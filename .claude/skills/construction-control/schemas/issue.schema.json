@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://construction-control/schemas/issue.schema.json",
+  "title": "Issue — единый объект выявленной проблемы",
+  "description": "Каждая выявленная проблема (отклонение, дефект, риск, нарушение последовательности) возвращается как Issue со строго определённым набором полей. Ссылки на сущности даются по id. Ни одно поле-ссылка не додумывается: если данных нет — null и снижение confidence.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "pattern": "^issue_[A-Za-z0-9]+$" },
+    "type": { "const": "Issue" },
+    "project_id": { "type": "string" },
+
+    "issue_kind": {
+      "type": "string",
+      "enum": ["schedule_deviation", "premature_start", "sequence_violation", "defect", "risk", "coverage_gap", "contract_breach"],
+      "description": "Класс проблемы."
+    },
+
+    "object": {
+      "type": "string",
+      "description": "Объект: проект/здание/корпус."
+    },
+    "building_id": { "type": ["string", "null"] },
+    "floor_id": { "type": ["string", "null"] },
+    "zone_id": { "type": ["string", "null"] },
+    "room_id": { "type": ["string", "null"] },
+    "location_label": {
+      "type": "string",
+      "description": "Человекочитаемое место: «Корпус 1, этаж 3, пом. 305»."
+    },
+
+    "work_name": { "type": "string", "description": "Вид работы." },
+    "contractor": { "type": ["string", "null"], "description": "Подрядчик." },
+
+    "contract_obligation_id": { "type": ["string", "null"], "description": "Ссылка на пункт договора (ContractObligation)." },
+    "contract_ref": { "type": ["string", "null"], "description": "Человекочитаемая ссылка: «Договор №..., п. 5.2»." },
+    "estimate_item_id": { "type": ["string", "null"], "description": "Ссылка на позицию сметы." },
+    "estimate_ref": { "type": ["string", "null"], "description": "Человекочитаемая ссылка на позицию сметы." },
+    "schedule_task_id": { "type": ["string", "null"], "description": "Ссылка на строку графика." },
+    "schedule_ref": { "type": ["string", "null"], "description": "Человекочитаемая ссылка: «График, строка 42»." },
+
+    "planned_percent": { "type": ["number", "null"], "minimum": 0, "maximum": 100, "description": "Плановая готовность на дату обхода." },
+    "actual_percent": { "type": ["number", "null"], "minimum": 0, "maximum": 100, "description": "Фактическая готовность по видео." },
+    "deviation_percent": { "type": ["number", "null"], "description": "actual − planned. Отрицательное — отставание." },
+    "days_overdue": { "type": ["integer", "null"], "description": "Просрочка в днях (schedule slippage). 0 — в графике, отрицательное — с опережением." },
+    "forecast_finish": { "type": ["string", "null"], "format": "date", "description": "Прогноз даты завершения работы." },
+
+    "severity": { "$ref": "entities.schema.json#/$defs/Severity" },
+    "confidence": { "$ref": "entities.schema.json#/$defs/Confidence" },
+    "confidence_level": { "$ref": "entities.schema.json#/$defs/ConfidenceLevel" },
+
+    "evidence_description": { "type": "string", "description": "Описание доказательств: что видно, чем измерено, из каких документов." },
+    "evidence_frame_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Ссылки на подтверждающие кадры (EvidenceFrame.id)."
+    },
+    "source_refs": {
+      "type": "array",
+      "items": { "$ref": "entities.schema.json#/$defs/SourceRef" },
+      "description": "Ссылки на пункты документов, обосновывающие проблему."
+    },
+
+    "possible_causes": { "type": "array", "items": { "type": "string" }, "description": "Возможные причины." },
+    "consequences": { "type": "array", "items": { "type": "string" }, "description": "Последствия (в т.ч. влияние на последующие работы)." },
+    "impacted_schedule_task_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Работы, на которые влияет данное отклонение."
+    },
+
+    "recommended_actions": {
+      "type": "array",
+      "items": { "$ref": "entities.schema.json#/$defs/CorrectiveAction" },
+      "description": "Рекомендуемые действия."
+    },
+    "responsible": { "type": ["string", "null"], "description": "Ответственный за устранение." },
+    "due_date": { "type": ["string", "null"], "format": "date", "description": "Рекомендуемый срок устранения." },
+
+    "requires_human_review": {
+      "type": "boolean",
+      "description": "Требуется ли подтверждение специалистом. true для всех critical и для скрытых работ/приёмки."
+    },
+    "human_review_reason": {
+      "type": ["string", "null"],
+      "description": "Почему нужен человек: критичность, скрытые работы, низкая уверенность, юридические последствия."
+    },
+    "review_status": { "$ref": "entities.schema.json#/$defs/ReviewStatus", "default": "pending_review" },
+
+    "linked_observation_ids": { "type": "array", "items": { "type": "string" } },
+    "linked_defect_ids": { "type": "array", "items": { "type": "string" } },
+    "linked_risk_ids": { "type": "array", "items": { "type": "string" } },
+    "created_by_agent": {
+      "type": "string",
+      "enum": ["schedule_control", "quality_control", "visual_progress", "chief_construction"]
+    },
+    "created_at": { "type": "string", "format": "date-time" }
+  },
+  "required": [
+    "id", "type", "project_id", "issue_kind", "object", "location_label",
+    "work_name", "severity", "confidence", "confidence_level",
+    "evidence_description", "evidence_frame_ids",
+    "possible_causes", "consequences", "recommended_actions",
+    "requires_human_review", "review_status", "created_by_agent"
+  ],
+  "allOf": [
+    {
+      "description": "Скрытые работы, приёмка и критические выводы обязаны уходить на подтверждение человеку.",
+      "if": { "properties": { "severity": { "const": "critical" } } },
+      "then": { "properties": { "requires_human_review": { "const": true } } }
+    }
+  ]
+}

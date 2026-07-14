@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://construction-control/schemas/document-extraction.output.schema.json",
+  "title": "Document Extraction Agent — output",
+  "description": "Строгий JSON, который возвращает Document Extraction Agent после разбора комплекта документов. Все элементы обязаны иметь source-ссылку; ничего не выдумывается.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "project": { "$ref": "entities.schema.json#/$defs/Project" },
+    "buildings": { "type": "array", "items": { "$ref": "entities.schema.json#/$defs/Building" } },
+    "floors": { "type": "array", "items": { "$ref": "entities.schema.json#/$defs/Floor" } },
+    "zones": { "type": "array", "items": { "$ref": "entities.schema.json#/$defs/Zone" } },
+    "rooms": { "type": "array", "items": { "$ref": "entities.schema.json#/$defs/Room" } },
+    "contract_obligations": { "type": "array", "items": { "$ref": "entities.schema.json#/$defs/ContractObligation" } },
+    "estimate_items": { "type": "array", "items": { "$ref": "entities.schema.json#/$defs/EstimateItem" } },
+    "schedule_tasks": { "type": "array", "items": { "$ref": "entities.schema.json#/$defs/ScheduleTask" } },
+    "cross_links": {
+      "type": "array",
+      "description": "Связи между пунктами разных документов (обязательство ↔ смета ↔ график).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "from_id": { "type": "string" },
+          "to_id": { "type": "string" },
+          "relation": { "type": "string", "enum": ["obligation_covers_estimate", "estimate_scheduled_by_task", "obligation_scheduled_by_task", "task_in_room", "estimate_in_room"] },
+          "confidence": { "$ref": "entities.schema.json#/$defs/Confidence" }
+        },
+        "required": ["from_id", "to_id", "relation", "confidence"]
+      }
+    },
+    "extraction_gaps": {
+      "type": "array",
+      "description": "Что не удалось извлечь надёжно и требует проверки человеком.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "document_type": { "type": "string" },
+          "issue": { "type": "string" },
+          "needs_human": { "type": "boolean" }
+        },
+        "required": ["document_type", "issue", "needs_human"]
+      }
+    },
+    "overall_confidence": { "$ref": "entities.schema.json#/$defs/Confidence" }
+  },
+  "required": ["project", "contract_obligations", "estimate_items", "schedule_tasks", "overall_confidence"]
+}

@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://construction-control/schemas/visual-progress.output.schema.json",
+  "title": "Visual Progress Agent — output",
+  "description": "Строгий JSON анализа кадров одного обхода. Агент НЕ сравнивает с графиком — только фиксирует наблюдаемое с уверенностью и ссылками на кадры.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "inspection_id": { "type": "string" },
+    "segments": {
+      "type": "array",
+      "items": { "$ref": "entities.schema.json#/$defs/VideoSegment" },
+      "description": "Сегменты с определёнными помещениями и методом привязки."
+    },
+    "observations": {
+      "type": "array",
+      "items": { "$ref": "entities.schema.json#/$defs/ProgressObservation" },
+      "description": "Наблюдения прогресса. Для каждого: помещение, работа, статус, % готовности, confidence, кадры."
+    },
+    "unassigned_segments": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "id сегментов, для которых не удалось определить помещение (нужна ручная привязка)."
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "rooms_covered": { "type": "array", "items": { "type": "string" } },
+        "rooms_expected": { "type": "array", "items": { "type": "string" } },
+        "rooms_missing": { "type": "array", "items": { "type": "string" }, "description": "Ожидались, но не сняты — coverage gap." }
+      },
+      "required": ["rooms_covered", "rooms_missing"]
+    },
+    "overall_confidence": { "$ref": "entities.schema.json#/$defs/Confidence" }
+  },
+  "required": ["inspection_id", "observations", "coverage", "overall_confidence"]
+}

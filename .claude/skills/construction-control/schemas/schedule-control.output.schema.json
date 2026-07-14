@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://construction-control/schemas/schedule-control.output.schema.json",
+  "title": "Schedule Control Agent — output",
+  "description": "Строгий JSON сравнения плана и факта. Все расчёты — обычная арифметика по датам и процентам, не оценки модели.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "project_id": { "type": "string" },
+    "as_of_date": { "type": "string", "format": "date", "description": "Дата обхода, на которую считается план." },
+    "task_evaluations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "schedule_task_id": { "type": "string" },
+          "room_id": { "type": ["string", "null"] },
+          "planned_percent": { "$ref": "entities.schema.json#/$defs/Percent" },
+          "actual_percent": { "$ref": "entities.schema.json#/$defs/Percent" },
+          "deviation_percent": { "type": "number" },
+          "days_overdue": { "type": "integer" },
+          "status_flag": {
+            "type": "string",
+            "enum": ["on_track", "behind", "ahead", "overdue", "premature_start", "sequence_violation", "not_observed"]
+          },
+          "forecast_finish": { "type": ["string", "null"], "format": "date" },
+          "progress_rate_pct_per_day": { "type": ["number", "null"] },
+          "impacted_task_ids": { "type": "array", "items": { "type": "string" } },
+          "confidence": { "$ref": "entities.schema.json#/$defs/Confidence" },
+          "basis": { "type": "string", "description": "Пояснение расчёта: даты, объёмы, наблюдения." }
+        },
+        "required": ["schedule_task_id", "planned_percent", "actual_percent", "deviation_percent", "days_overdue", "status_flag", "confidence"]
+      }
+    },
+    "sequence_checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "task_id": { "type": "string" },
+          "predecessor_id": { "type": "string" },
+          "violation": { "type": "boolean" },
+          "detail": { "type": "string" }
+        },
+        "required": ["task_id", "predecessor_id", "violation"]
+      }
+    },
+    "issues": {
+      "type": "array",
+      "items": { "$ref": "issue.schema.json" },
+      "description": "Отклонения, оформленные как Issue."
+    },
+    "critical_path_note": { "type": ["string", "null"], "description": "Влияние на критический путь и общий срок." },
+    "overall_confidence": { "$ref": "entities.schema.json#/$defs/Confidence" }
+  },
+  "required": ["project_id", "as_of_date", "task_evaluations", "issues", "overall_confidence"]
+}

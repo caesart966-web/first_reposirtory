@@ -1,0 +1,411 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://construction-control/schemas/entities.schema.json",
+  "title": "Construction Control — Core Data Model",
+  "description": "Единая модель данных ИИ-ассистента строительного контроля. Все сущности связаны по id-ссылкам. Схема используется базой данных проекта и всеми агентами как общий словарь.",
+
+  "$defs": {
+    "Id": {
+      "type": "string",
+      "description": "Стабильный идентификатор с префиксом типа, например proj_a1b2, room_0304.",
+      "pattern": "^[a-z]+_[A-Za-z0-9]+$"
+    },
+    "IsoDate": { "type": "string", "format": "date", "description": "Дата в формате YYYY-MM-DD." },
+    "IsoDateTime": { "type": "string", "format": "date-time" },
+    "Percent": { "type": "number", "minimum": 0, "maximum": 100 },
+    "Confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Числовая уверенность вывода 0..1."
+    },
+    "ConfidenceLevel": {
+      "type": "string",
+      "enum": ["low", "medium", "high"],
+      "description": "low < 0.5 ≤ medium < 0.8 ≤ high. Дублирует Confidence в человекочитаемом виде."
+    },
+    "Severity": {
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low", "info"],
+      "description": "Критичность проблемы: critical — угроза срокам/безопасности/скрытым работам; info — справочно."
+    },
+    "WorkStatus": {
+      "type": "string",
+      "enum": ["not_started", "started", "in_progress", "visually_complete"],
+      "description": "not_started — не начата; started — начата (появились признаки); in_progress — выполняется; visually_complete — визуально завершена (НЕ равно принята)."
+    },
+    "ReviewStatus": {
+      "type": "string",
+      "enum": ["pending_review", "confirmed", "rejected", "corrected", "escalated", "auto_accepted"],
+      "description": "Состояние вывода в цикле human-in-the-loop."
+    },
+    "SourceRef": {
+      "type": "object",
+      "description": "Ссылка на место в исходном документе для трассируемости.",
+      "additionalProperties": false,
+      "properties": {
+        "document_id": { "$ref": "#/$defs/Id" },
+        "document_type": {
+          "type": "string",
+          "enum": ["contract", "supplementary_agreement", "estimate", "boq", "schedule", "design_doc", "working_doc", "floor_plan", "tech_card", "quality_spec", "other"]
+        },
+        "locator": {
+          "type": "string",
+          "description": "Человекочитаемый указатель: пункт 5.2, лист 12, строка сметы 0-1-15, ячейка Sheet1!C42, страница 7."
+        },
+        "page": { "type": "integer", "minimum": 1 },
+        "quote": { "type": "string", "description": "Дословная цитата-подтверждение (при наличии)." }
+      },
+      "required": ["document_id", "document_type", "locator"]
+    },
+
+    "Project": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/Id" },
+        "type": { "const": "Project" },
+        "name": { "type": "string" },
+        "customer": { "type": "string", "description": "Заказчик." },
+        "general_contractor": { "type": "string", "description": "Генподрядчик." },
+        "address": { "type": "string" },
+        "contract_ids": { "type": "array", "items": { "$ref": "#/$defs/Id" } },
+        "planned_start": { "$ref": "#/$defs/IsoDate" },
+        "planned_finish": { "$ref": "#/$defs/IsoDate" },
+        "buildings": { "type": "array", "items": { "$ref": "#/$defs/Id" } }
+      },
+      "required": ["id", "type", "name"]
+    },
+
+    "Building": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/Id" },
+        "type": { "const": "Building" },
+        "project_id": { "$ref": "#/$defs/Id" },
+        "name": { "type": "string", "description": "Объект/корпус, например «Корпус 1»." },
+        "floors": { "type": "array", "items": { "$ref": "#/$defs/Id" } }
+      },
+      "required": ["id", "type", "project_id", "name"]
+    },
+
+    "Floor": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/Id" },
+        "type": { "const": "Floor" },
+        "building_id": { "$ref": "#/$defs/Id" },
+        "level": { "type": "integer", "description": "Номер этажа, отрицательный — подземный." },
+        "name": { "type": "string" },
+        "floor_plan_document_id": { "$ref": "#/$defs/Id" },
+        "zones": { "type": "array", "items": { "$ref": "#/$defs/Id" } }
+      },
+      "required": ["id", "type", "building_id", "level"]
+    },
+
+    "Zone": {
+      "type": "object",
+      "description": "Крупная строительная зона на этаже (секция, ядро, коридорный блок). Может отсутствовать, если этаж делится сразу на помещения.",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/Id" },
+        "type": { "const": "Zone" },
+        "floor_id": { "$ref": "#/$defs/Id" },
+        "name": { "type": "string" },
+        "rooms": { "type": "array", "items": { "$ref": "#/$defs/Id" } }
+      },
+      "required": ["id", "type", "floor_id", "name"]
+    },
+
+    "Room": {
+      "type": "object",
+      "description": "Помещение — базовая единица привязки работ, кадров и наблюдений в MVP без BIM.",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/Id" },
+        "type": { "const": "Room" },
+        "zone_id": { "$ref": "#/$defs/Id" },
+        "floor_id": { "$ref": "#/$defs/Id" },
+        "code": { "type": "string", "description": "Номер помещения на плане, например «305»." },
+        "name": { "type": "string", "description": "Назначение: офис, санузел, лестничная клетка." },
+        "area_m2": { "type": "number", "minimum": 0 },
+        "plan_polygon": {
+          "type": "array",
+          "description": "Опциональный контур помещения на плане в координатах плана (для ручной разметки).",
+          "items": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 }
+        }
+      },
+      "required": ["id", "type", "floor_id", "code"]
+    },
+
+    "ContractObligation": {
+      "type": "object",
+      "description": "Обязательство/условие, извлечённое из договора или доп. соглашения.",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/Id" },
+        "type": { "const": "ContractObligation" },
+        "project_id": { "$ref": "#/$defs/Id" },
+        "category": {
+          "type": "string",
+          "enum": ["scope", "deadline", "responsibility", "acceptance", "quality", "penalty", "payment", "warranty", "hidden_works", "other"],
+          "description": "Вид условия: объём, срок, ответственность, приёмка, качество, штраф, оплата, гарантия, скрытые работы."
+        },
+        "summary": { "type": "string", "description": "Краткая суть обязательства." },
+        "responsible_party": { "type": "string", "description": "Ответственная сторона: подрядчик/заказчик/иное." },
+        "due_date": { "$ref": "#/$defs/IsoDate" },
+        "penalty": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "basis": { "type": "string", "description": "За что штраф." },
+            "rate": { "type": "string", "description": "Ставка, напр. «0.1% от цены этапа за день»." },
+            "cap": { "type": "string", "description": "Ограничение суммы, при наличии." }
+          }
+        },
+        "acceptance_requirements": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Требования к приёмке (документы, освидетельствование скрытых работ, испытания)."
+        },
+        "source": { "$ref": "#/$defs/SourceRef" },
+        "linked_estimate_item_ids": { "type": "array", "items": { "$ref": "#/$defs/Id" } },
+        "linked_schedule_task_ids": { "type": "array", "items": { "$ref": "#/$defs/Id" } },
+        "confidence": { "$ref": "#/$defs/Confidence" }
+      },
+      "required": ["id", "type", "project_id", "category", "summary", "source"]
+    },
+
+    "EstimateItem": {
+      "type": "object",
+      "description": "Позиция сметы / строка ведомости объёмов работ (ВОР).",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/Id" },
+        "type": { "const": "EstimateItem" },
+        "project_id": { "$ref": "#/$defs/Id" },
+        "code": { "type": "string", "description": "Шифр расценки/позиции, напр. ГЭСН/ФЕР или внутренний." },
+        "work_name": { "type": "string", "description": "Вид работы." },
+        "unit": { "type": "string", "description": "Единица измерения: м2, м3, шт, т, компл." },
+        "quantity": { "type": "number", "description": "Плановый объём." },
+        "unit_price": { "type": "number", "description": "Цена за единицу (опц.)." },
+        "total_cost": { "type": "number", "description": "Стоимость позиции (опц.)." },
+        "contractor": { "type": "string", "description": "Подрядчик, выполняющий позицию." },
+        "source": { "$ref": "#/$defs/SourceRef" },
+        "room_ids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Id" },
+          "description": "Помещения, к которым отнесён объём (ручная привязка в MVP)."
+        },
+        "linked_schedule_task_ids": { "type": "array", "items": { "$ref": "#/$defs/Id" } },
+        "confidence": { "$ref": "#/$defs/Confidence" }
+      },
+      "required": ["id", "type", "project_id", "work_name", "unit", "quantity", "source"]
+    },
+
+    "ScheduleTask": {
+      "type": "object",
+      "description": "Строка календарно-сетевого графика производства работ.",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/Id" },
+        "type": { "const": "ScheduleTask" },
+        "project_id": { "$ref": "#/$defs/Id" },
+        "wbs_code": { "type": "string", "description": "Код/номер строки графика (WBS)." },
+        "name": { "type": "string" },
+        "planned_start": { "$ref": "#/$defs/IsoDate" },
+        "planned_finish": { "$ref": "#/$defs/IsoDate" },
+        "baseline_start": { "$ref": "#/$defs/IsoDate" },
+        "baseline_finish": { "$ref": "#/$defs/IsoDate" },
+        "duration_days": { "type": "integer", "minimum": 0 },
+        "responsible": { "type": "string", "description": "Ответственный/подрядчик." },
+        "predecessor_ids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Id" },
+          "description": "Предшественники (для проверки технологической последовательности)."
+        },
+        "dependency_type": {
+          "type": "string",
+          "enum": ["FS", "SS", "FF", "SF"],
+          "description": "Тип связи с предшественниками (по умолчанию FS — окончание-начало)."
+        },
+        "room_ids": { "type": "array", "items": { "$ref": "#/$defs/Id" }, "description": "Помещения/зоны выполнения (ручная привязка)." },
+        "linked_estimate_item_ids": { "type": "array", "items": { "$ref": "#/$defs/Id" } },
+        "is_milestone": { "type": "boolean", "default": false },
+        "is_hidden_work": { "type": "boolean", "default": false, "description": "Скрытые работы — требуют освидетельствования, нельзя принимать по видео." },
+        "source": { "$ref": "#/$defs/SourceRef" },
+        "confidence": { "$ref": "#/$defs/Confidence" }
+      },
+      "required": ["id", "type", "project_id", "name", "planned_start", "planned_finish", "source"]
+    },
+
+    "Inspection": {
+      "type": "object",
+      "description": "Обход объекта = загрузка одного или нескольких видео за дату.",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/Id" },
+        "type": { "const": "Inspection" },
+        "project_id": { "$ref": "#/$defs/Id" },
+        "date": { "$ref": "#/$defs/IsoDate" },
+        "inspector": { "type": "string", "description": "Кто снимал обход." },
+        "camera_type": { "type": "string", "enum": ["standard", "360"], "default": "standard" },
+        "video_source_ids": { "type": "array", "items": { "$ref": "#/$defs/Id" }, "description": "Исходные видеофайлы." },
+        "segment_ids": { "type": "array", "items": { "$ref": "#/$defs/Id" } },
+        "previous_inspection_id": { "$ref": "#/$defs/Id", "description": "Предыдущий обход для сравнения." },
+        "coverage_note": { "type": "string", "description": "Какие зоны не попали в обход." }
+      },
+      "required": ["id", "type", "project_id", "date"]
+    },
+
+    "VideoSegment": {
+      "type": "object",
+      "description": "Смысловой эпизод видео, привязанный к помещению/зоне.",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/Id" },
+        "type": { "const": "VideoSegment" },
+        "inspection_id": { "$ref": "#/$defs/Id" },
+        "video_source_id": { "$ref": "#/$defs/Id" },
+        "start_ms": { "type": "integer", "minimum": 0 },
+        "end_ms": { "type": "integer", "minimum": 0 },
+        "room_id": { "$ref": "#/$defs/Id", "description": "Определённое помещение (может быть null до привязки)." },
+        "zone_id": { "$ref": "#/$defs/Id" },
+        "room_assignment_method": {
+          "type": "string",
+          "enum": ["ocr_marker", "narration_asr", "visual_match", "manual", "unknown"],
+          "description": "Как определено помещение: по табличке (OCR), по речи (ASR), визуально, вручную."
+        },
+        "transcript": { "type": "string", "description": "Расшифровка речи в сегменте (ASR)." },
+        "frame_ids": { "type": "array", "items": { "$ref": "#/$defs/Id" } },
+        "confidence": { "$ref": "#/$defs/Confidence" }
+      },
+      "required": ["id", "type", "inspection_id", "start_ms", "end_ms"]
+    },
+
+    "EvidenceFrame": {
+      "type": "object",
+      "description": "Ключевой кадр-доказательство, извлечённый из видеосегмента.",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/Id" },
+        "type": { "const": "EvidenceFrame" },
+        "segment_id": { "$ref": "#/$defs/Id" },
+        "timestamp_ms": { "type": "integer", "minimum": 0 },
+        "image_uri": { "type": "string", "description": "Ссылка на файл кадра в хранилище." },
+        "thumbnail_uri": { "type": "string" },
+        "room_id": { "$ref": "#/$defs/Id" },
+        "detected_labels": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Распознанные конструкции/работы на кадре (свободные метки)."
+        },
+        "ocr_text": { "type": "string", "description": "Текст, распознанный на кадре (таблички, маркировка)." },
+        "quality_flags": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["blurry", "dark", "overexposed", "occluded", "motion", "ok"] }
+        }
+      },
+      "required": ["id", "type", "segment_id", "timestamp_ms", "image_uri"]
+    },
+
+    "ProgressObservation": {
+      "type": "object",
+      "description": "Наблюдение фактического прогресса по одной работе в одном помещении на одном обходе.",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/Id" },
+        "type": { "const": "ProgressObservation" },
+        "project_id": { "$ref": "#/$defs/Id" },
+        "inspection_id": { "$ref": "#/$defs/Id" },
+        "room_id": { "$ref": "#/$defs/Id" },
+        "zone_id": { "$ref": "#/$defs/Id" },
+        "work_name": { "type": "string" },
+        "estimate_item_id": { "$ref": "#/$defs/Id" },
+        "schedule_task_id": { "$ref": "#/$defs/Id" },
+        "status": { "$ref": "#/$defs/WorkStatus" },
+        "estimated_completion_percent": { "$ref": "#/$defs/Percent", "description": "Оценка фактической готовности по видео." },
+        "confidence": { "$ref": "#/$defs/Confidence" },
+        "confidence_level": { "$ref": "#/$defs/ConfidenceLevel" },
+        "evidence_frame_ids": { "type": "array", "items": { "$ref": "#/$defs/Id" }, "minItems": 0 },
+        "evidence_description": { "type": "string", "description": "Что именно видно на кадрах и почему сделан вывод." },
+        "delta_from_previous_percent": { "type": "number", "description": "Прирост готовности относительно прошлого обхода." },
+        "observed_at": { "$ref": "#/$defs/IsoDateTime" },
+        "review_status": { "$ref": "#/$defs/ReviewStatus", "default": "pending_review" }
+      },
+      "required": ["id", "type", "project_id", "inspection_id", "room_id", "work_name", "status", "estimated_completion_percent", "confidence", "evidence_frame_ids"]
+    },
+
+    "Defect": {
+      "type": "object",
+      "description": "Дефект или подозрение на дефект, выявленное по видео.",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/Id" },
+        "type": { "const": "Defect" },
+        "project_id": { "$ref": "#/$defs/Id" },
+        "room_id": { "$ref": "#/$defs/Id" },
+        "work_name": { "type": "string" },
+        "defect_status": {
+          "type": "string",
+          "enum": ["suspected", "confirmed_visual", "needs_instrumental_check", "dismissed"],
+          "description": "suspected — подозрение; confirmed_visual — визуально подтверждён; needs_instrumental_check — нужна инструментальная/документальная проверка; dismissed — снят."
+        },
+        "description": { "type": "string" },
+        "requirement_source": { "$ref": "#/$defs/SourceRef", "description": "Требование (техкарта/качество/проект), которое нарушено." },
+        "severity": { "$ref": "#/$defs/Severity" },
+        "confidence": { "$ref": "#/$defs/Confidence" },
+        "evidence_frame_ids": { "type": "array", "items": { "$ref": "#/$defs/Id" } },
+        "evidence_description": { "type": "string" },
+        "required_checks": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Проверки, которые нельзя выполнить по видео и которые нужно провести инструментально/документально."
+        },
+        "review_status": { "$ref": "#/$defs/ReviewStatus", "default": "pending_review" }
+      },
+      "required": ["id", "type", "project_id", "room_id", "defect_status", "description", "severity", "confidence"]
+    },
+
+    "Risk": {
+      "type": "object",
+      "description": "Риск — вероятное будущее негативное событие (в отличие от уже наступившего отклонения/дефекта).",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/Id" },
+        "type": { "const": "Risk" },
+        "project_id": { "$ref": "#/$defs/Id" },
+        "category": { "type": "string", "enum": ["schedule", "quality", "sequence", "safety", "contract", "coverage", "other"] },
+        "description": { "type": "string" },
+        "likelihood": { "type": "string", "enum": ["low", "medium", "high"] },
+        "impact": { "$ref": "#/$defs/Severity" },
+        "affected_room_ids": { "type": "array", "items": { "$ref": "#/$defs/Id" } },
+        "affected_schedule_task_ids": { "type": "array", "items": { "$ref": "#/$defs/Id" } },
+        "confidence": { "$ref": "#/$defs/Confidence" },
+        "review_status": { "$ref": "#/$defs/ReviewStatus", "default": "pending_review" }
+      },
+      "required": ["id", "type", "project_id", "category", "description", "likelihood", "impact"]
+    },
+
+    "CorrectiveAction": {
+      "type": "object",
+      "description": "Рекомендуемое корректирующее мероприятие по проблеме.",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/Id" },
+        "type": { "const": "CorrectiveAction" },
+        "project_id": { "$ref": "#/$defs/Id" },
+        "issue_id": { "$ref": "#/$defs/Id" },
+        "action": { "type": "string", "description": "Конкретное действие." },
+        "responsible": { "type": "string", "description": "Ответственный за выполнение." },
+        "due_date": { "$ref": "#/$defs/IsoDate", "description": "Рекомендуемый срок устранения." },
+        "priority": { "$ref": "#/$defs/Severity" },
+        "status": { "type": "string", "enum": ["proposed", "accepted", "in_progress", "done", "rejected"], "default": "proposed" },
+        "pm_task_id": { "type": "string", "description": "Идентификатор задачи в системе управления проектами, если создана." }
+      },
+      "required": ["id", "type", "project_id", "action", "responsible"]
+    }
+  }
+}

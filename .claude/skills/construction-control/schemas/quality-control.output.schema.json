@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://construction-control/schemas/quality-control.output.schema.json",
+  "title": "Quality Control Agent — output",
+  "description": "Строгий JSON проверки качества по видео. Агент чётко разделяет визуально проверяемое и то, что требует инструментальной/документальной проверки.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "inspection_id": { "type": "string" },
+    "defects": {
+      "type": "array",
+      "items": { "$ref": "entities.schema.json#/$defs/Defect" }
+    },
+    "checkable_requirements": {
+      "type": "array",
+      "description": "Требования, которые удалось проверить визуально.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "requirement": { "type": "string" },
+          "source": { "$ref": "entities.schema.json#/$defs/SourceRef" },
+          "room_id": { "type": ["string", "null"] },
+          "result": { "type": "string", "enum": ["pass", "fail", "uncertain"] },
+          "evidence_frame_ids": { "type": "array", "items": { "type": "string" } },
+          "confidence": { "$ref": "entities.schema.json#/$defs/Confidence" }
+        },
+        "required": ["requirement", "result", "confidence"]
+      }
+    },
+    "non_verifiable_by_video": {
+      "type": "array",
+      "description": "Требования/проверки, которые НЕЛЬЗЯ выполнить по видео (скрытые работы, прочность, влажность, геометрия с допусками и т.п.).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "requirement": { "type": "string" },
+          "source": { "$ref": "entities.schema.json#/$defs/SourceRef" },
+          "reason": { "type": "string" },
+          "recommended_check": { "type": "string", "description": "Какая инструментальная/документальная проверка нужна." },
+          "is_hidden_work": { "type": "boolean" }
+        },
+        "required": ["requirement", "reason", "recommended_check"]
+      }
+    },
+    "issues": {
+      "type": "array",
+      "items": { "$ref": "issue.schema.json" }
+    },
+    "overall_confidence": { "$ref": "entities.schema.json#/$defs/Confidence" }
+  },
+  "required": ["inspection_id", "defects", "non_verifiable_by_video", "issues", "overall_confidence"]
+}

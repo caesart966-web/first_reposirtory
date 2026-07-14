@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://construction-control/schemas/weekly-report.output.schema.json",
+  "title": "Chief Construction Agent — weekly report output",
+  "description": "Строгий JSON недельного отчёта. Chief-агент объединяет результаты, ранжирует проблемы, но не делает категоричных выводов без доказательств и помечает всё спорное на человека.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "report_id": { "type": "string" },
+    "project_id": { "type": "string" },
+    "period": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "from": { "type": "string", "format": "date" },
+        "to": { "type": "string", "format": "date" },
+        "inspection_ids": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["from", "to"]
+    },
+    "executive_summary": { "type": "string", "description": "Краткое резюме для руководителя: 3–7 предложений, без категоричных утверждений без доказательств." },
+    "kpi": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "overall_planned_percent": { "$ref": "entities.schema.json#/$defs/Percent" },
+        "overall_actual_percent": { "$ref": "entities.schema.json#/$defs/Percent" },
+        "overall_deviation_percent": { "type": "number" },
+        "tasks_on_track": { "type": "integer" },
+        "tasks_behind": { "type": "integer" },
+        "tasks_overdue": { "type": "integer" },
+        "open_defects": { "type": "integer" },
+        "forecast_project_finish": { "type": ["string", "null"], "format": "date" },
+        "coverage_percent": { "$ref": "entities.schema.json#/$defs/Percent", "description": "Доля запланированных помещений, попавших в обход." }
+      }
+    },
+    "ranked_issues": {
+      "type": "array",
+      "description": "Проблемы, отсортированные по критичности (critical → info).",
+      "items": { "$ref": "issue.schema.json" }
+    },
+    "risks": { "type": "array", "items": { "$ref": "entities.schema.json#/$defs/Risk" } },
+    "corrective_actions": { "type": "array", "items": { "$ref": "entities.schema.json#/$defs/CorrectiveAction" } },
+    "human_review_queue": {
+      "type": "array",
+      "description": "Выводы, требующие подтверждения специалистом до включения в официальные документы.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "issue_id": { "type": "string" },
+          "reason": { "type": "string" },
+          "severity": { "$ref": "entities.schema.json#/$defs/Severity" }
+        },
+        "required": ["issue_id", "reason", "severity"]
+      }
+    },
+    "data_quality_notes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Ограничения обхода: слепые зоны, плохое качество кадров, непривязанные сегменты."
+    },
+    "disclaimer": {
+      "type": "string",
+      "description": "Обязательная оговорка: отчёт носит информационный характер, не является приёмкой работ и не подтверждает скрытые работы."
+    },
+    "generated_at": { "type": "string", "format": "date-time" }
+  },
+  "required": ["report_id", "project_id", "period", "executive_summary", "kpi", "ranked_issues", "human_review_queue", "disclaimer"]
+}
