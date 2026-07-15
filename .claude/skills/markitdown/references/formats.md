@@ -50,6 +50,9 @@ heuristic. Raise `--dpi 300` for small or faint scans.
 - Encrypted / password-protected files (supply a decrypted copy).
 - Handwriting (Tesseract is tuned for printed text).
 - Complex multi-column magazine layouts may reflow imperfectly.
-- Charts/diagrams as images yield only any embedded text, not a description.
-  (MarkItDown can describe images if given an LLM client; this skill keeps
-  that off by default to stay cheap and offline.)
+- Charts/diagrams as images yield only any embedded text via OCR, not a
+  description — but the agent can *look* at them: Read image files directly
+  (the Read tool renders them), and render PDF pages to PNG with
+  `scripts/pages.py` for visual inspection.
+- Handwriting: OCR won't read it, but viewing the image/page (above) lets the
+  agent read it visually in many cases.

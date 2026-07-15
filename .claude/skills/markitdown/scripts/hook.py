@@ -135,6 +135,10 @@ def main() -> int:
                 lines.append(f"  - {os.path.relpath(r.src, root)} -> {rel} "
                              f"({r.words} words{extra})")
             lines.append("Use Read with offset/limit on the .md files to keep token use low.")
+            if any(r.ocr_used for r in ok):
+                lines.append("Some files were OCRed (text only): if diagrams, stamps, "
+                             "handwriting or layout matter, view the original image with "
+                             "Read, or render PDF pages via scripts/pages.py.")
             print("\n".join(lines))
         return 0
     except Exception as exc:  # noqa: BLE001 - never break the host session

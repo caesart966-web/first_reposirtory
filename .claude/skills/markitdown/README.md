@@ -53,6 +53,9 @@ python3 $S/convert.py --outline .markitdown/out/report_pdf.md
 
 # OCR a single image straight to stdout.
 python3 $S/ocr.py photo.jpg --lang rus
+
+# Render PDF pages to PNG so the agent can LOOK at diagrams/stamps/handwriting.
+python3 $S/pages.py doc.pdf --pages 2-4
 ```
 
 Then read the generated `.md` with the Read tool using `offset`/`limit` around
@@ -68,6 +71,7 @@ the outline's line numbers — don't dump the whole file.
 ├── scripts/
 │   ├── convert.py           # core CLI: convert files/dirs → Markdown
 │   ├── ocr.py               # Tesseract OCR helpers (images, scanned PDFs)
+│   ├── pages.py             # render PDF pages to PNG for visual inspection
 │   ├── hook.py              # auto-convert on session start / prompt submit
 │   ├── install_hooks.py     # wire/unwire the auto-conversion hooks
 │   └── setup.sh             # idempotent dependency bootstrap

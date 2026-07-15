@@ -6,10 +6,12 @@ description: >-
   user uploads, points at, or asks about a non-Markdown file — PDF, Word
   (docx), PowerPoint (pptx), Excel (xlsx), CSV/TSV, HTML, XML, JSON, EPUB,
   ZIP, Outlook .msg, or an image (PNG/JPG/TIFF) — or asks to "convert to
-  markdown", "extract text", "read this PDF", "OCR this scan/screenshot", or
-  "summarize this document". Handles scanned/image-only PDFs and photos of
-  text via OCR, and keeps token use low by writing Markdown to files and
-  reporting only a short outline instead of dumping full contents.
+  markdown", "extract text", "read this PDF", "OCR this scan/screenshot",
+  "summarize this document", or to look at diagrams/stamps/handwriting inside
+  a document. Handles scanned/image-only PDFs and photos of text via OCR, can
+  render PDF pages to PNG for visual inspection, and keeps token use low by
+  writing Markdown to files and reporting only a short outline instead of
+  dumping full contents.
 ---
 
 # MarkItDown Skill
@@ -101,6 +103,31 @@ python3 .claude/skills/markitdown/scripts/convert.py file.pdf --ocr off
 
 Quick OCR of a single image straight to stdout: `python3
 .claude/skills/markitdown/scripts/ocr.py image.png --lang eng+rus`.
+
+## Looking at images visually (diagrams, stamps, handwriting, photos)
+
+OCR recovers **printed text only**. When a document contains anything that
+must be *seen* — charts, diagrams, tables drawn as pictures, stamps, seals,
+signatures, handwriting, photos, or a layout you need to verify — look at the
+actual image:
+
+- **Standalone image files** (`.png .jpg .jpeg .tif ...`): open the original
+  file directly with the **Read tool** — it renders images visually. Do this
+  *in addition to* reading the OCR `.md` when the picture matters.
+- **PDF pages**: render the page(s) you need to PNG first, then Read the PNG:
+
+  ```bash
+  python3 .claude/skills/markitdown/scripts/pages.py doc.pdf --pages 3
+  python3 .claude/skills/markitdown/scripts/pages.py doc.pdf --pages 2-5,8 --dpi 200
+  ```
+
+  It prints one PNG path per line (default output: `.markitdown/pages/`).
+
+Rule of thumb: use the `.md` to *search and quote* text cheaply; view the
+image/page when the question involves anything visual, or when OCR output
+looks garbled or suspiciously empty for a page. Render only the specific
+pages you need — each viewed image costs tokens, so don't render `--pages all`
+of a long document unless the user asks for a full visual review.
 
 ## Automatic conversion when files are uploaded
 
