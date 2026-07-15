@@ -1,0 +1,14 @@
+# MarkItDown Skill — Python dependencies
+# Install with:  pip install -r requirements.txt
+# (or just run scripts/setup.sh, which also installs the tesseract engine)
+
+# Core converter + all format extras (PDF, docx, pptx, xlsx, audio, ...).
+markitdown[all]>=0.1.0
+
+# OCR binding (needs the system `tesseract` binary — see scripts/setup.sh).
+pytesseract>=0.3.10
+
+# pypdfium2 and Pillow are pulled in by markitdown[pdf]; listed for clarity —
+# pypdfium2 renders PDF pages for OCR, Pillow handles images.
+pypdfium2>=4
+Pillow>=9
