@@ -88,6 +88,99 @@ def _yadisk_href(url: str) -> str:
     return href
 
 
+_HTML_MARKERS = (b"<!doctype html", b"<html", b"<HTML", b"<!DOCTYPE html")
+
+
+def _looks_like_html(first_bytes: bytes) -> bool:
+    head = first_bytes.lstrip()[:64]
+    return any(head.startswith(m) or m in head[:32] for m in _HTML_MARKERS)
+
+
+def _download_mailru(url: str, out_dir: Path) -> Path:
+    """Mail.ru Cloud public/stock links (cloud.mail.ru/public/..., /stock/...).
+
+    The share page is a JS app, so a plain GET returns a useless HTML shell.
+    Instead we parse the page's embedded state for the download server
+    (`weblink_get`) and the file's weblink id + name, then fetch the file
+    directly. Falls back to the anonymous dispatcher API if the page layout
+    changes.
+    """
+    import http.cookiejar
+
+    cj = http.cookiejar.CookieJar()
+    opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
+    opener.addheaders = [("User-Agent", UA)]
+
+    with opener.open(url, timeout=TIMEOUT) as resp:
+        page = resp.read(4 << 20).decode("utf-8", "replace")
+
+    m = re.search(r"cloud\.mail\.ru/(public|stock)/([^?#]+)", url)
+    kind, pid = (m.group(1), m.group(2).strip("/")) if m else ("public", "")
+
+    def _first(pattern: str) -> str | None:
+        mm = re.search(pattern, page)
+        return mm.group(1) if mm else None
+
+    # Download server list embedded in the page state.
+    weblink_get = None
+    raw = _first(r'"weblink_get"\s*:\s*(\[[^\]]*\])')
+    if raw:
+        try:
+            arr = json.loads(raw)
+            if arr and isinstance(arr, list):
+                weblink_get = (arr[0] or {}).get("url")
+        except json.JSONDecodeError:
+            pass
+    if not weblink_get:
+        try:
+            data = json.loads(opener.open(
+                "https://cloud.mail.ru/api/v2/dispatcher?api=2",
+                timeout=TIMEOUT).read().decode("utf-8"))
+            weblink_get = data["body"]["weblink_get"][0]["url"]
+        except Exception as exc:  # noqa: BLE001
+            raise RuntimeError(
+                "Mail.ru Cloud: could not resolve a download server "
+                f"(page layout may have changed): {exc}")
+
+    weblink = _first(r'"weblink"\s*:\s*"([^"]+)"')
+    name = _first(r'"name"\s*:\s*"([^"]+)"')
+
+    candidates = [c for c in {weblink, pid, f"stock/{pid}" if kind == "stock" else None}
+                  if c]
+    last_err: Exception | None = None
+    for cand in candidates:
+        dl = f"{weblink_get.rstrip('/')}/{urllib.parse.quote(cand, safe='/')}"
+        try:
+            with opener.open(dl, timeout=TIMEOUT) as resp:
+                first = resp.read(1024)
+                if not first or _looks_like_html(first):
+                    continue  # got a web page back, not the file
+                fname = _filename_from_response(resp, dl)
+                if name and ("." in name) and ("." not in fname or fname.startswith("download_")):
+                    fname = Path(name).name
+                dest = out_dir / fname
+                with open(dest, "wb") as fh:
+                    fh.write(first)
+                    total = len(first)
+                    while True:
+                        chunk = resp.read(1 << 20)
+                        if not chunk:
+                            break
+                        total += len(chunk)
+                        if total > MAX_BYTES:
+                            raise RuntimeError(
+                                f"file exceeds {MAX_BYTES // (1 << 30)} GB cap")
+                        fh.write(chunk)
+                return dest
+        except Exception as exc:  # noqa: BLE001 - try the next candidate id
+            last_err = exc
+    raise RuntimeError(
+        "Mail.ru Cloud: could not download the file "
+        f"(tried ids: {', '.join(candidates) or 'none'}"
+        f"{'; last error: ' + str(last_err) if last_err else ''}). "
+        "Make sure the link is public.")
+
+
 # --------------------------------------------------------------------------- #
 # Download
 # --------------------------------------------------------------------------- #
@@ -161,6 +254,8 @@ def download(url: str, out_dir: Path) -> Path:
         return _download_gdrive(url, out_dir)
     if "disk.yandex." in url or "yadi.sk" in url:
         return _download_plain(_yadisk_href(url), out_dir)
+    if "cloud.mail.ru" in url:
+        return _download_mailru(url, out_dir)
     return _download_plain(url, out_dir)
 
 

@@ -163,7 +163,7 @@ If the project has `.github/workflows/markitdown.yml`, files pushed into
 `inbox/` are converted by GitHub Actions into `converted/*.md` — even with no
 session running. Files too big for GitHub (>25 MB web / >100 MB push) go in as
 URLs: one link per line in `inbox/links.txt` (direct, Google Drive, Yandex
-Disk, Dropbox). CI downloads them with `scripts/fetch.py`, converts, and
+Disk, Mail.ru Cloud, Dropbox). CI downloads them with `scripts/fetch.py`, converts, and
 commits only the Markdown; processed links are tracked in
 `converted/.links_done.json` and never re-downloaded. You can also run it
 manually:
