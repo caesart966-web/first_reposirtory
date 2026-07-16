@@ -86,6 +86,7 @@ def _candidates(dirs: list[tuple[Path, bool]]) -> list[Path]:
             if (
                 f.is_file()
                 and f.suffix.lower() in C.ALL_EXTS
+                and f.suffix.lower() not in C.MD_EXTS
                 and f.name not in C.SKIP_NAMES
                 and C.CACHE_DIRNAME not in f.parts
                 and f.resolve() not in seen

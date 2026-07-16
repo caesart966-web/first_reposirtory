@@ -296,6 +296,9 @@ def _is_cached(path: Path, opts: Options, manifest: dict) -> str | None:
 # --------------------------------------------------------------------------- #
 
 ALL_EXTS = DOC_EXTS | IMAGE_EXTS | AUDIO_EXTS
+# Already Markdown — nothing to convert. Skipped when scanning a directory
+# (an explicitly named .md file is still processed/normalized).
+MD_EXTS = {".md", ".markdown"}
 
 
 def _iter_inputs(targets: list[str], recursive: bool):
@@ -307,6 +310,7 @@ def _iter_inputs(targets: list[str], recursive: bool):
                 if (
                     f.is_file()
                     and f.suffix.lower() in ALL_EXTS
+                    and f.suffix.lower() not in MD_EXTS
                     and f.name not in SKIP_NAMES
                     and CACHE_DIRNAME not in f.parts
                 ):
