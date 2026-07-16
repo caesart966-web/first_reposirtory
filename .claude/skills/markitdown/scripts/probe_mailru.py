@@ -34,20 +34,26 @@ get_url = _ep_url(disp, "get") or ""
 for it in items:
     name = str(it.get("name", ""))
     sid = str(it.get("stock", ""))
+    token = str(it.get("dwl_token", ""))
     qname = urllib.parse.quote(name)
     qsid = urllib.parse.quote(sid, safe="/")
+    qtok = urllib.parse.quote(token, safe="")
     cands = []
     for base in [stock_url, get_url, weblink_get]:
         if not base:
             continue
         b = base.rstrip("/")
-        cands += [f"{b}/{qsid}", f"{b}/{qsid}/{qname}",
-                  f"{b}/{urllib.parse.quote(bundle, safe='/')}/{qname}"]
+        if token:
+            cands += [f"{b}/{qtok}", f"{b}/{qtok}/{qname}",
+                      f"{b}/{qsid}?key={qtok}", f"{b}/{qsid}?token={qtok}",
+                      f"{b}/{qsid}?dwl_token={qtok}"]
+        cands += [f"{b}/{qsid}"]
     for c in dict.fromkeys(cands):
         try:
             r = op.open(c, timeout=30)
             head = r.read(80)
             print("TRY OK ", r.status, r.headers.get("Content-Type"),
-                  r.headers.get("Content-Length"), c[:160], "HEAD:", head[:40])
+                  r.headers.get("Content-Length"), c[:180], "HEAD:", head[:40])
+            break
         except Exception as e:  # noqa: BLE001
-            print("TRY ERR", getattr(e, 'code', '?'), c[:160], "->", e)
+            print("TRY ERR", getattr(e, 'code', '?'), c[:180], "->", e)
