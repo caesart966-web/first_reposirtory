@@ -68,32 +68,50 @@ def ocr_image(path: Path, lang: str = "eng+rus") -> str:
         return pytesseract.image_to_string(img, lang=lang)
 
 
-def ocr_pdf(path: Path, lang: str = "eng+rus", dpi: int = 200, max_pages: int = 0) -> str:
-    """Render each PDF page and OCR it. `max_pages=0` means all pages."""
+def ocr_pdf(path: Path, lang: str = "eng+rus", dpi: int = 200,
+            max_pages: int = 0, jobs: int = 0) -> str:
+    """Render each PDF page and OCR it. `max_pages=0` means all pages.
+
+    Pages are OCRed in parallel: pytesseract shells out to the tesseract
+    binary, so a thread pool gives near-linear speedup with CPU cores.
+    Rendering stays sequential (pypdfium2 is not thread-safe) and is done
+    in batches so a long document never holds every page bitmap in memory.
+    """
+    import os
+    from concurrent.futures import ThreadPoolExecutor
+
     import pypdfium2 as pdfium
     import pytesseract
 
     lang = _resolve_lang(lang)
     scale = max(dpi, 72) / 72.0
-    chunks: list[str] = []
+    jobs = jobs or min(8, os.cpu_count() or 2)
+
+    def _ocr_one(arg):
+        idx, pil = arg
+        try:
+            return idx, pytesseract.image_to_string(pil, lang=lang).strip()
+        finally:
+            pil.close()
+
+    chunks: dict[int, str] = {}
     pdf = pdfium.PdfDocument(str(path))
     try:
         n = len(pdf)
         if max_pages:
             n = min(n, max_pages)
-        for i in range(n):
-            page = pdf[i]
-            bitmap = page.render(scale=scale)
-            pil = bitmap.to_pil()
-            try:
-                page_text = pytesseract.image_to_string(pil, lang=lang).strip()
-            finally:
-                pil.close()
-            if page_text:
-                chunks.append(f"<!-- page {i + 1} -->\n{page_text}")
+        with ThreadPoolExecutor(max_workers=jobs) as pool:
+            for start in range(0, n, jobs):
+                batch = []
+                for i in range(start, min(start + jobs, n)):
+                    batch.append((i, pdf[i].render(scale=scale).to_pil()))
+                for idx, text in pool.map(_ocr_one, batch):
+                    if text:
+                        chunks[idx] = text
     finally:
         pdf.close()
-    return "\n\n".join(chunks)
+    return "\n\n".join(f"<!-- page {i + 1} -->\n{chunks[i]}"
+                       for i in sorted(chunks))
 
 
 def ocr_file(path: Path, lang: str = "eng+rus", dpi: int = 200) -> str:

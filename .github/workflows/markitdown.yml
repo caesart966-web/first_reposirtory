@@ -2,12 +2,18 @@ name: MarkItDown auto-convert
 
 # Any file pushed into inbox/ gets converted to Markdown in converted/.
 # Triggered on every branch so uploads via the GitHub web UI always work.
-# workflow_dispatch allows manual re-runs (e.g. to retry failed links).
+# workflow_dispatch allows manual re-runs and accepts an optional file URL,
+# so a conversion can be started for any link without touching the repo.
 on:
   push:
     paths:
       - "inbox/**"
   workflow_dispatch:
+    inputs:
+      url:
+        description: "File URL to fetch and convert (optional)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -39,6 +45,16 @@ jobs:
           python3 .claude/skills/markitdown/scripts/fetch.py inbox/links.txt \
             --out /tmp/fetched --state converted/.links_done.json \
             || echo "::warning::Some links failed to download — see log above"
+
+      - name: Fetch URL passed to manual run
+        if: ${{ github.event.inputs.url != '' && github.event.inputs.url != null }}
+        env:
+          FETCH_URL: ${{ github.event.inputs.url }}
+        run: |
+          python3 .claude/skills/markitdown/scripts/fetch.py \
+            --url "$FETCH_URL" \
+            --out /tmp/fetched --state converted/.links_done.json \
+            || echo "::warning::URL download failed — see log above"
 
       - name: Convert inbox and fetched files to Markdown
         run: |
