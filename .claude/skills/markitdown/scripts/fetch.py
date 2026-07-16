@@ -96,20 +96,45 @@ def _looks_like_html(first_bytes: bytes) -> bool:
     return any(head.startswith(m) or m in head[:32] for m in _HTML_MARKERS)
 
 
-def _find_key(obj, key: str):
-    """Depth-first search for the first value of `key` in nested dict/list."""
-    if isinstance(obj, dict):
-        if key in obj:
-            return obj[key]
-        for v in obj.values():
-            r = _find_key(v, key)
-            if r is not None:
-                return r
-    elif isinstance(obj, list):
-        for v in obj:
-            r = _find_key(v, key)
-            if r is not None:
-                return r
+def _extract_json_object(text: str, key: str) -> dict | None:
+    """Extract and parse the balanced ``{...}`` following ``"key":`` in text.
+
+    The Mail.ru page embeds a huge JS object that is not strictly valid JSON
+    (it can contain JS-only escapes), so parsing the whole thing fails.
+    Instead we cut out just the sub-object we need with a brace scanner and
+    neutralize invalid escapes if strict parsing still complains.
+    """
+    m = re.search(r'"%s"\s*:\s*\{' % re.escape(key), text)
+    if not m:
+        return None
+    i = m.end() - 1  # position of the opening brace
+    depth, in_str, esc = 0, False, False
+    for j in range(i, min(len(text), i + 2_000_000)):
+        c = text[j]
+        if in_str:
+            if esc:
+                esc = False
+            elif c == "\\":
+                esc = True
+            elif c == '"':
+                in_str = False
+        else:
+            if c == '"':
+                in_str = True
+            elif c == "{":
+                depth += 1
+            elif c == "}":
+                depth -= 1
+                if depth == 0:
+                    raw = text[i:j + 1]
+                    try:
+                        return json.loads(raw)
+                    except json.JSONDecodeError:
+                        fixed = re.sub(r'\\(?!["\\/bfnrtu])', r"\\\\", raw)
+                        try:
+                            return json.loads(fixed)
+                        except json.JSONDecodeError:
+                            return None
     return None
 
 
@@ -141,16 +166,7 @@ def _download_mailru(url: str, out_dir: Path) -> Path:
     with opener.open(url, timeout=TIMEOUT) as resp:
         page = resp.read(8 << 20).decode("utf-8", "replace")
 
-    m = re.search(r"window\.cloudSettings\s*=\s*(\{.*?\})\s*</script>", page, re.S)
-    if not m:
-        raise RuntimeError("Mail.ru Cloud: cloudSettings not found on the page "
-                           "(layout changed, or the link is not public)")
-    try:
-        settings = json.loads(m.group(1))
-    except json.JSONDecodeError as exc:
-        raise RuntimeError(f"Mail.ru Cloud: could not parse cloudSettings: {exc}")
-
-    dispatcher = _find_key(settings, "dispatcher") or {}
+    dispatcher = _extract_json_object(page, "dispatcher") or {}
     if not dispatcher:
         try:
             data = json.loads(opener.open(
@@ -162,12 +178,31 @@ def _download_mailru(url: str, out_dir: Path) -> Path:
     stock_url = _ep_url(dispatcher, "stock")
     weblink_get = _ep_url(dispatcher, "weblink_get")
 
-    folder = _find_key(settings, "folder") or {}
-    items = folder.get("list") or _find_key(settings, "list") or []
+    ssf = _extract_json_object(page, "serverSideFolders") or {}
+    folder = ssf.get("folder") if isinstance(ssf.get("folder"), dict) else None
+    if folder is None:
+        folder = _extract_json_object(page, "folder") or {}
+    items = folder.get("list") or []
     bundle = folder.get("bundle") or ""
     files = [it for it in items
              if isinstance(it, dict) and it.get("name")
              and it.get("kind", "file") != "folder"]
+
+    if not files:
+        # Last resort: pull name+id pairs straight out of the raw page text.
+        for pat in (r'"name":"([^"]+)"[^{}]*?"stock":"([^"]+)"',
+                    r'"stock":"([^"]+)"[^{}]*?"name":"([^"]+)"',
+                    r'"name":"([^"]+)"[^{}]*?"weblink":"([^"]+)"'):
+            m = re.search(pat, page)
+            if m:
+                a, b = m.group(1), m.group(2)
+                if "stock" in pat and pat.startswith(r'"stock"'):
+                    files = [{"name": b, "stock": a}]
+                elif "stock" in pat:
+                    files = [{"name": a, "stock": b}]
+                else:
+                    files = [{"name": a, "weblink": b}]
+                break
     if not files:
         raise RuntimeError("Mail.ru Cloud: no files found in the page state "
                            "(empty share, or the link is not public)")
