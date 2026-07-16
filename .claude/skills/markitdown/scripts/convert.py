@@ -57,7 +57,8 @@ IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".gif", ".webp"}
 AUDIO_EXTS = {".wav", ".mp3", ".m4a", ".flac", ".ogg"}
 
 # Files we should never treat as convertible sources.
-SKIP_NAMES = {".DS_Store"}
+# links.txt is the URL list consumed by fetch.py, not a document.
+SKIP_NAMES = {".DS_Store", "links.txt"}
 CACHE_DIRNAME = ".markitdown"
 
 
