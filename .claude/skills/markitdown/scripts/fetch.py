@@ -161,7 +161,10 @@ def _download_mailru(url: str, out_dir: Path) -> Path:
 
     cj = http.cookiejar.CookieJar()
     opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
-    opener.addheaders = [("User-Agent", UA)]
+    # The download CDN rejects requests without a cloud.mail.ru Referer.
+    opener.addheaders = [("User-Agent", UA),
+                         ("Referer", "https://cloud.mail.ru/"),
+                         ("Origin", "https://cloud.mail.ru")]
 
     with opener.open(url, timeout=TIMEOUT) as resp:
         page = resp.read(8 << 20).decode("utf-8", "replace")
@@ -212,6 +215,15 @@ def _download_mailru(url: str, out_dir: Path) -> Path:
         name = Path(str(it["name"])).name
         qname = urllib.parse.quote(name)
         candidates: list[str] = []
+        # Stock links: verified working form is /stock/get/{dwl_token}/{name}.
+        if it.get("dwl_token") and stock_url:
+            tok = urllib.parse.quote(str(it["dwl_token"]), safe="")
+            candidates.append(f"{stock_url.rstrip('/')}/get/{tok}/{qname}")
+        # Public links: the classic weblink_get form.
+        if it.get("weblink") and weblink_get:
+            w = urllib.parse.quote(str(it["weblink"]), safe="/")
+            candidates.append(f"{weblink_get.rstrip('/')}/{w}")
+        # Older fallbacks, in case the layout shifts again.
         if it.get("stock") and stock_url:
             sid = urllib.parse.quote(str(it["stock"]), safe="/")
             candidates += [f"{stock_url.rstrip('/')}/{sid}/{qname}",
@@ -219,9 +231,6 @@ def _download_mailru(url: str, out_dir: Path) -> Path:
         if bundle and stock_url:
             b = urllib.parse.quote(str(bundle), safe="/")
             candidates.append(f"{stock_url.rstrip('/')}/{b}/{qname}")
-        if it.get("weblink") and weblink_get:
-            w = urllib.parse.quote(str(it["weblink"]), safe="/")
-            candidates.append(f"{weblink_get.rstrip('/')}/{w}")
 
         for dl in candidates:
             try:
