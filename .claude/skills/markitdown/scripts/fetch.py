@@ -96,14 +96,41 @@ def _looks_like_html(first_bytes: bytes) -> bool:
     return any(head.startswith(m) or m in head[:32] for m in _HTML_MARKERS)
 
 
+def _find_key(obj, key: str):
+    """Depth-first search for the first value of `key` in nested dict/list."""
+    if isinstance(obj, dict):
+        if key in obj:
+            return obj[key]
+        for v in obj.values():
+            r = _find_key(v, key)
+            if r is not None:
+                return r
+    elif isinstance(obj, list):
+        for v in obj:
+            r = _find_key(v, key)
+            if r is not None:
+                return r
+    return None
+
+
+def _ep_url(dispatcher, name: str) -> str | None:
+    """Endpoint URL from a dispatcher block ({'url':..} or [{'url':..}, ...])."""
+    v = (dispatcher or {}).get(name)
+    if isinstance(v, list):
+        v = v[0] if v else None
+    if isinstance(v, dict):
+        return v.get("url")
+    return None
+
+
 def _download_mailru(url: str, out_dir: Path) -> Path:
     """Mail.ru Cloud public/stock links (cloud.mail.ru/public/..., /stock/...).
 
-    The share page is a JS app, so a plain GET returns a useless HTML shell.
-    Instead we parse the page's embedded state for the download server
-    (`weblink_get`) and the file's weblink id + name, then fetch the file
-    directly. Falls back to the anonymous dispatcher API if the page layout
-    changes.
+    The share page is a JS app, so a plain GET returns a useless HTML shell —
+    but it embeds `window.cloudSettings = {...}` with everything we need:
+    the per-file ids (`weblink` for /public/, `stock` for /stock/), the real
+    file name, and a `dispatcher` block naming the download servers
+    (`weblink_get` for public links, `stock` for stock links).
     """
     import http.cookiejar
 
@@ -112,73 +139,82 @@ def _download_mailru(url: str, out_dir: Path) -> Path:
     opener.addheaders = [("User-Agent", UA)]
 
     with opener.open(url, timeout=TIMEOUT) as resp:
-        page = resp.read(4 << 20).decode("utf-8", "replace")
+        page = resp.read(8 << 20).decode("utf-8", "replace")
 
-    m = re.search(r"cloud\.mail\.ru/(public|stock)/([^?#]+)", url)
-    kind, pid = (m.group(1), m.group(2).strip("/")) if m else ("public", "")
+    m = re.search(r"window\.cloudSettings\s*=\s*(\{.*?\})\s*</script>", page, re.S)
+    if not m:
+        raise RuntimeError("Mail.ru Cloud: cloudSettings not found on the page "
+                           "(layout changed, or the link is not public)")
+    try:
+        settings = json.loads(m.group(1))
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"Mail.ru Cloud: could not parse cloudSettings: {exc}")
 
-    def _first(pattern: str) -> str | None:
-        mm = re.search(pattern, page)
-        return mm.group(1) if mm else None
-
-    # Download server list embedded in the page state.
-    weblink_get = None
-    raw = _first(r'"weblink_get"\s*:\s*(\[[^\]]*\])')
-    if raw:
-        try:
-            arr = json.loads(raw)
-            if arr and isinstance(arr, list):
-                weblink_get = (arr[0] or {}).get("url")
-        except json.JSONDecodeError:
-            pass
-    if not weblink_get:
+    dispatcher = _find_key(settings, "dispatcher") or {}
+    if not dispatcher:
         try:
             data = json.loads(opener.open(
                 "https://cloud.mail.ru/api/v2/dispatcher?api=2",
                 timeout=TIMEOUT).read().decode("utf-8"))
-            weblink_get = data["body"]["weblink_get"][0]["url"]
-        except Exception as exc:  # noqa: BLE001
-            raise RuntimeError(
-                "Mail.ru Cloud: could not resolve a download server "
-                f"(page layout may have changed): {exc}")
+            dispatcher = data.get("body", {})
+        except Exception:  # noqa: BLE001 - page block is the primary source
+            pass
+    stock_url = _ep_url(dispatcher, "stock")
+    weblink_get = _ep_url(dispatcher, "weblink_get")
 
-    weblink = _first(r'"weblink"\s*:\s*"([^"]+)"')
-    name = _first(r'"name"\s*:\s*"([^"]+)"')
+    folder = _find_key(settings, "folder") or {}
+    items = folder.get("list") or _find_key(settings, "list") or []
+    bundle = folder.get("bundle") or ""
+    files = [it for it in items
+             if isinstance(it, dict) and it.get("name")
+             and it.get("kind", "file") != "folder"]
+    if not files:
+        raise RuntimeError("Mail.ru Cloud: no files found in the page state "
+                           "(empty share, or the link is not public)")
 
-    candidates = [c for c in {weblink, pid, f"stock/{pid}" if kind == "stock" else None}
-                  if c]
     last_err: Exception | None = None
-    for cand in candidates:
-        dl = f"{weblink_get.rstrip('/')}/{urllib.parse.quote(cand, safe='/')}"
-        try:
-            with opener.open(dl, timeout=TIMEOUT) as resp:
-                first = resp.read(1024)
-                if not first or _looks_like_html(first):
-                    continue  # got a web page back, not the file
-                fname = _filename_from_response(resp, dl)
-                if name and ("." in name) and ("." not in fname or fname.startswith("download_")):
-                    fname = Path(name).name
-                dest = out_dir / fname
-                with open(dest, "wb") as fh:
-                    fh.write(first)
-                    total = len(first)
-                    while True:
-                        chunk = resp.read(1 << 20)
-                        if not chunk:
-                            break
-                        total += len(chunk)
-                        if total > MAX_BYTES:
-                            raise RuntimeError(
-                                f"file exceeds {MAX_BYTES // (1 << 30)} GB cap")
-                        fh.write(chunk)
-                return dest
-        except Exception as exc:  # noqa: BLE001 - try the next candidate id
-            last_err = exc
+    for it in files:
+        name = Path(str(it["name"])).name
+        qname = urllib.parse.quote(name)
+        candidates: list[str] = []
+        if it.get("stock") and stock_url:
+            sid = urllib.parse.quote(str(it["stock"]), safe="/")
+            candidates += [f"{stock_url.rstrip('/')}/{sid}/{qname}",
+                           f"{stock_url.rstrip('/')}/{sid}"]
+        if bundle and stock_url:
+            b = urllib.parse.quote(str(bundle), safe="/")
+            candidates.append(f"{stock_url.rstrip('/')}/{b}/{qname}")
+        if it.get("weblink") and weblink_get:
+            w = urllib.parse.quote(str(it["weblink"]), safe="/")
+            candidates.append(f"{weblink_get.rstrip('/')}/{w}")
+
+        for dl in candidates:
+            try:
+                with opener.open(dl, timeout=TIMEOUT) as resp:
+                    first = resp.read(1024)
+                    if not first or _looks_like_html(first):
+                        continue  # got a web page back, not the file
+                    dest = out_dir / name
+                    with open(dest, "wb") as fh:
+                        fh.write(first)
+                        total = len(first)
+                        while True:
+                            chunk = resp.read(1 << 20)
+                            if not chunk:
+                                break
+                            total += len(chunk)
+                            if total > MAX_BYTES:
+                                raise RuntimeError(
+                                    f"file exceeds {MAX_BYTES // (1 << 30)} GB cap")
+                            fh.write(chunk)
+                    return dest
+            except Exception as exc:  # noqa: BLE001 - try the next candidate
+                last_err = exc
+
     raise RuntimeError(
-        "Mail.ru Cloud: could not download the file "
-        f"(tried ids: {', '.join(candidates) or 'none'}"
-        f"{'; last error: ' + str(last_err) if last_err else ''}). "
-        "Make sure the link is public.")
+        "Mail.ru Cloud: could not download "
+        f"({len(files)} file(s) found, e.g. '{files[0]['name']}'; "
+        f"last error: {last_err}). Make sure the link is public.")
 
 
 # --------------------------------------------------------------------------- #

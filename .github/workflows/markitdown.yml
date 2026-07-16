@@ -2,10 +2,12 @@ name: MarkItDown auto-convert
 
 # Any file pushed into inbox/ gets converted to Markdown in converted/.
 # Triggered on every branch so uploads via the GitHub web UI always work.
+# workflow_dispatch allows manual re-runs (e.g. to retry failed links).
 on:
   push:
     paths:
       - "inbox/**"
+  workflow_dispatch:
 
 permissions:
   contents: write
