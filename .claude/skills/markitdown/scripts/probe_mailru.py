@@ -2,55 +2,52 @@
 """TEMPORARY debug probe for Mail.ru Cloud stock links. Removed after use."""
 import http.cookiejar
 import json
-import re
 import sys
+import urllib.parse
 import urllib.request
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from fetch import _extract_json_object, _ep_url, UA  # noqa: E402
 
 url = sys.argv[1]
 cj = http.cookiejar.CookieJar()
 op = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
-op.addheaders = [("User-Agent",
-                  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-                  "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")]
+op.addheaders = [("User-Agent", UA)]
 
 page = op.open(url, timeout=60).read().decode("utf-8", "replace")
 print("PAGE LEN:", len(page))
 
-for key in ["weblink_get", "stock_get", "\"stock\"", "tokens", "dispatcher",
-            "csrf", "cloudSettings", "__PRELOADED", "serverSideProps"]:
-    m = re.search(re.escape(key), page)
-    if m:
-        s = max(0, m.start() - 60)
-        print(f"--- {key}: ...{page[s:m.start() + 300]}...".replace("\n", " ")[:400])
+disp = _extract_json_object(page, "dispatcher") or {}
+print("DISPATCHER:", json.dumps(disp, ensure_ascii=False)[:1200])
 
-for host in sorted(set(re.findall(
-        r'https?://[a-z0-9.-]*(?:cldmail|datacloudmail|cloclo)[a-z0-9.-]*\.ru[^"\'\\\s]*',
-        page)))[:10]:
-    print("DL-HOST:", host[:220])
+ssf = _extract_json_object(page, "serverSideFolders") or {}
+print("SERVERSIDEFOLDERS FULL:", json.dumps(ssf, ensure_ascii=False)[:5000])
 
-for m in list(re.finditer(r"<script[^>]*>(.{0,20000}?)</script>", page, re.S))[:40]:
-    body = m.group(1).strip()
-    if ("stock" in body or "weblink" in body) and len(body) > 50:
-        print("SCRIPT:", body[:1000].replace("\n", " "))
-        print("======")
+folder = ssf.get("folder") or {}
+items = folder.get("list") or []
+bundle = folder.get("bundle") or ""
+stock_url = _ep_url(disp, "stock") or ""
+weblink_get = _ep_url(disp, "weblink_get") or ""
+get_url = _ep_url(disp, "get") or ""
 
-try:
-    d = json.loads(op.open("https://cloud.mail.ru/api/v2/dispatcher?api=2",
-                           timeout=60).read().decode("utf-8"))
-    print("DISPATCHER BODY KEYS:", sorted(d.get("body", {}).keys()))
-    print(json.dumps(d.get("body", {}), ensure_ascii=False)[:2000])
-except Exception as e:  # noqa: BLE001
-    print("dispatcher error:", e)
-
-pid = url.split("/stock/")[-1].split("/public/")[-1].strip("/")
-for cand in [
-    f"https://cloud.mail.ru/api/v2/stock?ids={pid}&api=2",
-    f"https://cloud.mail.ru/api/v2/stock/lite?ids={pid}&api=2",
-    f"https://cloud.mail.ru/api/v2/stock/file?id={pid}&api=2",
-    f"https://cloud.mail.ru/api/v2/folder?weblink={pid}&api=2",
-]:
-    try:
-        r = op.open(cand, timeout=30)
-        print("API OK:", cand, "->", r.read(500).decode("utf-8", "replace"))
-    except Exception as e:  # noqa: BLE001
-        print("API ERR:", cand, "->", e)
+for it in items:
+    name = str(it.get("name", ""))
+    sid = str(it.get("stock", ""))
+    qname = urllib.parse.quote(name)
+    qsid = urllib.parse.quote(sid, safe="/")
+    cands = []
+    for base in [stock_url, get_url, weblink_get]:
+        if not base:
+            continue
+        b = base.rstrip("/")
+        cands += [f"{b}/{qsid}", f"{b}/{qsid}/{qname}",
+                  f"{b}/{urllib.parse.quote(bundle, safe='/')}/{qname}"]
+    for c in dict.fromkeys(cands):
+        try:
+            r = op.open(c, timeout=30)
+            head = r.read(80)
+            print("TRY OK ", r.status, r.headers.get("Content-Type"),
+                  r.headers.get("Content-Length"), c[:160], "HEAD:", head[:40])
+        except Exception as e:  # noqa: BLE001
+            print("TRY ERR", getattr(e, 'code', '?'), c[:160], "->", e)
