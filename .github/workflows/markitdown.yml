@@ -30,11 +30,18 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq tesseract-ocr tesseract-ocr-rus
-          pip install --quiet "markitdown[all]" pytesseract
+          pip install --quiet "markitdown[all]" pytesseract gdown
 
-      - name: Convert inbox to Markdown
+      - name: Fetch large files from inbox/links.txt
         run: |
-          python3 .claude/skills/markitdown/scripts/convert.py inbox \
+          python3 .claude/skills/markitdown/scripts/fetch.py inbox/links.txt \
+            --out /tmp/fetched --state converted/.links_done.json \
+            || echo "::warning::Some links failed to download — see log above"
+
+      - name: Convert inbox and fetched files to Markdown
+        run: |
+          mkdir -p /tmp/fetched
+          python3 .claude/skills/markitdown/scripts/convert.py inbox /tmp/fetched \
             --recursive --out converted --force \
             || echo "::warning::Some files failed to convert — see log above"
 

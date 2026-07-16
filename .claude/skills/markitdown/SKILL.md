@@ -157,6 +157,22 @@ When you see a `MarkItDown auto-converted…` note, treat the listed `.md` files
 as the source of truth and read those (with `offset`/`limit`) instead of the
 originals.
 
+### CI conversion and large files (repo `inbox/` + links)
+
+If the project has `.github/workflows/markitdown.yml`, files pushed into
+`inbox/` are converted by GitHub Actions into `converted/*.md` — even with no
+session running. Files too big for GitHub (>25 MB web / >100 MB push) go in as
+URLs: one link per line in `inbox/links.txt` (direct, Google Drive, Yandex
+Disk, Dropbox). CI downloads them with `scripts/fetch.py`, converts, and
+commits only the Markdown; processed links are tracked in
+`converted/.links_done.json` and never re-downloaded. You can also run it
+manually:
+
+```bash
+python3 .claude/skills/markitdown/scripts/fetch.py inbox/links.txt --out /tmp/fetched
+python3 .claude/skills/markitdown/scripts/fetch.py --url https://... --out /tmp/fetched
+```
+
 ## Command reference (`convert.py`)
 
 | Flag | Meaning |
