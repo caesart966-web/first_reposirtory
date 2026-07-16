@@ -179,52 +179,104 @@ def _looks_scanned(text: str, path: Path) -> bool:
     return alpha < 32 or (size_kb > 40 and alpha < size_kb)
 
 
-def convert_one(path: Path, opts: Options) -> Result:
+def _extract_with_fallback(path: Path, opts: Options) -> tuple[str, bool, str | None]:
+    """MarkItDown extraction with the OCR fallback. Returns (text, ocr_used, note)."""
     ext = path.suffix.lower()
-    res = Result(src=str(path))
     kind = (
         "image" if ext in IMAGE_EXTS
         else "audio" if ext in AUDIO_EXTS
         else "doc"
     )
+    ocr_used = False
+    note: str | None = None
 
-    text = ""
+    # 1) Native MarkItDown extraction (text PDFs, Office, HTML, EXIF, ...).
     try:
-        # 1) Native MarkItDown extraction (text PDFs, Office, HTML, EXIF, ...).
-        try:
-            text = _extract_text(path)
-        except Exception as exc:  # noqa: BLE001 - fall back to OCR for images
-            if kind != "image":
-                raise
-            text = f"<!-- markitdown could not parse {path.name}: {exc} -->\n"
+        text = _extract_text(path)
+    except Exception as exc:  # noqa: BLE001 - fall back to OCR for images
+        if kind != "image":
+            raise
+        text = f"<!-- markitdown could not parse {path.name}: {exc} -->\n"
 
-        ocr_wanted = opts.ocr == "on" or (
-            opts.ocr == "auto"
-            and (
-                kind == "image"
-                or (ext == ".pdf" and _looks_scanned(text, path))
-            )
+    ocr_wanted = opts.ocr == "on" or (
+        opts.ocr == "auto"
+        and (
+            kind == "image"
+            or (ext == ".pdf" and _looks_scanned(text, path))
         )
+    )
 
-        # 2) OCR fallback for images and scanned PDFs.
-        if ocr_wanted and opts.ocr != "off":
+    # 2) OCR fallback for images and scanned PDFs.
+    if ocr_wanted and opts.ocr != "off":
+        try:
+            from ocr import ocr_file, ocr_available
+            if ocr_available():
+                ocr_text = ocr_file(path, lang=opts.lang, dpi=opts.dpi)
+                if _alpha_count(ocr_text) > _alpha_count(text):
+                    # Prefer the richer of the two, keep metadata as a note.
+                    header = text.strip()
+                    text = (header + "\n\n" if header else "") + ocr_text
+                    ocr_used = True
+            elif opts.ocr == "on":
+                note = ("OCR requested but tesseract is not installed "
+                        "(run scripts/setup.sh)")
+        except Exception as exc:  # noqa: BLE001
+            if opts.ocr == "on":
+                note = f"OCR failed: {exc}"
+
+    return text, ocr_used, note
+
+
+def _convert_zip(path: Path, opts: Options) -> tuple[str, bool]:
+    """Convert every supported file inside a ZIP, OCR included.
+
+    MarkItDown's own ZIP handler skips OCR for archived scans/images, so we
+    extract to a temp dir and run each entry through the full pipeline.
+    Nested ZIPs are handled natively (one level deep, no OCR inside them).
+    Returns (markdown, any_ocr_used).
+    """
+    import tempfile
+    import zipfile
+
+    chunks = [f"Content from the zip file `{path.name}`:"]
+    ocr_any = False
+    with tempfile.TemporaryDirectory() as td:
+        with zipfile.ZipFile(path) as zf:
+            zf.extractall(td)  # extract() sanitizes absolute/.. member paths
+        base = Path(td)
+        all_files = sorted(f for f in base.rglob("*") if f.is_file())
+        entries = [f for f in all_files if f.suffix.lower() in ALL_EXTS]
+        skipped = [f.relative_to(base) for f in all_files
+                   if f.suffix.lower() not in ALL_EXTS]
+
+        if not entries:
+            chunks.append("\n(no convertible files found in the archive)")
+        for f in entries:
+            rel = f.relative_to(base)
             try:
-                from ocr import ocr_file, ocr_available
-                if ocr_available():
-                    ocr_text = ocr_file(path, lang=opts.lang, dpi=opts.dpi)
-                    if _alpha_count(ocr_text) > _alpha_count(text):
-                        # Prefer the richer of the two, keep metadata as a note.
-                        header = text.strip()
-                        text = (header + "\n\n" if header else "") + ocr_text
-                        res.ocr_used = True
-                elif opts.ocr == "on":
-                    res.error = (
-                        "OCR requested but tesseract is not installed "
-                        "(run scripts/setup.sh)"
-                    )
-            except Exception as exc:  # noqa: BLE001
-                if opts.ocr == "on":
-                    res.error = f"OCR failed: {exc}"
+                if f.suffix.lower() == ".zip":
+                    text = _extract_text(f)
+                    used = False
+                else:
+                    text, used, _ = _extract_with_fallback(f, opts)
+                ocr_any = ocr_any or used
+                chunks.append(f"\n## File: {rel}\n\n{text.strip()}")
+            except Exception as exc:  # noqa: BLE001 - one bad entry must not kill the archive
+                chunks.append(f"\n## File: {rel}\n\n<!-- failed to convert: {exc} -->")
+        if skipped:
+            names = ", ".join(str(s) for s in skipped[:10])
+            more = f" (+{len(skipped) - 10} more)" if len(skipped) > 10 else ""
+            chunks.append(f"\n<!-- unsupported files skipped: {names}{more} -->")
+    return "\n".join(chunks) + "\n", ocr_any
+
+
+def convert_one(path: Path, opts: Options) -> Result:
+    res = Result(src=str(path))
+    try:
+        if path.suffix.lower() == ".zip":
+            text, res.ocr_used = _convert_zip(path, opts)
+        else:
+            text, res.ocr_used, res.error = _extract_with_fallback(path, opts)
 
         text = postprocess(text, opts.keep_data_uris)
         res.chars, res.words, res.lines = stats(text)

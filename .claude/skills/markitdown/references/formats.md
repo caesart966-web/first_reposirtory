@@ -19,7 +19,7 @@ rough guide.
 | EPUB | `.epub` | Chapters concatenated. |
 | Jupyter | `.ipynb` | Markdown + code cells. |
 | Outlook message | `.msg` | Headers + body. |
-| ZIP archive | `.zip` | Each contained file is converted and concatenated. |
+| ZIP archive | `.zip` | Each contained file runs through the full pipeline — including OCR for archived scans/images — and results are concatenated into one `.md` with a `## File:` section per entry. Unsupported entries are listed as skipped. Nested ZIPs: one level deep, no OCR inside. |
 | Plain text / Markdown | `.txt`, `.md`, `.markdown`, `.rtf` | Passed through / normalized. |
 
 ## Images (OCR path)
