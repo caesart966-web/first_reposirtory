@@ -87,6 +87,12 @@ def ocr_pdf(path: Path, lang: str = "eng+rus", dpi: int = 200,
     scale = max(dpi, 72) / 72.0
     jobs = jobs or min(8, os.cpu_count() or 2)
 
+    if jobs > 1:
+        # Tesseract 5 spawns its own OpenMP threads; N concurrent processes
+        # each spinning on 4 OMP threads oversubscribe the CPU catastrophically
+        # (measured 100x slowdown). One OMP thread per process fixes it.
+        os.environ.setdefault("OMP_THREAD_LIMIT", "1")
+
     def _ocr_one(arg):
         idx, pil = arg
         try:
