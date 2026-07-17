@@ -1,0 +1,10 @@
+{
+  "_comment": "Образец регистрации MCP-сервера для Claude Code. Чтобы включить, скопируйте этот файл в КОРЕНЬ репозитория под именем .mcp.json (см. README, раздел «Подключение к Claude Code»). После этого в сессии на этом репозитории у скилла /construction-control появятся реальные инструменты get_estimate_items, create_issue и т.д.",
+  "mcpServers": {
+    "construction-mcp": {
+      "command": "bash",
+      "args": ["backend/construction-mcp/run.sh"],
+      "env": {}
+    }
+  }
+}

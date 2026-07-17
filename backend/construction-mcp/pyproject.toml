@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "construction-mcp"
+version = "0.1.0"
+description = "MCP-сервер ИИ-ассистента строительного контроля (backend скилла /construction-control)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp>=1.2",
+    "jsonschema>=4.18",
+    "openpyxl>=3.1",
+    "pdfplumber>=0.11",
+    "python-docx>=1.1",
+    "anyio>=4.0",
+]
+
+[project.optional-dependencies]
+vision = ["anthropic>=0.40"]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+construction-mcp = "construction_mcp.server:main"
+
+[tool.setuptools]
+packages = ["construction_mcp"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -4,6 +4,13 @@ __pycache__/
 *.egg-info/
 .venv/
 venv/
+.pytest_cache/
+
+# construction-mcp backend runtime artifacts
+backend/construction-mcp/data/
+*.db
+*.db-wal
+*.db-shm
 
 # OS / editors
 .DS_Store
