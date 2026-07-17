@@ -14,6 +14,10 @@ on:
         description: "File URL to fetch and convert (optional)"
         required: false
         default: ""
+      private:
+        description: "true = do not commit results; upload a 1-day workflow artifact instead (for sensitive documents in a public repo)"
+        required: false
+        default: "false"
 
 permissions:
   contents: write
@@ -57,13 +61,31 @@ jobs:
             || echo "::warning::URL download failed — see log above"
 
       - name: Convert inbox and fetched files to Markdown
+        if: ${{ github.event.inputs.private != 'true' }}
         run: |
           mkdir -p /tmp/fetched
           python3 .claude/skills/markitdown/scripts/convert.py inbox /tmp/fetched \
             --recursive --out converted --force \
             || echo "::warning::Some files failed to convert — see log above"
 
+      - name: Convert privately (results go to an artifact, not the repo)
+        if: ${{ github.event.inputs.private == 'true' }}
+        run: |
+          mkdir -p /tmp/fetched /tmp/private_out
+          python3 .claude/skills/markitdown/scripts/convert.py /tmp/fetched \
+            --recursive --out /tmp/private_out --force \
+            || echo "::warning::Some files failed to convert — see log above"
+
+      - name: Upload private results as artifact
+        if: ${{ github.event.inputs.private == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: private-converted
+          path: /tmp/private_out
+          retention-days: 1
+
       - name: Commit converted Markdown
+        if: ${{ github.event.inputs.private != 'true' }}
         run: |
           git config user.name "markitdown-bot"
           git config user.email "github-actions[bot]@users.noreply.github.com"
