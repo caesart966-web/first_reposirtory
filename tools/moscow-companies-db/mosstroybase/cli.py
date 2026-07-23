@@ -81,6 +81,14 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--key", default=None, help=f"API-ключ (или переменная {config.CHECKO_API_KEY_ENV})")
     p.add_argument("--limit", type=int, default=100, help="обработать не более N компаний")
     p.add_argument("--delay", type=float, default=config.DEFAULT_DELAY_CHECKO, help="пауза, сек")
+    p.add_argument(
+        "--include-inactive", action="store_true",
+        help="тратить запросы и на ликвидированные компании (по умолчанию — нет)",
+    )
+    p.add_argument(
+        "--include-with-phones", action="store_true",
+        help="запрашивать и компании, у которых телефон уже найден (по умолчанию — нет)",
+    )
     p.set_defaults(func=cmd_enrich_checko)
 
     p = add_parser("enrich-sites", help="собрать контакты с сайтов компаний (где сайт известен)")
@@ -187,6 +195,31 @@ def cmd_enrich_egrul(args) -> int:
     return 0
 
 
+def select_for_checko(
+    companies: list[dict],
+    limit: int,
+    include_inactive: bool = False,
+    include_with_phones: bool = False,
+    okved_prefixes: tuple[str, ...] = config.DEFAULT_OKVED_PREFIXES,
+) -> list[dict]:
+    """Отбирает компании под квоту Checko: без лишней траты запросов.
+
+    По умолчанию пропускаем ликвидированные и уже имеющие телефон; в первую
+    очередь — компании, у которых строительный ОКВЭД основной (а не доп.).
+    """
+    candidates = []
+    for company in companies:
+        if not include_inactive and company.get("is_active") == 0:
+            continue
+        if not include_with_phones and company.get("phones"):
+            continue
+        candidates.append(company)
+    candidates.sort(
+        key=lambda c: 0 if rsmp.okved_matches(c.get("okved_main") or "", okved_prefixes) else 1
+    )
+    return candidates[:limit] if limit else candidates
+
+
 def cmd_enrich_checko(args) -> int:
     api_key = args.key or os.environ.get(config.CHECKO_API_KEY_ENV)
     if not api_key:
@@ -196,8 +229,14 @@ def cmd_enrich_checko(args) -> int:
     session = make_session()
     processed = 0
     with CompanyDB(args.db) as db:
-        companies = list(db.iter_missing_source("checko", limit=args.limit))
-        print(f"[checko] к обработке: {len(companies)} (лимит бесплатного тарифа ~100/сутки)")
+        companies = select_for_checko(
+            list(db.iter_missing_source("checko", limit=0)),
+            limit=args.limit,
+            include_inactive=args.include_inactive,
+            include_with_phones=args.include_with_phones,
+        )
+        print(f"[checko] к обработке: {len(companies)} (лимит бесплатного тарифа ~100/сутки; "
+              "запускайте ежедневно — обработанные повторно не запрашиваются)")
         for company in companies:
             inn = company["inn"]
             try:
