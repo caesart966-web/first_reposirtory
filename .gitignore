@@ -17,3 +17,6 @@ backend/construction-mcp/data/
 *.swp
 .idea/
 .vscode/
+
+# Кэш конвертации PDF (markitdown) из сессий Claude
+.markitdown/
