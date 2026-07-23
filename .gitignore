@@ -12,8 +12,10 @@ backend/construction-mcp/data/
 *.db-wal
 *.db-shm
 
-# mosstroybase (база компаний): скачанные выгрузки и собранные базы
+# mosstroybase (база компаний): скачанные выгрузки, собранные базы, экспорты
 tools/moscow-companies-db/data/
+tools/moscow-companies-db/exports/
+tools/moscow-companies-db/daily.log
 *.sqlite3
 *.sqlite3-wal
 *.sqlite3-shm

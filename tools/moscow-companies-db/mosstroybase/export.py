@@ -24,8 +24,10 @@ COLUMNS = (
 )
 
 
-def _rows(db: CompanyDB, only_active: bool, with_contacts_only: bool):
+def _rows(db: CompanyDB, only_active: bool, with_contacts_only: bool, inns: set[str] | None = None):
     for company in db.iter_all():
+        if inns is not None and company["inn"] not in inns:
+            continue
         if only_active and company.get("is_active") == 0:
             continue
         if with_contacts_only and not company["emails"] and not company["phones"]:
@@ -39,18 +41,24 @@ def _rows(db: CompanyDB, only_active: bool, with_contacts_only: bool):
         yield row
 
 
-def export_csv(db: CompanyDB, path: str | Path, only_active: bool, with_contacts_only: bool) -> int:
+def export_csv(
+    db: CompanyDB, path: str | Path, only_active: bool, with_contacts_only: bool,
+    inns: set[str] | None = None,
+) -> int:
     count = 0
     with open(path, "w", newline="", encoding="utf-8-sig") as fh:
         writer = csv.writer(fh, delimiter=";")
         writer.writerow([title for _field, title in COLUMNS])
-        for row in _rows(db, only_active, with_contacts_only):
+        for row in _rows(db, only_active, with_contacts_only, inns):
             writer.writerow(row)
             count += 1
     return count
 
 
-def export_xlsx(db: CompanyDB, path: str | Path, only_active: bool, with_contacts_only: bool) -> int:
+def export_xlsx(
+    db: CompanyDB, path: str | Path, only_active: bool, with_contacts_only: bool,
+    inns: set[str] | None = None,
+) -> int:
     try:
         from openpyxl import Workbook
     except ImportError as exc:
@@ -61,7 +69,7 @@ def export_xlsx(db: CompanyDB, path: str | Path, only_active: bool, with_contact
     ws.title = "Компании"
     ws.append([title for _field, title in COLUMNS])
     count = 0
-    for row in _rows(db, only_active, with_contacts_only):
+    for row in _rows(db, only_active, with_contacts_only, inns):
         ws.append(row)
         count += 1
     ws.freeze_panes = "A2"

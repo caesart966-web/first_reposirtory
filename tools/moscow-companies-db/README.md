@@ -86,6 +86,32 @@ python -m mosstroybase enrich-sites                # бесплатно доби
                                                    # которые дал Checko
 ```
 
+### Ежедневный автозапуск: команда `daily`
+
+Одна команда делает всё сразу: обрабатывает дневную пачку через Checko,
+добирает контакты с сайтов из этой пачки и кладёт два файла в `exports/`:
+`companies_ГГГГ-ММ-ДД.xlsx` (сегодняшние компании) и `companies_all.xlsx`
+(вся база: действующие компании с контактами).
+
+```bash
+python -m mosstroybase daily            # ключ — из CHECKO_API_KEY
+```
+
+Автозапуск по расписанию (компьютер должен быть включён в это время):
+
+```bash
+# Linux/macOS: crontab -e, запуск каждый день в 09:00
+0 9 * * * cd /путь/до/tools/moscow-companies-db && CHECKO_API_KEY=ключ .venv/bin/python -m mosstroybase daily >> daily.log 2>&1
+```
+
+```powershell
+# Windows: Планировщик заданий (от имени пользователя), ежедневно в 09:00
+schtasks /Create /SC DAILY /ST 09:00 /TN mosstroybase-daily /TR "cmd /c cd /d C:\путь\до\tools\moscow-companies-db && .venv\Scripts\python -m mosstroybase daily >> daily.log 2>&1"
+```
+
+Перед первым `daily` база должна быть собрана: `fetch-rsmp` → `build` →
+`enrich-egrul` (см. выше).
+
 Математика: 100 запросов/сутки ≈ 36 тыс. компаний в год. Если база в десятки
 тысяч компаний и телефоны нужны быстро, варианты:
 

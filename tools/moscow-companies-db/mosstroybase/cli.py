@@ -96,6 +96,13 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--delay", type=float, default=config.DEFAULT_DELAY_WEBSITE, help="пауза, сек")
     p.set_defaults(func=cmd_enrich_sites)
 
+    p = add_parser("daily", help="ежедневный прогон: Checko-пачка + сайты + Excel за сегодня")
+    p.add_argument("--key", default=None, help=f"API-ключ Checko (или переменная {config.CHECKO_API_KEY_ENV})")
+    p.add_argument("--limit", type=int, default=100, help="размер дневной пачки (по умолчанию 100)")
+    p.add_argument("--delay", type=float, default=config.DEFAULT_DELAY_CHECKO, help="пауза, сек")
+    p.add_argument("--out-dir", default="exports", help="папка для Excel-файлов (по умолчанию exports/)")
+    p.set_defaults(func=cmd_daily)
+
     p = add_parser("export", help="выгрузить базу в CSV/XLSX")
     p.add_argument("--csv", default=None, help="путь к CSV")
     p.add_argument("--xlsx", default=None, help="путь к XLSX (нужен openpyxl)")
@@ -220,6 +227,44 @@ def select_for_checko(
     return candidates[:limit] if limit else candidates
 
 
+def run_checko_batch(
+    db: CompanyDB,
+    session,
+    api_key: str,
+    limit: int,
+    delay: float,
+    include_inactive: bool = False,
+    include_with_phones: bool = False,
+) -> list[str]:
+    """Обрабатывает пачку компаний через Checko; возвращает ИНН обработанных."""
+    companies = select_for_checko(
+        list(db.iter_missing_source("checko", limit=0)),
+        limit=limit,
+        include_inactive=include_inactive,
+        include_with_phones=include_with_phones,
+    )
+    print(f"[checko] к обработке: {len(companies)} (лимит бесплатного тарифа ~100/сутки; "
+          "запускайте ежедневно — обработанные повторно не запрашиваются)")
+    processed: list[str] = []
+    for company in companies:
+        inn = company["inn"]
+        try:
+            data = checko.fetch(inn, api_key, session)
+        except requests.RequestException as exc:
+            print(f"[checko] {inn}: ошибка ({exc}), останавливаюсь — проверьте ключ/лимит")
+            break
+        update: dict = {"inn": inn, "sources": ["checko"]}
+        if data:
+            update.update(checko.extract_contacts(data))
+        db.upsert(update)
+        processed.append(inn)
+        if len(processed) % 25 == 0:
+            print(f"[checko] обработано {len(processed)}")
+        time.sleep(delay)
+    print(f"[checko] готово: обработано {len(processed)}")
+    return processed
+
+
 def cmd_enrich_checko(args) -> int:
     api_key = args.key or os.environ.get(config.CHECKO_API_KEY_ENV)
     if not api_key:
@@ -227,32 +272,65 @@ def cmd_enrich_checko(args) -> int:
               "Бесплатный ключ: https://checko.ru/integration/api", file=sys.stderr)
         return 1
     session = make_session()
-    processed = 0
     with CompanyDB(args.db) as db:
-        companies = select_for_checko(
-            list(db.iter_missing_source("checko", limit=0)),
-            limit=args.limit,
+        run_checko_batch(
+            db, session, api_key, args.limit, args.delay,
             include_inactive=args.include_inactive,
             include_with_phones=args.include_with_phones,
         )
-        print(f"[checko] к обработке: {len(companies)} (лимит бесплатного тарифа ~100/сутки; "
-              "запускайте ежедневно — обработанные повторно не запрашиваются)")
-        for company in companies:
-            inn = company["inn"]
+    return 0
+
+
+def cmd_daily(args) -> int:
+    """Ежедневный прогон: Checko-пачка → добор с сайтов → Excel за сегодня."""
+    from datetime import date
+
+    api_key = args.key or os.environ.get(config.CHECKO_API_KEY_ENV)
+    session = make_session()
+    out_dir = Path(args.out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    today = date.today().isoformat()
+
+    with CompanyDB(args.db) as db:
+        processed: list[str] = []
+        if api_key:
+            processed = run_checko_batch(db, session, api_key, args.limit, args.delay)
+        else:
+            print(f"[daily] переменная {config.CHECKO_API_KEY_ENV} не задана — "
+                  "шаг Checko пропущен, телефоны не приедут", file=sys.stderr)
+
+        # Добираем контакты с сайтов, которые дал Checko в сегодняшней пачке
+        for inn in processed:
+            company = db.get(inn)
+            if not company or not (company.get("website") or "").strip():
+                continue
+            if "website" in company["sources"]:
+                continue
+            contacts = website.harvest(company["website"], session, delay=config.DEFAULT_DELAY_WEBSITE)
+            db.upsert({"inn": inn, "sources": ["website"], **contacts})
+
+        def save(path: Path, **kwargs) -> tuple[Path, int]:
             try:
-                data = checko.fetch(inn, api_key, session)
-            except requests.RequestException as exc:
-                print(f"[checko] {inn}: ошибка ({exc}), останавливаюсь — проверьте ключ/лимит")
-                break
-            update: dict = {"inn": inn, "sources": ["checko"]}
-            if data:
-                update.update(checko.extract_contacts(data))
-            db.upsert(update)
-            processed += 1
-            if processed % 25 == 0:
-                print(f"[checko] обработано {processed}")
-            time.sleep(args.delay)
-    print(f"[checko] готово: обработано {processed}")
+                return path, export_xlsx(db, path, **kwargs)
+            except RuntimeError:  # нет openpyxl — падаем обратно в CSV
+                csv_path = path.with_suffix(".csv")
+                return csv_path, export_csv(db, csv_path, **kwargs)
+
+        if processed:
+            path, n = save(
+                out_dir / f"companies_{today}.xlsx",
+                only_active=False, with_contacts_only=False, inns=set(processed),
+            )
+            print(f"[daily] сегодняшняя пачка: {path} ({n} компаний)")
+        else:
+            print("[daily] сегодня новых компаний из Checko нет "
+                  "(всё уже обработано, нет ключа или исчерпан лимит)")
+
+        path, n = save(
+            out_dir / "companies_all.xlsx",
+            only_active=True, with_contacts_only=True,
+        )
+        print(f"[daily] полная база с контактами: {path} ({n} компаний)")
     return 0
 
 
