@@ -12,6 +12,10 @@ backend/construction-mcp/data/
 *.db-wal
 *.db-shm
 
+# Local scratch: markitdown input/output cache (machine-local paths in manifest)
+.markitdown/
+inbox/
+
 # OS / editors
 .DS_Store
 *.swp
