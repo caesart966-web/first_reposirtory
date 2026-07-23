@@ -23,6 +23,8 @@ CREATE TABLE IF NOT EXISTS companies (
     msp_category TEXT,
     egrul_status TEXT,
     is_active INTEGER,
+    sro_member INTEGER,
+    sro_info TEXT DEFAULT '[]',
     emails TEXT DEFAULT '[]',
     phones TEXT DEFAULT '[]',
     website TEXT,
@@ -34,10 +36,11 @@ CREATE INDEX IF NOT EXISTS idx_companies_okved_main ON companies(okved_main);
 CREATE INDEX IF NOT EXISTS idx_companies_region ON companies(region_code);
 """
 
-_LIST_FIELDS = ("okved_add", "emails", "phones", "sources")
+_LIST_FIELDS = ("okved_add", "emails", "phones", "sources", "sro_info")
 _SCALAR_FIELDS = (
     "ogrn", "name", "name_short", "kind", "region_code", "address",
-    "okved_main", "msp_category", "egrul_status", "is_active", "website",
+    "okved_main", "msp_category", "egrul_status", "is_active", "sro_member",
+    "website",
 )
 
 
@@ -51,6 +54,18 @@ class CompanyDB:
         self.conn = sqlite3.connect(path)
         self.conn.row_factory = sqlite3.Row
         self.conn.executescript(SCHEMA)
+        self._migrate()
+
+    def _migrate(self) -> None:
+        """Дотягивает схему старых баз до текущей (новые колонки)."""
+        existing = {row[1] for row in self.conn.execute("PRAGMA table_info(companies)")}
+        for column, ddl in (
+            ("sro_member", "sro_member INTEGER"),
+            ("sro_info", "sro_info TEXT DEFAULT '[]'"),
+        ):
+            if column not in existing:
+                self.conn.execute(f"ALTER TABLE companies ADD COLUMN {ddl}")
+        self.conn.commit()
 
     def close(self) -> None:
         self.conn.commit()
@@ -150,6 +165,9 @@ class CompanyDB:
             "с телефоном": one("SELECT COUNT(*) FROM companies WHERE phones != '[]'"),
             "с сайтом": one(
                 "SELECT COUNT(*) FROM companies WHERE website IS NOT NULL AND website != ''"
+            ),
+            "в строительной СРО (отсекаются)": one(
+                "SELECT COUNT(*) FROM companies WHERE sro_member = 1"
             ),
             "стройка (41–43)": one(
                 "SELECT COUNT(*) FROM companies WHERE okved_main LIKE '41%' "

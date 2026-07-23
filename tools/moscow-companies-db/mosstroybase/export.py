@@ -20,13 +20,19 @@ COLUMNS = (
     ("phones", "Телефоны"),
     ("emails", "E-mail"),
     ("website", "Сайт"),
+    ("sro_info", "СРО"),
     ("sources", "Источники"),
 )
 
 
-def _rows(db: CompanyDB, only_active: bool, with_contacts_only: bool, inns: set[str] | None = None):
+def _rows(
+    db: CompanyDB, only_active: bool, with_contacts_only: bool,
+    inns: set[str] | None = None, include_sro: bool = False,
+):
     for company in db.iter_all():
         if inns is not None and company["inn"] not in inns:
+            continue
+        if not include_sro and company.get("sro_member") == 1:
             continue
         if only_active and company.get("is_active") == 0:
             continue
@@ -43,13 +49,13 @@ def _rows(db: CompanyDB, only_active: bool, with_contacts_only: bool, inns: set[
 
 def export_csv(
     db: CompanyDB, path: str | Path, only_active: bool, with_contacts_only: bool,
-    inns: set[str] | None = None,
+    inns: set[str] | None = None, include_sro: bool = False,
 ) -> int:
     count = 0
     with open(path, "w", newline="", encoding="utf-8-sig") as fh:
         writer = csv.writer(fh, delimiter=";")
         writer.writerow([title for _field, title in COLUMNS])
-        for row in _rows(db, only_active, with_contacts_only, inns):
+        for row in _rows(db, only_active, with_contacts_only, inns, include_sro):
             writer.writerow(row)
             count += 1
     return count
@@ -57,7 +63,7 @@ def export_csv(
 
 def export_xlsx(
     db: CompanyDB, path: str | Path, only_active: bool, with_contacts_only: bool,
-    inns: set[str] | None = None,
+    inns: set[str] | None = None, include_sro: bool = False,
 ) -> int:
     try:
         from openpyxl import Workbook
@@ -69,7 +75,7 @@ def export_xlsx(
     ws.title = "Компании"
     ws.append([title for _field, title in COLUMNS])
     count = 0
-    for row in _rows(db, only_active, with_contacts_only, inns):
+    for row in _rows(db, only_active, with_contacts_only, inns, include_sro):
         ws.append(row)
         count += 1
     ws.freeze_panes = "A2"

@@ -18,7 +18,7 @@ from . import config
 from .db import CompanyDB
 from .export import export_csv, export_xlsx
 from .http import make_session
-from .sources import checko, egrul, rsmp, website
+from .sources import checko, egrul, rsmp, sro, website
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -96,7 +96,12 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--delay", type=float, default=config.DEFAULT_DELAY_WEBSITE, help="пауза, сек")
     p.set_defaults(func=cmd_enrich_sites)
 
-    p = add_parser("daily", help="ежедневный прогон: Checko-пачка + сайты + Excel за сегодня")
+    p = add_parser("enrich-sro", help="пометить членов строительных СРО по реестру НОСТРОЙ (бесплатно)")
+    p.add_argument("--limit", type=int, default=0, help="проверить не более N компаний")
+    p.add_argument("--delay", type=float, default=config.DEFAULT_DELAY_SRO, help="пауза, сек")
+    p.set_defaults(func=cmd_enrich_sro)
+
+    p = add_parser("daily", help="ежедневный прогон: СРО-фильтр + Checko-пачка + сайты + Excel за сегодня")
     p.add_argument("--key", default=None, help=f"API-ключ Checko (или переменная {config.CHECKO_API_KEY_ENV})")
     p.add_argument("--limit", type=int, default=100, help="размер дневной пачки (по умолчанию 100)")
     p.add_argument("--delay", type=float, default=config.DEFAULT_DELAY_CHECKO, help="пауза, сек")
@@ -110,6 +115,10 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--with-contacts-only", action="store_true",
         help="только компании, у которых найден телефон или e-mail",
+    )
+    p.add_argument(
+        "--include-sro", action="store_true",
+        help="включить в выгрузку и членов строительных СРО (по умолчанию отсекаются)",
     )
     p.set_defaults(func=cmd_export)
 
@@ -211,11 +220,14 @@ def select_for_checko(
 ) -> list[dict]:
     """Отбирает компании под квоту Checko: без лишней траты запросов.
 
-    По умолчанию пропускаем ликвидированные и уже имеющие телефон; в первую
-    очередь — компании, у которых строительный ОКВЭД основной (а не доп.).
+    По умолчанию пропускаем ликвидированные и уже имеющие телефон; члены
+    строительных СРО не берутся никогда. В первую очередь — компании,
+    у которых строительный ОКВЭД основной (а не доп.).
     """
     candidates = []
     for company in companies:
+        if company.get("sro_member") == 1:
+            continue
         if not include_inactive and company.get("is_active") == 0:
             continue
         if not include_with_phones and company.get("phones"):
@@ -235,19 +247,36 @@ def run_checko_batch(
     delay: float,
     include_inactive: bool = False,
     include_with_phones: bool = False,
+    sro_precheck: bool = True,
 ) -> list[str]:
-    """Обрабатывает пачку компаний через Checko; возвращает ИНН обработанных."""
+    """Обрабатывает пачку компаний через Checko; возвращает ИНН обработанных.
+
+    Перед тратой Checko-запроса компания бесплатно проверяется по реестру
+    НОСТРОЙ: действующие члены строительных СРО помечаются и пропускаются.
+    """
     companies = select_for_checko(
         list(db.iter_missing_source("checko", limit=0)),
-        limit=limit,
+        limit=0,
         include_inactive=include_inactive,
         include_with_phones=include_with_phones,
     )
-    print(f"[checko] к обработке: {len(companies)} (лимит бесплатного тарифа ~100/сутки; "
+    plan = min(limit, len(companies)) if limit else len(companies)
+    print(f"[checko] к обработке: {plan} (лимит бесплатного тарифа ~100/сутки; "
           "запускайте ежедневно — обработанные повторно не запрашиваются)")
     processed: list[str] = []
+    skipped_sro = 0
     for company in companies:
+        if limit and len(processed) >= limit:
+            break
         inn = company["inn"]
+        if sro_precheck and "sro" not in company["sources"]:
+            membership = sro.check_membership(inn, session)
+            if membership is not None:
+                db.upsert({"inn": inn, "sources": ["sro"], **membership})
+                time.sleep(config.DEFAULT_DELAY_SRO)
+                if membership["sro_member"] == 1:
+                    skipped_sro += 1
+                    continue
         try:
             data = checko.fetch(inn, api_key, session)
         except requests.RequestException as exc:
@@ -261,8 +290,37 @@ def run_checko_batch(
         if len(processed) % 25 == 0:
             print(f"[checko] обработано {len(processed)}")
         time.sleep(delay)
+    if skipped_sro:
+        print(f"[checko] пропущено членов строительных СРО: {skipped_sro} (квота не потрачена)")
     print(f"[checko] готово: обработано {len(processed)}")
     return processed
+
+
+def cmd_enrich_sro(args) -> int:
+    """Бесплатно помечает по реестру НОСТРОЙ, кто уже в строительной СРО."""
+    session = make_session()
+    processed = members = errors = 0
+    with CompanyDB(args.db) as db:
+        companies = list(db.iter_missing_source("sro", limit=args.limit))
+        print(f"[sro] к проверке по реестру НОСТРОЙ: {len(companies)} (бесплатно)")
+        for company in companies:
+            membership = sro.check_membership(company["inn"], session)
+            if membership is None:
+                errors += 1
+                if errors >= 10 and errors > processed:
+                    print("[sro] реестр НОСТРОЙ недоступен — останавливаюсь; "
+                          "запустите команду позже", file=sys.stderr)
+                    return 1
+                continue
+            db.upsert({"inn": company["inn"], "sources": ["sro"], **membership})
+            processed += 1
+            members += membership["sro_member"]
+            if processed % 100 == 0:
+                print(f"[sro] проверено {processed}, в СРО {members}")
+            time.sleep(args.delay)
+    print(f"[sro] готово: проверено {processed}, из них в строительной СРО {members} "
+          "(исключены из выгрузок и обзвона)")
+    return 0
 
 
 def cmd_enrich_checko(args) -> int:
@@ -364,10 +422,12 @@ def cmd_export(args) -> int:
         return 1
     with CompanyDB(args.db) as db:
         if args.csv:
-            n = export_csv(db, args.csv, args.only_active, args.with_contacts_only)
+            n = export_csv(db, args.csv, args.only_active, args.with_contacts_only,
+                           include_sro=args.include_sro)
             print(f"[export] CSV: {args.csv} ({n} строк)")
         if args.xlsx:
-            n = export_xlsx(db, args.xlsx, args.only_active, args.with_contacts_only)
+            n = export_xlsx(db, args.xlsx, args.only_active, args.with_contacts_only,
+                            include_sro=args.include_sro)
             print(f"[export] XLSX: {args.xlsx} ({n} строк)")
     return 0
 
