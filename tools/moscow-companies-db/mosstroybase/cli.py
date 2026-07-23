@@ -1,0 +1,266 @@
+"""CLI: сбор базы московских строительных/проектных/изыскательских компаний.
+
+Типовой конвейер:
+    fetch-rsmp → build → enrich-egrul → [enrich-checko] → [enrich-sites] → export
+"""
+
+from __future__ import annotations
+
+import argparse
+import os
+import sys
+import time
+from pathlib import Path
+
+import requests
+
+from . import config
+from .db import CompanyDB
+from .export import export_csv, export_xlsx
+from .http import make_session
+from .sources import checko, egrul, rsmp, website
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = _build_parser()
+    args = parser.parse_args(argv)
+    if not getattr(args, "func", None):
+        parser.print_help()
+        return 1
+    try:
+        return args.func(args) or 0
+    except KeyboardInterrupt:
+        print("\nПрервано пользователем; уже собранные данные сохранены в БД.")
+        return 130
+
+
+def _build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="mosstroybase",
+        description="Сбор базы строительных, проектных и изыскательских компаний Москвы",
+    )
+    parser.add_argument(
+        "--db", default=config.DEFAULT_DB_PATH,
+        help=f"путь к файлу SQLite (по умолчанию {config.DEFAULT_DB_PATH})",
+    )
+    # --db разрешён и до, и после подкоманды; SUPPRESS не даёт подкоманде
+    # затереть значение глобального флага своим default-ом
+    db_parent = argparse.ArgumentParser(add_help=False)
+    db_parent.add_argument("--db", default=argparse.SUPPRESS, help="путь к файлу SQLite")
+    sub = parser.add_subparsers(dest="command", parser_class=argparse.ArgumentParser)
+
+    def add_parser(name: str, **kwargs):
+        return sub.add_parser(name, parents=[db_parent], **kwargs)
+
+    p = add_parser("fetch-rsmp", help="скачать выгрузку реестра МСП ФНС (~1.5–2 ГБ)")
+    p.add_argument("--out", default="data/rsmp.zip", help="куда сохранить архив")
+    p.add_argument("--force", action="store_true", help="перекачать, даже если файл уже есть")
+    p.set_defaults(func=cmd_fetch_rsmp)
+
+    p = add_parser("build", help="отобрать компании из выгрузки реестра МСП в базу")
+    p.add_argument("--rsmp-file", default="data/rsmp.zip", help="путь к ZIP/XML выгрузки")
+    p.add_argument("--region", default=config.MOSCOW_REGION_CODE, help="код региона (77 — Москва)")
+    p.add_argument(
+        "--okved", nargs="+", default=list(config.DEFAULT_OKVED_PREFIXES),
+        help="префиксы ОКВЭД (по умолчанию: %(default)s)",
+    )
+    p.add_argument("--include-ip", action="store_true", help="включать ИП (по умолчанию только ЮЛ)")
+    p.add_argument("--limit", type=int, default=0, help="остановиться после N компаний (для проверки)")
+    p.set_defaults(func=cmd_build)
+
+    p = add_parser("import-inn", help="добавить компании списком ИНН (файл, по одному в строке)")
+    p.add_argument("--file", required=True, help="текстовый файл с ИНН")
+    p.set_defaults(func=cmd_import_inn)
+
+    p = add_parser("enrich-egrul", help="дообогатить из ЕГРЮЛ: e-mail, статус, адрес")
+    p.add_argument("--limit", type=int, default=0, help="обработать не более N компаний")
+    p.add_argument("--delay", type=float, default=config.DEFAULT_DELAY_EGRUL, help="пауза, сек")
+    p.set_defaults(func=cmd_enrich_egrul)
+
+    p = add_parser("enrich-checko", help="телефоны/сайты через Checko API (нужен ключ)")
+    p.add_argument("--key", default=None, help=f"API-ключ (или переменная {config.CHECKO_API_KEY_ENV})")
+    p.add_argument("--limit", type=int, default=100, help="обработать не более N компаний")
+    p.add_argument("--delay", type=float, default=config.DEFAULT_DELAY_CHECKO, help="пауза, сек")
+    p.set_defaults(func=cmd_enrich_checko)
+
+    p = add_parser("enrich-sites", help="собрать контакты с сайтов компаний (где сайт известен)")
+    p.add_argument("--limit", type=int, default=0, help="обработать не более N компаний")
+    p.add_argument("--delay", type=float, default=config.DEFAULT_DELAY_WEBSITE, help="пауза, сек")
+    p.set_defaults(func=cmd_enrich_sites)
+
+    p = add_parser("export", help="выгрузить базу в CSV/XLSX")
+    p.add_argument("--csv", default=None, help="путь к CSV")
+    p.add_argument("--xlsx", default=None, help="путь к XLSX (нужен openpyxl)")
+    p.add_argument("--only-active", action="store_true", help="только действующие компании")
+    p.add_argument(
+        "--with-contacts-only", action="store_true",
+        help="только компании, у которых найден телефон или e-mail",
+    )
+    p.set_defaults(func=cmd_export)
+
+    p = add_parser("stats", help="сводка по базе")
+    p.set_defaults(func=cmd_stats)
+
+    return parser
+
+
+# -- команды ------------------------------------------------------------
+
+
+def cmd_fetch_rsmp(args) -> int:
+    session = make_session()
+    url = rsmp.resolve_data_url(session)
+    rsmp.download(url, Path(args.out), session, force=args.force)
+    return 0
+
+
+def cmd_build(args) -> int:
+    path = Path(args.rsmp_file)
+    if not path.exists():
+        print(f"Файл {path} не найден. Сначала выполните fetch-rsmp "
+              "или укажите путь через --rsmp-file.", file=sys.stderr)
+        return 1
+    prefixes = tuple(args.okved)
+    print(f"[build] регион {args.region}, ОКВЭД {', '.join(prefixes)}")
+    count = 0
+    with CompanyDB(args.db) as db:
+        for doc in rsmp.iter_companies(path, args.region, prefixes, include_ip=args.include_ip):
+            doc["sources"] = ["rsmp"]
+            db.upsert(doc)
+            count += 1
+            if count % 500 == 0:
+                print(f"[build] в базе {count} компаний...")
+            if args.limit and count >= args.limit:
+                print(f"[build] достигнут лимит {args.limit}, останавливаюсь")
+                break
+    print(f"[build] готово, добавлено/обновлено компаний: {count}")
+    return 0
+
+
+def cmd_import_inn(args) -> int:
+    path = Path(args.file)
+    if not path.exists():
+        print(f"Файл {path} не найден.", file=sys.stderr)
+        return 1
+    count = 0
+    with CompanyDB(args.db) as db:
+        for line in path.read_text(encoding="utf-8").splitlines():
+            inn = line.strip()
+            if not inn or not inn.isdigit():
+                continue
+            db.upsert({"inn": inn, "kind": "ЮЛ", "sources": ["manual"]})
+            count += 1
+    print(f"[import-inn] добавлено ИНН: {count}. Далее выполните enrich-egrul.")
+    return 0
+
+
+def cmd_enrich_egrul(args) -> int:
+    session = make_session()
+    processed = errors = 0
+    with CompanyDB(args.db) as db:
+        companies = list(db.iter_missing_source("egrul", limit=args.limit))
+        total = len(companies)
+        print(f"[egrul] к обработке: {total}")
+        for company in companies:
+            inn = company["inn"]
+            try:
+                payload = egrul.fetch(inn, session)
+            except requests.RequestException as exc:
+                errors += 1
+                print(f"[egrul] {inn}: ошибка сети ({exc}), пропускаю")
+                if errors >= 20 and errors > processed:
+                    print("[egrul] слишком много ошибок подряд — похоже, источник "
+                          "недоступен; останавливаюсь", file=sys.stderr)
+                    return 1
+                continue
+            update: dict = {"inn": inn, "sources": ["egrul"]}
+            if payload is None:
+                update["egrul_status"] = "не найдено в ЕГРЮЛ"
+            else:
+                update.update(egrul.extract_info(payload))
+            db.upsert(update)
+            processed += 1
+            if processed % 100 == 0:
+                print(f"[egrul] обработано {processed}/{total}")
+            time.sleep(args.delay)
+    print(f"[egrul] готово: обработано {processed}, ошибок {errors}")
+    return 0
+
+
+def cmd_enrich_checko(args) -> int:
+    api_key = args.key or os.environ.get(config.CHECKO_API_KEY_ENV)
+    if not api_key:
+        print(f"Нужен API-ключ Checko: --key или переменная {config.CHECKO_API_KEY_ENV}. "
+              "Бесплатный ключ: https://checko.ru/integration/api", file=sys.stderr)
+        return 1
+    session = make_session()
+    processed = 0
+    with CompanyDB(args.db) as db:
+        companies = list(db.iter_missing_source("checko", limit=args.limit))
+        print(f"[checko] к обработке: {len(companies)} (лимит бесплатного тарифа ~100/сутки)")
+        for company in companies:
+            inn = company["inn"]
+            try:
+                data = checko.fetch(inn, api_key, session)
+            except requests.RequestException as exc:
+                print(f"[checko] {inn}: ошибка ({exc}), останавливаюсь — проверьте ключ/лимит")
+                break
+            update: dict = {"inn": inn, "sources": ["checko"]}
+            if data:
+                update.update(checko.extract_contacts(data))
+            db.upsert(update)
+            processed += 1
+            if processed % 25 == 0:
+                print(f"[checko] обработано {processed}")
+            time.sleep(args.delay)
+    print(f"[checko] готово: обработано {processed}")
+    return 0
+
+
+def cmd_enrich_sites(args) -> int:
+    session = make_session()
+    processed = found = 0
+    with CompanyDB(args.db) as db:
+        companies = [
+            c for c in db.iter_missing_source("website", limit=0)
+            if (c.get("website") or "").strip()
+        ]
+        if args.limit:
+            companies = companies[: args.limit]
+        print(f"[sites] сайтов к обходу: {len(companies)}")
+        for company in companies:
+            contacts = website.harvest(company["website"], session, delay=args.delay)
+            update = {"inn": company["inn"], "sources": ["website"], **contacts}
+            db.upsert(update)
+            processed += 1
+            if contacts["emails"] or contacts["phones"]:
+                found += 1
+            if processed % 20 == 0:
+                print(f"[sites] обработано {processed}, с контактами {found}")
+    print(f"[sites] готово: обработано {processed}, контакты найдены у {found}")
+    return 0
+
+
+def cmd_export(args) -> int:
+    if not args.csv and not args.xlsx:
+        print("Укажите --csv и/или --xlsx.", file=sys.stderr)
+        return 1
+    with CompanyDB(args.db) as db:
+        if args.csv:
+            n = export_csv(db, args.csv, args.only_active, args.with_contacts_only)
+            print(f"[export] CSV: {args.csv} ({n} строк)")
+        if args.xlsx:
+            n = export_xlsx(db, args.xlsx, args.only_active, args.with_contacts_only)
+            print(f"[export] XLSX: {args.xlsx} ({n} строк)")
+    return 0
+
+
+def cmd_stats(args) -> int:
+    with CompanyDB(args.db) as db:
+        for key, value in db.stats().items():
+            print(f"{key:28} {value}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

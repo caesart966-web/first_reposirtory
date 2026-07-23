@@ -12,6 +12,12 @@ backend/construction-mcp/data/
 *.db-wal
 *.db-shm
 
+# mosstroybase (база компаний): скачанные выгрузки и собранные базы
+tools/moscow-companies-db/data/
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+
 # OS / editors
 .DS_Store
 *.swp

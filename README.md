@@ -61,3 +61,10 @@ python3 scripts/deviation.py --demo            # пример расчёта о�
 pip install jsonschema
 python3 scripts/validate.py issue <файл.json>  # валидация проблемы по схеме
 ```
+
+## Инструменты
+
+- `tools/moscow-companies-db/` — **mosstroybase**: CLI-сборщик базы строительных,
+  проектных и изыскательских компаний Москвы (юрлица с ОКВЭД 41/42/43/71.11/71.12)
+  с телефонами и e-mail из открытых источников (реестр МСП ФНС, ЕГРЮЛ, Checko API,
+  сайты компаний). Подробности — в `tools/moscow-companies-db/README.md`.
