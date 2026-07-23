@@ -1,0 +1,18 @@
+{
+  "canvas": 512,
+  "supersample": 4,
+  "gold_top": [248, 218, 124],
+  "gold_bot": [208, 152, 40],
+  "navy": [20, 35, 70],
+  "cap_target": 50,
+  "outline_ratio": 0.21,
+  "white_ratio": 0.13,
+  "max_line_width": 476,
+  "line_gap_ratio": 0.34,
+  "char_fill_margin": 6,
+  "text_bottom_margin": 16,
+  "char_white_outline": 4,
+  "enhance_color": 1.18,
+  "enhance_brightness": 1.04,
+  "watermark_inpaint_radius": 3
+}
