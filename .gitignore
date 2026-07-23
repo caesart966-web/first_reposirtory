@@ -18,6 +18,9 @@ tools/moscow-companies-db/data/
 *.sqlite3-wal
 *.sqlite3-shm
 
+# markitdown: кэш конвертации PDF→Markdown (runtime-артефакты)
+.markitdown/
+
 # OS / editors
 .DS_Store
 *.swp
