@@ -70,7 +70,7 @@ class TestCompanyDB(unittest.TestCase):
                 company = db.get("1")
                 self.assertEqual(company["sro_member"], 1)
                 self.assertEqual(company["name"], "А")
-                self.assertEqual(db.stats()["в строительной СРО (отсекаются)"], 1)
+                self.assertEqual(db.stats()["отсекаются (в СРО/исключены < года)"], 1)
 
     def test_empty_inn_ignored(self):
         with TemporaryDirectory() as tmp:

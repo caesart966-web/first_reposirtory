@@ -178,7 +178,7 @@ class CompanyDB:
             "с сайтом": one(
                 "SELECT COUNT(*) FROM companies WHERE website IS NOT NULL AND website != ''"
             ),
-            "в строительной СРО (отсекаются)": one(
+            "отсекаются (в СРО/исключены < года)": one(
                 "SELECT COUNT(*) FROM companies WHERE sro_member = 1"
             ),
             "стройка (41–43)": one(

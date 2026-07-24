@@ -8,6 +8,10 @@
 Членство в проектно-изыскательских СРО (реестр НОПРИЗ) сознательно НЕ
 проверяется — по условию задачи оно не является поводом отсечь компанию.
 
+Исключённые из СРО: по ГрК РФ год после исключения вступить в новую СРО
+нельзя, поэтому исключённые менее года назад отсекаются, а год и более
+назад — остаются лидами (с датой исключения в пометке).
+
 Особенность API реестра: незнакомый фильтр он молча игнорирует и возвращает
 общий список членов. Поэтому формат фильтра подбирается по содержимому
 ответа: фильтр «сработал», если ответ пуст или содержит запись с нашим ИНН;
@@ -17,10 +21,16 @@
 
 from __future__ import annotations
 
+import re
 import sys
+from datetime import date, datetime, timedelta
 from typing import Any, Iterator
 
 import requests
+
+# После исключения из СРО год нельзя вступить в новую (ГрК РФ, ст. 55.7):
+# исключённые менее года назад — ещё не лиды, отсекаются наравне с членами
+REJOIN_BAN_DAYS = 365
 
 NOSTROY_URL = "https://reestr.nostroy.ru/api/sro/all/member/list"
 
@@ -88,6 +98,50 @@ def _is_former(record: dict) -> bool:
     )
 
 
+def _parse_date(text: str) -> date | None:
+    m = re.match(r"(\d{2})\.(\d{2})\.(\d{4})", text.strip())
+    if m:
+        day, month, year = map(int, m.groups())
+    else:
+        m = re.match(r"(\d{4})-(\d{2})-(\d{2})", text.strip())
+        if not m:
+            return None
+        year, month, day = map(int, m.groups())
+    try:
+        return date(year, month, day)
+    except ValueError:
+        return None
+
+
+# Ключи с датой прекращения членства; запасной вариант — дата последнего
+# обновления записи (для исключённых она обычно совпадает с исключением)
+_EXCLUSION_KEY_HINTS = ("stop", "прекращ", "исключ", "excl")
+_FALLBACK_KEY_HINTS = ("last_updated",)
+
+
+def _extract_exclusion_date(record: dict) -> date | None:
+    for hints in (_EXCLUSION_KEY_HINTS, _FALLBACK_KEY_HINTS):
+        found: list[date] = []
+
+        def rec(obj: Any) -> None:
+            if isinstance(obj, dict):
+                for key, value in obj.items():
+                    if isinstance(value, str) and any(h in key.lower() for h in hints):
+                        parsed = _parse_date(value)
+                        if parsed:
+                            found.append(parsed)
+                    elif isinstance(value, (dict, list)):
+                        rec(value)
+            elif isinstance(obj, list):
+                for item in obj:
+                    rec(item)
+
+        rec(record)
+        if found:
+            return max(found)
+    return None
+
+
 def evaluate(payload: Any, inn: str) -> str | None:
     """None — записей нет; 'member' — состоит; 'former' — исключён/бывший."""
     records = _find_records(payload, inn)
@@ -106,6 +160,23 @@ def _post(body: dict, session: requests.Session, timeout: int) -> Any | None:
         return resp.json()
     except (requests.RequestException, ValueError):
         return None
+
+
+def _former_verdict(matching: list[dict]) -> dict:
+    """Вердикт для исключённых: свежие (< года) отсекаются, давние — лиды."""
+    dates = [d for d in (_extract_exclusion_date(r) for r in matching) if d]
+    excl_date = max(dates) if dates else None
+    if excl_date is None:
+        return {"sro_member": 0,
+                "sro_info": ["НОСТРОЙ: исключён, дата неизвестна — проверьте вручную"]}
+    if (date.today() - excl_date).days < REJOIN_BAN_DAYS:
+        until = excl_date + timedelta(days=REJOIN_BAN_DAYS)
+        return {"sro_member": 1,
+                "sro_info": [f"НОСТРОЙ: исключён {excl_date:%d.%m.%Y}, вступление "
+                             f"не раньше {until:%d.%m.%Y} — отсечён"]}
+    return {"sro_member": 0,
+            "sro_info": [f"НОСТРОЙ: исключён {excl_date:%d.%m.%Y}, год прошёл — "
+                         "можно вступать"]}
 
 
 def check_membership(inn: str, session: requests.Session, timeout: int = 30) -> dict | None:
@@ -134,7 +205,7 @@ def check_membership(inn: str, session: requests.Session, timeout: int = 30) -> 
         if matching:
             _working_body = idx
             if all(_is_former(r) for r in matching):
-                return {"sro_member": 0, "sro_info": ["НОСТРОЙ: исключён/бывший член"]}
+                return _former_verdict(matching)
             return {"sro_member": 1, "sro_info": ["НОСТРОЙ: член строительной СРО"]}
         if not records:
             # Пустой ответ = фильтр сработал, ИНН в реестре нет

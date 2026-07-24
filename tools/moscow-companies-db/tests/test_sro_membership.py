@@ -1,8 +1,23 @@
 import unittest
+from datetime import date, timedelta
 
 from mosstroybase.sources import sro
 
 INN = "6162005910"
+
+
+def former_payload(days_ago: int) -> dict:
+    stop = (date.today() - timedelta(days=days_ago)).strftime("%d.%m.%Y") + " 00:00:00"
+    return {
+        "data": {
+            "data": [{
+                "inn": INN,
+                "member_status": {"id": 2, "title": "Исключен"},
+                "member_right_stop_date_time_string": stop,
+            }],
+            "count": 1,
+        }
+    }
 
 # Ответ с проигнорированным фильтром: общий список, чужие ИНН
 FOREIGN_LISTING = {
@@ -74,11 +89,26 @@ class TestCheckMembership(unittest.TestCase):
         self.assertEqual(result, {"sro_member": 0, "sro_info": []})
         self.assertEqual(sro._working_body, 0)
 
-    def test_former_member_not_excluded(self):
+    def test_former_member_without_date_kept_as_lead(self):
         session = FakeSession([MATCH_FORMER])
         result = sro.check_membership(INN, session)
         self.assertEqual(result["sro_member"], 0)
         self.assertIn("исключён", result["sro_info"][0])
+        self.assertIn("проверьте вручную", result["sro_info"][0])
+
+    def test_recently_excluded_blocked_for_a_year(self):
+        # Исключён 100 дней назад — вступить в СРО ещё нельзя, отсекаем
+        session = FakeSession([former_payload(100)])
+        result = sro.check_membership(INN, session)
+        self.assertEqual(result["sro_member"], 1)
+        self.assertIn("не раньше", result["sro_info"][0])
+
+    def test_long_excluded_is_lead(self):
+        # Исключён 400 дней назад — год прошёл, полноценный лид
+        session = FakeSession([former_payload(400)])
+        result = sro.check_membership(INN, session)
+        self.assertEqual(result["sro_member"], 0)
+        self.assertIn("год прошёл", result["sro_info"][0])
 
     def test_all_variants_ignored_returns_unknown(self):
         session = FakeSession([FOREIGN_LISTING])
