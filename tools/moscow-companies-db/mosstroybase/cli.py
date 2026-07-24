@@ -462,6 +462,11 @@ def cmd_daily(args) -> int:
             except RuntimeError:  # нет openpyxl — падаем обратно в CSV
                 csv_path = path.with_suffix(".csv")
                 return csv_path, export_csv(db, csv_path, **kwargs)
+            except PermissionError:
+                # Файл открыт в Excel — пишем рядом, ничего не теряя
+                alt = path.with_name(path.stem + "_новый" + path.suffix)
+                print(f"[daily] файл {path} открыт в Excel — сохраняю как {alt}")
+                return alt, export_xlsx(db, alt, **kwargs)
 
         if processed:
             path, n = save(
@@ -510,14 +515,19 @@ def cmd_export(args) -> int:
         print("Укажите --csv и/или --xlsx.", file=sys.stderr)
         return 1
     with CompanyDB(args.db) as db:
-        if args.csv:
-            n = export_csv(db, args.csv, args.only_active, args.with_contacts_only,
-                           include_sro=args.include_sro)
-            print(f"[export] CSV: {args.csv} ({n} строк)")
-        if args.xlsx:
-            n = export_xlsx(db, args.xlsx, args.only_active, args.with_contacts_only,
-                            include_sro=args.include_sro)
-            print(f"[export] XLSX: {args.xlsx} ({n} строк)")
+        try:
+            if args.csv:
+                n = export_csv(db, args.csv, args.only_active, args.with_contacts_only,
+                               include_sro=args.include_sro)
+                print(f"[export] CSV: {args.csv} ({n} строк)")
+            if args.xlsx:
+                n = export_xlsx(db, args.xlsx, args.only_active, args.with_contacts_only,
+                                include_sro=args.include_sro)
+                print(f"[export] XLSX: {args.xlsx} ({n} строк)")
+        except PermissionError:
+            print("Не удалось записать файл: он открыт в Excel. "
+                  "Закройте его и повторите команду.", file=sys.stderr)
+            return 1
     return 0
 
 
