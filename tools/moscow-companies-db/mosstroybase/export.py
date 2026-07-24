@@ -6,6 +6,7 @@ import csv
 from pathlib import Path
 
 from .db import CompanyDB
+from .normalize import is_valid_phone
 
 COLUMNS = (
     ("inn", "ИНН"),
@@ -43,6 +44,10 @@ def _rows(
         row = []
         for field, _title in COLUMNS:
             value = company.get(field)
+            if field == "phones" and isinstance(value, list):
+                # Перестраховка: старые записи могли содержать ложные
+                # срабатывания регулярки — в выгрузку идут только валидные
+                value = [p for p in value if is_valid_phone(p)]
             if isinstance(value, list):
                 value = "; ".join(value)
             row.append(value if value is not None else "")

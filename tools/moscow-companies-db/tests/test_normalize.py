@@ -16,6 +16,18 @@ class TestNormalize(unittest.TestCase):
         text = "Тел.: +7 (495) 123-45-67, 8-926-000-11-22; факс +7 495 123 45 67"
         self.assertEqual(extract_phones(text), ["+74951234567", "+79260001122"])
 
+    def test_no_match_inside_long_digit_runs(self):
+        # Идентификаторы счётчиков и прочие длинные числа — не телефоны
+        self.assertEqual(extract_phones('data-id="574217414856"'), [])
+        self.assertEqual(extract_phones("ym(87418529630, 'init')"), [])
+        # А чистый номер без разделителей — телефон
+        self.assertEqual(extract_phones("tel:84951234567"), ["+74951234567"])
+
+    def test_invalid_russian_codes_rejected(self):
+        self.assertIsNone(normalize_phone("+7 217 141 48 56"))  # кодов 2xx нет
+        self.assertIsNone(normalize_phone("+7 012 345 67 89"))
+        self.assertEqual(normalize_phone("+7 421 741 48 56"), "+74217414856")
+
     def test_extract_emails(self):
         text = 'Пишите: Info@Example.ru или <img src="logo@2x.png"> sales@stroy-msk.com'
         self.assertEqual(extract_emails(text), ["info@example.ru", "sales@stroy-msk.com"])
