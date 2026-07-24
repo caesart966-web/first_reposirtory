@@ -130,6 +130,23 @@ def extract_info(payload: dict) -> dict:
 
     info["region_code"] = _first_str(deep_find(payload, ("КодРегион",)))
 
+    # Руководитель (блок СведДолжнФЛ): ФИО и должность
+    for block in deep_find(payload, ("ДолжнФЛ",)):
+        if not isinstance(block, (dict, list)):
+            continue
+        last = _first_str(deep_find(block, ("Фамилия",)))
+        first = _first_str(deep_find(block, ("Имя",)))
+        middle = _first_str(deep_find(block, ("Отчество",)))
+        fio = " ".join(filter(None, (last, first, middle))) or _first_str(
+            deep_find(block, ("ФИО",))
+        )
+        if fio:
+            info["director"] = fio
+            post = _first_str(deep_find(block, ("НаимДолжн",)))
+            if post:
+                info["director_post"] = post.capitalize()
+            break
+
     # ОКВЭД (пригодится для компаний, добавленных вручную по ИНН)
     for block in deep_find(payload, ("СвОКВЭДОсн",)):
         code = _first_str(deep_find({"x": block}, ("КодОКВЭД",)))

@@ -25,6 +25,8 @@ CREATE TABLE IF NOT EXISTS companies (
     is_active INTEGER,
     sro_member INTEGER,
     sro_info TEXT DEFAULT '[]',
+    director TEXT,
+    director_post TEXT,
     emails TEXT DEFAULT '[]',
     phones TEXT DEFAULT '[]',
     website TEXT,
@@ -40,7 +42,7 @@ _LIST_FIELDS = ("okved_add", "emails", "phones", "sources", "sro_info")
 _SCALAR_FIELDS = (
     "ogrn", "name", "name_short", "kind", "region_code", "address",
     "okved_main", "msp_category", "egrul_status", "is_active", "sro_member",
-    "website",
+    "director", "director_post", "website",
 )
 
 
@@ -62,6 +64,8 @@ class CompanyDB:
         for column, ddl in (
             ("sro_member", "sro_member INTEGER"),
             ("sro_info", "sro_info TEXT DEFAULT '[]'"),
+            ("director", "director TEXT"),
+            ("director_post", "director_post TEXT"),
         ):
             if column not in existing:
                 self.conn.execute(f"ALTER TABLE companies ADD COLUMN {ddl}")

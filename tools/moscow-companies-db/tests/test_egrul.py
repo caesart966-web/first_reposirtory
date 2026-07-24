@@ -23,6 +23,11 @@ SAMPLE_ACTIVE = {
             },
         },
         "СвАдрЭлПочты": {"@attributes": {"E-mail": "Info@StroyMontazh.ru"}},
+        "СведДолжнФЛ": {
+            "СвФЛ": {"@attributes": {"Фамилия": "ПЕТРОВ", "Имя": "ПЁТР",
+                                     "Отчество": "ПЕТРОВИЧ"}},
+            "СвДолжн": {"@attributes": {"НаимДолжн": "ГЕНЕРАЛЬНЫЙ ДИРЕКТОР"}},
+        },
         "СвОКВЭД": {
             "СвОКВЭДОсн": {"@attributes": {"КодОКВЭД": "41.20", "НаимОКВЭД": "Строительство"}},
             "СвОКВЭДДоп": [
@@ -51,6 +56,8 @@ class TestEgrulExtract(unittest.TestCase):
         self.assertEqual(info["okved_main"], "41.20")
         self.assertEqual(info["okved_add"], ["43.31", "43.32"])
         self.assertEqual(info["region_code"], "77")
+        self.assertEqual(info["director"], "ПЕТРОВ ПЁТР ПЕТРОВИЧ")
+        self.assertEqual(info["director_post"], "Генеральный директор")
         # Адрес собран из смысловых полей, без GUID и кодов
         self.assertIn("МОСКВА", info["address"])
         self.assertIn("МЯСНИЦКАЯ", info["address"])

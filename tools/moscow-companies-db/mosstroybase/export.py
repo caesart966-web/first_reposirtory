@@ -17,6 +17,8 @@ COLUMNS = (
     ("address", "Адрес"),
     ("egrul_status", "Статус"),
     ("msp_category", "Категория МСП"),
+    ("director", "Руководитель"),
+    ("director_post", "Должность"),
     ("phones", "Телефоны"),
     ("emails", "E-mail"),
     ("website", "Сайт"),

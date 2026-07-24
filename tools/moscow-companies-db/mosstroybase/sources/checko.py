@@ -54,6 +54,24 @@ def extract_contacts(data: dict) -> dict:
         if info.get("address"):
             break
 
+    # Руководитель: ФИО и должность (личных телефонов в открытых данных нет).
+    # Берём именно ключ "Руковод" верхнего уровня — substring-поиск зацепил бы
+    # и "СвязРуковод"/"МассРуковод"
+    heads = data.get("Руковод")
+    if isinstance(heads, dict):
+        heads = [heads]
+    if isinstance(heads, list):
+        for item in heads:
+            if not isinstance(item, dict):
+                continue
+            fio = item.get("ФИО")
+            if isinstance(fio, str) and fio.strip():
+                info["director"] = fio.strip()
+                post = item.get("НаимДолжн")
+                if isinstance(post, str) and post.strip():
+                    info["director_post"] = post.strip().capitalize()
+                break
+
     for value in deep_find(data, ("Сайт", "ВебСайт")):
         for text in _strings(value):
             text = text.strip()
