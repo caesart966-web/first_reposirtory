@@ -126,6 +126,11 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("inn", help="ИНН для проверки")
     p.set_defaults(func=cmd_check_sro)
 
+    p = add_parser("check-checko", help="диагностика: сырой ответ Checko API по одному ИНН")
+    p.add_argument("inn", help="ИНН для проверки")
+    p.add_argument("--key", default=None, help=f"API-ключ (или переменная {config.CHECKO_API_KEY_ENV})")
+    p.set_defaults(func=cmd_check_checko)
+
     p = add_parser("stats", help="сводка по базе")
     p.set_defaults(func=cmd_stats)
 
@@ -470,6 +475,34 @@ def cmd_check_sro(args) -> int:
     print(f"ИНН {args.inn}: {labels[verdict]}")
     text = _json.dumps(payload, ensure_ascii=False)
     print(f"\nОтвет реестра (первые 800 символов из {len(text)}):\n{text[:800]}")
+    return 0
+
+
+def cmd_check_checko(args) -> int:
+    """Показывает сырой ответ Checko API и что из него извлекает программа."""
+    import json as _json
+
+    api_key = args.key or os.environ.get(config.CHECKO_API_KEY_ENV)
+    if not api_key:
+        print(f"Нужен API-ключ: --key или переменная {config.CHECKO_API_KEY_ENV}.", file=sys.stderr)
+        return 1
+    session = make_session()
+    resp = session.get(
+        config.CHECKO_COMPANY_URL, params={"key": api_key, "inn": args.inn}, timeout=30
+    )
+    print(f"HTTP-статус: {resp.status_code}")
+    text = resp.text
+    try:
+        payload = resp.json()
+    except ValueError:
+        payload = None
+    if isinstance(payload, dict) and isinstance(payload.get("data"), dict):
+        info = checko.extract_contacts(payload["data"])
+        print(f"Извлечено программой: телефоны {info['phones']}, "
+              f"e-mail {info['emails']}, сайт {info['website']}")
+        text = _json.dumps(payload, ensure_ascii=False)
+    print(f"\nСырой ответ (первые 1500 символов из {len(text)}):")
+    print(text[:1500])
     return 0
 
 
