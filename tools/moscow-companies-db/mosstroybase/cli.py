@@ -205,7 +205,8 @@ def cmd_enrich_egrul(args) -> int:
             db.upsert(update)
             processed += 1
             if processed % 100 == 0:
-                print(f"[egrul] обработано {processed}/{total}")
+                percent = processed * 100 // total if total else 100
+                print(f"[egrul] обработано {processed}/{total} ({percent}%)", flush=True)
             time.sleep(args.delay)
     print(f"[egrul] готово: обработано {processed}, ошибок {errors}")
     return 0
@@ -269,6 +270,7 @@ def run_checko_batch(
         if limit and len(processed) >= limit:
             break
         inn = company["inn"]
+        name = company.get("name_short") or company.get("name") or ""
         if sro_precheck and "sro" not in company["sources"]:
             membership = sro.check_membership(inn, session)
             if membership is not None:
@@ -276,6 +278,8 @@ def run_checko_batch(
                 time.sleep(config.DEFAULT_DELAY_SRO)
                 if membership["sro_member"] == 1:
                     skipped_sro += 1
+                    print(f"[sro]    {inn} {name}: член строительной СРО — пропускаю, "
+                          "квота не тратится", flush=True)
                     continue
         try:
             data = checko.fetch(inn, api_key, session)
@@ -287,8 +291,9 @@ def run_checko_batch(
             update.update(checko.extract_contacts(data))
         db.upsert(update)
         processed.append(inn)
-        if len(processed) % 25 == 0:
-            print(f"[checko] обработано {len(processed)}")
+        print(f"[checko] {len(processed)}/{plan} {inn} {name}: "
+              f"телефонов {len(update.get('phones') or [])}, "
+              f"e-mail {len(update.get('emails') or [])}", flush=True)
         time.sleep(delay)
     if skipped_sro:
         print(f"[checko] пропущено членов строительных СРО: {skipped_sro} (квота не потрачена)")
@@ -358,14 +363,21 @@ def cmd_daily(args) -> int:
                   "шаг Checko пропущен, телефоны не приедут", file=sys.stderr)
 
         # Добираем контакты с сайтов, которые дал Checko в сегодняшней пачке
-        for inn in processed:
+        sites = [
+            inn for inn in processed
+            if (c := db.get(inn))
+            and (c.get("website") or "").strip()
+            and "website" not in c["sources"]
+        ]
+        if sites:
+            print(f"[sites] обхожу сайты сегодняшней пачки: {len(sites)}")
+        for idx, inn in enumerate(sites, 1):
             company = db.get(inn)
-            if not company or not (company.get("website") or "").strip():
-                continue
-            if "website" in company["sources"]:
-                continue
             contacts = website.harvest(company["website"], session, delay=config.DEFAULT_DELAY_WEBSITE)
             db.upsert({"inn": inn, "sources": ["website"], **contacts})
+            print(f"[sites] {idx}/{len(sites)} {company['website']}: "
+                  f"телефонов +{len(contacts['phones'])}, e-mail +{len(contacts['emails'])}",
+                  flush=True)
 
         def save(path: Path, **kwargs) -> tuple[Path, int]:
             try:
