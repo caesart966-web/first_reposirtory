@@ -27,7 +27,11 @@ _ADDRESS_SKIP_KEYS = {"КодРегион", "КодАдрКладр", "ИдНо�
 
 
 def walk(obj: Any, parent_key: str = "") -> Iterator[tuple[str, Any]]:
-    """Рекурсивно выдаёт (ключ, значение) для всех листьев JSON-структуры."""
+    """Рекурсивно выдаёт (ключ, значение) для всех листьев JSON-структуры.
+
+    Элементы списков-листьев (например, "Тел": ["+7...", "+7..."]) выдаются
+    с ключом родителя — иначе такие значения терялись бы при обходе.
+    """
     if isinstance(obj, dict):
         for key, value in obj.items():
             if isinstance(value, (dict, list)):
@@ -36,7 +40,10 @@ def walk(obj: Any, parent_key: str = "") -> Iterator[tuple[str, Any]]:
                 yield key, value
     elif isinstance(obj, list):
         for item in obj:
-            yield from walk(item, parent_key)
+            if isinstance(item, (dict, list)):
+                yield from walk(item, parent_key)
+            else:
+                yield parent_key, item
 
 
 def deep_find(obj: Any, key_substrings: tuple[str, ...]) -> Iterator[Any]:

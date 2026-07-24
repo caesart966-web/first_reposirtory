@@ -89,6 +89,11 @@ def _build_parser() -> argparse.ArgumentParser:
         "--include-with-phones", action="store_true",
         help="запрашивать и компании, у которых телефон уже найден (по умолчанию — нет)",
     )
+    p.add_argument(
+        "--redo-empty", action="store_true",
+        help="повторно запросить компании, обработанные ранее, но оставшиеся "
+             "без контактов (тратит квоту заново)",
+    )
     p.set_defaults(func=cmd_enrich_checko)
 
     p = add_parser("enrich-sites", help="собрать контакты с сайтов компаний (где сайт известен)")
@@ -264,14 +269,19 @@ def run_checko_batch(
     include_inactive: bool = False,
     include_with_phones: bool = False,
     sro_precheck: bool = True,
+    pool: list[dict] | None = None,
 ) -> list[str]:
     """Обрабатывает пачку компаний через Checko; возвращает ИНН обработанных.
 
     Перед тратой Checko-запроса компания бесплатно проверяется по реестру
     НОСТРОЙ: действующие члены строительных СРО помечаются и пропускаются.
+    pool позволяет передать свой список кандидатов (например, для повторной
+    обработки); по умолчанию берутся компании, ещё не тронутые Checko.
     """
+    if pool is None:
+        pool = list(db.iter_missing_source("checko", limit=0))
     companies = select_for_checko(
-        list(db.iter_missing_source("checko", limit=0)),
+        pool,
         limit=0,
         include_inactive=include_inactive,
         include_with_phones=include_with_phones,
@@ -351,10 +361,18 @@ def cmd_enrich_checko(args) -> int:
         return 1
     session = make_session()
     with CompanyDB(args.db) as db:
+        pool = None
+        if args.redo_empty:
+            pool = [
+                c for c in db.iter_all()
+                if "checko" in c["sources"] and not c["phones"] and not c["emails"]
+            ]
+            print(f"[checko] повторная обработка: {len(pool)} компаний без контактов")
         run_checko_batch(
             db, session, api_key, args.limit, args.delay,
             include_inactive=args.include_inactive,
             include_with_phones=args.include_with_phones,
+            pool=pool,
         )
     return 0
 
