@@ -502,21 +502,29 @@ def cmd_export(args) -> int:
 
 
 def cmd_check_sro(args) -> int:
-    """Показывает сырой ответ реестра НОСТРОЙ по одному ИНН — для отладки."""
+    """Проверяет один ИНН по реестру НОСТРОЙ с подбором формата фильтра."""
     import json as _json
 
     session = make_session()
-    payload = sro._query(args.inn, session, 30)
-    if payload is None:
-        print("Реестр НОСТРОЙ не ответил (сеть или формат запроса). Попробуйте позже.")
+    sro._working_body = None
+    sro._format_unusable = False
+    result = sro.check_membership(args.inn, session)
+    if result is None:
+        print("Не удалось определить членство: реестр недоступен или ни один "
+              "формат фильтра не сработал. Ниже — сырой ответ для отладки.")
+        payload = sro._post(sro._FILTER_BODIES[0](args.inn), session, 30)
+        if payload is not None:
+            text = _json.dumps(payload, ensure_ascii=False)
+            print(f"\nСырой ответ формата №1 ({len(text)} символов):\n{text[:1200]}")
         return 1
-    verdict = sro.evaluate(payload, args.inn)
-    labels = {"member": "ЧЛЕН строительной СРО (будет отсечён)",
-              "former": "исключён/бывший член (НЕ отсекается)",
-              None: "записей по этому ИНН не найдено (не в СРО)"}
-    print(f"ИНН {args.inn}: {labels[verdict]}")
-    text = _json.dumps(payload, ensure_ascii=False)
-    print(f"\nОтвет реестра (первые 800 символов из {len(text)}):\n{text[:800]}")
+    if result["sro_member"] == 1:
+        print(f"ИНН {args.inn}: ЧЛЕН строительной СРО (будет отсечён)")
+    elif result["sro_info"]:
+        print(f"ИНН {args.inn}: {result['sro_info'][0]} (НЕ отсекается)")
+    else:
+        print(f"ИНН {args.inn}: записей по этому ИНН не найдено (не в СРО)")
+    if sro._working_body is not None:
+        print(f"[диагностика] сработал формат фильтра №{sro._working_body + 1}")
     return 0
 
 

@@ -8,22 +8,34 @@
 Членство в проектно-изыскательских СРО (реестр НОПРИЗ) сознательно НЕ
 проверяется — по условию задачи оно не является поводом отсечь компанию.
 
-Формат ответа реестра может меняться, поэтому разбор устойчивый: записи
-фильтруются по точному совпадению ИНН, статус определяется по текстовым
-признакам («исключ…»/«прекращ…» = бывший член, не отсекаем).
+Особенность API реестра: незнакомый фильтр он молча игнорирует и возвращает
+общий список членов. Поэтому формат фильтра подбирается по содержимому
+ответа: фильтр «сработал», если ответ пуст или содержит запись с нашим ИНН;
+непустой ответ без нашего ИНН означает проигнорированный фильтр. Найденный
+рабочий формат кешируется на время работы процесса.
 """
 
 from __future__ import annotations
 
+import sys
 from typing import Any, Iterator
 
 import requests
 
 NOSTROY_URL = "https://reestr.nostroy.ru/api/sro/all/member/list"
 
-# Варианты имени фильтра по ИНН в API реестра; записи в любом случае
-# перепроверяются по точному ИНН, так что лишние результаты не страшны
-_FILTER_KEYS = ("member_inn", "inn")
+# Кандидаты формата тела запроса; порядок — от наиболее вероятного
+_FILTER_BODIES = (
+    lambda inn: {"filters": {"inn": inn}, "page": 1, "pageSize": 20},
+    lambda inn: {"filters": {"member": {"inn": inn}}, "page": 1, "pageSize": 20},
+    lambda inn: {"searchString": inn, "page": 1, "pageSize": 20},
+    lambda inn: {"filters": {}, "searchString": inn, "page": 1, "pageSize": 20},
+    lambda inn: {"filters": {"member_inn": inn}, "page": 1, "pageSize": 20},
+)
+
+# Кеш процесса: индекс рабочего формата и флаг «ни один формат не подошёл»
+_working_body: int | None = None
+_format_unusable: bool = False
 
 _FORMER_MARKERS = ("исключ", "прекращ")
 
@@ -58,6 +70,18 @@ def _find_records(payload: Any, inn: str) -> list[dict]:
     return records
 
 
+def _record_list(payload: Any) -> list[dict]:
+    """Список записей из ответа реестра (обёртка data → data)."""
+    if not isinstance(payload, dict):
+        return []
+    data = payload.get("data")
+    if isinstance(data, dict):
+        data = data.get("data")
+    if isinstance(data, list):
+        return [r for r in data if isinstance(r, dict)]
+    return []
+
+
 def _is_former(record: dict) -> bool:
     return any(
         marker in text.lower() for text in _strings(record) for marker in _FORMER_MARKERS
@@ -74,34 +98,56 @@ def evaluate(payload: Any, inn: str) -> str | None:
     return "member"
 
 
-def _query(inn: str, session: requests.Session, timeout: int) -> Any | None:
-    for filter_key in _FILTER_KEYS:
-        try:
-            resp = session.post(
-                NOSTROY_URL,
-                json={"filters": {filter_key: inn}, "page": 1, "pageSize": 20},
-                timeout=timeout,
-            )
-            if resp.status_code != 200:
-                continue
-            return resp.json()
-        except (requests.RequestException, ValueError):
-            continue
-    return None
+def _post(body: dict, session: requests.Session, timeout: int) -> Any | None:
+    try:
+        resp = session.post(NOSTROY_URL, json=body, timeout=timeout)
+        if resp.status_code != 200:
+            return None
+        return resp.json()
+    except (requests.RequestException, ValueError):
+        return None
 
 
 def check_membership(inn: str, session: requests.Session, timeout: int = 30) -> dict | None:
-    """{'sro_member': 1|0, 'sro_info': [...]} или None, если реестр недоступен.
+    """{'sro_member': 1|0, 'sro_info': [...]} или None (недоступно/не определить).
 
-    sro_member = 1 только для действующих членов строительной СРО (НОСТРОЙ);
-    бывшие/исключённые члены не отсекаются, но помечаются в sro_info.
+    sro_member = 1 только для действующих членов строительной СРО; бывшие и
+    исключённые не отсекаются, но помечаются в sro_info.
     """
-    payload = _query(inn, session, timeout)
-    if payload is None:
-        return None  # реестр недоступен — пометим в другой раз
-    verdict = evaluate(payload, inn)
-    if verdict == "member":
-        return {"sro_member": 1, "sro_info": ["НОСТРОЙ: член строительной СРО"]}
-    if verdict == "former":
-        return {"sro_member": 0, "sro_info": ["НОСТРОЙ: исключён/бывший член"]}
-    return {"sro_member": 0, "sro_info": []}
+    global _working_body, _format_unusable
+    if _format_unusable:
+        return None
+
+    order = list(range(len(_FILTER_BODIES)))
+    if _working_body is not None:
+        order.remove(_working_body)
+        order.insert(0, _working_body)
+
+    reachable = False
+    for idx in order:
+        payload = _post(_FILTER_BODIES[idx](inn), session, timeout)
+        if payload is None:
+            continue
+        reachable = True
+        records = _record_list(payload)
+        matching = [r for r in records if _find_records(r, inn)]
+        if matching:
+            _working_body = idx
+            if all(_is_former(r) for r in matching):
+                return {"sro_member": 0, "sro_info": ["НОСТРОЙ: исключён/бывший член"]}
+            return {"sro_member": 1, "sro_info": ["НОСТРОЙ: член строительной СРО"]}
+        if not records:
+            # Пустой ответ = фильтр сработал, ИНН в реестре нет
+            _working_body = idx
+            return {"sro_member": 0, "sro_info": []}
+        # Непустой список чужих записей — фильтр проигнорирован, пробуем другой
+
+    if not reachable:
+        return None
+    # Реестр отвечает, но ни один формат фильтра не сработал. Честнее вернуть
+    # «неизвестно», чем ложное «не в СРО», и не долбить реестр впустую дальше.
+    _format_unusable = True
+    print("[sro] реестр НОСТРОЙ отвечает, но фильтр по ИНН не сработал ни в одном "
+          "из известных форматов — СРО-проверка отключена до следующего запуска. "
+          "Выполните check-sro и пришлите вывод разработчику.", file=sys.stderr)
+    return None
