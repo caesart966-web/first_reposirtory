@@ -39,11 +39,20 @@ def extract_contacts(data: dict) -> dict:
                 if phone not in info["phones"]:
                     info["phones"].append(phone)
 
-    for value in deep_find(data, ("Емэйл", "Email", "ЭлПочта", "Почта")):
+    for value in deep_find(data, ("Емэйл", "Емейл", "Email", "E-mail", "ЭлПочта", "Почта")):
         for text in _strings(value):
             for email in extract_emails(text):
                 if email not in info["emails"]:
                     info["emails"].append(email)
+
+    # Полный юридический адрес тоже есть в ответе Checko — забираем
+    for value in deep_find(data, ("АдресРФ",)):
+        for text in _strings(value):
+            if text.strip():
+                info["address"] = text.strip()
+                break
+        if info.get("address"):
+            break
 
     for value in deep_find(data, ("Сайт", "ВебСайт")):
         for text in _strings(value):

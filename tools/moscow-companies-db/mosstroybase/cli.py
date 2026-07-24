@@ -501,8 +501,12 @@ def cmd_check_checko(args) -> int:
         print(f"Извлечено программой: телефоны {info['phones']}, "
               f"e-mail {info['emails']}, сайт {info['website']}")
         text = _json.dumps(payload, ensure_ascii=False)
-    print(f"\nСырой ответ (первые 1500 символов из {len(text)}):")
-    print(text[:1500])
+    lowered = text.lower()
+    print("\nПризнаки контактов в ответе:")
+    for marker in ("контакт", "тел", "емэйл", "емейл", "email", "почта", "сайт"):
+        print(f"  «{marker}»: {'есть' if marker in lowered else 'нет'}")
+    print(f"\nСырой ответ целиком ({len(text)} символов):")
+    print(text[:20000])
     return 0
 
 
