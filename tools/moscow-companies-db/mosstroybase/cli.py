@@ -94,6 +94,11 @@ def _build_parser() -> argparse.ArgumentParser:
         help="повторно запросить компании, обработанные ранее, но оставшиеся "
              "без контактов (тратит квоту заново)",
     )
+    p.add_argument(
+        "--redo-no-director", action="store_true",
+        help="повторно запросить компании с контактами, но без ФИО руководителя — "
+             "для пачек, обработанных до появления этого поля (тратит квоту)",
+    )
     p.set_defaults(func=cmd_enrich_checko)
 
     p = add_parser("enrich-sites", help="собрать контакты с сайтов компаний (где сайт известен)")
@@ -212,8 +217,13 @@ def cmd_enrich_egrul(args) -> int:
                 errors += 1
                 print(f"[egrul] {inn}: ошибка сети ({exc}), пропускаю")
                 if errors >= 20 and errors > processed:
-                    print("[egrul] слишком много ошибок подряд — похоже, источник "
-                          "недоступен; останавливаюсь", file=sys.stderr)
+                    print("[egrul] слишком много ошибок подряд — источник недоступен; "
+                          "останавливаюсь.\n"
+                          "Примечание: бесплатный JSON-доступ зеркала ЕГРЮЛ "
+                          "(egrul.itsoft.ru → egrul.org) закрыт и переведён в платную "
+                          "подписку. Руководителя, адрес, статус и e-mail рабочим "
+                          "пачкам теперь даёт Checko (команда daily) — этот шаг "
+                          "перестал быть обязательным.", file=sys.stderr)
                     return 1
                 continue
             update: dict = {"inn": inn, "sources": ["egrul"]}
@@ -367,16 +377,25 @@ def cmd_enrich_checko(args) -> int:
     session = make_session()
     with CompanyDB(args.db) as db:
         pool = None
+        include_with_phones = args.include_with_phones
         if args.redo_empty:
             pool = [
                 c for c in db.iter_all()
                 if "checko" in c["sources"] and not c["phones"] and not c["emails"]
             ]
             print(f"[checko] повторная обработка: {len(pool)} компаний без контактов")
+        elif args.redo_no_director:
+            pool = [
+                c for c in db.iter_all()
+                if "checko" in c["sources"] and not c.get("director")
+                and (c["phones"] or c["emails"])
+            ]
+            include_with_phones = True  # у этих компаний телефоны уже есть
+            print(f"[checko] дозапрос руководителей: {len(pool)} компаний")
         run_checko_batch(
             db, session, api_key, args.limit, args.delay,
             include_inactive=args.include_inactive,
-            include_with_phones=args.include_with_phones,
+            include_with_phones=include_with_phones,
             pool=pool,
         )
     return 0
