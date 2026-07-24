@@ -99,6 +99,11 @@ def _build_parser() -> argparse.ArgumentParser:
         help="повторно запросить компании с контактами, но без ФИО руководителя — "
              "для пачек, обработанных до появления этого поля (тратит квоту)",
     )
+    p.add_argument(
+        "--include-secondary", action="store_true",
+        help="брать и компании, у которых строительный ОКВЭД только дополнительный "
+             "(по умолчанию — только основной)",
+    )
     p.set_defaults(func=cmd_enrich_checko)
 
     p = add_parser("enrich-sites", help="собрать контакты с сайтов компаний (где сайт известен)")
@@ -121,6 +126,11 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--limit", type=int, default=100, help="размер дневной пачки (по умолчанию 100)")
     p.add_argument("--delay", type=float, default=config.DEFAULT_DELAY_CHECKO, help="пауза, сек")
     p.add_argument("--out-dir", default="exports", help="папка для Excel-файлов (по умолчанию exports/)")
+    p.add_argument(
+        "--include-secondary", action="store_true",
+        help="брать и компании, у которых строительный ОКВЭД только дополнительный "
+             "(по умолчанию — только основной)",
+    )
     p.set_defaults(func=cmd_daily)
 
     p = add_parser("export", help="выгрузить базу в CSV/XLSX")
@@ -252,23 +262,28 @@ def select_for_checko(
     include_inactive: bool = False,
     include_with_phones: bool = False,
     okved_prefixes: tuple[str, ...] = config.DEFAULT_OKVED_PREFIXES,
+    include_secondary: bool = False,
 ) -> list[dict]:
     """Отбирает компании под квоту Checko: без лишней траты запросов.
 
-    По умолчанию пропускаем ликвидированные и уже имеющие телефон; члены
-    строительных СРО не берутся никогда. В первую очередь — компании,
-    у которых строительный ОКВЭД основной (а не доп.).
+    В работу идут только компании со строительным/проектным ОСНОВНЫМ ОКВЭД
+    (include_secondary=True возвращает и те, у кого стройка лишь в доп.
+    кодах). Ликвидированные и уже имеющие телефон пропускаются; члены
+    строительных СРО не берутся никогда.
     """
     candidates = []
     for company in companies:
         if company.get("sro_member") == 1:
+            continue
+        main_ok = rsmp.okved_matches(company.get("okved_main") or "", okved_prefixes)
+        if not main_ok and not include_secondary:
             continue
         if not include_inactive and company.get("is_active") == 0:
             continue
         if not include_with_phones and company.get("phones"):
             continue
         candidates.append(company)
-    # Сначала основной строительный ОКВЭД; внутри — сначала средние и малые:
+    # Основной ОКВЭД раньше дополнительного; внутри — сначала средние и малые:
     # у них телефоны в источниках Checko находятся заметно чаще, чем у микро
     msp_priority = {"среднее": 0, "малое": 1, "микро": 2}
     candidates.sort(
@@ -290,6 +305,7 @@ def run_checko_batch(
     include_with_phones: bool = False,
     sro_precheck: bool = True,
     pool: list[dict] | None = None,
+    include_secondary: bool = False,
 ) -> list[str]:
     """Обрабатывает пачку компаний через Checko; возвращает ИНН обработанных.
 
@@ -305,6 +321,7 @@ def run_checko_batch(
         limit=0,
         include_inactive=include_inactive,
         include_with_phones=include_with_phones,
+        include_secondary=include_secondary,
     )
     plan = min(limit, len(companies)) if limit else len(companies)
     print(f"[checko] к обработке: {plan} (лимит бесплатного тарифа ~100/сутки; "
@@ -398,11 +415,13 @@ def cmd_enrich_checko(args) -> int:
     with CompanyDB(args.db) as db:
         pool = None
         include_with_phones = args.include_with_phones
+        include_secondary = args.include_secondary
         if args.redo_empty:
             pool = [
                 c for c in db.iter_all()
                 if "checko" in c["sources"] and not c["phones"] and not c["emails"]
             ]
+            include_secondary = True  # уже обработанных не отбрасываем по ОКВЭД
             print(f"[checko] повторная обработка: {len(pool)} компаний без контактов")
         elif args.redo_no_director:
             pool = [
@@ -411,12 +430,14 @@ def cmd_enrich_checko(args) -> int:
                 and (c["phones"] or c["emails"])
             ]
             include_with_phones = True  # у этих компаний телефоны уже есть
+            include_secondary = True
             print(f"[checko] дозапрос руководителей: {len(pool)} компаний")
         run_checko_batch(
             db, session, api_key, args.limit, args.delay,
             include_inactive=args.include_inactive,
             include_with_phones=include_with_phones,
             pool=pool,
+            include_secondary=include_secondary,
         )
     return 0
 
@@ -434,7 +455,10 @@ def cmd_daily(args) -> int:
     with CompanyDB(args.db) as db:
         processed: list[str] = []
         if api_key:
-            processed = run_checko_batch(db, session, api_key, args.limit, args.delay)
+            processed = run_checko_batch(
+                db, session, api_key, args.limit, args.delay,
+                include_secondary=args.include_secondary,
+            )
         else:
             print(f"[daily] переменная {config.CHECKO_API_KEY_ENV} не задана — "
                   "шаг Checko пропущен, телефоны не приедут", file=sys.stderr)
