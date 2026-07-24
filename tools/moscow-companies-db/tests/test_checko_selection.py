@@ -38,6 +38,19 @@ class TestSelectForChecko(unittest.TestCase):
         selected = select_for_checko(COMPANIES, limit=0)
         self.assertNotIn("6", [c["inn"] for c in selected])
 
+    def test_msp_category_priority(self):
+        companies = [
+            {"inn": "a", "is_active": 1, "phones": [], "okved_main": "41.20",
+             "msp_category": "микро"},
+            {"inn": "b", "is_active": 1, "phones": [], "okved_main": "41.20",
+             "msp_category": "среднее"},
+            {"inn": "c", "is_active": 1, "phones": [], "okved_main": "41.20",
+             "msp_category": "малое"},
+        ]
+        # Средние и малые — раньше микро: у них выше шанс найти телефон
+        self.assertEqual([c["inn"] for c in select_for_checko(companies, limit=0)],
+                         ["b", "c", "a"])
+
 
 if __name__ == "__main__":
     unittest.main()

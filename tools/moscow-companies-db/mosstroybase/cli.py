@@ -122,6 +122,10 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     p.set_defaults(func=cmd_export)
 
+    p = add_parser("check-sro", help="диагностика: проверить один ИНН по реестру НОСТРОЙ")
+    p.add_argument("inn", help="ИНН для проверки")
+    p.set_defaults(func=cmd_check_sro)
+
     p = add_parser("stats", help="сводка по базе")
     p.set_defaults(func=cmd_stats)
 
@@ -234,8 +238,14 @@ def select_for_checko(
         if not include_with_phones and company.get("phones"):
             continue
         candidates.append(company)
+    # Сначала основной строительный ОКВЭД; внутри — сначала средние и малые:
+    # у них телефоны в источниках Checko находятся заметно чаще, чем у микро
+    msp_priority = {"среднее": 0, "малое": 1, "микро": 2}
     candidates.sort(
-        key=lambda c: 0 if rsmp.okved_matches(c.get("okved_main") or "", okved_prefixes) else 1
+        key=lambda c: (
+            0 if rsmp.okved_matches(c.get("okved_main") or "", okved_prefixes) else 1,
+            msp_priority.get(c.get("msp_category"), 3),
+        )
     )
     return candidates[:limit] if limit else candidates
 
@@ -441,6 +451,25 @@ def cmd_export(args) -> int:
             n = export_xlsx(db, args.xlsx, args.only_active, args.with_contacts_only,
                             include_sro=args.include_sro)
             print(f"[export] XLSX: {args.xlsx} ({n} строк)")
+    return 0
+
+
+def cmd_check_sro(args) -> int:
+    """Показывает сырой ответ реестра НОСТРОЙ по одному ИНН — для отладки."""
+    import json as _json
+
+    session = make_session()
+    payload = sro._query(args.inn, session, 30)
+    if payload is None:
+        print("Реестр НОСТРОЙ не ответил (сеть или формат запроса). Попробуйте позже.")
+        return 1
+    verdict = sro.evaluate(payload, args.inn)
+    labels = {"member": "ЧЛЕН строительной СРО (будет отсечён)",
+              "former": "исключён/бывший член (НЕ отсекается)",
+              None: "записей по этому ИНН не найдено (не в СРО)"}
+    print(f"ИНН {args.inn}: {labels[verdict]}")
+    text = _json.dumps(payload, ensure_ascii=False)
+    print(f"\nОтвет реестра (первые 800 символов из {len(text)}):\n{text[:800]}")
     return 0
 
 
