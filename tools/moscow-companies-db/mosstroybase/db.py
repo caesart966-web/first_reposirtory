@@ -131,6 +131,14 @@ class CompanyDB:
             )
         self.conn.commit()
 
+    def replace_phones(self, inn: str, phones: list[str]) -> None:
+        """Полностью заменяет список телефонов компании (для чистки мусора)."""
+        self.conn.execute(
+            "UPDATE companies SET phones = ?, updated_at = ? WHERE inn = ?",
+            (json.dumps(merge_unique(phones), ensure_ascii=False), _now(), inn),
+        )
+        self.conn.commit()
+
     # -- чтение ---------------------------------------------------------
 
     def get(self, inn: str) -> dict[str, Any] | None:

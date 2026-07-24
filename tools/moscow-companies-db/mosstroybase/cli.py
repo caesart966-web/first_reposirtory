@@ -147,6 +147,15 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     p.set_defaults(func=cmd_export)
 
+    p = add_parser("clean-phones", help="вычистить мусорные телефоны из базы")
+    p.add_argument(
+        "--reharvest-over", type=int, default=6,
+        help="компаниям с числом номеров больше N пересобрать телефоны с их "
+             "сайта по строгим правилам (0 — отключить; по умолчанию 6)",
+    )
+    p.add_argument("--delay", type=float, default=config.DEFAULT_DELAY_WEBSITE, help="пауза, сек")
+    p.set_defaults(func=cmd_clean_phones)
+
     p = add_parser("check-sro", help="диагностика: проверить один ИНН по реестру НОСТРОЙ")
     p.add_argument("inn", help="ИНН для проверки")
     p.set_defaults(func=cmd_check_sro)
@@ -552,6 +561,57 @@ def cmd_export(args) -> int:
             print("Не удалось записать файл: он открыт в Excel. "
                   "Закройте его и повторите команду.", file=sys.stderr)
             return 1
+    return 0
+
+
+def cmd_clean_phones(args) -> int:
+    """Чистит телефоны: удаляет невалидные, пересобирает подозрительно длинные."""
+    from collections import Counter
+
+    from .normalize import is_valid_phone
+
+    session = make_session()
+    removed = touched = 0
+    flagged: list[dict] = []
+    counter: Counter = Counter()
+    with CompanyDB(args.db) as db:
+        for company in db.iter_all():
+            phones = company["phones"]
+            if not phones:
+                continue
+            valid = [p for p in phones if is_valid_phone(p)]
+            if len(valid) != len(phones):
+                db.replace_phones(company["inn"], valid)
+                removed += len(phones) - len(valid)
+                touched += 1
+                company["phones"] = valid
+            for p in company["phones"]:
+                counter[p] += 1
+            if args.reharvest_over and len(company["phones"]) > args.reharvest_over:
+                flagged.append(company)
+        print(f"[clean] удалено номеров с несуществующими кодами: {removed} "
+              f"(у {touched} компаний)")
+
+        for company in flagged:
+            inn = company["inn"]
+            name = company.get("name_short") or company.get("name") or ""
+            site = (company.get("website") or "").strip()
+            if not site:
+                print(f"[clean] {inn} {name}: {len(company['phones'])} номеров, "
+                      "сайт неизвестен — проверьте вручную")
+                continue
+            contacts = website.harvest(site, session, delay=args.delay)
+            fresh = [p for p in contacts["phones"] if is_valid_phone(p)]
+            db.replace_phones(inn, fresh)
+            print(f"[clean] {inn} {name}: пересобрано с сайта {site} — "
+                  f"было {len(company['phones'])}, стало {len(fresh)}", flush=True)
+
+        shared = {p: c for p, c in counter.items() if c >= 3}
+        if shared:
+            print("\n[clean] номера, встречающиеся у 3+ компаний (возможен "
+                  "колл-центр или мусор — проверьте вручную):")
+            for phone, count in sorted(shared.items(), key=lambda x: -x[1]):
+                print(f"  {phone} — у {count} компаний")
     return 0
 
 
