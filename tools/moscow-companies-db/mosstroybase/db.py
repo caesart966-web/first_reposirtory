@@ -180,6 +180,15 @@ class CompanyDB:
             "проект/изыскания (71.1x)": one(
                 "SELECT COUNT(*) FROM companies WHERE okved_main LIKE '71.1%'"
             ),
+            "категория «среднее»": one(
+                "SELECT COUNT(*) FROM companies WHERE msp_category = 'среднее'"
+            ),
+            "категория «малое»": one(
+                "SELECT COUNT(*) FROM companies WHERE msp_category = 'малое'"
+            ),
+            "категория «микро»": one(
+                "SELECT COUNT(*) FROM companies WHERE msp_category = 'микро'"
+            ),
         }
 
     @staticmethod
