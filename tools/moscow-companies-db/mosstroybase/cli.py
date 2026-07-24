@@ -196,9 +196,14 @@ def cmd_enrich_egrul(args) -> int:
     session = make_session()
     processed = errors = 0
     with CompanyDB(args.db) as db:
-        companies = list(db.iter_missing_source("egrul", limit=args.limit))
+        companies = list(db.iter_missing_source("egrul", limit=0))
+        # Сначала — компании, уже прошедшие Checko: это рабочие пачки, им
+        # ЕГРЮЛ допишет руководителя, e-mail и полный адрес в первую очередь
+        companies.sort(key=lambda c: 0 if "checko" in c["sources"] else 1)
+        if args.limit:
+            companies = companies[: args.limit]
         total = len(companies)
-        print(f"[egrul] к обработке: {total}")
+        print(f"[egrul] к обработке: {total} (первыми идут компании из дневных пачек Checko)")
         for company in companies:
             inn = company["inn"]
             try:
