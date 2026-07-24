@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import re
+import time
 import xml.etree.ElementTree as ET
 import zipfile
 from pathlib import Path
@@ -63,24 +64,47 @@ def resolve_data_url(session: requests.Session) -> str:
 
 
 def download(url: str, dest: Path, session: requests.Session, force: bool = False) -> Path:
-    """Скачивает выгрузку потоково; при наличии файла повторно не качает."""
+    """Скачивает выгрузку потоково; при обрыве связи докачивает с места остановки.
+
+    Недокачанный файл живёт рядом как <имя>.part и переиспользуется между
+    запусками, так что повторный fetch-rsmp продолжает, а не начинает заново.
+    """
     dest.parent.mkdir(parents=True, exist_ok=True)
     if dest.exists() and dest.stat().st_size > 0 and not force:
         print(f"[rsmp] файл уже скачан: {dest} ({dest.stat().st_size // 2**20} МБ), пропускаю")
         return dest
     print(f"[rsmp] скачиваю {url}")
     tmp = dest.with_suffix(dest.suffix + ".part")
-    downloaded = 0
-    with session.get(url, stream=True, timeout=120) as resp:
-        resp.raise_for_status()
-        with open(tmp, "wb") as fh:
-            for chunk in resp.iter_content(chunk_size=2**20):
-                fh.write(chunk)
-                downloaded += len(chunk)
-                if downloaded % (200 * 2**20) < 2**20:
-                    print(f"[rsmp] ...{downloaded // 2**20} МБ")
+    max_attempts = 30
+    for attempt in range(1, max_attempts + 1):
+        offset = tmp.stat().st_size if tmp.exists() else 0
+        headers = {"Range": f"bytes={offset}-"} if offset else {}
+        try:
+            with session.get(url, stream=True, timeout=120, headers=headers) as resp:
+                if offset and resp.status_code != 206:
+                    # сервер не поддержал докачку — начинаем с нуля
+                    offset = 0
+                resp.raise_for_status()
+                mode = "ab" if offset else "wb"
+                if offset:
+                    print(f"[rsmp] докачиваю с {offset // 2**20} МБ")
+                downloaded = offset
+                with open(tmp, mode) as fh:
+                    for chunk in resp.iter_content(chunk_size=2**20):
+                        fh.write(chunk)
+                        downloaded += len(chunk)
+                        if downloaded % (200 * 2**20) < 2**20:
+                            print(f"[rsmp] ...{downloaded // 2**20} МБ")
+            break
+        except requests.RequestException as exc:
+            if attempt >= max_attempts:
+                raise
+            got = tmp.stat().st_size // 2**20 if tmp.exists() else 0
+            print(f"[rsmp] обрыв соединения на {got} МБ ({type(exc).__name__}); "
+                  f"продолжаю через 10 сек (попытка {attempt}/{max_attempts})")
+            time.sleep(10)
     tmp.rename(dest)
-    print(f"[rsmp] готово: {dest} ({downloaded // 2**20} МБ)")
+    print(f"[rsmp] готово: {dest} ({dest.stat().st_size // 2**20} МБ)")
     return dest
 
 
