@@ -109,6 +109,11 @@ def _build_parser() -> argparse.ArgumentParser:
     p = add_parser("enrich-sro", help="пометить членов строительных СРО по реестру НОСТРОЙ (бесплатно)")
     p.add_argument("--limit", type=int, default=0, help="проверить не более N компаний")
     p.add_argument("--delay", type=float, default=config.DEFAULT_DELAY_SRO, help="пауза, сек")
+    p.add_argument(
+        "--recheck", action="store_true",
+        help="перепроверить компании, уже помеченные как «не в СРО» "
+             "(нужно после исправления фильтра реестра)",
+    )
     p.set_defaults(func=cmd_enrich_sro)
 
     p = add_parser("daily", help="ежедневный прогон: СРО-фильтр + Checko-пачка + сайты + Excel за сегодня")
@@ -346,8 +351,19 @@ def cmd_enrich_sro(args) -> int:
     session = make_session()
     processed = members = errors = 0
     with CompanyDB(args.db) as db:
-        companies = list(db.iter_missing_source("sro", limit=args.limit))
-        print(f"[sro] к проверке по реестру НОСТРОЙ: {len(companies)} (бесплатно)")
+        if args.recheck:
+            companies = [
+                c for c in db.iter_all()
+                if "sro" in c["sources"] and c.get("sro_member") != 1
+            ]
+            # Сначала рабочие пачки Checko — они уже в выгрузках
+            companies.sort(key=lambda c: 0 if "checko" in c["sources"] else 1)
+            if args.limit:
+                companies = companies[: args.limit]
+            print(f"[sro] перепроверка ранее помеченных «не в СРО»: {len(companies)}")
+        else:
+            companies = list(db.iter_missing_source("sro", limit=args.limit))
+            print(f"[sro] к проверке по реестру НОСТРОЙ: {len(companies)} (бесплатно)")
         for company in companies:
             membership = sro.check_membership(company["inn"], session)
             if membership is None:
@@ -360,8 +376,12 @@ def cmd_enrich_sro(args) -> int:
             db.upsert({"inn": company["inn"], "sources": ["sro"], **membership})
             processed += 1
             members += membership["sro_member"]
+            if membership["sro_member"] == 1:
+                name = company.get("name_short") or company.get("name") or ""
+                print(f"[sro] {company['inn']} {name}: ЧЛЕН СРО — исключён из выгрузок",
+                      flush=True)
             if processed % 100 == 0:
-                print(f"[sro] проверено {processed}, в СРО {members}")
+                print(f"[sro] проверено {processed}, в СРО {members}", flush=True)
             time.sleep(args.delay)
     print(f"[sro] готово: проверено {processed}, из них в строительной СРО {members} "
           "(исключены из выгрузок и обзвона)")
