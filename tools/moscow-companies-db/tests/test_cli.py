@@ -24,7 +24,8 @@ class TestCliEndToEnd(unittest.TestCase):
                 rows = list(csv.reader(fh, delimiter=";"))
             self.assertEqual(rows[0][0], "ИНН")
             inns = {row[0] for row in rows[1:]}
-            self.assertEqual(inns, {"7701234567", "7709876543", "7706666666"})
+            # Проектировщик 7709876543 (71.12.45) в дефолтный набор не входит
+            self.assertEqual(inns, {"7701234567", "7706666666"})
 
     def test_import_inn(self):
         with TemporaryDirectory() as tmp:

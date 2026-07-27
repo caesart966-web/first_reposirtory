@@ -8,12 +8,15 @@ from mosstroybase.sources import rsmp
 
 SAMPLE = Path(__file__).parent / "data" / "sample_rsmp.xml"
 
+# Широкий набор (со стройкой и проектированием) — для проверки механики парсера
+WIDE_PREFIXES = ("41", "42", "43", "71.11", "71.12")
+
 
 class TestRsmpParser(unittest.TestCase):
     def _collect(self, path, include_ip=False):
         return list(
             rsmp.iter_companies(
-                path, MOSCOW_REGION_CODE, DEFAULT_OKVED_PREFIXES, include_ip=include_ip
+                path, MOSCOW_REGION_CODE, WIDE_PREFIXES, include_ip=include_ip
             )
         )
 
@@ -60,11 +63,16 @@ class TestRsmpParser(unittest.TestCase):
         self.assertEqual(len(companies), 6)
 
     def test_okved_matches(self):
-        prefixes = DEFAULT_OKVED_PREFIXES
         for code in ("41.20", "42.11", "43.99", "71.11", "71.12.45"):
-            self.assertTrue(rsmp.okved_matches(code, prefixes), code)
+            self.assertTrue(rsmp.okved_matches(code, WIDE_PREFIXES), code)
         for code in ("46.73", "62.01", "71.20", ""):
-            self.assertFalse(rsmp.okved_matches(code, prefixes), code)
+            self.assertFalse(rsmp.okved_matches(code, WIDE_PREFIXES), code)
+
+    def test_default_prefixes_are_construction_only(self):
+        # По решению заказчика: только стройка, без проектирования/изысканий
+        self.assertEqual(DEFAULT_OKVED_PREFIXES, ("41", "42", "43"))
+        self.assertFalse(rsmp.okved_matches("71.11", DEFAULT_OKVED_PREFIXES))
+        self.assertFalse(rsmp.okved_matches("71.12.45", DEFAULT_OKVED_PREFIXES))
 
 
 if __name__ == "__main__":

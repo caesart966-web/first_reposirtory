@@ -20,18 +20,24 @@ COMPANIES = [
 
 class TestSelectForChecko(unittest.TestCase):
     def test_default_selection_and_priority(self):
-        # По умолчанию — только основной строительный ОКВЭД: компания «3»
-        # (стройка лишь в доп. кодах) не берётся
+        # По умолчанию — только основной ОКВЭД чистой стройки (41–43):
+        # «3» (стройка в доп. кодах) и «5» (проектирование 71.12) не берутся
         selected = select_for_checko(COMPANIES, limit=0)
-        self.assertEqual([c["inn"] for c in selected], ["4", "5"])
+        self.assertEqual([c["inn"] for c in selected], ["4"])
 
     def test_include_secondary(self):
         selected = select_for_checko(COMPANIES, limit=0, include_secondary=True)
-        self.assertEqual([c["inn"] for c in selected], ["4", "5", "3"])
+        self.assertEqual([c["inn"] for c in selected], ["4", "3", "5"])
+
+    def test_wide_prefixes_return_project_companies(self):
+        selected = select_for_checko(
+            COMPANIES, limit=0, okved_prefixes=("41", "42", "43", "71.11", "71.12")
+        )
+        self.assertEqual([c["inn"] for c in selected], ["4", "5"])
 
     def test_limit_takes_top_priority_first(self):
-        selected = select_for_checko(COMPANIES, limit=2)
-        self.assertEqual([c["inn"] for c in selected], ["4", "5"])
+        selected = select_for_checko(COMPANIES, limit=1)
+        self.assertEqual([c["inn"] for c in selected], ["4"])
 
     def test_include_flags(self):
         selected = select_for_checko(
