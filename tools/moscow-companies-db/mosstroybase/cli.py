@@ -104,6 +104,11 @@ def _build_parser() -> argparse.ArgumentParser:
         help="брать и компании, у которых строительный ОКВЭД только дополнительный "
              "(по умолчанию — только основной)",
     )
+    p.add_argument(
+        "--okved", nargs="+", default=list(config.DEFAULT_OKVED_PREFIXES),
+        help="какие основные ОКВЭД брать в работу (по умолчанию: %(default)s; "
+             "например, --okved 41 42 43 — только стройка, без проектировщиков)",
+    )
     p.set_defaults(func=cmd_enrich_checko)
 
     p = add_parser("enrich-sites", help="собрать контакты с сайтов компаний (где сайт известен)")
@@ -130,6 +135,11 @@ def _build_parser() -> argparse.ArgumentParser:
         "--include-secondary", action="store_true",
         help="брать и компании, у которых строительный ОКВЭД только дополнительный "
              "(по умолчанию — только основной)",
+    )
+    p.add_argument(
+        "--okved", nargs="+", default=list(config.DEFAULT_OKVED_PREFIXES),
+        help="какие основные ОКВЭД брать в работу (по умолчанию: %(default)s; "
+             "например, --okved 41 42 43 — только стройка, без проектировщиков)",
     )
     p.set_defaults(func=cmd_daily)
 
@@ -315,6 +325,7 @@ def run_checko_batch(
     sro_precheck: bool = True,
     pool: list[dict] | None = None,
     include_secondary: bool = False,
+    okved_prefixes: tuple[str, ...] = config.DEFAULT_OKVED_PREFIXES,
 ) -> list[str]:
     """Обрабатывает пачку компаний через Checko; возвращает ИНН обработанных.
 
@@ -331,6 +342,7 @@ def run_checko_batch(
         include_inactive=include_inactive,
         include_with_phones=include_with_phones,
         include_secondary=include_secondary,
+        okved_prefixes=okved_prefixes,
     )
     plan = min(limit, len(companies)) if limit else len(companies)
     print(f"[checko] к обработке: {plan} (лимит бесплатного тарифа ~100/сутки; "
@@ -447,6 +459,7 @@ def cmd_enrich_checko(args) -> int:
             include_with_phones=include_with_phones,
             pool=pool,
             include_secondary=include_secondary,
+            okved_prefixes=tuple(args.okved),
         )
     return 0
 
@@ -467,6 +480,7 @@ def cmd_daily(args) -> int:
             processed = run_checko_batch(
                 db, session, api_key, args.limit, args.delay,
                 include_secondary=args.include_secondary,
+                okved_prefixes=tuple(args.okved),
             )
         else:
             print(f"[daily] переменная {config.CHECKO_API_KEY_ENV} не задана — "
