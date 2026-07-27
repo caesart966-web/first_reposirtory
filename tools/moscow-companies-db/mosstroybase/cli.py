@@ -481,9 +481,11 @@ def cmd_daily(args) -> int:
         ]
         if sites:
             print(f"[sites] обхожу сайты сегодняшней пачки: {len(sites)}")
+        site_session = make_session(retries=False)
         for idx, inn in enumerate(sites, 1):
             company = db.get(inn)
-            contacts = website.harvest(company["website"], session, delay=config.DEFAULT_DELAY_WEBSITE)
+            contacts = website.harvest(company["website"], site_session,
+                                       delay=config.DEFAULT_DELAY_WEBSITE)
             # Номера с сайта не смешиваются с проверенными из Checko:
             # неподтверждённые идут в отдельную колонку «проверить»
             unconfirmed = [p for p in contacts["phones"] if p not in company["phones"]]
@@ -525,7 +527,7 @@ def cmd_daily(args) -> int:
 
 
 def cmd_enrich_sites(args) -> int:
-    session = make_session()
+    session = make_session(retries=False)
     processed = found = 0
     with CompanyDB(args.db) as db:
         companies = [
@@ -576,7 +578,7 @@ def cmd_clean_phones(args) -> int:
 
     from .normalize import is_valid_phone
 
-    session = make_session()
+    session = make_session(retries=False)
     removed = touched = 0
     flagged: list[dict] = []
     counter: Counter = Counter()

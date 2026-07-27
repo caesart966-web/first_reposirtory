@@ -11,14 +11,16 @@ from .config import USER_AGENT
 DEFAULT_TIMEOUT = 30
 
 
-def make_session(user_agent: str | None = None) -> requests.Session:
+def make_session(user_agent: str | None = None, retries: bool = True) -> requests.Session:
+    """HTTP-сессия; retries=False — для обхода сайтов компаний, где повторные
+    попытки на мёртвых доменах только затягивают прогон."""
     session = requests.Session()
     retry = Retry(
         total=3,
         backoff_factor=1.5,
         status_forcelist=(429, 500, 502, 503, 504),
         allowed_methods=("GET", "HEAD"),
-    )
+    ) if retries else Retry(total=0)
     adapter = HTTPAdapter(max_retries=retry)
     session.mount("http://", adapter)
     session.mount("https://", adapter)

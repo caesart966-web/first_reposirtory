@@ -40,7 +40,7 @@ def harvest(
     website: str,
     session: requests.Session,
     delay: float = 1.0,
-    timeout: int = 15,
+    timeout: int = 8,
     max_pages: int = 4,
 ) -> dict:
     """Возвращает {'emails': [...], 'phones': [...]} со страниц сайта."""
