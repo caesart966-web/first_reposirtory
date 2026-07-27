@@ -15,6 +15,9 @@ class TestExport(unittest.TestCase):
         db.upsert({"inn": "3", "name": "В", "phones": ["+74950000003"], "is_active": 0})
         db.upsert({"inn": "4", "name": "Г", "phones": ["+74950000004"], "is_active": 1,
                    "sro_member": 1, "sro_info": ["НОСТРОЙ: член строительной СРО"]})
+        # Только неподтверждённые номера с сайта — тоже считается контактом
+        db.upsert({"inn": "5", "name": "Д", "phones_site": ["+74950000005"],
+                   "is_active": 1})
         return db
 
     def _inns(self, path: str) -> set[str]:
@@ -35,7 +38,7 @@ class TestExport(unittest.TestCase):
             with self._make_db(tmp) as db:
                 out = str(Path(tmp) / "out.csv")
                 export_csv(db, out, only_active=True, with_contacts_only=True)
-                self.assertEqual(self._inns(out), {"1"})
+                self.assertEqual(self._inns(out), {"1", "5"})
 
     def test_sro_members_excluded_by_default(self):
         with TemporaryDirectory() as tmp:

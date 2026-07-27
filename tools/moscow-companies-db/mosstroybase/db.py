@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS companies (
     director_post TEXT,
     emails TEXT DEFAULT '[]',
     phones TEXT DEFAULT '[]',
+    phones_site TEXT DEFAULT '[]',
     website TEXT,
     sources TEXT DEFAULT '[]',
     created_at TEXT,
@@ -38,7 +39,7 @@ CREATE INDEX IF NOT EXISTS idx_companies_okved_main ON companies(okved_main);
 CREATE INDEX IF NOT EXISTS idx_companies_region ON companies(region_code);
 """
 
-_LIST_FIELDS = ("okved_add", "emails", "phones", "sources", "sro_info")
+_LIST_FIELDS = ("okved_add", "emails", "phones", "phones_site", "sources", "sro_info")
 _SCALAR_FIELDS = (
     "ogrn", "name", "name_short", "kind", "region_code", "address",
     "okved_main", "msp_category", "egrul_status", "is_active", "sro_member",
@@ -66,6 +67,7 @@ class CompanyDB:
             ("sro_info", "sro_info TEXT DEFAULT '[]'"),
             ("director", "director TEXT"),
             ("director_post", "director_post TEXT"),
+            ("phones_site", "phones_site TEXT DEFAULT '[]'"),
         ):
             if column not in existing:
                 self.conn.execute(f"ALTER TABLE companies ADD COLUMN {ddl}")
@@ -131,11 +133,13 @@ class CompanyDB:
             )
         self.conn.commit()
 
-    def replace_phones(self, inn: str, phones: list[str]) -> None:
-        """Полностью заменяет список телефонов компании (для чистки мусора)."""
+    def replace_list(self, inn: str, field: str, values: list[str]) -> None:
+        """Полностью заменяет списковое поле компании (для чистки мусора)."""
+        if field not in _LIST_FIELDS:
+            raise ValueError(f"не списковое поле: {field}")
         self.conn.execute(
-            "UPDATE companies SET phones = ?, updated_at = ? WHERE inn = ?",
-            (json.dumps(merge_unique(phones), ensure_ascii=False), _now(), inn),
+            f"UPDATE companies SET {field} = ?, updated_at = ? WHERE inn = ?",
+            (json.dumps(merge_unique(values), ensure_ascii=False), _now(), inn),
         )
         self.conn.commit()
 

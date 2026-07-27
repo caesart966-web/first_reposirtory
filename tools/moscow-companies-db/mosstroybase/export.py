@@ -20,7 +20,8 @@ COLUMNS = (
     ("msp_category", "Категория МСП"),
     ("director", "Руководитель"),
     ("director_post", "Должность"),
-    ("phones", "Телефоны"),
+    ("phones", "Телефоны (Checko)"),
+    ("phones_site", "Телефоны с сайта (проверить)"),
     ("emails", "E-mail"),
     ("website", "Сайт"),
     ("sro_info", "СРО"),
@@ -39,12 +40,13 @@ def _rows(
             continue
         if only_active and company.get("is_active") == 0:
             continue
-        if with_contacts_only and not company["emails"] and not company["phones"]:
+        if (with_contacts_only and not company["emails"] and not company["phones"]
+                and not company.get("phones_site")):
             continue
         row = []
         for field, _title in COLUMNS:
             value = company.get(field)
-            if field == "phones" and isinstance(value, list):
+            if field in ("phones", "phones_site") and isinstance(value, list):
                 # Перестраховка: старые записи могли содержать ложные
                 # срабатывания регулярки — в выгрузку идут только валидные
                 value = [p for p in value if is_valid_phone(p)]

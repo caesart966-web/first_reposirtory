@@ -484,10 +484,15 @@ def cmd_daily(args) -> int:
         for idx, inn in enumerate(sites, 1):
             company = db.get(inn)
             contacts = website.harvest(company["website"], session, delay=config.DEFAULT_DELAY_WEBSITE)
-            db.upsert({"inn": inn, "sources": ["website"], **contacts})
+            # Номера с сайта не смешиваются с проверенными из Checko:
+            # неподтверждённые идут в отдельную колонку «проверить»
+            unconfirmed = [p for p in contacts["phones"] if p not in company["phones"]]
+            db.upsert({"inn": inn, "sources": ["website"],
+                       "emails": contacts["emails"], "phones_site": unconfirmed})
+            confirmed = len(contacts["phones"]) - len(unconfirmed)
             print(f"[sites] {idx}/{len(sites)} {company['website']}: "
-                  f"телефонов +{len(contacts['phones'])}, e-mail +{len(contacts['emails'])}",
-                  flush=True)
+                  f"подтверждено {confirmed}, на проверку +{len(unconfirmed)}, "
+                  f"e-mail +{len(contacts['emails'])}", flush=True)
 
         def save(path: Path, **kwargs) -> tuple[Path, int]:
             try:
@@ -532,8 +537,9 @@ def cmd_enrich_sites(args) -> int:
         print(f"[sites] сайтов к обходу: {len(companies)}")
         for company in companies:
             contacts = website.harvest(company["website"], session, delay=args.delay)
-            update = {"inn": company["inn"], "sources": ["website"], **contacts}
-            db.upsert(update)
+            unconfirmed = [p for p in contacts["phones"] if p not in company["phones"]]
+            db.upsert({"inn": company["inn"], "sources": ["website"],
+                       "emails": contacts["emails"], "phones_site": unconfirmed})
             processed += 1
             if contacts["emails"] or contacts["phones"]:
                 found += 1
@@ -576,18 +582,21 @@ def cmd_clean_phones(args) -> int:
     counter: Counter = Counter()
     with CompanyDB(args.db) as db:
         for company in db.iter_all():
-            phones = company["phones"]
-            if not phones:
-                continue
-            valid = [p for p in phones if is_valid_phone(p)]
-            if len(valid) != len(phones):
-                db.replace_phones(company["inn"], valid)
-                removed += len(phones) - len(valid)
+            changed = False
+            for field in ("phones", "phones_site"):
+                values = company.get(field) or []
+                valid = [p for p in values if is_valid_phone(p)]
+                if len(valid) != len(values):
+                    db.replace_list(company["inn"], field, valid)
+                    removed += len(values) - len(valid)
+                    changed = True
+                    company[field] = valid
+            if changed:
                 touched += 1
-                company["phones"] = valid
-            for p in company["phones"]:
+            total_now = len(company["phones"]) + len(company.get("phones_site") or [])
+            for p in (*company["phones"], *(company.get("phones_site") or [])):
                 counter[p] += 1
-            if args.reharvest_over and len(company["phones"]) > args.reharvest_over:
+            if args.reharvest_over and total_now > args.reharvest_over:
                 flagged.append(company)
         print(f"[clean] удалено номеров с несуществующими кодами: {removed} "
               f"(у {touched} компаний)")
@@ -595,16 +604,21 @@ def cmd_clean_phones(args) -> int:
         for company in flagged:
             inn = company["inn"]
             name = company.get("name_short") or company.get("name") or ""
+            total = len(company["phones"]) + len(company.get("phones_site") or [])
             site = (company.get("website") or "").strip()
             if not site:
-                print(f"[clean] {inn} {name}: {len(company['phones'])} номеров, "
+                print(f"[clean] {inn} {name}: {total} номеров, "
                       "сайт неизвестен — проверьте вручную")
                 continue
+            # Аномально длинный список — наследие старого сборщика: телефоны
+            # пересобираются с сайта в колонку «проверить», основная очищается
+            # (официальные номера вернутся при следующем enrich-checko --redo-empty)
             contacts = website.harvest(site, session, delay=args.delay)
             fresh = [p for p in contacts["phones"] if is_valid_phone(p)]
-            db.replace_phones(inn, fresh)
+            db.replace_list(inn, "phones_site", fresh)
+            db.replace_list(inn, "phones", [])
             print(f"[clean] {inn} {name}: пересобрано с сайта {site} — "
-                  f"было {len(company['phones'])}, стало {len(fresh)}", flush=True)
+                  f"было {total}, на проверку {len(fresh)}", flush=True)
 
         shared = {p: c for p, c in counter.items() if c >= 3}
         if shared:
