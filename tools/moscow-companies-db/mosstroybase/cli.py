@@ -100,6 +100,12 @@ def _build_parser() -> argparse.ArgumentParser:
              "для пачек, обработанных до появления этого поля (тратит квоту)",
     )
     p.add_argument(
+        "--redo-no-liveness", action="store_true",
+        help="повторно запросить обработанные компании без признаков живости "
+             "(СЧР/налоги/банкротство) — для пачек до появления этих полей "
+             "(тратит квоту)",
+    )
+    p.add_argument(
         "--include-secondary", action="store_true",
         help="брать и компании, у которых строительный ОКВЭД только дополнительный "
              "(по умолчанию — только основной)",
@@ -462,6 +468,16 @@ def cmd_enrich_checko(args) -> int:
             include_with_phones = True  # у этих компаний телефоны уже есть
             include_secondary = True
             print(f"[checko] дозапрос руководителей: {len(pool)} компаний")
+        elif args.redo_no_liveness:
+            # bankruptcy заполняется при каждом запросе (блок ЕФРСБ приходит
+            # всегда), поэтому его отсутствие = живость ещё не запрашивалась
+            pool = [
+                c for c in db.iter_all()
+                if "checko" in c["sources"] and c.get("bankruptcy") is None
+            ]
+            include_with_phones = True
+            include_secondary = True
+            print(f"[checko] дозапрос признаков живости: {len(pool)} компаний")
         run_checko_batch(
             db, session, api_key, args.limit, args.delay,
             include_inactive=args.include_inactive,
