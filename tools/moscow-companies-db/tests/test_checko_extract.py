@@ -28,6 +28,10 @@ DATA = {
         "НаимДолжн": "ГЕНЕРАЛЬНЫЙ ДИРЕКТОР",
         "Недост": False,
     }],
+    "ДатаРег": "2020-07-02",
+    "СЧР": 7,
+    "Налоги": {"СумУпл": "123456.78", "СумНедоим": "0.00"},
+    "ЕФРСБ": [],
     # Похожие ключи не должны подменять руководителя
     "СвязРуковод": ["1177700022048"],
     "МассРуковод": False,
@@ -44,6 +48,14 @@ class TestCheckoExtract(unittest.TestCase):
         self.assertEqual(info["is_active"], 1)
         self.assertEqual(info["director"], "Родных Геннадий Геннадиевич")
         self.assertEqual(info["director_post"], "Генеральный директор")
+        self.assertEqual(info["reg_date"], "2020-07-02")
+        self.assertEqual(info["employees"], 7)
+        self.assertAlmostEqual(info["taxes_paid"], 123456.78)
+        self.assertEqual(info["bankruptcy"], 0)
+
+    def test_bankruptcy_flag(self):
+        data = dict(DATA, **{"ЕФРСБ": [{"Тип": "Наблюдение"}]})
+        self.assertEqual(checko.extract_contacts(data)["bankruptcy"], 1)
 
     def test_no_contacts_block(self):
         data = {k: v for k, v in DATA.items() if k != "Контакты"}

@@ -27,6 +27,11 @@ CREATE TABLE IF NOT EXISTS companies (
     sro_info TEXT DEFAULT '[]',
     director TEXT,
     director_post TEXT,
+    reg_date TEXT,
+    msp_since TEXT,
+    employees INTEGER,
+    taxes_paid REAL,
+    bankruptcy INTEGER,
     emails TEXT DEFAULT '[]',
     phones TEXT DEFAULT '[]',
     phones_site TEXT DEFAULT '[]',
@@ -43,7 +48,8 @@ _LIST_FIELDS = ("okved_add", "emails", "phones", "phones_site", "sources", "sro_
 _SCALAR_FIELDS = (
     "ogrn", "name", "name_short", "kind", "region_code", "address",
     "okved_main", "msp_category", "egrul_status", "is_active", "sro_member",
-    "director", "director_post", "website",
+    "director", "director_post", "reg_date", "msp_since", "employees",
+    "taxes_paid", "bankruptcy", "website",
 )
 
 
@@ -68,6 +74,11 @@ class CompanyDB:
             ("director", "director TEXT"),
             ("director_post", "director_post TEXT"),
             ("phones_site", "phones_site TEXT DEFAULT '[]'"),
+            ("reg_date", "reg_date TEXT"),
+            ("msp_since", "msp_since TEXT"),
+            ("employees", "employees INTEGER"),
+            ("taxes_paid", "taxes_paid REAL"),
+            ("bankruptcy", "bankruptcy INTEGER"),
         ):
             if column not in existing:
                 self.conn.execute(f"ALTER TABLE companies ADD COLUMN {ddl}")
@@ -184,6 +195,12 @@ class CompanyDB:
             ),
             "отсекаются (в СРО/исключены < года)": one(
                 "SELECT COUNT(*) FROM companies WHERE sro_member = 1"
+            ),
+            "банкротства (отсекаются)": one(
+                "SELECT COUNT(*) FROM companies WHERE bankruptcy = 1"
+            ),
+            "живые по признакам (СЧР>0 или налоги>0)": one(
+                "SELECT COUNT(*) FROM companies WHERE employees > 0 OR taxes_paid > 0"
             ),
             "стройка (41–43)": one(
                 "SELECT COUNT(*) FROM companies WHERE okved_main LIKE '41%' "

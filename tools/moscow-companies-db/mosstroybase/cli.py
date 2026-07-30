@@ -155,6 +155,11 @@ def _build_parser() -> argparse.ArgumentParser:
         "--include-sro", action="store_true",
         help="включить в выгрузку и членов строительных СРО (по умолчанию отсекаются)",
     )
+    p.add_argument(
+        "--alive-only", action="store_true",
+        help="только компании с признаками жизни: сотрудники (СЧР) > 0 или "
+             "уплаченные налоги > 0 (банкроты отсекаются всегда)",
+    )
     p.set_defaults(func=cmd_export)
 
     p = add_parser("clean-phones", help="вычистить мусорные телефоны из базы")
@@ -294,6 +299,8 @@ def select_for_checko(
     for company in companies:
         if company.get("sro_member") == 1:
             continue
+        if company.get("bankruptcy") == 1:
+            continue
         main_ok = rsmp.okved_matches(company.get("okved_main") or "", okved_prefixes)
         if not main_ok and not include_secondary:
             continue
@@ -302,9 +309,11 @@ def select_for_checko(
         if not include_with_phones and company.get("phones"):
             continue
         candidates.append(company)
-    # Основной ОКВЭД раньше дополнительного; внутри — сначала средние и малые:
-    # у них телефоны в источниках Checko находятся заметно чаще, чем у микро
+    # Порядок: основной ОКВЭД раньше дополнительного; внутри — средние и малые
+    # раньше микро (телефоны находятся чаще); внутри категории — свежие по дате
+    # включения в реестр МСП первыми (контакты моложе — дозвон выше)
     msp_priority = {"среднее": 0, "малое": 1, "микро": 2}
+    candidates.sort(key=lambda c: c.get("msp_since") or "", reverse=True)
     candidates.sort(
         key=lambda c: (
             0 if rsmp.okved_matches(c.get("okved_main") or "", okved_prefixes) else 1,
@@ -573,11 +582,11 @@ def cmd_export(args) -> int:
         try:
             if args.csv:
                 n = export_csv(db, args.csv, args.only_active, args.with_contacts_only,
-                               include_sro=args.include_sro)
+                               include_sro=args.include_sro, alive_only=args.alive_only)
                 print(f"[export] CSV: {args.csv} ({n} строк)")
             if args.xlsx:
                 n = export_xlsx(db, args.xlsx, args.only_active, args.with_contacts_only,
-                                include_sro=args.include_sro)
+                                include_sro=args.include_sro, alive_only=args.alive_only)
                 print(f"[export] XLSX: {args.xlsx} ({n} строк)")
         except PermissionError:
             print("Не удалось записать файл: он открыт в Excel. "

@@ -40,6 +40,7 @@ class TestRsmpParser(unittest.TestCase):
         self.assertEqual(stroy["okved_main"], "41.20")
         self.assertEqual(stroy["okved_add"], ["43.31"])
         self.assertEqual(stroy["msp_category"], "микро")
+        self.assertEqual(stroy["msp_since"], "2019-08-10")
         self.assertIn("МОСКВА", stroy["address"])
 
         geo = by_inn["7709876543"]

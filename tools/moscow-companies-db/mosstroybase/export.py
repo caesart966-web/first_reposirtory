@@ -18,6 +18,10 @@ COLUMNS = (
     ("address", "Адрес"),
     ("egrul_status", "Статус"),
     ("msp_category", "Категория МСП"),
+    ("reg_date", "Дата регистрации"),
+    ("employees", "Сотрудников (СЧР)"),
+    ("taxes_paid", "Налоги уплачено, ₽"),
+    ("bankruptcy", "Банкротство"),
     ("director", "Руководитель"),
     ("director_post", "Должность"),
     ("phones", "Телефоны (Checko)"),
@@ -32,13 +36,21 @@ COLUMNS = (
 def _rows(
     db: CompanyDB, only_active: bool, with_contacts_only: bool,
     inns: set[str] | None = None, include_sro: bool = False,
+    alive_only: bool = False,
 ):
     for company in db.iter_all():
         if inns is not None and company["inn"] not in inns:
             continue
         if not include_sro and company.get("sro_member") == 1:
             continue
+        # Банкроты — не лиды: исключаются из выгрузок всегда
+        if company.get("bankruptcy") == 1:
+            continue
         if only_active and company.get("is_active") == 0:
+            continue
+        if alive_only and not (
+            (company.get("employees") or 0) > 0 or (company.get("taxes_paid") or 0) > 0
+        ):
             continue
         if (with_contacts_only and not company["emails"] and not company["phones"]
                 and not company.get("phones_site")):
@@ -46,6 +58,8 @@ def _rows(
         row = []
         for field, _title in COLUMNS:
             value = company.get(field)
+            if field == "bankruptcy":
+                value = "банкротство" if value == 1 else ""
             if field in ("phones", "phones_site") and isinstance(value, list):
                 # Перестраховка: старые записи могли содержать ложные
                 # срабатывания регулярки — в выгрузку идут только валидные
@@ -59,12 +73,14 @@ def _rows(
 def export_csv(
     db: CompanyDB, path: str | Path, only_active: bool, with_contacts_only: bool,
     inns: set[str] | None = None, include_sro: bool = False,
+    alive_only: bool = False,
 ) -> int:
     count = 0
     with open(path, "w", newline="", encoding="utf-8-sig") as fh:
         writer = csv.writer(fh, delimiter=";")
         writer.writerow([title for _field, title in COLUMNS])
-        for row in _rows(db, only_active, with_contacts_only, inns, include_sro):
+        for row in _rows(db, only_active, with_contacts_only, inns, include_sro,
+                         alive_only):
             writer.writerow(row)
             count += 1
     return count
@@ -73,6 +89,7 @@ def export_csv(
 def export_xlsx(
     db: CompanyDB, path: str | Path, only_active: bool, with_contacts_only: bool,
     inns: set[str] | None = None, include_sro: bool = False,
+    alive_only: bool = False,
 ) -> int:
     try:
         from openpyxl import Workbook
@@ -84,7 +101,8 @@ def export_xlsx(
     ws.title = "Компании"
     ws.append([title for _field, title in COLUMNS])
     count = 0
-    for row in _rows(db, only_active, with_contacts_only, inns, include_sro):
+    for row in _rows(db, only_active, with_contacts_only, inns, include_sro,
+                     alive_only):
         ws.append(row)
         count += 1
     ws.freeze_panes = "A2"

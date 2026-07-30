@@ -54,6 +54,26 @@ def extract_contacts(data: dict) -> dict:
         if info.get("address"):
             break
 
+    # Признаки живости: дата регистрации, сотрудники, уплаченные налоги —
+    # и банкротство (записи в ЕФРСБ). Всё это есть в том же ответе Checko.
+    reg = data.get("ДатаРег")
+    if isinstance(reg, str) and reg.strip():
+        info["reg_date"] = reg.strip()
+    schr = data.get("СЧР")
+    if isinstance(schr, (int, float)):
+        info["employees"] = int(schr)
+    elif isinstance(schr, str) and schr.strip().isdigit():
+        info["employees"] = int(schr.strip())
+    taxes = data.get("Налоги")
+    if isinstance(taxes, dict):
+        try:
+            info["taxes_paid"] = float(str(taxes.get("СумУпл")).replace(",", "."))
+        except (TypeError, ValueError):
+            pass
+    efrsb = data.get("ЕФРСБ")
+    if efrsb is not None:
+        info["bankruptcy"] = 1 if efrsb else 0
+
     # Руководитель: ФИО и должность (личных телефонов в открытых данных нет).
     # Берём именно ключ "Руковод" верхнего уровня — substring-поиск зацепил бы
     # и "СвязРуковод"/"МассРуковод"

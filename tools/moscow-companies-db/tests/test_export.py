@@ -18,6 +18,9 @@ class TestExport(unittest.TestCase):
         # Только неподтверждённые номера с сайта — тоже считается контактом
         db.upsert({"inn": "5", "name": "Д", "phones_site": ["+74950000005"],
                    "is_active": 1})
+        # Банкрот — не лид, из выгрузок исключается всегда
+        db.upsert({"inn": "6", "name": "Е", "phones": ["+74950000006"],
+                   "is_active": 1, "bankruptcy": 1})
         return db
 
     def _inns(self, path: str) -> set[str]:
@@ -39,6 +42,23 @@ class TestExport(unittest.TestCase):
                 out = str(Path(tmp) / "out.csv")
                 export_csv(db, out, only_active=True, with_contacts_only=True)
                 self.assertEqual(self._inns(out), {"1", "5"})
+
+    def test_bankrupts_always_excluded(self):
+        with TemporaryDirectory() as tmp:
+            with self._make_db(tmp) as db:
+                out = str(Path(tmp) / "out.csv")
+                export_csv(db, out, only_active=False, with_contacts_only=False)
+                self.assertNotIn("6", self._inns(out))
+
+    def test_alive_only(self):
+        with TemporaryDirectory() as tmp:
+            with self._make_db(tmp) as db:
+                db.upsert({"inn": "7", "name": "Ж", "phones": ["+74950000007"],
+                           "is_active": 1, "employees": 12})
+                out = str(Path(tmp) / "out.csv")
+                export_csv(db, out, only_active=False, with_contacts_only=False,
+                           alive_only=True)
+                self.assertEqual(self._inns(out), {"7"})
 
     def test_sro_members_excluded_by_default(self):
         with TemporaryDirectory() as tmp:

@@ -34,6 +34,15 @@ def _local(tag: str) -> str:
     return tag.rsplit("}", 1)[-1]
 
 
+def _iso_date(raw: str) -> str | None:
+    """ДД.ММ.ГГГГ → ГГГГ-ММ-ДД (для сортировки строкой)."""
+    m = re.match(r"(\d{2})\.(\d{2})\.(\d{4})$", (raw or "").strip())
+    if not m:
+        return None
+    day, month, year = m.groups()
+    return f"{year}-{month}-{day}"
+
+
 def resolve_data_url(session: requests.Session) -> str:
     """Находит ссылку на актуальный ZIP выгрузки в meta.csv (или на странице паспорта)."""
     urls: list[str] = []
@@ -127,6 +136,7 @@ def _parse_document(elem: ET.Element) -> dict | None:
         "okved_main": None,
         "okved_add": [],
         "msp_category": _MSP_CATEGORIES.get(elem.get("КатСубМСП", ""), None),
+        "msp_since": _iso_date(elem.get("ДатаВклМСП", "")),
     }
     location_parts: list[str] = []
     for child in elem.iter():
