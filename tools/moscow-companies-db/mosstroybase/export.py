@@ -16,8 +16,6 @@ COLUMNS = (
     ("okved_main", "ОКВЭД основной"),
     ("okved_add", "ОКВЭД дополнительные"),
     ("address", "Адрес"),
-    ("egrul_status", "Статус"),
-    ("msp_category", "Категория МСП"),
     ("reg_date", "Дата регистрации"),
     ("employees", "Сотрудников (СЧР)"),
     ("taxes_paid", "Налоги уплачено, ₽"),
@@ -28,8 +26,6 @@ COLUMNS = (
     ("phones_site", "Телефоны с сайта (проверить)"),
     ("emails", "E-mail"),
     ("website", "Сайт"),
-    ("sro_info", "СРО"),
-    ("sources", "Источники"),
 )
 
 
