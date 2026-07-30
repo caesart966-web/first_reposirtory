@@ -14,7 +14,7 @@ from pathlib import Path
 
 import requests
 
-from . import config
+from . import config, riskscore
 from .db import CompanyDB
 from .export import export_csv, export_xlsx
 from .http import make_session
@@ -147,6 +147,11 @@ def _build_parser() -> argparse.ArgumentParser:
         help="какие основные ОКВЭД брать в работу (по умолчанию: %(default)s; "
              "например, --okved 41 42 43 — только стройка, без проектировщиков)",
     )
+    p.add_argument(
+        "--include-risky", action="store_true",
+        help="не отсеивать компании с признаками мусора/технички (по умолчанию "
+             "отсеиваются — см. --exclude-risky в export)",
+    )
     p.set_defaults(func=cmd_daily)
 
     p = add_parser("export", help="выгрузить базу в CSV/XLSX")
@@ -165,6 +170,13 @@ def _build_parser() -> argparse.ArgumentParser:
         "--alive-only", action="store_true",
         help="только компании с признаками жизни: сотрудники (СЧР) > 0 или "
              "уплаченные налоги > 0 (банкроты отсекаются всегда)",
+    )
+    p.add_argument(
+        "--exclude-risky", action="store_true",
+        help="отсеять компании с признаками мусора/технички: недостоверность "
+             "или предстоящее исключение в ЕГРЮЛ, отсутствие контактов, "
+             "0 сотрудников и 0 налогов, парная регистрация по одному адресу "
+             "(см. mosstroybase/riskscore.py)",
     )
     p.set_defaults(func=cmd_export)
 
@@ -185,6 +197,10 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("inn", help="ИНН для проверки")
     p.add_argument("--key", default=None, help=f"API-ключ (или переменная {config.CHECKO_API_KEY_ENV})")
     p.set_defaults(func=cmd_check_checko)
+
+    p = add_parser("check-risk", help="диагностика: разбор оценки риска (--exclude-risky) по одному ИНН")
+    p.add_argument("inn", help="ИНН для проверки")
+    p.set_defaults(func=cmd_check_risk)
 
     p = add_parser("stats", help="сводка по базе")
     p.set_defaults(func=cmd_stats)
@@ -547,10 +563,12 @@ def cmd_daily(args) -> int:
                 print(f"[daily] файл {path} открыт в Excel — сохраняю как {alt}")
                 return alt, export_xlsx(db, alt, **kwargs)
 
+        exclude_risky = not args.include_risky
         if processed:
             path, n = save(
                 out_dir / f"companies_{today}.xlsx",
                 only_active=False, with_contacts_only=False, inns=set(processed),
+                exclude_risky=exclude_risky,
             )
             print(f"[daily] сегодняшняя пачка: {path} ({n} компаний)")
         else:
@@ -559,7 +577,7 @@ def cmd_daily(args) -> int:
 
         path, n = save(
             out_dir / "companies_all.xlsx",
-            only_active=True, with_contacts_only=True,
+            only_active=True, with_contacts_only=True, exclude_risky=exclude_risky,
         )
         print(f"[daily] полная база с контактами: {path} ({n} компаний)")
     return 0
@@ -598,11 +616,13 @@ def cmd_export(args) -> int:
         try:
             if args.csv:
                 n = export_csv(db, args.csv, args.only_active, args.with_contacts_only,
-                               include_sro=args.include_sro, alive_only=args.alive_only)
+                               include_sro=args.include_sro, alive_only=args.alive_only,
+                               exclude_risky=args.exclude_risky)
                 print(f"[export] CSV: {args.csv} ({n} строк)")
             if args.xlsx:
                 n = export_xlsx(db, args.xlsx, args.only_active, args.with_contacts_only,
-                                include_sro=args.include_sro, alive_only=args.alive_only)
+                                include_sro=args.include_sro, alive_only=args.alive_only,
+                                exclude_risky=args.exclude_risky)
                 print(f"[export] XLSX: {args.xlsx} ({n} строк)")
         except PermissionError:
             print("Не удалось записать файл: он открыт в Excel. "
@@ -726,6 +746,30 @@ def cmd_check_checko(args) -> int:
         print(f"  «{marker}»: {'есть' if marker in lowered else 'нет'}")
     print(f"\nСырой ответ целиком ({len(text)} символов):")
     print(text[:20000])
+    return 0
+
+
+def cmd_check_risk(args) -> int:
+    """Показывает разбор скоринга риска (тот же, что и --exclude-risky) по одному ИНН."""
+    with CompanyDB(args.db) as db:
+        company = db.get(args.inn)
+        if company is None:
+            print(f"ИНН {args.inn} не найден в базе.", file=sys.stderr)
+            return 1
+        companies = list(db.iter_all())
+        scores = riskscore.score_all(companies)
+        score, reasons = scores[args.inn]
+    name = company.get("name_short") or company.get("name") or ""
+    verdict = (
+        "МУСОР" if score >= riskscore.JUNK_THRESHOLD
+        else "ПОД ВОПРОСОМ" if score >= riskscore.CHECK_THRESHOLD
+        else "ЧИСТЫЙ"
+    )
+    print(f"ИНН {args.inn} {name}: скор {score} — {verdict}")
+    for reason in reasons:
+        print(f"  - {reason}")
+    if not reasons:
+        print("  - причин для снижения оценки не найдено")
     return 0
 
 

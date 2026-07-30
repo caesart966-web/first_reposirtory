@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
+from . import riskscore
 from .db import CompanyDB
 from .normalize import is_valid_phone
 
@@ -32,9 +33,13 @@ COLUMNS = (
 def _rows(
     db: CompanyDB, only_active: bool, with_contacts_only: bool,
     inns: set[str] | None = None, include_sro: bool = False,
-    alive_only: bool = False,
+    alive_only: bool = False, exclude_risky: bool = False,
 ):
-    for company in db.iter_all():
+    companies = list(db.iter_all())
+    # Скор считается по всей базе разом: парная регистрация (тот же адрес +
+    # близкая дата) определяется сравнением компаний друг с другом
+    scores = riskscore.score_all(companies) if exclude_risky else {}
+    for company in companies:
         if inns is not None and company["inn"] not in inns:
             continue
         if not include_sro and company.get("sro_member") == 1:
@@ -51,6 +56,10 @@ def _rows(
         if (with_contacts_only and not company["emails"] and not company["phones"]
                 and not company.get("phones_site")):
             continue
+        if exclude_risky:
+            score, _reasons = scores[company["inn"]]
+            if riskscore.is_risky(score):
+                continue
         row = []
         for field, _title in COLUMNS:
             value = company.get(field)
@@ -69,14 +78,14 @@ def _rows(
 def export_csv(
     db: CompanyDB, path: str | Path, only_active: bool, with_contacts_only: bool,
     inns: set[str] | None = None, include_sro: bool = False,
-    alive_only: bool = False,
+    alive_only: bool = False, exclude_risky: bool = False,
 ) -> int:
     count = 0
     with open(path, "w", newline="", encoding="utf-8-sig") as fh:
         writer = csv.writer(fh, delimiter=";")
         writer.writerow([title for _field, title in COLUMNS])
         for row in _rows(db, only_active, with_contacts_only, inns, include_sro,
-                         alive_only):
+                         alive_only, exclude_risky):
             writer.writerow(row)
             count += 1
     return count
@@ -85,7 +94,7 @@ def export_csv(
 def export_xlsx(
     db: CompanyDB, path: str | Path, only_active: bool, with_contacts_only: bool,
     inns: set[str] | None = None, include_sro: bool = False,
-    alive_only: bool = False,
+    alive_only: bool = False, exclude_risky: bool = False,
 ) -> int:
     try:
         from openpyxl import Workbook
@@ -98,7 +107,7 @@ def export_xlsx(
     ws.append([title for _field, title in COLUMNS])
     count = 0
     for row in _rows(db, only_active, with_contacts_only, inns, include_sro,
-                     alive_only):
+                     alive_only, exclude_risky):
         ws.append(row)
         count += 1
     ws.freeze_panes = "A2"

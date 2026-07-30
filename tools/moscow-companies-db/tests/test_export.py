@@ -5,6 +5,7 @@ from tempfile import TemporaryDirectory
 
 from mosstroybase.db import CompanyDB
 from mosstroybase.export import export_csv
+from mosstroybase.riskscore import CHECK_THRESHOLD, score_company
 
 
 class TestExport(unittest.TestCase):
@@ -69,6 +70,21 @@ class TestExport(unittest.TestCase):
                 export_csv(db, out, only_active=False, with_contacts_only=False,
                            include_sro=True)
                 self.assertIn("4", self._inns(out))
+
+    def test_exclude_risky_drops_companies_without_any_contact(self):
+        with TemporaryDirectory() as tmp:
+            with self._make_db(tmp) as db:
+                # Компания "2" из _make_db без единого контакта — риск-скор
+                # riskscore.score_company должен признать её рискованной
+                score, _reasons = score_company(db.get("2"))
+                self.assertGreaterEqual(score, CHECK_THRESHOLD)
+
+                out = str(Path(tmp) / "out.csv")
+                export_csv(db, out, only_active=False, with_contacts_only=False,
+                           exclude_risky=True)
+                inns = self._inns(out)
+                self.assertNotIn("2", inns)
+                self.assertIn("1", inns)
 
 
 if __name__ == "__main__":
