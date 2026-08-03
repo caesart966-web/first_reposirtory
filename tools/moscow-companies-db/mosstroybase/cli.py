@@ -505,6 +505,16 @@ def cmd_enrich_checko(args) -> int:
     return 0
 
 
+def todays_checko_inns(db: CompanyDB, today: str) -> set[str]:
+    """ИНН компаний, которых Checko коснулся сегодня — за все запуски дня,
+    а не только за текущий (нужно, чтобы daily с разными ключами Checko в
+    один день не терял предыдущую пачку при пересборке файла)."""
+    return {
+        c["inn"] for c in db.iter_all()
+        if "checko" in c["sources"] and (c.get("updated_at") or "").startswith(today)
+    }
+
+
 def cmd_daily(args) -> int:
     """Ежедневный прогон: Checko-пачка → добор с сайтов → Excel за сегодня."""
     from datetime import date
@@ -573,13 +583,14 @@ def cmd_daily(args) -> int:
         else:
             print("[daily] фильтр риска ОТКЛЮЧЁН (--include-risky) — в выгрузку "
                   "попадут и подозрительные компании")
-        if processed:
+        todays_inns = todays_checko_inns(db, today)
+        if todays_inns:
             path, n = save(
                 out_dir / f"companies_{today}.xlsx",
-                only_active=False, with_contacts_only=False, inns=set(processed),
+                only_active=False, with_contacts_only=False, inns=todays_inns,
                 exclude_risky=exclude_risky,
             )
-            print(f"[daily] сегодняшняя пачка: {path} ({n} компаний)")
+            print(f"[daily] сегодняшняя пачка (за все запуски сегодня): {path} ({n} компаний)")
         else:
             print("[daily] сегодня новых компаний из Checko нет "
                   "(всё уже обработано, нет ключа или исчерпан лимит)")
