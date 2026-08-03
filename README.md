@@ -1,3 +1,12 @@
+# Репозиторий: два проекта
+
+1. **`orders-app/`** — приложение учёта заказов фрилансера (PWA, ставится на телефон,
+   работает офлайн). Инструкция и описание — [`orders-app/README.md`](orders-app/README.md).
+2. **`.claude/skills/construction-control/`** — Claude Code skill «ИИ-ассистент
+   строительного контроля» (описан ниже).
+
+---
+
 # ИИ-ассистент строительного контроля — Claude Code Skill
 
 Кастомный Claude Code skill **`/construction-control`**: оркестратор строительного

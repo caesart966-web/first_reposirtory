@@ -1,0 +1,102 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* ── Светлая тема ─────────────────────────────────────────────── */
+  :root {
+    --c-bg: 247 248 250; /* #F7F8FA */
+    --c-surface: 255 255 255; /* #FFFFFF */
+    --c-surface-2: 241 243 247; /* #F1F3F7 */
+    --c-line: 232 236 241; /* #E8ECF1 */
+    --c-ink: 26 31 43; /* #1A1F2B */
+    --c-muted: 107 118 132; /* #6B7684 */
+    --c-accent: 74 111 227; /* #4A6FE3 */
+    --c-money: 18 165 120; /* #12A578 */
+    --c-warn: 233 162 59; /* #E9A23B */
+    --c-danger: 224 90 71; /* #E05A47 */
+    --c-violet: 124 107 224; /* #7C6BE0 */
+    /* Насыщенность мягкой подложки у плашек-«пилюль» */
+    --tint: 0.1;
+    color-scheme: light;
+  }
+
+  /* ── Тёмная тема (продумана отдельно, а не инверсия) ──────────── */
+  .dark {
+    --c-bg: 18 21 28; /* #12151C */
+    --c-surface: 26 31 41; /* #1A1F29 */
+    --c-surface-2: 35 41 54; /* #232936 */
+    --c-line: 38 44 56; /* #262C38 */
+    --c-ink: 232 235 240; /* #E8EBF0 */
+    --c-muted: 135 146 163; /* #8792A3 */
+    --c-accent: 122 148 236; /* светлее и мягче, чтобы не резало глаз */
+    --c-money: 52 195 148;
+    --c-warn: 235 179 98;
+    --c-danger: 233 121 105;
+    --c-violet: 155 141 236;
+    --tint: 0.16;
+    color-scheme: dark;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-bg text-ink font-sans text-body antialiased;
+    /* Приложение не «резинится» по вертикали при свайпах в standalone-режиме */
+    overscroll-behavior-y: none;
+  }
+
+  /* Все числа — моноширинными цифрами, чтобы суммы в списках не «плясали» */
+  .tnum,
+  input[type='number'],
+  input[inputmode='numeric'] {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+  }
+
+  /* Убираем стрелки у числовых полей */
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-line;
+  }
+}
+
+@layer components {
+  /* Горизонтальные ленты без видимой полосы прокрутки */
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Минимальная область нажатия 44×44 */
+  .tap {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Уважение к системной настройке «меньше движения» */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
