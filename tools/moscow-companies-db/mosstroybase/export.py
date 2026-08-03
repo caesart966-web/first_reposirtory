@@ -34,6 +34,7 @@ def _rows(
     db: CompanyDB, only_active: bool, with_contacts_only: bool,
     inns: set[str] | None = None, include_sro: bool = False,
     alive_only: bool = False, exclude_risky: bool = False,
+    risk_stats: dict | None = None,
 ):
     companies = list(db.iter_all())
     # Скор считается по всей базе разом: парная регистрация (тот же адрес +
@@ -57,8 +58,15 @@ def _rows(
                 and not company.get("phones_site")):
             continue
         if exclude_risky:
+            # Считаем только среди реальных кандидатов на выгрузку (уже
+            # прошедших остальные фильтры) — не по всей базе, иначе доля
+            # выглядит устрашающе из-за необогащённых компаний
+            if risk_stats is not None:
+                risk_stats["candidates"] = risk_stats.get("candidates", 0) + 1
             score, _reasons = scores[company["inn"]]
             if riskscore.is_risky(score):
+                if risk_stats is not None:
+                    risk_stats["excluded"] = risk_stats.get("excluded", 0) + 1
                 continue
         row = []
         for field, _title in COLUMNS:
@@ -79,13 +87,14 @@ def export_csv(
     db: CompanyDB, path: str | Path, only_active: bool, with_contacts_only: bool,
     inns: set[str] | None = None, include_sro: bool = False,
     alive_only: bool = False, exclude_risky: bool = False,
+    risk_stats: dict | None = None,
 ) -> int:
     count = 0
     with open(path, "w", newline="", encoding="utf-8-sig") as fh:
         writer = csv.writer(fh, delimiter=";")
         writer.writerow([title for _field, title in COLUMNS])
         for row in _rows(db, only_active, with_contacts_only, inns, include_sro,
-                         alive_only, exclude_risky):
+                         alive_only, exclude_risky, risk_stats):
             writer.writerow(row)
             count += 1
     return count
@@ -95,6 +104,7 @@ def export_xlsx(
     db: CompanyDB, path: str | Path, only_active: bool, with_contacts_only: bool,
     inns: set[str] | None = None, include_sro: bool = False,
     alive_only: bool = False, exclude_risky: bool = False,
+    risk_stats: dict | None = None,
 ) -> int:
     try:
         from openpyxl import Workbook
@@ -107,7 +117,7 @@ def export_xlsx(
     ws.append([title for _field, title in COLUMNS])
     count = 0
     for row in _rows(db, only_active, with_contacts_only, inns, include_sro,
-                     alive_only, exclude_risky):
+                     alive_only, exclude_risky, risk_stats):
         ws.append(row)
         count += 1
     ws.freeze_panes = "A2"

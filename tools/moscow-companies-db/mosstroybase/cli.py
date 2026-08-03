@@ -574,32 +574,41 @@ def cmd_daily(args) -> int:
                 return alt, export_xlsx(db, alt, **kwargs)
 
         exclude_risky = not args.include_risky
-        if exclude_risky:
-            scores = riskscore.score_all(db.iter_all())
-            risky = sum(1 for score, _ in scores.values() if riskscore.is_risky(score))
-            print(f"[daily] фильтр риска включён (--exclude-risky по умолчанию): "
-                  f"в базе отсеяно от выгрузки {risky}/{len(scores)} компаний "
-                  "с признаками мусора/технички")
-        else:
+        if not exclude_risky:
             print("[daily] фильтр риска ОТКЛЮЧЁН (--include-risky) — в выгрузку "
                   "попадут и подозрительные компании")
+
+        def _report_risk(stats: dict) -> None:
+            # Считаем долю отсеянных только среди реальных кандидатов этого
+            # конкретного файла, а не по всей истории базы — иначе цифра
+            # тонет в необогащённых компаниях и выглядит как «99% мусора»
+            if exclude_risky and stats:
+                print(f"[daily] фильтр риска: отсеяно {stats.get('excluded', 0)}/"
+                      f"{stats.get('candidates', 0)} кандидатов этого файла "
+                      "(check-risk <ИНН> — разбор по одной компании)")
+
         todays_inns = todays_checko_inns(db, today)
         if todays_inns:
+            risk_stats: dict = {}
             path, n = save(
                 out_dir / f"companies_{today}.xlsx",
                 only_active=False, with_contacts_only=False, inns=todays_inns,
-                exclude_risky=exclude_risky,
+                exclude_risky=exclude_risky, risk_stats=risk_stats,
             )
             print(f"[daily] сегодняшняя пачка (за все запуски сегодня): {path} ({n} компаний)")
+            _report_risk(risk_stats)
         else:
             print("[daily] сегодня новых компаний из Checko нет "
                   "(всё уже обработано, нет ключа или исчерпан лимит)")
 
+        risk_stats_all: dict = {}
         path, n = save(
             out_dir / "companies_all.xlsx",
             only_active=True, with_contacts_only=True, exclude_risky=exclude_risky,
+            risk_stats=risk_stats_all,
         )
         print(f"[daily] полная база с контактами: {path} ({n} компаний)")
+        _report_risk(risk_stats_all)
     return 0
 
 
@@ -633,22 +642,30 @@ def cmd_export(args) -> int:
         print("Укажите --csv и/или --xlsx.", file=sys.stderr)
         return 1
     with CompanyDB(args.db) as db:
-        if args.exclude_risky:
-            scores = riskscore.score_all(db.iter_all())
-            risky = sum(1 for score, _ in scores.values() if riskscore.is_risky(score))
-            print(f"[export] фильтр риска включён (--exclude-risky): "
-                  f"отсеяно {risky}/{len(scores)} компаний с признаками мусора/технички")
+        def _report_risk(stats: dict) -> None:
+            # Доля отсеянных считается только среди кандидатов ЭТОЙ выгрузки
+            # (уже прошедших --only-active/--with-contacts-only/--alive-only),
+            # а не по всей базе — иначе необогащённые компании тонут в цифре
+            if args.exclude_risky and stats:
+                print(f"[export] фильтр риска: отсеяно {stats.get('excluded', 0)}/"
+                      f"{stats.get('candidates', 0)} кандидатов этой выгрузки "
+                      "(check-risk <ИНН> — разбор по одной компании)")
+
         try:
             if args.csv:
+                risk_stats: dict = {}
                 n = export_csv(db, args.csv, args.only_active, args.with_contacts_only,
                                include_sro=args.include_sro, alive_only=args.alive_only,
-                               exclude_risky=args.exclude_risky)
+                               exclude_risky=args.exclude_risky, risk_stats=risk_stats)
                 print(f"[export] CSV: {args.csv} ({n} строк)")
+                _report_risk(risk_stats)
             if args.xlsx:
+                risk_stats = {}
                 n = export_xlsx(db, args.xlsx, args.only_active, args.with_contacts_only,
                                 include_sro=args.include_sro, alive_only=args.alive_only,
-                                exclude_risky=args.exclude_risky)
+                                exclude_risky=args.exclude_risky, risk_stats=risk_stats)
                 print(f"[export] XLSX: {args.xlsx} ({n} строк)")
+                _report_risk(risk_stats)
         except PermissionError:
             print("Не удалось записать файл: он открыт в Excel. "
                   "Закройте его и повторите команду.", file=sys.stderr)
