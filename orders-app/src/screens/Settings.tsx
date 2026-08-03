@@ -105,7 +105,10 @@ export function Settings({ params }: { params: Record<string, string> }) {
     try {
       const text = await file.text()
       const res = await importJson(text)
-      toast(`Восстановлено: ${res.orders} заказов, ${res.clients} клиентов`)
+      toast(
+        `Восстановлено: ${plural(res.orders, 'заказ', 'заказа', 'заказов')}, ` +
+          plural(res.clients, 'клиент', 'клиента', 'клиентов'),
+      )
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Не получилось прочитать файл', 'error')
     }

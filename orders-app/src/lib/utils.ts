@@ -93,7 +93,7 @@ export function money(value: number, withSign = true): string {
   const rounded = Math.round(value)
   const s = Math.abs(rounded)
     .toString()
-    .replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
   const sign = rounded < 0 ? '−' : ''
   return withSign ? `${sign}${s} ₽` : `${sign}${s}`
 }
@@ -113,7 +113,7 @@ function trimZero(s: string): string {
 /** Разбор суммы из ввода: «10 000», «10к», «10.5» → число. */
 export function parseAmount(input: string): number {
   const cleaned = input
-    .replace(/\s| | /g, '')
+    .replace(/[\s\u00A0\u2009\u202F]/g, '')
     .replace(',', '.')
     .replace(/[кk]$/i, '000')
   const n = Number(cleaned.replace(/[^\d.-]/g, ''))
