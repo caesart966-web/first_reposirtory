@@ -564,6 +564,15 @@ def cmd_daily(args) -> int:
                 return alt, export_xlsx(db, alt, **kwargs)
 
         exclude_risky = not args.include_risky
+        if exclude_risky:
+            scores = riskscore.score_all(db.iter_all())
+            risky = sum(1 for score, _ in scores.values() if riskscore.is_risky(score))
+            print(f"[daily] фильтр риска включён (--exclude-risky по умолчанию): "
+                  f"в базе отсеяно от выгрузки {risky}/{len(scores)} компаний "
+                  "с признаками мусора/технички")
+        else:
+            print("[daily] фильтр риска ОТКЛЮЧЁН (--include-risky) — в выгрузку "
+                  "попадут и подозрительные компании")
         if processed:
             path, n = save(
                 out_dir / f"companies_{today}.xlsx",
@@ -613,6 +622,11 @@ def cmd_export(args) -> int:
         print("Укажите --csv и/или --xlsx.", file=sys.stderr)
         return 1
     with CompanyDB(args.db) as db:
+        if args.exclude_risky:
+            scores = riskscore.score_all(db.iter_all())
+            risky = sum(1 for score, _ in scores.values() if riskscore.is_risky(score))
+            print(f"[export] фильтр риска включён (--exclude-risky): "
+                  f"отсеяно {risky}/{len(scores)} компаний с признаками мусора/технички")
         try:
             if args.csv:
                 n = export_csv(db, args.csv, args.only_active, args.with_contacts_only,
