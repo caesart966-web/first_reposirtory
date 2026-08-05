@@ -135,6 +135,11 @@ def _build_parser() -> argparse.ArgumentParser:
         help="проверить только ИНН из файла (по одному в строке), а не всю "
              "базу — отсутствующих в базе добавит сам, как import-inn",
     )
+    p.add_argument(
+        "--out", default=None,
+        help="вместе с --file: сохранить результат по этому списку в CSV/XLSX "
+             "(по расширению файла) — ИНН, название, членство в СРО",
+    )
     p.set_defaults(func=cmd_enrich_sro)
 
     p = add_parser(
@@ -152,6 +157,11 @@ def _build_parser() -> argparse.ArgumentParser:
         "--file", default=None,
         help="проверить только ИНН из файла (по одному в строке), а не всю "
              "базу — отсутствующих в базе добавит сам, как import-inn",
+    )
+    p.add_argument(
+        "--out", default=None,
+        help="вместе с --file: сохранить результат по этому списку в CSV/XLSX "
+             "(по расширению файла) — ИНН, название, членство в НОПРИЗ",
     )
     p.set_defaults(func=cmd_enrich_nopriz)
 
@@ -442,10 +452,54 @@ def run_checko_batch(
     return processed
 
 
+def _write_membership_report(
+    path: str, db: CompanyDB, inns: list[str],
+    member_field: str, info_field: str, tag: str, label: str,
+) -> None:
+    """Результат проверки СРО/НОПРИЗ по конкретному списку ИНН — отдельным
+    файлом (ИНН, название, вердикт), а не в общей выгрузке лидов."""
+    rows = []
+    for inn in inns:
+        company = db.get(inn)
+        if company is None:
+            rows.append((inn, "", "не найдено в базе"))
+            continue
+        name = company.get("name_short") or company.get("name") or ""
+        member = company.get(member_field)
+        info = company.get(info_field) or []
+        if member == 1:
+            verdict = info[0] if info else f"член {label}"
+        elif member == 0:
+            verdict = info[0] if info else f"не в {label}"
+        else:
+            verdict = "не проверено (ошибка сети при обработке)"
+        rows.append((inn, name, verdict))
+
+    out_path = Path(path)
+    if out_path.suffix.lower() == ".xlsx":
+        from openpyxl import Workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.title = label
+        ws.append(["ИНН", "Название", "Результат"])
+        for row in rows:
+            ws.append(row)
+        ws.freeze_panes = "A2"
+        wb.save(out_path)
+    else:
+        import csv
+        with open(out_path, "w", newline="", encoding="utf-8-sig") as fh:
+            writer = csv.writer(fh, delimiter=";")
+            writer.writerow(["ИНН", "Название", "Результат"])
+            writer.writerows(rows)
+    print(f"[{tag}] результат по списку сохранён: {out_path} ({len(rows)} строк)")
+
+
 def cmd_enrich_sro(args) -> int:
     """Бесплатно помечает по реестру НОСТРОЙ, кто уже в строительной СРО."""
     session = make_session()
     processed = members = errors = 0
+    file_inns: list[str] | None = None
     with CompanyDB(args.db) as db:
         if args.file:
             path = Path(args.file)
@@ -461,6 +515,7 @@ def cmd_enrich_sro(args) -> int:
                     # Отсутствующих в базе добавляем сами — как import-inn
                     db.upsert({"inn": inn, "kind": "ЮЛ", "sources": ["manual"]})
                 inns.append(inn)
+            file_inns = inns
             all_from_file = [db.get(inn) for inn in inns]
             # По умолчанию пропускаем уже проверенных — иначе на большом
             # файле повторный запуск после обрыва передопрашивал бы всех
@@ -506,6 +561,10 @@ def cmd_enrich_sro(args) -> int:
             if processed % 100 == 0:
                 print(f"[sro] проверено {processed}, в СРО {members}", flush=True)
             time.sleep(args.delay)
+        if args.out and file_inns is not None:
+            _write_membership_report(
+                args.out, db, file_inns, "sro_member", "sro_info", "sro", "НОСТРОЙ",
+            )
     print(f"[sro] готово: проверено {processed}, из них в строительной СРО {members} "
           "(исключены из выгрузок и обзвона)")
     return 0
@@ -519,6 +578,7 @@ def cmd_enrich_nopriz(args) -> int:
     """
     session = make_session()
     processed = members = errors = 0
+    file_inns: list[str] | None = None
     with CompanyDB(args.db) as db:
         if args.file:
             path = Path(args.file)
@@ -533,6 +593,7 @@ def cmd_enrich_nopriz(args) -> int:
                 if db.get(inn) is None:
                     db.upsert({"inn": inn, "kind": "ЮЛ", "sources": ["manual"]})
                 inns.append(inn)
+            file_inns = inns
             all_from_file = [db.get(inn) for inn in inns]
             if args.recheck:
                 companies = all_from_file
@@ -573,6 +634,10 @@ def cmd_enrich_nopriz(args) -> int:
             if processed % 100 == 0:
                 print(f"[nopriz] проверено {processed}, в НОПРИЗ {members}", flush=True)
             time.sleep(args.delay)
+        if args.out and file_inns is not None:
+            _write_membership_report(
+                args.out, db, file_inns, "nopriz_member", "nopriz_info", "nopriz", "НОПРИЗ",
+            )
     print(f"[nopriz] готово: проверено {processed}, из них в НОПРИЗ {members} "
           "(справочно — из выгрузок не исключаются)")
     return 0

@@ -104,6 +104,37 @@ class TestEnrichSroFromFile(unittest.TestCase):
             self.assertEqual(rc, 0)
             self.assertEqual(set(checked), {"1", "2"})
 
+    def test_out_writes_report_covering_whole_file_not_just_this_run(self):
+        # "1" был проверен раньше (и потому пропущен этим запуском), "2" —
+        # проверяется сейчас; отчёт --out должен покрывать ОБЕИХ, не только
+        # тех, кого коснулся именно этот запуск
+        with TemporaryDirectory() as tmp:
+            db_path = str(Path(tmp) / "base.sqlite3")
+            with CompanyDB(db_path) as db:
+                db.upsert({"inn": "1", "name": 'ООО "Ранее проверен"', "sources": ["sro"],
+                           "sro_member": 1, "sro_info": ["НОСТРОЙ: член строительной СРО"]})
+
+            inns_file = Path(tmp) / "inns.txt"
+            inns_file.write_text("1\n2\n", encoding="utf-8")
+            out_csv = Path(tmp) / "результат.csv"
+
+            def fake_check_membership(inn, session):
+                return {"sro_member": 0, "sro_info": []}
+
+            with patch("mosstroybase.cli.sro.check_membership", side_effect=fake_check_membership):
+                rc = main(["--db", db_path, "enrich-sro", "--file", str(inns_file),
+                           "--out", str(out_csv)])
+            self.assertEqual(rc, 0)
+            self.assertTrue(out_csv.exists())
+
+            with open(out_csv, encoding="utf-8-sig") as fh:
+                rows = list(csv.reader(fh, delimiter=";"))
+            self.assertEqual(rows[0], ["ИНН", "Название", "Результат"])
+            by_inn = {r[0]: r for r in rows[1:]}
+            self.assertEqual(set(by_inn), {"1", "2"})
+            self.assertIn("член строительной СРО", by_inn["1"][2])
+            self.assertEqual(by_inn["2"][2], "не в НОСТРОЙ")
+
 
 class TestEnrichNoprizFromFile(unittest.TestCase):
     def test_checks_file_inns_without_touching_export_filters(self):
