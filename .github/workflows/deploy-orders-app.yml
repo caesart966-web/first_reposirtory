@@ -1,10 +1,11 @@
-name: Публикация приложения «Заказы» на GitHub Pages
+name: 'Публикация на GitHub Pages: «Заказы» и макет «Строй-Герой»'
 
 on:
   push:
     branches: [main]
     paths:
       - 'orders-app/**'
+      - 'stroigeroi-site/**'
       - '.github/workflows/deploy-orders-app.yml'
   workflow_dispatch: # позволяет запустить сборку руками из вкладки Actions
 
@@ -39,6 +40,11 @@ jobs:
 
       - name: Сборка
         run: npm run build
+
+      # Макет «Строй-Герой» — обычная статика, собирать нечего:
+      # кладём папку рядом, он открывается по адресу /stroigeroi/
+      - name: Добавляем макет «Строй-Герой»
+        run: cp -r ../stroigeroi-site dist/stroigeroi
 
       - uses: actions/configure-pages@v5
 
