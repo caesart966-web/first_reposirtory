@@ -461,7 +461,17 @@ def cmd_enrich_sro(args) -> int:
                     # Отсутствующих в базе добавляем сами — как import-inn
                     db.upsert({"inn": inn, "kind": "ЮЛ", "sources": ["manual"]})
                 inns.append(inn)
-            companies = [db.get(inn) for inn in inns]
+            all_from_file = [db.get(inn) for inn in inns]
+            # По умолчанию пропускаем уже проверенных — иначе на большом
+            # файле повторный запуск после обрыва передопрашивал бы всех
+            # заново. --recheck снимает это ограничение (перепроверка)
+            if args.recheck:
+                companies = all_from_file
+            else:
+                companies = [c for c in all_from_file if "sro" not in c["sources"]]
+                skipped = len(all_from_file) - len(companies)
+                if skipped:
+                    print(f"[sro] уже проверено ранее (пропускаю): {skipped}")
             print(f"[sro] к проверке из файла {path}: {len(companies)} "
                   "(бесплатно, вне зависимости от лимита)")
         elif args.recheck:
@@ -523,7 +533,14 @@ def cmd_enrich_nopriz(args) -> int:
                 if db.get(inn) is None:
                     db.upsert({"inn": inn, "kind": "ЮЛ", "sources": ["manual"]})
                 inns.append(inn)
-            companies = [db.get(inn) for inn in inns]
+            all_from_file = [db.get(inn) for inn in inns]
+            if args.recheck:
+                companies = all_from_file
+            else:
+                companies = [c for c in all_from_file if "nopriz" not in c["sources"]]
+                skipped = len(all_from_file) - len(companies)
+                if skipped:
+                    print(f"[nopriz] уже проверено ранее (пропускаю): {skipped}")
             print(f"[nopriz] к проверке из файла {path}: {len(companies)} "
                   "(бесплатно, вне зависимости от лимита)")
         elif args.recheck:

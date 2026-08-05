@@ -73,6 +73,37 @@ class TestEnrichSroFromFile(unittest.TestCase):
                 self.assertIn("sro", db.get("2")["sources"])
                 self.assertNotIn("sro", db.get("9")["sources"])  # вне файла — не проверяли
 
+    def test_resumes_without_rechecking_already_done(self):
+        # На большом файле процесс может прерваться на середине — повторный
+        # запуск с тем же файлом не должен переспрашивать уже проверенных
+        with TemporaryDirectory() as tmp:
+            db_path = str(Path(tmp) / "base.sqlite3")
+            with CompanyDB(db_path) as db:
+                db.upsert({"inn": "1", "name": "Уже проверен", "sources": ["sro"],
+                           "sro_member": 0})
+                db.upsert({"inn": "2", "name": "Ещё не проверен", "sources": ["rsmp"]})
+
+            inns_file = Path(tmp) / "inns.txt"
+            inns_file.write_text("1\n2\n", encoding="utf-8")
+
+            checked: list[str] = []
+
+            def fake_check_membership(inn, session):
+                checked.append(inn)
+                return {"sro_member": 0, "sro_info": []}
+
+            with patch("mosstroybase.cli.sro.check_membership", side_effect=fake_check_membership):
+                rc = main(["--db", db_path, "enrich-sro", "--file", str(inns_file)])
+            self.assertEqual(rc, 0)
+            self.assertEqual(checked, ["2"])  # "1" пропущен — уже был проверен
+
+            # --recheck снимает пропуск и переспрашивает всех из файла заново
+            checked.clear()
+            with patch("mosstroybase.cli.sro.check_membership", side_effect=fake_check_membership):
+                rc = main(["--db", db_path, "enrich-sro", "--file", str(inns_file), "--recheck"])
+            self.assertEqual(rc, 0)
+            self.assertEqual(set(checked), {"1", "2"})
+
 
 class TestEnrichNoprizFromFile(unittest.TestCase):
     def test_checks_file_inns_without_touching_export_filters(self):
