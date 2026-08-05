@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Контакты и магазины | Строй-Герой</title>
+<meta name="description" content="Адреса и телефон магазинов «Строй-Герой» в Петропавловске-Камчатском и Елизово.">
+<link rel="icon" href="assets/logo.png" type="image/png">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Перейти к содержимому</a>
+<header class="site-header">
+  <div class="stripe-band" aria-hidden="true"></div>
+
+  <div class="header-util">
+    <div class="container header-util__inner">
+      <span class="header-util__city"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>Город:</span>&nbsp;Петропавловск-Камчатский</span>
+
+      <div class="dropdown" data-dropdown>
+        <button class="dropdown__toggle" type="button" data-dropdown-toggle aria-expanded="false" aria-controls="util-shops">
+          Адреса магазинов <span class="icon-chevron"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></span>
+        </button>
+        <div class="dropdown__panel" id="util-shops" data-dropdown-panel hidden>
+          <div class="dropdown__item"><strong>ул. Чубарова, 16, корп. 40</strong><span>Петропавловск-Камчатский</span></div><div class="dropdown__item"><strong>просп. 50 лет Октября, 17А</strong><span>Петропавловск-Камчатский</span></div><div class="dropdown__item"><strong>Магистральная ул., 2/2</strong><span>Елизово</span></div>
+        </div>
+      </div>
+
+      <div class="dropdown" data-dropdown>
+        <button class="dropdown__toggle" type="button" data-dropdown-toggle aria-expanded="false" aria-controls="util-hours">
+          График работы <span class="icon-chevron"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></span>
+        </button>
+        <div class="dropdown__panel" id="util-hours" data-dropdown-panel hidden>
+          <p class="ph"><strong>Нужны данные</strong>Режим работы трёх магазинов заказчик ещё не прислал. Сюда подставляются реальные часы.</p>
+        </div>
+      </div>
+
+      <a class="header-util__phone" href="tel:+79638300999"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg>8-963-830-09-99</a>
+    </div>
+  </div>
+
+  <div class="container header-main">
+    <a class="site-logo" href="index.html">
+      <img src="assets/logo.png" width="78" height="78" alt="Строй-Герой — наши материалы, ваша уверенность">
+    </a>
+
+    <button class="btn btn--primary btn--upper header-catalog" type="button" data-catalog-toggle aria-expanded="false" aria-controls="catalog-menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/></svg> Каталог
+    </button>
+
+    <form class="search-form" role="search" action="catalog.html" method="get">
+      <label class="visually-hidden" for="site-search">Поиск товара по названию</label>
+      <input class="search-form__input" id="site-search" name="search" type="search" placeholder="Поиск товара по названию">
+      <button class="search-form__submit" type="submit">Найти</button>
+    </form>
+
+    <div class="header-actions">
+      <a class="icon-btn" href="#" data-demo="избранное" aria-label="Избранное"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20s-7-4.4-7-9.4A3.9 3.9 0 0 1 12 7.2 3.9 3.9 0 0 1 19 10.6c0 5-7 9.4-7 9.4Z"/></svg></a>
+      <a class="icon-btn" href="#" data-demo="сравнение" aria-label="Сравнение товаров"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 20V11M12 20V4M18 20v-6"/></svg></a>
+      <a class="icon-btn" href="#" data-demo="корзина" aria-label="Корзина"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9.5" cy="19.5" r="1.6"/><circle cx="17" cy="19.5" r="1.6"/><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L20 8H6"/></svg><span class="icon-btn__count">0</span></a>
+      <a class="icon-btn" href="#" data-demo="вход в личный кабинет" aria-label="Личный кабинет"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg></a>
+      <button class="header-burger" type="button" data-burger aria-expanded="false" aria-controls="mobile-nav" aria-label="Меню сайта"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    </div>
+  </div>
+
+  <div class="catalog-menu" id="catalog-menu" data-catalog-menu hidden>
+    <div class="container">
+      <div class="catalog-menu__grid"><a class="catalog-menu__link" href="catalog.html"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M9 4v16M15 4v16"/></svg>Гипсокартон</a><a class="catalog-menu__link" href="catalog.html"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5.5 8h13l-1.4 11.1a1 1 0 0 1-1 .9H7.9a1 1 0 0 1-1-.9z"/><path d="M8 8a4 4 0 0 1 8 0"/></svg>Шпатлёвка</a><a class="catalog-menu__link" href="catalog.html"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M8.5 4h7l1.5 4.5V19a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V8.5z"/><path d="M10 4v3.5M14 4v3.5"/></svg>Штукатурка</a><a class="catalog-menu__link" href="catalog.html"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="6" width="17" height="12" rx="2"/><path d="M8 6v12M12 6v12M16 6v12"/></svg>Радиаторы</a><a class="catalog-menu__link" href="catalog.html"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.5S18 10 18 13.5a6 6 0 0 1-12 0C6 10 12 3.5 12 3.5Z"/></svg>Сантехника</a></div>
+    </div>
+  </div>
+
+  <div class="container">
+    <nav class="mobile-nav" id="mobile-nav" data-mobile-nav hidden aria-label="Мобильное меню">
+      <a class="mobile-nav__link" href="catalog.html">Гипсокартон</a><a class="mobile-nav__link" href="catalog.html">Шпатлёвка</a><a class="mobile-nav__link" href="catalog.html">Штукатурка</a><a class="mobile-nav__link" href="catalog.html">Радиаторы</a><a class="mobile-nav__link" href="catalog.html">Сантехника</a>
+      <a class="mobile-nav__link" href="contacts.html">Контакты и магазины</a>
+      <a class="mobile-nav__link" href="tel:+79638300999">8-963-830-09-99</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <div class="container">
+
+    <nav class="breadcrumbs" aria-label="Хлебные крошки">
+      <ol>
+        <li><a href="index.html">Главная</a></li>
+        <li aria-current="page">Контакты</li>
+      </ol>
+    </nav>
+
+    <div class="page-head">
+      <h1>Контакты</h1>
+      <p>Три магазина: два в Петропавловске-Камчатском и один в Елизово. Телефон общий — звоните в любой.</p>
+    </div>
+
+    <section class="section section--tight" style="padding-top:0">
+      <div class="shop-grid"><article class="shop-card">
+  <div class="shop-card__top" aria-hidden="true"></div>
+  <div class="shop-card__body">
+    <p class="shop-card__city">Петропавловск-Камчатский</p>
+    <h3 class="shop-card__addr">ул. Чубарова, 16, корп. 40</h3>
+    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><a href="tel:+79638300999">8-963-830-09-99</a></p>
+    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="ph ph--inline">режим работы — нужен от заказчика</span></p>
+    <div class="ph ph--map shop-card__map"><span><strong>Карта</strong>Здесь встанет Яндекс.Карта с точкой магазина</span></div>
+  </div>
+</article><article class="shop-card">
+  <div class="shop-card__top" aria-hidden="true"></div>
+  <div class="shop-card__body">
+    <p class="shop-card__city">Петропавловск-Камчатский</p>
+    <h3 class="shop-card__addr">просп. 50 лет Октября, 17А</h3>
+    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><a href="tel:+79638300999">8-963-830-09-99</a></p>
+    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="ph ph--inline">режим работы — нужен от заказчика</span></p>
+    <div class="ph ph--map shop-card__map"><span><strong>Карта</strong>Здесь встанет Яндекс.Карта с точкой магазина</span></div>
+  </div>
+</article><article class="shop-card">
+  <div class="shop-card__top" aria-hidden="true"></div>
+  <div class="shop-card__body">
+    <p class="shop-card__city">Елизово</p>
+    <h3 class="shop-card__addr">Магистральная ул., 2/2</h3>
+    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><a href="tel:+79638300999">8-963-830-09-99</a></p>
+    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="ph ph--inline">режим работы — нужен от заказчика</span></p>
+    <div class="ph ph--map shop-card__map"><span><strong>Карта</strong>Здесь встанет Яндекс.Карта с точкой магазина</span></div>
+  </div>
+</article></div>
+    </section>
+
+    <section class="section section--tight">
+      <div class="contacts-grid">
+
+        <div>
+          <h2 class="section__title" style="margin-bottom:16px">Общие контакты</h2>
+          <ul class="info-list">
+            <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><span><strong>Телефон</strong><a href="tel:+79638300999">8-963-830-09-99</a></span></li>
+            <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/></svg><span><strong>Почта</strong><a href="mailto:stroigeroi41@mail.ru">stroigeroi41@mail.ru</a></span></li>
+            <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span><strong>Режим работы</strong><span class="ph ph--inline">нужен от заказчика</span></span></li>
+            <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg><span><strong>Реквизиты</strong><span class="ph ph--inline">название юрлица, ИНН, ОГРН — от заказчика</span></span></li>
+          </ul>
+
+          <div class="ph ph--map" style="margin-top:24px">
+            <span><strong>Общая карта</strong>Одна карта с тремя точками магазинов.<br>Встанет виджет Яндекс.Карт.</span>
+          </div>
+        </div>
+
+        <form class="form" action="#" method="post" novalidate>
+          <h2 style="margin-bottom:16px">Задать вопрос</h2>
+          <div class="form__row">
+            <label for="name">Как вас зовут</label>
+            <input id="name" name="name" type="text" placeholder="Имя">
+          </div>
+          <div class="form__row">
+            <label for="contact">Телефон или почта</label>
+            <input id="contact" name="contact" type="text" placeholder="Куда ответить">
+          </div>
+          <div class="form__row">
+            <label for="message">Вопрос</label>
+            <textarea id="message" name="message" placeholder="Что нужно: материал, объём, сроки"></textarea>
+          </div>
+          <button class="btn btn--action btn--block btn--lg" type="button" data-demo="отправка формы">Отправить</button>
+          <p class="form__hint">В макете форма не отправляется. В рабочей версии письмо уйдёт на stroigeroi41@mail.ru.</p>
+        </form>
+
+      </div>
+    </section>
+
+  </div>
+</main>
+<footer class="site-footer">
+  <div class="stripe-band stripe-band--thin" aria-hidden="true"></div>
+  <div class="container">
+    <div class="site-footer__grid">
+
+      <div class="footer-brand">
+        <div class="footer-brand__logo">
+          <img src="assets/logo.png" width="64" height="64" alt="Строй-Герой">
+          <span class="footer-brand__slogan">Наши материалы — ваша уверенность</span>
+        </div>
+        <p>Сеть магазинов строительных материалов на Камчатке. Три магазина: два в Петропавловске-Камчатском и один в Елизово.</p>
+        <div class="social">
+          <a href="#" data-demo="переход в соцсеть" aria-label="Сообщество магазина"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 9h16v11H4z"/><path d="m4 9 1.5-5h13L20 9M4 9a2.5 2.5 0 0 0 4 1 2.5 2.5 0 0 0 4 0 2.5 2.5 0 0 0 4 0 2.5 2.5 0 0 0 4-1"/></svg></a>
+          <a href="mailto:stroigeroi41@mail.ru" aria-label="Написать на почту"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/></svg></a>
+          <a href="tel:+79638300999" aria-label="Позвонить"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg></a>
+        </div>
+      </div>
+
+      <div>
+        <h3>Каталог</h3>
+        <ul><li><a href="catalog.html">Гипсокартон</a></li><li><a href="catalog.html">Шпатлёвка</a></li><li><a href="catalog.html">Штукатурка</a></li><li><a href="catalog.html">Радиаторы</a></li><li><a href="catalog.html">Сантехника</a></li></ul>
+      </div>
+
+      <div>
+        <h3>Покупателям</h3>
+        <ul>
+          <li><a href="contacts.html">Контакты</a></li>
+          <li><a href="contacts.html">Адреса магазинов</a></li>
+          <li><a href="#" data-demo="раздел «Доставка»">Доставка и оплата</a></li>
+          <li><a href="#" data-demo="раздел «Возврат»">Возврат товара</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h3>Контакты</h3>
+        <ul>
+          <li><a href="tel:+79638300999"><strong>8-963-830-09-99</strong></a></li>
+          <li><a href="mailto:stroigeroi41@mail.ru">stroigeroi41@mail.ru</a></li>
+          <li>ул. Чубарова, 16, корп. 40<br><span style="color:var(--sg-muted);font-size:14px">Петропавловск-Камчатский</span></li><li>просп. 50 лет Октября, 17А<br><span style="color:var(--sg-muted);font-size:14px">Петропавловск-Камчатский</span></li><li>Магистральная ул., 2/2<br><span style="color:var(--sg-muted);font-size:14px">Елизово</span></li>
+        </ul>
+      </div>
+
+    </div>
+    <div class="site-footer__bottom">
+      <p>© Строй-Герой, Камчатский край</p>
+      <p class="ph ph--inline">Реквизиты организации — нужны от заказчика</p>
+    </div>
+  </div>
+</footer>
+
+<p class="demo-note" data-demo-note hidden role="status"></p>
+
+<script src="assets/app.js"></script>
+</body>
+</html>
