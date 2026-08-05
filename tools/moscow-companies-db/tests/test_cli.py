@@ -2,6 +2,7 @@ import csv
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 from mosstroybase.cli import main, todays_checko_inns
 from mosstroybase.db import CompanyDB
@@ -40,6 +41,69 @@ class TestCliEndToEnd(unittest.TestCase):
             with open(csv_path, encoding="utf-8-sig") as fh:
                 rows = list(csv.reader(fh, delimiter=";"))
             self.assertEqual({r[0] for r in rows[1:]}, {"7736520080", "5036045205"})
+
+
+class TestEnrichSroFromFile(unittest.TestCase):
+    def test_checks_exactly_the_file_inns_adding_missing_ones(self):
+        # "1" уже в базе (из другого источника), "2" — новый, только из файла;
+        # оба должны быть проверены, а компании из базы вне файла — нет
+        with TemporaryDirectory() as tmp:
+            db_path = str(Path(tmp) / "base.sqlite3")
+            with CompanyDB(db_path) as db:
+                db.upsert({"inn": "1", "name": "В базе", "sources": ["rsmp"]})
+                db.upsert({"inn": "9", "name": "Не в файле — не трогать", "sources": ["rsmp"]})
+
+            inns_file = Path(tmp) / "inns.txt"
+            inns_file.write_text("1\n2\nне-инн\n", encoding="utf-8")
+
+            checked: list[str] = []
+
+            def fake_check_membership(inn, session):
+                checked.append(inn)
+                return {"sro_member": 0, "sro_info": []}
+
+            with patch("mosstroybase.cli.sro.check_membership", side_effect=fake_check_membership):
+                rc = main(["--db", db_path, "enrich-sro", "--file", str(inns_file)])
+            self.assertEqual(rc, 0)
+            self.assertEqual(set(checked), {"1", "2"})
+
+            with CompanyDB(db_path) as db:
+                self.assertIsNotNone(db.get("2"))  # добавлен из файла
+                self.assertIn("sro", db.get("1")["sources"])
+                self.assertIn("sro", db.get("2")["sources"])
+                self.assertNotIn("sro", db.get("9")["sources"])  # вне файла — не проверяли
+
+
+class TestEnrichNoprizFromFile(unittest.TestCase):
+    def test_checks_file_inns_without_touching_export_filters(self):
+        with TemporaryDirectory() as tmp:
+            db_path = str(Path(tmp) / "base.sqlite3")
+            inns_file = Path(tmp) / "inns.txt"
+            inns_file.write_text("7700000001\n7700000002\n", encoding="utf-8")
+
+            def fake_check_membership(inn, session):
+                # Первая — проектная (член НОПРИЗ), вторая — нет
+                if inn == "7700000001":
+                    return {"nopriz_member": 1, "nopriz_info": ["НОПРИЗ: член СРО"]}
+                return {"nopriz_member": 0, "nopriz_info": []}
+
+            with patch("mosstroybase.cli.nopriz.check_membership",
+                       side_effect=fake_check_membership):
+                rc = main(["--db", db_path, "enrich-nopriz", "--file", str(inns_file)])
+            self.assertEqual(rc, 0)
+
+            with CompanyDB(db_path) as db:
+                self.assertEqual(db.get("7700000001")["nopriz_member"], 1)
+                self.assertEqual(db.get("7700000002")["nopriz_member"], 0)
+                # sro_member не тронут — НОПРИЗ не влияет на отсев по СРО
+                self.assertIsNone(db.get("7700000001").get("sro_member"))
+
+            # НОПРИЗ-членство не исключает из выгрузки (в отличие от sro_member)
+            csv_path = str(Path(tmp) / "out.csv")
+            main(["--db", db_path, "export", "--csv", csv_path])
+            with open(csv_path, encoding="utf-8-sig") as fh:
+                rows = list(csv.reader(fh, delimiter=";"))
+            self.assertEqual({r[0] for r in rows[1:]}, {"7700000001", "7700000002"})
 
 
 class TestTodaysCheckoInns(unittest.TestCase):

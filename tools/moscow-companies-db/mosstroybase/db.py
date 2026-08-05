@@ -25,6 +25,8 @@ CREATE TABLE IF NOT EXISTS companies (
     is_active INTEGER,
     sro_member INTEGER,
     sro_info TEXT DEFAULT '[]',
+    nopriz_member INTEGER,
+    nopriz_info TEXT DEFAULT '[]',
     director TEXT,
     director_post TEXT,
     reg_date TEXT,
@@ -44,12 +46,14 @@ CREATE INDEX IF NOT EXISTS idx_companies_okved_main ON companies(okved_main);
 CREATE INDEX IF NOT EXISTS idx_companies_region ON companies(region_code);
 """
 
-_LIST_FIELDS = ("okved_add", "emails", "phones", "phones_site", "sources", "sro_info")
+_LIST_FIELDS = (
+    "okved_add", "emails", "phones", "phones_site", "sources", "sro_info", "nopriz_info",
+)
 _SCALAR_FIELDS = (
     "ogrn", "name", "name_short", "kind", "region_code", "address",
     "okved_main", "msp_category", "egrul_status", "is_active", "sro_member",
-    "director", "director_post", "reg_date", "msp_since", "employees",
-    "taxes_paid", "bankruptcy", "website",
+    "nopriz_member", "director", "director_post", "reg_date", "msp_since",
+    "employees", "taxes_paid", "bankruptcy", "website",
 )
 
 
@@ -71,6 +75,8 @@ class CompanyDB:
         for column, ddl in (
             ("sro_member", "sro_member INTEGER"),
             ("sro_info", "sro_info TEXT DEFAULT '[]'"),
+            ("nopriz_member", "nopriz_member INTEGER"),
+            ("nopriz_info", "nopriz_info TEXT DEFAULT '[]'"),
             ("director", "director TEXT"),
             ("director_post", "director_post TEXT"),
             ("phones_site", "phones_site TEXT DEFAULT '[]'"),
@@ -195,6 +201,9 @@ class CompanyDB:
             ),
             "отсекаются (в СРО/исключены < года)": one(
                 "SELECT COUNT(*) FROM companies WHERE sro_member = 1"
+            ),
+            "в проектных/изыск. СРО НОПРИЗ (справочно)": one(
+                "SELECT COUNT(*) FROM companies WHERE nopriz_member = 1"
             ),
             "банкротства (отсекаются)": one(
                 "SELECT COUNT(*) FROM companies WHERE bankruptcy = 1"

@@ -18,7 +18,7 @@ from . import config, riskscore
 from .db import CompanyDB
 from .export import export_csv, export_xlsx
 from .http import make_session
-from .sources import checko, egrul, rsmp, sro, website
+from .sources import checko, egrul, nopriz, rsmp, sro, website
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -130,7 +130,30 @@ def _build_parser() -> argparse.ArgumentParser:
         help="перепроверить компании, уже помеченные как «не в СРО» "
              "(нужно после исправления фильтра реестра)",
     )
+    p.add_argument(
+        "--file", default=None,
+        help="проверить только ИНН из файла (по одному в строке), а не всю "
+             "базу — отсутствующих в базе добавит сам, как import-inn",
+    )
     p.set_defaults(func=cmd_enrich_sro)
+
+    p = add_parser(
+        "enrich-nopriz",
+        help="пометить членов проектно-изыскательских СРО по реестру НОПРИЗ "
+             "(бесплатно; справочно — на выгрузки не влияет)",
+    )
+    p.add_argument("--limit", type=int, default=0, help="проверить не более N компаний")
+    p.add_argument("--delay", type=float, default=config.DEFAULT_DELAY_SRO, help="пауза, сек")
+    p.add_argument(
+        "--recheck", action="store_true",
+        help="перепроверить компании, уже помеченные как «не в НОПРИЗ»",
+    )
+    p.add_argument(
+        "--file", default=None,
+        help="проверить только ИНН из файла (по одному в строке), а не всю "
+             "базу — отсутствующих в базе добавит сам, как import-inn",
+    )
+    p.set_defaults(func=cmd_enrich_nopriz)
 
     p = add_parser("daily", help="ежедневный прогон: СРО-фильтр + Checko-пачка + сайты + Excel за сегодня")
     p.add_argument("--key", default=None, help=f"API-ключ Checko (или переменная {config.CHECKO_API_KEY_ENV})")
@@ -192,6 +215,10 @@ def _build_parser() -> argparse.ArgumentParser:
     p = add_parser("check-sro", help="диагностика: проверить один ИНН по реестру НОСТРОЙ")
     p.add_argument("inn", help="ИНН для проверки")
     p.set_defaults(func=cmd_check_sro)
+
+    p = add_parser("check-nopriz", help="диагностика: проверить один ИНН по реестру НОПРИЗ")
+    p.add_argument("inn", help="ИНН для проверки")
+    p.set_defaults(func=cmd_check_nopriz)
 
     p = add_parser("check-checko", help="диагностика: сырой ответ Checko API по одному ИНН")
     p.add_argument("inn", help="ИНН для проверки")
@@ -420,7 +447,24 @@ def cmd_enrich_sro(args) -> int:
     session = make_session()
     processed = members = errors = 0
     with CompanyDB(args.db) as db:
-        if args.recheck:
+        if args.file:
+            path = Path(args.file)
+            if not path.exists():
+                print(f"Файл {path} не найден.", file=sys.stderr)
+                return 1
+            inns: list[str] = []
+            for line in path.read_text(encoding="utf-8").splitlines():
+                inn = line.strip()
+                if not inn or not inn.isdigit():
+                    continue
+                if db.get(inn) is None:
+                    # Отсутствующих в базе добавляем сами — как import-inn
+                    db.upsert({"inn": inn, "kind": "ЮЛ", "sources": ["manual"]})
+                inns.append(inn)
+            companies = [db.get(inn) for inn in inns]
+            print(f"[sro] к проверке из файла {path}: {len(companies)} "
+                  "(бесплатно, вне зависимости от лимита)")
+        elif args.recheck:
             companies = [
                 c for c in db.iter_all()
                 if "sro" in c["sources"] and c.get("sro_member") != 1
@@ -454,6 +498,66 @@ def cmd_enrich_sro(args) -> int:
             time.sleep(args.delay)
     print(f"[sro] готово: проверено {processed}, из них в строительной СРО {members} "
           "(исключены из выгрузок и обзвона)")
+    return 0
+
+
+def cmd_enrich_nopriz(args) -> int:
+    """Бесплатно помечает по реестру НОПРИЗ, кто в проектно-изыскательской СРО.
+
+    Справочная проверка — в отличие от enrich-sro, не влияет на выгрузки и
+    --exclude-risky, только заполняет nopriz_member/nopriz_info.
+    """
+    session = make_session()
+    processed = members = errors = 0
+    with CompanyDB(args.db) as db:
+        if args.file:
+            path = Path(args.file)
+            if not path.exists():
+                print(f"Файл {path} не найден.", file=sys.stderr)
+                return 1
+            inns: list[str] = []
+            for line in path.read_text(encoding="utf-8").splitlines():
+                inn = line.strip()
+                if not inn or not inn.isdigit():
+                    continue
+                if db.get(inn) is None:
+                    db.upsert({"inn": inn, "kind": "ЮЛ", "sources": ["manual"]})
+                inns.append(inn)
+            companies = [db.get(inn) for inn in inns]
+            print(f"[nopriz] к проверке из файла {path}: {len(companies)} "
+                  "(бесплатно, вне зависимости от лимита)")
+        elif args.recheck:
+            companies = [
+                c for c in db.iter_all()
+                if "nopriz" in c["sources"] and c.get("nopriz_member") != 1
+            ]
+            if args.limit:
+                companies = companies[: args.limit]
+            print(f"[nopriz] перепроверка ранее помеченных «не в НОПРИЗ»: {len(companies)}")
+        else:
+            companies = list(db.iter_missing_source("nopriz", limit=args.limit))
+            print(f"[nopriz] к проверке по реестру НОПРИЗ: {len(companies)} (бесплатно)")
+        for company in companies:
+            membership = nopriz.check_membership(company["inn"], session)
+            if membership is None:
+                errors += 1
+                if errors >= 10 and errors > processed:
+                    print("[nopriz] реестр НОПРИЗ недоступен — останавливаюсь; "
+                          "запустите команду позже", file=sys.stderr)
+                    return 1
+                continue
+            db.upsert({"inn": company["inn"], "sources": ["nopriz"], **membership})
+            processed += 1
+            members += membership["nopriz_member"]
+            if membership["nopriz_member"] == 1:
+                name = company.get("name_short") or company.get("name") or ""
+                print(f"[nopriz] {company['inn']} {name}: член проектно-изыскательской СРО",
+                      flush=True)
+            if processed % 100 == 0:
+                print(f"[nopriz] проверено {processed}, в НОПРИЗ {members}", flush=True)
+            time.sleep(args.delay)
+    print(f"[nopriz] готово: проверено {processed}, из них в НОПРИЗ {members} "
+          "(справочно — из выгрузок не исключаются)")
     return 0
 
 
@@ -756,6 +860,33 @@ def cmd_check_sro(args) -> int:
         print(f"ИНН {args.inn}: записей по этому ИНН не найдено (не в СРО)")
     if sro._working_body is not None:
         print(f"[диагностика] сработал формат фильтра №{sro._working_body + 1}")
+    return 0
+
+
+def cmd_check_nopriz(args) -> int:
+    """Проверяет один ИНН по реестру НОПРИЗ с подбором формата фильтра."""
+    import json as _json
+
+    session = make_session()
+    nopriz._working_body = None
+    nopriz._format_unusable = False
+    result = nopriz.check_membership(args.inn, session)
+    if result is None:
+        print("Не удалось определить членство: реестр недоступен или ни один "
+              "формат фильтра не сработал. Ниже — сырой ответ для отладки.")
+        payload = nopriz._post(nopriz._FILTER_BODIES[0](args.inn), session, 30)
+        if payload is not None:
+            text = _json.dumps(payload, ensure_ascii=False)
+            print(f"\nСырой ответ формата №1 ({len(text)} символов):\n{text[:1200]}")
+        return 1
+    if result["nopriz_member"] == 1:
+        print(f"ИНН {args.inn}: член проектно-изыскательской СРО (НОПРИЗ)")
+    elif result["nopriz_info"]:
+        print(f"ИНН {args.inn}: {result['nopriz_info'][0]}")
+    else:
+        print(f"ИНН {args.inn}: записей по этому ИНН не найдено (не в НОПРИЗ)")
+    if nopriz._working_body is not None:
+        print(f"[диагностика] сработал формат фильтра №{nopriz._working_body + 1}")
     return 0
 
 
