@@ -716,41 +716,43 @@ ul {
   background-image: var(--sg-stripes-lg);
   border: 1px solid var(--sg-line);
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
-  gap: var(--sp-5);
-  padding: var(--sp-6);
+  padding: var(--sp-5) var(--sp-5) 0;
+  overflow: hidden;
 }
 
 /* Эмблема лежит прямо на полосках: у неё свой белый круг внутри кольца */
+/* Слева эмблема по центру, справа маскот — стоит на нижней кромке панели */
 .hero__marks {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  align-items: center;
-  gap: var(--sp-5);
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  align-items: end;
+  gap: var(--sp-4);
   width: 100%;
 }
 
 .hero__emblem {
-  width: min(300px, 100%);
+  width: min(280px, 100%);
   height: auto;
   justify-self: center;
+  align-self: center;
+  margin-bottom: var(--sp-6);
   filter: drop-shadow(0 6px 18px rgba(16, 24, 40, 0.18));
 }
 
 .hero__mascot {
+  align-self: end;
   display: grid;
-  place-items: center;
-  min-height: 220px;
+  justify-items: center;
 }
 
 .hero__mascot img {
   width: 100%;
+  max-width: 340px;
   height: auto;
-  max-height: 420px;
-  object-fit: contain;
-  filter: drop-shadow(0 8px 22px rgba(16, 24, 40, 0.22));
+  display: block;
+  filter: drop-shadow(0 10px 26px rgba(16, 24, 40, 0.28));
 }
 
 /* Пока файла маскота нет — вместо картинки подпись, что именно нужно */
