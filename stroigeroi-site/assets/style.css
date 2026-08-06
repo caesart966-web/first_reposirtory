@@ -723,33 +723,43 @@ ul {
   padding: var(--sp-6);
 }
 
-.hero__badge {
-  width: min(280px, 64%);
-  aspect-ratio: 1 / 1;
-  border-radius: 50%;
-  background: var(--sg-white);
+/* Эмблема лежит прямо на полосках: у неё свой белый круг внутри кольца */
+.hero__marks {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--sp-5);
+  width: 100%;
+}
+
+.hero__emblem {
+  width: min(300px, 100%);
+  height: auto;
+  justify-self: center;
+  filter: drop-shadow(0 6px 18px rgba(16, 24, 40, 0.18));
+}
+
+.hero__mascot {
   display: grid;
   place-items: center;
-  padding: var(--sp-5);
-  box-shadow: var(--sh-lg);
+  min-height: 220px;
 }
 
-.hero__badge img {
+.hero__mascot img {
   width: 100%;
   height: auto;
+  max-height: 420px;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 22px rgba(16, 24, 40, 0.22));
 }
 
-.hero__slogan {
-  width: 100%;
-  margin: 0;
-  padding: var(--sp-3) var(--sp-4);
-  border-radius: var(--r-md);
+/* Пока файла маскота нет — вместо картинки подпись, что именно нужно */
+.hero__mascot .ph {
   background: var(--sg-white);
-  border: 1px solid var(--sg-line);
-  text-align: center;
-  font-weight: 700;
-  color: var(--sg-blue);
+  max-width: 320px;
 }
+
+
 
 /* ==========================================================================
    Плитки категорий
@@ -1791,6 +1801,14 @@ ul {
 
   .hero__visual {
     min-height: 300px;
+  }
+
+  .hero__marks {
+    grid-template-columns: 1fr;
+  }
+
+  .hero__emblem {
+    width: min(260px, 70%);
   }
 }
 
@@ -3324,17 +3342,7 @@ html[data-theme="dark"] .step.is-current .step__num {
    Тёмная тема: логотип остаётся на белом — как требует фирменный стиль
    ========================================================================== */
 
-html[data-theme="dark"] .site-logo img,
-html[data-theme="dark"] .footer-brand__logo img,
-html[data-theme="dark"] .hero__badge {
-  background: #ffffff;
-  border-radius: 50%;
-}
 
-html[data-theme="dark"] .site-logo img,
-html[data-theme="dark"] .footer-brand__logo img {
-  padding: 3px;
-}
 
 /* Подпись на заглушке фото должна читаться поверх штриховки */
 .ph--photo {
