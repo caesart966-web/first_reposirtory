@@ -65,6 +65,49 @@ def _read_xlsx_raw(path: str) -> list[list[str]]:
         return rows
 
 
+def read_found_inns(path: str) -> set[str]:
+    """ИНН из предыдущего результата, у которых уже есть телефон.
+
+    Нужно для --only-missing: не тратим квоту API на закрытые строки.
+    Ищет столбцы «ИНН» и «Телефон» по шапке, а не по номеру, чтобы работать
+    и с файлом, собранным вручную.
+    """
+    ext = os.path.splitext(path)[1].lower()
+    try:
+        if ext in (".csv", ".tsv"):
+            delim = "\t" if ext == ".tsv" else ","
+            with open(path, encoding="utf-8-sig") as fh:
+                rows = [list(r) for r in csv.reader(fh, delimiter=delim)]
+        else:
+            try:
+                import openpyxl  # type: ignore
+                wb = openpyxl.load_workbook(path, data_only=True, read_only=True)
+                rows = [[("" if c is None else str(c)) for c in r]
+                        for r in wb.active.iter_rows(values_only=True)]
+            except ImportError:
+                rows = _read_xlsx_raw(path)
+    except Exception:
+        return set()
+
+    if not rows:
+        return set()
+
+    header = [str(h).strip().lower() for h in rows[0]]
+    inn_col = next((i for i, h in enumerate(header) if "инн" in h), None)
+    tel_col = next((i for i, h in enumerate(header) if "телефон" in h or "phone" in h), None)
+    if inn_col is None or tel_col is None:
+        return set()
+
+    found: set[str] = set()
+    for row in rows[1:]:
+        inn = (row[inn_col] if len(row) > inn_col else "").strip()
+        tel = (row[tel_col] if len(row) > tel_col else "").strip()
+        inn = re.sub(r"\.0$", "", inn)
+        if inn and tel:
+            found.add(inn)
+    return found
+
+
 def read_companies(path: str) -> list[Company]:
     """Читает файл: 1-й столбец — название, 2-й — ИНН. Первая строка — шапка."""
     ext = os.path.splitext(path)[1].lower()
