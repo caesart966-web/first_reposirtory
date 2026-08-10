@@ -1,0 +1,154 @@
+# Конфигурация приложения. Ключи API сюда НЕ пишутся — только в .env.
+
+app:
+  # Контактный адрес владельца парсера — подставляется в User-Agent,
+  # чтобы администраторы сайтов могли связаться (переопределяется CONTACT_EMAIL из .env)
+  contact_email: "owner@example.com"
+  user_agent: "ContactFinderBot/1.0"
+
+http:
+  concurrency: 10          # одновременно обрабатываемых компаний (флаг --threads главнее)
+  per_host_rps: 5          # запросов в секунду на один домен
+  connect_timeout: 10      # секунд на установку соединения
+  read_timeout: 30         # секунд на чтение ответа
+  retries: 5               # попыток на запрос
+  backoff: [2, 4, 8, 16, 32]   # экспоненциальные паузы между попытками, сек
+  respect_robots: true     # соблюдать robots.txt при обходе сайтов
+  proxy_check_url: "https://api.ipify.org"   # URL проверки живости прокси
+
+cache:
+  ttl_days: 30             # TTL кэша ответов источников
+  db_path: "data/finder.db"
+
+# full — опросить все источники; first_email — остановиться на первом валидном e-mail
+depth: "full"
+
+sources:
+  egrul:         { enabled: true,  priority: 10 }
+  zakupki:       { enabled: true,  priority: 20 }
+  sro:           { enabled: true,  priority: 30 }
+  website:       { enabled: true,  priority: 40, max_pages: 8 }
+  dgis:          { enabled: true,  priority: 50 }   # нужен DGIS_API_KEY
+  yandex_maps:   { enabled: true,  priority: 55 }   # нужен YANDEX_MAPS_API_KEY
+  dadata:        { enabled: true,  priority: 60 }   # нужен DADATA_API_KEY
+  domain_search: { enabled: true,  priority: 70 }   # нужны ключи search API
+
+circuit_breaker:
+  error_threshold: 5       # ошибок подряд до паузы источника
+  pause_minutes: 15        # длительность паузы источника
+
+validation:
+  check_mx: true           # реальная DNS-проверка MX-записи домена почты
+  # Локальные части адресов, которые считаются мусором/шаблоном
+  email_stop_prefixes:
+    - example
+    - test
+    - noreply
+    - no-reply
+    - nobody
+    - your
+    - vash
+    - ваш
+    - email
+    - e-mail
+    - name
+    - user
+    - demo
+    - sample
+  # Полные адреса-заглушки
+  email_stop_addresses:
+    - "email@site.ru"
+    - "info@site.ru"
+    - "mail@site.ru"
+    - "ваш@почта.рф"
+    - "email@example.com"
+  # Домены веб-студий, хостеров и конструкторов — их почта в футере не контакт компании
+  dev_stoplist_domains:
+    - artlebedev.ru
+    - bitrix24.ru
+    - 1c-bitrix.ru
+    - tilda.cc
+    - tilda.ws
+    - wix.com
+    - nethouse.ru
+    - umi.ru
+    - ukit.com
+    - insales.ru
+    - megagroup.ru
+    - reg.ru
+    - timeweb.ru
+    - timeweb.com
+    - beget.com
+    - beget.ru
+    - sprinthost.ru
+    - jino.ru
+    - masterhost.ru
+    - nic.ru
+    - webasyst.com
+    - joomla.org
+    - wordpress.org
+    - drupal.org
+    - modx.com
+    - amocrm.ru
+    - webflow.com
+  # Бесплатные почтовые сервисы (корпоративная почта на домене компании приоритетнее)
+  free_mail_domains:
+    - mail.ru
+    - bk.ru
+    - list.ru
+    - inbox.ru
+    - internet.ru
+    - yandex.ru
+    - ya.ru
+    - gmail.com
+    - rambler.ru
+    - outlook.com
+    - hotmail.com
+    - icloud.com
+  # Агрегаторы и справочники — не могут быть «официальным сайтом компании»
+  aggregator_domains:
+    - rusprofile.ru
+    - sbis.ru
+    - saby.ru
+    - zachestnyibiznes.ru
+    - spark-interfax.ru
+    - list-org.com
+    - checko.ru
+    - audit-it.ru
+    - kontur.ru
+    - focus.kontur.ru
+    - vbankcenter.ru
+    - companies.rbc.ru
+    - e-ecolog.ru
+    - hh.ru
+    - avito.ru
+    - 2gis.ru
+    - yandex.ru
+    - google.com
+    - vk.com
+    - ok.ru
+    - t.me
+    - wikipedia.org
+    - egrul.nalog.ru
+    - nalog.gov.ru
+    - zakupki.gov.ru
+    - tenderguru.ru
+    - synapsenet.ru
+    - dic.academic.ru
+    - banki.ru
+    - unirate24.ru
+    - gmcgks.ru
+
+# Веса скоринга достоверности (ТЗ, п. 6)
+scoring:
+  level_a: 40              # источник уровня A (официальный реестр)
+  verified_site: 30        # контакт с домена, подтверждённого по ИНН
+  multi_source: 15         # контакт в 2+ независимых источниках
+  corp_domain: 10          # домен почты совпадает с сайтом компании
+  level_d_unverified: -20  # уровень D без верификации
+  liquidated: -30          # компания ликвидирована
+  base_b_unverified: 15    # контакт с сайта-кандидата (не подтверждён)
+  base_c: 20               # источник уровня C (агрегатор с официальным API)
+
+output:
+  logs_dir: "logs"
