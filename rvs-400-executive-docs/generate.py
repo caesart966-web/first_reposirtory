@@ -1758,6 +1758,14 @@ def main(outdir):
     build_certificates_xlsx(xlsx)
     made.append(xlsx)
 
+    # --- организационные документы и письма ---
+    from orgdocs import ORG_BUILDERS
+    odir = os.path.join(outdir, "05 Приказы и письма")
+    for code, name, builder, land in ORG_BUILDERS:
+        d = new_doc(landscape=land)
+        builder(d)
+        made.append(save(d, os.path.join(odir, f"{code} {safe(name)}.docx")))
+
     # --- журналы ---
     jdir = os.path.join(outdir, "04 Журналы")
     for code, name in JOURNALS:
