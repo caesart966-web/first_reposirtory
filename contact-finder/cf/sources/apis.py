@@ -106,7 +106,11 @@ def _request(fetcher: Fetcher, url: str, cache_key: str, use_cache: bool) -> dic
     except Exception:  # noqa: BLE001
         return None
 
-    cache.put(cache_key, raw)
+    # Ответы-ошибки не кэшируем. Иначе «превышен суточный лимит», полученный
+    # сегодня, навсегда осел бы в кэше, и завтра запрос уже не повторился бы —
+    # компания молча осталась бы без контактов.
+    if not _meta_problem(payload):
+        cache.put(cache_key, raw)
     return payload
 
 
