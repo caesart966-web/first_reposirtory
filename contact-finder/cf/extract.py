@@ -88,6 +88,14 @@ _REQUISITE_CONTEXT = re.compile(
     re.I,
 )
 
+# Дата: 27.02.2026 (точки) или 2021-07-16 (ISO).
+# Дефисы сюда НЕ включены намеренно — иначе «238-95-81» читается как дата.
+# Без этой проверки «27.02.2026 17:18» превращалось в «+7 (270) 220-26-17».
+_DATE_LIKE = re.compile(r"\d{1,2}\s*\.\s*\d{1,2}\s*\.\s*\d{2,4}|\d{4}-\d{2}-\d{2}")
+# Десятичная дробь: 25063000.00 , 770111091.76 — это сумма, не телефон.
+# Проверяется только при единственной точке, чтобы не терять запись 8.812.449.84.88.
+_DECIMAL_LIKE = re.compile(r"\d[.,]\d{1,2}\s*$")
+
 
 def phones_from_text(text: str) -> list[str]:
     """Телефоны из плоского текста.
@@ -111,6 +119,15 @@ def phones_from_text(text: str) -> list[str]:
         # Число сразу после «ИНН»/«ОГРН»/«БИК»/«счёт» — реквизит, не телефон.
         prefix = text[max(0, match.start() - 12): match.start()]
         if _REQUISITE_CONTEXT.search(prefix):
+            continue
+        # Дата или денежная сумма — не телефон.
+        if _DATE_LIKE.search(chunk):
+            continue
+        if chunk.count(".") == 1 and _DECIMAL_LIKE.search(chunk):
+            continue
+        # Дата могла остаться слева от кандидата: «27.02.2026 17:18» режется
+        # двоеточием, и в кандидат попадает хвост «2026 17». Смотрим контекст.
+        if _DATE_LIKE.search(text[max(0, match.start() - 11): match.end()]):
             continue
 
         phone = normalize_phone(chunk)
