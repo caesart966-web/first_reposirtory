@@ -154,6 +154,14 @@ def checko_api(company, fetcher: Fetcher, cfg) -> list[Found]:
             continue
 
         phones, emails, site, got_inn = _collect(data)
+
+        # Контрагент найден (ИНН в ответе совпал) — второй endpoint не нужен,
+        # даже если контактов у него нет. Иначе на каждую компанию без
+        # телефона уходило бы два запроса вместо одного, и суточный лимит
+        # тратился бы вдвое быстрее.
+        if got_inn == inn and not (phones or emails or site):
+            return []
+
         if not (phones or emails or site):
             continue
 
