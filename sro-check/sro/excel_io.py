@@ -24,6 +24,7 @@ from .models import SOURCE_NOPRIZ, SOURCE_NOSTROY, CheckResult, Verdict
 # ---------------------------------------------------------------------------
 
 COL_VERDICT = "Есть СРО"
+COL_MEMBER_NAME = "Компания в реестре"
 COL_SRO_NAME = "Название СРО"
 COL_REG_NUMBER = "Реестровый номер"
 COL_STATUS = "Статус членства"
@@ -33,6 +34,7 @@ COL_NOTE = "Примечание"
 
 OUTPUT_COLUMNS = (
     COL_VERDICT,
+    COL_MEMBER_NAME,
     COL_SRO_NAME,
     COL_REG_NUMBER,
     COL_STATUS,
@@ -43,6 +45,7 @@ OUTPUT_COLUMNS = (
 
 COLUMN_WIDTHS = {
     COL_VERDICT: 20,
+    COL_MEMBER_NAME: 46,
     COL_SRO_NAME: 52,
     COL_REG_NUMBER: 18,
     COL_STATUS: 18,
@@ -50,6 +53,8 @@ COLUMN_WIDTHS = {
     COL_SOURCE: 14,
     COL_NOTE: 46,
 }
+
+SUMMARY_SHEET = "Итоги проверки"
 
 # Как узнать нужные колонки в исходном файле: подстроки в названии заголовка.
 INN_ALIASES = ("инн",)
@@ -247,26 +252,69 @@ def write_result(
     row: int,
     result: CheckResult,
     colorize: bool = True,
+    extra_note: str = "",
 ) -> None:
-    """Записать результат проверки в строку."""
+    """Записать результат проверки в строку.
+
+    `extra_note` дописывается к примечанию: туда попадает то, что зависит от
+    самой строки файла, а не от ответа реестра (например, расхождение названий).
+    """
+    note = "; ".join(part for part in (result.diagnostics, extra_note) if part)
     values = {
         COL_VERDICT: result.verdict.value,
+        COL_MEMBER_NAME: result.member_names,
         COL_SRO_NAME: result.sro_names,
         COL_REG_NUMBER: result.registry_numbers,
         COL_STATUS: result.statuses,
         COL_DATE: result.checked_at,
         COL_SOURCE: result.sources,
-        COL_NOTE: result.diagnostics,
+        COL_NOTE: note,
     }
 
+    wrapped = (COL_MEMBER_NAME, COL_SRO_NAME, COL_NOTE)
     for name, value in values.items():
         column = layout.columns.get(name)
         if not column:
             continue
         cell = worksheet.cell(row=row, column=column, value=value or "")
-        cell.alignment = Alignment(vertical="top", wrap_text=name in (COL_SRO_NAME, COL_NOTE))
+        cell.alignment = Alignment(vertical="top", wrap_text=name in wrapped)
         if colorize and name == COL_VERDICT:
             cell.fill = VERDICT_FILLS[result.verdict]
+
+
+def finish_sheet(worksheet: Worksheet, layout: SheetLayout) -> None:
+    """Довести лист до удобного вида: закрепить шапку и включить фильтр.
+
+    Делается один раз перед сохранением: 393 строки без фильтра и закреплённой
+    шапки читать невозможно.
+    """
+    try:
+        worksheet.freeze_panes = worksheet.cell(row=layout.header_row + 1, column=1)
+        last_column = get_column_letter(max(worksheet.max_column, 1))
+        last_row = max(worksheet.max_row, layout.header_row)
+        worksheet.auto_filter.ref = f"A{layout.header_row}:{last_column}{last_row}"
+    except Exception:
+        # Оформление — не то, ради чего стоит терять результат проверки.
+        pass
+
+
+def write_summary(workbook, rows: list[tuple[str, object]]) -> None:
+    """Отдельный лист с итогами прогона: сколько чего и с какими настройками."""
+    if SUMMARY_SHEET in workbook.sheetnames:
+        del workbook[SUMMARY_SHEET]
+    sheet = workbook.create_sheet(SUMMARY_SHEET)
+    sheet.column_dimensions["A"].width = 34
+    sheet.column_dimensions["B"].width = 60
+
+    title = sheet.cell(row=1, column=1, value="Итоги проверки СРО")
+    title.font = Font(bold=True, size=14)
+
+    for index, (label, value) in enumerate(rows, start=3):
+        name_cell = sheet.cell(row=index, column=1, value=label)
+        name_cell.font = Font(bold=True)
+        name_cell.alignment = Alignment(vertical="top")
+        value_cell = sheet.cell(row=index, column=2, value=value)
+        value_cell.alignment = Alignment(vertical="top", wrap_text=True)
 
 
 def registry_order(priority: str) -> list[str]:

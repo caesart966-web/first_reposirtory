@@ -22,8 +22,9 @@ from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font, PatternFill
 
 import check_sro
+import ui_palette
 from sro import discover as discover_mod
-from sro import excel_io
+from sro import excel_io, names
 from sro.inn import is_valid_inn, normalize_inn
 from sro.models import (
     SOURCE_NOPRIZ,
@@ -192,6 +193,76 @@ class TestInterpret(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # Работа по сети (через мок реестра)
 # ---------------------------------------------------------------------------
+
+
+class TestLogColouring(unittest.TestCase):
+    """Раскраска журнала: цвет строки должен совпадать с её смыслом."""
+
+    def check(self, line: str, expected: str) -> None:
+        self.assertEqual(ui_palette.classify(line), expected, line)
+
+    def test_verdicts(self):
+        self.check("Проверено 1 из 393 | ООО «А» | ИНН 7702521529 → да | СРО «Строители»", "ok")
+        self.check("Проверено 2 из 393 | АО «Б» | ИНН 7707083893 → нет", "bad")
+
+    def test_unknown_is_amber_not_red(self):
+        """Главная ловушка: «не удалось проверить» нельзя красить как «нет»."""
+        self.check(
+            "Проверено 3 из 393 | ООО «В» | ИНН 7806479303 → не удалось проверить | HTTP 404",
+            "warn",
+        )
+
+    def test_alerts_and_headings(self):
+        self.check("ОШИБКА: файл не найден", "alert")
+        self.check("СБОЙ: ConnectionError", "alert")
+        self.check("ВНИМАНИЕ: первые 25 компаний — все «нет»", "warn")
+        self.check("  ! ВНИМАНИЕ: в реестре другая компания", "warn")
+        self.check("=== НОСТРОЙ ===", "head")
+        self.check("ИТОГ: рабочий способ проверки есть", "head")
+        self.check("=" * 60, "head")
+
+    def test_service_lines_are_dimmed(self):
+        self.check("", "muted")
+        self.check("[НОСТРОЙ] ищу действующий адрес в скриптах сайта…", "muted")
+        self.check("  … промежуточный результат сохранён", "muted")
+
+    def test_company_named_like_a_keyword_keeps_its_verdict(self):
+        self.check("Проверено 7 из 9 | ООО «Внимание» | ИНН 7702521529 → да", "ok")
+
+    def test_plain_text_stays_plain(self):
+        self.check("Файл: C:/Users/Оператор/Компании.xlsx", "body")
+
+    def test_every_tag_has_a_colour(self):
+        for line in ("=== x ===", "→ да", "→ нет", "не удалось проверить", "ОШИБКА", "", "текст"):
+            self.assertIn(ui_palette.classify(line), ui_palette.LOG_TAGS)
+
+
+class TestCompanyNames(unittest.TestCase):
+    """Сверка названий ловит опечатку в ИНН: запись найдена, но не про ту компанию."""
+
+    def test_legal_form_does_not_matter(self):
+        self.assertTrue(
+            names.looks_like_same_company(
+                'ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ "МОСТОСТРОЙ"', "ООО «Мостострой»"
+            )
+        )
+
+    def test_shortened_name_still_matches(self):
+        self.assertTrue(names.looks_like_same_company('ООО "МЕГ"', "ООО «Мегаполис»"))
+
+    def test_different_companies_are_caught(self):
+        self.assertFalse(names.looks_like_same_company('ООО "Ромашка"', "ООО «Лютик»"))
+
+    def test_silence_when_there_is_nothing_to_compare(self):
+        """Ложная тревога на каждой строке обесценила бы предупреждение."""
+        self.assertTrue(names.looks_like_same_company("", "ООО «Лютик»"))
+        self.assertTrue(names.looks_like_same_company('ООО "Ромашка"', None))
+        self.assertTrue(names.looks_like_same_company("ООО", "АО"))
+
+    def test_note_quotes_the_registry_name(self):
+        note = names.mismatch_note('ООО "Ромашка"', "ООО «Лютик»")
+        self.assertIn("Лютик", note)
+        self.assertEqual(names.mismatch_note('ООО "Ромашка"', "ООО «Ромашка»"), "")
 
 
 class TestOrigin(unittest.TestCase):
@@ -810,6 +881,127 @@ class TestGuiPlumbing(unittest.TestCase):
         code = check_sro.run(self.make_args(), self.quiet_log(), cancel=cancel)
         self.assertEqual(code, 130)
         self.assertEqual([value for value in self.verdict_column_values() if value], [])
+
+
+class TestResultFileIsReadable(unittest.TestCase):
+    """Оформление результата: 393 строки без шапки и фильтра читать невозможно."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.mock = MockRegistry()
+        cls.mock.__enter__()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.mock.__exit__(None, None, None)
+
+    def setUp(self):
+        self.folder = tempfile.mkdtemp(prefix="sro-view-")
+        self.source = os.path.join(self.folder, "Компании_Список.xlsx")
+        self.output = os.path.join(self.folder, "Результат.xlsx")
+        make_source_file(self.source)
+        self.run_tool()
+
+    def run_tool(self) -> None:
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            check_sro.main(
+                [
+                    "--input", self.source,
+                    "--sheet", "Лиды по приоритету",
+                    "--output", self.output,
+                    "--cache", os.path.join(self.folder, "кэш.json"),
+                    "--log", os.path.join(self.folder, "лог.txt"),
+                    "--nostroy-url", self.mock.url,
+                    "--nopriz-url", self.mock.url,
+                    "--browser", "never",
+                    "--delay-min", "0", "--delay-max", "0",
+                    "--attempts", "1", "--timeout", "5",
+                ]
+            )
+
+    def test_header_is_frozen_and_filter_is_on(self):
+        sheet = load_workbook(self.output)["Лиды по приоритету"]
+        # Шапка в образце — во второй строке, значит закрепляем по третью
+        self.assertEqual(sheet.freeze_panes, "A3")
+        self.assertTrue(sheet.auto_filter.ref, "должен быть включён автофильтр")
+
+    def test_summary_sheet_reports_the_run(self):
+        workbook = load_workbook(self.output)
+        self.assertIn(excel_io.SUMMARY_SHEET, workbook.sheetnames)
+        sheet = workbook[excel_io.SUMMARY_SHEET]
+        labels = {sheet.cell(row=row, column=1).value for row in range(1, 20)}
+        for expected in ("Проверено компаний", "Не удалось проверить", "Есть СРО"):
+            self.assertIn(expected, labels)
+
+    def test_summary_survives_second_run(self):
+        """Повторный запуск не должен плодить листы «Итоги проверки (2)»."""
+        self.run_tool()
+        names_after = load_workbook(self.output).sheetnames
+        self.assertEqual(names_after.count(excel_io.SUMMARY_SHEET), 1)
+
+
+class TestWrongInnIsCaught(unittest.TestCase):
+    """Опечатка в ИНН: реестр отвечает «да», но про совершенно другую компанию."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.mock = MockRegistry()
+        cls.mock.__enter__()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.mock.__exit__(None, None, None)
+
+    def setUp(self):
+        self.folder = tempfile.mkdtemp(prefix="sro-mismatch-")
+        self.source = os.path.join(self.folder, "Один.xlsx")
+        self.output = os.path.join(self.folder, "Один_результат.xlsx")
+
+    def build(self, company: str) -> None:
+        workbook = Workbook()
+        worksheet = workbook.active
+        worksheet.title = "Лиды по приоритету"
+        for index, title in enumerate(["Поставщик", "ИНН", "Приоритет"], start=1):
+            worksheet.cell(row=1, column=index, value=title)
+        worksheet.cell(row=2, column=1, value=company)
+        worksheet.cell(row=2, column=2, value=int(mock.MEMBER_INN))
+        worksheet.cell(row=2, column=3, value="Строители")
+        workbook.save(self.source)
+
+    def note_for(self, company: str) -> str:
+        self.build(company)
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            check_sro.main(
+                [
+                    "--input", self.source,
+                    "--sheet", "Лиды по приоритету",
+                    "--output", self.output,
+                    "--cache", os.path.join(self.folder, "кэш.json"),
+                    "--log", os.path.join(self.folder, "лог.txt"),
+                    "--nostroy-url", self.mock.url,
+                    "--nopriz-url", self.mock.url,
+                    "--browser", "never",
+                    "--delay-min", "0", "--delay-max", "0",
+                    "--attempts", "1", "--timeout", "5",
+                ]
+            )
+        sheet = load_workbook(self.output)["Лиды по приоритету"]
+        headers = {
+            excel_io.normalize_header(sheet.cell(row=1, column=column).value): column
+            for column in range(1, sheet.max_column + 1)
+        }
+        return str(sheet.cell(row=2, column=headers["примечание"]).value or "")
+
+    def test_wrong_company_is_flagged(self):
+        note = self.note_for("ООО «Совершенно другая контора»")
+        self.assertIn("ВНИМАНИЕ", note)
+        self.assertIn("Мостострой", note, "в примечании должно быть название из реестра")
+
+    def test_matching_company_is_not_flagged(self):
+        note = self.note_for('ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ "МОСТОСТРОЙ"')
+        self.assertNotIn("ВНИМАНИЕ", note)
 
 
 if __name__ == "__main__":

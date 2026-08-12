@@ -77,6 +77,9 @@ class Membership:
     sro_name: str | None = None
     registry_number: str | None = None
     status_raw: str | None = None
+    # Название самой компании так, как оно записано в реестре. Нужно, чтобы
+    # поймать опечатку в ИНН: запись найдётся, но про другую организацию.
+    member_name: str | None = None
 
     @property
     def status(self) -> str:
@@ -98,6 +101,7 @@ class Membership:
             sro_name=data.get("sro_name"),
             registry_number=data.get("registry_number"),
             status_raw=data.get("status_raw"),
+            member_name=data.get("member_name"),
         )
 
 
@@ -204,6 +208,16 @@ class CheckResult:
     @property
     def statuses(self) -> str:
         return "; ".join(m.status for m in self.memberships if m.status)
+
+    @property
+    def member_names(self) -> str:
+        """Названия компании так, как их вернул реестр (без повторов)."""
+        seen: list[str] = []
+        for membership in self.memberships:
+            name = (membership.member_name or "").strip()
+            if name and name not in seen:
+                seen.append(name)
+        return "; ".join(seen)
 
     @property
     def sources(self) -> str:

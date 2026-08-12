@@ -265,12 +265,17 @@ def _record_inns(record: dict) -> tuple[list[str], list[str]]:
     return member, every
 
 
-def _pick(record: dict, patterns: Iterable[str]) -> str | None:
+def _pick(record: dict, patterns: Iterable[str], exclude: str = "") -> str | None:
     """Взять из записи первое значение, чей путь подходит под один из шаблонов.
 
-    Шаблоны перечислены по убыванию приоритета.
+    Шаблоны перечислены по убыванию приоритета. `exclude` отсекает ветки,
+    которые заведомо не о том: например, название компании нельзя брать
+    из полей самой СРО.
     """
     leaves = [(path.lower(), path, value) for path, value in _leaves(record)]
+    if exclude:
+        blocked = re.compile(exclude, re.IGNORECASE)
+        leaves = [item for item in leaves if not blocked.search(item[0])]
     for pattern in patterns:
         regex = re.compile(pattern, re.IGNORECASE)
         for lowered, _path, value in leaves:
@@ -306,12 +311,23 @@ _STATUS_PATTERNS = (
 )
 
 
+_MEMBER_NAME_PATTERNS = (
+    r"^(full_name|short_name|name|organization_name|company_name|member_name)$",
+    r"^(member|company|organization)\.(full_name|short_name|name|title)$",
+    r"(member|company|organization|entity).*(full_name|short_name|name)",
+    r"^(full_description|short_description)$",
+)
+
+
 def _membership_from_record(record: dict, source: str) -> Membership:
     return Membership(
         source=source,
         sro_name=_pick(record, _SRO_NAME_PATTERNS),
         registry_number=_pick(record, _REG_NUMBER_PATTERNS),
         status_raw=_pick(record, _STATUS_PATTERNS),
+        # Название компании берём в обход веток самой СРО, иначе в него
+        # попадёт название саморегулируемой организации.
+        member_name=_pick(record, _MEMBER_NAME_PATTERNS, exclude=_SRO_SCOPE.pattern),
     )
 
 

@@ -23,7 +23,7 @@ import sys
 import time
 from datetime import datetime
 
-from sro import excel_io
+from sro import excel_io, names
 from sro.excel_io import COL_VERDICT
 from sro.inn import describe_problem, is_valid_inn, normalize_inn
 from sro.models import (
@@ -382,6 +382,7 @@ def run(args, log: Log, cancel=None, progress=None) -> int:
     counters = {Verdict.YES: 0, Verdict.NO: 0, Verdict.UNKNOWN: 0}
     processed = 0
     from_cache = 0
+    mismatched = 0
     interrupted = False
 
     try:
@@ -437,7 +438,17 @@ def run(args, log: Log, cancel=None, progress=None) -> int:
                 cache[inn] = result
                 save_cache(args.cache, cache)
 
-            excel_io.write_result(worksheet, layout, row, result, colorize=not args.no_color)
+            # Опечатка в ИНН не даёт ошибки: реестр находит запись, но про
+            # другую компанию. Ловим это сверкой названий.
+            warning = ""
+            if result.verdict is Verdict.YES:
+                warning = names.mismatch_note(name, result.member_names)
+                if warning:
+                    mismatched += 1
+
+            excel_io.write_result(
+                worksheet, layout, row, result, colorize=not args.no_color, extra_note=warning
+            )
             counters[result.verdict] += 1
 
             if progress is not None:
@@ -456,6 +467,8 @@ def run(args, log: Log, cancel=None, progress=None) -> int:
                 f"Проверено {processed} из {total} | {label} | ИНН {inn or '—'} → "
                 f"{result.verdict.value}" + (f" | {detail[:70]}" if detail else "")
             )
+            if warning:
+                log(f"  ! {warning}")
 
             if processed % args.checkpoint_every == 0:
                 try:
@@ -498,6 +511,30 @@ def run(args, log: Log, cancel=None, progress=None) -> int:
                 pass
         save_cache(args.cache, cache)
 
+    # Оформление и лист с итогами — перед последним сохранением.
+    excel_io.finish_sheet(worksheet, layout)
+    excel_io.write_summary(
+        workbook,
+        [
+            ("Файл", args.input),
+            ("Лист", worksheet.title),
+            ("Дата и время проверки", datetime.now().strftime(DATE_FORMAT)),
+            ("Проверено компаний", processed),
+            ("Есть СРО", counters[Verdict.YES]),
+            ("Нет СРО", counters[Verdict.NO]),
+            ("Не удалось проверить", counters[Verdict.UNKNOWN]),
+            ("Расхождений в названии компании", mismatched),
+            ("Взято из сохранённых результатов", from_cache),
+            (
+                "Что считалось ответом «да»",
+                "только действующее членство"
+                if args.verdict_basis == "active"
+                else "любая запись в реестре",
+            ),
+            ("Проверка прервана пользователем", "да" if interrupted else "нет"),
+        ],
+    )
+
     # Финальное сохранение — уже вне finally, чтобы не «проглотить» возможную
     # ошибку из основного цикла.
     try:
@@ -520,6 +557,10 @@ def run(args, log: Log, cancel=None, progress=None) -> int:
     log(f"  не удалось проверить   {counters[Verdict.UNKNOWN]}")
     if from_cache:
         log(f"  (из них взято из кэша: {from_cache})")
+    if mismatched:
+        log("")
+        log(f"ВНИМАНИЕ: у {mismatched} компаний название в реестре расходится с названием")
+        log("в вашем файле — вероятна опечатка в ИНН. Строки помечены в колонке «Примечание».")
 
     if counters[Verdict.UNKNOWN]:
         log("")
