@@ -115,9 +115,25 @@ def _search_string_body(inn: str) -> dict:
     return {"searchString": inn, "page": 1, "pageCount": 50}
 
 
+def _list_body(inn: str) -> dict:
+    """Тело запроса, снятое с самого сайта реестра (панель разработчика).
+
+    Здесь важна точность, а не красота: `searchString` лежит в корне, а не
+    внутри `filters`, а `pageCount` — строка, а не число. Так шлёт сайт,
+    так шлём и мы.
+    """
+    return {
+        "filters": {},
+        "page": 1,
+        "pageCount": "20",
+        "sortBy": {},
+        "searchString": inn,
+    }
+
+
 def _filters_body(inn: str) -> dict:
-    """Форма, типичная для таблиц с фильтрами: поиск завёрнут в «filters»."""
-    return {"filters": {"searchString": inn}, "page": 1, "pageCount": 20}
+    """Запасная форма на случай, если у второго реестра поиск завёрнут внутрь."""
+    return {"filters": {"searchString": inn}, "page": 1, "pageCount": "20", "sortBy": {}}
 
 
 def _endpoint_family(name: str, url: str, referer: str) -> list["Endpoint"]:
@@ -127,6 +143,8 @@ def _endpoint_family(name: str, url: str, referer: str) -> list["Endpoint"]:
     и даём реестру ответить самому: первый понятный ответ запоминается.
     """
     return [
+        # Первым идёт то, что реально шлёт сайт.
+        Endpoint(f"{name}:post-list", "POST", url, json_body=_list_body, referer=referer),
         Endpoint(f"{name}:post-filters", "POST", url, json_body=_filters_body, referer=referer),
         Endpoint(
             f"{name}:post-searchString", "POST", url, json_body=_search_string_body, referer=referer

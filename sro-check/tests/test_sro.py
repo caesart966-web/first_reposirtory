@@ -394,6 +394,39 @@ class TestDiscovery(unittest.TestCase):
         self.assertNotIn("https://mc.yandex.ru/metrika/tag.js", session.requested)
 
 
+class TestRealRequestShape(unittest.TestCase):
+    """Запрос снят с самого сайта реестра и не должен «улучшаться» по памяти.
+
+    Проверено в панели разработчика на reestr.nostroy.ru:
+        POST https://reestr.nostroy.ru/api/sro/all/member/list
+        {"filters":{},"page":1,"pageCount":"20","sortBy":{},"searchString":"..."}
+    """
+
+    def test_body_is_exactly_what_the_site_sends(self):
+        self.assertEqual(
+            registries_mod._list_body("5907056036"),
+            {
+                "filters": {},
+                "page": 1,
+                "pageCount": "20",  # именно строка: сайт шлёт так
+                "sortBy": {},
+                "searchString": "5907056036",  # именно в корне, не внутри filters
+            },
+        )
+
+    def test_first_endpoint_is_the_observed_one(self):
+        first = registries_mod.NOSTROY_ENDPOINTS[0]
+        self.assertEqual(first.method, "POST")
+        self.assertEqual(first.url, "https://reestr.nostroy.ru/api/sro/all/member/list")
+        self.assertEqual(first.build("5907056036")["json"]["searchString"], "5907056036")
+
+    def test_origin_matches_what_the_registry_allows(self):
+        """Ответ реестра: Access-Control-Allow-Origin: https://reestr.nostroy.ru"""
+        self.assertEqual(
+            origin_of(registries_mod.NOSTROY_ENDPOINTS[0].referer), "https://reestr.nostroy.ru"
+        )
+
+
 class TestErrorHints(unittest.TestCase):
     """Что показывать человеку, когда реестр ответил ошибкой."""
 
