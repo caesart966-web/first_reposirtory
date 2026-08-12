@@ -222,6 +222,7 @@ def run_probe(args, log: Log, cancel=None) -> int:
     )
 
     any_working = False
+    working_urls: dict[str, str] = {}
     for source, provider in providers.items():
         log(f"=== {source} ===")
         for row in provider.probe(inn):
@@ -239,6 +240,7 @@ def run_probe(args, log: Log, cancel=None) -> int:
                     )
             if row["result"] in ("found", "empty"):
                 any_working = True
+                working_urls.setdefault(source, row["url"])
             elif row.get("sample"):
                 log(f"      начало ответа: {row['sample'][:200]}")
             _pause(args.delay_min, args.delay_max, cancel)
@@ -266,6 +268,14 @@ def run_probe(args, log: Log, cancel=None) -> int:
                         log(f"    {flag} \"{url.split('?')[0]}\"")
         except Exception as error:
             log(f"  браузер недоступен: {error}")
+        log("")
+
+    if working_urls:
+        log("Рабочие адреса — впишите их в программе, чтобы она больше не искала:")
+        for source, url in working_urls.items():
+            flag = "--nostroy-url" if source == SOURCE_NOSTROY else "--nopriz-url"
+            log(f"    поле «Адрес API {source}»:  {url}")
+            log(f'        (в командной строке: {flag} "{url}")')
         log("")
 
     if any_working:

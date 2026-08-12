@@ -14,6 +14,7 @@ import sys
 import tempfile
 import threading
 import unittest
+from unittest.mock import patch
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -21,6 +22,7 @@ from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font, PatternFill
 
 import check_sro
+from sro import discover as discover_mod
 from sro import excel_io
 from sro.inn import is_valid_inn, normalize_inn
 from sro.models import (
@@ -33,7 +35,14 @@ from sro.models import (
     Verdict,
     normalize_status,
 )
-from sro.registries import RegistryProvider, build_providers, interpret_payload, origin_of
+from sro import registries as registries_mod
+from sro.registries import (
+    Endpoint,
+    RegistryProvider,
+    build_providers,
+    interpret_payload,
+    origin_of,
+)
 from tests import mock_registry as mock
 from tests.mock_registry import MockRegistry
 
@@ -200,6 +209,136 @@ class TestOrigin(unittest.TestCase):
 
     def test_not_a_url(self):
         self.assertEqual(origin_of("просто текст"), "")
+
+
+class FakeResponse:
+    def __init__(self, text: str, status: int = 200) -> None:
+        self.text = text
+        self.status_code = status
+
+
+class FakeSession:
+    """Подставной сайт: отдаёт заранее заданные страницы и скрипты."""
+
+    def __init__(self, pages: dict[str, str]) -> None:
+        self.pages = pages
+        self.requested: list[str] = []
+
+    def get(self, url: str, timeout: float | None = None) -> FakeResponse:
+        self.requested.append(url)
+        if url in self.pages:
+            return FakeResponse(self.pages[url])
+        return FakeResponse("", 404)
+
+
+class TestDiscovery(unittest.TestCase):
+    """Поиск адреса API в скриптах сайта — то же, что человек делает в F12."""
+
+    def test_finds_relative_and_absolute(self):
+        text = """
+            fetch("/api/sro/all/member/search?inn=" + inn)
+            const other = 'https://reestr.nostroy.ru/api/member/list'
+        """
+        self.assertEqual(
+            discover_mod.api_paths(text),
+            {"/api/sro/all/member/search", "https://reestr.nostroy.ru/api/member/list"},
+        )
+
+    def test_skips_templates(self):
+        """Адрес с подстановкой использовать нельзя — подставлять нечего."""
+        self.assertEqual(discover_mod.api_paths('url("/api/member/${id}/card")'), set())
+
+    def test_scoring_prefers_member_search(self):
+        self.assertGreater(
+            discover_mod.score_path("/api/sro/all/member/search"),
+            discover_mod.score_path("/api/news/list"),
+        )
+
+    def test_scoring_rejects_unrelated(self):
+        for path in ("/api/auth/login", "/api/file/upload", "/api/user/password"):
+            self.assertLess(discover_mod.score_path(path), 0, path)
+
+    def test_script_urls_are_absolute(self):
+        html = '<script src="/static/app.js"></script><script src="https://cdn.example/x.js">'
+        self.assertEqual(
+            discover_mod.script_urls(html, "https://reestr.nostroy.ru/reestr/chleny-sro"),
+            ["https://reestr.nostroy.ru/static/app.js", "https://cdn.example/x.js"],
+        )
+
+    def test_discover_end_to_end(self):
+        page = discover_mod.PAGES[SOURCE_NOSTROY][0]
+        session = FakeSession(
+            {
+                page: '<html><script src="/static/app.js"></script></html>',
+                "https://reestr.nostroy.ru/static/app.js": (
+                    'a("/api/auth/login");b("/api/sro/all/member/search");c("/api/news/list")'
+                ),
+            }
+        )
+        found = discover_mod.discover(SOURCE_NOSTROY, session, logger=lambda _m: None)
+        self.assertEqual(found[0], "https://reestr.nostroy.ru/api/sro/all/member/search")
+        self.assertNotIn("https://reestr.nostroy.ru/api/auth/login", found)
+
+    def test_foreign_scripts_are_not_downloaded(self):
+        """Аналитику и рекламные сети не трогаем — там нечего искать."""
+        page = discover_mod.PAGES[SOURCE_NOSTROY][0]
+        session = FakeSession({page: '<script src="https://mc.yandex.ru/metrika/tag.js"></script>'})
+        discover_mod.discover(SOURCE_NOSTROY, session, logger=lambda _m: None)
+        self.assertNotIn("https://mc.yandex.ru/metrika/tag.js", session.requested)
+
+
+class TestSelfHealing(unittest.TestCase):
+    """Прошитый адрес умер — программа должна найти рабочий и продолжить."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.mock = MockRegistry()
+        cls.mock.__enter__()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.mock.__exit__(None, None, None)
+
+    def dead_provider(self, **kwargs) -> RegistryProvider:
+        dead = [
+            Endpoint(
+                "прошитый",
+                "GET",
+                "http://127.0.0.1:9/api/dead",
+                params=lambda inn: {"inn": inn},
+            )
+        ]
+        return RegistryProvider(
+            SOURCE_NOSTROY, dead, timeout=2, attempts=1, logger=lambda _m: None, **kwargs
+        )
+
+    def test_lookup_uses_discovered_address(self):
+        provider = self.dead_provider()
+        with patch.object(registries_mod, "discover", return_value=[self.mock.url]):
+            answer = provider.lookup(mock.MEMBER_INN)
+        self.assertIs(answer.outcome, Outcome.FOUND)
+        self.assertIsNotNone(provider.working, "найденный адрес должен запомниться как рабочий")
+
+    def test_discovery_happens_once_not_per_company(self):
+        provider = self.dead_provider()
+        with patch.object(registries_mod, "discover", return_value=[]) as spy:
+            for _ in range(3):
+                provider.lookup(mock.MEMBER_INN)
+        self.assertEqual(spy.call_count, 1, "393 компании не должны вызвать 393 поиска адреса")
+
+    def test_manual_address_disables_search(self):
+        """Адрес задан руками — значит, искать нечего, идём строго по нему."""
+        provider = self.dead_provider(allow_discovery=False)
+        with patch.object(registries_mod, "discover", return_value=[self.mock.url]) as spy:
+            answer = provider.lookup(mock.MEMBER_INN)
+        self.assertIs(answer.outcome, Outcome.UNKNOWN)
+        spy.assert_not_called()
+
+    def test_failed_search_still_reports_honestly(self):
+        provider = self.dead_provider()
+        with patch.object(registries_mod, "discover", side_effect=RuntimeError("сеть легла")):
+            answer = provider.lookup(mock.MEMBER_INN)
+        self.assertIs(answer.outcome, Outcome.UNKNOWN, "сбой поиска — это «не проверено», а не «нет»")
 
 
 class TestProviderOverHttp(unittest.TestCase):

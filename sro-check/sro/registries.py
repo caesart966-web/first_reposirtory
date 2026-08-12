@@ -24,6 +24,7 @@ from urllib.parse import urlsplit
 
 import requests
 
+from .discover import discover
 from .inn import normalize_inn
 from .models import (
     SOURCE_NOPRIZ,
@@ -444,6 +445,7 @@ class RegistryProvider:
         attempts: int = 3,
         session: requests.Session | None = None,
         logger: Callable[[str], None] | None = None,
+        allow_discovery: bool = True,
     ) -> None:
         self.source = source
         self.endpoints = list(endpoints)
@@ -456,6 +458,10 @@ class RegistryProvider:
         # перебираем все варианты; после — обращаемся только к нему.
         self.working: Endpoint | None = None
         self.disabled_reason: str = ""
+        # Поиск адреса в скриптах сайта делаем не чаще одного раза за запуск.
+        # При вручную заданном адресе не ищем вовсе: человек уже сказал, куда идти.
+        self.allow_discovery = allow_discovery
+        self.discovery_tried = False
 
     # -- низкий уровень -----------------------------------------------------
 
@@ -516,7 +522,79 @@ class RegistryProvider:
 
         return None, last_note or "не удалось выполнить запрос"
 
+    # -- поиск адреса, когда прошитые перестали работать --------------------
+
+    def _endpoints_from(self, urls: list[str]) -> list[Endpoint]:
+        """Собрать варианты запроса к найденному адресу.
+
+        Какая именно форма запроса верна — параметр `inn`, параметр
+        `searchString` или POST с телом, — заранее неизвестно, поэтому
+        готовим все три и даём реестру ответить самому.
+        """
+        built: list[Endpoint] = []
+        for number, url in enumerate(urls, start=1):
+            referer = origin_of(url)
+            built.append(
+                Endpoint(f"найден-{number}:get-inn", "GET", url, params=_search_params, referer=referer)
+            )
+            built.append(
+                Endpoint(
+                    f"найден-{number}:get-searchString",
+                    "GET",
+                    url,
+                    params=_search_string_params,
+                    referer=referer,
+                )
+            )
+            built.append(
+                Endpoint(
+                    f"найден-{number}:post-searchString",
+                    "POST",
+                    url,
+                    json_body=_search_string_body,
+                    referer=referer,
+                )
+            )
+        return built
+
+    def find_new_endpoints(self) -> list[Endpoint]:
+        """Один раз за запуск поискать действующий адрес API в скриптах сайта."""
+        if self.discovery_tried or not self.allow_discovery:
+            return []
+        self.discovery_tried = True
+        self.logger(
+            f"[{self.source}] прошитые адреса не отвечают — ищу действующий в скриптах сайта…"
+        )
+        try:
+            urls = discover(self.source, self.session, self.timeout, self.logger)
+        except Exception as error:  # поиск адреса — вспомогательная затея,
+            # его сбой не должен ронять проверку
+            self.logger(f"[{self.source}] поиск адреса не удался: {type(error).__name__}")
+            return []
+        fresh = self._endpoints_from(urls)
+        self.endpoints.extend(fresh)
+        return fresh
+
     # -- высокий уровень ----------------------------------------------------
+
+    def _try_endpoints(
+        self, endpoints: list[Endpoint], inn: str, reasons: list[str]
+    ) -> RegistryAnswer | None:
+        """Перебрать варианты. Вернуть понятный ответ либо None, если не вышло."""
+        for endpoint in endpoints:
+            payload, note = self._request(endpoint, inn)
+            if payload is None:
+                reasons.append(note)
+                continue
+            answer = interpret_payload(payload, inn, self.source)
+            if answer.outcome is Outcome.UNKNOWN:
+                reasons.append(answer.note)
+                continue
+            # Эндпоинт вернул понятный ответ — запоминаем его как рабочий.
+            self.working = endpoint
+            self.logger(f"[{self.source}] рабочий эндпоинт: {endpoint.name} ({endpoint.url})")
+            return answer
+        return None
 
     def lookup(self, inn: str) -> RegistryAnswer:
         """Проверить один ИНН в этом реестре."""
@@ -535,18 +613,14 @@ class RegistryProvider:
             return answer
 
         reasons: list[str] = []
-        for endpoint in self.endpoints:
-            payload, note = self._request(endpoint, inn)
-            if payload is None:
-                reasons.append(note)
-                continue
-            answer = interpret_payload(payload, inn, self.source)
-            if answer.outcome is Outcome.UNKNOWN:
-                reasons.append(answer.note)
-                continue
-            # Эндпоинт вернул понятный ответ — запоминаем его как рабочий.
-            self.working = endpoint
-            self.logger(f"[{self.source}] рабочий эндпоинт: {endpoint.name}")
+        answer = self._try_endpoints(self.endpoints, inn, reasons)
+        if answer is not None:
+            return answer
+
+        # Ни один прошитый адрес не сработал. Скорее всего, реестр их сменил —
+        # пробуем найти действующий сами, по скриптам сайта.
+        answer = self._try_endpoints(self.find_new_endpoints(), inn, reasons)
+        if answer is not None:
             return answer
 
         # В примечание для человека пишем причину, а не внутренние имена
@@ -561,7 +635,17 @@ class RegistryProvider:
     def probe(self, inn: str) -> list[dict]:
         """Диагностика: попробовать все варианты и рассказать, что вышло."""
         report: list[dict] = []
-        for endpoint in self.endpoints:
+        self._probe_endpoints(self.endpoints, inn, report)
+
+        # Если ни один прошитый адрес не дал понятного ответа — ищем адрес
+        # в скриптах сайта и проверяем найденное здесь же. Ради этого
+        # диагностику и запускают.
+        if not any(row["result"] in ("found", "empty") for row in report):
+            self._probe_endpoints(self.find_new_endpoints(), inn, report)
+        return report
+
+    def _probe_endpoints(self, endpoints: list[Endpoint], inn: str, report: list[dict]) -> None:
+        for endpoint in endpoints:
             payload, note = self._request(endpoint, inn)
             row: dict[str, Any] = {"endpoint": endpoint.name, "url": endpoint.url}
             if payload is None:
@@ -575,7 +659,6 @@ class RegistryProvider:
                 if answer.memberships:
                     row["found"] = [m.to_dict() for m in answer.memberships]
             report.append(row)
-        return report
 
 
 def build_providers(
@@ -603,9 +686,19 @@ def build_providers(
 
     return {
         SOURCE_NOSTROY: RegistryProvider(
-            SOURCE_NOSTROY, nostroy_endpoints, timeout, attempts, logger=logger
+            SOURCE_NOSTROY,
+            nostroy_endpoints,
+            timeout,
+            attempts,
+            logger=logger,
+            allow_discovery=not nostroy_url,
         ),
         SOURCE_NOPRIZ: RegistryProvider(
-            SOURCE_NOPRIZ, nopriz_endpoints, timeout, attempts, logger=logger
+            SOURCE_NOPRIZ,
+            nopriz_endpoints,
+            timeout,
+            attempts,
+            logger=logger,
+            allow_discovery=not nopriz_url,
         ),
     }
