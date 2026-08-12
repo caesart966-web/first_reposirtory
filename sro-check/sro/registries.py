@@ -20,6 +20,7 @@ import re
 import time
 from dataclasses import dataclass
 from typing import Any, Callable, Iterable, Iterator
+from urllib.parse import urlsplit
 
 import requests
 
@@ -55,6 +56,34 @@ class Endpoint:
         if self.json_body is not None:
             kwargs["json"] = self.json_body(inn)
         return kwargs
+
+
+def origin_of(url: str) -> str:
+    """Схема и домен адреса: «https://reestr.nostroy.ru».
+
+    Отдельной функцией — потому что наивное отрезание по строке здесь ошибается:
+    в адресе `https://reestr.nostroy.ru/reestr/...` подстрока `/reestr`
+    впервые встречается ещё в домене, и Origin получался обрубком `https:/`.
+    """
+    parts = urlsplit(url)
+    if not parts.scheme or not parts.netloc:
+        return ""
+    return f"{parts.scheme}://{parts.netloc}"
+
+
+def _body_hint(response) -> str:
+    """Короткая выжимка из тела ответа.
+
+    При 4xx/5xx сервер обычно пишет в теле, что именно ему не понравилось,
+    — без этого «HTTP 404» не даёт ничего для починки.
+    """
+    try:
+        text = (response.text or "").strip()
+    except Exception:
+        return ""
+    if not text:
+        return ""
+    return " — " + re.sub(r"\s+", " ", text)[:200]
 
 
 def _search_params(inn: str) -> dict:
@@ -436,7 +465,9 @@ class RegistryProvider:
         headers = dict(DEFAULT_HEADERS)
         if endpoint.referer:
             headers["Referer"] = endpoint.referer
-            headers["Origin"] = endpoint.referer.split("/reestr")[0].split("/nreesters")[0]
+            origin = origin_of(endpoint.referer)
+            if origin:
+                headers["Origin"] = origin
 
         last_note = ""
         for attempt in range(1, self.attempts + 1):
@@ -461,13 +492,13 @@ class RegistryProvider:
                 continue
 
             if response.status_code >= 500:
-                last_note = f"ошибка сервера {response.status_code}"
+                last_note = f"ошибка сервера {response.status_code}{_body_hint(response)}"
                 if attempt < self.attempts:
                     time.sleep(2 ** attempt)
                 continue
 
             if response.status_code >= 400:
-                return None, f"HTTP {response.status_code}"
+                return None, f"HTTP {response.status_code}{_body_hint(response)}"
 
             content_type = response.headers.get("Content-Type", "")
             body = response.text or ""

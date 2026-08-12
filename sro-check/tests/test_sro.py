@@ -33,7 +33,7 @@ from sro.models import (
     Verdict,
     normalize_status,
 )
-from sro.registries import RegistryProvider, build_providers, interpret_payload
+from sro.registries import RegistryProvider, build_providers, interpret_payload, origin_of
 from tests import mock_registry as mock
 from tests.mock_registry import MockRegistry
 
@@ -185,6 +185,23 @@ class TestInterpret(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
+class TestOrigin(unittest.TestCase):
+    """Заголовок Origin: домен реестров сам содержит «reestr», и наивное
+    отрезание по подстроке превращало заголовок в обрубок «https:/»."""
+
+    def test_domain_containing_reestr(self):
+        self.assertEqual(
+            origin_of("https://reestr.nostroy.ru/reestr/chleny-sro"),
+            "https://reestr.nostroy.ru",
+        )
+
+    def test_plain_domain(self):
+        self.assertEqual(origin_of("https://nopriz.ru/nreesters/"), "https://nopriz.ru")
+
+    def test_not_a_url(self):
+        self.assertEqual(origin_of("просто текст"), "")
+
+
 class TestProviderOverHttp(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -210,6 +227,12 @@ class TestProviderOverHttp(unittest.TestCase):
     def test_server_error(self):
         answer = self.provider().lookup(mock.SERVER_ERROR_INN)
         self.assertIs(answer.outcome, Outcome.UNKNOWN)
+
+    def test_server_error_note_quotes_the_server(self):
+        """Без текста ответа «ошибка сервера 500» не даёт ничего для починки."""
+        answer = self.provider().lookup(mock.SERVER_ERROR_INN)
+        self.assertIn("500", answer.note)
+        self.assertIn("internal", answer.note, "в примечание должно попасть тело ответа")
 
     def test_html_instead_of_json(self):
         """Классическая ловушка: заглушка сайта отдаёт HTML со статусом 200."""
