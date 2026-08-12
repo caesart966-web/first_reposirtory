@@ -115,68 +115,56 @@ def _search_string_body(inn: str) -> dict:
     return {"searchString": inn, "page": 1, "pageCount": 50}
 
 
+def _filters_body(inn: str) -> dict:
+    """Форма, типичная для таблиц с фильтрами: поиск завёрнут в «filters»."""
+    return {"filters": {"searchString": inn}, "page": 1, "pageCount": 20}
+
+
+def _endpoint_family(name: str, url: str, referer: str) -> list["Endpoint"]:
+    """Три способа спросить один и тот же адрес.
+
+    Какая форма запроса верна, снаружи не видно, поэтому готовим все три
+    и даём реестру ответить самому: первый понятный ответ запоминается.
+    """
+    return [
+        Endpoint(f"{name}:post-filters", "POST", url, json_body=_filters_body, referer=referer),
+        Endpoint(
+            f"{name}:post-searchString", "POST", url, json_body=_search_string_body, referer=referer
+        ),
+        Endpoint(
+            f"{name}:get-searchString", "GET", url, params=_search_string_params, referer=referer
+        ),
+    ]
+
+
 NOSTROY_SITE = "https://reestr.nostroy.ru"
 NOPRIZ_SITE = "https://reestr.nopriz.ru"
 
+# Реестр членов СРО живёт прямо в корне сайта (адресная строка так и остаётся
+# «reestr.nostroy.ru»), поэтому Referer — корень, а не выдуманный путь.
 NOSTROY_ENDPOINTS: list[Endpoint] = [
+    # «list» — именно так называется запрос, которым сайт сам берёт таблицу
+    # членов СРО. Прежние догадки заканчивались на «search» и давали 404.
+    *_endpoint_family("nostroy:list", f"{NOSTROY_SITE}/api/sro/all/member/list", f"{NOSTROY_SITE}/"),
+    *_endpoint_family("nostroy:member-list", f"{NOSTROY_SITE}/api/member/list", f"{NOSTROY_SITE}/"),
     Endpoint(
         "nostroy:get-inn",
         "GET",
         f"{NOSTROY_SITE}/api/sro/all/member/search",
         params=_search_params,
-        referer=f"{NOSTROY_SITE}/reestr/chleny-sro",
-    ),
-    Endpoint(
-        "nostroy:get-searchString",
-        "GET",
-        f"{NOSTROY_SITE}/api/sro/all/member/search",
-        params=_search_string_params,
-        referer=f"{NOSTROY_SITE}/reestr/chleny-sro",
-    ),
-    Endpoint(
-        "nostroy:post-searchString",
-        "POST",
-        f"{NOSTROY_SITE}/api/sro/all/member/search",
-        json_body=_search_string_body,
-        referer=f"{NOSTROY_SITE}/reestr/chleny-sro",
-    ),
-    Endpoint(
-        "nostroy:get-member-inn",
-        "GET",
-        f"{NOSTROY_SITE}/api/member/search",
-        params=_search_params,
-        referer=f"{NOSTROY_SITE}/reestr/chleny-sro",
+        referer=f"{NOSTROY_SITE}/",
     ),
 ]
 
 NOPRIZ_ENDPOINTS: list[Endpoint] = [
+    *_endpoint_family("nopriz:list", f"{NOPRIZ_SITE}/api/sro/all/member/list", f"{NOPRIZ_SITE}/"),
+    *_endpoint_family("nopriz:member-list", f"{NOPRIZ_SITE}/api/member/list", f"{NOPRIZ_SITE}/"),
     Endpoint(
         "nopriz:get-inn",
         "GET",
         f"{NOPRIZ_SITE}/api/sro/all/member/search",
         params=_search_params,
-        referer=f"{NOPRIZ_SITE}/reestr/chleny-sro",
-    ),
-    Endpoint(
-        "nopriz:get-searchString",
-        "GET",
-        f"{NOPRIZ_SITE}/api/sro/all/member/search",
-        params=_search_string_params,
-        referer=f"{NOPRIZ_SITE}/reestr/chleny-sro",
-    ),
-    Endpoint(
-        "nopriz:post-searchString",
-        "POST",
-        f"{NOPRIZ_SITE}/api/sro/all/member/search",
-        json_body=_search_string_body,
-        referer=f"{NOPRIZ_SITE}/reestr/chleny-sro",
-    ),
-    Endpoint(
-        "nopriz:www-get-inn",
-        "GET",
-        "https://nopriz.ru/api/sro/all/member/search",
-        params=_search_params,
-        referer="https://nopriz.ru/nreesters/",
+        referer=f"{NOPRIZ_SITE}/",
     ),
 ]
 

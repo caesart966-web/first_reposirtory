@@ -18,14 +18,16 @@ from typing import Callable
 from .models import SOURCE_NOPRIZ, SOURCE_NOSTROY, Outcome, RegistryAnswer
 from .registries import interpret_payload
 
+# Реестр членов СРО открывается в корне сайта: адресная строка остаётся
+# «reestr.nostroy.ru», разделы переключаются вкладками внутри страницы.
 SEARCH_PAGES = {
     SOURCE_NOSTROY: [
+        "https://reestr.nostroy.ru/",
         "https://reestr.nostroy.ru/reestr/chleny-sro",
-        "https://reestr.nostroy.ru/reestr",
     ],
     SOURCE_NOPRIZ: [
+        "https://reestr.nopriz.ru/",
         "https://reestr.nopriz.ru/reestr/chleny-sro",
-        "https://reestr.nopriz.ru/reestr",
         "https://nopriz.ru/nreesters/",
     ],
 }

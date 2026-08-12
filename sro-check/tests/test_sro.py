@@ -351,6 +351,34 @@ class TestDiscovery(unittest.TestCase):
         self.assertEqual(found[0], "https://reestr.nostroy.ru/api/sro/all/member/search")
         self.assertNotIn("https://reestr.nostroy.ru/api/auth/login", found)
 
+    def test_fragments_are_collected_separately(self):
+        """Скрипт хранит основу и хвост порознь: BASE + '/member/list'."""
+        text = 'const BASE="/api/sro/all"; post(BASE+"/member/list"); img("/static/logo.png")'
+        self.assertEqual(discover_mod.path_fragments(text), {"/member/list"})
+        self.assertIn("/api/sro/all", discover_mod.api_paths(text))
+
+    def test_combine_glues_base_and_fragment(self):
+        self.assertIn(
+            "/api/sro/all/member/list",
+            discover_mod.combine(["/api/sro/all"], ["/member/list"]),
+        )
+
+    def test_discover_finds_address_assembled_in_code(self):
+        """Главный случай: целиком адрес в скрипте не написан ни разу."""
+        page = discover_mod.PAGES[SOURCE_NOSTROY][0]
+        session = FakeSession(
+            {
+                page: '<html><script src="/js/api.js"></script></html>',
+                "https://reestr.nostroy.ru/js/api.js": (
+                    'const BASE="/api/sro/all";'
+                    'export const members=(q)=>post(BASE+"/member/list",q);'
+                    'export const login=()=>post("/api/auth/login");'
+                ),
+            }
+        )
+        found = discover_mod.discover(SOURCE_NOSTROY, session, logger=lambda _m: None)
+        self.assertIn("https://reestr.nostroy.ru/api/sro/all/member/list", found)
+
     def test_html_is_requested_as_html(self):
         """Сессия провайдера просит JSON — за страницей нужно идти с другим Accept."""
         page = discover_mod.PAGES[SOURCE_NOSTROY][0]
