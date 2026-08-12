@@ -231,6 +231,7 @@ def run_probe(args, log: Log, cancel=None) -> int:
     working_urls: dict[str, str] = {}
     for source, provider in providers.items():
         log(f"=== {source} ===")
+        shown_sample = False
         for row in provider.probe(inn):
             marker = {"found": "РАБОТАЕТ, найдено", "empty": "РАБОТАЕТ, не найдено"}.get(
                 row["result"], "не подошёл"
@@ -247,6 +248,11 @@ def run_probe(args, log: Log, cancel=None) -> int:
             if row["result"] in ("found", "empty"):
                 any_working = True
                 working_urls.setdefault(source, row["url"])
+                # Показываем сырую запись один раз: по ней видно, из каких полей
+                # взяты статус и номер, — без этого несостыковку не разглядеть.
+                if row["result"] == "found" and not shown_sample and row.get("sample"):
+                    log(f"      начало ответа: {row['sample'][:300]}")
+                    shown_sample = True
             elif row.get("sample"):
                 log(f"      начало ответа: {row['sample'][:200]}")
             _pause(args.delay_min, args.delay_max, cancel)

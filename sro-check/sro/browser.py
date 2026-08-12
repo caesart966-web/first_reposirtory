@@ -34,6 +34,11 @@ SEARCH_PAGES = {
 
 # Как выглядит поле поиска — пробуем варианты по очереди
 INPUT_SELECTORS = (
+    # На сайте НОСТРОЙ подпись «ИНН, ОГРН, Наименование» стоит НАД полем, а не
+    # внутри него, поэтому поиск только по placeholder ничего не находил.
+    "input[aria-label*='ИНН']",
+    "input[name*='searchString']",
+    "input[id*='search']",
     "input[placeholder*='ИНН']",
     "input[placeholder*='инн']",
     "input[placeholder*='Поиск']",

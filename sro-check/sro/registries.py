@@ -316,19 +316,29 @@ _SRO_NAME_PATTERNS = (
     r"^(sro_name|sroname|organization_name)$",
 )
 
+# Реестр отдаёт справочные значения объектами:
+#     "member_status": {"id": 2, "code": "2", "title": "Исключен"}
+# Читаемое значение лежит в «title», поэтому такие пути идут первыми: иначе
+# в файл попадёт код «2», статус не распознается и вердикт станет
+# «не удалось проверить» даже по успешно найденной компании.
 _REG_NUMBER_PATTERNS = (
-    r"^(registry_number|reg_number|member_number|number_in_registry)$",
-    r"(member|memb).*(number|nomer)",
-    r"^(registration_number|reestr_number|number)$",
-    r"(registry|reestr).*(number|nomer)",
-    r"^sro\.(registration_number|reg_number|number)$",
+    # То, что сайт показывает в колонке «Рег. номер СРО»: СРО-С-171-13012010
+    r"^sro\.(registration_number|reg_number|registry_number)$",
+    r"sro\.(registration_number|reg_number)$",
+    # Номер самой записи о членстве
+    r"^(inventory_number|registry_number|reg_number|member_number|number_in_registry)$",
+    r"(member|memb).*(number|nomer)$",
+    r"(registry|reestr).*(number|nomer)$",
+    r"^(registration_number|reestr_number)$",
 )
 
 _STATUS_PATTERNS = (
+    r"member_status\.(title|name|value|description)$",
+    r"(^|\.)status\.(title|name|value|description)$",
+    r"status.*\.(title|name|description)$",
     r"^(member_status|membership_status|status_name|status_description)$",
     r"^status$",
-    r"(member|membership).*(status|state)",
-    r"status.*(name|description|title)",
+    r"(member|membership).*(status|state)$",
     r"status",
 )
 

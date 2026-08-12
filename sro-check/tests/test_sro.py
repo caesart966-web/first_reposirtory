@@ -27,6 +27,8 @@ from sro import discover as discover_mod
 from sro import excel_io, names
 from sro.inn import is_valid_inn, normalize_inn
 from sro.models import (
+    CheckResult,
+    RegistryAnswer,
     SOURCE_NOPRIZ,
     SOURCE_NOSTROY,
     STATUS_ACTIVE,
@@ -115,7 +117,9 @@ class TestInterpret(unittest.TestCase):
         self.assertEqual(len(answer.memberships), 1)
         membership = answer.memberships[0]
         self.assertIn("Строители России", membership.sro_name)
-        self.assertEqual(membership.registry_number, "1234")
+        # В колонку идёт номер СРО — тот же, что сайт показывает в «Рег. номер СРО».
+        # Внутренний номер записи о членстве человеку ни о чём не говорит.
+        self.assertEqual(membership.registry_number, "СРО-С-123-45678910")
         self.assertEqual(membership.status, STATUS_ACTIVE)
 
     def test_found_does_not_take_company_name_as_sro_name(self):
@@ -392,6 +396,59 @@ class TestDiscovery(unittest.TestCase):
         session = FakeSession({page: '<script src="https://mc.yandex.ru/metrika/tag.js"></script>'})
         discover_mod.discover(SOURCE_NOSTROY, session, logger=lambda _m: None)
         self.assertNotIn("https://mc.yandex.ru/metrika/tag.js", session.requested)
+
+
+class TestRealRecordShape(unittest.TestCase):
+    """Разбор записи в том виде, в каком её отдаёт настоящий реестр.
+
+    Справочные значения приходят объектами: {"id":2,"code":"2","title":"Исключен"}.
+    Если взять из такого объекта код вместо «title», статус не распознается,
+    и успешно найденная компания получит «не удалось проверить».
+    """
+
+    RECORD = {
+        "id": 90722,
+        "member_type": {"id": 1, "code": "1", "title": "ЮЛ"},
+        "member_status": {"id": 2, "code": "2", "title": "Исключен"},
+        "inventory_number": "П-192-000278908099-1752",
+        "full_description": 'ООО "СтройМонтаж-59"',
+        "inn": "5907056036",
+        "ogrn": "1135907001801",
+        "sro": {
+            "id": 906,
+            "number": 906,
+            "registration_number": "СРО-С-171-13012010",
+            "full_description": "Саморегулируемая организация Союз «Строители Урала»",
+        },
+    }
+
+    def membership(self):
+        payload = {"data": {"data": [self.RECORD], "count": 1}}
+        answer = interpret_payload(payload, "5907056036", SOURCE_NOSTROY)
+        self.assertIs(answer.outcome, Outcome.FOUND)
+        return answer.memberships[0]
+
+    def test_status_is_the_word_not_the_code(self):
+        self.assertEqual(self.membership().status, STATUS_EXCLUDED)
+
+    def test_registry_number_is_the_one_shown_on_the_site(self):
+        self.assertEqual(self.membership().registry_number, "СРО-С-171-13012010")
+
+    def test_sro_and_company_names_are_not_mixed_up(self):
+        membership = self.membership()
+        self.assertIn("Строители Урала", membership.sro_name)
+        self.assertIn("СтройМонтаж-59", membership.member_name)
+
+    def test_verdict_is_no_for_excluded_member(self):
+        """Раньше нераспознанный статус давал «не удалось» по найденной компании."""
+        result = CheckResult(
+            inn="5907056036",
+            answers=[
+                RegistryAnswer(SOURCE_NOSTROY, Outcome.FOUND, memberships=[self.membership()])
+            ],
+            basis="active",
+        )
+        self.assertIs(result.verdict, Verdict.NO)
 
 
 class TestRealRequestShape(unittest.TestCase):
@@ -817,7 +874,7 @@ class TestEndToEnd(unittest.TestCase):
 
         found = check("ООО «Мостострой»", "да")
         self.assertIn("Строители России", found["название сро"])
-        self.assertEqual(found["реестровый номер"], "1234")
+        self.assertEqual(found["реестровый номер"], "СРО-С-123-45678910")
         self.assertEqual(found["статус членства"], "действует")
         self.assertEqual(found["источник"], "НОСТРОЙ")
         self.assertTrue(found["дата проверки"])
