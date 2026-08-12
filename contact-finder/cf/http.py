@@ -87,7 +87,9 @@ class Fetcher:
             ]
             return urllib.parse.urlunsplit(
                 (parts.scheme, parts.netloc, parts.path,
-                 urllib.parse.urlencode(masked), parts.fragment)
+                 # safe="*" — иначе маска печатается как %2A%2A%2A и человек
+                 # решает, что это остаток ключа, а не заглушка.
+                 urllib.parse.urlencode(masked, safe="*"), parts.fragment)
             )
         except Exception:  # noqa: BLE001
             return url
