@@ -14,6 +14,9 @@ import urllib.parse
 import urllib.request
 import zlib
 
+_SECRET_PARAMS = {"key", "apikey", "api_key", "token", "access_token",
+                   "secret", "password", "pwd", "auth"}
+
 try:  # requests лучше держит TLS/редиректы, но не обязателен
     import requests  # type: ignore
     _HAS_REQUESTS = True
@@ -53,6 +56,7 @@ class Fetcher:
         # после _DEAD_AFTER неудач хост исключается до конца прогона.
         self._host_failures: dict[str, int] = {}
         self._dead_hosts: set[str] = set()
+        self._last_error_was_limit = False
 
     _DEAD_AFTER = 2  # столько неудачных URL подряд — и хост считается мёртвым
 
@@ -62,6 +66,29 @@ class Fetcher:
             return urllib.parse.urlparse(url).netloc.lower()
         except Exception:  # noqa: BLE001
             return ""
+
+    @staticmethod
+    def safe_url(url: str) -> str:
+        """URL без секретов — для вывода в лог.
+
+        API-ключи передаются в query-строке, а лог пользователь копирует в
+        переписку, скриншоты и баг-репорты. Значения параметров key/token/
+        apikey/secret/password заменяются на «***».
+        """
+        try:
+            parts = urllib.parse.urlsplit(url)
+            if not parts.query:
+                return url
+            pairs = urllib.parse.parse_qsl(parts.query, keep_blank_values=True)
+            masked = [
+                (k, "***" if k.lower() in _SECRET_PARAMS else v) for k, v in pairs
+            ]
+            return urllib.parse.urlunsplit(
+                (parts.scheme, parts.netloc, parts.path,
+                 urllib.parse.urlencode(masked), parts.fragment)
+            )
+        except Exception:  # noqa: BLE001
+            return url
 
     # ------------------------------------------------------------------ утилиты
 
@@ -91,7 +118,7 @@ class Fetcher:
         # Хост уже признан мёртвым — не тратим на него время.
         if host in self._dead_hosts:
             if self.verbose:
-                print(f"    · пропуск {url} — хост {host} не отвечает")
+                print(f"    · пропуск {self.safe_url(url)} — хост {host} недоступен")
             return None
 
         for attempt in range(1, self.retries + 1):
@@ -101,8 +128,9 @@ class Fetcher:
                 self._host_failures.pop(host, None)  # хост живой — сбрасываем счётчик
                 return result
             except Exception as exc:  # noqa: BLE001
+                self._last_error_was_limit = "блок/лимит" in str(exc)
                 if self.verbose:
-                    print(f"    ! попытка {attempt}/{self.retries} {url} — {exc}")
+                    print(f"    ! попытка {attempt}/{self.retries} {self.safe_url(url)} — {exc}")
                 if attempt < self.retries:
                     time.sleep(2 ** attempt)
 
@@ -111,7 +139,13 @@ class Fetcher:
         if self._host_failures[host] >= self._DEAD_AFTER:
             self._dead_hosts.add(host)
             if self.verbose:
-                print(f"    × хост {host} исключён до конца прогона (не отвечает)")
+                # 403/429 от API — это почти всегда исчерпанный лимит, а не
+                # падение сайта. Пишем прямо, иначе человек ищет проблему с сетью.
+                if self._last_error_was_limit:
+                    print(f"    × {host}: исчерпан лимит запросов — "
+                          f"дальше пропускаем, продолжите завтра")
+                else:
+                    print(f"    × хост {host} исключён до конца прогона (не отвечает)")
         return None
 
     def _get_requests(self, url: str) -> str | None:
