@@ -547,6 +547,30 @@ class TestSelfHealing(unittest.TestCase):
         self.assertGreater(after_first, before)
         self.assertEqual(len(provider.endpoints), after_first)
 
+    def test_session_is_warmed_up_once_not_per_company(self):
+        """Реестр ставит PHPSESSID — заходим за ним один раз, а не 393."""
+        provider = RegistryProvider(
+            SOURCE_NOSTROY,
+            list(registries_mod.NOSTROY_ENDPOINTS)[:1],
+            timeout=1,
+            attempts=1,
+            logger=lambda _m: None,
+        )
+        with patch.object(provider.session, "get") as visit, patch.object(
+            provider, "_try_endpoints", return_value=None
+        ), patch.object(provider, "find_new_endpoints", return_value=[]):
+            provider.lookup("7702521529")
+            provider.lookup("7707083893")
+        self.assertEqual(visit.call_count, 1)
+        self.assertTrue(visit.call_args[0][0].startswith("https://reestr.nostroy.ru"))
+
+    def test_manual_address_skips_the_warm_up(self):
+        """Задан свой адрес — ходить на чужой сайт за cookie незачем."""
+        provider = self.dead_provider(allow_discovery=False)
+        with patch.object(provider.session, "get") as visit:
+            provider.warm_up()
+        visit.assert_not_called()
+
     def test_failed_search_still_reports_honestly(self):
         provider = self.dead_provider()
         with patch.object(registries_mod, "discover", side_effect=RuntimeError("сеть легла")):

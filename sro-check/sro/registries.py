@@ -24,7 +24,7 @@ from urllib.parse import urlsplit
 
 import requests
 
-from .discover import discover
+from .discover import PAGE_HEADERS, discover
 from .inn import normalize_inn
 from .models import (
     SOURCE_NOPRIZ,
@@ -500,6 +500,8 @@ class RegistryProvider:
         # При вручную заданном адресе не ищем вовсе: человек уже сказал, куда идти.
         self.allow_discovery = allow_discovery
         self.discovery_tried = False
+        # Заход на сайт за сессионными cookie делается один раз за запуск.
+        self.warmed_up = False
 
     # -- низкий уровень -----------------------------------------------------
 
@@ -559,6 +561,26 @@ class RegistryProvider:
                 return None, "ответ не разобрался как JSON"
 
         return None, last_note or "не удалось выполнить запрос"
+
+    def warm_up(self) -> None:
+        """Один раз зайти на сайт реестра, чтобы получить сессионные cookie.
+
+        Реестр отвечает `Set-Cookie: PHPSESSID`, а часть таких API отказывает
+        запросам, пришедшим «с улицы», без сессии. Один заход на страницу стоит
+        дешевле, чем 393 отказа.
+
+        При вручную заданном адресе не делаем: там может быть чужой домен.
+        """
+        if self.warmed_up or not self.allow_discovery or not self.endpoints:
+            return
+        self.warmed_up = True
+        origin = origin_of(self.endpoints[0].referer)
+        if not origin:
+            return
+        try:
+            self.session.get(f"{origin}/", timeout=self.timeout, headers=PAGE_HEADERS)
+        except Exception as error:  # заход не удался — не повод не пробовать API
+            self.logger(f"[{self.source}] зайти на сайт за сессией не вышло: {type(error).__name__}")
 
     # -- поиск адреса, когда прошитые перестали работать --------------------
 
@@ -650,6 +672,7 @@ class RegistryProvider:
 
     def lookup(self, inn: str) -> RegistryAnswer:
         """Проверить один ИНН в этом реестре."""
+        self.warm_up()
         if self.working is not None:
             payload, note = self._request(self.working, inn)
             if payload is None:
@@ -688,6 +711,7 @@ class RegistryProvider:
 
     def probe(self, inn: str) -> list[dict]:
         """Диагностика: попробовать все варианты и рассказать, что вышло."""
+        self.warm_up()
         report: list[dict] = []
         self._probe_endpoints(self.endpoints, inn, report)
 
