@@ -476,8 +476,13 @@ class App(ttk.Frame):
                     self.output_path = payload
                 elif kind == "done":
                     self._finish(payload)
+                    if self.closing:
+                        # Окно уже уничтожено — планировать следующий опрос не на чем.
+                        return
         except queue.Empty:
             pass
+        except tk.TclError:
+            return
         self.after(120, self._drain)
 
     def _show_progress(self, processed: int, total: int, counters: dict) -> None:
@@ -500,6 +505,9 @@ class App(ttk.Frame):
         if self.closing:
             self.master.destroy()
             return
+
+        if not self.output_path:  # диагностика: показывать нечего
+            self.progress.configure(value=0)
 
         if self.output_path:
             # Программа могла сохранить результат под другим именем, если файл

@@ -16,6 +16,11 @@ on:
 permissions:
   contents: read
 
+# Новый пуш в ту же ветку отменяет предыдущую сборку — она всё равно устарела.
+concurrency:
+  group: build-sro-check-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   # Без этого Python на windows-runner спотыкается о кириллицу в выводе.
   PYTHONIOENCODING: utf-8
