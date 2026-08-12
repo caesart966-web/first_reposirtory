@@ -9,6 +9,7 @@ from __future__ import annotations
 import concurrent.futures as futures
 
 from .config import Config
+from .secrets import scrub
 from .http import Fetcher
 from .models import Company
 from .sources import SOURCES
@@ -28,7 +29,7 @@ def process_company(company: Company, cfg: Config) -> Company:
             company.findings.extend(source(company, fetcher, cfg))
         except Exception as exc:  # noqa: BLE001
             if cfg.verbose:
-                print(f"    ! источник {source.__name__} упал: {exc}")
+                print(scrub(f"    ! источник {source.__name__} упал: {exc}"))
         # Достаточно, если уже есть надёжный телефон.
         if company.phones:
             break

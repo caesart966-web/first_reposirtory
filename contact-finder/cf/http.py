@@ -14,6 +14,8 @@ import urllib.parse
 import urllib.request
 import zlib
 
+from .secrets import scrub
+
 _SECRET_PARAMS = {"key", "apikey", "api_key", "token", "access_token",
                    "secret", "password", "pwd", "auth"}
 
@@ -118,7 +120,7 @@ class Fetcher:
         # Хост уже признан мёртвым — не тратим на него время.
         if host in self._dead_hosts:
             if self.verbose:
-                print(f"    · пропуск {self.safe_url(url)} — хост {host} недоступен")
+                print(scrub(f"    · пропуск {self.safe_url(url)} — хост {host} недоступен"))
             return None
 
         for attempt in range(1, self.retries + 1):
@@ -130,7 +132,7 @@ class Fetcher:
             except Exception as exc:  # noqa: BLE001
                 self._last_error_was_limit = "блок/лимит" in str(exc)
                 if self.verbose:
-                    print(f"    ! попытка {attempt}/{self.retries} {self.safe_url(url)} — {exc}")
+                    print(scrub(f"    ! попытка {attempt}/{self.retries} {self.safe_url(url)} — {exc}"))
                 if attempt < self.retries:
                     time.sleep(2 ** attempt)
 

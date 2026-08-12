@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+
+from .secrets import register
 from pathlib import Path
 
 
@@ -45,7 +47,7 @@ class Config:
     @classmethod
     def from_env(cls) -> "Config":
         _load_dotenv()
-        return cls(
+        cfg = cls(
             proxy=os.environ.get("CF_PROXY") or None,
             checko_key=os.environ.get("CHECKO_API_KEY") or None,
             datanewton_key=os.environ.get("DATANEWTON_API_KEY") or None,
@@ -53,3 +55,7 @@ class Config:
             yandex_user=os.environ.get("YANDEX_XML_USER") or None,
             yandex_key=os.environ.get("YANDEX_XML_KEY") or None,
         )
+        # Ключи под защиту до первого сетевого запроса: дальше они не смогут
+        # попасть в вывод ни через URL, ни через текст исключения.
+        register(cfg.checko_key, cfg.datanewton_key, cfg.dgis_key, cfg.yandex_key)
+        return cfg
