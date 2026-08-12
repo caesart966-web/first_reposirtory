@@ -295,8 +295,9 @@ class FakeSession:
         self.pages = pages
         self.requested: list[str] = []
 
-    def get(self, url: str, timeout: float | None = None) -> FakeResponse:
+    def get(self, url: str, timeout: float | None = None, headers: dict | None = None) -> FakeResponse:
         self.requested.append(url)
+        self.headers_seen = headers or {}
         if url in self.pages:
             return FakeResponse(self.pages[url])
         return FakeResponse("", 404)
@@ -349,6 +350,13 @@ class TestDiscovery(unittest.TestCase):
         found = discover_mod.discover(SOURCE_NOSTROY, session, logger=lambda _m: None)
         self.assertEqual(found[0], "https://reestr.nostroy.ru/api/sro/all/member/search")
         self.assertNotIn("https://reestr.nostroy.ru/api/auth/login", found)
+
+    def test_html_is_requested_as_html(self):
+        """Сессия провайдера просит JSON — за страницей нужно идти с другим Accept."""
+        page = discover_mod.PAGES[SOURCE_NOSTROY][0]
+        session = FakeSession({page: "<html></html>"})
+        discover_mod.discover(SOURCE_NOSTROY, session, logger=lambda _m: None)
+        self.assertIn("text/html", session.headers_seen.get("Accept", ""))
 
     def test_foreign_scripts_are_not_downloaded(self):
         """Аналитику и рекламные сети не трогаем — там нечего искать."""

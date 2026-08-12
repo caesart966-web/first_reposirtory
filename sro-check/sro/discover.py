@@ -49,6 +49,14 @@ _BAD = ("auth", "login", "logout", "admin", "upload", "file", "image", "captcha"
 MAX_SCRIPTS = 12  # сколько скриптов осматривать — больше почти никогда не нужно
 MAX_CANDIDATES = 6
 
+# Сессия провайдера настроена на JSON («Accept: application/json»), а здесь мы
+# просим обычную страницу и скрипты. С чужим Accept сервер вправе ответить 406
+# или отдать не то, поэтому заголовки на этих запросах свои.
+PAGE_HEADERS = {
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "ru-RU,ru;q=0.9",
+}
+
 
 def score_path(path: str) -> int:
     """Насколько путь похож на поиск по членам реестра. Больше — правдоподобнее."""
@@ -105,7 +113,7 @@ def discover(source: str, session, timeout: float = 20.0, logger=print) -> list[
 
     for page_url in PAGES.get(source, []):
         try:
-            response = session.get(page_url, timeout=timeout)
+            response = session.get(page_url, timeout=timeout, headers=PAGE_HEADERS)
         except Exception as error:
             logger(f"[{source}] осмотр {page_url}: {type(error).__name__}")
             continue
@@ -121,7 +129,7 @@ def discover(source: str, session, timeout: float = 20.0, logger=print) -> list[
             if urlsplit(script_url).netloc != urlsplit(page_url).netloc:
                 continue
             try:
-                script = session.get(script_url, timeout=timeout)
+                script = session.get(script_url, timeout=timeout, headers=PAGE_HEADERS)
             except Exception:
                 continue
             if script.status_code < 400:
