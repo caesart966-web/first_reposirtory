@@ -451,6 +451,67 @@ class TestRealRecordShape(unittest.TestCase):
         self.assertIs(result.verdict, Verdict.NO)
 
 
+class TestTwoMemberships(unittest.TestCase):
+    """Настоящий случай из реестра НОПРИЗ по ИНН 4704094919.
+
+    ООО «ДОРСТРОЙ 47» исключено из одной СРО в 2019-м и с 2024-го состоит
+    в другой. Такое бывает при смене СРО, и ответ здесь — «да».
+    """
+
+    PAYLOAD = {
+        "data": {
+            "data": [
+                {
+                    "id": 1,
+                    "member_status": {"id": 2, "code": "2", "title": "Исключен"},
+                    "full_description": 'ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ "ДОРСТРОЙ 47"',
+                    "inn": "4704094919",
+                    "sro": {
+                        "registration_number": "СРО-П-174-01102012",
+                        "full_description": "Ассоциация «Национальный альянс проектировщиков «ГлавПроект»",
+                    },
+                },
+                {
+                    "id": 2,
+                    "member_status": {"id": 1, "code": "1", "title": "Является членом"},
+                    "full_description": 'ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ "ДОРСТРОЙ 47"',
+                    "inn": "4704094919",
+                    "sro": {
+                        "registration_number": "СРО-П-168-22112011",
+                        "full_description": "Ассоциация проектировщиков «Проектирование дорог и инфраструктуры»",
+                    },
+                },
+            ],
+            "count": 2,
+        }
+    }
+
+    def result(self) -> CheckResult:
+        answer = interpret_payload(self.PAYLOAD, "4704094919", SOURCE_NOPRIZ)
+        self.assertIs(answer.outcome, Outcome.FOUND)
+        return CheckResult(inn="4704094919", answers=[answer], basis="active")
+
+    def test_active_membership_decides_the_verdict(self):
+        self.assertIs(self.result().verdict, Verdict.YES)
+
+    def test_active_sro_is_listed_first(self):
+        """Реестр отдал исключённую первой — в файле впереди должна быть действующая."""
+        result = self.result()
+        self.assertTrue(result.statuses.startswith(STATUS_ACTIVE), result.statuses)
+        self.assertTrue(result.sro_names.startswith("Ассоциация проектировщиков"), result.sro_names)
+
+    def test_nothing_is_lost(self):
+        result = self.result()
+        self.assertIn("ГлавПроект", result.sro_names)
+        self.assertIn(STATUS_EXCLUDED, result.statuses)
+        self.assertIn("СРО-П-168-22112011", result.registry_numbers)
+        self.assertIn("СРО-П-174-01102012", result.registry_numbers)
+
+    def test_company_name_is_not_duplicated(self):
+        """Обе записи про одну компанию — название не должно повториться дважды."""
+        self.assertEqual(self.result().member_names.count("ДОРСТРОЙ 47"), 1)
+
+
 class TestRealRequestShape(unittest.TestCase):
     """Запрос снят с самого сайта реестра и не должен «улучшаться» по памяти.
 

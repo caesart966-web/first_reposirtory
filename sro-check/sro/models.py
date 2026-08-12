@@ -150,12 +150,19 @@ class CheckResult:
 
     # ---------- сводные поля для Excel ----------
 
+    # Действующее членство важнее прекращённого: компания может состоять
+    # в одной СРО и быть исключённой из другой (обычное дело при смене СРО).
+    _STATUS_ORDER = {STATUS_ACTIVE: 0, STATUS_SUSPENDED: 1, STATUS_EXCLUDED: 2}
+
     @property
     def memberships(self) -> list[Membership]:
         result: list[Membership] = []
         for answer in self.answers:
             result.extend(answer.memberships)
-        return result
+        # Сортировка устойчивая: внутри одного статуса порядок реестра сохраняется.
+        # Нужна, чтобы в колонке «Название СРО» первой стояла действующая СРО,
+        # а не та, из которой компанию исключили пять лет назад.
+        return sorted(result, key=lambda m: self._STATUS_ORDER.get(m.status, 3))
 
     @property
     def verdict(self) -> Verdict:
