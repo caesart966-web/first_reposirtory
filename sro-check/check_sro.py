@@ -39,19 +39,32 @@ from sro.registries import build_providers
 DATE_FORMAT = "%d.%m.%Y %H:%M"
 
 
+def _print_line(message: str) -> None:
+    """Печать в консоль. У оконной сборки консоли нет — тогда просто молчим."""
+    try:
+        print(message, flush=True)
+    except (OSError, ValueError, AttributeError):
+        pass
+
+
 # ---------------------------------------------------------------------------
 # Вспомогательное
 # ---------------------------------------------------------------------------
 
 
 class Log:
-    """Пишет в консоль и в файл одновременно."""
+    """Пишет в консоль (или в переданный приёмник) и в файл одновременно.
 
-    def __init__(self, path: str | None = None) -> None:
+    `sink` позволяет графическому интерфейсу забирать строки себе в окно
+    вместо консоли, которой у оконного приложения нет.
+    """
+
+    def __init__(self, path: str | None = None, sink=None) -> None:
         self.handle = open(path, "a", encoding="utf-8") if path else None
+        self.sink = sink if sink is not None else _print_line
 
     def __call__(self, message: str = "") -> None:
-        print(message, flush=True)
+        self.sink(message)
         if self.handle:
             self.handle.write(f"{datetime.now():%Y-%m-%d %H:%M:%S} {message}\n")
             self.handle.flush()
@@ -133,6 +146,7 @@ def check_company(
     delay_max: float,
     basis: str,
     log: Log,
+    cancel=None,
 ) -> CheckResult:
     """Опросить реестры по одному ИНН."""
     result = CheckResult(inn=inn, checked_at=datetime.now().strftime(DATE_FORMAT), basis=basis)
@@ -142,7 +156,7 @@ def check_company(
 
         if browser_mode != "always":
             answer = providers[source].lookup(inn)
-            _pause(delay_min, delay_max)
+            _pause(delay_min, delay_max, cancel)
 
         # Браузер подключаем, если прямой запрос не дал понятного ответа.
         needs_browser = browser_mode == "always" or (
@@ -150,7 +164,7 @@ def check_company(
         )
         if needs_browser and browser is not None:
             browser_answer = browser.lookup(source, inn)
-            _pause(delay_min, delay_max)
+            _pause(delay_min, delay_max, cancel)
             if browser_answer.outcome is not Outcome.UNKNOWN or answer is None:
                 answer = browser_answer
 
@@ -172,11 +186,19 @@ def _with_basis(result: CheckResult, basis: str) -> CheckResult:
     return result
 
 
-def _pause(delay_min: float, delay_max: float) -> None:
-    """Пауза между обращениями к реестру: не нагружаем государственный сервис."""
+def _pause(delay_min: float, delay_max: float, cancel=None) -> None:
+    """Пауза между обращениями к реестру: не нагружаем государственный сервис.
+
+    Если передан `cancel` (threading.Event), пауза прерывается сразу по нажатию
+    «Стоп» — иначе пользователь ждал бы окончания сна впустую.
+    """
     if delay_max <= 0:
         return
-    time.sleep(random.uniform(max(0.0, delay_min), max(delay_min, delay_max)))
+    seconds = random.uniform(max(0.0, delay_min), max(delay_min, delay_max))
+    if cancel is not None:
+        cancel.wait(seconds)
+    else:
+        time.sleep(seconds)
 
 
 # ---------------------------------------------------------------------------
@@ -184,7 +206,7 @@ def _pause(delay_min: float, delay_max: float) -> None:
 # ---------------------------------------------------------------------------
 
 
-def run_probe(args, log: Log) -> int:
+def run_probe(args, log: Log, cancel=None) -> int:
     inn = normalize_inn(args.probe)
     log(f"Диагностика API реестров по ИНН {inn}")
     if not is_valid_inn(inn):
@@ -219,8 +241,11 @@ def run_probe(args, log: Log) -> int:
                 any_working = True
             elif row.get("sample"):
                 log(f"      начало ответа: {row['sample'][:200]}")
-            _pause(args.delay_min, args.delay_max)
+            _pause(args.delay_min, args.delay_max, cancel)
         log("")
+        if cancel is not None and cancel.is_set():
+            log("Диагностика остановлена.")
+            return 1
 
     if args.browser != "never":
         log("=== Проверка через браузер ===")
@@ -255,7 +280,13 @@ def run_probe(args, log: Log) -> int:
 # ---------------------------------------------------------------------------
 
 
-def run(args, log: Log) -> int:
+def run(args, log: Log, cancel=None, progress=None) -> int:
+    """Основной проход по файлу.
+
+    `cancel`   — threading.Event: взведённый останавливает работу так же
+                 аккуратно, как Ctrl+C (всё проверенное сохраняется).
+    `progress` — callback(processed, total, counters) для индикатора в окне.
+    """
     if not os.path.exists(args.input):
         log(f"ОШИБКА: файл не найден: {args.input}")
         return 2
@@ -345,6 +376,9 @@ def run(args, log: Log) -> int:
 
     try:
         for row, raw_inn, inn, name, priority in plan:
+            if cancel is not None and cancel.is_set():
+                interrupted = True
+                break
             processed += 1
             label = (name or "").strip()[:45] or f"строка {row}"
 
@@ -377,6 +411,7 @@ def run(args, log: Log) -> int:
                         delay_max=args.delay_max,
                         basis=args.verdict_basis,
                         log=log,
+                        cancel=cancel,
                     )
                 except KeyboardInterrupt:
                     raise
@@ -394,6 +429,17 @@ def run(args, log: Log) -> int:
 
             excel_io.write_result(worksheet, layout, row, result, colorize=not args.no_color)
             counters[result.verdict] += 1
+
+            if progress is not None:
+                progress(
+                    processed,
+                    total,
+                    {
+                        "yes": counters[Verdict.YES],
+                        "no": counters[Verdict.NO],
+                        "unknown": counters[Verdict.UNKNOWN],
+                    },
+                )
 
             detail = result.sro_names or result.diagnostics or ""
             log(
@@ -430,6 +476,10 @@ def run(args, log: Log) -> int:
         interrupted = True
         log("")
         log("Остановлено пользователем — сохраняю то, что успел проверить…")
+    else:
+        if interrupted:
+            log("")
+            log("Остановлено — сохраняю то, что успел проверить…")
     finally:
         if browser_context is not None:
             try:

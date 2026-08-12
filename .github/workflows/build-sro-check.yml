@@ -1,0 +1,100 @@
+name: Сборка программы «Проверка СРО»
+
+# Собирает из sro-check/ готовое приложение, которое запускается двойным кликом
+# и не требует установленного Python. Windows-программу нельзя собрать на Linux,
+# поэтому сборка идёт на настоящих машинах GitHub: windows-latest и macos-latest.
+#
+# Где забрать результат: вкладка Actions → нужный запуск → раздел Artifacts.
+
+on:
+  push:
+    paths:
+      - 'sro-check/**'
+      - '.github/workflows/build-sro-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Без этого Python на windows-runner спотыкается о кириллицу в выводе.
+  PYTHONIOENCODING: utf-8
+  PYTHONUTF8: '1'
+
+jobs:
+  build:
+    name: ${{ matrix.title }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            title: Windows
+            artifact: SRO-Check-Windows
+          - os: macos-latest
+            title: macOS
+            artifact: SRO-Check-macOS
+
+    defaults:
+      run:
+        # bash одинаково ведёт себя на обеих системах и корректно работает
+        # с кириллицей в именах файлов (PowerShell 5.1 — нет).
+        shell: bash
+        working-directory: sro-check
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Установить зависимости
+        run: |
+          python -m pip install --upgrade pip
+          # Playwright намеренно не ставим: он тянет ~150 МБ браузера,
+          # а в собранной программе запасной способ проверки отключён.
+          pip install openpyxl requests pyinstaller
+
+      - name: Прогнать тесты
+        run: python -m unittest discover -s tests -t .
+
+      - name: Собрать приложение
+        run: |
+          pyinstaller \
+            --noconfirm \
+            --clean \
+            --onefile \
+            --windowed \
+            --name SRO-Check \
+            --exclude-module playwright \
+            --exclude-module pytest \
+            --exclude-module numpy \
+            --exclude-module pandas \
+            gui.py
+
+      - name: Упаковать (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          mkdir -p out
+          mv "dist/SRO-Check.exe" "out/Проверка СРО.exe"
+          cp КАК_ЗАПУСТИТЬ.md "out/Инструкция.md"
+          ls -la out
+
+      - name: Упаковать (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p out
+          # ditto сохраняет права на запуск внутри .app — обычный zip их теряет.
+          ditto -c -k --keepParent "dist/SRO-Check.app" "out/Проверка СРО.app.zip"
+          cp КАК_ЗАПУСТИТЬ.md "out/Инструкция.md"
+          ls -la out
+
+      - name: Выложить результат
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: sro-check/out/
+          if-no-files-found: error
+          retention-days: 90

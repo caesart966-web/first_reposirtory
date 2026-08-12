@@ -12,6 +12,7 @@ import io
 import os
 import sys
 import tempfile
+import threading
 import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -541,6 +542,112 @@ class TestEndToEnd(unittest.TestCase):
         verdict_key = next(key for key in next(iter(rows.values())) if key.startswith("есть сро"))
         verdicts = {row[verdict_key] for row in rows.values()}
         self.assertEqual(verdicts, {"не удалось проверить"})
+
+
+class TestGuiPlumbing(unittest.TestCase):
+    """Механика, на которой держится оконная версия (gui.py).
+
+    Окно не может пользоваться ни консолью, ни Ctrl+C, поэтому у ядра есть
+    приёмник строк (`sink`), событие отмены и обратный вызов прогресса.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.mock = MockRegistry()
+        cls.mock.__enter__()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.mock.__exit__(None, None, None)
+
+    def setUp(self):
+        self.folder = tempfile.mkdtemp(prefix="sro-gui-")
+        self.source = os.path.join(self.folder, "Компании_Список.xlsx")
+        self.output = os.path.join(self.folder, "Результат.xlsx")
+        make_source_file(self.source)
+
+    def make_args(self, *extra: str):
+        return check_sro.parse_args(
+            [
+                "--input", self.source,
+                "--sheet", "Лиды по приоритету",
+                "--output", self.output,
+                "--cache", os.path.join(self.folder, "кэш.json"),
+                "--log", os.path.join(self.folder, "лог.txt"),
+                "--nostroy-url", self.mock.url,
+                "--nopriz-url", self.mock.url,
+                "--browser", "never",
+                "--delay-min", "0",
+                "--delay-max", "0",
+                "--attempts", "1",
+                "--timeout", "5",
+                *extra,
+            ]
+        )
+
+    @staticmethod
+    def quiet_log() -> check_sro.Log:
+        return check_sro.Log(None, sink=lambda _message: None)
+
+    def verdict_column_values(self) -> list:
+        workbook = load_workbook(self.output)
+        worksheet = workbook["Лиды по приоритету"]
+        headers = {
+            excel_io.normalize_header(worksheet.cell(row=2, column=column).value): column
+            for column in range(1, worksheet.max_column + 1)
+        }
+        column = next(index for key, index in headers.items() if key.startswith("есть сро"))
+        return [
+            worksheet.cell(row=row, column=column).value
+            for row in range(3, 3 + len(COMPANIES))
+        ]
+
+    # -- сами проверки --------------------------------------------------
+
+    def test_sink_receives_lines_instead_of_console(self):
+        collected: list[str] = []
+        log = check_sro.Log(None, sink=collected.append)
+        log("первая строка")
+        log()
+        self.assertEqual(collected, ["первая строка", ""])
+
+    def test_progress_reports_every_company(self):
+        seen: list[tuple] = []
+        code = check_sro.run(
+            self.make_args(),
+            self.quiet_log(),
+            progress=lambda processed, total, counters: seen.append(
+                (processed, total, dict(counters))
+            ),
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual([processed for processed, _, _ in seen], list(range(1, len(COMPANIES) + 1)))
+
+        processed, total, counters = seen[-1]
+        self.assertEqual(total, len(COMPANIES))
+        # Счётчики в окне должны сходиться с числом обработанных строк
+        self.assertEqual(counters["yes"] + counters["no"] + counters["unknown"], processed)
+
+    def test_cancel_stops_early_and_keeps_checked_rows(self):
+        cancel = threading.Event()
+
+        def progress(processed: int, _total: int, _counters: dict) -> None:
+            if processed == 3:
+                cancel.set()  # то же самое, что нажать «Остановить»
+
+        code = check_sro.run(self.make_args(), self.quiet_log(), cancel=cancel, progress=progress)
+
+        self.assertEqual(code, 130)  # тот же код возврата, что и у Ctrl+C
+        self.assertTrue(os.path.exists(self.output), "результат должен сохраниться и после отмены")
+        filled = [value for value in self.verdict_column_values() if value]
+        self.assertEqual(len(filled), 3, "успели проверить ровно три строки — они и должны остаться")
+
+    def test_cancel_before_start_checks_nobody(self):
+        cancel = threading.Event()
+        cancel.set()
+        code = check_sro.run(self.make_args(), self.quiet_log(), cancel=cancel)
+        self.assertEqual(code, 130)
+        self.assertEqual([value for value in self.verdict_column_values() if value], [])
 
 
 if __name__ == "__main__":
