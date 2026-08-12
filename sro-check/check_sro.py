@@ -165,6 +165,12 @@ def check_company(
         if needs_browser and browser is not None:
             browser_answer = browser.lookup(source, inn)
             _pause(delay_min, delay_max, cancel)
+            # Браузер попутно видит, по какому адресу сайт сам ходит за данными.
+            # Забираем этот адрес себе: дальше можно работать прямыми запросами,
+            # которые в разы быстрее.
+            found_url = getattr(browser, "discovered_urls", {}).get(source)
+            if found_url:
+                providers[source].adopt_url(found_url)
             if browser_answer.outcome is not Outcome.UNKNOWN or answer is None:
                 answer = browser_answer
 

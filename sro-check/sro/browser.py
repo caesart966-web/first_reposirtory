@@ -72,6 +72,32 @@ class BrowserLookup:
         self._context = None
         self.discovered_urls: dict[str, str] = {}
 
+    # Порядок важен: сначала браузеры, которые у пользователя уже стоят —
+    # тогда ничего скачивать не нужно. Отдельно загруженный Playwright-ом
+    # chromium (channel=None) остаётся запасным вариантом.
+    CHANNELS = ("chrome", "msedge", None)
+
+    def _launch(self):
+        problems: list[str] = []
+        for channel in self.CHANNELS:
+            name = channel or "встроенный chromium"
+            try:
+                if channel:
+                    browser = self._playwright.chromium.launch(
+                        headless=self.headless, channel=channel
+                    )
+                else:
+                    browser = self._playwright.chromium.launch(headless=self.headless)
+            except Exception as error:
+                problems.append(f"{name}: {type(error).__name__}")
+                continue
+            self.logger(f"[браузер] работаю через {name}")
+            return browser
+        raise RuntimeError(
+            "не удалось запустить браузер — нужен установленный Chrome или Edge. "
+            + "; ".join(problems[:3])
+        )
+
     def __enter__(self) -> "BrowserLookup":
         try:
             from playwright.sync_api import sync_playwright
@@ -83,7 +109,7 @@ class BrowserLookup:
             ) from error
 
         self._playwright = sync_playwright().start()
-        self._browser = self._playwright.chromium.launch(headless=self.headless)
+        self._browser = self._launch()
         self._context = self._browser.new_context(
             locale="ru-RU",
             user_agent=(

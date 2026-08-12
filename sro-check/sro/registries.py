@@ -72,11 +72,19 @@ def origin_of(url: str) -> str:
     return f"{parts.scheme}://{parts.netloc}"
 
 
+_HTML_TITLE = re.compile(r"<title[^>]*>(.*?)</title>", re.IGNORECASE | re.DOTALL)
+
+
 def _body_hint(response) -> str:
     """Короткая выжимка из тела ответа.
 
     При 4xx/5xx сервер обычно пишет в теле, что именно ему не понравилось,
     — без этого «HTTP 404» не даёт ничего для починки.
+
+    Если пришла HTML-страница (заглушка защиты, страница ошибки), печатать её
+    разметку бессмысленно: «<!DOCTYPE html> <html> <head>» занимает всю строку
+    и вытесняет пояснение второго реестра. Берём заголовок страницы — в нём
+    обычно и написано, кто именно нас развернул.
     """
     try:
         text = (response.text or "").strip()
@@ -84,7 +92,15 @@ def _body_hint(response) -> str:
         return ""
     if not text:
         return ""
-    return " — " + re.sub(r"\s+", " ", text)[:200]
+
+    if "<html" in text[:500].lower() or text[:20].lower().startswith("<!doctype"):
+        match = _HTML_TITLE.search(text)
+        title = re.sub(r"\s+", " ", match.group(1)).strip() if match else ""
+        if title:
+            return f" — сайт вернул HTML-страницу «{title[:70]}» вместо данных"
+        return " — сайт вернул HTML-страницу вместо данных"
+
+    return " — " + re.sub(r"\s+", " ", text)[:120]
 
 
 def _search_params(inn: str) -> dict:
@@ -573,6 +589,20 @@ class RegistryProvider:
             )
         return built
 
+    def adopt_url(self, url: str) -> None:
+        """Принять адрес, найденный со стороны — например, подсмотренный браузером.
+
+        Смысл в скорости: браузер отрабатывает секунды, прямой запрос —
+        доли секунды. Достаточно один раз узнать настоящий адрес, чтобы
+        остальные сотни компаний проверить быстро.
+        """
+        url = (url or "").split("?")[0]
+        if not url or any(endpoint.url == url for endpoint in self.endpoints):
+            return
+        self.endpoints = self._endpoints_from([url]) + self.endpoints
+        self.working = None  # пусть переберёт заново, начиная с нового адреса
+        self.logger(f"[{self.source}] принял адрес API, найденный браузером: {url}")
+
     def find_new_endpoints(self) -> list[Endpoint]:
         """Один раз за запуск поискать действующий адрес API в скриптах сайта."""
         if self.discovery_tried or not self.allow_discovery:
@@ -641,11 +671,13 @@ class RegistryProvider:
 
         # В примечание для человека пишем причину, а не внутренние имена
         # эндпоинтов: одинаковые причины схлопываем, чтобы не было простыней.
+        # Каждую причину подрезаем отдельно: иначе одна длинная съедает лимит
+        # целиком и пояснение второго реестра до человека не доходит.
         unique = list(dict.fromkeys(reason for reason in reasons if reason))
         return RegistryAnswer(
             self.source,
             Outcome.UNKNOWN,
-            note="; ".join(unique[:2])[:200] or "реестр не ответил",
+            note="; ".join(reason[:110] for reason in unique[:2]) or "реестр не ответил",
         )
 
     def probe(self, inn: str) -> list[dict]:

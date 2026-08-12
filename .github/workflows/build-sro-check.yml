@@ -58,9 +58,11 @@ jobs:
       - name: Установить зависимости
         run: |
           python -m pip install --upgrade pip
-          # Playwright намеренно не ставим: он тянет ~150 МБ браузера,
-          # а в собранной программе запасной способ проверки отключён.
-          pip install openpyxl requests pyinstaller
+          # Playwright входит в сборку: реестры перестали отдавать данные
+          # обычным HTTP-клиентам, и проверка через браузер — единственный
+          # надёжный способ. Сам браузер НЕ скачиваем: программа работает
+          # через уже установленный у пользователя Chrome или Edge.
+          pip install openpyxl requests pyinstaller playwright
 
       - name: Прогнать тесты
         run: python -m unittest discover -s tests -t .
@@ -76,7 +78,7 @@ jobs:
             --onefile \
             --windowed \
             --name SRO-Check \
-            --exclude-module playwright \
+            --collect-all playwright \
             --exclude-module pytest \
             --exclude-module numpy \
             --exclude-module pandas \
@@ -86,13 +88,14 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           # Запускаем именно собранный .exe: так проверяется, что внутрь попал
-          # tkinter и окно действительно открывается, а не только что сборка прошла.
-          ./dist/SRO-Check.exe --selftest
-          echo "собранная программа запустилась и корректно завершилась"
+          # и tkinter, и Playwright, и окно действительно открывается,
+          # а не только что сборка прошла.
+          ./dist/SRO-Check.exe --selftest --require-browser
+          echo "собранная программа запустилась, окно построилось, Playwright на месте"
 
       - name: Проверить, что собранная программа запускается (macOS)
         if: runner.os == 'macOS'
-        run: ./dist/SRO-Check.app/Contents/MacOS/SRO-Check --selftest
+        run: ./dist/SRO-Check.app/Contents/MacOS/SRO-Check --selftest --require-browser
 
       - name: Упаковать (Windows)
         if: runner.os == 'Windows'

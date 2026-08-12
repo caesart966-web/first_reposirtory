@@ -366,6 +366,60 @@ class TestDiscovery(unittest.TestCase):
         self.assertNotIn("https://mc.yandex.ru/metrika/tag.js", session.requested)
 
 
+class TestErrorHints(unittest.TestCase):
+    """Что показывать человеку, когда реестр ответил ошибкой."""
+
+    class Response:
+        def __init__(self, text: str) -> None:
+            self.text = text
+
+    def hint(self, text: str) -> str:
+        return registries_mod._body_hint(self.Response(text))
+
+    def test_html_page_is_summarised_not_dumped(self):
+        """«<!DOCTYPE html> <html> <head>» занимает всю строку и не значит ничего."""
+        html = (
+            '<!DOCTYPE html><html><head><meta charset="utf-8">'
+            "<title>500 Internal Server Error</title></head><body>…</body></html>"
+        )
+        hint = self.hint(html)
+        self.assertIn("HTML-страницу", hint)
+        self.assertIn("500 Internal Server Error", hint)
+        self.assertNotIn("DOCTYPE", hint)
+
+    def test_html_without_title(self):
+        hint = self.hint("<html><body>что-то пошло не так</body></html>")
+        self.assertIn("HTML-страницу", hint)
+        self.assertNotIn("<html", hint)
+
+    def test_json_error_is_quoted_as_is(self):
+        self.assertIn("internal", self.hint('{"error":"internal"}'))
+
+    def test_empty_body_adds_nothing(self):
+        self.assertEqual(self.hint(""), "")
+
+    def test_long_reason_does_not_crowd_out_the_second(self):
+        """Одна длинная причина не должна вытеснять пояснение второго варианта."""
+        endpoints = [
+            Endpoint("первый", "GET", "http://a/api", params=lambda inn: {}),
+            Endpoint("второй", "GET", "http://b/api", params=lambda inn: {}),
+        ]
+        provider = RegistryProvider(
+            SOURCE_NOSTROY,
+            endpoints,
+            timeout=1,
+            attempts=1,
+            logger=lambda _m: None,
+            allow_discovery=False,
+        )
+        answers = iter([(None, "ПЕРВЫЙ " + "ы" * 300), (None, "ВТОРОЙ " + "я" * 300)])
+        with patch.object(provider, "_request", side_effect=lambda *_: next(answers)):
+            answer = provider.lookup("7702521529")
+
+        self.assertIn("ПЕРВЫЙ", answer.note)
+        self.assertIn("ВТОРОЙ", answer.note, "второе пояснение вытеснено первым")
+
+
 class TestSelfHealing(unittest.TestCase):
     """Прошитый адрес умер — программа должна найти рабочий и продолжить."""
 
@@ -412,6 +466,25 @@ class TestSelfHealing(unittest.TestCase):
             answer = provider.lookup(mock.MEMBER_INN)
         self.assertIs(answer.outcome, Outcome.UNKNOWN)
         spy.assert_not_called()
+
+    def test_adopted_address_is_tried_first(self):
+        """Адрес, подсмотренный браузером, должен сразу пойти в дело."""
+        provider = self.dead_provider()
+        provider.adopt_url(self.mock.url + "?inn=123")
+        self.assertTrue(provider.endpoints[0].url.startswith(self.mock.url))
+        self.assertNotIn("?", provider.endpoints[0].url, "параметры запроса адресом не являются")
+
+        answer = provider.lookup(mock.MEMBER_INN)
+        self.assertIs(answer.outcome, Outcome.FOUND)
+
+    def test_adopting_the_same_address_twice_changes_nothing(self):
+        provider = self.dead_provider()
+        before = len(provider.endpoints)
+        provider.adopt_url(self.mock.url)
+        after_first = len(provider.endpoints)
+        provider.adopt_url(self.mock.url)
+        self.assertGreater(after_first, before)
+        self.assertEqual(len(provider.endpoints), after_first)
 
     def test_failed_search_still_reports_honestly(self):
         provider = self.dead_provider()

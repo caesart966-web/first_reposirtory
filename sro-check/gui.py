@@ -681,6 +681,12 @@ def main() -> int:
     app = App(root)
 
     if "--selftest" in sys.argv[1:]:
+        # --require-browser: убедиться, что в сборку попал Playwright. Без него
+        # проверка через браузер молча превратится в «недоступно», а это сейчас
+        # единственный надёжный способ достучаться до реестров.
+        if "--require-browser" in sys.argv[1:] and not app.has_browser:
+            root.destroy()
+            return 3
         return _selftest(root, app)
 
     root.mainloop()
