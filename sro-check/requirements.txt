@@ -1,0 +1,5 @@
+openpyxl>=3.1
+requests>=2.31
+# Playwright нужен только для запасной проверки через браузер (--browser auto/always).
+# После установки один раз выполните: playwright install chromium
+playwright>=1.40

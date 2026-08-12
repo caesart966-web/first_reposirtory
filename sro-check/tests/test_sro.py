@@ -1,0 +1,547 @@
+"""Тесты. Запуск:  python -m unittest discover -s tests -v
+
+Самая важная группа тестов — TestNeverGuess: она проверяет главное обещание
+программы, что при любом сбое в файл попадает «не удалось проверить»,
+а не «нет».
+"""
+
+from __future__ import annotations
+
+import contextlib
+import io
+import os
+import sys
+import tempfile
+import unittest
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from openpyxl import Workbook, load_workbook
+from openpyxl.styles import Font, PatternFill
+
+import check_sro
+from sro import excel_io
+from sro.inn import is_valid_inn, normalize_inn
+from sro.models import (
+    SOURCE_NOPRIZ,
+    SOURCE_NOSTROY,
+    STATUS_ACTIVE,
+    STATUS_EXCLUDED,
+    STATUS_SUSPENDED,
+    Outcome,
+    Verdict,
+    normalize_status,
+)
+from sro.registries import RegistryProvider, build_providers, interpret_payload
+from tests import mock_registry as mock
+from tests.mock_registry import MockRegistry
+
+
+# ---------------------------------------------------------------------------
+# ИНН
+# ---------------------------------------------------------------------------
+
+
+class TestInn(unittest.TestCase):
+    def test_plain_string(self):
+        self.assertEqual(normalize_inn("7702521529"), "7702521529")
+
+    def test_strips_spaces_and_junk(self):
+        self.assertEqual(normalize_inn(" 7702 521 529 "), "7702521529")
+        self.assertEqual(normalize_inn("ИНН: 7702521529"), "7702521529")
+
+    def test_excel_number(self):
+        """Excel часто отдаёт ИНН числом — в том числе с плавающей точкой."""
+        self.assertEqual(normalize_inn(7702521529), "7702521529")
+        self.assertEqual(normalize_inn(7702521529.0), "7702521529")
+
+    def test_restores_leading_zero(self):
+        """0274062111 в Excel превращается в 274062111 — возвращаем ноль."""
+        self.assertEqual(normalize_inn(274062111), "0274062111")
+        self.assertEqual(len(normalize_inn(27406211101)), 12)
+
+    def test_empty(self):
+        self.assertEqual(normalize_inn(None), "")
+        self.assertEqual(normalize_inn(""), "")
+        self.assertEqual(normalize_inn("нет данных"), "")
+
+    def test_checksum(self):
+        self.assertTrue(is_valid_inn("7702521529"))  # реальный контрольный разряд
+        self.assertTrue(is_valid_inn("7707083893"))
+        self.assertFalse(is_valid_inn("7702521520"))  # испорчен последний разряд
+        self.assertFalse(is_valid_inn("123"))
+        self.assertFalse(is_valid_inn(""))
+
+
+class TestStatus(unittest.TestCase):
+    def test_active(self):
+        for text in ("Является членом СРО", "Действующий", "действует", "Активен"):
+            self.assertEqual(normalize_status(text), STATUS_ACTIVE, text)
+
+    def test_suspended(self):
+        for text in ("Приостановлено", "Действие членства приостановлено"):
+            self.assertEqual(normalize_status(text), STATUS_SUSPENDED, text)
+
+    def test_excluded(self):
+        for text in ("Исключен из реестра", "Исключён", "Членство прекращено"):
+            self.assertEqual(normalize_status(text), STATUS_EXCLUDED, text)
+
+    def test_unknown_text_is_not_invented(self):
+        """Незнакомую формулировку не выдумываем — отдаём пустую строку."""
+        self.assertEqual(normalize_status("нечто невнятное"), "")
+        self.assertEqual(normalize_status(None), "")
+
+
+# ---------------------------------------------------------------------------
+# Разбор ответов реестра
+# ---------------------------------------------------------------------------
+
+
+class TestInterpret(unittest.TestCase):
+    def test_found(self):
+        answer = interpret_payload(mock.SCENARIOS[mock.MEMBER_INN], mock.MEMBER_INN, SOURCE_NOSTROY)
+        self.assertIs(answer.outcome, Outcome.FOUND)
+        self.assertEqual(len(answer.memberships), 1)
+        membership = answer.memberships[0]
+        self.assertIn("Строители России", membership.sro_name)
+        self.assertEqual(membership.registry_number, "1234")
+        self.assertEqual(membership.status, STATUS_ACTIVE)
+
+    def test_found_does_not_take_company_name_as_sro_name(self):
+        """У записи есть и своё название, и название СРО — берём именно СРО."""
+        answer = interpret_payload(mock.SCENARIOS[mock.MEMBER_INN], mock.MEMBER_INN, SOURCE_NOSTROY)
+        self.assertNotIn("Мостострой", answer.memberships[0].sro_name)
+
+    def test_empty_is_a_real_no(self):
+        answer = interpret_payload(
+            mock.SCENARIOS[mock.NON_MEMBER_INN], mock.NON_MEMBER_INN, SOURCE_NOSTROY
+        )
+        self.assertIs(answer.outcome, Outcome.EMPTY)
+
+    def test_suspended_and_excluded_statuses(self):
+        suspended = interpret_payload(
+            mock.SCENARIOS[mock.SUSPENDED_INN], mock.SUSPENDED_INN, SOURCE_NOSTROY
+        )
+        self.assertEqual(suspended.memberships[0].status, STATUS_SUSPENDED)
+        excluded = interpret_payload(
+            mock.SCENARIOS[mock.EXCLUDED_INN], mock.EXCLUDED_INN, SOURCE_NOSTROY
+        )
+        self.assertEqual(excluded.memberships[0].status, STATUS_EXCLUDED)
+
+    # --- ниже: всё, что должно давать UNKNOWN, а не EMPTY ---
+
+    def test_unknown_json_shape(self):
+        answer = interpret_payload(
+            mock.SCENARIOS[mock.WEIRD_JSON_INN], mock.WEIRD_JSON_INN, SOURCE_NOSTROY
+        )
+        self.assertIs(answer.outcome, Outcome.UNKNOWN)
+
+    def test_records_without_inn_field(self):
+        answer = interpret_payload(
+            mock.SCENARIOS[mock.NO_INN_FIELD_INN], mock.NO_INN_FIELD_INN, SOURCE_NOSTROY
+        )
+        self.assertIs(answer.outcome, Outcome.UNKNOWN)
+
+    def test_search_filter_ignored(self):
+        """Реестр отдал чужие записи — это не доказательство отсутствия."""
+        answer = interpret_payload(
+            mock.SCENARIOS[mock.UNFILTERED_INN], mock.UNFILTERED_INN, SOURCE_NOSTROY
+        )
+        self.assertIs(answer.outcome, Outcome.UNKNOWN)
+
+    def test_partial_results(self):
+        """Показана часть результатов — компания может быть на другой странице."""
+        answer = interpret_payload(
+            mock.SCENARIOS[mock.PAGINATED_INN], mock.PAGINATED_INN, SOURCE_NOSTROY
+        )
+        self.assertIs(answer.outcome, Outcome.UNKNOWN)
+
+    def test_inn_only_in_sro_fields_is_ambiguous(self):
+        payload = {
+            "success": True,
+            "data": {
+                "data": [
+                    {
+                        "id": 1,
+                        "full_description": "ООО «Кто-то»",
+                        "sro": {"inn": "7702521529", "full_description": "СРО"},
+                    }
+                ],
+                "count": 1,
+            },
+        }
+        answer = interpret_payload(payload, "7702521529", SOURCE_NOSTROY)
+        self.assertIs(answer.outcome, Outcome.UNKNOWN)
+
+    def test_garbage_inputs(self):
+        for payload in (None, "просто текст", 42, {"success": False, "message": "доступ закрыт"}):
+            answer = interpret_payload(payload, "7702521529", SOURCE_NOSTROY)
+            self.assertIs(answer.outcome, Outcome.UNKNOWN, payload)
+
+
+# ---------------------------------------------------------------------------
+# Работа по сети (через мок реестра)
+# ---------------------------------------------------------------------------
+
+
+class TestProviderOverHttp(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.mock = MockRegistry()
+        cls.mock.__enter__()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.mock.__exit__(None, None, None)
+
+    def provider(self) -> RegistryProvider:
+        providers = build_providers(timeout=5, attempts=1, nostroy_url=self.mock.url)
+        return providers[SOURCE_NOSTROY]
+
+    def test_found_over_http(self):
+        answer = self.provider().lookup(mock.MEMBER_INN)
+        self.assertIs(answer.outcome, Outcome.FOUND)
+
+    def test_empty_over_http(self):
+        answer = self.provider().lookup(mock.NON_MEMBER_INN)
+        self.assertIs(answer.outcome, Outcome.EMPTY)
+
+    def test_server_error(self):
+        answer = self.provider().lookup(mock.SERVER_ERROR_INN)
+        self.assertIs(answer.outcome, Outcome.UNKNOWN)
+
+    def test_html_instead_of_json(self):
+        """Классическая ловушка: заглушка сайта отдаёт HTML со статусом 200."""
+        answer = self.provider().lookup(mock.HTML_INN)
+        self.assertIs(answer.outcome, Outcome.UNKNOWN)
+
+    def test_connection_dropped(self):
+        answer = self.provider().lookup(mock.TIMEOUT_INN)
+        self.assertIs(answer.outcome, Outcome.UNKNOWN)
+
+    def test_unreachable_host(self):
+        providers = build_providers(
+            timeout=2, attempts=1, nostroy_url="http://127.0.0.1:9/api/search"
+        )
+        answer = providers[SOURCE_NOSTROY].lookup(mock.MEMBER_INN)
+        self.assertIs(answer.outcome, Outcome.UNKNOWN)
+
+
+# ---------------------------------------------------------------------------
+# Сведение результата по двум реестрам
+# ---------------------------------------------------------------------------
+
+
+class TestVerdict(unittest.TestCase):
+    def build(self, *outcomes):
+        from sro.models import CheckResult, RegistryAnswer
+
+        result = CheckResult(inn="7702521529")
+        for source, outcome in outcomes:
+            result.answers.append(RegistryAnswer(source, outcome))
+        return result
+
+    def test_found_anywhere_is_yes(self):
+        result = self.build((SOURCE_NOSTROY, Outcome.EMPTY), (SOURCE_NOPRIZ, Outcome.FOUND))
+        self.assertIs(result.verdict, Verdict.YES)
+
+    def test_both_empty_is_no(self):
+        result = self.build((SOURCE_NOSTROY, Outcome.EMPTY), (SOURCE_NOPRIZ, Outcome.EMPTY))
+        self.assertIs(result.verdict, Verdict.NO)
+
+    def test_one_unknown_spoils_the_no(self):
+        """Ключевое правило: не проверили один реестр — значит «не знаю»."""
+        result = self.build((SOURCE_NOSTROY, Outcome.EMPTY), (SOURCE_NOPRIZ, Outcome.UNKNOWN))
+        self.assertIs(result.verdict, Verdict.UNKNOWN)
+
+    def test_no_answers_is_unknown(self):
+        self.assertIs(self.build().verdict, Verdict.UNKNOWN)
+
+    def test_unknown_plus_found_is_yes(self):
+        result = self.build((SOURCE_NOSTROY, Outcome.UNKNOWN), (SOURCE_NOPRIZ, Outcome.FOUND))
+        self.assertIs(result.verdict, Verdict.YES)
+
+    def with_membership(self, status_raw: str, basis: str):
+        from sro.models import CheckResult, Membership, RegistryAnswer
+
+        membership = Membership(source=SOURCE_NOSTROY, sro_name="СРО", status_raw=status_raw)
+        answer = RegistryAnswer(SOURCE_NOSTROY, Outcome.FOUND, memberships=[membership])
+        return CheckResult(inn="7702521529", answers=[answer], basis=basis)
+
+    def test_basis_found_counts_any_record(self):
+        for status in ("Является членом СРО", "Приостановлено", "Исключен"):
+            self.assertIs(self.with_membership(status, "found").verdict, Verdict.YES, status)
+
+    def test_basis_active_requires_live_membership(self):
+        self.assertIs(self.with_membership("Является членом СРО", "active").verdict, Verdict.YES)
+        self.assertIs(self.with_membership("Приостановлено", "active").verdict, Verdict.NO)
+        self.assertIs(self.with_membership("Исключен", "active").verdict, Verdict.NO)
+
+    def test_basis_active_does_not_guess_unknown_status(self):
+        """Статус не распознан — «нет» ставить нельзя."""
+        self.assertIs(self.with_membership("нечто невнятное", "active").verdict, Verdict.UNKNOWN)
+
+
+class TestRegistryOrder(unittest.TestCase):
+    def test_builders_go_to_nostroy_first(self):
+        self.assertEqual(excel_io.registry_order("Строители")[0], SOURCE_NOSTROY)
+
+    def test_designers_go_to_nopriz_first(self):
+        for priority in ("Проектировщики", "проектировщики/изыскатели", "Изыскатели"):
+            self.assertEqual(excel_io.registry_order(priority)[0], SOURCE_NOPRIZ, priority)
+
+    def test_unknown_priority_defaults_to_nostroy(self):
+        self.assertEqual(excel_io.registry_order("")[0], SOURCE_NOSTROY)
+
+
+# ---------------------------------------------------------------------------
+# Полный проход по файлу
+# ---------------------------------------------------------------------------
+
+COMPANIES = [
+    ("ООО «Мостострой»", mock.MEMBER_INN, "Строители"),
+    ("АО «Проектстрой»", mock.SUSPENDED_INN, "Проектировщики"),
+    ("ООО «Бывший член»", mock.EXCLUDED_INN, "Строители"),
+    ("ПАО «Не в СРО»", mock.NON_MEMBER_INN, "Строители"),
+    ("ООО «Сервер лёг»", mock.SERVER_ERROR_INN, "Строители"),
+    ("ООО «HTML вместо JSON»", mock.HTML_INN, "Строители"),
+    ("ООО «Странный JSON»", mock.WEIRD_JSON_INN, "Проектировщики"),
+    ("ООО «Фильтр не сработал»", mock.UNFILTERED_INN, "Строители"),
+    ("ООО «Битый ИНН»", "12345", "Строители"),
+    ("ООО «Без ИНН»", "", "Строители"),
+]
+
+
+def make_source_file(path: str) -> None:
+    """Собрать файл, похожий на настоящий: заголовок, шапка, цвета."""
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "Лиды по приоритету"
+
+    worksheet["A1"] = "Список компаний для обзвона"  # строка-заголовок над шапкой
+    worksheet["A1"].font = Font(bold=True, size=14)
+
+    headers = ["Поставщик", "ИНН", "Приоритет", "Есть СРО? (проверить в НОСТРОЙ)"]
+    for index, title in enumerate(headers, start=1):
+        cell = worksheet.cell(row=2, column=index, value=title)
+        cell.font = Font(bold=True)
+        cell.fill = PatternFill("solid", fgColor="DDEBF7")
+
+    for offset, (name, inn, priority) in enumerate(COMPANIES):
+        row = 3 + offset
+        worksheet.cell(row=row, column=1, value=name)
+        # ИНН специально кладём числом, как это делает Excel
+        worksheet.cell(row=row, column=2, value=int(inn) if inn.isdigit() else inn)
+        worksheet.cell(row=row, column=3, value=priority)
+        if offset == 0:
+            worksheet.cell(row=row, column=1).fill = PatternFill("solid", fgColor="FFF2CC")
+
+    workbook.save(path)
+
+
+class TestEndToEnd(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.mock = MockRegistry()
+        cls.mock.__enter__()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.mock.__exit__(None, None, None)
+
+    def setUp(self):
+        self.folder = tempfile.mkdtemp(prefix="sro-test-")
+        self.source = os.path.join(self.folder, "Компании_Список.xlsx")
+        self.output = os.path.join(self.folder, "Результат.xlsx")
+        make_source_file(self.source)
+        self.mock.requests_log.clear()
+
+    def run_tool(self, *extra: str) -> int:
+        return self._silently(
+            [
+                "--input", self.source,
+                "--sheet", "Лиды по приоритету",
+                "--output", self.output,
+                "--cache", os.path.join(self.folder, "кэш.json"),
+                "--log", os.path.join(self.folder, "лог.txt"),
+                "--nostroy-url", self.mock.url,
+                "--nopriz-url", self.mock.url,
+                "--browser", "never",
+                "--delay-min", "0",
+                "--delay-max", "0",
+                "--attempts", "1",
+                "--timeout", "5",
+                *extra,
+            ]
+        )
+
+    @staticmethod
+    def _silently(argv: list[str]) -> int:
+        """Запустить программу, не засоряя вывод тестов её прогрессом."""
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            return check_sro.main(argv)
+
+    def read_output(self) -> dict[str, dict]:
+        workbook = load_workbook(self.output)
+        worksheet = workbook["Лиды по приоритету"]
+        headers = {
+            excel_io.normalize_header(worksheet.cell(row=2, column=column).value): column
+            for column in range(1, worksheet.max_column + 1)
+        }
+        rows: dict[str, dict] = {}
+        for row in range(3, worksheet.max_row + 1):
+            name = worksheet.cell(row=row, column=1).value
+            if not name:
+                continue
+            rows[name] = {
+                title: worksheet.cell(row=row, column=column).value
+                for title, column in headers.items()
+            }
+        return rows
+
+    # -- сами проверки --------------------------------------------------
+
+    def test_full_run(self):
+        self.assertEqual(self.run_tool("--verdict-basis", "found"), 0)
+        self.assertTrue(os.path.exists(self.output))
+        rows = self.read_output()
+
+        # Колонку вердикта ищем так же, как это делает программа
+        verdict_key = next(key for key in next(iter(rows.values())) if key.startswith("есть сро"))
+
+        def check(company: str, expected: str) -> dict:
+            self.assertIn(company, rows)
+            self.assertEqual(rows[company][verdict_key], expected, company)
+            return rows[company]
+
+        found = check("ООО «Мостострой»", "да")
+        self.assertIn("Строители России", found["название сро"])
+        self.assertEqual(found["реестровый номер"], "1234")
+        self.assertEqual(found["статус членства"], "действует")
+        self.assertEqual(found["источник"], "НОСТРОЙ")
+        self.assertTrue(found["дата проверки"])
+
+        self.assertEqual(check("АО «Проектстрой»", "да")["статус членства"], "приостановлено")
+        self.assertEqual(check("ООО «Бывший член»", "да")["статус членства"], "исключён")
+
+        # Достоверное «нет»: оба реестра ответили и ничего не нашли
+        check("ПАО «Не в СРО»", "нет")
+
+        # Всё, что сломалось, обязано стать «не удалось проверить»
+        for company in (
+            "ООО «Сервер лёг»",
+            "ООО «HTML вместо JSON»",
+            "ООО «Странный JSON»",
+            "ООО «Фильтр не сработал»",
+            "ООО «Битый ИНН»",
+            "ООО «Без ИНН»",
+        ):
+            check(company, "не удалось проверить")
+
+    def test_verdict_basis_active(self):
+        """При правиле «active» членство должно быть именно действующим."""
+        self.assertEqual(self.run_tool("--verdict-basis", "active"), 0)
+        rows = self.read_output()
+        verdict_key = next(key for key in next(iter(rows.values())) if key.startswith("есть сро"))
+
+        self.assertEqual(rows["ООО «Мостострой»"][verdict_key], "да")
+
+        # Приостановленные и исключённые — «нет», но сведения о СРО сохраняются,
+        # чтобы было видно, на каком основании принято решение.
+        for company, status in (
+            ("АО «Проектстрой»", "приостановлено"),
+            ("ООО «Бывший член»", "исключён"),
+        ):
+            self.assertEqual(rows[company][verdict_key], "нет", company)
+            self.assertEqual(rows[company]["статус членства"], status)
+            self.assertIn("Строители России", rows[company]["название сро"])
+
+    def test_broken_inn_never_hits_the_network(self):
+        self.run_tool()
+        self.assertNotIn("12345", self.mock.requests_log)
+        self.assertIn(mock.MEMBER_INN, self.mock.requests_log)
+
+    def test_original_file_untouched(self):
+        with open(self.source, "rb") as handle:
+            before = handle.read()
+        self.run_tool()
+        with open(self.source, "rb") as handle:
+            self.assertEqual(handle.read(), before)
+
+    def test_formatting_preserved(self):
+        self.run_tool()
+        workbook = load_workbook(self.output)
+        worksheet = workbook["Лиды по приоритету"]
+        self.assertEqual(worksheet["A1"].value, "Список компаний для обзвона")
+        self.assertTrue(worksheet["A1"].font.bold)
+        self.assertTrue(worksheet["A2"].font.bold)
+        self.assertEqual(worksheet["A2"].fill.fgColor.rgb[-6:], "DDEBF7")
+        self.assertEqual(worksheet["A3"].fill.fgColor.rgb[-6:], "FFF2CC")
+
+    def test_cache_prevents_repeat_requests(self):
+        self.run_tool()
+        first_pass = len(self.mock.requests_log)
+        self.assertGreater(first_pass, 0)
+
+        self.mock.requests_log.clear()
+        self.run_tool()
+        # Повторный запуск: «да»/«нет» берутся из кэша, заново спрашиваем
+        # только те строки, что в прошлый раз не удалось проверить.
+        repeated = set(self.mock.requests_log)
+        self.assertNotIn(mock.MEMBER_INN, repeated)
+        self.assertNotIn(mock.NON_MEMBER_INN, repeated)
+        self.assertIn(mock.SERVER_ERROR_INN, repeated)
+
+    def test_retry_failed_only_touches_unresolved_rows(self):
+        self.run_tool()
+        self.mock.requests_log.clear()
+
+        # Скармливаем результат обратно и просим перепроверить только сбои
+        self.source = self.output
+        self.output = os.path.join(self.folder, "Результат2.xlsx")
+        self.assertEqual(self.run_tool("--retry-failed"), 0)
+
+        touched = set(self.mock.requests_log)
+        self.assertNotIn(mock.MEMBER_INN, touched)
+        self.assertNotIn(mock.NON_MEMBER_INN, touched)
+        self.assertIn(mock.HTML_INN, touched)
+
+        # Ранее полученные ответы в файле сохранились
+        rows = self.read_output()
+        verdict_key = next(key for key in next(iter(rows.values())) if key.startswith("есть сро"))
+        self.assertEqual(rows["ООО «Мостострой»"][verdict_key], "да")
+        self.assertEqual(rows["ПАО «Не в СРО»"][verdict_key], "нет")
+
+    def test_checkpoint_file_appears_during_run(self):
+        self.run_tool("--checkpoint-every", "2")
+        self.assertTrue(os.path.exists(self.output))
+        cache = os.path.join(self.folder, "кэш.json")
+        self.assertTrue(os.path.exists(cache))
+
+    def test_registry_down_never_produces_a_no(self):
+        """Реестр недоступен целиком — ни одной строки «нет» появиться не должно."""
+        self.output = os.path.join(self.folder, "Результат_офлайн.xlsx")
+        code = self._silently(
+            [
+                "--input", self.source,
+                "--sheet", "Лиды по приоритету",
+                "--output", self.output,
+                "--cache", os.path.join(self.folder, "кэш_офлайн.json"),
+                "--log", os.path.join(self.folder, "лог_офлайн.txt"),
+                "--nostroy-url", "http://127.0.0.1:9/api/search",
+                "--nopriz-url", "http://127.0.0.1:9/api/search",
+                "--browser", "never",
+                "--delay-min", "0", "--delay-max", "0",
+                "--attempts", "1", "--timeout", "2",
+            ]
+        )
+        self.assertEqual(code, 0)
+        rows = self.read_output()
+        verdict_key = next(key for key in next(iter(rows.values())) if key.startswith("есть сро"))
+        verdicts = {row[verdict_key] for row in rows.values()}
+        self.assertEqual(verdicts, {"не удалось проверить"})
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
