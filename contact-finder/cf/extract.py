@@ -182,6 +182,17 @@ AGGREGATOR_DOMAINS = {
     "check.tochka.com", "klerk.ru", "moedelo.org", "vbr.ru", "ogrn.su",
     "injust.pro", "testfirm.ru", "conventions.ru", "orgs.biz", "yp.ru",
     "zoon.ru", "spravker.ru", "orgpage.ru", "vbankcenter.ru", "upfox.ru",
+    # Сайты-«проверялки» по ИНН. Легко принимаются за сайт самой компании,
+    # потому что выдача по запросу «<название> ИНН» их поднимает наверх.
+    "innproverka.ru", "sbis.ru", "kontragent.pro", "kontragent.skrin.ru",
+    "excheck.pro", "nalog.io", "vypiska-nalog.ru", "egrul.ru", "egrul.nalog.ru",
+    "rusprofile.com", "list-org.ru", "sravni.ru", "kartoteka.ru",
+    "prima-inform.ru", "seldon.ru", "myseldon.com", "basis.myseldon.com",
+    "ngee.ru", "find-org.com", "regreestr.com", "checkspot.ru", "1cont.ru",
+    "info-gkh.ru", "reputation.ru", "ruscifra.ru", "vembo.ru", "openweb.ru",
+    "a-3.ru", "vp.ru", "b2b-center.ru", "b2bsky.ru", "b2b-project.ru",
+    "trudvsem.ru", "rabota.ru", "career.habr.com", "hh.ru", "zakgo.ru",
+    "vsem-podryad.ru", "sro.press", "sro.su", "sro-portal.info",
 }
 
 

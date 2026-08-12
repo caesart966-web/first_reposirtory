@@ -10,6 +10,7 @@ import gzip
 import random
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 import zlib
 
@@ -47,6 +48,20 @@ class Fetcher:
         self.verbose = verbose
         self._last_call = 0.0
         self._session = requests.Session() if _HAS_REQUESTS else None
+        # Счётчик подряд идущих отказов по каждому хосту. Если сайт лежит или
+        # рвёт соединение, нет смысла долбить его десятком путей подряд:
+        # после _DEAD_AFTER неудач хост исключается до конца прогона.
+        self._host_failures: dict[str, int] = {}
+        self._dead_hosts: set[str] = set()
+
+    _DEAD_AFTER = 2  # столько неудачных URL подряд — и хост считается мёртвым
+
+    @staticmethod
+    def _host_of(url: str) -> str:
+        try:
+            return urllib.parse.urlparse(url).netloc.lower()
+        except Exception:  # noqa: BLE001
+            return ""
 
     # ------------------------------------------------------------------ утилиты
 
@@ -71,17 +86,32 @@ class Fetcher:
 
     def get(self, url: str) -> str | None:
         """GET с ретраями и экспоненциальной паузой. None — если не удалось."""
+        host = self._host_of(url)
+
+        # Хост уже признан мёртвым — не тратим на него время.
+        if host in self._dead_hosts:
+            if self.verbose:
+                print(f"    · пропуск {url} — хост {host} не отвечает")
+            return None
+
         for attempt in range(1, self.retries + 1):
             self._throttle()
             try:
-                if self._session is not None:
-                    return self._get_requests(url)
-                return self._get_urllib(url)
+                result = self._get_requests(url) if self._session is not None else self._get_urllib(url)
+                self._host_failures.pop(host, None)  # хост живой — сбрасываем счётчик
+                return result
             except Exception as exc:  # noqa: BLE001
                 if self.verbose:
                     print(f"    ! попытка {attempt}/{self.retries} {url} — {exc}")
                 if attempt < self.retries:
                     time.sleep(2 ** attempt)
+
+        # Все попытки исчерпаны — засчитываем хосту неудачу.
+        self._host_failures[host] = self._host_failures.get(host, 0) + 1
+        if self._host_failures[host] >= self._DEAD_AFTER:
+            self._dead_hosts.add(host)
+            if self.verbose:
+                print(f"    × хост {host} исключён до конца прогона (не отвечает)")
         return None
 
     def _get_requests(self, url: str) -> str | None:
