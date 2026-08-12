@@ -60,6 +60,9 @@ jobs:
       - name: Прогнать тесты
         run: python -m unittest discover -s tests -t .
 
+      - name: Проверить, что окно собирается (из исходников)
+        run: python gui.py --selftest
+
       - name: Собрать приложение
         run: |
           pyinstaller \
@@ -74,12 +77,24 @@ jobs:
             --exclude-module pandas \
             gui.py
 
+      - name: Проверить, что собранная программа запускается (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          # Запускаем именно собранный .exe: так проверяется, что внутрь попал
+          # tkinter и окно действительно открывается, а не только что сборка прошла.
+          ./dist/SRO-Check.exe --selftest
+          echo "собранная программа запустилась и корректно завершилась"
+
+      - name: Проверить, что собранная программа запускается (macOS)
+        if: runner.os == 'macOS'
+        run: ./dist/SRO-Check.app/Contents/MacOS/SRO-Check --selftest
+
       - name: Упаковать (Windows)
         if: runner.os == 'Windows'
         run: |
           mkdir -p out
           mv "dist/SRO-Check.exe" "out/Проверка СРО.exe"
-          cp КАК_ЗАПУСТИТЬ.md "out/Инструкция.md"
+          cp ПРОГРАММА.md "out/Инструкция.md"
           ls -la out
 
       - name: Упаковать (macOS)
@@ -88,7 +103,7 @@ jobs:
           mkdir -p out
           # ditto сохраняет права на запуск внутри .app — обычный zip их теряет.
           ditto -c -k --keepParent "dist/SRO-Check.app" "out/Проверка СРО.app.zip"
-          cp КАК_ЗАПУСТИТЬ.md "out/Инструкция.md"
+          cp ПРОГРАММА.md "out/Инструкция.md"
           ls -la out
 
       - name: Выложить результат

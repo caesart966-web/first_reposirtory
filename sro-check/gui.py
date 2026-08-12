@@ -544,6 +544,11 @@ class App(ttk.Frame):
 
 
 def main() -> int:
+    # --selftest — служебный ключ для сборочного конвейера: собрать окно,
+    # прокрутить цикл событий и сразу выйти. Так проверяется, что собранная
+    # программа действительно запускается, а не просто скомпилировалась.
+    selftest = "--selftest" in sys.argv[1:]
+
     # На Windows без этого окно выглядит размытым на экранах с масштабированием.
     if sys.platform.startswith("win"):
         try:
@@ -560,7 +565,16 @@ def main() -> int:
         root.call("tk", "scaling", 1.3)
     except tk.TclError:
         pass
-    App(root)
+    app = App(root)
+
+    if selftest:
+        app.advanced_var.set(True)
+        app._toggle_advanced()  # раскрыть и дополнительные настройки тоже
+        root.update_idletasks()
+        root.update()
+        root.destroy()
+        return 0
+
     root.mainloop()
     return 0
 
