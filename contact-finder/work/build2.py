@@ -7,7 +7,8 @@ by_inn = {r['inn']: r for r in recs}
 
 wb = openpyxl.Workbook(); ws = wb.active; ws.title = 'Телефоны СРО-410'
 ws.append(['№','Организация (реестр НОСТРОЙ)','ИНН','Телефон(ы)','Доп. контакты / реквизиты',
-           'Источник','Достоверность','Рег.№ в СРО','Статус в СРО','КФ ВВ, ₽'])
+           'Источник','Достоверность','Рег.№ в СРО','Статус в СРО','КФ ВВ, ₽',
+           'Дозвонились?','Дата звонка','Кто звонил','Комментарий'])
 hf = PatternFill('solid', fgColor='1F4E79'); thin = Side(style='thin', color='BFBFBF')
 bd = Border(left=thin,right=thin,top=thin,bottom=thin)
 for c in ws[1]:
@@ -23,18 +24,21 @@ for inn, r in items:
     n+=1; src = by_inn.get(inn, {})
     kf = src.get('kf_vv') or ''
     ws.append([n, r['name'], inn, r['phone'], r['extra'], r['src'], r['conf'],
-               src.get('reg',''), src.get('status',''), kf])
+               src.get('reg',''), src.get('status',''), kf, '', '', '', ''])
     row=ws.max_row
     fill = ok if r['phone'] and r['conf'].startswith('высокая') else (mid if r['phone'] else no)
-    for col in range(1,11):
+    for col in range(1,15):
         cell=ws.cell(row=row,column=col); cell.border=bd
         cell.alignment=Alignment(vertical='top',wrap_text=(col in (2,4,5,6,7)))
         cell.fill=fill
         if col==4: cell.font=Font(bold=bool(r['phone']))
     ws.cell(row=row,column=3).number_format='@'
-for col,w in zip('ABCDEFGHIJ',[5,44,14,34,52,42,26,10,16,14]):
+for col,w in zip('ABCDEFGHIJKLMN',[5,44,14,34,52,42,26,10,16,14,14,13,16,40]):
     ws.column_dimensions[col].width=w
-ws.freeze_panes='A2'; ws.auto_filter.ref=f"A1:J{ws.max_row}"
+from openpyxl.worksheet.datavalidation import DataValidation
+dv = DataValidation(type='list', formula1='"да, дозвонились,не отвечает,номер не тот,отказ,перезвонить"', allow_blank=True)
+ws.add_data_validation(dv); dv.add(f'K2:K{ws.max_row}')
+ws.freeze_panes='A2'; ws.auto_filter.ref=f"A1:N{ws.max_row}"
 
 found=sum(1 for v in res.values() if v['phone'])
 act=sum(1 for r in recs if r['status']=='Является членом')
