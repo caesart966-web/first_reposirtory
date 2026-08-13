@@ -353,6 +353,14 @@ class App(ttk.Frame):
             state="disabled",
         )
         self.open_file_button.grid(row=0, column=0, sticky="w")
+        self.open_leads_button = ttk.Button(
+            footer,
+            text="Открыть список без СРО",
+            style="Accent.TButton",
+            command=self._open_leads,
+            state="disabled",
+        )
+        self.open_leads_button.grid(row=0, column=1, sticky="w", padx=(10, 0))
         self.open_folder_button = ttk.Button(
             footer,
             text="Открыть папку",
@@ -360,7 +368,7 @@ class App(ttk.Frame):
             command=self._open_folder,
             state="disabled",
         )
-        self.open_folder_button.grid(row=0, column=1, sticky="w", padx=(10, 0))
+        self.open_folder_button.grid(row=0, column=2, sticky="w", padx=(10, 0))
 
     def _toggle_advanced(self) -> None:
         if self.advanced_var.get():
@@ -426,6 +434,17 @@ class App(ttk.Frame):
         if self.output_path and os.path.exists(self.output_path):
             open_in_system(self.output_path)
 
+    def _open_leads(self) -> None:
+        path = self.leads_path()
+        if path and os.path.exists(path):
+            open_in_system(path)
+
+    def leads_path(self) -> str:
+        """Файл с компаниями без СРО — рядом с основным результатом."""
+        if not self.output_path:
+            return ""
+        return check_sro.without_sro_path(self.output_path)
+
     def _open_folder(self) -> None:
         if self.output_path:
             folder = os.path.dirname(os.path.abspath(self.output_path))
@@ -489,6 +508,7 @@ class App(ttk.Frame):
     def _launch(self, probe_inn: str) -> None:
         self.output_path = ""
         self.open_file_button.configure(state="disabled")
+        self.open_leads_button.configure(state="disabled")
         self.open_folder_button.configure(state="disabled")
         self._clear_log()
         self._set_chips(0, 0, 0)
@@ -587,6 +607,9 @@ class App(ttk.Frame):
         self.open_folder_button.configure(state="normal")
         if os.path.exists(self.output_path):
             self.open_file_button.configure(state="normal")
+        leads = self.leads_path()
+        if leads and os.path.exists(leads):
+            self.open_leads_button.configure(state="normal")
 
     def _show_progress(self, processed: int, total: int, counters: dict) -> None:
         if self.progress["mode"] != "determinate":

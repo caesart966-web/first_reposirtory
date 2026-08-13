@@ -8,11 +8,13 @@
 
 from __future__ import annotations
 
+import os
 import re
 from copy import copy
 from dataclasses import dataclass, field
+from datetime import datetime
 
-from openpyxl import load_workbook
+from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.worksheet import Worksheet
@@ -315,6 +317,73 @@ def write_summary(workbook, rows: list[tuple[str, object]]) -> None:
         name_cell.alignment = Alignment(vertical="top")
         value_cell = sheet.cell(row=index, column=2, value=value)
         value_cell.alignment = Alignment(vertical="top", wrap_text=True)
+
+
+def rows_with_verdict(worksheet: Worksheet, layout: SheetLayout, verdict: str) -> list[int]:
+    """Номера строк с указанным вердиктом.
+
+    Читаем из самого файла, а не копим по ходу проверки: тогда в выборку
+    попадут и строки, взятые из сохранённых результатов, и те, что были
+    проверены в прошлый заход.
+    """
+    column = layout.columns.get(COL_VERDICT)
+    if not column:
+        return []
+    wanted = normalize_header(verdict)
+    found: list[int] = []
+    for row in range(layout.first_data_row, max(layout.last_row, worksheet.max_row) + 1):
+        if normalize_header(worksheet.cell(row=row, column=column).value) == wanted:
+            found.append(row)
+    return found
+
+
+def write_subset(
+    worksheet: Worksheet, layout: SheetLayout, rows: list[int], path: str, title: str
+) -> str:
+    """Отдельный файл только из выбранных строк — со всеми исходными колонками.
+
+    Колонки копируются целиком и в исходном порядке: телефоны, почта, ФИО
+    и всё остальное, что было в файле, едет вместе со строкой. Ради этого
+    выгрузка и делается — со списком потом работают, а не просто смотрят.
+
+    Возвращает путь, по которому файл реально сохранён.
+    """
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = title[:31]  # ограничение Excel на длину имени листа
+
+    last_column = worksheet.max_column
+    for column in range(1, last_column + 1):
+        source = worksheet.cell(row=layout.header_row, column=column)
+        cell = sheet.cell(row=1, column=column, value=source.value)
+        cell.font = Font(bold=True)
+        cell.fill = PatternFill("solid", fgColor="DDEBF7")
+        cell.alignment = Alignment(vertical="top", wrap_text=True)
+
+        letter = get_column_letter(column)
+        width = worksheet.column_dimensions[letter].width
+        if width:
+            sheet.column_dimensions[letter].width = width
+
+    for index, source_row in enumerate(rows, start=2):
+        for column in range(1, last_column + 1):
+            sheet.cell(
+                row=index, column=column, value=worksheet.cell(row=source_row, column=column).value
+            )
+
+    sheet.freeze_panes = "A2"
+    if rows:
+        sheet.auto_filter.ref = f"A1:{get_column_letter(last_column)}{len(rows) + 1}"
+
+    try:
+        workbook.save(path)
+        return path
+    except OSError:
+        # Файл занят Excel — не теряем выгрузку, кладём рядом под другим именем.
+        stem, extension = os.path.splitext(path)
+        alternative = f"{stem}_{datetime.now():%Y%m%d_%H%M%S}{extension}"
+        workbook.save(alternative)
+        return alternative
 
 
 def registry_order(priority: str) -> list[str]:

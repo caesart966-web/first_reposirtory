@@ -1282,6 +1282,94 @@ class TestResultFileIsReadable(unittest.TestCase):
         self.assertEqual(names_after.count(excel_io.SUMMARY_SHEET), 1)
 
 
+class TestLeadsFile(unittest.TestCase):
+    """Отдельная выгрузка «нет СРО»: с ней работают, значит нужны контакты."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.mock = MockRegistry()
+        cls.mock.__enter__()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.mock.__exit__(None, None, None)
+
+    def setUp(self):
+        self.folder = tempfile.mkdtemp(prefix="sro-leads-")
+        self.source = os.path.join(self.folder, "Компании_Список.xlsx")
+        self.output = os.path.join(self.folder, "Результат.xlsx")
+        self.build_source()
+        self.run_tool()
+
+    def build_source(self) -> None:
+        """Файл с контактными колонками — как у настоящего списка лидов."""
+        workbook = Workbook()
+        worksheet = workbook.active
+        worksheet.title = "Лиды по приоритету"
+        headers = ["Поставщик", "ИНН", "Приоритет", "Телефон", "Почта", "Контактное лицо"]
+        for index, title in enumerate(headers, start=1):
+            worksheet.cell(row=1, column=index, value=title)
+
+        rows = [
+            ("ООО «Мостострой»", mock.MEMBER_INN, "Строители", "+7 900 000-00-01", "a@b.ru", "Иванов И.И."),
+            ("ПАО «Не в СРО»", mock.NON_MEMBER_INN, "Строители", "+7 900 000-00-02", "c@d.ru", "Петров П.П."),
+        ]
+        for offset, values in enumerate(rows):
+            for index, value in enumerate(values, start=1):
+                cell_value = int(value) if index == 2 and str(value).isdigit() else value
+                worksheet.cell(row=2 + offset, column=index, value=cell_value)
+        workbook.save(self.source)
+
+    def run_tool(self) -> None:
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            check_sro.main(
+                [
+                    "--input", self.source,
+                    "--sheet", "Лиды по приоритету",
+                    "--output", self.output,
+                    "--cache", os.path.join(self.folder, "кэш.json"),
+                    "--log", os.path.join(self.folder, "лог.txt"),
+                    "--nostroy-url", self.mock.url,
+                    "--nopriz-url", self.mock.url,
+                    "--browser", "never",
+                    "--delay-min", "0", "--delay-max", "0",
+                    "--attempts", "1", "--timeout", "5",
+                    "--verdict-basis", "found",
+                ]
+            )
+
+    def leads_sheet(self):
+        path = check_sro.without_sro_path(self.output)
+        self.assertTrue(os.path.exists(path), "файл со списком без СРО должен появиться")
+        return load_workbook(path).active
+
+    def test_only_companies_without_sro_are_included(self):
+        sheet = self.leads_sheet()
+        names = [sheet.cell(row=row, column=1).value for row in range(2, sheet.max_row + 1)]
+        self.assertEqual(names, ["ПАО «Не в СРО»"])
+
+    def test_contacts_come_along(self):
+        """Ради этого выгрузка и делается — звонить-то по чему-то надо."""
+        sheet = self.leads_sheet()
+        values = [sheet.cell(row=2, column=column).value for column in range(1, 7)]
+        self.assertIn("+7 900 000-00-02", values)
+        self.assertIn("c@d.ru", values)
+        self.assertIn("Петров П.П.", values)
+
+    def test_headers_are_kept(self):
+        sheet = self.leads_sheet()
+        headers = [sheet.cell(row=1, column=column).value for column in range(1, 7)]
+        self.assertEqual(headers[:3], ["Поставщик", "ИНН", "Приоритет"])
+        self.assertEqual(sheet.freeze_panes, "A2")
+
+    def test_verdict_columns_are_carried_over_too(self):
+        """В выгрузке остаётся и «Примечание» — иногда там причина отказа."""
+        sheet = self.leads_sheet()
+        headers = [sheet.cell(row=1, column=c).value for c in range(1, sheet.max_column + 1)]
+        self.assertIn(excel_io.COL_NOTE, headers)
+
+
 class TestWrongInnIsCaught(unittest.TestCase):
     """Опечатка в ИНН: реестр отвечает «да», но про совершенно другую компанию."""
 

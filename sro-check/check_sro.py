@@ -185,6 +185,14 @@ def default_output(input_path: str) -> str:
     return os.path.join(folder, f"{stem}_с_СРО{extension or '.xlsx'}")
 
 
+def without_sro_path(output_path: str) -> str:
+    """Имя файла с выгрузкой компаний без СРО — рядом с основным результатом."""
+    folder, filename = os.path.split(output_path)
+    stem, extension = os.path.splitext(filename)
+    stem = stem.replace("_с_СРО", "")
+    return os.path.join(folder, f"{stem}_без_СРО{extension or '.xlsx'}")
+
+
 # ---------------------------------------------------------------------------
 # Проверка одной компании
 # ---------------------------------------------------------------------------
@@ -574,6 +582,8 @@ def run(args, log: Log, cancel=None, progress=None) -> int:
     log("")
     log("Оформляю файл и сохраняю…")
     excel_io.finish_sheet(worksheet, layout)
+    # Считаем до записи итогов, чтобы упомянуть выгрузку на листе «Итоги».
+    no_rows = excel_io.rows_with_verdict(worksheet, layout, Verdict.NO.value)
     excel_io.write_summary(
         workbook,
         [
@@ -593,6 +603,10 @@ def run(args, log: Log, cancel=None, progress=None) -> int:
                 else "любая запись в реестре",
             ),
             ("Проверка прервана пользователем", "да" if interrupted else "нет"),
+            (
+                "Список компаний без СРО",
+                os.path.basename(without_sro_path(args.output)) if no_rows else "—",
+            ),
         ],
     )
 
@@ -610,9 +624,23 @@ def run(args, log: Log, cancel=None, progress=None) -> int:
         log("")
         log(f"ВНИМАНИЕ: файл {args.output} был занят, результат сохранён как {final_path}")
 
+    # Отдельная выгрузка «нет СРО»: с этим списком потом работают — звонят,
+    # пишут, — поэтому в него едут все исходные колонки целиком, вместе
+    # с телефонами, почтой и контактными лицами.
+    leads_path = ""
+    if no_rows:
+        try:
+            leads_path = excel_io.write_subset(
+                worksheet, layout, no_rows, without_sro_path(args.output), "Без СРО"
+            )
+        except Exception as error:
+            log(f"ВНИМАНИЕ: не удалось сохранить список без СРО: {error}")
+
     log("")
     log("=" * 60)
     log(f"Готово. Результат: {final_path}")
+    if leads_path:
+        log(f"Список без СРО ({len(no_rows)} компаний, со всеми контактами): {leads_path}")
     log(f"  да . . . . . . . . . . {counters[Verdict.YES]}")
     log(f"  нет  . . . . . . . . . {counters[Verdict.NO]}")
     log(f"  не удалось проверить   {counters[Verdict.UNKNOWN]}")
