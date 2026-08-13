@@ -507,6 +507,11 @@ class App(ttk.Frame):
         log = None
         try:
             args = check_sro.parse_args(argv)
+            # Путь результата сообщаем сразу: файл появляется уже на первом
+            # промежуточном сохранении, и открыть его должно быть можно, не
+            # дожидаясь конца прогона.
+            if not is_probe:
+                self.messages.put(("output", args.output))
             # Журнал на диск ведём только для настоящего прогона: для диагностики
             # файл не нужен, а папка может оказаться недоступной для записи.
             log_path = "" if is_probe else args.log
@@ -555,6 +560,7 @@ class App(ttk.Frame):
                     self._show_progress(*payload)
                 elif kind == "output":
                     self.output_path = payload
+                    self._refresh_output_buttons()
                 elif kind == "done":
                     self._finish(payload)
                     if self.closing:
@@ -564,7 +570,23 @@ class App(ttk.Frame):
             pass
         except tk.TclError:
             return
+        except Exception:
+            # Сбой отрисовки одной строки не должен навсегда остановить приём
+            # сообщений: иначе окно замрёт с наполовину показанным результатом.
+            pass
         self.after(120, self._drain)
+
+    def _refresh_output_buttons(self) -> None:
+        """Включить кнопки, как только файл появился на диске.
+
+        Результат сохраняется каждые 20 строк, так что открыть его можно
+        задолго до конца прогона.
+        """
+        if not self.output_path:
+            return
+        self.open_folder_button.configure(state="normal")
+        if os.path.exists(self.output_path):
+            self.open_file_button.configure(state="normal")
 
     def _show_progress(self, processed: int, total: int, counters: dict) -> None:
         if self.progress["mode"] != "determinate":
@@ -573,6 +595,10 @@ class App(ttk.Frame):
         self.progress.configure(maximum=max(1, total), value=processed)
         self._set_status(f"Проверено {processed} из {total}", theme.ACCENT)
         self._set_chips(counters["yes"], counters["no"], counters["unknown"])
+        # Файл сохраняется каждые 20 строк — примерно с той же частотой и
+        # проверяем, не пора ли разблокировать кнопки.
+        if processed % 20 == 0:
+            self._refresh_output_buttons()
 
     def _finish(self, code: int) -> None:
         self.progress.stop()
@@ -585,9 +611,7 @@ class App(ttk.Frame):
             return
 
         if self.output_path:
-            exists = os.path.exists(self.output_path)
-            self.open_folder_button.configure(state="normal")
-            self.open_file_button.configure(state="normal" if exists else "disabled")
+            self._refresh_output_buttons()
         else:
             self.progress.configure(value=0)
 

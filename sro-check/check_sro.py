@@ -74,6 +74,61 @@ class Log:
             self.handle.close()
 
 
+class LazyBrowser:
+    """Браузер, который запускается только когда действительно понадобился.
+
+    Раньше Chrome стартовал в начале каждого прогона «на всякий случай».
+    Если реестры отвечают напрямую — а это обычный случай, — он полчаса стоял
+    без дела, а потом его приходилось закрывать, и на этом закрытии программа
+    подвисала уже после того, как все компании были проверены.
+
+    Наружу выставляет тот же интерфейс, что BrowserLookup: lookup() и
+    discovered_urls.
+    """
+
+    def __init__(self, headless: bool, logger) -> None:
+        self.headless = headless
+        self.logger = logger
+        self.discovered_urls: dict[str, str] = {}
+        self._inner = None
+        self._failed = False
+
+    def _ensure(self):
+        if self._inner is not None or self._failed:
+            return self._inner
+        try:
+            from sro.browser import BrowserLookup
+
+            self.logger("Прямой запрос не сработал — запускаю браузер (это займёт несколько секунд)")
+            inner = BrowserLookup(headless=self.headless, logger=self.logger)
+            inner.__enter__()
+        except Exception as error:
+            self._failed = True
+            self.logger(f"ВНИМАНИЕ: браузер недоступен ({error}). Работаю только через API.")
+            return None
+        self._inner = inner
+        # Один и тот же словарь: находки браузера сразу видны снаружи.
+        self.discovered_urls = inner.discovered_urls
+        return inner
+
+    def lookup(self, source: str, inn: str) -> RegistryAnswer:
+        inner = self._ensure()
+        if inner is None:
+            return RegistryAnswer(source, Outcome.UNKNOWN, note="браузер недоступен")
+        return inner.lookup(source, inn)
+
+    def close(self) -> None:
+        """Закрыть, если запускали. Не запускали — закрывать нечего."""
+        if self._inner is None:
+            return
+        self.logger("Закрываю браузер…")
+        try:
+            self._inner.__exit__(None, None, None)
+        except Exception as error:
+            self.logger(f"  (браузер закрылся с ошибкой: {type(error).__name__})")
+        self._inner = None
+
+
 def load_cache(path: str) -> dict[str, CheckResult]:
     if not path or not os.path.exists(path):
         return {}
@@ -377,19 +432,12 @@ def run(args, log: Log, cancel=None, progress=None) -> int:
         nopriz_url=args.nopriz_url,
     )
 
+    # Браузер держим наготове, но не запускаем: он понадобится, только если
+    # прямой запрос к реестру перестанет давать понятный ответ.
     browser = None
-    browser_context = None
     if args.browser != "never":
-        try:
-            from sro.browser import BrowserLookup
-
-            browser_context = BrowserLookup(headless=not args.show_browser, logger=log)
-            browser = browser_context.__enter__()
-            log("Браузерная проверка включена (запасной способ)")
-        except Exception as error:
-            log(f"ВНИМАНИЕ: браузер недоступен ({error}). Работаю только через API.")
-            browser = None
-            browser_context = None
+        browser = LazyBrowser(headless=not args.show_browser, logger=log)
+        log("Браузерная проверка наготове (запустится, только если понадобится)")
 
     counters = {Verdict.YES: 0, Verdict.NO: 0, Verdict.UNKNOWN: 0}
     processed = 0
@@ -516,14 +564,15 @@ def run(args, log: Log, cancel=None, progress=None) -> int:
             log("")
             log("Остановлено — сохраняю то, что успел проверить…")
     finally:
-        if browser_context is not None:
-            try:
-                browser_context.__exit__(None, None, None)
-            except Exception:
-                pass
+        if browser is not None:
+            browser.close()
         save_cache(args.cache, cache)
 
     # Оформление и лист с итогами — перед последним сохранением.
+    # Об этом шаге сообщаем: на большом файле он занимает несколько секунд,
+    # и без строки в журнале кажется, что программа зависла на финише.
+    log("")
+    log("Оформляю файл и сохраняю…")
     excel_io.finish_sheet(worksheet, layout)
     excel_io.write_summary(
         workbook,

@@ -1061,6 +1061,63 @@ class TestEndToEnd(unittest.TestCase):
         self.assertEqual(verdicts, {"не удалось проверить"})
 
 
+class TestLazyBrowser(unittest.TestCase):
+    """Chrome не должен запускаться, если реестры отвечают напрямую.
+
+    Иначе он полчаса стоит без дела, а на закрытии программа подвисает —
+    уже после того, как все компании проверены.
+    """
+
+    class FakeBrowser:
+        started = 0
+
+        def __init__(self, **_kwargs) -> None:
+            TestLazyBrowser.FakeBrowser.started += 1
+            self.discovered_urls: dict[str, str] = {}
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_exc):
+            return False
+
+        def lookup(self, source: str, inn: str):
+            return RegistryAnswer(source, Outcome.EMPTY, note="ответ из браузера")
+
+    def setUp(self):
+        TestLazyBrowser.FakeBrowser.started = 0
+
+    def test_never_started_when_not_needed(self):
+        browser = check_sro.LazyBrowser(headless=True, logger=lambda _m: None)
+        browser.close()  # закрывать нечего — и это не должно ничего сломать
+        self.assertEqual(self.FakeBrowser.started, 0)
+
+    def test_started_once_on_first_use(self):
+        with patch("sro.browser.BrowserLookup", self.FakeBrowser):
+            browser = check_sro.LazyBrowser(headless=True, logger=lambda _m: None)
+            self.assertEqual(self.FakeBrowser.started, 0, "до первого обращения — не запускать")
+            browser.lookup(SOURCE_NOSTROY, "7702521529")
+            browser.lookup(SOURCE_NOSTROY, "7707083893")
+            self.assertEqual(self.FakeBrowser.started, 1, "и не перезапускать на каждую компанию")
+            browser.close()
+
+    def test_failed_start_is_not_retried(self):
+        attempts: list[int] = []
+
+        def boom(**_kwargs):
+            attempts.append(1)
+            raise RuntimeError("Chrome не установлен")
+
+        with patch("sro.browser.BrowserLookup", boom):
+            browser = check_sro.LazyBrowser(headless=True, logger=lambda _m: None)
+            first = browser.lookup(SOURCE_NOSTROY, "7702521529")
+            second = browser.lookup(SOURCE_NOSTROY, "7707083893")
+
+        self.assertIs(first.outcome, Outcome.UNKNOWN, "сбой браузера — это «не проверено»")
+        self.assertIs(second.outcome, Outcome.UNKNOWN)
+        self.assertEqual(len(attempts), 1, "не дёргать запуск браузера на каждой компании")
+
+
 class TestGuiPlumbing(unittest.TestCase):
     """Механика, на которой держится оконная версия (gui.py).
 
