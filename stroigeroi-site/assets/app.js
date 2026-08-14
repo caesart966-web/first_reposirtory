@@ -61,6 +61,35 @@
   document.documentElement.classList.add('theme-ready');
 
   /* ======================================================================
+     Подборки товаров каруселью: стрелки листают на видимую ширину,
+     на краях гаснут. Работает и обычной прокруткой пальцем.
+     ====================================================================== */
+  $$('[data-slider]').forEach(function (box) {
+    var line = $('[data-slider-line]', box);
+    var prev = $('[data-slider-prev]', box);
+    var next = $('[data-slider-next]', box);
+    if (!line || !prev || !next) return;
+
+    function refresh() {
+      var max = line.scrollWidth - line.clientWidth;
+      prev.disabled = line.scrollLeft <= 1;
+      next.disabled = line.scrollLeft >= max - 1;
+    }
+
+    function step(dir) {
+      var card = line.querySelector('.product-card');
+      var by = card ? (card.offsetWidth + 16) * Math.max(1, Math.floor(line.clientWidth / (card.offsetWidth + 16))) : line.clientWidth;
+      line.scrollBy({ left: dir * by, behavior: 'smooth' });
+    }
+
+    prev.addEventListener('click', function () { step(-1); });
+    next.addEventListener('click', function () { step(1); });
+    line.addEventListener('scroll', refresh, { passive: true });
+    window.addEventListener('resize', refresh);
+    refresh();
+  });
+
+  /* ======================================================================
      Липкая шапка: при прокрутке вниз ужимается
      ====================================================================== */
   var header = $('[data-header]');

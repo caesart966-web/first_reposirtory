@@ -780,25 +780,63 @@ ul {
 }
 
 /* ==========================================================================
-   Первый экран: крупный промо-блок и баннеры рядом с ним
+   Первый экран: крупный промо-блок и плитка 2×2 рядом с ним —
+   раскладка повторяет сайт-образец, присланный заказчиком
    ========================================================================== */
 
-.bannerset {
+.mainscreen {
   padding: var(--sp-5) 0 0;
 }
 
-.bannerset__grid {
+.mainscreen__grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.72fr) minmax(0, 1fr);
-  gap: var(--sp-4);
+  grid-template-columns: minmax(0, 1.81fr) minmax(0, 1fr);
+  gap: 10px;
   align-items: stretch;
 }
 
-.bannerset__side {
+/* Четыре плитки преимуществ: два столбца, два ряда */
+.tiles {
   display: grid;
-  grid-template-rows: 1.15fr 1fr;
-  gap: var(--sp-4);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
   min-width: 0;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+  padding: var(--sp-4);
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-xl);
+  background: var(--sg-bg-soft);
+}
+
+.tile__icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-lg);
+  background: var(--sg-white);
+  color: var(--sg-blue);
+}
+
+.tile__title {
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+.tile__text {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--sg-muted);
+}
+
+.tile__text.ph--inline {
+  align-self: flex-start;
 }
 
 /* Промо-блок: текст слева, знаки бренда справа */
@@ -914,6 +952,81 @@ ul {
   max-width: 320px;
 }
 
+/* ==========================================================================
+   Подборка товаров каруселью — как в образце: заголовок, стрелки, лента
+   ========================================================================== */
+
+.selection__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-4);
+}
+
+.selection__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.slider-btn {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid var(--sg-line);
+  border-radius: var(--r-pill);
+  background: var(--sg-white);
+  color: var(--sg-blue);
+  cursor: pointer;
+}
+
+.slider-btn:hover:not(:disabled) {
+  border-color: var(--sg-blue);
+  background: var(--sg-blue-tint);
+}
+
+.slider-btn:disabled {
+  color: var(--sg-line);
+  cursor: default;
+}
+
+.slider-btn .icon-prev {
+  transform: rotate(90deg);
+}
+
+.slider-btn .icon-next {
+  transform: rotate(-90deg);
+}
+
+.selection__line {
+  display: flex;
+  gap: var(--sp-4);
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  padding-bottom: var(--sp-2);
+}
+
+.selection__line::-webkit-scrollbar {
+  display: none;
+}
+
+.selection__line .product-card {
+  flex: 0 0 calc((100% - var(--sp-4) * 3) / 4);
+  scroll-snap-align: start;
+}
+
+/* ── Короткие баннеры: два в ряд ─────────────────────────────────────────── */
+.short-banners {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-4);
+}
+
 /* ── Баннеры рядом с промо-блоком и в ленте ─────────────────────────────── */
 .banner {
   position: relative;
@@ -956,95 +1069,6 @@ ul {
 .banner__link {
   margin-top: auto;
   font-weight: 700;
-}
-
-/* ── Полоса преимуществ ─────────────────────────────────────────────────── */
-.usp-strip {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--sp-3);
-  padding: var(--sp-4);
-  border-radius: var(--r-xl);
-  background: var(--sg-bg-soft);
-}
-
-.usp {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--sp-3);
-  min-width: 0;
-}
-
-.usp__icon {
-  flex: none;
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--r-lg);
-  background: var(--sg-white);
-  color: var(--sg-blue);
-}
-
-.usp__text {
-  min-width: 0;
-}
-
-.usp__text strong {
-  display: block;
-  font-size: 15px;
-  line-height: 1.25;
-}
-
-.usp__text span {
-  display: block;
-  margin-top: 2px;
-  font-size: 13px;
-  color: var(--sg-muted);
-}
-
-/* ── Ряд «вход + короткие баннеры» ──────────────────────────────────────── */
-.split-row {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--sp-4);
-}
-
-.auth-card {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: center;
-  gap: var(--sp-4);
-  min-width: 0;
-  padding: var(--sp-5);
-  border: 1px solid var(--sg-line);
-  border-radius: var(--r-xl);
-  background: var(--sg-blue-tint);
-}
-
-.auth-card__icon {
-  width: 52px;
-  height: 52px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--r-pill);
-  background: var(--sg-white);
-  color: var(--sg-blue);
-}
-
-.auth-card__title {
-  font-size: 20px;
-  margin: 0 0 2px;
-}
-
-.auth-card p {
-  margin: 0;
-  font-size: 14px;
-  color: var(--sg-muted);
-}
-
-.auth-card .btn {
-  grid-column: 1 / -1;
 }
 
 /* ── Широкий баннер ─────────────────────────────────────────────────────── */
@@ -2181,8 +2205,12 @@ html[data-theme="dark"] .hero__visual {
     grid-template-columns: repeat(3, 1fr);
   }
 
-  .bannerset__grid {
+  .mainscreen__grid {
     grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  }
+
+  .selection__line .product-card {
+    flex-basis: calc((100% - var(--sp-4) * 2) / 3);
   }
 
   .header-quick__nav {
@@ -2191,23 +2219,17 @@ html[data-theme="dark"] .hero__visual {
 }
 
 @media (max-width: 1023px) {
-  /* Баннеры уходят под промо-блок и встают в два столбца */
-  .bannerset__grid {
+  /* Плитки уходят под промо-блок и встают в четыре столбца */
+  .mainscreen__grid {
     grid-template-columns: 1fr;
   }
 
-  .bannerset__side {
-    grid-template-rows: none;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .tiles {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
-  .usp-strip {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--sp-4);
-  }
-
-  .split-row {
-    grid-template-columns: 1fr;
+  .selection__line .product-card {
+    flex-basis: calc((100% - var(--sp-4) * 2) / 3);
   }
 
   .site-footer__grid {
@@ -2355,12 +2377,17 @@ html[data-theme="dark"] .hero__visual {
     padding: 0 var(--sp-4);
   }
 
-  .bannerset__side {
-    grid-template-columns: 1fr;
+  .tiles,
+  .short-banners {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .usp-strip {
-    grid-template-columns: 1fr;
+  .selection__line .product-card {
+    flex-basis: calc((100% - var(--sp-3)) / 2);
+  }
+
+  .selection__line {
+    gap: var(--sp-3);
   }
 
   .hero__copy {
