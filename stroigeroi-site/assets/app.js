@@ -109,23 +109,31 @@
     });
   });
 
-  var catalogBtn = $('[data-catalog-toggle]');
+  /* Меню каталога открывают две кнопки: «Каталог» и «Ещё разделы» */
+  var catalogBtns = $$('[data-catalog-toggle]');
   var catalogMenu = $('[data-catalog-menu]');
 
-  function closeCatalog() {
-    if (!catalogBtn || !catalogMenu) return;
-    catalogBtn.setAttribute('aria-expanded', 'false');
-    catalogMenu.hidden = true;
+  function setCatalog(open) {
+    if (!catalogMenu) return;
+    catalogBtns.forEach(function (b) {
+      b.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    catalogMenu.hidden = !open;
   }
 
-  if (catalogBtn && catalogMenu) {
-    catalogBtn.addEventListener('click', function (e) {
-      e.stopPropagation();
-      var open = catalogBtn.getAttribute('aria-expanded') === 'true';
-      closeAllDropdowns();
-      closeSuggest();
-      catalogBtn.setAttribute('aria-expanded', open ? 'false' : 'true');
-      catalogMenu.hidden = open;
+  function closeCatalog() {
+    setCatalog(false);
+  }
+
+  if (catalogBtns.length && catalogMenu) {
+    catalogBtns.forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var open = btn.getAttribute('aria-expanded') === 'true';
+        closeAllDropdowns();
+        closeSuggest();
+        setCatalog(!open);
+      });
     });
     catalogMenu.addEventListener('click', function (e) { e.stopPropagation(); });
   }
