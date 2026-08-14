@@ -9,6 +9,7 @@
   --sg-blue: #010b87;
   --sg-red: #d81921;
   --sg-white: #ffffff;
+  --sg-on-dark: #ffffff; /* текст и знаки на фирменных тёмных поверхностях */
   --sg-ink: #1b1b1f;
   --sg-muted: #63636e;
   --sg-line: #e6e6ec;
@@ -275,7 +276,7 @@ ul {
 }
 
 /* ==========================================================================
-   Шапка
+   Шапка — три этажа: информационная полоса, основная строка, быстрые разделы
    ========================================================================== */
 
 .site-header {
@@ -285,47 +286,60 @@ ul {
   border-bottom: 1px solid var(--sg-line);
 }
 
-/* Служебная полоса */
+/* ── Первый этаж: тёмная информационная полоса ───────────────────────────── */
 .header-util {
-  border-bottom: 1px solid var(--sg-line);
-  font-size: 14px;
-  color: #4a4a55;
+  background: var(--sg-blue);
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 13px;
 }
 
 .header-util__inner {
   display: flex;
   align-items: center;
-  gap: var(--sp-5);
-  min-height: 46px;
-  padding-top: var(--sp-1);
-  padding-bottom: var(--sp-1);
+  gap: var(--sp-4);
+  min-height: 40px;
 }
 
-.header-util__city {
-  display: inline-flex;
+.header-util__nav {
+  display: flex;
   align-items: center;
-  gap: var(--sp-2);
+  gap: var(--sp-5);
+  min-width: 0;
+}
+
+.header-util__nav a {
+  color: inherit;
   font-weight: 600;
-  color: var(--sg-ink);
+  white-space: nowrap;
+}
+
+.header-util__nav a:hover {
+  color: var(--sg-on-dark);
+  text-decoration: none;
+}
+
+.header-util__side {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
 }
 
 .header-util__phone {
-  margin-left: auto;
   display: inline-flex;
   align-items: center;
-  gap: var(--sp-2);
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--sg-blue);
+  gap: 6px;
+  color: var(--sg-on-dark);
+  font-weight: 700;
   white-space: nowrap;
 }
 
 .header-util__phone:hover {
-  color: var(--sg-red);
   text-decoration: none;
+  opacity: 0.85;
 }
 
-/* Выпадающие списки в служебной полосе */
+/* Выпадающие списки в информационной полосе */
 .dropdown {
   position: relative;
 }
@@ -333,21 +347,24 @@ ul {
 .dropdown__toggle {
   display: inline-flex;
   align-items: center;
-  gap: var(--sp-2);
-  min-height: 40px;
+  gap: 6px;
+  min-height: 36px;
   padding: 0 var(--sp-2);
   background: none;
   border: 0;
   color: inherit;
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
 }
 
-.dropdown__toggle:hover {
-  color: var(--sg-blue);
+.header-util .dropdown__toggle:hover {
+  color: var(--sg-on-dark);
 }
 
 .dropdown__toggle .icon-chevron {
+  display: inline-flex;
   transition: transform 0.15s ease;
 }
 
@@ -358,14 +375,16 @@ ul {
 .dropdown__panel {
   position: absolute;
   top: calc(100% + 6px);
-  left: 0;
+  right: 0;
   z-index: 50;
   min-width: 290px;
   padding: var(--sp-4);
-  background: var(--sg-white);
+  background: var(--sg-on-dark);
   border: 1px solid var(--sg-line);
   border-radius: var(--r-lg);
   box-shadow: var(--sh-md);
+  color: var(--sg-ink);
+  font-size: 14px;
 }
 
 .dropdown__panel[hidden] {
@@ -389,30 +408,79 @@ ul {
   color: var(--sg-muted);
 }
 
-/* Основная шапка */
+/* ── Второй этаж: логотип, каталог, поиск, действия ──────────────────────── */
 .header-main {
+  background: var(--sg-white);
+}
+
+.header-main__inner {
   display: flex;
   align-items: center;
   gap: var(--sp-4);
-  padding-top: var(--sp-4);
-  padding-bottom: var(--sp-4);
+  padding-top: var(--sp-3);
+  padding-bottom: var(--sp-3);
 }
 
-/* Логотип всегда на белом фоне, пропорции 1:1 */
+/* Логотип всегда на белом фоне */
 .site-logo {
   flex: none;
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  color: var(--sg-blue);
+}
+
+.site-logo:hover {
+  text-decoration: none;
 }
 
 .site-logo img {
-  width: 78px;
-  height: 78px;
+  width: 64px;
+  height: 64px;
+  transition: width 0.18s ease, height 0.18s ease;
 }
 
+.site-logo__word {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+/* Кнопка каталога — красная, как основное действие */
 .header-catalog {
   flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 48px;
+  padding: 0 var(--sp-5);
+  border: 0;
+  border-radius: var(--r-lg);
+  background: var(--sg-red);
+  color: var(--sg-white);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
 }
 
+.header-catalog:hover {
+  background: var(--sg-red-dark);
+}
+
+.header-catalog .icon-close {
+  display: none;
+}
+
+.header-catalog[aria-expanded="true"] .icon-open {
+  display: none;
+}
+
+.header-catalog[aria-expanded="true"] .icon-close {
+  display: block;
+}
+
+/* Поиск: поле и красная кнопка слиты в один блок */
 .search-form {
   flex: 1 1 auto;
   display: flex;
@@ -422,11 +490,11 @@ ul {
 .search-form__input {
   flex: 1 1 auto;
   min-width: 0;
-  height: 50px;
+  height: 48px;
   padding: 0 var(--sp-4);
-  border: 2px solid var(--sg-line);
+  border: 1.5px solid var(--sg-line);
   border-right: 0;
-  border-radius: var(--r-md) 0 0 var(--r-md);
+  border-radius: var(--r-lg) 0 0 var(--r-lg);
   font-size: 15px;
   color: var(--sg-ink);
   background: var(--sg-white);
@@ -443,16 +511,14 @@ ul {
 
 .search-form__submit {
   flex: none;
-  height: 50px;
-  padding: 0 var(--sp-5);
+  width: 62px;
+  height: 48px;
+  display: grid;
+  place-items: center;
   border: 0;
-  border-radius: 0 var(--r-md) var(--r-md) 0;
+  border-radius: 0 var(--r-lg) var(--r-lg) 0;
   background: var(--sg-red);
   color: var(--sg-white);
-  font-size: 14px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
   cursor: pointer;
 }
 
@@ -460,45 +526,54 @@ ul {
   background: var(--sg-red-dark);
 }
 
-/* Иконки справа — одного размера и одной толщины линий */
+/* Действия: иконка с подписью под ней */
 .header-actions {
   flex: none;
   display: flex;
-  gap: var(--sp-2);
+  align-items: center;
+  gap: var(--sp-4);
 }
 
-.icon-btn {
-  position: relative;
-  width: 48px;
-  height: 48px;
+.header-action {
+  min-width: 56px;
+  min-height: 48px;
   display: grid;
-  place-items: center;
-  border: 1.5px solid var(--sg-line);
-  border-radius: var(--r-md);
-  background: var(--sg-white);
-  color: var(--sg-blue);
-  cursor: pointer;
+  justify-items: center;
+  gap: 2px;
+  color: var(--sg-ink);
+  text-align: center;
 }
 
-.icon-btn:hover {
-  border-color: var(--sg-blue);
-  background: var(--sg-blue-tint);
+.header-action:hover {
+  color: var(--sg-blue);
   text-decoration: none;
 }
 
-.icon-btn__count {
+.header-action__icon {
+  position: relative;
+  display: block;
+}
+
+.header-action__label {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.header-action__count {
   position: absolute;
   top: -6px;
-  right: -6px;
-  min-width: 20px;
-  height: 20px;
+  right: -10px;
+  min-width: 18px;
+  height: 18px;
   padding: 0 5px;
   display: grid;
   place-items: center;
   border-radius: var(--r-pill);
   background: var(--sg-red);
   color: var(--sg-white);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   line-height: 1;
 }
@@ -509,10 +584,73 @@ ul {
   height: 48px;
   place-items: center;
   border: 1.5px solid var(--sg-line);
-  border-radius: var(--r-md);
+  border-radius: var(--r-lg);
   background: var(--sg-white);
   color: var(--sg-blue);
   cursor: pointer;
+}
+
+/* ── Третий этаж: быстрые ссылки на разделы ──────────────────────────────── */
+.header-quick {
+  border-top: 1px solid var(--sg-line);
+}
+
+.header-quick__inner {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  min-height: 46px;
+}
+
+.header-quick__nav {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
+  min-width: 0;
+  overflow: hidden;
+  /* если разделы всё же не влезли, последний растворяется, а не режется */
+  mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent 100%);
+}
+
+.header-quick__link {
+  color: var(--sg-ink);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 46px;
+  white-space: nowrap;
+}
+
+.header-quick__link:hover {
+  color: var(--sg-blue);
+  text-decoration: none;
+}
+
+.header-quick__link--accent {
+  color: var(--sg-red);
+}
+
+.header-quick__link--accent:hover {
+  color: var(--sg-red-dark);
+}
+
+.header-quick__more {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 36px;
+  padding: 0 var(--sp-2);
+  background: none;
+  border: 0;
+  color: var(--sg-blue);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.header-quick__more:hover {
+  color: var(--sg-red);
 }
 
 /* Меню каталога */
@@ -531,11 +669,21 @@ ul {
   display: none;
 }
 
+.catalog-menu__title {
+  padding: var(--sp-5) var(--sp-5) 0;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--sg-muted);
+}
+
 .catalog-menu__grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: var(--sp-3);
-  padding: var(--sp-5) var(--sp-5) var(--sp-6);
+  padding: var(--sp-4) var(--sp-5) var(--sp-6);
 }
 
 .catalog-menu__link {
@@ -544,7 +692,7 @@ ul {
   gap: var(--sp-3);
   padding: var(--sp-3);
   border: 1px solid var(--sg-line);
-  border-radius: var(--r-md);
+  border-radius: var(--r-lg);
   color: var(--sg-ink);
   font-weight: 600;
 }
@@ -578,7 +726,6 @@ ul {
   color: var(--sg-ink);
   font-weight: 600;
 }
-
 /* ==========================================================================
    Секции
    ========================================================================== */
@@ -633,23 +780,49 @@ ul {
 }
 
 /* ==========================================================================
-   Промо-блок первого экрана
+   Первый экран: крупный промо-блок и баннеры рядом с ним
    ========================================================================== */
 
+.bannerset {
+  padding: var(--sp-5) 0 0;
+}
+
+.bannerset__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.72fr) minmax(0, 1fr);
+  gap: var(--sp-4);
+  align-items: stretch;
+}
+
+.bannerset__side {
+  display: grid;
+  grid-template-rows: 1.15fr 1fr;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+
+/* Промо-блок: текст слева, знаки бренда справа */
 .hero {
   position: relative;
   overflow: hidden;
-  border-bottom: 1px solid var(--sg-line);
+  min-width: 0;
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-xl);
+  background: var(--sg-white);
 }
 
 .hero__inner {
   display: grid;
-  grid-template-columns: 1.15fr 1fr;
-  gap: var(--sp-7);
-  align-items: center;
-  padding: var(--sp-8) var(--sp-5);
-  max-width: var(--container);
-  margin: 0 auto;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: var(--sp-5);
+  align-items: stretch;
+  height: 100%;
+}
+
+.hero__copy {
+  padding: var(--sp-6) 0 var(--sp-6) var(--sp-6);
+  align-self: center;
+  min-width: 0;
 }
 
 .hero__eyebrow {
@@ -666,7 +839,9 @@ ul {
 }
 
 .hero__title {
-  font-size: 46px;
+  font-size: clamp(26px, 2.5vw, 36px);
+  line-height: 1.12;
+  text-wrap: balance;
   margin-bottom: var(--sp-4);
 }
 
@@ -675,9 +850,9 @@ ul {
 }
 
 .hero__text {
-  font-size: 18px;
+  font-size: 16px;
   color: var(--sg-muted);
-  max-width: 46ch;
+  max-width: 42ch;
   margin-bottom: var(--sp-5);
 }
 
@@ -685,36 +860,15 @@ ul {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-3);
-  margin-bottom: var(--sp-5);
 }
 
-.hero__facts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-5);
-  padding-top: var(--sp-5);
-  border-top: 1px solid var(--sg-line);
-}
-
-.hero__fact strong {
-  display: block;
-  font-size: 24px;
-  font-weight: 800;
-  color: var(--sg-blue);
-}
-
-.hero__fact span {
-  font-size: 14px;
-  color: var(--sg-muted);
-}
-
-/* Правая часть: полосатая подложка, логотип на белом круге поверх неё */
+/* Правая часть: полосатая подложка, оба знака бренда на ней */
 .hero__visual {
   position: relative;
-  min-height: 380px;
-  border-radius: var(--r-xl);
-  background-image: var(--sg-stripes-lg);
-  border: 1px solid var(--sg-line);
+  min-width: 0;
+  min-height: 320px;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0.32)),
+    var(--sg-stripes-lg);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -722,22 +876,21 @@ ul {
   overflow: hidden;
 }
 
-/* Эмблема лежит прямо на полосках: у неё свой белый круг внутри кольца */
 /* Слева эмблема по центру, справа маскот — стоит на нижней кромке панели */
 .hero__marks {
   display: grid;
-  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
   align-items: end;
-  gap: var(--sp-4);
+  gap: var(--sp-5);
   width: 100%;
 }
 
 .hero__emblem {
-  width: min(280px, 100%);
+  width: min(230px, 100%);
   height: auto;
   justify-self: center;
   align-self: center;
-  margin-bottom: var(--sp-6);
+  margin-bottom: var(--sp-7);
   filter: drop-shadow(0 6px 18px rgba(16, 24, 40, 0.18));
 }
 
@@ -749,7 +902,7 @@ ul {
 
 .hero__mascot img {
   width: 100%;
-  max-width: 340px;
+  max-width: 300px;
   height: auto;
   display: block;
   filter: drop-shadow(0 10px 26px rgba(16, 24, 40, 0.28));
@@ -761,7 +914,176 @@ ul {
   max-width: 320px;
 }
 
+/* ── Баннеры рядом с промо-блоком и в ленте ─────────────────────────────── */
+.banner {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+  padding: var(--sp-5) var(--sp-5) var(--sp-5) calc(var(--sp-5) + var(--sp-4));
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-xl);
+  background: var(--sg-white);
+}
 
+.banner__stripe {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 10px;
+  background-image: var(--sg-stripes);
+}
+
+.banner__label {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--sg-red);
+}
+
+.banner__title {
+  font-size: 22px;
+  margin: 0;
+}
+
+.banner p {
+  margin: 0;
+  color: var(--sg-muted);
+}
+
+.banner__link {
+  margin-top: auto;
+  font-weight: 700;
+}
+
+/* ── Полоса преимуществ ─────────────────────────────────────────────────── */
+.usp-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border-radius: var(--r-xl);
+  background: var(--sg-bg-soft);
+}
+
+.usp {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.usp__icon {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-lg);
+  background: var(--sg-white);
+  color: var(--sg-blue);
+}
+
+.usp__text {
+  min-width: 0;
+}
+
+.usp__text strong {
+  display: block;
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+.usp__text span {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--sg-muted);
+}
+
+/* ── Ряд «вход + короткие баннеры» ──────────────────────────────────────── */
+.split-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-4);
+}
+
+.auth-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: var(--sp-4);
+  min-width: 0;
+  padding: var(--sp-5);
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-xl);
+  background: var(--sg-blue-tint);
+}
+
+.auth-card__icon {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  background: var(--sg-white);
+  color: var(--sg-blue);
+}
+
+.auth-card__title {
+  font-size: 20px;
+  margin: 0 0 2px;
+}
+
+.auth-card p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--sg-muted);
+}
+
+.auth-card .btn {
+  grid-column: 1 / -1;
+}
+
+/* ── Широкий баннер ─────────────────────────────────────────────────────── */
+.wide-banner {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
+  padding: var(--sp-5) var(--sp-6) var(--sp-5) calc(var(--sp-6) + var(--sp-4));
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-xl);
+  background: var(--sg-white);
+  color: var(--sg-ink);
+}
+
+.wide-banner:hover {
+  text-decoration: none;
+  border-color: var(--sg-blue);
+}
+
+.wide-banner__stripe {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 14px;
+  background-image: var(--sg-stripes);
+}
+
+.wide-banner__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--sg-muted);
+}
+
+.wide-banner__text strong {
+  display: block;
+  font-size: 24px;
+  color: var(--sg-ink);
+}
 
 /* ==========================================================================
    Плитки категорий
@@ -885,6 +1207,25 @@ ul {
   color: var(--sg-blue);
 }
 
+.badge--new {
+  background: var(--sg-blue-tint);
+  color: var(--sg-blue);
+}
+
+/* Порядок строк как в образце: артикул, название, фасовка и остаток, цена */
+.product-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+
+.product-card__art {
+  font-size: 12px;
+  color: var(--sg-muted);
+  margin: 0;
+}
+
 .product-card__brand {
   font-size: 13px;
   color: var(--sg-muted);
@@ -895,7 +1236,6 @@ ul {
   font-size: 15px;
   font-weight: 600;
   line-height: 1.35;
-  margin-bottom: var(--sp-2);
   color: var(--sg-ink);
 }
 
@@ -904,9 +1244,12 @@ ul {
 }
 
 .product-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
   font-size: 13px;
   color: var(--sg-muted);
-  margin-bottom: var(--sp-3);
+  margin: 0;
 }
 
 .product-card__bottom {
@@ -916,6 +1259,12 @@ ul {
   justify-content: space-between;
   gap: var(--sp-3);
   flex-wrap: wrap;
+}
+
+.product-card__buy {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
 }
 
 /* Цена — красным, это фирменный акцент */
@@ -941,6 +1290,15 @@ ul {
 
 .product-card__buy {
   margin-left: auto;
+}
+
+/* Внутри карточки товара пунктир приглушён — иначе четыре рамки на карточку
+   перебивают саму карточку. Крупное предупреждение стоит над сеткой. */
+.product-card .ph--inline,
+.quick-view .ph--inline {
+  border-width: 1px;
+  background: none;
+  padding: 0 4px;
 }
 
 /* ==========================================================================
@@ -1150,98 +1508,167 @@ ul {
 }
 
 /* ==========================================================================
-   Подвал
+   Подвал — тёмный, как в образце: бренд слева, четыре колонки ссылок справа
    ========================================================================== */
 
 .site-footer {
   margin-top: var(--sp-8);
-  background: var(--sg-white);
-  border-top: 1px solid var(--sg-line);
+  background: var(--sg-blue);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 14px;
 }
 
 .site-footer__grid {
   display: grid;
-  grid-template-columns: 1.4fr 1fr 1fr 1.2fr;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 2.15fr);
   gap: var(--sp-6);
-  padding: var(--sp-7) 0;
-}
-
-.site-footer h3 {
-  font-size: 15px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: var(--sp-4);
-}
-
-.site-footer li + li {
-  margin-top: var(--sp-2);
+  padding: var(--sp-7) 0 var(--sp-6);
 }
 
 .site-footer a {
-  color: var(--sg-ink);
+  color: var(--sg-on-dark);
 }
 
 .site-footer a:hover {
-  color: var(--sg-blue);
+  color: var(--sg-on-dark);
+  opacity: 0.75;
+  text-decoration: none;
 }
 
-.footer-brand__logo {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  margin-bottom: var(--sp-3);
-}
-
-.footer-brand__logo img {
-  width: 64px;
-  height: 64px;
+/* Логотип на цветную подложку не ставим — в подвале только текстовый знак */
+.footer-brand__word {
+  display: inline-block;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--sg-on-dark);
 }
 
 .footer-brand__slogan {
-  font-weight: 700;
-  color: var(--sg-blue);
-  font-size: 15px;
-}
-
-.footer-brand p {
-  color: var(--sg-muted);
+  margin: var(--sp-1) 0 var(--sp-4);
   font-size: 14px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.86);
 }
 
-.social {
-  display: flex;
-  gap: var(--sp-2);
-  margin-top: var(--sp-4);
+.footer-brand__note {
+  margin: 0 0 var(--sp-4);
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.62);
 }
 
-.social a {
-  width: 44px;
-  height: 44px;
+.footer-brand__legal {
+  display: inline-block;
+}
+
+.footer-links {
   display: grid;
-  place-items: center;
-  border: 1.5px solid var(--sg-line);
-  border-radius: var(--r-md);
-  color: var(--sg-blue);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-5);
 }
 
-.social a:hover {
-  border-color: var(--sg-blue);
-  background: var(--sg-blue-tint);
+.footer-group {
+  min-width: 0;
+}
+
+.footer-group__label {
+  margin: 0 0 var(--sp-3);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.footer-group ul,
+.footer-contacts ul,
+.footer-shops ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.footer-group li + li,
+.footer-contacts li + li,
+.footer-shops li + li {
+  margin-top: var(--sp-2);
+}
+
+.footer-group__hint {
+  display: inline-block;
+  margin-top: var(--sp-3);
+}
+
+.site-footer__contacts {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--sp-6);
+  padding: var(--sp-5) 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.footer-shops li span {
+  display: block;
+  color: var(--sg-on-dark);
+}
+
+.footer-shops li em {
+  font-style: normal;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .site-footer__bottom {
-  border-top: 1px solid var(--sg-line);
-  padding: var(--sp-4) 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  padding: var(--sp-4) 0 var(--sp-6);
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sp-3) var(--sp-5);
-  align-items: center;
-  font-size: 14px;
-  color: var(--sg-muted);
+  gap: var(--sp-2) var(--sp-5);
+  align-items: baseline;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .site-footer__bottom p {
   margin: 0;
+}
+
+.site-footer__disclaimer {
+  flex: 1 1 460px;
+  min-width: 0;
+  line-height: 1.5;
+}
+
+/* Плейсхолдеры в подвале читаются на тёмном фоне */
+.site-footer .ph {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* В тёмной теме фирменный синий осветляется, поэтому тёмные поверхности
+   шапки и подвала задаются отдельно — иначе они становятся светло-сиреневыми. */
+html[data-theme="dark"] .header-util,
+html[data-theme="dark"] .site-footer {
+  background: var(--sg-bg-soft);
+}
+
+html[data-theme="dark"] .site-footer {
+  border-top: 1px solid var(--sg-line);
+}
+
+/* Полосатая панель с знаками бренда — это фирменная плашка, а не фон страницы.
+   В тёмной теме она остаётся светлой: логотип на тёмную подложку не ставим. */
+html[data-theme="dark"] .hero__visual {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0.32)),
+    repeating-linear-gradient(
+      -45deg,
+      #ffffff 0 34px,
+      #010b87 34px 58px,
+      #ffffff 58px 92px,
+      #d81921 92px 116px
+    );
 }
 
 /* ==========================================================================
@@ -1754,15 +2181,42 @@ ul {
     grid-template-columns: repeat(3, 1fr);
   }
 
-  .hero__title {
-    font-size: 38px;
+  .bannerset__grid {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  }
+
+  .header-quick__nav {
+    gap: var(--sp-4);
   }
 }
 
 @media (max-width: 1023px) {
+  /* Баннеры уходят под промо-блок и встают в два столбца */
+  .bannerset__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bannerset__side {
+    grid-template-rows: none;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .usp-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-4);
+  }
+
+  .split-row {
+    grid-template-columns: 1fr;
+  }
+
   .site-footer__grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: var(--sp-5);
+  }
+
+  .footer-links {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .feature-grid {
@@ -1796,21 +2250,19 @@ ul {
 
   .hero__inner {
     grid-template-columns: 1fr;
-    gap: var(--sp-6);
-    padding-top: var(--sp-6);
-    padding-bottom: var(--sp-6);
+    gap: 0;
+  }
+
+  .hero__copy {
+    padding: var(--sp-6) var(--sp-5);
   }
 
   .hero__visual {
     min-height: 300px;
   }
 
-  .hero__marks {
-    grid-template-columns: 1fr;
-  }
-
   .hero__emblem {
-    width: min(260px, 70%);
+    width: min(200px, 45%);
   }
 }
 
@@ -1828,34 +2280,47 @@ ul {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .header-util__inner {
-    gap: var(--sp-3);
-    font-size: 13px;
-  }
-
-  /* На планшете служебные ссылки прячем — они есть в меню и в подвале */
+  /* На планшете служебные ссылки и строка разделов прячутся —
+     всё это есть в мобильном меню и в подвале */
+  .header-util__nav,
   .header-util .dropdown,
-  .util-callback {
+  .util-callback,
+  .header-quick {
     display: none;
   }
 
   .header-util__inner {
     gap: var(--sp-3);
+    font-size: 13px;
   }
 
-  .header-util__city {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  .header-util__side {
+    margin-left: 0;
+    width: 100%;
+    justify-content: space-between;
   }
 
   .header-burger {
     display: grid;
   }
 
-  .header-main {
+  .header-main__inner {
     flex-wrap: wrap;
+    gap: var(--sp-3);
+  }
+
+  /* Первая строка — логотип и действия, вторая — «Каталог» и поиск.
+     Пустой элемент принудительно переносит строку. */
+  .header-main__inner::after {
+    content: "";
+    order: 2;
+    flex-basis: 100%;
+    height: 0;
+  }
+
+  .header-actions {
+    order: 1;
+    margin-left: auto;
     gap: var(--sp-3);
   }
 
@@ -1865,11 +2330,7 @@ ul {
 
   .search-form {
     order: 4;
-    flex-basis: 100%;
-  }
-
-  .header-actions {
-    margin-left: auto;
+    flex: 1 1 200px;
   }
 
   .catalog-menu__grid {
@@ -1894,17 +2355,20 @@ ul {
     padding: 0 var(--sp-4);
   }
 
-  .hero__inner {
-    padding-left: var(--sp-4);
-    padding-right: var(--sp-4);
+  .bannerset__side {
+    grid-template-columns: 1fr;
   }
 
-  .hero__title {
-    font-size: 30px;
+  .usp-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .hero__copy {
+    padding: var(--sp-5) var(--sp-4);
   }
 
   .hero__text {
-    font-size: 16px;
+    font-size: 15px;
   }
 
   .hero__actions .btn {
@@ -1912,22 +2376,45 @@ ul {
   }
 
   .site-logo img {
-    width: 60px;
-    height: 60px;
+    width: 52px;
+    height: 52px;
+  }
+
+  .site-logo__word {
+    display: none;
   }
 
   .header-util__phone {
-    font-size: 16px;
+    font-size: 15px;
   }
 
-  .header-actions .icon-btn:nth-child(1),
-  .header-actions .icon-btn:nth-child(2) {
+  .header-action__label {
+    display: none;
+  }
+
+  .header-actions .header-action:nth-child(1),
+  .header-actions .header-action:nth-child(2) {
+    display: none;
+  }
+
+  .header-action {
+    min-width: 44px;
+  }
+
+  .header-catalog {
+    width: 48px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .header-catalog span {
     display: none;
   }
 
   .catalog-menu__grid,
   .feature-grid,
-  .site-footer__grid {
+  .footer-links,
+  .site-footer__contacts {
     grid-template-columns: 1fr;
   }
 
@@ -1944,10 +2431,21 @@ ul {
   .product-card__buy {
     margin-left: 0;
     width: 100%;
+    justify-content: center;
+  }
+
+  .product-card__buy span {
+    display: none;
   }
 
   .price {
     font-size: 19px;
+  }
+
+  .wide-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-4);
   }
 
   .section__head {
@@ -1965,10 +2463,6 @@ ul {
 
   .header-util__inner {
     min-height: 42px;
-  }
-
-  .header-util__city span {
-    display: none;
   }
 
   .gallery__thumbs {
@@ -2049,7 +2543,7 @@ html[data-theme="dark"] .btn--action,
 html[data-theme="dark"] .search-form__submit,
 html[data-theme="dark"] .badge--sale,
 html[data-theme="dark"] .badge--hit,
-html[data-theme="dark"] .icon-btn__count,
+html[data-theme="dark"] .header-action__count,
 html[data-theme="dark"] .pagination .is-current {
   color: #0e1117;
 }
@@ -2125,14 +2619,18 @@ html {
   height: 5px;
 }
 
-.site-header.is-compact .header-main {
+.site-header.is-compact .header-main__inner {
   padding-top: var(--sp-2);
   padding-bottom: var(--sp-2);
 }
 
+.site-header.is-compact .header-quick {
+  display: none;
+}
+
 .site-header.is-compact .site-logo img {
-  width: 54px;
-  height: 54px;
+  width: 48px;
+  height: 48px;
   transition: width 0.2s ease, height 0.2s ease;
 }
 
@@ -2153,9 +2651,14 @@ html {
   cursor: pointer;
 }
 
+.theme-toggle {
+  width: 36px;
+  height: 36px;
+}
+
 .theme-toggle:hover {
-  background: var(--sg-blue-tint);
-  color: var(--sg-blue);
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--sg-on-dark);
 }
 
 .theme-toggle .icon-moon {
@@ -2170,21 +2673,22 @@ html[data-theme="dark"] .theme-toggle .icon-moon {
   display: block;
 }
 
-/* Кнопка «Заказать звонок» в служебной полосе */
+/* Кнопка «Заказать звонок» в тёмной информационной полосе */
 .util-callback {
   background: none;
   border: 0;
   padding: 0 var(--sp-2);
-  min-height: 40px;
-  color: var(--sg-blue);
-  font-size: 14px;
+  min-height: 36px;
+  color: inherit;
+  font-size: 13px;
   font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
   border-bottom: 1px dashed currentColor;
 }
 
 .util-callback:hover {
-  color: var(--sg-red);
+  color: var(--sg-on-dark);
 }
 
 /* ==========================================================================
@@ -2504,59 +3008,6 @@ html[data-theme="dark"] .theme-toggle .icon-moon {
   }
 }
 
-/* ==========================================================================
-   Промо-лента акций
-   ========================================================================== */
-
-.promo-strip {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--sp-4);
-}
-
-.promo-card {
-  position: relative;
-  overflow: hidden;
-  padding: var(--sp-5);
-  border: 1px solid var(--sg-line);
-  border-radius: var(--r-lg);
-  background: var(--sg-white);
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-3);
-  min-height: 150px;
-}
-
-.promo-card__stripe {
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 8px;
-  background-image: var(--sg-stripes);
-}
-
-.promo-card__label {
-  font-size: 13px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--sg-red);
-}
-
-.promo-card h3 {
-  padding-left: var(--sp-4);
-}
-
-.promo-card__label,
-.promo-card p,
-.promo-card a {
-  padding-left: var(--sp-4);
-}
-
-@media (max-width: 900px) {
-  .promo-strip {
-    grid-template-columns: 1fr;
-  }
-}
 
 /* ==========================================================================
    Каталог: чипы фильтров, вид списком, ползунок цены
@@ -3208,7 +3659,7 @@ html[data-theme="dark"] .step.is-current .step__num {
   100% { transform: scale(1); }
 }
 
-.icon-btn__count.is-pop {
+.header-action__count.is-pop {
   animation: count-pop 0.35s ease;
 }
 
