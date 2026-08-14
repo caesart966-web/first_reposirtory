@@ -2411,17 +2411,31 @@ html[data-theme="dark"] .hero__visual {
     width: 100%;
   }
 
+  /* Шапка на телефоне: логотип и действия одной строкой, поиск — второй.
+     Красную кнопку «Каталог» убираем: тот же каталог открывают бургер
+     и нижняя панель, три одинаковых значка подряд только путают. */
   .site-logo img {
-    width: 52px;
-    height: 52px;
+    width: 44px;
+    height: 44px;
   }
 
   .site-logo__word {
     display: none;
   }
 
+  .header-main__inner {
+    gap: var(--sp-2);
+    padding-top: var(--sp-2);
+    padding-bottom: var(--sp-2);
+  }
+
   .header-util__phone {
+    min-height: 44px;
     font-size: 15px;
+  }
+
+  .header-util__inner {
+    min-height: 44px;
   }
 
   .header-action__label {
@@ -2438,13 +2452,94 @@ html[data-theme="dark"] .hero__visual {
   }
 
   .header-catalog {
-    width: 48px;
-    padding: 0;
-    justify-content: center;
+    display: none;
   }
 
-  .header-catalog span {
-    display: none;
+  .search-form {
+    flex-basis: 100%;
+  }
+
+  .search-form__input,
+  .search-form__submit {
+    height: 44px;
+  }
+
+  .search-form__submit {
+    width: 54px;
+  }
+
+  .header-burger {
+    width: 44px;
+    height: 44px;
+  }
+
+  /* На телефоне знаки бренда идут первыми — это главная картинка блока,
+     а текст с кнопками уходит под неё. Панель невысокая, иначе первый
+     экран занимает только полоска с маскотом. */
+  .hero__inner {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hero__visual {
+    order: -1;
+    min-height: 0;
+    padding: var(--sp-3) var(--sp-4) 0;
+  }
+
+  .hero__copy {
+    padding: var(--sp-5) var(--sp-4);
+  }
+
+  .hero__title {
+    font-size: 24px;
+  }
+
+  .hero__text {
+    font-size: 15px;
+    margin-bottom: var(--sp-4);
+  }
+
+  .hero__marks {
+    gap: var(--sp-3);
+    align-items: end;
+  }
+
+  .hero__emblem {
+    width: min(96px, 32%);
+    margin-bottom: var(--sp-3);
+  }
+
+  .hero__mascot img {
+    max-width: 165px;
+  }
+
+  /* Преимущества становятся списком коротких строк, а не высокими плитками */
+  .tiles {
+    grid-template-columns: 1fr;
+    gap: var(--sp-2);
+  }
+
+  .tile {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: var(--sp-2) var(--sp-3);
+    padding: var(--sp-3);
+  }
+
+  .tile__icon {
+    grid-row: span 2;
+    width: 40px;
+    height: 40px;
+  }
+
+  .tile__title {
+    align-self: end;
+  }
+
+  .tile__text {
+    align-self: start;
   }
 
   .catalog-menu__grid,
@@ -2470,7 +2565,7 @@ html[data-theme="dark"] .hero__visual {
     justify-content: center;
   }
 
-  .product-card__buy span {
+  .product-card__buy svg {
     display: none;
   }
 
@@ -2484,10 +2579,15 @@ html[data-theme="dark"] .hero__visual {
     gap: var(--sp-4);
   }
 
-  .section__head {
+  .section__head,
+  .selection__head {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--sp-2);
+  }
+
+  .slider-btn {
+    display: none;
   }
 }
 
@@ -3732,6 +3832,41 @@ html[data-theme="dark"] .step.is-current .step__num {
   .product-card__tools {
     opacity: 1;
     transform: none;
+  }
+}
+
+/* На телефоне карточка узкая: столбик из трёх кнопок закрывает фото.
+   Оставляем только избранное, остальное доступно в карточке товара.
+   Заодно кнопка дорастает до 44 px — минимального размера для пальца. */
+@media (max-width: 640px) {
+  .product-card__tools [data-add="compare"],
+  .product-card__tools [data-modal-open] {
+    display: none;
+  }
+
+  /* Селектор с двумя классами — иначе базовое правило .card-tool ниже
+     по файлу перебивает этот блок при одинаковой специфичности. */
+  .product-card__tools .card-tool,
+  .header-util .theme-toggle {
+    width: 44px;
+    height: 44px;
+  }
+
+  .action-link {
+    min-height: 44px;
+  }
+
+  /* Списки-ссылки, по которым реально тыкают пальцем */
+  .chip,
+  .view-toggle button,
+  .filters-toggle,
+  .cat-list__link,
+  .mobile-nav__link,
+  .footer-group li a,
+  .filters label {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
   }
 }
 
