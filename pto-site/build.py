@@ -457,7 +457,13 @@ def page_home(r: Renderer) -> None:
     # Постер — статичный кадр. Он показывается сразу, пока грузится видео,
     # и остаётся вместо видео на телефонах. Видео подключает app.js.
     poster = site.url(h.get("poster", "/assets/media/hero-poster.png"))
-    sources = "|".join(site.url(h[k]) for k in ("video_webm", "video_mp4") if h.get(k))
+    # Тег видео вставляем, только если файл действительно лежит в assets/.
+    # Иначе браузер зря дёргал бы несуществующий файл — а на экране всё равно
+    # остаётся постер. Положите hero.mp4 в assets/media/, и видео появится само.
+    sources = "|".join(
+        site.url(h[k]) for k in ("video_webm", "video_mp4")
+        if h.get(k) and (ASSETS_DIR / h[k].lstrip("/").removeprefix("assets/")).exists()
+    )
     video_tag = (f'''<video class="hero__video" autoplay muted loop playsinline preload="none"
            poster="{poster}" data-src="{sources}" aria-hidden="true" tabindex="-1"></video>'''
                  if sources else "")
