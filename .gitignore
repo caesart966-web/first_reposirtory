@@ -28,3 +28,7 @@ tools/moscow-companies-db/daily.log
 *.swp
 .idea/
 .vscode/
+
+# pto-site: реальные токены приёма заявок (заливаются на хостинг руками)
+pto-site/assets/config.js
+pto-site/dist/assets/config.js
