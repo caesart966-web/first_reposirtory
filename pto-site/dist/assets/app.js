@@ -55,7 +55,7 @@
      видео до того, как мы разрешим.                                        */
   var video = document.querySelector('.hero__video');
   if (video) {
-    var wide = window.matchMedia('(min-width: 901px)').matches;
+    var wide = window.matchMedia('(min-width: 981px)').matches;
     var calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var saveData = navigator.connection && navigator.connection.saveData;
 

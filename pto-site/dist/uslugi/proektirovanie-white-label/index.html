@@ -25,6 +25,11 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 
+<!-- Шрифты грузятся заранее: так подмена системного на фирменный происходит
+     до первой отрисовки и текст не «прыгает». Файлы лежат на своём сервере. -->
+<link rel="preload" href="/assets/fonts/inter-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+
 <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/assets/img/favicon.svg">
 <link rel="stylesheet" href="/assets/style.css">
@@ -118,7 +123,28 @@
               <a class="btn btn--primary btn--block" href="#zayavka">Оставить заявку</a>
               <a class="btn btn--ghost btn--block" href="tel:+79000000000">+7 (900) 000-00-00</a>
             </div>
-            <p style="margin-top:1.25rem;font-size:0.9375rem;color:var(--ink-muted)">Работаем удалённо по всей России</p>
+            <div class="spec">
+              <div class="spec__row">
+                <span class="spec__key">География</span>
+                <span class="spec__dots"></span>
+                <span class="spec__val">Вся Россия</span>
+              </div>
+              <div class="spec__row">
+                <span class="spec__key">Ответ</span>
+                <span class="spec__dots"></span>
+                <span class="spec__val">В течение рабочего дня</span>
+              </div>
+              <div class="spec__row">
+                <span class="spec__key">Форматы</span>
+                <span class="spec__dots"></span>
+                <span class="spec__val">Бумага, PDF с ЭЦП, ИСУП</span>
+              </div>
+              <div class="spec__row">
+                <span class="spec__key">Договор</span>
+                <span class="spec__dots"></span>
+                <span class="spec__val">С фиксированной ценой</span>
+              </div>
+            </div>
           </div>
         </div>
       </aside>
