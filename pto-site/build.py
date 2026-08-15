@@ -98,6 +98,24 @@ class Site:
 # 2. Блоки страницы
 # =========================================================================
 
+def asset_exists(rel: str) -> bool:
+    """Есть ли файл в папке assets/. Путь вида /assets/media/hero.mp4."""
+    if not rel:
+        return False
+    return (ASSETS_DIR / rel.lstrip("/").removeprefix("assets/")).exists()
+
+
+def resolve_media(configured: str, fallbacks: list) -> str:
+    """Берёт первый существующий файл: сначала указанный в данных, потом
+    привычные имена с другими расширениями. Нужно, чтобы постер, полученный
+    из видео скриптом tools/prepare-hero-video.sh, подхватился сам —
+    без правки data/site.json."""
+    for rel in [configured] + fallbacks:
+        if asset_exists(rel):
+            return rel
+    return configured or fallbacks[-1]
+
+
 def li_list(items, css="ticks") -> str:
     body = "\n".join(f"      <li>{esc(i)}</li>" for i in items)
     return f'<ul class="{css}">\n{body}\n    </ul>'
@@ -460,14 +478,17 @@ def page_home(r: Renderer) -> None:
 
     # Постер — статичный кадр. Он показывается сразу, пока грузится видео,
     # и остаётся вместо видео на телефонах. Видео подключает app.js.
-    poster = site.url(h.get("poster", "/assets/media/hero-poster.png"))
+    poster = site.url(resolve_media(h.get("poster"), [
+        "/assets/media/hero-poster.webp",
+        "/assets/media/hero-poster.jpg",
+        "/assets/media/hero-poster.png",
+        "/assets/media/hero-poster-placeholder.png",
+    ]))
     # Тег видео вставляем, только если файл действительно лежит в assets/.
     # Иначе браузер зря дёргал бы несуществующий файл — а на экране всё равно
     # остаётся постер. Положите hero.mp4 в assets/media/, и видео появится само.
-    sources = "|".join(
-        site.url(h[k]) for k in ("video_webm", "video_mp4")
-        if h.get(k) and (ASSETS_DIR / h[k].lstrip("/").removeprefix("assets/")).exists()
-    )
+    sources = "|".join(site.url(h[k]) for k in ("video_webm", "video_mp4")
+                       if asset_exists(h.get(k)))
     video_tag = (f'''<video class="hero__video" autoplay muted loop playsinline preload="none"
            poster="{poster}" data-src="{sources}" aria-hidden="true" tabindex="-1"></video>'''
                  if sources else "")

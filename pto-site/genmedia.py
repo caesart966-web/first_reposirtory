@@ -123,7 +123,7 @@ def ensure_media(assets_dir: Path, force: bool = False) -> list:
     """Создаёт заглушки, если их ещё нет. Возвращает список созданных файлов."""
     created = []
     targets = [
-        (assets_dir / "media" / "hero-poster.png", make_poster),
+        (assets_dir / "media" / "hero-poster-placeholder.png", make_poster),
         (assets_dir / "img" / "og-default.png", make_og),
     ]
     for path, maker in targets:
