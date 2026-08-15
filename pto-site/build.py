@@ -351,10 +351,11 @@ def schema_breadcrumbs(site: Site, crumbs) -> dict:
 # =========================================================================
 
 class Renderer:
-    def __init__(self, site: Site, template: str):
+    def __init__(self, site: Site, template: str, noindex: bool = False):
         self.site = site
         self.template = template
-        self.pages = []          # (путь, менять ли в sitemap, приоритет)
+        self.noindex = noindex   # для превью-сборок: закрыть от поисковиков
+        self.pages = []          # (путь, приоритет)
 
     def nav_links(self, current: str) -> str:
         out = []
@@ -376,6 +377,8 @@ class Renderer:
                head_extra: str = "", og_type: str = "website", og_title: str = "",
                in_sitemap: bool = True, priority: str = "0.7",
                robots: str = "index, follow") -> None:
+        if self.noindex:
+            robots = "noindex, nofollow"
         site = self.site
         c = site.contacts
         f1, f2 = self.footer_services()
@@ -837,11 +840,15 @@ def write_sitemap(site: Site, pages) -> None:
     (DIST_DIR / "sitemap.xml").write_text(xml, encoding="utf-8")
 
 
-def write_robots(site: Site) -> None:
-    text = ("User-agent: *\n"
-            "Allow: /\n"
-            "Disallow: /assets/config.js\n\n"
-            f"Sitemap: {site.abs_url('/sitemap.xml')}\n")
+def write_robots(site: Site, noindex: bool = False) -> None:
+    if noindex:
+        # Превью для показа заказчику: в поиск попадать не должно
+        text = "User-agent: *\nDisallow: /\n"
+    else:
+        text = ("User-agent: *\n"
+                "Allow: /\n"
+                "Disallow: /assets/config.js\n\n"
+                f"Sitemap: {site.abs_url('/sitemap.xml')}\n")
     (DIST_DIR / "robots.txt").write_text(text, encoding="utf-8")
 
 
@@ -866,10 +873,18 @@ def copy_assets() -> None:
 # 6. Точка входа
 # =========================================================================
 
-def build(regen_media: bool = False) -> Site:
+def build(regen_media: bool = False, base_path: str = None,
+          base_url: str = None, noindex: bool = False) -> Site:
     site_data = load_json(DATA_DIR / "site.json")
     services = load_json(DATA_DIR / "services.json")
     site = Site(site_data, services)
+
+    # Превью-сборка: адрес и подпапку задаём из командной строки,
+    # чтобы боевые настройки в data/site.json остались нетронутыми.
+    if base_path is not None:
+        site.base_path = base_path.rstrip("/")
+    if base_url is not None:
+        site.base_url = base_url.rstrip("/")
 
     created = genmedia.ensure_media(ASSETS_DIR, force=regen_media)
     for path in created:
@@ -880,7 +895,7 @@ def build(regen_media: bool = False) -> Site:
     DIST_DIR.mkdir(parents=True)
 
     template = (TPL_DIR / "base.html").read_text(encoding="utf-8")
-    r = Renderer(site, template)
+    r = Renderer(site, template, noindex=noindex)
 
     page_home(r)
     page_services_index(r)
@@ -894,7 +909,7 @@ def build(regen_media: bool = False) -> Site:
 
     copy_assets()
     write_sitemap(site, r.pages)
-    write_robots(site)
+    write_robots(site, noindex=noindex)
 
     # Проверка, что заголовки нигде не повторяются
     check_unique(r)
@@ -939,8 +954,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Сборка сайта")
     parser.add_argument("--serve", action="store_true", help="собрать и открыть локально")
     parser.add_argument("--regen-media", action="store_true", help="перерисовать картинки-заглушки")
+    parser.add_argument("--base-path", metavar="/подпапка",
+                        help="если сайт лежит не в корне домена (для превью)")
+    parser.add_argument("--base-url", metavar="https://...",
+                        help="адрес сайта, если отличается от указанного в site.json")
+    parser.add_argument("--noindex", action="store_true",
+                        help="закрыть сборку от поисковиков (для показа заказчику)")
     args = parser.parse_args()
 
-    build(regen_media=args.regen_media)
+    build(regen_media=args.regen_media, base_path=args.base_path,
+          base_url=args.base_url, noindex=args.noindex)
     if args.serve:
         serve()

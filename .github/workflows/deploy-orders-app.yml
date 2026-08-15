@@ -1,4 +1,4 @@
-name: 'Публикация на GitHub Pages: «Заказы» и макет «Строй-Герой»'
+name: 'Публикация на GitHub Pages: «Заказы», «Строй-Герой» и сайт ПТО'
 
 on:
   push:
@@ -6,6 +6,7 @@ on:
     paths:
       - 'orders-app/**'
       - 'stroigeroi-site/**'
+      - 'pto-site/**'
       - '.github/workflows/deploy-orders-app.yml'
   workflow_dispatch: # позволяет запустить сборку руками из вкладки Actions
 
@@ -45,6 +46,21 @@ jobs:
       # кладём папку рядом, он открывается по адресу /stroigeroi/
       - name: Добавляем макет «Строй-Герой»
         run: cp -r ../stroigeroi-site dist/stroigeroi
+
+      # Сайт ПТО собирается генератором на Python и открывается по адресу /pto/.
+      # Это ПРЕВЬЮ для показа заказчику: подпапка вместо корня домена
+      # и запрет индексации, чтобы демо с тестовым телефоном не попало в поиск.
+      # Боевая сборка для своего домена делается без этих флагов.
+      - name: Собираем сайт ПТО
+        working-directory: pto-site
+        run: |
+          python3 build.py \
+            --base-path /${{ github.event.repository.name }}/pto \
+            --base-url https://${{ github.repository_owner }}.github.io \
+            --noindex
+
+      - name: Добавляем сайт ПТО
+        run: cp -r ../pto-site/dist dist/pto
 
       - uses: actions/configure-pages@v5
 
