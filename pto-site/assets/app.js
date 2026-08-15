@@ -9,6 +9,28 @@
 
   var CFG = window.SITE_CONFIG || {};
 
+  // Метка «скрипты работают». Всё, что прячет контент до анимации, висит
+  // на этом классе — значит без JS и у поисковиков текст виден всегда.
+  document.documentElement.classList.add('js');
+
+  var calmMedia = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  /* ---------- 0. Шапка: тень появляется только при прокрутке ------------- */
+  var header = document.querySelector('.header');
+  if (header) {
+    var onScroll = function () {
+      header.classList.toggle('is-scrolled', window.scrollY > 8);
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+  }
+
+  /* Появления блоков при скролле здесь СОЗНАТЕЛЬНО НЕТ.
+     Текст, спрятанный до попадания в кадр, пропадает при печати в PDF,
+     при переходе по якорю и при любой ошибке в скриптах, а посетитель
+     у нас торопится и читает по диагонали. Плавность сделана там, где
+     она ничем не рискует: наведение, фокус, раскрытие вопросов, шапка. */
+
   /* ---------- 1. Мобильное меню ----------------------------------------- */
   var burger = document.querySelector('.burger');
   var nav = document.getElementById('nav');
