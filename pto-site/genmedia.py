@@ -119,13 +119,28 @@ def make_og(path: Path, width: int = 1200, height: int = 630) -> None:
     _write_png(path, width, height, rows)
 
 
+def _has_any(folder: Path, stem: str) -> bool:
+    """Лежит ли рядом настоящий файл с таким именем в любом формате."""
+    return any((folder / f"{stem}{ext}").exists()
+               for ext in (".webp", ".jpg", ".jpeg", ".png"))
+
+
 def ensure_media(assets_dir: Path, force: bool = False) -> list:
-    """Создаёт заглушки, если их ещё нет. Возвращает список созданных файлов."""
+    """Создаёт заглушки, если их ещё нет. Возвращает список созданных файлов.
+
+    Заглушка рисуется только тогда, когда настоящей картинки нет. Как только
+    вы кладёте свой постер или свою картинку для мессенджеров, заглушка
+    перестаёт создаваться и не занимает место на хостинге."""
+    media = assets_dir / "media"
+    img = assets_dir / "img"
+
+    targets = []
+    if not _has_any(media, "hero-poster"):
+        targets.append((media / "hero-poster-placeholder.png", make_poster))
+    if not _has_any(img, "og-default"):
+        targets.append((img / "og-default.png", make_og))
+
     created = []
-    targets = [
-        (assets_dir / "media" / "hero-poster-placeholder.png", make_poster),
-        (assets_dir / "img" / "og-default.png", make_og),
-    ]
     for path, maker in targets:
         if force or not path.exists():
             maker(path)
