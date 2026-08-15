@@ -1,0 +1,451 @@
+<!doctype html>
+<!--
+  Общий каркас всех страниц сайта.
+  Шапка и подвал описаны ЗДЕСЬ и только здесь: поправите — изменится на всех страницах.
+  Всё, что в двойных фигурных скобках, подставляет генератор build.py.
+-->
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Бюро ПТО — документальное сопровождение строительства по всей России</title>
+<meta name="description" content="Проектирование, исполнительная документация, сметы, ППР, геодезия, защита объёмов КС-2 и КС-3, Ростехнадзор и ЗОС. Работаем удалённо по всей России, сдаём без возвратов.">
+<link rel="canonical" href="https://example.com/">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#0e1e33">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Бюро ПТО">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:title" content="Бюро ПТО — документальное сопровождение строительства по всей России">
+<meta property="og:description" content="Проектирование, исполнительная документация, сметы, ППР, геодезия, защита объёмов КС-2 и КС-3, Ростехнадзор и ЗОС. Работаем удалённо по всей России, сдаём без возвратов.">
+<meta property="og:url" content="https://example.com/">
+<meta property="og:image" content="https://example.com/assets/img/og-default.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/assets/img/favicon.svg">
+<link rel="stylesheet" href="/assets/style.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","@id":"https://example.com/#organization","name":"Бюро ПТО","legalName":"ООО «Бюро ПТО»","description":"Готовим и защищаем документацию за строительные компании: проектирование, исполнительная документация, геодезия, объёмы, сдача объектов.","url":"https://example.com/","logo":"https://example.com/assets/img/logo.svg","image":"https://example.com/assets/img/og-default.png","email":"info@example.com","telephone":"+79000000000","areaServed":{"@type":"Country","name":"Россия"},"contactPoint":[{"@type":"ContactPoint","telephone":"+79000000000","email":"info@example.com","contactType":"sales","areaServed":"RU","availableLanguage":"Russian"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Бюро ПТО","url":"https://example.com/"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Мы в другом регионе, вы работаете с нами?","acceptedAnswer":{"@type":"Answer","text":"Да. Вся работа с документами ведётся удалённо, поэтому регион объекта роли не играет — мы одинаково работаем и по Москве, и по Дальнему Востоку. Выезд нужен только для геодезии и фактических обмеров, он согласуется отдельно."}},{"@type":"Question","name":"Сдача через две недели, документации нет. Возьмётесь?","acceptedAnswer":{"@type":"Answer","text":"Это наш обычный сценарий. В таких случаях мы сначала за один-два дня проводим аудит: смотрим, что есть по факту, и говорим прямо, какой объём реально собрать к вашей дате, а что придётся закрывать позже. Под срочные задачи подключаем нескольких инженеров параллельно."}},{"@type":"Question","name":"Документацию уже завернули. Вы её доделаете или всё заново?","acceptedAnswer":{"@type":"Answer","text":"Разбираемся с тем, что есть. Часто комплект переделывается не полностью: восстанавливаем недостающие акты, приводим формы к требованиям, снимаем замечания. Если исходные материалы непригодны, скажем об этом сразу и не будем брать деньги за реанимацию."}},{"@type":"Question","name":"Как считается стоимость?","acceptedAnswer":{"@type":"Answer","text":"От состава и объёма: количество разделов, площадь и назначение объекта, срочность, требования конкретного заказчика. После аудита исходных данных даём фиксированную стоимость по этапам, а не «вилку»."}},{"@type":"Question","name":"Вы подписываете NDA?","acceptedAnswer":{"@type":"Answer","text":"Да. Работаем по соглашению о конфиденциальности, в том числе по объектам со специальными требованиями. Материалы заказчика не используются в портфолио без письменного разрешения."}},{"@type":"Question","name":"Можно работать под нашим брендом?","acceptedAnswer":{"@type":"Answer","text":"Да, это формат White Label: документация выпускается в ваших штампах и под вашим брендом, наше участие остаётся внутри. Так работают проектные и генподрядные организации, которым нужно закрыть пиковую нагрузку."}}]}</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Перейти к содержанию</a>
+
+<header class="header">
+  <div class="container header__inner">
+    <a class="logo" href="/" aria-label="Бюро ПТО — на главную">
+      <img src="/assets/img/logo.svg" alt="" width="34" height="34">
+      <span class="logo__text">
+        <span class="logo__name">Бюро ПТО</span>
+        <span class="logo__sub">Документальное сопровождение строительства</span>
+      </span>
+    </a>
+
+    <button class="burger" type="button" aria-label="Меню" aria-expanded="false" aria-controls="nav">
+      <span></span><span></span><span></span>
+    </button>
+
+    <nav class="nav" id="nav" aria-label="Основное меню">
+      <ul class="nav__list">
+                <li><a class="nav__link" href="/uslugi/">Услуги</a></li>
+        <li><a class="nav__link" href="/o-kompanii/">О компании</a></li>
+        <li><a class="nav__link" href="/kontakty/">Контакты</a></li>
+      </ul>
+    </nav>
+
+    <div class="header__contacts">
+      <a class="header__phone" href="tel:+79000000000">+7 (900) 000-00-00</a>
+      <a class="btn btn--primary" href="#zayavka">Оставить заявку</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero">
+    <div class="hero__media" style="background-image:url(/assets/media/hero-poster.png)"></div>
+    <video class="hero__video" autoplay muted loop playsinline preload="none"
+           poster="/assets/media/hero-poster.png" data-src="/assets/media/hero.webm|/assets/media/hero.mp4" aria-hidden="true" tabindex="-1"></video>
+    <div class="container">
+      <div class="hero__inner">
+        <span class="eyebrow">Проектная, исполнительная и сдаточная документация</span>
+        <h1>Документация по объекту — под ключ, по всей России</h1>
+        <p class="hero__lead">Забираем на себя проектирование, исполнительную документацию, геодезию, защиту объёмов и сдачу объекта в эксплуатацию. Работаем удалённо: регион значения не имеет.</p>
+        <ul class="hero__points">
+          <li>Сдача без возвратов и замечаний</li>
+          <li>Штат инженеров ПТО, тянем объёмы параллельно по нескольким объектам</li>
+          <li>Подключаемся к объекту, где сдача уже горит</li>
+        </ul>
+        <div class="btn-row">
+          <a class="btn btn--primary" href="#zayavka">Оставить заявку</a>
+          <a class="btn btn--on-dark" href="/uslugi/">Все услуги</a>
+        </div>
+        <p class="hero__geo">Работаем удалённо по всей России · <a href="tel:+79000000000" style="color:#fff">+7 (900) 000-00-00</a></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--surface">
+    <div class="container">
+      <div class="section__head">
+        <span class="eyebrow">Коротко</span>
+        <h2>Что мы делаем</h2>
+        <p>Мы — производственно-технический отдел на аутсорсе. Строительная компания строит, мы закрываем всё, что связано с бумагами: от проектной документации и смет до актов, объёмов и Заключения о соответствии. Формат работы — удалённый, на объект выезжаем под геодезию и обмеры.</p>
+      </div>
+      <div class="grid grid--3">
+        <div class="stat">
+          <div class="stat__value">13</div>
+          <div class="stat__label">направлений документации: от стадии «П» до ЗОС</div>
+        </div>
+        <div class="stat">
+          <div class="stat__value">85<span class="stat__unit">РФ</span></div>
+          <div class="stat__label">субъектов РФ — география не ограничена</div>
+        </div>
+        <div class="stat">
+          <div class="stat__value">1<span class="stat__unit">день</span></div>
+          <div class="stat__label">на оценку объёма работ и стоимости</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section__head">
+        <h2>Услуги</h2>
+        <p>Четыре направления. Можно взять одну задачу, можно передать документальное сопровождение объекта целиком.</p>
+      </div>
+    <div class="group">
+      <div class="group__head">
+        <span class="group__num">Группа 01</span>
+        <h3 class="group__title">Проектирование и легализация изменений</h3>
+        <p class="group__subtitle">Проектная документация, White Label, узаконивание отступлений от проекта, госэкспертиза</p>
+      </div>
+      <div class="service-list">
+        <a class="service-item" href="/uslugi/proektirovanie/">
+          <span class="service-item__title">Проектирование объектов (стадия «П»)</span>
+          <span class="service-item__text">Проектная документация объектов любого масштаба.</span>
+        </a>
+        <a class="service-item" href="/uslugi/proektirovanie-white-label/">
+          <span class="service-item__title">Проектирование в формате White Label</span>
+          <span class="service-item__text">Готовые решения под брендом заказчика, разгрузка проектного отдела на 100%.</span>
+        </a>
+        <a class="service-item" href="/uslugi/aktualizatsiya-proektov/">
+          <span class="service-item__title">Актуализация проектов после СМР и легализация изменений</span>
+          <span class="service-item__text">Решаем проблему «построили не по чертежам»: сверяем факт с проектом и узакониваем изменения.</span>
+        </a>
+        <a class="service-item" href="/uslugi/gosekspertiza/">
+          <span class="service-item__title">Сопровождение в Госэкспертизе</span>
+          <span class="service-item__text">Ведение и защита проектных решений и смет, задача — пройти с первого раза.</span>
+        </a>
+      </div>
+    </div>
+    <div class="group">
+      <div class="group__head">
+        <span class="group__num">Группа 02</span>
+        <h3 class="group__title">Исполнительная документация</h3>
+        <p class="group__subtitle">Комплекты по Минстрою и ГОСТ, регламенты крупных заказчиков, ИСУП, сметы, ППР</p>
+      </div>
+      <div class="service-list">
+        <a class="service-item" href="/uslugi/ispolnitelnaya-dokumentatsiya/">
+          <span class="service-item__title">Исполнительная документация под ключ (Минстрой, ГОСТ)</span>
+          <span class="service-item__text">Все разделы по действующим требованиям, без возвратов и замечаний.</span>
+        </a>
+        <a class="service-item" href="/uslugi/ispolnitelnaya-dokumentatsiya-operatory-svyazi/">
+          <span class="service-item__title">Исполнительная документация под регламенты операторов связи</span>
+          <span class="service-item__text">Адаптация под внутренние регламенты Ростелеком, Т2, реставрация, спецведомства.</span>
+        </a>
+        <a class="service-item" href="/uslugi/isup-exon/">
+          <span class="service-item__title">Цифровая исполнительная документация в ИСУП Exon</span>
+          <span class="service-item__text">Ведение исполнительной документации в цифровой среде Exon под ключ.</span>
+        </a>
+        <a class="service-item" href="/uslugi/smetnaya-dokumentatsiya/">
+          <span class="service-item__title">Сметная документация</span>
+          <span class="service-item__text">Разработка смет: локальные, объектные, сводные расчёты.</span>
+        </a>
+        <a class="service-item" href="/uslugi/ppr-i-tehkarty/">
+          <span class="service-item__title">ППР и технологические карты</span>
+          <span class="service-item__text">Проекты производства работ и техкарты по всем разделам стройки и инженерных систем.</span>
+        </a>
+      </div>
+    </div>
+    <div class="group">
+      <div class="group__head">
+        <span class="group__num">Группа 03</span>
+        <h3 class="group__title">Инжиниринг и полевой контроль</h3>
+        <p class="group__subtitle">Геодезия, фактические обмеры, расчёт и защита выполненных объёмов</p>
+      </div>
+      <div class="service-list">
+        <a class="service-item" href="/uslugi/geodeziya/">
+          <span class="service-item__title">Геодезия и аудит объёмов</span>
+          <span class="service-item__text">Съёмка, точные обмеры, расчёт фактических объёмов. Поверенное оборудование из реестра ГСИ.</span>
+        </a>
+        <a class="service-item" href="/uslugi/zashchita-obemov-ks2-ks3/">
+          <span class="service-item__title">Защита выполненных объёмов (КС-2, КС-3)</span>
+          <span class="service-item__text">Аргументируем и защищаем каждый объём перед техническим заказчиком.</span>
+        </a>
+      </div>
+    </div>
+    <div class="group">
+      <div class="group__head">
+        <span class="group__num">Группа 04</span>
+        <h3 class="group__title">Сдача объекта и ввод в эксплуатацию</h3>
+        <p class="group__subtitle">Ростехнадзор, подключение сетей, Заключение о соответствии</p>
+      </div>
+      <div class="service-list">
+        <a class="service-item" href="/uslugi/rostehnadzor/">
+          <span class="service-item__title">Прохождение Ростехнадзора и подключение сетей</span>
+          <span class="service-item__text">Пакет документов и подача на временное и постоянное подключение: электрика, тепло, вода.</span>
+        </a>
+        <a class="service-item" href="/uslugi/zos/">
+          <span class="service-item__title">Сдача объекта и получение ЗОС</span>
+          <span class="service-item__text">Доводим объект до Заключения о соответствии и передачи госкомиссии.</span>
+        </a>
+      </div>
+    </div>
+      <div class="btn-row mt-6">
+        <a class="btn btn--ghost" href="/uslugi/">Все услуги списком</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--dark">
+    <div class="container">
+      <div class="section__head"><h2>Почему к нам</h2></div>
+      <div class="grid grid--2">
+        <div class="card">
+          <h3>Удалённая работа по всей России</h3>
+          <p>Документы готовятся дистанционно, обмен — по электронной почте и в облаке. Часовой пояс и удалённость объекта на срок не влияют. На объект выезжаем, когда нужна геодезия и фактические обмеры.</p>
+        </div>
+        <div class="card">
+          <h3>Сдача без возвратов и замечаний</h3>
+          <p>Работаем по действующим требованиям Минстроя, ГОСТ и внутренним регламентам заказчика. Цель — пройти проверку с первого раза, а не переделывать комплект по кругу.</p>
+        </div>
+        <div class="card">
+          <h3>Штат, а не один инженер</h3>
+          <p>В работе одновременно несколько объектов. Под срочную сдачу подключаем нескольких инженеров, чтобы комплект собрался за дни, а не за месяцы.</p>
+        </div>
+        <div class="card">
+          <h3>Собственное поверенное оборудование</h3>
+          <p>Тахеометры и нивелиры из реестра ГСИ, с действующими свидетельствами о поверке. Результаты обмеров принимаются техническим заказчиком как доказательная база по объёмам.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section__head"><h2>Как мы работаем</h2></div>
+      <div class="steps steps--3">
+        <div class="step">
+          <h3>Заявка</h3>
+          <p>Вы описываете объект и задачу: что уже есть, что завернули, когда сдача. Ответим в течение рабочего дня.</p>
+        </div>
+        <div class="step">
+          <h3>Аудит исходных данных</h3>
+          <p>Смотрим договор, проект, смету, журналы, сертификаты. Показываем, чего не хватает и что придётся восстанавливать.</p>
+        </div>
+        <div class="step">
+          <h3>Смета и сроки</h3>
+          <p>Фиксируем состав работ, стоимость и график сдачи по этапам. Договор, при необходимости — NDA.</p>
+        </div>
+        <div class="step">
+          <h3>Работа</h3>
+          <p>Готовим документацию, задаём вопросы точечно, не дёргаем по мелочам. Промежуточные комплекты отдаём по мере готовности.</p>
+        </div>
+        <div class="step">
+          <h3>Согласование</h3>
+          <p>Отрабатываем замечания технического заказчика и надзорных органов до снятия. Правки в рамках задачи — без доплат.</p>
+        </div>
+        <div class="step">
+          <h3>Передача</h3>
+          <p>Отдаём комплект в согласованных форматах: бумага, PDF с подписями, ИСУП. Остаёмся на связи до подписания.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--alt">
+    <div class="container">
+      <div class="section__head"><h2>Частые вопросы</h2></div>
+      <div class="faq">
+      <details class="faq__item">
+        <summary class="faq__q">Мы в другом регионе, вы работаете с нами?</summary>
+        <div class="faq__a"><p>Да. Вся работа с документами ведётся удалённо, поэтому регион объекта роли не играет — мы одинаково работаем и по Москве, и по Дальнему Востоку. Выезд нужен только для геодезии и фактических обмеров, он согласуется отдельно.</p></div>
+      </details>
+      <details class="faq__item">
+        <summary class="faq__q">Сдача через две недели, документации нет. Возьмётесь?</summary>
+        <div class="faq__a"><p>Это наш обычный сценарий. В таких случаях мы сначала за один-два дня проводим аудит: смотрим, что есть по факту, и говорим прямо, какой объём реально собрать к вашей дате, а что придётся закрывать позже. Под срочные задачи подключаем нескольких инженеров параллельно.</p></div>
+      </details>
+      <details class="faq__item">
+        <summary class="faq__q">Документацию уже завернули. Вы её доделаете или всё заново?</summary>
+        <div class="faq__a"><p>Разбираемся с тем, что есть. Часто комплект переделывается не полностью: восстанавливаем недостающие акты, приводим формы к требованиям, снимаем замечания. Если исходные материалы непригодны, скажем об этом сразу и не будем брать деньги за реанимацию.</p></div>
+      </details>
+      <details class="faq__item">
+        <summary class="faq__q">Как считается стоимость?</summary>
+        <div class="faq__a"><p>От состава и объёма: количество разделов, площадь и назначение объекта, срочность, требования конкретного заказчика. После аудита исходных данных даём фиксированную стоимость по этапам, а не «вилку».</p></div>
+      </details>
+      <details class="faq__item">
+        <summary class="faq__q">Вы подписываете NDA?</summary>
+        <div class="faq__a"><p>Да. Работаем по соглашению о конфиденциальности, в том числе по объектам со специальными требованиями. Материалы заказчика не используются в портфолио без письменного разрешения.</p></div>
+      </details>
+      <details class="faq__item">
+        <summary class="faq__q">Можно работать под нашим брендом?</summary>
+        <div class="faq__a"><p>Да, это формат White Label: документация выпускается в ваших штампах и под вашим брендом, наше участие остаётся внутри. Так работают проектные и генподрядные организации, которым нужно закрыть пиковую нагрузку.</p></div>
+      </details>
+      </div>
+    </div>
+  </section>
+
+  <section class="section form-block" id="zayavka">
+    <div class="container">
+      <div class="form-grid">
+        <div>
+          <h2>Оставить заявку</h2>
+          <p class="lead">Опишите объект и задачу. Перезвоним в течение рабочего дня, при срочной сдаче — быстрее.</p>
+          <div class="contact-lines">
+            <div class="contact-line">
+              <span class="contact-line__label">Телефон</span>
+              <a class="contact-line__value" href="tel:+79000000000">+7 (900) 000-00-00</a>
+            </div>
+            <div class="contact-line">
+              <span class="contact-line__label">Почта</span>
+              <a class="contact-line__value" href="mailto:info@example.com">info@example.com</a>
+            </div>
+            <div class="contact-line">
+              <span class="contact-line__label">Telegram</span>
+              <a class="contact-line__value" href="https://t.me/example" rel="nofollow noopener" target="_blank">@example</a>
+            </div>
+            <div class="contact-line">
+              <span class="contact-line__label">Режим работы</span>
+              <span class="contact-line__value" style="font-size:1rem;font-weight:500">Пн–Пт 9:00–19:00 МСК, срочные задачи — без выходных</span>
+            </div>
+          </div>
+        </div>
+
+        <form class="form" data-form="lead" novalidate
+              data-success="Заявка отправлена. Мы свяжемся с вами в рабочее время."
+              data-error="Не удалось отправить. Позвоните нам или напишите в Telegram — ответим быстрее.">
+          <div class="field">
+            <label for="f-name">Как к вам обращаться <span class="req">*</span></label>
+            <input id="f-name" name="name" type="text" autocomplete="name" required>
+            <span class="field__error"></span>
+          </div>
+          <div class="field">
+            <label for="f-phone">Телефон <span class="req">*</span></label>
+            <input id="f-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required
+                   placeholder="+7 ___ ___-__-__">
+            <span class="field__error"></span>
+          </div>
+          <div class="field">
+            <label for="f-service">Услуга или тип объекта</label>
+            <select id="f-service" name="service">
+              <option value="">— не важно / несколько услуг —</option>
+              <option value="Проектирование объектов (стадия «П»)">Проектирование объектов (стадия «П»)</option>
+              <option value="Проектирование в формате White Label">Проектирование в формате White Label</option>
+              <option value="Актуализация проектов после СМР и легализация изменений">Актуализация проектов после СМР и легализация изменений</option>
+              <option value="Сопровождение в Госэкспертизе">Сопровождение в Госэкспертизе</option>
+              <option value="Исполнительная документация под ключ (Минстрой, ГОСТ)">Исполнительная документация под ключ (Минстрой, ГОСТ)</option>
+              <option value="Исполнительная документация под регламенты операторов связи">Исполнительная документация под регламенты операторов связи</option>
+              <option value="Цифровая исполнительная документация в ИСУП Exon">Цифровая исполнительная документация в ИСУП Exon</option>
+              <option value="Сметная документация">Сметная документация</option>
+              <option value="ППР и технологические карты">ППР и технологические карты</option>
+              <option value="Геодезия и аудит объёмов">Геодезия и аудит объёмов</option>
+              <option value="Защита выполненных объёмов (КС-2, КС-3)">Защита выполненных объёмов (КС-2, КС-3)</option>
+              <option value="Прохождение Ростехнадзора и подключение сетей">Прохождение Ростехнадзора и подключение сетей</option>
+              <option value="Сдача объекта и получение ЗОС">Сдача объекта и получение ЗОС</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-comment">Коротко о задаче</label>
+            <textarea id="f-comment" name="comment" rows="3"
+                      placeholder="Объект, что нужно сделать, к какой дате"></textarea>
+          </div>
+          <div class="hp" aria-hidden="true">
+            <label for="f-company">Не заполняйте это поле</label>
+            <input id="f-company" name="company" type="text" tabindex="-1" autocomplete="off">
+          </div>
+          <div class="form__status" role="status"></div>
+          <button class="btn btn--primary btn--block" type="submit">Отправить заявку</button>
+          <p class="form__note">Нажимая кнопку, вы соглашаетесь на обработку персональных данных.</p>
+        </form>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer__top">
+      <div>
+        <div class="logo footer__logo">
+          <img src="/assets/img/logo.svg" alt="" width="34" height="34">
+          <span class="logo__text">
+            <span class="logo__name">Бюро ПТО</span>
+            <span class="logo__sub">Документальное сопровождение строительства</span>
+          </span>
+        </div>
+        <p>Готовим и защищаем документацию за строительные компании: проектирование, исполнительная документация, геодезия, объёмы, сдача объектов.</p>
+        <p>Работаем удалённо по всей России</p>
+      </div>
+
+      <div>
+        <div class="footer__title">Услуги</div>
+        <ul class="footer__list">
+                    <li><a href="/uslugi/proektirovanie/">Проектирование объектов (стадия «П»)</a></li>
+          <li><a href="/uslugi/proektirovanie-white-label/">Проектирование в формате White Label</a></li>
+          <li><a href="/uslugi/aktualizatsiya-proektov/">Актуализация проектов после СМР и легализация изменений</a></li>
+          <li><a href="/uslugi/gosekspertiza/">Сопровождение в Госэкспертизе</a></li>
+          <li><a href="/uslugi/ispolnitelnaya-dokumentatsiya/">Исполнительная документация под ключ (Минстрой, ГОСТ)</a></li>
+          <li><a href="/uslugi/ispolnitelnaya-dokumentatsiya-operatory-svyazi/">Исполнительная документация под регламенты операторов связи</a></li>
+          <li><a href="/uslugi/isup-exon/">Цифровая исполнительная документация в ИСУП Exon</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="footer__title">&nbsp;</div>
+        <ul class="footer__list">
+                    <li><a href="/uslugi/smetnaya-dokumentatsiya/">Сметная документация</a></li>
+          <li><a href="/uslugi/ppr-i-tehkarty/">ППР и технологические карты</a></li>
+          <li><a href="/uslugi/geodeziya/">Геодезия и аудит объёмов</a></li>
+          <li><a href="/uslugi/zashchita-obemov-ks2-ks3/">Защита выполненных объёмов (КС-2, КС-3)</a></li>
+          <li><a href="/uslugi/rostehnadzor/">Прохождение Ростехнадзора и подключение сетей</a></li>
+          <li><a href="/uslugi/zos/">Сдача объекта и получение ЗОС</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="footer__title">Контакты</div>
+        <a class="footer__phone" href="tel:+79000000000">+7 (900) 000-00-00</a>
+        <ul class="footer__list">
+          <li><a href="mailto:info@example.com">info@example.com</a></li>
+          <li><a href="https://t.me/example" rel="nofollow noopener" target="_blank">Telegram: @example</a></li>
+          <li>Пн–Пт 9:00–19:00 МСК, срочные задачи — без выходных</li>
+        </ul>
+        <ul class="footer__list" style="margin-top:1rem">
+          <li><a href="/o-kompanii/">О компании</a></li>
+          <li><a href="/kontakty/">Контакты</a></li>
+          <li><a href="/uslugi/">Все услуги</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer__bottom">
+      <span>© 2026 ООО «Бюро ПТО»</span>
+      <span>Сайт носит информационный характер и не является публичной офертой.</span>
+    </div>
+  </div>
+</footer>
+
+<div class="call-bar">
+  <a class="btn btn--primary" href="tel:+79000000000">Позвонить</a>
+  <a class="btn btn--ghost" href="#zayavka">Заявка</a>
+</div>
+
+<script src="/assets/config.js"></script>
+<script src="/assets/app.js" defer></script>
+</body>
+</html>
