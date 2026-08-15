@@ -25,6 +25,11 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 
+<!-- Шрифты грузятся заранее: так подмена системного на фирменный происходит
+     до первой отрисовки и текст не «прыгает». Файлы лежат на своём сервере. -->
+<link rel="preload" href="/assets/fonts/inter-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+
 <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/assets/img/favicon.svg">
 <link rel="stylesheet" href="/assets/style.css">
@@ -127,7 +132,8 @@
       <div class="section__head"><h2>Чем занимаемся</h2></div>
     <div class="group">
       <div class="group__head">
-        <span class="group__num">Группа 01</span>
+        <span class="group__index" aria-hidden="true">01</span>
+        <span class="group__num">Группа 01 / 04</span>
         <h3 class="group__title">Проектирование и легализация изменений</h3>
         <p class="group__subtitle">Проектная документация, White Label, узаконивание отступлений от проекта, госэкспертиза</p>
       </div>
@@ -152,7 +158,8 @@
     </div>
     <div class="group">
       <div class="group__head">
-        <span class="group__num">Группа 02</span>
+        <span class="group__index" aria-hidden="true">02</span>
+        <span class="group__num">Группа 02 / 04</span>
         <h3 class="group__title">Исполнительная документация</h3>
         <p class="group__subtitle">Комплекты по Минстрою и ГОСТ, регламенты крупных заказчиков, ИСУП, сметы, ППР</p>
       </div>
@@ -181,7 +188,8 @@
     </div>
     <div class="group">
       <div class="group__head">
-        <span class="group__num">Группа 03</span>
+        <span class="group__index" aria-hidden="true">03</span>
+        <span class="group__num">Группа 03 / 04</span>
         <h3 class="group__title">Инжиниринг и полевой контроль</h3>
         <p class="group__subtitle">Геодезия, фактические обмеры, расчёт и защита выполненных объёмов</p>
       </div>
@@ -198,7 +206,8 @@
     </div>
     <div class="group">
       <div class="group__head">
-        <span class="group__num">Группа 04</span>
+        <span class="group__index" aria-hidden="true">04</span>
+        <span class="group__num">Группа 04 / 04</span>
         <h3 class="group__title">Сдача объекта и ввод в эксплуатацию</h3>
         <p class="group__subtitle">Ростехнадзор, подключение сетей, Заключение о соответствии</p>
       </div>

@@ -19,6 +19,51 @@
    14. Утилиты и адаптив
    ========================================================================= */
 
+/* ---------- 0. Шрифты ----------------------------------------------------
+   Inter — основной текст, JetBrains Mono — технические подписи и номера.
+   Лежат в assets/fonts/, к сторонним серверам сайт не обращается вообще.
+
+   Это «переменные» шрифты: один файл содержит все насыщенности от 100 до 900,
+   поэтому вместо шести файлов грузятся два. Кириллица и латиница разделены —
+   браузер скачивает только то, что реально встретилось на странице.
+   Моноширинный урезан до нужных символов: с 52 КБ до 23 КБ.
+
+   font-display: swap — текст виден сразу системным шрифтом и подменяется,
+   когда файл дойдёт. Пустых мест на экране не бывает никогда.            */
+
+@font-face {
+  font-family: "InterVar";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("fonts/inter-cyrillic.woff2") format("woff2");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: "InterVar";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("fonts/inter-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+2013-2014, U+2018-201D, U+2026, U+2212;
+}
+@font-face {
+  font-family: "MonoVar";
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url("fonts/mono-cyrillic.woff2") format("woff2");
+  unicode-range: U+0400-045F, U+0490-0491;
+}
+@font-face {
+  font-family: "MonoVar";
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url("fonts/mono-latin.woff2") format("woff2");
+  unicode-range: U+0020-007E, U+00A0, U+2013-2014, U+2018-201D, U+2026;
+}
+
 /* ---------- 1. Токены ---------------------------------------------------- */
 :root {
   /* Цвет. Три цвета плюс нейтральные — больше не добавлять. */
@@ -47,10 +92,10 @@
 
   /* Типографика: технический гротеск из системных шрифтов —
      ноль запросов к сторонним серверам, мгновенная отрисовка. */
-  --font: "Inter", "SF Pro Text", -apple-system, BlinkMacSystemFont,
+  --font: "InterVar", "Inter", -apple-system, BlinkMacSystemFont,
           "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono",
-               "Consolas", monospace;
+  --font-mono: "MonoVar", ui-monospace, "SF Mono", "Cascadia Mono",
+               "Roboto Mono", "Consolas", monospace;
 
   --fs-base: 1.0625rem;   /* 17px — основной текст, не мельче 16px */
   --lh-base: 1.65;
@@ -373,10 +418,11 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   display: inline-flex;
   align-items: center;
   min-height: var(--tap);
-  padding: 0 var(--s-4);
+  padding: 0 var(--s-3);
   color: var(--navy);
   text-decoration: none;
   font-weight: 550;
+  white-space: nowrap;   /* пункты меню никогда не ломаются на две строки */
   border-radius: var(--radius);
   transition: color var(--t-fast), background-color var(--t-fast);
 }
@@ -384,7 +430,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 .nav__link::after {
   content: "";
   position: absolute;
-  left: var(--s-4); right: var(--s-4);
+  left: var(--s-3); right: var(--s-3);
   bottom: 12px;
   height: 2px;
   background: var(--accent);
@@ -538,8 +584,53 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 .hero__geo a { color: #fff; text-decoration: none; font-weight: 600; }
 .hero__geo a:hover { color: var(--accent-300); }
 
+/* Спецификационная полоса под первым экраном: ключевые цифры так,
+   как их подают в технической документации — значение и подпись капсом. */
+.hero__spec {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s-5);
+  margin-top: var(--s-7);
+  padding-top: var(--s-5);
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  max-width: 46rem;
+}
+.hero__spec-item { position: relative; padding-left: var(--s-4); }
+.hero__spec-item::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0.15em;
+  width: 2px; height: 1.1em;
+  background: var(--accent);
+}
+.hero__spec-value {
+  font-size: clamp(1.5rem, 1.15rem + 1.2vw, 2.1rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+.hero__spec-unit {
+  font-size: 0.4em;
+  font-weight: 600;
+  color: var(--accent-300);
+  margin-left: 0.3em;
+  letter-spacing: 0;
+}
+.hero__spec-label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #8fa3bd;
+  margin-top: var(--s-3);
+  line-height: 1.5;
+}
+
 /* На мобильных видео не проигрываем — только статичный кадр */
-@media (max-width: 900px) {
+@media (max-width: 980px) {
   .hero__video { display: none; }
   .hero { min-height: 0; }
 }
@@ -640,10 +731,28 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 .group { padding-top: var(--s-6); margin-bottom: var(--s-8); }
 .group:last-child { margin-bottom: 0; }
 .group__head {
+  position: relative;
   margin-bottom: var(--s-5);
   padding-top: var(--s-4);
+  padding-right: 4.5rem;
   border-top: 1px solid var(--line);
 }
+/* Крупный «водяной» номер группы справа — как нумерация раздела в альбоме чертежей */
+.group__index {
+  position: absolute;
+  right: 0;
+  top: var(--s-3);
+  font-family: var(--font-mono);
+  font-size: clamp(2.5rem, 5vw, 3.75rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  color: var(--navy);
+  opacity: 0.07;
+  pointer-events: none;
+  user-select: none;
+}
+.section--dark .group__index { color: #fff; opacity: 0.09; }
 .section--dark .group__head { border-top-color: rgba(255, 255, 255, 0.14); }
 .group__num {
   font-family: var(--font-mono);
@@ -769,6 +878,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 .sticky-box { position: sticky; top: calc(var(--header-h) + var(--s-5)); }
 
 .panel {
+  position: relative;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
@@ -776,6 +886,49 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   box-shadow: var(--shadow-sm);
 }
 .panel--accent { border-top: 3px solid var(--accent); }
+/* Угловые засечки, как отметки обреза на чертеже */
+.panel--accent::before,
+.panel--accent::after {
+  content: "";
+  position: absolute;
+  bottom: 10px;
+  width: 12px; height: 12px;
+  border: 2px solid var(--accent);
+  opacity: 0.5;
+}
+.panel--accent::before { left: 10px; border-top: 0; border-right: 0; }
+.panel--accent::after  { right: 10px; border-top: 0; border-left: 0; }
+
+/* Строки характеристик: подпись — точки — значение. Как в спецификации. */
+.spec {
+  display: grid;
+  gap: var(--s-3);
+  margin-top: var(--s-5);
+  padding-top: var(--s-5);
+  border-top: 1px dashed var(--line-strong);
+}
+.spec__row { display: flex; align-items: baseline; gap: var(--s-2); }
+.spec__key {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.spec__dots {
+  flex: 1 1 auto;
+  min-width: var(--s-4);
+  align-self: center;
+  border-bottom: 1px dotted var(--line-strong);
+}
+.spec__val {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--navy);
+  text-align: right;
+}
 
 /* ---------- 9. Этапы ----------------------------------------------------- */
 .steps { counter-reset: step; display: grid; gap: var(--s-6); }
@@ -1060,6 +1213,11 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 .mt-6 { margin-top: var(--s-7); }
 .mb-0 { margin-bottom: 0; }
 
+@media (max-width: 1120px) {
+  /* Шапка тесная: телефон уступает место меню и кнопке */
+  .header__phone { display: none; }
+}
+
 @media (max-width: 1020px) {
   .split { grid-template-columns: minmax(0, 1fr); gap: var(--s-6); }
   .sticky-box { position: static; }
@@ -1068,7 +1226,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   .footer__top { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-6); }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 980px) {
   .nav { display: none; }
   .nav.is-open {
     display: block;

@@ -25,6 +25,11 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 
+<!-- Шрифты грузятся заранее: так подмена системного на фирменный происходит
+     до первой отрисовки и текст не «прыгает». Файлы лежат на своём сервере. -->
+<link rel="preload" href="/assets/fonts/inter-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+
 <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/assets/img/favicon.svg">
 <link rel="stylesheet" href="/assets/style.css">
@@ -82,31 +87,30 @@
           <a class="btn btn--primary" href="#zayavka">Оставить заявку</a>
           <a class="btn btn--on-dark" href="/uslugi/">Все услуги</a>
         </div>
-        <p class="hero__geo">Работаем удалённо по всей России · <a href="tel:+79000000000" style="color:#fff">+7 (900) 000-00-00</a></p>
+        <div class="hero__spec">
+          <div class="hero__spec-item">
+            <div class="hero__spec-value">13</div>
+            <div class="hero__spec-label">направлений документации: от стадии «П» до ЗОС</div>
+          </div>
+          <div class="hero__spec-item">
+            <div class="hero__spec-value">85<span class="hero__spec-unit">РФ</span></div>
+            <div class="hero__spec-label">субъектов РФ — география не ограничена</div>
+          </div>
+          <div class="hero__spec-item">
+            <div class="hero__spec-value">1<span class="hero__spec-unit">день</span></div>
+            <div class="hero__spec-label">на оценку объёма работ и стоимости</div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
   <section class="section section--surface">
     <div class="container">
-      <div class="section__head">
+      <div class="section__head" style="margin-bottom:0">
         <span class="eyebrow">Коротко</span>
         <h2>Что мы делаем</h2>
-        <p>Мы — производственно-технический отдел на аутсорсе. Строительная компания строит, мы закрываем всё, что связано с бумагами: от проектной документации и смет до актов, объёмов и Заключения о соответствии. Формат работы — удалённый, на объект выезжаем под геодезию и обмеры.</p>
-      </div>
-      <div class="grid grid--3">
-        <div class="stat">
-          <div class="stat__value">13</div>
-          <div class="stat__label">направлений документации: от стадии «П» до ЗОС</div>
-        </div>
-        <div class="stat">
-          <div class="stat__value">85<span class="stat__unit">РФ</span></div>
-          <div class="stat__label">субъектов РФ — география не ограничена</div>
-        </div>
-        <div class="stat">
-          <div class="stat__value">1<span class="stat__unit">день</span></div>
-          <div class="stat__label">на оценку объёма работ и стоимости</div>
-        </div>
+        <p class="lead">Мы — производственно-технический отдел на аутсорсе. Строительная компания строит, мы закрываем всё, что связано с бумагами: от проектной документации и смет до актов, объёмов и Заключения о соответствии. Формат работы — удалённый, на объект выезжаем под геодезию и обмеры.</p>
       </div>
     </div>
   </section>
@@ -119,7 +123,8 @@
       </div>
     <div class="group">
       <div class="group__head">
-        <span class="group__num">Группа 01</span>
+        <span class="group__index" aria-hidden="true">01</span>
+        <span class="group__num">Группа 01 / 04</span>
         <h3 class="group__title">Проектирование и легализация изменений</h3>
         <p class="group__subtitle">Проектная документация, White Label, узаконивание отступлений от проекта, госэкспертиза</p>
       </div>
@@ -144,7 +149,8 @@
     </div>
     <div class="group">
       <div class="group__head">
-        <span class="group__num">Группа 02</span>
+        <span class="group__index" aria-hidden="true">02</span>
+        <span class="group__num">Группа 02 / 04</span>
         <h3 class="group__title">Исполнительная документация</h3>
         <p class="group__subtitle">Комплекты по Минстрою и ГОСТ, регламенты крупных заказчиков, ИСУП, сметы, ППР</p>
       </div>
@@ -173,7 +179,8 @@
     </div>
     <div class="group">
       <div class="group__head">
-        <span class="group__num">Группа 03</span>
+        <span class="group__index" aria-hidden="true">03</span>
+        <span class="group__num">Группа 03 / 04</span>
         <h3 class="group__title">Инжиниринг и полевой контроль</h3>
         <p class="group__subtitle">Геодезия, фактические обмеры, расчёт и защита выполненных объёмов</p>
       </div>
@@ -190,7 +197,8 @@
     </div>
     <div class="group">
       <div class="group__head">
-        <span class="group__num">Группа 04</span>
+        <span class="group__index" aria-hidden="true">04</span>
+        <span class="group__num">Группа 04 / 04</span>
         <h3 class="group__title">Сдача объекта и ввод в эксплуатацию</h3>
         <p class="group__subtitle">Ростехнадзор, подключение сетей, Заключение о соответствии</p>
       </div>

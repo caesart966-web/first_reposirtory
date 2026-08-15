@@ -115,9 +115,11 @@ def block_services_by_group(site: Site) -> str:
           <span class="service-item__text">{esc(s["short"])}</span>
         </a>'''
             )
+        total = len(site.groups)
         parts.append(f'''    <div class="group">
       <div class="group__head">
-        <span class="group__num">Группа {n:02d}</span>
+        <span class="group__index" aria-hidden="true">{n:02d}</span>
+        <span class="group__num">Группа {n:02d} / {total:02d}</span>
         <h3 class="group__title">{esc(group["title"])}</h3>
         <p class="group__subtitle">{esc(group["subtitle"])}</p>
       </div>
@@ -441,13 +443,15 @@ def page_home(r: Renderer) -> None:
 
     points = "\n".join(f"          <li>{esc(p)}</li>" for p in h["points"])
 
-    stats = []
+    # Ключевые цифры вынесены в первый экран — сразу под текстом,
+    # как строка характеристик в паспорте изделия.
+    spec = []
     for st in offer["stats"]:
-        unit = f'<span class="stat__unit">{esc(st["unit"])}</span>' if st.get("unit") else ""
-        stats.append(f'''        <div class="stat">
-          <div class="stat__value">{esc(st["value"])}{unit}</div>
-          <div class="stat__label">{esc(st["label"])}</div>
-        </div>''')
+        unit = f'<span class="hero__spec-unit">{esc(st["unit"])}</span>' if st.get("unit") else ""
+        spec.append(f'''          <div class="hero__spec-item">
+            <div class="hero__spec-value">{esc(st["value"])}{unit}</div>
+            <div class="hero__spec-label">{esc(st["label"])}</div>
+          </div>''')
 
     why_cards = "\n".join(f'''        <div class="card">
           <h3>{esc(w["title"])}</h3>
@@ -483,7 +487,9 @@ def page_home(r: Renderer) -> None:
           <a class="btn btn--primary" href="#zayavka">{esc(h["cta_primary"])}</a>
           <a class="btn btn--on-dark" href="{site.url('/uslugi/')}">{esc(h["cta_secondary"])}</a>
         </div>
-        <p class="hero__geo">{esc(site.contacts["geo"])} · <a href="tel:{esc(site.contacts["phone_href"])}" style="color:#fff">{esc(site.contacts["phone_display"])}</a></p>
+        <div class="hero__spec">
+{chr(10).join(spec)}
+        </div>
       </div>
     </div>
   </section>'''
@@ -492,13 +498,10 @@ def page_home(r: Renderer) -> None:
 
   <section class="section section--surface">
     <div class="container">
-      <div class="section__head">
+      <div class="section__head" style="margin-bottom:0">
         <span class="eyebrow">Коротко</span>
         <h2>{esc(offer["title"])}</h2>
-        <p>{esc(offer["text"])}</p>
-      </div>
-      <div class="grid grid--3">
-{chr(10).join(stats)}
+        <p class="lead">{esc(offer["text"])}</p>
       </div>
     </div>
   </section>
@@ -657,7 +660,13 @@ def page_service(r: Renderer, service: dict, city: dict = None) -> None:
               <a class="btn btn--primary btn--block" href="#zayavka">Оставить заявку</a>
               <a class="btn btn--ghost btn--block" href="tel:{esc(site.contacts["phone_href"])}">{esc(site.contacts["phone_display"])}</a>
             </div>
-            <p style="margin-top:1.25rem;font-size:0.9375rem;color:var(--ink-muted)">{esc(site.contacts["geo"])}</p>
+            <div class="spec">
+{chr(10).join(f"""              <div class="spec__row">
+                <span class="spec__key">{esc(s["key"])}</span>
+                <span class="spec__dots"></span>
+                <span class="spec__val">{esc(s["value"])}</span>
+              </div>""" for s in site.raw.get("service_spec", []))}
+            </div>
           </div>
         </div>
       </aside>
