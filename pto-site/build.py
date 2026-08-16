@@ -116,6 +116,14 @@ def resolve_media(configured: str, fallbacks: list) -> str:
     return configured or fallbacks[-1]
 
 
+def paragraphs(text, css="") -> str:
+    """Текст в абзацы. В данных можно писать как одной строкой, так и списком
+    строк — тогда каждая строка станет отдельным абзацем."""
+    items = text if isinstance(text, list) else [text]
+    cls = f' class="{css}"' if css else ""
+    return "\n".join(f"<p{cls}>{esc(t)}</p>" for t in items if str(t).strip())
+
+
 def li_list(items, css="ticks") -> str:
     body = "\n".join(f"      <li>{esc(i)}</li>" for i in items)
     return f'<ul class="{css}">\n{body}\n    </ul>'
@@ -524,7 +532,7 @@ def page_home(r: Renderer) -> None:
       <div class="section__head" style="margin-bottom:0">
         <span class="eyebrow">Коротко</span>
         <h2>{esc(offer["title"])}</h2>
-        <p class="lead">{esc(offer["text"])}</p>
+        {paragraphs(offer["text"], "lead")}
       </div>
     </div>
   </section>
