@@ -629,9 +629,9 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   line-height: 1.5;
 }
 
-/* На мобильных видео не проигрываем — только статичный кадр */
+/* Видео играет и на телефонах — решение заказчика. Файл лёгкий (~1,3 МБ),
+   а при включённой экономии трафика и отключённых анимациях остаётся кадр. */
 @media (max-width: 980px) {
-  .hero__video { display: none; }
   .hero { min-height: 0; }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -48,18 +48,16 @@
   }
 
   /* ---------- 2. Фоновое видео ------------------------------------------
-     Видео подключается ТОЛЬКО на широких экранах и только если пользователь
-     не отключил анимации. На телефоне остаётся постер (картинка):
-     не тратим трафик и батарею, не зависим от автозапуска в iOS.
-     Источники подставляются скриптом, поэтому браузер не начинает качать
-     видео до того, как мы разрешим.                                        */
+     Видео играет на всех экранах, включая телефоны, — решение заказчика.
+     Кадр вместо видео остаётся в двух случаях: включена экономия трафика
+     или в системе отключены анимации. Источники подставляются скриптом
+     после полной загрузки страницы, чтобы первый экран ничего не ждал.  */
   var video = document.querySelector('.hero__video');
   if (video) {
-    var wide = window.matchMedia('(min-width: 981px)').matches;
     var calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var saveData = navigator.connection && navigator.connection.saveData;
 
-    if (wide && !calm && !saveData) {
+    if (!calm && !saveData) {
       var start = function () {
         var sources = (video.getAttribute('data-src') || '').split('|');
         sources.forEach(function (src) {
