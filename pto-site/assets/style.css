@@ -67,8 +67,14 @@
 /* ---------- 1. Токены ---------------------------------------------------- */
 :root {
   /* Цвет. Три цвета плюс нейтральные — больше не добавлять. */
-  --navy:        #0d1c30;   /* основной, графитово-синий */
+  --navy:        #0d1c30;   /* тёмно-синий как ЦВЕТ ТЕКСТА: заголовки, подписи */
   --navy-900:    #091524;
+
+  /* Тёмные плашки (первый экран, блоки на тёмном, подвал) — отдельная роль.
+     Разделены с --navy потому, что в тёмной теме текст становится светлым,
+     а плашка обязана остаться тёмной. */
+  --panel:       #0d1c30;
+  --panel-900:   #091524;
   --navy-800:    #142c48;
   --navy-600:    #22415f;
   --accent:      #1f6feb;   /* акцент: кнопки, активные состояния, ссылки */
@@ -129,6 +135,10 @@
   --ease: cubic-bezier(0.2, 0.6, 0.2, 1);
   --t-fast: 130ms var(--ease);
   --t-mid:  200ms var(--ease);
+
+  /* Поддерживаем обе темы. Без этой строки Chrome на Android
+     перекрашивает светлый сайт сам, и выглядит это грубо. */
+  color-scheme: light dark;
 
   /* Тонкая техническая сетка для тёмных блоков */
   --grid-size: 56px;
@@ -233,7 +243,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
    Она даёт «инженерность» без единой картинки. */
 .section--dark {
   position: relative;
-  background: var(--navy);
+  background: var(--panel);
   color: var(--ink-inverse);
   overflow: hidden;
 }
@@ -480,7 +490,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   width: 18px;
   height: 2px;
   margin: 4px auto;
-  background: var(--navy);
+  background: var(--panel);
   border-radius: 2px;
   transition: transform var(--t-mid), opacity var(--t-fast);
 }
@@ -493,7 +503,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 .hero {
   position: relative;
   isolation: isolate;
-  background: var(--navy);
+  background: var(--panel);
   color: #fff;
   overflow: hidden;
   min-height: min(88vh, 760px);
@@ -504,7 +514,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   position: absolute;
   inset: 0;
   z-index: -3;
-  background-color: var(--navy);
+  background-color: var(--panel);
   background-image: linear-gradient(115deg, #091524 0%, #12263f 45%, #1b3a5e 100%);
   background-size: cover;
   background-position: center;
@@ -672,6 +682,17 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 .card--compact h3 { font-size: 1.0625rem; line-height: 1.35; }
 .card--compact p { font-size: 0.9375rem; }
 
+/* Блок «Что мы делаем»: текст плюс карточка условий, чтобы страница
+   не превращалась в сплошную простыню текста */
+.offer-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: var(--s-8);
+  align-items: start;
+}
+.offer-card h3 { margin-bottom: var(--s-2); }
+.offer-card .spec { margin-top: var(--s-4); }
+
 /* Крупные цифры */
 .stat {
   border-top: 2px solid var(--navy);
@@ -832,7 +853,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 /* Шапка внутренней страницы */
 .page-head {
   position: relative;
-  background: var(--navy);
+  background: var(--panel);
   color: #fff;
   padding: var(--s-7) 0 var(--s-8);
   overflow: hidden;
@@ -1017,7 +1038,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 }
 
 /* ---------- 11. Форма ---------------------------------------------------- */
-.form-block { position: relative; background: var(--navy); color: #fff; overflow: hidden; }
+.form-block { position: relative; background: var(--panel); color: #fff; overflow: hidden; }
 .form-block::before {
   content: "";
   position: absolute;
@@ -1122,7 +1143,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 
 /* ---------- 12. Подвал --------------------------------------------------- */
 .footer {
-  background: var(--navy-900);
+  background: var(--panel-900);
   color: var(--ink-inverse-muted);
   padding: var(--s-8) 0 var(--s-5);
   font-size: 0.9375rem;
@@ -1219,6 +1240,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 }
 
 @media (max-width: 1020px) {
+  .offer-grid { grid-template-columns: minmax(0, 1fr); gap: var(--s-6); }
   .split { grid-template-columns: minmax(0, 1fr); gap: var(--s-6); }
   .sticky-box { position: static; }
   .form-grid { grid-template-columns: minmax(0, 1fr); gap: var(--s-6); }
@@ -1281,4 +1303,89 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   .header, .footer, .call-bar, .form-block { display: none; }
   body { background: #fff; }
   .reveal { opacity: 1 !important; transform: none !important; }
+}
+
+/* ---------- 15. Тёмная тема ---------------------------------------------
+   Включается сама, если в системе телефона или компьютера выбрана тёмная
+   тема. Переопределяются ТОЛЬКО цвета — вся вёрстка общая, поэтому правки
+   макета автоматически работают в обеих темах.
+
+   ВАЖНО: блок должен идти ПОСЛЕДНИМ в файле. Приоритет у правил одинаковый,
+   и выигрывает то, что ниже: если поднять этот блок выше, переопределения
+   перестанут применяться.
+
+   Зачем это вообще: без своей тёмной темы Chrome на Android перекрашивает
+   светлый сайт собственным алгоритмом. Получается грязно и тускло. Теперь
+   браузер видит, что тема у нас есть, и не вмешивается.                  */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Фирменный тёмный становится цветом ТЕКСТА — почти белым */
+    --navy:        #f1f6fc;
+    --navy-900:    #ffffff;
+    --navy-800:    #24415f;
+    --navy-600:    #3a5878;
+
+    /* Плашки остаются тёмными, но чуть светлее фона страницы —
+       так они читаются как приподнятые, а не сливаются */
+    --panel:       #101f33;
+    --panel-900:   #0a1526;
+
+    /* Акцент на тёмном фоне: кнопка сохраняет насыщенность (на ней белый
+       текст), а ссылки берут светлый оттенок, иначе их не видно */
+    --accent:      #1f6feb;
+    --accent-700:  #82b3ff;
+    --accent-300:  #9cc4ff;
+    --accent-050:  #16283f;
+
+    --bg:          #0a1420;
+    --surface:     #111e2e;
+    --surface-alt: #0e1a29;
+    --line:        #1f3145;
+    --line-strong: #2e4460;
+
+    --ink:         #e9eff7;
+    --ink-muted:   #a2b4c9;
+    --ink-soft:    #8296ae;
+
+    --ok:          #6fd39d;
+
+    /* На тёмном фоне мягкие тени не видны — делаем их глубже */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.45), 0 16px 48px rgba(0, 0, 0, 0.55);
+  }
+
+  /* При наведении ссылка должна становиться светлее, а не темнее */
+  a:hover { color: var(--accent-300); }
+
+  /* Полупрозрачные подложки были рассчитаны на белый фон */
+  .header { background: rgba(10, 20, 32, 0.86); }
+  .header.is-scrolled { background: rgba(10, 20, 32, 0.94); }
+  @supports not (backdrop-filter: blur(1px)) {
+    .header { background: var(--surface); }
+  }
+  .call-bar {
+    background: rgba(10, 20, 32, 0.95);
+    box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.5);
+  }
+  .faq__item:hover { background: rgba(255, 255, 255, 0.028); }
+
+  /* Подчёркивание ссылок: на тёмном нужен более светлый оттенок */
+  a { text-decoration-color: rgba(130, 179, 255, 0.4); }
+
+  /* Сообщения формы */
+  .form__status--ok  { background: rgba(31, 122, 77, 0.18);  color: #7fdcab; border-color: rgba(111, 211, 157, 0.35); }
+  .form__status--err { background: rgba(192, 57, 43, 0.18); color: #ff9c90; border-color: rgba(255, 156, 144, 0.35); }
+  .field--error input, .field--error textarea { border-color: #e2685a; }
+  .field__error { color: #ff9c90; }
+
+  /* Стрелка выпадающего списка была нарисована тёмной */
+  .field select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%23a2b4c9' stroke-width='1.6' d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
+  }
+
+  /* Логотип нарисован для светлого фона: белый лист и тёмная обводка.
+     На тёмном добавляем еле заметную подложку, чтобы не «висел в воздухе» */
+  .logo img { border-radius: 5px; }
 }
