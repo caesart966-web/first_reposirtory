@@ -12,7 +12,11 @@
 <meta name="description" content="Разрабатываем проектную документацию под вашим брендом и в ваших штампах. Разгружаем проектный отдел на 100%, сдаём во всех нужных форматах и в срок.">
 <link rel="canonical" href="https://example.com/uslugi/proektirovanie-white-label/">
 <meta name="robots" content="index, follow">
-<meta name="theme-color" content="#0e1e33">
+<!-- Сайт умеет и светлую, и тёмную тему. Без этого Chrome на Android
+     перекрашивает страницу сам, и выглядит это грубо. -->
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a1420" media="(prefers-color-scheme: dark)">
 
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="X-PTO">

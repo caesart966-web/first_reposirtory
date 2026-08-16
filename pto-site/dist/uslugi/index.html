@@ -12,7 +12,11 @@
 <meta name="description" content="Полный список услуг: проектирование и стадия «П», исполнительная документация, сметы, ППР, геодезия, защита объёмов КС-2 и КС-3, Ростехнадзор, ЗОС. Работаем по всей России.">
 <link rel="canonical" href="https://example.com/uslugi/">
 <meta name="robots" content="index, follow">
-<meta name="theme-color" content="#0e1e33">
+<!-- Сайт умеет и светлую, и тёмную тему. Без этого Chrome на Android
+     перекрашивает страницу сам, и выглядит это грубо. -->
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a1420" media="(prefers-color-scheme: dark)">
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="X-PTO">

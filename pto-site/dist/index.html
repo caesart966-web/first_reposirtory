@@ -12,7 +12,11 @@
 <meta name="description" content="Проектирование, исполнительная документация, сметы, ППР, геодезия, защита объёмов КС-2 и КС-3, Ростехнадзор и ЗОС. Работаем удалённо по всей России, сдаём без возвратов.">
 <link rel="canonical" href="https://example.com/">
 <meta name="robots" content="index, follow">
-<meta name="theme-color" content="#0e1e33">
+<!-- Сайт умеет и светлую, и тёмную тему. Без этого Chrome на Android
+     перекрашивает страницу сам, и выглядит это грубо. -->
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a1420" media="(prefers-color-scheme: dark)">
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="X-PTO">
@@ -108,11 +112,41 @@
 
   <section class="section section--surface">
     <div class="container">
-      <div class="section__head" style="margin-bottom:0">
-        <span class="eyebrow">Коротко</span>
-        <h2>Что мы делаем</h2>
-        <p class="lead">Мы — производственно-технический отдел на аутсорсе. Строительная компания строит, мы закрываем всё, что связано с бумагами: от проектной документации и смет до актов, объёмов и Заключения о соответствии. Формат работы — удалённый, свой главный офис позволяет эффективнее сдавать документацию, чем просиживать ваше и наше время в строительных бытовках!</p>
+      <div class="offer-grid">
+        <div class="section__head" style="margin-bottom:0">
+          <span class="eyebrow">Коротко</span>
+          <h2>Что мы делаем</h2>
+          <p class="lead">Мы — производственно-технический отдел на аутсорсе. Строительная компания строит, мы закрываем всё, что связано с бумагами: от проектной документации и смет до актов, объёмов и Заключения о соответствии. Формат работы — удалённый, свой главный офис позволяет эффективнее сдавать документацию, чем просиживать ваше и наше время в строительных бытовках!</p>
 <p class="lead">Но на объект выделяем особенное внимание и время — это полное согласование работ, обмеры, геодезия. Уточняем оформление непосредственно за вас, делаем комплексный аудит и доводим до подписания самостоятельно. Передаём документацию лично из рук в руки заказчикам.</p>
+        </div>
+        <aside class="panel panel--accent offer-card">
+          <h3>Условия работы</h3>
+          <div class="spec">
+            <div class="spec__row">
+              <span class="spec__key">География</span>
+              <span class="spec__dots"></span>
+              <span class="spec__val">Вся Россия</span>
+            </div>
+            <div class="spec__row">
+              <span class="spec__key">Ответ</span>
+              <span class="spec__dots"></span>
+              <span class="spec__val">В течение рабочего дня</span>
+            </div>
+            <div class="spec__row">
+              <span class="spec__key">Форматы</span>
+              <span class="spec__dots"></span>
+              <span class="spec__val">Бумага, PDF с ЭЦП, ИСУП</span>
+            </div>
+            <div class="spec__row">
+              <span class="spec__key">Договор</span>
+              <span class="spec__dots"></span>
+              <span class="spec__val">С фиксированной ценой</span>
+            </div>
+          </div>
+          <div class="btn-row" style="margin-top:1.5rem">
+            <a class="btn btn--primary btn--block" href="#zayavka">Оценить объём и сроки</a>
+          </div>
+        </aside>
       </div>
     </div>
   </section>

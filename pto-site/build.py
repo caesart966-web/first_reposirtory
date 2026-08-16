@@ -529,10 +529,25 @@ def page_home(r: Renderer) -> None:
 
   <section class="section section--surface">
     <div class="container">
-      <div class="section__head" style="margin-bottom:0">
-        <span class="eyebrow">Коротко</span>
-        <h2>{esc(offer["title"])}</h2>
-        {paragraphs(offer["text"], "lead")}
+      <div class="offer-grid">
+        <div class="section__head" style="margin-bottom:0">
+          <span class="eyebrow">Коротко</span>
+          <h2>{esc(offer["title"])}</h2>
+          {paragraphs(offer["text"], "lead")}
+        </div>
+        <aside class="panel panel--accent offer-card">
+          <h3>Условия работы</h3>
+          <div class="spec">
+{chr(10).join(f"""            <div class="spec__row">
+              <span class="spec__key">{esc(s["key"])}</span>
+              <span class="spec__dots"></span>
+              <span class="spec__val">{esc(s["value"])}</span>
+            </div>""" for s in site.raw.get("service_spec", []))}
+          </div>
+          <div class="btn-row" style="margin-top:1.5rem">
+            <a class="btn btn--primary btn--block" href="#zayavka">Оценить объём и сроки</a>
+          </div>
+        </aside>
       </div>
     </div>
   </section>
