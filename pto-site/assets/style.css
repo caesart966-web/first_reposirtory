@@ -682,6 +682,41 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 .card--compact h3 { font-size: 1.0625rem; line-height: 1.35; }
 .card--compact p { font-size: 0.9375rem; }
 
+/* Широкая видео-полоса (страница «О компании»). Постер стоит фоном,
+   поэтому кадр виден мгновенно, ещё до загрузки самого видео. */
+.media-band {
+  position: relative;
+  margin: 0;
+  aspect-ratio: 21 / 9;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--panel) center / cover no-repeat;
+  box-shadow: var(--shadow-md);
+}
+.media-band__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.media-band__caption {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  padding: var(--s-7) var(--s-5) var(--s-4);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #e7eef6;
+  background: linear-gradient(180deg, rgba(7,17,30,0) 0%, rgba(7,17,30,0.75) 100%);
+}
+@media (max-width: 720px) {
+  .media-band { aspect-ratio: 4 / 3; }
+  .media-band__caption { font-size: 0.6875rem; padding: var(--s-6) var(--s-4) var(--s-3); }
+}
+
 /* Блок «Что мы делаем»: текст плюс карточка условий, чтобы страница
    не превращалась в сплошную простыню текста */
 .offer-grid {

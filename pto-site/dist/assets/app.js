@@ -52,15 +52,16 @@
      Кадр вместо видео остаётся в двух случаях: включена экономия трафика
      или в системе отключены анимации. Источники подставляются скриптом
      после полной загрузки страницы, чтобы первый экран ничего не ждал.  */
-  var video = document.querySelector('.hero__video');
-  if (video) {
-    var calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var videos = document.querySelectorAll('.js-video');
+  if (videos.length) {
+    var calm = calmMedia.matches;
     var saveData = navigator.connection && navigator.connection.saveData;
 
-    if (!calm && !saveData) {
+    Array.prototype.forEach.call(videos, function (video) {
+      if (calm || saveData) { video.remove(); return; }
+
       var start = function () {
-        var sources = (video.getAttribute('data-src') || '').split('|');
-        sources.forEach(function (src) {
+        (video.getAttribute('data-src') || '').split('|').forEach(function (src) {
           if (!src) return;
           var s = document.createElement('source');
           s.src = src;
@@ -72,12 +73,10 @@
         // Если автозапуск запрещён — просто остаётся постер, ошибку гасим.
         if (p && p.catch) p.catch(function () { video.remove(); });
       };
-      // Ждём полной загрузки страницы: видео не задерживает первый экран.
+      // Ждём полной загрузки страницы: видео не задерживает отрисовку.
       if (document.readyState === 'complete') start();
       else window.addEventListener('load', start);
-    } else {
-      video.remove();
-    }
+    });
   }
 
   /* ---------- 3. Форма заявки -------------------------------------------- */

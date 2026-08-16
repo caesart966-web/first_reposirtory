@@ -116,6 +116,29 @@ def resolve_media(configured: str, fallbacks: list) -> str:
     return configured or fallbacks[-1]
 
 
+def block_media(site: Site, cfg: dict) -> str:
+    """Широкая видео-полоса. Ведёт себя как первый экран: постер виден сразу,
+    видео подключается скриптом после загрузки страницы. Если файлов видео нет,
+    остаётся постер — блок не ломается."""
+    if not cfg:
+        return ""
+    poster = site.url(resolve_media(cfg.get("poster"), []))
+    sources = "|".join(site.url(cfg[k]) for k in ("webm", "mp4") if asset_exists(cfg.get(k)))
+    video = (f'''<video class="media-band__video js-video" autoplay muted loop playsinline
+             preload="none" poster="{poster}" data-src="{sources}"
+             aria-hidden="true" tabindex="-1"></video>''' if sources else "")
+    caption = (f'<figcaption class="media-band__caption">{esc(cfg["caption"])}</figcaption>'
+               if cfg.get("caption") else "")
+    return f'''  <section class="section section--tight">
+    <div class="container">
+      <figure class="media-band" style="background-image:url({poster})">
+        {video}
+        {caption}
+      </figure>
+    </div>
+  </section>'''
+
+
 def paragraphs(text, css="") -> str:
     """Текст в абзацы. В данных можно писать как одной строкой, так и списком
     строк — тогда каждая строка станет отдельным абзацем."""
@@ -499,7 +522,7 @@ def page_home(r: Renderer) -> None:
     # остаётся постер. Положите hero.mp4 в assets/media/, и видео появится само.
     sources = "|".join(site.url(h[k]) for k in ("video_webm", "video_mp4")
                        if asset_exists(h.get(k)))
-    video_tag = (f'''<video class="hero__video" autoplay muted loop playsinline preload="none"
+    video_tag = (f'''<video class="hero__video js-video" autoplay muted loop playsinline preload="none"
            poster="{poster}" data-src="{sources}" aria-hidden="true" tabindex="-1"></video>'''
                  if sources else "")
 
@@ -765,6 +788,8 @@ def page_about(r: Renderer) -> None:
       <p class="lead">{esc(cfg["lead"])}</p>
     </div>
   </section>
+
+{block_media(site, cfg.get("video"))}
 
   <section class="section">
     <div class="container">
