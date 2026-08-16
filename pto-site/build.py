@@ -308,6 +308,7 @@ def schema_organization(site: Site) -> dict:
         "image": site.abs_url("/assets/img/og-default.png"),
         "email": c["email"],
         "telephone": c["phone_href"],
+        "taxID": site.company.get("inn", ""),
         "areaServed": {"@type": "Country", "name": "Россия"},
         "contactPoint": [{
             "@type": "ContactPoint",
@@ -419,6 +420,7 @@ class Renderer:
             "footer_services_2": f2,
             "company_name": esc(site.company["name"]),
             "legal_name": esc(site.company.get("legal_name", site.company["name"])),
+            "requisites": esc(site.company.get("requisites", site.company.get("legal_name", ""))),
             "company_tagline": esc(site.company["tagline"]),
             "company_about_short": esc(site.company["about_short"]),
             "phone_display": esc(c["phone_display"]),
