@@ -23,7 +23,9 @@ CUT6 = TODAY - datetime.timedelta(days=183)
 rows, bad = parse('checko_raw.txt')
 assert not bad, bad
 recs = json.load(open('nostroy.json'))
-by = {r['inn']: r for r in recs}
+# Только действующие записи — исключённая строка затирала действующую.
+by = {r['inn']: r for r in recs if r['status'] == 'Является членом'}
+assert len(by) == 972, len(by)
 mine = json.load(open('nostroy_results.json'))
 joined = {k: datetime.date.fromisoformat(v[:10])
           for k, v in json.load(open('join_dates.json')).items()}

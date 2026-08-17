@@ -4,11 +4,15 @@ from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 import datetime
 recs = json.load(open('nostroy.json'))
 res  = json.load(open('nostroy_results.json'))
-by_inn = {r['inn']: r for r in recs}
+# Только действующие записи: у 5 компаний осталась ещё и старая строка
+# «Исключен», и она затирала действующую — рег.№ и статус вставали чужие.
+active_rows = [r for r in recs if r['status'] == 'Является членом']
+by_inn = {r['inn']: r for r in active_rows}
+assert len(by_inn) == 972, len(by_inn)
 
 joined = {k: datetime.date.fromisoformat(v[:10])
           for k, v in json.load(open('join_dates.json')).items()}
-TODAY = datetime.date(2026, 8, 13)
+TODAY = datetime.date(2026, 8, 17)
 CUT6 = TODAY - datetime.timedelta(days=183)
 
 wb = openpyxl.Workbook(); ws = wb.active; ws.title = 'Телефоны СРО-410'
