@@ -193,9 +193,17 @@ def block_objects(site: Site, items, limit: int = 0) -> str:
     shown = items[:limit] if limit else items
     cards = []
     for n, o in enumerate(shown, start=1):
-        has_photo = o.get("photo") and asset_exists(o["photo"])
-        media = (f'<div class="object__media" style="background-image:url({site.url(o["photo"])})"></div>'
-                 if has_photo else '<div class="object__media object__media--empty"></div>')
+        # Фото ищется по имени: assets/img/objects/<slug>.jpg и т.п.
+        # Достаточно положить файл с нужным именем — данные править не нужно.
+        photo = o.get("photo") or ""
+        if not asset_exists(photo) and o.get("slug"):
+            for ext in (".webp", ".jpg", ".jpeg", ".png"):
+                candidate = f'/assets/img/objects/{o["slug"]}{ext}'
+                if asset_exists(candidate):
+                    photo = candidate
+                    break
+        media = (f'<div class="object__media" style="background-image:url({site.url(photo)})"></div>'
+                 if asset_exists(photo) else '<div class="object__media object__media--empty"></div>')
         scope = f'<p class="object__scope">{esc(o["scope"])}</p>' if o.get("scope") else ""
         cards.append(f'''        <article class="object">
           {media}
