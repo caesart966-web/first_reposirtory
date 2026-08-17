@@ -313,6 +313,13 @@ def block_form(site: Site, preselect: str = "") -> str:
         sel = " selected" if s["nav_title"] == preselect else ""
         options.append(f'<option value="{esc(s["nav_title"])}"{sel}>{esc(s["nav_title"])}</option>')
 
+    max_line = ""
+    if c.get("max_url"):
+        max_line = (f'''<div class="contact-line">
+              <span class="contact-line__label">MAX</span>
+              <a class="contact-line__value" href="{esc(c["max_url"])}" rel="nofollow noopener" target="_blank">{esc(c.get("max_display", "Канал"))}</a>
+            </div>''')
+
     return f'''  <section class="section form-block" id="zayavka">
     <div class="container">
       <div class="form-grid">
@@ -332,6 +339,7 @@ def block_form(site: Site, preselect: str = "") -> str:
               <span class="contact-line__label">Telegram</span>
               <a class="contact-line__value" href="{esc(c["telegram_url"])}" rel="nofollow noopener" target="_blank">{esc(c["telegram_display"])}</a>
             </div>
+            {max_line}
             <div class="contact-line">
               <span class="contact-line__label">Режим работы</span>
               <span class="contact-line__value" style="font-size:1rem;font-weight:500">{esc(c["work_hours"])}</span>
@@ -543,6 +551,8 @@ class Renderer:
             "email": esc(c["email"]),
             "telegram_url": esc(c["telegram_url"]),
             "telegram_display": esc(c["telegram_display"]),
+            "max_url": esc(c.get("max_url", "")),
+            "max_display": esc(c.get("max_display", "")),
             "work_hours": esc(c["work_hours"]),
             "geo": esc(c["geo"]),
             "year": str(date.today().year),
@@ -1017,11 +1027,11 @@ def page_contacts(r: Renderer) -> None:
           <a class="contact-line__value" href="{esc(c["telegram_url"])}" rel="nofollow noopener" target="_blank" style="color:var(--navy);font-size:1.0625rem">{esc(c["telegram_display"])}</a>
         </div>
         <div class="stat">
-          <div class="contact-line__label">Режим работы</div>
-          <div style="font-size:1rem;color:var(--ink-muted);margin-top:.25rem">{esc(c["work_hours"])}</div>
+          <div class="contact-line__label">MAX</div>
+          <a class="contact-line__value" href="{esc(c["max_url"])}" rel="nofollow noopener" target="_blank" style="color:var(--navy);font-size:1.0625rem">{esc(c.get("max_display","Канал"))}</a>
         </div>
       </div>
-      <p class="lead lead--tight mt-6">{esc(c["geo"])}. Договор, счёт и закрывающие документы — в электронном виде, при необходимости отправляем оригиналы почтой.</p>
+      <p class="lead lead--tight mt-6">{esc(c["work_hours"])}. {esc(c["geo"])}. Договор, счёт и закрывающие документы — в электронном виде, при необходимости отправляем оригиналы почтой.</p>
     </div>
   </section>
 
