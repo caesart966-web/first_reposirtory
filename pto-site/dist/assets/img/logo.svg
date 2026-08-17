@@ -1,14 +1,26 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Логотип">
-  <!-- Стопка документов: нижние слои -->
-  <rect x="9" y="32" width="30" height="7" rx="2" fill="#24466e"/>
-  <rect x="7" y="25" width="34" height="8" rx="2" fill="#16304f"/>
-  <!-- Верхний лист -->
-  <rect x="5" y="7" width="34" height="21" rx="2.5" fill="#ffffff" stroke="#0e1e33" stroke-width="2"/>
-  <!-- Строки текста на листе -->
-  <rect x="10" y="12" width="19" height="2" rx="1" fill="#0e1e33"/>
-  <rect x="10" y="17" width="24" height="2" rx="1" fill="#c3cfdd"/>
-  <rect x="10" y="22" width="14" height="2" rx="1" fill="#c3cfdd"/>
-  <!-- Акцент: отметка проверки -->
-  <path d="M33.5 34.5l3 3 6-6.5" fill="none" stroke="#1f6feb" stroke-width="3.2"
-        stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="X-PTO">
+  <!--
+    Знак X-PTO: монограмма из двух контурных штрихов.
+    Нижний левый луч — акцентный синий, остальное — цвет текста.
+
+    Тёмные лучи закрашены currentColor: знак берёт цвет от родителя,
+    поэтому одинаково читается и на светлом фоне, и на тёмном (подвал,
+    тёмная тема). Файл вставляется в страницу целиком генератором,
+    иначе currentColor не работает.
+
+    Порядок фигур важен: луч «\» рисуется последним и проходит поверх
+    остальных — как в оригинальном знаке.
+  -->
+
+  <!-- Луч «/» : нижняя левая половина, акцентная -->
+  <path fill="#1f6feb" fill-rule="evenodd"
+        d="M27 32 H37 L16 56 H6 Z M30 32 H34 L17.375 51 H13.375 Z"/>
+
+  <!-- Луч «/» : верхняя правая половина -->
+  <path fill="currentColor" fill-rule="evenodd"
+        d="M48 8 H58 L37 32 H27 Z M46.625 13 H50.625 L34 32 H30 Z"/>
+
+  <!-- Луч «\» : цельный, поверх остальных -->
+  <path fill="currentColor" fill-rule="evenodd"
+        d="M6 8 H16 L58 56 H48 Z M13.375 13 H17.375 L50.625 51 H46.625 Z"/>
 </svg>

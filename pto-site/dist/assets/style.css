@@ -403,7 +403,9 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   width: 36px; height: 36px; flex: 0 0 auto;
   transition: transform var(--t-mid);
 }
-.logo:hover img { transform: translateY(-1px); }
+.logo:hover img, .logo:hover svg { transform: translateY(-1px); }
+/* В подвале фон всегда тёмный, поэтому знак там всегда светлый */
+.footer__logo { color: #fff; }
 .logo__text { display: flex; flex-direction: column; line-height: 1.15; }
 .logo__name { font-weight: 700; font-size: 1.0625rem; letter-spacing: -0.02em; }
 .logo__sub {

@@ -38,6 +38,12 @@ TPL_DIR = ROOT / "templates"
 ASSETS_DIR = ROOT / "assets"
 DIST_DIR = ROOT / "dist"
 
+# Знак вставляется в страницу целиком, а не картинкой: только так он может
+# наследовать цвет текста и оставаться читаемым на тёмном фоне.
+LOGO_SVG = re.sub(r"<!--.*?-->", "",
+                  (ASSETS_DIR / "img" / "logo.svg").read_text(encoding="utf-8"),
+                  flags=re.S).strip()
+
 
 # =========================================================================
 # 1. Загрузка данных и помощники
@@ -541,6 +547,7 @@ class Renderer:
             "nav_links": self.nav_links(path),
             "footer_services_1": f1,
             "footer_services_2": f2,
+            "logo_svg": LOGO_SVG,
             "company_name": esc(site.company["name"]),
             "legal_name": esc(site.company.get("legal_name", site.company["name"])),
             "requisites": esc(site.company.get("requisites", site.company.get("legal_name", ""))),
