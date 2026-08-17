@@ -87,6 +87,9 @@
      Картинка грузится только в момент открытия, страница от неё не тяжелеет. */
   var lightbox = null;
   var lastFocused = null;
+  var items = [];          // список картинок текущего просмотра
+  var current = 0;         // какая показана
+  var baseCaption = '';
 
   function buildLightbox() {
     var el = document.createElement('div');
@@ -95,6 +98,11 @@
     el.setAttribute('aria-modal', 'true');
     el.setAttribute('aria-label', 'Просмотр документа');
     el.hidden = true;
+    var arrow = function (dir) {
+      return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" ' +
+             'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+             (dir === 'prev' ? '<path d="M15 5 8 12l7 7"/>' : '<path d="M9 5l7 7-7 7"/>') + '</svg>';
+    };
     el.innerHTML =
       '<div class="lightbox__inner">' +
         '<div class="lightbox__bar">' +
@@ -104,34 +112,56 @@
             '<button class="lightbox__btn" type="button" data-close aria-label="Закрыть">Закрыть</button>' +
           '</span>' +
         '</div>' +
+        '<button class="lightbox__nav lightbox__nav--prev" type="button" data-prev aria-label="Предыдущее фото" hidden>' + arrow('prev') + '</button>' +
+        '<button class="lightbox__nav lightbox__nav--next" type="button" data-next aria-label="Следующее фото" hidden>' + arrow('next') + '</button>' +
         '<div class="lightbox__scroll"><img class="lightbox__img" alt=""></div>' +
       '</div>';
     document.body.appendChild(el);
 
     // Закрытие: крестик, клик по тёмному фону, Esc
     el.addEventListener('click', function (e) {
-      if (e.target === el || e.target.closest('[data-close]')) closeLightbox();
+      if (e.target === el || e.target.closest('[data-close]')) { closeLightbox(); return; }
+      if (e.target.closest('[data-prev]')) show(current - 1);
+      if (e.target.closest('[data-next]')) show(current + 1);
     });
     return el;
+  }
+
+  // Показывает кадр по номеру. Список из одной картинки — обычный просмотр,
+  // из нескольких — галерея со стрелками.
+  function show(index) {
+    if (!items.length) return;
+    current = (index + items.length) % items.length;   // по кругу
+    var img = lightbox.querySelector('.lightbox__img');
+    img.src = items[current];
+    img.alt = baseCaption || 'Изображение';
+    var many = items.length > 1;
+    lightbox.querySelector('[data-prev]').hidden = !many;
+    lightbox.querySelector('[data-next]').hidden = !many;
+    lightbox.querySelector('.lightbox__caption').textContent =
+      baseCaption + (many ? '  ·  ' + (current + 1) + ' / ' + items.length : '');
+    lightbox.querySelector('.lightbox__scroll').scrollTop = 0;
   }
 
   function openLightbox(trigger) {
     if (!lightbox) lightbox = buildLightbox();
     lastFocused = trigger;
+    baseCaption = trigger.getAttribute('data-caption') || '';
 
-    var img = lightbox.querySelector('.lightbox__img');
+    var gallery = trigger.getAttribute('data-gallery');
+    if (gallery) {
+      try { items = JSON.parse(gallery); }
+      catch (e) { items = []; }
+    } else {
+      items = [trigger.getAttribute('data-lightbox')];
+    }
+
     var pdf = lightbox.querySelector('[data-pdf-link]');
-    var caption = trigger.getAttribute('data-caption') || '';
-
-    img.src = trigger.getAttribute('data-lightbox');
-    img.alt = caption || 'Документ';
-    lightbox.querySelector('.lightbox__caption').textContent = caption;
-
     var pdfHref = trigger.getAttribute('data-pdf');
     if (pdfHref) { pdf.href = pdfHref; pdf.hidden = false; }
     else { pdf.removeAttribute('href'); pdf.hidden = true; }
 
-    lightbox.querySelector('.lightbox__scroll').scrollTop = 0;
+    show(0);
     lightbox.hidden = false;
     document.body.classList.add('is-locked');
     lightbox.querySelector('[data-close]').focus();
@@ -146,14 +176,17 @@
   }
 
   document.addEventListener('click', function (e) {
-    var trigger = e.target.closest('[data-lightbox]');
+    var trigger = e.target.closest('[data-lightbox], [data-gallery]');
     if (!trigger) return;
     e.preventDefault();
     openLightbox(trigger);
   });
 
   document.addEventListener('keydown', function (e) {
+    if (!lightbox || lightbox.hidden) return;
     if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowLeft') show(current - 1);
+    if (e.key === 'ArrowRight') show(current + 1);
   });
 
   /* ---------- 4. Форма заявки -------------------------------------------- */

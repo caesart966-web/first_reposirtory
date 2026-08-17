@@ -756,6 +756,34 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   background: var(--panel) center / cover no-repeat;
   border-bottom: 1px solid var(--line);
 }
+/* Несколько фотографий: плитка становится кнопкой, открывающей галерею */
+.object__media--more {
+  appearance: none;
+  position: relative;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  display: block;
+}
+.object__count {
+  position: absolute;
+  right: var(--s-3);
+  bottom: var(--s-3);
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(7, 17, 30, 0.72);
+  backdrop-filter: blur(4px);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #fff;
+  transition: background-color var(--t-fast);
+}
+.object__media--more:hover .object__count { background: var(--accent); }
+
 /* Заставка, пока нет фотографии объекта: та же чертёжная сетка,
    что и в тёмных блоках. Выглядит как задумано, а не как «дыра». */
 .object__media--empty {
@@ -936,6 +964,9 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   transition: background-color var(--t-fast), border-color var(--t-fast);
 }
 .lightbox__btn:hover { background: rgba(255, 255, 255, 0.2); border-color: #fff; color: #fff; }
+/* Без этой строки атрибут hidden не сработает: display из правила выше
+   сильнее браузерного [hidden] { display: none } */
+.lightbox__btn[hidden] { display: none; }
 
 /* Прокручиваемая область: документ высокий, в экран целиком не влезает */
 .lightbox__scroll {
@@ -952,6 +983,34 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   .lightbox { padding: var(--s-3); }
   .lightbox__caption { display: none; }
   .lightbox__bar { justify-content: flex-end; }
+}
+
+/* Галерея: стрелки по бокам картинки */
+.lightbox__nav {
+  appearance: none;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px; height: 48px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color var(--t-fast);
+  z-index: 2;
+}
+.lightbox__nav:hover { background: var(--accent); border-color: var(--accent); }
+.lightbox__nav[hidden] { display: none; }
+.lightbox__nav--prev { left: -60px; }
+.lightbox__nav--next { right: -60px; }
+.lightbox__nav svg { width: 18px; height: 18px; }
+.lightbox__inner { position: relative; }
+
+@media (max-width: 1080px) {
+  .lightbox__nav--prev { left: 6px; }
+  .lightbox__nav--next { right: 6px; }
 }
 
 /* Пока окно открыто, страница под ним не прокручивается */
