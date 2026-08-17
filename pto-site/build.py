@@ -146,14 +146,16 @@ def block_recommendations(site: Site, cfg: dict) -> str:
         return ""
     cards = []
     for r in cfg["items"]:
+        # Письмо открывается картинкой во всплывающем окне. Ссылка на исходный
+        # PDF остаётся внутри окна — для тех, кому нужен сам документ.
         link = ""
-        if r.get("file"):
-            size = ""
-            path = ASSETS_DIR / r["file"].lstrip("/").removeprefix("assets/")
-            if path.exists():
-                size = f' <span class="rec__size">PDF, {path.stat().st_size // 1024} КБ</span>'
-            link = (f'<a class="rec__link" href="{site.url(r["file"])}" target="_blank" '
-                    f'rel="noopener">Открыть письмо{size}</a>')
+        if r.get("image") and asset_exists(r["image"]):
+            pdf = (f' data-pdf="{site.url(r["file"])}"'
+                   if r.get("file") and asset_exists(r["file"]) else "")
+            link = (f'<button class="rec__link" type="button"'
+                    f' data-lightbox="{site.url(r["image"])}"'
+                    f' data-caption="{esc(r["company"])} · {esc(r["city"])}, {esc(r["date"])}"'
+                    f'{pdf}>Посмотреть письмо</button>')
         cards.append(f'''        <article class="card rec">
           <div class="rec__head">
             <h3>{esc(r["company"])}</h3>

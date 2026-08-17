@@ -1,8 +1,9 @@
 /* =========================================================================
    Скрипты сайта. Один файл на весь сайт, без библиотек.
    1. Мобильное меню
-   2. Фоновое видео первого экрана (грузится только там, где нужно)
-   3. Форма заявки -> Telegram
+   2. Фоновое видео (грузится только там, где нужно)
+   3. Всплывающее окно с документом
+   4. Форма заявки -> Telegram
    ========================================================================= */
 (function () {
   'use strict';
@@ -79,7 +80,83 @@
     });
   }
 
-  /* ---------- 3. Форма заявки -------------------------------------------- */
+  /* ---------- 3. Всплывающее окно с документом ---------------------------
+     Письма и благодарности показываются картинкой прямо на сайте, а не
+     открываются PDF-файлом в новой вкладке. Ссылка на исходный PDF есть
+     внутри окна — тому, кому нужен сам документ.
+     Картинка грузится только в момент открытия, страница от неё не тяжелеет. */
+  var lightbox = null;
+  var lastFocused = null;
+
+  function buildLightbox() {
+    var el = document.createElement('div');
+    el.className = 'lightbox';
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-modal', 'true');
+    el.setAttribute('aria-label', 'Просмотр документа');
+    el.hidden = true;
+    el.innerHTML =
+      '<div class="lightbox__inner">' +
+        '<div class="lightbox__bar">' +
+          '<span class="lightbox__caption"></span>' +
+          '<span class="lightbox__actions">' +
+            '<a class="lightbox__btn" data-pdf-link hidden target="_blank" rel="noopener">Скачать PDF</a>' +
+            '<button class="lightbox__btn" type="button" data-close aria-label="Закрыть">Закрыть</button>' +
+          '</span>' +
+        '</div>' +
+        '<div class="lightbox__scroll"><img class="lightbox__img" alt=""></div>' +
+      '</div>';
+    document.body.appendChild(el);
+
+    // Закрытие: крестик, клик по тёмному фону, Esc
+    el.addEventListener('click', function (e) {
+      if (e.target === el || e.target.closest('[data-close]')) closeLightbox();
+    });
+    return el;
+  }
+
+  function openLightbox(trigger) {
+    if (!lightbox) lightbox = buildLightbox();
+    lastFocused = trigger;
+
+    var img = lightbox.querySelector('.lightbox__img');
+    var pdf = lightbox.querySelector('[data-pdf-link]');
+    var caption = trigger.getAttribute('data-caption') || '';
+
+    img.src = trigger.getAttribute('data-lightbox');
+    img.alt = caption || 'Документ';
+    lightbox.querySelector('.lightbox__caption').textContent = caption;
+
+    var pdfHref = trigger.getAttribute('data-pdf');
+    if (pdfHref) { pdf.href = pdfHref; pdf.hidden = false; }
+    else { pdf.removeAttribute('href'); pdf.hidden = true; }
+
+    lightbox.querySelector('.lightbox__scroll').scrollTop = 0;
+    lightbox.hidden = false;
+    document.body.classList.add('is-locked');
+    lightbox.querySelector('[data-close]').focus();
+  }
+
+  function closeLightbox() {
+    if (!lightbox || lightbox.hidden) return;
+    lightbox.hidden = true;
+    lightbox.querySelector('.lightbox__img').removeAttribute('src');
+    document.body.classList.remove('is-locked');
+    if (lastFocused) { lastFocused.focus(); lastFocused = null; }
+  }
+
+  document.addEventListener('click', function (e) {
+    var trigger = e.target.closest('[data-lightbox]');
+    if (!trigger) return;
+    e.preventDefault();
+    openLightbox(trigger);
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeLightbox();
+  });
+
+  /* ---------- 4. Форма заявки -------------------------------------------- */
   var forms = document.querySelectorAll('form[data-form="lead"]');
 
   function digits(s) { return (s || '').replace(/\D/g, ''); }
