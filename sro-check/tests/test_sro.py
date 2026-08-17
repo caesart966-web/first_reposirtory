@@ -28,6 +28,7 @@ from sro import excel_io, names
 from sro.inn import is_valid_inn, normalize_inn
 from sro.models import (
     CheckResult,
+    Membership,
     RegistryAnswer,
     SOURCE_NOPRIZ,
     SOURCE_NOSTROY,
@@ -1059,6 +1060,96 @@ class TestEndToEnd(unittest.TestCase):
         verdict_key = next(key for key in next(iter(rows.values())) if key.startswith("есть сро"))
         verdicts = {row[verdict_key] for row in rows.values()}
         self.assertEqual(verdicts, {"не удалось проверить"})
+
+
+class TestBothRegistriesChecked(unittest.TestCase):
+    """Исключение из одного реестра не должно давать «нет», если в другом
+    членство действует. Ради этого второй реестр опрашивается, даже когда
+    в первом уже нашлась (недействующая) запись."""
+
+    class StubProvider:
+        def __init__(self, answer) -> None:
+            self._answer = answer
+            self.asked = False
+
+        def lookup(self, _inn: str):
+            self.asked = True
+            return self._answer
+
+    def run_check(self, priority, nostroy, nopriz, basis="active"):
+        providers = {
+            SOURCE_NOSTROY: self.StubProvider(nostroy),
+            SOURCE_NOPRIZ: self.StubProvider(nopriz),
+        }
+        result = check_sro.check_company(
+            inn="7702521529",
+            priority=priority,
+            providers=providers,
+            browser=None,
+            browser_mode="never",
+            check_all=False,
+            delay_min=0,
+            delay_max=0,
+            basis=basis,
+            log=check_sro.Log(None, sink=lambda _m: None),
+        )
+        return result, providers
+
+    def test_excluded_in_first_still_checks_the_second(self):
+        excluded = RegistryAnswer(
+            SOURCE_NOSTROY,
+            Outcome.FOUND,
+            memberships=[Membership(SOURCE_NOSTROY, sro_name="Старая", status_raw="Исключен")],
+        )
+        active = RegistryAnswer(
+            SOURCE_NOPRIZ,
+            Outcome.FOUND,
+            memberships=[Membership(SOURCE_NOPRIZ, sro_name="Действующая", status_raw="Является членом")],
+        )
+        # Помечена строителем → первым идёт НОСТРОЙ (исключён), но действующее
+        # членство в НОПРИЗ должно быть найдено.
+        result, providers = self.run_check("Строители", nostroy=excluded, nopriz=active)
+        self.assertIs(result.verdict, Verdict.YES)
+        self.assertTrue(providers[SOURCE_NOPRIZ].asked, "второй реестр обязан быть опрошен")
+
+    def test_active_in_first_stops_early(self):
+        active = RegistryAnswer(
+            SOURCE_NOSTROY,
+            Outcome.FOUND,
+            memberships=[Membership(SOURCE_NOSTROY, status_raw="Является членом")],
+        )
+        other = RegistryAnswer(SOURCE_NOPRIZ, Outcome.EMPTY)
+        result, providers = self.run_check("Строители", nostroy=active, nopriz=other)
+        self.assertIs(result.verdict, Verdict.YES)
+        self.assertFalse(
+            providers[SOURCE_NOPRIZ].asked, "действующее членство найдено — второй реестр не нужен"
+        )
+
+    def test_excluded_in_both_is_a_real_no(self):
+        excluded_n = RegistryAnswer(
+            SOURCE_NOSTROY, Outcome.FOUND,
+            memberships=[Membership(SOURCE_NOSTROY, status_raw="Исключен")],
+        )
+        excluded_p = RegistryAnswer(
+            SOURCE_NOPRIZ, Outcome.FOUND,
+            memberships=[Membership(SOURCE_NOPRIZ, status_raw="Исключен")],
+        )
+        result, providers = self.run_check("Строители", nostroy=excluded_n, nopriz=excluded_p)
+        self.assertIs(result.verdict, Verdict.NO)
+        self.assertTrue(providers[SOURCE_NOPRIZ].asked)
+
+    def test_found_in_first_stops_early_when_any_record_counts(self):
+        """При basis=found любая запись — уже «да», второй реестр не нужен."""
+        excluded = RegistryAnswer(
+            SOURCE_NOSTROY, Outcome.FOUND,
+            memberships=[Membership(SOURCE_NOSTROY, status_raw="Исключен")],
+        )
+        other = RegistryAnswer(SOURCE_NOPRIZ, Outcome.EMPTY)
+        result, providers = self.run_check(
+            "Строители", nostroy=excluded, nopriz=other, basis="found"
+        )
+        self.assertIs(result.verdict, Verdict.YES)
+        self.assertFalse(providers[SOURCE_NOPRIZ].asked)
 
 
 class TestLazyBrowser(unittest.TestCase):

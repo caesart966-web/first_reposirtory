@@ -157,8 +157,21 @@ class CheckResult:
     @property
     def memberships(self) -> list[Membership]:
         result: list[Membership] = []
+        seen: set[tuple] = set()
         for answer in self.answers:
-            result.extend(answer.memberships)
+            for membership in answer.memberships:
+                # Одну и ту же СРО с одним реестровым номером в списке дважды
+                # быть не должно. Совпадение по (СРО, номер, статус) — это
+                # дубль, а не два разных членства.
+                key = (
+                    (membership.sro_name or "").strip().lower(),
+                    (membership.registry_number or "").strip().lower(),
+                    membership.status,
+                )
+                if key in seen:
+                    continue
+                seen.add(key)
+                result.append(membership)
         # Сортировка устойчивая: внутри одного статуса порядок реестра сохраняется.
         # Нужна, чтобы в колонке «Название СРО» первой стояла действующая СРО,
         # а не та, из которой компанию исключили пять лет назад.
