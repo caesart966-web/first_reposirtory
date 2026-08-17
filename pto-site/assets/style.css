@@ -416,6 +416,16 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   margin-top: 2px;
 }
 
+/* На ноутбуках (примерно 1000–1300px) в строку шапки перестаёт помещаться
+   всё сразу, и кнопка вылезает за правый край. Подпись под названием —
+   украшение, её и убираем, остальное поджимаем. */
+@media (min-width: 981px) and (max-width: 1320px) {
+  .header .logo__sub { display: none; }
+  .header__inner { gap: var(--s-4); }
+  .header .nav__link { padding: 0 var(--s-2); }
+  .header__contacts { gap: var(--s-3); }
+}
+
 .nav { margin-left: auto; }
 .nav__list {
   display: flex;
@@ -641,6 +651,23 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   line-height: 1.5;
 }
 
+/* Появление первого экрана: короткий подъём с прозрачностью.
+   Срабатывает сразу при загрузке — ничего не ждёт, ничего не прячет ниже
+   сгиба и полностью заканчивается за треть секунды. При системной настройке
+   «уменьшить движение» и при печати не включается вовсе. */
+@media (prefers-reduced-motion: no-preference) {
+  .hero__inner > * { animation: rise 600ms var(--ease) both; }
+  .hero__inner > h1 { animation-delay: 60ms; }
+  .hero__inner > .hero__lead { animation-delay: 120ms; }
+  .hero__inner > .hero__points { animation-delay: 180ms; }
+  .hero__inner > .btn-row { animation-delay: 240ms; }
+  .hero__inner > .hero__spec { animation-delay: 300ms; }
+}
+@keyframes rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: none; }
+}
+
 /* Видео играет и на телефонах — решение заказчика. Файл лёгкий (~1,3 МБ),
    а при включённой экономии трафика и отключённых анимациях остаётся кадр. */
 @media (max-width: 980px) {
@@ -672,8 +699,43 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   backdrop-filter: blur(2px);
 }
 .section--dark .card p { color: var(--ink-inverse-muted); }
+/* Тонкий акцентный отрезок сверху карточки: тянется на всю ширину при
+   наведении. Без него блок «Почему к нам» — просто пять одинаковых плашек. */
+.section--dark .card {
+  overflow: hidden;
+  transition: background-color var(--t-mid), border-color var(--t-mid);
+}
+.section--dark .card::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0;
+  width: 40px; height: 2px;
+  background: var(--accent-300);
+  transition: width 420ms var(--ease);
+}
+.section--dark .card:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.section--dark .card:hover::before { width: 100%; }
 
-.card--link { text-decoration: none; color: inherit; }
+.card--link { text-decoration: none; color: inherit; padding-bottom: calc(var(--s-6) + 14px); }
+/* Уголок-стрелка: сразу видно, что плашка кликабельна */
+.card--link::after {
+  content: "";
+  position: absolute;
+  right: var(--s-5);
+  bottom: var(--s-5);
+  width: 8px; height: 8px;
+  border-top: 2px solid var(--line-strong);
+  border-right: 2px solid var(--line-strong);
+  transform: rotate(45deg);
+  transition: border-color var(--t-mid), transform var(--t-mid);
+}
+.card--link:hover::after {
+  border-color: var(--accent);
+  transform: rotate(45deg) translate(2px, -2px);
+}
 .card--link:hover {
   border-color: var(--accent);
   color: inherit;
@@ -681,6 +743,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   transform: translateY(-2px);
 }
 .card--compact { padding: var(--s-5); }
+.card--compact.card--link { padding-bottom: calc(var(--s-5) + 14px); }
 .card--compact h3 { font-size: 1.0625rem; line-height: 1.35; }
 .card--compact p { font-size: 0.9375rem; }
 
@@ -752,10 +815,26 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   transform: translateY(-2px);
 }
 .object__media {
+  position: relative;
   aspect-ratio: 16 / 10;
   background: var(--panel) center / cover no-repeat;
   border-bottom: 1px solid var(--line);
+  overflow: hidden;
 }
+/* Приближение фотографии при наведении. Двигается не сама плитка, а её копия
+   внутри (background-image: inherit) — иначе вместе с картинкой уезжала бы
+   и нижняя граница карточки. */
+.object__media::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: inherit;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  transition: transform 620ms var(--ease);
+}
+.object:hover .object__media::before { transform: scale(1.06); }
 /* Несколько фотографий: плитка становится кнопкой, открывающей галерею */
 .object__media--more {
   appearance: none;
@@ -769,6 +848,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 }
 .object__count {
   position: absolute;
+  z-index: 2;
   right: var(--s-3);
   bottom: var(--s-3);
   padding: 5px 10px;
@@ -1111,6 +1191,37 @@ body.is-locked { overflow: hidden; }
 .group__title { font-size: clamp(1.3rem, 1.12rem + 0.7vw, 1.75rem); margin: var(--s-3) 0 var(--s-3); }
 .group__subtitle { color: var(--ink-muted); font-size: 0.9375rem; margin: 0; max-width: 46rem; }
 
+/* На больших экранах группа читается как разворот альбома: слева описание
+   раздела, справа его состав. Заголовок «прилипает» и остаётся перед
+   глазами, пока листаешь длинный список услуг. */
+@media (min-width: 1100px) {
+  .group {
+    display: grid;
+    grid-template-columns: 18rem minmax(0, 1fr);
+    column-gap: var(--s-7);
+    align-items: start;
+    border-top: 1px solid var(--line);
+  }
+  .group__head {
+    position: sticky;
+    top: calc(var(--header-h) + var(--s-5));
+    margin-bottom: 0;
+    padding-right: 0;
+    padding-top: var(--s-5);
+    border-top: 0;
+  }
+  .group__index {
+    position: static;
+    display: block;
+    font-size: 3.25rem;
+    opacity: 0.1;
+    margin-bottom: var(--s-2);
+  }
+  .group__subtitle { max-width: none; }
+  .service-list { padding-top: var(--s-5); }
+  .section--dark .group { border-top-color: rgba(255, 255, 255, 0.14); }
+}
+
 .service-list { display: grid; gap: var(--s-4); grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
 /* Карточка услуги: слева акцентная полоса, справа стрелка. */
@@ -1277,7 +1388,10 @@ body.is-locked { overflow: hidden; }
 }
 
 /* ---------- 9. Этапы ----------------------------------------------------- */
-.steps { counter-reset: step; display: grid; gap: var(--s-6); }
+/* Между шагами нет горизонтального зазора — так их верхние линии смыкаются
+   в одну сплошную и ряд читается как шкала, а не как три отдельные плашки.
+   Воздух между колонками даёт внутренний отступ самого шага. */
+.steps { counter-reset: step; display: grid; row-gap: var(--s-6); column-gap: 0; }
 .steps--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .steps--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
@@ -1286,26 +1400,37 @@ body.is-locked { overflow: hidden; }
   position: relative;
   border-top: 1px solid var(--line);
   padding-top: var(--s-4);
+  padding-right: var(--s-6);
 }
 .section--dark .step { border-top-color: rgba(255, 255, 255, 0.16); }
-/* Акцентный отрезок поверх линии — визуально «шкала выполнения» */
+/* Акцентный отрезок поверх линии — визуально «шкала выполнения».
+   При наведении он дотягивается до конца шага: маленький отклик на действие,
+   который показывает, какой этап читаешь. */
 .step::after {
   content: "";
   position: absolute;
   left: 0; top: -1px;
   width: 32px; height: 2px;
   background: var(--accent);
+  transition: width 380ms var(--ease);
 }
+.step:hover::after { width: 100%; }
 .step::before {
   content: counter(step, decimal-leading-zero);
   display: block;
   font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-size: 1.375rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
   color: var(--accent);
+  /* 0.85, а не меньше: цифра крупная, но контраст к светлому фону должен
+     оставаться выше 3:1, иначе её плохо видно. */
+  opacity: 0.85;
   margin-bottom: var(--s-3);
+  transition: opacity var(--t-mid);
 }
+.step:hover::before { opacity: 1; }
 .section--dark .step::before { color: var(--accent-300); }
 .step h3 { font-size: 1.0625rem; margin-bottom: var(--s-2); }
 .step p { color: var(--ink-muted); font-size: 0.9375rem; margin: 0; }
@@ -1534,16 +1659,92 @@ body.is-locked { overflow: hidden; }
 }
 .call-bar .btn { flex: 1 1 0; min-height: 46px; padding: var(--s-2) var(--s-3); font-size: 0.9375rem; }
 
-/* ---------- 13. О движении на сайте -------------------------------------
-   Блоки НЕ выезжают при прокрутке — это осознанное решение, а не забывчивость.
-   Такой приём прячет текст до момента, когда до него доскроллили, и он
-   пропадает при печати в PDF, при переходе по прямой ссылке на якорь и при
-   любой ошибке в скриптах. Посетитель у нас торопится: у него горит сдача.
+/* ---------- 12б. Контакты ------------------------------------------------
+   Каждый способ связи — отдельная карточка со значком: так на странице
+   видно четыре равноценных двери, а не четыре строки мелкого текста. */
+.contact-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--s-4);
+}
+.contact-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-5);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+  text-decoration: none;
+  color: inherit;
+  min-height: var(--tap);
+  transition: border-color var(--t-mid), box-shadow var(--t-mid), transform var(--t-mid);
+}
+.contact-card:hover {
+  color: inherit;
+  border-color: var(--accent);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+.contact-card__icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent-050);
+  color: var(--accent);
+  flex: none;
+  transition: background-color var(--t-mid), color var(--t-mid);
+}
+.contact-card__icon svg { width: 19px; height: 19px; display: block; }
+.contact-card:hover .contact-card__icon { background: var(--accent); color: #fff; }
+.contact-card__label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+.contact-card__value {
+  font-size: 1.0625rem;
+  font-weight: 650;
+  color: var(--navy);
+  letter-spacing: -0.01em;
+  word-break: break-word;
+}
+.contact-card--phone .contact-card__value { font-size: 1.25rem; }
+.contact-card__note { font-size: 0.875rem; color: var(--ink-muted); margin: 0; }
 
-   Движение оставлено только там, где оно отвечает на действие человека:
-   наведение на карточку, фокус в поле, раскрытие вопроса, тень у шапки.
-   Всё — не длиннее 200мс и полностью отключается системной настройкой
-   «уменьшить движение» (см. блок prefers-reduced-motion в начале файла). */
+@media (max-width: 900px) {
+  .contact-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 520px) {
+  .contact-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ---------- 13. Появление блоков при скролле -----------------------------
+   Блоки чуть поднимаются и проявляются, когда доходят до экрана.
+   Приём обычный, но у него есть известные болезни: текст пропадает при
+   печати в PDF, при переходе по прямой ссылке на якорь и при любой ошибке
+   в скриптах. Поэтому здесь он обвязан страховками:
+
+   • прячет блоки ТОЛЬКО скрипт — он ставит класс can-reveal на <html>;
+     если скрипт не выполнился, страница видна целиком и сразу;
+   • при системной настройке «уменьшить движение» класс не ставится;
+   • через 2,5 секунды после загрузки скрипт показывает всё оставшееся —
+     что бы ни случилось с наблюдателем, невидимого текста не остаётся;
+   • при печати правило снимается (см. блок @media print ниже).
+
+   Движение маленькое: 14px и полсекунды. Читать не мешает. */
+.can-reveal .reveal { opacity: 0; transform: translateY(14px); }
+.can-reveal .reveal.is-in {
+  opacity: 1;
+  transform: none;
+  transition: opacity 520ms var(--ease), transform 520ms var(--ease);
+}
 
 /* ---------- 14. Утилиты и адаптив --------------------------------------- */
 .visually-hidden {
@@ -1628,6 +1829,7 @@ body.is-locked { overflow: hidden; }
   .header, .footer, .call-bar, .form-block { display: none; }
   body { background: #fff; }
   .reveal { opacity: 1 !important; transform: none !important; }
+  .hero__inner > * { animation: none !important; }
 }
 
 /* ---------- 15. Тёмная тема ---------------------------------------------
@@ -1709,6 +1911,10 @@ body.is-locked { overflow: hidden; }
   .field select {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%23a2b4c9' stroke-width='1.6' d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
   }
+
+  /* Значок контакта: на тёмной подложке нужен светлый оттенок акцента */
+  .contact-card__icon { color: var(--accent-300); }
+  .contact-card:hover .contact-card__icon { color: #fff; }
 
   /* Логотип нарисован для светлого фона: белый лист и тёмная обводка.
      На тёмном добавляем еле заметную подложку, чтобы не «висел в воздухе» */

@@ -1,5 +1,6 @@
 /* =========================================================================
    Скрипты сайта. Один файл на весь сайт, без библиотек.
+   0. Шапка, появление блоков при прокрутке, счётчик цифр
    1. Мобильное меню
    2. Фоновое видео (грузится только там, где нужно)
    3. Всплывающее окно с документом
@@ -26,11 +27,70 @@
     window.addEventListener('scroll', onScroll, { passive: true });
   }
 
-  /* Появления блоков при скролле здесь СОЗНАТЕЛЬНО НЕТ.
-     Текст, спрятанный до попадания в кадр, пропадает при печати в PDF,
-     при переходе по якорю и при любой ошибке в скриптах, а посетитель
-     у нас торопится и читает по диагонали. Плавность сделана там, где
-     она ничем не рискует: наведение, фокус, раскрытие вопросов, шапка. */
+  /* ---------- 0б. Появление блоков при прокрутке -------------------------
+     Блоки чуть поднимаются, когда доходят до экрана. Приём известен своими
+     болячками (пропавший текст в PDF, на якорях, при ошибке скрипта),
+     поэтому обвязан страховками:
+       • прячет блоки только этот код — класс can-reveal ставится ниже;
+         не выполнился скрипт — страница видна целиком и сразу;
+       • при системной настройке «уменьшить движение» ничего не прячется;
+       • через 2,5 секунды после загрузки показывается всё оставшееся,
+         даже если наблюдатель почему-то не сработал;
+       • первый экран не трогаем — он появляется своей анимацией в CSS. */
+  var revealTargets = [];
+  if (!calmMedia.matches && 'IntersectionObserver' in window) {
+    revealTargets = [].slice.call(document.querySelectorAll(
+      '.section__head, .card, .object, .step, .rec, .service-list,' +
+      ' .panel, .media-band, .faq, .form-card, .contact-card, .doc-list'
+    )).filter(function (el) { return !el.closest('.hero'); });
+
+    if (revealTargets.length) {
+      document.documentElement.classList.add('can-reveal');
+      revealTargets.forEach(function (el) { el.classList.add('reveal'); });
+
+      var showAll = function () {
+        revealTargets.forEach(function (el) { el.classList.add('is-in'); });
+      };
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (!e.isIntersecting) return;
+          // Небольшая задержка по порядку внутри одного ряда: соседние
+          // карточки появляются друг за другом, а не все разом.
+          var sibs = e.target.parentNode ? e.target.parentNode.children : [];
+          var i = [].indexOf.call(sibs, e.target);
+          e.target.style.transitionDelay = (Math.min(i, 5) * 60) + 'ms';
+          e.target.classList.add('is-in');
+          io.unobserve(e.target);
+        });
+      }, { rootMargin: '0px 0px -8% 0px', threshold: 0.01 });
+
+      revealTargets.forEach(function (el) { io.observe(el); });
+      // Страховка: что бы ни случилось, невидимого текста не остаётся.
+      window.setTimeout(showAll, 2500);
+      window.addEventListener('beforeprint', showAll);
+    }
+  }
+
+  /* ---------- 0в. Счётчик цифр первого экрана ---------------------------
+     Значения уже стоят в разметке — скрипт только «прокручивает» их от нуля.
+     Если скрипта нет или движение выключено, цифры просто стоят на месте. */
+  if (!calmMedia.matches) {
+    [].forEach.call(document.querySelectorAll('.hero__spec-value'), function (el, n) {
+      var target = parseInt(el.textContent, 10);
+      if (!target || target > 999 || !el.firstChild) return;
+      var started = 0;
+      var step = function (now) {
+        if (!started) started = now;
+        var k = Math.min(1, (now - started) / 900);
+        // Замедление к концу: цифра «доезжает», а не обрывается.
+        var value = Math.round(target * (1 - Math.pow(1 - k, 3)));
+        el.firstChild.nodeValue = String(value);
+        if (k < 1) requestAnimationFrame(step);
+      };
+      el.firstChild.nodeValue = '0';
+      window.setTimeout(function () { requestAnimationFrame(step); }, 320 + n * 90);
+    });
+  }
 
   /* ---------- 1. Мобильное меню ----------------------------------------- */
   var burger = document.querySelector('.burger');

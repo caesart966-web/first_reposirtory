@@ -407,6 +407,47 @@ def block_form(site: Site, preselect: str = "") -> str:
   </section>'''
 
 
+# Значки для карточек контактов. Рисуем линиями в один цвет (currentColor),
+# поэтому они сами перекрашиваются при наведении и в тёмной теме.
+ICONS = {
+    "phone": '<path d="M4 3h3l1.6 4-2 1.4a12 12 0 0 0 5 5L13 11.4 17 13v3a1.6 1.6 0 0 1-1.8 1.6A14.4 14.4 0 0 1 2.4 4.8 1.6 1.6 0 0 1 4 3z"/>',
+    "mail": '<rect x="2.2" y="4.2" width="15.6" height="11.6" rx="1.6"/><path d="m2.8 5.4 7.2 5.2 7.2-5.2"/>',
+    "chat": '<path d="M17 11.2A3.8 3.8 0 0 1 13.2 15H7l-4 2.6V5.2A3.8 3.8 0 0 1 6.8 1.4h6.4A3.8 3.8 0 0 1 17 5.2z" transform="translate(0 1)"/>',
+    "link": '<path d="M8.4 11.6a3.4 3.4 0 0 0 5 .3l2.4-2.4a3.4 3.4 0 0 0-4.8-4.8l-1.3 1.3"/><path d="M11.6 8.4a3.4 3.4 0 0 0-5-.3L4.2 10.5a3.4 3.4 0 0 0 4.8 4.8l1.3-1.3"/>',
+}
+
+
+def icon(name: str) -> str:
+    return (f'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" '
+            f'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{ICONS[name]}</svg>')
+
+
+def contact_cards(site: Site) -> str:
+    """Четыре способа связи карточками — на странице контактов."""
+    c = site.contacts
+    notes = site.raw["contacts_page"].get("notes", {})
+    ext = ' rel="nofollow noopener" target="_blank"'
+    rows = [
+        ("phone", "Телефон", c["phone_display"], f'tel:{c["phone_href"]}', "", " contact-card--phone"),
+        ("mail", "Почта", c["email"], f'mailto:{c["email"]}', "", ""),
+        ("chat", "Telegram", c["telegram_display"], c["telegram_url"], ext, ""),
+        ("link", "MAX", c.get("max_display", "Канал"), c["max_url"], ext, ""),
+    ]
+    keys = ["phone", "email", "telegram", "max"]
+    cards = []
+    for (ic, label, value, href, attrs, extra), key in zip(rows, keys):
+        note = notes.get(key, "")
+        cards.append(f'''        <a class="contact-card{extra}" href="{esc(href)}"{attrs}>
+          <span class="contact-card__icon">{icon(ic)}</span>
+          <span class="contact-card__label">{esc(label)}</span>
+          <span class="contact-card__value">{esc(value)}</span>
+          {f'<span class="contact-card__note">{esc(note)}</span>' if note else ''}
+        </a>''')
+    return f'''      <div class="contact-grid">
+{chr(10).join(cards)}
+      </div>'''
+
+
 def block_related(site: Site, service: dict) -> str:
     cards = []
     for slug in service.get("related", []):
@@ -1022,6 +1063,7 @@ def page_contacts(r: Renderer) -> None:
     site = r.site
     cfg = site.raw["contacts_page"]
     c = site.contacts
+    chk = cfg["checklist"]
 
     body = f'''  <section class="page-head">
     <div class="container">
@@ -1036,25 +1078,17 @@ def page_contacts(r: Renderer) -> None:
 
   <section class="section section--surface">
     <div class="container">
-      <div class="grid grid--4">
-        <div class="stat">
-          <div class="contact-line__label">Телефон</div>
-          <a class="contact-line__value" href="tel:{esc(c["phone_href"])}" style="color:var(--navy)">{esc(c["phone_display"])}</a>
+{contact_cards(site)}
+      <div class="offer-grid mt-6">
+        <div>
+          <p class="lead lead--tight">{esc(c["work_hours"])}. {esc(c["geo"])}. Договор, счёт и закрывающие документы — в электронном виде, при необходимости отправляем оригиналы почтой.</p>
         </div>
-        <div class="stat">
-          <div class="contact-line__label">Почта</div>
-          <a class="contact-line__value" href="mailto:{esc(c["email"])}" style="color:var(--navy);font-size:1.0625rem">{esc(c["email"])}</a>
-        </div>
-        <div class="stat">
-          <div class="contact-line__label">Telegram</div>
-          <a class="contact-line__value" href="{esc(c["telegram_url"])}" rel="nofollow noopener" target="_blank" style="color:var(--navy);font-size:1.0625rem">{esc(c["telegram_display"])}</a>
-        </div>
-        <div class="stat">
-          <div class="contact-line__label">MAX</div>
-          <a class="contact-line__value" href="{esc(c["max_url"])}" rel="nofollow noopener" target="_blank" style="color:var(--navy);font-size:1.0625rem">{esc(c.get("max_display","Канал"))}</a>
-        </div>
+        <aside class="panel panel--accent">
+          <h3>{esc(chk["title"])}</h3>
+          <p style="color:var(--ink-muted);font-size:0.9375rem">{esc(chk["text"])}</p>
+          {li_list(chk["items"], "ticks")}
+        </aside>
       </div>
-      <p class="lead lead--tight mt-6">{esc(c["work_hours"])}. {esc(c["geo"])}. Договор, счёт и закрывающие документы — в электронном виде, при необходимости отправляем оригиналы почтой.</p>
     </div>
   </section>
 
