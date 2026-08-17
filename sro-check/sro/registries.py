@@ -397,7 +397,9 @@ def interpret_payload(payload: Any, inn: str, source: str) -> RegistryAnswer:
         if last in _LIST_KEYS or path == "":
             count = _find_count(payload)
             if count in (None, 0):
-                return RegistryAnswer(source, Outcome.EMPTY, note=f"пусто по пути «{path or '[]'}»")
+                return RegistryAnswer(
+                    source, Outcome.EMPTY, note="реестр ответил: по этому ИНН записей нет"
+                )
             return RegistryAnswer(
                 source,
                 Outcome.UNKNOWN,

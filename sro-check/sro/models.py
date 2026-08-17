@@ -254,15 +254,24 @@ class CheckResult:
 
     @property
     def diagnostics(self) -> str:
-        """Короткое пояснение — попадает в колонку «Примечание»."""
+        """Короткое пояснение — попадает в колонку «Примечание».
+
+        Для ответа «нет» показываем, что вернул КАЖДЫЙ реестр: сколько записей
+        и почему не совпало. Так «нет» становится проверяемым — видно, что оба
+        реестра действительно опрошены и оба ответили пусто, а не что программа
+        где-то оступилась.
+        """
+        verdict = self.verdict
         parts = [self.note] if self.note else []
         for answer in self.answers:
             if not answer.note:
                 continue
-            # Показываем пояснение, когда проверка не удалась, а также когда
-            # запись нашли, но реквизиты СРО вытащить не смогли.
+            # Показываем пояснение, когда проверка не удалась; когда запись
+            # нашли, но реквизиты СРО вытащить не смогли; и для итогового «нет» —
+            # чтобы каждый «нет» нёс доказательство.
             unclear_hit = answer.outcome is Outcome.FOUND and not answer.memberships
-            if answer.outcome is Outcome.UNKNOWN or unclear_hit:
+            explains_no = verdict is Verdict.NO and answer.outcome is Outcome.EMPTY
+            if answer.outcome is Outcome.UNKNOWN or unclear_hit or explains_no:
                 parts.append(f"{answer.source}: {answer.note}")
         return "; ".join(p for p in parts if p)
 

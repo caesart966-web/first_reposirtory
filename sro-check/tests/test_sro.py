@@ -1062,6 +1062,44 @@ class TestEndToEnd(unittest.TestCase):
         self.assertEqual(verdicts, {"не удалось проверить"})
 
 
+class TestNoIsSelfDocumenting(unittest.TestCase):
+    """Каждый «нет» должен нести доказательство: что вернул каждый реестр.
+
+    Иначе непонятно, компания правда не член или программа оступилась.
+    """
+
+    def test_note_shows_both_registries(self):
+        result = CheckResult(
+            inn="7702521529",
+            answers=[
+                RegistryAnswer(SOURCE_NOSTROY, Outcome.EMPTY, note="реестр ответил: по этому ИНН записей нет"),
+                RegistryAnswer(SOURCE_NOPRIZ, Outcome.EMPTY, note="реестр вернул 3 записей, ни одна не с этим ИНН"),
+            ],
+            basis="active",
+        )
+        self.assertIs(result.verdict, Verdict.NO)
+        note = result.diagnostics
+        self.assertIn("НОСТРОЙ", note)
+        self.assertIn("НОПРИЗ", note)
+        self.assertIn("записей нет", note)
+
+    def test_yes_stays_clean(self):
+        """У «да» примечание не засоряется служебными пояснениями."""
+        result = CheckResult(
+            inn="7702521529",
+            answers=[
+                RegistryAnswer(
+                    SOURCE_NOSTROY,
+                    Outcome.FOUND,
+                    memberships=[Membership(SOURCE_NOSTROY, sro_name="СРО", status_raw="Является членом")],
+                )
+            ],
+            basis="active",
+        )
+        self.assertIs(result.verdict, Verdict.YES)
+        self.assertEqual(result.diagnostics, "")
+
+
 class TestBothRegistriesChecked(unittest.TestCase):
     """Исключение из одного реестра не должно давать «нет», если в другом
     членство действует. Ради этого второй реестр опрашивается, даже когда
