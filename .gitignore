@@ -21,3 +21,10 @@ backend/construction-mcp/data/
 # pto-site: реальные токены приёма заявок (заливаются на хостинг руками)
 pto-site/assets/config.js
 pto-site/dist/assets/config.js
+
+# sro-docs: персональные данные компаний и рабочие файлы не хранятся в репозитории
+sro-docs/output/
+sro-docs/logs/
+sro-docs/input/*
+!sro-docs/input/.gitkeep
+!sro-docs/input/Пример_карточки_ТеплоЭнергоСтрой.docx

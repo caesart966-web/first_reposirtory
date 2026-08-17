@@ -1,0 +1,214 @@
+# -*- coding: utf-8 -*-
+"""Сборка значений переменных для подстановки в шаблоны.
+
+Здесь и только здесь реквизиты компании превращаются в то, что реально
+попадёт в документ: разбитые по клеткам цифры ИНН, родительный падеж ФИО,
+отметки «V», дата прописью.
+
+Если склонение вызывает сомнения, значение НЕ подставляется молча:
+собирается список подтверждений (`Confirmation`), которые интерфейс
+показывает пользователю.
+"""
+
+from __future__ import annotations
+
+import json
+import re
+from dataclasses import dataclass, field
+from datetime import date
+from pathlib import Path
+
+from . import morphology
+from .company_parser import split_company_name
+from .models import CompanyData
+
+MARK = "V"
+MARK_LEVEL = "v"
+
+OBJECT_KINDS = {
+    "ordinary": "Объекты капитального строительства (кроме особо опасных, "
+                "технически сложных и уникальных)",
+    "hazardous": "Особо опасные, технически сложные и уникальные объекты",
+    "nuclear": "Объекты использования атомной энергии",
+}
+
+HARM_LEVELS = {
+    "1": "Первый — до 90 млн руб. по одному договору (взнос 100 000 руб.)",
+    "2": "Второй — до 500 млн руб. (взнос 500 000 руб.)",
+    "3": "Третий — до 3 млрд руб. (взнос 1 500 000 руб.)",
+    "4": "Четвёртый — до 10 млрд руб. (взнос 2 000 000 руб.)",
+    "5": "Пятый — 10 млрд руб. и более (взнос 5 000 000 руб.)",
+}
+
+CONTRACT_LEVELS = {
+    "": "не заявляется (как в бланке)",
+    "1": "Первый — до 90 млн руб. (взнос 200 000 руб.)",
+    "2": "Второй — до 500 млн руб. (взнос 2 500 000 руб.)",
+    "3": "Третий — до 3 млрд руб. (взнос 4 500 000 руб.)",
+    "4": "Четвёртый — до 10 млрд руб. (взнос 7 000 000 руб.)",
+    "5": "Пятый — 10 млрд руб. и более (взнос 25 000 000 руб.)",
+}
+
+
+@dataclass
+class Confirmation:
+    """Значение, которое программа не смогла определить надёжно."""
+
+    key: str            # ключ в company.overrides
+    label: str          # что подтверждаем, по-русски
+    suggestion: str     # что предлагает программа
+    reason: str         # почему нужна проверка
+
+
+@dataclass
+class ContextResult:
+    values: dict[str, str] = field(default_factory=dict)
+    confirmations: list[Confirmation] = field(default_factory=list)
+    notes: list[str] = field(default_factory=list)
+
+
+def load_attorney(config_dir: Path) -> dict[str, str]:
+    """Данные представителя Ассоциации из config/attorney.json."""
+    path = Path(config_dir) / "attorney.json"
+    if not path.exists():
+        raise FileNotFoundError(
+            f"Не найден файл настроек {path}. Он содержит данные доверенного лица "
+            f"для доверенности."
+        )
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return {k: str(v) for k, v in data.items() if not k.startswith("_")}
+
+
+def _digits(value: str) -> str:
+    return re.sub(r"\D", "", value or "")
+
+
+def _parse_date(value: str) -> date | None:
+    match = re.match(r"^(\d{2})\.(\d{2})\.(\d{4})$", (value or "").strip())
+    if not match:
+        return None
+    day, month, year = (int(x) for x in match.groups())
+    try:
+        return date(year, month, day)
+    except ValueError:
+        return None
+
+
+def _resolve(company: CompanyData, key: str, computed: morphology.Inflected,
+             label: str, result: ContextResult) -> str:
+    """Взять подтверждённое пользователем значение либо запросить подтверждение."""
+    override = (company.overrides or {}).get(key, "").strip()
+    if override:
+        return override
+    if computed.confident or not computed.value:
+        return computed.value
+    result.confirmations.append(
+        Confirmation(key, label, computed.value,
+                     computed.reason or "автоматическое склонение ненадёжно")
+    )
+    return computed.value
+
+
+def build_context(company: CompanyData, attorney: dict[str, str],
+                  today: date | None = None) -> ContextResult:
+    """Собрать все значения переменных для одной компании."""
+    result = ContextResult()
+    values = result.values
+
+    # ---------------------------------------------------------- наименования
+    form_short_full, form_full, bare_full = split_company_name(company.full_name)
+    form_short, _, bare_short = split_company_name(company.short_name)
+
+    values["legal_form_full"] = form_full or form_short_full
+    values["company_name_bare"] = bare_full
+    values["legal_form_short"] = form_short or form_short_full
+    values["short_name_bare"] = bare_short
+
+    if company.full_name and not values["legal_form_full"]:
+        result.notes.append(
+            f"В полном наименовании «{company.full_name}» не распознана "
+            f"организационно-правовая форма (ООО, АО, ПАО…). Проверьте написание."
+        )
+    if company.short_name and not values["legal_form_short"]:
+        result.notes.append(
+            f"В сокращённом наименовании «{company.short_name}» не распознана "
+            f"организационно-правовая форма (ООО, АО, ПАО…). Проверьте написание."
+        )
+    if values["legal_form_short"] and values["legal_form_short"] != "ООО":
+        result.notes.append(
+            f"Бланки Ассоциации напечатаны под ООО, а у вас {values['legal_form_short']}. "
+            f"Программа подставит вашу форму собственности, но перед подачей "
+            f"обязательно просмотрите готовые документы."
+        )
+
+    # ---------------------------------------------------------- идентификаторы
+    inn = _digits(company.inn)
+    ogrn = _digits(company.ogrn)
+    values["inn"] = inn
+    values["ogrn"] = ogrn
+    values["kpp"] = _digits(company.kpp)
+    for index in range(10):
+        values[f"inn_d{index + 1}"] = inn[index] if index < len(inn) else ""
+    for index in range(13):
+        values[f"ogrn_d{index + 1}"] = ogrn[index] if index < len(ogrn) else ""
+
+    # ---------------------------------------------------------- адреса и связь
+    values["legal_address"] = company.legal_address
+    values["actual_address"] = company.actual_address
+    values["postal_address"] = company.postal_address
+    values["phone"] = company.phone
+    values["email"] = company.email
+    values["website"] = company.website
+
+    # ---------------------------------------------------------- банк
+    values["bank_name"] = company.bank_name
+    values["bank_account"] = _digits(company.bank_account)
+    values["bank_corr_account"] = _digits(company.bank_corr_account)
+    values["bank_bik"] = _digits(company.bank_bik)
+
+    # ---------------------------------------------------------- руководитель
+    full_name = company.director_full_name
+    values["director_position"] = company.director_position
+    values["director_full_name"] = full_name
+
+    values["director_short_name"] = _resolve(
+        company, "director_short_name", morphology.short_name(full_name),
+        "Подпись руководителя (Фамилия И.О.)", result)
+
+    values["director_full_name_genitive"] = _resolve(
+        company, "director_full_name_genitive", morphology.full_name_genitive(full_name),
+        f"ФИО руководителя в родительном падеже («в лице …»)", result)
+
+    values["director_position_genitive"] = _resolve(
+        company, "director_position_genitive",
+        morphology.position_genitive(company.director_position),
+        "Должность руководителя в родительном падеже («в лице …»)", result)
+
+    values["director_basis_genitive"] = _resolve(
+        company, "director_basis_genitive",
+        morphology.basis_genitive(company.director_basis),
+        "Основание полномочий в родительном падеже («на основании …»)", result)
+
+    # ---------------------------------------------------------- дата документа
+    doc_date = _parse_date(company.doc_date) or (today or date.today())
+    values["doc_day"] = f"{doc_date.day:02d}"
+    values["doc_month_name"] = morphology.MONTHS_GENITIVE[doc_date.month - 1]
+    values["doc_year"] = str(doc_date.year)
+    values["doc_date"] = doc_date.strftime("%d.%m.%Y")
+
+    values["power_number"] = company.power_number
+
+    # ---------------------------------------------------------- отметки «V»
+    for kind in OBJECT_KINDS:
+        values[f"mark_object_{kind}"] = MARK if company.object_kind == kind else ""
+    for level in "12345":
+        values[f"mark_harm_level{level}"] = (
+            MARK_LEVEL if company.harm_fund_level == level else "")
+        values[f"mark_contract_level{level}"] = (
+            MARK_LEVEL if company.contract_fund_level == level else "")
+
+    # ---------------------------------------------------------- представитель
+    for key, value in attorney.items():
+        values[key] = value
+
+    return result
