@@ -185,6 +185,36 @@ def block_recommendations(site: Site, cfg: dict) -> str:
   </section>'''
 
 
+def block_objects(site: Site, items, limit: int = 0) -> str:
+    """Карточки объектов. Фотография необязательна: без неё выводится
+    фирменная заставка с чертёжной сеткой, вёрстка не ломается."""
+    if not items:
+        return ""
+    shown = items[:limit] if limit else items
+    cards = []
+    for n, o in enumerate(shown, start=1):
+        has_photo = o.get("photo") and asset_exists(o["photo"])
+        media = (f'<div class="object__media" style="background-image:url({site.url(o["photo"])})"></div>'
+                 if has_photo else '<div class="object__media object__media--empty"></div>')
+        scope = f'<p class="object__scope">{esc(o["scope"])}</p>' if o.get("scope") else ""
+        cards.append(f'''        <article class="object">
+          {media}
+          <div class="object__body">
+            <span class="object__num">{n:02d}</span>
+            <h3 class="object__name">{esc(o["name"])}</h3>
+            <span class="object__city">{esc(o["city"])}</span>
+            {scope}
+            <div class="spec">
+              <div class="spec__row"><span class="spec__key">Заказчик</span>
+                <span class="spec__dots"></span><span class="spec__val">{esc(o["client"])}</span></div>
+            </div>
+          </div>
+        </article>''')
+    return f'''      <div class="object-grid">
+{chr(10).join(cards)}
+      </div>'''
+
+
 def paragraphs(text, css="") -> str:
     """Текст в абзацы. В данных можно писать как одной строкой, так и списком
     строк — тогда каждая строка станет отдельным абзацем."""
@@ -572,6 +602,24 @@ def page_home(r: Renderer) -> None:
            poster="{poster}" data-src="{sources}" aria-hidden="true" tabindex="-1"></video>'''
                  if sources else "")
 
+    # Анонс объектов на главной: три штуки и ссылка на полный список
+    pf = site.raw.get("portfolio")
+    objects_teaser = ""
+    if pf and pf.get("items"):
+        objects_teaser = f'''  <section class="section section--alt">
+    <div class="container">
+      <div class="section__head">
+        <span class="eyebrow">Объекты</span>
+        <h2>Где мы уже работали</h2>
+        <p>{esc(pf["lead"])}</p>
+      </div>
+{block_objects(site, pf["items"], limit=3)}
+      <div class="btn-row mt-6">
+        <a class="btn btn--ghost" href="{site.url("/obekty/")}">Все объекты</a>
+      </div>
+    </div>
+  </section>'''
+
     hero = f'''  <section class="hero">
     <div class="hero__media" style="background-image:url({poster})"></div>
     {video_tag}
@@ -633,6 +681,8 @@ def page_home(r: Renderer) -> None:
       </div>
     </div>
   </section>
+
+{objects_teaser}
 
   <section class="section section--dark">
     <div class="container">
@@ -805,6 +855,58 @@ def page_service(r: Renderer, service: dict, city: dict = None) -> None:
 
     r.render(path=path, title=title, description=description, body=body,
              head_extra=head, og_type="article", priority="0.8")
+
+
+# ---------- объекты -------------------------------------------------------
+
+def page_objects(r: Renderer) -> None:
+    site = r.site
+    cfg = site.raw.get("portfolio")
+    if not cfg:
+        return
+
+    body = f'''  <section class="page-head">
+    <div class="container">
+      <ul class="breadcrumbs">
+        <li><a href="{site.url('/')}">Главная</a></li>
+        <li>Объекты</li>
+      </ul>
+      <h1>{esc(cfg["h1"])}</h1>
+      <p class="lead">{esc(cfg["lead"])}</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+{block_objects(site, cfg["items"])}
+    </div>
+  </section>
+
+  <section class="section section--alt">
+    <div class="container">
+      <div class="section__head"><h2>Что делаем на таких объектах</h2></div>
+{block_services_by_group(site)}
+    </div>
+  </section>
+
+{block_form(site)}'''
+
+    head = "\n".join([
+        jsonld(schema_organization(site)),
+        jsonld(schema_breadcrumbs(site, [("Главная", "/"), ("Объекты", "/obekty/")])),
+        jsonld({
+            "@context": "https://schema.org",
+            "@type": "ItemList",
+            "name": "Объекты",
+            "itemListElement": [{
+                "@type": "ListItem",
+                "position": i,
+                "name": f'{o["name"]}, {o["city"]}',
+            } for i, o in enumerate(cfg["items"], start=1)],
+        }),
+    ])
+    r.render(path="/obekty/", title=cfg["title"], description=cfg["description"],
+             body=body, head_extra=head, priority="0.8")
 
 
 # ---------- о компании ----------------------------------------------------
@@ -1037,6 +1139,7 @@ def build(regen_media: bool = False, base_path: str = None,
         page_service(r, service)
         for city in service.get("cities", []):
             page_service(r, service, city)
+    page_objects(r)
     page_about(r)
     page_contacts(r)
     page_404(r)
