@@ -728,6 +728,57 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 .offer-card h3 { margin-bottom: var(--s-2); }
 .offer-card .spec { margin-top: var(--s-4); }
 
+/* Рекомендательные письма */
+.rec { gap: 0; }
+.rec__head { margin-bottom: var(--s-4); }
+.rec__head h3 { margin-bottom: var(--s-2); }
+.rec__meta {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+/* Цитата с акцентной чертой — единственное место на сайте, где текст
+   выделен курсивом: так видно, что это чужие слова, а не наши */
+.rec__quote {
+  margin: 0 0 var(--s-5);
+  padding-left: var(--s-5);
+  border-left: 2px solid var(--accent);
+  font-size: 1.0625rem;
+  line-height: 1.55;
+  font-style: italic;
+  color: var(--ink);
+}
+.rec__quote::before { content: "«"; }
+.rec__quote::after  { content: "»"; }
+.rec .spec { margin-top: 0; border-top: 0; padding-top: 0; }
+.rec__scope {
+  margin: var(--s-4) 0 var(--s-5);
+  font-size: 0.9375rem;
+  color: var(--ink-muted);
+}
+.rec__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: var(--tap);
+  margin-top: auto;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--accent-700);
+}
+.rec__link::before {
+  content: "";
+  width: 14px; height: 16px; flex: 0 0 auto;
+  border: 2px solid currentColor;
+  border-radius: 2px;
+  clip-path: polygon(0 0, 68% 0, 100% 26%, 100% 100%, 0 100%);
+}
+.rec__link:hover { color: var(--accent); text-decoration: underline; }
+.rec__size { font-family: var(--font-mono); font-size: 0.6875rem; color: var(--ink-soft); font-weight: 500; }
+
 /* Крупные цифры */
 .stat {
   border-top: 2px solid var(--navy);

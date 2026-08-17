@@ -139,6 +139,50 @@ def block_media(site: Site, cfg: dict) -> str:
   </section>'''
 
 
+def block_recommendations(site: Site, cfg: dict) -> str:
+    """Рекомендательные письма. У карточки без поля file ссылки нет —
+    так письмо можно показать текстом, не выкладывая сам документ."""
+    if not cfg or not cfg.get("items"):
+        return ""
+    cards = []
+    for r in cfg["items"]:
+        link = ""
+        if r.get("file"):
+            size = ""
+            path = ASSETS_DIR / r["file"].lstrip("/").removeprefix("assets/")
+            if path.exists():
+                size = f' <span class="rec__size">PDF, {path.stat().st_size // 1024} КБ</span>'
+            link = (f'<a class="rec__link" href="{site.url(r["file"])}" target="_blank" '
+                    f'rel="noopener">Открыть письмо{size}</a>')
+        cards.append(f'''        <article class="card rec">
+          <div class="rec__head">
+            <h3>{esc(r["company"])}</h3>
+            <span class="rec__meta">{esc(r["city"])} · {esc(r["date"])}</span>
+          </div>
+          <blockquote class="rec__quote">{esc(r["quote"])}</blockquote>
+          <div class="spec">
+            <div class="spec__row"><span class="spec__key">Роль</span>
+              <span class="spec__dots"></span><span class="spec__val">{esc(r["role"])}</span></div>
+            <div class="spec__row"><span class="spec__key">Объект</span>
+              <span class="spec__dots"></span><span class="spec__val">{esc(r["object"])}</span></div>
+          </div>
+          <p class="rec__scope">{esc(r["scope"])}</p>
+          {link}
+        </article>''')
+
+    head = f'<h2>{esc(cfg["title"])}</h2>'
+    if cfg.get("lead"):
+        head += f'<p>{esc(cfg["lead"])}</p>'
+    return f'''  <section class="section">
+    <div class="container">
+      <div class="section__head">{head}</div>
+      <div class="grid grid--2">
+{chr(10).join(cards)}
+      </div>
+    </div>
+  </section>'''
+
+
 def paragraphs(text, css="") -> str:
     """Текст в абзацы. В данных можно писать как одной строкой, так и списком
     строк — тогда каждая строка станет отдельным абзацем."""
@@ -798,6 +842,8 @@ def page_about(r: Renderer) -> None:
       </div>
     </div>
   </section>
+
+{block_recommendations(site, site.raw.get("recommendations"))}
 
   <section class="section section--dark">
     <div class="container">
