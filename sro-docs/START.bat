@@ -1,93 +1,61 @@
 @echo off
-chcp 65001 >nul
-setlocal enabledelayedexpansion
+setlocal
 cd /d "%~dp0"
-title Документы для вступления в СРО
+title Dokumenty SRO
 
-echo ============================================================
-echo   Документы для вступления в СРО
-echo ============================================================
-echo.
+rem ---------------------------------------------------------------
+rem  WARNING FOR DEVELOPERS / VNIMANIE RAZRABOTCHIKAM
+rem  This file MUST stay pure ASCII with CRLF line endings.
+rem  cmd.exe reads a batch file byte by byte and loses its position
+rem  on multi-byte (Cyrillic) characters: every command after that
+rem  gets cut in half and fails with
+rem  "is not recognized as an internal or external command".
+rem  All Russian text for the user is printed by scripts\bootstrap.py
+rem  and scripts\explain_error.py instead.
+rem ---------------------------------------------------------------
 
-rem ---------- 1. Ищем Python ----------
 set "PYEXE="
 py -3 --version >nul 2>&1 && set "PYEXE=py -3"
 if not defined PYEXE (
     python --version >nul 2>&1 && set "PYEXE=python"
 )
-if not defined PYEXE (
-    echo На компьютере не найден Python.
-    echo.
-    echo Что делать:
-    echo   1. Откройте сайт https://www.python.org/downloads/
-    echo   2. Скачайте и установите Python версии 3.10 или новее.
-    echo   3. ВАЖНО: при установке поставьте галочку "Add Python to PATH".
-    echo   4. Запустите этот файл снова.
-    echo.
-    pause
-    exit /b 1
-)
+if not defined PYEXE goto no_python
 
-rem ---------- 2. Готовим окружение (только при первом запуске) ----------
-if not exist ".venv\Scripts\python.exe" (
-    echo Первый запуск: готовлю рабочее окружение. Это займёт 1-2 минуты...
-    echo.
-    %PYEXE% -m venv .venv
-    if errorlevel 1 (
-        echo.
-        echo Не удалось создать рабочее окружение.
-        echo Проверьте, что на диске есть свободное место и папка не защищена от записи.
-        echo.
-        pause
-        exit /b 1
-    )
-    ".venv\Scripts\python.exe" -m pip install --upgrade pip --quiet
-    echo Устанавливаю необходимые библиотеки...
-    ".venv\Scripts\python.exe" -m pip install -r requirements.txt --quiet
-    if errorlevel 1 (
-        echo.
-        echo Не удалось установить необходимые библиотеки.
-        echo Чаще всего причина - нет доступа в интернет или его блокирует антивирус.
-        echo.
-        pause
-        exit /b 1
-    )
-    echo Устанавливаю дополнительные возможности ^(PDF, перетаскивание файлов^)...
-    ".venv\Scripts\python.exe" -m pip install -r requirements-optional.txt --quiet
-    if errorlevel 1 (
-        echo   Дополнительные возможности установить не удалось - это не страшно,
-        echo   программа будет работать без них.
-    )
-    echo.
-    echo Окружение готово.
-    echo.
-)
+%PYEXE% "scripts\bootstrap.py"
+if errorlevel 1 goto setup_failed
 
-rem ---------- 3. Проверяем шаблоны ----------
-if not exist "templates\01_Заявление_о_вступлении.docx" (
-    echo Не найден шаблон заявления в папке templates.
-    echo Восстановите файлы шаблонов и запустите программу снова.
-    echo.
-    pause
-    exit /b 1
-)
-
-rem ---------- 4. Запускаем ----------
-echo Запускаю программу...
 ".venv\Scripts\python.exe" -m src.gui
-if errorlevel 1 (
-    echo.
-    echo ============================================================
-    echo   Программа завершилась с ошибкой.
-    echo ============================================================
-    echo.
-    echo Что можно сделать:
-    echo   1. Откройте файл logs\app.log - в конце будет описание ошибки.
-    echo   2. Проверьте, что документы Word не открыты в другой программе.
-    echo   3. Если ошибка повторяется, удалите папку .venv и запустите START.bat снова.
-    echo.
-    pause
-    exit /b 1
-)
+if errorlevel 1 goto run_failed
 
-endlocal
+exit /b 0
+
+
+:no_python
+echo.
+echo  Python not found. Opening instructions in Notepad...
+echo.
+if exist "SETUP_PYTHON.txt" start "" notepad.exe "SETUP_PYTHON.txt"
+echo  Python ne naiden - smotrite fail SETUP_PYTHON.txt
+echo.
+pause
+exit /b 1
+
+
+:setup_failed
+echo.
+echo  Prichina napisana vyshe po-russki.
+echo.
+pause
+exit /b 1
+
+
+:run_failed
+echo.
+if exist ".venv\Scripts\python.exe" (
+    ".venv\Scripts\python.exe" "scripts\explain_error.py"
+) else (
+    echo  Oshibka zapuska. Smotrite fail logs\app.log
+)
+echo.
+pause
+exit /b 1
