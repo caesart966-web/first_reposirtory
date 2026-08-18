@@ -180,6 +180,86 @@ def read_export(path):
     return out
 
 
+HEADERS = {
+    'inn':      (('инн',), ('инн',)),
+    'n':        (('n п/п', '№ п/п', '№'), ('п/п', 'номер')),
+    'full':     (('полное наименование',), ('наименование', 'организац', 'компан', 'член')),
+    'short':    (('сокращенное наименование', 'сокращённое наименование'), ('сокращ',)),
+    'phone':    (('контактные телефоны', 'телефон'), ('телефон', 'контакт')),
+    'date_in':  (('дата регистрации в реестре сро', 'дата вступления'),
+                 ('дата регистрации', 'дата вступ', 'дата прием', 'дата включ')),
+    'date_out': (('дата прекращения членства', 'дата прекращения'),
+                 ('дата прекращ', 'дата исключ')),
+}
+
+
+def _match_columns(header):
+    """Подбирает номера колонок по названиям. Сначала точное совпадение, потом частичное;
+    из нескольких подходящих берём самую левую — «ИНН страховой компании» так не перебьёт «ИНН»."""
+    cells = [_clean(c).lower() for c in header]
+    found = {}
+    for field, (exact, loose) in HEADERS.items():
+        for want in exact:
+            hit = [i for i, c in enumerate(cells) if c == want]
+            if hit:
+                found[field] = hit[0]
+                break
+        if field in found:
+            continue
+        for want in loose:
+            hit = [i for i, c in enumerate(cells) if want in c]
+            if hit:
+                found[field] = hit[0]
+                break
+    return found
+
+
+def read_any(path):
+    """Любая таблица, где есть колонка с ИНН: выгрузка НОСТРОЙ, список из Excel и т.п."""
+    wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+    best = None
+    for ws in wb.worksheets:
+        head = []
+        for i, r in enumerate(ws.iter_rows(min_row=1, max_row=25, values_only=True)):
+            head.append(r)
+        for i, r in enumerate(head):
+            cols = _match_columns(r)
+            if 'inn' in cols:
+                best = (ws, i + 1, cols)
+                break
+        if best:
+            break
+    if not best:
+        wb.close()
+        return None, None
+
+    ws, hdr_row, cols = best
+    out, seen, num = [], set(), 0
+    for r in ws.iter_rows(min_row=hdr_row + 1, values_only=True):
+        if cols['inn'] >= len(r):
+            continue
+        inn = re.sub(r'\D', '', _clean(r[cols['inn']]))
+        if len(inn) not in (10, 12) or inn in seen:
+            continue
+        seen.add(inn)
+        num += 1
+        get = lambda f: _clean(r[cols[f]]) if f in cols and cols[f] < len(r) else ''
+        n = r[cols['n']] if 'n' in cols and cols['n'] < len(r) else None
+        full = get('full') or get('short')
+        if not full:
+            continue
+        out.append({'n': int(n) if isinstance(n, (int, float)) else num,
+                    'full': full, 'short': get('short') or full, 'inn': inn,
+                    'phone': norm_phone(get('phone'))[0],
+                    'date_in': _date(get('date_in')), 'date_out': _date(get('date_out'))})
+    wb.close()
+    names = {'inn': 'ИНН', 'full': 'Наименование', 'short': 'Сокращённое',
+             'phone': 'Телефон', 'date_in': 'Дата вступления', 'date_out': 'Дата прекращения'}
+    descr = ', '.join('%s=%s' % (names[f], get_column_letter(cols[f] + 1))
+                      for f in ('inn', 'full', 'short', 'phone', 'date_in', 'date_out') if f in cols)
+    return out, descr
+
+
 def load_register(input_dir):
     """Читает всё, что положили в input: zip-архив, выгрузки, сводную таблицу."""
     input_dir.mkdir(parents=True, exist_ok=True)
@@ -207,18 +287,25 @@ def load_register(input_dir):
 
     records, seen_source = {}, []
     for p in sorted(sheets):
-        got = read_compiled(p) or read_export(p)
+        got, how = read_compiled(p), 'сводная таблица'
         if not got:
-            log('  пропускаю %s — не похоже ни на выгрузку, ни на сводную таблицу' % p.name)
+            got, how = read_export(p), 'выгрузка с сайта СРО'
+        if not got:
+            got, how = read_any(p)           # любая таблица с колонкой ИНН
+            how = 'колонки распознаны: %s' % how if got else None
+        if not got:
+            log('  ПРОПУСКАЮ %s — не нашёл в нём колонку с ИНН' % p.name)
             continue
-        seen_source.append('%s (%d)' % (p.name, len(got)))
+        seen_source.append('%s: %d записей, %s' % (p.name, len(got), how))
         for rec in got:
-            records[rec['n']] = rec          # одинаковые № из разных файлов — не дублируем
+            key = (rec['inn'], rec['n'])
+            records[key] = rec               # одна и та же запись из разных файлов — не дублируем
     if not records:
         log('Ни в одном файле не нашёл реестр. Проверьте, что лежит в input.')
         sys.exit(1)
-    log('Прочитано: ' + ', '.join(seen_source))
-    return [records[k] for k in sorted(records)]
+    for line in seen_source:
+        log('  ' + line)
+    return sorted(records.values(), key=lambda r: r['n'])
 
 
 # --- выборка ---------------------------------------------------------------
