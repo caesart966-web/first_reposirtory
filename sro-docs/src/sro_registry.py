@@ -43,6 +43,20 @@ class DocumentSpec:
 
 
 @dataclass
+class Level:
+    """Уровень ответственности из бланка конкретной СРО."""
+
+    key: str        # «1»…«5»
+    title: str      # «Первый»
+    limit: str      # «Не превышает 90 миллионов рублей»
+    fee: str        # «100 000 рублей»
+
+    @property
+    def label(self) -> str:
+        return f"{self.title} — {self.limit} (взнос {self.fee})"
+
+
+@dataclass
 class SroProfile:
     """Одна саморегулируемая организация."""
 
@@ -54,6 +68,12 @@ class SroProfile:
     defaults: dict[str, str] = field(default_factory=dict)
     auto_fill: dict[str, str] = field(default_factory=dict)
     documents: list[DocumentSpec] = field(default_factory=list)
+    harm_levels: list[Level] = field(default_factory=list)
+    contract_levels: list[Level] = field(default_factory=list)
+
+    def level_keys(self, kind: str) -> list[str]:
+        levels = self.harm_levels if kind == "harm" else self.contract_levels
+        return [item.key for item in levels]
 
     @property
     def key(self) -> str:
@@ -166,6 +186,21 @@ def load_profile(folder: Path) -> SroProfile:
         return {k: str(v) for k, v in data.get(section, {}).items()
                 if not k.startswith("_")}
 
+    def levels(kind: str) -> list[Level]:
+        raw = (data.get("levels") or {}).get(kind, [])
+        out = []
+        for item in raw:
+            try:
+                out.append(Level(key=str(item["key"]), title=str(item["title"]),
+                                 limit=str(item.get("limit", "")),
+                                 fee=str(item.get("fee", ""))))
+            except KeyError as exc:
+                raise SroError(
+                    f"В уровнях ответственности СРО «{folder.name}» не хватает "
+                    f"поля {exc}.\nПересоберите: python scripts/extract_levels.py"
+                ) from exc
+        return out
+
     return SroProfile(
         folder=folder,
         name=str(data.get("name") or folder.name),
@@ -175,6 +210,8 @@ def load_profile(folder: Path) -> SroProfile:
         defaults=clean("defaults"),
         auto_fill=clean("auto_fill"),
         documents=documents,
+        harm_levels=levels("harm"),
+        contract_levels=levels("contract"),
     )
 
 

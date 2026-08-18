@@ -627,6 +627,39 @@ class TestMultipleSro(unittest.TestCase):
         self.assertEqual(self.project.attorney(), {})
         self.assertNotEqual(self.project.templates_dir, ready[0].templates_dir)
 
+    def test_levels_come_from_each_sro(self):
+        """У строительных СРО пять уровней, у проектных и изыскательских четыре."""
+        counts = {p.key: len(p.harm_levels) for p in self.project.all_sro}
+        self.assertEqual(counts.get("СССС"), 5)
+        self.assertEqual(counts.get("СФЕРА-А"), 5)
+        self.assertEqual(counts.get("СИС"), 5)
+        self.assertEqual(counts.get("ЯРД"), 4)
+        self.assertEqual(counts.get("СФЕРА ПРОЕКТИРОВЩИКОВ"), 4)
+        self.assertEqual(counts.get("СФЕРА ИЗЫСКАТЕЛЕЙ"), 4)
+        for profile in self.project.all_sro:
+            with self.subTest(sro=profile.key):
+                self.assertEqual(len(profile.harm_levels),
+                                 len(profile.contract_levels))
+
+    def test_nonexistent_level_is_refused(self):
+        """Пятый уровень у проектной СРО — ошибка, а не молча пустая таблица."""
+        self.project.use_sro("ЯРД", remember=False)
+        company = make_company(ALPHA)
+        company.set("harm_fund_level", "5")
+        with self.assertRaises(GeneratorError) as ctx:
+            generate(self.project, company, make_pdf=False)
+        message = str(ctx.exception)
+        self.assertIn("нет уровня №5", message)
+        self.assertIn("25 миллионов", message)
+
+    def test_levels_differ_between_domains(self):
+        by_key = {p.key: p for p in self.project.all_sro}
+        building = by_key["СФЕРА-А"].harm_levels[0]
+        design = by_key["СФЕРА ПРОЕКТИРОВЩИКОВ"].harm_levels[0]
+        self.assertIn("90", building.limit)
+        self.assertIn("25", design.limit)
+        self.assertNotEqual(building.fee, design.fee)
+
     def test_remembered_choice_is_restored(self):
         self.project.use_sro("СССС")
         self.assertEqual(Project(ROOT).sro.key, "СССС")

@@ -296,6 +296,34 @@ def output_folder(project: "Project", company: CompanyData) -> Path:
             / safe_folder_name(project.sro.short_name, "СРО"))
 
 
+def _check_levels(project: "Project", company: CompanyData) -> None:
+    """Выбранный уровень ответственности должен существовать у ЭТОЙ СРО.
+
+    У строительных СРО уровней пять, у проектировщиков и изыскателей — четыре.
+    Без проверки программа молча оставила бы таблицу без отметки, и документ
+    ушёл бы в СРО с незаявленным уровнем.
+    """
+    checks = (
+        ("harm_fund_level", project.sro.harm_levels,
+         "компенсационный фонд возмещения вреда", True),
+        ("contract_fund_level", project.sro.contract_levels,
+         "компенсационный фонд обеспечения договорных обязательств", False),
+    )
+    for field_name, levels, what in ((c[0], c[1], c[2]) for c in checks):
+        chosen = company.get(field_name)
+        if not chosen:
+            continue
+        if not levels:
+            continue
+        if chosen not in [item.key for item in levels]:
+            available = "\n".join(f"  {item.key} — {item.label}" for item in levels)
+            raise GeneratorError(
+                f"У СРО «{project.sro.short_name}» нет уровня №{chosen} "
+                f"({what}).\n\nДоступные уровни:\n{available}\n\n"
+                f"Выберите уровень из этого списка."
+            )
+
+
 # ---------------------------------------------------------------- генерация
 def generate(project: Project, company_input: CompanyData,
              documents: list[DocumentSpec] | None = None,
@@ -314,6 +342,8 @@ def generate(project: Project, company_input: CompanyData,
     if not documents:
         raise GeneratorError(
             f"У СРО «{project.sro.short_name}» не включён ни один документ.")
+
+    _check_levels(project, company)
 
     result = GenerationResult()
     result.notes.extend(result_notes)

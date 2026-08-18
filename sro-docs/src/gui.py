@@ -26,8 +26,7 @@ if __package__ in (None, ""):  # запуск как «python src/gui.py»
 
 from . import app_logging  # noqa: E402
 from .company_parser import parse_card, parse_text  # noqa: E402
-from .context_builder import (CONTRACT_LEVELS, HARM_LEVELS, OBJECT_KINDS,  # noqa: E402
-                              build_context)
+from .context_builder import OBJECT_KINDS, build_context  # noqa: E402
 from .document_generator import (GeneratorError, Project, check_readiness,  # noqa: E402
                                  generate)
 from .models import FIELD_SPECS, CompanyData  # noqa: E402
@@ -346,26 +345,45 @@ class Application(tk.Frame):
                             variable=self.vars["object_kind"]).pack(
                 anchor="w", padx=PAD, pady=1)
 
-        block = ttk.LabelFrame(
-            frame, text=" Заявление, п.8 — компенсационный фонд возмещения вреда ")
-        block.pack(fill=X, padx=PAD, pady=PAD)
+        # Уровни ответственности у каждой СРО свои: у строительных пять,
+        # у проектировщиков и изыскателей четыре, и суммы разные.
+        # Поэтому список строится по выбранной СРО и пересобирается при смене.
+        self.harm_block = ttk.LabelFrame(
+            frame, text=" Компенсационный фонд возмещения вреда ")
+        self.harm_block.pack(fill=X, padx=PAD, pady=PAD)
         self.vars["harm_fund_level"] = tk.StringVar(value="1")
-        for level, title in HARM_LEVELS.items():
-            ttk.Radiobutton(block, text=title, value=level,
-                            variable=self.vars["harm_fund_level"]).pack(
-                anchor="w", padx=PAD, pady=1)
 
-        block = ttk.LabelFrame(
-            frame,
-            text=" Заявление, п.9 — компенсационный фонд обеспечения договорных обязательств ")
-        block.pack(fill=X, padx=PAD, pady=PAD)
+        self.contract_block = ttk.LabelFrame(
+            frame, text=" Компенсационный фонд обеспечения договорных обязательств ")
+        self.contract_block.pack(fill=X, padx=PAD, pady=PAD)
         self.vars["contract_fund_level"] = tk.StringVar(value="")
-        for level, title in CONTRACT_LEVELS.items():
-            ttk.Radiobutton(block, text=title, value=level,
-                            variable=self.vars["contract_fund_level"]).pack(
-                anchor="w", padx=PAD, pady=1)
 
+        self._rebuild_levels()
         return frame
+
+    def _rebuild_levels(self) -> None:
+        """Перестроить списки уровней под выбранную СРО."""
+        for block, levels, variable, allow_none in (
+                (self.harm_block, self.project.sro.harm_levels,
+                 self.vars["harm_fund_level"], False),
+                (self.contract_block, self.project.sro.contract_levels,
+                 self.vars["contract_fund_level"], True)):
+            for child in block.winfo_children():
+                child.destroy()
+            if not levels:
+                ttk.Label(block, foreground="#8a5a00",
+                          text="Уровни этой СРО не заданы — бланк заявления "
+                               "ещё не загружен.").pack(anchor="w", padx=PAD, pady=2)
+                continue
+            if allow_none:
+                ttk.Radiobutton(block, text="не заявляется (как в бланке)", value="",
+                                variable=variable).pack(anchor="w", padx=PAD, pady=1)
+            for level in levels:
+                ttk.Radiobutton(block, text=level.label, value=level.key,
+                                variable=variable).pack(anchor="w", padx=PAD, pady=1)
+            # Если выбранного уровня у новой СРО нет — сбрасываем на первый.
+            if variable.get() and variable.get() not in [x.key for x in levels]:
+                variable.set(levels[0].key if not allow_none else "")
 
     def _build_result_tab(self) -> ttk.Frame:
         frame = ttk.Frame(self.notebook)
@@ -478,6 +496,7 @@ class Application(tk.Frame):
             return
         self.project.use_sro(dialog.result)
         self._show_sro()
+        self._rebuild_levels()
 
         # Умолчания у разных СРО могут отличаться — подставляем новые
         # только туда, где пользователь ничего не вводил.
