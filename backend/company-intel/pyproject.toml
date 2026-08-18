@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "company-intel"
+version = "0.1.0"
+description = "Автоматический сбор данных о компании (OSINT-агрегатор): реквизиты, контакты, домены, персоны"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "httpx>=0.27",
+    "beautifulsoup4>=4.12",
+    "lxml>=5.0",
+]
+
+[project.optional-dependencies]
+dns = ["dnspython>=2.6"]
+xlsx = ["openpyxl>=3.1"]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.23"]
+
+[project.scripts]
+company-intel = "company_intel.cli:main"
+
+[tool.setuptools]
+packages = ["company_intel", "company_intel.sources"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+# Пакет и хелперы тестов импортируются без установки, из любой директории.
+pythonpath = [".", "tests"]

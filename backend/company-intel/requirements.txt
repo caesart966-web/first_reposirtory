@@ -1,0 +1,9 @@
+# Зависимости company-intel (см. также pyproject.toml).
+httpx>=0.27
+beautifulsoup4>=4.12
+lxml>=5.0
+
+# Опционально:
+# dnspython>=2.6     # MX/TXT/NS-записи (без него — фолбэк на системный resolver)
+# openpyxl>=3.1      # экспорт отчёта в XLSX
+# pytest>=8.0        # тесты

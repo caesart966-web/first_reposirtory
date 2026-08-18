@@ -6,6 +6,11 @@ __pycache__/
 venv/
 .pytest_cache/
 
+# company-intel: ключи API и кэш HTTP-ответов
+backend/company-intel/.env
+backend/company-intel/.cache/
+*.sqlite3
+
 # construction-mcp backend runtime artifacts
 backend/construction-mcp/data/
 *.db
