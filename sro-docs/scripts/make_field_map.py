@@ -31,32 +31,36 @@ HEADER = """# Карта соответствия
 def main() -> int:
     project = Project(ROOT)
     lines = [HEADER]
-
-    for spec in project.enabled_documents():
-        lines.append(f"## {spec.title}\n")
-        lines.append(f"Шаблон: `templates/{spec.template}`\n")
-        lines.append("| Поле данных | Переменная | Место использования |")
-        lines.append("| --- | --- | --- |")
-
-        for name in project.placeholders(spec):
-            info = lookup_variable(name, project.variables) or {}
-            source = info.get("field")
-            if source:
-                field = FIELD_BY_KEY.get(source)
-                label = f"`{source}` — {field.label}" if field else f"`{source}`"
-            else:
-                label = "*не реквизит компании*"
-            lines.append(f"| {label} | `{{{{{name}}}}}` | {info.get('where', '')} |")
-        lines.append("")
-
     used: set[str] = set()
-    for spec in project.enabled_documents():
-        for name in project.placeholders(spec):
-            info = lookup_variable(name, project.variables) or {}
-            if info.get("field"):
-                used.add(info["field"])
 
-    lines.append("## Поля, которые текущим шаблонам не нужны\n")
+    for profile in project.all_sro:
+        lines.append(f"# СРО «{profile.short_name}»\n")
+        if profile.name != profile.short_name:
+            lines.append(f"{profile.name}\n")
+        if not profile.is_ready:
+            lines.append("Бланки ещё не загружены.\n")
+            continue
+
+        project.use_sro(profile, remember=False)
+        for spec in profile.enabled_documents():
+            lines.append(f"## {spec.title}\n")
+            lines.append(f"Шаблон: `sro/{profile.key}/templates/{spec.template}`\n")
+            lines.append("| Поле данных | Переменная | Место использования |")
+            lines.append("| --- | --- | --- |")
+
+            for name in project.placeholders(spec):
+                info = lookup_variable(name, project.variables) or {}
+                source = info.get("field")
+                if source:
+                    used.add(source)
+                    field = FIELD_BY_KEY.get(source)
+                    label = f"`{source}` — {field.label}" if field else f"`{source}`"
+                else:
+                    label = "*не реквизит компании*"
+                lines.append(f"| {label} | `{{{{{name}}}}}` | {info.get('where', '')} |")
+            lines.append("")
+
+    lines.append("# Поля, которые текущим шаблонам не нужны\n")
     lines.append("Программа их читает и хранит — пригодятся будущим документам СРО, —")
     lines.append("но никогда не требует для формирования заявления и доверенности.\n")
     lines.append("| Поле | Название |")

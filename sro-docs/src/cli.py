@@ -3,7 +3,8 @@
 
 Нужен для проверки и для тех случаев, когда окно не открывается.
 
-    python -m src.cli --card input/Карточка.docx
+    python -m src.cli --sro-list                       # какие СРО настроены
+    python -m src.cli --sro СССС --card Карточка.docx
     python -m src.cli --text "ООО «Ромашка» ИНН 7812345678 ..."
     python -m src.cli --card input/Карточка.docx --set actual_address="г. СПб, ..."
     python -m src.cli --map            # карта соответствия полей и переменных
@@ -27,6 +28,7 @@ from .document_generator import (GeneratorError, Project, check_readiness,  # no
 from .models import FIELD_SPECS, CompanyData  # noqa: E402
 from .quality_control import lookup_variable  # noqa: E402
 from .readers import ReadError, read_card  # noqa: E402
+from .sro_registry import SroError  # noqa: E402
 from .validators import validate_company  # noqa: E402
 
 
@@ -67,8 +69,25 @@ def print_readiness(project: Project, company: CompanyData) -> bool:
     return ready
 
 
+def print_sro_list(project: Project) -> None:
+    print("НАСТРОЕННЫЕ САМОРЕГУЛИРУЕМЫЕ ОРГАНИЗАЦИИ\n")
+    for profile in project.all_sro:
+        mark = "→" if profile.key == project.sro.key else " "
+        print(f" {mark} {profile.short_name:<12} {profile.name}")
+        if profile.city:
+            print(f"      город: {profile.city}")
+        print(f"      папка: sro/{profile.key}")
+        for spec in profile.enabled_documents():
+            print(f"      документ: {spec.title}  ({spec.template})")
+        if profile.note:
+            print(f"      примечание: {profile.note}")
+        print()
+    print("«→» — СРО, выбранная сейчас. Сменить: --sro <название>")
+
+
 def print_field_map(project: Project) -> None:
-    print("КАРТА СООТВЕТСТВИЯ: поле данных → переменная → документ → место\n")
+    print(f"КАРТА СООТВЕТСТВИЯ — СРО «{project.sro.short_name}»")
+    print("поле данных → переменная → документ → место\n")
     rows: list[tuple[str, str, str, str]] = []
     for spec in project.enabled_documents():
         for name in project.placeholders(spec):
@@ -83,6 +102,9 @@ def print_field_map(project: Project) -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Заполнение документов на вступление в СРО")
+    parser.add_argument("--sro", help="в какую СРО подаём (название или папка)")
+    parser.add_argument("--sro-list", action="store_true",
+                        help="показать список настроенных СРО")
     parser.add_argument("--card", help="файл карточки компании (DOCX/XLSX/PDF/TXT)")
     parser.add_argument("--text", help="реквизиты обычным текстом")
     parser.add_argument("--set", action="append", default=[], metavar="ПОЛЕ=ЗНАЧЕНИЕ",
@@ -95,15 +117,27 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--verbose", action="store_true", help="подробный вывод")
     args = parser.parse_args(argv)
 
-    project = Project()
+    try:
+        project = Project(sro=args.sro)
+    except (GeneratorError, SroError) as exc:
+        print(f"\n{exc}\n", file=sys.stderr)
+        return 2
     app_logging.setup(project.logs_dir, verbose=args.verbose)
 
+    if args.sro_list:
+        print_sro_list(project)
+        return 0
     if args.map:
         print_field_map(project)
         return 0
 
     if not args.card and not args.text and not args.set:
         parser.error("укажите --card, --text или хотя бы одно --set")
+
+    print()
+    print(f"СРО: {project.sro.name}")
+    if project.sro.note:
+        print(f"     {project.sro.note}")
 
     company = project.new_company()
     notes: list[str] = []

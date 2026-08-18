@@ -25,28 +25,18 @@ from datetime import date
 from pathlib import Path
 
 from . import app_logging
-from .context_builder import ContextResult, build_context, load_attorney
+from .context_builder import ContextResult, build_context
 from .docx_engine import TemplateError, fill_template, scan_placeholders
 from .models import FIELD_BY_KEY, CompanyData
 from .quality_control import (QualityReport, check_document, lookup_variable,
                               required_variables_for)
+from .sro_registry import DocumentSpec, SroError, SroProfile, discover, find
 
 WINDOWS_FORBIDDEN = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 
 
 class GeneratorError(Exception):
     """Ошибка формирования документов с текстом для пользователя."""
-
-
-@dataclass
-class DocumentSpec:
-    """Описание документа из config/documents.json."""
-
-    id: str
-    title: str
-    template: str
-    output_name: str
-    enabled: bool = True
 
 
 @dataclass
@@ -79,42 +69,100 @@ class GenerationResult:
 
 
 class Project:
-    """Пути, настройки и шаблоны проекта."""
+    """Пути, общие настройки и ВЫБРАННАЯ саморегулируемая организация.
 
-    def __init__(self, root: Path | str | None = None) -> None:
+    Всё, что зависит от СРО (бланки, документы, доверенное лицо, умолчания),
+    берётся из профиля `self.sro`. Всё общее (карта переменных, папка вывода)
+    — из config/app.json. Смена СРО делается методом `use_sro()`.
+    """
+
+    def __init__(self, root: Path | str | None = None,
+                 sro: str | SroProfile | None = None) -> None:
         self.root = Path(root) if root else Path(__file__).resolve().parent.parent
         self.config_dir = self.root / "config"
-        self.templates_dir = self.root / "templates"
         self.logs_dir = self.root / "logs"
 
-        self.documents_config = self._load_json("documents.json")
+        self.app_config = self._load_json("app.json", required=False)
         self.variables = self._load_json("variables.json").get("variables", {})
-        self.output_root = self.root / self.documents_config.get("output_root", "output")
-        self.defaults = {
-            key: str(value)
-            for key, value in self.documents_config.get("defaults", {}).items()
-            if not key.startswith("_")
-        }
-        self.auto_fill = {
-            key: str(value)
-            for key, value in self.documents_config.get("auto_fill", {}).items()
-            if not key.startswith("_")
-        }
+        self.output_root = self.root / self.app_config.get("output_root", "output")
 
-        self.documents: list[DocumentSpec] = []
-        for item in self.documents_config.get("documents", []):
-            self.documents.append(DocumentSpec(
-                id=item["id"],
-                title=item["title"],
-                template=item["template"],
-                output_name=item.get("output_name", item["template"]),
-                enabled=bool(item.get("enabled", True)),
-            ))
+        self.all_sro: list[SroProfile] = discover(self.root)
+        self.sro: SroProfile = self._choose(sro)
+
+    # ------------------------------------------------------------------ СРО
+    def _choose(self, wanted: str | SroProfile | None) -> SroProfile:
+        """Какую СРО использовать.
+
+        Если СРО названа явно, а такой нет — это ОШИБКА, а не повод молча
+        взять запомненную: иначе документы уедут не в ту СРО.
+        Запомненный выбор используется, только когда явного нет.
+        """
+        if isinstance(wanted, SroProfile):
+            return wanted
+
+        if wanted:
+            found = find(self.all_sro, str(wanted))
+            if found is not None:
+                return found
+            names = ", ".join(f"«{p.short_name}»" for p in self.all_sro)
+            raise GeneratorError(
+                f"СРО «{wanted}» не найдена.\n"
+                f"Доступны: {names}"
+            )
+
+        remembered = self.app_config.get("last_sro")
+        if remembered:
+            found = find(self.all_sro, str(remembered))
+            if found is not None:
+                return found
+        return self.all_sro[0]
+
+    def use_sro(self, wanted: str | SroProfile, remember: bool = True) -> SroProfile:
+        """Переключиться на другую СРО.
+
+        `remember=False` — временное переключение без записи в настройки
+        (нужно служебным скриптам, которые обходят все СРО подряд).
+        """
+        self.sro = self._choose(wanted)
+        if remember:
+            self.remember_sro()
+        return self.sro
+
+    def remember_sro(self) -> None:
+        """Записать выбранную СРО в config/app.json — чтобы не выбирать каждый раз."""
+        path = self.config_dir / "app.json"
+        try:
+            data = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+            data["last_sro"] = self.sro.key
+            path.write_text(
+                json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        except (OSError, json.JSONDecodeError) as exc:
+            # Не смертельно: в следующий раз просто спросим заново.
+            app_logging.get().warning("Не удалось запомнить выбор СРО: %s", exc)
+
+    # ---------------------------------------------------- свойства выбранной СРО
+    @property
+    def templates_dir(self) -> Path:
+        return self.sro.templates_dir
+
+    @property
+    def defaults(self) -> dict[str, str]:
+        return self.sro.defaults
+
+    @property
+    def auto_fill(self) -> dict[str, str]:
+        return self.sro.auto_fill
+
+    @property
+    def documents(self) -> list[DocumentSpec]:
+        return self.sro.documents
 
     # ------------------------------------------------------------------
-    def _load_json(self, name: str) -> dict:
+    def _load_json(self, name: str, required: bool = True) -> dict:
         path = self.config_dir / name
         if not path.exists():
+            if not required:
+                return {}
             raise GeneratorError(
                 f"Не найден файл настроек «{name}» в папке config.\n"
                 f"Восстановите его из архива программы."
@@ -175,7 +223,8 @@ class Project:
         path = self.template_path(spec)
         if not path.exists():
             raise GeneratorError(
-                f"Не найден шаблон «{spec.template}» для документа «{spec.title}».\n"
+                f"Не найден шаблон «{spec.template}» для документа «{spec.title}»\n"
+                f"СРО «{self.sro.short_name}».\n"
                 f"Положите файл в папку: {self.templates_dir}"
             )
         try:
@@ -184,7 +233,10 @@ class Project:
             raise GeneratorError(str(exc)) from exc
 
     def attorney(self) -> dict[str, str]:
-        return load_attorney(self.config_dir)
+        try:
+            return self.sro.attorney()
+        except SroError as exc:
+            raise GeneratorError(str(exc)) from exc
 
 
 # ---------------------------------------------------------------- готовность
@@ -193,6 +245,8 @@ def check_readiness(project: Project, company: CompanyData,
     """Каких обязательных данных не хватает для каждого документа."""
     documents = documents if documents is not None else project.enabled_documents()
     results: list[Readiness] = []
+    if not documents:
+        return results
 
     for spec in documents:
         readiness = Readiness(spec)
@@ -216,15 +270,30 @@ def check_readiness(project: Project, company: CompanyData,
     return results
 
 
-def company_folder_name(company: CompanyData) -> str:
-    """«9701329181_ООО ТЭС» — имя папки, безопасное для Windows."""
-    name = company.short_name or company.full_name or "Без названия"
-    name = name.replace("«", "").replace("»", "").replace('"', "")
+def safe_folder_name(name: str, fallback: str = "Без названия") -> str:
+    """Имя папки, безопасное для Windows."""
+    name = (name or "").replace("«", "").replace("»", "").replace('"', "")
     name = WINDOWS_FORBIDDEN.sub(" ", name)
     name = re.sub(r"\s+", " ", name).strip(" .")
+    return name[:120] or fallback
+
+
+def company_folder_name(company: CompanyData) -> str:
+    """«9701329181_ООО ТЭС» — папка компании."""
+    name = safe_folder_name(company.short_name or company.full_name)
     inn = re.sub(r"\D", "", company.inn) or "без_ИНН"
-    folder = f"{inn}_{name}".strip("_ ")
-    return folder[:120] or "Без названия"
+    return f"{inn}_{name}".strip("_ ")[:120] or "Без названия"
+
+
+def output_folder(project: "Project", company: CompanyData) -> Path:
+    """Папка результата: output / компания / СРО.
+
+    Компания сверху, потому что одну и ту же компанию нередко подают
+    в несколько СРО — так все её документы лежат рядом.
+    """
+    return (project.output_root
+            / company_folder_name(company)
+            / safe_folder_name(project.sro.short_name, "СРО"))
 
 
 # ---------------------------------------------------------------- генерация
@@ -239,8 +308,12 @@ def generate(project: Project, company_input: CompanyData,
     company = company_input.copy()
     result_notes = project.apply_auto_fill(company)
     documents = documents if documents is not None else project.enabled_documents()
+    note = project.sro.readiness_note()
+    if note:
+        raise GeneratorError(note)
     if not documents:
-        raise GeneratorError("В настройках не включён ни один документ.")
+        raise GeneratorError(
+            f"У СРО «{project.sro.short_name}» не включён ни один документ.")
 
     result = GenerationResult()
     result.notes.extend(result_notes)
@@ -271,10 +344,11 @@ def generate(project: Project, company_input: CompanyData,
 
     context: ContextResult = build_context(company, project.attorney(), today=today)
     result.notes.extend(context.notes)
-    log.info("Формирование документов: %s", app_logging.safe_company(company))
+    log.info("Формирование документов для СРО «%s»: %s",
+             project.sro.short_name, app_logging.safe_company(company))
     log.debug("Переменные: %s", app_logging.safe_values(context.values))
 
-    folder = project.output_root / company_folder_name(company)
+    folder = output_folder(project, company)
     try:
         folder.mkdir(parents=True, exist_ok=True)
     except OSError as exc:

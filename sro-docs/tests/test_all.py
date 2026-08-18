@@ -431,7 +431,9 @@ class TestGeneration(unittest.TestCase):
         self.assertEqual(len(result.created), 2)
         names = sorted(p.name for p in result.created)
         self.assertEqual(names, ["01_Заявление_о_вступлении.docx", "02_Доверенность.docx"])
-        self.assertEqual(result.folder.name, "7812345675_ООО Ромашка")
+        # Папка результата: компания / СРО
+        self.assertEqual(result.folder.name, "СССС")
+        self.assertEqual(result.folder.parent.name, "7812345675_ООО Ромашка")
 
         application = extract_all_text(result.folder / "01_Заявление_о_вступлении.docx")
         self.assertIn("Общество с ограниченной ответственностью «Ромашка-Строй»; "
@@ -535,18 +537,98 @@ class TestGeneration(unittest.TestCase):
         self.assertTrue(name.startswith("7812345675_"))
 
 
+class TestMultipleSro(unittest.TestCase):
+    """Работа с несколькими саморегулируемыми организациями."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.project = Project(ROOT)
+        self.project.output_root = self.tmp / "out"
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def test_all_declared_sro_are_found(self):
+        keys = {p.key for p in self.project.all_sro}
+        self.assertIn("СССС", keys)
+        self.assertGreaterEqual(len(keys), 2, "должно быть найдено больше одной СРО")
+
+    def test_every_sro_profile_is_readable(self):
+        for profile in self.project.all_sro:
+            with self.subTest(sro=profile.key):
+                self.assertTrue(profile.short_name)
+                self.assertTrue(profile.name)
+                self.assertIsInstance(profile.documents, list)
+
+    def test_sro_can_be_found_by_name_or_folder(self):
+        from src.sro_registry import find
+        for wanted in ("СССС", "сссс", "Ассоциация «Строительный союз Северной столицы»"):
+            with self.subTest(wanted=wanted):
+                self.assertIsNotNone(find(self.project.all_sro, wanted))
+        self.assertIsNone(find(self.project.all_sro, "такой СРО не существует"))
+
+    def test_unknown_sro_is_reported(self):
+        with self.assertRaises(GeneratorError) as ctx:
+            Project(ROOT, sro="СРО-которой-нет")
+        self.assertIn("не найдена", str(ctx.exception))
+
+    def test_sro_without_templates_is_not_ready(self):
+        pending = [p for p in self.project.all_sro if not p.is_ready]
+        self.assertTrue(pending, "ожидались СРО, для которых бланки ещё не загружены")
+        for profile in pending:
+            with self.subTest(sro=profile.key):
+                note = profile.readiness_note()
+                self.assertIn("бланки", note.lower())
+                self.assertIn(str(profile.templates_dir), note)
+
+    def test_generation_blocked_without_templates(self):
+        pending = next(p for p in self.project.all_sro if not p.is_ready)
+        self.project.use_sro(pending, remember=False)
+        with self.assertRaises(GeneratorError) as ctx:
+            generate(self.project, make_company(ALPHA), make_pdf=False)
+        self.assertIn("бланки", str(ctx.exception).lower())
+
+    def test_documents_land_in_sro_subfolder(self):
+        self.project.use_sro("СССС", remember=False)
+        result = generate(self.project, make_company(ALPHA), make_pdf=False)
+        self.assertTrue(result.ok, [r.problems for r in result.quality])
+        self.assertEqual(result.folder.name, "СССС")
+        self.assertEqual(result.folder.parent.name, "7812345675_ООО Ромашка")
+
+    def test_switching_sro_does_not_leak_settings(self):
+        """У каждой СРО свои бланки, документы и доверенное лицо."""
+        ready = [p for p in self.project.all_sro if p.is_ready]
+        pending = [p for p in self.project.all_sro if not p.is_ready]
+        self.project.use_sro(ready[0], remember=False)
+        self.assertTrue(self.project.enabled_documents())
+        self.assertTrue(self.project.attorney())
+        self.project.use_sro(pending[0], remember=False)
+        self.assertEqual(self.project.enabled_documents(), [])
+        self.assertEqual(self.project.attorney(), {})
+        self.assertNotEqual(self.project.templates_dir, ready[0].templates_dir)
+
+    def test_remembered_choice_is_restored(self):
+        self.project.use_sro("СССС")
+        self.assertEqual(Project(ROOT).sro.key, "СССС")
+
+
 class TestProjectConfig(unittest.TestCase):
     def test_every_placeholder_is_described(self):
         """Каждая переменная шаблонов должна быть описана в config/variables.json."""
         from src.quality_control import lookup_variable
 
         project = Project(ROOT)
-        for spec in project.enabled_documents():
-            for name in project.placeholders(spec):
-                with self.subTest(document=spec.title, variable=name):
-                    self.assertIsNotNone(
-                        lookup_variable(name, project.variables),
-                        f"переменная {{{{{name}}}}} не описана в config/variables.json")
+        for profile in project.all_sro:
+            if not profile.is_ready:
+                continue
+            project.use_sro(profile, remember=False)
+            for spec in profile.enabled_documents():
+                for name in project.placeholders(spec):
+                    with self.subTest(sro=profile.key, document=spec.title, variable=name):
+                        self.assertIsNotNone(
+                            lookup_variable(name, project.variables),
+                            f"переменная {{{{{name}}}}} не описана "
+                            f"в config/variables.json")
 
     def test_power_of_attorney_number_default(self):
         """По принятому порядку все доверенности выдаются без номера."""
@@ -635,8 +717,13 @@ class TestProjectConfig(unittest.TestCase):
 
     def test_templates_exist(self):
         project = Project(ROOT)
-        for spec in project.enabled_documents():
-            self.assertTrue(project.template_path(spec).exists(), spec.template)
+        for profile in project.all_sro:
+            if not profile.is_ready:
+                continue
+            project.use_sro(profile, remember=False)
+            for spec in profile.enabled_documents():
+                self.assertTrue(project.template_path(spec).exists(),
+                                f"{profile.key}: {spec.template}")
 
 
 if __name__ == "__main__":

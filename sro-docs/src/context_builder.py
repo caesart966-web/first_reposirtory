@@ -12,11 +12,9 @@
 
 from __future__ import annotations
 
-import json
 import re
 from dataclasses import dataclass, field
 from datetime import date
-from pathlib import Path
 
 from . import morphology
 from .company_parser import split_company_name
@@ -65,18 +63,6 @@ class ContextResult:
     values: dict[str, str] = field(default_factory=dict)
     confirmations: list[Confirmation] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
-
-
-def load_attorney(config_dir: Path) -> dict[str, str]:
-    """Данные представителя Ассоциации из config/attorney.json."""
-    path = Path(config_dir) / "attorney.json"
-    if not path.exists():
-        raise FileNotFoundError(
-            f"Не найден файл настроек {path}. Он содержит данные доверенного лица "
-            f"для доверенности."
-        )
-    data = json.loads(path.read_text(encoding="utf-8"))
-    return {k: str(v) for k, v in data.items() if not k.startswith("_")}
 
 
 def _digits(value: str) -> str:

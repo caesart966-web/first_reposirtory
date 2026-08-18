@@ -32,6 +32,7 @@ from .document_generator import (GeneratorError, Project, check_readiness,  # no
                                  generate)
 from .models import FIELD_SPECS, CompanyData  # noqa: E402
 from .readers import SUPPORTED_SUFFIXES, ReadError, read_card  # noqa: E402
+from .sro_registry import SroError  # noqa: E402
 from .validators import validate_company  # noqa: E402
 
 TITLE = "Документы для вступления в СРО"
@@ -104,6 +105,68 @@ class ConfirmDialog(tk.Toplevel):
         self.destroy()
 
 
+class SroDialog(tk.Toplevel):
+    """Окно выбора саморегулируемой организации."""
+
+    def __init__(self, master, profiles, current=None) -> None:
+        super().__init__(master)
+        self.title("Выбор СРО")
+        self.transient(master)
+        self.grab_set()
+        self.resizable(False, False)
+        self.result = None
+        self._profiles = list(profiles)
+
+        ttk.Label(self, text="В какую СРО подаём документы?",
+                  font=("Segoe UI", 11, "bold")).pack(
+            anchor="w", padx=PAD * 2, pady=(PAD * 2, 0))
+        ttk.Label(self, wraplength=560, justify=LEFT, foreground="#40474f",
+                  text="Выбор запоминается — в следующий раз программа откроется сразу с ним.").pack(
+            anchor="w", padx=PAD * 2, pady=(2, PAD))
+
+        body = ttk.Frame(self)
+        body.pack(fill=BOTH, expand=True, padx=PAD * 2)
+
+        self._choice = tk.StringVar(value=(current.key if current else
+                                           self._profiles[0].key))
+        for profile in self._profiles:
+            row = ttk.Frame(body)
+            row.pack(fill=X, pady=3)
+            ttk.Radiobutton(row, text=profile.short_name, value=profile.key,
+                            variable=self._choice, width=24).pack(side=LEFT, anchor="n")
+            details = ttk.Frame(row)
+            details.pack(side=LEFT, fill=X, expand=True)
+            title = profile.name if profile.name != profile.short_name else ""
+            if title:
+                ttk.Label(details, text=title, wraplength=380,
+                          justify=LEFT).pack(anchor="w")
+            if profile.is_ready:
+                count = len(profile.enabled_documents())
+                ttk.Label(details, text=f"бланки загружены, документов: {count}",
+                          foreground="#1c6b1c").pack(anchor="w")
+            else:
+                ttk.Label(details, text="бланки ещё не загружены",
+                          foreground="#8a5a00").pack(anchor="w")
+
+        buttons = ttk.Frame(self)
+        buttons.pack(fill=X, padx=PAD * 2, pady=PAD * 2)
+        ttk.Button(buttons, text="Отмена", command=self._cancel).pack(side=RIGHT)
+        ttk.Button(buttons, text="Выбрать", command=self._accept).pack(
+            side=RIGHT, padx=PAD)
+
+        self.protocol("WM_DELETE_WINDOW", self._cancel)
+        self.wait_window(self)
+
+    def _accept(self) -> None:
+        key = self._choice.get()
+        self.result = next((p for p in self._profiles if p.key == key), None)
+        self.destroy()
+
+    def _cancel(self) -> None:
+        self.result = None
+        self.destroy()
+
+
 class Application(tk.Frame):
     def __init__(self, master: tk.Tk, project: Project) -> None:
         super().__init__(master)
@@ -117,9 +180,17 @@ class Application(tk.Frame):
 
         self.pack(fill=BOTH, expand=True)
         self._build()
+        self._show_sro()
 
     # ------------------------------------------------------------ разметка
     def _build(self) -> None:
+        top = ttk.Frame(self)
+        top.pack(fill=X, padx=PAD, pady=(PAD, 0))
+        ttk.Label(top, text="СРО:", font=("Segoe UI", 9, "bold")).pack(side=LEFT)
+        self.sro_label = ttk.Label(top, text="")
+        self.sro_label.pack(side=LEFT, padx=(4, PAD))
+        ttk.Button(top, text="Сменить СРО…", command=self.on_change_sro).pack(side=LEFT)
+
         self.notebook = ttk.Notebook(self)
         self.notebook.pack(fill=BOTH, expand=True, padx=PAD, pady=PAD)
 
@@ -392,6 +463,40 @@ class Application(tk.Frame):
         self.notebook.select(1)
         self.on_check(silent=True)
 
+    def _show_sro(self) -> None:
+        """Обновить строку с текущей СРО."""
+        profile = self.project.sro
+        if profile.is_ready:
+            self.sro_label.configure(text=profile.label, foreground="black")
+        else:
+            self.sro_label.configure(text=f"{profile.label} — бланки не загружены",
+                                     foreground="#8a5a00")
+
+    def on_change_sro(self) -> None:
+        dialog = SroDialog(self.master, self.project.all_sro, self.project.sro)
+        if dialog.result is None or dialog.result.key == self.project.sro.key:
+            return
+        self.project.use_sro(dialog.result)
+        self._show_sro()
+
+        # Умолчания у разных СРО могут отличаться — подставляем новые
+        # только туда, где пользователь ничего не вводил.
+        self._read_form()
+        for key, value in self.project.defaults.items():
+            if not self.company.get(key):
+                self.company.set(key, value)
+        self._write_form()
+
+        note = self.project.sro.readiness_note()
+        if note:
+            messagebox.showwarning(TITLE, note)
+            self._set_status(f"СРО «{self.project.sro.short_name}»: "
+                             f"бланки не загружены.", "#8a5a00")
+            return
+        self._set_status(f"Выбрана СРО «{self.project.sro.short_name}». "
+                         f"Проверьте реквизиты и формируйте документы.", "#1c6b1c")
+        self.on_check(silent=True)
+
     def on_copy_address(self) -> None:
         self._read_form()
         self.company.set("actual_address", self.company.legal_address)
@@ -403,6 +508,14 @@ class Application(tk.Frame):
 
     # ------------------------------------------------------------ проверка
     def on_check(self, silent: bool = False) -> bool:
+        note = self.project.sro.readiness_note()
+        if note:
+            if not silent:
+                messagebox.showwarning(TITLE, note)
+            self._set_status(f"СРО «{self.project.sro.short_name}»: "
+                             f"бланки не загружены.", "#8a5a00")
+            return False
+
         self._read_form()
         auto_filled = self.project.apply_auto_fill(self.company)
         if auto_filled:
@@ -411,7 +524,10 @@ class Application(tk.Frame):
         for key, label in self.labels.items():
             label.configure(foreground="black")
 
-        lines: list[str] = ["КАРТОЧКА КОМПАНИИ", "=" * 60]
+        lines: list[str] = [f"СРО: {self.project.sro.name}"]
+        if self.project.sro.note:
+            lines.append(f"     {self.project.sro.note}")
+        lines += ["", "КАРТОЧКА КОМПАНИИ", "=" * 60]
         lines.append(f"Компания: {self.company.short_name or '(не заполнено)'}")
         lines.append(f"Полное наименование: {self.company.full_name or '(не заполнено)'}")
         lines.append(f"ИНН: {self.company.inn or '(не заполнено)'}")
@@ -582,7 +698,7 @@ class Application(tk.Frame):
 def main() -> int:
     try:
         project = Project()
-    except GeneratorError as exc:
+    except (GeneratorError, SroError) as exc:
         root = tk.Tk()
         root.withdraw()
         messagebox.showerror(TITLE, str(exc))
@@ -604,7 +720,23 @@ def main() -> int:
     except tk.TclError:
         pass
 
-    Application(root, project)
+    # Настроена одна СРО — спрашивать не о чем.
+    if len(project.all_sro) > 1:
+        root.withdraw()
+        chosen = SroDialog(root, project.all_sro, project.sro).result
+        root.deiconify()
+        if chosen is None:
+            root.destroy()
+            return 0
+        project.use_sro(chosen)
+
+    application = Application(root, project)
+    note = project.sro.readiness_note()
+    if note:
+        messagebox.showwarning(TITLE, note)
+        application._set_status(
+            f"СРО «{project.sro.short_name}»: бланки не загружены.", "#8a5a00")
+
     root.mainloop()
     return 0
 

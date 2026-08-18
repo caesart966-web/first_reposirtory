@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
-"""Разметка исходных шаблонов: пропуски «_____» → переменные {{...}}.
+"""Разметка бланков СРО «СССС»: пропуски «_____» → переменные {{...}}.
 
-Запускается ОДИН раз (и повторно, если СРО пришлёт новую редакцию бланка):
+Запускается ОДИН раз (и повторно, если Ассоциация пришлёт новую редакцию):
 
     python scripts/prepare_templates.py
+
+ЭТОТ СКРИПТ НУЖЕН ТОЛЬКО ДЛЯ «СССС». Её бланки пришли как пустые формы
+с подчёркиваниями, и разметка делалась хирургически — по номеру абзаца
+и фрагмента. Для НОВОЙ СРО так делать не нужно: откройте её бланк в Word
+и впишите переменные вида {{inn}} руками, программа их поймёт.
 
 Что делает:
   * читает нетронутые оригиналы из templates/_originals/;
@@ -464,11 +469,17 @@ def prepare(source: Path, target: Path, ops: list[dict]) -> None:
     temp.replace(target)
 
 
-def main() -> int:
-    originals = ROOT / "templates" / "_originals"
-    output = ROOT / "templates"
+SRO_FOLDER = ROOT / "sro" / "СССС"
 
-    print("Разметка шаблонов")
+
+def main() -> int:
+    originals = SRO_FOLDER / "templates" / "_originals"
+    output = SRO_FOLDER / "templates"
+    if not originals.exists():
+        print(f"Не найдена папка с оригиналами: {originals}")
+        return 1
+
+    print("Разметка бланков СРО «СССС»")
     print("=" * 60)
     for source_name, target_name, ops in TEMPLATES:
         source = originals / source_name
