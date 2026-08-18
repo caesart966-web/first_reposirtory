@@ -127,7 +127,8 @@ def op_regex(paragraph: int, pattern: str, replacement: str,
             "replacement": replacement, "tab_pos": tab_pos}
 
 
-def op_blank(paragraph, nodes: list[int] | None, new: str) -> dict:
+def op_blank(paragraph, nodes: list[int] | None, new: str,
+             newline: bool = False) -> dict:
     """Пропуск «______» заменить значением, не считая подчёркивания вручную.
 
     Проверяет, что перечисленные фрагменты состоят ТОЛЬКО из подчёркиваний
@@ -137,8 +138,41 @@ def op_blank(paragraph, nodes: list[int] | None, new: str) -> dict:
 
     `nodes=None` — найти пропуски в абзаце самому. Удобно там, где подпись
     к строке и сама строка лежат в одном абзаце.
+
+    `newline=True` — начать значение с новой строки. Нужно там, где пропуск
+    идёт сразу за подписью к строке выше: в пустом бланке подчёркивания сами
+    переносятся и выглядят отдельной строкой, а короткое значение иначе
+    прилипало бы к подписи.
     """
-    return {"kind": "blank", "p": paragraph, "nodes": nodes, "new": new}
+    return {"kind": "blank", "p": paragraph, "nodes": nodes, "new": new,
+            "newline": newline}
+
+
+def op_line(paragraph, new: str) -> dict:
+    """Написать значение в пустом абзаце, у которого строка нарисована рамкой.
+
+    В некоторых бланках место под запись сделано не подчёркиваниями, а пустым
+    абзацем с нижней границей. Писать туда нечего заменять, поэтому фрагмент
+    создаётся заново и наследует оформление знака абзаца.
+
+    Проверяет, что абзац действительно пуст: если в бланке там появился текст,
+    разметка остановится, а не затрёт его.
+    """
+    return {"kind": "line", "p": paragraph, "new": new}
+
+
+def op_add_line(paragraph, expected: str, new: str) -> dict:
+    """Дописать значение отдельной строкой сразу после указанного абзаца.
+
+    Нужно там, где в бланке есть подпись к строке, а самой строки нет:
+    у «СФЕР» в п.7 три подписи, но мест для записи только два. Новый абзац
+    полностью повторяет свойства предыдущего (отступы, шрифт, подчёркивание
+    рамкой), поэтому строка выглядит так же, как соседние.
+
+    `expected` — образец текста абзаца-ориентира: если бланк изменится,
+    разметка остановится, а не допишет строку не туда.
+    """
+    return {"kind": "add_line", "p": paragraph, "expected": expected, "new": new}
 
 
 def op_pad(paragraph: int, nodes: list[int], position: int) -> dict:
@@ -414,20 +448,25 @@ def sfera_application_ops(levels: int) -> list[dict]:
         op_regex(40, r"^_+$", "{{legal_address_street}}"),
         op_blank(42, None, "{{legal_address_house}}"),
 
-        # --- п.5 и п.6: адрес целиком одной строкой ---
-        # Здесь бланк устроен иначе: подпись к строке и вторая строка лежат
-        # в ОДНОМ абзаце, и «дом 35…» прилипал бы к концу подписи. Поэтому
-        # пишем адрес целиком в первую строку, вторую оставляем пустой.
-        op_regex(45, r"^_+$", "{{actual_address}}"),
-        op_blank(46, None, ""),
-        op_regex(48, r"^_+$", "{{postal_address}}"),
-        op_blank(49, None, ""),
+        # --- п.5 фактический и п.6 почтовый адрес ---
+        # Здесь бланк устроен цепочкой: подпись к строке и СЛЕДУЮЩАЯ строка
+        # лежат в одном абзаце. Пропуск с новой строки (newline) разрезает
+        # абзац, поэтому «дом 35…» встаёт отдельной строкой, как в п.4,
+        # а подпись не расползается пробелами по ширине.
+        op_regex(45, r"^_+$", "{{actual_address_street}}"),
+        op_blank(46, None, "{{actual_address_house}}", newline=True),
+        op_regex(48, r"^_+$", "{{postal_address_street}}"),
+        op_blank(49, None, "{{postal_address_house}}", newline=True),
 
-        # --- п.7 контакты: строка руководителя и строка контактного лица ---
+        # --- п.7 контакты: три строки ---
+        # Руководитель; контактное лицо (это тот же директор); контакты
+        # организации. Под третью подпись в бланке места нет — дописываем
+        # строку сами, с теми же отступами и подчёркиванием рамкой.
         op_regex(52, r"^_+$", "{{director_contact_line}}"),
         # В этом абзаце подпись к строке набрана другим шрифтом, чем сама
         # строка, поэтому переписываем только фрагменты с подчёркиваниями.
-        op_blank(53, [10, 11, 12], "{{director_contact_line}}"),
+        op_blank(53, [10, 11, 12], "{{director_contact_line}}", newline=True),
+        op_add_line(54, r"контактного лица$", "{{company_contact_line}}"),
 
         # --- п.8 виды объектов ---
         op_mark(3, 1, 1, "", "{{mark_object_ordinary}}", size=32),
@@ -444,6 +483,64 @@ def sfera_application_ops(levels: int) -> list[dict]:
         op_regex(r"^Подпись уполномоченного лица организации",
                  r"/_+/$", "/{{director_short_name}}/"),
     ]
+
+
+# ============================================================ ЗАЯВЛЕНИЕ ЯРД
+# Того же семейства, что и заявления «СФЕР», но клеток под ИНН и ОГРН больше:
+# бланк рассчитан на предпринимателя (ИНН 12 знаков, ОГРНИП 15). У юрлица
+# знаков меньше, лишние клетки остаются пустыми.
+YARD_APPLICATION_OPS: list[dict] = [
+    # --- шапка: исходящий номер и дата ---
+    op_regex(r"^№__от «_____» ___________20__ г\.$",
+             r"^№__от «_____» ___________20__ г\.$",
+             "№ {{doc_number}} от «{{doc_day}}» {{doc_month_name}} {{doc_year}} г."),
+
+    # --- п.1 ИНН (12 клеток) и п.2 ОГРНИП (15 клеток) ---
+    *[op_cell(1, 0, i, "", "{{inn_d%d}}" % (i + 1)) for i in range(12)],
+    *[op_cell(2, 0, i, "", "{{ogrn_d%d}}" % (i + 1)) for i in range(15)],
+
+    # --- п.3 наименование ---
+    # В бланке пропуск идёт впритык к подписи («…дата его рождения__»),
+    # поэтому наименование пишем на отдельную строку ниже, а короткий
+    # пропуск у подписи очищаем.
+    op_blank(42, None, ""),
+    op_blank(43, None, "{{company_full_name}}"),
+
+    # --- п.4 юридический адрес: две отдельные строки ---
+    op_regex(45, r"^_+$", "{{legal_address_street}}"),
+    op_blank(47, None, "{{legal_address_house}}"),
+
+    # --- п.5 фактический и п.6 почтовый адрес ---
+    # Бланк устроен цепочкой: строка, затем абзац «подпись к строке выше +
+    # следующая строка». Поэтому вторая строка адреса лежит в хвосте абзаца
+    # с подписью. Делим адрес так же, как в п.4: улица сверху, дом снизу.
+    op_regex(50, r"^_+$", "{{actual_address_street}}"),
+    op_blank(51, None, "{{actual_address_house}}", newline=True),
+    op_regex(53, r"^_+$", "{{postal_address_street}}"),
+    op_blank(54, None, "{{postal_address_house}}", newline=True),
+
+    # --- п.7 контакты: три строки ---
+    # руководитель; контактное лицо (это тот же директор); контакты организации.
+    # Третья строка — пустой абзац, подчёркнутый рамкой, а не подчёркиваниями.
+    op_regex(57, r"^_+$", "{{director_contact_line}}"),
+    op_blank(58, None, "{{director_contact_line}}", newline=True),
+    op_line(60, "{{company_contact_line}}"),
+
+    # --- п.8 виды объектов ---
+    op_mark(3, 1, 1, "V", "{{mark_object_ordinary}}", size=32),
+    op_mark(3, 2, 1, "", "{{mark_object_hazardous}}", size=32),
+    op_mark(3, 3, 1, "", "{{mark_object_nuclear}}", size=32),
+
+    # --- п.9 и п.10 уровни ответственности (четыре) ---
+    op_mark(4, 1, 3, "V", "{{mark_harm_level1}}", size=36),
+    *[op_mark(4, n, 3, "", "{{mark_harm_level%d}}" % n, size=36) for n in (2, 3, 4)],
+    *[op_mark(5, n, 3, "", "{{mark_contract_level%d}}" % n, size=36)
+      for n in (1, 2, 3, 4)],
+
+    # --- подпись ---
+    op_regex(r"^Подпись уполномоченного лица организации",
+             r"/_+/$", "/{{director_short_name}}/"),
+]
 
 
 # ============================================================ ДОВЕРЕННОСТЬ ЯРД
@@ -516,6 +613,7 @@ TEMPLATES: dict[str, list[tuple]] = {
         ("Доверенность_ОРИГИНАЛ.docx", "02_Доверенность.docx", SFERA_POWER_OPS),
     ],
     "ЯРД": [
+        ("Заявление_ОРИГИНАЛ.docx", "01_Заявление.docx", YARD_APPLICATION_OPS),
         ("Доверенность_ОРИГИНАЛ.docx", "02_Доверенность.docx", YARD_POWER_OPS),
     ],
 }
@@ -593,6 +691,42 @@ def _emphasize(node, size: int) -> None:
         element.set(W + "val", str(size))
 
 
+def _own_tabs(paragraph) -> list:
+    """Все <w:tab/> этого абзаца, НЕ считая вложенных абзацев."""
+    found: list = []
+
+    def walk(node) -> None:
+        for child in node:
+            if child.tag == W + "p":
+                continue
+            if child.tag == W + "tab":
+                found.append(child)
+            else:
+                walk(child)
+
+    walk(paragraph)
+    return found
+
+
+def _joined_with_tabs(paragraph) -> str:
+    """Текст абзаца так, как его видит человек: с табуляциями как \t."""
+    parts: list[str] = []
+
+    def walk(node) -> None:
+        for child in node:
+            if child.tag == W + "p":
+                continue
+            if child.tag == W + "t":
+                parts.append(child.text or "")
+            elif child.tag == W + "tab":
+                parts.append("\t")
+            else:
+                walk(child)
+
+    walk(paragraph)
+    return "".join(parts)
+
+
 def _write_with_tabs(node, text: str) -> None:
     """Записать текст, превратив \t в настоящие табуляции внутри фрагмента."""
     parts = text.split("\t")
@@ -651,6 +785,62 @@ def _cell_layout(cell):
             _own_text_nodes(paragraphs[target_index]), others)
 
 
+def _is_blank(text: str | None) -> bool:
+    """Это пропуск под запись — «______», а не обычный текст?
+
+    Обязательно хотя бы одно подчёркивание: фрагмент из одних пробелов
+    пропуском не считается. Иначе автопоиск пропусков цеплял пробел между
+    словами подписи и значение уезжало в середину строки.
+    """
+    text = text or ""
+    return "_" in text and not text.strip(" _")
+
+
+def _add_paragraph_after(root, paragraph, text: str) -> None:
+    """Вставить новый абзац сразу после указанного, повторив его свойства."""
+    parents = {child: node for node in root.iter() for child in node}
+    body = parents.get(paragraph)
+    if body is None:
+        raise PrepareError("добавление строки: не найден родитель абзаца")
+    new_paragraph = etree.Element(W + "p")
+    p_pr = paragraph.find(W + "pPr")
+    if p_pr is not None:
+        new_paragraph.append(etree.fromstring(etree.tostring(p_pr)))
+    _make_run(new_paragraph, text)
+    body.insert(list(body).index(paragraph) + 1, new_paragraph)
+
+
+def _split_paragraph(root, paragraph, text_node) -> None:
+    """Разрезать абзац перед фрагментом на два абзаца.
+
+    Нужно там, где бланк держит подпись к строке и следующую строку в одном
+    абзаце. Простой перенос строки (<w:br/>) не годится: у абзаца с выравни-
+    ванием по ширине строка перед переносом растягивается на всю ширину и
+    подпись расползается пробелами. Второй абзац получает копию свойств
+    первого, поэтому отступы, интервалы и шрифт остаются те же.
+    """
+    parents = {child: node for node in root.iter() for child in node}
+    run = parents.get(text_node)
+    if run is None or run.tag != W + "r":
+        raise PrepareError("разрыв абзаца: фрагмент лежит не внутри w:r")
+    body = parents.get(paragraph)
+    if body is None:
+        raise PrepareError("разрыв абзаца: не найден родитель абзаца")
+
+    children = list(paragraph)
+    if run not in children:
+        raise PrepareError("разрыв абзаца: фрагмент лежит во вложенном блоке")
+
+    new_paragraph = etree.Element(W + "p")
+    p_pr = paragraph.find(W + "pPr")
+    if p_pr is not None:
+        new_paragraph.append(etree.fromstring(etree.tostring(p_pr)))
+    for child in children[children.index(run):]:
+        paragraph.remove(child)
+        new_paragraph.append(child)
+    body.insert(list(body).index(paragraph) + 1, new_paragraph)
+
+
 def _make_run(paragraph, text: str):
     """Создать фрагмент текста, унаследовав оформление от знака абзаца."""
     run = etree.SubElement(paragraph, W + "r")
@@ -694,6 +884,9 @@ def apply_ops(document_xml: bytes, ops: list[dict], label: str) -> bytes:
     root = etree.fromstring(document_xml)
     paragraphs = list(_iter_paragraphs(root))
     tables = list(root.iter(W + "tbl"))
+    # Добавление и разрыв абзацев сдвигают нумерацию, поэтому копим такие
+    # действия и применяем в самом конце, с конца документа к началу.
+    deferred: list[tuple] = []
 
     for op in ops:
         if "p" in op:
@@ -751,8 +944,7 @@ def apply_ops(document_xml: bytes, ops: list[dict], label: str) -> bytes:
             nodes = _own_text_nodes(paragraphs[op["p"]])
             indices = op["nodes"]
             if indices is None:
-                indices = [i for i, n in enumerate(nodes)
-                           if (n.text or "") and not (n.text or "").strip(" _")]
+                indices = [i for i, n in enumerate(nodes) if _is_blank(n.text)]
                 if not indices:
                     raise PrepareError(
                         f"{label}: в абзаце №{op['p']} не найдено пропусков "
@@ -766,7 +958,7 @@ def apply_ops(document_xml: bytes, ops: list[dict], label: str) -> bytes:
                         f"(всего {len(nodes)}). Шаблон изменился.")
                 node = nodes[index]
                 text = node.text or ""
-                if not text or text.strip(" _"):
+                if not _is_blank(text):
                     raise PrepareError(
                         f"{label}: абзац №{op['p']}, фрагмент №{index} — "
                         f"ожидался пропуск из подчёркиваний.\n"
@@ -777,6 +969,32 @@ def apply_ops(document_xml: bytes, ops: list[dict], label: str) -> bytes:
             _set_node_text(picked[0], op["new"])
             for node in picked[1:]:
                 _set_node_text(node, "")
+            if op.get("newline"):
+                deferred.append((op["p"], "split", paragraphs[op["p"]], picked[0]))
+
+        elif op["kind"] == "add_line":
+            paragraph = paragraphs[op["p"]]
+            actual = _joined_with_tabs(paragraph)
+            if not re.search(op["expected"], actual):
+                raise PrepareError(
+                    f"{label}: абзац №{op['p']} не похож на ориентир "
+                    f"{op['expected']!r}.\n"
+                    f"  В документе: {actual[:120]!r}\n"
+                    f"Шаблон изменился — обновите карту разметки."
+                )
+            deferred.append((op["p"], "add", paragraph, op["new"]))
+
+        elif op["kind"] == "line":
+            paragraph = paragraphs[op["p"]]
+            existing = "".join(n.text or "" for n in _own_text_nodes(paragraph))
+            if existing.strip():
+                raise PrepareError(
+                    f"{label}: абзац №{op['p']} ожидался пустым (место под "
+                    f"запись, подчёркнутое рамкой).\n"
+                    f"  В документе: {existing[:60]!r}\n"
+                    f"Шаблон изменился — обновите карту разметки."
+                )
+            _make_run(paragraph, op["new"])
 
         elif op["kind"] == "pad":
             paragraph = paragraphs[op["p"]]
@@ -831,7 +1049,10 @@ def apply_ops(document_xml: bytes, ops: list[dict], label: str) -> bytes:
                     f"({len(styles)} вида оформления). Переписать его целиком нельзя — "
                     f"потеряется выделение. Используйте op_text или op_find."
                 )
-            joined = "".join(n.text or "" for n in nodes)
+            # Табуляции — не текст, а отдельные элементы <w:tab/>. Если их
+            # не учесть, образец не увидит отступов, а запись в первый
+            # фрагмент склеит то, что в бланке разнесено табуляцией.
+            joined = _joined_with_tabs(paragraph)
             new_text, count = re.subn(op["pattern"], op["replacement"], joined)
             if count == 0:
                 raise PrepareError(
@@ -842,6 +1063,8 @@ def apply_ops(document_xml: bytes, ops: list[dict], label: str) -> bytes:
                 )
             for extra in nodes[1:]:
                 _set_node_text(extra, "")
+            for stray in _own_tabs(paragraph):
+                stray.getparent().remove(stray)
             if "\t" in new_text:
                 _write_with_tabs(nodes[0], new_text)
                 if op.get("tab_pos"):
@@ -943,6 +1166,12 @@ def apply_ops(document_xml: bytes, ops: list[dict], label: str) -> bytes:
             for other in others:
                 for extra in _own_text_nodes(other):
                     _set_node_text(extra, "")
+
+    for _, kind, paragraph, payload in sorted(deferred, key=lambda item: -item[0]):
+        if kind == "split":
+            _split_paragraph(root, paragraph, payload)
+        else:
+            _add_paragraph_after(root, paragraph, payload)
 
     return etree.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True)
 

@@ -166,9 +166,12 @@ def build_context(company: CompanyData, attorney: dict[str, str],
     values["inn"] = inn
     values["ogrn"] = ogrn
     values["kpp"] = _digits(company.kpp)
-    for index in range(10):
+    # Клеток в бланках бывает разное число: у юрлица ИНН 10 знаков и ОГРН 13,
+    # у предпринимателя — 12 и 15. Бланк ЯРД рассчитан на предпринимателя,
+    # поэтому клеток больше. Заполняем слева направо, лишние остаются пустыми.
+    for index in range(12):
         values[f"inn_d{index + 1}"] = inn[index] if index < len(inn) else ""
-    for index in range(13):
+    for index in range(15):
         values[f"ogrn_d{index + 1}"] = ogrn[index] if index < len(ogrn) else ""
 
     # ---------------------------------------------------------- адреса и связь

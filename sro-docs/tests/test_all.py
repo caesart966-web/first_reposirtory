@@ -701,15 +701,22 @@ class TestProjectConfig(unittest.TestCase):
         from src.docx_engine import W, _iter_paragraphs, _own_text_nodes
 
         project = Project(ROOT)
-        for spec in project.enabled_documents():
-            archive = zipfile.ZipFile(project.template_path(spec))
+        specs = []
+        for profile in project.all_sro:
+            if not profile.is_ready:
+                continue
+            project.use_sro(profile, remember=False)
+            specs += [(profile.key, spec, project.template_path(spec))
+                      for spec in profile.enabled_documents()]
+        for sro_key, spec, template in specs:
+            archive = zipfile.ZipFile(template)
             root = etree.fromstring(archive.read("word/document.xml"))
             for paragraph in _iter_paragraphs(root):
                 for node in _own_text_nodes(paragraph):
                     if "{{" not in (node.text or ""):
                         continue
                     run_properties = node.getparent().find(W + "rPr")
-                    with self.subTest(document=spec.title, text=node.text):
+                    with self.subTest(sro=sro_key, document=spec.title, text=node.text):
                         self.assertIsNotNone(
                             run_properties,
                             f"{spec.template}: у фрагмента {node.text!r} "
@@ -767,6 +774,109 @@ class TestProjectConfig(unittest.TestCase):
                               "остался автоматический интервал — строки разъедутся")
             self.assertIsNone(spacing.get(W + "afterAutospacing"),
                               "остался автоматический интервал — строки разъедутся")
+
+    def test_caption_and_value_are_on_separate_lines(self):
+        """Значение не должно прилипать к подписи к строке.
+
+        В бланках подпись к строке и следующая строка лежат в одном абзаце.
+        Раньше телефон директора попадал прямо в подпись, и выходило
+        «E-mail руководителя организацииИванов И.И., Директор…».
+        """
+        project = Project(ROOT)
+        company = make_company(ALPHA)
+        for profile in project.all_sro:
+            if not profile.is_ready:
+                continue
+            project.use_sro(profile, remember=False)
+            spec = next((s for s in profile.enabled_documents()
+                         if s.id == "application"), None)
+            if spec is None:
+                continue
+            values = build_context(company, project.attorney(), sro=profile).values
+            with tempfile.TemporaryDirectory() as folder:
+                target = Path(folder) / spec.template
+                fill_template(project.template_path(spec), target, values)
+                text = extract_all_text(target)
+            for caption in ("руководителя организации", "контактного лица",
+                            "переулок и др.)", "корпуса (строения) и офиса"):
+                for line in text.splitlines():
+                    if caption not in line:
+                        continue
+                    tail = line.split(caption, 1)[1].strip()
+                    with self.subTest(sro=profile.key, caption=caption):
+                        self.assertEqual(
+                            tail, "",
+                            f"{profile.key}: к подписи «{caption}» прилип текст "
+                            f"«{tail[:60]}»")
+
+    def test_organisation_contacts_are_filled(self):
+        """У пункта «Контактные данные» заполнены все три строки."""
+        project = Project(ROOT)
+        company = make_company(ALPHA)
+        for profile in project.all_sro:
+            if not profile.is_ready:
+                continue
+            project.use_sro(profile, remember=False)
+            spec = next((s for s in profile.enabled_documents()
+                         if s.id == "application"), None)
+            if spec is None:
+                continue
+            placeholders = project.placeholders(spec)
+            if "director_contact_line" not in placeholders:
+                continue  # в бланке нет пункта «Контактные данные»
+            with self.subTest(sro=profile.key):
+                self.assertIn(
+                    "company_contact_line", placeholders,
+                    f"{profile.key}: строка «код города, телефон, факс, E-mail, "
+                    f"адрес в сети Интернет организации» осталась пустой")
+
+    def test_tabs_survive_rewriting(self):
+        """Табуляции бланка нельзя терять при переписывании абзаца.
+
+        Строка подписи разнесена табуляцией; когда она пропадала, инициалы
+        прилипали к тексту и расписаться было негде.
+        """
+        import zipfile
+
+        from lxml import etree
+
+        from src.docx_engine import W, _iter_paragraphs, _own_text_nodes
+
+        project = Project(ROOT)
+        checked = 0
+        for profile in project.all_sro:
+            if not profile.is_ready:
+                continue
+            project.use_sro(profile, remember=False)
+            spec = next((s for s in profile.enabled_documents()
+                         if s.id == "application"), None)
+            if spec is None:
+                continue
+            root = etree.fromstring(zipfile.ZipFile(
+                project.template_path(spec)).read("word/document.xml"))
+            for paragraph in _iter_paragraphs(root):
+                text = "".join(n.text or "" for n in _own_text_nodes(paragraph))
+                if "Подпись уполномоченного лица организации" not in text:
+                    continue
+                checked += 1
+                # Важен не сам факт табуляции, а её место: она должна стоять
+                # МЕЖДУ надписью и инициалами. Раньше переписывание абзаца
+                # сваливало весь текст в первый фрагмент, а табуляции
+                # оставались болтаться в хвосте — расписаться было негде.
+                order = []
+                for element in paragraph.iter():
+                    if element.tag == W + "tab":
+                        order.append("\t")
+                    elif element.tag == W + "t":
+                        order.append(element.text or "")
+                joined = "".join(order)
+                with self.subTest(sro=profile.key):
+                    self.assertRegex(
+                        joined,
+                        r"организации\t.*\{\{director_short_name\}\}",
+                        f"{profile.key}: между надписью и инициалами нет "
+                        f"табуляции — расписаться будет негде")
+        self.assertTrue(checked, "не найдено ни одной строки подписи")
 
     def test_templates_exist(self):
         project = Project(ROOT)
