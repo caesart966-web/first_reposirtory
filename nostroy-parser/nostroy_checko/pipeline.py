@@ -28,6 +28,7 @@ from pathlib import Path
 from typing import Any
 
 from .archives import extract_archive, is_archive
+from .checko_api import CheckoApiClient
 from .checko_client import CheckoClient
 from .config import Settings
 from .excel_reader import find_data_files, iter_sheets
@@ -261,7 +262,19 @@ def enrich_with_checko(
         result.quota_used = quota.used
         return
 
-    client = CheckoClient(settings, quota)
+    # Есть ключ API — идём через api.checko.ru: он отдаёт структурированный JSON
+    # и не закрыт защитой от автоматизации, в отличие от обычных страниц сайта.
+    if settings.checko_api_key:
+        logger.info("Источник данных: официальный API checko.ru (api.checko.ru)")
+        client = CheckoApiClient(settings, quota)
+    else:
+        logger.info(
+            "Источник данных: разбор страниц сайта checko.ru. "
+            "Сайт защищён от автоматизации — если карточки не находятся, "
+            "получите ключ API в личном кабинете checko.ru и передайте "
+            "его ключом --checko-api-key"
+        )
+        client = CheckoClient(settings, quota)
     progress_bar = _make_progress_bar(min(len(pending), available), settings)
     processed = 0
     start_time = time.monotonic()
@@ -342,6 +355,8 @@ def enrich_with_checko(
         executor.shutdown(wait=True, cancel_futures=True)
         if progress_bar is not None:
             progress_bar.close()
+        if hasattr(client, "report_skipped"):
+            client.report_skipped()
         client.close()
         state.save(force=True)
 

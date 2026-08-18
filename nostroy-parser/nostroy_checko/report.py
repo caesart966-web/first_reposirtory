@@ -145,44 +145,22 @@ def build_nostroy_rows(records: Sequence[RegistryRecord]) -> tuple[list[str], li
 
 def build_combined_rows(groups: Sequence[CompanyGroup]) -> tuple[list[str], list[list[Any]]]:
     """
-    Строки вкладки ``combined``.
+    Строки вкладки ``combined`` — рабочая выгрузка для обзвона.
 
-    Порядок колонок соответствует требуемому составу выгрузки:
-    название, ИНН, контакты с checko.ru, даты вступления/исключения,
-    контакты из реестра НОСТРОЙ — плюс объединённые списки телефонов и email.
+    Намеренно короткая: только то, что нужно, чтобы позвонить.
+    Название, ИНН, контактные номера с checko.ru и даты членства.
+
+    Подробности никуда не делись: полный набор контактов с checko.ru (почта,
+    адрес, руководитель, сайт, статус запроса) лежит на вкладке
+    ``checko_contacts``, а всё, что было в исходном реестре, — на вкладке
+    ``nostroy_contacts``, построчно и со ссылкой на файл-источник.
     """
     headers = [
         "Название компании",
         "ИНН",
-        # --- контактные данные с checko.ru --- #
-        "Телефон (checko.ru)",
-        "Email (checko.ru)",
-        "Адрес (checko.ru)",
-        "Руководитель (checko.ru)",
-        "Контакты checko.ru (одной строкой)",
-        # --- даты членства --- #
+        "Контактные номера (checko.ru)",
         "Дата вступления",
         "Дата исключения",
-        # --- контактные данные из реестра НОСТРОЙ --- #
-        "Телефон (реестр НОСТРОЙ)",
-        "Email (реестр НОСТРОЙ)",
-        "Адрес (реестр НОСТРОЙ)",
-        "Руководитель (реестр НОСТРОЙ)",
-        "Контакты реестра (одной строкой)",
-        # --- объединённые данные --- #
-        "Все телефоны",
-        "Все email",
-        "Все адреса",
-        "Все руководители",
-        "Сайт",
-        # --- служебное --- #
-        "ОГРН",
-        "Статус членства",
-        "Статус запроса checko.ru",
-        "Ссылка на checko.ru",
-        "Варианты написания названия",
-        "Записей в реестре",
-        "Источники (файл | лист | строка)",
     ]
     rows: list[list[Any]] = []
     for group in groups:
@@ -192,29 +170,8 @@ def build_combined_rows(groups: Sequence[CompanyGroup]) -> tuple[list[str], list
                 group.name,
                 group.inn,
                 join_unique(checko.phones) if checko else "",
-                join_unique(checko.emails) if checko else "",
-                join_unique(checko.addresses) if checko else "",
-                join_unique(checko.directors) if checko else "",
-                checko.contacts_summary() if checko else "",
                 group.date_join,
                 group.date_exit,
-                join_unique(group.registry_phones),
-                join_unique(group.registry_emails),
-                join_unique(group.registry_addresses),
-                join_unique(group.registry_directors),
-                group.registry_contacts_summary(),
-                join_unique(group.all_phones),
-                join_unique(group.all_emails),
-                join_unique(group.all_addresses),
-                join_unique(group.all_directors),
-                join_unique(group.registry_websites + (checko.websites if checko else [])),
-                group.ogrn or (checko.ogrn if checko else ""),
-                group.status,
-                group.checko_status,
-                checko.url if checko else "",
-                join_unique(group.all_names),
-                len(group.records),
-                truncate(join_unique(group.sources), 1000),
             ]
         )
     return headers, rows

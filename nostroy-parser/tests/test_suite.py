@@ -139,6 +139,87 @@ class _CheckoHandler(BaseHTTPRequestHandler):
         self._respond(404, "<html><body>Not Found</body></html>")
 
 
+#: Ответ официального API checko.ru на карточку организации.
+API_COMPANY_PAYLOAD = {
+    "meta": {"status": "ok", "message": ""},
+    "data": {
+        "ИНН": "7707083893", "КПП": "770701001", "ОГРН": "1027700132195",
+        "НаимСокрЮЛ": 'ООО "РОМАШКА"',
+        "НаимПолнЮЛ": 'ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ "РОМАШКА"',
+        "ЮрАдрес": {
+            "АдресРФ": "123456, г. Москва, ул. Ленина, д. 1, оф. 5",
+            "Индекс": "123456",
+            "Регион": {"Наим": "Москва", "Код": "77"},
+        },
+        "Контакты": {
+            "Тел": ["+7 (495) 123-45-67", "8 916 000-00-00"],
+            "Емэйл": ["info@romashka-stroy.ru"],
+            "ВебСайт": "romashka-stroy.ru",
+        },
+        "Руковод": [{"ФИО": "Иванов Иван Иванович", "НаимДолжн": "Генеральный директор"}],
+        "Статус": {"Наим": "Действующее"},
+    },
+}
+
+
+class _CheckoApiHandler(BaseHTTPRequestHandler):
+    """Эмулятор api.checko.ru: успешный ответ, лимит, неверный ключ."""
+
+    mode = "ok"
+    hits: list[str] = []
+    lock = threading.Lock()
+
+    def log_message(self, *args):  # noqa: D102
+        return
+
+    def _json(self, code: int, payload: dict) -> None:
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_GET(self) -> None:  # noqa: N802
+        with _CheckoApiHandler.lock:
+            _CheckoApiHandler.hits.append(self.path)
+        mode = _CheckoApiHandler.mode
+        if mode == "bad_key":
+            self._json(401, {"meta": {"status": "error", "message": "Неверный ключ доступа"}})
+        elif mode == "limit_http":
+            self._json(429, {"meta": {"status": "error", "message": "Too Many Requests"}})
+        elif mode == "limit_message":
+            self._json(200, {"meta": {"status": "error",
+                                      "message": "Превышен лимит запросов на сегодня"}})
+        elif mode == "not_found":
+            self._json(200, {"meta": {"status": "ok", "message": "Компания не найдена"},
+                             "data": {}})
+        else:
+            self._json(200, API_COMPANY_PAYLOAD)
+
+
+class _FakeCheckoApiServer:
+    """Контекстный менеджер с локальным сервером-заглушкой для API."""
+
+    def __init__(self) -> None:
+        self.server = ThreadingHTTPServer(("127.0.0.1", 0), _CheckoApiHandler)
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+
+    def __enter__(self) -> "_FakeCheckoApiServer":
+        self.thread.start()
+        return self
+
+    def __exit__(self, *exc_info) -> None:
+        self.server.shutdown()
+        self.server.server_close()
+        self.thread.join(timeout=5)
+
+    @property
+    def base_url(self) -> str:
+        host, port = self.server.server_address[:2]
+        return f"http://{host}:{port}/v2"
+
+
 class _FakeCheckoServer:
     """Контекстный менеджер, поднимающий локальный сервер-заглушку."""
 
@@ -667,6 +748,174 @@ class TestCheckoClientHTTP(BaseTestCase):
         self.assertGreater(len(_CheckoHandler.hits), 2)
 
 
+class TestSroContactsNotMixedIn(BaseTestCase):
+    """
+    Реквизиты самой СРО не должны попадать в контакты её членов.
+
+    В выгрузках НОСТРОЙ рядом с данными члена идут телефон и адрес самой
+    саморегулируемой организации. Без защиты у всех компаний в отчёте
+    оказался бы один и тот же телефон.
+    """
+
+    SRO_ADDRESS = "192007, Санкт-Петербург, наб. Обводного канала, д. 60, лит.А"
+    SRO_PHONE = "+7 (812) 251-31-01"
+
+    def _sheet(self):
+        from nostroy_checko.excel_reader import SheetData
+
+        headers = ["Полное наименование", "ИНН", "Дата вступления",
+                   "Адрес места нахождения", "Руководитель",
+                   "Наименование СРО", "Адрес СРО", "Телефон СРО", "Телефон"]
+        members = [
+            ('ООО "СПС"', "5050150032", "12.01.2026", "193230, СПб, пр. Солидарности, д. 1"),
+            ('ООО "Статус"', "7814809202", "21.01.2026", "197341, СПб, ул. Афонская, д. 2"),
+            ('ООО "Монтаж"', "7814852857", "09.02.2026", "197348, СПб, Богатырский пр., д. 3"),
+            ('ООО "ГеоПром"', "7840441705", "16.02.2026", "193167, СПб, ул. Моисеенко, д. 4"),
+            ('ООО "Сервис"', "7810445794", "18.02.2026", "198152, СПб, ул. Автовская, д. 5"),
+            ('ООО "Дивис"', "7802146141", "26.02.2026", "194362, СПб, Парголово, д. 6"),
+            ('ООО "ТоргДом"', "4705075034", "11.02.2026", "190005, СПб, Измайловский б-р, д. 7"),
+            ('ООО "Нептун"', "7802765459", "26.02.2026", "192174, СПб, ул. Кибальчича, д. 8"),
+            ('ООО "СКР"', "7840486265", "27.03.2026", "192239, СПб, ул. Бухарестская, д. 9"),
+            ('ООО "СтройИ"', "7806313724", "17.04.2026", "197022, СПб, наб. Карповки, д. 10"),
+        ]
+        rows = [headers] + [
+            [name, inn, joined, address, f"Директор {index}",
+             "Ассоциация «Строительный комплекс»", self.SRO_ADDRESS,
+             self.SRO_PHONE, "8 800 100-21-00"]
+            for index, (name, inn, joined, address) in enumerate(members, start=1)
+        ]
+        return SheetData(Path("t.xlsx"), "t.xlsx", "Лист1", rows)
+
+    def test_sro_phone_and_address_are_excluded(self) -> None:
+        records, _, _ = parse_sheet(self._sheet())
+        self.assertEqual(len(records), 10)
+        for record in records:
+            self.assertEqual(record.phones, [], msg=f"{record.name}: телефон СРО попал в контакты")
+            self.assertFalse(
+                any("Обводного" in address for address in record.addresses),
+                msg=f"{record.name}: адрес СРО попал в контакты",
+            )
+        # Собственные адреса членов, наоборот, должны сохраниться — все разные.
+        addresses = {address for record in records for address in record.addresses}
+        self.assertEqual(len(addresses), 10)
+        # И руководители тоже на месте.
+        self.assertTrue(all(record.directors for record in records))
+
+    def test_varying_column_is_kept(self) -> None:
+        """Колонка с РАЗНЫМИ телефонами остаётся контактом компании."""
+        from nostroy_checko.excel_reader import SheetData
+
+        sheet = self._sheet()
+        rows = [list(row) for row in sheet.rows]
+        for index, row in enumerate(rows[1:], start=1):
+            row[8] = f"8 (812) 100-00-{index:02d}"      # телефоны теперь разные
+        records, _, _ = parse_sheet(SheetData(Path("t.xlsx"), "t.xlsx", "Лист1", rows))
+        self.assertTrue(all(record.phones for record in records))
+        self.assertEqual(len({record.phones[0] for record in records}), 10)
+
+
+# --------------------------------------------------------------------------- #
+#                        7b. Официальный API checko.ru                         #
+# --------------------------------------------------------------------------- #
+
+class TestCheckoApi(BaseTestCase):
+    """Разбор ответа API и обработка его ошибок."""
+
+    def setUp(self) -> None:
+        _CheckoApiHandler.hits = []
+        _CheckoApiHandler.mode = "ok"
+
+    def _client(self, server, quota, **overrides):
+        from nostroy_checko import checko_api
+
+        settings = Settings(
+            input_path=Path("."), output_dir=self.tmp_dir / "api",
+            checko_api_key="test-key", rps=0.0, timeout=5.0, max_retries=1,
+            **overrides,
+        )
+        checko_api.CHECKO_API_BASE = server.base_url
+        return checko_api.CheckoApiClient(settings, quota)
+
+    def test_payload_parsing_company(self) -> None:
+        from nostroy_checko.checko_api import parse_api_payload
+
+        result = parse_api_payload(API_COMPANY_PAYLOAD["data"], expected_inn="7707083893")
+        self.assertEqual(result.status, STATUS_OK)
+        self.assertIn("РОМАШКА", result.name)
+        self.assertEqual(result.inn, "7707083893")
+        self.assertEqual(result.ogrn, "1027700132195")
+        self.assertIn("+74951234567", result.phones)
+        self.assertIn("info@romashka-stroy.ru", result.emails)
+        self.assertTrue(any("Ленина" in address for address in result.addresses))
+        self.assertTrue(any("Иванов" in director for director in result.directors))
+        self.assertTrue(result.inn_matched)
+        # Вложенное поле «Регион.Наим» не должно подменять название компании.
+        self.assertNotEqual(result.name, "Москва")
+
+    def test_payload_parsing_entrepreneur(self) -> None:
+        from nostroy_checko.checko_api import parse_api_payload
+
+        payload = {
+            "ИНН": "500100732259", "ОГРНИП": "304500116000157",
+            "ФИО": "Сидоров Сергей Сергеевич",
+            "Адрес": {"АдресРФ": "141700, Московская обл., г. Долгопрудный, ул. Первомайская, д. 12"},
+            "Контакты": {"Тел": "8-916-000-00-00", "Емэйл": "sidorov@mail.ru"},
+        }
+        result = parse_api_payload(payload, expected_inn="500100732259")
+        self.assertEqual(result.name, "Сидоров Сергей Сергеевич")
+        self.assertIn("+79160000000", result.phones)
+        self.assertIn("sidorov@mail.ru", result.emails)
+
+    def test_successful_request(self) -> None:
+        with _FakeCheckoApiServer() as server:
+            client = self._client(server, DailyQuota(limit=10))
+            result = client.lookup("7707083893", expected_inn="7707083893")
+        self.assertEqual(result.status, STATUS_OK)
+        self.assertIn("+74951234567", result.phones)
+        self.assertEqual(len(_CheckoApiHandler.hits), 1)   # одна компания = один запрос
+        self.assertIn("/v2/company", _CheckoApiHandler.hits[0])
+
+    def test_entrepreneur_endpoint_for_12_digit_inn(self) -> None:
+        with _FakeCheckoApiServer() as server:
+            client = self._client(server, DailyQuota(limit=10))
+            client.lookup("500100732259", expected_inn="500100732259")
+        self.assertIn("/v2/entrepreneur", _CheckoApiHandler.hits[0])
+
+    def test_bad_key_stops_work(self) -> None:
+        _CheckoApiHandler.mode = "bad_key"
+        quota = DailyQuota(limit=10)
+        with _FakeCheckoApiServer() as server:
+            client = self._client(server, quota)
+            result = client.lookup("7707083893", expected_inn="7707083893")
+        self.assertEqual(result.status, STATUS_FORBIDDEN)
+        self.assertTrue(quota.exhausted)     # смысла продолжать нет
+
+    def test_limit_by_http_and_by_message(self) -> None:
+        for mode in ("limit_http", "limit_message"):
+            _CheckoApiHandler.mode = mode
+            quota = DailyQuota(limit=10)
+            with _FakeCheckoApiServer() as server:
+                client = self._client(server, quota)
+                result = client.lookup("7707083893", expected_inn="7707083893")
+            self.assertEqual(result.status, STATUS_RATE_LIMITED, msg=mode)
+            self.assertTrue(quota.exhausted, msg=mode)
+
+    def test_not_found(self) -> None:
+        _CheckoApiHandler.mode = "not_found"
+        with _FakeCheckoApiServer() as server:
+            client = self._client(server, DailyQuota(limit=10))
+            result = client.lookup("7707083893", expected_inn="7707083893")
+        self.assertEqual(result.status, STATUS_NOT_FOUND)
+
+    def test_record_without_inn_costs_no_request(self) -> None:
+        """Записи без ИНН пропускаются: API ищет только по реквизитам."""
+        with _FakeCheckoApiServer() as server:
+            client = self._client(server, DailyQuota(limit=10))
+            result = client.lookup('ООО "Без ИНН"')
+        self.assertEqual(result.status, STATUS_NOT_FOUND)
+        self.assertEqual(len(_CheckoApiHandler.hits), 0)
+
+
 # --------------------------------------------------------------------------- #
 #              8. Полный цикл: лимит, остановка и продолжение назавтра         #
 # --------------------------------------------------------------------------- #
@@ -749,14 +998,26 @@ class TestEndToEndAcrossDays(BaseTestCase):
         )
         combined = workbook["combined"]
         headers = [cell.value for cell in combined[1]]
-        self.assertIn("Название компании", headers)
-        self.assertIn("ИНН", headers)
-        self.assertIn("Телефон (checko.ru)", headers)
-        self.assertIn("Дата вступления", headers)
-        self.assertIn("Дата исключения", headers)
-        self.assertIn("Телефон (реестр НОСТРОЙ)", headers)
+        # Рабочая вкладка — ровно пять колонок, ничего лишнего.
+        self.assertEqual(
+            headers,
+            [
+                "Название компании",
+                "ИНН",
+                "Контактные номера (checko.ru)",
+                "Дата вступления",
+                "Дата исключения",
+            ],
+        )
+        # Подробности при этом сохранены на других вкладках.
+        checko_headers = [cell.value for cell in workbook["checko_contacts"][1]]
+        self.assertIn("Email (checko.ru)", checko_headers)
+        self.assertIn("Руководитель (checko.ru)", checko_headers)
+        nostroy_headers = [cell.value for cell in workbook["nostroy_contacts"][1]]
+        self.assertIn("Адрес (реестр)", nostroy_headers)
+        self.assertIn("Файл-источник", nostroy_headers)
 
-        phone_column = headers.index("Телефон (checko.ru)")
+        phone_column = headers.index("Контактные номера (checko.ru)")
         filled = [
             row[phone_column]
             for row in combined.iter_rows(min_row=2, values_only=True)

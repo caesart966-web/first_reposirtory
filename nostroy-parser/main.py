@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+import os
 from datetime import date
 from pathlib import Path
 
@@ -124,6 +125,15 @@ def build_parser() -> argparse.ArgumentParser:
         "--no-checko",
         action="store_true",
         help="не обращаться к checko.ru — только разобрать реестр",
+    )
+    group_checko.add_argument(
+        "--checko-api-key",
+        default=None, metavar="КЛЮЧ",
+        help=(
+            "ключ официального API checko.ru (api.checko.ru) — надёжнее разбора HTML "
+            "и не блокируется защитой сайта; можно задать переменной окружения "
+            "CHECKO_API_KEY. Без ключа скрипт разбирает обычные страницы сайта"
+        ),
     )
     group_checko.add_argument(
         "--daily-limit",
@@ -232,6 +242,8 @@ def settings_from_args(args: argparse.Namespace) -> Settings:
         header_max_span=max(1, args.header_max_span),
         content_sample=max(10, args.content_sample),
         use_checko=not args.no_checko,
+        # Ключ можно не писать в командной строке — он подхватится из окружения.
+        checko_api_key=args.checko_api_key or os.environ.get("CHECKO_API_KEY") or None,
         daily_limit=max(0, args.daily_limit),
         workers=max(1, args.workers),
         rps=max(0.0, args.rps),

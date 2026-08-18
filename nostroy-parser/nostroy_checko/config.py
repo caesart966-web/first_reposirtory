@@ -92,6 +92,7 @@ class Settings:
 
     # --- checko.ru --------------------------------------------------------- #
     use_checko: bool = True                # False => только разбор реестра
+    checko_api_key: str | None = None      # ключ официального API (надёжнее HTML)
     daily_limit: int = DEFAULT_DAILY_LIMIT
     workers: int = DEFAULT_WORKERS
     rps: float = DEFAULT_RPS

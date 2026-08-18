@@ -122,6 +122,59 @@ def _longest_non_empty(row: Sequence[Any], indexes: Iterable[int]) -> str:
     return max(values, key=len) if values else ""
 
 
+#: Минимум заполненных строк, начиная с которого ищем «постоянные» колонки.
+MIN_ROWS_FOR_CONSTANT_CHECK = 8
+
+
+def detect_constant_columns(rows: Sequence[Sequence[Any]]) -> dict[int, str]:
+    """
+    Находит колонки, значение которых одинаково во ВСЕХ строках листа.
+
+    Зачем. В выгрузках реестра НОСТРОЙ рядом с данными члена СРО идут реквизиты
+    самой саморегулируемой организации — её наименование, телефон, адрес, почта.
+    Они, естественно, одинаковы во всех строках файла. Если принять их за
+    контакты компании, у всех членов окажется один и тот же телефон, и выгрузка
+    станет бесполезной.
+
+    Заголовок выдаёт такую колонку не всегда (она может называться просто
+    «Телефон»), поэтому опираемся на сами данные: значение, не меняющееся на
+    протяжении всего файла, физически не может быть контактом конкретного члена.
+
+    Проверяются ВСЕ колонки, а не только опознанные как контактные: сплошной
+    поиск телефонов и почты идёт по всей строке и иначе вытащил бы телефон СРО
+    из соседней колонки в обход разбора по ролям.
+
+    :return: ``{индекс колонки: постоянное значение}``.
+    """
+    if len(rows) < MIN_ROWS_FOR_CONSTANT_CHECK:
+        return {}
+
+    width = max((len(row) for row in rows), default=0)
+    seen: dict[int, str] = {}          # колонка -> её единственное значение
+    filled: dict[int, int] = {}        # сколько непустых значений встретилось
+    varying: set[int] = set()          # колонки, где значения уже различались
+
+    for row in rows:
+        for index in range(width):
+            if index in varying:
+                continue               # ранний выход: колонка уже признана изменчивой
+            text = clean_text(_value_at(row, index))
+            if not text:
+                continue
+            filled[index] = filled.get(index, 0) + 1
+            if index not in seen:
+                seen[index] = text
+            elif seen[index] != text:
+                varying.add(index)
+                seen.pop(index, None)
+
+    return {
+        index: value
+        for index, value in seen.items()
+        if filled.get(index, 0) >= MIN_ROWS_FOR_CONSTANT_CHECK
+    }
+
+
 # --------------------------------------------------------------------------- #
 #                         Разбор одной строки таблицы                          #
 # --------------------------------------------------------------------------- #
@@ -131,9 +184,14 @@ def parse_row(
     column_map: ColumnMap,
     sheet: SheetData,
     row_number: int,
+    skip_columns: frozenset[int] = frozenset(),
 ) -> RegistryRecord | None:
     """
     Превращает строку таблицы в запись реестра.
+
+    :param skip_columns: колонки, которые нельзя считать контактами компании
+        (реквизиты самой СРО — см. :func:`detect_constant_contact_columns`).
+        Их значения по-прежнему попадают в ``raw_fields``, то есть не теряются.
 
     Возвращает ``None``, если в строке нет ни названия, ни ИНН
     (вызывающий код зафиксирует её как нераспознанную).
@@ -186,6 +244,8 @@ def parse_row(
 
     # ------------------- контактные данные из реестра ---------------------- #
     for index in column_map.all_of(ROLE_PHONE):
+        if index in skip_columns:
+            continue
         text = clean_text(_value_at(row, index))
         if not text:
             continue
@@ -197,6 +257,8 @@ def parse_row(
             record.other_contacts[column_map.header_of(index)] = text
 
     for index in column_map.all_of(ROLE_EMAIL):
+        if index in skip_columns:
+            continue
         text = clean_text(_value_at(row, index))
         if not text:
             continue
@@ -207,16 +269,22 @@ def parse_row(
             record.other_contacts[column_map.header_of(index)] = text
 
     for index in column_map.all_of(ROLE_ADDRESS):
+        if index in skip_columns:
+            continue
         text = clean_text(_value_at(row, index))
         if text:
             merge_unique(record.addresses, [text])
 
     for index in column_map.all_of(ROLE_DIRECTOR):
+        if index in skip_columns:
+            continue
         text = clean_text(_value_at(row, index))
         if text:
             merge_unique(record.directors, [text])
 
     for index in column_map.all_of(ROLE_WEBSITE):
+        if index in skip_columns:
+            continue
         text = clean_text(_value_at(row, index))
         if not text:
             continue
@@ -224,6 +292,8 @@ def parse_row(
         merge_unique(record.websites, urls or [text])
 
     for index in column_map.all_of(ROLE_CONTACT_OTHER):
+        if index in skip_columns:
+            continue
         text = clean_text(_value_at(row, index))
         if text:
             record.other_contacts[column_map.header_of(index)] = text
@@ -233,7 +303,9 @@ def parse_row(
     # склеены с адресом или лежат в колонке, роль которой определить не удалось.
     # Поэтому проходим по ВСЕМ ячейкам строки без исключений: повторы всё равно
     # отсекаются merge_unique, а вот пропустить контакт мы не имеем права.
-    for value in row:
+    for index, value in enumerate(row):
+        if index in skip_columns:
+            continue
         text = clean_text(value)
         if not text:
             continue
@@ -311,10 +383,22 @@ def parse_sheet(
         column_map.headers = guess_headers_for_headerless(sheet.rows)
         column_map.normalized = ["" for _ in column_map.headers]
 
+    start = column_map.data_start_row
+
+    # Отсекаем реквизиты самой СРО: контактные колонки с одинаковым значением
+    # во всех строках — это телефон/адрес/почта саморегулируемой организации,
+    # а не члена. Иначе у всех компаний окажется один и тот же телефон.
+    constant_columns = detect_constant_columns(sheet.rows[start:])
+    skip_columns = frozenset(constant_columns)
+    for index, value in sorted(constant_columns.items()):
+        logger.info(
+            "  лист %r: колонка %r одинакова во всех строках (%r) — "
+            "это реквизит самой СРО, в контакты компаний не пойдёт",
+            sheet.sheet_name, column_map.header_of(index), value[:60],
+        )
+
     records: list[RegistryRecord] = []
     unrecognized: list[UnrecognizedRow] = []
-
-    start = column_map.data_start_row
     for offset, row in enumerate(sheet.rows[start:]):
         row_number = start + offset + 1          # нумерация как в Excel, с 1
         if _row_is_empty(row):
@@ -323,7 +407,7 @@ def parse_sheet(
             continue
 
         try:
-            record = parse_row(row, column_map, sheet, row_number)
+            record = parse_row(row, column_map, sheet, row_number, skip_columns)
         except Exception as exc:  # noqa: BLE001 — одна битая строка не рушит разбор
             logger.error("Ошибка разбора строки %s листа %r: %s", row_number, sheet.sheet_name, exc)
             unrecognized.append(
