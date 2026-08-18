@@ -602,6 +602,7 @@ def parse(answer):
     emails = clean_list(emails, lambda v: '@' in v)
     sites = clean_list(sites, lambda v: re.search(r'\.[a-zA-Zа-яА-Я]{2,}', v) is not None)
     phones = dedupe_phones(phones)
+    phones = [norm_phone(x)[0] for x in phones]      # +78123202982 -> +7 (812) 320-29-82
     return {
         'phones': ', '.join(phones),
         'emails': ', '.join(emails),
