@@ -15,6 +15,9 @@
          python probiv.py --status   что сделано, что осталось, ничего не запрашивая
 """
 
+import sys
+sys.dont_write_bytecode = True
+
 import argparse
 import configparser
 import datetime
@@ -46,7 +49,6 @@ except ImportError:
 
 BASE = Path(__file__).resolve().parent
 INPUT_DIR = BASE / 'input'
-REPORT_DIR = BASE / 'Отчеты'
 STATE_DIR = BASE / 'состояние'
 CONFIG = BASE / 'config.ini'
 
@@ -462,18 +464,16 @@ def parse(answer):
 FONT = 'Arial'
 COLS = [
     ('№', 7, 'center'),
-    ('Наименование (реестр)', 34, 'left'),
+    ('Наименование', 34, 'left'),
     ('ИНН', 14, 'center'),
-    ('Телефоны (Checko)', 30, 'left'),
-    ('Почта (Checko)', 26, 'left'),
-    ('Сайт (Checko)', 22, 'left'),
-    ('Статус (Checko)', 18, 'left'),
-    ('Адрес (Checko)', 44, 'left'),
-    ('Телефон в реестре', 22, 'left'),
-    ('Новый контакт', 13, 'center'),
+    ('Телефоны', 30, 'left'),
+    ('Почта', 26, 'left'),
+    ('Сайт', 22, 'left'),
+    ('Статус', 18, 'left'),
+    ('Адрес', 44, 'left'),
     ('Дата вступления', 15, 'center'),
     ('Дата прекращения', 16, 'center'),
-    ('Результат', 30, 'left'),
+    ('Дата пробива', 13, 'center'),
 ]
 
 
@@ -484,7 +484,7 @@ def write_report(path, title, rows):
     ws['A1'] = title
     ws['A1'].font = Font(name=FONT, size=13, bold=True,
                         color='B00020' if title.startswith('ДЕМО') else '1F3864')
-    ws.merge_cells('A1:M1')
+    ws.merge_cells('A1:K1')
     ws.row_dimensions[1].height = 24
 
     thin = Side(style='thin', color='BFBFBF')
@@ -504,34 +504,28 @@ def write_report(path, title, rows):
             c.font = Font(name=FONT, size=10)
             c.border = border
             c.alignment = Alignment(horizontal=COLS[i - 1][2], vertical='top',
-                                    wrap_text=i in (2, 4, 5, 6, 8, 13))
+                                    wrap_text=i in (2, 4, 5, 6, 8))
             if r % 2 == 0:
                 c.fill = PatternFill('solid', fgColor='F2F5FA')
         ws.cell(row=r, column=3).number_format = '@'
-        ws.cell(row=r, column=11).number_format = 'DD.MM.YYYY'
-        ws.cell(row=r, column=12).number_format = 'DD.MM.YYYY'
-        if row[9] == 'Да':
-            ws.cell(row=r, column=10).font = Font(name=FONT, size=10, bold=True, color='1E7B34')
+        for col in (9, 10, 11):
+            ws.cell(row=r, column=col).number_format = 'DD.MM.YYYY'
 
-    ws.auto_filter.ref = 'A2:M%d' % max(2, len(rows) + 2)
+    ws.auto_filter.ref = 'A2:K%d' % max(2, len(rows) + 2)
     ws.freeze_panes = 'A3'
     ws.sheet_view.showGridLines = False
     path.parent.mkdir(parents=True, exist_ok=True)
     wb.save(path)
 
 
-def make_row(rec, res, note):
-    reg_phone = rec['phone'] or ''
-    found = (res or {}).get('phones', '')
-    new = ''
-    if found:
-        reg_digits = {re.sub(r'\D', '', p) for p in reg_phone.split(', ') if p}
-        new = 'Да' if any(re.sub(r'\D', '', p) not in reg_digits
-                          for p in found.split(', ')) else 'Нет'
+def make_row(rec, res, probe_date):
+    phones = (res or {}).get('phones', '')
+    if res is None:
+        phones = 'не найдено в Checko'
     return [rec['n'], rec['short'] or rec['full'], rec['inn'],
-            found, (res or {}).get('emails', ''), (res or {}).get('site', ''),
+            phones, (res or {}).get('emails', ''), (res or {}).get('site', ''),
             (res or {}).get('status', ''), (res or {}).get('address', ''),
-            reg_phone, new, rec['date_in'], rec['date_out'], note]
+            rec['date_in'], rec['date_out'], probe_date]
 
 
 # --- главный сценарий ------------------------------------------------------
@@ -595,14 +589,14 @@ def main():
     log('Прогон №%d: беру %d компаний, начиная с №%d.' % (run, limit, todo[0]['n']))
     log('')
 
-    batch, found, errors = [], 0, 0
+    done_now, found, errors = [], 0, 0
     by_inn = {}
     stopped = None
     for rec in todo[:limit]:
         inn = rec['inn']
         if inn in by_inn:                                  # тот же ИНН в реестре дважды
             res, note = by_inn[inn]
-            batch.append(make_row(rec, res, note))
+            done_now.append(rec)
             state.mark(inn, 'ok', run)
             continue
         try:
@@ -635,7 +629,7 @@ def main():
                 note = 'в Checko не найдено'
             state.mark(inn, 'ok', run)
         by_inn[inn] = (res, note)
-        batch.append(make_row(rec, res, note))
+        done_now.append(rec)
         state.save()
         log('  №%-5d %-34s %-13s %s' % (rec['n'], (rec['short'] or rec['full'])[:34], inn,
                                         (res or {}).get('phones', '') or note))
@@ -643,45 +637,43 @@ def main():
 
     state.save()
 
-    stamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
-    prefix = 'ДЕМО_' if args.demo else ''
-    batch_path = REPORT_DIR / ('%sОтчет_%s.xlsx' % (prefix, stamp))
-    demo_mark = 'ДЕМО-ПРОГОН, ДАННЫЕ ВЫМЫШЛЕННЫЕ — так будет выглядеть настоящий отчёт. ' if args.demo else ''
-    write_report(batch_path, '%sПробив контактов через Checko — прогон №%d от %s (%d компаний)'
-                 % (demo_mark, run, datetime.datetime.now().strftime('%d.%m.%Y'), len(batch)), batch)
-
-    # Накопительный отчёт: всё, что пробито за все дни.
-    total_rows = []
+    # Отчёт один на всё: пересобирается из сохранённых ответов после каждого прогона.
+    rows_out = []
     for rec in targets:
-        cached = cache_dir / ('%s.json' % rec['inn'])
         if not state.done(rec['inn']):
             continue
+        cached = cache_dir / ('%s.json' % rec['inn'])
         if cached.exists():
             try:
                 res = parse(json.loads(cached.read_text(encoding='utf-8')))
             except ValueError:
                 res = None
-            note = 'ДЕМО — данные вымышленные' if args.demo else (
-                'найдено' if res and (res['phones'] or res['emails'] or res['site'])
-                else ('компания найдена, контактов нет' if res else 'в Checko не найдено'))
         else:
-            res, note = None, state.data['processed'][rec['inn']].get('статус', '')
-        total_rows.append(make_row(rec, res, note))
-    total_path = REPORT_DIR / ('%sВсе_результаты.xlsx' % prefix)
-    write_report(total_path, '%sПробив контактов через Checko — все результаты на %s (%d компаний)'
-                 % (demo_mark, datetime.datetime.now().strftime('%d.%m.%Y'), len(total_rows)), total_rows)
+            res = None
+        rows_out.append(make_row(rec, res, _date(state.data['processed'][rec['inn']].get('дата'))))
 
-    left = len(todo) - len(batch)
+    mark = 'ДЕМО, ДАННЫЕ ВЫМЫШЛЕННЫЕ — образец. ' if args.demo else ''
+    report = BASE / ('ДЕМО_Отчет.xlsx' if args.demo else 'Отчет.xlsx')
+    title = '%sКонтакты членов СРО из Checko — на %s, пробито %d компаний' % (
+        mark, datetime.datetime.now().strftime('%d.%m.%Y'), len(rows_out))
+    try:
+        write_report(report, title, rows_out)
+    except PermissionError:
+        report = report.with_name(report.stem + '_новый.xlsx')
+        write_report(report, title, rows_out)
+        log('')
+        log('ВНИМАНИЕ: файл Отчет.xlsx открыт в Excel, поэтому записал рядом %s' % report.name)
+
+    left = len(todo) - len(done_now)
     log('')
     if stopped:
         log('ОСТАНОВЛЕНО: %s' % stopped)
-    log('Обработано за прогон: %d   |   с контактами: %d   |   ошибок: %d' % (len(batch), found, errors))
+    log('Обработано за прогон: %d   |   с контактами: %d   |   ошибок: %d' % (len(done_now), found, errors))
     log('Потрачено сегодня: %d из %d' % (state.spent_today(), daily))
     log('Осталось пробить: %d %s' % (left, ('(это ещё %d дн.)' % -(-left // max(1, daily))) if left else ''))
     log('')
-    log('Отчёт за прогон:   %s' % batch_path.name)
-    log('Все результаты:    %s' % total_path.name)
-    log('Папка с отчётами:  %s' % REPORT_DIR)
+    log('')
+    log('ОТЧЁТ: %s' % report)
 
 
 if __name__ == '__main__':

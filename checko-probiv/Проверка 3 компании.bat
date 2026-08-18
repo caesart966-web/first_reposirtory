@@ -1,9 +1,7 @@
 @echo off
 chcp 65001
 cd /d "%~dp0"
-title Probiv kontaktov cherez Checko
-echo.
-echo === Rabochaya papka: %CD%
+title Kontakty iz Checko
 echo.
 
 set PY=python
@@ -31,5 +29,4 @@ echo.
 echo.
 %PY% probiv.py --limit 3
 echo.
-echo === Gotovo. Okno mozhno zakryt.
 pause
