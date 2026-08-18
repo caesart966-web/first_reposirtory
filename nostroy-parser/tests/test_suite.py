@@ -1076,6 +1076,36 @@ class TestEndToEndAcrossDays(BaseTestCase):
         settings.retry_failed = True
         self.assertTrue(_needs_lookup(group, store, settings))
 
+    def test_switching_to_api_retries_html_failures(self) -> None:
+        """
+        Появился ключ API — прошлые неудачи парсера HTML не блокируют повтор.
+
+        Иначе компании, которые не смог найти разбор страниц сайта, навсегда
+        остались бы со статусом not_found, и API их бы уже не проверил.
+        """
+        from nostroy_checko.models import CompanyGroup, RegistryRecord
+        from nostroy_checko.pipeline import _needs_lookup
+
+        store = StateStore(self.tmp_dir / "switch" / "state.json", daily_limit=100)
+        store.load()
+        group = CompanyGroup(key="inn:7707083893",
+                             records=[RegistryRecord(name="Тест", inn="7707083893")])
+
+        # Вчера парсер сайта ничего не нашёл — результат «окончательный».
+        store.set_result(group.key, CheckoContacts(status=STATUS_NOT_FOUND, source="html"))
+
+        without_key = Settings(input_path=Path("."), output_dir=self.tmp_dir / "switch")
+        self.assertFalse(_needs_lookup(group, store, without_key))
+
+        with_key = Settings(input_path=Path("."), output_dir=self.tmp_dir / "switch",
+                            checko_api_key="new-key")
+        self.assertTrue(_needs_lookup(group, store, with_key))
+
+        # А вот удачно собранные данные перезапрашивать незачем — квота дорога.
+        store._results[group.key] = CheckoContacts(status=STATUS_OK, source="html",
+                                                   phones=["+74951234567"])
+        self.assertFalse(_needs_lookup(group, store, with_key))
+
     def test_forbidden_stops_run_but_report_is_written(self) -> None:
         """Блокировка останавливает запросы, но отчёт всё равно формируется."""
         from nostroy_checko.pipeline import run

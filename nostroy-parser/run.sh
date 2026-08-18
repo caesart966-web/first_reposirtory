@@ -61,6 +61,6 @@ fi
 
 # --- 4. Запускаем ----------------------------------------------------------
 echo
-./.venv/bin/python main.py --input "$INPUT" --output output "$@"
+./.venv/bin/python main.py --input "$INPUT" --output output ${EXTRA_ARGS:-} "$@"
 echo
 echo "Результаты — в папке: $(pwd)/output"

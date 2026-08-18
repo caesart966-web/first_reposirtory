@@ -50,6 +50,9 @@ from .textutils import (
 
 logger = get_logger("checko-api")
 
+#: Пометка источника данных в сохранённом результате.
+SOURCE_API = "api"
+
 #: Базовый адрес API.
 CHECKO_API_BASE = "https://api.checko.ru/v2"
 
@@ -113,7 +116,7 @@ def parse_api_payload(data: Any, expected_inn: str = "") -> CheckoContacts:
     Функция не делает сетевых вызовов — её удобно проверять на сохранённом
     JSON и она же используется в автотестах.
     """
-    result = CheckoContacts(status=STATUS_OK, fetched_at=utcnow_iso())
+    result = CheckoContacts(status=STATUS_OK, fetched_at=utcnow_iso(), source=SOURCE_API)
     if not isinstance(data, (dict, list)):
         result.status = STATUS_NOT_FOUND
         result.error = "в ответе API нет данных о компании"
@@ -279,7 +282,8 @@ class CheckoApiClient:
         не тратится.
         """
         inn = re.sub(r"\D", "", expected_inn or query)
-        result = CheckoContacts(query=query, fetched_at=utcnow_iso(), attempts=1)
+        result = CheckoContacts(query=query, fetched_at=utcnow_iso(), attempts=1,
+                                source=SOURCE_API)
 
         if len(inn) not in (10, 12):
             with self._lock:

@@ -202,6 +202,7 @@ class CheckoContacts:
 
     query: str = ""                  # что искали (ИНН или название)
     status: str = STATUS_SKIPPED     # см. константы STATUS_*
+    source: str = ""                 # чем получено: "api" или "html"
     url: str = ""                    # адрес карточки компании
     http_status: int | None = None   # код последнего HTTP-ответа
     error: str = ""                  # текст ошибки, если была
@@ -257,6 +258,7 @@ class CheckoContacts:
         return {
             "query": self.query,
             "status": self.status,
+            "source": self.source,
             "url": self.url,
             "http_status": self.http_status,
             "error": self.error,
@@ -280,6 +282,7 @@ class CheckoContacts:
         return cls(
             query=data.get("query", ""),
             status=data.get("status", STATUS_SKIPPED),
+            source=data.get("source", ""),
             url=data.get("url", ""),
             http_status=data.get("http_status"),
             error=data.get("error", ""),

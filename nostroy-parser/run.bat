@@ -40,7 +40,7 @@ if not exist "%INPUT%" goto not_found
 
 rem --- 4. Запускаем -------------------------------------------------------
 echo.
-".venv\Scripts\python.exe" main.py --input "%INPUT%" --output output %2 %3 %4 %5 %6
+".venv\Scripts\python.exe" main.py --input "%INPUT%" --output output %EXTRA_ARGS% %2 %3 %4 %5 %6
 echo.
 echo ============================================================
 echo  Результаты — в папке: %~dp0output

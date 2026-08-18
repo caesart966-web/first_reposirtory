@@ -58,6 +58,9 @@ from .textutils import (
 
 logger = get_logger("checko")
 
+#: Пометка источника данных в сохранённом результате.
+SOURCE_HTML = "html"
+
 # --------------------------------------------------------------------------- #
 #                          Маркеры состояний страницы                          #
 # --------------------------------------------------------------------------- #
@@ -378,7 +381,7 @@ def parse_company_page(html: str, url: str, expected_inn: str = "") -> CheckoCon
     :param expected_inn: ИНН, который мы искали — для проверки, что открылась
                          карточка нужной компании.
     """
-    result = CheckoContacts(url=url, status=STATUS_OK, fetched_at=utcnow_iso())
+    result = CheckoContacts(url=url, status=STATUS_OK, fetched_at=utcnow_iso(), source=SOURCE_HTML)
     soup = _make_soup(html)
 
     # --- заголовок карточки ------------------------------------------------ #
@@ -690,7 +693,8 @@ class CheckoClient:
         Никогда не выбрасывает исключений: любая проблема возвращается
         как результат со статусом ``error``/``forbidden``/``rate_limited``.
         """
-        result = CheckoContacts(query=query, fetched_at=utcnow_iso(), attempts=1)
+        result = CheckoContacts(query=query, fetched_at=utcnow_iso(), attempts=1,
+                                source=SOURCE_HTML)
         query = clean_text(query)
         if not query:
             result.status = STATUS_ERROR

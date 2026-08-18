@@ -205,6 +205,15 @@ def _needs_lookup(group: CompanyGroup, state: StateStore, settings: Settings) ->
     existing = state.get_result(group.key)
     if existing is None:
         return True
+
+    # Источник данных сменился (например, появился ключ API вместо разбора
+    # страниц сайта) — прошлые неудачи больше ничего не значат. Иначе компании,
+    # которые не смог найти парсер HTML, навсегда остались бы со статусом
+    # not_found и API их бы уже не проверил.
+    current_source = "api" if settings.checko_api_key else "html"
+    if existing.source and existing.source != current_source and not existing.is_success:
+        return True
+
     if existing.is_final:
         return False
     if existing.status in (STATUS_RATE_LIMITED, STATUS_SKIPPED):
