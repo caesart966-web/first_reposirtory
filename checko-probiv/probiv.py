@@ -214,26 +214,91 @@ def _match_columns(header):
     return found
 
 
+def _inn_like(v):
+    """Похоже ли значение ячейки на ИНН: только цифры, 10 или 12 знаков."""
+    t = _clean(v)
+    if not t or re.search(r'\D', t):
+        return False
+    return len(t) in (10, 12)
+
+
+def _guess_by_data(grid, inn_col, start):
+    """Когда шапки нет — угадываем колонки по содержимому строк с данными."""
+    cols, body = {}, [r for r in grid[start:] if len(r) > inn_col and _inn_like(r[inn_col])]
+    if not body:
+        return cols
+    width = max(len(r) for r in body)
+
+    def column(j):
+        return [r[j] for r in body if j < len(r)]
+
+    best_len = 0
+    for j in range(width):
+        if j == inn_col:
+            continue
+        vals = [_clean(v) for v in column(j)]
+        texts = [v for v in vals if re.search(r'[А-Яа-яA-Za-z]', v)]
+        phones = [v for v in vals if len(re.sub(r'\D', '', v)) >= 6 and re.search(r'[+()\-]|^8', v)]
+        dates = [v for v in column(j) if _date(v)]
+        if len(texts) > len(vals) * 0.5:                       # колонка с наименованием — самая «длинная»
+            avg = sum(len(t) for t in texts) / len(texts)
+            if avg > best_len:
+                best_len, cols['full'] = avg, j
+        if len(phones) > len(vals) * 0.3 and 'phone' not in cols:
+            cols['phone'] = j
+        if len(dates) > len(vals) * 0.5:
+            if 'date_in' not in cols:
+                cols['date_in'] = j
+            elif 'date_out' not in cols:
+                cols['date_out'] = j
+    return cols
+
+
 def read_any(path):
-    """Любая таблица, где есть колонка с ИНН: выгрузка НОСТРОЙ, список из Excel и т.п."""
+    """Любая таблица, где есть ИНН: выгрузка НОСТРОЙ, список из Excel и т.п.
+    Сначала ищем шапку по названиям колонок, а если её нет — находим ИНН по самим данным."""
     wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
     best = None
     for ws in wb.worksheets:
-        head = []
-        for i, r in enumerate(ws.iter_rows(min_row=1, max_row=25, values_only=True)):
-            head.append(r)
-        for i, r in enumerate(head):
+        grid = list(ws.iter_rows(min_row=1, max_row=300, values_only=True))
+        if not grid:
+            continue
+
+        for i, r in enumerate(grid):                            # 1. шапка с названиями
             cols = _match_columns(r)
             if 'inn' in cols:
-                best = (ws, i + 1, cols)
+                best = (ws, i + 1, cols, 'по названиям колонок')
                 break
         if best:
             break
+
+        hits, first_row = {}, {}                                # 2. поиск ИНН по содержимому
+        for i, r in enumerate(grid):
+            for j, v in enumerate(r):
+                if _inn_like(v):
+                    hits[j] = hits.get(j, 0) + 1
+                    first_row.setdefault(j, i)
+        if not hits:
+            continue
+        inn_col = max(hits, key=lambda k: hits[k])
+        start = first_row[inn_col]
+
+        cols, how = {}, 'по данным'
+        for i in range(start - 1, max(-1, start - 11), -1):     # шапка чуть выше данных?
+            named = _match_columns(grid[i])
+            if len([c for c in grid[i] if _clean(c)]) >= 3 and named:
+                cols, how = named, 'по данным и шапке выше'
+                break
+        cols.update({k: v for k, v in _guess_by_data(grid, inn_col, start).items() if k not in cols})
+        cols['inn'] = inn_col
+        best = (ws, start, cols, how)
+        break
+
     if not best:
         wb.close()
         return None, None
 
-    ws, hdr_row, cols = best
+    ws, hdr_row, cols, how = best
     out, seen, num = [], set(), 0
     for r in ws.iter_rows(min_row=hdr_row + 1, values_only=True):
         if cols['inn'] >= len(r):
@@ -255,8 +320,9 @@ def read_any(path):
     wb.close()
     names = {'inn': 'ИНН', 'full': 'Наименование', 'short': 'Сокращённое',
              'phone': 'Телефон', 'date_in': 'Дата вступления', 'date_out': 'Дата прекращения'}
-    descr = ', '.join('%s=%s' % (names[f], get_column_letter(cols[f] + 1))
-                      for f in ('inn', 'full', 'short', 'phone', 'date_in', 'date_out') if f in cols)
+    descr = '%s — %s' % (how, ', '.join('%s=%s' % (names[f], get_column_letter(cols[f] + 1))
+                                        for f in ('inn', 'full', 'short', 'phone', 'date_in', 'date_out')
+                                        if f in cols))
     return out, descr
 
 
@@ -292,7 +358,7 @@ def load_register(input_dir):
             got, how = read_export(p), 'выгрузка с сайта СРО'
         if not got:
             got, how = read_any(p)           # любая таблица с колонкой ИНН
-            how = 'колонки распознаны: %s' % how if got else None
+            how = 'колонки распознаны %s' % how if got else None
         if not got:
             log('  ПРОПУСКАЮ %s — не нашёл в нём колонку с ИНН' % p.name)
             continue
