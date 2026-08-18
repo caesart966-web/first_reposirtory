@@ -22,7 +22,7 @@ import tempfile
 import threading
 import unittest
 import zipfile
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -1077,6 +1077,19 @@ class TestEndToEndAcrossDays(BaseTestCase):
         checko_headers = [cell.value for cell in workbook["checko_contacts"][1]]
         self.assertIn("Email (checko.ru)", checko_headers)
         self.assertIn("Руководитель (checko.ru)", checko_headers)
+        # Даты членства продублированы рядом с контактами checko.ru...
+        self.assertIn("Дата вступления в СРО", checko_headers)
+        self.assertIn("Дата исключения из СРО", checko_headers)
+        # ...а служебные поля из отчёта убраны.
+        for removed in ("Ссылка на карточку", "ИНН совпал", "Дата получения", "Ошибка"):
+            self.assertNotIn(removed, checko_headers)
+        # Даты должны быть настоящими датами, а не текстом.
+        join_column = checko_headers.index("Дата вступления в СРО") + 1
+        filled = [
+            workbook["checko_contacts"].cell(row=index, column=join_column).value
+            for index in range(2, workbook["checko_contacts"].max_row + 1)
+        ]
+        self.assertTrue(all(isinstance(value, datetime) for value in filled if value))
         nostroy_headers = [cell.value for cell in workbook["nostroy_contacts"][1]]
         self.assertIn("Адрес (реестр)", nostroy_headers)
         self.assertIn("Файл-источник", nostroy_headers)

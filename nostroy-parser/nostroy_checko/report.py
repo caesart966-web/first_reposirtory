@@ -48,7 +48,15 @@ SHEET_SUMMARY = "run_summary"
 # --------------------------------------------------------------------------- #
 
 def build_checko_rows(groups: Sequence[CompanyGroup]) -> tuple[list[str], list[list[Any]]]:
-    """Строки вкладки ``checko_contacts`` — только данные с checko.ru."""
+    """
+    Строки вкладки ``checko_contacts`` — контакты, полученные с checko.ru,
+    плюс даты членства в СРО из реестра НОСТРОЙ.
+
+    Служебные поля (ссылка на карточку, признак совпадения ИНН, время запроса
+    и текст ошибки) в отчёт не выводятся — они остаются в логе запуска
+    ``output/logs/`` и в ``output/parsed/companies.json``. «Статус запроса»
+    сохранён: по нему видно, откуда взялась пустая строка контактов.
+    """
     headers = [
         "Название компании (реестр)",
         "Название компании (checko.ru)",
@@ -59,11 +67,9 @@ def build_checko_rows(groups: Sequence[CompanyGroup]) -> tuple[list[str], list[l
         "Адрес (checko.ru)",
         "Руководитель (checko.ru)",
         "Сайт (checko.ru)",
+        "Дата вступления в СРО",
+        "Дата исключения из СРО",
         "Статус запроса",
-        "ИНН совпал",
-        "Ссылка на карточку",
-        "Дата получения",
-        "Ошибка",
     ]
     rows: list[list[Any]] = []
     for group in groups:
@@ -79,11 +85,9 @@ def build_checko_rows(groups: Sequence[CompanyGroup]) -> tuple[list[str], list[l
                 join_unique(checko.addresses) if checko else "",
                 join_unique(checko.directors) if checko else "",
                 join_unique(checko.websites) if checko else "",
+                group.date_join,
+                group.date_exit,
                 checko.status if checko else "не запрашивалось",
-                _bool_to_text(checko.inn_matched) if checko else "",
-                checko.url if checko else "",
-                checko.fetched_at if checko else "",
-                checko.error if checko else "",
             ]
         )
     return headers, rows
@@ -194,13 +198,6 @@ def build_summary_rows(summary: dict[str, Any]) -> tuple[list[str], list[list[An
     return headers, rows
 
 
-def _bool_to_text(value: bool | None) -> str:
-    """``True/False/None`` -> ``да/нет/—`` для отображения в отчёте."""
-    if value is None:
-        return "—"
-    return "да" if value else "нет"
-
-
 # --------------------------------------------------------------------------- #
 #                              Запись Excel-файла                              #
 # --------------------------------------------------------------------------- #
@@ -233,9 +230,7 @@ def _write_sheet(workbook: Any, title: str, headers: Sequence[str], rows: Sequen
         if any(marker in header.upper() for marker in ("ИНН", "ОГРН", "ТЕЛЕФОН"))
     }
     date_columns = {
-        index
-        for index, header in enumerate(headers, start=1)
-        if "ДАТА" in header.upper() and "ПОЛУЧЕНИЯ" not in header.upper()
+        index for index, header in enumerate(headers, start=1) if "ДАТА" in header.upper()
     }
 
     widths = [len(str(header)) for header in headers]
