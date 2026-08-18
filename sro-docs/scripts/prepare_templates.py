@@ -127,6 +127,20 @@ def op_regex(paragraph: int, pattern: str, replacement: str,
             "replacement": replacement, "tab_pos": tab_pos}
 
 
+def op_blank(paragraph, nodes: list[int] | None, new: str) -> dict:
+    """Пропуск «______» заменить значением, не считая подчёркивания вручную.
+
+    Проверяет, что перечисленные фрагменты состоят ТОЛЬКО из подчёркиваний
+    (и пробелов), кладёт значение в первый, остальные вычищает. Точное число
+    подчёркиваний в бланке значения не имеет и в разметке не фиксируется —
+    иначе правка ломалась бы от одного лишнего знака.
+
+    `nodes=None` — найти пропуски в абзаце самому. Удобно там, где подпись
+    к строке и сама строка лежат в одном абзаце.
+    """
+    return {"kind": "blank", "p": paragraph, "nodes": nodes, "new": new}
+
+
 def op_pad(paragraph: int, nodes: list[int], position: int) -> dict:
     """Подложку из пробелов заменить табуляцией с прижимом вправо.
 
@@ -370,6 +384,68 @@ SFERA_POWER_OPS: list[dict] = [
 ]
 
 
+# ============================================================ ЗАЯВЛЕНИЕ «СФЕРЫ»
+def sfera_application_ops(levels: int) -> list[dict]:
+    """Разметка заявления «СФЕР». `levels` — сколько уровней ответственности.
+
+    У СФЕРА-А (строительство) их пять, у изыскателей и проектировщиков —
+    четыре. Всё остальное в трёх бланках совпадает, поэтому разметка общая,
+    а подпись ищется по тексту: из-за разного числа строк в таблицах
+    номера последних абзацев съезжают.
+    """
+    return [
+        # --- шапка: исходящий номер и дата ---
+        op_regex(r"^№__от «_____» ___________20__ г\.$",
+                 r"^№__от «_____» ___________20__ г\.$",
+                 "№ {{doc_number}} от «{{doc_day}}» {{doc_month_name}} "
+                 "{{doc_year}} г."),
+
+        # --- п.1 ИНН и п.2 ОГРН: по одной цифре в клетке ---
+        *[op_cell(1, 0, i, "", "{{inn_d%d}}" % (i + 1)) for i in range(10)],
+        *[op_cell(2, 0, i, "", "{{ogrn_d%d}}" % (i + 1)) for i in range(13)],
+
+        # --- п.3 наименование ---
+        op_regex(38, r"дата его рождения_+$",
+                 "дата его рождения {{company_full_name}}"),
+
+        # --- п.4 юридический адрес: две отдельные строки ---
+        # Бланк просит адрес двумя строками: сверху индекс, регион, город
+        # и улица, снизу — дом, корпус, офис. Делим по указателю дома.
+        op_regex(40, r"^_+$", "{{legal_address_street}}"),
+        op_blank(42, None, "{{legal_address_house}}"),
+
+        # --- п.5 и п.6: адрес целиком одной строкой ---
+        # Здесь бланк устроен иначе: подпись к строке и вторая строка лежат
+        # в ОДНОМ абзаце, и «дом 35…» прилипал бы к концу подписи. Поэтому
+        # пишем адрес целиком в первую строку, вторую оставляем пустой.
+        op_regex(45, r"^_+$", "{{actual_address}}"),
+        op_blank(46, None, ""),
+        op_regex(48, r"^_+$", "{{postal_address}}"),
+        op_blank(49, None, ""),
+
+        # --- п.7 контакты: строка руководителя и строка контактного лица ---
+        op_regex(52, r"^_+$", "{{director_contact_line}}"),
+        # В этом абзаце подпись к строке набрана другим шрифтом, чем сама
+        # строка, поэтому переписываем только фрагменты с подчёркиваниями.
+        op_blank(53, [10, 11, 12], "{{director_contact_line}}"),
+
+        # --- п.8 виды объектов ---
+        op_mark(3, 1, 1, "", "{{mark_object_ordinary}}", size=32),
+        op_mark(3, 2, 1, "", "{{mark_object_hazardous}}", size=32),
+        op_mark(3, 3, 1, "", "{{mark_object_nuclear}}", size=32),
+
+        # --- п.9 и п.10 уровни ответственности ---
+        *[op_mark(4, n, 3, "", "{{mark_harm_level%d}}" % n, size=36)
+          for n in range(1, levels + 1)],
+        *[op_mark(5, n, 3, "", "{{mark_contract_level%d}}" % n, size=36)
+          for n in range(1, levels + 1)],
+
+        # --- подпись (номер абзаца зависит от числа уровней — ищем по тексту) ---
+        op_regex(r"^Подпись уполномоченного лица организации",
+                 r"/_+/$", "/{{director_short_name}}/"),
+    ]
+
+
 # ============================================================ ДОВЕРЕННОСТЬ ЯРД
 # Устроена иначе, чем «СФЕРЫ»: срок три года, город составления пустой,
 # ИНН обозначен пробелами, а не подчёркиваниями.
@@ -428,12 +504,15 @@ TEMPLATES: dict[str, list[tuple]] = {
         ("Доверенность_ОРИГИНАЛ.docx", "02_Доверенность.docx", POWER_OPS),
     ],
     "СФЕРА-А": [
+        ("Заявление_ОРИГИНАЛ.docx", "01_Заявление.docx", sfera_application_ops(5)),
         ("Доверенность_ОРИГИНАЛ.docx", "02_Доверенность.docx", SFERA_POWER_OPS),
     ],
     "СФЕРА ИЗЫСКАТЕЛЕЙ": [
+        ("Заявление_ОРИГИНАЛ.docx", "01_Заявление.docx", sfera_application_ops(4)),
         ("Доверенность_ОРИГИНАЛ.docx", "02_Доверенность.docx", SFERA_POWER_OPS),
     ],
     "СФЕРА ПРОЕКТИРОВЩИКОВ": [
+        ("Заявление_ОРИГИНАЛ.docx", "01_Заявление.docx", sfera_application_ops(4)),
         ("Доверенность_ОРИГИНАЛ.docx", "02_Доверенность.docx", SFERA_POWER_OPS),
     ],
     "ЯРД": [
@@ -590,12 +669,35 @@ def _make_run(paragraph, text: str):
     return run
 
 
+def _resolve_paragraph(paragraphs, where, label: str) -> int:
+    """Номер абзаца: либо задан числом, либо ищется по образцу текста.
+
+    Поиск по тексту нужен там, где похожие бланки различаются числом строк
+    в таблицах: у строительных СРО уровней пять, у проектных четыре, и все
+    последующие абзацы съезжают. Текст при этом остаётся тем же.
+    """
+    if isinstance(where, int):
+        return where
+    pattern = re.compile(where)
+    hits = [i for i, p in enumerate(paragraphs)
+            if pattern.search("".join(n.text or "" for n in _own_text_nodes(p)))]
+    if len(hits) != 1:
+        raise PrepareError(
+            f"{label}: абзац по образцу {where!r} найден {len(hits)} раз, "
+            f"а нужен ровно один.\n"
+            f"Шаблон изменился — обновите карту разметки в этом скрипте."
+        )
+    return hits[0]
+
+
 def apply_ops(document_xml: bytes, ops: list[dict], label: str) -> bytes:
     root = etree.fromstring(document_xml)
     paragraphs = list(_iter_paragraphs(root))
     tables = list(root.iter(W + "tbl"))
 
     for op in ops:
+        if "p" in op:
+            op = dict(op, p=_resolve_paragraph(paragraphs, op["p"], label))
         if op["kind"] == "text":
             index, node_index = op["p"], op["n"]
             if index >= len(paragraphs):
@@ -644,6 +746,37 @@ def apply_ops(document_xml: bytes, ops: list[dict], label: str) -> bytes:
             else:
                 run = _make_run(paragraph, op["new"])
                 _emphasize(run.find(W + "t"), op["size"])
+
+        elif op["kind"] == "blank":
+            nodes = _own_text_nodes(paragraphs[op["p"]])
+            indices = op["nodes"]
+            if indices is None:
+                indices = [i for i, n in enumerate(nodes)
+                           if (n.text or "") and not (n.text or "").strip(" _")]
+                if not indices:
+                    raise PrepareError(
+                        f"{label}: в абзаце №{op['p']} не найдено пропусков "
+                        f"из подчёркиваний. Шаблон изменился."
+                    )
+            picked = []
+            for index in indices:
+                if index >= len(nodes):
+                    raise PrepareError(
+                        f"{label}: в абзаце №{op['p']} нет фрагмента №{index} "
+                        f"(всего {len(nodes)}). Шаблон изменился.")
+                node = nodes[index]
+                text = node.text or ""
+                if not text or text.strip(" _"):
+                    raise PrepareError(
+                        f"{label}: абзац №{op['p']}, фрагмент №{index} — "
+                        f"ожидался пропуск из подчёркиваний.\n"
+                        f"  В документе: {text[:60]!r}\n"
+                        f"Шаблон изменился — обновите карту разметки."
+                    )
+                picked.append(node)
+            _set_node_text(picked[0], op["new"])
+            for node in picked[1:]:
+                _set_node_text(node, "")
 
         elif op["kind"] == "pad":
             paragraph = paragraphs[op["p"]]

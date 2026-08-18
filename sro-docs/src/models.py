@@ -67,6 +67,15 @@ FIELD_SPECS: list[FieldSpec] = [
 
 FIELD_BY_KEY = {f.key: f for f in FIELD_SPECS}
 
+#: Параметры конкретного пакета документов — это НЕ реквизиты компании.
+#: При разборе новой карточки они сохраняются, а не сбрасываются.
+#: Список один на всю программу: раньше он был перечислен в двух местах
+#: и разошёлся — номер заявления терялся.
+DOC_PARAM_FIELDS = (
+    "doc_date", "doc_number", "power_number",
+    "object_kind", "harm_fund_level", "contract_fund_level",
+)
+
 
 @dataclass
 class CompanyData:
@@ -109,8 +118,8 @@ class CompanyData:
 
     # --- Параметры конкретного пакета документов (не реквизиты компании) ---
     doc_date: str = ""          # дата документов, ДД.ММ.ГГГГ
-    power_number: str = ""      # номер доверенности; значение по умолчанию —
-                                # в config/documents.json, раздел defaults
+    power_number: str = ""      # номер доверенности; умолчание — в sro.json
+    doc_number: str = ""        # исходящий номер заявления; умолчание — в sro.json
     object_kind: str = "ordinary"      # ordinary | hazardous | nuclear
     harm_fund_level: str = "1"         # уровень по п.12 ст.55.16 ГрК РФ
     contract_fund_level: str = ""      # уровень по п.13; пусто = КФ ОДО не заявляем

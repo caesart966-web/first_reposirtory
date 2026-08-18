@@ -25,7 +25,7 @@ from .company_parser import parse_card, parse_text  # noqa: E402
 from .context_builder import build_context  # noqa: E402
 from .document_generator import (GeneratorError, Project, check_readiness,  # noqa: E402
                                  generate)
-from .models import FIELD_SPECS, CompanyData  # noqa: E402
+from .models import DOC_PARAM_FIELDS, FIELD_SPECS, CompanyData  # noqa: E402
 from .quality_control import lookup_variable  # noqa: E402
 from .readers import ReadError, read_card  # noqa: E402
 from .sro_registry import SroError  # noqa: E402
@@ -152,8 +152,7 @@ def main(argv: list[str] | None = None) -> int:
         if parsed is not None:
             defaults = company           # умолчания, полученные из настроек
             company = parsed.company
-            for key in ("doc_date", "power_number", "object_kind",
-                        "harm_fund_level", "contract_fund_level"):
+            for key in DOC_PARAM_FIELDS:
                 company.set(key, defaults.get(key))
             notes += parsed.notes
             derived.update(parsed.derived)

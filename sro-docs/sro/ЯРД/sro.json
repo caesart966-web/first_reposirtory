@@ -9,7 +9,8 @@
   "city": "Москва",
   "note": "Направление: подготовка проектной документации. Доверенность выдаётся на три года.",
   "defaults": {
-    "power_number": "б/н"
+    "power_number": "б/н",
+    "doc_number": "б/н"
   },
   "auto_fill": {
     "actual_address": "legal_address",

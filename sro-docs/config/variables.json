@@ -183,6 +183,61 @@
       "field": null,
       "required": false,
       "where": "город СРО (место составления документа)"
+    },
+    "company_full_name": {
+      "field": "full_name",
+      "required": true,
+      "where": "полное наименование целиком, с формой собственности"
+    },
+    "company_short_name": {
+      "field": "short_name",
+      "required": true,
+      "where": "сокращённое наименование целиком"
+    },
+    "doc_number": {
+      "field": null,
+      "required": false,
+      "where": "исходящий номер заявления; по умолчанию «б/н»"
+    },
+    "director_contact_line": {
+      "field": "director_full_name",
+      "required": true,
+      "where": "контакты одной строкой: ФИО, должность, телефон, почта"
+    },
+    "company_contact_line": {
+      "field": "phone",
+      "required": true,
+      "where": "контакты организации одной строкой: телефон, почта, сайт"
+    },
+    "legal_address_street": {
+      "field": "legal_address",
+      "required": true,
+      "where": "юридический адрес, часть до дома: индекс, регион, город, улица"
+    },
+    "legal_address_house": {
+      "field": "legal_address",
+      "required": true,
+      "where": "юридический адрес, часть от дома: дом, корпус, офис"
+    },
+    "actual_address_street": {
+      "field": "actual_address",
+      "required": true,
+      "where": "фактический адрес, часть до дома: индекс, регион, город, улица"
+    },
+    "actual_address_house": {
+      "field": "actual_address",
+      "required": true,
+      "where": "фактический адрес, часть от дома: дом, корпус, офис"
+    },
+    "postal_address_street": {
+      "field": "postal_address",
+      "required": true,
+      "where": "почтовый адрес, часть до дома: индекс, регион, город, улица"
+    },
+    "postal_address_house": {
+      "field": "postal_address",
+      "required": true,
+      "where": "почтовый адрес, часть от дома: дом, корпус, офис"
     }
   }
 }

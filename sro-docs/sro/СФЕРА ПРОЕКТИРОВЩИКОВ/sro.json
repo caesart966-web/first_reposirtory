@@ -9,7 +9,8 @@
   "city": "Санкт-Петербург",
   "note": "Направление: подготовка проектной документации. Бланки рассчитаны на ООО.",
   "defaults": {
-    "power_number": "б/н"
+    "power_number": "б/н",
+    "doc_number": "б/н"
   },
   "auto_fill": {
     "actual_address": "legal_address",
@@ -21,6 +22,13 @@
     "  \"template\": \"01_Заявление.docx\", \"enabled\": true }"
   ],
   "documents": [
+    {
+      "id": "application",
+      "title": "Заявление о вступлении",
+      "template": "01_Заявление.docx",
+      "output_name": "01_Заявление.docx",
+      "enabled": true
+    },
     {
       "id": "power_of_attorney",
       "title": "Доверенность",

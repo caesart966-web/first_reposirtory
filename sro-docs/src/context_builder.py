@@ -47,6 +47,45 @@ class ContextResult:
     notes: list[str] = field(default_factory=list)
 
 
+#: С чего начинается «домовая» часть адреса. Порядок важен: сначала длинные.
+HOUSE_MARKERS = (
+    "владение", "домовладение", "дом ", "д.", "корпус", "корп.", "корп ",
+    "строение", "стр.", "стр ", "литера", "лит.", "помещение", "помещ.",
+    "пом.", "офис", "оф.", "квартира", "кв.", "этаж", "комната", "ком.",
+)
+
+
+def split_address(address: str) -> tuple[str, str]:
+    """Разделить адрес на «до дома» и «дом и далее».
+
+    Некоторые бланки просят адрес двумя строками: сверху индекс, регион,
+    город и улица, снизу — номер дома, корпуса и офиса. Делим по первому
+    указателю дома.
+
+    Если указателя нет, весь адрес уходит в первую строку, вторая остаётся
+    пустой: выдумывать разбиение нельзя.
+    """
+    text = (address or "").strip()
+    if not text:
+        return "", ""
+    lowered = text.lower()
+    best = None
+    for marker in HOUSE_MARKERS:
+        position = lowered.find(marker)
+        if position <= 0:
+            continue
+        # Указатель должен начинать слово, а не сидеть внутри другого.
+        if text[position - 1].isalnum():
+            continue
+        if best is None or position < best:
+            best = position
+    if best is None:
+        return text, ""
+    head = text[:best].rstrip().rstrip(",").rstrip()
+    tail = text[best:].strip()
+    return head, tail
+
+
 def _digits(value: str) -> str:
     return re.sub(r"\D", "", value or "")
 
@@ -100,6 +139,9 @@ def build_context(company: CompanyData, attorney: dict[str, str],
     values["company_name_bare"] = bare_full
     values["legal_form_short"] = form_short or form_short_full
     values["short_name_bare"] = bare_short
+    # Наименования целиком — нужны бланкам, где для них одна строка.
+    values["company_full_name"] = company.full_name
+    values["company_short_name"] = company.short_name
 
     if company.full_name and not values["legal_form_full"]:
         result.notes.append(
@@ -133,6 +175,11 @@ def build_context(company: CompanyData, attorney: dict[str, str],
     values["legal_address"] = company.legal_address
     values["actual_address"] = company.actual_address
     values["postal_address"] = company.postal_address
+    # Бланки, где адрес просят двумя строками: улица сверху, дом снизу.
+    for name in ("legal_address", "actual_address", "postal_address"):
+        street, house = split_address(company.get(name))
+        values[f"{name}_street"] = street
+        values[f"{name}_house"] = house
     values["phone"] = company.phone
     values["email"] = company.email
     values["website"] = company.website
@@ -174,6 +221,19 @@ def build_context(company: CompanyData, attorney: dict[str, str],
     values["doc_date"] = doc_date.strftime("%d.%m.%Y")
 
     values["power_number"] = company.power_number
+    values["doc_number"] = company.doc_number
+
+    # ---------------------------------------------------------- строки контактов
+    # Некоторые бланки просят контакты одной строкой в заданном порядке.
+    # Собираем ровно из того, что есть; пустые части просто пропускаем.
+    def joined(*parts: str) -> str:
+        return ", ".join(part for part in parts if part and part.strip())
+
+    values["director_contact_line"] = joined(
+        company.director_full_name, company.director_position,
+        company.phone, company.email)
+    values["company_contact_line"] = joined(
+        company.phone, company.email, company.website)
 
     # ---------------------------------------------------------- отметки «V»
     for kind in OBJECT_KINDS:

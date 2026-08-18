@@ -29,7 +29,7 @@ from .company_parser import parse_card, parse_text  # noqa: E402
 from .context_builder import OBJECT_KINDS, build_context  # noqa: E402
 from .document_generator import (GeneratorError, Project, check_readiness,  # noqa: E402
                                  generate)
-from .models import FIELD_SPECS, CompanyData  # noqa: E402
+from .models import DOC_PARAM_FIELDS, FIELD_SPECS, CompanyData  # noqa: E402
 from .readers import SUPPORTED_SUFFIXES, ReadError, read_card  # noqa: E402
 from .sro_registry import SroError  # noqa: E402
 from .validators import validate_company  # noqa: E402
@@ -328,6 +328,14 @@ class Application(tk.Frame):
         ttk.Label(block, text="в виде ДД.ММ.ГГГГ", foreground="#6b7480").grid(
             row=0, column=2, sticky="w")
 
+        self.vars["doc_number"] = tk.StringVar(value=self.company.doc_number)
+        ttk.Label(block, text="Номер заявления:").grid(row=2, column=0, sticky="e",
+                                                       padx=PAD, pady=4)
+        ttk.Entry(block, textvariable=self.vars["doc_number"], width=16).grid(
+            row=2, column=1, sticky="w", padx=PAD)
+        ttk.Label(block, text="исходящий номер письма; по умолчанию «б/н»",
+                  foreground="#6b7480").grid(row=2, column=2, sticky="w")
+
         self.vars["power_number"] = tk.StringVar(value=self.company.power_number)
         ttk.Label(block, text="Номер доверенности:").grid(row=1, column=0, sticky="e",
                                                           padx=PAD, pady=4)
@@ -454,13 +462,7 @@ class Application(tk.Frame):
     def _apply_parsed(self, parsed, source: str) -> None:
         # Дата и параметры документов не относятся к карточке — сохраняем их.
         self._read_form()
-        keep = {
-            "doc_date": self.company.doc_date,
-            "power_number": self.company.power_number,
-            "object_kind": self.company.object_kind,
-            "harm_fund_level": self.company.harm_fund_level,
-            "contract_fund_level": self.company.contract_fund_level,
-        }
+        keep = {key: self.company.get(key) for key in DOC_PARAM_FIELDS}
         self.company = parsed.company           # новый объект: чужих данных не остаётся
         for key, value in keep.items():
             self.company.set(key, value)
