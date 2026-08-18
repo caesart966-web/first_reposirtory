@@ -206,11 +206,6 @@ def build_parser() -> argparse.ArgumentParser:
     # ------------------------------- прочее --------------------------------- #
     group_misc = parser.add_argument_group("Прочее")
     group_misc.add_argument(
-        "--with-diagnostics",
-        action="store_true",
-        help="добавить в отчёт служебные вкладки (нераспознанные строки, сводка)",
-    )
-    group_misc.add_argument(
         "--no-progress-bar",
         action="store_true",
         help="не показывать прогресс-бар (полезно при записи вывода в файл)",
@@ -267,7 +262,6 @@ def settings_from_args(args: argparse.Namespace) -> Settings:
         reset_state=args.reset_state,
         max_companies=args.max_companies,
         log_level=args.log_level,
-        with_diagnostics=args.with_diagnostics,
         report_date=report_date,
         no_progress_bar=args.no_progress_bar,
     )

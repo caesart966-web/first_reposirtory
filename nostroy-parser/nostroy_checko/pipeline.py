@@ -460,12 +460,5 @@ def run(settings: Settings) -> RunResult:
         result.files_index,
     )
 
-    result.report_path = write_report(
-        settings.report_path,
-        result.groups,
-        result.records,
-        result.unrecognized,
-        result.summary(),
-        with_diagnostics=settings.with_diagnostics,
-    )
+    result.report_path = write_report(settings.report_path, result.groups)
     return result

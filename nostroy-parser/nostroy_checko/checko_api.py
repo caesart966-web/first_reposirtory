@@ -183,7 +183,10 @@ def parse_api_payload(data: Any, expected_inn: str = "") -> CheckoContacts:
                         elif _KEY_POSITION.match(str(sub_key).lower()) and isinstance(sub_value, str):
                             position = clean_text(sub_value)
                     if fio:
-                        merge_unique(directors, [f"{position}: {fio}" if position else fio])
+                        # В отчёт нужно только ФИО — должность не сохраняем.
+                        merge_unique(directors, [fio])
+                    elif position and not fio:
+                        merge_unique(directors, [position])
                 elif isinstance(item, str) and clean_text(item):
                     merge_unique(directors, [clean_text(item)])
         # ФИО индивидуального предпринимателя — это и есть название.

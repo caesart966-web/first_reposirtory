@@ -327,6 +327,23 @@ class TestTextUtils(BaseTestCase):
         )
         self.assertEqual(textutils.extract_emails("ivanov @ mail.ru"), ["ivanov@mail.ru"])
 
+    def test_director_fio_without_position(self) -> None:
+        """В отчёте нужно ФИО, а не «Генеральный директор: ФИО»."""
+        cases = {
+            "Генеральный директор: Кузьмина Арина Сергеевна": "Кузьмина Арина Сергеевна",
+            "Директор Хватынец Леонид Витальевич": "Хватынец Леонид Витальевич",
+            "Врио генерального директора Сидоров С.С.": "Сидоров С.С.",
+            "Председатель правления Смирнова Анна Владимировна": "Смирнова Анна Владимировна",
+            "Единоличный исполнительный орган: Ковалёв Дмитрий Олегович": "Ковалёв Дмитрий Олегович",
+            "Петров Пётр Петрович": "Петров Пётр Петрович",
+            "Иванов И.И.": "Иванов И.И.",
+            # Фамилию «Главин» нельзя принять за должность «глава».
+            "Главин Иван Иванович": "Главин Иван Иванович",
+            "": "",
+        }
+        for source, expected in cases.items():
+            self.assertEqual(textutils.director_fio(source), expected, msg=source)
+
     def test_header_normalization(self) -> None:
         self.assertEqual(
             textutils.normalize_header("  Полное  наименование\nчлена СРО (ЮЛ/ИП) "),
@@ -897,6 +914,25 @@ class TestCheckoApi(BaseTestCase):
         # Вложенное поле «Регион.Наим» не должно подменять название компании.
         self.assertNotEqual(result.name, "Москва")
 
+    def test_director_is_stored_as_fio_only(self) -> None:
+        """В отчёт должно попасть ФИО, а не «Генеральный директор: ФИО»."""
+        from nostroy_checko.checko_api import parse_api_payload
+        from nostroy_checko.report import build_report_rows
+        from nostroy_checko.models import CompanyGroup, RegistryRecord
+
+        parsed = parse_api_payload(API_COMPANY_PAYLOAD["data"])
+        self.assertEqual(parsed.directors, ["Иванов Иван Иванович"])
+
+        # И на случай данных из другого источника — чистка при выводе в отчёт.
+        group = CompanyGroup(
+            key="inn:7707083893",
+            records=[RegistryRecord(name="Тест", inn="7707083893")],
+        )
+        group.checko = parsed
+        group.checko.directors = ["Генеральный директор: Петров Пётр Петрович"]
+        headers, rows = build_report_rows([group])
+        self.assertEqual(rows[0][headers.index("Руководитель")], "Петров Пётр Петрович")
+
     def test_payload_parsing_entrepreneur(self) -> None:
         from nostroy_checko.checko_api import parse_api_payload
 
@@ -1004,7 +1040,6 @@ class TestEndToEndAcrossDays(BaseTestCase):
             timeout=5.0,
             max_retries=1,
             no_progress_bar=True,
-            with_diagnostics=True,
         )
 
     @classmethod
@@ -1052,55 +1087,46 @@ class TestEndToEndAcrossDays(BaseTestCase):
             (len(COMPANIES) - 3) * 2,
         )
 
-        # В отчёте есть все три обязательные вкладки и контакты с checko.
+        # Отчёт — один лист с нужными колонками.
         from openpyxl import load_workbook
 
         workbook = load_workbook(day_two.report_path)
-        self.assertEqual(
-            workbook.sheetnames[:3],
-            ["checko_contacts", "nostroy_contacts", "combined"],
-        )
-        combined = workbook["combined"]
-        headers = [cell.value for cell in combined[1]]
-        # Рабочая вкладка — ровно пять колонок, ничего лишнего.
+        self.assertEqual(workbook.sheetnames, ["Контакты"])
+        sheet = workbook["Контакты"]
+        headers = [cell.value for cell in sheet[1]]
         self.assertEqual(
             headers,
             [
                 "Название компании",
                 "ИНН",
-                "Контактные номера (checko.ru)",
-                "Дата вступления",
-                "Дата исключения",
+                "Телефон",
+                "Email",
+                "Адрес",
+                "Руководитель",
+                "Дата вступления в СРО",
+                "Дата исключения из СРО",
+                "Статус запроса",
             ],
         )
-        # Подробности при этом сохранены на других вкладках.
-        checko_headers = [cell.value for cell in workbook["checko_contacts"][1]]
-        self.assertIn("Email (checko.ru)", checko_headers)
-        self.assertIn("Руководитель (checko.ru)", checko_headers)
-        # Даты членства продублированы рядом с контактами checko.ru...
-        self.assertIn("Дата вступления в СРО", checko_headers)
-        self.assertIn("Дата исключения из СРО", checko_headers)
-        # ...а служебные поля из отчёта убраны.
-        for removed in ("Ссылка на карточку", "ИНН совпал", "Дата получения", "Ошибка"):
-            self.assertNotIn(removed, checko_headers)
-        # Даты должны быть настоящими датами, а не текстом.
-        join_column = checko_headers.index("Дата вступления в СРО") + 1
-        filled = [
-            workbook["checko_contacts"].cell(row=index, column=join_column).value
-            for index in range(2, workbook["checko_contacts"].max_row + 1)
-        ]
-        self.assertTrue(all(isinstance(value, datetime) for value in filled if value))
-        nostroy_headers = [cell.value for cell in workbook["nostroy_contacts"][1]]
-        self.assertIn("Адрес (реестр)", nostroy_headers)
-        self.assertIn("Файл-источник", nostroy_headers)
 
-        phone_column = headers.index("Контактные номера (checko.ru)")
+        # Контакты получены по всем компаниям.
+        phone_column = headers.index("Телефон")
         filled = [
             row[phone_column]
-            for row in combined.iter_rows(min_row=2, values_only=True)
+            for row in sheet.iter_rows(min_row=2, values_only=True)
             if row[phone_column]
         ]
-        self.assertEqual(len(filled), len(COMPANIES))   # контакты получены по всем
+        self.assertEqual(len(filled), len(COMPANIES))
+
+        # Даты вступления — настоящие даты, взятые из реестра НОСТРОЙ.
+        join_column = headers.index("Дата вступления в СРО")
+        joins = [row[join_column] for row in sheet.iter_rows(min_row=2, values_only=True)]
+        self.assertTrue(all(isinstance(value, datetime) for value in joins))
+
+        # Шапка выделена только жирностью — заливки и цветного текста нет.
+        header_cell = sheet["A1"]
+        self.assertTrue(header_cell.font.bold)
+        self.assertIn(header_cell.fill.fill_type, (None, "none"))
 
     def test_retry_policy(self) -> None:
         """Ошибки повторяются ограниченное число раз, «не успели» — всегда."""

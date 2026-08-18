@@ -24,7 +24,7 @@ from typing import Any, Sequence
 
 from .logging_setup import get_logger
 from .models import CompanyGroup, RegistryRecord, UnrecognizedRow
-from .textutils import format_date, join_unique, truncate
+from .textutils import director_fio, format_date, join_unique, truncate
 
 logger = get_logger("report")
 
@@ -35,38 +35,28 @@ _MIN_COLUMN_WIDTH = 10
 #: Формат отображения дат в отчёте.
 _DATE_FORMAT = "DD.MM.YYYY"
 
-#: Названия обязательных вкладок (строго по ТЗ).
-SHEET_CHECKO = "checko_contacts"
-SHEET_NOSTROY = "nostroy_contacts"
-SHEET_COMBINED = "combined"
-SHEET_UNRECOGNIZED = "unrecognized_rows"
-SHEET_SUMMARY = "run_summary"
+#: Единственный лист отчёта.
+SHEET_NAME = "Контакты"
 
 
 # --------------------------------------------------------------------------- #
-#                        Подготовка строк для вкладок                          #
+#                          Подготовка строк отчёта                             #
 # --------------------------------------------------------------------------- #
 
-def build_checko_rows(groups: Sequence[CompanyGroup]) -> tuple[list[str], list[list[Any]]]:
+def build_report_rows(groups: Sequence[CompanyGroup]) -> tuple[list[str], list[list[Any]]]:
     """
-    Строки вкладки ``checko_contacts`` — контакты, полученные с checko.ru,
-    плюс даты членства в СРО из реестра НОСТРОЙ.
+    Формирует единственную таблицу отчёта — по строке на компанию.
 
-    Служебные поля (ссылка на карточку, признак совпадения ИНН, время запроса
-    и текст ошибки) в отчёт не выводятся — они остаются в логе запуска
-    ``output/logs/`` и в ``output/parsed/companies.json``. «Статус запроса»
-    сохранён: по нему видно, откуда взялась пустая строка контактов.
+    Контакты берутся с checko.ru, даты членства — из реестра НОСТРОЙ.
+    В колонке «Руководитель» выводится только ФИО, без должности.
     """
     headers = [
-        "Название компании (реестр)",
-        "Название компании (checko.ru)",
+        "Название компании",
         "ИНН",
-        "ОГРН (checko.ru)",
-        "Телефоны (checko.ru)",
-        "Email (checko.ru)",
-        "Адрес (checko.ru)",
-        "Руководитель (checko.ru)",
-        "Сайт (checko.ru)",
+        "Телефон",
+        "Email",
+        "Адрес",
+        "Руководитель",
         "Дата вступления в СРО",
         "Дата исключения из СРО",
         "Статус запроса",
@@ -77,14 +67,11 @@ def build_checko_rows(groups: Sequence[CompanyGroup]) -> tuple[list[str], list[l
         rows.append(
             [
                 group.name,
-                checko.name if checko else "",
                 group.inn,
-                checko.ogrn if checko else "",
                 join_unique(checko.phones) if checko else "",
                 join_unique(checko.emails) if checko else "",
                 join_unique(checko.addresses) if checko else "",
-                join_unique(checko.directors) if checko else "",
-                join_unique(checko.websites) if checko else "",
+                join_unique(director_fio(value) for value in checko.directors) if checko else "",
                 group.date_join,
                 group.date_exit,
                 checko.status if checko else "не запрашивалось",
@@ -93,137 +80,36 @@ def build_checko_rows(groups: Sequence[CompanyGroup]) -> tuple[list[str], list[l
     return headers, rows
 
 
-def build_nostroy_rows(records: Sequence[RegistryRecord]) -> tuple[list[str], list[list[Any]]]:
-    """
-    Строки вкладки ``nostroy_contacts`` — контакты из реестра НОСТРОЙ.
-
-    Одна строка отчёта = одна исходная запись реестра (со ссылкой на файл,
-    лист и номер строки), поэтому ни одна запись не «схлопывается» и не теряется.
-    """
-    headers = [
-        "Название компании / ИП",
-        "ИНН",
-        "ОГРН",
-        "Дата вступления в СРО",
-        "Дата исключения",
-        "Статус членства",
-        "Телефон (реестр)",
-        "Email (реестр)",
-        "Адрес (реестр)",
-        "Руководитель (реестр)",
-        "Сайт (реестр)",
-        "Прочие контакты (реестр)",
-        "Регистрационный номер",
-        "СРО",
-        "Файл-источник",
-        "Лист",
-        "Строка",
-        "Примечания разбора",
-    ]
-    rows: list[list[Any]] = []
-    for record in records:
-        rows.append(
-            [
-                record.name,
-                record.inn,
-                record.ogrn,
-                record.date_join,
-                record.date_exit,
-                record.status,
-                join_unique(record.phones),
-                join_unique(record.emails),
-                join_unique(record.addresses),
-                join_unique(record.directors),
-                join_unique(record.websites),
-                join_unique(f"{key}: {value}" for key, value in record.other_contacts.items()),
-                record.reg_number,
-                record.sro_name,
-                record.source_file,
-                record.source_sheet,
-                record.source_row,
-                join_unique(record.warnings),
-            ]
-        )
-    return headers, rows
-
-
-def build_combined_rows(groups: Sequence[CompanyGroup]) -> tuple[list[str], list[list[Any]]]:
-    """
-    Строки вкладки ``combined`` — рабочая выгрузка для обзвона.
-
-    Намеренно короткая: только то, что нужно, чтобы позвонить.
-    Название, ИНН, контактные номера с checko.ru и даты членства.
-
-    Подробности никуда не делись: полный набор контактов с checko.ru (почта,
-    адрес, руководитель, сайт, статус запроса) лежит на вкладке
-    ``checko_contacts``, а всё, что было в исходном реестре, — на вкладке
-    ``nostroy_contacts``, построчно и со ссылкой на файл-источник.
-    """
-    headers = [
-        "Название компании",
-        "ИНН",
-        "Контактные номера (checko.ru)",
-        "Дата вступления",
-        "Дата исключения",
-    ]
-    rows: list[list[Any]] = []
-    for group in groups:
-        checko = group.checko
-        rows.append(
-            [
-                group.name,
-                group.inn,
-                join_unique(checko.phones) if checko else "",
-                group.date_join,
-                group.date_exit,
-            ]
-        )
-    return headers, rows
-
-
-def build_unrecognized_rows(items: Sequence[UnrecognizedRow]) -> tuple[list[str], list[list[Any]]]:
-    """Строки служебной вкладки с нераспознанными строками исходных файлов."""
-    headers = ["Файл", "Лист", "Строка", "Причина", "Содержимое строки"]
-    rows = [
-        [item.file_path, item.sheet_name, item.row_number, item.reason, truncate(item.preview, 2000)]
-        for item in items
-    ]
-    return headers, rows
-
-
-def build_summary_rows(summary: dict[str, Any]) -> tuple[list[str], list[list[Any]]]:
-    """Строки служебной вкладки со сводкой по запуску."""
-    headers = ["Показатель", "Значение"]
-    rows = [[key, value] for key, value in summary.items()]
-    return headers, rows
-
-
 # --------------------------------------------------------------------------- #
 #                              Запись Excel-файла                              #
 # --------------------------------------------------------------------------- #
 
-def _write_sheet(workbook: Any, title: str, headers: Sequence[str], rows: Sequence[Sequence[Any]]) -> None:
+def _write_sheet(
+    workbook: Any,
+    title: str,
+    headers: Sequence[str],
+    rows: Sequence[Sequence[Any]],
+) -> None:
     """
-    Записывает одну вкладку: шапка, данные, автофильтр, закрепление, ширины.
+    Записывает лист: шапка, данные, автофильтр, закрепление строки, ширины.
 
-    ИНН пишется текстом — иначе Excel съедает ведущие нули и показывает
-    ``7,70708E+09`` вместо номера.
+    Оформление намеренно скупое: жирная шапка и ничего больше. Заливку и цвета
+    не используем — таблицу читают и фильтруют, а не разглядывают.
+
+    ИНН и телефоны пишутся текстом: иначе Excel съедает ведущие нули и
+    показывает ``7,70708E+09`` вместо номера. Даты пишутся настоящими датами,
+    поэтому по ним работают сортировка и фильтр по периоду.
     """
-    from openpyxl.styles import Alignment, Font, PatternFill
+    from openpyxl.styles import Alignment, Font
     from openpyxl.utils import get_column_letter
 
     worksheet = workbook.create_sheet(title=title[:31])
-    header_font = Font(bold=True, color="FFFFFF")
-    header_fill = PatternFill("solid", fgColor="1F4E78")
-    header_alignment = Alignment(vertical="center", wrap_text=True)
 
     worksheet.append(list(headers))
     for cell in worksheet[1]:
-        cell.font = header_font
-        cell.fill = header_fill
-        cell.alignment = header_alignment
+        cell.font = Font(bold=True)
+        cell.alignment = Alignment(vertical="center")
 
-    # Колонки, которые обязаны быть текстовыми (ИНН, ОГРН, телефоны).
     text_columns = {
         index
         for index, header in enumerate(headers, start=1)
@@ -264,58 +150,29 @@ def _write_sheet(workbook: Any, title: str, headers: Sequence[str], rows: Sequen
 
     worksheet.freeze_panes = "A2"
     if rows:
-        worksheet.auto_filter.ref = (
-            f"A1:{get_column_letter(len(headers))}{len(rows) + 1}"
-        )
+        worksheet.auto_filter.ref = f"A1:{get_column_letter(len(headers))}{len(rows) + 1}"
 
 
-def write_report(
-    path: Path,
-    groups: Sequence[CompanyGroup],
-    records: Sequence[RegistryRecord],
-    unrecognized: Sequence[UnrecognizedRow] = (),
-    summary: dict[str, Any] | None = None,
-    with_diagnostics: bool = False,
-) -> Path:
+def write_report(path: Path, groups: Sequence[CompanyGroup]) -> Path:
     """
-    Формирует итоговый Excel-файл со всеми вкладками.
+    Формирует итоговый Excel-файл — один лист «Контакты», по строке на компанию.
 
-    :param path:             куда сохранить (``final_report_YYYY-MM-DD.xlsx``);
-    :param groups:           уникальные компании с данными checko.ru;
-    :param records:          все записи реестра (для вкладки nostroy_contacts);
-    :param unrecognized:     нераспознанные строки (служебная вкладка);
-    :param summary:          сводка по запуску (служебная вкладка);
-    :param with_diagnostics: добавлять ли служебные вкладки;
-    :return: путь к сохранённому файлу.
+    Всё, что в таблицу не вошло, сохраняется рядом в ``output/parsed/``:
+    построчные данные реестра — в ``records.json``, нераспознанные строки —
+    в ``unrecognized_rows.csv``.
     """
     from openpyxl import Workbook
 
     workbook = Workbook()
-    # Workbook создаётся с пустым листом — удаляем его, вкладки добавляем сами.
-    workbook.remove(workbook.active)
+    workbook.remove(workbook.active)          # убираем пустой лист по умолчанию
 
-    checko_headers, checko_rows = build_checko_rows(groups)
-    _write_sheet(workbook, SHEET_CHECKO, checko_headers, checko_rows)
-
-    nostroy_headers, nostroy_rows = build_nostroy_rows(records)
-    _write_sheet(workbook, SHEET_NOSTROY, nostroy_headers, nostroy_rows)
-
-    combined_headers, combined_rows = build_combined_rows(groups)
-    _write_sheet(workbook, SHEET_COMBINED, combined_headers, combined_rows)
-
-    if with_diagnostics:
-        headers, rows = build_unrecognized_rows(unrecognized)
-        _write_sheet(workbook, SHEET_UNRECOGNIZED, headers, rows)
-        headers, rows = build_summary_rows(summary or {})
-        _write_sheet(workbook, SHEET_SUMMARY, headers, rows)
+    headers, rows = build_report_rows(groups)
+    _write_sheet(workbook, SHEET_NAME, headers, rows)
 
     path.parent.mkdir(parents=True, exist_ok=True)
     workbook.save(str(path))
     workbook.close()
-    logger.info(
-        "Отчёт сохранён: %s (компаний %d, записей реестра %d)",
-        path, len(groups), len(records),
-    )
+    logger.info("Отчёт сохранён: %s (компаний %d)", path, len(groups))
     return path
 
 

@@ -138,7 +138,6 @@ class Settings:
 
     # --- прочее ------------------------------------------------------------ #
     log_level: str = "INFO"
-    with_diagnostics: bool = False         # добавить в отчёт служебные вкладки
     report_date: date = field(default_factory=date.today)
     no_progress_bar: bool = False
 
