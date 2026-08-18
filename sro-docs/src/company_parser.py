@@ -413,12 +413,6 @@ def parse_card(content: CardContent) -> ParseResult:
                 f"«{fb}» и «{sb}». Так бывает, но проверьте по Уставу."
             )
 
-    if not company.actual_address and company.legal_address:
-        result.notes.append(
-            "Фактический адрес в карточке не найден. Если он совпадает с юридическим, "
-            "нажмите «Скопировать из юридического»."
-        )
-
     result.company = company
     return result
 

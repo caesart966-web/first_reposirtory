@@ -235,7 +235,7 @@ class Application(tk.Frame):
                           wraplength=320, justify=LEFT).grid(
                     row=row, column=2, sticky="w", padx=PAD)
             if spec.key == "actual_address":
-                ttk.Button(block, text="Скопировать из юридического",
+                ttk.Button(block, text="Ещё раз скопировать из юридического",
                            command=self.on_copy_address).grid(
                     row=row + 1, column=1, sticky="w", padx=PAD, pady=(0, PAD))
                 row += 1
@@ -375,9 +375,12 @@ class Application(tk.Frame):
         self.company = parsed.company           # новый объект: чужих данных не остаётся
         for key, value in keep.items():
             self.company.set(key, value)
+        auto_filled = self.project.apply_auto_fill(self.company)
         self._write_form()
 
         messages = [source, ""]
+        for note in auto_filled:
+            messages.append(f"Подставлено автоматически: {note}")
         for key, note in parsed.derived.items():
             messages.append(f"ВНИМАНИЕ: {note}")
         for note in parsed.notes:
@@ -401,6 +404,9 @@ class Application(tk.Frame):
     # ------------------------------------------------------------ проверка
     def on_check(self, silent: bool = False) -> bool:
         self._read_form()
+        auto_filled = self.project.apply_auto_fill(self.company)
+        if auto_filled:
+            self._write_form()
 
         for key, label in self.labels.items():
             label.configure(foreground="black")
@@ -420,6 +426,12 @@ class Application(tk.Frame):
         lines.append(f"Основание полномочий: {self.company.director_basis or '(не заполнено)'}")
         lines.append(f"Дата документов: {self.company.doc_date}")
         lines.append("")
+
+        if auto_filled:
+            lines.append("ПОДСТАВЛЕНО АВТОМАТИЧЕСКИ")
+            lines.append("-" * 60)
+            lines.extend(auto_filled)
+            lines.append("")
 
         issues = validate_company(self.company)
         errors = [i for i in issues if i.is_error]

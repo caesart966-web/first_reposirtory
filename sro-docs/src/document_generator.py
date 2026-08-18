@@ -95,6 +95,11 @@ class Project:
             for key, value in self.documents_config.get("defaults", {}).items()
             if not key.startswith("_")
         }
+        self.auto_fill = {
+            key: str(value)
+            for key, value in self.documents_config.get("auto_fill", {}).items()
+            if not key.startswith("_")
+        }
 
         self.documents: list[DocumentSpec] = []
         for item in self.documents_config.get("documents", []):
@@ -135,6 +140,30 @@ class Project:
         if not company.doc_date:
             company.doc_date = date.today().strftime("%d.%m.%Y")
         return company
+
+    def apply_auto_fill(self, company: CompanyData) -> list[str]:
+        """Заполнить пустые поля из других полей по правилам config/auto_fill.
+
+        Сейчас правило одно: фактический адрес берётся из юридического —
+        у компаний они совпадают. Заполненное поле НЕ перезаписывается,
+        поэтому редкий случай «адреса разные» решается простым вводом
+        фактического адреса вручную.
+
+        Возвращает понятные пояснения о том, что было подставлено.
+        """
+        notes: list[str] = []
+        for target, source in self.auto_fill.items():
+            if company.get(target) or not company.get(source):
+                continue
+            company.set(target, company.get(source))
+            target_field = FIELD_BY_KEY.get(target)
+            source_field = FIELD_BY_KEY.get(source)
+            notes.append(
+                f"{target_field.label if target_field else target} подставлен "
+                f"из поля «{source_field.label if source_field else source}». "
+                f"Если у этой компании он другой — впишите свой."
+            )
+        return notes
 
     def enabled_documents(self) -> list[DocumentSpec]:
         return [d for d in self.documents if d.enabled]
@@ -208,11 +237,13 @@ def generate(project: Project, company_input: CompanyData,
 
     # Работаем с копией: исходный объект никто по пути не изменит.
     company = company_input.copy()
+    result_notes = project.apply_auto_fill(company)
     documents = documents if documents is not None else project.enabled_documents()
     if not documents:
         raise GeneratorError("В настройках не включён ни один документ.")
 
     result = GenerationResult()
+    result.notes.extend(result_notes)
 
     readiness = check_readiness(project, company, documents)
     blocked = [r for r in readiness if not r.ok]

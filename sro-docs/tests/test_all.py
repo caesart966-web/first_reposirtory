@@ -383,6 +383,7 @@ class TestGeneration(unittest.TestCase):
 
     def test_missing_fields_block_generation(self):
         company = make_company(ALPHA)
+        company.set("legal_address", "")
         company.set("actual_address", "")
         company.set("email", "")
         readiness = check_readiness(self.project, company)
@@ -395,6 +396,32 @@ class TestGeneration(unittest.TestCase):
         self.assertIn("не хватает следующих данных", message)
         self.assertIn("Фактический адрес", message)
         self.assertNotIn("нет данных", message)
+
+    def test_actual_address_taken_from_legal(self):
+        """У компаний фактический адрес совпадает с юридическим."""
+        company = make_company(ALPHA)
+        company.set("actual_address", "")
+        notes = self.project.apply_auto_fill(company)
+        self.assertEqual(company.actual_address, ALPHA["legal_address"])
+        self.assertTrue(any("Фактический адрес" in note for note in notes))
+        self.assertTrue(all(item.ok for item in check_readiness(self.project, company)))
+
+    def test_own_actual_address_is_not_overwritten(self):
+        company = make_company(ALPHA)
+        company.set("actual_address", "196084, г. Санкт-Петербург, Лиговский пр., д. 270")
+        self.assertEqual(self.project.apply_auto_fill(company), [])
+        self.assertNotEqual(company.actual_address, company.legal_address)
+
+    def test_generation_fills_actual_address_itself(self):
+        company = make_company(ALPHA)
+        company.set("actual_address", "")
+        result = generate(self.project, company, make_pdf=False)
+        self.assertTrue(result.ok, [r.problems for r in result.quality])
+        application = extract_all_text(result.folder / "01_Заявление_о_вступлении.docx")
+        self.assertIn(f"домашний адрес предпринимателя: {ALPHA['legal_address']}",
+                      application)
+        # Исходный объект не тронут - подстановка идёт в копии.
+        self.assertEqual(company.actual_address, "")
 
     def test_full_scenario(self):
         company = make_company(ALPHA)

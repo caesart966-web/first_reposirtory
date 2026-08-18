@@ -42,7 +42,7 @@ FIELD_SPECS: list[FieldSpec] = [
               used_by_templates=False),
     FieldSpec("legal_address", "Юридический адрес", "Адреса и связь", multiline=True),
     FieldSpec("actual_address", "Фактический адрес", "Адреса и связь", multiline=True,
-              hint="Если совпадает с юридическим — нажмите «Скопировать из юридического»"),
+              hint="Подставляется из юридического. Впишите свой, если адреса разные"),
     FieldSpec("postal_address", "Почтовый адрес", "Адреса и связь",
               used_by_templates=False, multiline=True),
     FieldSpec("phone", "Телефон", "Адреса и связь", hint="Например: +7 (812) 123-45-67"),

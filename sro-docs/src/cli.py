@@ -139,6 +139,8 @@ def main(argv: list[str] | None = None) -> int:
         else:
             parser.error(f"неизвестное поле {key!r}")
 
+    notes += project.apply_auto_fill(company)
+
     print_card(company)
 
     for key, note in derived.items():
