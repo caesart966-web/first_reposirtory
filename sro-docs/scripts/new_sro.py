@@ -57,7 +57,8 @@ def make_profile(short_name: str, name: str, city: str) -> dict:
             "power_number": "б/н"
         },
         "auto_fill": {
-            "actual_address": "legal_address"
+            "actual_address": "legal_address",
+            "postal_address": "legal_address"
         },
         "_комментарий_документы": [
             "На каждый бланк — свой блок:",

@@ -406,10 +406,30 @@ class TestGeneration(unittest.TestCase):
         self.assertTrue(any("Фактический адрес" in note for note in notes))
         self.assertTrue(all(item.ok for item in check_readiness(self.project, company)))
 
+    def test_postal_address_taken_from_legal(self):
+        """Адрес у компании один: юридический, фактический и почтовый совпадают."""
+        company = make_company(ALPHA)
+        company.set("actual_address", "")
+        company.set("postal_address", "")
+        self.project.apply_auto_fill(company)
+        self.assertEqual(company.actual_address, ALPHA["legal_address"])
+        self.assertEqual(company.postal_address, ALPHA["legal_address"])
+
+    def test_every_sro_fills_all_three_addresses(self):
+        for profile in self.project.all_sro:
+            with self.subTest(sro=profile.key):
+                self.assertEqual(profile.auto_fill.get("actual_address"), "legal_address")
+                self.assertEqual(profile.auto_fill.get("postal_address"), "legal_address")
+
     def test_own_actual_address_is_not_overwritten(self):
         company = make_company(ALPHA)
-        company.set("actual_address", "196084, г. Санкт-Петербург, Лиговский пр., д. 270")
+        own = "196084, г. Санкт-Петербург, Лиговский пр., д. 270"
+        company.set("actual_address", own)
+        company.set("postal_address", own)
+        # Оба адреса заданы вручную — подставлять нечего.
         self.assertEqual(self.project.apply_auto_fill(company), [])
+        self.assertEqual(company.actual_address, own)
+        self.assertEqual(company.postal_address, own)
         self.assertNotEqual(company.actual_address, company.legal_address)
 
     def test_generation_fills_actual_address_itself(self):
