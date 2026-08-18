@@ -112,6 +112,11 @@
       "required": true,
       "where": "подпись: Фамилия И.О."
     },
+    "director_initials_name": {
+      "field": "director_full_name",
+      "required": true,
+      "where": "подпись в обратном порядке: И.О. Фамилия (так просит бланк СИС)"
+    },
     "director_basis_genitive": {
       "field": "director_basis",
       "required": true,
@@ -241,6 +246,11 @@
       "field": "postal_address",
       "required": true,
       "where": "почтовый адрес, часть от дома: дом, корпус, офис"
+    },
+    "contract_participation": {
+      "field": null,
+      "required": false,
+      "where": "«ДА» или «НЕТ»: намерение участвовать в конкурентных закупках; «ДА», если выбран уровень фонда обеспечения договорных обязательств"
     }
   }
 }

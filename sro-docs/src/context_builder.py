@@ -202,6 +202,14 @@ def build_context(company: CompanyData, attorney: dict[str, str],
         company, "director_short_name", morphology.short_name(full_name),
         "Подпись руководителя (Фамилия И.О.)", result)
 
+    # Некоторые бланки просят подпись в обратном порядке: «И.О. Фамилия».
+    # Переставляем уже готовое (и при необходимости подтверждённое
+    # пользователем) значение, а не разбираем ФИО заново.
+    short_parts = values["director_short_name"].split(" ", 1)
+    values["director_initials_name"] = (
+        f"{short_parts[1]} {short_parts[0]}" if len(short_parts) == 2
+        else values["director_short_name"])
+
     values["director_full_name_genitive"] = _resolve(
         company, "director_full_name_genitive", morphology.full_name_genitive(full_name),
         f"ФИО руководителя в родительном падеже («в лице …»)", result)
@@ -246,6 +254,13 @@ def build_context(company: CompanyData, attorney: dict[str, str],
             MARK_LEVEL if company.harm_fund_level == level else "")
         values[f"mark_contract_level{level}"] = (
             MARK_LEVEL if company.contract_fund_level == level else "")
+
+    # ------------------------------------------- участие в конкурентных закупках
+    # Бланк СИС спрашивает словом «ДА» или «НЕТ». Это не отдельный вопрос
+    # к пользователю: участие в конкурентных закупках и есть то, ради чего
+    # вступают в компенсационный фонд обеспечения договорных обязательств.
+    # Выбран уровень такого фонда — «ДА», не выбран — «НЕТ».
+    values["contract_participation"] = "ДА" if company.contract_fund_level else "НЕТ"
 
     # ---------------------------------------------------------- представитель
     for key, value in attorney.items():

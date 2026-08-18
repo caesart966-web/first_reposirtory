@@ -9,6 +9,7 @@
 
 from __future__ import annotations
 
+import json
 import shutil
 import sys
 import tempfile
@@ -557,6 +558,27 @@ class TestGeneration(unittest.TestCase):
         self.assertTrue(name.startswith("7812345675_"))
 
 
+def make_sandbox(folder: Path) -> Path:
+    """Копия программы с одной готовой СРО и одной, куда бланки не загружены.
+
+    Раньше проверки «СРО без бланков» опирались на то, что какая-то СРО
+    в самой программе ещё не размечена. Теперь размечены все, поэтому
+    пустая СРО создаётся здесь — проверка больше не зависит от того,
+    сколько бланков уже готово.
+    """
+    root = folder / "программа"
+    (root / "sro").mkdir(parents=True)
+    shutil.copytree(ROOT / "config", root / "config")
+    shutil.copytree(ROOT / "sro" / "СССС", root / "sro" / "СССС")
+    empty = root / "sro" / "НОВАЯ СРО"
+    (empty / "templates").mkdir(parents=True)
+    (empty / "sro.json").write_text(
+        json.dumps({"name": "Новая СРО", "short_name": "НОВАЯ", "city": "",
+                    "documents": []}, ensure_ascii=False),
+        encoding="utf-8")
+    return root
+
+
 class TestMultipleSro(unittest.TestCase):
     """Работа с несколькими саморегулируемыми организациями."""
 
@@ -564,6 +586,11 @@ class TestMultipleSro(unittest.TestCase):
         self.tmp = Path(tempfile.mkdtemp())
         self.project = Project(ROOT)
         self.project.output_root = self.tmp / "out"
+
+    def sandbox_project(self) -> Project:
+        project = Project(make_sandbox(self.tmp))
+        project.output_root = self.tmp / "out"
+        return project
 
     def tearDown(self):
         shutil.rmtree(self.tmp, ignore_errors=True)
@@ -592,9 +619,16 @@ class TestMultipleSro(unittest.TestCase):
             Project(ROOT, sro="СРО-которой-нет")
         self.assertIn("не найдена", str(ctx.exception))
 
+    def test_all_sro_in_program_are_ready(self):
+        """У каждой СРО программы бланки размечены и на месте."""
+        for profile in self.project.all_sro:
+            with self.subTest(sro=profile.key):
+                self.assertTrue(profile.is_ready, profile.readiness_note())
+
     def test_sro_without_templates_is_not_ready(self):
-        pending = [p for p in self.project.all_sro if not p.is_ready]
-        self.assertTrue(pending, "ожидались СРО, для которых бланки ещё не загружены")
+        project = self.sandbox_project()
+        pending = [p for p in project.all_sro if not p.is_ready]
+        self.assertTrue(pending, "ожидалась СРО, для которой бланки не загружены")
         for profile in pending:
             with self.subTest(sro=profile.key):
                 note = profile.readiness_note()
@@ -602,10 +636,11 @@ class TestMultipleSro(unittest.TestCase):
                 self.assertIn(str(profile.templates_dir), note)
 
     def test_generation_blocked_without_templates(self):
-        pending = next(p for p in self.project.all_sro if not p.is_ready)
-        self.project.use_sro(pending, remember=False)
+        project = self.sandbox_project()
+        pending = next(p for p in project.all_sro if not p.is_ready)
+        project.use_sro(pending, remember=False)
         with self.assertRaises(GeneratorError) as ctx:
-            generate(self.project, make_company(ALPHA), make_pdf=False)
+            generate(project, make_company(ALPHA), make_pdf=False)
         self.assertIn("бланки", str(ctx.exception).lower())
 
     def test_documents_land_in_sro_subfolder(self):
@@ -617,15 +652,16 @@ class TestMultipleSro(unittest.TestCase):
 
     def test_switching_sro_does_not_leak_settings(self):
         """У каждой СРО свои бланки, документы и доверенное лицо."""
-        ready = [p for p in self.project.all_sro if p.is_ready]
-        pending = [p for p in self.project.all_sro if not p.is_ready]
-        self.project.use_sro(ready[0], remember=False)
-        self.assertTrue(self.project.enabled_documents())
-        self.assertTrue(self.project.attorney())
-        self.project.use_sro(pending[0], remember=False)
-        self.assertEqual(self.project.enabled_documents(), [])
-        self.assertEqual(self.project.attorney(), {})
-        self.assertNotEqual(self.project.templates_dir, ready[0].templates_dir)
+        project = self.sandbox_project()
+        ready = [p for p in project.all_sro if p.is_ready]
+        pending = [p for p in project.all_sro if not p.is_ready]
+        project.use_sro(ready[0], remember=False)
+        self.assertTrue(project.enabled_documents())
+        self.assertTrue(project.attorney())
+        project.use_sro(pending[0], remember=False)
+        self.assertEqual(project.enabled_documents(), [])
+        self.assertEqual(project.attorney(), {})
+        self.assertNotEqual(project.templates_dir, ready[0].templates_dir)
 
     def test_levels_come_from_each_sro(self):
         """У строительных СРО пять уровней, у проектных и изыскательских четыре."""
@@ -663,6 +699,47 @@ class TestMultipleSro(unittest.TestCase):
     def test_remembered_choice_is_restored(self):
         self.project.use_sro("СССС")
         self.assertEqual(Project(ROOT).sro.key, "СССС")
+
+
+def _character_styles(archive) -> dict:
+    """Знаковые стили документа: styleId → его rPr."""
+    from lxml import etree
+
+    from src.docx_engine import W
+
+    root = etree.fromstring(archive.read("word/styles.xml"))
+    found = {}
+    for style in root.iter(W + "style"):
+        if style.get(W + "type") != "character":
+            continue
+        run_properties = style.find(W + "rPr")
+        if run_properties is not None:
+            found[style.get(W + "styleId")] = run_properties
+    return found
+
+
+def _font_of(run, styles: dict) -> tuple[bool, bool]:
+    """Заданы ли у фрагмента шрифт и размер — прямо или знаковым стилем.
+
+    Шрифт можно задать двумя способами, и оба правильные: прямо в самом
+    фрагменте либо знаковым стилем (w:rStyle). Важно только, что шрифт
+    и размер заданы явно, а не унаследованы «как получится» — из-за такого
+    наследования адреса когда-то вышли шрифтом Calibri вместо Times.
+    """
+    from src.docx_engine import W
+
+    run_properties = run.find(W + "rPr")
+    if run_properties is None:
+        return False, False
+    sources = [run_properties]
+    style_reference = run_properties.find(W + "rStyle")
+    if style_reference is not None:
+        from_style = styles.get(style_reference.get(W + "val"))
+        if from_style is not None:
+            sources.append(from_style)
+    has_font = any(s.find(W + "rFonts") is not None for s in sources)
+    has_size = any(s.find(W + "sz") is not None for s in sources)
+    return has_font, has_size
 
 
 class TestProjectConfig(unittest.TestCase):
@@ -715,18 +792,17 @@ class TestProjectConfig(unittest.TestCase):
                 for node in _own_text_nodes(paragraph):
                     if "{{" not in (node.text or ""):
                         continue
-                    run_properties = node.getparent().find(W + "rPr")
+                    styles = _character_styles(archive)
+                    font, size = _font_of(node.getparent(), styles)
                     with self.subTest(sro=sro_key, document=spec.title, text=node.text):
-                        self.assertIsNotNone(
-                            run_properties,
+                        self.assertTrue(
+                            font,
                             f"{spec.template}: у фрагмента {node.text!r} "
-                            f"нет настроек шрифта")
-                        self.assertIsNotNone(
-                            run_properties.find(W + "rFonts"),
-                            f"{spec.template}: у фрагмента {node.text!r} не задан шрифт")
-                        self.assertIsNotNone(
-                            run_properties.find(W + "sz"),
-                            f"{spec.template}: у фрагмента {node.text!r} не задан размер")
+                            f"не задан шрифт")
+                        self.assertTrue(
+                            size,
+                            f"{spec.template}: у фрагмента {node.text!r} "
+                            f"не задан размер")
 
     def test_signature_has_room_to_sign(self):
         """Между наименованием и инициалами — табуляция до правого поля."""
@@ -797,8 +873,13 @@ class TestProjectConfig(unittest.TestCase):
                 target = Path(folder) / spec.template
                 fill_template(project.template_path(spec), target, values)
                 text = extract_all_text(target)
-            for caption in ("руководителя организации", "контактного лица",
-                            "переулок и др.)", "корпуса (строения) и офиса"):
+            # Подписи взяты целиком: у СИС слова «контактного лица» стоят
+            # в середине подписи, и обрывок совпал бы там, где всё в порядке.
+            for caption in (
+                    "E-mail руководителя организации",
+                    "E-mail контактного лица",
+                    "улица (проспект, переулок и др.)",
+                    "и номер дома (владения), корпуса (строения) и офиса"):
                 for line in text.splitlines():
                     if caption not in line:
                         continue
@@ -877,6 +958,70 @@ class TestProjectConfig(unittest.TestCase):
                         f"{profile.key}: между надписью и инициалами нет "
                         f"табуляции — расписаться будет негде")
         self.assertTrue(checked, "не найдено ни одной строки подписи")
+
+    def test_no_data_from_sample_blanks_survives(self):
+        """Реквизиты компаний из образцов не должны попадать в документы.
+
+        Два бланка пришли ЗАПОЛНЕННЫМИ — с данными других компаний.
+        Это главная опасность: документ выглядит готовым, а в нём чужие
+        ОГРН и ИНН. Проверяем прямым поиском по всем готовым документам
+        всех СРО.
+        """
+        # что осталось в бланках от компаний, по которым их заполняли
+        foreign = {
+            "ЗАВОД ЭЛЕКТРОПУЛЬТ": "наименование компании из образца СИС",
+            "1027804180766": "ОГРН компании из образца СИС",
+            "7806008569": "ИНН компании из образца СИС",
+            "ЭЛЕКТРОПУЛЬТОВЦЕВ": "адрес компании из образца СИС",
+            "regionrem": "адрес почты из бланка СССС",
+            "КонтакноеЛицо": "метка программы слияния",
+            "МылоКонтрактнЛ": "метка программы слияния",
+        }
+        project = Project(ROOT)
+        company = make_company(ALPHA)
+        for profile in project.all_sro:
+            project.use_sro(profile, remember=False)
+            values = build_context(company, project.attorney(), sro=profile).values
+            for spec in profile.enabled_documents():
+                with tempfile.TemporaryDirectory() as folder:
+                    target = Path(folder) / spec.template
+                    fill_template(project.template_path(spec), target, values)
+                    text = extract_package_text(target)
+                for needle, what in foreign.items():
+                    with self.subTest(sro=profile.key, document=spec.title,
+                                      found=needle):
+                        self.assertNotIn(
+                            needle, text,
+                            f"{profile.key}/{spec.template}: в документе "
+                            f"осталось чужое — {what}")
+
+    def test_word_fields_are_flattened(self):
+        """В шаблонах не должно остаться «полей» Word.
+
+        Бланк СИС собран программой слияния: реквизиты вставлены полями
+        { AUTHOR ... }. Word пересчитывает такие поля при открытии, и вместо
+        подставленных данных в документе появляется имя автора файла.
+        """
+        import zipfile
+
+        from lxml import etree
+
+        from src.docx_engine import W
+
+        project = Project(ROOT)
+        for profile in project.all_sro:
+            project.use_sro(profile, remember=False)
+            for spec in profile.enabled_documents():
+                root = etree.fromstring(zipfile.ZipFile(
+                    project.template_path(spec)).read("word/document.xml"))
+                codes = [(node.text or "").strip()
+                         for node in root.iter(W + "instrText")]
+                with self.subTest(sro=profile.key, document=spec.title):
+                    self.assertEqual(
+                        codes, [],
+                        f"{profile.key}/{spec.template}: остались поля Word "
+                        f"({', '.join(codes[:3])}) — Word пересчитает их "
+                        f"и подменит данные")
 
     def test_templates_exist(self):
         project = Project(ROOT)
