@@ -167,6 +167,7 @@ class _CheckoApiHandler(BaseHTTPRequestHandler):
 
     mode = "ok"
     hits: list[str] = []
+    methods: list[str] = []
     lock = threading.Lock()
 
     def log_message(self, *args):  # noqa: D102
@@ -180,10 +181,25 @@ class _CheckoApiHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def do_POST(self) -> None:  # noqa: N802
+        """Некоторые тарифы API принимают только POST — проверяем и такой режим."""
+        length = int(self.headers.get("Content-Length", 0) or 0)
+        self.rfile.read(length)
+        with _CheckoApiHandler.lock:
+            _CheckoApiHandler.methods.append("POST")
+        self._dispatch(force_ok=True)
+
     def do_GET(self) -> None:  # noqa: N802
         with _CheckoApiHandler.lock:
             _CheckoApiHandler.hits.append(self.path)
-        mode = _CheckoApiHandler.mode
+            _CheckoApiHandler.methods.append("GET")
+        if _CheckoApiHandler.mode == "post_only":
+            self._json(405, {"meta": {"status": "error", "message": "Method Not Allowed"}})
+            return
+        self._dispatch()
+
+    def _dispatch(self, force_ok: bool = False) -> None:
+        mode = "ok" if force_ok else _CheckoApiHandler.mode
         if mode == "bad_key":
             self._json(401, {"meta": {"status": "error", "message": "Неверный ключ доступа"}})
         elif mode == "limit_http":
@@ -823,9 +839,10 @@ class TestCheckoApi(BaseTestCase):
 
     def setUp(self) -> None:
         _CheckoApiHandler.hits = []
+        _CheckoApiHandler.methods = []
         _CheckoApiHandler.mode = "ok"
 
-    def _client(self, server, quota, **overrides):
+    def _client(self, server, quota, sample_path=None, **overrides):
         from nostroy_checko import checko_api
 
         settings = Settings(
@@ -834,7 +851,35 @@ class TestCheckoApi(BaseTestCase):
             **overrides,
         )
         checko_api.CHECKO_API_BASE = server.base_url
-        return checko_api.CheckoApiClient(settings, quota)
+        return checko_api.CheckoApiClient(settings, quota, sample_path=sample_path)
+
+    def test_falls_back_to_post_when_get_is_rejected(self) -> None:
+        """Если сервер не принимает GET, клиент сам повторяет запрос POST'ом."""
+        _CheckoApiHandler.mode = "post_only"
+        with _FakeCheckoApiServer() as server:
+            client = self._client(server, DailyQuota(limit=10))
+            first = client.lookup("7707083893", expected_inn="7707083893")
+            second = client.lookup("6658001234", expected_inn="6658001234")
+        self.assertEqual(first.status, STATUS_OK)
+        self.assertIn("+74951234567", first.phones)
+        # Первая компания: неудачный GET, затем POST. Метод запомнен —
+        # вторая компания идёт сразу POST'ом, лишних обращений нет.
+        self.assertEqual(_CheckoApiHandler.methods, ["GET", "POST", "POST"])
+        self.assertEqual(second.status, STATUS_OK)
+
+    def test_raw_response_sample_is_saved_without_the_key(self) -> None:
+        """Первый ответ API сохраняется целиком — по нему сверяются имена полей."""
+        sample = self.tmp_dir / "sample" / "checko_api_sample.json"
+        with _FakeCheckoApiServer() as server:
+            client = self._client(server, DailyQuota(limit=10), sample_path=sample)
+            client.lookup("7707083893", expected_inn="7707083893")
+            client.lookup("6658001234", expected_inn="6658001234")
+        self.assertTrue(sample.exists())
+        saved = json.loads(sample.read_text(encoding="utf-8"))
+        self.assertEqual(saved["ответ"]["http_код"], 200)
+        self.assertIn("НаимСокрЮЛ", saved["ответ"]["тело"])
+        # Ключ не должен попасть в файл, которым будут делиться для диагностики.
+        self.assertNotIn("test-key", json.dumps(saved, ensure_ascii=False))
 
     def test_payload_parsing_company(self) -> None:
         from nostroy_checko.checko_api import parse_api_payload

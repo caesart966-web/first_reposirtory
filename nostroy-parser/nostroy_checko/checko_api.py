@@ -230,7 +230,12 @@ class CheckoApiClient:
     Одна компания — ровно один HTTP-запрос и одна единица суточной квоты.
     """
 
-    def __init__(self, settings: Settings, quota: DailyQuota) -> None:
+    def __init__(
+        self,
+        settings: Settings,
+        quota: DailyQuota,
+        sample_path: Any = None,
+    ) -> None:
         from .checko_client import RateLimiter   # общий ограничитель частоты
 
         self.settings = settings
@@ -240,6 +245,81 @@ class CheckoApiClient:
         self._local = threading.local()
         self._no_inn_count = 0
         self._lock = threading.Lock()
+        # Куда сохранить первый ответ API целиком. Нужно для разбора полётов:
+        # по нему видно точные имена полей, не тратя лишние запросы квоты.
+        self._sample_path = sample_path
+        self._sample_saved = False
+        # Каким методом сервер согласился отвечать. Определяется один раз и
+        # дальше переиспользуется, чтобы не пробовать оба на каждой компании.
+        self._method: str | None = None
+
+    def _save_sample(self, response: requests.Response, method: str) -> None:
+        """
+        Кладёт первый ответ API в файл (ключ вырезается).
+
+        Формат ответа сервиса может измениться или отличаться от ожидаемого —
+        сохранённый образец позволяет это увидеть и поправить разбор, не тратя
+        запросы из суточной квоты на эксперименты.
+        """
+        if self._sample_path is None:
+            return
+        with self._lock:
+            if self._sample_saved:
+                return
+            self._sample_saved = True
+        try:
+            body = response.text
+            if self.api_key:
+                body = body.replace(self.api_key, "***КЛЮЧ-СКРЫТ***")
+            url = response.url.replace(self.api_key, "***КЛЮЧ-СКРЫТ***") if self.api_key else response.url
+            payload = {
+                "запрос": {"метод": method, "url": url},
+                "ответ": {
+                    "http_код": response.status_code,
+                    "тип_содержимого": response.headers.get("Content-Type", ""),
+                    "тело": body[:200000],
+                },
+            }
+            self._sample_path.parent.mkdir(parents=True, exist_ok=True)
+            self._sample_path.write_text(
+                json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
+            logger.info("Образец ответа API сохранён: %s", self._sample_path)
+        except (OSError, ValueError) as exc:
+            logger.debug("Не удалось сохранить образец ответа API: %s", exc)
+
+    def _request(self, url: str, params: dict[str, str]) -> requests.Response:
+        """
+        Выполняет запрос к API, сам определяя нужный HTTP-метод.
+
+        Документация сервиса описывает и GET с параметрами в строке запроса,
+        и POST с телом. Чтобы не зависеть от догадок, первый раз пробуем GET,
+        и если сервер отвечает «метод не поддерживается» или «нет параметров» —
+        повторяем POST'ом. Найденный метод запоминается для всех следующих
+        запросов, лишних обращений не будет.
+        """
+        method = self._method
+        if method in (None, "GET"):
+            response = self.session.get(url, params=params, timeout=self.settings.timeout)
+            # 405 — метод не тот; 400/415 — сервер не понял параметры в строке.
+            if method is None and response.status_code in (400, 404, 405, 415):
+                logger.info(
+                    "API ответил %s на GET — повторяю запрос методом POST",
+                    response.status_code,
+                )
+                post_response = self.session.post(
+                    url, json=params, timeout=self.settings.timeout
+                )
+                if post_response.status_code == 200:
+                    self._method = "POST"
+                    return post_response
+                # POST не помог — значит дело не в методе, возвращаем первый ответ.
+                self._method = "GET"
+                return response
+            if method is None and response.status_code == 200:
+                self._method = "GET"
+            return response
+        return self.session.post(url, json=params, timeout=self.settings.timeout)
 
     # ------------------------------ сессия --------------------------------- #
 
@@ -299,7 +379,7 @@ class CheckoApiClient:
         for attempt in range(self.settings.max_retries + 1):
             self._rate_limiter.wait()
             try:
-                response = self.session.get(url, params=params, timeout=self.settings.timeout)
+                response = self._request(url, params)
             except requests.exceptions.Timeout as exc:
                 result.error = f"таймаут: {exc}"
                 if attempt < self.settings.max_retries:
@@ -317,6 +397,7 @@ class CheckoApiClient:
 
             result.http_status = response.status_code
             result.url = f"{url}?inn={inn}"
+            self._save_sample(response, self._method or "GET")
 
             if response.status_code in (401, 403):
                 self.quota.mark_exhausted(

@@ -275,7 +275,9 @@ def enrich_with_checko(
     # и не закрыт защитой от автоматизации, в отличие от обычных страниц сайта.
     if settings.checko_api_key:
         logger.info("Источник данных: официальный API checko.ru (api.checko.ru)")
-        client = CheckoApiClient(settings, quota)
+        client = CheckoApiClient(
+            settings, quota, sample_path=settings.parsed_dir / "checko_api_sample.json"
+        )
     else:
         logger.info(
             "Источник данных: разбор страниц сайта checko.ru. "
