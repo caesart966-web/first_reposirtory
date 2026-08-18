@@ -47,7 +47,12 @@ def build_report_rows(groups: Sequence[CompanyGroup]) -> tuple[list[str], list[l
     """
     Формирует единственную таблицу отчёта — по строке на компанию.
 
-    Контакты берутся с checko.ru, даты членства — из реестра НОСТРОЙ.
+    Контакты берутся с checko.ru, даты членства — из реестра НОСТРОЙ. Даты
+    проставляются сразу всем компаниям, ещё до обращения к checko.ru: они уже
+    есть в реестре и не зависят от суточной квоты. Телефоны, наоборот,
+    наполняются по мере обработки — день за днём.
+
+    «Статус членства» — короткое «действует» / «исключён» для сортировки.
     В колонке «Руководитель» выводится только ФИО, без должности.
     """
     headers = [
@@ -59,6 +64,7 @@ def build_report_rows(groups: Sequence[CompanyGroup]) -> tuple[list[str], list[l
         "Руководитель",
         "Дата вступления в СРО",
         "Дата исключения из СРО",
+        "Статус членства",
         "Статус запроса",
     ]
     rows: list[list[Any]] = []
@@ -74,6 +80,7 @@ def build_report_rows(groups: Sequence[CompanyGroup]) -> tuple[list[str], list[l
                 join_unique(director_fio(value) for value in checko.directors) if checko else "",
                 group.date_join,
                 group.date_exit,
+                group.membership_status,
                 checko.status if checko else "не запрашивалось",
             ]
         )

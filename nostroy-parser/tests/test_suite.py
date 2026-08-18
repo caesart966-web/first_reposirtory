@@ -534,6 +534,28 @@ class TestRegistryParser(BaseTestCase):
         # 3 + 2 + 1 (xlsx) + 2 (xls) + 2 (csv) + 2 (html) = 12
         self.assertEqual(len(records), 12)
 
+    def test_membership_status(self) -> None:
+        """Короткий статус членства: «исключён», если есть дата исключения."""
+        from nostroy_checko.models import CompanyGroup, RegistryRecord
+
+        def group_of(**kwargs) -> CompanyGroup:
+            return CompanyGroup(key="k", records=[RegistryRecord(name="Тест", **kwargs)])
+
+        self.assertEqual(group_of().membership_status, "действует")
+        self.assertEqual(
+            group_of(date_exit=date(2019, 11, 21)).membership_status, "исключён"
+        )
+        self.assertEqual(
+            group_of(status="действующий").membership_status, "действует"
+        )
+        # Дата исключения отсутствует, но текст статуса говорит об исключении.
+        self.assertEqual(
+            group_of(status="Прекращено членство").membership_status, "исключён"
+        )
+        self.assertEqual(
+            group_of(status="Исключен из членов СРО").membership_status, "исключён"
+        )
+
     def test_grouping_by_inn(self) -> None:
         records = self._all_records()
         groups = group_records(records, "inn")
@@ -1105,6 +1127,7 @@ class TestEndToEndAcrossDays(BaseTestCase):
                 "Руководитель",
                 "Дата вступления в СРО",
                 "Дата исключения из СРО",
+                "Статус членства",
                 "Статус запроса",
             ],
         )
@@ -1208,6 +1231,48 @@ class TestEndToEndAcrossDays(BaseTestCase):
         # Данные реестра собраны полностью, несмотря на недоступность checko.ru.
         self.assertEqual(len(result.groups), len(COMPANIES))
         self.assertEqual(len(result.records), 12)
+
+    def test_dates_are_filled_for_every_company_from_day_one(self) -> None:
+        """
+        Даты членства проставляются сразу всем компаниям.
+
+        Они берутся из реестра и не зависят от суточной квоты checko.ru:
+        телефоны наполняются день за днём, а даты должны стоять уже в первом
+        отчёте — в том числе у компаний, до которых очередь ещё не дошла.
+        """
+        from nostroy_checko.pipeline import run
+        from openpyxl import load_workbook
+
+        _CheckoApiHandler.hits = []
+        _CheckoApiHandler.mode = "ok"
+        output = self.tmp_dir / "e2e-dates"
+        with _FakeCheckoApiServer() as server:
+            from nostroy_checko import checko_api
+
+            checko_api.CHECKO_API_BASE = server.base_url
+            settings = Settings(
+                input_path=self.archive, output_dir=output, checko_api_key="k",
+                daily_limit=2, workers=2, rps=0.0, timeout=5.0, max_retries=1,
+                no_progress_bar=True,
+            )
+            result = run(settings)
+
+        sheet = load_workbook(result.report_path)["Контакты"]
+        headers = [cell.value for cell in sheet[1]]
+        rows = list(sheet.iter_rows(min_row=2, values_only=True))
+        join_column = headers.index("Дата вступления в СРО")
+        phone_column = headers.index("Телефон")
+        status_column = headers.index("Статус членства")
+
+        # В отчёте все компании, а не только обработанные.
+        self.assertEqual(len(rows), len(COMPANIES))
+        # Дата вступления есть у КАЖДОЙ, хотя квоты хватило лишь на две.
+        self.assertTrue(all(row[join_column] for row in rows))
+        self.assertEqual(sum(1 for row in rows if row[phone_column]), 2)
+        # Статус членства заполнен у всех и принимает только два значения.
+        self.assertEqual(
+            {row[status_column] for row in rows} - {"действует", "исключён"}, set()
+        )
 
     def test_quota_is_never_exceeded(self) -> None:
         """При лимите N выполняется ровно N запросов к сайту, не больше."""

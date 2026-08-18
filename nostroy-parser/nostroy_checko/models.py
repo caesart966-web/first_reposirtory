@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from typing import Any
@@ -365,7 +366,26 @@ class CompanyGroup:
 
     @property
     def status(self) -> str:
+        """Статус членства так, как он записан в реестре (текст как есть)."""
         return next((r.status for r in self.records if r.status), "")
+
+    @property
+    def membership_status(self) -> str:
+        """
+        Короткий статус членства для сортировки: ``действует`` или ``исключён``.
+
+        Определяющий признак — дата исключения: она же стоит в соседней колонке
+        отчёта, и расхождение между ними сбивало бы с толку. Если даты нет,
+        смотрим текст статуса из реестра («прекращено членство», «исключён»
+        и подобные формулировки). В остальных случаях компания считается
+        действующей.
+        """
+        if self.date_exit is not None:
+            return "исключён"
+        text = self.status.lower().replace("ё", "е")
+        if re.search(r"исключ|прекращ|выход|аннулир|не явля", text):
+            return "исключён"
+        return "действует"
 
     @property
     def sro_names(self) -> list[str]:
