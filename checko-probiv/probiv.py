@@ -482,7 +482,8 @@ def write_report(path, title, rows):
     ws = wb.active
     ws.title = 'Результаты'
     ws['A1'] = title
-    ws['A1'].font = Font(name=FONT, size=13, bold=True, color='1F3864')
+    ws['A1'].font = Font(name=FONT, size=13, bold=True,
+                        color='B00020' if title.startswith('ДЕМО') else '1F3864')
     ws.merge_cells('A1:M1')
     ws.row_dimensions[1].height = 24
 
@@ -569,7 +570,7 @@ def main():
     todo = [r for r in targets if not state.done(r['inn'])]
     daily = cfg.getint('checko', 'daily_limit', fallback=100)
     left_today = max(0, daily - state.spent_today())
-    limit = args.limit if args.limit else left_today
+    limit = (args.limit or 5) if args.demo else (args.limit or left_today)
 
     log('')
     log('Всего в реестре: %d   |   в выборке «%s»: %d' % (len(records), scope, len(targets)))
@@ -587,7 +588,7 @@ def main():
         log('Суточный лимит исчерпан. Запустите программу завтра — продолжит с №%d.' % todo[0]['n'])
         return
 
-    limit = min(limit or 5, len(todo)) if args.demo else min(limit, left_today, len(todo))
+    limit = min(limit, len(todo)) if args.demo else min(limit, left_today, len(todo))
     state.data['runs'] += 1
     run = state.data['runs']
     log('')
@@ -622,7 +623,10 @@ def main():
             (cache_dir / ('%s.json' % inn)).write_text(
                 json.dumps(answer, ensure_ascii=False, indent=1), encoding='utf-8')
             res = parse(answer)
-            if res and (res['phones'] or res['emails'] or res['site']):
+            if args.demo:
+                note = 'ДЕМО — данные вымышленные'
+                found += 1
+            elif res and (res['phones'] or res['emails'] or res['site']):
                 found += 1
                 note = 'найдено'
             elif res:
@@ -642,8 +646,9 @@ def main():
     stamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
     prefix = 'ДЕМО_' if args.demo else ''
     batch_path = REPORT_DIR / ('%sОтчет_%s.xlsx' % (prefix, stamp))
-    write_report(batch_path, 'Пробив контактов через Checko — прогон №%d от %s (%d компаний)'
-                 % (run, datetime.datetime.now().strftime('%d.%m.%Y'), len(batch)), batch)
+    demo_mark = 'ДЕМО-ПРОГОН, ДАННЫЕ ВЫМЫШЛЕННЫЕ — так будет выглядеть настоящий отчёт. ' if args.demo else ''
+    write_report(batch_path, '%sПробив контактов через Checko — прогон №%d от %s (%d компаний)'
+                 % (demo_mark, run, datetime.datetime.now().strftime('%d.%m.%Y'), len(batch)), batch)
 
     # Накопительный отчёт: всё, что пробито за все дни.
     total_rows = []
@@ -656,14 +661,15 @@ def main():
                 res = parse(json.loads(cached.read_text(encoding='utf-8')))
             except ValueError:
                 res = None
-            note = 'найдено' if res and (res['phones'] or res['emails'] or res['site']) \
-                else ('компания найдена, контактов нет' if res else 'в Checko не найдено')
+            note = 'ДЕМО — данные вымышленные' if args.demo else (
+                'найдено' if res and (res['phones'] or res['emails'] or res['site'])
+                else ('компания найдена, контактов нет' if res else 'в Checko не найдено'))
         else:
             res, note = None, state.data['processed'][rec['inn']].get('статус', '')
         total_rows.append(make_row(rec, res, note))
     total_path = REPORT_DIR / ('%sВсе_результаты.xlsx' % prefix)
-    write_report(total_path, 'Пробив контактов через Checko — все результаты на %s (%d компаний)'
-                 % (datetime.datetime.now().strftime('%d.%m.%Y'), len(total_rows)), total_rows)
+    write_report(total_path, '%sПробив контактов через Checko — все результаты на %s (%d компаний)'
+                 % (demo_mark, datetime.datetime.now().strftime('%d.%m.%Y'), len(total_rows)), total_rows)
 
     left = len(todo) - len(batch)
     log('')
