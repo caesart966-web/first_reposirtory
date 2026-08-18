@@ -1,0 +1,835 @@
+#!/usr/bin/env python3
+"""
+Автотесты парсера реестра НОСТРОЙ.
+
+Запуск (из корня проекта ``nostroy-parser``)::
+
+    python -m unittest discover -s tests -v
+    # или
+    python tests/test_suite.py
+
+Сеть не требуется: обращения к checko.ru эмулируются локальным HTTP-сервером,
+который отдаёт заготовленные страницы и коды ответов (200/403/404/429).
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import shutil
+import sys
+import tempfile
+import threading
+import unittest
+import zipfile
+from datetime import date, timedelta
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+
+# Позволяем запускать файл напрямую: python tests/test_suite.py
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from nostroy_checko import archives, checko_client, column_mapper, textutils  # noqa: E402
+from nostroy_checko.config import Settings  # noqa: E402
+from nostroy_checko.excel_reader import find_data_files, read_tabular_file  # noqa: E402
+from nostroy_checko.logging_setup import setup_logging  # noqa: E402
+from nostroy_checko.models import (  # noqa: E402
+    STATUS_FORBIDDEN,
+    STATUS_NOT_FOUND,
+    STATUS_OK,
+    STATUS_RATE_LIMITED,
+    CheckoContacts,
+)
+from nostroy_checko.quota import DailyQuota  # noqa: E402
+from nostroy_checko.registry_parser import group_records, parse_sheet  # noqa: E402
+from nostroy_checko.state import StateStore  # noqa: E402
+
+from make_fixtures import COMPANIES, build_fixtures  # noqa: E402
+
+
+# --------------------------------------------------------------------------- #
+#                         Эмулятор сайта checko.ru                             #
+# --------------------------------------------------------------------------- #
+
+COMPANY_PAGE = """<!DOCTYPE html>
+<html lang="ru"><head><title>ООО "Строительная компания Ромашка" — Проверка контрагента</title>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Organization",
+ "name":"ООО \\"Строительная компания Ромашка\\"","taxID":"7707083893",
+ "telephone":"+7 (495) 123-45-67","email":"info@romashka-stroy.ru",
+ "address":{"@type":"PostalAddress","postalCode":"123456","addressLocality":"г. Москва",
+ "streetAddress":"ул. Ленина, д. 1, оф. 5"}}
+</script></head>
+<body>
+<h1>ООО "Строительная компания Ромашка"</h1>
+<dl>
+  <dt>ИНН</dt><dd>7707083893</dd>
+  <dt>ОГРН</dt><dd>1027700132195</dd>
+  <dt>Руководитель</dt><dd>Иванов Иван Иванович</dd>
+  <dt>Адрес</dt><dd>123456, г. Москва, ул. Ленина, д. 1, оф. 5</dd>
+  <dt>Телефон</dt><dd><a href="tel:+74951234567">+7 (495) 123-45-67</a></dd>
+  <dt>Электронная почта</dt><dd><a href="mailto:info@romashka-stroy.ru">info@romashka-stroy.ru</a></dd>
+  <dt>Сайт</dt><dd><a href="https://romashka-stroy.ru">romashka-stroy.ru</a></dd>
+</dl>
+<footer>Служба поддержки: <a href="mailto:info@checko.ru">info@checko.ru</a>, 8 800 222-56-14</footer>
+</body></html>"""
+
+SEARCH_PAGE = """<!DOCTYPE html><html><body><h2>Результаты поиска</h2>
+<div class="results">
+  <a href="/company/romashka-stroy-1027700132195">ООО "Строительная компания Ромашка"</a>
+</div></body></html>"""
+
+EMPTY_SEARCH_PAGE = """<!DOCTYPE html><html><body>
+<p>По вашему запросу ничего не найдено</p></body></html>"""
+
+LIMIT_PAGE = """<!DOCTYPE html><html><body>
+<h1>Превышен лимит запросов</h1><p>Исчерпан лимит бесплатных запросов на сегодня.</p>
+</body></html>"""
+
+
+class _CheckoHandler(BaseHTTPRequestHandler):
+    """Обработчик, воспроизводящий поведение checko.ru, включая ошибки."""
+
+    #: Режим работы сервера, задаётся тестом: ok / not_found / limit / forbidden / flaky
+    mode = "ok"
+    #: Счётчик запросов — тесты проверяют, что лимит не превышен.
+    hits: list[str] = []
+    lock = threading.Lock()
+
+    def log_message(self, *args):  # noqa: D102 — глушим служебный вывод сервера
+        return
+
+    def _respond(self, code: int, body: str, content_type: str = "text/html; charset=utf-8") -> None:
+        payload = body.encode("utf-8")
+        self.send_response(code)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(payload)))
+        self.end_headers()
+        self.wfile.write(payload)
+
+    def do_GET(self) -> None:  # noqa: N802 — имя задано базовым классом
+        with _CheckoHandler.lock:
+            _CheckoHandler.hits.append(self.path)
+            count = len(_CheckoHandler.hits)
+
+        mode = _CheckoHandler.mode
+        if mode == "forbidden":
+            self._respond(403, "<html><body>Access denied</body></html>")
+            return
+        if mode == "limit":
+            self._respond(429, "<html><body>Too Many Requests</body></html>")
+            return
+        if mode == "limit_page":
+            self._respond(200, LIMIT_PAGE)
+            return
+        if mode == "flaky" and count % 2 == 1:
+            # Каждый второй запрос — ошибка сервера, клиент обязан повторить.
+            self._respond(503, "<html><body>Service Unavailable</body></html>")
+            return
+
+        if self.path.startswith("/company/"):
+            self._respond(200, COMPANY_PAGE)
+            return
+        if self.path.startswith("/search"):
+            if mode == "not_found":
+                self._respond(200, EMPTY_SEARCH_PAGE)
+            else:
+                self._respond(200, SEARCH_PAGE)
+            return
+        self._respond(404, "<html><body>Not Found</body></html>")
+
+
+class _FakeCheckoServer:
+    """Контекстный менеджер, поднимающий локальный сервер-заглушку."""
+
+    def __init__(self) -> None:
+        self.server = ThreadingHTTPServer(("127.0.0.1", 0), _CheckoHandler)
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+
+    def __enter__(self) -> "_FakeCheckoServer":
+        self.thread.start()
+        return self
+
+    def __exit__(self, *exc_info) -> None:
+        self.server.shutdown()
+        self.server.server_close()
+        self.thread.join(timeout=5)
+
+    @property
+    def base_url(self) -> str:
+        host, port = self.server.server_address[:2]
+        return f"http://{host}:{port}"
+
+
+# --------------------------------------------------------------------------- #
+#                                Базовый класс                                 #
+# --------------------------------------------------------------------------- #
+
+class BaseTestCase(unittest.TestCase):
+    """Общая подготовка: временная папка и отключение системного прокси."""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.tmp_dir = Path(tempfile.mkdtemp(prefix="nostroy-test-"))
+        setup_logging(cls.tmp_dir / "logs", "ERROR")
+        # Локальный сервер-заглушка не должен ходить через корпоративный прокси.
+        cls._saved_env = {
+            key: os.environ.pop(key)
+            for key in ("HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy")
+            if key in os.environ
+        }
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.environ.update(cls._saved_env)
+        shutil.rmtree(cls.tmp_dir, ignore_errors=True)
+
+
+# --------------------------------------------------------------------------- #
+#                        1. Утилиты нормализации                               #
+# --------------------------------------------------------------------------- #
+
+class TestTextUtils(BaseTestCase):
+    """Проверка распознавания ИНН, дат, телефонов и email."""
+
+    def test_inn_checksum(self) -> None:
+        self.assertTrue(textutils.is_valid_inn("7707083893"))       # ЮЛ
+        self.assertTrue(textutils.is_valid_inn("500100732259"))     # ИП
+        self.assertFalse(textutils.is_valid_inn("7707083894"))      # неверная сумма
+        self.assertFalse(textutils.is_valid_inn("12345"))           # неверная длина
+
+    def test_inn_extraction(self) -> None:
+        self.assertEqual(textutils.normalize_inn("ИНН 7707083893"), "7707083893")
+        self.assertEqual(textutils.normalize_inn(7707083893.0), "7707083893")
+        self.assertEqual(textutils.normalize_inn("7707083893 / 770701001"), "7707083893")
+        self.assertEqual(textutils.normalize_inn("77 07 08 38 93"), "7707083893")
+        self.assertEqual(textutils.normalize_inn("нет"), "")
+
+    def test_dates(self) -> None:
+        expected = date(2010, 5, 12)
+        for value in ("12.05.2010", "2010-05-12", "12/05/2010", "12 мая 2010 г."):
+            self.assertEqual(textutils.parse_date(value), expected, msg=value)
+        self.assertEqual(textutils.parse_date(40123), date(2009, 11, 6))   # серийное число
+        self.assertEqual(textutils.parse_date(2010), date(2010, 1, 1))     # «голый» год
+        self.assertIsNone(textutils.parse_date("7707083893"))              # ИНН — не дата
+        self.assertIsNone(textutils.parse_date(""))
+
+    def test_phones(self) -> None:
+        self.assertEqual(
+            textutils.extract_phones("8(495)123-45-67, +7 916 000-00-00"),
+            ["+74951234567", "+79160000000"],
+        )
+        # ИНН и ОГРН не должны опознаваться как телефоны.
+        self.assertEqual(textutils.extract_phones("7707083893"), [])
+        self.assertEqual(textutils.extract_phones("ОГРН 1027700132195"), [])
+
+    def test_emails(self) -> None:
+        self.assertEqual(
+            textutils.extract_emails("Ivanov@Mail.RU; test@sub.example.co.uk"),
+            ["ivanov@mail.ru", "test@sub.example.co.uk"],
+        )
+        self.assertEqual(textutils.extract_emails("ivanov @ mail.ru"), ["ivanov@mail.ru"])
+
+    def test_header_normalization(self) -> None:
+        self.assertEqual(
+            textutils.normalize_header("  Полное  наименование\nчлена СРО (ЮЛ/ИП) "),
+            "полное наименование члена сро юл ип",
+        )
+
+
+# --------------------------------------------------------------------------- #
+#                        2. Определение колонок                                #
+# --------------------------------------------------------------------------- #
+
+class TestColumnMapper(BaseTestCase):
+    """Шапка ищется в любом месте листа, роли — по заголовку и по содержимому."""
+
+    def test_header_below_title_rows(self) -> None:
+        rows = [
+            ["Реестр членов СРО-С-410", None, None],
+            [None, None, None],
+            ["Наименование", "ИНН", "Дата вступления в СРО"],
+            ['ООО "Ромашка"', "7707083893", "12.05.2010"],
+        ]
+        mapping = column_mapper.build_column_map(rows)
+        self.assertEqual(mapping.header_row, 2)
+        self.assertEqual(mapping.data_start_row, 3)
+        self.assertEqual(mapping.first(column_mapper.ROLE_NAME), 0)
+        self.assertEqual(mapping.first(column_mapper.ROLE_INN), 1)
+        self.assertEqual(mapping.first(column_mapper.ROLE_DATE_JOIN), 2)
+
+    def test_two_row_header(self) -> None:
+        """Шапка в два этажа: нижняя строка сама по себе неинформативна."""
+        rows = [
+            ["Наименование", "ИНН", "Дата", None],
+            [None, None, "вступления", "исключения"],
+            ['АО "Тест"', "6658001234", "03.09.2012", "21.11.2019"],
+        ]
+        mapping = column_mapper.build_column_map(rows)
+        self.assertEqual(mapping.header_row, 0)
+        self.assertEqual(mapping.header_span, 2)
+        self.assertEqual(mapping.data_start_row, 2)
+        self.assertEqual(mapping.first(column_mapper.ROLE_DATE_JOIN), 2)
+        self.assertEqual(mapping.first(column_mapper.ROLE_DATE_EXIT), 3)
+
+    def test_no_header_detected_by_content(self) -> None:
+        """Без шапки роли определяются по самим значениям."""
+        rows = [
+            ['ООО "Альфа"', "7707083893", "12.05.2010", "123456, г. Москва, ул. Ленина, д. 1"],
+            ['ЗАО "Бета"', "2310031475", "08.07.2011", "350000, г. Краснодар, ул. Красная, д. 100"],
+            ["ИП Сидоров Сергей Сергеевич", "500100732259", "17.02.2015",
+             "141700, Московская обл., г. Долгопрудный, ул. Первомайская, д. 12"],
+        ]
+        mapping = column_mapper.build_column_map(rows)
+        self.assertEqual(mapping.first(column_mapper.ROLE_INN), 1)
+        self.assertEqual(mapping.first(column_mapper.ROLE_NAME), 0)
+        self.assertEqual(mapping.first(column_mapper.ROLE_DATE_JOIN), 2)
+        self.assertEqual(mapping.first(column_mapper.ROLE_ADDRESS), 3)
+
+    def test_unknown_column_names(self) -> None:
+        """Совершенно нестандартные заголовки — роли берутся из содержимого."""
+        rows = [
+            ["Кто", "Номер", "Когда", "Как связаться"],
+            ['ООО "Гамма"', "7707083893", "12.05.2010", "8 (495) 123-45-67"],
+            ['ООО "Дельта"', "2310031475", "08.07.2011", "+7 861 200-30-40"],
+        ]
+        mapping = column_mapper.build_column_map(rows)
+        self.assertEqual(mapping.first(column_mapper.ROLE_INN), 1)
+        self.assertEqual(mapping.first(column_mapper.ROLE_PHONE), 3)
+
+
+# --------------------------------------------------------------------------- #
+#                        3. Архивы и чтение файлов                             #
+# --------------------------------------------------------------------------- #
+
+class TestArchives(BaseTestCase):
+    """Распаковка ZIP: русские имена, вложенные архивы, защита от zip slip."""
+
+    def test_extract_with_cyrillic_names_and_nesting(self) -> None:
+        work = self.tmp_dir / "arch"
+        work.mkdir(parents=True, exist_ok=True)
+
+        inner = work / "внутренний.zip"
+        with zipfile.ZipFile(inner, "w") as archive:
+            archive.writestr("Папка/Файл внутри.txt", "данные")
+
+        outer = work / "внешний.zip"
+        with zipfile.ZipFile(outer, "w") as archive:
+            archive.writestr("Реестр/Отчёт.txt", "содержимое")
+            archive.write(inner, arcname="Архивы/внутренний.zip")
+
+        extracted = archives.extract_archive(outer, work / "out")
+        names = sorted(path.name for path in extracted)
+        self.assertIn("Отчёт.txt", names)
+        self.assertIn("Файл внутри.txt", names)   # вложенный архив тоже распакован
+
+    def test_zip_slip_is_blocked(self) -> None:
+        work = self.tmp_dir / "slip"
+        work.mkdir(parents=True, exist_ok=True)
+        malicious = work / "bad.zip"
+        with zipfile.ZipFile(malicious, "w") as archive:
+            archive.writestr("../../escaped.txt", "плохо")
+        extracted = archives.extract_archive(malicious, work / "out")
+        for path in extracted:
+            self.assertTrue(str(path).startswith(str((work / "out").resolve())))
+
+
+class TestExcelReader(BaseTestCase):
+    """Чтение всех поддерживаемых форматов, включая «псевдо-Excel»."""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        super().setUpClass()
+        cls.archive = build_fixtures(cls.tmp_dir / "fixtures")
+        cls.source_dir = cls.tmp_dir / "fixtures" / "_source"
+
+    def test_all_formats_are_read(self) -> None:
+        files = find_data_files(self.source_dir)
+        self.assertGreaterEqual(len(files), 4)
+        readers = set()
+        total_rows = 0
+        for path in files:
+            sheets = read_tabular_file(path, path.name)
+            self.assertTrue(sheets, msg=f"не прочитан файл {path}")
+            for sheet in sheets:
+                readers.add(sheet.reader)
+                total_rows += sheet.row_count
+        self.assertTrue(any(reader.startswith("csv") for reader in readers))
+        self.assertIn("html", readers)          # HTML-таблица с расширением .xls
+        self.assertIn("openpyxl", readers)
+        self.assertGreater(total_rows, 10)
+
+    def test_all_sheets_are_read(self) -> None:
+        """У книги с тремя листами должны прочитаться все три."""
+        path = self.source_dir / "Реестр членов СРО.xlsx"
+        sheets = read_tabular_file(path, path.name)
+        self.assertEqual(len(sheets), 3)
+        self.assertEqual(
+            [sheet.sheet_name for sheet in sheets],
+            ["Реестр членов", "Доп. сведения", "Выгрузка"],
+        )
+
+
+# --------------------------------------------------------------------------- #
+#                        4. Разбор записей реестра                             #
+# --------------------------------------------------------------------------- #
+
+class TestRegistryParser(BaseTestCase):
+    """Проверка извлечения обязательных полей и группировки."""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        super().setUpClass()
+        build_fixtures(cls.tmp_dir / "fixtures2")
+        cls.source_dir = cls.tmp_dir / "fixtures2" / "_source"
+
+    def _all_records(self):
+        records = []
+        for path in find_data_files(self.source_dir):
+            for sheet in read_tabular_file(path, path.name):
+                parsed, _, _ = parse_sheet(sheet)
+                records.extend(parsed)
+        return records
+
+    def test_required_fields(self) -> None:
+        records = self._all_records()
+        self.assertTrue(records)
+        # Проверяем объединённые данные компании: одна и та же организация
+        # встречается в нескольких файлах, и контакты в них разные.
+        groups = {group.inn: group for group in group_records(records, "inn")}
+        for company in COMPANIES:
+            self.assertIn(company["inn"], groups, msg=f"потеряна компания {company['name']}")
+
+        romashka = groups["7707083893"]
+        self.assertIn("Ромашка", romashka.name)
+        self.assertEqual(romashka.date_join, date(2010, 5, 12))
+        self.assertIsNone(romashka.date_exit)
+        self.assertIn("+74951234567", romashka.registry_phones)
+        self.assertIn("info@romashka-stroy.ru", romashka.registry_emails)
+        self.assertTrue(any("Москва" in address for address in romashka.registry_addresses))
+        self.assertIn("Иванов Иван Иванович", romashka.registry_directors)
+
+    def test_exit_date_is_parsed(self) -> None:
+        records = self._all_records()
+        ural = next(record for record in records if record.inn == "6658001234")
+        self.assertEqual(ural.date_exit, date(2019, 11, 21))
+
+    def test_nothing_is_skipped(self) -> None:
+        """Число записей должно совпадать с числом строк данных во всех файлах."""
+        records = self._all_records()
+        # 3 + 2 + 1 (xlsx) + 2 (xls) + 2 (csv) + 2 (html) = 12
+        self.assertEqual(len(records), 12)
+
+    def test_grouping_by_inn(self) -> None:
+        records = self._all_records()
+        groups = group_records(records, "inn")
+        self.assertEqual(len(groups), len(COMPANIES))
+        # Дедупликация «название + ИНН» даёт не меньше групп, чем по одному ИНН.
+        groups_pairs = group_records(records, "name_inn")
+        self.assertGreaterEqual(len(groups_pairs), len(groups))
+
+
+class TestParserRobustness(BaseTestCase):
+    """Мусорные строки не ломают разбор и не исчезают бесследно."""
+
+    def _sheet(self, rows):
+        from nostroy_checko.excel_reader import SheetData
+
+        return SheetData(
+            file_path=Path("dummy.xlsx"),
+            display_path="dummy.xlsx",
+            sheet_name="Лист1",
+            rows=rows,
+        )
+
+    def test_junk_rows_are_reported_not_dropped(self) -> None:
+        rows = [
+            ["Наименование", "ИНН", "Дата вступления"],
+            ['ООО "Альфа"', "7707083893", "12.05.2010"],
+            [None, None, None],                       # пустая строка — просто разделитель
+            ["Наименование", "ИНН", "Дата вступления"],  # повтор шапки на «странице»
+            [12345, None, None],                      # мусор: ни ИНН, ни названия
+            ['ЗАО "Бета"', "2310031475", "08.07.2011"],
+        ]
+        records, unrecognized, _ = parse_sheet(self._sheet(rows))
+        self.assertEqual(len(records), 2)
+        self.assertEqual(len(unrecognized), 1)
+        self.assertEqual(unrecognized[0].row_number, 5)
+        self.assertIn("12345", unrecognized[0].preview)
+
+    def test_inn_found_without_inn_column(self) -> None:
+        """Если колонка ИНН не опознана, он всё равно находится в строке."""
+        rows = [
+            ["Организация", "Реквизиты", "Дата вступления"],
+            ['ООО "Гамма"', "ИНН 7707083893, КПП 770701001", "12.05.2010"],
+        ]
+        records, _, _ = parse_sheet(self._sheet(rows))
+        self.assertEqual(len(records), 1)
+        self.assertEqual(records[0].inn, "7707083893")
+
+    def test_contacts_found_in_arbitrary_column(self) -> None:
+        """Телефон и почта извлекаются даже из колонки «Примечание»."""
+        rows = [
+            ["Наименование", "ИНН", "Примечание"],
+            ['ООО "Дельта"', "7707083893", "связь: 8 (495) 123-45-67, mail: d@delta.ru"],
+        ]
+        records, _, _ = parse_sheet(self._sheet(rows))
+        self.assertIn("+74951234567", records[0].phones)
+        self.assertIn("d@delta.ru", records[0].emails)
+
+    def test_empty_sheet_does_not_crash(self) -> None:
+        records, unrecognized, _ = parse_sheet(self._sheet([]))
+        self.assertEqual(records, [])
+        self.assertEqual(unrecognized, [])
+
+
+# --------------------------------------------------------------------------- #
+#                        5. Квота и файл состояния                             #
+# --------------------------------------------------------------------------- #
+
+class TestQuota(BaseTestCase):
+    """Суточный лимит: бронирование, возврат, сброс в новые сутки."""
+
+    def test_reserve_respects_limit(self) -> None:
+        quota = DailyQuota(limit=3)
+        self.assertTrue(all(quota.reserve() for _ in range(3)))
+        self.assertFalse(quota.reserve())
+        self.assertEqual(quota.remaining, 0)
+        self.assertTrue(quota.exhausted)
+
+    def test_release_returns_unit(self) -> None:
+        quota = DailyQuota(limit=1)
+        self.assertTrue(quota.reserve())
+        quota.release()
+        self.assertTrue(quota.reserve())
+
+    def test_rollover_to_new_day(self) -> None:
+        """Вчерашний счётчик обнуляется — это и есть работа «по дням»."""
+        yesterday = date.today() - timedelta(days=1)
+        quota = DailyQuota(limit=100, used=100, window_date=yesterday, exhausted=True)
+        self.assertEqual(quota.remaining, 100)
+        self.assertFalse(quota.exhausted)
+        self.assertTrue(quota.reserve())
+
+    def test_parallel_reservations_do_not_exceed_limit(self) -> None:
+        """При работе в потоках лимит не должен «протекать»."""
+        quota = DailyQuota(limit=50)
+        granted: list[bool] = []
+        lock = threading.Lock()
+
+        def worker() -> None:
+            allowed = quota.reserve()
+            with lock:
+                granted.append(allowed)
+
+        threads = [threading.Thread(target=worker) for _ in range(200)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        self.assertEqual(sum(granted), 50)
+
+
+class TestStateStore(BaseTestCase):
+    """Файл состояния переживает перезапуск и повреждение."""
+
+    def test_save_and_load(self) -> None:
+        path = self.tmp_dir / "state1" / "state.json"
+        store = StateStore(path, daily_limit=10)
+        store.load()
+        store.quota.reserve()
+        store.set_result("inn:7707083893", CheckoContacts(query="7707083893", status=STATUS_OK,
+                                                          phones=["+74951234567"]))
+        store.save()
+
+        restored = StateStore(path, daily_limit=10)
+        restored.load()
+        self.assertEqual(restored.quota.used, 1)
+        result = restored.get_result("inn:7707083893")
+        self.assertIsNotNone(result)
+        self.assertEqual(result.phones, ["+74951234567"])
+        self.assertTrue(restored.has_final_result("inn:7707083893"))
+
+    def test_corrupted_file_does_not_crash(self) -> None:
+        path = self.tmp_dir / "state2" / "state.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("{ это не JSON", encoding="utf-8")
+        store = StateStore(path, daily_limit=10)
+        store.load()                                   # не должно упасть
+        self.assertEqual(store.summary()["total"], 0)
+
+    def test_success_is_not_overwritten_by_error(self) -> None:
+        path = self.tmp_dir / "state3" / "state.json"
+        store = StateStore(path, daily_limit=10)
+        store.load()
+        store.set_result("inn:1", CheckoContacts(status=STATUS_OK, phones=["+70000000000"]))
+        store.set_result("inn:1", CheckoContacts(status="error", error="сеть"))
+        self.assertEqual(store.get_result("inn:1").status, STATUS_OK)
+
+
+# --------------------------------------------------------------------------- #
+#                        6. Разбор страницы checko.ru                          #
+# --------------------------------------------------------------------------- #
+
+class TestCheckoParsing(BaseTestCase):
+    """Разбор HTML карточки компании без обращения к сети."""
+
+    def test_company_page(self) -> None:
+        result = checko_client.parse_company_page(
+            COMPANY_PAGE, "https://checko.ru/company/x", expected_inn="7707083893"
+        )
+        self.assertEqual(result.status, STATUS_OK)
+        self.assertEqual(result.inn, "7707083893")
+        self.assertEqual(result.ogrn, "1027700132195")
+        self.assertIn("+74951234567", result.phones)
+        self.assertIn("info@romashka-stroy.ru", result.emails)
+        self.assertTrue(any("Москва" in address for address in result.addresses))
+        self.assertTrue(any("Иванов" in director for director in result.directors))
+        self.assertTrue(result.inn_matched)
+
+    def test_own_contacts_are_filtered(self) -> None:
+        """Телефон и почта самого сервиса не должны попасть в контакты компании."""
+        result = checko_client.parse_company_page(COMPANY_PAGE, "https://checko.ru/company/x")
+        self.assertNotIn("info@checko.ru", result.emails)
+        self.assertNotIn("+78002225614", result.phones)
+
+    def test_limit_page_is_detected(self) -> None:
+        result = checko_client.parse_company_page(LIMIT_PAGE, "https://checko.ru/search")
+        self.assertEqual(result.status, STATUS_RATE_LIMITED)
+
+    def test_search_link_extraction(self) -> None:
+        url = checko_client.find_card_link(SEARCH_PAGE, "https://checko.ru/search?query=1")
+        self.assertEqual(url, "https://checko.ru/company/romashka-stroy-1027700132195")
+
+
+# --------------------------------------------------------------------------- #
+#                        7. HTTP-клиент: коды ответов                          #
+# --------------------------------------------------------------------------- #
+
+class TestCheckoClientHTTP(BaseTestCase):
+    """Поведение клиента при 200 / 404 / 403 / 429 и при сбоях сервера."""
+
+    def setUp(self) -> None:
+        _CheckoHandler.hits = []
+        _CheckoHandler.mode = "ok"
+
+    def _client(self, server: _FakeCheckoServer, quota: DailyQuota, **overrides):
+        settings = Settings(
+            input_path=Path("."), output_dir=self.tmp_dir / "http",
+            rps=0.0, timeout=5.0, max_retries=overrides.pop("max_retries", 1),
+            **overrides,
+        )
+        checko_client.CHECKO_BASE_URL = server.base_url
+        return checko_client.CheckoClient(settings, quota)
+
+    def test_successful_lookup(self) -> None:
+        with _FakeCheckoServer() as server:
+            client = self._client(server, DailyQuota(limit=10))
+            result = client.lookup("7707083893", expected_inn="7707083893")
+        self.assertEqual(result.status, STATUS_OK)
+        self.assertIn("+74951234567", result.phones)
+        self.assertIn("info@romashka-stroy.ru", result.emails)
+        self.assertEqual(len(_CheckoHandler.hits), 2)     # поиск + карточка
+
+    def test_not_found(self) -> None:
+        _CheckoHandler.mode = "not_found"
+        with _FakeCheckoServer() as server:
+            client = self._client(server, DailyQuota(limit=10))
+            result = client.lookup("0000000000")
+        self.assertEqual(result.status, STATUS_NOT_FOUND)
+
+    def test_forbidden_marks_quota_after_streak(self) -> None:
+        _CheckoHandler.mode = "forbidden"
+        quota = DailyQuota(limit=10)
+        with _FakeCheckoServer() as server:
+            client = self._client(server, quota)
+            for _ in range(checko_client.CheckoClient.FORBIDDEN_TOLERANCE):
+                result = client.lookup("7707083893")
+                self.assertEqual(result.status, STATUS_FORBIDDEN)
+        self.assertTrue(quota.exhausted)
+
+    def test_429_exhausts_quota(self) -> None:
+        _CheckoHandler.mode = "limit"
+        quota = DailyQuota(limit=10)
+        with _FakeCheckoServer() as server:
+            client = self._client(server, quota)
+            result = client.lookup("7707083893")
+        self.assertEqual(result.status, STATUS_RATE_LIMITED)
+        self.assertTrue(quota.exhausted)
+
+    def test_5xx_is_retried(self) -> None:
+        """Ошибка 503 должна привести к повтору, а не к отказу."""
+        _CheckoHandler.mode = "flaky"
+        with _FakeCheckoServer() as server:
+            client = self._client(server, DailyQuota(limit=10), max_retries=3)
+            result = client.lookup("7707083893")
+        self.assertEqual(result.status, STATUS_OK)
+        self.assertGreater(len(_CheckoHandler.hits), 2)
+
+
+# --------------------------------------------------------------------------- #
+#              8. Полный цикл: лимит, остановка и продолжение назавтра         #
+# --------------------------------------------------------------------------- #
+
+class TestEndToEndAcrossDays(BaseTestCase):
+    """
+    Главный сценарий из ТЗ.
+
+    День 1: лимит 3 запроса -> обработаны 3 компании, остальные ждут.
+    День 2: счётчик обнуляется -> обрабатываются оставшиеся, ранее собранные
+    данные не запрашиваются повторно.
+    """
+
+    def _settings(self, output: Path, base_url: str, daily_limit: int) -> Settings:
+        checko_client.CHECKO_BASE_URL = base_url
+        return Settings(
+            input_path=self.archive,
+            output_dir=output,
+            daily_limit=daily_limit,
+            workers=3,
+            rps=0.0,
+            timeout=5.0,
+            max_retries=1,
+            no_progress_bar=True,
+            with_diagnostics=True,
+        )
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        super().setUpClass()
+        cls.archive = build_fixtures(cls.tmp_dir / "fixtures3")
+
+    def test_two_day_run(self) -> None:
+        from nostroy_checko.pipeline import run
+
+        _CheckoHandler.hits = []
+        _CheckoHandler.mode = "ok"
+        output = self.tmp_dir / "e2e"
+
+        with _FakeCheckoServer() as server:
+            # ------------------------------ день 1 -------------------------- #
+            settings = self._settings(output, server.base_url, daily_limit=3)
+            day_one = run(settings)
+
+            self.assertEqual(len(day_one.groups), len(COMPANIES))
+            self.assertEqual(day_one.checko_done + day_one.checko_failed, 3)
+            self.assertEqual(day_one.checko_pending, len(COMPANIES) - 3)
+            self.assertTrue(day_one.report_path.exists())
+
+            state_file = settings.state_file
+            self.assertTrue(state_file.exists())
+            saved = json.loads(state_file.read_text(encoding="utf-8"))
+            self.assertEqual(saved["quota"]["used"], 3)
+            self.assertEqual(len(saved["results"]), 3)
+
+            # --- имитируем наступление следующих суток ----------------------- #
+            saved["quota"]["window_date"] = (date.today() - timedelta(days=1)).isoformat()
+            state_file.write_text(json.dumps(saved, ensure_ascii=False), encoding="utf-8")
+            hits_after_day_one = len(_CheckoHandler.hits)
+
+            # ------------------------------ день 2 -------------------------- #
+            settings = self._settings(output, server.base_url, daily_limit=100)
+            day_two = run(settings)
+
+        # Все компании обработаны, повторных запросов по готовым — нет.
+        self.assertEqual(day_two.checko_pending, 0)
+        self.assertEqual(day_two.checko_done + day_two.checko_failed, len(COMPANIES) - 3)
+        self.assertLessEqual(
+            len(_CheckoHandler.hits) - hits_after_day_one,
+            (len(COMPANIES) - 3) * 2,
+        )
+
+        # В отчёте есть все три обязательные вкладки и контакты с checko.
+        from openpyxl import load_workbook
+
+        workbook = load_workbook(day_two.report_path)
+        self.assertEqual(
+            workbook.sheetnames[:3],
+            ["checko_contacts", "nostroy_contacts", "combined"],
+        )
+        combined = workbook["combined"]
+        headers = [cell.value for cell in combined[1]]
+        self.assertIn("Название компании", headers)
+        self.assertIn("ИНН", headers)
+        self.assertIn("Телефон (checko.ru)", headers)
+        self.assertIn("Дата вступления", headers)
+        self.assertIn("Дата исключения", headers)
+        self.assertIn("Телефон (реестр НОСТРОЙ)", headers)
+
+        phone_column = headers.index("Телефон (checko.ru)")
+        filled = [
+            row[phone_column]
+            for row in combined.iter_rows(min_row=2, values_only=True)
+            if row[phone_column]
+        ]
+        self.assertEqual(len(filled), len(COMPANIES))   # контакты получены по всем
+
+    def test_retry_policy(self) -> None:
+        """Ошибки повторяются ограниченное число раз, «не успели» — всегда."""
+        from nostroy_checko.pipeline import MAX_AUTO_RETRY_ATTEMPTS, _needs_lookup
+        from nostroy_checko.models import CompanyGroup, RegistryRecord
+
+        settings = Settings(input_path=Path("."), output_dir=self.tmp_dir / "retry")
+        store = StateStore(self.tmp_dir / "retry" / "state.json", daily_limit=100)
+        store.load()
+        group = CompanyGroup(key="inn:7707083893",
+                             records=[RegistryRecord(name="Тест", inn="7707083893")])
+
+        # Ничего не известно — запрашиваем.
+        self.assertTrue(_needs_lookup(group, store, settings))
+
+        # Окончательные ответы повторять нельзя — это трата квоты.
+        store.set_result(group.key, CheckoContacts(status=STATUS_OK))
+        self.assertFalse(_needs_lookup(group, store, settings))
+        store._results[group.key] = CheckoContacts(status=STATUS_NOT_FOUND)
+        self.assertFalse(_needs_lookup(group, store, settings))
+
+        # «Не успели из-за лимита» — повторяем всегда.
+        store._results[group.key] = CheckoContacts(status=STATUS_RATE_LIMITED)
+        self.assertTrue(_needs_lookup(group, store, settings))
+
+        # Ошибки — не более MAX_AUTO_RETRY_ATTEMPTS раз подряд.
+        store._attempts.pop(group.key, None)
+        for _ in range(MAX_AUTO_RETRY_ATTEMPTS):
+            store.set_result(group.key, CheckoContacts(status="error", error="сеть"))
+        self.assertFalse(_needs_lookup(group, store, settings))
+        settings.retry_failed = True
+        self.assertTrue(_needs_lookup(group, store, settings))
+
+    def test_forbidden_stops_run_but_report_is_written(self) -> None:
+        """Блокировка останавливает запросы, но отчёт всё равно формируется."""
+        from nostroy_checko.pipeline import run
+
+        _CheckoHandler.hits = []
+        _CheckoHandler.mode = "forbidden"
+        output = self.tmp_dir / "e2e-forbidden"
+        with _FakeCheckoServer() as server:
+            settings = self._settings(output, server.base_url, daily_limit=100)
+            result = run(settings)
+        _CheckoHandler.mode = "ok"
+
+        self.assertTrue(result.interrupted)
+        self.assertEqual(result.checko_done, 0)
+        self.assertTrue(result.report_path.exists())
+        # Данные реестра собраны полностью, несмотря на недоступность checko.ru.
+        self.assertEqual(len(result.groups), len(COMPANIES))
+        self.assertEqual(len(result.records), 12)
+
+    def test_quota_is_never_exceeded(self) -> None:
+        """При лимите N выполняется ровно N запросов к сайту, не больше."""
+        from nostroy_checko.pipeline import run
+
+        _CheckoHandler.hits = []
+        _CheckoHandler.mode = "ok"
+        output = self.tmp_dir / "e2e-limit"
+        with _FakeCheckoServer() as server:
+            settings = self._settings(output, server.base_url, daily_limit=2)
+            result = run(settings)
+        # 2 компании * (поиск + карточка) = максимум 4 обращения.
+        self.assertLessEqual(len(_CheckoHandler.hits), 4)
+        self.assertEqual(result.checko_done, 2)
+        self.assertEqual(result.quota_used, 2)
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
