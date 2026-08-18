@@ -553,6 +553,86 @@ class TestProjectConfig(unittest.TestCase):
         project = Project(ROOT)
         self.assertEqual(project.new_company().power_number, "б/н")
 
+    def test_every_placeholder_has_explicit_font(self):
+        """Подставляемый текст должен быть тем же шрифтом, что и остальной.
+
+        В бланке пропуски для адресов не имели настроек шрифта, и значение
+        выходило шрифтом по умолчанию (Calibri) вместо Times New Roman.
+        """
+        import zipfile
+
+        from lxml import etree
+
+        from src.docx_engine import W, _iter_paragraphs, _own_text_nodes
+
+        project = Project(ROOT)
+        for spec in project.enabled_documents():
+            archive = zipfile.ZipFile(project.template_path(spec))
+            root = etree.fromstring(archive.read("word/document.xml"))
+            for paragraph in _iter_paragraphs(root):
+                for node in _own_text_nodes(paragraph):
+                    if "{{" not in (node.text or ""):
+                        continue
+                    run_properties = node.getparent().find(W + "rPr")
+                    with self.subTest(document=spec.title, text=node.text):
+                        self.assertIsNotNone(
+                            run_properties,
+                            f"{spec.template}: у фрагмента {node.text!r} "
+                            f"нет настроек шрифта")
+                        self.assertIsNotNone(
+                            run_properties.find(W + "rFonts"),
+                            f"{spec.template}: у фрагмента {node.text!r} не задан шрифт")
+                        self.assertIsNotNone(
+                            run_properties.find(W + "sz"),
+                            f"{spec.template}: у фрагмента {node.text!r} не задан размер")
+
+    def test_signature_has_room_to_sign(self):
+        """Между наименованием и инициалами — табуляция до правого поля."""
+        import zipfile
+
+        from lxml import etree
+
+        from src.docx_engine import W, _iter_paragraphs, _own_text_nodes
+
+        project = Project(ROOT)
+        spec = next(s for s in project.enabled_documents() if s.id == "application")
+        root = etree.fromstring(
+            zipfile.ZipFile(project.template_path(spec)).read("word/document.xml"))
+        for paragraph in _iter_paragraphs(root):
+            text = "".join(n.text or "" for n in _own_text_nodes(paragraph))
+            if "{{director_short_name}}" not in text:
+                continue
+            self.assertTrue(list(paragraph.iter(W + "tab")),
+                            "в строке подписи нет табуляции")
+            tabs = paragraph.find(W + "pPr").find(W + "tabs")
+            self.assertIsNotNone(tabs, "не задана позиция табуляции")
+            self.assertEqual(tabs.find(W + "tab").get(W + "val"), "right")
+            return
+        self.fail("не найдена строка подписи руководителя")
+
+    def test_header_cells_are_level(self):
+        """Номер заявления и адресат должны стоять на одной высоте."""
+        import zipfile
+
+        from lxml import etree
+
+        from src.docx_engine import W
+
+        project = Project(ROOT)
+        spec = next(s for s in project.enabled_documents() if s.id == "application")
+        root = etree.fromstring(
+            zipfile.ZipFile(project.template_path(spec)).read("word/document.xml"))
+        header = list(root.iter(W + "tbl"))[1]
+        for paragraph in header.iter(W + "p"):
+            p_pr = paragraph.find(W + "pPr")
+            spacing = p_pr.find(W + "spacing") if p_pr is not None else None
+            if spacing is None:
+                continue
+            self.assertIsNone(spacing.get(W + "beforeAutospacing"),
+                              "остался автоматический интервал — строки разъедутся")
+            self.assertIsNone(spacing.get(W + "afterAutospacing"),
+                              "остался автоматический интервал — строки разъедутся")
+
     def test_templates_exist(self):
         project = Project(ROOT)
         for spec in project.enabled_documents():

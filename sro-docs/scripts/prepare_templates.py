@@ -57,6 +57,35 @@ def op_rel(old_target: str, new_target: str) -> dict:
     return {"kind": "rel", "expected": old_target, "new": new_target}
 
 
+def op_font(paragraph: int, node: int, like_node: int) -> dict:
+    """Дать фрагменту такое же оформление, как у другого фрагмента абзаца.
+
+    В бланке некоторые пропуски («_____» для адресов) не имеют настроек
+    шрифта вообще, поэтому подставленный текст выходил шрифтом по умолчанию
+    (Calibri), а не Times New Roman, как весь документ.
+    """
+    return {"kind": "font", "p": paragraph, "n": node, "like": like_node}
+
+
+def op_spacing(paragraph: int, attrs: dict) -> dict:
+    """Задать интервалы абзаца (w:spacing), убрав всё остальное.
+
+    Нужно, чтобы убрать «автоматический интервал» (beforeAutospacing),
+    из-за которого текст в соседних ячейках таблицы стоял на разной высоте.
+    """
+    return {"kind": "spacing", "p": paragraph, "attrs": attrs}
+
+
+def op_tab(paragraph: int, nodes: list[int], expected: list[str], position: int) -> dict:
+    """Заменить «пробельную» подложку табуляцией с прижимом вправо.
+
+    Так подпись руководителя всегда встаёт к правому полю, и между
+    наименованием компании и инициалами остаётся место, чтобы расписаться.
+    """
+    return {"kind": "tab", "p": paragraph, "nodes": nodes,
+            "expected": expected, "pos": position}
+
+
 # ============================================================ ЗАЯВЛЕНИЕ
 APPLICATION_OPS: list[dict] = [
     # --- шапка: дата документа ---
@@ -123,6 +152,23 @@ APPLICATION_OPS: list[dict] = [
 
     # --- чужая почта, оставшаяся в гиперссылке от прошлой компании ---
     op_rel("mailto:regionrem@mail.ru", "mailto:{{email}}"),
+
+    # ---------------- правки вёрстки бланка ----------------
+
+    # Шапка: у правой ячейки («В Ассоциацию…») включён автоматический
+    # интервал, из-за него адресат стоял на строку ниже номера заявления.
+    # Приводим к тем же интервалам, что у левой ячейки.
+    op_spacing(5, {"after": "0", "line": "240", "lineRule": "auto"}),
+    op_spacing(6, {"after": "0", "line": "240", "lineRule": "auto"}),
+
+    # Пропуски для адресов не имели настроек шрифта — подставленный текст
+    # выходил шрифтом Calibri вместо Times New Roman, как весь документ.
+    op_font(45, 3, 0),
+    op_font(47, 3, 0),
+
+    # Подпись: вместо подложки из пробелов — табуляция с прижимом к правому
+    # полю, чтобы между наименованием и инициалами было место расписаться.
+    op_tab(125, [5, 6], ["                           ", " "], 9356),
 ]
 
 # ============================================================ ДОВЕРЕННОСТЬ
@@ -284,6 +330,67 @@ def apply_ops(document_xml: bytes, ops: list[dict], label: str) -> bytes:
                     f"Шаблон изменился — обновите карту разметки в этом скрипте."
                 )
             _set_node_text(node, op["new"])
+
+        elif op["kind"] == "font":
+            nodes = _own_text_nodes(paragraphs[op["p"]])
+            source = nodes[op["like"]].getparent().find(W + "rPr")
+            if source is None:
+                raise PrepareError(
+                    f"{label}: у фрагмента №{op['like']} абзаца №{op['p']} нет "
+                    f"оформления, копировать нечего. Шаблон изменился."
+                )
+            run = nodes[op["n"]].getparent()
+            existing = run.find(W + "rPr")
+            if existing is not None:
+                run.remove(existing)
+            run.insert(0, etree.fromstring(etree.tostring(source)))
+
+        elif op["kind"] == "spacing":
+            paragraph = paragraphs[op["p"]]
+            p_pr = paragraph.find(W + "pPr")
+            if p_pr is None:
+                raise PrepareError(
+                    f"{label}: у абзаца №{op['p']} нет свойств. Шаблон изменился.")
+            spacing = p_pr.find(W + "spacing")
+            if spacing is None:
+                spacing = etree.Element(W + "spacing")
+                p_pr.insert(0, spacing)
+            for name in list(spacing.attrib):
+                del spacing.attrib[name]
+            for name, value in op["attrs"].items():
+                spacing.set(W + name, value)
+
+        elif op["kind"] == "tab":
+            paragraph = paragraphs[op["p"]]
+            nodes = _own_text_nodes(paragraph)
+            actual = [nodes[i].text or "" for i in op["nodes"]]
+            if actual != op["expected"]:
+                raise PrepareError(
+                    f"{label}: абзац №{op['p']}, подложка подписи.\n"
+                    f"  Ожидалось: {op['expected']!r}\n"
+                    f"  В документе: {actual!r}\n"
+                    f"Шаблон изменился — обновите карту разметки в этом скрипте."
+                )
+            p_pr = paragraph.find(W + "pPr")
+            if p_pr is None:
+                raise PrepareError(
+                    f"{label}: у абзаца №{op['p']} нет свойств. Шаблон изменился.")
+            # По схеме OOXML w:tabs идёт раньше w:spacing — вставляем первым.
+            existing_tabs = p_pr.find(W + "tabs")
+            if existing_tabs is not None:
+                p_pr.remove(existing_tabs)
+            tabs = etree.Element(W + "tabs")
+            stop = etree.SubElement(tabs, W + "tab")
+            stop.set(W + "val", "right")
+            stop.set(W + "pos", str(op["pos"]))
+            p_pr.insert(0, tabs)
+            # Первый фрагмент подложки становится табуляцией, остальные пустеют.
+            first = nodes[op["nodes"][0]]
+            run = first.getparent()
+            run.insert(list(run).index(first), etree.Element(W + "tab"))
+            _set_node_text(first, "")
+            for index in op["nodes"][1:]:
+                _set_node_text(nodes[index], "")
 
         elif op["kind"] == "cell":
             t_index, row_index, col_index = op["t"], op["r"], op["c"]
