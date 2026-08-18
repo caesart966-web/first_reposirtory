@@ -47,6 +47,7 @@ try:
 except ImportError:
     norm_phone = lambda s: (s or '', 'raw')
 
+ВЕРСИЯ = '6 от 18.08.2026'
 BASE = Path(__file__).resolve().parent
 INPUT_DIR = BASE / 'input'
 STATE_DIR = BASE / 'состояние'
@@ -132,6 +133,8 @@ def _date(v):
 def _clean(v):
     if v is None:
         return ''
+    if isinstance(v, float) and v.is_integer():
+        v = int(v)                                   # ИНН-число: 7801234567.0 -> 7801234567
     return re.sub(r'\s+', ' ', str(v).replace('\xa0', ' ')).strip()
 
 
@@ -187,9 +190,10 @@ HEADERS = {
     'short':    (('сокращенное наименование', 'сокращённое наименование'), ('сокращ',)),
     'phone':    (('контактные телефоны', 'телефон'), ('телефон', 'контакт')),
     'date_in':  (('дата регистрации в реестре сро', 'дата вступления'),
-                 ('дата регистрации', 'дата вступ', 'дата прием', 'дата включ')),
+                 ('дата регистрации', 'дата вступ', 'дата прием', 'дата приём',
+                  'дата включ', 'вступ', 'включ', 'приём в член', 'прием в член')),
     'date_out': (('дата прекращения членства', 'дата прекращения'),
-                 ('дата прекращ', 'дата исключ')),
+                 ('дата прекращ', 'дата исключ', 'прекращ', 'исключ', 'выбыт')),
 }
 
 
@@ -216,7 +220,7 @@ def _match_columns(header):
 
 def _inn_like(v):
     """Похоже ли значение ячейки на ИНН: только цифры, 10 или 12 знаков."""
-    t = _clean(v)
+    t = _clean(v).replace(' ', '')
     if not t or re.search(r'\D', t):
         return False
     return len(t) in (10, 12)
@@ -224,7 +228,8 @@ def _inn_like(v):
 
 def _guess_by_data(grid, inn_col, start):
     """Когда шапки нет — угадываем колонки по содержимому строк с данными."""
-    cols, body = {}, [r for r in grid[start:] if len(r) > inn_col and _inn_like(r[inn_col])]
+    cols, date_cols = {}, []
+    body = [r for r in grid[start:] if len(r) > inn_col and _inn_like(r[inn_col])]
     if not body:
         return cols
     width = max(len(r) for r in body)
@@ -246,11 +251,16 @@ def _guess_by_data(grid, inn_col, start):
                 best_len, cols['full'] = avg, j
         if len(phones) > len(vals) * 0.3 and 'phone' not in cols:
             cols['phone'] = j
-        if len(dates) > len(vals) * 0.5:
-            if 'date_in' not in cols:
-                cols['date_in'] = j
-            elif 'date_out' not in cols:
-                cols['date_out'] = j
+        if dates:
+            date_cols.append((j, len(dates), len(vals)))
+
+    # дата вступления заполнена почти везде, дата прекращения — редкая, она следующая
+    dense = [j for j, d, n in date_cols if d > n * 0.5]
+    if dense:
+        cols.setdefault('date_in', dense[0])
+    rest = [j for j, d, n in date_cols if j != cols.get('date_in')]
+    if rest:
+        cols.setdefault('date_out', rest[0])
     return cols
 
 
@@ -260,7 +270,7 @@ def read_any(path):
     wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
     best = None
     for ws in wb.worksheets:
-        grid = list(ws.iter_rows(min_row=1, max_row=300, values_only=True))
+        grid = list(ws.iter_rows(min_row=1, max_row=1000, values_only=True))
         if not grid:
             continue
 
@@ -682,6 +692,44 @@ def make_row(rec, res, probe_date):
             rec['date_in'], rec['date_out'], probe_date]
 
 
+def dump_input():
+    """Печатает структуру файлов из input — чтобы было видно, где что лежит."""
+    files = [p for p in sorted(INPUT_DIR.iterdir()) if p.is_file()] if INPUT_DIR.exists() else []
+    if not files:
+        log('Папка input пуста.')
+        return
+    for f in files:
+        log('')
+        log('=' * 70)
+        log('ФАЙЛ: %s   (%d КБ)' % (f.name, f.stat().st_size // 1024))
+        if f.suffix.lower() != '.xlsx':
+            log('  не .xlsx — пропускаю')
+            continue
+        try:
+            wb = openpyxl.load_workbook(f, read_only=True, data_only=True)
+        except Exception as e:
+            log('  не открывается: %s' % e)
+            continue
+        for ws in wb.worksheets:
+            log('')
+            log('  ЛИСТ «%s»: строк %s, колонок %s' % (ws.title, ws.max_row, ws.max_column))
+            rows_seen = []
+            for i, row in enumerate(ws.iter_rows(min_row=1, max_row=500, values_only=True), start=1):
+                cells = [(get_column_letter(j + 1), _clean(v)) for j, v in enumerate(row) if _clean(v)]
+                if cells:
+                    rows_seen.append((i, cells))
+            # интересны строки таблицы, а не одиночные заголовки-заглушки сверху
+            table = [x for x in rows_seen if len(x[1]) >= 2][:12] or rows_seen[:12]
+            for i, cells in table:
+                log('    строка %d: %s' % (i, ' | '.join('%s=%s' % (c, v[:38]) for c, v in cells[:9])))
+            if not rows_seen:
+                log('    лист пустой')
+        wb.close()
+    log('')
+    log('=' * 70)
+    log('Пришлите этот текст — по нему видно, какая колонка где.')
+
+
 # --- главный сценарий ------------------------------------------------------
 
 def main():
@@ -690,10 +738,16 @@ def main():
     ap.add_argument('--demo', action='store_true', help='показать формат отчёта без обращения к API')
     ap.add_argument('--status', action='store_true', help='показать, что сделано, и выйти')
     ap.add_argument('--reset-day', action='store_true', help='обнулить счётчик запросов за сегодня')
+    ap.add_argument('--dump', action='store_true', help='показать, что лежит в файлах папки input')
     args = ap.parse_args()
 
     if hasattr(sys.stdout, 'reconfigure'):
         sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    log('Версия программы: %s' % ВЕРСИЯ)
+
+    if args.dump:                                   # показать содержимое файлов, ключ не нужен
+        dump_input()
+        return
 
     cfg = read_config() if not args.demo else configparser.ConfigParser()
     if args.demo:
