@@ -1179,7 +1179,6 @@ class TestEndToEndAcrossDays(BaseTestCase):
                 "Дата вступления в СРО",
                 "Дата исключения из СРО",
                 "Статус членства",
-                "Статус запроса",
             ],
         )
 
@@ -1283,20 +1282,20 @@ class TestEndToEndAcrossDays(BaseTestCase):
         self.assertEqual(len(result.groups), len(COMPANIES))
         self.assertEqual(len(result.records), 12)
 
-    def test_dates_are_filled_for_every_company_from_day_one(self) -> None:
+    def test_report_accumulates_processed_companies_only(self) -> None:
         """
-        Даты членства проставляются сразу всем компаниям.
+        В отчёте только обработанные компании — файл копится день за днём.
 
-        Они берутся из реестра и не зависят от суточной квоты checko.ru:
-        телефоны наполняются день за днём, а даты должны стоять уже в первом
-        отчёте — в том числе у компаний, до которых очередь ещё не дошла.
+        Обработали две — в файле две строки, с контактами, датами и статусом
+        членства. Необработанных компаний в таблице нет вовсе: «пустых» строк,
+        до которых не дошла квота, пользователь видеть не должен.
         """
         from nostroy_checko.pipeline import run
         from openpyxl import load_workbook
 
         _CheckoApiHandler.hits = []
         _CheckoApiHandler.mode = "ok"
-        output = self.tmp_dir / "e2e-dates"
+        output = self.tmp_dir / "e2e-accumulate"
         with _FakeCheckoApiServer() as server:
             from nostroy_checko import checko_api
 
@@ -1311,40 +1310,20 @@ class TestEndToEndAcrossDays(BaseTestCase):
         sheet = load_workbook(result.report_path)["Контакты"]
         headers = [cell.value for cell in sheet[1]]
         rows = list(sheet.iter_rows(min_row=2, values_only=True))
-        join_column = headers.index("Дата вступления в СРО")
+
+        # Квоты хватило на две компании — в отчёте ровно две строки.
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(result.in_report, 2)
+        self.assertNotIn("Статус запроса", headers)
+
+        # У вошедших строк заполнено всё: контакты, даты, статус членства.
         phone_column = headers.index("Телефон")
+        join_column = headers.index("Дата вступления в СРО")
         status_column = headers.index("Статус членства")
-
-        # В отчёте все компании, а не только обработанные.
-        self.assertEqual(len(rows), len(COMPANIES))
-        # Дата вступления есть у КАЖДОЙ, хотя квоты хватило лишь на две.
-        self.assertTrue(all(row[join_column] for row in rows))
-
-        # Телефон показывается и у необработанных компаний — из реестра.
-        # Пустым он остаётся только там, где его нет ни в реестре, ни у checko.
-        status_request_column = headers.index("Статус запроса")
-        with_registry_phone = {
-            company["inn"] for company in COMPANIES if company["phone"]
-        }
-        inn_column = headers.index("ИНН")
         for row in rows:
-            has_phone = bool(row[phone_column])
-            self.assertEqual(
-                has_phone,
-                row[inn_column] in with_registry_phone or row[status_request_column] == "ok",
-                msg=f"телефон для ИНН {row[inn_column]}",
-            )
-        # Хотя бы одна компания получила телефон, не будучи запрошенной у checko.
-        self.assertTrue(
-            any(
-                row[phone_column] and row[status_request_column] != "ok"
-                for row in rows
-            )
-        )
-        # Статус членства заполнен у всех и принимает только два значения.
-        self.assertEqual(
-            {row[status_column] for row in rows} - {"действует", "исключён"}, set()
-        )
+            self.assertTrue(row[phone_column])
+            self.assertTrue(row[join_column])
+            self.assertIn(row[status_column], ("действует", "исключён"))
 
     def test_quota_is_never_exceeded(self) -> None:
         """При лимите N выполняется ровно N запросов к сайту, не больше."""

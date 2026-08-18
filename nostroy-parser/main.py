@@ -315,10 +315,24 @@ def main(argv: list[str] | None = None) -> int:
         logger.info("%-42s %s", "Итоговый отчёт:", result.report_path.resolve())
     logger.info("=" * 78)
 
-    if result.checko_pending:
+    if result.forbidden_seen:
+        logger.error("=" * 70)
+        logger.error("СЕРВИС checko.ru ОТКЛОНИЛ ДОСТУП (ответ 403).")
+        logger.error("Именно поэтому в таблице нет контактов. Что проверить:")
+        logger.error("  1. Ключ вписан в файл checko_api_key.txt (вместо строки-заглушки).")
+        logger.error("  2. Ключ скопирован целиком, без пробелов и лишних символов.")
+        logger.error("  3. В личном кабинете checko.ru тариф с доступом к API активен.")
+        logger.error("Квота на отклонённые запросы не тратится — исправьте ключ и")
+        logger.error("запускайте снова сразу же, ждать следующего дня не нужно.")
+        logger.error("Если ключ точно верный — пришлите разработчику файл")
+        logger.error("output/parsed/checko_api_sample.json и свежий лог из output/logs/.")
+        logger.error("=" * 70)
+    elif result.checko_pending:
         logger.warning(
-            "Осталось необработанных компаний: %d. Запустите ту же команду завтра "
-            "после 00:00 — скрипт продолжит с места остановки.",
+            "В отчёте сейчас %d компаний. Осталось обработать: %d. "
+            "Запустите ту же команду завтра после 00:00 — добавятся следующие, "
+            "файл накапливается день за днём.",
+            result.in_report,
             result.checko_pending,
         )
     return 0

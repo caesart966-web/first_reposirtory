@@ -64,12 +64,15 @@ class RunResult:
     quota_used: int = 0
     quota_limit: int = 0
     interrupted: bool = False       # работа прервана (лимит/Ctrl+C)
+    forbidden_seen: bool = False    # сервис отклонил ключ / доступ (403)
+    in_report: int = 0              # сколько компаний уже вошло в отчёт
 
     def summary(self) -> dict[str, Any]:
         """Сводка для служебной вкладки отчёта и финального сообщения."""
         return {
             "Записей реестра всего": len(self.records),
             "Уникальных компаний": len(self.groups),
+            "Компаний в отчёте (обработано)": self.in_report,
             "Нераспознанных строк": len(self.unrecognized),
             "Обработано файлов": len(self.files_index),
             "Запросов к checko.ru за запуск": self.checko_done + self.checko_failed,
@@ -279,12 +282,13 @@ def enrich_with_checko(
             settings, quota, sample_path=settings.parsed_dir / "checko_api_sample.json"
         )
     else:
-        logger.info(
-            "Источник данных: разбор страниц сайта checko.ru. "
-            "Сайт защищён от автоматизации — если карточки не находятся, "
-            "получите ключ API в личном кабинете checko.ru и передайте "
-            "его ключом --checko-api-key"
-        )
+        logger.warning("=" * 70)
+        logger.warning("ВНИМАНИЕ: ключ API checko.ru НЕ ЗАДАН.")
+        logger.warning("Скрипт попробует разбирать обычные страницы сайта, но сайт")
+        logger.warning("защищён от автоматизации и почти наверняка ответит отказом.")
+        logger.warning("Впишите ключ в файл checko_api_key.txt рядом со скриптом")
+        logger.warning("(ключ выдаётся в личном кабинете checko.ru).")
+        logger.warning("=" * 70)
         client = CheckoClient(settings, quota)
     progress_bar = _make_progress_bar(min(len(pending), available), settings)
     processed = 0
@@ -346,6 +350,8 @@ def enrich_with_checko(
             state.save(force=False)
 
             # Лимит или блокировка — дальше идти бессмысленно.
+            if contacts.status == STATUS_FORBIDDEN:
+                result.forbidden_seen = True
             if quota.exhausted or contacts.status == STATUS_FORBIDDEN:
                 if not result.interrupted:
                     if contacts.status == STATUS_FORBIDDEN:
@@ -460,5 +466,9 @@ def run(settings: Settings) -> RunResult:
         result.files_index,
     )
 
+    result.in_report = sum(
+        1 for group in result.groups
+        if group.checko is not None and group.checko.is_final
+    )
     result.report_path = write_report(settings.report_path, result.groups)
     return result

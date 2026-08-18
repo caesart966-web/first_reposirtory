@@ -45,17 +45,20 @@ SHEET_NAME = "Контакты"
 
 def build_report_rows(groups: Sequence[CompanyGroup]) -> tuple[list[str], list[list[Any]]]:
     """
-    Формирует единственную таблицу отчёта — по строке на компанию.
+    Формирует таблицу отчёта — только по УЖЕ ОБРАБОТАННЫМ компаниям.
+
+    В отчёт попадает компания, по которой запрос к checko.ru доведён до
+    окончательного ответа (карточка получена либо сервис ответил «не найдено»).
+    Остальные не показываются вовсе: обработали сто — в файле сто строк,
+    назавтра обработались следующие сто — стало двести. Так файл накапливается
+    день за днём и в нём никогда нет «пустых» компаний, до которых очередь
+    ещё не дошла.
 
     Контакты берутся с checko.ru, а если сервис по компании ничего не дал —
-    из самого реестра НОСТРОЙ (там обычно есть адрес и руководитель, иногда
-    телефон и почта). Даты членства — из реестра НОСТРОЙ. Даты
-    проставляются сразу всем компаниям, ещё до обращения к checko.ru: они уже
-    есть в реестре и не зависят от суточной квоты. Телефоны, наоборот,
-    наполняются по мере обработки — день за днём.
+    из самого реестра НОСТРОЙ. Даты вступления/исключения и статус членства —
+    из реестра. В колонке «Руководитель» — только ФИО, без должности.
 
-    «Статус членства» — короткое «действует» / «исключён» для сортировки.
-    В колонке «Руководитель» выводится только ФИО, без должности.
+    Строки отсортированы по названию, чтобы файл был стабильным между днями.
     """
     headers = [
         "Название компании",
@@ -67,11 +70,13 @@ def build_report_rows(groups: Sequence[CompanyGroup]) -> tuple[list[str], list[l
         "Дата вступления в СРО",
         "Дата исключения из СРО",
         "Статус членства",
-        "Статус запроса",
     ]
+    processed = [
+        group for group in groups if group.checko is not None and group.checko.is_final
+    ]
+    processed.sort(key=lambda group: group.name)
     rows: list[list[Any]] = []
-    for group in groups:
-        checko = group.checko
+    for group in processed:
         rows.append(
             [
                 group.name,
@@ -83,7 +88,6 @@ def build_report_rows(groups: Sequence[CompanyGroup]) -> tuple[list[str], list[l
                 group.date_join,
                 group.date_exit,
                 group.membership_status,
-                checko.status if checko else "не запрашивалось",
             ]
         )
     return headers, rows
@@ -164,7 +168,8 @@ def _write_sheet(
 
 def write_report(path: Path, groups: Sequence[CompanyGroup]) -> Path:
     """
-    Формирует итоговый Excel-файл — один лист «Контакты», по строке на компанию.
+    Формирует итоговый Excel-файл — один лист «Контакты», по строке на
+    обработанную компанию (см. :func:`build_report_rows`).
 
     Всё, что в таблицу не вошло, сохраняется рядом в ``output/parsed/``:
     построчные данные реестра — в ``records.json``, нераспознанные строки —
@@ -181,7 +186,10 @@ def write_report(path: Path, groups: Sequence[CompanyGroup]) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     workbook.save(str(path))
     workbook.close()
-    logger.info("Отчёт сохранён: %s (компаний %d)", path, len(groups))
+    logger.info(
+        "Отчёт сохранён: %s (в файле %d обработанных компаний из %d известных)",
+        path, len(rows), len(groups),
+    )
     return path
 
 
