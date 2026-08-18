@@ -109,7 +109,8 @@ class CompanyData:
 
     # --- Параметры конкретного пакета документов (не реквизиты компании) ---
     doc_date: str = ""          # дата документов, ДД.ММ.ГГГГ
-    power_number: str = ""      # номер доверенности; пусто = как в шаблоне
+    power_number: str = ""      # номер доверенности; значение по умолчанию —
+                                # в config/documents.json, раздел defaults
     object_kind: str = "ordinary"      # ordinary | hazardous | nuclear
     harm_fund_level: str = "1"         # уровень по п.12 ст.55.16 ГрК РФ
     contract_fund_level: str = ""      # уровень по п.13; пусто = КФ ОДО не заявляем

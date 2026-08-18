@@ -105,19 +105,22 @@ def main(argv: list[str] | None = None) -> int:
     if not args.card and not args.text and not args.set:
         parser.error("укажите --card, --text или хотя бы одно --set")
 
-    company = CompanyData()
+    company = project.new_company()
     notes: list[str] = []
     derived: dict[str, str] = {}
 
     try:
+        parsed = None
         if args.card:
             parsed = parse_card(read_card(args.card))
-            company = parsed.company
-            notes += parsed.notes
-            derived.update(parsed.derived)
         elif args.text:
             parsed = parse_text(args.text)
+        if parsed is not None:
+            defaults = company           # умолчания, полученные из настроек
             company = parsed.company
+            for key in ("doc_date", "power_number", "object_kind",
+                        "harm_fund_level", "contract_fund_level"):
+                company.set(key, defaults.get(key))
             notes += parsed.notes
             derived.update(parsed.derived)
     except ReadError as exc:

@@ -108,8 +108,7 @@ class Application(tk.Frame):
     def __init__(self, master: tk.Tk, project: Project) -> None:
         super().__init__(master)
         self.project = project
-        self.company = CompanyData()
-        self.company.doc_date = date.today().strftime("%d.%m.%Y")
+        self.company = project.new_company()
         self.last_folder: Path | None = None
 
         self.vars: dict[str, tk.StringVar] = {}
@@ -158,8 +157,8 @@ class Application(tk.Frame):
         self.paste_area = tk.Text(block, height=12, wrap=WORD, font=("Consolas", 10))
         self.paste_area.pack(fill=BOTH, expand=True, padx=PAD, pady=PAD)
         self.paste_area.insert("1.0",
-                               'ООО "Ромашка"\nИНН 7812345678\nКПП 781201001\n'
-                               'ОГРН 1237800000000\nЮридический адрес: ...\n'
+                               'ООО "Ромашка"\nИНН 7812345675\nКПП 781201001\n'
+                               'ОГРН 1237800000008\nЮридический адрес: ...\n'
                                'Генеральный директор: Иванов Иван Иванович\n'
                                'Действует на основании Устава\nТелефон: ...\nEmail: ...')
         ttk.Button(block, text="Разобрать текст", command=self.on_parse_text).pack(
@@ -259,14 +258,14 @@ class Application(tk.Frame):
         ttk.Label(block, text="в виде ДД.ММ.ГГГГ", foreground="#6b7480").grid(
             row=0, column=2, sticky="w")
 
-        self.vars["power_number"] = tk.StringVar()
+        self.vars["power_number"] = tk.StringVar(value=self.company.power_number)
         ttk.Label(block, text="Номер доверенности:").grid(row=1, column=0, sticky="e",
                                                           padx=PAD, pady=4)
         ttk.Entry(block, textvariable=self.vars["power_number"], width=16).grid(
             row=1, column=1, sticky="w", padx=PAD)
-        ttk.Label(block, text="если оставить пустым, поле «№» останется незаполненным, "
-                              "как в бланке", foreground="#6b7480").grid(
-            row=1, column=2, sticky="w")
+        ttk.Label(block, text="по умолчанию «б/н» — без номера; можно вписать "
+                              "настоящий номер, если он нужен",
+                  foreground="#6b7480").grid(row=1, column=2, sticky="w")
 
         block = ttk.LabelFrame(frame, text=" Заявление, п.7 — виды объектов ")
         block.pack(fill=X, padx=PAD, pady=PAD)

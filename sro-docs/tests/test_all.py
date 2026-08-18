@@ -464,6 +464,20 @@ class TestGeneration(unittest.TestCase):
                            BETA["email"], "Петров"):
                 self.assertNotIn(marker, text, f"{path.name}: попало «{marker}»")
 
+    def test_power_of_attorney_says_b_n(self):
+        company = make_company(ALPHA)
+        company.set("power_number", self.project.new_company().power_number)
+        result = generate(self.project, company, make_pdf=False)
+        power = extract_all_text(result.folder / "02_Доверенность.docx")
+        self.assertIn("ДОВЕРЕННОСТЬ № б/н", power)
+
+    def test_power_of_attorney_number_can_be_overridden(self):
+        company = make_company(ALPHA)
+        company.set("power_number", "14/2026")
+        result = generate(self.project, company, make_pdf=False)
+        power = extract_all_text(result.folder / "02_Доверенность.docx")
+        self.assertIn("ДОВЕРЕННОСТЬ № 14/2026", power)
+
     def test_beta_company_documents(self):
         company = make_company(BETA)
         result = generate(self.project, company, make_pdf=False, today=date(2026, 8, 17))
@@ -506,6 +520,11 @@ class TestProjectConfig(unittest.TestCase):
                     self.assertIsNotNone(
                         lookup_variable(name, project.variables),
                         f"переменная {{{{{name}}}}} не описана в config/variables.json")
+
+    def test_power_of_attorney_number_default(self):
+        """По принятому порядку все доверенности выдаются без номера."""
+        project = Project(ROOT)
+        self.assertEqual(project.new_company().power_number, "б/н")
 
     def test_templates_exist(self):
         project = Project(ROOT)

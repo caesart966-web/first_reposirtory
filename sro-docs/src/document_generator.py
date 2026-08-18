@@ -90,6 +90,11 @@ class Project:
         self.documents_config = self._load_json("documents.json")
         self.variables = self._load_json("variables.json").get("variables", {})
         self.output_root = self.root / self.documents_config.get("output_root", "output")
+        self.defaults = {
+            key: str(value)
+            for key, value in self.documents_config.get("defaults", {}).items()
+            if not key.startswith("_")
+        }
 
         self.documents: list[DocumentSpec] = []
         for item in self.documents_config.get("documents", []):
@@ -116,6 +121,20 @@ class Project:
                 f"Файл настроек «{name}» повреждён (строка {exc.lineno}): {exc.msg}.\n"
                 f"Проверьте, что при правке не потерялись запятые или кавычки."
             ) from exc
+
+    def new_company(self) -> CompanyData:
+        """Пустая карточка компании со значениями по умолчанию из настроек.
+
+        Здесь и только здесь появляются умолчания вроде «№ б/н» у доверенности.
+        Если пользователь потом очистит поле, оно останется пустым: умолчания
+        применяются к НОВОЙ карточке, а не при каждой проверке.
+        """
+        company = CompanyData()
+        for key, value in self.defaults.items():
+            company.set(key, value)
+        if not company.doc_date:
+            company.doc_date = date.today().strftime("%d.%m.%Y")
+        return company
 
     def enabled_documents(self) -> list[DocumentSpec]:
         return [d for d in self.documents if d.enabled]
