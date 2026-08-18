@@ -46,6 +46,36 @@ DEFAULT_USER_AGENT = (
     "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
 )
 
+#: Имя файла, в котором можно хранить ключ API рядом со скриптом —
+#: так его не приходится каждый раз набирать в командной строке.
+CHECKO_KEY_FILENAME = "checko_api_key.txt"
+
+#: Текст-заглушка в этом файле: пока он там, считаем, что ключ не задан.
+CHECKO_KEY_PLACEHOLDER = "ВСТАВЬТЕ_КЛЮЧ_СЮДА"
+
+
+def read_api_key_file(directory: Path) -> str | None:
+    """
+    Читает ключ API из файла ``checko_api_key.txt`` рядом со скриптом.
+
+    Строки-комментарии (начинаются с ``#``) и заглушка игнорируются.
+    Возвращает ``None``, если файла нет или ключ в него ещё не вписан.
+    """
+    path = directory / CHECKO_KEY_FILENAME
+    try:
+        content = path.read_text(encoding="utf-8-sig")
+    except (OSError, UnicodeDecodeError):
+        return None
+    for line in content.splitlines():
+        candidate = line.strip()
+        if not candidate or candidate.startswith("#"):
+            continue
+        if CHECKO_KEY_PLACEHOLDER in candidate:
+            continue
+        return candidate
+    return None
+
+
 #: Собственные контакты checko.ru — их нельзя принимать за контакты компании.
 CHECKO_OWN_EMAILS: frozenset[str] = frozenset(
     {

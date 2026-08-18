@@ -907,6 +907,25 @@ class TestCheckoApi(BaseTestCase):
             result = client.lookup("7707083893", expected_inn="7707083893")
         self.assertEqual(result.status, STATUS_NOT_FOUND)
 
+    def test_api_key_is_read_from_file(self) -> None:
+        """Ключ можно просто вписать в checko_api_key.txt рядом со скриптом."""
+        from nostroy_checko.config import read_api_key_file
+
+        directory = self.tmp_dir / "keyfile"
+        directory.mkdir(parents=True, exist_ok=True)
+        key_file = directory / "checko_api_key.txt"
+
+        # Файла нет — ключа нет.
+        self.assertIsNone(read_api_key_file(directory))
+
+        # Файл с одной лишь заглушкой ключом не считается.
+        key_file.write_text("# подсказка\n\nВСТАВЬТЕ_КЛЮЧ_СЮДА\n", encoding="utf-8")
+        self.assertIsNone(read_api_key_file(directory))
+
+        # Вписанный ключ читается, комментарии игнорируются.
+        key_file.write_text("# подсказка\n\n  abc123SECRET  \n", encoding="utf-8")
+        self.assertEqual(read_api_key_file(directory), "abc123SECRET")
+
     def test_record_without_inn_costs_no_request(self) -> None:
         """Записи без ИНН пропускаются: API ищет только по реквизитам."""
         with _FakeCheckoApiServer() as server:

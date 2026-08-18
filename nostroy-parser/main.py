@@ -44,6 +44,7 @@ if sys.version_info < (3, 10):
 
 from nostroy_checko import __version__
 from nostroy_checko.config import (
+    CHECKO_KEY_FILENAME,
     DEFAULT_DAILY_LIMIT,
     DEFAULT_MAX_RETRIES,
     DEFAULT_RPS,
@@ -51,6 +52,7 @@ from nostroy_checko.config import (
     DEFAULT_USER_AGENT,
     DEFAULT_WORKERS,
     Settings,
+    read_api_key_file,
 )
 from nostroy_checko.logging_setup import setup_logging
 
@@ -131,8 +133,10 @@ def build_parser() -> argparse.ArgumentParser:
         default=None, metavar="КЛЮЧ",
         help=(
             "ключ официального API checko.ru (api.checko.ru) — надёжнее разбора HTML "
-            "и не блокируется защитой сайта; можно задать переменной окружения "
-            "CHECKO_API_KEY. Без ключа скрипт разбирает обычные страницы сайта"
+            "и не блокируется защитой сайта. Проще всего вписать ключ в файл "
+            f"{CHECKO_KEY_FILENAME} рядом со скриптом; также понимается "
+            "переменная окружения CHECKO_API_KEY. Без ключа скрипт разбирает "
+            "обычные страницы сайта"
         ),
     )
     group_checko.add_argument(
@@ -242,8 +246,14 @@ def settings_from_args(args: argparse.Namespace) -> Settings:
         header_max_span=max(1, args.header_max_span),
         content_sample=max(10, args.content_sample),
         use_checko=not args.no_checko,
-        # Ключ можно не писать в командной строке — он подхватится из окружения.
-        checko_api_key=args.checko_api_key or os.environ.get("CHECKO_API_KEY") or None,
+        # Ключ ищем по очереди: аргумент -> переменная окружения -> файл
+        # checko_api_key.txt рядом со скриптом (самый простой способ).
+        checko_api_key=(
+            args.checko_api_key
+            or os.environ.get("CHECKO_API_KEY")
+            or read_api_key_file(Path(__file__).resolve().parent)
+            or None
+        ),
         daily_limit=max(0, args.daily_limit),
         workers=max(1, args.workers),
         rps=max(0.0, args.rps),
