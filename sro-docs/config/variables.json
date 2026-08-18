@@ -10,125 +10,179 @@
   ],
   "variables": {
     "legal_form_full": {
-      "field": "full_name", "required": true,
+      "field": "full_name",
+      "required": true,
       "where": "организационно-правовая форма полностью, перед наименованием"
     },
     "company_name_bare": {
-      "field": "full_name", "required": true,
+      "field": "full_name",
+      "required": true,
       "where": "полное наименование в кавычках, без формы"
     },
     "legal_form_short": {
-      "field": "short_name", "required": true,
+      "field": "short_name",
+      "required": true,
       "where": "сокращённая форма (ООО, АО…) перед наименованием"
     },
     "short_name_bare": {
-      "field": "short_name", "required": true,
+      "field": "short_name",
+      "required": true,
       "where": "сокращённое наименование в кавычках, без формы"
     },
     "inn": {
-      "field": "inn", "required": true,
+      "field": "inn",
+      "required": true,
       "where": "ИНН одной строкой"
     },
     "inn_d*": {
-      "field": "inn", "required": true,
+      "field": "inn",
+      "required": true,
       "where": "ИНН по одной цифре в клетке"
     },
     "ogrn_d*": {
-      "field": "ogrn", "required": true,
+      "field": "ogrn",
+      "required": true,
       "where": "ОГРН по одной цифре в клетке"
     },
     "ogrn": {
-      "field": "ogrn", "required": true,
+      "field": "ogrn",
+      "required": true,
       "where": "ОГРН одной строкой"
     },
     "kpp": {
-      "field": "kpp", "required": true,
+      "field": "kpp",
+      "required": true,
       "where": "КПП"
     },
     "legal_address": {
-      "field": "legal_address", "required": true,
+      "field": "legal_address",
+      "required": true,
       "where": "юридический адрес"
     },
     "actual_address": {
-      "field": "actual_address", "required": true,
+      "field": "actual_address",
+      "required": true,
       "where": "фактический адрес"
     },
     "postal_address": {
-      "field": "postal_address", "required": true,
+      "field": "postal_address",
+      "required": true,
       "where": "почтовый адрес"
     },
     "phone": {
-      "field": "phone", "required": true,
+      "field": "phone",
+      "required": true,
       "where": "контактный телефон"
     },
     "email": {
-      "field": "email", "required": true,
+      "field": "email",
+      "required": true,
       "where": "адрес электронной почты (в том числе адрес гиперссылки)"
     },
     "website": {
-      "field": "website", "required": true,
+      "field": "website",
+      "required": true,
       "where": "сайт организации"
     },
     "director_position": {
-      "field": "director_position", "required": true,
+      "field": "director_position",
+      "required": true,
       "where": "должность руководителя, именительный падеж"
     },
     "director_position_genitive": {
-      "field": "director_position", "required": true,
+      "field": "director_position",
+      "required": true,
       "where": "должность руководителя, родительный падеж («в лице …»)"
     },
     "director_full_name": {
-      "field": "director_full_name", "required": true,
+      "field": "director_full_name",
+      "required": true,
       "where": "ФИО руководителя полностью, именительный падеж"
     },
     "director_full_name_genitive": {
-      "field": "director_full_name", "required": true,
+      "field": "director_full_name",
+      "required": true,
       "where": "ФИО руководителя, родительный падеж («в лице …»)"
     },
     "director_short_name": {
-      "field": "director_full_name", "required": true,
+      "field": "director_full_name",
+      "required": true,
       "where": "подпись: Фамилия И.О."
     },
     "director_basis_genitive": {
-      "field": "director_basis", "required": true,
+      "field": "director_basis",
+      "required": true,
       "where": "основание полномочий, родительный падеж («на основании …»)"
     },
     "bank_name": {
-      "field": "bank_name", "required": true, "where": "наименование банка"
+      "field": "bank_name",
+      "required": true,
+      "where": "наименование банка"
     },
     "bank_account": {
-      "field": "bank_account", "required": true, "where": "расчётный счёт"
+      "field": "bank_account",
+      "required": true,
+      "where": "расчётный счёт"
     },
     "bank_corr_account": {
-      "field": "bank_corr_account", "required": true, "where": "корреспондентский счёт"
+      "field": "bank_corr_account",
+      "required": true,
+      "where": "корреспондентский счёт"
     },
     "bank_bik": {
-      "field": "bank_bik", "required": true, "where": "БИК"
+      "field": "bank_bik",
+      "required": true,
+      "where": "БИК"
     },
-
     "doc_day": {
-      "field": null, "required": false, "where": "дата документа — день"
+      "field": null,
+      "required": false,
+      "where": "дата документа — день"
     },
     "doc_month_name": {
-      "field": null, "required": false, "where": "дата документа — месяц прописью"
+      "field": null,
+      "required": false,
+      "where": "дата документа — месяц прописью"
     },
     "doc_year": {
-      "field": null, "required": false, "where": "дата документа — год"
+      "field": null,
+      "required": false,
+      "where": "дата документа — год"
     },
     "doc_date": {
-      "field": null, "required": false, "where": "дата документа целиком, ДД.ММ.ГГГГ"
+      "field": null,
+      "required": false,
+      "where": "дата документа целиком, ДД.ММ.ГГГГ"
     },
     "power_number": {
-      "field": null, "required": false,
+      "field": null,
+      "required": false,
       "where": "номер доверенности; если не задан, поле остаётся пустым, как в бланке"
     },
     "mark_*": {
-      "field": null, "required": false,
+      "field": null,
+      "required": false,
       "where": "отметка «V» в таблицах видов объектов и уровней ответственности"
     },
     "attorney_*": {
-      "field": null, "required": false,
+      "field": null,
+      "required": false,
       "where": "сведения о представителе Ассоциации (config/attorney.json)"
+    },
+    "sro_name": {
+      "field": null,
+      "required": false,
+      "where": "полное название СРО, из sro/<СРО>/sro.json"
+    },
+    "sro_short_name": {
+      "field": null,
+      "required": false,
+      "where": "сокращённое название СРО"
+    },
+    "sro_city": {
+      "field": null,
+      "required": false,
+      "where": "город СРО (место составления документа)"
     }
   }
 }

@@ -1,20 +1,21 @@
 # -*- coding: utf-8 -*-
-"""Разметка бланков СРО «СССС»: пропуски «_____» → переменные {{...}}.
+"""Разметка бланков СРО: пропуски «_____» → переменные {{...}}.
 
-Запускается ОДИН раз (и повторно, если Ассоциация пришлёт новую редакцию):
+    python scripts/prepare_templates.py            # все СРО
+    python scripts/prepare_templates.py СФЕРА-А    # только одна
 
-    python scripts/prepare_templates.py
+Бланки приходят как пустые формы с подчёркиваниями, поэтому разметка
+делается хирургически: каждая правка адресуется абзацем и либо номером
+фрагмента, либо его текстом, и сверяется с ожидаемым содержимым.
 
-ЭТОТ СКРИПТ НУЖЕН ТОЛЬКО ДЛЯ «СССС». Её бланки пришли как пустые формы
-с подчёркиваниями, и разметка делалась хирургически — по номеру абзаца
-и фрагмента. Для НОВОЙ СРО так делать не нужно: откройте её бланк в Word
-и впишите переменные вида {{inn}} руками, программа их поймёт.
+Скрипт нужен только для тех бланков, что размечены здесь. Для нового
+документа так делать не обязательно: откройте бланк в Word и впишите
+переменные вида {{inn}} руками — программа их поймёт.
 
 Что делает:
-  * читает нетронутые оригиналы из templates/_originals/;
-  * заменяет текст СТРОГО указанных фрагментов (номер абзаца + номер
-    фрагмента + ожидаемый текст) на переменные;
-  * пишет результат в templates/.
+  * читает нетронутые оригиналы из sro/<СРО>/templates/_originals/;
+  * применяет правки;
+  * пишет результат в sro/<СРО>/templates/.
 
 Почему так, а не «найти и заменить»: каждая операция сверяется с ожидаемым
 исходным текстом. Если СРО изменит бланк, скрипт остановится с понятным
@@ -57,6 +58,22 @@ def op_cell(table: int, row: int, col: int, expected: str, new: str) -> dict:
     return {"kind": "cell", "t": table, "r": row, "c": col, "expected": expected, "new": new}
 
 
+def op_mark(table: int, row: int, col: int, expected: str, new: str,
+            size: int = 32) -> dict:
+    """Ячейка под отметку «V»: крупно, жирно и ровно по центру.
+
+    В бланке ячейки, где отметка уже стояла, оформлены крупно и по центру,
+    а пустые — нет. Отметка, попавшая в пустую ячейку, выходила мелкой
+    и прижатой к верху. Эта правка приводит все такие ячейки к одному виду:
+    выравнивание по центру по горизонтали и вертикали, размер как у уже
+    проставленных отметок, лишние пустые абзацы убираются.
+
+    `size` — в полуточках, как принято в Word: 32 = 16 пт, 36 = 18 пт.
+    """
+    return {"kind": "mark", "t": table, "r": row, "c": col,
+            "expected": expected, "new": new, "size": size}
+
+
 def op_rel(old_target: str, new_target: str) -> dict:
     """Заменить адрес гиперссылки в word/_rels/document.xml.rels."""
     return {"kind": "rel", "expected": old_target, "new": new_target}
@@ -79,6 +96,54 @@ def op_spacing(paragraph: int, attrs: dict) -> dict:
     из-за которого текст в соседних ячейках таблицы стоял на разной высоте.
     """
     return {"kind": "spacing", "p": paragraph, "attrs": attrs}
+
+
+def op_find(paragraph: int, expected: str, new: str) -> dict:
+    """Заменить фрагмент, найденный по его ТЕКСТУ, а не по номеру.
+
+    Устойчивее op_text: Word дробит текст по-разному в похожих бланках,
+    и номера фрагментов «съезжают». Текст при этом остаётся тем же.
+    Если такой текст встречается в абзаце не один раз — это ошибка,
+    скрипт остановится.
+    """
+    return {"kind": "find", "p": paragraph, "expected": expected, "new": new}
+
+
+def op_regex(paragraph: int, pattern: str, replacement: str,
+             tab_pos: int | None = None) -> dict:
+    """Переписать текст ВСЕГО абзаца по образцу.
+
+    Работает только там, где весь абзац оформлен одинаково: текст
+    собирается в строку, применяется замена, результат кладётся в первый
+    фрагмент. Если оформление внутри абзаца разное (например, часть текста
+    жирная), скрипт остановится — иначе потерялось бы выделение.
+
+    Символ \t в замене превращается в настоящую табуляцию. Вместе с
+    `tab_pos` (позиция в твипах) это заменяет «подложку из пробелов»:
+    правая часть строки прижимается к полю и не съезжает, какой бы
+    длины ни оказался подставленный текст.
+    """
+    return {"kind": "regex", "p": paragraph, "pattern": pattern,
+            "replacement": replacement, "tab_pos": tab_pos}
+
+
+def op_pad(paragraph: int, nodes: list[int], position: int) -> dict:
+    """Подложку из пробелов заменить табуляцией с прижимом вправо.
+
+    В отличие от op_tab не требует перечислять пробелы буквально: проверяет,
+    что перечисленные фрагменты состоят ТОЛЬКО из пробелов, и заменяет их
+    табуляцией. Подходит абзацам с неоднородным оформлением, где op_regex
+    применять нельзя.
+    """
+    return {"kind": "pad", "p": paragraph, "nodes": nodes, "pos": position}
+
+
+def op_rstrip(paragraph: int, node: int, prefix: str) -> dict:
+    """Убрать «хвост» из пробелов у фрагмента, оставив нужный текст.
+
+    Проверяет, что фрагмент — это `prefix` плюс только пробелы.
+    """
+    return {"kind": "rstrip", "p": paragraph, "n": node, "prefix": prefix}
 
 
 def op_tab(paragraph: int, nodes: list[int], expected: list[str], position: int) -> dict:
@@ -130,23 +195,23 @@ APPLICATION_OPS: list[dict] = [
     op_text(51, 9, "_______________________", "{{email}}"),
 
     # --- п.7 виды объектов (таблица №4, столбец «отметить знаком V») ---
-    op_cell(4, 1, 1, "V", "{{mark_object_ordinary}}"),
-    op_cell(4, 2, 1, "", "{{mark_object_hazardous}}"),
-    op_cell(4, 3, 1, "", "{{mark_object_nuclear}}"),
+    op_mark(4, 1, 1, "V", "{{mark_object_ordinary}}", size=32),
+    op_mark(4, 2, 1, "", "{{mark_object_hazardous}}", size=32),
+    op_mark(4, 3, 1, "", "{{mark_object_nuclear}}", size=32),
 
     # --- п.8 уровень ответственности, КФ возмещения вреда (таблица №5) ---
-    op_cell(5, 1, 3, "v", "{{mark_harm_level1}}"),
-    op_cell(5, 2, 3, "", "{{mark_harm_level2}}"),
-    op_cell(5, 3, 3, "", "{{mark_harm_level3}}"),
-    op_cell(5, 4, 3, "", "{{mark_harm_level4}}"),
-    op_cell(5, 5, 3, "", "{{mark_harm_level5}}"),
+    op_mark(5, 1, 3, "v", "{{mark_harm_level1}}", size=36),
+    op_mark(5, 2, 3, "", "{{mark_harm_level2}}", size=36),
+    op_mark(5, 3, 3, "", "{{mark_harm_level3}}", size=36),
+    op_mark(5, 4, 3, "", "{{mark_harm_level4}}", size=36),
+    op_mark(5, 5, 3, "", "{{mark_harm_level5}}", size=36),
 
     # --- п.9 уровень ответственности, КФ обеспечения дог. обязательств (таблица №6) ---
-    op_cell(6, 1, 3, "", "{{mark_contract_level1}}"),
-    op_cell(6, 2, 3, "", "{{mark_contract_level2}}"),
-    op_cell(6, 3, 3, "", "{{mark_contract_level3}}"),
-    op_cell(6, 4, 3, "", "{{mark_contract_level4}}"),
-    op_cell(6, 5, 3, "", "{{mark_contract_level5}}"),
+    op_mark(6, 1, 3, "", "{{mark_contract_level1}}", size=36),
+    op_mark(6, 2, 3, "", "{{mark_contract_level2}}", size=36),
+    op_mark(6, 3, 3, "", "{{mark_contract_level3}}", size=36),
+    op_mark(6, 4, 3, "", "{{mark_contract_level4}}", size=36),
+    op_mark(6, 5, 3, "", "{{mark_contract_level5}}", size=36),
 
     # --- подпись ---
     op_text(125, 0, "Генеральный директор ", "{{director_position}} "),
@@ -254,13 +319,232 @@ POWER_OPS: list[dict] = [
     op_text(21, 13, "_______/", "/"),
 ]
 
-TEMPLATES = [
-    ("Заявление_о_вступлении_ОРИГИНАЛ.docx", "01_Заявление_о_вступлении.docx", APPLICATION_OPS),
-    ("Доверенность_ОРИГИНАЛ.docx", "02_Доверенность.docx", POWER_OPS),
+# ============================================================ ДОВЕРЕННОСТЬ «СФЕРЫ»
+# Три «СФЕРЫ» устроены одинаково: те же абзацы, тот же текст, различаются
+# только названием СРО. Поэтому разметка у них общая.
+# Адресуемся текстом (op_find) и образцом (op_regex), а не номерами
+# фрагментов: Word дробит одинаковый текст в этих файлах по-разному.
+SFERA_POWER_OPS: list[dict] = [
+    # --- шапка бланка ---
+    op_regex(0, r"^ООО «_+»$", "{{legal_form_short}} «{{short_name_bare}}»"),
+
+    # --- дата и место составления ---
+    # Дата слева, город справа. В бланке они разведены подложкой из пробелов,
+    # рассчитанной на короткое «_» ______ 2025. Настоящая дата длиннее,
+    # и город уезжал на вторую строку — заменяем подложку табуляцией
+    # с прижимом к правому полю.
+    op_regex(4,
+             r"^«_» ______ 2025 г\.\s+г\. Санкт-Петербург$",
+             "«{{doc_day}}» {{doc_month_name}} {{doc_year}} г.\tг. {{sro_city}}",
+             tab_pos=9355),
+
+    # --- преамбула: кто выдаёт доверенность ---
+    # Абзац оформлен неоднородно (наименование жирное), поэтому по фрагментам.
+    op_text(8, 0, "Общество с ограниченной", "{{legal_form_full}}"),
+    op_text(8, 1, " ответственностью ", " "),
+    op_text(8, 2, "«»", "«{{company_name_bare}}»"),
+    op_text(8, 6, "__________", "{{inn}}"),
+    op_text(8, 9, "Генерального директора", "{{director_position_genitive}}"),
+    op_text(8, 13, "_____________", "{{director_full_name_genitive}}"),
+    op_find(8, "на основании Устава, ",
+            "на основании {{director_basis_genitive}}, "),
+
+    # --- доверенное лицо: весь абзац одним образцом ---
+    op_regex(
+        9,
+        r"^Корневу Юлию Юрьевну, .*кв\.39,$",
+        "{{attorney_full_name_genitive}}, {{attorney_birth_date}}г.р., "
+        "место рождения: {{attorney_birth_place}}, "
+        "паспорт {{attorney_passport}}, выдан {{attorney_passport_issued_by}} "
+        "{{attorney_passport_date}} года, "
+        "код подразделения: {{attorney_dept_code}}, "
+        "{{attorney_registered_word}} по адресу: {{attorney_reg_address}},"),
+
+    # --- подпись доверенного лица ---
+    op_regex(15, r"/Корнева Ю\.Ю\./$", "/{{attorney_short_name}}/"),
+
+    # --- подпись руководителя ---
+    op_regex(18, r"^Генеральный директор$", "{{director_position}}"),
+    op_regex(19, r"^ООО «_+»(\s+_+\s+)_+(\s*)$",
+             r"{{legal_form_short}} «{{short_name_bare}}»\1{{director_short_name}}\2"),
 ]
 
 
+# ============================================================ ДОВЕРЕННОСТЬ ЯРД
+# Устроена иначе, чем «СФЕРЫ»: срок три года, город составления пустой,
+# ИНН обозначен пробелами, а не подчёркиваниями.
+YARD_POWER_OPS: list[dict] = [
+    # --- шапка бланка ---
+    op_text(0, 0, "ООО ", "{{legal_form_short}} "),
+    op_text(0, 2, "_____________", "{{short_name_bare}}"),
+
+    # --- дата слева, город справа (подложку из пробелов → табуляция) ---
+    op_text(4, 1, "_____", "{{doc_day}}"),
+    op_text(4, 3, "________", "{{doc_month_name}}"),
+    op_text(4, 4, " 2024", " {{doc_year}}"),
+    op_rstrip(4, 6, "г."),
+    op_pad(4, [7, 8, 9], 9355),
+    op_text(4, 10, "     г. ", "г. "),
+    op_text(4, 11, "_____________", "{{sro_city}}"),
+
+    # --- преамбула ---
+    op_text(8, 0, "Общество с ограниченной ответственностью ", "{{legal_form_full}} "),
+    op_text(8, 2, "  ", "{{company_name_bare}}"),
+    op_text(8, 3, "                   ", ""),
+    op_text(8, 4, "                           ", ""),
+    op_text(8, 5, "      ", ""),
+    op_text(8, 9, " ИНН       ", " ИНН {{inn}}"),
+    op_text(8, 12, "Генерального директора", "{{director_position_genitive}}"),
+    op_text(8, 15, " _____________________________________________",
+            " {{director_full_name_genitive}}"),
+    op_find(8, "на основании Устава, ",
+            "на основании {{director_basis_genitive}}, "),
+
+    # --- доверенное лицо ---
+    op_regex(
+        9,
+        r"^Жирихова Андрея Валерьевича, .*кв\. 41,$",
+        "{{attorney_full_name_genitive}}, {{attorney_birth_date}}г.р., "
+        "место рождения: {{attorney_birth_place}}, "
+        "паспорт {{attorney_passport}}, выдан {{attorney_passport_issued_by}} "
+        "{{attorney_passport_date}} года, "
+        "код подразделения: {{attorney_dept_code}}, "
+        "{{attorney_registered_word}} по адресу: {{attorney_reg_address}},"),
+
+    # --- подписи ---
+    op_regex(15, r"/Жирихов А\.В\./$", "/{{attorney_short_name}}/"),
+    op_regex(18, r"^Генеральный директор$", "{{director_position}}"),
+    op_regex(19, r"^ООО «\s+»(\s+_+\s+)/\s*Ф\.И\.О\.\s*/ ?$",
+             r"{{legal_form_short}} «{{short_name_bare}}»\1/{{director_short_name}}/ "),
+]
+
+
+# ============================================================ реестр бланков
+# СРО → список (файл-оригинал, как назвать результат, правки)
+TEMPLATES: dict[str, list[tuple]] = {
+    "СССС": [
+        ("Заявление_о_вступлении_ОРИГИНАЛ.docx",
+         "01_Заявление_о_вступлении.docx", APPLICATION_OPS),
+        ("Доверенность_ОРИГИНАЛ.docx", "02_Доверенность.docx", POWER_OPS),
+    ],
+    "СФЕРА-А": [
+        ("Доверенность_ОРИГИНАЛ.docx", "02_Доверенность.docx", SFERA_POWER_OPS),
+    ],
+    "СФЕРА ИЗЫСКАТЕЛЕЙ": [
+        ("Доверенность_ОРИГИНАЛ.docx", "02_Доверенность.docx", SFERA_POWER_OPS),
+    ],
+    "СФЕРА ПРОЕКТИРОВЩИКОВ": [
+        ("Доверенность_ОРИГИНАЛ.docx", "02_Доверенность.docx", SFERA_POWER_OPS),
+    ],
+    "ЯРД": [
+        ("Доверенность_ОРИГИНАЛ.docx", "02_Доверенность.docx", YARD_POWER_OPS),
+    ],
+}
+
+
 # ============================================================ реализация
+def _style_key(node) -> str:
+    """Отпечаток оформления фрагмента — чтобы понять, однороден ли абзац."""
+    run_properties = node.getparent().find(W + "rPr")
+    if run_properties is None:
+        return "<без оформления>"
+    xml = etree.tostring(run_properties, encoding="unicode")
+    return re.sub(r'\sw:rsid[A-Za-z]*="[^"]*"', "", xml)
+
+
+def _locate_cell(tables, op, label):
+    """Найти ячейку таблицы по номерам, с понятной ошибкой."""
+    if op["t"] >= len(tables):
+        raise PrepareError(
+            f"{label}: в документе нет таблицы №{op['t']} (всего {len(tables)}).")
+    rows = list(tables[op["t"]].findall(W + "tr"))
+    if op["r"] >= len(rows):
+        raise PrepareError(
+            f"{label}: в таблице №{op['t']} нет строки №{op['r']}.")
+    cells = list(rows[op["r"]].findall(W + "tc"))
+    if op["c"] >= len(cells):
+        raise PrepareError(
+            f"{label}: в таблице №{op['t']}, строке №{op['r']} "
+            f"нет ячейки №{op['c']}.")
+    return cells[op["c"]]
+
+
+def _center_cell(cell) -> None:
+    """Выравнивание содержимого ячейки по центру по вертикали."""
+    tc_pr = cell.find(W + "tcPr")
+    if tc_pr is None:
+        tc_pr = etree.Element(W + "tcPr")
+        cell.insert(0, tc_pr)
+    existing = tc_pr.find(W + "vAlign")
+    if existing is not None:
+        tc_pr.remove(existing)
+    align = etree.SubElement(tc_pr, W + "vAlign")
+    align.set(W + "val", "center")
+
+
+def _center_paragraph(paragraph) -> None:
+    """Выравнивание абзаца по центру, без отступов."""
+    p_pr = paragraph.find(W + "pPr")
+    if p_pr is None:
+        p_pr = etree.Element(W + "pPr")
+        paragraph.insert(0, p_pr)
+    for tag in ("ind", "jc"):
+        existing = p_pr.find(W + tag)
+        if existing is not None:
+            p_pr.remove(existing)
+    jc = etree.SubElement(p_pr, W + "jc")
+    jc.set(W + "val", "center")
+
+
+def _emphasize(node, size: int) -> None:
+    """Сделать фрагмент жирным и заданного размера."""
+    run = node.getparent()
+    r_pr = run.find(W + "rPr")
+    if r_pr is None:
+        r_pr = etree.Element(W + "rPr")
+        run.insert(0, r_pr)
+    for tag in ("b", "bCs", "sz", "szCs"):
+        existing = r_pr.find(W + tag)
+        if existing is not None:
+            r_pr.remove(existing)
+    etree.SubElement(r_pr, W + "b")
+    etree.SubElement(r_pr, W + "bCs")
+    for tag in ("sz", "szCs"):
+        element = etree.SubElement(r_pr, W + tag)
+        element.set(W + "val", str(size))
+
+
+def _write_with_tabs(node, text: str) -> None:
+    """Записать текст, превратив \t в настоящие табуляции внутри фрагмента."""
+    parts = text.split("\t")
+    run = node.getparent()
+    _set_node_text(node, parts[0])
+    position = list(run).index(node)
+    for part in parts[1:]:
+        position += 1
+        run.insert(position, etree.Element(W + "tab"))
+        position += 1
+        extra = etree.Element(W + "t")
+        _set_node_text(extra, part)
+        run.insert(position, extra)
+
+
+def _add_right_tab(paragraph, position: int) -> None:
+    """Позиция табуляции с прижимом вправо. По схеме w:tabs идёт первым в pPr."""
+    p_pr = paragraph.find(W + "pPr")
+    if p_pr is None:
+        p_pr = etree.Element(W + "pPr")
+        paragraph.insert(0, p_pr)
+    existing = p_pr.find(W + "tabs")
+    if existing is not None:
+        p_pr.remove(existing)
+    tabs = etree.Element(W + "tabs")
+    stop = etree.SubElement(tabs, W + "tab")
+    stop.set(W + "val", "right")
+    stop.set(W + "pos", str(position))
+    p_pr.insert(0, tabs)
+
+
 def _set_node_text(node, text: str) -> None:
     node.text = text
     node.set(XML_SPACE, "preserve")
@@ -335,6 +619,102 @@ def apply_ops(document_xml: bytes, ops: list[dict], label: str) -> bytes:
                     f"Шаблон изменился — обновите карту разметки в этом скрипте."
                 )
             _set_node_text(node, op["new"])
+
+        elif op["kind"] == "mark":
+            cells = _locate_cell(tables, op, label)
+            actual, paragraph, nodes, others = _cell_layout(cells)
+            if actual != op["expected"]:
+                raise PrepareError(
+                    f"{label}: таблица №{op['t']}, ячейка [{op['r']}][{op['c']}].\n"
+                    f"  Ожидался текст: {op['expected']!r}\n"
+                    f"  В документе:    {actual!r}\n"
+                    f"Шаблон изменился — обновите карту разметки в этом скрипте."
+                )
+            _center_cell(cells)
+            for stray in others:
+                parent = stray.getparent()
+                if parent is not None and not _own_text_nodes(stray):
+                    parent.remove(stray)      # пустая строка сдвигала отметку вниз
+            _center_paragraph(paragraph)
+            if nodes:
+                _set_node_text(nodes[0], op["new"])
+                for extra in nodes[1:]:
+                    _set_node_text(extra, "")
+                _emphasize(nodes[0], op["size"])
+            else:
+                run = _make_run(paragraph, op["new"])
+                _emphasize(run.find(W + "t"), op["size"])
+
+        elif op["kind"] == "pad":
+            paragraph = paragraphs[op["p"]]
+            nodes = _own_text_nodes(paragraph)
+            picked = [nodes[i] for i in op["nodes"]]
+            bad = [(i, n.text) for i, n in zip(op["nodes"], picked)
+                   if (n.text or "").strip()]
+            if bad:
+                raise PrepareError(
+                    f"{label}: в абзаце №{op['p']} фрагменты {bad!r} — не пробелы.\n"
+                    f"Шаблон изменился — обновите карту разметки в этом скрипте."
+                )
+            first = picked[0]
+            run = first.getparent()
+            run.insert(list(run).index(first), etree.Element(W + "tab"))
+            for node in picked:
+                _set_node_text(node, "")
+            _add_right_tab(paragraph, op["pos"])
+
+        elif op["kind"] == "rstrip":
+            node = _own_text_nodes(paragraphs[op["p"]])[op["n"]]
+            actual = node.text or ""
+            if actual != op["prefix"] + actual[len(op["prefix"]):] or \
+                    actual[len(op["prefix"]):].strip():
+                raise PrepareError(
+                    f"{label}: абзац №{op['p']}, фрагмент №{op['n']}.\n"
+                    f"  Ожидалось {op['prefix']!r} и дальше только пробелы.\n"
+                    f"  В документе: {actual!r}"
+                )
+            _set_node_text(node, op["prefix"])
+
+        elif op["kind"] == "find":
+            nodes = _own_text_nodes(paragraphs[op["p"]])
+            hits = [n for n in nodes if (n.text or "") == op["expected"]]
+            if len(hits) != 1:
+                raise PrepareError(
+                    f"{label}: в абзаце №{op['p']} фрагмент с текстом "
+                    f"{op['expected']!r} найден {len(hits)} раз, а нужен ровно один.\n"
+                    f"Шаблон изменился — обновите карту разметки в этом скрипте."
+                )
+            _set_node_text(hits[0], op["new"])
+
+        elif op["kind"] == "regex":
+            paragraph = paragraphs[op["p"]]
+            nodes = _own_text_nodes(paragraph)
+            if not nodes:
+                raise PrepareError(f"{label}: абзац №{op['p']} пуст.")
+            styles = {_style_key(n) for n in nodes}
+            if len(styles) > 1:
+                raise PrepareError(
+                    f"{label}: абзац №{op['p']} оформлен неоднородно "
+                    f"({len(styles)} вида оформления). Переписать его целиком нельзя — "
+                    f"потеряется выделение. Используйте op_text или op_find."
+                )
+            joined = "".join(n.text or "" for n in nodes)
+            new_text, count = re.subn(op["pattern"], op["replacement"], joined)
+            if count == 0:
+                raise PrepareError(
+                    f"{label}: в абзаце №{op['p']} не найден образец "
+                    f"{op['pattern']!r}.\n"
+                    f"  В документе: {joined[:120]!r}\n"
+                    f"Шаблон изменился — обновите карту разметки в этом скрипте."
+                )
+            for extra in nodes[1:]:
+                _set_node_text(extra, "")
+            if "\t" in new_text:
+                _write_with_tabs(nodes[0], new_text)
+                if op.get("tab_pos"):
+                    _add_right_tab(paragraph, op["tab_pos"])
+            else:
+                _set_node_text(nodes[0], new_text)
 
         elif op["kind"] == "font":
             nodes = _own_text_nodes(paragraphs[op["p"]])
@@ -469,37 +849,44 @@ def prepare(source: Path, target: Path, ops: list[dict]) -> None:
     temp.replace(target)
 
 
-SRO_FOLDER = ROOT / "sro" / "СССС"
+def main(argv: list[str] | None = None) -> int:
+    from src.docx_engine import scan_placeholders
 
-
-def main() -> int:
-    originals = SRO_FOLDER / "templates" / "_originals"
-    output = SRO_FOLDER / "templates"
-    if not originals.exists():
-        print(f"Не найдена папка с оригиналами: {originals}")
+    argv = sys.argv[1:] if argv is None else argv
+    wanted = argv[0] if argv else None
+    if wanted and wanted not in TEMPLATES:
+        print(f"Для СРО «{wanted}» разметка в этом скрипте не описана.")
+        print("Описаны: " + ", ".join(f"«{k}»" for k in TEMPLATES))
         return 1
 
-    print("Разметка бланков СРО «СССС»")
-    print("=" * 60)
-    for source_name, target_name, ops in TEMPLATES:
-        source = originals / source_name
-        target = output / target_name
-        if not source.exists():
-            print(f"  ПРОПУЩЕН: не найден оригинал {source}")
+    print("Разметка бланков СРО")
+    print("=" * 62)
+    total = 0
+    for sro, items in TEMPLATES.items():
+        if wanted and sro != wanted:
             continue
-        try:
-            prepare(source, target, ops)
-        except PrepareError as exc:
-            print(f"\nОШИБКА при разметке «{source_name}»:\n{exc}\n")
+        folder = ROOT / "sro" / sro / "templates"
+        originals = folder / "_originals"
+        if not originals.exists():
+            print(f"\n{sro}: не найдена папка с оригиналами {originals}")
             return 1
-        from src.docx_engine import scan_placeholders
-        found = scan_placeholders(target)
-        print(f"  {source_name}")
-        print(f"    → {target_name}: переменных {len(found)}")
-        for name in found:
-            print(f"        {{{{{name}}}}}")
-    print("=" * 60)
-    print("Готово. Оригиналы не изменялись.")
+        print(f"\n{sro}")
+        for source_name, target_name, ops in items:
+            source = originals / source_name
+            if not source.exists():
+                print(f"  ПРОПУЩЕН: не найден оригинал {source_name}")
+                continue
+            try:
+                prepare(source, folder / target_name, ops)
+            except PrepareError as exc:
+                print(f"\n  ОШИБКА при разметке «{source_name}»:\n{exc}\n")
+                return 1
+            found = scan_placeholders(folder / target_name)
+            print(f"  {target_name}: переменных {len(found)}")
+            print("     " + ", ".join(sorted(set(found))))
+            total += 1
+    print("\n" + "=" * 62)
+    print(f"Готово: размечено бланков — {total}. Оригиналы не изменялись.")
     return 0
 
 

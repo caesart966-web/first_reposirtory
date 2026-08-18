@@ -591,7 +591,7 @@ class Application(tk.Frame):
                     self.labels[key].configure(foreground="#b00020")
         lines.append("")
 
-        context = build_context(self.company, self.project.attorney())
+        context = build_context(self.company, self.project.attorney(), sro=self.project.sro)
         if context.notes:
             lines.append("ПРИМЕЧАНИЯ")
             lines.append("-" * 60)
@@ -633,7 +633,7 @@ class Application(tk.Frame):
             self.on_check(silent=False)
             return
 
-        context = build_context(self.company, self.project.attorney())
+        context = build_context(self.company, self.project.attorney(), sro=self.project.sro)
         if context.confirmations:
             dialog = ConfirmDialog(self.master, context.confirmations)
             if dialog.result is None:

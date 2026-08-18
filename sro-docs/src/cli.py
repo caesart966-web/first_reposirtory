@@ -195,7 +195,7 @@ def main(argv: list[str] | None = None) -> int:
 
     ready = print_readiness(project, company)
 
-    context = build_context(company, project.attorney())
+    context = build_context(company, project.attorney(), sro=project.sro)
     for note in context.notes:
         print(f"  ПРИМЕЧАНИЕ: {note}")
     if context.confirmations:

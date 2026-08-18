@@ -96,10 +96,19 @@ def _resolve(company: CompanyData, key: str, computed: morphology.Inflected,
 
 
 def build_context(company: CompanyData, attorney: dict[str, str],
-                  today: date | None = None) -> ContextResult:
-    """Собрать все значения переменных для одной компании."""
+                  today: date | None = None, sro=None) -> ContextResult:
+    """Собрать все значения переменных для одной компании.
+
+    `sro` — профиль саморегулируемой организации: из него берутся
+    переменные {{sro_name}}, {{sro_short_name}}, {{sro_city}}.
+    """
     result = ContextResult()
     values = result.values
+
+    # ---------------------------------------------------------- сама СРО
+    values["sro_name"] = getattr(sro, "name", "") or ""
+    values["sro_short_name"] = getattr(sro, "short_name", "") or ""
+    values["sro_city"] = getattr(sro, "city", "") or ""
 
     # ---------------------------------------------------------- наименования
     form_short_full, form_full, bare_full = split_company_name(company.full_name)
@@ -122,7 +131,7 @@ def build_context(company: CompanyData, attorney: dict[str, str],
         )
     if values["legal_form_short"] and values["legal_form_short"] != "ООО":
         result.notes.append(
-            f"Бланки Ассоциации напечатаны под ООО, а у вас {values['legal_form_short']}. "
+            f"Бланки СРО напечатаны под ООО, а у вас {values['legal_form_short']}. "
             f"Программа подставит вашу форму собственности, но перед подачей "
             f"обязательно просмотрите готовые документы."
         )

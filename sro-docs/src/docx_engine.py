@@ -59,6 +59,31 @@ class FillReport:
 
 
 # --------------------------------------------------------------- обход XML
+def paragraph_text(paragraph) -> str:
+    """Текст абзаца так, как он выглядит: табуляции — пробелами.
+
+    Нужно для проверок и вывода: без этого «дата\tгород» слипалось
+    в «датагород» и выглядело ошибкой, хотя в документе всё верно.
+    """
+    parts: list[str] = []
+
+    def walk(node) -> None:
+        for child in node:
+            if child.tag == W + "p":
+                continue
+            if child.tag == W + "t":
+                parts.append(child.text or "")
+            elif child.tag == W + "tab":
+                parts.append("\t")
+            elif child.tag == W + "br":
+                parts.append("\n")
+            else:
+                walk(child)
+
+    walk(paragraph)
+    return "".join(parts)
+
+
 def _own_text_nodes(paragraph) -> list:
     """Все w:t этого абзаца, НЕ считая вложенных абзацев (надписи, таблицы внутри)."""
     found: list = []
@@ -275,7 +300,7 @@ def extract_all_text(docx_path: str | Path) -> str:
                     continue
                 root = etree.fromstring(source.read(item.filename))
                 for paragraph in _iter_paragraphs(root):
-                    line = "".join(n.text or "" for n in _own_text_nodes(paragraph))
+                    line = paragraph_text(paragraph)
                     if line.strip():
                         chunks.append(line)
     except zipfile.BadZipFile as exc:

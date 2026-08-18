@@ -342,7 +342,8 @@ def generate(project: Project, company_input: CompanyData,
         lines.append("Заполните недостающие поля и повторите.")
         raise GeneratorError("\n".join(lines))
 
-    context: ContextResult = build_context(company, project.attorney(), today=today)
+    context: ContextResult = build_context(company, project.attorney(),
+                                       today=today, sro=project.sro)
     result.notes.extend(context.notes)
     log.info("Формирование документов для СРО «%s»: %s",
              project.sro.short_name, app_logging.safe_company(company))
