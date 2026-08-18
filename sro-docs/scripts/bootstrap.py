@@ -55,10 +55,31 @@ def already_installed():
 
 
 def pip(args, quiet=True):
-    command = [VENV_PYTHON, "-m", "pip"] + list(args)
-    if quiet:
-        command.append("--quiet")
-    return subprocess.call(command)
+    """Вызов pip с тихим и предсказуемым выводом.
+
+    --no-cache-dir убирает жёлтые «Cache entry deserialization failed»:
+    это испорченные записи в кэше pip (обычно от другой версии Python
+    на том же компьютере). Они безобидны — pip просто качает заново, —
+    но пугают пользователя, поэтому кэш не используем вовсе: установка
+    выполняется один раз.
+
+    В тихом режиме вывод копится и печатается ТОЛЬКО при ошибке:
+    успех остаётся чистым, а на сбое видно всё, что сказал pip.
+    """
+    command = [VENV_PYTHON, "-m", "pip"] + list(args) + [
+        "--disable-pip-version-check",
+        "--no-cache-dir",
+        "--no-warn-script-location",
+    ]
+    if not quiet:
+        return subprocess.call(command)
+
+    command.append("--quiet")
+    process = subprocess.run(command, stdout=subprocess.PIPE,
+                             stderr=subprocess.STDOUT)
+    if process.returncode != 0 and process.stdout:
+        say(process.stdout.decode("utf-8", "replace").rstrip())
+    return process.returncode
 
 
 def fail(title, lines):
@@ -114,23 +135,22 @@ def main():
 
     say("  [2 из 3] Устанавливаю необходимые библиотеки...")
     pip(["install", "--upgrade", "pip"])
+    # Тихий режим сам печатает вывод pip при сбое, повторять не нужно.
     if pip(["install", "-r", os.path.join(ROOT, "requirements.txt")]) != 0:
-        say()
-        say("  Не получилось тихо, пробую ещё раз с подробным выводом...")
-        if pip(["install", "-r", os.path.join(ROOT, "requirements.txt")],
-               quiet=False) != 0:
-            return fail("Не удалось установить библиотеки", [
-                "Чаще всего причина - нет доступа в интернет либо его",
-                "блокирует антивирус или корпоративная сеть.",
-                "",
-                "Что попробовать:",
-                "  1. Проверьте интернет в браузере.",
-                "  2. Запустите с другой сети (например, с телефона).",
-                "  3. Если сеть корпоративная - попросите системного",
-                "     администратора разрешить доступ к pypi.org.",
-            ])
+        return fail("Не удалось установить библиотеки", [
+            "Причина - в строках ERROR выше. Чаще всего это отсутствие",
+            "доступа в интернет либо его блокировка антивирусом или",
+            "корпоративной сетью.",
+            "",
+            "Что попробовать:",
+            "  1. Проверьте интернет в браузере.",
+            "  2. Запустите с другой сети (например, раздайте с телефона).",
+            "  3. Если сеть корпоративная - попросите системного",
+            "     администратора разрешить доступ к pypi.org.",
+        ])
 
     say("  [3 из 3] Устанавливаю дополнительные возможности (PDF, перетаскивание)...")
+    say("            это самый долгий шаг, до минуты — программа не зависла.")
     if pip(["install", "-r", os.path.join(ROOT, "requirements-optional.txt")]) != 0:
         say("      Не установились - это не страшно, программа работает и без них.")
         say("      PDF можно будет сделать из Word: Файл - Сохранить как - PDF.")
