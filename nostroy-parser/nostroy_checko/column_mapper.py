@@ -135,12 +135,12 @@ ROLE_PATTERNS: tuple[RolePattern, ...] = (
         ROLE_DATE_JOIN,
         r"дата (вступления|приема|принятия|включения|внесения|начала членства|регистрации в реестре)",
         12,
-        r"исключ|прекращ|выход|приостанов|возобновл",
+        r"исключ|прекращ|выход|приостанов|возобновл|рожден",
     ),
     RolePattern(ROLE_DATE_JOIN, r"дата и номер решения о приеме", 11, r"исключ|прекращ"),
     RolePattern(ROLE_DATE_JOIN, r"(вступлени|прием в член|принят в член)", 9, r"исключ|прекращ|выход"),
-    RolePattern(ROLE_DATE_JOIN, r"год вступления|членство с|дата начала", 8, r"исключ|прекращ"),
-    RolePattern(ROLE_DATE_JOIN, r"^дата регистрации$|дата внесения сведений", 6, r"исключ|прекращ"),
+    RolePattern(ROLE_DATE_JOIN, r"год вступления|членство с|дата начала", 8, r"исключ|прекращ|рожден"),
+    RolePattern(ROLE_DATE_JOIN, r"^дата регистрации$|дата внесения сведений", 6, r"исключ|прекращ|рожден"),
 
     # ------------------------- дата исключения ---------------------------- #
     RolePattern(
@@ -419,6 +419,7 @@ def detect_header_row(
 class _ColumnStats:
     """Статистика значений одной колонки — основа автоопределения роли."""
 
+    scanned: int = 0              # сколько строк просмотрено
     non_empty: int = 0
     inn: int = 0
     ogrn: int = 0
@@ -434,8 +435,13 @@ class _ColumnStats:
     avg_length: float = 0.0
 
     def ratio(self, attribute: str) -> float:
-        """Доля значений колонки, подходящих под признак."""
+        """Доля НЕПУСТЫХ значений колонки, подходящих под признак."""
         return getattr(self, attribute) / self.non_empty if self.non_empty else 0.0
+
+    @property
+    def fill_ratio(self) -> float:
+        """Доля строк, где колонка вообще заполнена."""
+        return self.non_empty / self.scanned if self.scanned else 0.0
 
 
 def _collect_column_stats(
@@ -450,6 +456,7 @@ def _collect_column_stats(
     for row in rows:
         if stats.non_empty >= sample_size:
             break
+        stats.scanned += 1
         if column >= len(row):
             continue
         raw = row[column]
@@ -582,17 +589,32 @@ def detect_roles_by_content(
         for column, stats in stats_by_column.items()
         if column not in assigned and stats.non_empty and stats.ratio("dates") >= 0.6
     ]
+    # Дата вступления есть у КАЖДОГО члена СРО, поэтому колонка, заполненная
+    # лишь у части строк, на эту роль не годится. Отсекает частый случай:
+    # «Дата рождения» заполнена только у индивидуальных предпринимателей —
+    # без этой проверки она становилась бы «датой вступления».
+    dense_date_columns = [
+        (column, stats) for column, stats in date_columns if stats.fill_ratio >= 0.5
+    ]
     # Колонка с более ранними датами и большей заполненностью — «дата вступления».
-    date_columns.sort(
-        key=lambda item: (
-            -item[1].non_empty,
-            min(item[1].date_values) if item[1].date_values else _date.max,
+    for group in (date_columns, dense_date_columns):
+        group.sort(
+            key=lambda item: (
+                -item[1].non_empty,
+                min(item[1].date_values) if item[1].date_values else _date.max,
+            )
         )
-    )
-    if not column_map.roles.get(ROLE_DATE_JOIN) and date_columns:
-        column, stats = date_columns.pop(0)
-        claim(ROLE_DATE_JOIN, column)
-        logger.info("Дата вступления определена по содержимому: колонка %d", column + 1)
+    if not column_map.roles.get(ROLE_DATE_JOIN):
+        if dense_date_columns:
+            column, stats = dense_date_columns[0]
+            date_columns = [item for item in date_columns if item[0] != column]
+            claim(ROLE_DATE_JOIN, column)
+            logger.info("Дата вступления определена по содержимому: колонка %d", column + 1)
+        elif date_columns:
+            logger.warning(
+                "Колонка с датой вступления не найдена: ни один столбец с датами "
+                "не заполнен хотя бы у половины записей. Проверьте заголовки файла"
+            )
     if not column_map.roles.get(ROLE_DATE_EXIT) and date_columns:
         # Дата исключения заполнена реже, чем дата вступления.
         column, stats = min(date_columns, key=lambda item: item[1].non_empty)

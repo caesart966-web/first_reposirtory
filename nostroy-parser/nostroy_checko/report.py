@@ -47,7 +47,9 @@ def build_report_rows(groups: Sequence[CompanyGroup]) -> tuple[list[str], list[l
     """
     Формирует единственную таблицу отчёта — по строке на компанию.
 
-    Контакты берутся с checko.ru, даты членства — из реестра НОСТРОЙ. Даты
+    Контакты берутся с checko.ru, а если сервис по компании ничего не дал —
+    из самого реестра НОСТРОЙ (там обычно есть адрес и руководитель, иногда
+    телефон и почта). Даты членства — из реестра НОСТРОЙ. Даты
     проставляются сразу всем компаниям, ещё до обращения к checko.ru: они уже
     есть в реестре и не зависят от суточной квоты. Телефоны, наоборот,
     наполняются по мере обработки — день за днём.
@@ -74,10 +76,10 @@ def build_report_rows(groups: Sequence[CompanyGroup]) -> tuple[list[str], list[l
             [
                 group.name,
                 group.inn,
-                join_unique(checko.phones) if checko else "",
-                join_unique(checko.emails) if checko else "",
-                join_unique(checko.addresses) if checko else "",
-                join_unique(director_fio(value) for value in checko.directors) if checko else "",
+                join_unique(group.best_phones),
+                join_unique(group.best_emails),
+                join_unique(group.best_addresses),
+                join_unique(director_fio(value) for value in group.best_directors),
                 group.date_join,
                 group.date_exit,
                 group.membership_status,

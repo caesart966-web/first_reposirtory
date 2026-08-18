@@ -590,7 +590,8 @@ class CheckoClient:
             streak = self._forbidden_streak
         if streak >= self.FORBIDDEN_TOLERANCE:
             self.quota.mark_exhausted(
-                f"сервис вернул 403 подряд {streak} раз(а) — вероятна блокировка или капча"
+                f"сервис вернул 403 подряд {streak} раз(а) — вероятна блокировка или капча",
+                spent=False,
             )
 
     def _register_success(self) -> None:

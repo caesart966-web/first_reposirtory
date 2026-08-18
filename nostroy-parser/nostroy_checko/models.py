@@ -461,6 +461,33 @@ class CompanyGroup:
             merge_unique(result, self.checko.directors)
         return result
 
+    # --- «лучшее из доступного»: checko, а если пусто — реестр ---------- #
+    # Реестр НОСТРОЙ часто содержит адрес и руководителя, а иногда телефон и
+    # почту. Ждать их с checko.ru незачем: данные уже есть и не зависят от
+    # суточной квоты. Поэтому в отчёт идёт значение с checko, а при его
+    # отсутствии — значение из реестра. Так таблица полезна с первого дня,
+    # даже если сервис недоступен.
+
+    @property
+    def best_phones(self) -> list[str]:
+        checko_values = self.checko.phones if self.checko else []
+        return checko_values or self.registry_phones
+
+    @property
+    def best_emails(self) -> list[str]:
+        checko_values = self.checko.emails if self.checko else []
+        return checko_values or self.registry_emails
+
+    @property
+    def best_addresses(self) -> list[str]:
+        checko_values = self.checko.addresses if self.checko else []
+        return checko_values or self.registry_addresses
+
+    @property
+    def best_directors(self) -> list[str]:
+        checko_values = self.checko.directors if self.checko else []
+        return checko_values or self.registry_directors
+
     @property
     def sources(self) -> list[str]:
         """Список всех источников (файл | лист | строка), где встретилась компания."""

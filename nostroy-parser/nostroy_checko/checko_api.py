@@ -404,7 +404,8 @@ class CheckoApiClient:
 
             if response.status_code in (401, 403):
                 self.quota.mark_exhausted(
-                    f"API вернул {response.status_code}: проверьте ключ и тариф checko.ru"
+                    f"API вернул {response.status_code}: проверьте ключ и тариф checko.ru",
+                    spent=False,
                 )
                 result.status = STATUS_FORBIDDEN
                 result.error = f"HTTP {response.status_code}: ключ отклонён"
@@ -464,7 +465,7 @@ class CheckoApiClient:
             base.error = message
             return base
         if any(marker in lowered for marker in _MSG_BAD_KEY):
-            self.quota.mark_exhausted(f"API сообщает: {message}")
+            self.quota.mark_exhausted(f"API сообщает: {message}", spent=False)
             base.status = STATUS_FORBIDDEN
             base.error = message
             return base

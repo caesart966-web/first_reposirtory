@@ -400,6 +400,31 @@ class TestColumnMapper(BaseTestCase):
         self.assertEqual(mapping.first(column_mapper.ROLE_DATE_JOIN), 2)
         self.assertEqual(mapping.first(column_mapper.ROLE_ADDRESS), 3)
 
+    def test_birth_date_is_not_taken_as_join_date(self) -> None:
+        """
+        «Дата рождения» заполнена только у ИП и не должна стать датой вступления.
+
+        Реальный случай: в выгрузке колонка с датой вступления называется
+        нестандартно, а рядом есть «Дата рождения» — заполненная лишь у
+        предпринимателей. Без проверки плотности заполнения парсер принимал
+        её за дату вступления, и у пары ИП в отчёте появлялись 1970-е годы.
+        """
+        rows = [["Организация", "Номер", "Дата рождения"]]
+        for index in range(12):
+            # Дата рождения есть только у двух записей из двенадцати.
+            birth = "03.05.1970" if index == 3 else ("10.08.1990" if index == 7 else "")
+            rows.append([f'ООО "Компания {index}"', f"78{index:08d}", birth])
+        mapping = column_mapper.build_column_map(rows)
+        self.assertIsNone(mapping.first(column_mapper.ROLE_DATE_JOIN))
+
+    def test_dense_date_column_is_taken_as_join_date(self) -> None:
+        """А заполненная у всех колонка с датами — это дата вступления."""
+        rows = [["Организация", "Номер", "Когда"]]
+        for index in range(12):
+            rows.append([f'ООО "Компания {index}"', f"78{index:08d}", f"{index + 1:02d}.03.2020"])
+        mapping = column_mapper.build_column_map(rows)
+        self.assertEqual(mapping.first(column_mapper.ROLE_DATE_JOIN), 2)
+
     def test_unknown_column_names(self) -> None:
         """Совершенно нестандартные заголовки — роли берутся из содержимого."""
         rows = [
@@ -646,6 +671,32 @@ class TestQuota(BaseTestCase):
         self.assertEqual(quota.remaining, 100)
         self.assertFalse(quota.exhausted)
         self.assertTrue(quota.reserve())
+
+    def test_forbidden_stop_does_not_burn_the_day(self) -> None:
+        """
+        Отказ сервиса (403, неверный ключ) не должен «съедать» сутки.
+
+        Реальный случай: пользователь запустил сбор с неработающим доступом,
+        получил forbidden — и при перезапуске с исправленным ключом скрипт
+        отвечал «квота исчерпана», хотя не потратил ни одного запроса.
+        """
+        quota = DailyQuota(limit=100)
+        quota.reserve(); quota.reserve(); quota.reserve()      # потрачено 3
+        quota.mark_exhausted("HTTP 403", spent=False)
+        self.assertTrue(quota.exhausted)                       # текущий запуск стоит
+
+        # Следующий запуск в тот же день: остановка не переносится.
+        restored = DailyQuota.from_dict(quota.to_dict(), limit=100)
+        self.assertFalse(restored.exhausted)
+        self.assertEqual(restored.used, 3)                     # но счётчик честный
+        self.assertTrue(restored.reserve())
+
+        # А настоящий исчерпанный лимит (429) переносится до полуночи.
+        spent = DailyQuota(limit=100)
+        spent.mark_exhausted("HTTP 429", spent=True)
+        restored_spent = DailyQuota.from_dict(spent.to_dict(), limit=100)
+        self.assertTrue(restored_spent.exhausted)
+        self.assertFalse(restored_spent.reserve())
 
     def test_parallel_reservations_do_not_exceed_limit(self) -> None:
         """При работе в потоках лимит не должен «протекать»."""
@@ -1268,7 +1319,28 @@ class TestEndToEndAcrossDays(BaseTestCase):
         self.assertEqual(len(rows), len(COMPANIES))
         # Дата вступления есть у КАЖДОЙ, хотя квоты хватило лишь на две.
         self.assertTrue(all(row[join_column] for row in rows))
-        self.assertEqual(sum(1 for row in rows if row[phone_column]), 2)
+
+        # Телефон показывается и у необработанных компаний — из реестра.
+        # Пустым он остаётся только там, где его нет ни в реестре, ни у checko.
+        status_request_column = headers.index("Статус запроса")
+        with_registry_phone = {
+            company["inn"] for company in COMPANIES if company["phone"]
+        }
+        inn_column = headers.index("ИНН")
+        for row in rows:
+            has_phone = bool(row[phone_column])
+            self.assertEqual(
+                has_phone,
+                row[inn_column] in with_registry_phone or row[status_request_column] == "ok",
+                msg=f"телефон для ИНН {row[inn_column]}",
+            )
+        # Хотя бы одна компания получила телефон, не будучи запрошенной у checko.
+        self.assertTrue(
+            any(
+                row[phone_column] and row[status_request_column] != "ok"
+                for row in rows
+            )
+        )
         # Статус членства заполнен у всех и принимает только два значения.
         self.assertEqual(
             {row[status_column] for row in rows} - {"действует", "исключён"}, set()

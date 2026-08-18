@@ -152,19 +152,35 @@ class DailyQuota:
         with self._lock:
             self._used = max(0, self._used - count)
 
-    def mark_exhausted(self, reason: str = "") -> None:
+    def mark_exhausted(self, reason: str = "", spent: bool = True) -> None:
         """
-        Помечает лимит исчерпанным принудительно.
+        Останавливает дальнейшие запросы.
 
-        Вызывается при получении HTTP 429 или страницы «лимит запросов
-        исчерпан»: сервер знает лучше нашего счётчика.
+        :param reason: почему остановились (попадёт в лог и файл состояния);
+        :param spent:  ``True`` — квота действительно израсходована (HTTP 429,
+                       страница «лимит исчерпан»): счётчик добивается до лимита,
+                       и до полуночи запросов больше не будет.
+                       ``False`` — сервис отказал по другой причине (неверный
+                       ключ, блокировка, HTTP 403). Счётчик не трогаем: причина
+                       устранима, и следующий запуск обязан попробовать снова,
+                       не дожидаясь новых суток.
         """
         with self._lock:
             if not self._exhausted:
-                logger.warning("Суточный лимит checko.ru исчерпан: %s", reason or "ответ сервера")
+                if spent:
+                    logger.warning(
+                        "Суточный лимит checko.ru исчерпан: %s", reason or "ответ сервера"
+                    )
+                else:
+                    logger.error(
+                        "Запросы остановлены: %s. Это не расход лимита — "
+                        "устраните причину и запускайте снова, ждать до завтра не нужно",
+                        reason or "отказ сервиса",
+                    )
             self._exhausted = True
             self._exhausted_reason = reason
-            self._used = max(self._used, self._limit)
+            if spent:
+                self._used = max(self._used, self._limit)
 
     def progress_line(self) -> str:
         """Строка прогресса для вывода оператору."""
@@ -213,10 +229,28 @@ class DailyQuota:
         except ValueError:
             window_date = date.today()
         stored_limit = int(data.get("limit", 100) or 100)
+        effective_limit = limit if limit is not None else stored_limit
+        used = int(data.get("used", 0) or 0)
+        exhausted = bool(data.get("exhausted", False))
+        reason = str(data.get("exhausted_reason", ""))
+
+        # Прошлый запуск остановился, хотя лимит израсходован не был, — значит
+        # причина была во внешнем отказе (неверный ключ, блокировка), а не в
+        # квоте. Такую остановку не переносим на новый запуск: пользователь мог
+        # уже исправить причину, и заставлять его ждать полуночи неправильно.
+        if exhausted and used < effective_limit:
+            logger.info(
+                "Прошлый запуск остановился не из-за лимита (%s), израсходовано %d из %d — "
+                "пробуем снова",
+                reason or "причина не записана", used, effective_limit,
+            )
+            exhausted = False
+            reason = ""
+
         return cls(
-            limit=limit if limit is not None else stored_limit,
-            used=int(data.get("used", 0) or 0),
+            limit=effective_limit,
+            used=used,
             window_date=window_date,
-            exhausted=bool(data.get("exhausted", False)),
-            exhausted_reason=str(data.get("exhausted_reason", "")),
+            exhausted=exhausted,
+            exhausted_reason=reason,
         )
