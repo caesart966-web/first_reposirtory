@@ -786,6 +786,20 @@ class TestMultipleSro(unittest.TestCase):
         self.assertNotIn("№ б/н", extract_all_text(application))
         self.assertIn("ДОВ-7", extract_all_text(power))
 
+    def test_usage_counter_grows_with_sets(self):
+        """Счётчик комплектов растёт на число успешных СРО и сохраняется."""
+        self.project.output_root = self.tmp / "out"
+        self.project.root = self.tmp  # счётчик пишем во временную папку
+        self.assertEqual(self.project.usage_count(), 0)
+        chosen = [p for p in self.project.all_sro if p.key in ("СССС", "ЯРД")]
+        generate_many(self.project, make_company(ALPHA), chosen, make_pdf=False)
+        made = 2
+        self.assertEqual(self.project.record_sets(made), made)
+        # Пересоздаём проект на той же папке — счётчик читается с диска.
+        again = Project(ROOT)
+        again.root = self.tmp
+        self.assertEqual(again.usage_count(), made)
+
     def test_generate_many_isolates_errors(self):
         """Сбой у одной СРО не мешает остальным.
 

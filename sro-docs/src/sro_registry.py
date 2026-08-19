@@ -20,6 +20,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
+from .paths import app_root
 
 SRO_DIR_NAME = "sro"
 PROFILE_FILE = "sro.json"
@@ -217,7 +218,7 @@ def load_profile(folder: Path) -> SroProfile:
 
 def discover(root: Path | None = None) -> list[SroProfile]:
     """Все СРО, найденные в папке sro/. Порядок — по имени папки."""
-    base = Path(root) if root else Path(__file__).resolve().parent.parent
+    base = Path(root) if root else app_root()
     sro_dir = base / SRO_DIR_NAME
     if not sro_dir.exists():
         raise SroError(

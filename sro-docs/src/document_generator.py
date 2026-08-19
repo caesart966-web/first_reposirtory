@@ -25,6 +25,7 @@ from datetime import date
 from pathlib import Path
 
 from . import app_logging
+from .paths import app_root
 from .context_builder import ContextResult, build_context
 from .docx_engine import TemplateError, fill_template, scan_placeholders
 from .company_parser import split_company_name
@@ -80,7 +81,7 @@ class Project:
 
     def __init__(self, root: Path | str | None = None,
                  sro: str | SroProfile | None = None) -> None:
-        self.root = Path(root) if root else Path(__file__).resolve().parent.parent
+        self.root = Path(root) if root else app_root()
         self.config_dir = self.root / "config"
         self.logs_dir = self.root / "logs"
 
@@ -155,6 +156,40 @@ class Project:
         except (OSError, json.JSONDecodeError) as exc:
             # Не смертельно: в следующий раз просто спросим заново.
             app_logging.get().warning("Не удалось запомнить выбор СРО: %s", exc)
+
+    # ------------------------------------------------ счётчик использования
+    @property
+    def usage_path(self) -> Path:
+        """Файл счётчика: сколько комплектов документов уже сделано."""
+        return self.root / "usage.json"
+
+    def usage_count(self) -> int:
+        """Сколько комплектов сформировано всего (0, если ещё ни одного)."""
+        try:
+            data = json.loads(self.usage_path.read_text(encoding="utf-8"))
+            return int(data.get("sets_made", 0))
+        except (OSError, ValueError, json.JSONDecodeError):
+            return 0
+
+    def record_sets(self, count: int, when: str = "") -> int:
+        """Добавить к счётчику `count` сделанных комплектов. Вернуть итог.
+
+        Один комплект — документы для одной СРО. Счёт ведётся в usage.json
+        рядом с программой; это просто число, без персональных данных.
+        """
+        if count <= 0:
+            return self.usage_count()
+        total = self.usage_count() + count
+        payload = {"sets_made": total}
+        if when:
+            payload["last_run"] = when
+        try:
+            self.usage_path.write_text(
+                json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8")
+        except OSError as exc:
+            app_logging.get().warning("Не удалось записать счётчик: %s", exc)
+        return total
 
     # ---------------------------------------------------- свойства выбранной СРО
     @property

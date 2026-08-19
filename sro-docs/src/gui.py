@@ -429,6 +429,11 @@ class Application(tk.Frame):
         self.sro_label.pack(side=LEFT, padx=(4, PAD))
         ttk.Button(top, text="Сменить СРО…", command=self.on_change_sro).pack(side=LEFT)
 
+        # Счётчик использования: сколько комплектов документов уже сделано.
+        self.usage_label = ttk.Label(top, foreground="#40474f")
+        self.usage_label.pack(side=RIGHT)
+        self._show_usage()
+
         self.notebook = ttk.Notebook(self)
         self.notebook.pack(fill=BOTH, expand=True, padx=PAD, pady=PAD)
 
@@ -778,6 +783,11 @@ class Application(tk.Frame):
         self.notebook.select(1)
         self.on_check(silent=True)
 
+    def _show_usage(self) -> None:
+        """Обновить счётчик сделанных комплектов в верхней строке."""
+        total = self.project.usage_count()
+        self.usage_label.configure(text=f"Сделано комплектов всего: {total}")
+
     def _show_sro(self) -> None:
         """Обновить строку с выбранными СРО."""
         profiles = self.project.selected_sros
@@ -1039,6 +1049,13 @@ class Application(tk.Frame):
             lines.append("")
 
         self._show_report(lines)
+
+        # Счётчик: каждая успешно собранная СРО — один комплект.
+        if ok_folders:
+            from datetime import datetime
+            self.project.record_sets(
+                len(ok_folders), datetime.now().strftime("%d.%m.%Y %H:%M"))
+            self._show_usage()
 
         # Кнопка «Открыть папку»: если одна СРО — её папку, если несколько —
         # общий корень output, где лежат все папки СРО.

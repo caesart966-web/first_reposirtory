@@ -263,6 +263,12 @@ def main(argv: list[str] | None = None) -> int:
             print(f"    примечание: {note}")
         if not result.ok:
             any_fail = True
+
+    made = sum(1 for o in outcomes if o.ok)
+    if made:
+        from datetime import datetime
+        total = project.record_sets(made, datetime.now().strftime("%d.%m.%Y %H:%M"))
+        print(f"\nСделано комплектов за этот раз: {made}. Всего: {total}.")
     print()
     return 0 if not any_fail else 4
 
