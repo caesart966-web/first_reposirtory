@@ -513,6 +513,53 @@ class TestColumnMapper(BaseTestCase):
         mapping = column_mapper.build_column_map(rows)
         self.assertEqual(mapping.first(column_mapper.ROLE_DATE_JOIN), 2)
 
+    def test_dates_inside_decision_text(self) -> None:
+        """
+        Типовая выгрузка НОСТРОЙ: дата спрятана в тексте решения о приёме.
+
+        Заголовки вида «Дата и номер решения о приеме/о прекращении членства»,
+        значения — «Протокол № 15 от 12.05.2010». Плюс рядом «Дата рождения»,
+        заполненная только у ИП: она не должна стать датой исключения.
+        """
+        rows = [[
+            "№", "Полное наименование", "ИНН",
+            "Дата и номер решения о приеме в члены",
+            "Дата и номер решения о прекращении членства",
+            "Дата рождения",
+        ]]
+        data = [
+            ('ООО "Альфа"', "7707083893", "Протокол № 15 от 12.05.2010", "", ""),
+            ('ООО "Бета"', "2310031475", "Протокол № 22 от 08.07.2011",
+             "Решение № 4 от 30.06.2021", ""),
+            ('ООО "Гамма"', "7802312345", "Протокол № 31 от 25.12.2009", "", ""),
+            ("ИП Сидоров С.С.", "500100732259", "Протокол № 44 от 17.02.2015",
+             "", "03.05.1970"),
+        ]
+        for index, (name, inn, joined, left, birth) in enumerate(data, start=1):
+            rows.append([index, name, inn, joined, left, birth])
+
+        from nostroy_checko.excel_reader import SheetData
+
+        sheet = SheetData(Path("t.xlsx"), "t.xlsx", "Лист1", rows)
+        report: list = []
+        records, _, _ = parse_sheet(sheet, column_report=report)
+        by_inn = {record.inn: record for record in records}
+
+        self.assertEqual(by_inn["7707083893"].date_join, date(2010, 5, 12))
+        self.assertEqual(by_inn["2310031475"].date_exit, date(2021, 6, 30))
+        self.assertEqual(by_inn["7802312345"].date_join, date(2009, 12, 25))
+        # Дата рождения ИП не должна превратиться в дату исключения.
+        self.assertIsNone(by_inn["500100732259"].date_exit)
+        self.assertEqual(by_inn["500100732259"].date_join, date(2015, 2, 17))
+
+        # Диагностика описывает каждый столбец — по ней видно, что распозналось.
+        self.assertEqual(len(report), 6)
+        roles = {item["Заголовок"]: item["Распознано как"] for item in report}
+        self.assertEqual(roles["Дата и номер решения о приеме в члены"], "date_join")
+        self.assertEqual(roles["Дата и номер решения о прекращении членства"], "date_exit")
+        self.assertEqual(roles["Дата рождения"], "—")
+        self.assertTrue(all(item["Примеры значений"] is not None for item in report))
+
     def test_unknown_column_names(self) -> None:
         """Совершенно нестандартные заголовки — роли берутся из содержимого."""
         rows = [

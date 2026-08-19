@@ -60,6 +60,7 @@ class RunResult:
     groups: list[CompanyGroup] = field(default_factory=list)
     unrecognized: list[UnrecognizedRow] = field(default_factory=list)
     files_index: list[dict[str, Any]] = field(default_factory=list)
+    column_report: list[dict[str, Any]] = field(default_factory=list)
     report_path: Path | None = None
     checko_done: int = 0            # успешно обработано компаний за этот запуск
     checko_failed: int = 0          # ошибок за этот запуск
@@ -167,6 +168,7 @@ def parse_all(settings: Settings, search_root: Path) -> RunResult:
             scan_rows=settings.header_scan_rows,
             max_span=settings.header_max_span,
             sample_size=settings.content_sample,
+            column_report=result.column_report,
         )
         stats["records"] += len(records)
         stats["unrecognized"] += len(unrecognized)
@@ -190,6 +192,7 @@ def _apply_nostroy(group: CompanyGroup, info: "NostroyMemberInfo") -> None:
     group.nostroy_date_join = info.date_join
     group.nostroy_date_exit = info.date_exit
     group.nostroy_status = info.status_text
+    group.nostroy_registry = getattr(info, "registry", "")
     group.nostroy_phones = list(info.phones)
     group.nostroy_emails = list(info.emails)
     group.nostroy_addresses = list(info.addresses)
@@ -239,8 +242,23 @@ def enrich_dates_from_nostroy(
         "Этот проход разовый: завтра он не повторится",
         len(to_fetch), len(pending) - len(to_fetch),
     )
+    from .nostroy_api import NOPRIZ_BASE, NOSTROY_BASE
+
+    # Два официальных реестра: НОСТРОЙ (строители) и НОПРИЗ (проектировщики
+    # и изыскатели). Компании из второго в первом попросту нет — без него у
+    # них навсегда оставались бы пустые даты.
+    registries = [
+        ("НОСТРОЙ", NOSTROY_BASE, settings.parsed_dir / "nostroy_api_sample.json"),
+    ]
+    if settings.nopriz_dates:
+        registries.append(
+            ("НОПРИЗ", NOPRIZ_BASE, settings.parsed_dir / "nopriz_api_sample.json")
+        )
     client = NostroyClient(
-        settings, sample_path=settings.parsed_dir / "nostroy_api_sample.json"
+        settings,
+        sample_path=registries[0][2],
+        base_url=registries[0][1],
+        title=registries[0][0],
     )
     found = 0
     done = 0
@@ -250,7 +268,7 @@ def enrich_dates_from_nostroy(
     def fetch(group: CompanyGroup) -> tuple[CompanyGroup, Any]:
         if stop_event.is_set() or client.is_dead:
             return group, None
-        return group, client.lookup(group.inn)
+        return group, client.lookup(group.inn, ogrn=group.ogrn, name=group.name)
 
     # Первую компанию обрабатываем в одиночку: клиент на ней определяет рабочий
     # формат запроса и запоминает его. Если запустить сразу все потоки, каждый
@@ -268,6 +286,7 @@ def enrich_dates_from_nostroy(
                 state.set_nostroy(group.inn, info.to_dict())
                 if info.found:
                     found += 1
+                    info.registry = client.title
                     _apply_nostroy(group, info)
                 if done % 50 == 0 or done == len(to_fetch):
                     speed = done / max(time.monotonic() - start_time, 0.001)
@@ -287,7 +306,42 @@ def enrich_dates_from_nostroy(
         executor.shutdown(wait=True, cancel_futures=True)
         client.close()
         state.save(force=True)
-    logger.info("Реестр НОСТРОЙ: даты получены по %d из %d компаний", found, len(to_fetch))
+    logger.info("Реестр %s: даты получены по %d из %d компаний",
+                client.title, found, len(to_fetch))
+
+    # Остаток добираем вторым реестром — компаний там немного, идёт быстро.
+    if len(registries) > 1 and not stop_event.is_set():
+        still_missing = [
+            group for group in to_fetch
+            if not group.nostroy_date_join and not any(r.date_join for r in group.records)
+        ]
+        if still_missing:
+            title, base_url, sample = registries[1]
+            logger.info(
+                "Без дат осталось %d компаний — проверяю реестр %s "
+                "(проектировщики и изыскатели)",
+                len(still_missing), title,
+            )
+            second = NostroyClient(settings, sample_path=sample, base_url=base_url, title=title)
+            found_second = 0
+            try:
+                for group, info in executor.map(
+                    lambda g: (g, second.lookup(g.inn, ogrn=g.ogrn, name=g.name)),
+                    still_missing,
+                ):
+                    if info is None or second.is_dead:
+                        break
+                    if info.found:
+                        found_second += 1
+                        info.registry = title
+                        _apply_nostroy(group, info)
+                        state.set_nostroy(group.inn, info.to_dict())
+            except KeyboardInterrupt:
+                logger.warning("Прервано — собранное сохранено")
+            finally:
+                second.close()
+                state.save(force=True)
+            logger.info("Реестр %s: найдено ещё %d компаний", title, found_second)
 
 
 # --------------------------------------------------------------------------- #
@@ -580,6 +634,7 @@ def run(settings: Settings) -> RunResult:
         result.groups,
         result.unrecognized,
         result.files_index,
+        result.column_report,
     )
 
     result.in_report = sum(

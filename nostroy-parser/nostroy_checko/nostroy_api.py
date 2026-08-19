@@ -48,8 +48,13 @@ from .textutils import (
 
 logger = get_logger("nostroy-api")
 
-#: Базовый адрес реестра.
+#: Базовый адрес реестра НОСТРОЙ (строители).
 NOSTROY_BASE = "https://reestr.nostroy.ru"
+
+#: Базовый адрес реестра НОПРИЗ (проектировщики и изыскатели).
+#: Многие компании состоят в СРО проектировщиков, и в реестре НОСТРОЙ их нет —
+#: без второго источника у них навсегда оставались бы пустые даты.
+NOPRIZ_BASE = "https://reestr.nopriz.ru"
 
 #: Известные конечные точки поиска членов (пробуются по очереди).
 _LIST_ENDPOINTS: tuple[str, ...] = (
@@ -89,6 +94,7 @@ class NostroyMemberInfo:
     date_join: date | None = None
     date_exit: date | None = None
     status_text: str = ""            # статус членства как в реестре (текст)
+    registry: str = ""               # какой реестр ответил: НОСТРОЙ или НОПРИЗ
     phones: list[str] = field(default_factory=list)
     emails: list[str] = field(default_factory=list)
     addresses: list[str] = field(default_factory=list)
@@ -104,6 +110,7 @@ class NostroyMemberInfo:
             "date_join": self.date_join.isoformat() if self.date_join else None,
             "date_exit": self.date_exit.isoformat() if self.date_exit else None,
             "status_text": self.status_text,
+            "registry": self.registry,
             "phones": self.phones,
             "emails": self.emails,
             "addresses": self.addresses,
@@ -120,6 +127,7 @@ class NostroyMemberInfo:
             date_join=parse_date(data.get("date_join")),
             date_exit=parse_date(data.get("date_exit")),
             status_text=data.get("status_text", ""),
+            registry=data.get("registry", ""),
             phones=list(data.get("phones", [])),
             emails=list(data.get("emails", [])),
             addresses=list(data.get("addresses", [])),
@@ -253,10 +261,19 @@ class NostroyClient:
     а повторные запуски берут ответы из кэша состояния.
     """
 
-    def __init__(self, settings: Settings, sample_path: Any = None) -> None:
+    def __init__(
+        self,
+        settings: Settings,
+        sample_path: Any = None,
+        base_url: str = NOSTROY_BASE,
+        title: str = "НОСТРОЙ",
+    ) -> None:
         from .checko_client import RateLimiter
 
         self.settings = settings
+        self.base_url = base_url
+        self.title = title
+        self._last_error = ""
         self._rate_limiter = RateLimiter(settings.nostroy_rps)
         self._local = threading.local()
         self._sample_path = sample_path
@@ -277,8 +294,8 @@ class NostroyClient:
                     "User-Agent": self.settings.user_agent,
                     "Accept": "application/json, text/plain, */*",
                     "Content-Type": "application/json",
-                    "Origin": NOSTROY_BASE,
-                    "Referer": f"{NOSTROY_BASE}/",
+                    "Origin": self.base_url,
+                    "Referer": f"{self.base_url}/",
                 }
             )
             proxies = self.settings.proxies()
@@ -317,57 +334,54 @@ class NostroyClient:
             self._sample_path.write_text(
                 json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
             )
-            logger.info("Образец ответа реестра НОСТРОЙ сохранён: %s", self._sample_path)
+            logger.info("Образец ответа реестра %s сохранён: %s", self.title, self._sample_path)
         except (OSError, ValueError) as exc:
             logger.debug("Не удалось сохранить образец ответа реестра: %s", exc)
 
-    def _bodies_for(self, inn: str) -> tuple[dict[str, Any], ...]:
+    def _bodies_for(self, value: str) -> tuple[dict[str, Any], ...]:
         """Варианты тела запроса — по убыванию вероятности успеха."""
         return (
-            {"filters": {"member_inn": inn}, "page": 1, "pageSize": 20},
-            {"filters": {"inn": inn}, "page": 1, "pageSize": 20},
-            {"searchString": inn, "page": 1, "pageSize": 20},
+            {"filters": {"member_inn": value}, "page": 1, "pageSize": 20},
+            {"filters": {"inn": value}, "page": 1, "pageSize": 20},
+            {"searchString": value, "page": 1, "pageSize": 20},
+            {"filters": {"search": value}, "page": 1, "pageSize": 20},
         )
 
-    def lookup(self, inn: str) -> NostroyMemberInfo:
-        """Запрашивает запись члена по ИНН. Никогда не выбрасывает исключений."""
-        info = NostroyMemberInfo(inn=inn, fetched_at=utcnow_iso())
-        inn = re.sub(r"\D", "", inn)
-        if len(inn) not in (10, 12):
-            info.error = "нет ИНН — реестр ищет только по ИНН"
-            return info
-        if self._dead:
-            info.error = "реестр НОСТРОЙ недоступен (предыдущие запросы не прошли)"
-            return info
+    def _query(self, value: str, inn: str, only_working: bool) -> NostroyMemberInfo | None:
+        """
+        Один заход поиска по значению ``value`` (ИНН, ОГРН или названию).
 
+        :param only_working: использовать лишь уже известный рабочий формат
+            запроса (быстрый путь). При ``False`` перебираются все варианты —
+            так добираются компании, которых быстрый путь не нашёл.
+        :return: найденную запись либо ``None``.
+        """
         endpoints = (
             (self._working_endpoint,) if self._working_endpoint else _LIST_ENDPOINTS
         )
-        bodies = list(enumerate(self._bodies_for(inn)))
-        if self._working_body is not None:
-            # Формат запроса уже известен — один запрос на компанию.
-            # Без этого каждая «не найденная» компания стоила три запроса,
-            # и весь проход растягивался в разы.
+        bodies = list(enumerate(self._bodies_for(value)))
+        if only_working and self._working_body is not None:
             bodies = [bodies[self._working_body]]
 
-        last_error = ""
         for endpoint in endpoints:
             for body_index, body in bodies:
+                if self._dead:
+                    return None
                 self._rate_limiter.wait()
                 try:
                     response = self.session.post(
-                        f"{NOSTROY_BASE}{endpoint}",
+                        f"{self.base_url}{endpoint}",
                         json=body,
                         timeout=self.settings.timeout,
                     )
                 except requests.exceptions.RequestException as exc:
-                    last_error = f"сетевая ошибка: {exc}"
+                    self._last_error = f"сетевая ошибка: {exc}"
                     with self._lock:
                         self._failures += 1
                         if self._failures >= 5:
                             self._dead = True
                     if self._dead:
-                        break
+                        return None
                     time.sleep(1.0 + random.uniform(0, 0.5))
                     continue
 
@@ -375,12 +389,12 @@ class NostroyClient:
                     self._failures = 0
                 self._save_sample(response, endpoint)
                 if response.status_code != 200:
-                    last_error = f"HTTP {response.status_code} от {endpoint}"
+                    self._last_error = f"HTTP {response.status_code} от {endpoint}"
                     break        # другой вариант тела не поможет — меняем endpoint
                 try:
                     payload = response.json()
                 except ValueError:
-                    last_error = "ответ реестра не является JSON"
+                    self._last_error = "ответ реестра не является JSON"
                     break
 
                 parsed = parse_member_payload(payload, inn)
@@ -389,15 +403,50 @@ class NostroyClient:
                         self._working_endpoint = endpoint
                         self._working_body = body_index
                     return parsed
-                last_error = parsed.error
-                # Запись не найдена, но запрос прошёл — пробуем другое тело.
-            if self._dead:
-                break
+                self._last_error = parsed.error
+        return None
 
+    def lookup(self, inn: str, ogrn: str = "", name: str = "") -> NostroyMemberInfo:
+        """
+        Ищет члена СРО по ИНН, а при неудаче — по ОГРН и по названию.
+
+        Перебор запасных ключей нужен ради полноты: часть записей в реестре
+        заполнена так, что поиск по ИНН их не находит, а по ОГРН или названию
+        находит. Быстрый путь (известный формат запроса) пробуется первым,
+        поэтому на подавляющем большинстве компаний по-прежнему один запрос.
+
+        Никогда не выбрасывает исключений.
+        """
+        info = NostroyMemberInfo(inn=inn, fetched_at=utcnow_iso())
+        inn = re.sub(r"\D", "", inn)
+        if len(inn) not in (10, 12):
+            info.error = "нет ИНН — реестр ищет только по реквизитам"
+            return info
+        if self._dead:
+            info.error = f"реестр {self.title} недоступен"
+            return info
+
+        self._last_error = ""
+        # 1) быстрый путь: известный формат запроса, поиск по ИНН
+        found = self._query(inn, inn, only_working=True)
+        # 2) полный перебор форматов по ИНН
+        if found is None and not self._dead and self._working_body is not None:
+            found = self._query(inn, inn, only_working=False)
+        # 3) запасные ключи поиска — ОГРН и название
+        if found is None and not self._dead:
+            for fallback in (re.sub(r"\D", "", ogrn or ""), clean_text(name)):
+                if not fallback or len(fallback) < 5:
+                    continue
+                found = self._query(fallback, inn, only_working=False)
+                if found is not None:
+                    break
+
+        if found is not None:
+            return found
         if self._dead:
             logger.warning(
-                "Реестр НОСТРОЙ недоступен (%s) — даты будут только из вашего файла",
-                last_error,
+                "Реестр %s недоступен (%s) — даты будут из других источников",
+                self.title, self._last_error,
             )
-        info.error = last_error or "запись не найдена"
+        info.error = self._last_error or "запись не найдена"
         return info

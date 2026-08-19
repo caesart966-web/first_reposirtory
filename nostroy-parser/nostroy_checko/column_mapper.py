@@ -147,11 +147,17 @@ ROLE_PATTERNS: tuple[RolePattern, ...] = (
         ROLE_DATE_EXIT,
         r"дата (исключения|прекращения|выхода|аннулирования|окончания членства)",
         12,
+        r"рожден",
+    ),
+    RolePattern(
+        ROLE_DATE_EXIT,
+        r"решени[ияюе][^а-я]*(об?|о)\s*(исключени|прекращени|аннулировани|выход)",
+        11,
         None,
     ),
     RolePattern(ROLE_DATE_EXIT, r"дата и номер решения об исключении", 11, None),
-    RolePattern(ROLE_DATE_EXIT, r"(исключен|прекращени[ея] членства|выход из член)", 9, None),
-    RolePattern(ROLE_DATE_EXIT, r"членство по|дата окончания", 8, None),
+    RolePattern(ROLE_DATE_EXIT, r"(исключен|прекращени[ея] членства|выход из член)", 9, r"рожден"),
+    RolePattern(ROLE_DATE_EXIT, r"членство по|дата окончания", 8, r"рожден"),
 
     # ------------------------------ статус --------------------------------- #
     RolePattern(ROLE_STATUS, r"^статус|статус членства|состояние членства|сведения о членстве", 9, None),
@@ -624,10 +630,21 @@ def detect_roles_by_content(
                 "не заполнен хотя бы у половины записей. Проверьте заголовки файла"
             )
     if not column_map.roles.get(ROLE_DATE_EXIT) and date_columns:
-        # Дата исключения заполнена реже, чем дата вступления.
-        column, stats = min(date_columns, key=lambda item: item[1].non_empty)
-        claim(ROLE_DATE_EXIT, column)
-        logger.info("Дата исключения определена по содержимому: колонка %d", column + 1)
+        # Дата исключения заполнена реже даты вступления, но датой рождения
+        # быть не может: отсекаем колонки, где даты заведомо «человеческие»
+        # (медиана раньше 1960 года — так выглядят даты рождения ИП).
+        def looks_like_birthdays(stats: _ColumnStats) -> bool:
+            values = sorted(stats.date_values)
+            if not values:
+                return False
+            median = values[len(values) // 2]
+            return median.year < 1960
+
+        candidates = [item for item in date_columns if not looks_like_birthdays(item[1])]
+        if candidates:
+            column, stats = min(candidates, key=lambda item: item[1].non_empty)
+            claim(ROLE_DATE_EXIT, column)
+            logger.info("Дата исключения определена по содержимому: колонка %d", column + 1)
 
     # --- руководитель -------------------------------------------------------- #
     if not column_map.roles.get(ROLE_DIRECTOR):

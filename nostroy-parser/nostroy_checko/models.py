@@ -218,6 +218,9 @@ class CheckoContacts:
     websites: list[str] = field(default_factory=list)
     extra: dict[str, str] = field(default_factory=dict)  # прочие поля карточки
 
+    # Сведения о членстве в СРО, если сервис их отдаёт — третий источник дат.
+    sro_date_join: date | None = None
+    sro_date_exit: date | None = None
     inn_matched: bool | None = None  # совпал ли ИНН на странице с запрошенным
     fetched_at: str = ""             # ISO-время получения данных
     attempts: int = 0                # сколько раз пытались получить карточку
@@ -272,6 +275,8 @@ class CheckoContacts:
             "directors": self.directors,
             "websites": self.websites,
             "extra": self.extra,
+            "sro_date_join": self.sro_date_join.isoformat() if self.sro_date_join else None,
+            "sro_date_exit": self.sro_date_exit.isoformat() if self.sro_date_exit else None,
             "inn_matched": self.inn_matched,
             "fetched_at": self.fetched_at,
             "attempts": self.attempts,
@@ -296,6 +301,8 @@ class CheckoContacts:
             directors=list(data.get("directors", [])),
             websites=list(data.get("websites", [])),
             extra=dict(data.get("extra", {})),
+            sro_date_join=parse_date(data.get("sro_date_join")),
+            sro_date_exit=parse_date(data.get("sro_date_exit")),
             inn_matched=data.get("inn_matched"),
             fetched_at=data.get("fetched_at", ""),
             attempts=int(data.get("attempts", 0) or 0),
@@ -324,6 +331,7 @@ class CompanyGroup:
     nostroy_date_join: date | None = None
     nostroy_date_exit: date | None = None
     nostroy_status: str = ""
+    nostroy_registry: str = ""       # какой реестр ответил: НОСТРОЙ или НОПРИЗ
     nostroy_phones: list[str] = field(default_factory=list)
     nostroy_emails: list[str] = field(default_factory=list)
     nostroy_addresses: list[str] = field(default_factory=list)
@@ -362,15 +370,39 @@ class CompanyGroup:
 
     @property
     def date_join(self) -> date | None:
-        """Дата вступления: из файла выгрузки, а если там нет — из реестра НОСТРОЙ."""
+        """
+        Дата вступления. Источники по убыванию доверия: ваш файл ->
+        официальный реестр (НОСТРОЙ/НОПРИЗ) -> сведения о членстве с checko.ru.
+        Ничего не вычисляется и не додумывается: берётся только то, что
+        какой-то источник сообщил явно.
+        """
         dates = [r.date_join for r in self.records if r.date_join]
-        return min(dates) if dates else self.nostroy_date_join
+        if dates:
+            return min(dates)
+        if self.nostroy_date_join:
+            return self.nostroy_date_join
+        return self.checko.sro_date_join if self.checko else None
 
     @property
     def date_exit(self) -> date | None:
-        """Дата исключения: из файла выгрузки, а если там нет — из реестра НОСТРОЙ."""
+        """Дата исключения — те же источники и тот же порядок доверия."""
         dates = [r.date_exit for r in self.records if r.date_exit]
-        return max(dates) if dates else self.nostroy_date_exit
+        if dates:
+            return max(dates)
+        if self.nostroy_date_exit:
+            return self.nostroy_date_exit
+        return self.checko.sro_date_exit if self.checko else None
+
+    @property
+    def date_source(self) -> str:
+        """Откуда взята дата вступления — для проверки достоверности."""
+        if any(record.date_join for record in self.records):
+            return "ваш файл"
+        if self.nostroy_date_join:
+            return self.nostroy_registry or "официальный реестр"
+        if self.checko and self.checko.sro_date_join:
+            return "checko.ru"
+        return "не найдена"
 
     @property
     def status(self) -> str:

@@ -42,6 +42,7 @@ from .models import (
 from .quota import DailyQuota
 from .textutils import (
     clean_text,
+    parse_date,
     extract_emails,
     extract_phones,
     merge_unique,
@@ -70,6 +71,10 @@ _KEY_NAME_SHORT = re.compile(r"^(наимсокр|наимсокрюл|наим�
 _KEY_DIRECTOR = re.compile(r"^(руковод|руководитель|директор|управляющ\w*)$", re.IGNORECASE)
 _KEY_FIO = re.compile(r"^(фио|fio|name)$", re.IGNORECASE)
 _KEY_POSITION = re.compile(r"^(наимдолжн|должность|должн)$", re.IGNORECASE)
+#: Раздел о членстве в саморегулируемых организациях.
+_KEY_SRO_SECTION = re.compile(r"(сро|саморегул|sro)", re.IGNORECASE)
+_KEY_DATE_START = re.compile(r"(датавступ|датанач|датарег|начало|datestart|с$)", re.IGNORECASE)
+_KEY_DATE_END = re.compile(r"(датаисключ|датапрекр|датаокон|конец|dateend|по$)", re.IGNORECASE)
 
 #: Сообщения API, по которым определяем особые состояния.
 _MSG_LIMIT = ("лимит", "превыш", "limit", "quota", "исчерпан")
@@ -200,6 +205,9 @@ def parse_api_payload(data: Any, expected_inn: str = "") -> CheckoContacts:
     if name_candidates:
         result.name = name_candidates[max(name_candidates)]
 
+    # --- членство в СРО: третий источник дат, уже оплаченный квотой -------- #
+    _extract_sro_dates(data, result)
+
     # Самый подробный адрес считаем основным.
     if raw_addresses:
         result.addresses = [max(raw_addresses, key=len)]
@@ -222,6 +230,55 @@ def parse_api_payload(data: Any, expected_inn: str = "") -> CheckoContacts:
         result.status = STATUS_NOT_FOUND
         result.error = "API вернул пустую карточку"
     return result
+
+
+def _extract_sro_dates(data: Any, result: CheckoContacts) -> None:
+    """
+    Достаёт даты членства в СРО из раздела ответа, если сервис его отдаёт.
+
+    Раздел уже оплачен запросом к API, поэтому это бесплатный третий источник
+    дат — вдобавок к вашему файлу и официальному реестру. Разбор ведётся по
+    смыслу ключей: сначала ищем узел, относящийся к СРО, внутри него —
+    даты начала и окончания членства.
+    """
+    sections: list[Any] = []
+
+    def find_sections(node: Any, key_path: str = "") -> None:
+        if isinstance(node, dict):
+            for key, value in node.items():
+                if _KEY_SRO_SECTION.search(str(key)) and isinstance(value, (dict, list)):
+                    sections.append(value)
+                find_sections(value, str(key))
+        elif isinstance(node, list):
+            for item in node:
+                find_sections(item, key_path)
+
+    find_sections(data)
+    if not sections:
+        return
+
+    def scan(node: Any) -> None:
+        if isinstance(node, dict):
+            for key, value in node.items():
+                key_text = str(key).replace(" ", "").replace("_", "")
+                if isinstance(value, (dict, list)):
+                    scan(value)
+                    continue
+                parsed = parse_date(value)
+                if parsed is None:
+                    continue
+                if _KEY_DATE_END.search(key_text):
+                    if result.sro_date_exit is None or parsed > result.sro_date_exit:
+                        result.sro_date_exit = parsed
+                elif _KEY_DATE_START.search(key_text):
+                    if result.sro_date_join is None or parsed < result.sro_date_join:
+                        result.sro_date_join = parsed
+        elif isinstance(node, list):
+            for item in node:
+                scan(item)
+
+    for section in sections:
+        scan(section)
 
 
 class CheckoApiClient:

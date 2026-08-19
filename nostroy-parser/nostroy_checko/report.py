@@ -203,6 +203,7 @@ def write_parsed_artifacts(
     groups: Sequence[CompanyGroup],
     unrecognized: Sequence[UnrecognizedRow],
     files_index: Sequence[dict[str, Any]],
+    column_report: Sequence[dict[str, Any]] = (),
 ) -> None:
     """
     Сохраняет промежуточные результаты разбора в ``output/parsed/``.
@@ -236,6 +237,19 @@ def write_parsed_artifacts(
             for item in files_index
         ],
     )
+    if column_report:
+        # Разбор столбцов: по нему видно, чем распознан каждый столбец файла.
+        # Первое, что нужно смотреть, если в отчёте пусто там, где в исходнике
+        # данные есть.
+        _write_csv(
+            parsed_dir / "columns_detected.csv",
+            ["Файл", "Лист", "Колонка", "Заголовок", "Распознано как", "Примеры значений"],
+            [
+                [item.get(key, "") for key in
+                 ("Файл", "Лист", "Колонка", "Заголовок", "Распознано как", "Примеры значений")]
+                for item in column_report
+            ],
+        )
     logger.info("Промежуточные выгрузки сохранены в %s", parsed_dir)
 
 

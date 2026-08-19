@@ -358,17 +358,63 @@ def parse_row(
 #                              Разбор листа целиком                            #
 # --------------------------------------------------------------------------- #
 
+def describe_columns(
+    sheet: SheetData,
+    column_map: ColumnMap,
+    max_samples: int = 3,
+) -> list[dict[str, Any]]:
+    """
+    Описывает, как распознан каждый столбец листа: заголовок, назначенная роль
+    и примеры значений.
+
+    Нужна, когда в отчёте пусто там, где в исходном файле данные есть.
+    По этой выжимке сразу видно, чем именно столбец был признан — и почему
+    нужная колонка не попала в отчёт. Файл маленький, его удобно переслать,
+    в отличие от всей выгрузки.
+    """
+    role_by_column: dict[int, list[str]] = {}
+    for role, indexes in column_map.roles.items():
+        for index in indexes:
+            role_by_column.setdefault(index, []).append(role)
+
+    start = column_map.data_start_row
+    width = max((len(row) for row in sheet.rows), default=0)
+    described: list[dict[str, Any]] = []
+    for index in range(width):
+        samples: list[str] = []
+        for row in sheet.rows[start:]:
+            text = clean_text(_value_at(row, index))
+            if text:
+                samples.append(text[:60])
+            if len(samples) >= max_samples:
+                break
+        described.append(
+            {
+                "Файл": sheet.display_path,
+                "Лист": sheet.sheet_name,
+                "Колонка": index + 1,
+                "Заголовок": column_map.header_of(index),
+                "Распознано как": ", ".join(sorted(role_by_column.get(index, []))) or "—",
+                "Примеры значений": " | ".join(samples),
+            }
+        )
+    return described
+
+
 def parse_sheet(
     sheet: SheetData,
     scan_rows: int = 60,
     max_span: int = 3,
     sample_size: int = 400,
+    column_report: list[dict[str, Any]] | None = None,
 ) -> tuple[list[RegistryRecord], list[UnrecognizedRow], ColumnMap]:
     """
     Разбирает один лист: определяет структуру и проходит ВСЕ строки.
 
     :return: ``(записи, нераспознанные строки, карта колонок)``.
     """
+    if column_report is None:
+        column_report = []
     if not sheet.rows:
         return [], [], ColumnMap()
 
@@ -435,6 +481,7 @@ def parse_sheet(
 
         records.append(record)
 
+    column_report.extend(describe_columns(sheet, column_map))
     logger.info(
         "  лист %r: строк %d, записей %d, нераспознано %d (%s)",
         sheet.sheet_name,

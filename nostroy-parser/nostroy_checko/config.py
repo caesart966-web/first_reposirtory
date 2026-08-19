@@ -134,6 +134,7 @@ class Settings:
     nostroy_dates: bool = True             # дотягивать даты из открытого реестра НОСТРОЙ
     nostroy_rps: float = 4.0               # частота запросов к реестру НОСТРОЙ
     nostroy_workers: int = 4               # параллельные потоки к реестру НОСТРОЙ
+    nopriz_dates: bool = True              # добирать даты в реестре НОПРИЗ
     open_report: bool = False              # открыть готовый отчёт в Excel по завершении
     count_http_requests: bool = False      # квота на каждый HTTP-запрос, а не на компанию
     retry_failed: bool = False             # повторить ранее неудачные запросы
