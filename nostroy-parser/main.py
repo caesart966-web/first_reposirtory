@@ -175,6 +175,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="прокси вида http://user:pass@host:port (по умолчанию берётся из HTTPS_PROXY)",
     )
     group_checko.add_argument(
+        "--use-site-parser",
+        action="store_true",
+        help=(
+            "разрешить работу БЕЗ ключа API — разбором обычных страниц сайта "
+            "(не рекомендуется: сайт защищён от автоматизации и обычно отвечает отказом)"
+        ),
+    )
+    group_checko.add_argument(
         "--no-query-by-name",
         action="store_true",
         help="не искать компанию по названию, если в реестре нет ИНН",
@@ -275,6 +283,24 @@ def main(argv: list[str] | None = None) -> int:
     settings.ensure_dirs()
 
     logger = setup_logging(settings.logs_dir, settings.log_level)
+
+    # Запуск без ключа почти всегда заканчивается пустой таблицей и потерянным
+    # временем, поэтому останавливаемся сразу — с инструкцией, а не после
+    # долгого разбора файлов.
+    if settings.use_checko and not settings.checko_api_key and not args.use_site_parser:
+        logger.error("=" * 70)
+        logger.error("КЛЮЧ API checko.ru НЕ НАЙДЕН — запуск остановлен.")
+        logger.error("")
+        logger.error("Что сделать (1 минута):")
+        logger.error("  1. Откройте файл checko_api_key.txt рядом со скриптом.")
+        logger.error("  2. Сотрите строку ВСТАВЬТЕ_КЛЮЧ_СЮДА и вставьте свой ключ")
+        logger.error("     (он выдаётся в личном кабинете на checko.ru).")
+        logger.error("  3. Сохраните файл и запустите скрипт заново.")
+        logger.error("")
+        logger.error("Без checko.ru (только разбор реестра): добавьте ключ --no-checko.")
+        logger.error("Разбор страниц сайта без ключа API:    ключ --use-site-parser.")
+        logger.error("=" * 70)
+        return 2
     logger.info("=" * 78)
     logger.info("Парсер реестра НОСТРОЙ + checko.ru, версия %s", __version__)
     logger.info("Вход:  %s", settings.input_path)
