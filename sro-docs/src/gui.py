@@ -11,6 +11,7 @@ tkinterdnd2. Без неё всё то же самое доступно кноп
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import sys
 import traceback
@@ -242,6 +243,8 @@ class SroParamsWizard(tk.Toplevel):
         self._index = 0
         self._params = [
             {
+                "doc_date": defaults.get("doc_date") or "",
+                "doc_number": defaults.get("doc_number") or "",
                 "object_kind": defaults.get("object_kind") or "ordinary",
                 "harm_fund_level": defaults.get("harm_fund_level") or "1",
                 "contract_fund_level": defaults.get("contract_fund_level") or "",
@@ -266,6 +269,8 @@ class SroParamsWizard(tk.Toplevel):
         self._back_btn = ttk.Button(buttons, text="Назад", command=self._back)
         self._back_btn.pack(side=RIGHT)
 
+        self._date_var = tk.StringVar()
+        self._number_var = tk.StringVar()
         self._object_var = tk.StringVar()
         self._harm_var = tk.StringVar()
         self._contract_var = tk.StringVar()
@@ -287,9 +292,25 @@ class SroParamsWizard(tk.Toplevel):
         for child in self._body.winfo_children():
             child.destroy()
 
+        self._date_var.set(params["doc_date"])
+        self._number_var.set(params["doc_number"])
         self._object_var.set(params["object_kind"])
         self._harm_var.set(params["harm_fund_level"])
         self._contract_var.set(params["contract_fund_level"])
+
+        head = ttk.LabelFrame(self._body, text=" Дата и номер заявления ")
+        head.pack(fill=X, pady=(0, PAD))
+        head.columnconfigure(1, weight=1)
+        ttk.Label(head, text="Дата:").grid(row=0, column=0, sticky="e", padx=PAD, pady=4)
+        ttk.Entry(head, textvariable=self._date_var, width=16).grid(
+            row=0, column=1, sticky="w", padx=PAD)
+        ttk.Label(head, text="в виде ДД.ММ.ГГГГ", foreground="#6b7480").grid(
+            row=0, column=2, sticky="w", padx=PAD)
+        ttk.Label(head, text="Номер:").grid(row=1, column=0, sticky="e", padx=PAD, pady=4)
+        ttk.Entry(head, textvariable=self._number_var, width=16).grid(
+            row=1, column=1, sticky="w", padx=PAD)
+        ttk.Label(head, text="исходящий номер; по умолчанию «б/н»",
+                  foreground="#6b7480").grid(row=1, column=2, sticky="w", padx=PAD)
 
         obj = ttk.LabelFrame(self._body, text=" Виды объектов ")
         obj.pack(fill=X, pady=(0, PAD))
@@ -329,12 +350,29 @@ class SroParamsWizard(tk.Toplevel):
 
     def _save(self) -> None:
         self._params[self._index] = {
+            "doc_date": self._date_var.get().strip(),
+            "doc_number": self._number_var.get().strip(),
             "object_kind": self._object_var.get(),
             "harm_fund_level": self._harm_var.get(),
             "contract_fund_level": self._contract_var.get(),
         }
 
+    def _date_ok(self) -> bool:
+        """Дата пустая (тогда подставится сегодняшняя) либо ДД.ММ.ГГГГ."""
+        text = self._date_var.get().strip()
+        if not text:
+            return True
+        if not re.match(r"^\d{2}\.\d{2}\.\d{4}$", text):
+            messagebox.showwarning(
+                "Дата", f"Дата «{text}» не в том виде.\n"
+                        "Впишите её как ДД.ММ.ГГГГ, например 19.08.2026, "
+                        "или оставьте поле пустым.")
+            return False
+        return True
+
     def _next(self) -> None:
+        if not self._date_ok():
+            return
         self._save()
         if self._index == len(self._profiles) - 1:
             self.result = self._params
@@ -926,6 +964,8 @@ class Application(tk.Frame):
         profiles = self.project.selected_sros
         if len(profiles) > 1:
             defaults = {
+                "doc_date": self.company.doc_date,
+                "doc_number": self.company.doc_number,
                 "object_kind": self.company.object_kind,
                 "harm_fund_level": self.company.harm_fund_level,
                 "contract_fund_level": self.company.contract_fund_level,

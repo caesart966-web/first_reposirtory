@@ -708,25 +708,35 @@ class TestMultipleSro(unittest.TestCase):
         self.project.output_root = self.tmp / "out"
         plans = [
             (self._profile("СФЕРА-А"),
-             {"object_kind": "hazardous", "harm_fund_level": "3",
+             {"doc_date": "01.09.2026", "doc_number": "СФ-11",
+              "object_kind": "hazardous", "harm_fund_level": "3",
               "contract_fund_level": ""}),
             (self._profile("ЯРД"),
-             {"object_kind": "ordinary", "harm_fund_level": "2",
+             {"doc_date": "02.09.2026", "doc_number": "ЯР-22",
+              "object_kind": "ordinary", "harm_fund_level": "2",
               "contract_fund_level": "1"}),
         ]
         outcomes = generate_many(self.project, make_company(ALPHA), plans,
                                  make_pdf=False)
         marks = {}
+        texts = {}
         for outcome in outcomes:
             self.assertTrue(outcome.ok, outcome.error)
             application = next(p for p in outcome.result.created
                                if p.name.startswith("01_"))
             marks[outcome.sro.key] = self._marked_levels(application)
+            texts[outcome.sro.key] = extract_all_text(application)
         # СФЕРА-А: возмещение вреда — третий уровень, ОДО не заявлен.
         self.assertEqual(marks["СФЕРА-А"], {"вреда": {"Третий"}})
         # ЯРД: возмещение вреда — второй, ОДО — первый.
         self.assertEqual(marks["ЯРД"],
                          {"вреда": {"Второй"}, "обеспечения": {"Первый"}})
+        # Номер и дата — свои у каждой СРО.
+        self.assertIn("СФ-11", texts["СФЕРА-А"])
+        self.assertIn("01» сентября 2026", texts["СФЕРА-А"])
+        self.assertIn("ЯР-22", texts["ЯРД"])
+        self.assertIn("02» сентября 2026", texts["ЯРД"])
+        self.assertNotIn("СФ-11", texts["ЯРД"])
 
     def _profile(self, key):
         return next(p for p in self.project.all_sro if p.key == key)
