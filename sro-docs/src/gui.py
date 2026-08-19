@@ -28,7 +28,7 @@ from . import app_logging  # noqa: E402
 from .company_parser import parse_card, parse_text  # noqa: E402
 from .context_builder import OBJECT_KINDS, build_context  # noqa: E402
 from .document_generator import (GeneratorError, Project, check_readiness,  # noqa: E402
-                                 generate)
+                                 generate_many)
 from .models import (APPLICANT_KINDS, COMPANY, DOC_PARAM_FIELDS,  # noqa: E402
                      ENTREPRENEUR, FIELD_SPECS, CompanyData)
 from .readers import SUPPORTED_SUFFIXES, ReadError, read_card  # noqa: E402
@@ -141,7 +141,12 @@ class ConfirmDialog(tk.Toplevel):
 
 
 class SroDialog(tk.Toplevel):
-    """Окно выбора саморегулируемой организации."""
+    """Окно выбора саморегулируемых организаций (можно несколько).
+
+    Возвращает СПИСОК выбранных профилей в `self.result` (или None, если
+    пользователь нажал «Отмена»). Отмечено может быть сколько угодно —
+    комплекты документов сформируются сразу для всех.
+    """
 
     def __init__(self, master, profiles, current=None) -> None:
         super().__init__(master)
@@ -149,24 +154,36 @@ class SroDialog(tk.Toplevel):
         self.resizable(False, False)
         self.result = None
         self._profiles = list(profiles)
+        # current — уже выбранные СРО: список профилей. Допускаем и один
+        # профиль (для обратной совместимости), тогда оборачиваем в список.
+        if current is None:
+            current = []
+        elif not isinstance(current, (list, tuple, set)):
+            current = [current]
+        current_keys = {p.key for p in current}
+        if not current_keys and self._profiles:
+            current_keys = {self._profiles[0].key}
 
-        ttk.Label(self, text="В какую СРО подаём документы?",
+        ttk.Label(self, text="В какие СРО подаём документы?",
                   font=("Segoe UI", 11, "bold")).pack(
             anchor="w", padx=PAD * 2, pady=(PAD * 2, 0))
         ttk.Label(self, wraplength=560, justify=LEFT, foreground="#40474f",
-                  text="Выбор запоминается — в следующий раз программа откроется сразу с ним.").pack(
+                  text="Отметьте одну или несколько галочками — комплекты "
+                       "документов сформируются сразу для всех выбранных. "
+                       "Выбор запоминается.").pack(
             anchor="w", padx=PAD * 2, pady=(2, PAD))
 
         body = ttk.Frame(self)
         body.pack(fill=BOTH, expand=True, padx=PAD * 2)
 
-        self._choice = tk.StringVar(value=(current.key if current else
-                                           self._profiles[0].key))
+        self._vars: dict[str, tk.BooleanVar] = {}
         for profile in self._profiles:
+            var = tk.BooleanVar(value=(profile.key in current_keys))
+            self._vars[profile.key] = var
             row = ttk.Frame(body)
             row.pack(fill=X, pady=3)
-            ttk.Radiobutton(row, text=profile.short_name, value=profile.key,
-                            variable=self._choice, width=24).pack(side=LEFT, anchor="n")
+            ttk.Checkbutton(row, text=profile.short_name, variable=var,
+                            width=24).pack(side=LEFT, anchor="n")
             details = ttk.Frame(row)
             details.pack(side=LEFT, fill=X, expand=True)
             title = profile.name if profile.name != profile.short_name else ""
@@ -192,8 +209,12 @@ class SroDialog(tk.Toplevel):
         self.wait_window(self)
 
     def _accept(self) -> None:
-        key = self._choice.get()
-        self.result = next((p for p in self._profiles if p.key == key), None)
+        chosen = [p for p in self._profiles if self._vars[p.key].get()]
+        if not chosen:
+            messagebox.showwarning(
+                "Выбор СРО", "Отметьте галочкой хотя бы одну СРО.")
+            return
+        self.result = chosen
         self.destroy()
 
     def _cancel(self) -> None:
@@ -578,19 +599,29 @@ class Application(tk.Frame):
         self.on_check(silent=True)
 
     def _show_sro(self) -> None:
-        """Обновить строку с текущей СРО."""
-        profile = self.project.sro
-        if profile.is_ready:
-            self.sro_label.configure(text=profile.label, foreground="black")
+        """Обновить строку с выбранными СРО."""
+        profiles = self.project.selected_sros
+        names = ", ".join(p.short_name for p in profiles)
+        not_ready = [p.short_name for p in profiles if not p.is_ready]
+        if not_ready:
+            self.sro_label.configure(
+                text=f"{names}  (бланки не загружены: {', '.join(not_ready)})",
+                foreground="#8a5a00")
+        elif len(profiles) > 1:
+            self.sro_label.configure(
+                text=f"{names}  — комплектов: {len(profiles)}", foreground="black")
         else:
-            self.sro_label.configure(text=f"{profile.label} — бланки не загружены",
-                                     foreground="#8a5a00")
+            self.sro_label.configure(text=names, foreground="black")
 
     def on_change_sro(self) -> None:
-        dialog = SroDialog(self.master, self.project.all_sro, self.project.sro)
-        if dialog.result is None or dialog.result.key == self.project.sro.key:
+        dialog = SroDialog(self.master, self.project.all_sro,
+                           self.project.selected_sros)
+        if dialog.result is None:
             return
-        self.project.use_sro(dialog.result)
+        chosen_keys = {p.key for p in dialog.result}
+        if chosen_keys == {p.key for p in self.project.selected_sros}:
+            return
+        self.project.set_selected(dialog.result)
         self._show_sro()
         self._rebuild_levels()
 
@@ -758,10 +789,8 @@ class Application(tk.Frame):
             self.company.overrides.update(dialog.result)
 
         try:
-            result = generate(self.project, self.company, make_pdf=True)
-        except GeneratorError as exc:
-            messagebox.showerror(TITLE, str(exc))
-            return
+            outcomes = generate_many(self.project, self.company,
+                                     self.project.selected_sros, make_pdf=True)
         except Exception as exc:  # noqa: BLE001
             app_logging.get().exception("Сбой формирования документов")
             messagebox.showerror(
@@ -772,43 +801,73 @@ class Application(tk.Frame):
 
         lines = ["РЕЗУЛЬТАТ", "=" * 60,
                  f"Компания: {self.company.identity()}",
-                 f"Папка: {result.folder}", ""]
-        for path in result.created:
-            lines.append(f"  создан: {path.name}")
-        for path in result.pdf:
-            lines.append(f"  создан: {path.name}")
-        lines.append("")
-        lines.append("КОНТРОЛЬ КАЧЕСТВА")
-        lines.append("-" * 60)
-        for report in result.quality:
-            lines.append(f"{'ПРОВЕРЕН' if report.ok else 'НЕ ГОТОВ'}: {report.document}")
-            for problem in report.problems:
-                lines.append(f"    проблема: {problem}")
-            for warning in report.warnings:
-                lines.append(f"    внимание: {warning}")
-        if result.notes:
+                 f"Выбрано СРО: {len(outcomes)}", ""]
+        total_created = 0
+        failed_sros: list[str] = []
+        ok_folders: list[Path] = []
+        for outcome in outcomes:
+            lines.append(f"### {outcome.sro.short_name}")
+            if outcome.error:
+                failed_sros.append(outcome.sro.short_name)
+                lines.append("    НЕ СФОРМИРОВАНО:")
+                for line in outcome.error.splitlines():
+                    lines.append(f"      {line}")
+                lines.append("")
+                continue
+            result = outcome.result
+            lines.append(f"    папка: {result.folder}")
+            for path in result.created:
+                lines.append(f"      создан: {path.name}")
+            for path in result.pdf:
+                lines.append(f"      создан: {path.name}")
+            total_created += len(result.created)
+            document_failed = False
+            for report in result.quality:
+                if not report.ok:
+                    document_failed = True
+                    lines.append(f"      НЕ ГОТОВ: {report.document}")
+                    for problem in report.problems:
+                        lines.append(f"        проблема: {problem}")
+                for warning in report.warnings:
+                    lines.append(f"      внимание: {warning}")
+            if document_failed:
+                failed_sros.append(outcome.sro.short_name)
+            elif result.ok:
+                ok_folders.append(result.folder)
+            for note in result.notes:
+                lines.append(f"      примечание: {note}")
             lines.append("")
-            lines.append("ПРИМЕЧАНИЯ")
-            lines.append("-" * 60)
-            lines.extend(result.notes)
 
         self._show_report(lines)
-        self.last_folder = result.folder
-        self.open_button.configure(state="normal")
 
-        if result.ok:
-            self._set_status("Документы сформированы и проверены.", "#1c6b1c")
-            if messagebox.askyesno(
+        # Кнопка «Открыть папку»: если одна СРО — её папку, если несколько —
+        # общий корень output, где лежат все папки СРО.
+        if len(ok_folders) == 1:
+            self.last_folder = ok_folders[0]
+        elif ok_folders:
+            self.last_folder = self.project.output_root
+        if self.last_folder:
+            self.open_button.configure(state="normal")
+
+        if not failed_sros and ok_folders:
+            self._set_status(
+                f"Готово: комплектов {len(ok_folders)}, документов "
+                f"{total_created}. Все проверены.", "#1c6b1c")
+            if self.last_folder and messagebox.askyesno(
                     TITLE,
-                    f"Документы готовы ({len(result.created)} шт.).\n\n"
-                    f"Папка: {result.folder}\n\nОткрыть папку?"):
-                open_in_explorer(result.folder)
+                    f"Документы готовы: {total_created} шт. "
+                    f"в {len(ok_folders)} СРО.\n\n"
+                    f"Папка: {self.last_folder}\n\nОткрыть папку?"):
+                open_in_explorer(self.last_folder)
         else:
-            self._set_status("Документы НЕ прошли контроль качества.", "#b00020")
-            messagebox.showerror(
+            self._set_status(
+                f"Часть СРО не сформирована: {', '.join(failed_sros)}. "
+                f"Подробности — на вкладке «Результат».", "#b00020")
+            messagebox.showwarning(
                 TITLE,
-                "Документы сформированы, но не прошли контроль качества "
-                "и использовать их нельзя.\n\nПодробности — на вкладке «Результат».")
+                "Не для всех СРО удалось сформировать документы.\n\n"
+                f"С проблемами: {', '.join(failed_sros)}.\n\n"
+                "Подробности — на вкладке «Результат».")
 
 
 def main() -> int:
@@ -847,14 +906,15 @@ def main() -> int:
     if len(project.all_sro) > 1:
         log.info("запуск: показываю окно выбора СРО")
         root.withdraw()
-        chosen = SroDialog(root, project.all_sro, project.sro).result
+        chosen = SroDialog(root, project.all_sro, project.selected_sros).result
         root.deiconify()
         if chosen is None:
             log.info("запуск: выбор СРО отменён пользователем")
             root.destroy()
             return 0
-        log.info("запуск: выбрана СРО «%s»", chosen.short_name)
-        project.use_sro(chosen)
+        log.info("запуск: выбрано СРО — %s",
+                 ", ".join(p.short_name for p in chosen))
+        project.set_selected(chosen)
 
     application = Application(root, project)
     log.info("запуск: главное окно построено")

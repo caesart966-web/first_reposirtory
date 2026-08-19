@@ -90,8 +90,22 @@ class Project:
 
         self.all_sro: list[SroProfile] = discover(self.root)
         self.sro: SroProfile = self._choose(sro)
+        #: Выбранные СРО для пакетного формирования. Первая — основная:
+        #: по ней показываются уровни и предпросмотр, документы формируются
+        #: для всех. По умолчанию выбрана одна — основная.
+        self.selected_sros: list[SroProfile] = [self.sro]
 
     # ------------------------------------------------------------------ СРО
+    def set_selected(self, profiles: list[SroProfile], remember: bool = True) -> None:
+        """Задать список выбранных СРО. Первая становится основной.
+
+        Пустой список игнорируется: хотя бы одна СРО должна быть выбрана.
+        """
+        profiles = [p for p in profiles if p is not None]
+        if not profiles:
+            return
+        self.selected_sros = profiles
+        self.use_sro(profiles[0], remember=remember)
     def _choose(self, wanted: str | SroProfile | None) -> SroProfile:
         """Какую СРО использовать.
 
@@ -474,3 +488,37 @@ def generate(project: Project, company_input: CompanyData,
             result.notes.append(pdf_note)
 
     return result
+
+
+@dataclass
+class SroOutcome:
+    """Итог формирования для ОДНОЙ СРО в пакетном прогоне."""
+
+    sro: SroProfile
+    result: GenerationResult | None = None
+    error: str | None = None
+
+    @property
+    def ok(self) -> bool:
+        return self.result is not None and self.result.ok
+
+
+def generate_many(project: Project, company_input: CompanyData,
+                  sros: list[SroProfile], make_pdf: bool = True,
+                  today: date | None = None) -> list[SroOutcome]:
+    """Сформировать комплекты документов сразу для нескольких СРО.
+
+    Каждая СРО обрабатывается отдельно и независимо: сбой в одной
+    (например, у проектной СРО нет выбранного пятого уровня) не мешает
+    остальным — он записывается в итог этой СРО, а прочие формируются как
+    обычно. Работаем с копией компании — исходный объект не меняется.
+    """
+    outcomes: list[SroOutcome] = []
+    for profile in sros:
+        project.use_sro(profile, remember=False)
+        try:
+            result = generate(project, company_input, make_pdf=make_pdf, today=today)
+            outcomes.append(SroOutcome(profile, result=result))
+        except GeneratorError as exc:
+            outcomes.append(SroOutcome(profile, error=str(exc)))
+    return outcomes

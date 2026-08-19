@@ -24,11 +24,11 @@ from . import app_logging  # noqa: E402
 from .company_parser import parse_card, parse_text  # noqa: E402
 from .context_builder import build_context  # noqa: E402
 from .document_generator import (GeneratorError, Project, check_readiness,  # noqa: E402
-                                 generate)
+                                 generate_many)
 from .models import DOC_PARAM_FIELDS, FIELD_SPECS, CompanyData  # noqa: E402
 from .quality_control import lookup_variable  # noqa: E402
 from .readers import ReadError, read_card  # noqa: E402
-from .sro_registry import SroError  # noqa: E402
+from .sro_registry import SroError, find  # noqa: E402
 from .validators import validate_company  # noqa: E402
 
 
@@ -102,7 +102,7 @@ def print_field_map(project: Project) -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Заполнение документов на вступление в СРО")
-    parser.add_argument("--sro", help="в какую СРО подаём (название или папка)")
+    parser.add_argument("--sro", help="в какие СРО подаём: название или несколько через запятую (СФЕРА-А,ЯРД)")
     parser.add_argument("--sro-list", action="store_true",
                         help="показать список настроенных СРО")
     parser.add_argument("--card", help="файл карточки компании (DOCX/XLSX/PDF/TXT)")
@@ -118,11 +118,25 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        project = Project(sro=args.sro)
+        project = Project()
     except (GeneratorError, SroError) as exc:
         print(f"\n{exc}\n", file=sys.stderr)
         return 2
     app_logging.setup(project.logs_dir, verbose=args.verbose)
+
+    # --sro может перечислять несколько СРО через запятую.
+    if args.sro:
+        wanted = [name.strip() for name in args.sro.split(",") if name.strip()]
+        chosen = []
+        for name in wanted:
+            profile = find(project.all_sro, name)
+            if profile is None:
+                available = ", ".join(f"«{p.short_name}»" for p in project.all_sro)
+                print(f"\nСРО «{name}» не найдена.\nДоступны: {available}\n",
+                      file=sys.stderr)
+                return 2
+            chosen.append(profile)
+        project.set_selected(chosen, remember=False)
 
     if args.sro_list:
         print_sro_list(project)
@@ -218,31 +232,39 @@ def main(argv: list[str] | None = None) -> int:
         print("Формирование остановлено: не хватает обязательных данных.\n")
         return 3
 
-    try:
-        result = generate(project, company, make_pdf=not args.no_pdf)
-    except GeneratorError as exc:
-        print(f"\n{exc}\n", file=sys.stderr)
-        return 3
+    outcomes = generate_many(project, company, project.selected_sros,
+                             make_pdf=not args.no_pdf)
 
     print("=" * 62)
     print("РЕЗУЛЬТАТ")
     print("=" * 62)
-    print(f"Папка: {result.folder}")
-    for path in result.created:
-        print(f"  создан: {path.name}")
-    for path in result.pdf:
-        print(f"  создан: {path.name}")
-    for report in result.quality:
-        status = "проверен" if report.ok else "НЕ ГОТОВ"
-        print(f"  [{status}] {report.document}")
-        for problem in report.problems:
-            print(f"      проблема: {problem}")
-        for warning in report.warnings:
-            print(f"      внимание: {warning}")
-    for note in result.notes:
-        print(f"  примечание: {note}")
+    any_fail = False
+    for outcome in outcomes:
+        print(f"\n### СРО: {outcome.sro.short_name}")
+        if outcome.error:
+            any_fail = True
+            for line in outcome.error.splitlines():
+                print(f"    {line}")
+            continue
+        result = outcome.result
+        print(f"  Папка: {result.folder}")
+        for path in result.created:
+            print(f"    создан: {path.name}")
+        for path in result.pdf:
+            print(f"    создан: {path.name}")
+        for report in result.quality:
+            status = "проверен" if report.ok else "НЕ ГОТОВ"
+            print(f"    [{status}] {report.document}")
+            for problem in report.problems:
+                print(f"        проблема: {problem}")
+            for warning in report.warnings:
+                print(f"        внимание: {warning}")
+        for note in result.notes:
+            print(f"    примечание: {note}")
+        if not result.ok:
+            any_fail = True
     print()
-    return 0 if result.ok else 4
+    return 0 if not any_fail else 4
 
 
 if __name__ == "__main__":

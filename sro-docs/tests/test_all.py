@@ -28,7 +28,8 @@ from src.docx_engine import (_digit_row, extract_all_text,  # noqa: E402
                              extract_package_text,
                              fill_template, scan_placeholders)
 from src.document_generator import (GeneratorError, Project,  # noqa: E402
-                                    check_readiness, company_folder_name, generate)
+                                    check_readiness, company_folder_name,
+                                    generate, generate_many)
 from src.models import CompanyData  # noqa: E402
 from src.readers import read_card  # noqa: E402
 
@@ -660,6 +661,56 @@ class TestMultipleSro(unittest.TestCase):
         with self.assertRaises(GeneratorError) as ctx:
             generate(project, make_company(ALPHA), make_pdf=False)
         self.assertIn("бланки", str(ctx.exception).lower())
+
+    def test_generate_many_makes_a_set_per_sro(self):
+        """Выбор нескольких СРО → по комплекту документов в каждой папке СРО."""
+        self.project.output_root = self.tmp / "out"
+        chosen = [p for p in self.project.all_sro
+                  if p.key in ("СССС", "СФЕРА-А", "ЯРД")]
+        outcomes = generate_many(self.project, make_company(ALPHA), chosen,
+                                 make_pdf=False)
+        self.assertEqual(len(outcomes), 3)
+        for outcome in outcomes:
+            with self.subTest(sro=outcome.sro.key):
+                self.assertTrue(outcome.ok, outcome.error)
+                # папка: output / СРО / компания
+                self.assertEqual(outcome.result.folder.parent.name, outcome.sro.short_name)
+                self.assertEqual(outcome.result.folder.name, "7812345675_ООО Ромашка")
+                self.assertEqual(len(outcome.result.created), 2)
+
+    def test_generate_many_does_not_mix_between_sro(self):
+        """В комплекте каждой СРО — её название, чужих нет."""
+        self.project.output_root = self.tmp / "out"
+        chosen = [p for p in self.project.all_sro if p.key in ("СССС", "ЯРД")]
+        outcomes = generate_many(self.project, make_company(ALPHA), chosen,
+                                 make_pdf=False)
+        texts = {}
+        for outcome in outcomes:
+            self.assertTrue(outcome.ok, outcome.error)
+            joined = " ".join(extract_all_text(p) for p in outcome.result.created)
+            texts[outcome.sro.key] = joined
+        # У каждой СРО в документах её собственное короткое имя.
+        self.assertIn("СССС", texts["СССС"])
+        self.assertIn("ЯРД", texts["ЯРД"])
+        # А чужого имени СРО быть не должно.
+        self.assertNotIn("ЯРД", texts["СССС"])
+
+    def test_generate_many_isolates_errors(self):
+        """Сбой у одной СРО не мешает остальным.
+
+        Пятый уровень есть у строительной СРО и нет у проектной (ЯРД, четыре
+        уровня). При выборе обеих строительная формируется, а ЯРД честно
+        сообщает об ошибке — но не роняет весь пакет.
+        """
+        self.project.output_root = self.tmp / "out"
+        company = make_company(ALPHA)
+        company.set("harm_fund_level", "5")
+        chosen = [p for p in self.project.all_sro if p.key in ("СФЕРА-А", "ЯРД")]
+        outcomes = generate_many(self.project, company, chosen, make_pdf=False)
+        by_key = {o.sro.key: o for o in outcomes}
+        self.assertTrue(by_key["СФЕРА-А"].ok, by_key["СФЕРА-А"].error)
+        self.assertIsNotNone(by_key["ЯРД"].error)
+        self.assertIn("уровн", by_key["ЯРД"].error.lower())
 
     def test_documents_land_in_company_subfolder_of_sro(self):
         """Папки: сверху СРО, внутри — папка компании."""
