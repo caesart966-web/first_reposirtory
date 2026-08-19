@@ -1165,5 +1165,80 @@ class TestProjectConfig(unittest.TestCase):
                                 f"{profile.key}: {spec.template}")
 
 
+class TestFirstRunWindow(unittest.TestCase):
+    """Первый запуск: окно выбора СРО должно быть ВИДНО.
+
+    На первом запуске главное окно ещё скрыто (`withdraw`), и если окно
+    выбора СРО привязать к нему через `transient`, на Windows диалог тоже
+    становится невидимым — программа как будто зависает при запуске. Тесту
+    нужен экран, поэтому без дисплея он пропускается (в обычном прогоне так
+    и будет; под Xvfb — выполняется).
+    """
+
+    def _make_root(self):
+        try:
+            import tkinter as tk
+        except ImportError as exc:            # tkinter не установлен
+            self.skipTest(f"tkinter недоступен: {exc}")
+        try:
+            root = tk.Tk()
+        except tk.TclError as exc:            # нет дисплея
+            self.skipTest(f"нет графического окружения: {exc}")
+        return tk, root
+
+    def test_sro_dialog_visible_with_hidden_parent(self):
+        tk, root = self._make_root()
+        from src import gui
+        try:
+            root.withdraw()  # как в main() на первом запуске
+            project = Project(ROOT)
+            seen = {}
+
+            def poll():
+                for child in root.winfo_children():
+                    if isinstance(child, gui.SroDialog):
+                        child.update_idletasks(); root.update()
+                        seen["viewable"] = bool(child.winfo_viewable())
+                        seen["transient"] = bool(child.wm_transient())
+                        child._accept()
+                        return
+                root.after(40, poll)
+
+            root.after(80, poll)
+            chosen = gui.SroDialog(root, project.all_sro, project.sro).result
+            self.assertTrue(seen.get("viewable"),
+                            "окно выбора СРО невидимо при скрытом главном окне "
+                            "— на Windows программа зависнет при запуске")
+            self.assertFalse(seen.get("transient"),
+                             "к скрытому родителю не должно быть привязки transient")
+            self.assertIsNotNone(chosen, "выбор СРО не вернулся")
+        finally:
+            root.destroy()
+
+    def test_sro_dialog_stays_child_of_visible_parent(self):
+        tk, root = self._make_root()
+        from src import gui
+        try:
+            root.deiconify(); root.update()  # как при кнопке «Сменить СРО…»
+            project = Project(ROOT)
+            seen = {}
+
+            def poll():
+                for child in root.winfo_children():
+                    if isinstance(child, gui.SroDialog):
+                        child.update_idletasks(); root.update()
+                        seen["transient"] = bool(child.wm_transient())
+                        child._accept()
+                        return
+                root.after(40, poll)
+
+            root.after(80, poll)
+            gui.SroDialog(root, project.all_sro, project.sro)
+            self.assertTrue(seen.get("transient"),
+                            "к видимому родителю окно должно оставаться дочерним")
+        finally:
+            root.destroy()
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

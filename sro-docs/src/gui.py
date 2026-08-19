@@ -55,14 +55,48 @@ def open_in_explorer(path: Path) -> None:
             f"\n\nТехническая причина: {exc}")
 
 
+def _present_modal(window, master) -> None:
+    """Показать модальное окно так, чтобы его было ВИДНО.
+
+    `transient` привязывает окно к родителю. Но если родитель сейчас скрыт
+    (на первом запуске главное окно ещё не построено и спрятано `withdraw()`),
+    на Windows такое окно тоже становится невидимым: оно есть, но его не видно,
+    а программа замирает на `wait_window`. Со стороны выглядит как «не
+    запускается». Поэтому к СКРЫТОМУ родителю не привязываемся, а окно
+    поднимаем на передний план и захватываем фокус сами.
+
+    К видимому родителю (кнопка «Сменить СРО…», подтверждение склонений во
+    время формирования) привязка сохраняется — так окно ведёт себя как
+    положено дочернему.
+    """
+    if master is not None and master.winfo_viewable():
+        window.transient(master)
+    window.update_idletasks()
+    width = window.winfo_width() or window.winfo_reqwidth()
+    height = window.winfo_height() or window.winfo_reqheight()
+    x = max(0, (window.winfo_screenwidth() - width) // 2)
+    y = max(0, (window.winfo_screenheight() - height) // 3)
+    window.geometry(f"+{x}+{y}")
+    window.deiconify()
+    window.lift()
+    try:
+        window.attributes("-topmost", True)
+        window.after(300, lambda: window.attributes("-topmost", False))
+    except tk.TclError:
+        pass
+    window.focus_force()
+    try:
+        window.grab_set()
+    except tk.TclError:
+        pass
+
+
 class ConfirmDialog(tk.Toplevel):
     """Подтверждение склонений, в которых программа не уверена."""
 
     def __init__(self, master, confirmations) -> None:
         super().__init__(master)
         self.title("Проверьте склонение")
-        self.transient(master)
-        self.grab_set()
         self.result: dict[str, str] | None = None
         self._entries: dict[str, tk.Entry] = {}
 
@@ -94,6 +128,7 @@ class ConfirmDialog(tk.Toplevel):
             side=RIGHT, padx=PAD)
 
         self.protocol("WM_DELETE_WINDOW", self._cancel)
+        _present_modal(self, master)
         self.wait_window(self)
 
     def _accept(self) -> None:
@@ -111,8 +146,6 @@ class SroDialog(tk.Toplevel):
     def __init__(self, master, profiles, current=None) -> None:
         super().__init__(master)
         self.title("Выбор СРО")
-        self.transient(master)
-        self.grab_set()
         self.resizable(False, False)
         self.result = None
         self._profiles = list(profiles)
@@ -155,6 +188,7 @@ class SroDialog(tk.Toplevel):
             side=RIGHT, padx=PAD)
 
         self.protocol("WM_DELETE_WINDOW", self._cancel)
+        _present_modal(self, master)
         self.wait_window(self)
 
     def _accept(self) -> None:
