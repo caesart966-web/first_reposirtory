@@ -304,6 +304,68 @@ class _NostroyHandler(BaseHTTPRequestHandler):
         self.wfile.write(raw)
 
 
+#: Крупный список членов для проверки массовой загрузки.
+_BULK_INNS = [f"78{index:08d}" for index in range(250)]
+
+
+class _BulkHandler(BaseHTTPRequestHandler):
+    """Эмулятор реестра, отдающего список членов СРО страницами."""
+
+    hits: list[str] = []
+    lock = threading.Lock()
+
+    def log_message(self, *args):  # noqa: D102
+        return
+
+    def do_POST(self) -> None:  # noqa: N802
+        length = int(self.headers.get("Content-Length", 0) or 0)
+        body = json.loads(self.rfile.read(length).decode("utf-8"))
+        filters = body.get("filters") or {}
+        with _BulkHandler.lock:
+            _BulkHandler.hits.append(json.dumps(filters, ensure_ascii=False))
+        if "sro_id" in filters:
+            page = int(body.get("page", 1))
+            size = int(body.get("pageSize", 100))
+            chunk = _BULK_INNS[(page - 1) * size : page * size]
+            data = [
+                {
+                    "inn": inn,
+                    "full_description": f"ООО «Компания {index}»",
+                    "member_status": {"title": "Является членом"},
+                    "registry_registration_date": "2016-04-14T00:00:00+03:00",
+                }
+                for index, inn in enumerate(chunk)
+            ]
+        else:
+            data = []
+        raw = json.dumps({"data": {"data": data}}, ensure_ascii=False).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(raw)))
+        self.end_headers()
+        self.wfile.write(raw)
+
+
+class _FakeBulkServer:
+    def __init__(self) -> None:
+        self.server = ThreadingHTTPServer(("127.0.0.1", 0), _BulkHandler)
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+
+    def __enter__(self) -> "_FakeBulkServer":
+        self.thread.start()
+        return self
+
+    def __exit__(self, *exc_info) -> None:
+        self.server.shutdown()
+        self.server.server_close()
+        self.thread.join(timeout=5)
+
+    @property
+    def base_url(self) -> str:
+        host, port = self.server.server_address[:2]
+        return f"http://{host}:{port}"
+
+
 class _FakeNostroyServer:
     def __init__(self) -> None:
         self.server = ThreadingHTTPServer(("127.0.0.1", 0), _NostroyHandler)
@@ -1353,6 +1415,45 @@ class TestNostroyRegistry(BaseTestCase):
             enrich_dates_from_nostroy(fresh, settings, store)
             self.assertEqual(len(_NostroyHandler.hits), hits_first)
             self.assertEqual(fresh[0].date_join, date(2016, 4, 14))
+
+    def test_bulk_member_list_instead_of_per_company(self) -> None:
+        """
+        Список членов СРО забирается целиком, а не по одной компании.
+
+        Реестр хранит данные именно так — списком членов конкретной СРО, —
+        поэтому полторы тысячи компаний приезжают за полтора десятка запросов
+        вместо полутора тысяч. Номер СРО берётся из выгрузки и из имени файла.
+        """
+        from nostroy_checko import nostroy_api
+        from nostroy_checko.models import CompanyGroup, RegistryRecord
+        from nostroy_checko.pipeline import enrich_dates_from_nostroy
+
+        _BulkHandler.hits = []
+        settings = Settings(
+            input_path=Path("reestr_nostroy_sro_410_20260811.xlsx"),
+            output_dir=self.tmp_dir / "bulk",
+            rps=0.0, nostroy_rps=1000.0, nostroy_workers=4, timeout=5.0,
+            nopriz_dates=False,
+        )
+        store = StateStore(self.tmp_dir / "bulk" / "state.json", daily_limit=100)
+        store.load()
+        groups = [
+            CompanyGroup(
+                key=f"inn:{inn}",
+                records=[RegistryRecord(name="X", inn=inn, sro_name="410")],
+            )
+            for inn in _BULK_INNS
+        ]
+        with _FakeBulkServer() as server:
+            nostroy_api.NOSTROY_BASE = server.base_url
+            enrich_dates_from_nostroy(groups, settings, store)
+
+        # Даты получены по всем, а запросов — считаные единицы.
+        self.assertTrue(all(group.date_join for group in groups))
+        self.assertLess(len(_BulkHandler.hits), 10)
+        self.assertGreater(len(groups), 100)
+        # Поштучный поиск не понадобился вовсе.
+        self.assertTrue(all("sro_id" in hit for hit in _BulkHandler.hits))
 
     def test_file_dates_take_precedence(self) -> None:
         """Дата из файла выгрузки главнее даты из реестра НОСТРОЙ."""

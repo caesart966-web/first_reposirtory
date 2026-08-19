@@ -19,6 +19,7 @@
 
 from __future__ import annotations
 
+import re
 import shutil
 import threading
 import time
@@ -187,6 +188,32 @@ def parse_all(settings: Settings, search_root: Path) -> RunResult:
 #                 Шаг 2б: даты членства из реестра НОСТРОЙ                     #
 # --------------------------------------------------------------------------- #
 
+def _detect_sro_ids(result_groups: list[CompanyGroup], settings: Settings) -> list[str]:
+    """
+    Определяет номера СРО, к которым относится выгрузка.
+
+    Ищет их в двух местах: в самих записях (колонка «СРО → ID») и в имени
+    входного файла (``reestr_nostroy_sro_410_20260811.xlsx``). Номер нужен,
+    чтобы забрать список членов СРО целиком, а не искать каждую компанию.
+    """
+    counter: dict[str, int] = {}
+    for group in result_groups:
+        for record in group.records:
+            digits = re.sub(r"\D", "", record.sro_name or "")
+            if 2 <= len(digits) <= 5:
+                counter[digits] = counter.get(digits, 0) + 1
+
+    from_name = re.search(r"sro[_\-]?(\d{2,5})", settings.input_path.name, re.IGNORECASE)
+    if from_name:
+        digits = from_name.group(1)
+        counter[digits] = counter.get(digits, 0) + len(result_groups)
+
+    # Берём только те номера, что покрывают заметную часть выгрузки, —
+    # случайные числа из других колонок так отсеиваются.
+    threshold = max(5, len(result_groups) // 20)
+    return [sro for sro, count in sorted(counter.items(), key=lambda i: -i[1]) if count >= threshold]
+
+
 def _apply_nostroy(group: CompanyGroup, info: "NostroyMemberInfo") -> None:
     """Переносит сведения из реестра НОСТРОЙ в группу компании."""
     group.nostroy_date_join = info.date_join
@@ -234,6 +261,59 @@ def enrich_dates_from_nostroy(
 
     if not to_fetch:
         logger.info("Даты из реестра НОСТРОЙ: все %d компаний взяты из кэша", len(pending))
+        return
+
+    from .nostroy_api import NOSTROY_BASE
+
+    # --- быстрый путь: весь список членов СРО одним заходом ---------------- #
+    # В файле выгрузки указан номер СРО, а реестр умеет отдавать список её
+    # членов страницами. Полторы тысячи компаний приезжают за полтора десятка
+    # запросов вместо полутора тысяч — минуты вместо часа.
+    sro_ids = _detect_sro_ids(result_groups=to_fetch, settings=settings)
+    if sro_ids:
+        bulk_client = NostroyClient(
+            settings,
+            sample_path=settings.parsed_dir / "nostroy_api_sample.json",
+            base_url=NOSTROY_BASE,
+            title="НОСТРОЙ",
+        )
+        try:
+            for sro_id in sro_ids:
+                logger.info(
+                    "Загружаю список членов СРО №%s целиком — это в разы быстрее "
+                    "поштучного поиска",
+                    sro_id,
+                )
+                members = bulk_client.fetch_sro_members(sro_id)
+                if not members:
+                    logger.info(
+                        "  список СРО №%s получить не удалось — перехожу к поиску "
+                        "по каждой компании", sro_id,
+                    )
+                    continue
+                applied = 0
+                for group in list(to_fetch):
+                    info = members.get(group.inn)
+                    if info is None:
+                        continue
+                    _apply_nostroy(group, info)
+                    state.set_nostroy(group.inn, info.to_dict())
+                    to_fetch.remove(group)
+                    applied += 1
+                logger.info(
+                    "  из списка СРО №%s заполнено компаний: %d, осталось: %d",
+                    sro_id, applied, len(to_fetch),
+                )
+            state.save(force=True)
+        except KeyboardInterrupt:
+            logger.warning("Прервано — собранное сохранено")
+            state.save(force=True)
+            return
+        finally:
+            bulk_client.close()
+
+    if not to_fetch:
+        logger.info("Все даты получены из списков СРО — поштучный поиск не нужен")
         return
 
     logger.info(

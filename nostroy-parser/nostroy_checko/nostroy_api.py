@@ -406,6 +406,90 @@ class NostroyClient:
                 self._last_error = parsed.error
         return None
 
+    def fetch_sro_members(
+        self,
+        sro_id: str,
+        page_size: int = 100,
+        max_pages: int = 200,
+    ) -> dict[str, NostroyMemberInfo]:
+        """
+        Забирает СРАЗУ ВЕСЬ список членов одной СРО, страницами.
+
+        Это на порядок быстрее поштучного поиска: полторы тысячи компаний
+        приезжают за полтора десятка запросов вместо полутора тысяч. Именно так
+        данные и лежат в реестре — список членов конкретной СРО.
+
+        Возвращает ``{ИНН: сведения}``. Пустой словарь означает, что массовая
+        загрузка не удалась (неизвестен формат фильтра, реестр недоступен) —
+        вызывающий код в этом случае возвращается к поштучному поиску.
+        """
+        digits = re.sub(r"\D", "", sro_id or "")
+        if not digits:
+            return {}
+
+        # Имя фильтра по СРО в открытом API не описано, поэтому пробуем
+        # известные варианты и берём тот, который вернул записи.
+        filter_variants: tuple[dict[str, Any], ...] = (
+            {"sro_id": digits},
+            {"sro": digits},
+            {"sro_number": digits},
+            {"sroId": digits},
+            {"sro_registration_number": digits},
+        )
+        endpoints = (
+            (self._working_endpoint,) if self._working_endpoint else _LIST_ENDPOINTS
+        )
+
+        for endpoint in endpoints:
+            for filters in filter_variants:
+                collected: dict[str, NostroyMemberInfo] = {}
+                for page in range(1, max_pages + 1):
+                    if self._dead:
+                        return collected
+                    body = {"filters": filters, "page": page, "pageSize": page_size}
+                    self._rate_limiter.wait()
+                    try:
+                        response = self.session.post(
+                            f"{self.base_url}{endpoint}",
+                            json=body,
+                            timeout=self.settings.timeout,
+                        )
+                    except requests.exceptions.RequestException as exc:
+                        self._last_error = f"сетевая ошибка: {exc}"
+                        break
+                    self._save_sample(response, endpoint)
+                    if response.status_code != 200:
+                        self._last_error = f"HTTP {response.status_code}"
+                        break
+                    try:
+                        payload = response.json()
+                    except ValueError:
+                        self._last_error = "ответ реестра не является JSON"
+                        break
+
+                    records: list[dict[str, Any]] = []
+                    _collect_member_records(payload, records)
+                    fresh = 0
+                    for record in records:
+                        inn = _record_inn(record)
+                        if not inn or inn in collected:
+                            continue
+                        info = parse_member_payload(record, inn)
+                        if info.found:
+                            info.registry = self.title
+                            collected[inn] = info
+                            fresh += 1
+                    if fresh == 0:
+                        break          # страницы кончились либо фильтр не тот
+                    logger.info(
+                        "  %s: загружено записей списка — %d", self.title, len(collected)
+                    )
+                if len(collected) >= 10:
+                    with self._lock:
+                        self._working_endpoint = endpoint
+                    return collected
+        return {}
+
     def lookup(self, inn: str, ogrn: str = "", name: str = "") -> NostroyMemberInfo:
         """
         Ищет члена СРО по ИНН, а при неудаче — по ОГРН и по названию.
