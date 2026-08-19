@@ -560,6 +560,71 @@ class TestColumnMapper(BaseTestCase):
         self.assertEqual(roles["Дата рождения"], "—")
         self.assertTrue(all(item["Примеры значений"] is not None for item in report))
 
+    def test_database_export_layout(self) -> None:
+        """
+        Выгрузка из базы реестра: английские имена полей, тройки ID/code/title,
+        колонка примечаний со свободным текстом.
+
+        Проверяются четыре ошибки, найденные на настоящем файле СРО-410:
+        шапка не должна поглощать строки данных; full_description — это
+        наименование, а не адрес; статус берётся из title, а не из ID;
+        колонка other_information не должна становиться датой исключения.
+        """
+        rows = [[
+            "Регистрационный номер", "ИНН", "ОГРН/ОГРНИП",
+            "member_status → ID", "member_status → title",
+            "full_description", "short_description", "other_information",
+        ]]
+        data = [
+            ("666", "7839024647", "1157800000544", "1", "Является членом",
+             "Автономная некоммерческая организация «ВАЛААМ»", "АНО «ВАЛААМ»", ""),
+            ("184", "7825489730", "1027809215477", "2", "Исключен",
+             "Акционерное общество «Абсолют»", "АО «Абсолют»",
+             "дата рождения 03.05.1970, место рождения -пос. Ропша"),
+            ("197", "7825663795", "1037843017684", "1", "Является членом",
+             "Общество с ограниченной ответственностью «Гамма»", "ООО «Гамма»",
+             'по организации ООО "Алсим-Строй" в июле 2021 года ошибочно'),
+        ]
+        for index in range(10):                     # объём, чтобы работал автодетект
+            rows.append(list(data[index % len(data)]))
+            rows[-1][1] = f"78{index:08d}"          # уникальные ИНН
+        from nostroy_checko.excel_reader import SheetData
+
+        sheet = SheetData(Path("t.xlsx"), "t.xlsx", "СРО 410", rows)
+        report: list = []
+        records, _, mapping = parse_sheet(sheet, column_report=report)
+
+        # Шапка — ровно одна строка, все 10 записей на месте.
+        self.assertEqual(mapping.header_row, 0)
+        self.assertEqual(mapping.data_start_row, 1)
+        self.assertEqual(len(records), 10)
+
+        roles = {item["Заголовок"]: item["Распознано как"] for item in report}
+        self.assertIn("name", roles["full_description"])
+        self.assertNotIn("address", roles["full_description"])
+        self.assertEqual(roles["member_status → title"], "status")
+        self.assertEqual(roles["member_status → ID"], "—")
+        # Примечание не должно быть принято за дату.
+        self.assertEqual(roles["other_information"], "—")
+        self.assertTrue(all(record.date_exit is None for record in records))
+
+        # Наименование — полное, статус — человекочитаемый.
+        first = records[0]
+        self.assertIn("Автономная некоммерческая", first.name)
+        self.assertEqual(first.status, "Является членом")
+
+    def test_notes_text_never_yields_invented_dates(self) -> None:
+        """Дата не должна «додумываться» из произвольного текста."""
+        invented = 'по организации ООО "Алсим-Строй" ИНН 7810888740 в июле 2021 года ошибочно'
+        self.assertIsNone(textutils.parse_date(invented))
+        # Дата, упомянутая в предложении, читается, но полем даты не считается.
+        note = "дата рождения 03.05.1970, место рождения -пос. Ропша, Ломоносовского р-на"
+        self.assertEqual(textutils.parse_date(note), date(1970, 5, 3))
+        self.assertFalse(textutils.is_date_cell(note))
+        # А вот запись решения — полноценное поле даты.
+        self.assertTrue(textutils.is_date_cell("Протокол № 15 от 12.05.2010"))
+        self.assertEqual(textutils.parse_date("Протокол № 15 от 12.05.2010"), date(2010, 5, 12))
+
     def test_unknown_column_names(self) -> None:
         """Совершенно нестандартные заголовки — роли берутся из содержимого."""
         rows = [

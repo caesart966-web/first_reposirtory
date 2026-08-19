@@ -26,6 +26,7 @@ from .logging_setup import get_logger
 from .textutils import (
     cell_to_text,
     clean_text,
+    is_date_cell,
     extract_emails,
     extract_phones,
     has_org_marker,
@@ -109,6 +110,9 @@ _NAME_ANTI = (
 #: Полный набор правил «заголовок -> роль». Порядок не важен, важен вес.
 ROLE_PATTERNS: tuple[RolePattern, ...] = (
     # ---------------------------- наименование ---------------------------- #
+    # Выгрузки из баз данных приходят с английскими именами полей.
+    RolePattern(ROLE_NAME, r"^full description$|^full name$|^fullname$", 12, None),
+    RolePattern(ROLE_NAME, r"^short description$|^short name$|^shortname$", 9, None),
     RolePattern(ROLE_NAME, r"полное (фирменное )?наименование", 12, _NAME_ANTI),
     RolePattern(ROLE_NAME, r"наименование (члена|организации|юридического лица|юл|ип|компании)", 11, _NAME_ANTI),
     RolePattern(ROLE_NAME, r"^наименование$", 10, None),
@@ -124,6 +128,8 @@ ROLE_PATTERNS: tuple[RolePattern, ...] = (
     # -------------------------------- ИНН --------------------------------- #
     RolePattern(ROLE_INN, r"идентификационный номер налогоплательщика", 12, None),
     RolePattern(ROLE_INN, r"(^|\W)инн(\W|$)", 11, r"инн (банка|заказчика|страхов|поручител)"),
+    RolePattern(ROLE_INN, r"^inn$|^tax id$", 11, None),
+    RolePattern(ROLE_OGRN, r"^ogrn$|^psrn$", 11, None),
     RolePattern(ROLE_INN, r"^инн кпп$|^инн кпп члена", 10, None),
 
     # -------------------------------- ОГРН -------------------------------- #
@@ -161,6 +167,10 @@ ROLE_PATTERNS: tuple[RolePattern, ...] = (
 
     # ------------------------------ статус --------------------------------- #
     RolePattern(ROLE_STATUS, r"^статус|статус членства|состояние членства|сведения о членстве", 9, None),
+    # В выгрузках из баз рядом лежат три колонки одного поля: ID, code и title.
+    # Человекочитаемое значение — только в title; ID («1»/«2») в отчёте бесполезен.
+    RolePattern(ROLE_STATUS, r"member status title|status title", 12, None),
+    RolePattern(ROLE_STATUS, r"member status|^status$", 10, r"(^| )(id|code|код)( |$)"),
     RolePattern(ROLE_STATUS, r"действующ|прекращен(о|ное)? членство", 6, None),
 
     # ------------------------ реестровый номер ----------------------------- #
@@ -202,6 +212,13 @@ ROLE_PATTERNS: tuple[RolePattern, ...] = (
 
     # -------------------- прочие контактные сведения ----------------------- #
     RolePattern(ROLE_CONTACT_OTHER, r"контакт|способ связи|мессенджер|whatsapp|telegram|viber", 7, None),
+)
+
+#: Служебные колонки выгрузок: там лежат заметки, а не поля члена СРО.
+#: В реестре НОСТРОЙ, например, в other_information хранится дата рождения ИП —
+#: приняв её за дату исключения, скрипт помечал предпринимателей исключёнными.
+_NOTES_HEADER_RE = re.compile(
+    r"(other information|прочая информация|примечани|коммент|заметк|описани|note)"
 )
 
 #: Заголовки, которые точно НЕ являются данными о члене СРО (порядковый номер и т.п.).
@@ -277,12 +294,42 @@ def match_header_roles(header: str) -> dict[str, float]:
     normalized = normalize_header(header)
     if not normalized or _SERVICE_HEADER_RE.match(normalized):
         return {}
+    if _NOTES_HEADER_RE.search(normalized):
+        return {}
     result: dict[str, float] = {}
     for rule in ROLE_PATTERNS:
         weight = rule.match(normalized)
         if weight > 0:
             result[rule.role] = max(result.get(rule.role, 0.0), weight)
     return result
+
+
+def row_looks_like_data(row: Sequence[Any]) -> bool:
+    """
+    Похожа ли строка на данные, а не на заголовки.
+
+    Настоящая шапка не содержит ИНН, ОГРН и названий в кавычках. Без этой
+    проверки «многоэтажная» шапка склеивалась с первыми строками таблицы:
+    заголовок «ИНН» превращался в «ИНН 7839024647 7825489730», а сами компании
+    из этих строк пропадали из отчёта.
+    """
+    signals = 0
+    for value in row:
+        text = cell_to_text(value)
+        if not text:
+            continue
+        digits = re.sub(r"\D", "", text)
+        if is_valid_inn(text):
+            signals += 2
+        elif re.fullmatch(r"\d{13}|\d{15}", digits):     # ОГРН/ОГРНИП
+            signals += 2
+        elif re.search(r'[«»"]', text):                   # название в кавычках
+            signals += 1
+        elif parse_date(text) is not None:
+            signals += 1
+        if signals >= 2:
+            return True
+    return False
 
 
 def _combine_header_rows(rows: Sequence[Sequence[Any]]) -> list[str]:
@@ -404,7 +451,10 @@ def detect_header_row(
         for span in range(1, max_span + 1):
             if start + span > len(rows):
                 break
-            headers = _combine_header_rows(rows[start : start + span])
+            candidate_rows = rows[start : start + span]
+            if any(row_looks_like_data(row) for row in candidate_rows):
+                continue          # в шапку попали данные — это не шапка
+            headers = _combine_header_rows(candidate_rows)
             if not any(headers):
                 continue
             score, roles = score_header_candidate(headers)
@@ -484,7 +534,7 @@ def _collect_column_stats(
             stats.inn += 1
         if re.fullmatch(r"\d{13}|\d{15}", re.sub(r"\D", "", text)):
             stats.ogrn += 1
-        parsed = parse_date(raw, date_mode)
+        parsed = parse_date(raw, date_mode) if is_date_cell(raw, date_mode) else None
         if parsed is not None:
             stats.dates += 1
             stats.date_values.append(parsed)
@@ -528,6 +578,11 @@ def detect_roles_by_content(
 
     width = max(len(row) for row in rows)
     assigned: set[int] = {index for indexes in column_map.roles.values() for index in indexes}
+    # Колонки-примечания исключаем и из автоопределения: там лежит свободный
+    # текст, в котором может встретиться что угодно, включая чужие даты.
+    for index, header in enumerate(column_map.headers):
+        if _NOTES_HEADER_RE.search(normalize_header(header)):
+            assigned.add(index)
     stats_by_column: dict[int, _ColumnStats] = {}
     for column in range(width):
         stats_by_column[column] = _collect_column_stats(rows, column, sample_size, date_mode)
@@ -607,8 +662,14 @@ def detect_roles_by_content(
     # лишь у части строк, на эту роль не годится. Отсекает частый случай:
     # «Дата рождения» заполнена только у индивидуальных предпринимателей —
     # без этой проверки она становилась бы «датой вступления».
+    def _median_year(stats: _ColumnStats) -> int:
+        values = sorted(stats.date_values)
+        return values[len(values) // 2].year if values else 0
+
     dense_date_columns = [
-        (column, stats) for column, stats in date_columns if stats.fill_ratio >= 0.5
+        (column, stats)
+        for column, stats in date_columns
+        if stats.fill_ratio >= 0.5 and _median_year(stats) >= 2000
     ]
     # Колонка с более ранними датами и большей заполненностью — «дата вступления».
     for group in (date_columns, dense_date_columns):
@@ -634,11 +695,14 @@ def detect_roles_by_content(
         # быть не может: отсекаем колонки, где даты заведомо «человеческие»
         # (медиана раньше 1960 года — так выглядят даты рождения ИП).
         def looks_like_birthdays(stats: _ColumnStats) -> bool:
+            # Саморегулирование в строительстве появилось в 2008-2009 годах,
+            # поэтому колонка, где типичная дата раньше 2000-го, — это что
+            # угодно (даты рождения, регистрации фирмы), но не даты членства.
             values = sorted(stats.date_values)
             if not values:
                 return False
             median = values[len(values) // 2]
-            return median.year < 1960
+            return median.year < 2000
 
         candidates = [item for item in date_columns if not looks_like_birthdays(item[1])]
         if candidates:

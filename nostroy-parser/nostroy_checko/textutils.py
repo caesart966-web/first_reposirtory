@@ -337,15 +337,46 @@ def parse_date(value: Any, date_mode: int = 0) -> date | None:
         return parse_date(inner.group(0), date_mode)
 
     # --- запасной разбор через dateutil (день впереди месяца) --------------- #
+    # Режим fuzzy НЕ используется намеренно: он «додумывает» дату из любого
+    # текста — фраза «в июле 2021 года ошибочно...» превращалась в конкретное
+    # число, и в отчёт попадала выдуманная дата. Лучше не вернуть ничего,
+    # чем вернуть неверное.
+    if len(compact) > 32:
+        return None
     try:
-        from dateutil import parser as dateutil_parser  # локальный импорт: необязательная зависимость
+        from dateutil import parser as dateutil_parser  # необязательная зависимость
     except ImportError:
         return None
     try:
-        result = dateutil_parser.parse(compact, dayfirst=True, fuzzy=True).date()
+        result = dateutil_parser.parse(compact, dayfirst=True).date()
     except (ValueError, OverflowError, TypeError):
         return None
     return result if _MIN_DATE <= result <= _MAX_DATE else None
+
+
+def is_date_cell(value: Any, date_mode: int = 0) -> bool:
+    """
+    Похожа ли ячейка на поле с датой (а не на текст, где дата упомянута).
+
+    Используется при автоопределении роли столбца. Разница принципиальная:
+    в ячейке «Протокол № 15 от 12.05.2010» дата — это содержимое поля, а в
+    примечании «дата рождения 03.05.1970, место рождения -пос. Ропша...» —
+    просто упоминание. Без этой проверки колонка примечаний становилась
+    «датой исключения».
+    """
+    if isinstance(value, (date, datetime)):
+        return True
+    text = clean_text(value)
+    if not text or parse_date(value, date_mode) is None:
+        return False
+    match = _DATE_LIKE_RE.search(text)
+    if match is None:
+        return len(text) <= 12          # серийное число или «голый» год
+    # Вокруг даты допускается короткая подпись («от», «Протокол № 15»),
+    # но не предложение из нескольких слов.
+    remainder = (text[: match.start()] + text[match.end() :])
+    letters = sum(1 for char in remainder if char.isalpha())
+    return letters <= 16
 
 
 def format_date(value: date | None) -> str:
