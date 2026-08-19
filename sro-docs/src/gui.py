@@ -222,6 +222,138 @@ class SroDialog(tk.Toplevel):
         self.destroy()
 
 
+class SroParamsWizard(tk.Toplevel):
+    """Мастер: по очереди задаёт параметры заявления для каждой СРО.
+
+    Реквизиты компании одни на все СРО, а виды работ и уровни ответственности
+    (в том числе обеспечения договорных обязательств, ОДО) в разных СРО могут
+    быть разными — их и спрашиваем на каждую СРО отдельно.
+
+    В `self.result` возвращается список словарей параметров (по одному на
+    СРО, в том же порядке) или None, если пользователь нажал «Отмена».
+    """
+
+    def __init__(self, master, profiles, defaults) -> None:
+        super().__init__(master)
+        self.title("Параметры для каждой СРО")
+        self.resizable(False, False)
+        self.result = None
+        self._profiles = list(profiles)
+        self._index = 0
+        self._params = [
+            {
+                "object_kind": defaults.get("object_kind") or "ordinary",
+                "harm_fund_level": defaults.get("harm_fund_level") or "1",
+                "contract_fund_level": defaults.get("contract_fund_level") or "",
+            }
+            for _ in self._profiles
+        ]
+
+        self._heading = ttk.Label(self, font=("Segoe UI", 11, "bold"))
+        self._heading.pack(anchor="w", padx=PAD * 2, pady=(PAD * 2, 0))
+        self._subhead = ttk.Label(self, foreground="#40474f", wraplength=620,
+                                  justify=LEFT)
+        self._subhead.pack(anchor="w", padx=PAD * 2, pady=(2, PAD))
+
+        self._body = ttk.Frame(self)
+        self._body.pack(fill=BOTH, expand=True, padx=PAD * 2)
+
+        buttons = ttk.Frame(self)
+        buttons.pack(fill=X, padx=PAD * 2, pady=PAD * 2)
+        ttk.Button(buttons, text="Отмена", command=self._cancel).pack(side=RIGHT)
+        self._next_btn = ttk.Button(buttons, text="Далее", command=self._next)
+        self._next_btn.pack(side=RIGHT, padx=PAD)
+        self._back_btn = ttk.Button(buttons, text="Назад", command=self._back)
+        self._back_btn.pack(side=RIGHT)
+
+        self._object_var = tk.StringVar()
+        self._harm_var = tk.StringVar()
+        self._contract_var = tk.StringVar()
+
+        self._render()
+        self.protocol("WM_DELETE_WINDOW", self._cancel)
+        _present_modal(self, master)
+        self.wait_window(self)
+
+    def _render(self) -> None:
+        profile = self._profiles[self._index]
+        params = self._params[self._index]
+        self._heading.configure(
+            text=f"СРО {self._index + 1} из {len(self._profiles)}: "
+                 f"{profile.short_name}")
+        self._subhead.configure(
+            text="Отметьте виды работ и уровни ответственности именно для этой "
+                 "СРО. У следующей можно указать другие.")
+        for child in self._body.winfo_children():
+            child.destroy()
+
+        self._object_var.set(params["object_kind"])
+        self._harm_var.set(params["harm_fund_level"])
+        self._contract_var.set(params["contract_fund_level"])
+
+        obj = ttk.LabelFrame(self._body, text=" Виды объектов ")
+        obj.pack(fill=X, pady=(0, PAD))
+        for kind, title in OBJECT_KINDS.items():
+            ttk.Radiobutton(obj, text=title, value=kind, variable=self._object_var,
+                            width=1).pack(anchor="w", padx=PAD, pady=1, fill=X)
+
+        self._level_block(" Компенсационный фонд возмещения вреда ",
+                          profile.harm_levels, self._harm_var, allow_none=False)
+        self._level_block(" Компенсационный фонд обеспечения договорных "
+                          "обязательств (ОДО) ",
+                          profile.contract_levels, self._contract_var, allow_none=True)
+
+        last = self._index == len(self._profiles) - 1
+        self._next_btn.configure(text="Готово" if last else "Далее")
+        self._back_btn.configure(state="normal" if self._index else "disabled")
+
+    def _level_block(self, title, levels, variable, allow_none) -> None:
+        block = ttk.LabelFrame(self._body, text=title)
+        block.pack(fill=X, pady=(0, PAD))
+        if not levels:
+            ttk.Label(block, foreground="#8a5a00",
+                      text="Уровни этой СРО не заданы.").pack(
+                anchor="w", padx=PAD, pady=2)
+            return
+        keys = [x.key for x in levels]
+        if allow_none:
+            ttk.Radiobutton(block, text="не заявляется (как в бланке)", value="",
+                            variable=variable).pack(anchor="w", padx=PAD, pady=1)
+            if variable.get() not in keys:
+                variable.set("")
+        elif variable.get() not in keys:
+            variable.set(keys[0])
+        for level in levels:
+            ttk.Radiobutton(block, text=level.label, value=level.key,
+                            variable=variable).pack(anchor="w", padx=PAD, pady=1)
+
+    def _save(self) -> None:
+        self._params[self._index] = {
+            "object_kind": self._object_var.get(),
+            "harm_fund_level": self._harm_var.get(),
+            "contract_fund_level": self._contract_var.get(),
+        }
+
+    def _next(self) -> None:
+        self._save()
+        if self._index == len(self._profiles) - 1:
+            self.result = self._params
+            self.destroy()
+        else:
+            self._index += 1
+            self._render()
+
+    def _back(self) -> None:
+        self._save()
+        if self._index:
+            self._index -= 1
+            self._render()
+
+    def _cancel(self) -> None:
+        self.result = None
+        self.destroy()
+
+
 class Application(tk.Frame):
     def __init__(self, master: tk.Tk, project: Project) -> None:
         super().__init__(master)
@@ -788,9 +920,26 @@ class Application(tk.Frame):
                 return
             self.company.overrides.update(dialog.result)
 
+        # Параметры заявления (виды работ, уровни, ОДО) в разных СРО могут
+        # быть разными. Реквизиты компании общие, а параметры при нескольких
+        # СРО собираем мастером — по очереди на каждую.
+        profiles = self.project.selected_sros
+        if len(profiles) > 1:
+            defaults = {
+                "object_kind": self.company.object_kind,
+                "harm_fund_level": self.company.harm_fund_level,
+                "contract_fund_level": self.company.contract_fund_level,
+            }
+            wizard = SroParamsWizard(self.master, profiles, defaults)
+            if wizard.result is None:
+                self._set_status("Формирование отменено.", "#8a5a00")
+                return
+            plans = list(zip(profiles, wizard.result))
+        else:
+            plans = list(profiles)  # одна СРО — параметры со вкладки «Параметры»
+
         try:
-            outcomes = generate_many(self.project, self.company,
-                                     self.project.selected_sros, make_pdf=True)
+            outcomes = generate_many(self.project, self.company, plans, make_pdf=True)
         except Exception as exc:  # noqa: BLE001
             app_logging.get().exception("Сбой формирования документов")
             messagebox.showerror(

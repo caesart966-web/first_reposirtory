@@ -504,20 +504,33 @@ class SroOutcome:
 
 
 def generate_many(project: Project, company_input: CompanyData,
-                  sros: list[SroProfile], make_pdf: bool = True,
+                  plans, make_pdf: bool = True,
                   today: date | None = None) -> list[SroOutcome]:
     """Сформировать комплекты документов сразу для нескольких СРО.
 
-    Каждая СРО обрабатывается отдельно и независимо: сбой в одной
-    (например, у проектной СРО нет выбранного пятого уровня) не мешает
-    остальным — он записывается в итог этой СРО, а прочие формируются как
-    обычно. Работаем с копией компании — исходный объект не меняется.
+    `plans` — что и с какими параметрами формировать. Каждый элемент —
+    либо профиль СРО, либо пара «(профиль, параметры)», где параметры —
+    словарь полей, СВОИХ для этой СРО (виды объектов, уровни ответственности
+    и обеспечения договорных обязательств). Одна компания нередко заявляет
+    в разных СРО разные виды работ и уровни, поэтому параметры задаются
+    на каждую СРО отдельно, а реквизиты компании берутся общие.
+
+    Каждая СРО обрабатывается независимо: сбой в одной (например, у проектной
+    СРО нет выбранного пятого уровня) не мешает остальным — он записывается
+    в итог этой СРО. Работаем с копией компании — исходный объект не меняется.
     """
     outcomes: list[SroOutcome] = []
-    for profile in sros:
+    for plan in plans:
+        if isinstance(plan, (tuple, list)):
+            profile, params = plan
+        else:
+            profile, params = plan, {}
         project.use_sro(profile, remember=False)
+        company = company_input.copy()
+        for key, value in (params or {}).items():
+            company.set(key, value)
         try:
-            result = generate(project, company_input, make_pdf=make_pdf, today=today)
+            result = generate(project, company, make_pdf=make_pdf, today=today)
             outcomes.append(SroOutcome(profile, result=result))
         except GeneratorError as exc:
             outcomes.append(SroOutcome(profile, error=str(exc)))

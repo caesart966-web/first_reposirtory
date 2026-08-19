@@ -396,6 +396,9 @@ class TestGeneration(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
         self.project = Project(ROOT)
+        # Явно фиксируем основную СРО, чтобы тесты не зависели от того,
+        # какая СРО была «запомнена» в config/app.json.
+        self.project.use_sro("СССС", remember=False)
         self.project.output_root = self.tmp / "out"
 
     def tearDown(self):
@@ -694,6 +697,66 @@ class TestMultipleSro(unittest.TestCase):
         self.assertIn("ЯРД", texts["ЯРД"])
         # А чужого имени СРО быть не должно.
         self.assertNotIn("ЯРД", texts["СССС"])
+
+    def test_generate_many_uses_own_params_per_sro(self):
+        """У каждой СРО — свои виды работ и уровни, реквизиты общие.
+
+        Так работает мастер параметров в окне: одна компания заявляет
+        в разных СРО разное. Проверяем, что нужный уровень отмечен именно
+        в своей СРО, а чужой — нет.
+        """
+        self.project.output_root = self.tmp / "out"
+        plans = [
+            (self._profile("СФЕРА-А"),
+             {"object_kind": "hazardous", "harm_fund_level": "3",
+              "contract_fund_level": ""}),
+            (self._profile("ЯРД"),
+             {"object_kind": "ordinary", "harm_fund_level": "2",
+              "contract_fund_level": "1"}),
+        ]
+        outcomes = generate_many(self.project, make_company(ALPHA), plans,
+                                 make_pdf=False)
+        marks = {}
+        for outcome in outcomes:
+            self.assertTrue(outcome.ok, outcome.error)
+            application = next(p for p in outcome.result.created
+                               if p.name.startswith("01_"))
+            marks[outcome.sro.key] = self._marked_levels(application)
+        # СФЕРА-А: возмещение вреда — третий уровень, ОДО не заявлен.
+        self.assertEqual(marks["СФЕРА-А"], {"вреда": {"Третий"}})
+        # ЯРД: возмещение вреда — второй, ОДО — первый.
+        self.assertEqual(marks["ЯРД"],
+                         {"вреда": {"Второй"}, "обеспечения": {"Первый"}})
+
+    def _profile(self, key):
+        return next(p for p in self.project.all_sro if p.key == key)
+
+    @staticmethod
+    def _marked_levels(docx) -> dict:
+        """Какие уровни отмечены в таблицах заявления: {фонд: {уровни}}."""
+        import zipfile
+
+        from lxml import etree
+
+        from src.docx_engine import W
+
+        root = etree.fromstring(zipfile.ZipFile(docx).read("word/document.xml"))
+        names = {"Первый", "Второй", "Третий", "Четвертый", "Пятый"}
+        found: dict = {}
+        for table in root.iter(W + "tbl"):
+            rows = table.findall(W + "tr")
+            head = " ".join(t.text or "" for t in rows[0].iter(W + "t")) if rows else ""
+            fund = ("вреда" if "вреда" in head else
+                    "обеспечения" if "обеспечения" in head else None)
+            if fund is None:
+                continue
+            for row in rows[1:]:
+                cells = row.findall(W + "tc")
+                label = " ".join(t.text or "" for t in cells[0].iter(W + "t")).strip()
+                mark = " ".join(t.text or "" for t in cells[-1].iter(W + "t")).strip()
+                if label in names and mark:
+                    found.setdefault(fund, set()).add(label)
+        return found
 
     def test_generate_many_isolates_errors(self):
         """Сбой у одной СРО не мешает остальным.
