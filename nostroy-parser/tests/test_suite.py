@@ -249,6 +249,10 @@ NOSTROY_MEMBER_PAYLOAD = {
                 "registry_registration_date": "2016-04-14T00:00:00+03:00",
                 "accession_date": "2016-04-14T00:00:00+03:00",
                 "exclusion_date": None,
+                "full_address": "630099, Новосибирская обл., г. Новосибирск, ул. Ленина, д. 21",
+                "member_phone": "8 (383) 200-00-00",
+                "member_email": "info@sibstroy.ru",
+                "director": {"fio": "Кузнецов Андрей Павлович", "post": "Директор"},
                 "birth_date": "1980-01-01T00:00:00+03:00",
                 "created_at": "2021-05-01T10:00:00+03:00",
             }
@@ -1183,6 +1187,11 @@ class TestNostroyRegistry(BaseTestCase):
         self.assertTrue(info.found)
         self.assertEqual(info.date_join, date(2016, 4, 14))
         self.assertIsNone(info.date_exit)          # действующий член
+        # Реестр отдаёт и контакты — они тоже извлекаются.
+        self.assertIn("+73832000000", info.phones)
+        self.assertIn("info@sibstroy.ru", info.emails)
+        self.assertTrue(any("Новосибирск" in a for a in info.addresses))
+        self.assertIn("Кузнецов Андрей Павлович", info.directors)
         # Дата рождения и дата создания записи не приняты за даты членства.
 
         excluded = parse_member_payload(NOSTROY_EXCLUDED_PAYLOAD, "2310031475")
@@ -1216,6 +1225,11 @@ class TestNostroyRegistry(BaseTestCase):
             # Даты подставились и попали в итоговые свойства группы.
             self.assertEqual(groups[0].date_join, date(2016, 4, 14))
             self.assertEqual(groups[0].membership_status, "действует")
+            # Контакты из реестра дошли до итоговых колонок (best_*).
+            self.assertIn("+73832000000", groups[0].best_phones)
+            self.assertIn("info@sibstroy.ru", groups[0].best_emails)
+            self.assertTrue(any("Новосибирск" in a for a in groups[0].best_addresses))
+            self.assertIn("Кузнецов Андрей Павлович", groups[0].best_directors)
             self.assertEqual(groups[1].date_exit, date(2021, 6, 30))
             self.assertEqual(groups[1].membership_status, "исключён")
 
@@ -1291,6 +1305,7 @@ class TestEndToEndAcrossDays(BaseTestCase):
             timeout=5.0,
             max_retries=1,
             no_progress_bar=True,
+            nostroy_dates=False,     # реестр НОСТРОЙ проверяется отдельными тестами
         )
 
     @classmethod
@@ -1481,7 +1496,7 @@ class TestEndToEndAcrossDays(BaseTestCase):
             settings = Settings(
                 input_path=self.archive, output_dir=output, checko_api_key="k",
                 daily_limit=2, workers=2, rps=0.0, timeout=5.0, max_retries=1,
-                no_progress_bar=True,
+                no_progress_bar=True, nostroy_dates=False,
             )
             result = run(settings)
 

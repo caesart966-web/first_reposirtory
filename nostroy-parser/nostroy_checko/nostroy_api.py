@@ -37,7 +37,14 @@ import requests
 from .config import Settings
 from .logging_setup import get_logger
 from .models import utcnow_iso
-from .textutils import clean_text, parse_date
+from .textutils import (
+    clean_text,
+    extract_emails,
+    extract_fio,
+    extract_phones,
+    merge_unique,
+    parse_date,
+)
 
 logger = get_logger("nostroy-api")
 
@@ -66,6 +73,11 @@ _IGNORE_KEY_RE = re.compile(
 _DATE_KEY_RE = re.compile(r"(date|дата|_at$)", re.IGNORECASE)
 _STATUS_KEY_RE = re.compile(r"status|статус", re.IGNORECASE)
 _INN_KEY_RE = re.compile(r"^inn$|инн", re.IGNORECASE)
+#: Ключи с контактами члена (телефон/почта/адрес/руководитель).
+_PHONE_KEY_RE = re.compile(r"phone|tel|телефон", re.IGNORECASE)
+_EMAIL_KEY_RE = re.compile(r"mail|почта", re.IGNORECASE)
+_ADDRESS_KEY_RE = re.compile(r"address|адрес|place|location", re.IGNORECASE)
+_DIRECTOR_KEY_RE = re.compile(r"director|руковод|head|исполнительн|фио|fio", re.IGNORECASE)
 
 
 @dataclass(slots=True)
@@ -77,6 +89,10 @@ class NostroyMemberInfo:
     date_join: date | None = None
     date_exit: date | None = None
     status_text: str = ""            # статус членства как в реестре (текст)
+    phones: list[str] = field(default_factory=list)
+    emails: list[str] = field(default_factory=list)
+    addresses: list[str] = field(default_factory=list)
+    directors: list[str] = field(default_factory=list)
     error: str = ""
     fetched_at: str = ""
     warnings: list[str] = field(default_factory=list)
@@ -88,6 +104,10 @@ class NostroyMemberInfo:
             "date_join": self.date_join.isoformat() if self.date_join else None,
             "date_exit": self.date_exit.isoformat() if self.date_exit else None,
             "status_text": self.status_text,
+            "phones": self.phones,
+            "emails": self.emails,
+            "addresses": self.addresses,
+            "directors": self.directors,
             "error": self.error,
             "fetched_at": self.fetched_at,
         }
@@ -100,6 +120,10 @@ class NostroyMemberInfo:
             date_join=parse_date(data.get("date_join")),
             date_exit=parse_date(data.get("date_exit")),
             status_text=data.get("status_text", ""),
+            phones=list(data.get("phones", [])),
+            emails=list(data.get("emails", [])),
+            addresses=list(data.get("addresses", [])),
+            directors=list(data.get("directors", [])),
             error=data.get("error", ""),
             fetched_at=data.get("fetched_at", ""),
         )
@@ -187,6 +211,17 @@ def parse_member_payload(payload: Any, inn: str) -> NostroyMemberInfo:
                     continue
                 if value in (None, ""):
                     continue
+                text_value = clean_text(value) if isinstance(value, (str, int, float)) else ""
+                if _PHONE_KEY_RE.search(key_text) and text_value:
+                    merge_unique(info.phones, extract_phones(text_value))
+                elif _EMAIL_KEY_RE.search(key_text) and text_value:
+                    merge_unique(info.emails, extract_emails(text_value))
+                elif _ADDRESS_KEY_RE.search(key_text) and len(text_value) >= 15:
+                    merge_unique(info.addresses, [text_value])
+                elif _DIRECTOR_KEY_RE.search(key_text) and text_value:
+                    fio = extract_fio(text_value)
+                    if fio:
+                        merge_unique(info.directors, [fio])
                 if _DATE_KEY_RE.search(key_text) and not _IGNORE_KEY_RE.search(full_path):
                     parsed = _clean_date_value(value)
                     if parsed is None:

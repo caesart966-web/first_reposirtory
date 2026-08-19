@@ -324,6 +324,10 @@ class CompanyGroup:
     nostroy_date_join: date | None = None
     nostroy_date_exit: date | None = None
     nostroy_status: str = ""
+    nostroy_phones: list[str] = field(default_factory=list)
+    nostroy_emails: list[str] = field(default_factory=list)
+    nostroy_addresses: list[str] = field(default_factory=list)
+    nostroy_directors: list[str] = field(default_factory=list)
 
     # ------------------------- сводные поля --------------------------- #
 
@@ -472,25 +476,45 @@ class CompanyGroup:
     # отсутствии — значение из реестра. Так таблица полезна с первого дня,
     # даже если сервис недоступен.
 
+    def _best(self, checko_values: list[str], attribute: str, nostroy_values: list[str]) -> list[str]:
+        """Объединяет источники: checko -> файл выгрузки -> реестр НОСТРОЙ."""
+        result: list[str] = []
+        merge_unique(result, checko_values)
+        merge_unique(result, self._collect(attribute))
+        merge_unique(result, nostroy_values)
+        return result
+
     @property
     def best_phones(self) -> list[str]:
-        checko_values = self.checko.phones if self.checko else []
-        return checko_values or self.registry_phones
+        return self._best(self.checko.phones if self.checko else [], "phones", self.nostroy_phones)
 
     @property
     def best_emails(self) -> list[str]:
-        checko_values = self.checko.emails if self.checko else []
-        return checko_values or self.registry_emails
+        return self._best(self.checko.emails if self.checko else [], "emails", self.nostroy_emails)
 
     @property
     def best_addresses(self) -> list[str]:
-        checko_values = self.checko.addresses if self.checko else []
-        return checko_values or self.registry_addresses
+        # Адрес показываем один, самый информативный: checko свежее, файл и
+        # реестр НОСТРОЙ — запасные. Склейка трёх адресов сбивала бы с толку.
+        for values in (
+            self.checko.addresses if self.checko else [],
+            self.registry_addresses,
+            self.nostroy_addresses,
+        ):
+            if values:
+                return values
+        return []
 
     @property
     def best_directors(self) -> list[str]:
-        checko_values = self.checko.directors if self.checko else []
-        return checko_values or self.registry_directors
+        for values in (
+            self.checko.directors if self.checko else [],
+            self.registry_directors,
+            self.nostroy_directors,
+        ):
+            if values:
+                return values
+        return []
 
     @property
     def sources(self) -> list[str]:

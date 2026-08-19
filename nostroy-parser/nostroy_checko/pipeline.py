@@ -25,7 +25,10 @@ import time
 from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:  # только для аннотаций — среда выполнения этот импорт не видит
+    from .nostroy_api import NostroyMemberInfo
 
 from .archives import extract_archive, is_archive
 from .checko_api import CheckoApiClient
@@ -182,6 +185,17 @@ def parse_all(settings: Settings, search_root: Path) -> RunResult:
 #                 Шаг 2б: даты членства из реестра НОСТРОЙ                     #
 # --------------------------------------------------------------------------- #
 
+def _apply_nostroy(group: CompanyGroup, info: "NostroyMemberInfo") -> None:
+    """Переносит сведения из реестра НОСТРОЙ в группу компании."""
+    group.nostroy_date_join = info.date_join
+    group.nostroy_date_exit = info.date_exit
+    group.nostroy_status = info.status_text
+    group.nostroy_phones = list(info.phones)
+    group.nostroy_emails = list(info.emails)
+    group.nostroy_addresses = list(info.addresses)
+    group.nostroy_directors = list(info.directors)
+
+
 def enrich_dates_from_nostroy(
     groups: list[CompanyGroup],
     settings: Settings,
@@ -198,8 +212,9 @@ def enrich_dates_from_nostroy(
     from .nostroy_api import NostroyClient, NostroyMemberInfo
 
     def needs(group: CompanyGroup) -> bool:
-        has_file_date = any(record.date_join for record in group.records)
-        return bool(group.inn) and not has_file_date
+        # Реестр бесплатный, ответы кэшируются — запрашиваем всех с ИНН:
+        # он даёт не только даты, но и адрес/телефон/руководителя.
+        return bool(group.inn)
 
     pending = [group for group in groups if needs(group)]
     if not pending:
@@ -210,10 +225,7 @@ def enrich_dates_from_nostroy(
     for group in pending:
         cached = state.get_nostroy(group.inn)
         if cached is not None:
-            info = NostroyMemberInfo.from_dict(cached)
-            group.nostroy_date_join = info.date_join
-            group.nostroy_date_exit = info.date_exit
-            group.nostroy_status = info.status_text
+            _apply_nostroy(group, NostroyMemberInfo.from_dict(cached))
         else:
             to_fetch.append(group)
 
@@ -222,8 +234,8 @@ def enrich_dates_from_nostroy(
         return
 
     logger.info(
-        "Дат вступления нет в файле у %d компаний — запрашиваю открытый реестр "
-        "НОСТРОЙ (reestr.nostroy.ru, бесплатно, без лимита)",
+        "Запрашиваю открытый реестр НОСТРОЙ по %d компаниям — даты членства, "
+        "адреса и контакты (reestr.nostroy.ru, бесплатно, без лимита)",
         len(to_fetch),
     )
     client = NostroyClient(
@@ -238,9 +250,7 @@ def enrich_dates_from_nostroy(
             state.set_nostroy(group.inn, info.to_dict())
             if info.found:
                 found += 1
-                group.nostroy_date_join = info.date_join
-                group.nostroy_date_exit = info.date_exit
-                group.nostroy_status = info.status_text
+                _apply_nostroy(group, info)
             if index % 25 == 0 or index == len(to_fetch):
                 logger.info("  реестр НОСТРОЙ: %d из %d (найдено дат: %d)",
                             index, len(to_fetch), found)
