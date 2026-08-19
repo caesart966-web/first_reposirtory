@@ -470,9 +470,9 @@ class TestGeneration(unittest.TestCase):
         self.assertEqual(len(result.created), 2)
         names = sorted(p.name for p in result.created)
         self.assertEqual(names, ["01_Заявление_о_вступлении.docx", "02_Доверенность.docx"])
-        # Папка результата: компания / СРО
-        self.assertEqual(result.folder.name, "СССС")
-        self.assertEqual(result.folder.parent.name, "7812345675_ООО Ромашка")
+        # Папка результата: СРО / компания
+        self.assertEqual(result.folder.name, "7812345675_ООО Ромашка")
+        self.assertEqual(result.folder.parent.name, "СССС")
 
         application = extract_all_text(result.folder / "01_Заявление_о_вступлении.docx")
         self.assertIn("Общество с ограниченной ответственностью «Ромашка-Строй»; "
@@ -661,12 +661,14 @@ class TestMultipleSro(unittest.TestCase):
             generate(project, make_company(ALPHA), make_pdf=False)
         self.assertIn("бланки", str(ctx.exception).lower())
 
-    def test_documents_land_in_sro_subfolder(self):
+    def test_documents_land_in_company_subfolder_of_sro(self):
+        """Папки: сверху СРО, внутри — папка компании."""
         self.project.use_sro("СССС", remember=False)
         result = generate(self.project, make_company(ALPHA), make_pdf=False)
         self.assertTrue(result.ok, [r.problems for r in result.quality])
-        self.assertEqual(result.folder.name, "СССС")
-        self.assertEqual(result.folder.parent.name, "7812345675_ООО Ромашка")
+        self.assertEqual(result.folder.name, "7812345675_ООО Ромашка")
+        self.assertEqual(result.folder.parent.name, "СССС")
+        self.assertEqual(result.folder.parent.parent, self.project.output_root)
 
     def test_switching_sro_does_not_leak_settings(self):
         """У каждой СРО свои бланки, документы и доверенное лицо."""

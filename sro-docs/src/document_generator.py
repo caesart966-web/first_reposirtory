@@ -325,14 +325,15 @@ def company_folder_name(company: CompanyData) -> str:
 
 
 def output_folder(project: "Project", company: CompanyData) -> Path:
-    """Папка результата: output / компания / СРО.
+    """Папка результата: output / СРО / компания.
 
-    Компания сверху, потому что одну и ту же компанию нередко подают
-    в несколько СРО — так все её документы лежат рядом.
+    Сверху СРО, внутри — папка компании: документы группируются по той
+    саморегулируемой организации, в которую подаём. Одну компанию можно
+    подать в несколько СРО — тогда её папка появится в каждой из них.
     """
     return (project.output_root
-            / company_folder_name(company)
-            / safe_folder_name(project.sro.short_name, "СРО"))
+            / safe_folder_name(project.sro.short_name, "СРО")
+            / company_folder_name(company))
 
 
 def _check_levels(project: "Project", company: CompanyData) -> None:
