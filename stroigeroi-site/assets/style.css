@@ -796,8 +796,27 @@ ul {
 .mainscreen__grid {
   display: grid;
   grid-template-columns: minmax(0, 1.81fr) minmax(0, 1fr);
+  /* Баннер и плитки в одну строку, заголовок с кнопками — под ними.
+     На телефоне порядок меняется на «баннер → заголовок → плитки»,
+     иначе заголовок уезжает под четыре плитки и его не видно. */
+  grid-template-areas:
+    'hero tiles'
+    'intro intro';
   gap: 10px;
+  row-gap: var(--sp-6);
   align-items: stretch;
+}
+
+.mainscreen__grid > .hero {
+  grid-area: hero;
+}
+
+.mainscreen__grid > .tiles {
+  grid-area: tiles;
+}
+
+.mainscreen__grid > .intro {
+  grid-area: intro;
 }
 
 /* Четыре плитки преимуществ: два столбца, два ряда */
@@ -844,7 +863,9 @@ ul {
   align-self: flex-start;
 }
 
-/* Промо-блок: текст слева, знаки бренда справа */
+/* Промо-блок — это готовый фирменный баннер заказчика, целиком.
+   Полоски, эмблема, маскот и стройка на фоне нарисованы в самой картинке,
+   поэтому здесь только рамка и скругление: ничего поверх не накладываем. */
 .hero {
   position: relative;
   overflow: hidden;
@@ -852,25 +873,45 @@ ul {
   border: 1px solid var(--sg-line);
   border-radius: var(--r-xl);
   background: var(--sg-white);
+  line-height: 0; /* убирает щель под картинкой от строчного бокса */
 }
 
-.hero__inner {
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-  gap: var(--sp-5);
-  align-items: stretch;
+.hero__banner {
+  width: 100%;
+  height: 100%;
+  /* Баннер широкий (1920×976). Пока карточка не ниже своей пропорции —
+     видно целиком; если колонка плиток рядом окажется выше, картинка
+     подрезается по краям, а не растягивается. */
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+.hero picture {
+  display: block;
   height: 100%;
 }
 
-.hero__copy {
-  padding: var(--sp-6) 0 var(--sp-6) var(--sp-6);
-  align-self: center;
+/* Заголовок страницы и кнопки — отдельной полосой под первым экраном.
+   На баннере нет места под текст: слева эмблема, справа герой. */
+.intro {
+  display: flex;
+  flex-wrap: wrap;
+  /* Кнопки садятся на нижнюю строку текста, а не висят по центру:
+     иначе справа под ними остаётся заметная дыра. */
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-5) var(--sp-6);
+}
+
+.intro__copy {
+  flex: 1 1 460px;
   min-width: 0;
 }
 
-.hero__eyebrow {
+.intro__eyebrow {
   display: inline-block;
-  margin-bottom: var(--sp-4);
+  margin: 0 0 var(--sp-3);
   padding: var(--sp-2) var(--sp-4);
   border-radius: var(--r-pill);
   background: var(--sg-blue-tint);
@@ -881,82 +922,28 @@ ul {
   letter-spacing: 0.06em;
 }
 
-.hero__title {
-  font-size: clamp(26px, 2.5vw, 36px);
+.intro__title {
+  font-size: clamp(26px, 2.6vw, 38px);
   line-height: 1.12;
   text-wrap: balance;
-  margin-bottom: var(--sp-4);
+  margin: 0 0 var(--sp-3);
 }
 
-.hero__title span {
+.intro__title span {
   color: var(--sg-blue);
 }
 
-.hero__text {
+.intro__text {
+  margin: 0;
   font-size: 16px;
   color: var(--sg-muted);
-  max-width: 42ch;
-  margin-bottom: var(--sp-5);
+  max-width: 52ch;
 }
 
-.hero__actions {
+.intro__actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-3);
-}
-
-/* Правая часть: полосатая подложка, оба знака бренда на ней */
-.hero__visual {
-  position: relative;
-  min-width: 0;
-  min-height: 320px;
-  background-image: linear-gradient(rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0.32)),
-    var(--sg-stripes-lg);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: var(--sp-4) var(--sp-3) 0;
-  overflow: hidden;
-}
-
-/* Слева эмблема по центру, справа маскот — стоит на нижней кромке панели */
-/* Колонки поровну: на фирменном баннере эмблема и герой одного роста,
-   и в макете они должны читаться так же. */
-.hero__marks {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  align-items: end;
-  gap: var(--sp-4);
-  width: 100%;
-}
-
-.hero__emblem {
-  width: min(300px, 100%);
-  height: auto;
-  justify-self: center;
-  align-self: center;
-  margin-bottom: var(--sp-6);
-  filter: drop-shadow(0 6px 18px rgba(16, 24, 40, 0.18));
-}
-
-.hero__mascot {
-  align-self: end;
-  display: grid;
-  justify-items: center;
-}
-
-.hero__mascot img {
-  width: 100%;
-  max-width: 300px;
-  height: auto;
-  display: block;
-  filter: drop-shadow(0 10px 26px rgba(16, 24, 40, 0.28));
-}
-
-/* Пока файла маскота нет — вместо картинки подпись, что именно нужно */
-.hero__mascot .ph {
-  background: var(--sg-white);
-  max-width: 320px;
 }
 
 /* ==========================================================================
@@ -1724,19 +1711,6 @@ html[data-theme="dark"] .site-footer {
   border-top: 1px solid var(--sg-line);
 }
 
-/* Полосатая панель с знаками бренда — это фирменная плашка, а не фон страницы.
-   В тёмной теме она остаётся светлой: логотип на тёмную подложку не ставим. */
-html[data-theme="dark"] .hero__visual {
-  background-image: linear-gradient(rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0.32)),
-    repeating-linear-gradient(
-      -45deg,
-      #ffffff 0 34px,
-      #010b87 34px 58px,
-      #ffffff 58px 92px,
-      #d81921 92px 116px
-    );
-}
-
 /* ==========================================================================
    Хлебные крошки и шапка страницы
    ========================================================================== */
@@ -2261,9 +2235,14 @@ html[data-theme="dark"] .hero__visual {
 }
 
 @media (max-width: 1023px) {
-  /* Плитки уходят под промо-блок и встают в четыре столбца */
+  /* Плитки уходят под баннер и встают в четыре столбца */
   .mainscreen__grid {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      'hero'
+      'intro'
+      'tiles';
+    row-gap: var(--sp-5);
   }
 
   .tiles {
@@ -2312,25 +2291,12 @@ html[data-theme="dark"] .hero__visual {
     grid-template-columns: 1fr;
   }
 
-  .hero__inner {
-    grid-template-columns: 1fr;
-    gap: 0;
+  .intro {
+    gap: var(--sp-4);
   }
 
-  .hero__copy {
-    padding: var(--sp-6) var(--sp-5);
-  }
-
-  .hero__visual {
-    min-height: 300px;
-  }
-
-  .hero__emblem {
-    width: min(240px, 100%);
-  }
-
-  .hero__mascot img {
-    max-width: 240px;
+  .intro__actions {
+    flex: 1 1 100%;
   }
 }
 
@@ -2436,15 +2402,7 @@ html[data-theme="dark"] .hero__visual {
     gap: var(--sp-3);
   }
 
-  .hero__copy {
-    padding: var(--sp-5) var(--sp-4);
-  }
-
-  .hero__text {
-    font-size: 15px;
-  }
-
-  .hero__actions .btn {
+  .intro__actions .btn {
     width: 100%;
   }
 
@@ -2510,48 +2468,12 @@ html[data-theme="dark"] .hero__visual {
     height: 44px;
   }
 
-  /* На телефоне знаки бренда идут первыми — это главная картинка блока,
-     а текст с кнопками уходит под неё. Панель невысокая, иначе первый
-     экран занимает только полоска с маскотом. */
-  .hero__inner {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .hero__visual {
-    order: -1;
-    min-height: 0;
-    padding: var(--sp-3) var(--sp-4) 0;
-  }
-
-  .hero__copy {
-    padding: var(--sp-5) var(--sp-4);
-  }
-
-  .hero__title {
+  .intro__title {
     font-size: 24px;
   }
 
-  .hero__text {
+  .intro__text {
     font-size: 15px;
-    margin-bottom: var(--sp-4);
-  }
-
-  /* На баннере заказчика эмблема и герой одного роста — держим так же.
-     Колонки поровну, ширина знаков одинаковая. */
-  .hero__marks {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: var(--sp-2);
-    align-items: end;
-  }
-
-  .hero__emblem {
-    width: min(170px, 100%);
-    margin-bottom: var(--sp-4);
-  }
-
-  .hero__mascot img {
-    max-width: 170px;
   }
 
   /* Преимущества становятся списком коротких строк, а не высокими плитками */
@@ -2649,8 +2571,7 @@ html[data-theme="dark"] .hero__visual {
 /* Печать: полоски и интерактив не нужны */
 @media print {
   .site-header,
-  .site-footer,
-  .hero__visual {
+  .site-footer {
     background-image: none;
   }
 }
@@ -2755,8 +2676,8 @@ h2 {
   font-size: clamp(21px, 1.15rem + 1vw, 28px);
 }
 
-.hero__title {
-  font-size: clamp(30px, 1.6rem + 2.6vw, 50px);
+.intro__title {
+  font-size: clamp(26px, 1.4rem + 2.2vw, 42px);
 }
 
 html {
