@@ -181,8 +181,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     group_checko.add_argument(
         "--nostroy-rps",
-        type=float, default=1.0, metavar="ЧИСЛО",
+        type=float, default=4.0, metavar="ЧИСЛО",
         help="частота запросов к реестру НОСТРОЙ (запросов в секунду)",
+    )
+    group_checko.add_argument(
+        "--nostroy-workers",
+        type=int, default=4, metavar="N",
+        help="параллельных потоков к реестру НОСТРОЙ",
     )
     group_checko.add_argument(
         "--use-site-parser",
@@ -282,6 +287,7 @@ def settings_from_args(args: argparse.Namespace) -> Settings:
         query_by_name=not args.no_query_by_name,
         nostroy_dates=not args.no_nostroy_dates,
         nostroy_rps=max(0.1, args.nostroy_rps),
+        nostroy_workers=max(1, args.nostroy_workers),
         open_report=args.open_report,
         count_http_requests=args.count_http_requests,
         retry_failed=args.retry_failed,

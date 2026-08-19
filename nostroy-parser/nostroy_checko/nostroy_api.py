@@ -263,7 +263,9 @@ class NostroyClient:
         self._sample_saved = False
         self._lock = threading.Lock()
         self._working_endpoint: str | None = None
+        self._working_body: int | None = None    # индекс сработавшего варианта тела
         self._dead = False           # реестр недоступен — дальше не пытаемся
+        self._failures = 0           # подряд идущие сетевые сбои (общие на все потоки)
 
     @property
     def session(self) -> requests.Session:
@@ -341,10 +343,16 @@ class NostroyClient:
         endpoints = (
             (self._working_endpoint,) if self._working_endpoint else _LIST_ENDPOINTS
         )
-        failures = 0
+        bodies = list(enumerate(self._bodies_for(inn)))
+        if self._working_body is not None:
+            # Формат запроса уже известен — один запрос на компанию.
+            # Без этого каждая «не найденная» компания стоила три запроса,
+            # и весь проход растягивался в разы.
+            bodies = [bodies[self._working_body]]
+
         last_error = ""
         for endpoint in endpoints:
-            for body in self._bodies_for(inn):
+            for body_index, body in bodies:
                 self._rate_limiter.wait()
                 try:
                     response = self.session.post(
@@ -354,12 +362,17 @@ class NostroyClient:
                     )
                 except requests.exceptions.RequestException as exc:
                     last_error = f"сетевая ошибка: {exc}"
-                    failures += 1
-                    if failures >= 3:
+                    with self._lock:
+                        self._failures += 1
+                        if self._failures >= 5:
+                            self._dead = True
+                    if self._dead:
                         break
-                    time.sleep(min(2.0 * failures, 6.0) + random.uniform(0, 0.5))
+                    time.sleep(1.0 + random.uniform(0, 0.5))
                     continue
 
+                with self._lock:
+                    self._failures = 0
                 self._save_sample(response, endpoint)
                 if response.status_code != 200:
                     last_error = f"HTTP {response.status_code} от {endpoint}"
@@ -372,15 +385,16 @@ class NostroyClient:
 
                 parsed = parse_member_payload(payload, inn)
                 if parsed.found:
-                    self._working_endpoint = endpoint
+                    with self._lock:
+                        self._working_endpoint = endpoint
+                        self._working_body = body_index
                     return parsed
                 last_error = parsed.error
                 # Запись не найдена, но запрос прошёл — пробуем другое тело.
-            if failures >= 3:
+            if self._dead:
                 break
 
-        if failures >= 3:
-            self._dead = True
+        if self._dead:
             logger.warning(
                 "Реестр НОСТРОЙ недоступен (%s) — даты будут только из вашего файла",
                 last_error,

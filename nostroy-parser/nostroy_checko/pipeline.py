@@ -235,29 +235,56 @@ def enrich_dates_from_nostroy(
 
     logger.info(
         "Запрашиваю открытый реестр НОСТРОЙ по %d компаниям — даты членства, "
-        "адреса и контакты (reestr.nostroy.ru, бесплатно, без лимита)",
-        len(to_fetch),
+        "адреса и контакты (бесплатно, без лимита). Уже известных из кэша: %d. "
+        "Этот проход разовый: завтра он не повторится",
+        len(to_fetch), len(pending) - len(to_fetch),
     )
     client = NostroyClient(
         settings, sample_path=settings.parsed_dir / "nostroy_api_sample.json"
     )
     found = 0
+    done = 0
+    start_time = time.monotonic()
+    stop_event = threading.Event()
+
+    def fetch(group: CompanyGroup) -> tuple[CompanyGroup, Any]:
+        if stop_event.is_set() or client.is_dead:
+            return group, None
+        return group, client.lookup(group.inn)
+
+    # Первую компанию обрабатываем в одиночку: клиент на ней определяет рабочий
+    # формат запроса и запоминает его. Если запустить сразу все потоки, каждый
+    # из них перебирал бы варианты заново — лишние запросы к чужому серверу.
+    executor = ThreadPoolExecutor(max_workers=max(1, settings.nostroy_workers))
     try:
-        for index, group in enumerate(to_fetch, start=1):
-            if client.is_dead:
-                break
-            info = client.lookup(group.inn)
-            state.set_nostroy(group.inn, info.to_dict())
-            if info.found:
-                found += 1
-                _apply_nostroy(group, info)
-            if index % 25 == 0 or index == len(to_fetch):
-                logger.info("  реестр НОСТРОЙ: %d из %d (найдено дат: %d)",
-                            index, len(to_fetch), found)
-            state.save(force=False)
+        head, tail = to_fetch[:1], to_fetch[1:]
+        for batch in (head, tail):
+            if not batch or stop_event.is_set():
+                continue
+            for group, info in executor.map(fetch, batch):
+                done += 1
+                if info is None:
+                    continue
+                state.set_nostroy(group.inn, info.to_dict())
+                if info.found:
+                    found += 1
+                    _apply_nostroy(group, info)
+                if done % 50 == 0 or done == len(to_fetch):
+                    speed = done / max(time.monotonic() - start_time, 0.001)
+                    left = (len(to_fetch) - done) / speed if speed else 0
+                    logger.info(
+                        "  реестр НОСТРОЙ: %d из %d (найдено: %d, осталось ~%d мин)",
+                        done, len(to_fetch), found, int(left / 60) + 1,
+                    )
+                    state.save(force=False)
+                if client.is_dead:
+                    stop_event.set()
     except KeyboardInterrupt:
         logger.warning("Запросы к реестру НОСТРОЙ прерваны — собранное сохранено")
+        stop_event.set()
     finally:
+        stop_event.set()
+        executor.shutdown(wait=True, cancel_futures=True)
         client.close()
         state.save(force=True)
     logger.info("Реестр НОСТРОЙ: даты получены по %d из %d компаний", found, len(to_fetch))
