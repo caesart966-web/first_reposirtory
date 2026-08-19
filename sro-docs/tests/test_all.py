@@ -768,6 +768,24 @@ class TestMultipleSro(unittest.TestCase):
                     found.setdefault(fund, set()).add(label)
         return found
 
+    def test_ssss_application_and_power_take_their_numbers(self):
+        """У СССС номер заявления и номер доверенности подставляются.
+
+        Раньше в бланке заявления СССС «№ б/н» было вписано текстом и не
+        менялось. Проверяем, что теперь оба номера — свои.
+        """
+        self.project.output_root = self.tmp / "out"
+        plans = [(self._profile("СССС"),
+                  {"doc_number": "ЗАЯВ-7", "power_number": "ДОВ-7"})]
+        outcome = generate_many(self.project, make_company(ALPHA), plans,
+                                make_pdf=False)[0]
+        self.assertTrue(outcome.ok, outcome.error)
+        application = next(p for p in outcome.result.created if p.name.startswith("01_"))
+        power = next(p for p in outcome.result.created if p.name.startswith("02_"))
+        self.assertIn("ЗАЯВ-7", extract_all_text(application))
+        self.assertNotIn("№ б/н", extract_all_text(application))
+        self.assertIn("ДОВ-7", extract_all_text(power))
+
     def test_generate_many_isolates_errors(self):
         """Сбой у одной СРО не мешает остальным.
 

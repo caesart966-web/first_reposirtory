@@ -243,6 +243,7 @@ class SroParamsWizard(tk.Toplevel):
             {
                 "doc_date": defaults.get("doc_date") or "",
                 "doc_number": defaults.get("doc_number") or "",
+                "power_number": defaults.get("power_number") or "",
                 "object_kind": defaults.get("object_kind") or "ordinary",
                 "harm_fund_level": defaults.get("harm_fund_level") or "1",
                 "contract_fund_level": defaults.get("contract_fund_level") or "",
@@ -269,6 +270,7 @@ class SroParamsWizard(tk.Toplevel):
 
         self._date_var = tk.StringVar()
         self._number_var = tk.StringVar()
+        self._power_var = tk.StringVar()
         self._object_var = tk.StringVar()
         self._harm_var = tk.StringVar()
         self._contract_var = tk.StringVar()
@@ -292,11 +294,12 @@ class SroParamsWizard(tk.Toplevel):
 
         self._date_var.set(params["doc_date"])
         self._number_var.set(params["doc_number"])
+        self._power_var.set(params["power_number"])
         self._object_var.set(params["object_kind"])
         self._harm_var.set(params["harm_fund_level"])
         self._contract_var.set(params["contract_fund_level"])
 
-        head = ttk.LabelFrame(self._body, text=" Дата и номер заявления ")
+        head = ttk.LabelFrame(self._body, text=" Дата и номера ")
         head.pack(fill=X, pady=(0, PAD))
         head.columnconfigure(1, weight=1)
         ttk.Label(head, text="Дата:").grid(row=0, column=0, sticky="e", padx=PAD, pady=4)
@@ -304,11 +307,18 @@ class SroParamsWizard(tk.Toplevel):
             row=0, column=1, sticky="w", padx=PAD)
         ttk.Label(head, text="в виде ДД.ММ.ГГГГ", foreground="#6b7480").grid(
             row=0, column=2, sticky="w", padx=PAD)
-        ttk.Label(head, text="Номер:").grid(row=1, column=0, sticky="e", padx=PAD, pady=4)
+        ttk.Label(head, text="Номер заявления:").grid(
+            row=1, column=0, sticky="e", padx=PAD, pady=4)
         ttk.Entry(head, textvariable=self._number_var, width=16).grid(
             row=1, column=1, sticky="w", padx=PAD)
         ttk.Label(head, text="исходящий номер; по умолчанию «б/н»",
                   foreground="#6b7480").grid(row=1, column=2, sticky="w", padx=PAD)
+        ttk.Label(head, text="Номер доверенности:").grid(
+            row=2, column=0, sticky="e", padx=PAD, pady=4)
+        ttk.Entry(head, textvariable=self._power_var, width=16).grid(
+            row=2, column=1, sticky="w", padx=PAD)
+        ttk.Label(head, text="по умолчанию «б/н»",
+                  foreground="#6b7480").grid(row=2, column=2, sticky="w", padx=PAD)
 
         obj = ttk.LabelFrame(self._body, text=" Виды объектов ")
         obj.pack(fill=X, pady=(0, PAD))
@@ -351,6 +361,7 @@ class SroParamsWizard(tk.Toplevel):
         self._params[self._index] = {
             "doc_date": self._date_var.get().strip(),
             "doc_number": self._number_var.get().strip(),
+            "power_number": self._power_var.get().strip(),
             "object_kind": self._object_var.get(),
             "harm_fund_level": self._harm_var.get(),
             "contract_fund_level": self._contract_var.get(),
@@ -965,6 +976,7 @@ class Application(tk.Frame):
             defaults = {
                 "doc_date": self.company.doc_date,
                 "doc_number": self.company.doc_number,
+                "power_number": self.company.power_number,
                 "object_kind": self.company.object_kind,
                 "harm_fund_level": self.company.harm_fund_level,
                 "contract_fund_level": self.company.contract_fund_level,
