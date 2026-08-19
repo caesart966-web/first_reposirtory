@@ -29,7 +29,8 @@ from .company_parser import parse_card, parse_text  # noqa: E402
 from .context_builder import OBJECT_KINDS, build_context  # noqa: E402
 from .document_generator import (GeneratorError, Project, check_readiness,  # noqa: E402
                                  generate)
-from .models import DOC_PARAM_FIELDS, FIELD_SPECS, CompanyData  # noqa: E402
+from .models import (APPLICANT_KINDS, COMPANY, DOC_PARAM_FIELDS,  # noqa: E402
+                     ENTREPRENEUR, FIELD_SPECS, CompanyData)
 from .readers import SUPPORTED_SUFFIXES, ReadError, read_card  # noqa: E402
 from .sro_registry import SroError  # noqa: E402
 from .validators import validate_company  # noqa: E402
@@ -176,10 +177,13 @@ class Application(tk.Frame):
         self.vars: dict[str, tk.StringVar] = {}
         self.texts: dict[str, tk.Text] = {}
         self.labels: dict[str, ttk.Label] = {}
+        self.hints: dict[str, tuple] = {}
+        self.entries: dict[str, ttk.Entry] = {}
 
         self.pack(fill=BOTH, expand=True)
         self._build()
         self._show_sro()
+        self._show_applicant_kind()
 
     # ------------------------------------------------------------ разметка
     def _build(self) -> None:
@@ -273,6 +277,22 @@ class Application(tk.Frame):
         canvas.bind_all("<MouseWheel>",
                         lambda e: canvas.yview_scroll(-int(e.delta / 120), "units"))
 
+        # --- кто подаёт документы -------------------------------------
+        # От этого зависят длина ИНН и ОГРН, наличие КПП и вид наименования,
+        # поэтому переключатель стоит первым, до всех полей.
+        kind_block = ttk.LabelFrame(inner, text=" Кто подаёт документы ")
+        kind_block.pack(fill=X, padx=PAD, pady=PAD // 2)
+        self.applicant_kind = tk.StringVar(value=COMPANY)
+        for value in (COMPANY, ENTREPRENEUR):
+            ttk.Radiobutton(kind_block, text=APPLICANT_KINDS[value], value=value,
+                            variable=self.applicant_kind,
+                            command=self.on_applicant_kind).pack(
+                anchor="w", padx=PAD, pady=2)
+        ttk.Label(kind_block, foreground="#6b7480", wraplength=620, justify=LEFT,
+                  text="У предпринимателя ИНН из 12 цифр, ОГРНИП из 15 и нет КПП. "
+                       "Клетки под цифры в бланках программа расширит сама.").pack(
+            anchor="w", padx=PAD, pady=(0, PAD // 2))
+
         group = None
         block = None
         row = 0
@@ -296,14 +316,15 @@ class Application(tk.Frame):
             else:
                 variable = tk.StringVar()
                 self.vars[spec.key] = variable
-                ttk.Entry(block, textvariable=variable).grid(
-                    row=row, column=1, sticky="we", padx=PAD, pady=3)
+                entry = ttk.Entry(block, textvariable=variable)
+                entry.grid(row=row, column=1, sticky="we", padx=PAD, pady=3)
+                self.entries[spec.key] = entry
 
-            hint = (spec.hint + mark).strip()
-            if hint:
-                ttk.Label(block, text=hint, foreground="#6b7480",
-                          wraplength=320, justify=LEFT).grid(
-                    row=row, column=2, sticky="w", padx=PAD)
+            hint_label = ttk.Label(block, text=(spec.hint + mark).strip(),
+                                   foreground="#6b7480", wraplength=320,
+                                   justify=LEFT)
+            hint_label.grid(row=row, column=2, sticky="w", padx=PAD)
+            self.hints[spec.key] = (hint_label, mark)
             if spec.key == "actual_address":
                 ttk.Button(block, text="Ещё раз скопировать из юридического",
                            command=self.on_copy_address).grid(
@@ -405,17 +426,55 @@ class Application(tk.Frame):
     # ------------------------------------------------------------ данные
     def _read_form(self) -> None:
         """Перенести всё, что в полях окна, в объект компании."""
+        self.company.applicant_kind = self.applicant_kind.get()
         for key, variable in self.vars.items():
             self.company.set(key, variable.get())
         for key, widget in self.texts.items():
             self.company.set(key, widget.get("1.0", END).strip())
 
     def _write_form(self) -> None:
+        self.applicant_kind.set(self.company.applicant_kind)
         for key, variable in self.vars.items():
             variable.set(self.company.get(key))
         for key, widget in self.texts.items():
             widget.delete("1.0", END)
             widget.insert("1.0", self.company.get(key))
+        self._show_applicant_kind()
+
+    def _show_applicant_kind(self) -> None:
+        """Подписи и подсказки полей — под выбранный тип заявителя.
+
+        Поля, которых у этого заявителя не бывает (КПП у предпринимателя),
+        не прячем, а гасим и подписываем почему: так человек видит, что
+        программа их не забыла, а сознательно не спрашивает.
+        """
+        for spec in FIELD_SPECS:
+            label = self.labels.get(spec.key)
+            if label is None:
+                continue
+            applicable = not spec.only_for or spec.only_for == self.company.applicant_kind
+            label.configure(text=self.company.label_for(spec.key) + ":",
+                            foreground="black" if applicable else "#9aa2ac")
+            hint_label, mark = self.hints.get(spec.key, (None, ""))
+            if hint_label is not None:
+                text = ("У индивидуального предпринимателя этого реквизита нет"
+                        if not applicable
+                        else (self.company.hint_for(spec.key) + mark).strip())
+                hint_label.configure(text=text)
+            entry = self.entries.get(spec.key)
+            if entry is not None:
+                entry.configure(state="normal" if applicable else "disabled")
+
+    def on_applicant_kind(self) -> None:
+        """Пользователь переключил «юрлицо / предприниматель»."""
+        self._read_form()
+        notes = self.project.apply_applicant_defaults(self.company)
+        self._write_form()
+        if notes:
+            self._set_status("; ".join(notes)[:200])
+        else:
+            self._set_status(
+                f"Заявитель: {APPLICANT_KINDS[self.company.applicant_kind]}.")
 
     def _set_status(self, text: str, color: str = "") -> None:
         self.status.configure(text=text, foreground=color or "black")
@@ -466,7 +525,8 @@ class Application(tk.Frame):
         self.company = parsed.company           # новый объект: чужих данных не остаётся
         for key, value in keep.items():
             self.company.set(key, value)
-        auto_filled = self.project.apply_auto_fill(self.company)
+        auto_filled = self.project.apply_applicant_defaults(self.company)
+        auto_filled += self.project.apply_auto_fill(self.company)
         self._write_form()
 
         messages = [source, ""]
@@ -538,7 +598,8 @@ class Application(tk.Frame):
             return False
 
         self._read_form()
-        auto_filled = self.project.apply_auto_fill(self.company)
+        auto_filled = self.project.apply_applicant_defaults(self.company)
+        auto_filled += self.project.apply_auto_fill(self.company)
         if auto_filled:
             self._write_form()
 

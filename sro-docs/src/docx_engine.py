@@ -52,6 +52,7 @@ class FillReport:
     replaced: dict[str, int] = field(default_factory=dict)
     unknown: list[str] = field(default_factory=list)   # переменные, которых нет в данных
     left_empty: list[str] = field(default_factory=list)  # переменные с пустым значением
+    notes: list[str] = field(default_factory=list)     # что пришлось поправить в бланке
 
     @property
     def total(self) -> int:
@@ -170,11 +171,157 @@ def _fill_xml(data: bytes, values: dict[str, str], report: FillReport) -> bytes 
     parser = etree.XMLParser(remove_blank_text=False, resolve_entities=False)
     root = etree.fromstring(data, parser)
     before = report.total
+    added = expand_digit_rows(root, values, report)
     for paragraph in _iter_paragraphs(root):
         _fill_paragraph(paragraph, values, report)
-    if report.total == before and not report.unknown:
+    if report.total == before and not report.unknown and not added:
         return None
     return etree.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True)
+
+
+# ------------------------------------------------------- клетки под цифры
+#: Ряды клеток «по одной цифре», которые бланк может не вместить.
+#: У юрлица ИНН 10 знаков и ОГРН 13, у предпринимателя — 12 и 15.
+DIGIT_ROWS = ("inn", "ogrn")
+
+
+def _needed_cells(values: dict[str, str], prefix: str) -> int:
+    """Сколько клеток нужно, чтобы поместились все цифры значения."""
+    count = 0
+    while values.get(f"{prefix}_d{count + 1}", "").strip():
+        count += 1
+    return count
+
+
+def _digit_row(root, prefix: str):
+    """Найти строку таблицы, где клетки — это {{inn_d1}}, {{inn_d2}}, …
+
+    Ищем по содержимому, а не по номеру таблицы: бланки у СРО разные,
+    и любой номер рано или поздно съедет.
+    """
+    for row in root.iter(W + "tr"):
+        cells = row.findall(W + "tc")
+        if len(cells) < 2:
+            continue
+        names = []
+        for index, cell in enumerate(cells):
+            text = "".join(node.text or "" for node in cell.iter(W + "t"))
+            names.append(text.strip() == "{{%s_d%d}}" % (prefix, index + 1))
+        if names[0] and names[1] and all(names):
+            return row
+    return None
+
+
+def expand_digit_rows(root, values: dict[str, str], report=None) -> bool:
+    """Добавить клетки под цифры, если значение в бланк не помещается.
+
+    Бланки СРО напечатаны под юридическое лицо: 10 клеток под ИНН и 13 под
+    ОГРН. У индивидуального предпринимателя ИНН 12 знаков, а ОГРНИП 15 —
+    двух клеток не хватает, и последние цифры просто пропали бы.
+
+    Клетки добавляются в конец ряда: новая повторяет оформление последней,
+    а ширины пересчитываются так, чтобы ОБЩАЯ ширина таблицы не изменилась
+    и таблица не вылезла за поля страницы.
+
+    Лишние клетки не удаляются никогда: если в бланке их больше, чем цифр,
+    они законно остаются пустыми.
+    """
+    changed = False
+    for prefix in DIGIT_ROWS:
+        needed = _needed_cells(values, prefix)
+        if not needed:
+            continue
+        row = _digit_row(root, prefix)
+        if row is None:
+            continue
+        cells = row.findall(W + "tc")
+        if len(cells) >= needed:
+            continue
+        # Ширину ряда запоминаем ДО добавления клеток: новые её не расширяют,
+        # а делят прежнюю, иначе таблица вылезет за поле страницы.
+        total = _row_width(row)
+        for index in range(len(cells), needed):
+            row.append(_clone_digit_cell(cells[-1], "{{%s_d%d}}" % (prefix, index + 1)))
+        _spread_widths(row, total)
+        changed = True
+        if report is not None:
+            report.notes.append(
+                f"В бланке было {len(cells)} клеток под {prefix.upper()}, "
+                f"а знаков {needed} — добавлено клеток: {needed - len(cells)}."
+            )
+    return changed
+
+
+def _clone_digit_cell(sample, text: str):
+    """Копия клетки под цифру: то же оформление, другой текст."""
+    cell = etree.fromstring(etree.tostring(sample))
+    # В клетке текст лежит внутри абзаца, поэтому _own_text_nodes здесь
+    # не годится: он вложенные абзацы намеренно пропускает.
+    nodes = list(cell.iter(W + "t"))
+    if nodes:
+        nodes[0].text = text
+        nodes[0].set(XML_SPACE, "preserve")
+        for extra in nodes[1:]:
+            extra.text = ""
+    return cell
+
+
+def _row_width(row) -> int:
+    """Общая ширина ряда в твипах."""
+    total = 0
+    for cell in row.findall(W + "tc"):
+        properties = cell.find(W + "tcPr")
+        width = properties.find(W + "tcW") if properties is not None else None
+        try:
+            total += int(width.get(W + "w"))
+        except (AttributeError, TypeError, ValueError):
+            pass
+    return total
+
+
+def _spread_widths(row, total: int) -> None:
+    """Разложить прежнюю общую ширину ряда поровну на все клетки.
+
+    Заодно выравниваются клетки разной ширины: в бланке ЯРД последние
+    были вдвое уже остальных, и ряд выглядел кривым.
+    """
+    cells = row.findall(W + "tc")
+    if total <= 0 or not cells:
+        return
+    # Ширину «съедают» уже существующие клетки: раскладываем поровну,
+    # остаток отдаём последней, чтобы сумма совпала знак в знак.
+    each = total // len(cells)
+    for index, cell in enumerate(cells):
+        properties = cell.find(W + "tcPr")
+        if properties is None:
+            properties = etree.SubElement(cell, W + "tcPr")
+            cell.remove(properties)
+            cell.insert(0, properties)
+        width = properties.find(W + "tcW")
+        if width is None:
+            width = etree.SubElement(properties, W + "tcW")
+        value = each if index < len(cells) - 1 else total - each * (len(cells) - 1)
+        width.set(W + "w", str(value))
+        width.set(W + "type", "dxa")
+    _rebuild_grid(row, len(cells), total)
+
+
+def _rebuild_grid(row, count: int, total: int) -> None:
+    """Сетка колонок таблицы (w:tblGrid) должна совпадать с числом клеток."""
+    table = row.getparent()
+    if table is None or table.tag != W + "tbl":
+        return
+    grid = table.find(W + "tblGrid")
+    if grid is None:
+        grid = etree.Element(W + "tblGrid")
+        properties = table.find(W + "tblPr")
+        table.insert(list(table).index(properties) + 1 if properties is not None else 0, grid)
+    for column in list(grid):
+        grid.remove(column)
+    each = total // count
+    for index in range(count):
+        column = etree.SubElement(grid, W + "gridCol")
+        column.set(W + "w", str(each if index < count - 1 else total - each * (count - 1)))
 
 
 def _fill_rels(data: bytes, values: dict[str, str], report: FillReport) -> bytes | None:

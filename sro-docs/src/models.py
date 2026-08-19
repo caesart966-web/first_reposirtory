@@ -27,6 +27,20 @@ class FieldSpec:
     used_by_templates: bool = True
     multiline: bool = False
     hint: str = ""
+    #: Поле есть только у одного типа заявителя: "company" или "entrepreneur".
+    #: Пусто — поле нужно и юрлицу, и предпринимателю.
+    only_for: str = ""
+
+
+#: Тип заявителя. От него зависит длина ИНН и ОГРН, наличие КПП,
+#: вид наименования и то, кто подписывает документы.
+COMPANY = "company"
+ENTREPRENEUR = "entrepreneur"
+
+APPLICANT_KINDS = {
+    COMPANY: "Юридическое лицо",
+    ENTREPRENEUR: "Индивидуальный предприниматель",
+}
 
 
 # Порядок здесь = порядок полей в интерфейсе.
@@ -36,7 +50,8 @@ FIELD_SPECS: list[FieldSpec] = [
     FieldSpec("short_name", "Сокращённое наименование", "Организация",
               hint="Например: ООО «Ромашка»"),
     FieldSpec("inn", "ИНН", "Организация", hint="10 цифр для юридического лица"),
-    FieldSpec("kpp", "КПП", "Организация", used_by_templates=False, hint="9 цифр"),
+    FieldSpec("kpp", "КПП", "Организация", used_by_templates=False, hint="9 цифр",
+              only_for=COMPANY),
     FieldSpec("ogrn", "ОГРН", "Организация", hint="13 цифр"),
     FieldSpec("registration_date", "Дата регистрации", "Организация",
               used_by_templates=False),
@@ -54,6 +69,7 @@ FIELD_SPECS: list[FieldSpec] = [
               hint="Именительный падеж: Иванов Иван Иванович"),
     FieldSpec("director_basis", "Основание полномочий", "Руководитель",
               hint="Обычно «Устав»"),
+
     FieldSpec("bank_name", "Наименование банка", "Банковские реквизиты",
               used_by_templates=False),
     FieldSpec("bank_account", "Расчётный счёт", "Банковские реквизиты",
@@ -71,10 +87,39 @@ FIELD_BY_KEY = {f.key: f for f in FIELD_SPECS}
 #: При разборе новой карточки они сохраняются, а не сбрасываются.
 #: Список один на всю программу: раньше он был перечислен в двух местах
 #: и разошёлся — номер заявления терялся.
+#: Чем поля предпринимателя отличаются на вид. Сами поля те же —
+#: меняются только название и подсказка, чтобы человек не гадал.
+ENTREPRENEUR_LABELS = {
+    "full_name": "ФИО предпринимателя полностью",
+    "short_name": "Сокращённо",
+    "ogrn": "ОГРНИП",
+    "legal_address": "Адрес регистрации по месту жительства",
+    "actual_address": "Адрес фактического осуществления деятельности",
+    "director_position": "Должность подписанта",
+    "director_full_name": "ФИО подписанта полностью",
+}
+
+ENTREPRENEUR_HINTS = {
+    "full_name": "Например: Индивидуальный предприниматель Иванов Иван Иванович",
+    "short_name": "Например: ИП Иванов И.И.",
+    "inn": "12 цифр для индивидуального предпринимателя",
+    "ogrn": "15 цифр (ОГРНИП)",
+    "director_position": "Для предпринимателя это «Индивидуальный предприниматель»",
+    "director_full_name": "Тот же человек, что и сам предприниматель",
+    "director_basis": "У предпринимателя это лист записи ЕГРИП, а не Устав",
+}
+
 DOC_PARAM_FIELDS = (
     "doc_date", "doc_number", "power_number",
     "object_kind", "harm_fund_level", "contract_fund_level",
 )
+
+#: Умолчания для предпринимателя. Это подсказка в форме, а не подстановка
+#: молча: человек видит значение и может его заменить.
+ENTREPRENEUR_DEFAULTS = {
+    "director_position": "Индивидуальный предприниматель",
+    "director_basis": "Лист записи ЕГРИП",
+}
 
 
 @dataclass
@@ -84,6 +129,10 @@ class CompanyData:
     Каждая генерация документов работает со своим экземпляром — это
     архитектурная защита от подмешивания данных другой компании.
     """
+
+    #: Юридическое лицо или индивидуальный предприниматель. От этого
+    #: зависят длина ИНН и ОГРН, наличие КПП и вид наименования.
+    applicant_kind: str = COMPANY
 
     # --- Организация ---
     full_name: str = ""
@@ -163,4 +212,34 @@ class CompanyData:
         return f"{self.short_name or self.full_name} / ИНН {self.inn} / ОГРН {self.ogrn}"
 
     def is_empty(self) -> bool:
-        return not any(self.get(f.key) for f in FIELD_SPECS)
+        return not any(self.get(f.key) for f in self.fields())
+
+    # ------------------------------------------------------------------
+    @property
+    def is_entrepreneur(self) -> bool:
+        return self.applicant_kind == ENTREPRENEUR
+
+    def fields(self) -> list[FieldSpec]:
+        """Поля, которые нужны ЭТОМУ заявителю.
+
+        У предпринимателя нет КПП: спрашивать его — значит просить
+        придумать несуществующий реквизит.
+        """
+        return [spec for spec in FIELD_SPECS
+                if not spec.only_for or spec.only_for == self.applicant_kind]
+
+    def hint_for(self, key: str) -> str:
+        """Подсказка к полю с учётом типа заявителя."""
+        if self.is_entrepreneur:
+            special = ENTREPRENEUR_HINTS.get(key)
+            if special:
+                return special
+        return FIELD_BY_KEY[key].hint if key in FIELD_BY_KEY else ""
+
+    def label_for(self, key: str) -> str:
+        """Название поля с учётом типа заявителя."""
+        if self.is_entrepreneur:
+            special = ENTREPRENEUR_LABELS.get(key)
+            if special:
+                return special
+        return FIELD_BY_KEY[key].label if key in FIELD_BY_KEY else key

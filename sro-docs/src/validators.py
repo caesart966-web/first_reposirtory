@@ -67,11 +67,29 @@ def ogrn_checksum_ok(ogrn: str) -> bool | None:
 
 
 # ---------------------------------------------------------------- поля
-def validate_inn(value: str) -> list[Issue]:
+#: Сколько знаков в ИНН и ОГРН у каждого типа заявителя.
+#: У юрлица ИНН 10 и ОГРН 13, у предпринимателя ИНН 12 и ОГРНИП 15.
+ID_LENGTHS = {
+    "company": {"inn": 10, "ogrn": 13, "ogrn_name": "ОГРН"},
+    "entrepreneur": {"inn": 12, "ogrn": 15, "ogrn_name": "ОГРНИП"},
+}
+
+KIND_NAMES = {
+    "company": "юридического лица",
+    "entrepreneur": "индивидуального предпринимателя",
+}
+
+
+def _rules(kind: str) -> dict:
+    return ID_LENGTHS.get(kind or "company", ID_LENGTHS["company"])
+
+
+def validate_inn(value: str, kind: str = "company") -> list[Issue]:
     raw = (value or "").strip()
     if not raw:
         return []
     d = digits_only(raw)
+    expected = _rules(kind)["inn"]
     issues: list[Issue] = []
     if _looks_dirty(raw):
         issues.append(Issue("inn", f"ИНН «{raw}» содержит пробелы или дефисы — "
@@ -79,15 +97,16 @@ def validate_inn(value: str) -> list[Issue]:
                             "warning"))
     if not d:
         return [Issue("inn", f"ИНН «{raw}» не содержит цифр. Проверьте значение.")]
-    if len(d) == 12:
-        issues.append(Issue("inn", f"Введён ИНН {d} — это 12 цифр, такой ИНН бывает у "
-                                   f"индивидуального предпринимателя или физлица. "
-                                   f"Шаблоны рассчитаны на юридическое лицо (10 цифр). "
-                                   f"Проверьте значение."))
-        return issues
-    if len(d) != 10:
-        issues.append(Issue("inn", f"Введён ИНН {d}. Для юридического лица ожидается "
-                                   f"10 цифр, введено {len(d)}. Проверьте значение."))
+    if len(d) != expected:
+        # Подсказываем, что, возможно, перепутан тип заявителя: это самая
+        # частая причина «неправильной» длины.
+        other = "индивидуального предпринимателя" if expected == 10 else "юридического лица"
+        hint = (f" Столько знаков бывает у {other} — проверьте, "
+                f"верно ли выбран тип заявителя."
+                if len(d) in (10, 12) else "")
+        issues.append(Issue("inn", f"Введён ИНН {d}. Для {KIND_NAMES[kind or 'company']} "
+                                   f"ожидается {expected} цифр, введено {len(d)}."
+                                   f"{hint} Проверьте значение."))
         return issues
     if inn_checksum_ok(d) is False:
         issues.append(Issue("inn", f"ИНН {d} не проходит проверку контрольного числа. "
@@ -96,11 +115,15 @@ def validate_inn(value: str) -> list[Issue]:
     return issues
 
 
-def validate_kpp(value: str) -> list[Issue]:
+def validate_kpp(value: str, kind: str = "company") -> list[Issue]:
     raw = (value or "").strip()
     if not raw:
         return []
     d = digits_only(raw)
+    if kind == "entrepreneur":
+        return [Issue("kpp", f"Введён КПП {d}, но у индивидуального предпринимателя "
+                             f"КПП не бывает. Очистите поле или проверьте, "
+                             f"верно ли выбран тип заявителя.")]
     issues: list[Issue] = []
     if _looks_dirty(raw):
         issues.append(Issue("kpp", f"КПП «{raw}» содержит лишние символы — "
@@ -111,7 +134,7 @@ def validate_kpp(value: str) -> list[Issue]:
     return issues
 
 
-def validate_ogrn(value: str) -> list[Issue]:
+def validate_ogrn(value: str, kind: str = "company") -> list[Issue]:
     raw = (value or "").strip()
     if not raw:
         return []
@@ -122,17 +145,20 @@ def validate_ogrn(value: str) -> list[Issue]:
                                     f"в документ будет подставлено «{d}».", "warning"))
     if not d:
         return [Issue("ogrn", f"ОГРН «{raw}» не содержит цифр. Проверьте значение.")]
-    if len(d) == 15:
-        issues.append(Issue("ogrn", f"Введён ОГРНИП {d} (15 цифр) — это номер "
-                                    f"индивидуального предпринимателя. Шаблоны рассчитаны "
-                                    f"на юридическое лицо (ОГРН, 13 цифр). Проверьте значение."))
-        return issues
-    if len(d) != 13:
-        issues.append(Issue("ogrn", f"Введён ОГРН {d}. Ожидается 13 цифр, введено {len(d)}. "
-                                    f"Проверьте значение."))
+    rules = _rules(kind)
+    expected, name = rules["ogrn"], rules["ogrn_name"]
+    if len(d) != expected:
+        other = "индивидуального предпринимателя" if expected == 13 else "юридического лица"
+        hint = (f" Столько знаков бывает у {other} — проверьте, "
+                f"верно ли выбран тип заявителя."
+                if len(d) in (13, 15) else "")
+        issues.append(Issue("ogrn", f"Введён {name} {d}. Для "
+                                    f"{KIND_NAMES[kind or 'company']} ожидается "
+                                    f"{expected} цифр, введено {len(d)}."
+                                    f"{hint} Проверьте значение."))
         return issues
     if ogrn_checksum_ok(d) is False:
-        issues.append(Issue("ogrn", f"ОГРН {d} не проходит проверку контрольного числа. "
+        issues.append(Issue("ogrn", f"{name} {d} не проходит проверку контрольного числа. "
                                     f"Скорее всего, в одной из цифр опечатка. "
                                     f"Проверьте значение."))
     return issues
@@ -216,9 +242,10 @@ def validate_company(company) -> list[Issue]:
     issues: list[Issue] = []
     issues += validate_company_name(company.full_name, "full_name", "Полное наименование")
     issues += validate_company_name(company.short_name, "short_name", "Сокращённое наименование")
-    issues += validate_inn(company.inn)
-    issues += validate_kpp(company.kpp)
-    issues += validate_ogrn(company.ogrn)
+    kind = getattr(company, "applicant_kind", "company")
+    issues += validate_inn(company.inn, kind)
+    issues += validate_kpp(company.kpp, kind)
+    issues += validate_ogrn(company.ogrn, kind)
     issues += validate_email(company.email)
     issues += validate_phone(company.phone)
     issues += validate_bik(company.bank_bik)

@@ -15,7 +15,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-from .models import CompanyData
+from .models import ENTREPRENEUR, CompanyData
 from .morphology import normalize_person_name
 from .readers import CardContent
 
@@ -27,9 +27,14 @@ LEGAL_FORMS: list[tuple[str, str]] = [
     ("ОАО", "Открытое акционерное общество"),
     ("ООО", "Общество с ограниченной ответственностью"),
     ("АО", "Акционерное общество"),
+    ("ИП", "Индивидуальный предприниматель"),
 ]
 SHORT_BY_FULL = {full.lower(): short for short, full in LEGAL_FORMS}
 FULL_BY_SHORT = {short: full for short, full in LEGAL_FORMS}
+
+#: У предпринимателя после «ИП» стоит ФИО, а не название в кавычках.
+#: Отсюда два отличия: кавычки не ставим и наименование не выдумываем.
+ENTREPRENEUR_FORMS = {"ИП"}
 
 POSITION_LABELS = {
     "генеральный директор", "директор", "исполнительный директор",
@@ -142,14 +147,14 @@ def split_company_name(name: str) -> tuple[str, str, str]:
             break
 
     if not form_short:
-        match = re.match(r"^(ПАО|НАО|ЗАО|ОАО|ООО|АО)\b\.?", rest, flags=re.IGNORECASE)
+        match = re.match(r"^(ПАО|НАО|ЗАО|ОАО|ООО|АО|ИП)\b\.?", rest, flags=re.IGNORECASE)
         if match:
             form_short = match.group(1).upper()
             form_full = FULL_BY_SHORT[form_short]
             rest = rest[match.end():].strip()
 
     # В карточках часто дублируют ОПФ: «Общество с ограниченной ответственностью ООО «X»».
-    dup = re.match(r"^(ПАО|НАО|ЗАО|ОАО|ООО|АО)\b\.?", rest, flags=re.IGNORECASE)
+    dup = re.match(r"^(ПАО|НАО|ЗАО|ОАО|ООО|АО|ИП)\b\.?", rest, flags=re.IGNORECASE)
     if dup and form_short:
         rest = rest[dup.end():].strip()
 
@@ -161,8 +166,47 @@ def split_company_name(name: str) -> tuple[str, str, str]:
 
 def _compose_name(form: str, bare: str) -> str:
     if form and bare:
+        # У предпринимателя после «ИП» идёт ФИО — кавычки там не ставятся.
+        if form in ENTREPRENEUR_FORMS or form == FULL_BY_SHORT.get("ИП"):
+            return f"{form} {bare}"
         return f"{form} «{bare}»"
     return bare or form
+
+
+def _is_initials_of(short: str, full: str) -> bool:
+    """«Иванов И.И.» — это сокращение от «Иванов Иван Иванович»?"""
+    full_parts = (full or "").split()
+    short_parts = (short or "").replace(".", " ").split()
+    if len(full_parts) < 2 or len(short_parts) < 2:
+        return False
+    if full_parts[0].lower() != short_parts[0].lower():
+        return False
+    initials = [part[0].lower() for part in full_parts[1:]]
+    given = [part[0].lower() for part in short_parts[1:] if part]
+    return bool(given) and given == initials[:len(given)]
+
+
+def looks_like_entrepreneur(*values: str) -> bool:
+    """Похоже ли, что заявитель — индивидуальный предприниматель.
+
+    Смотрим только на то, что реально написано в карточке: слова
+    «индивидуальный предприниматель» или «ИП» в наименовании, длину ИНН
+    (12 знаков вместо 10) и длину ОГРНИП (15 вместо 13). Ничего не
+    домысливаем: если признаков нет, считаем заявителя юридическим лицом.
+    """
+    for value in values:
+        text = (value or "").strip()
+        if not text:
+            continue
+        lowered = text.lower()
+        if lowered.startswith("индивидуальный предприниматель"):
+            return True
+        if re.match(r"^ип\b\.?\s", lowered) or lowered == "ип":
+            return True
+        digits = re.sub(r"\D", "", text)
+        if digits and digits == re.sub(r"\s", "", text) and len(digits) in (12, 15):
+            return True
+    return False
 
 
 # --------------------------------------------------------------- руководитель
@@ -407,11 +451,26 @@ def parse_card(content: CardContent) -> ParseResult:
     if company.full_name and company.short_name:
         _, _, fb = split_company_name(company.full_name)
         _, _, sb = split_company_name(company.short_name)
-        if fb and sb and fb.lower() != sb.lower():
+        # У предпринимателя полное — это ФИО, а сокращённое — фамилия
+        # с инициалами. Это не расхождение, а норма, и сообщать не о чем.
+        same_person = _is_initials_of(sb, fb)
+        if fb and sb and fb.lower() != sb.lower() and not same_person:
             result.notes.append(
                 f"В полном и сокращённом наименовании разные названия: "
                 f"«{fb}» и «{sb}». Так бывает, но проверьте по Уставу."
             )
+
+    # ------------------------------------------------- юрлицо или предприниматель
+    # Определяем по тому, что реально написано в карточке. Ничего не
+    # додумываем: тип всегда виден в окне, и его можно переключить.
+    if looks_like_entrepreneur(company.full_name, company.short_name,
+                               company.inn, company.ogrn):
+        company.applicant_kind = ENTREPRENEUR
+        result.notes.append(
+            "Заявитель распознан как индивидуальный предприниматель "
+            "(по наименованию или по длине ИНН и ОГРНИП). Если это не так, "
+            "переключите тип заявителя в верхней части окна."
+        )
 
     result.company = company
     return result

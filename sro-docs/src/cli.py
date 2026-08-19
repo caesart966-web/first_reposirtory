@@ -172,6 +172,7 @@ def main(argv: list[str] | None = None) -> int:
         else:
             parser.error(f"неизвестное поле {key!r}")
 
+    notes += project.apply_applicant_defaults(company)
     notes += project.apply_auto_fill(company)
 
     print_card(company)

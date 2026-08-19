@@ -24,7 +24,8 @@ from src import morphology, validators  # noqa: E402
 from src.company_parser import (parse_card, parse_text,  # noqa: E402
                                 split_company_name)
 from src.context_builder import build_context  # noqa: E402
-from src.docx_engine import (extract_all_text, extract_package_text,  # noqa: E402
+from src.docx_engine import (_digit_row, extract_all_text,  # noqa: E402
+                             extract_package_text,
                              fill_template, scan_placeholders)
 from src.document_generator import (GeneratorError, Project,  # noqa: E402
                                     check_readiness, company_folder_name, generate)
@@ -60,6 +61,23 @@ BETA = dict(
     director_position="Директор",
     director_full_name="Петрова Мария Сергеевна",
     director_basis="Устав",
+)
+
+
+#: Вымышленный предприниматель. ИНН 12 знаков, ОГРНИП 15, КПП нет.
+IVAN = dict(
+    applicant_kind="entrepreneur",
+    full_name="Индивидуальный предприниматель Иванов Иван Иванович",
+    short_name="ИП Иванов И.И.",
+    inn="781234567870",
+    ogrn="304780123456781",
+    legal_address="190000, г. Санкт-Петербург, ул. Вымышленная, д. 1, лит. А, пом. 5",
+    actual_address="190000, г. Санкт-Петербург, ул. Вымышленная, д. 1, лит. А, пом. 5",
+    phone="+7 (812) 000-00-03",
+    email="ivanov@ip-test.example",
+    director_position="Индивидуальный предприниматель",
+    director_full_name="Иванов Иван Иванович",
+    director_basis="Лист записи ЕГРИП",
 )
 
 
@@ -1022,6 +1040,119 @@ class TestProjectConfig(unittest.TestCase):
                         f"{profile.key}/{spec.template}: остались поля Word "
                         f"({', '.join(codes[:3])}) — Word пересчитает их "
                         f"и подменит данные")
+
+    def test_entrepreneur_digits_fit_the_blank(self):
+        """У предпринимателя 12 и 15 знаков — клеток должно хватить.
+
+        Бланки напечатаны под юрлицо: 10 клеток под ИНН и 13 под ОГРН.
+        Последние цифры предпринимателя просто пропали бы, а документ
+        выглядел бы заполненным.
+        """
+        import zipfile
+
+        from lxml import etree
+
+        from src.docx_engine import W
+
+        project = Project(ROOT)
+        company = make_company(IVAN)
+        for profile in project.all_sro:
+            project.use_sro(profile, remember=False)
+            values = build_context(company, project.attorney(), sro=profile).values
+            for spec in profile.enabled_documents():
+                placeholders = project.placeholders(spec)
+                if "inn_d1" not in placeholders:
+                    continue  # в этом бланке цифры не по клеткам
+                with tempfile.TemporaryDirectory() as folder:
+                    target = Path(folder) / spec.template
+                    fill_template(project.template_path(spec), target, values)
+                    root = etree.fromstring(
+                        zipfile.ZipFile(target).read("word/document.xml"))
+                    rows = {}
+                    for row in root.iter(W + "tr"):
+                        text = "".join(n.text or "" for n in row.iter(W + "t"))
+                        if text in (company.inn, company.ogrn):
+                            rows[text] = row
+                for value in (company.inn, company.ogrn):
+                    with self.subTest(sro=profile.key, document=spec.title,
+                                      value=value):
+                        self.assertIn(
+                            value, rows,
+                            f"{profile.key}/{spec.template}: {value} не собрался "
+                            f"из клеток — часть цифр потерялась")
+                        self.assertGreaterEqual(
+                            len(rows[value].findall(W + "tc")), len(value),
+                            f"{profile.key}/{spec.template}: клеток меньше, "
+                            f"чем знаков в {value}")
+
+    def test_expanding_cells_keeps_table_width(self):
+        """Новые клетки делят прежнюю ширину, а не расширяют таблицу.
+
+        Иначе ряд вылезет за поле страницы и документ придётся править руками.
+        """
+        import zipfile
+
+        from lxml import etree
+
+        from src.docx_engine import W, _row_width
+
+        project = Project(ROOT)
+        for profile in project.all_sro:
+            project.use_sro(profile, remember=False)
+            for spec in profile.enabled_documents():
+                if "inn_d1" not in project.placeholders(spec):
+                    continue
+                template = project.template_path(spec)
+                before = {}
+                root = etree.fromstring(zipfile.ZipFile(template).read("word/document.xml"))
+                for prefix in ("inn", "ogrn"):
+                    row = _digit_row(root, prefix)
+                    if row is not None:
+                        before[prefix] = _row_width(row)
+                values = build_context(make_company(IVAN), project.attorney(),
+                                       sro=profile).values
+                with tempfile.TemporaryDirectory() as folder:
+                    target = Path(folder) / spec.template
+                    fill_template(template, target, values)
+                    filled = etree.fromstring(
+                        zipfile.ZipFile(target).read("word/document.xml"))
+                for prefix, width in before.items():
+                    digits = values["inn"] if prefix == "inn" else values["ogrn"]
+                    row = next((r for r in filled.iter(W + "tr")
+                                if "".join(n.text or "" for n in r.iter(W + "t")) == digits),
+                               None)
+                    with self.subTest(sro=profile.key, document=spec.title, row=prefix):
+                        self.assertIsNotNone(row)
+                        self.assertEqual(
+                            _row_width(row), width,
+                            f"{profile.key}/{spec.template}: ширина ряда {prefix} "
+                            f"изменилась — таблица вылезет за поля")
+                        grid = row.getparent().find(W + "tblGrid")
+                        self.assertEqual(
+                            len(grid.findall(W + "gridCol")),
+                            len(row.findall(W + "tc")),
+                            "сетка колонок не совпадает с числом клеток")
+
+    def test_entrepreneur_documents_are_complete(self):
+        """Документы предпринимателя проходят проверку у всех СРО.
+
+        Отдельно важно, что КПП не требуется: у предпринимателя его нет,
+        и просить его — значит просить придумать несуществующий реквизит.
+        """
+        project = Project(ROOT)
+        for profile in project.all_sro:
+            project.use_sro(profile, remember=False)
+            # Так же, как в окне программы: сперва умолчания и подстановка
+            # адресов, потом проверка готовности.
+            company = make_company(IVAN)
+            project.apply_applicant_defaults(company)
+            project.apply_auto_fill(company)
+            for item in check_readiness(project, company):
+                with self.subTest(sro=profile.key, document=item.spec.title):
+                    self.assertTrue(
+                        item.ok,
+                        f"{profile.key}/{item.spec.title}: не хватает "
+                        f"{', '.join(item.missing) or item.unknown_variables}")
 
     def test_templates_exist(self):
         project = Project(ROOT)

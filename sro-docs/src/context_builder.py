@@ -153,7 +153,15 @@ def build_context(company: CompanyData, attorney: dict[str, str],
             f"В сокращённом наименовании «{company.short_name}» не распознана "
             f"организационно-правовая форма (ООО, АО, ПАО…). Проверьте написание."
         )
-    if values["legal_form_short"] and values["legal_form_short"] != "ООО":
+    if company.is_entrepreneur:
+        result.notes.append(
+            "Заявитель — индивидуальный предприниматель. Бланки СРО напечатаны "
+            "под юридическое лицо, поэтому в них останутся слова «юридического "
+            "лица» и «организации». Программа подставит ваши данные, добавит "
+            "недостающие клетки под 12-значный ИНН и 15-значный ОГРНИП, но "
+            "перед подачей обязательно просмотрите готовые документы."
+        )
+    elif values["legal_form_short"] and values["legal_form_short"] != "ООО":
         result.notes.append(
             f"Бланки СРО напечатаны под ООО, а у вас {values['legal_form_short']}. "
             f"Программа подставит вашу форму собственности, но перед подачей "
@@ -165,7 +173,11 @@ def build_context(company: CompanyData, attorney: dict[str, str],
     ogrn = _digits(company.ogrn)
     values["inn"] = inn
     values["ogrn"] = ogrn
-    values["kpp"] = _digits(company.kpp)
+    # У предпринимателя КПП не бывает: подставляем пустоту, а не выдумываем.
+    values["kpp"] = "" if company.is_entrepreneur else _digits(company.kpp)
+    # Там, где КПП вписан прямо в предложение бланка, у предпринимателя
+    # должен выпасть весь оборот, а не остаться «КПП ,» с пустым местом.
+    values["kpp_phrase"] = f"КПП {values['kpp']}, " if values["kpp"] else ""
     # Клеток в бланках бывает разное число: у юрлица ИНН 10 знаков и ОГРН 13,
     # у предпринимателя — 12 и 15. Бланк ЯРД рассчитан на предпринимателя,
     # поэтому клеток больше. Заполняем слева направо, лишние остаются пустыми.

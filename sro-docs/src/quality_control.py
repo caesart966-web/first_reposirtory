@@ -140,18 +140,25 @@ def check_document(path: Path, title: str, company: CompanyData,
     return report
 
 
-def required_variables_for(placeholders: list[str], variable_map: dict) -> set[str]:
+def required_variables_for(placeholders: list[str], variable_map: dict,
+                           applicant_kind: str = "company") -> set[str]:
     """Какие переменные шаблона обязаны быть заполнены В ГОТОВОМ ДОКУМЕНТЕ.
 
-    Не то же самое, что обязательные поля карточки: клетки под отдельные
-    цифры ИНН и ОГРН помечены `may_be_empty`. У юрлица ИНН 10 знаков,
-    а клеток в бланке бывает 12 — две последние законно пустые.
+    Не то же самое, что обязательные поля карточки:
+      * клетки под отдельные цифры ИНН и ОГРН помечены `may_be_empty` —
+        у юрлица ИНН 10 знаков, а клеток в бланке бывает 12;
+      * переменные с `only_for` нужны не всякому заявителю — КПП бывает
+        только у юридического лица.
     """
     required = set()
     for name in placeholders:
         spec = lookup_variable(name, variable_map)
-        if spec and spec.get("required") and not spec.get("may_be_empty"):
-            required.add(name)
+        if not spec or not spec.get("required") or spec.get("may_be_empty"):
+            continue
+        only_for = spec.get("only_for")
+        if only_for and only_for != applicant_kind:
+            continue
+        required.add(name)
     return required
 
 

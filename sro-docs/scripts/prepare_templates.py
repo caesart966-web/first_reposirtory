@@ -38,7 +38,8 @@ from lxml import etree
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from src.docx_engine import W, _iter_paragraphs, _own_text_nodes  # noqa: E402
+from src.docx_engine import (W, _iter_paragraphs, _own_text_nodes,  # noqa: E402
+                            _rebuild_grid, _row_width, _spread_widths)
 
 XML_SPACE = "{http://www.w3.org/XML/1998/namespace}space"
 
@@ -51,6 +52,22 @@ class PrepareError(Exception):
 def op_text(paragraph: int, node: int, expected: str, new: str) -> dict:
     """Заменить текст фрагмента №node в абзаце №paragraph."""
     return {"kind": "text", "p": paragraph, "n": node, "expected": expected, "new": new}
+
+
+def op_cells(table: int, row: int, count: int) -> dict:
+    """Свести ряд клеток «по одной цифре» к нужному числу ровных клеток.
+
+    Бланк ЯРД рассчитан на предпринимателя: клеток под ИНН 12 и под ОГРНИП 15,
+    причём последние вдвое уже остальных — ряд выглядит кривым. Приводим его
+    к тому же виду, что у остальных СРО: 10 клеток под ИНН и 13 под ОГРН,
+    все одной ширины. Если документы подаёт предприниматель, недостающие
+    клетки программа добавит сама при заполнении (см. expand_digit_rows).
+
+    Общая ширина ряда сохраняется, поэтому таблица не меняет размера.
+    Клетки убираются только пустые: если в лишней клетке есть текст,
+    правка остановится.
+    """
+    return {"kind": "cells", "t": table, "r": row, "count": count}
 
 
 def op_unfield() -> dict:
@@ -518,9 +535,15 @@ YARD_APPLICATION_OPS: list[dict] = [
              r"^№__от «_____» ___________20__ г\.$",
              "№ {{doc_number}} от «{{doc_day}}» {{doc_month_name}} {{doc_year}} г."),
 
-    # --- п.1 ИНН (12 клеток) и п.2 ОГРНИП (15 клеток) ---
-    *[op_cell(1, 0, i, "", "{{inn_d%d}}" % (i + 1)) for i in range(12)],
-    *[op_cell(2, 0, i, "", "{{ogrn_d%d}}" % (i + 1)) for i in range(15)],
+    # --- п.1 ИНН и п.2 ОГРН ---
+    # Бланк ЯРД напечатан под предпринимателя: клеток 12 и 15, причём
+    # последние вдвое уже остальных. Приводим ряды к тому же виду, что
+    # у остальных СРО, — 10 и 13 ровных клеток. Предпринимателю программа
+    # добавит недостающие клетки сама при заполнении.
+    op_cells(1, 0, 10),
+    op_cells(2, 0, 13),
+    *[op_cell(1, 0, i, "", "{{inn_d%d}}" % (i + 1)) for i in range(10)],
+    *[op_cell(2, 0, i, "", "{{ogrn_d%d}}" % (i + 1)) for i in range(13)],
 
     # --- п.3 наименование ---
     # В бланке пропуск идёт впритык к подписи («…дата его рождения__»),
@@ -633,7 +656,7 @@ SIS_POWER_OPS: list[dict] = [
         r"Генерального директора _+, действующего на основании _+, "
         r"настоящей доверенностью уполномочивает:$",
         "Полное название организации-члена СРО: {{company_full_name}} "
-        "(ОГРН /ОГРНИП {{ogrn}} ИНН {{inn}}, КПП {{kpp}}, "
+        "(ОГРН /ОГРНИП {{ogrn}} ИНН {{inn}}, {{kpp_phrase}}"
         "зарегистрированное по адресу {{legal_address}}), "
         "в лице {{director_position_genitive}} {{director_full_name_genitive}}, "
         "действующего на основании {{director_basis_genitive}}, "
@@ -1036,7 +1059,30 @@ def apply_ops(document_xml: bytes, ops: list[dict], label: str) -> bytes:
     for op in ops:
         if "p" in op:
             op = dict(op, p=_resolve_paragraph(paragraphs, op["p"], label))
-        if op["kind"] == "unfield":
+        if op["kind"] == "cells":
+            rows = list(tables[op["t"]].findall(W + "tr"))
+            if op["r"] >= len(rows):
+                raise PrepareError(
+                    f"{label}: в таблице №{op['t']} нет строки №{op['r']}.")
+            row = rows[op["r"]]
+            cells = row.findall(W + "tc")
+            if len(cells) < op["count"]:
+                raise PrepareError(
+                    f"{label}: в таблице №{op['t']} клеток {len(cells)}, "
+                    f"а нужно оставить {op['count']} — убирать нечего. "
+                    f"Шаблон изменился.")
+            total = _row_width(row)
+            for extra in cells[op["count"]:]:
+                text = "".join(n.text or "" for n in extra.iter(W + "t"))
+                if text.strip():
+                    raise PrepareError(
+                        f"{label}: таблица №{op['t']}, лишняя клетка не пуста "
+                        f"({text[:40]!r}). Убирать её нельзя — шаблон изменился.")
+                row.remove(extra)
+            _spread_widths(row, total)
+            _rebuild_grid(row, op["count"], total)
+
+        elif op["kind"] == "unfield":
             removed = 0
             for run in list(root.iter(W + "r")):
                 if run.find(W + "fldChar") is None and run.find(W + "instrText") is None:

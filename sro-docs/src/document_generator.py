@@ -27,7 +27,9 @@ from pathlib import Path
 from . import app_logging
 from .context_builder import ContextResult, build_context
 from .docx_engine import TemplateError, fill_template, scan_placeholders
-from .models import FIELD_BY_KEY, CompanyData
+from .company_parser import split_company_name
+from .models import (ENTREPRENEUR_DEFAULTS, FIELD_BY_KEY,  # noqa: E402
+                     CompanyData)
 from .quality_control import (QualityReport, check_document, lookup_variable,
                               required_variables_for)
 from .sro_registry import DocumentSpec, SroError, SroProfile, discover, find
@@ -189,6 +191,38 @@ class Project:
             company.doc_date = date.today().strftime("%d.%m.%Y")
         return company
 
+    def apply_applicant_defaults(self, company: CompanyData) -> list[str]:
+        """Подставить умолчания, зависящие от типа заявителя.
+
+        У предпринимателя должность подписанта и основание полномочий
+        всегда одни и те же — «Индивидуальный предприниматель» и «Лист
+        записи ЕГРИП». Это подсказка в форме: заполненное поле не трогаем,
+        и человек всегда может вписать своё.
+        """
+        if not company.is_entrepreneur:
+            return []
+        notes: list[str] = []
+        for key, value in ENTREPRENEUR_DEFAULTS.items():
+            if company.get(key):
+                continue
+            company.set(key, value)
+            spec = FIELD_BY_KEY.get(key)
+            notes.append(
+                f"{company.label_for(key) if spec else key}: подставлено "
+                f"«{value}» — как обычно у предпринимателя. Если у вас иначе, "
+                f"впишите своё."
+            )
+        # Предприниматель подписывает документы сам.
+        if not company.director_full_name and company.full_name:
+            _, _, bare = split_company_name(company.full_name)
+            if bare and len(bare.split()) >= 2:
+                company.set("director_full_name", bare)
+                notes.append(
+                    f"ФИО подписанта взято из наименования: «{bare}». "
+                    f"Предприниматель подписывает документы сам."
+                )
+        return notes
+
     def apply_auto_fill(self, company: CompanyData) -> list[str]:
         """Заполнить пустые поля из других полей по правилам config/auto_fill.
 
@@ -257,6 +291,11 @@ def check_readiness(project: Project, company: CompanyData,
                 continue
             source = info.get("field")
             if not source or not info.get("required"):
+                continue
+            # Переменная не для этого заявителя: у предпринимателя нет КПП,
+            # и требовать его — значит просить придумать несуществующее.
+            only_for = info.get("only_for")
+            if only_for and only_for != company.applicant_kind:
                 continue
             if company.get(source):
                 continue
@@ -334,7 +373,8 @@ def generate(project: Project, company_input: CompanyData,
 
     # Работаем с копией: исходный объект никто по пути не изменит.
     company = company_input.copy()
-    result_notes = project.apply_auto_fill(company)
+    result_notes = project.apply_applicant_defaults(company)
+    result_notes += project.apply_auto_fill(company)
     documents = documents if documents is not None else project.enabled_documents()
     note = project.sro.readiness_note()
     if note:
@@ -411,7 +451,8 @@ def generate(project: Project, company_input: CompanyData,
 
         quality = check_document(
             target, spec.title, company, context.values,
-            required_variables_for(placeholders, project.variables),
+            required_variables_for(placeholders, project.variables,
+                                   company.applicant_kind),
             placeholders,
         )
         result.quality.append(quality)
