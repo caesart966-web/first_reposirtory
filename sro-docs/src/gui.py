@@ -191,11 +191,9 @@ class SroDialog(tk.Toplevel):
             if title:
                 ttk.Label(details, text=title, wraplength=380,
                           justify=LEFT).pack(anchor="w")
-            if profile.is_ready:
-                count = len(profile.enabled_documents())
-                ttk.Label(details, text=f"бланки загружены, документов: {count}",
-                          foreground="#1c6b1c").pack(anchor="w")
-            else:
+            # «Бланки загружены, документов: N» убрано как лишнее: у готовых
+            # СРО ничего не пишем, а вот про НЕзагруженные предупреждаем.
+            if not profile.is_ready:
                 ttk.Label(details, text="бланки ещё не загружены",
                           foreground="#8a5a00").pack(anchor="w")
 
@@ -315,8 +313,9 @@ class SroParamsWizard(tk.Toplevel):
         obj = ttk.LabelFrame(self._body, text=" Виды объектов ")
         obj.pack(fill=X, pady=(0, PAD))
         for kind, title in OBJECT_KINDS.items():
-            ttk.Radiobutton(obj, text=title, value=kind, variable=self._object_var,
-                            width=1).pack(anchor="w", padx=PAD, pady=1, fill=X)
+            ttk.Radiobutton(obj, text=title, value=kind,
+                            variable=self._object_var).pack(
+                anchor="w", padx=PAD, pady=1)
 
         self._level_block(" Компенсационный фонд возмещения вреда ",
                           profile.harm_levels, self._harm_var, allow_none=False)
