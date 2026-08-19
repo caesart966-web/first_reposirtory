@@ -821,12 +821,19 @@ def main() -> int:
         return 1
 
     app_logging.setup(project.logs_dir)
+    log = app_logging.get()
+    # Отпечаток окружения и шаги запуска — чтобы по журналу было видно,
+    # до какого места дошёл запуск, даже если окно так и не появилось.
+    log.info("запуск: Python %s, платформа %s",
+             sys.version.split()[0], sys.platform)
+    log.info("запуск: найдено СРО — %d", len(project.all_sro))
 
     try:
         from tkinterdnd2 import TkinterDnD
         root = TkinterDnD.Tk()
     except Exception:  # noqa: BLE001
         root = tk.Tk()
+    log.info("запуск: главное окно создано")
 
     root.title(TITLE)
     root.geometry("1060x760")
@@ -838,22 +845,28 @@ def main() -> int:
 
     # Настроена одна СРО — спрашивать не о чем.
     if len(project.all_sro) > 1:
+        log.info("запуск: показываю окно выбора СРО")
         root.withdraw()
         chosen = SroDialog(root, project.all_sro, project.sro).result
         root.deiconify()
         if chosen is None:
+            log.info("запуск: выбор СРО отменён пользователем")
             root.destroy()
             return 0
+        log.info("запуск: выбрана СРО «%s»", chosen.short_name)
         project.use_sro(chosen)
 
     application = Application(root, project)
+    log.info("запуск: главное окно построено")
     note = project.sro.readiness_note()
     if note:
         messagebox.showwarning(TITLE, note)
         application._set_status(
             f"СРО «{project.sro.short_name}»: бланки не загружены.", "#8a5a00")
 
+    log.info("запуск: окно открыто, работаем")
     root.mainloop()
+    log.info("выход: окно закрыто")
     return 0
 
 
@@ -864,10 +877,19 @@ if __name__ == "__main__":
         raise
     except Exception:  # noqa: BLE001
         traceback.print_exc()
+        # Записать причину в журнал: сообщение в окне отсылает к app.log,
+        # значит там и должна быть полная расшифровка, а не только в консоли,
+        # которую пользователь закроет.
+        try:
+            app_logging.get().exception("Программа завершилась с ошибкой при запуске")
+        except Exception:  # noqa: BLE001
+            pass
         try:
             import tkinter.messagebox as mb
             mb.showerror(TITLE, "Программа завершилась с ошибкой.\n\n"
-                                "Подробности — в файле logs/app.log.")
+                                "Подробности — в файле logs/app.log.\n\n"
+                                "Можно запустить DIAGNOSTIKA.bat — он соберёт "
+                                "отчёт и откроет его.")
         except Exception:  # noqa: BLE001
             pass
         raise SystemExit(1)
