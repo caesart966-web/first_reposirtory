@@ -34,7 +34,7 @@ BIN = DIST / "_bin"
 OUT = DIST / DIST_NAME
 
 # Данные, которые едут РЯДОМ с программой (не внутри неё): бланки и настройки.
-DATA_DIRS = ["sro", "config"]
+DATA_DIRS = ["sro", "config", "assets"]
 
 # Библиотеки, которые PyInstaller иногда не находит сам.
 COLLECT_ALL = ["tkinterdnd2"]
@@ -56,6 +56,9 @@ def run_pyinstaller() -> None:
         "--workpath", str(BUILD),
         "--specpath", str(BUILD),
     ]
+    icon = ROOT / "assets" / "icon.ico"
+    if icon.exists():
+        args += ["--icon", str(icon)]
     for package in COLLECT_ALL:
         try:
             __import__(package)

@@ -56,6 +56,28 @@ def open_in_explorer(path: Path) -> None:
             f"\n\nТехническая причина: {exc}")
 
 
+def _set_window_icon(root) -> None:
+    """Поставить значок окна и панели задач.
+
+    Значок лежит рядом с программой (папка assets). На Windows берётся .ico
+    (лучше для панели задач), на любой системе — .png. Если файлов нет,
+    молча оставляем значок по умолчанию — это не ошибка.
+    """
+    from .paths import app_root
+    assets = app_root() / "assets"
+    try:
+        ico = assets / "icon.ico"
+        if sys.platform.startswith("win") and ico.exists():
+            root.iconbitmap(str(ico))
+        png = assets / "icon.png"
+        if png.exists():
+            image = tk.PhotoImage(file=str(png))
+            root.iconphoto(True, image)
+            root._icon_image = image  # держим ссылку, иначе картинку соберёт GC
+    except Exception:  # noqa: BLE001
+        pass
+
+
 def _present_modal(window, master) -> None:
     """Показать модальное окно так, чтобы его было ВИДНО.
 
@@ -1114,6 +1136,7 @@ def main() -> int:
     root.title(TITLE)
     root.geometry("1060x760")
     root.minsize(880, 600)
+    _set_window_icon(root)
     try:
         ttk.Style().theme_use("vista" if sys.platform.startswith("win") else "clam")
     except tk.TclError:
