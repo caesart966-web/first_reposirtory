@@ -485,18 +485,18 @@ def sfera_application_ops(levels: int) -> list[dict]:
         # --- п.4 юридический адрес: две отдельные строки ---
         # Бланк просит адрес двумя строками: сверху индекс, регион, город
         # и улица, снизу — дом, корпус, офис. Делим по указателю дома.
-        op_regex(40, r"^_+$", "{{legal_address_street}}"),
-        op_blank(42, None, "{{legal_address_house}}"),
+        op_regex(40, r"^_+$", "{{legal_address}}"),
+        op_blank(42, None, ""),
 
         # --- п.5 фактический и п.6 почтовый адрес ---
         # Здесь бланк устроен цепочкой: подпись к строке и СЛЕДУЮЩАЯ строка
         # лежат в одном абзаце. Пропуск с новой строки (newline) разрезает
         # абзац, поэтому «дом 35…» встаёт отдельной строкой, как в п.4,
         # а подпись не расползается пробелами по ширине.
-        op_regex(45, r"^_+$", "{{actual_address_street}}"),
-        op_blank(46, None, "{{actual_address_house}}", newline=True),
-        op_regex(48, r"^_+$", "{{postal_address_street}}"),
-        op_blank(49, None, "{{postal_address_house}}", newline=True),
+        op_regex(45, r"^_+$", "{{actual_address}}"),
+        op_blank(46, None, ""),
+        op_regex(48, r"^_+$", "{{postal_address}}"),
+        op_blank(49, None, ""),
 
         # --- п.7 контакты: три строки ---
         # Руководитель; контактное лицо (это тот же директор); контакты
@@ -505,8 +505,7 @@ def sfera_application_ops(levels: int) -> list[dict]:
         op_regex(52, r"^_+$", "{{director_contact_line}}"),
         # В этом абзаце подпись к строке набрана другим шрифтом, чем сама
         # строка, поэтому переписываем только фрагменты с подчёркиваниями.
-        op_blank(53, [10, 11, 12], "{{director_contact_line}}", newline=True),
-        op_add_line(54, r"контактного лица$", "{{company_contact_line}}"),
+        op_blank(53, None, ""),
 
         # --- п.8 виды объектов ---
         op_mark(3, 1, 1, "", "{{mark_object_ordinary}}", size=32),
@@ -553,24 +552,23 @@ YARD_APPLICATION_OPS: list[dict] = [
     op_blank(43, None, "{{company_full_name}}"),
 
     # --- п.4 юридический адрес: две отдельные строки ---
-    op_regex(45, r"^_+$", "{{legal_address_street}}"),
-    op_blank(47, None, "{{legal_address_house}}"),
+    op_regex(45, r"^_+$", "{{legal_address}}"),
+    op_blank(47, None, ""),
 
     # --- п.5 фактический и п.6 почтовый адрес ---
     # Бланк устроен цепочкой: строка, затем абзац «подпись к строке выше +
     # следующая строка». Поэтому вторая строка адреса лежит в хвосте абзаца
     # с подписью. Делим адрес так же, как в п.4: улица сверху, дом снизу.
-    op_regex(50, r"^_+$", "{{actual_address_street}}"),
-    op_blank(51, None, "{{actual_address_house}}", newline=True),
-    op_regex(53, r"^_+$", "{{postal_address_street}}"),
-    op_blank(54, None, "{{postal_address_house}}", newline=True),
+    op_regex(50, r"^_+$", "{{actual_address}}"),
+    op_blank(51, None, ""),
+    op_regex(53, r"^_+$", "{{postal_address}}"),
+    op_blank(54, None, ""),
 
     # --- п.7 контакты: три строки ---
     # руководитель; контактное лицо (это тот же директор); контакты организации.
     # Третья строка — пустой абзац, подчёркнутый рамкой, а не подчёркиваниями.
     op_regex(57, r"^_+$", "{{director_contact_line}}"),
-    op_blank(58, None, "{{director_contact_line}}", newline=True),
-    op_line(60, "{{company_contact_line}}"),
+    op_blank(58, None, ""),
 
     # --- п.8 виды объектов ---
     op_mark(3, 1, 1, "V", "{{mark_object_ordinary}}", size=32),

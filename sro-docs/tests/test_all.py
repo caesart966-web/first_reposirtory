@@ -908,10 +908,17 @@ class TestProjectConfig(unittest.TestCase):
                             f"{profile.key}: к подписи «{caption}» прилип текст "
                             f"«{tail[:60]}»")
 
-    def test_organisation_contacts_are_filled(self):
-        """У пункта «Контактные данные» заполнены все три строки."""
+    def test_contacts_are_written_once(self):
+        """Контактные данные в п.7 подставляются ОДИН раз.
+
+        По просьбе пользователя данные в «Контактных данных» пишутся один
+        раз (строка руководителя), без повтора и без отдельной строки
+        контактов организации. Серые подписи бланка при этом остаются —
+        за это отвечает другой тест (о слипании подписи со значением).
+        """
         project = Project(ROOT)
         company = make_company(ALPHA)
+        values = None
         for profile in project.all_sro:
             if not profile.is_ready:
                 continue
@@ -923,11 +930,19 @@ class TestProjectConfig(unittest.TestCase):
             placeholders = project.placeholders(spec)
             if "director_contact_line" not in placeholders:
                 continue  # в бланке нет пункта «Контактные данные»
+            if values is None:
+                values = build_context(company, project.attorney(),
+                                       sro=profile).values
+            with tempfile.TemporaryDirectory() as folder:
+                target = Path(folder) / spec.template
+                fill_template(project.template_path(spec), target, values)
+                text = extract_all_text(target)
+            line = values["director_contact_line"]
             with self.subTest(sro=profile.key):
-                self.assertIn(
-                    "company_contact_line", placeholders,
-                    f"{profile.key}: строка «код города, телефон, факс, E-mail, "
-                    f"адрес в сети Интернет организации» осталась пустой")
+                self.assertEqual(
+                    text.count(line), 1,
+                    f"{profile.key}: контактная строка встречается "
+                    f"{text.count(line)} раз(а), а должна ровно один раз")
 
     def test_tabs_survive_rewriting(self):
         """Табуляции бланка нельзя терять при переписывании абзаца.
