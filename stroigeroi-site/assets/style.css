@@ -851,7 +851,7 @@ ul {
 
 .hero__inner {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
   gap: var(--sp-5);
   align-items: stretch;
   height: 100%;
@@ -910,25 +910,27 @@ ul {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding: var(--sp-5) var(--sp-5) 0;
+  padding: var(--sp-4) var(--sp-3) 0;
   overflow: hidden;
 }
 
 /* Слева эмблема по центру, справа маскот — стоит на нижней кромке панели */
+/* Колонки поровну: на фирменном баннере эмблема и герой одного роста,
+   и в макете они должны читаться так же. */
 .hero__marks {
   display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   align-items: end;
-  gap: var(--sp-5);
+  gap: var(--sp-4);
   width: 100%;
 }
 
 .hero__emblem {
-  width: min(230px, 100%);
+  width: min(300px, 100%);
   height: auto;
   justify-self: center;
   align-self: center;
-  margin-bottom: var(--sp-7);
+  margin-bottom: var(--sp-6);
   filter: drop-shadow(0 6px 18px rgba(16, 24, 40, 0.18));
 }
 
@@ -2284,7 +2286,11 @@ html[data-theme="dark"] .hero__visual {
   }
 
   .hero__emblem {
-    width: min(200px, 45%);
+    width: min(240px, 100%);
+  }
+
+  .hero__mascot img {
+    max-width: 240px;
   }
 }
 
@@ -2491,18 +2497,21 @@ html[data-theme="dark"] .hero__visual {
     margin-bottom: var(--sp-4);
   }
 
+  /* На баннере заказчика эмблема и герой одного роста — держим так же.
+     Колонки поровну, ширина знаков одинаковая. */
   .hero__marks {
-    gap: var(--sp-3);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--sp-2);
     align-items: end;
   }
 
   .hero__emblem {
-    width: min(96px, 32%);
-    margin-bottom: var(--sp-3);
+    width: min(170px, 100%);
+    margin-bottom: var(--sp-4);
   }
 
   .hero__mascot img {
-    max-width: 165px;
+    max-width: 170px;
   }
 
   /* Преимущества становятся списком коротких строк, а не высокими плитками */
