@@ -390,6 +390,11 @@ def detect_header_row(
     best: tuple[int | None, int, list[str]] = (None, 0, [])
 
     for start in range(limit):
+        # «Многоэтажная» шапка оправдана, только если каждая добавленная строка
+        # приносит НОВЫЕ роли (например, «Дата | вступления/исключения»).
+        # Иначе на маленьких листах шапка «съедала» первую строку данных:
+        # значения вроде «ИНН 5407123456» всё ещё похожи на заголовок с ИНН.
+        roles_at_shorter_span = -1
         for span in range(1, max_span + 1):
             if start + span > len(rows):
                 break
@@ -400,6 +405,9 @@ def detect_header_row(
             # Шапка должна опознаваться минимум по двум ролям либо содержать ИНН.
             if len(roles) < 2 and ROLE_INN not in roles:
                 continue
+            if span > 1 and len(roles) <= roles_at_shorter_span:
+                continue
+            roles_at_shorter_span = max(roles_at_shorter_span, len(roles))
             key = (round(score, 6), -span, -start)
             if key > best_key:
                 best_key = key

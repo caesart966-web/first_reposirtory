@@ -236,6 +236,90 @@ class _FakeCheckoApiServer:
         return f"http://{host}:{port}/v2"
 
 
+#: Ответ внутреннего API реестра НОСТРОЙ (структура как у reestr.nostroy.ru).
+NOSTROY_MEMBER_PAYLOAD = {
+    "data": {
+        "data": [
+            {
+                "id": 123456,
+                "full_description": 'ООО "СибирьСтрой"',
+                "inn": "5407123456",
+                "ogrn": "1065407123456",
+                "member_status": {"id": 1, "title": "Является членом"},
+                "registry_registration_date": "2016-04-14T00:00:00+03:00",
+                "accession_date": "2016-04-14T00:00:00+03:00",
+                "exclusion_date": None,
+                "birth_date": "1980-01-01T00:00:00+03:00",
+                "created_at": "2021-05-01T10:00:00+03:00",
+            }
+        ],
+        "totalCount": 1,
+    }
+}
+
+NOSTROY_EXCLUDED_PAYLOAD = {
+    "data": {
+        "data": [
+            {
+                "full_description": 'ЗАО "ЮгСтройИнвест"',
+                "inn": "2310031475",
+                "member_status": {"id": 2, "title": "Исключен"},
+                "registry_registration_date": "2011-07-08T00:00:00+03:00",
+                "exclusion_date": "2021-06-30T00:00:00+03:00",
+            }
+        ]
+    }
+}
+
+
+class _NostroyHandler(BaseHTTPRequestHandler):
+    """Эмулятор внутреннего API реестра НОСТРОЙ."""
+
+    hits: list[str] = []
+    lock = threading.Lock()
+
+    def log_message(self, *args):  # noqa: D102
+        return
+
+    def do_POST(self) -> None:  # noqa: N802
+        length = int(self.headers.get("Content-Length", 0) or 0)
+        body = self.rfile.read(length).decode("utf-8", errors="replace")
+        with _NostroyHandler.lock:
+            _NostroyHandler.hits.append(self.path)
+        if "2310031475" in body:
+            payload = NOSTROY_EXCLUDED_PAYLOAD
+        elif "5407123456" in body:
+            payload = NOSTROY_MEMBER_PAYLOAD
+        else:
+            payload = {"data": {"data": [], "totalCount": 0}}
+        raw = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(raw)))
+        self.end_headers()
+        self.wfile.write(raw)
+
+
+class _FakeNostroyServer:
+    def __init__(self) -> None:
+        self.server = ThreadingHTTPServer(("127.0.0.1", 0), _NostroyHandler)
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+
+    def __enter__(self) -> "_FakeNostroyServer":
+        self.thread.start()
+        return self
+
+    def __exit__(self, *exc_info) -> None:
+        self.server.shutdown()
+        self.server.server_close()
+        self.thread.join(timeout=5)
+
+    @property
+    def base_url(self) -> str:
+        host, port = self.server.server_address[:2]
+        return f"http://{host}:{port}"
+
+
 class _FakeCheckoServer:
     """Контекстный менеджер, поднимающий локальный сервер-заглушку."""
 
@@ -1087,6 +1171,100 @@ class TestCheckoApi(BaseTestCase):
             result = client.lookup('ООО "Без ИНН"')
         self.assertEqual(result.status, STATUS_NOT_FOUND)
         self.assertEqual(len(_CheckoApiHandler.hits), 0)
+
+
+class TestNostroyRegistry(BaseTestCase):
+    """Даты вступления/исключения дотягиваются из открытого реестра НОСТРОЙ."""
+
+    def test_payload_parsing(self) -> None:
+        from nostroy_checko.nostroy_api import parse_member_payload
+
+        info = parse_member_payload(NOSTROY_MEMBER_PAYLOAD, "5407123456")
+        self.assertTrue(info.found)
+        self.assertEqual(info.date_join, date(2016, 4, 14))
+        self.assertIsNone(info.date_exit)          # действующий член
+        # Дата рождения и дата создания записи не приняты за даты членства.
+
+        excluded = parse_member_payload(NOSTROY_EXCLUDED_PAYLOAD, "2310031475")
+        self.assertEqual(excluded.date_join, date(2011, 7, 8))
+        self.assertEqual(excluded.date_exit, date(2021, 6, 30))
+        self.assertIn("Исключен", excluded.status_text)
+
+    def test_lookup_and_cache(self) -> None:
+        from nostroy_checko import nostroy_api
+        from nostroy_checko.models import CompanyGroup, RegistryRecord
+        from nostroy_checko.pipeline import enrich_dates_from_nostroy
+
+        _NostroyHandler.hits = []
+        settings = Settings(input_path=Path("."), output_dir=self.tmp_dir / "nostroy",
+                            rps=0.0, nostroy_rps=1000.0, timeout=5.0)
+        store = StateStore(self.tmp_dir / "nostroy" / "state.json", daily_limit=100)
+        store.load()
+
+        groups = [
+            CompanyGroup(key="inn:5407123456",
+                         records=[RegistryRecord(name='ООО "СибирьСтрой"', inn="5407123456")]),
+            CompanyGroup(key="inn:2310031475",
+                         records=[RegistryRecord(name='ЗАО "ЮгСтройИнвест"', inn="2310031475")]),
+        ]
+        with _FakeNostroyServer() as server:
+            nostroy_api.NOSTROY_BASE = server.base_url
+            enrich_dates_from_nostroy(groups, settings, store)
+            hits_first = len(_NostroyHandler.hits)
+            self.assertGreater(hits_first, 0)
+
+            # Даты подставились и попали в итоговые свойства группы.
+            self.assertEqual(groups[0].date_join, date(2016, 4, 14))
+            self.assertEqual(groups[0].membership_status, "действует")
+            self.assertEqual(groups[1].date_exit, date(2021, 6, 30))
+            self.assertEqual(groups[1].membership_status, "исключён")
+
+            # Повторный запуск берёт всё из кэша — новых запросов нет.
+            fresh = [
+                CompanyGroup(key="inn:5407123456",
+                             records=[RegistryRecord(name="X", inn="5407123456")]),
+            ]
+            enrich_dates_from_nostroy(fresh, settings, store)
+            self.assertEqual(len(_NostroyHandler.hits), hits_first)
+            self.assertEqual(fresh[0].date_join, date(2016, 4, 14))
+
+    def test_file_dates_take_precedence(self) -> None:
+        """Дата из файла выгрузки главнее даты из реестра НОСТРОЙ."""
+        from nostroy_checko.models import CompanyGroup, RegistryRecord
+
+        group = CompanyGroup(
+            key="inn:5407123456",
+            records=[RegistryRecord(name="X", inn="5407123456", date_join=date(2015, 1, 1))],
+        )
+        group.nostroy_date_join = date(2016, 4, 14)
+        self.assertEqual(group.date_join, date(2015, 1, 1))
+
+
+class TestGenericDatabases(BaseTestCase):
+    """Скрипт принимает любые базы данных, не только выгрузки НОСТРОЙ."""
+
+    def test_arbitrary_client_database(self) -> None:
+        """Файл с произвольными колонками: клиенты CRM, а не реестр СРО."""
+        from nostroy_checko.excel_reader import SheetData
+
+        rows = [
+            ["Клиент", "Реквизиты (ИНН)", "Комментарий менеджера"],
+            ['ООО "Альфа Трейд"', "7707083893", "перезвонить в четверг"],
+            ['ЗАО "Бета Логистик"', "2310031475", "ждёт КП"],
+            ["ИП Сидоров Сергей Сергеевич", "500100732259", "8 916 000-00-00 — личный"],
+        ]
+        sheet = SheetData(Path("clients.xlsx"), "clients.xlsx", "CRM", rows)
+        records, unrecognized, _ = parse_sheet(sheet)
+        self.assertEqual(len(records), 3)
+        self.assertEqual(unrecognized, [])
+        by_inn = {record.inn: record for record in records}
+        self.assertIn("7707083893", by_inn)
+        # Телефон из «Комментария» тоже подобран — контакты ищутся по всей строке.
+        self.assertIn("+79160000000", by_inn["500100732259"].phones)
+        # Группировка и подготовка к checko работают без дат — это не ошибка.
+        groups = group_records(records, "inn")
+        self.assertEqual(len(groups), 3)
+        self.assertTrue(all(group.query_for_checko() for group in groups))
 
 
 # --------------------------------------------------------------------------- #

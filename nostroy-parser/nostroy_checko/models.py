@@ -320,6 +320,10 @@ class CompanyGroup:
     key: str                                          # ключ дедупликации
     records: list[RegistryRecord] = field(default_factory=list)
     checko: CheckoContacts | None = None
+    #: Даты/статус из открытого реестра НОСТРОЙ (если файл выгрузки их не содержит).
+    nostroy_date_join: date | None = None
+    nostroy_date_exit: date | None = None
+    nostroy_status: str = ""
 
     # ------------------------- сводные поля --------------------------- #
 
@@ -354,15 +358,15 @@ class CompanyGroup:
 
     @property
     def date_join(self) -> date | None:
-        """Самая ранняя дата вступления среди всех вхождений."""
+        """Дата вступления: из файла выгрузки, а если там нет — из реестра НОСТРОЙ."""
         dates = [r.date_join for r in self.records if r.date_join]
-        return min(dates) if dates else None
+        return min(dates) if dates else self.nostroy_date_join
 
     @property
     def date_exit(self) -> date | None:
-        """Самая поздняя дата исключения (если компания исключалась)."""
+        """Дата исключения: из файла выгрузки, а если там нет — из реестра НОСТРОЙ."""
         dates = [r.date_exit for r in self.records if r.date_exit]
-        return max(dates) if dates else None
+        return max(dates) if dates else self.nostroy_date_exit
 
     @property
     def status(self) -> str:
@@ -382,7 +386,7 @@ class CompanyGroup:
         """
         if self.date_exit is not None:
             return "исключён"
-        text = self.status.lower().replace("ё", "е")
+        text = (self.status or self.nostroy_status).lower().replace("ё", "е")
         if re.search(r"исключ|прекращ|выход|аннулир|не явля", text):
             return "исключён"
         return "действует"

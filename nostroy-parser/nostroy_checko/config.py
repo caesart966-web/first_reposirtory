@@ -131,6 +131,9 @@ class Settings:
     user_agent: str = DEFAULT_USER_AGENT
     proxy: str | None = None
     query_by_name: bool = True             # искать по названию, если нет ИНН
+    nostroy_dates: bool = True             # дотягивать даты из открытого реестра НОСТРОЙ
+    nostroy_rps: float = 1.0               # частота запросов к реестру НОСТРОЙ
+    open_report: bool = False              # открыть готовый отчёт в Excel по завершении
     count_http_requests: bool = False      # квота на каждый HTTP-запрос, а не на компанию
     retry_failed: bool = False             # повторить ранее неудачные запросы
     reset_state: bool = False              # начать «с нуля», удалив прогресс

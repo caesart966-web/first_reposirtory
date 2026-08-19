@@ -175,6 +175,16 @@ def build_parser() -> argparse.ArgumentParser:
         help="прокси вида http://user:pass@host:port (по умолчанию берётся из HTTPS_PROXY)",
     )
     group_checko.add_argument(
+        "--no-nostroy-dates",
+        action="store_true",
+        help="не дотягивать даты вступления/исключения из открытого реестра НОСТРОЙ",
+    )
+    group_checko.add_argument(
+        "--nostroy-rps",
+        type=float, default=1.0, metavar="ЧИСЛО",
+        help="частота запросов к реестру НОСТРОЙ (запросов в секунду)",
+    )
+    group_checko.add_argument(
         "--use-site-parser",
         action="store_true",
         help=(
@@ -213,6 +223,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     # ------------------------------- прочее --------------------------------- #
     group_misc = parser.add_argument_group("Прочее")
+    group_misc.add_argument(
+        "--open-report",
+        action="store_true",
+        help="открыть готовый отчёт в Excel по завершении работы",
+    )
     group_misc.add_argument(
         "--no-progress-bar",
         action="store_true",
@@ -265,6 +280,9 @@ def settings_from_args(args: argparse.Namespace) -> Settings:
         user_agent=args.user_agent,
         proxy=args.proxy,
         query_by_name=not args.no_query_by_name,
+        nostroy_dates=not args.no_nostroy_dates,
+        nostroy_rps=max(0.1, args.nostroy_rps),
+        open_report=args.open_report,
         count_http_requests=args.count_http_requests,
         retry_failed=args.retry_failed,
         reset_state=args.reset_state,
@@ -340,6 +358,18 @@ def main(argv: list[str] | None = None) -> int:
     if result.report_path:
         logger.info("%-42s %s", "Итоговый отчёт:", result.report_path.resolve())
     logger.info("=" * 78)
+
+    # «Как в таблице»: по завершении сразу открываем готовый файл в Excel.
+    if settings.open_report and result.report_path and result.report_path.exists():
+        try:
+            if hasattr(os, "startfile"):
+                os.startfile(str(result.report_path))          # Windows
+            else:
+                import subprocess
+                opener = "open" if sys.platform == "darwin" else "xdg-open"
+                subprocess.Popen([opener, str(result.report_path)])
+        except OSError as exc:
+            logger.debug("Не удалось открыть отчёт автоматически: %s", exc)
 
     if result.forbidden_seen:
         logger.error("=" * 70)

@@ -29,21 +29,36 @@ echo.
 :env_ready
 
 rem --- 3. Определяем, что разбирать --------------------------------------
+rem Файл, обработанный в прошлый раз, запоминается в last_input.txt:
+rem на следующий день достаточно двойного щелчка по run.bat.
 set "INPUT=%~1"
 if not "%INPUT%"=="" goto have_input
+if not exist "last_input.txt" goto ask_input
+set /p LAST=<last_input.txt
+if "%LAST%"=="" goto ask_input
+if not exist "%LAST%" goto ask_input
+echo Прошлый раз обрабатывался файл:
+echo   %LAST%
+choice /c 1_2 /n /m "Нажмите 1 — продолжить с ним, 2 — выбрать другой файл: "
+if errorlevel 2 goto ask_input
+set "INPUT=%LAST%"
+goto have_input
+:ask_input
 echo Перетащите архив (.rar/.zip) или Excel-файл в это окно
 set /p "INPUT=и нажмите Enter: "
 set "INPUT=%INPUT:"=%"
 :have_input
 if "%INPUT%"=="" goto no_input
 if not exist "%INPUT%" goto not_found
+echo %INPUT%>last_input.txt
 
-rem --- 4. Запускаем -------------------------------------------------------
+rem --- 4. Запускаем и по завершении открываем готовую таблицу ------------
 echo.
-".venv\Scripts\python.exe" main.py --input "%INPUT%" --output output %EXTRA_ARGS% %2 %3 %4 %5 %6
+".venv\Scripts\python.exe" main.py --input "%INPUT%" --output output --open-report %EXTRA_ARGS% %2 %3 %4 %5 %6
 echo.
 echo ============================================================
-echo  Результаты — в папке: %~dp0output
+echo  Готовая таблица открыта в Excel.
+echo  Файл лежит здесь: %~dp0output
 echo ============================================================
 goto done
 
@@ -56,7 +71,6 @@ goto done
 :old_python
 echo ОШИБКА: нужен Python версии 3.10 или новее. Установлена:
 python --version
-echo Обновите Python: https://www.python.org/downloads/
 goto done
 
 :venv_failed

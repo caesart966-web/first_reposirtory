@@ -179,6 +179,81 @@ def parse_all(settings: Settings, search_root: Path) -> RunResult:
 
 
 # --------------------------------------------------------------------------- #
+#                 Шаг 2б: даты членства из реестра НОСТРОЙ                     #
+# --------------------------------------------------------------------------- #
+
+def enrich_dates_from_nostroy(
+    groups: list[CompanyGroup],
+    settings: Settings,
+    state: StateStore,
+) -> None:
+    """
+    Дотягивает даты вступления/исключения из открытого реестра НОСТРОЙ.
+
+    Запрашиваются только компании, у которых в файле выгрузки нет даты
+    вступления и есть ИНН. Реестр бесплатный и без ключей, но это общий
+    публичный ресурс: частота запросов ограничена, ответы кэшируются в файле
+    состояния — повторные запуски реестр не дёргают.
+    """
+    from .nostroy_api import NostroyClient, NostroyMemberInfo
+
+    def needs(group: CompanyGroup) -> bool:
+        has_file_date = any(record.date_join for record in group.records)
+        return bool(group.inn) and not has_file_date
+
+    pending = [group for group in groups if needs(group)]
+    if not pending:
+        return
+
+    # Сначала раздаём то, что уже в кэше.
+    to_fetch: list[CompanyGroup] = []
+    for group in pending:
+        cached = state.get_nostroy(group.inn)
+        if cached is not None:
+            info = NostroyMemberInfo.from_dict(cached)
+            group.nostroy_date_join = info.date_join
+            group.nostroy_date_exit = info.date_exit
+            group.nostroy_status = info.status_text
+        else:
+            to_fetch.append(group)
+
+    if not to_fetch:
+        logger.info("Даты из реестра НОСТРОЙ: все %d компаний взяты из кэша", len(pending))
+        return
+
+    logger.info(
+        "Дат вступления нет в файле у %d компаний — запрашиваю открытый реестр "
+        "НОСТРОЙ (reestr.nostroy.ru, бесплатно, без лимита)",
+        len(to_fetch),
+    )
+    client = NostroyClient(
+        settings, sample_path=settings.parsed_dir / "nostroy_api_sample.json"
+    )
+    found = 0
+    try:
+        for index, group in enumerate(to_fetch, start=1):
+            if client.is_dead:
+                break
+            info = client.lookup(group.inn)
+            state.set_nostroy(group.inn, info.to_dict())
+            if info.found:
+                found += 1
+                group.nostroy_date_join = info.date_join
+                group.nostroy_date_exit = info.date_exit
+                group.nostroy_status = info.status_text
+            if index % 25 == 0 or index == len(to_fetch):
+                logger.info("  реестр НОСТРОЙ: %d из %d (найдено дат: %d)",
+                            index, len(to_fetch), found)
+            state.save(force=False)
+    except KeyboardInterrupt:
+        logger.warning("Запросы к реестру НОСТРОЙ прерваны — собранное сохранено")
+    finally:
+        client.close()
+        state.save(force=True)
+    logger.info("Реестр НОСТРОЙ: даты получены по %d из %d компаний", found, len(to_fetch))
+
+
+# --------------------------------------------------------------------------- #
 #                       Шаг 3: обогащение через checko.ru                      #
 # --------------------------------------------------------------------------- #
 
@@ -442,6 +517,10 @@ def run(settings: Settings) -> RunResult:
         total_companies=len(result.groups),
         total_records=len(result.records),
     )
+
+    # --- даты членства из открытого реестра НОСТРОЙ -------------------------- #
+    if settings.nostroy_dates:
+        enrich_dates_from_nostroy(result.groups, settings, state)
 
     # --- checko.ru ----------------------------------------------------------- #
     if settings.use_checko:

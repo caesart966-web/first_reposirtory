@@ -77,6 +77,7 @@ class StateStore:
         self.path = path
         self._lock = threading.RLock()
         self._results: dict[str, CheckoContacts] = {}
+        self._nostroy: dict[str, dict] = {}      # кэш ответов реестра НОСТРОЙ (по ИНН)
         self._attempts: dict[str, AttemptInfo] = {}
         self._meta: dict[str, Any] = {}
         self.quota = DailyQuota(limit=daily_limit)
@@ -117,6 +118,7 @@ class StateStore:
                 for key, value in (raw.get("attempts") or {}).items()
             }
             self._meta = dict(raw.get("meta") or {})
+            self._nostroy = dict(raw.get("nostroy") or {})
             logger.info(
                 "Состояние загружено: результатов %d, неудачных попыток %d, %s",
                 len(self._results),
@@ -138,6 +140,7 @@ class StateStore:
         with self._lock:
             self._results.clear()
             self._attempts.clear()
+            self._nostroy.clear()
             self._meta.clear()
             self.quota = DailyQuota(limit=self._daily_limit)
             self._dirty = True
@@ -184,6 +187,17 @@ class StateStore:
         with self._lock:
             return self._attempts.get(key) or AttemptInfo()
 
+    def get_nostroy(self, inn: str) -> dict | None:
+        """Кэшированный ответ реестра НОСТРОЙ по ИНН (или None)."""
+        with self._lock:
+            return self._nostroy.get(inn)
+
+    def set_nostroy(self, inn: str, payload: dict) -> None:
+        """Кладёт ответ реестра НОСТРОЙ в кэш — реестр не дёргается повторно."""
+        with self._lock:
+            self._nostroy[inn] = payload
+            self._dirty = True
+
     def set_meta(self, **values: Any) -> None:
         """Сохраняет произвольные служебные сведения о запуске."""
         with self._lock:
@@ -205,6 +219,7 @@ class StateStore:
                 "quota": self.quota.to_dict(),
                 "results": {key: value.to_dict() for key, value in self._results.items()},
                 "attempts": {key: value.to_dict() for key, value in self._attempts.items()},
+                "nostroy": self._nostroy,
                 "meta": self._meta,
             }
 

@@ -44,6 +44,11 @@ fi
 INPUT="$1"
 if [ -n "$INPUT" ]; then
     shift
+elif [ -f "last_input.txt" ] && [ -e "$(cat last_input.txt)" ]; then
+    LAST="$(cat last_input.txt)"
+    echo "Прошлый раз обрабатывался файл: $LAST"
+    read -r -p "Enter — продолжить с ним, или введите другой путь: " INPUT
+    INPUT="${INPUT:-$LAST}"
 else
     echo
     echo "Перетащите сюда архив (.rar/.zip) или Excel-файл и нажмите Enter:"
@@ -61,6 +66,7 @@ fi
 
 # --- 4. Запускаем ----------------------------------------------------------
 echo
-./.venv/bin/python main.py --input "$INPUT" --output output ${EXTRA_ARGS:-} "$@"
+printf '%s' "$INPUT" > last_input.txt
+./.venv/bin/python main.py --input "$INPUT" --output output --open-report ${EXTRA_ARGS:-} "$@"
 echo
 echo "Результаты — в папке: $(pwd)/output"
