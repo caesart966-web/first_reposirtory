@@ -181,9 +181,14 @@ ul {
   left: -9999px;
   top: 0;
   z-index: 100;
-  background: var(--sg-blue);
+  /* Фиксированный тёмно-синий, а не --sg-blue: в тёмной теме переменная
+     осветляется до #7b90ee, и белый текст на ней даёт контраст 2.97 —
+     ниже нормы. Здесь тема ни на что не влияет, ссылка служебная. */
+  background: #01075c;
   color: #fff;
   padding: var(--sp-3) var(--sp-4);
+  border-radius: 0 0 var(--r-md) 0;
+  font-weight: 600;
 }
 
 .skip-link:focus {
@@ -1378,6 +1383,41 @@ ul {
   );
   color: var(--sg-muted);
   font-size: 13px;
+}
+
+/* Отклик на поисковый запрос. Ставится скриптом только тогда, когда
+   в адресе есть ?search= — в исходной разметке блока нет. */
+.search-result {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2) var(--sp-4);
+  margin-bottom: var(--sp-5);
+  padding: var(--sp-4) var(--sp-5);
+  border-radius: var(--r-lg);
+  background: var(--sg-blue-tint);
+  border: 1px solid var(--sg-line);
+}
+
+.search-result__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--sg-blue);
+}
+
+.search-result__note {
+  flex: 1 1 320px;
+  min-width: 0;
+  margin: 0;
+  font-size: 14px;
+  color: var(--sg-muted);
+}
+
+.search-result__reset {
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 /* Полоса-предупреждение о недостающих данных */

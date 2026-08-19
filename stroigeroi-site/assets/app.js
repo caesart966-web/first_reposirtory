@@ -61,6 +61,56 @@
   document.documentElement.classList.add('theme-ready');
 
   /* ======================================================================
+     Поиск: показываем, что запрос дошёл
+     Настоящего поиска в макете нет — искать не по чему, прайса ещё нет.
+     Но молча открывать каталог, будто ничего не вводили, тоже нельзя:
+     человек решит, что кнопка сломана. Показываем сам запрос и честно
+     пишем, откуда возьмутся результаты.
+     ====================================================================== */
+  (function () {
+    var query = '';
+    try {
+      query = (new URLSearchParams(window.location.search).get('search') || '').trim();
+    } catch (e) {
+      query = '';
+    }
+    if (!query) return;
+
+    var head = $('.page-head');
+    if (!head) return;
+
+    // Поле поиска в шапке заполняем тем же запросом — иначе непонятно,
+    // что именно сейчас показано.
+    var input = $('[data-search-input]');
+    if (input) input.value = query;
+
+    var box = document.createElement('div');
+    box.className = 'search-result';
+    box.setAttribute('role', 'status');
+
+    var title = document.createElement('p');
+    title.className = 'search-result__title';
+    title.textContent = 'Поиск: «' + query + '»';
+
+    var note = document.createElement('p');
+    note.className = 'search-result__note';
+    note.textContent =
+      'Поиск заработает вместе с прайсом: сейчас искать не по чему. Ниже — раздел «' +
+      (head.querySelector('h1') ? head.querySelector('h1').textContent : 'каталог') +
+      '» целиком.';
+
+    var reset = document.createElement('a');
+    reset.className = 'search-result__reset';
+    reset.href = 'catalog.html';
+    reset.textContent = 'Сбросить поиск';
+
+    box.appendChild(title);
+    box.appendChild(note);
+    box.appendChild(reset);
+    head.parentNode.insertBefore(box, head.nextSibling);
+  })();
+
+  /* ======================================================================
      Подборки товаров каруселью: стрелки листают на видимую ширину,
      на краях гаснут. Работает и обычной прокруткой пальцем.
      ====================================================================== */
