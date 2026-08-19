@@ -66,13 +66,30 @@ python scripts/make_field_map.py
 # консольный режим
 python -m src.cli --sro-list
 python -m src.cli --sro СССС --card input/Карточка.docx
+python -m src.cli --sro "СФЕРА-А,ЯРД" --card input/Карточка.docx   # сразу несколько
 python -m src.cli --text "ООО «Ромашка» ИНН 7812345675 ..." --dry-run
 python -m src.cli --card input/Карточка.docx --set actual_address="..." --no-pdf
 python -m src.cli --map
 
 # тесты (вымышленные компании)
 python tests/test_all.py
+
+# собрать самостоятельное приложение (.exe) для передачи коллегам
+python scripts/build_app.py            # или BUILD_APP.bat на Windows
 ```
+
+### Приложение для коллег и счётчик
+
+`run.py` — точка входа. `scripts/build_app.py` собирает программу в один файл
+(PyInstaller) и кладёт рядом `sro/` и `config/` в папку `dist/Документы-СРО`.
+`src/paths.py` (`app_root()`) определяет корень: из исходников — папка проекта,
+из собранного `.exe` (`sys.frozen`) — папка рядом с `.exe`. Оттуда читаются
+`sro/` и `config/`, туда же пишутся `output/`, `logs/` и счётчик. Пошаговая
+инструкция по сборке и раздаче — в `КАК_СОБРАТЬ_ПРИЛОЖЕНИЕ.md`.
+
+Счётчик использования: `Project.record_sets()` увеличивает число сделанных
+комплектов (1 СРО = 1 комплект) в `usage.json` рядом с программой и показывает
+итог в окне и в консоли. Файл `usage.json` не в git — у каждого свой.
 
 ### Несколько СРО
 
