@@ -492,6 +492,28 @@ class TestGeneration(unittest.TestCase):
         result = generate(self.project, company, make_pdf=False)
         self.assertTrue(result.ok, [r.problems for r in result.quality])
 
+    def test_stale_output_files_are_removed(self):
+        """Дубликат от прошлого запуска (заявление под старым именем) убирается.
+
+        Раньше папка результата не очищалась, и файл под прежним именем
+        оставался рядом с новым — получалось «два заявления». Личные файлы
+        пользователя при этом трогать нельзя.
+        """
+        company = make_company(ALPHA)
+        first = generate(self.project, company, make_pdf=False)
+        folder = first.folder
+        # Файл-дубликат под старым именем и личный файл пользователя.
+        (folder / "01_Заявление_старое_имя.docx").write_text("дубликат")
+        (folder / "мои_заметки.docx").write_text("личное")
+
+        second = generate(self.project, company, make_pdf=False)
+        names = {f.name for f in folder.iterdir()}
+        self.assertNotIn("01_Заявление_старое_имя.docx", names)   # дубликат убран
+        self.assertIn("01_Заявление_о_вступлении.docx", names)    # актуальное на месте
+        self.assertIn("02_Доверенность.docx", names)
+        self.assertIn("мои_заметки.docx", names)                  # чужое не тронуто
+        self.assertTrue(any("прошлого запуска" in n for n in second.notes))
+
     def test_actual_address_taken_from_legal(self):
         """У компаний фактический адрес совпадает с юридическим."""
         company = make_company(ALPHA)

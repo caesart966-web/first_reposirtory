@@ -385,6 +385,42 @@ def output_folder(project: "Project", company: CompanyData) -> Path:
             / company_folder_name(company))
 
 
+#: Имя файла, похожее на наш результат: «01_Заявление.docx», «02_Доверенность.pdf».
+#: По этому образцу узнаём СВОИ прежние файлы, чтобы убрать их и не оставить
+#: рядом с новым набором «лишнее» второе заявление от прошлого запуска.
+_GENERATED_NAME_RE = re.compile(r"^\d{2}_.+\.(docx|pdf)$", re.IGNORECASE)
+
+
+def _clear_stale_outputs(folder: Path, documents: list[DocumentSpec]) -> list[str]:
+    """Убрать прежде сгенерированные файлы, которых нет в текущем наборе.
+
+    Бланки одной СРО могли раньше называться иначе (или остаться от прошлого
+    запуска). Тогда рядом с новым «01_Заявление.docx» лежал старый файл —
+    и пользователь видел «два заявления». Удаляем только файлы, похожие на
+    НАШИ результаты (с числовым префиксом), и только те, что не входят в
+    текущий набор; файлы самого пользователя не трогаем. Файлы текущего
+    набора не удаляем — они всё равно будут перезаписаны.
+    """
+    keep = set()
+    for spec in documents:
+        keep.add(spec.output_name)
+        keep.add(Path(spec.output_name).with_suffix(".pdf").name)
+    removed: list[str] = []
+    try:
+        entries = list(folder.iterdir())
+    except OSError:
+        return removed
+    for path in entries:
+        if (path.is_file() and path.name not in keep
+                and _GENERATED_NAME_RE.match(path.name)):
+            try:
+                path.unlink()
+                removed.append(path.name)
+            except OSError:
+                pass
+    return removed
+
+
 def _check_levels(project: "Project", company: CompanyData) -> None:
     """Выбранный уровень ответственности должен существовать у ЭТОЙ СРО.
 
@@ -479,6 +515,15 @@ def generate(project: Project, company_input: CompanyData,
             f"Техническая причина: {exc}"
         ) from exc
     result.folder = folder
+
+    # Убираем «лишние» файлы прошлых запусков (например, заявление под старым
+    # именем), чтобы в папке не оказалось двух заявлений или доверенностей.
+    stale = _clear_stale_outputs(folder, documents)
+    if stale:
+        log.info("Удалены прежние файлы набора: %s", ", ".join(stale))
+        result.notes.append(
+            "Из папки убраны прежние файлы (остались от прошлого запуска): "
+            + ", ".join(sorted(stale)))
 
     for spec in documents:
         template = project.template_path(spec)
