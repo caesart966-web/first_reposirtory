@@ -80,6 +80,14 @@ NAME_IP_RE = re.compile(
 NAME_BARE_RE = re.compile(
     r"\b(?P<form>" + _SHORT_FORMS_ALT + r")\b\s+(?P<bare>[А-ЯЁA-Z][^\n,;:]{1,60})")
 
+#: Строка ОБРЫВАЕТСЯ на организационно-правовой форме: в карточках название
+#: часто переносят — «Общество с ограниченной ответственностью» в одной
+#: строке, ««ЮРЛИДЕР»» в следующей. Такие строки склеиваем перед разбором.
+_FORM_TAIL_RE = re.compile(
+    r"(?:" + _FULL_FORMS_ALT + r"|\b(?:" + _SHORT_FORMS_ALT + r"))\s*$",
+    re.IGNORECASE)
+_QUOTE_HEAD_RE = re.compile(r"^[«\"\']")
+
 
 @dataclass
 class ParseResult:
@@ -224,6 +232,29 @@ def _canonical_form(form: str) -> str:
     if lower in SHORT_BY_FULL:
         return FULL_BY_SHORT[SHORT_BY_FULL[lower]]
     return form
+
+
+def join_wrapped_names(text: str) -> list[str]:
+    """Склеить наименование, разорванное переносом строки.
+
+    В карточках наименование нередко набрано в две строки: сверху
+    организационно-правовая форма, снизу само название в кавычках.
+    По отдельности ни одна строка наименованием не выглядит, поэтому
+    склеиваем их обратно ещё до разбора.
+    """
+    lines = (text or "").splitlines()
+    result: list[str] = []
+    index = 0
+    while index < len(lines):
+        current = lines[index].rstrip()
+        while (index + 1 < len(lines)
+               and _FORM_TAIL_RE.search(current.strip())
+               and _QUOTE_HEAD_RE.match(lines[index + 1].strip())):
+            current = current.strip() + " " + lines[index + 1].strip()
+            index += 1
+        result.append(current)
+        index += 1
+    return result
 
 
 def find_company_name(line: str) -> tuple[str, str] | None:
@@ -403,7 +434,9 @@ def parse_card(content: CardContent) -> ParseResult:
             remember("director_basis", basis)
 
     # 2. Строки вида «Подпись: значение» / «Подпись — значение».
-    for line in content.merged_text().splitlines():
+    # Наименование в карточке нередко перенесено на две строки — склеиваем
+    # такие переносы обратно, иначе ни одна строка не выглядит наименованием.
+    for line in join_wrapped_names(content.merged_text()):
         line = line.strip()
         if not line:
             continue
