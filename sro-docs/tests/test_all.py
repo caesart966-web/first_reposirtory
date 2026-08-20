@@ -281,6 +281,27 @@ class TestParser(unittest.TestCase):
             self.assertEqual(parsed.company.director_basis, "Устав")
             self.assertEqual(parsed.company.postal_address, "")
 
+    def test_city_is_recognized_as_address(self):
+        """Для ИП адрес часто задают одним городом («Город: …»).
+
+        Раньше такая строка не распознавалась: программа знала только
+        метки «Юридический адрес», «Адрес» и подобные, а «Город» — нет.
+        """
+        parsed = parse_text("ИП Волков Виталий Витальевич\n"
+                            "ИНН 312772345390\nГород: Санкт-Петербург\n")
+        self.assertEqual(parsed.company.legal_address, "Санкт-Петербург")
+
+        # Другие естественные формулировки тоже понимаются.
+        self.assertEqual(
+            parse_text("ИП Иванов\nГород прописки: Москва").company.legal_address,
+            "Москва")
+
+        # Если есть полный юридический адрес — он важнее строки «Город».
+        full = parse_text("ИП Иванов\n"
+                         "Юридический адрес: 190000, г. СПб, ул. Ленина, д. 1\n"
+                         "Город: Москва\n")
+        self.assertIn("Ленина", full.company.legal_address)
+
     def test_card_number_is_not_taken_for_phone(self):
         """Номер карты или счёта, начинающийся с 8, не должен попасть в телефон.
 
@@ -439,11 +460,13 @@ class TestGeneration(unittest.TestCase):
         company.set("legal_address", "")
         company.set("actual_address", "")
         company.set("email", "")
+        company.set("phone", "")
         readiness = check_readiness(self.project, company)
         missing = {label for item in readiness for label in item.missing}
         self.assertIn("Фактический адрес", missing)
-        # Почта теперь НЕ обязательна — её отсутствие не блокирует.
+        # Почта и телефон теперь НЕ обязательны — их отсутствие не блокирует.
         self.assertNotIn("Электронная почта", missing)
+        self.assertNotIn("Телефон", missing)
         with self.assertRaises(GeneratorError) as ctx:
             generate(self.project, company, make_pdf=False)
         message = str(ctx.exception)
@@ -457,6 +480,15 @@ class TestGeneration(unittest.TestCase):
         self.project.use_sro("СССС", remember=False)   # у СССС в бланке есть {{email}}
         company = make_company(ALPHA)
         company.set("email", "")
+        result = generate(self.project, company, make_pdf=False)
+        self.assertTrue(result.ok, [r.problems for r in result.quality])
+
+    def test_phone_is_optional(self):
+        """Без телефона документы всё равно формируются (телефон необязателен)."""
+        self.project.output_root = self.tmp / "out"
+        self.project.use_sro("СССС", remember=False)   # у СССС в бланке есть {{phone}}
+        company = make_company(ALPHA)
+        company.set("phone", "")
         result = generate(self.project, company, make_pdf=False)
         self.assertTrue(result.ok, [r.problems for r in result.quality])
 

@@ -82,8 +82,8 @@
     },
     "phone": {
       "field": "phone",
-      "required": true,
-      "where": "контактный телефон"
+      "required": false,
+      "where": "контактный телефон (необязательно: если есть)"
     },
     "email": {
       "field": "email",
@@ -232,8 +232,8 @@
     },
     "company_contact_line": {
       "field": "phone",
-      "required": true,
-      "where": "контакты организации одной строкой: телефон, почта, сайт"
+      "required": false,
+      "where": "контакты организации одной строкой: телефон, почта, сайт (необязательно)"
     },
     "legal_address_street": {
       "field": "legal_address",
