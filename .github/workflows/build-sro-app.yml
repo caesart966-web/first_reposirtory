@@ -1,0 +1,70 @@
+name: 'Сборка программы «Документы СРО» для Windows'
+
+# Собирает готовую программу под Windows прямо на GitHub, чтобы её можно
+# было просто скачать и передать коллегам — без установки Python.
+#
+# Как получить программу:
+#   1. вкладка Actions в этом репозитории;
+#   2. слева выбрать «Сборка программы «Документы СРО» для Windows»;
+#   3. кнопка «Run workflow» (ветку можно оставить по умолчанию);
+#   4. дождаться зелёной галочки, открыть запуск и внизу, в разделе
+#      Artifacts, скачать архив Dokumenty-SRO-Windows.
+#
+# В архиве — папка «Документы-СРО»: файл программы и папки sro, config,
+# assets рядом с ним. Её целиком можно отдать коллеге.
+
+on:
+  workflow_dispatch:   # запуск руками из вкладки Actions
+  push:
+    paths:
+      - 'sro-docs/**'
+      - '.github/workflows/build-sro-app.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Сборка под Windows
+    runs-on: windows-latest       # .exe собирается только на Windows
+    defaults:
+      run:
+        working-directory: sro-docs
+    env:
+      # Русский текст программа печатает в консоль; без UTF-8 сборка
+      # на Windows-раннере падала бы на кодировке.
+      PYTHONUTF8: '1'
+      PYTHONIOENCODING: 'utf-8'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Установка библиотек
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-optional.txt
+          pip install pyinstaller
+
+      # Прогоняем те же проверки, что и локально: незачем собирать
+      # программу, в которой что-то сломано.
+      - name: Проверки
+        timeout-minutes: 10
+        run: python -m unittest discover -s tests
+
+      - name: Сборка программы
+        run: python scripts/build_app.py
+
+      # Имя артефакта латиницей: так надёжнее для ссылки на скачивание.
+      # Внутри — папка «Документы-СРО» с русскими именами файлов.
+      - name: Выкладываем готовую программу
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dokumenty-SRO-Windows
+          path: sro-docs/dist/Документы-СРО
+          retention-days: 90
+          if-no-files-found: error
