@@ -412,13 +412,23 @@ class TestGeneration(unittest.TestCase):
         readiness = check_readiness(self.project, company)
         missing = {label for item in readiness for label in item.missing}
         self.assertIn("Фактический адрес", missing)
-        self.assertIn("Электронная почта", missing)
+        # Почта теперь НЕ обязательна — её отсутствие не блокирует.
+        self.assertNotIn("Электронная почта", missing)
         with self.assertRaises(GeneratorError) as ctx:
             generate(self.project, company, make_pdf=False)
         message = str(ctx.exception)
         self.assertIn("не хватает следующих данных", message)
         self.assertIn("Фактический адрес", message)
         self.assertNotIn("нет данных", message)
+
+    def test_email_is_optional(self):
+        """Без почты документы всё равно формируются (почта необязательна)."""
+        self.project.output_root = self.tmp / "out"
+        self.project.use_sro("СССС", remember=False)   # у СССС в бланке есть {{email}}
+        company = make_company(ALPHA)
+        company.set("email", "")
+        result = generate(self.project, company, make_pdf=False)
+        self.assertTrue(result.ok, [r.problems for r in result.quality])
 
     def test_actual_address_taken_from_legal(self):
         """У компаний фактический адрес совпадает с юридическим."""
