@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import re
 import os
 from dataclasses import dataclass, field
 from datetime import date
@@ -52,6 +53,16 @@ CHECKO_KEY_FILENAME = "checko_api_key.txt"
 
 #: Текст-заглушка в этом файле: пока он там, считаем, что ключ не задан.
 CHECKO_KEY_PLACEHOLDER = "ВСТАВЬТЕ_КЛЮЧ_СЮДА"
+
+
+def _safe_stem(input_path: Path | None, max_length: int = 40) -> str:
+    """Короткое безопасное имя реестра для названия отчёта."""
+    if not input_path:
+        return ""
+    stem = Path(input_path).stem.strip()
+    # В имени файла Windows запрещает \ / : * ? " < > | — вычищаем их и пробелы.
+    cleaned = re.sub(r'[\\/:*?"<>|\s]+', "-", stem).strip("-.")
+    return cleaned[:max_length]
 
 
 def read_api_key_file(directory: Path) -> str | None:
@@ -180,8 +191,15 @@ class Settings:
 
     @property
     def report_path(self) -> Path:
-        """Итоговый файл `output/final_report_YYYY-MM-DD.xlsx`."""
-        return self.output_dir / f"final_report_{self.report_date.isoformat()}.xlsx"
+        """Итоговый файл `output/final_report_ИМЯ-РЕЕСТРА_ГГГГ-ММ-ДД.xlsx`.
+
+        Имя входного файла входит в название, иначе два разных реестра,
+        обработанных в один день, писались бы в один файл и второй затирал
+        бы первый.
+        """
+        stem = _safe_stem(self.input_path)
+        parts = ["final_report", stem, self.report_date.isoformat()]
+        return self.output_dir / ("_".join(part for part in parts if part) + ".xlsx")
 
     # ------------------------------ методы --------------------------------- #
 
