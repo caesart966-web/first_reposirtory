@@ -21,3 +21,9 @@ backend/construction-mcp/data/
 # pto-site: реальные токены приёма заявок (заливаются на хостинг руками)
 pto-site/assets/config.js
 pto-site/dist/assets/config.js
+
+# nostroy-parser: результаты работы скрипта и тестовые данные
+nostroy-parser/output/
+nostroy-parser/demo/
+nostroy-parser/tests/fixtures/
+nostroy-parser/last_input.txt
