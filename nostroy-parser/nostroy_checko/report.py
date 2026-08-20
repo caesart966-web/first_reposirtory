@@ -24,7 +24,13 @@ from typing import Any, Sequence
 
 from .logging_setup import get_logger
 from .models import CompanyGroup, RegistryRecord, UnrecognizedRow
-from .textutils import director_fio, format_date, join_unique, truncate
+from .textutils import (
+    director_fio,
+    format_date,
+    join_unique,
+    shorten_company_name,
+    truncate,
+)
 
 logger = get_logger("report")
 
@@ -68,7 +74,6 @@ def build_report_rows(groups: Sequence[CompanyGroup]) -> tuple[list[str], list[l
         "Адрес",
         "Руководитель",
         "Дата вступления в СРО",
-        "Дата исключения из СРО",
         "Статус членства",
     ]
     processed = [
@@ -79,14 +84,16 @@ def build_report_rows(groups: Sequence[CompanyGroup]) -> tuple[list[str], list[l
     for group in processed:
         rows.append(
             [
-                group.name,
+                shorten_company_name(group.name),
                 group.inn,
                 join_unique(group.best_phones),
                 join_unique(group.best_emails),
                 join_unique(group.best_addresses),
-                join_unique(director_fio(value) for value in group.best_directors),
+                join_unique(
+                    shorten_company_name(director_fio(value))
+                    for value in group.best_directors
+                ),
                 group.date_join,
-                group.date_exit,
                 group.membership_status,
             ]
         )

@@ -47,6 +47,7 @@ from .textutils import (
     extract_phones,
     merge_unique,
     normalize_phone,
+    tidy_address,
 )
 
 logger = get_logger("checko-api")
@@ -93,6 +94,22 @@ def _walk(node: Any, callback: Any, path: str = "") -> None:
             _walk(item, callback, f"{path}[{index}]")
 
 
+def _address_rank(lowered_path: str) -> int:
+    """Насколько путь в JSON похож на юридический адрес компании.
+
+    Ответ Чеко содержит несколько адресов: юридический, фактический и адреса
+    обособленных подразделений. В отчёте нужен один — юридический, поэтому
+    выбор идёт по имени поля, а не по длине строки.
+    """
+    if "юрадрес" in lowered_path or "адресюл" in lowered_path:
+        return 3
+    if "подразделен" in lowered_path or "филиал" in lowered_path:
+        return 0
+    if "фактадрес" in lowered_path or "почтадрес" in lowered_path:
+        return 1
+    return 2
+
+
 def _as_text_list(value: Any) -> list[str]:
     """Приводит значение поля к списку строк (API отдаёт то строку, то массив)."""
     if value is None:
@@ -131,7 +148,7 @@ def parse_api_payload(data: Any, expected_inn: str = "") -> CheckoContacts:
     if isinstance(data, list):
         data = data[0] if data else {}
 
-    raw_addresses: list[str] = []
+    raw_addresses: list[tuple[int, str]] = []
     directors: list[str] = []
     # Названия собираем с приоритетом: полное > сокращённое > произвольное «Наим».
     # Иначе вложенное поле вроде ``Регион.Наим`` могло бы стать названием компании.
@@ -154,11 +171,15 @@ def parse_api_payload(data: Any, expected_inn: str = "") -> CheckoContacts:
                 if text and "." in text:
                     merge_unique(result.websites, [text])
         elif _KEY_ADDRESS.search(lowered):
+            # Адрес СРО лежит в том же ответе и к компании отношения не имеет:
+            # без этой проверки он попадал в отчёт сотням членов одной СРО.
+            if _KEY_SRO_SECTION.search(lowered_path):
+                return
             for item in _as_text_list(value):
                 text = clean_text(item)
                 # Отсекаем куски адреса (регион, индекс) — нужен полный адрес.
                 if len(text) >= 15:
-                    merge_unique(raw_addresses, [text])
+                    raw_addresses.append((_address_rank(lowered_path), text))
         elif _KEY_NAME_FULL.match(lowered) and isinstance(value, str):
             name_candidates.setdefault(3, clean_text(value))
         elif _KEY_NAME_SHORT.match(lowered) and isinstance(value, str):
@@ -208,10 +229,11 @@ def parse_api_payload(data: Any, expected_inn: str = "") -> CheckoContacts:
     # --- членство в СРО: третий источник дат, уже оплаченный квотой -------- #
     _extract_sro_dates(data, result)
 
-    # Самый подробный адрес считаем основным.
+    # В отчёт идёт РОВНО ОДИН адрес — юридический. Раньше сюда попадал весь
+    # список (юрадрес, филиалы, адрес СРО), и ячейка склеивалась через «;».
     if raw_addresses:
-        result.addresses = [max(raw_addresses, key=len)]
-        merge_unique(result.addresses, raw_addresses)
+        rank, text = max(raw_addresses, key=lambda pair: (pair[0], len(pair[1])))
+        result.addresses = [tidy_address(text)]
     result.directors = directors
 
     # Запасной проход: телефоны и почта могли лежать в полях с непредвиденным

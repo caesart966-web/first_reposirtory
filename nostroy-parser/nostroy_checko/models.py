@@ -28,6 +28,7 @@ from .textutils import (
     merge_unique,
     normalize_company_name,
     parse_date,
+    tidy_address,
 )
 
 
@@ -526,15 +527,16 @@ class CompanyGroup:
 
     @property
     def best_addresses(self) -> list[str]:
-        # Адрес показываем один, самый информативный: checko свежее, файл и
-        # реестр НОСТРОЙ — запасные. Склейка трёх адресов сбивала бы с толку.
+        # Адрес показываем РОВНО ОДИН, самый информативный: checko свежее, файл
+        # и реестр НОСТРОЙ — запасные. Раньше отсюда возвращался весь список
+        # источника, и в ячейке склеивались юрадрес, филиалы и адрес СРО.
         for values in (
             self.checko.addresses if self.checko else [],
             self.registry_addresses,
             self.nostroy_addresses,
         ):
             if values:
-                return values
+                return [tidy_address(values[0])]
         return []
 
     @property

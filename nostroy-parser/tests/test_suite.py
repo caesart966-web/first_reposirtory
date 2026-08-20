@@ -1583,7 +1583,6 @@ class TestEndToEndAcrossDays(BaseTestCase):
                 "Адрес",
                 "Руководитель",
                 "Дата вступления в СРО",
-                "Дата исключения из СРО",
                 "Статус членства",
             ],
         )
@@ -1745,6 +1744,94 @@ class TestEndToEndAcrossDays(BaseTestCase):
         self.assertLessEqual(len(_CheckoHandler.hits), 4)
         self.assertEqual(result.checko_done, 2)
         self.assertEqual(result.quota_used, 2)
+
+
+class TestSingleAddressAndShortNames(BaseTestCase):
+    """Один адрес в ячейке и обязательная аббревиатура ОПФ в названии."""
+
+    def test_only_legal_address_is_kept(self) -> None:
+        """Из юрадреса, филиалов и адреса СРО в отчёт идёт только юрадрес."""
+        from nostroy_checko.checko_api import parse_api_payload
+
+        payload = {
+            "ИНН": "7802687430",
+            "НаимПолн": "Акционерное общество «Пример»",
+            "ЮрАдрес": {
+                "АдресРФ": "194292, г. Санкт-Петербург, пер. 3-й Верхний, д. 2, литер А"
+            },
+            "Подразделения": [
+                {"Адрес": "636071, Томская область, г. Северск, ул. Лесная, д. 5"},
+                {"Адрес": "690001, Приморский край, г. Владивосток, ул. Светланская, д. 165"},
+            ],
+            "СРО": [
+                {
+                    "Наим": "Ассоциация строителей",
+                    "Адрес": "191124, Санкт-Петербург г, Красного Текстильщика ул, д 10-12",
+                }
+            ],
+        }
+        result = parse_api_payload(payload, expected_inn="7802687430")
+
+        self.assertEqual(len(result.addresses), 1)
+        self.assertIn("пер. 3-й Верхний", result.addresses[0])
+        # Адрес СРО — общий для сотен членов, в карточке компании его быть не должно.
+        self.assertNotIn("Красного Текстильщика", result.addresses[0])
+        self.assertNotIn("Северск", result.addresses[0])
+
+    def test_report_cell_has_no_address_list(self) -> None:
+        """В ячейке отчёта не должно быть склейки адресов через «;»."""
+        from nostroy_checko.models import CheckoContacts, CompanyGroup
+
+        group = CompanyGroup(key="7802687430")
+        group.checko = CheckoContacts(
+            inn="7802687430",
+            addresses=[
+                "194292, г. Санкт-Петербург, пер. 3-й Верхний, д. 2",
+                "636071, Томская область, г. Северск, ул. Лесная, д. 5",
+            ],
+        )
+        self.assertEqual(len(group.best_addresses), 1)
+        self.assertNotIn(";", group.best_addresses[0])
+
+    def test_inner_okrug_is_stripped(self) -> None:
+        """Административный шум ФИАС удаляется, город внутри города — нет."""
+        from nostroy_checko.textutils import tidy_address
+
+        okrug = tidy_address(
+            "195009, г. Санкт-Петербург, вн. тер. г. муниципальный округ "
+            "Финляндский Округ, ул. Комиссара Смирнова, д. 3"
+        )
+        self.assertNotIn("вн. тер.", okrug)
+        self.assertNotIn("Финляндский", okrug)
+        self.assertIn("ул. Комиссара Смирнова", okrug)
+
+        city = tidy_address(
+            "197760, г. Санкт-Петербург, вн. тер. г. город Кронштадт, ул. Мануильского, д. 20"
+        )
+        self.assertNotIn("вн. тер.", city)
+        self.assertIn("г. Кронштадт", city)
+
+    def test_legal_form_is_abbreviated(self) -> None:
+        """ООО / АО / ЗАО / ИП обязаны остаться в названии."""
+        from nostroy_checko.textutils import shorten_company_name
+
+        cases = {
+            'Акционерное общество "Абсолют"': "АО «Абсолют»",
+            "Общество с ограниченной ответственностью «Ромашка»": "ООО «Ромашка»",
+            "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ «СТРОЙКА»": "ООО «СТРОЙКА»",
+            "Закрытое акционерное общество «Терминал»": "ЗАО «Терминал»",
+            "Индивидуальный предприниматель Афонин Денис Витальевич":
+                "ИП Афонин Денис Витальевич",
+        }
+        for source, expected in cases.items():
+            self.assertEqual(shorten_company_name(source), expected)
+
+    def test_name_without_known_form_is_untouched(self) -> None:
+        """Ассоциации и союзы сокращать нечем — название не искажаем."""
+        from nostroy_checko.textutils import shorten_company_name
+
+        name = "Ассоциация предпринимателей в сфере благоустройства"
+        self.assertEqual(shorten_company_name(name), name)
 
 
 if __name__ == "__main__":
