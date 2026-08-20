@@ -43,6 +43,29 @@ POSTAL_INDEX = re.compile(r"^\s*\d{6}\b")
 LEGACY_FORMAT = re.compile(r"[А-Яа-яЁё]\s+(?:г|обл|край|респ|р-н)\s*,", re.IGNORECASE)
 
 
+# Внутригородская территория в формате ФИАС. «Муниципальный округ» —
+# чисто административная единица, для контактного адреса бесполезная и
+# растягивающая ячейку на три строки. Города внутри города (Кронштадт,
+# Петергоф) — наоборот, часть адреса, их сохраняем в обычной записи.
+INNER_OKRUG = re.compile(
+    r",?\s*вн\.\s*тер\.\s*г\.\s*муниципальн\w*\s+округ\s+[^,]+", re.IGNORECASE
+)
+INNER_CITY = re.compile(
+    r",?\s*вн\.\s*тер\.\s*г\.\s*(?:город|г\.)\s+([^,]+)", re.IGNORECASE
+)
+
+
+def tidy_address(address):
+    """Убирает из адреса административный шум, оставляя один читаемый адрес."""
+    if not address:
+        return address
+    result = INNER_OKRUG.sub("", str(address))
+    result = INNER_CITY.sub(lambda m: f", г. {m.group(1).strip()}", result)
+    result = re.sub(r"\s+", " ", result)
+    result = re.sub(r"\s*,\s*", ", ", result)
+    return result.strip(" ,")
+
+
 def split_addresses(raw):
     """Разбивает слипшуюся ячейку на отдельные адреса."""
     if not raw:
@@ -105,8 +128,8 @@ def pick_address(raw, inn, shared=frozenset()):
     if not candidates:
         return None, False
     if len(candidates) == 1:
-        return candidates[0], False
+        return tidy_address(candidates[0]), False
 
     scored = sorted(((score_address(a, inn), a) for a in candidates), key=lambda p: -p[0])
     ambiguous = scored[0][0] == scored[1][0]
-    return scored[0][1], ambiguous
+    return tidy_address(scored[0][1]), ambiguous

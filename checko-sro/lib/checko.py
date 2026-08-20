@@ -139,8 +139,18 @@ def extract(payload):
         if address:
             break
 
-    head = _first_dict(data.get("Руковод"))
-    director = head.get("ФИО") or head.get("Фио") or data.get("ФИО")
+    # Руководителем может быть не человек, а управляющая организация.
+    # Тогда в колонку ФИО идёт её название вместе с ООО/АО — иначе
+    # колонка осталась бы пустой, хотя руководитель у компании есть.
+    head = _first_dict(data.get("Руковод")) or _first_dict(data.get("УпрОрг"))
+    director = (
+        head.get("ФИО")
+        or head.get("Фио")
+        or data.get("ФИО")
+        or head.get("НаимСокр")
+        or head.get("НаимПолн")
+        or head.get("Наим")
+    )
 
     contacts = data.get("Контакты") or {}
     if not isinstance(contacts, dict):

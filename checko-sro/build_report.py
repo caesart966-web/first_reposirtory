@@ -17,7 +17,7 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from lib.address import detect_shared_addresses, pick_address, split_addresses
+from lib.address import detect_shared_addresses, pick_address, tidy_address
 from lib.checko import extract
 from lib.names import director_from_ip_name, shorten_name
 
@@ -93,12 +93,20 @@ def build_rows(source_rows, cache):
 
         # Адрес: точный ЮрАдрес из Чеко приоритетнее выбора из слипшейся ячейки.
         if checko.get("address"):
-            address, ambiguous = checko["address"], False
+            address, ambiguous = tidy_address(checko["address"]), False
         else:
             address, ambiguous = pick_address(source[SRC_ADDR], inn, shared)
 
         # Руководитель: у ИП это он сам, ФИО уже есть в наименовании.
-        director = source[SRC_HEAD] or checko.get("director") or director_from_ip_name(name)
+        director = (
+            source[SRC_HEAD]
+            or checko.get("director")
+            or director_from_ip_name(name)
+            # Управляющая организация — тоже руководитель; название с ООО/АО
+            # сокращаем так же, как в колонке названия компании.
+        )
+        if director:
+            director = shorten_name(director)
 
         phones = join_values(
             [p.strip() for p in str(source[SRC_PHONE] or "").split(";") if p.strip()],

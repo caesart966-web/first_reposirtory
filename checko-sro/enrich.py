@@ -21,11 +21,14 @@ from lib.checko import CheckoClient, QuotaExhausted, extract
 from lib.names import director_from_ip_name
 
 
-def plan(source_rows, client):
+def plan(source_rows, client, all_addresses=False):
     """ИНН, которым нужен запрос, в порядке важности пропуска.
 
     Адрес и руководитель важнее контактов: без них строка отчёта неполна,
     а телефона у компании может не быть в принципе.
+
+    all_addresses=True добавляет в очередь и те строки, где адрес выбран
+    эвристикой: запрос к Чеко заменит выбор на юридический адрес из ЕГРЮЛ.
     """
     shared = detect_shared_addresses(source_rows, address_index=SRC_ADDR)
     tasks = []
@@ -54,6 +57,9 @@ def plan(source_rows, client):
             weight += 5
             missing.append("email")
 
+        if not weight and all_addresses and address:
+            weight, missing = 1, ["сверить адрес с ЕГРЮЛ"]
+
         if weight:
             tasks.append((weight, inn, row[SRC_NAME], ", ".join(missing)))
 
@@ -67,6 +73,11 @@ def main():
     parser.add_argument("--cache", default="cache/checko", help="куда складывать ответы")
     parser.add_argument("--limit", type=int, help="ограничить число запросов за прогон")
     parser.add_argument("--dry-run", action="store_true", help="только показать план")
+    parser.add_argument(
+        "--all-addresses",
+        action="store_true",
+        help="запросить юридический адрес по всем ИНН, а не только там, где его нет",
+    )
     args = parser.parse_args()
 
     api_key = os.environ.get("CHECKO_API_KEY")
@@ -74,7 +85,7 @@ def main():
         parser.error("не задана переменная окружения CHECKO_API_KEY")
 
     client = CheckoClient(api_key or "", args.cache)
-    tasks = plan(read_source(args.source), client)
+    tasks = plan(read_source(args.source), client, all_addresses=args.all_addresses)
     budget = client.quota_left()
     if args.limit is not None:
         budget = min(budget, args.limit)
