@@ -1834,6 +1834,48 @@ class TestSingleAddressAndShortNames(BaseTestCase):
         self.assertEqual(shorten_company_name(name), name)
 
 
+class TestSroAddressNotInFallback(BaseTestCase):
+    """Адрес СРО не должен возвращаться через запасные источники адреса."""
+
+    SRO = "191124, Санкт-Петербург г, Красного Текстильщика ул, д 10-12 лит. О"
+
+    def _groups(self):
+        from nostroy_checko.models import CheckoContacts, CompanyGroup, RegistryRecord
+
+        groups = []
+        for index in range(20):
+            inn = f"78{index:08d}"
+            record = RegistryRecord(inn=inn, name=f"Общество с ограниченной ответственностью «К{index}»")
+            # В самом реестре у компании только адрес СРО — своего нет.
+            record.addresses = [self.SRO]
+            checko = CheckoContacts(inn=inn, status="ok")
+            if index < 18:
+                # У большинства адрес есть, и рядом с ним лежал адрес СРО:
+                # именно по этой частоте он и опознаётся.
+                own = f"19{index:04d}, г. Санкт-Петербург, ул. Примерная, д. {index}"
+                checko.addresses = [own]
+                checko.extra = {"addresses_all": [own, self.SRO]}
+            else:
+                # А здесь checko своего адреса не дал — включится запасной источник.
+                checko.addresses = []
+                checko.extra = {"addresses_all": [self.SRO]}
+            groups.append(CompanyGroup(key=f"inn:{inn}", records=[record], checko=checko))
+        return groups
+
+    def test_fallback_does_not_restore_sro_address(self) -> None:
+        from nostroy_checko.report import build_report_rows
+
+        headers, rows = build_report_rows(self._groups())
+        address_column = headers.index("Адрес")
+        addresses = [row[address_column] for row in rows]
+
+        self.assertEqual(len(rows), 20)
+        for address in addresses:
+            self.assertNotIn("Красного Текстильщика", address or "")
+        # Там, где своего адреса нет, ячейка пуста — это честнее чужого адреса.
+        self.assertEqual(sum(1 for address in addresses if not address), 2)
+
+
 class TestRebuildAddressesFromCache(BaseTestCase):
     """Пересборка адресов по кэшу: без сети и без расхода квоты."""
 

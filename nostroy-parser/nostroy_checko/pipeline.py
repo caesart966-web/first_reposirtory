@@ -683,6 +683,20 @@ def run(settings: Settings) -> RunResult:
     state.load()
     if settings.reset_state:
         state.reset()
+    # Карточки из прогонов до исправления разбора хранят слипшийся список
+    # адресов. Приводим их к одному юридическому адресу по уже сохранённым
+    # данным — без запросов и без расхода квоты.
+    address_stats = state.normalize_addresses()
+    if address_stats["changed"]:
+        logger.info(
+            "Адреса пересобраны по кэшу: исправлено карточек %d "
+            "(адресов СРО отброшено: %d, спорных: %d, без своего адреса: %d). "
+            "Запросы к checko.ru не потребовались",
+            address_stats["changed"],
+            address_stats["shared"],
+            address_stats["ambiguous"],
+            address_stats["empty"],
+        )
     state.set_meta(
         input_path=str(settings.input_path),
         total_companies=len(result.groups),

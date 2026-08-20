@@ -183,6 +183,39 @@ class StateStore:
             self._attempts[key] = attempt
             self._dirty = True
 
+    def normalize_addresses(self) -> dict[str, int]:
+        """Оставляет в каждой карточке один адрес — юридический.
+
+        Карточки, полученные до исправления разбора, хранят весь список:
+        юридический адрес, адреса подразделений и адрес самой СРО. Пересборка
+        идёт по уже сохранённым данным — без запросов к checko.ru и без
+        расхода квоты, поэтому уже пробитые компании остаются пробитыми.
+
+        Возвращает счётчики для лога. Повторный вызов ничего не меняет.
+        """
+        from .address_pick import detect_shared_addresses, full_address_list, rebuild_card
+
+        with self._lock:
+            cards = list(self._results.items())
+            shared = detect_shared_addresses(
+                full_address_list(card.addresses, card.extra) for _, card in cards
+            )
+            stats = {"changed": 0, "ambiguous": 0, "empty": 0, "shared": len(shared)}
+            for key, card in cards:
+                addresses, extra, ambiguous, empty = rebuild_card(
+                    card.addresses, card.extra, card.inn or key, shared
+                )
+                if addresses == card.addresses:
+                    continue
+                card.addresses = addresses
+                card.extra = extra
+                stats["changed"] += 1
+                stats["ambiguous"] += int(ambiguous)
+                stats["empty"] += int(empty)
+            if stats["changed"]:
+                self._dirty = True
+            return stats
+
     def get_attempts(self, key: str) -> AttemptInfo:
         with self._lock:
             return self._attempts.get(key) or AttemptInfo()

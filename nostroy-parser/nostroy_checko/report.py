@@ -24,6 +24,7 @@ from typing import Any, Sequence
 
 from .logging_setup import get_logger
 from .models import CompanyGroup, RegistryRecord, UnrecognizedRow
+from .address_pick import detect_shared_addresses, full_address_list, pick_address
 from .textutils import (
     director_fio,
     format_date,
@@ -48,6 +49,38 @@ SHEET_NAME = "Контакты"
 # --------------------------------------------------------------------------- #
 #                          Подготовка строк отчёта                             #
 # --------------------------------------------------------------------------- #
+
+def _address_candidates(group: CompanyGroup) -> list[str]:
+    """Все адреса группы из всех источников — для поиска общих адресов СРО.
+
+    Из карточки checko берётся ИСХОДНЫЙ список, а не уже очищенный: адрес СРО
+    опознаётся по частоте, и если смотреть на очищенные карточки, частота
+    падает ниже порога и адрес перестаёт распознаваться в запасных источниках.
+    """
+    candidates: list[str] = []
+    if group.checko:
+        candidates.extend(full_address_list(group.checko.addresses, group.checko.extra))
+    candidates.extend(group.registry_addresses)
+    candidates.extend(group.nostroy_addresses)
+    return candidates
+
+
+def _pick_group_address(group: CompanyGroup, shared: set[str]) -> str:
+    """Один адрес компании: checko свежее, реестр и НОСТРОЙ — запасные.
+
+    Пустая ячейка честнее чужого адреса: если у компании остался только
+    адрес СРО, лучше показать пустоту, чем ввести читателя в заблуждение.
+    """
+    for values in (
+        group.checko.addresses if group.checko else [],
+        group.registry_addresses,
+        group.nostroy_addresses,
+    ):
+        remaining = [value for value in values if value not in shared]
+        if remaining:
+            return pick_address(remaining, group.inn, shared)[0]
+    return ""
+
 
 def build_report_rows(groups: Sequence[CompanyGroup]) -> tuple[list[str], list[list[Any]]]:
     """
@@ -80,6 +113,12 @@ def build_report_rows(groups: Sequence[CompanyGroup]) -> tuple[list[str], list[l
         group for group in groups if group.checko is not None and group.checko.is_final
     ]
     processed.sort(key=lambda group: group.name)
+    # Адрес СРО общий для сотен её членов. Из карточек checko он уже отсеян,
+    # но остаётся в запасных источниках — реестре и выгрузке НОСТРОЙ, — откуда
+    # подставляется, когда у компании нет своего адреса. Отсеиваем его и там.
+    shared_addresses = detect_shared_addresses(
+        _address_candidates(group) for group in processed
+    )
     rows: list[list[Any]] = []
     for group in processed:
         rows.append(
@@ -88,7 +127,7 @@ def build_report_rows(groups: Sequence[CompanyGroup]) -> tuple[list[str], list[l
                 group.inn,
                 join_unique(group.best_phones),
                 join_unique(group.best_emails),
-                join_unique(group.best_addresses),
+                _pick_group_address(group, shared_addresses),
                 join_unique(
                     shorten_company_name(director_fio(value))
                     for value in group.best_directors

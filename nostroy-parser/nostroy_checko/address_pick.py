@@ -62,13 +62,22 @@ _LEGACY_KLADR_RE = re.compile(r"[А-Яа-яЁё]\s+(?:г|обл|край|рес�
 SHARED_ADDRESS_SHARE = 0.15
 
 
+def normalize_inn_hint(value: str) -> str:
+    """Достаёт ИНН из значения, которое может быть ключом вида ``inn:7801…``."""
+    text = str(value or "")
+    if ":" in text:
+        text = text.rsplit(":", 1)[1]
+    return text.strip()
+
+
 def region_matches(address: str, inn: str) -> bool:
     """Совпадает ли регион в адресе с кодом региона в ИНН."""
-    pattern = REGION_PATTERNS.get(str(inn or "")[:2])
+    inn = normalize_inn_hint(inn)
+    pattern = REGION_PATTERNS.get(inn[:2])
     if not pattern:
         return False
     lowered = address.lower()
-    exclude = REGION_EXCLUDE.get(str(inn)[:2])
+    exclude = REGION_EXCLUDE.get(inn[:2])
     if exclude and re.search(exclude, lowered):
         return False
     return bool(re.search(pattern, lowered))
@@ -129,3 +138,46 @@ def pick_address(
     )
     ambiguous = scored[0][0] == scored[1][0]
     return tidy_address(scored[0][1]), ambiguous
+
+
+#: Ключ, под которым в карточке хранится исходный полный список адресов.
+ORIGINAL_KEY = "addresses_all"
+
+
+def full_address_list(addresses: Sequence[str], extra: dict | None) -> list[str]:
+    """Полный список адресов карточки.
+
+    После первой пересборки в карточке остаётся один адрес, а исходный набор
+    переезжает в ``extra[ORIGINAL_KEY]``. Возврат к полному набору делает
+    пересборку идемпотентной: выбор каждый раз идёт из всех кандидатов,
+    а не из уже усечённого списка.
+    """
+    stored = (extra or {}).get(ORIGINAL_KEY)
+    if isinstance(stored, list) and stored:
+        return [str(item) for item in stored]
+    return [str(item) for item in (addresses or [])]
+
+
+def rebuild_card(
+    addresses: Sequence[str],
+    extra: dict | None,
+    inn: str,
+    shared: frozenset[str] | set[str],
+) -> tuple[list[str], dict, bool, bool]:
+    """Пересобирает адреса одной карточки.
+
+    Возвращает ``(адреса, extra, неоднозначно, адреса нет)``. Пустой результат
+    означает, что в карточке были только адреса СРО: чужой адрес в отчёте хуже
+    отсутствующего, поэтому ячейка остаётся пустой.
+    """
+    full = full_address_list(addresses, extra)
+    if not full:
+        return list(addresses or []), dict(extra or {}), False, False
+
+    chosen, ambiguous = pick_address(full, inn, shared)
+    empty = not chosen
+
+    new_extra = dict(extra or {})
+    if len(full) > 1:
+        new_extra[ORIGINAL_KEY] = full
+    return ([chosen] if chosen else []), new_extra, ambiguous and not empty, empty

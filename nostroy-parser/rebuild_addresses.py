@@ -27,11 +27,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from nostroy_checko.address_pick import detect_shared_addresses, pick_address
-from nostroy_checko.textutils import tidy_address
-
-#: Ключ, под которым в карточке хранится исходный список адресов.
-ORIGINAL_KEY = "addresses_all"
+from nostroy_checko.address_pick import (
+    ORIGINAL_KEY,
+    detect_shared_addresses,
+    full_address_list,
+    rebuild_card,
+)
 
 
 def load_state(path: Path) -> dict:
@@ -45,11 +46,7 @@ def load_state(path: Path) -> dict:
 
 def original_addresses(card: dict) -> list[str]:
     """Полный список адресов карточки — из extra, если пересборка уже была."""
-    extra = card.get("extra") or {}
-    stored = extra.get(ORIGINAL_KEY)
-    if isinstance(stored, list) and stored:
-        return [str(item) for item in stored]
-    return [str(item) for item in (card.get("addresses") or [])]
+    return full_address_list(card.get("addresses"), card.get("extra"))
 
 
 def rebuild(state: dict) -> tuple[list[dict], set[str]]:
@@ -64,10 +61,10 @@ def rebuild(state: dict) -> tuple[list[dict], set[str]]:
             continue
 
         inn = str(card.get("inn") or key)
-        chosen, ambiguous = pick_address(full, inn, shared)
-        # Пустой результат — не спорный выбор, а его отсутствие: в карточке
-        # были только адреса СРО. Такую компанию нужно допросить в checko.ru.
-        empty = not chosen
+        addresses, extra, ambiguous, empty = rebuild_card(
+            card.get("addresses"), card.get("extra"), inn, shared
+        )
+        chosen = addresses[0] if addresses else ""
 
         before = "; ".join(card.get("addresses") or [])
         if before != chosen:
@@ -82,11 +79,8 @@ def rebuild(state: dict) -> tuple[list[dict], set[str]]:
                 }
             )
 
-        extra = dict(card.get("extra") or {})
-        if len(full) > 1:
-            extra[ORIGINAL_KEY] = full
         card["extra"] = extra
-        card["addresses"] = [chosen] if chosen else []
+        card["addresses"] = addresses
 
     return changes, shared
 
