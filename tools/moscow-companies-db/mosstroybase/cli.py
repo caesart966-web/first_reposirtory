@@ -14,7 +14,7 @@ from pathlib import Path
 
 import requests
 
-from . import config, riskscore
+from . import config, links, riskscore
 from .db import CompanyDB
 from .export import export_csv, export_xlsx
 from .http import make_session
@@ -238,6 +238,21 @@ def _build_parser() -> argparse.ArgumentParser:
     p = add_parser("check-risk", help="диагностика: разбор оценки риска (--exclude-risky) по одному ИНН")
     p.add_argument("inn", help="ИНН для проверки")
     p.set_defaults(func=cmd_check_risk)
+
+    p = add_parser("links", help="группы компаний с общим директором (связанные лица)")
+    p.add_argument("--xlsx", default="связи.xlsx", help="куда сохранить отчёт")
+    p.add_argument("--csv", default=None, help="дополнительно сохранить в CSV")
+    p.add_argument(
+        "--by", nargs="+", default=["директор"],
+        choices=["директор", "адрес", "телефон"],
+        help="по каким признакам связывать (по умолчанию только директор; "
+             "адрес учитывается лишь там, где он точный — с домом)",
+    )
+    p.add_argument("--min-size", type=int, default=2,
+                   help="минимальный размер группы (по умолчанию 2)")
+    p.add_argument("--region", nargs="+", default=None,
+                   help="ограничить регионами: 77 — Москва, 78 — СПб")
+    p.set_defaults(func=cmd_links)
 
     p = add_parser("stats", help="сводка по базе")
     p.set_defaults(func=cmd_stats)
@@ -1025,6 +1040,87 @@ def cmd_check_risk(args) -> int:
         print(f"  - {reason}")
     if not reasons:
         print("  - причин для снижения оценки не найдено")
+    return 0
+
+
+LINK_COLUMNS = [
+    "№ группы", "Компаний в группе", "Связь", "ИНН", "Наименование",
+    "Руководитель", "Регион", "Адрес", "Телефоны", "Статус", "СРО",
+    "Дата регистрации", "Сотрудников (СЧР)",
+]
+
+
+def cmd_links(args) -> int:
+    """Группы компаний, у которых общий директор (адрес/телефон — по флагу)."""
+    with CompanyDB(args.db) as db:
+        companies = list(db.iter_all())
+    if args.region:
+        regions = {str(r) for r in args.region}
+        companies = [c for c in companies
+                     if (c.get("region_code") or "") in regions
+                     or (c.get("inn") or "")[:2] in regions]
+        print(f"[links] ограничение по регионам {', '.join(sorted(regions))}: "
+              f"{len(companies)} компаний")
+
+    groups = links.find_groups(companies, min_size=args.min_size,
+                               kinds=tuple(args.by))
+    if not groups:
+        print("[links] групп не найдено")
+        return 1
+
+    by_inn = {c["inn"]: c for c in companies}
+    rows = []
+    for number, group in enumerate(groups, 1):
+        reason = links.describe(group["reasons"])
+        for inn in group["inns"]:
+            c = by_inn[inn]
+            rows.append({
+                "№ группы": number,
+                "Компаний в группе": len(group["inns"]),
+                "Связь": reason,
+                "ИНН": inn,
+                "Наименование": c.get("name_short") or c.get("name") or "",
+                "Руководитель": c.get("director") or "",
+                "Регион": c.get("region_code") or "",
+                "Адрес": c.get("address") or "",
+                "Телефоны": "; ".join(c.get("phones") or []),
+                "Статус": c.get("egrul_status") or "",
+                "СРО": "; ".join(c.get("sro_info") or []),
+                "Дата регистрации": c.get("reg_date") or "",
+                "Сотрудников (СЧР)": c.get("employees") if c.get("employees") is not None else "",
+            })
+
+    total = sum(len(g["inns"]) for g in groups)
+    print(f"[links] групп: {len(groups)}, компаний в них: {total}")
+    print(f"[links] крупнейшие:")
+    for number, group in enumerate(groups[:10], 1):
+        print(f"[links]   №{number}: {len(group['inns'])} компаний — "
+              f"{links.describe(group['reasons'], limit=2)}")
+
+    try:
+        if args.csv:
+            import csv as _csv
+            with open(args.csv, "w", newline="", encoding="utf-8-sig") as fh:
+                writer = _csv.DictWriter(fh, fieldnames=LINK_COLUMNS, delimiter=";",
+                                         extrasaction="ignore")
+                writer.writeheader()
+                writer.writerows(rows)
+            print(f"[links] CSV: {args.csv} ({len(rows)} строк)")
+        if args.xlsx:
+            from openpyxl import Workbook
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Связанные компании"
+            ws.append(LINK_COLUMNS)
+            for row in rows:
+                ws.append([row.get(c, "") for c in LINK_COLUMNS])
+            ws.freeze_panes = "A2"
+            wb.save(args.xlsx)
+            print(f"[links] XLSX: {args.xlsx} ({len(rows)} строк)")
+    except PermissionError:
+        print("Не удалось записать файл: он открыт в Excel. "
+              "Закройте его и повторите команду.", file=sys.stderr)
+        return 1
     return 0
 
 
