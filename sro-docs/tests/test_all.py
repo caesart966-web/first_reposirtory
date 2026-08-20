@@ -1446,6 +1446,48 @@ class TestProjectConfig(unittest.TestCase):
             legal_entity_kept_quotes,
             "у юрлица кавычки вокруг наименования должны были сохраниться")
 
+    def test_entrepreneur_signature_is_compact(self):
+        """В строке подписи у ИП — компактное «ИП Фамилия И.О.», не полное имя.
+
+        Если предприниматель вписал в «Сокращённо» полное «ИП ВОЛКОВ ВИТАЛИЙ
+        ВИТАЛЬЕВИЧ», в строке подписи не должно оставаться длинное имя и
+        должность — иначе не хватает места под роспись. У юрлица в подписи
+        по-прежнему сокращённое наименование и должность.
+        """
+        project = Project(ROOT)
+        project.use_sro("СССС", remember=False)
+
+        ip = CompanyData()
+        for key, value in dict(
+                applicant_kind="entrepreneur",
+                full_name="Индивидуальный предприниматель ВОЛКОВ ВИТАЛИЙ ВИТАЛЬЕВИЧ",
+                short_name="ИП ВОЛКОВ ВИТАЛИЙ ВИТАЛЬЕВИЧ",
+                inn="312772345390", ogrn="304780123456781",
+                director_position="Индивидуальный предприниматель",
+                director_full_name="ВОЛКОВ ВИТАЛИЙ ВИТАЛЬЕВИЧ",
+                director_basis="Лист записи ЕГРИП").items():
+            ip.set(key, value)
+        vals = build_context(ip, project.attorney(), sro=project.sro).values
+        self.assertEqual(vals["signatory_name"], "ИП ВОЛКОВ В.В.")
+        self.assertEqual(vals["signatory_position_inline"], "")
+
+        # У юрлица подпись прежняя: сокращённое наименование и должность.
+        ur = make_company(ALPHA)
+        vals_ur = build_context(ur, project.attorney(), sro=project.sro).values
+        self.assertEqual(vals_ur["signatory_name"], vals_ur["company_short_display"])
+        self.assertIn("Генеральный директор", vals_ur["signatory_position_inline"])
+
+        # Готовые документы ИП: длинное имя в строке подписи не появляется.
+        for spec in project.sro.enabled_documents():
+            with tempfile.TemporaryDirectory() as folder:
+                out = Path(folder) / spec.template
+                fill_template(project.template_path(spec), out, vals)
+                for line in extract_all_text(out).splitlines():
+                    if "/ ВОЛКОВ В.В./" in line or "/ВОЛКОВ В.В./" in line:
+                        with self.subTest(document=spec.title, line=line):
+                            self.assertNotIn("ВИТАЛИЙ ВИТАЛЬЕВИЧ", line,
+                                "в строке подписи осталось длинное имя")
+
     def test_templates_exist(self):
         project = Project(ROOT)
         for profile in project.all_sro:

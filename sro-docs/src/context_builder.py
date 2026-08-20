@@ -241,6 +241,20 @@ def build_context(company: CompanyData, attorney: dict[str, str],
         f"{short_parts[1]} {short_parts[0]}" if len(short_parts) == 2
         else values["director_short_name"])
 
+    # Наименование В СТРОКЕ ПОДПИСИ. У юрлица там стоит сокращённое
+    # наименование (ООО «Ромашка») — как и печатает бланк. У предпринимателя
+    # полное «ИП ВОЛКОВ ВИТАЛИЙ ВИТАЛЬЕВИЧ» занимает всю строку, и места под
+    # роспись не остаётся; поэтому берём компактное «ИП Фамилия И.О.».
+    if company.is_entrepreneur:
+        values["signatory_name"] = f"ИП {values['director_short_name']}".strip()
+        # Должность «Индивидуальный предприниматель» в строке подписи заявления
+        # только удлиняет её и дублирует «ИП …» — у предпринимателя опускаем.
+        values["signatory_position_inline"] = ""
+    else:
+        values["signatory_name"] = values["company_short_display"]
+        values["signatory_position_inline"] = (
+            f"{company.director_position} " if company.director_position else "")
+
     values["director_full_name_genitive"] = _resolve(
         company, "director_full_name_genitive", morphology.full_name_genitive(full_name),
         f"ФИО руководителя в родительном падеже («в лице …»)", result)

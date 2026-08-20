@@ -311,10 +311,12 @@ APPLICATION_OPS: list[dict] = [
     op_mark(6, 5, 3, "", "{{mark_contract_level5}}", size=36),
 
     # --- подпись ---
-    # Печатные « » (фрагменты 2 и 4) убираем: наименование берём из
-    # company_short_display, где кавычки уже проставлены по типу заявителя.
-    op_text(125, 0, "Генеральный директор ", "{{director_position}} "),
-    op_text(125, 1, "ООО ", "{{company_short_display}}"),
+    # В строке подписи: у юрлица «Должность Наименование» (Генеральный
+    # директор ООО «Ромашка»), у ИП — компактное «ИП Фамилия И.О.» без
+    # должности, чтобы осталось место под роспись. Печатные « » (фрагменты
+    # 2 и 4) убираем — кавычки уже внутри signatory_name у юрлица.
+    op_text(125, 0, "Генеральный директор ", "{{signatory_position_inline}}"),
+    op_text(125, 1, "ООО ", "{{signatory_name}}"),
     op_text(125, 2, "«", ""),
     op_text(125, 3, "_____________   ", ""),
     op_text(125, 4, "»", ""),
@@ -421,7 +423,7 @@ POWER_OPS: list[dict] = [
     # Печатные « » (фрагменты 1 и 4) убираем: наименование берём из
     # company_short_display с кавычками по типу заявителя.
     op_text(20, 0, "Генеральный директор", "{{director_position}}"),
-    op_text(21, 0, "ООО ", "{{company_short_display}}"),
+    op_text(21, 0, "ООО ", "{{signatory_name}}"),
     op_text(21, 1, "«", ""),
     op_text(21, 2, "________", ""),
     op_text(21, 3, "_", ""),
@@ -478,7 +480,7 @@ SFERA_POWER_OPS: list[dict] = [
     # --- подпись руководителя ---
     op_regex(18, r"^Генеральный директор$", "{{director_position}}"),
     op_regex(19, r"^ООО «_+»(\s+_+\s+)_+(\s*)$",
-             r"{{company_short_display}}\1{{director_short_name}}\2"),
+             r"{{signatory_name}}\1{{director_short_name}}\2"),
 ]
 
 
@@ -664,7 +666,7 @@ YARD_POWER_OPS: list[dict] = [
     op_regex(15, r"/Жирихов А\.В\./$", "/{{attorney_short_name}}/"),
     op_regex(18, r"^Генеральный директор$", "{{director_position}}"),
     op_regex(19, r"^ООО «\s+»(\s+_+\s+)/\s*Ф\.И\.О\.\s*/ ?$",
-             r"{{company_short_display}}\1/{{director_short_name}}/ "),
+             r"{{signatory_name}}\1/{{director_short_name}}/ "),
 ]
 
 

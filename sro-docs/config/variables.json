@@ -215,6 +215,16 @@
       "required": true,
       "where": "полное наименование как в бланке: у юрлица форма и название в кавычках, у ИП — без кавычек"
     },
+    "signatory_name": {
+      "field": "short_name",
+      "required": true,
+      "where": "наименование в строке подписи: у юрлица сокращённое (ООО «Ромашка»), у ИП компактное «ИП Фамилия И.О.»"
+    },
+    "signatory_position_inline": {
+      "field": "director_position",
+      "required": false,
+      "where": "должность перед подписью в одной строке (у юрлица), у ИП пусто"
+    },
     "company_short_display": {
       "field": "short_name",
       "required": true,
