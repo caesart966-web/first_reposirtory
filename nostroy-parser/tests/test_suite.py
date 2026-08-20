@@ -1834,5 +1834,93 @@ class TestSingleAddressAndShortNames(BaseTestCase):
         self.assertEqual(shorten_company_name(name), name)
 
 
+class TestRebuildAddressesFromCache(BaseTestCase):
+    """Пересборка адресов по кэшу: без сети и без расхода квоты."""
+
+    def _state(self) -> dict:
+        sro = "191124, Санкт-Петербург г, Красного Текстильщика ул, д 10-12 лит. О"
+        # Адрес СРО повторяется у всех членов — по этому и опознаётся.
+        results = {}
+        for index in range(10):
+            inn = f"78{index:08d}"
+            results[inn] = {
+                "status": "ok",
+                "inn": inn,
+                "name": f"Компания {index}",
+                "phones": ["+78120000000"],
+                "emails": ["mail@example.ru"],
+                "addresses": [
+                    f"19{index:04d}, г. Санкт-Петербург, ул. Примерная, д. {index}, литера А",
+                    sro,
+                ],
+                "directors": ["Иванов Иван Иванович"],
+                "websites": [],
+                "extra": {},
+            }
+        return {
+            "version": 1,
+            "quota": {"date": "2026-08-20", "used": 100, "limit": 100},
+            "results": results,
+            "attempts": {},
+            "meta": {},
+            "nostroy": {},
+        }
+
+    def test_sro_address_is_dropped_and_one_remains(self) -> None:
+        from rebuild_addresses import rebuild
+
+        state = self._state()
+        changes, shared = rebuild(state)
+
+        self.assertEqual(len(changes), 10)
+        self.assertIn(
+            "191124, Санкт-Петербург г, Красного Текстильщика ул, д 10-12 лит. О", shared
+        )
+        for card in state["results"].values():
+            self.assertEqual(len(card["addresses"]), 1)
+            self.assertIn("ул. Примерная", card["addresses"][0])
+
+    def test_quota_and_contacts_survive(self) -> None:
+        """Пересборка не трогает квоту и не теряет контакты."""
+        from rebuild_addresses import rebuild
+
+        state = self._state()
+        rebuild(state)
+
+        self.assertEqual(state["quota"], {"date": "2026-08-20", "used": 100, "limit": 100})
+        for card in state["results"].values():
+            self.assertEqual(card["phones"], ["+78120000000"])
+            self.assertEqual(card["emails"], ["mail@example.ru"])
+            self.assertEqual(card["status"], "ok")
+
+    def test_second_run_changes_nothing(self) -> None:
+        """Скрипт идемпотентен: повторный запуск ничего не меняет."""
+        from rebuild_addresses import rebuild
+
+        state = self._state()
+        rebuild(state)
+        changes, _ = rebuild(state)
+        self.assertEqual(changes, [])
+
+    def test_full_list_is_kept_for_reruns(self) -> None:
+        """Полный список адресов сохраняется — выбор можно пересмотреть."""
+        from rebuild_addresses import rebuild
+
+        state = self._state()
+        rebuild(state)
+        for card in state["results"].values():
+            self.assertEqual(len(card["extra"]["addresses_all"]), 2)
+
+    def test_card_with_only_sro_address_becomes_empty(self) -> None:
+        """Если своего адреса нет, пустая ячейка честнее адреса чужой СРО."""
+        from rebuild_addresses import rebuild
+
+        state = self._state()
+        sro = "191124, Санкт-Петербург г, Красного Текстильщика ул, д 10-12 лит. О"
+        state["results"]["7800000000"]["addresses"] = [sro]
+        rebuild(state)
+        self.assertEqual(state["results"]["7800000000"]["addresses"], [])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
