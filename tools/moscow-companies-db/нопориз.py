@@ -97,6 +97,21 @@ def _strings(obj: Any) -> Iterator[str]:
             yield from _strings(item)
 
 
+def norm_inn(value: Any) -> str:
+    """ИНН к сравнимому виду: только цифры и восстановленный ведущий ноль.
+
+    Excel хранит ИНН числом, поэтому у компаний из регионов с кодом 01–09
+    ведущий ноль теряется: 0816034124 приезжает как 816034124. Без
+    восстановления такие компании молча не находятся в реестре.
+    """
+    digits = re.sub(r"\D", "", "" if value is None else str(value))
+    if len(digits) == 9:
+        return digits.zfill(10)
+    if len(digits) == 11:
+        return digits.zfill(12)
+    return digits
+
+
 def _parse_date(text: str) -> date | None:
     text = (text or "").strip()
     m = re.match(r"(\d{2})\.(\d{2})\.(\d{4})", text)
@@ -376,7 +391,7 @@ def cmd_dump(args) -> int:
             for record in records:
                 started = start_date(record)
                 rows.append({
-                    "ИНН": str(record.get("inn") or "").strip(),
+                    "ИНН": norm_inn(record.get("inn")),
                     "Наименование": _first_str(record, "short_description",
                                                "full_description", "name", "title"),
                     "ОГРН": str(record.get("ogrn") or record.get("ogrnip") or "").strip(),
@@ -412,7 +427,7 @@ def cmd_dump(args) -> int:
             for record in records_of(payload):
                 started = start_date(record)
                 rows.append({
-                    "ИНН": str(record.get("inn") or "").strip(),
+                    "ИНН": norm_inn(record.get("inn")),
                     "Наименование": _first_str(record, "short_description",
                                                "full_description", "name", "title"),
                     "ОГРН": str(record.get("ogrn") or record.get("ogrnip") or "").strip(),
@@ -460,7 +475,7 @@ def cmd_match(args) -> int:
     design: dict[str, tuple[date, str]] = {}
     survey: dict[str, tuple[date, str]] = {}
     for r in nopriz_rows:
-        inn = (r.get("ИНН") or "").strip()
+        inn = norm_inn(r.get("ИНН"))
         if not inn or (r.get("Бывший член") or "").strip() == "да":
             continue
         started = _parse_date(r.get("Дата вступления") or "")
@@ -486,9 +501,9 @@ def cmd_match(args) -> int:
                 "Изыскания: дата вступления", "Изыскания: СРО", "В НОПРИЗ"]
     columns = header + [c for c in new_cols if c not in header]
 
-    both = only_design = only_survey = neither = 0
+    both = only_design = only_survey = neither = no_inn = 0
     for row in rows:
-        inn = (row.get(inn_col) or "").strip()
+        inn = norm_inn(row.get(inn_col))
         d, s = design.get(inn), survey.get(inn)
         row["Проектирование: дата вступления"] = d[0].strftime("%d.%m.%Y") if d else ""
         row["Проектирование: СРО"] = d[1] if d else ""
@@ -500,6 +515,9 @@ def cmd_match(args) -> int:
             row["В НОПРИЗ"] = "проектирование"; only_design += 1
         elif s:
             row["В НОПРИЗ"] = "изыскания"; only_survey += 1
+        elif not inn:
+            # Строку не выбрасываем, но и «нет» писать нечестно — не проверяли
+            row["В НОПРИЗ"] = "нет ИНН"; no_inn += 1
         else:
             row["В НОПРИЗ"] = "нет"; neither += 1
 
@@ -510,6 +528,8 @@ def cmd_match(args) -> int:
     print(f"[сверка]   только проектирование:          {only_design}")
     print(f"[сверка]   только изыскания:               {only_survey}")
     print(f"[сверка]   не найдены в НОПРИЗ:            {neither}")
+    if no_inn:
+        print(f"[сверка]   строк без ИНН (не проверялись): {no_inn}")
     print(f"[сверка] готово: {out_path}")
     return 0
 
