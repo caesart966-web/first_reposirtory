@@ -29,8 +29,8 @@ from .paths import app_root
 from .context_builder import ContextResult, build_context
 from .docx_engine import TemplateError, fill_template, scan_placeholders
 from .company_parser import split_company_name
-from .models import (ENTREPRENEUR_DEFAULTS, FIELD_BY_KEY,  # noqa: E402
-                     CompanyData)
+from .models import (BASIS_DEFAULTS, COMPANY, ENTREPRENEUR,  # noqa: E402
+                     ENTREPRENEUR_DEFAULTS, FIELD_BY_KEY, CompanyData)
 from .quality_control import (QualityReport, check_document, lookup_variable,
                               required_variables_for)
 from .sro_registry import DocumentSpec, SroError, SroProfile, discover, find
@@ -248,6 +248,12 @@ class Project:
         записи ЕГРИП». Это подсказка в форме: заполненное поле не трогаем,
         и человек всегда может вписать своё.
         """
+        # Основание полномочий в форме не спрашивается — подставляем молча:
+        # у юрлица Устав, у предпринимателя лист записи ЕГРИП. Оно нужно
+        # доверенностям; если карточка принесла своё — оно и останется.
+        if not company.get("director_basis"):
+            company.set("director_basis", BASIS_DEFAULTS[
+                ENTREPRENEUR if company.is_entrepreneur else COMPANY])
         if not company.is_entrepreneur:
             return []
         notes: list[str] = []

@@ -302,6 +302,35 @@ class TestParser(unittest.TestCase):
                          "Город: Москва\n")
         self.assertIn("Ленина", full.company.legal_address)
 
+    def test_name_found_in_header(self):
+        """Наименование берётся из шапки карточки, а не только из пары «подпись: значение».
+
+        В реквизитах название часто стоит вверху отдельной строкой — иногда
+        со словами «Карточка предприятия», иногда это «ИП ФАМИЛИЯ ИМЯ
+        ОТЧЕСТВО». Раньше такие шапки не распознавались.
+        """
+        # Предприниматель: название только в шапке, без подписи поля.
+        parsed = parse_text("ИП ВОЛКОВ ВИТАЛИЙ ВИТАЛЬЕВИЧ\n"
+                            "ИНН: 312772345390\nГород: Санкт-Петербург\n")
+        self.assertEqual(parsed.company.short_name, "ИП ВОЛКОВ ВИТАЛИЙ ВИТАЛЬЕВИЧ")
+        self.assertIn("ВОЛКОВ ВИТАЛИЙ ВИТАЛЬЕВИЧ", parsed.company.full_name)
+
+        # Юрлицо: название не в начале строки, а после лишних слов.
+        parsed = parse_text("Карточка предприятия ООО «Ромашка-Строй»\n"
+                            "ИНН 7812345675\n")
+        self.assertEqual(parsed.company.short_name, "ООО «Ромашка-Строй»")
+
+        # Прямые кавычки и запись без кавычек тоже понимаются.
+        self.assertEqual(
+            parse_text('ООО "Ромашка"\nИНН 7812345675').company.short_name,
+            "ООО «Ромашка»")
+        self.assertEqual(
+            parse_text("ООО Ромашка\nИНН 7812345675").company.short_name,
+            "ООО «Ромашка»")
+
+        # Строки-не-наименования наименованием не считаются.
+        self.assertEqual(parse_text("ИНН 7812345675").company.short_name, "")
+
     def test_card_number_is_not_taken_for_phone(self):
         """Номер карты или счёта, начинающийся с 8, не должен попасть в телефон.
 
@@ -513,6 +542,29 @@ class TestGeneration(unittest.TestCase):
         self.assertIn("02_Доверенность.docx", names)
         self.assertIn("мои_заметки.docx", names)                  # чужое не тронуто
         self.assertTrue(any("прошлого запуска" in n for n in second.notes))
+
+    def test_basis_is_filled_automatically(self):
+        """«Основание полномочий» не спрашивается, но в доверенности печатается.
+
+        Поле убрано из формы: у юрлица это всегда Устав, у предпринимателя —
+        лист записи ЕГРИП. Значение нужно доверенностям («действующего на
+        основании …»), поэтому подставляется само.
+        """
+        from src.models import FIELD_BY_KEY
+
+        self.assertNotIn("director_basis", FIELD_BY_KEY,
+                         "поле не должно спрашиваться в форме")
+
+        cases = [(make_company(ALPHA), "на основании Устава"),
+                 (make_company(IVAN), "на основании Листа записи ЕГРИП")]
+        for company, expected in cases:
+            company.set("director_basis", "")     # пользователь его не заполняет
+            with self.subTest(kind=company.applicant_kind):
+                self.project.output_root = self.tmp / ("out_" + company.applicant_kind)
+                result = generate(self.project, company, make_pdf=False)
+                power = [p for p in result.created if "Доверенность" in p.name]
+                self.assertTrue(power, "доверенность не сформировалась")
+                self.assertIn(expected, extract_all_text(power[0]))
 
     def test_actual_address_taken_from_legal(self):
         """У компаний фактический адрес совпадает с юридическим."""

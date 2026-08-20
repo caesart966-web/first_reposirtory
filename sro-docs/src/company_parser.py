@@ -57,6 +57,29 @@ FIO_RE = re.compile(
 )
 FIO_UPPER_RE = re.compile(r"\b([А-ЯЁ\-]{2,})\s+([А-ЯЁ]{2,})\s+([А-ЯЁ]{2,})\b")
 
+#: Наименование ищем в ЛЮБОМ месте строки, а не только в её начале: в шапке
+#: карточки оно часто идёт после слов «Реквизиты», «Карточка предприятия»,
+#: «Сведения об организации» и т.п.
+_FULL_FORMS_ALT = "|".join(re.escape(full) for _, full in LEGAL_FORMS)
+_SHORT_FORMS_ALT = "|".join(short for short, _ in LEGAL_FORMS)
+
+#: «ООО «Ромашка»», «Общество с ограниченной ответственностью «Ромашка»».
+NAME_QUOTED_RE = re.compile(
+    r"(?P<form>" + _FULL_FORMS_ALT + r"|\b(?:" + _SHORT_FORMS_ALT + r")\b)"
+    r"\s*[«\"\']\s*(?P<bare>[^»\"\'\n]{1,150}?)\s*[»\"\']",
+    re.IGNORECASE)
+
+#: «ИП ВОЛКОВ ВИТАЛИЙ ВИТАЛЬЕВИЧ», «Индивидуальный предприниматель Иванов И.И.»
+#: Без IGNORECASE: ФИО в карточке пишут с заглавной, и так меньше ложных срабатываний.
+NAME_IP_RE = re.compile(
+    r"(?P<form>Индивидуальный предприниматель|ИП)\.?\s+"
+    r"(?P<bare>[А-ЯЁ][А-ЯЁа-яё\-]+(?:\s+[А-ЯЁ][А-ЯЁа-яё.\-]*){1,2})")
+
+#: «ООО Ромашка» — без кавычек. Берём только из короткой строки без цифр:
+#: в длинной строке за формой обычно идёт не название, а продолжение фразы.
+NAME_BARE_RE = re.compile(
+    r"\b(?P<form>" + _SHORT_FORMS_ALT + r")\b\s+(?P<bare>[А-ЯЁA-Z][^\n,;:]{1,60})")
+
 
 @dataclass
 class ParseResult:
@@ -190,6 +213,50 @@ def _compose_name(form: str, bare: str) -> str:
             return f"{form} {bare}"
         return f"{form} «{bare}»"
     return bare or form
+
+
+def _canonical_form(form: str) -> str:
+    """Привести форму к принятому написанию: «ооо» → «ООО»."""
+    upper = (form or "").upper()
+    if upper in FULL_BY_SHORT:
+        return upper
+    lower = (form or "").lower()
+    if lower in SHORT_BY_FULL:
+        return FULL_BY_SHORT[SHORT_BY_FULL[lower]]
+    return form
+
+
+def find_company_name(line: str) -> tuple[str, str] | None:
+    """Найти наименование организации или предпринимателя в строке.
+
+    Возвращает («full», наименование) для полной формы («Общество с
+    ограниченной ответственностью «Ромашка»») либо («short», …) для краткой
+    («ООО «Ромашка»»), либо None. Ищет в любом месте строки: в шапке карточки
+    название часто стоит после слов «Реквизиты», «Карточка предприятия».
+    """
+    text = (line or "").strip()
+    if not text:
+        return None
+    for pattern in (NAME_QUOTED_RE, NAME_IP_RE):
+        match = pattern.search(text)
+        if not match:
+            continue
+        form = _canonical_form(match.group("form"))
+        bare = _clean(match.group("bare"))
+        if not bare:
+            continue
+        kind = "short" if form in FULL_BY_SHORT else "full"
+        return kind, _compose_name(form, bare)
+    # Без кавычек — только короткая строка без цифр: иначе легко захватить
+    # кусок обычного предложения вместо наименования.
+    if len(text) <= 70 and not re.search(r"\d", text):
+        match = NAME_BARE_RE.search(text)
+        if match:
+            form = _canonical_form(match.group("form"))
+            bare = _clean(match.group("bare")).strip(" .")
+            if bare and form in FULL_BY_SHORT:
+                return "short", _compose_name(form, bare)
+    return None
 
 
 def _is_initials_of(short: str, full: str) -> bool:
@@ -364,11 +431,13 @@ def parse_card(content: CardContent) -> ParseResult:
                 continue
 
         # Строки без подписи: «ООО «Ромашка»», «Действует на основании Устава».
-        if re.match(r"^(ПАО|НАО|ЗАО|ОАО|ООО|АО)\s*[«\"']", line, flags=re.IGNORECASE):
-            remember("short_name", line)
-        elif re.match(r"^(Общество|Акционерное|Публичное|Непубличное|Закрытое|Открытое)",
-                      line, flags=re.IGNORECASE):
-            remember("full_name", line)
+        # Наименование ищем в ЛЮБОМ месте строки: в шапке карточки оно
+        # часто стоит после слов «Реквизиты», «Карточка предприятия»,
+        # а у предпринимателя это «ИП ФАМИЛИЯ ИМЯ ОТЧЕСТВО» без кавычек.
+        found = find_company_name(line)
+        if found:
+            kind, name = found
+            remember("full_name" if kind == "full" else "short_name", name)
         elif re.search(r"действу\w*\s+на основании", line, flags=re.IGNORECASE):
             basis_match = re.search(r"на основании\s+(.+)$", line, flags=re.IGNORECASE)
             if basis_match:
