@@ -142,6 +142,25 @@ def build_context(company: CompanyData, attorney: dict[str, str],
     # Наименования целиком — нужны бланкам, где для них одна строка.
     values["company_full_name"] = company.full_name
     values["company_short_name"] = company.short_name
+    # Наименование «как в бланке»: там, где в шаблоне напечатаны кавычки-
+    # ёлочки « », форму собственности и наименование в кавычках собираем
+    # ТОЛЬКО для юрлица (ООО «Ромашка»). У предпринимателя кавычек быть не
+    # должно — «Иванов Иван Иванович» в кавычках читается как название фирмы,
+    # а не как ФИО. Поэтому у ИП берём наименование как есть, без кавычек.
+    if company.is_entrepreneur:
+        values["company_full_display"] = company.full_name
+        values["company_short_display"] = company.short_name
+    else:
+        values["company_full_display"] = (
+            f"{values['legal_form_full']} «{values['company_name_bare']}»"
+            if values["legal_form_full"] and values["company_name_bare"]
+            else company.full_name
+        )
+        values["company_short_display"] = (
+            f"{values['legal_form_short']} «{values['short_name_bare']}»"
+            if values["legal_form_short"] and values["short_name_bare"]
+            else company.short_name
+        )
 
     if company.full_name and not values["legal_form_full"]:
         result.notes.append(

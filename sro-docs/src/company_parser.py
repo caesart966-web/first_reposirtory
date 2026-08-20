@@ -46,7 +46,9 @@ EMPTY_MARKERS = {"-", "--", "—", "–", "нет", "н/д", "нд", "не ук�
                  "отсутствует", "не заполнено", "нет данных", "…", "..."}
 
 EMAIL_RE = re.compile(r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}")
-PHONE_RE = re.compile(r"(?:\+7|8)[\s\-()]*\d[\d\s\-()]{8,}\d")
+# (?<!\d) — «восьмёрка» телефона не должна стоять внутри более длинного числа:
+# иначе в ИНН 781234567870 нашёлся бы «телефон» 81234567870.
+PHONE_RE = re.compile(r"(?<!\d)(?:\+7|8)[\s\-()]*\d[\d\s\-()]{8,}\d")
 DATE_RE = re.compile(r"\b(\d{2})[.\-/](\d{2})[.\-/](\d{4})\b")
 FIO_RE = re.compile(
     r"\b([А-ЯЁ][а-яё]+(?:-[А-ЯЁ][а-яё]+)?)\s+"
@@ -82,6 +84,19 @@ def _norm_label(label: str) -> str:
 
 def _digits(value: str) -> str:
     return re.sub(r"\D", "", value or "")
+
+
+def _looks_like_phone(candidate: str) -> bool:
+    """Похоже ли это на российский телефон, а не на карту или счёт?
+
+    Российский номер — ровно 11 цифр (8 или 7, затем десятизначный
+    номер). У карты 16 цифр, у расчётного счёта — 20, у ОГРН — 13 или 15.
+    Все они могут начинаться с восьмёрки, поэтому одного «начинается на 8»
+    мало: проверяем длину, чтобы номер карты предпринимателя не уехал
+    в поле «Телефон».
+    """
+    digits = _digits(candidate)
+    return len(digits) == 11 and digits[0] in "78"
 
 
 LABEL_MAP: list[tuple[tuple[str, ...], str]] = [
@@ -374,9 +389,13 @@ def parse_card(content: CardContent) -> ParseResult:
         if match:
             remember("email", match.group(0))
     if not raw_values.get("phone"):
-        match = PHONE_RE.search(text)
-        if match:
-            remember("phone", match.group(0))
+        # Ищем построчно и проверяем длину: номер карты или счёта, даже если
+        # он начинается с 8, за телефон не примем (у телефона ровно 11 цифр).
+        for line in text.splitlines():
+            match = PHONE_RE.search(line)
+            if match and _looks_like_phone(match.group(0)):
+                remember("phone", match.group(0))
+                break
     if not raw_values.get("director_full_name"):
         for line in text.splitlines():
             if re.search(r"директор|руководител|президент|управляющ", line, flags=re.IGNORECASE):

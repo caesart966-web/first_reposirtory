@@ -281,6 +281,36 @@ class TestParser(unittest.TestCase):
             self.assertEqual(parsed.company.director_basis, "Устав")
             self.assertEqual(parsed.company.postal_address, "")
 
+    def test_card_number_is_not_taken_for_phone(self):
+        """Номер карты или счёта, начинающийся с 8, не должен попасть в телефон.
+
+        Российский телефон — ровно 11 цифр. У карты 16, у расчётного счёта — 20.
+        Раньше номер карты предпринимателя, начинавшийся с 8, уезжал в поле
+        «Телефон» просто потому, что начинался с восьмёрки.
+        """
+        from src.company_parser import _looks_like_phone
+
+        self.assertTrue(_looks_like_phone("8 (812) 000-00-03"))
+        self.assertTrue(_looks_like_phone("+7 (812) 000-00-03"))
+        self.assertFalse(_looks_like_phone("8100 2400 1234 5678"))   # карта, 16
+        self.assertFalse(_looks_like_phone("8" + "0" * 19))          # счёт, 20
+
+        # Карта без метки телефона — поле «Телефон» остаётся пустым.
+        parsed = parse_text(
+            "Индивидуальный предприниматель Иванов Иван Иванович\n"
+            "ИНН 781234567870\nОГРНИП 304780123456781\n"
+            "Карта 8100 2400 1234 5678\n")
+        self.assertEqual(parsed.company.phone, "")
+
+        # Если рядом есть настоящий телефон — берётся он, а не карта.
+        parsed = parse_text("ИП Иванов И.И.\nИНН 781234567870\n"
+                            "8100 2400 1234 5678\n8 (812) 000-00-03\n")
+        self.assertEqual(parsed.company.phone, "8 (812) 000-00-03")
+
+        # ИНН 781234567870 больше не даёт ложный «телефон» 81234567870.
+        parsed = parse_text("ИНН 781234567870\nОГРНИП 304780123456781\n")
+        self.assertEqual(parsed.company.phone, "")
+
 
 class TestDocxEngine(unittest.TestCase):
     """Проверка движка на документе, специально разбитом на фрагменты."""
@@ -1336,6 +1366,53 @@ class TestProjectConfig(unittest.TestCase):
                         item.ok,
                         f"{profile.key}/{item.spec.title}: не хватает "
                         f"{', '.join(item.missing) or item.unknown_variables}")
+
+    def test_entrepreneur_name_not_in_quotes(self):
+        """ФИО предпринимателя НЕ берётся в кавычки-ёлочки, а у юрлица — берётся.
+
+        Кавычки « » в бланках напечатаны под юрлицо (ООО «Ромашка»). Для ИП
+        «Иванов Иван Иванович» в кавычках читается как название фирмы — это
+        ошибка. Проверяем сразу все бланки всех СРО: ни в одном готовом
+        документе ИП имя не должно стоять в кавычках. И наоборот — у юрлица
+        кавычки вокруг наименования обязаны сохраниться.
+        """
+        import re
+
+        def quoted(path):
+            bits = []
+            for line in extract_all_text(path).splitlines():
+                bits += re.findall(r"«[^»\n]*»", line)
+            return bits
+
+        project = Project(ROOT)
+        legal_entity_kept_quotes = False
+        for profile in project.all_sro:
+            project.use_sro(profile, remember=False)
+            ip_values = build_context(make_company(IVAN), project.attorney(),
+                                      sro=profile).values
+            ur_values = build_context(make_company(ALPHA), project.attorney(),
+                                      sro=profile).values
+            for spec in profile.enabled_documents():
+                with tempfile.TemporaryDirectory() as folder:
+                    ip_doc = Path(folder) / ("ip_" + spec.template)
+                    ur_doc = Path(folder) / ("ur_" + spec.template)
+                    fill_template(project.template_path(spec), ip_doc, ip_values)
+                    fill_template(project.template_path(spec), ur_doc, ur_values)
+                    for chunk in quoted(ip_doc):
+                        with self.subTest(sro=profile.key, document=spec.title,
+                                          chunk=chunk):
+                            self.assertNotIn(
+                                "Иванов", chunk,
+                                f"{profile.key}/{spec.title}: ФИО ИП в кавычках {chunk!r}")
+                            self.assertNotIn(
+                                "предприниматель", chunk.lower(),
+                                f"{profile.key}/{spec.title}: наименование ИП "
+                                f"в кавычках {chunk!r}")
+                    if any("Ромашка" in chunk for chunk in quoted(ur_doc)):
+                        legal_entity_kept_quotes = True
+        self.assertTrue(
+            legal_entity_kept_quotes,
+            "у юрлица кавычки вокруг наименования должны были сохраниться")
 
     def test_templates_exist(self):
         project = Project(ROOT)

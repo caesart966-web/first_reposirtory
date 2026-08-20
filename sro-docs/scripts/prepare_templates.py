@@ -264,10 +264,16 @@ APPLICATION_OPS: list[dict] = [
     *[op_cell(3, 0, i, "", "{{ogrn_d%d}}" % (i + 1)) for i in range(13)],
 
     # --- п.3 наименования ---
-    op_text(43, 0, "Общество с ограниченной ответственностью «", "{{legal_form_full}} «"),
-    op_text(43, 1, "            ", "{{company_name_bare}}"),
-    op_text(43, 3, "; ООО «", "; {{legal_form_short}} «"),
-    op_text(43, 4, "                        ", "{{short_name_bare}}"),
+    # Кавычки-ёлочки « » напечатаны в бланке (фрагменты 0/2 и 3/5). Для
+    # юрлица они верны (ООО «Ромашка»), для ИП — нет. Поэтому наименование
+    # целиком берём из company_full_display / company_short_display: там
+    # кавычки проставлены по типу заявителя, а печатные « » бланка убираем.
+    op_text(43, 0, "Общество с ограниченной ответственностью «", "{{company_full_display}}"),
+    op_text(43, 1, "            ", ""),
+    op_text(43, 2, "»", ""),
+    op_text(43, 3, "; ООО «", "; {{company_short_display}}"),
+    op_text(43, 4, "                        ", ""),
+    op_text(43, 5, "»", ""),
 
     # --- п.4 юридический адрес ---
     op_text(45, 3,
@@ -305,9 +311,13 @@ APPLICATION_OPS: list[dict] = [
     op_mark(6, 5, 3, "", "{{mark_contract_level5}}", size=36),
 
     # --- подпись ---
+    # Печатные « » (фрагменты 2 и 4) убираем: наименование берём из
+    # company_short_display, где кавычки уже проставлены по типу заявителя.
     op_text(125, 0, "Генеральный директор ", "{{director_position}} "),
-    op_text(125, 1, "ООО ", "{{legal_form_short}} "),
-    op_text(125, 3, "_____________   ", "{{short_name_bare}}"),
+    op_text(125, 1, "ООО ", "{{company_short_display}}"),
+    op_text(125, 2, "«", ""),
+    op_text(125, 3, "_____________   ", ""),
+    op_text(125, 4, "»", ""),
     op_text(125, 9, "___________________", "{{director_short_name}}"),
     op_text(125, 10, ".", ""),
 
@@ -335,8 +345,12 @@ APPLICATION_OPS: list[dict] = [
 # ============================================================ ДОВЕРЕННОСТЬ
 POWER_OPS: list[dict] = [
     # --- шапка бланка ---
-    op_text(2, 0, "ООО ", "{{legal_form_short}} "),
-    op_text(2, 2, "________", "{{short_name_bare}}"),
+    # Печатные « » (фрагменты 1 и 3) убираем: наименование берём из
+    # company_short_display с кавычками по типу заявителя.
+    op_text(2, 0, "ООО ", "{{company_short_display}}"),
+    op_text(2, 1, "«", ""),
+    op_text(2, 2, "________", ""),
+    op_text(2, 3, "»", ""),
 
     # --- дата ---
     op_text(6, 1, "_", "{{doc_day}}"),
@@ -353,9 +367,11 @@ POWER_OPS: list[dict] = [
     op_text(8, 1, "№ ", "№ {{power_number}}"),
 
     # --- преамбула: кто выдаёт доверенность ---
-    op_text(10, 0, "Общество с ограниченной", "{{legal_form_full}}"),
-    op_text(10, 1, " ответственностью ", " "),
-    op_text(10, 2, "«»", "«{{company_name_bare}}»"),
+    # Наименование целиком (с кавычками у юрлица, без — у ИП) кладём в первый
+    # фрагмент, а печатные « » бланка убираем.
+    op_text(10, 0, "Общество с ограниченной", "{{company_full_display}}"),
+    op_text(10, 1, " ответственностью ", ""),
+    op_text(10, 2, "«»", ""),
     op_text(10, 6, "__________", "{{inn}}"),
     op_text(10, 9, "Генерального директора", "{{director_position_genitive}}"),
     op_text(10, 13, "_____________", "{{director_full_name_genitive}}"),
@@ -402,10 +418,14 @@ POWER_OPS: list[dict] = [
     op_text(17, 9, ".", ""),
 
     # --- подпись руководителя ---
+    # Печатные « » (фрагменты 1 и 4) убираем: наименование берём из
+    # company_short_display с кавычками по типу заявителя.
     op_text(20, 0, "Генеральный директор", "{{director_position}}"),
-    op_text(21, 0, "ООО ", "{{legal_form_short}} "),
-    op_text(21, 2, "________", "{{short_name_bare}}"),
+    op_text(21, 0, "ООО ", "{{company_short_display}}"),
+    op_text(21, 1, "«", ""),
+    op_text(21, 2, "________", ""),
     op_text(21, 3, "_", ""),
+    op_text(21, 4, "»", ""),
     op_text(21, 12, "_______", "{{director_short_name}}"),
     op_text(21, 13, "_______/", "/"),
 ]
@@ -417,7 +437,8 @@ POWER_OPS: list[dict] = [
 # фрагментов: Word дробит одинаковый текст в этих файлах по-разному.
 SFERA_POWER_OPS: list[dict] = [
     # --- шапка бланка ---
-    op_regex(0, r"^ООО «_+»$", "{{legal_form_short}} «{{short_name_bare}}»"),
+    # Кавычки « » берём из company_short_display: у юрлица они есть, у ИП нет.
+    op_regex(0, r"^ООО «_+»$", "{{company_short_display}}"),
 
     # --- дата и место составления ---
     # Дата слева, город справа. В бланке они разведены подложкой из пробелов,
@@ -431,9 +452,9 @@ SFERA_POWER_OPS: list[dict] = [
 
     # --- преамбула: кто выдаёт доверенность ---
     # Абзац оформлен неоднородно (наименование жирное), поэтому по фрагментам.
-    op_text(8, 0, "Общество с ограниченной", "{{legal_form_full}}"),
-    op_text(8, 1, " ответственностью ", " "),
-    op_text(8, 2, "«»", "«{{company_name_bare}}»"),
+    op_text(8, 0, "Общество с ограниченной", "{{company_full_display}}"),
+    op_text(8, 1, " ответственностью ", ""),
+    op_text(8, 2, "«»", ""),
     op_text(8, 6, "__________", "{{inn}}"),
     op_text(8, 9, "Генерального директора", "{{director_position_genitive}}"),
     op_text(8, 13, "_____________", "{{director_full_name_genitive}}"),
@@ -457,7 +478,7 @@ SFERA_POWER_OPS: list[dict] = [
     # --- подпись руководителя ---
     op_regex(18, r"^Генеральный директор$", "{{director_position}}"),
     op_regex(19, r"^ООО «_+»(\s+_+\s+)_+(\s*)$",
-             r"{{legal_form_short}} «{{short_name_bare}}»\1{{director_short_name}}\2"),
+             r"{{company_short_display}}\1{{director_short_name}}\2"),
 ]
 
 
@@ -595,8 +616,12 @@ YARD_APPLICATION_OPS: list[dict] = [
 # ИНН обозначен пробелами, а не подчёркиваниями.
 YARD_POWER_OPS: list[dict] = [
     # --- шапка бланка ---
-    op_text(0, 0, "ООО ", "{{legal_form_short}} "),
-    op_text(0, 2, "_____________", "{{short_name_bare}}"),
+    # Печатные « » (фрагменты 1 и 3) убираем: наименование целиком берём из
+    # company_short_display (у юрлица с кавычками, у ИП — без).
+    op_text(0, 0, "ООО ", "{{company_short_display}}"),
+    op_text(0, 1, "«", ""),
+    op_text(0, 2, "_____________", ""),
+    op_text(0, 3, "»", ""),
 
     # --- дата слева, город справа (подложку из пробелов → табуляция) ---
     op_text(4, 1, "_____", "{{doc_day}}"),
@@ -608,11 +633,15 @@ YARD_POWER_OPS: list[dict] = [
     op_text(4, 11, "_____________", "{{sro_city}}"),
 
     # --- преамбула ---
-    op_text(8, 0, "Общество с ограниченной ответственностью ", "{{legal_form_full}} "),
-    op_text(8, 2, "  ", "{{company_name_bare}}"),
+    # Печатные « » (фрагменты 1 и 6) убираем: наименование целиком берём из
+    # company_full_display (у юрлица с кавычками, у ИП — без).
+    op_text(8, 0, "Общество с ограниченной ответственностью ", "{{company_full_display}}"),
+    op_text(8, 1, "«", ""),
+    op_text(8, 2, "  ", ""),
     op_text(8, 3, "                   ", ""),
     op_text(8, 4, "                           ", ""),
     op_text(8, 5, "      ", ""),
+    op_text(8, 6, "»", ""),
     op_text(8, 9, " ИНН       ", " ИНН {{inn}}"),
     op_text(8, 12, "Генерального директора", "{{director_position_genitive}}"),
     op_text(8, 15, " _____________________________________________",
@@ -635,7 +664,7 @@ YARD_POWER_OPS: list[dict] = [
     op_regex(15, r"/Жирихов А\.В\./$", "/{{attorney_short_name}}/"),
     op_regex(18, r"^Генеральный директор$", "{{director_position}}"),
     op_regex(19, r"^ООО «\s+»(\s+_+\s+)/\s*Ф\.И\.О\.\s*/ ?$",
-             r"{{legal_form_short}} «{{short_name_bare}}»\1/{{director_short_name}}/ "),
+             r"{{company_short_display}}\1/{{director_short_name}}/ "),
 ]
 
 

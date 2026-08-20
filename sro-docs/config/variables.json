@@ -210,6 +210,16 @@
       "required": true,
       "where": "сокращённое наименование целиком"
     },
+    "company_full_display": {
+      "field": "full_name",
+      "required": true,
+      "where": "полное наименование как в бланке: у юрлица форма и название в кавычках, у ИП — без кавычек"
+    },
+    "company_short_display": {
+      "field": "short_name",
+      "required": true,
+      "where": "сокращённое наименование как в бланке: у юрлица в кавычках, у ИП — без кавычек"
+    },
     "doc_number": {
       "field": null,
       "required": false,
