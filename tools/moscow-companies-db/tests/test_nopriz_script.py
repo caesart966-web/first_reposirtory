@@ -132,6 +132,19 @@ class TestActivityKind(unittest.TestCase):
             нопориз.activity_kind({"sro": {"short_description": "Ассоциация проектировщиков"}}),
             "проектирование")
 
+    def test_short_design_words(self):
+        # Реальные названия СРО из выгрузки: «проектир»/«проектн» их не ловят
+        for name in ("Ассоциация Саморегулируемая организация «Межрегионпроект»",
+                     'Ассоциация Саморегулируемая организация "СТРОЙПРОЕКТГАРАНТ"',
+                     "Ассоциация «Гильдия архитекторов и инженеров»",
+                     'Ассоциация "Архитекторы Черноморья"'):
+            self.assertEqual(нопориз.kind_by_sro_name(name), "проектирование", name)
+
+    def test_survey_still_recognised(self):
+        self.assertEqual(
+            нопориз.kind_by_sro_name("Ассоциация инженерных изысканий в строительстве"),
+            "изыскания")
+
     def test_unknown_stays_empty(self):
         self.assertEqual(нопориз.activity_kind({"sro": {"short_description": "Союз"}}), "")
 
