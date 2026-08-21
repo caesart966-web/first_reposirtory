@@ -370,6 +370,20 @@ def probe_page_size(session: requests.Session, wanted: int,
 # -- файлы --------------------------------------------------------------
 
 
+_PROGRESS_STEP = 25_000
+
+
+def _tick(action: str, path: Path, count: int) -> None:
+    """Признак жизни на больших файлах.
+
+    В выгрузке НОПРИЗ полтораста тысяч строк: чтение занимает полминуты,
+    запись — ещё столько же. Без единой строчки вывода это неотличимо от
+    зависшей программы, и её начинают убивать по Ctrl+C.
+    """
+    if count and count % _PROGRESS_STEP == 0:
+        print(f"[файл] {action} {path.name}: {count} строк", flush=True)
+
+
 def read_rows(path: Path) -> tuple[list[str], list[dict]]:
     if path.suffix.lower() == ".csv":
         import csv
@@ -377,17 +391,20 @@ def read_rows(path: Path) -> tuple[list[str], list[dict]]:
             reader = csv.DictReader(fh, delimiter=";")
             return list(reader.fieldnames or []), list(reader)
     from openpyxl import load_workbook
+    print(f"[файл] открываю {path.name} …", flush=True)
     wb = load_workbook(path, read_only=True)
     ws = wb.active
     rows_iter = ws.iter_rows(values_only=True)
     header = [str(c) if c is not None else "" for c in next(rows_iter)]
     rows = []
-    for values in rows_iter:
+    for seen, values in enumerate(rows_iter, 1):
         row = {header[i]: ("" if v is None else str(v))
                for i, v in enumerate(values) if i < len(header)}
         if any(row.values()):
             rows.append(row)
+        _tick("читаю", path, seen)
     wb.close()
+    print(f"[файл] прочитано {path.name}: {len(rows)} строк", flush=True)
     return header, rows
 
 
@@ -404,8 +421,10 @@ def write_rows(path: Path, columns: list[str], rows: list[dict], sheet: str) -> 
     wb = Workbook(write_only=True)
     ws = wb.create_sheet(sheet)
     ws.append(columns)
-    for row in rows:
+    for written, row in enumerate(rows, 1):
         ws.append([row.get(c, "") for c in columns])
+        _tick("пишу", path, written)
+    print(f"[файл] сохраняю {path.name} …", flush=True)
     wb.save(path)
 
 
