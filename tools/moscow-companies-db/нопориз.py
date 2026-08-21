@@ -16,12 +16,16 @@
 
 ПОРЯДОК РАБОТЫ
 
-1) Скачать реестр (один раз, 15–40 минут — он большой):
+1) Скачать реестр (один раз; он большой — 212 тысяч членств):
 
        .venv\\Scripts\\activate
        python нопориз.py выгрузка --out нопориз_реестр.xlsx
 
-   Прерывать можно: прогресс сохраняется, повтор с --resume продолжит.
+   Реестр отдаёт по 20 записей на страницу и обычно игнорирует pageSize,
+   поэтому скрипт сам подбирает имя параметра размера страницы. Если
+   подобрать не удалось, страниц выходит больше десяти тысяч и выгрузка
+   идёт пару часов. Прерывать можно: прогресс сохраняется, повтор
+   с --resume продолжит с места обрыва.
 
 2) Сверить свой файл (колонка ИНН обязательна):
 
@@ -55,6 +59,9 @@ import requests
 BASE = "https://reestr.nopriz.ru"
 MEMBER_LIST_URL = f"{BASE}/api/sro/all/member/list"
 
+# Имена параметра «размер страницы», которые встречаются у таких реестров
+_PAGE_SIZE_KEYS = ("pageSize", "perPage", "per_page", "page_size", "limit", "size")
+
 # Дата вступления. Первым — точное имя поля, каким его отдаёт платформа
 # (проверено на НОСТРОЕ: registry_registration_date вида
 # "2018-02-12T00:00:00+03:00"), дальше запасные варианты.
@@ -75,12 +82,15 @@ _ACTIVE_MARKERS = ("является членом", "действ", "член ")
 # Ветки записи, где лежат данные самой СРО, а не членство компании
 _SKIP_BRANCHES = ("sro", "sro_info", "organization")
 
-# Вид деятельности СРО определяем по названию и полям записи
-_DESIGN_WORDS = ("проектир", "проектн", "архитектурно-строительн")
-_SURVEY_WORDS = ("изыскан", "изыскател")
-
 DESIGN = "проектирование"
 SURVEY = "изыскания"
+
+# Вид деятельности СРО: сначала по регистрационному номеру (он прямо кодирует
+# вид буквой после «СРО-»), запасной путь — по словам в наименовании СРО
+_SRO_NUMBER = re.compile(r"СРО\s*-\s*([ПИ])\s*-", re.I)
+_SRO_NUMBER_KIND = {"П": DESIGN, "И": SURVEY}
+_DESIGN_WORDS = ("проектир", "проектн", "архитектурно-строительн")
+_SURVEY_WORDS = ("изыскан", "изыскател")
 
 
 # -- разбор ответов ----------------------------------------------------
@@ -208,14 +218,31 @@ def is_former(record: dict) -> bool:
     return min(d for d, _k in stopped) <= date.today()
 
 
+def sro_number(record: dict) -> str:
+    """Регистрационный номер СРО, например «СРО-П-147-09032010»."""
+    sro = record.get("sro")
+    if isinstance(sro, dict):
+        return _first_str(sro, "registration_number", "registry_number", "number")
+    return ""
+
+
 def activity_kind(record: dict) -> str:
     """«проектирование», «изыскания», оба через запятую или '' если неясно.
 
-    Вид берём из названия СРО и полей записи: у НОПРИЗ саморегулируемые
-    организации разделены на проектные и изыскательские, и это отражено
-    в наименовании («...проектировщиков», «...изыскателей»).
+    Главный признак — регистрационный номер СРО: у НОПРИЗ он прямо кодирует
+    вид деятельности (СРО-П-… проектные, СРО-И-… изыскательские). Это
+    надёжнее любых названий и не зависит от того, как СРО себя назвала.
+
+    Запасной путь — слова в наименовании самой СРО. Раньше смотрели на все
+    строки записи подряд, и это было ошибкой: ООО «Проектстрой», состоящее
+    в изыскательской СРО, получало вид «проектирование» из собственного
+    названия.
     """
-    text = " ".join(_strings(record)).lower()
+    match = _SRO_NUMBER.search(sro_number(record))
+    if match:
+        return _SRO_NUMBER_KIND[match.group(1).upper()]
+
+    text = sro_name(record).lower()
     kinds = []
     if any(w in text for w in _DESIGN_WORDS):
         kinds.append(DESIGN)
@@ -264,9 +291,10 @@ def make_session() -> requests.Session:
 
 
 def fetch_page(session: requests.Session, page: int, page_size: int,
+               size_key: str = "pageSize",
                timeout: int = 60, attempts: int = 6) -> dict | None:
     """Страница реестра. Реестр периодически отвечает 500 — повторяем."""
-    body = {"page": page, "pageSize": page_size}
+    body = {"page": page, size_key: page_size}
     for attempt in range(1, attempts + 1):
         try:
             resp = session.post(MEMBER_LIST_URL, json=body, timeout=timeout)
@@ -279,6 +307,43 @@ def fetch_page(session: requests.Session, page: int, page_size: int,
                   f"(попытка {attempt}/{attempts})", flush=True)
         time.sleep(min(2 ** attempt, 30))
     return None
+
+
+def _record_ids(records: list[dict]) -> list[str]:
+    return [str(r.get("id") or r.get("inn") or "") for r in records]
+
+
+def probe_page_size(session: requests.Session, wanted: int,
+                    attempts: int = 2) -> tuple[str, int]:
+    """Каким параметром реестр реально ограничивает размер страницы.
+
+    По умолчанию он отдаёт по 20 записей, игнорируя pageSize, — а записей
+    в реестре больше двухсот тысяч, то есть десять тысяч страниц и часы
+    ожидания. Иногда работает другое имя параметра, и его стоит поискать:
+    перебор стоит десяток запросов и экономит часы.
+
+    Мало найти имя, при котором записей вернулось больше. Если размер
+    задаётся парой limit/offset, а не номером страницы, то «страница 2»
+    вернёт ровно то же самое — и выгрузка тихо превратится в десять тысяч
+    копий первой страницы. Поэтому кандидат принимается только после
+    проверки, что вторая страница отличается от первой.
+    """
+    best_key, best_size = "pageSize", 0
+    for key in _PAGE_SIZE_KEYS:
+        first = records_of(fetch_page(session, 1, wanted, key, attempts=attempts) or {})
+        if len(first) <= best_size:
+            continue
+        second = records_of(fetch_page(session, 2, wanted, key, attempts=attempts) or {})
+        if not second or _record_ids(second) == _record_ids(first):
+            print(f"[нопориз] параметр {key}: вторая страница повторяет первую — "
+                  "не годится", flush=True)
+            continue
+        best_key, best_size = key, len(first)
+        print(f"[нопориз] параметр {key}: по {best_size} записей на страницу",
+              flush=True)
+        if best_size >= wanted:
+            break
+    return best_key, best_size
 
 
 # -- файлы --------------------------------------------------------------
@@ -323,8 +388,11 @@ def write_rows(path: Path, columns: list[str], rows: list[dict], sheet: str) -> 
     wb.save(path)
 
 
-DUMP_COLUMNS = ["ИНН", "Наименование", "ОГРН", "СРО", "ID СРО", "Вид деятельности",
-                "Дата вступления", "Статус", "Бывший член"]
+# «Рег. номер СРО» держим в выгрузке не для красоты: из него выводится вид
+# деятельности, и если классификация вдруг окажется неверной, её можно
+# пересчитать по готовому файлу, не выкачивая реестр заново.
+DUMP_COLUMNS = ["ИНН", "Наименование", "ОГРН", "СРО", "ID СРО", "Рег. номер СРО",
+                "Вид деятельности", "Дата вступления", "Статус", "Бывший член"]
 
 
 # -- команды ------------------------------------------------------------
@@ -335,6 +403,12 @@ def cmd_dump(args) -> int:
     session = make_session()
     out_path = Path(args.out)
     progress_path = out_path.with_suffix(out_path.suffix + ".progress.json")
+
+    size_key = args.page_size_key
+    if size_key == "авто":
+        size_key, probed = probe_page_size(session, args.page_size)
+        if not probed:
+            print("[нопориз] размер страницы подобрать не вышло — качаю как есть")
 
     rows: list[dict] = []
     start_page = 1
@@ -357,7 +431,7 @@ def cmd_dump(args) -> int:
 
     try:
         while True:
-            payload = fetch_page(session, page, args.page_size)
+            payload = fetch_page(session, page, args.page_size, size_key)
             if payload is None:
                 failed_pages.append(page)
                 print(f"[нопориз] страница {page} не отдалась — пропускаю, "
@@ -397,6 +471,7 @@ def cmd_dump(args) -> int:
                     "ОГРН": str(record.get("ogrn") or record.get("ogrnip") or "").strip(),
                     "СРО": sro_name(record),
                     "ID СРО": sro_id(record),
+                    "Рег. номер СРО": sro_number(record),
                     "Вид деятельности": activity_kind(record),
                     "Дата вступления": started.strftime("%d.%m.%Y") if started else "",
                     "Статус": member_status(record),
@@ -420,7 +495,7 @@ def cmd_dump(args) -> int:
         print(f"[нопориз] повторяю {len(failed_pages)} сбойных страниц")
         still: list[int] = []
         for p in failed_pages:
-            payload = fetch_page(session, p, args.page_size)
+            payload = fetch_page(session, p, args.page_size, size_key)
             if payload is None:
                 still.append(p)
                 continue
@@ -432,6 +507,7 @@ def cmd_dump(args) -> int:
                                                "full_description", "name", "title"),
                     "ОГРН": str(record.get("ogrn") or record.get("ogrnip") or "").strip(),
                     "СРО": sro_name(record), "ID СРО": sro_id(record),
+                    "Рег. номер СРО": sro_number(record),
                     "Вид деятельности": activity_kind(record),
                     "Дата вступления": started.strftime("%d.%m.%Y") if started else "",
                     "Статус": member_status(record),
@@ -570,6 +646,8 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("выгрузка", help="скачать реестр НОПРИЗ целиком (один раз)")
     p.add_argument("--out", default="нопориз_реестр.xlsx", help="куда сохранить")
     p.add_argument("--page-size", type=int, default=100, help="записей на страницу")
+    p.add_argument("--page-size-key", default="авто",
+                   help="имя параметра размера страницы; «авто» — подобрать")
     p.add_argument("--delay", type=float, default=0.3, help="пауза между страницами, сек")
     p.add_argument("--resume", action="store_true", help="продолжить прерванную выгрузку")
     p.set_defaults(func=cmd_dump)

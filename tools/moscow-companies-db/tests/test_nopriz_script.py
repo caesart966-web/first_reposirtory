@@ -105,5 +105,88 @@ class TestMatch(unittest.TestCase):
         self.assertEqual(rows[0]["В НОПРИЗ"], "нет")
 
 
+class TestActivityKind(unittest.TestCase):
+    def test_by_sro_registration_number(self):
+        # Номер СРО кодирует вид: СРО-П-… проектные, СРО-И-… изыскательские
+        self.assertEqual(
+            нопориз.activity_kind({"sro": {"registration_number": "СРО-П-147-09032010"}}),
+            "проектирование")
+        self.assertEqual(
+            нопориз.activity_kind({"sro": {"registration_number": "СРО-И-032-2010"}}),
+            "изыскания")
+
+    def test_number_beats_names(self):
+        # Название СРО говорит «изыскателей», номер — проектная: верим номеру
+        record = {"sro": {"registration_number": "СРО-П-147-09032010",
+                          "full_description": "Союз изыскателей"}}
+        self.assertEqual(нопориз.activity_kind(record), "проектирование")
+
+    def test_company_name_does_not_leak(self):
+        # ООО «Проектстрой» в изыскательской СРО — это изыскания, не проектирование
+        record = {"short_description": 'ООО "Проектстрой"',
+                  "sro": {"short_description": "Ассоциация изыскателей"}}
+        self.assertEqual(нопориз.activity_kind(record), "изыскания")
+
+    def test_falls_back_to_sro_name(self):
+        self.assertEqual(
+            нопориз.activity_kind({"sro": {"short_description": "Ассоциация проектировщиков"}}),
+            "проектирование")
+
+    def test_unknown_stays_empty(self):
+        self.assertEqual(нопориз.activity_kind({"sro": {"short_description": "Союз"}}), "")
+
+
+class _FakeResponse:
+    status_code = 200
+
+    def __init__(self, payload):
+        self._payload = payload
+
+    def json(self):
+        return self._payload
+
+
+class _FakeSession:
+    """Реестр, который слушается только одного имени параметра."""
+
+    def __init__(self, honours: str | None, default_size: int = 20,
+                 paginates: bool = True):
+        self.honours, self.default_size, self.paginates = honours, default_size, paginates
+        self.calls = []
+
+    def post(self, _url, json=None, timeout=None):
+        self.calls.append(dict(json))
+        size = json.get(self.honours, self.default_size) if self.honours else self.default_size
+        page = json["page"] if self.paginates else 1
+        start = (page - 1) * size
+        data = [{"id": start + i, "inn": f"{start + i:010d}"} for i in range(size)]
+        return _FakeResponse({"data": {"data": data, "count": 1000}})
+
+
+class TestProbePageSize(unittest.TestCase):
+    def test_finds_working_key(self):
+        session = _FakeSession(honours="limit")
+        key, size = нопориз.probe_page_size(session, 100)
+        self.assertEqual((key, size), ("limit", 100))
+
+    def test_falls_back_when_nothing_works(self):
+        session = _FakeSession(honours=None)
+        key, size = нопориз.probe_page_size(session, 100)
+        self.assertEqual((key, size), ("pageSize", 20))
+
+    def test_rejects_key_that_ignores_page(self):
+        # Размер слушается, но вторая страница повторяет первую (limit/offset):
+        # такой ключ дал бы десять тысяч копий первой страницы
+        session = _FakeSession(honours="limit", paginates=False)
+        key, size = нопориз.probe_page_size(session, 100)
+        self.assertEqual(key, "pageSize")
+
+
+class TestDumpColumns(unittest.TestCase):
+    def test_registration_number_stored(self):
+        # Без него вид деятельности не пересчитать, не выкачивая реестр заново
+        self.assertIn("Рег. номер СРО", нопориз.DUMP_COLUMNS)
+
+
 if __name__ == "__main__":
     unittest.main()
