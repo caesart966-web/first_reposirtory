@@ -434,6 +434,29 @@ def write_rows(path: Path, columns: list[str], rows: list[dict], sheet: str) -> 
 # «Рег. номер СРО» держим в выгрузке не для красоты: из него выводится вид
 # деятельности, и если классификация вдруг окажется неверной, её можно
 # пересчитать по готовому файлу, не выкачивая реестр заново.
+def write_sheets(path: Path, sheets: list[tuple[str, list[str], list[dict]]]) -> None:
+    """Несколько листов в одном файле.
+
+    У CSV листов нет, поэтому там второй и последующие уезжают в отдельные
+    файлы рядом — молча терять их нельзя.
+    """
+    if path.suffix.lower() == ".csv":
+        for i, (name, columns, rows) in enumerate(sheets):
+            target = path if i == 0 else path.with_name(f"{path.stem}_{name}.csv")
+            write_rows(target, columns, rows, name)
+        return
+    from openpyxl import Workbook
+    wb = Workbook(write_only=True)
+    for name, columns, rows in sheets:
+        ws = wb.create_sheet(name[:31])
+        ws.append(columns)
+        for written, row in enumerate(rows, 1):
+            ws.append([row.get(c, "") for c in columns])
+            _tick("пишу", path, written)
+    print(f"[файл] сохраняю {path.name} …", flush=True)
+    wb.save(path)
+
+
 DUMP_COLUMNS = ["ИНН", "Наименование", "ОГРН", "СРО", "ID СРО", "Рег. номер СРО",
                 "Вид деятельности", "Дата вступления", "Статус", "Бывший член"]
 
@@ -580,6 +603,50 @@ def cmd_dump(args) -> int:
     return 0
 
 
+AFTER_COLUMNS = ["Проектирование: дней после стройки",
+                 "Изыскания: дней после стройки"]
+
+# Пары «колонка с датой вступления в НОПРИЗ -> колонка с разницей в днях»
+_AFTER_PAIRS = (("Проектирование: дата вступления", AFTER_COLUMNS[0]),
+                ("Изыскания: дата вступления", AFTER_COLUMNS[1]))
+
+
+def rows_joined_after(rows: list[dict], sro_date_column: str,
+                      header: list[str]) -> list[dict]:
+    """Компании, вступившие в проектную или изыскательскую СРО позже строительной.
+
+    Смысл выборки: сначала компания получила допуск на строительство, а
+    проектирование или изыскания добрала потом — то есть расширяла профиль
+    уже работающей фирмой, а не заходила в НОПРИЗ сразу.
+
+    Достаточно одного вида: если проектирование добрали позже, а изыскания
+    были раньше, компания всё равно попадает в выборку — а разница в днях
+    показана по каждому виду отдельно, чтобы это было видно.
+    """
+    if sro_date_column not in header:
+        print(f"[сверка] колонки «{sro_date_column}» в файле нет — лист "
+              f"«вступили после стройки» не строю. Есть: {', '.join(header)}",
+              file=sys.stderr)
+        return []
+
+    found: list[dict] = []
+    for row in rows:
+        base = _parse_date(row.get(sro_date_column) or "")
+        if base is None:
+            continue
+        gaps = {}
+        for date_column, gap_column in _AFTER_PAIRS:
+            joined = _parse_date(row.get(date_column) or "")
+            gaps[gap_column] = (joined - base).days if joined else None
+        if not any(g is not None and g > 0 for g in gaps.values()):
+            continue
+        extra = dict(row)
+        for gap_column, days in gaps.items():
+            extra[gap_column] = "" if days is None else str(days)
+        found.append(extra)
+    return found
+
+
 def cmd_match(args) -> int:
     """Сверяет файл пользователя с выгрузкой НОПРИЗ по ИНН."""
     file_path, nopriz_path = Path(args.file), Path(args.nopriz)
@@ -640,8 +707,14 @@ def cmd_match(args) -> int:
         else:
             row["В НОПРИЗ"] = "нет"; neither += 1
 
+    after_columns = columns + AFTER_COLUMNS
+    after_rows = rows_joined_after(rows, args.дата_стройки, header)
+
     out_path = Path(args.out)
-    write_rows(out_path, columns, rows, "Сверка с НОПРИЗ")
+    sheets = [("Сверка с НОПРИЗ", columns, rows)]
+    if after_rows:
+        sheets.append(("Вступили после стройки", after_columns, after_rows))
+    write_sheets(out_path, sheets)
     print(f"[сверка] компаний в файле: {len(rows)}")
     print(f"[сверка]   и проектирование, и изыскания: {both}")
     print(f"[сверка]   только проектирование:          {only_design}")
@@ -649,6 +722,9 @@ def cmd_match(args) -> int:
     print(f"[сверка]   не найдены в НОПРИЗ:            {neither}")
     if no_inn:
         print(f"[сверка]   строк без ИНН (не проверялись): {no_inn}")
+    if after_rows:
+        print(f"[сверка] вступили в НОПРИЗ позже строительной СРО: {len(after_rows)} "
+              f"— отдельный лист «Вступили после стройки»")
     print(f"[сверка] готово: {out_path}")
     return 0
 
@@ -800,6 +876,9 @@ def main(argv: list[str] | None = None) -> int:
                    help="выгрузка реестра, сделанная командой «выгрузка»")
     p.add_argument("--out", default="результат.xlsx", help="куда сохранить результат")
     p.add_argument("--inn-column", default="ИНН", help="имя колонки с ИНН")
+    p.add_argument("--дата-стройки", default="Дата вступления НП",
+                   help="колонка с датой вступления в строительную СРО — по ней "
+                        "строится лист «Вступили после стройки»")
     p.set_defaults(func=cmd_match)
 
     p = sub.add_parser("виды", help="список СРО из выгрузки и их вид деятельности")

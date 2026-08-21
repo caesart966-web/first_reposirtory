@@ -44,7 +44,8 @@ class TestMatch(unittest.TestCase):
             out = tmp / "готово.xlsx"
             code = нопориз.cmd_match(SimpleNamespace(
                 file=str(tmp / "мой.xlsx"), nopriz=str(tmp / "реестр.xlsx"),
-                out=str(out), inn_column="ИНН"))
+                out=str(out), inn_column="ИНН",
+                дата_стройки="Дата вступления НП"))
             self.assertEqual(code, 0)
             header, rows = нопориз.read_rows(out)
             return header, rows
@@ -295,6 +296,78 @@ class TestCliArgs(unittest.TestCase):
         parser_ok = нопориз.main(["пересчитать", "--nopriz", "нет.xlsx",
                                   "--справочник", "нет.xlsx"])
         self.assertEqual(parser_ok, 1)   # файлов нет, но разбор аргументов прошёл
+
+
+class TestJoinedAfter(unittest.TestCase):
+    """Компании, добравшие проектирование или изыскания позже строительной СРО."""
+
+    HEADER = ["ИНН", "Дата вступления НП", "Проектирование: дата вступления",
+              "Изыскания: дата вступления"]
+
+    def _rows(self, *specs):
+        return [{"ИНН": str(i), "Дата вступления НП": sro,
+                 "Проектирование: дата вступления": design,
+                 "Изыскания: дата вступления": survey}
+                for i, (sro, design, survey) in enumerate(specs, 1)]
+
+    def test_later_membership_selected(self):
+        rows = self._rows(("22.04.2022", "01.06.2023", ""))
+        found = нопориз.rows_joined_after(rows, "Дата вступления НП", self.HEADER)
+        self.assertEqual(len(found), 1)
+        self.assertEqual(found[0]["Проектирование: дней после стройки"], "405")
+
+    def test_earlier_membership_skipped(self):
+        rows = self._rows(("22.04.2022", "15.03.2021", ""))
+        self.assertEqual(нопориз.rows_joined_after(rows, "Дата вступления НП",
+                                                   self.HEADER), [])
+
+    def test_same_day_is_not_later(self):
+        rows = self._rows(("22.04.2022", "22.04.2022", ""))
+        self.assertEqual(нопориз.rows_joined_after(rows, "Дата вступления НП",
+                                                   self.HEADER), [])
+
+    def test_one_kind_later_is_enough(self):
+        # Проектирование было раньше стройки, изыскания добрали позже —
+        # компания нужна, и обе разницы видны, включая отрицательную
+        rows = self._rows(("26.04.2022", "01.01.2020", "01.09.2024"))
+        found = нопориз.rows_joined_after(rows, "Дата вступления НП", self.HEADER)
+        self.assertEqual(len(found), 1)
+        self.assertEqual(found[0]["Проектирование: дней после стройки"], "-846")
+        self.assertEqual(found[0]["Изыскания: дней после стройки"], "859")
+
+    def test_not_in_nopriz_skipped(self):
+        self.assertEqual(нопориз.rows_joined_after(self._rows(("22.04.2022", "", "")),
+                                                   "Дата вступления НП", self.HEADER), [])
+
+    def test_missing_construction_date_skipped(self):
+        self.assertEqual(нопориз.rows_joined_after(self._rows(("", "01.06.2023", "")),
+                                                   "Дата вступления НП", self.HEADER), [])
+
+    def test_missing_column_does_not_crash(self):
+        # Файл без даты вступления в строительную СРО — лист просто не строим
+        rows = self._rows(("22.04.2022", "01.06.2023", ""))
+        self.assertEqual(нопориз.rows_joined_after(rows, "Такой колонки нет",
+                                                   self.HEADER), [])
+
+    def test_second_sheet_written(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            нопориз.write_rows(tmp / "мой.xlsx", ["ИНН", "Дата вступления НП"],
+                               [{"ИНН": "6164133875", "Дата вступления НП": "22.04.2022"}],
+                               "Мои")
+            нопориз.write_rows(tmp / "реестр.xlsx", нопориз.DUMP_COLUMNS,
+                               [_dump_row("6164133875", "проектирование",
+                                          "01.06.2023", "СРО-П")], "НОПРИЗ")
+            out = tmp / "готово.xlsx"
+            нопориз.cmd_match(SimpleNamespace(
+                file=str(tmp / "мой.xlsx"), nopriz=str(tmp / "реестр.xlsx"),
+                out=str(out), inn_column="ИНН",
+                дата_стройки="Дата вступления НП"))
+            from openpyxl import load_workbook
+            book = load_workbook(out, read_only=True)
+            self.assertEqual(book.sheetnames,
+                             ["Сверка с НОПРИЗ", "Вступили после стройки"])
+            book.close()
 
 
 if __name__ == "__main__":
