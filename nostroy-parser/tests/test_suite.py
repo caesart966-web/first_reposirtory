@@ -1834,6 +1834,56 @@ class TestSingleAddressAndShortNames(BaseTestCase):
         self.assertEqual(shorten_company_name(name), name)
 
 
+class TestFindSro(BaseTestCase):
+    """Определение, в какой СРО состоит компания."""
+
+    PAYLOAD = {
+        "data": {"data": [{
+            "inn": "7813692784",
+            "full_description": "Общество с ограниченной ответственностью «ОЛЛИ ИТ»",
+            "member_status": {"id": 1, "title": "Является членом СРО"},
+            "registry_registration_date": "2023-04-12T00:00:00+03:00",
+            "sro": {
+                "id": 410,
+                "full_description": "Ассоциация «СРО «Балтийский строительный комплекс»",
+                "registration_number": "СРО-С-410-16122014",
+                "inn": "7825489730",
+            },
+        }]}
+    }
+
+    def test_sro_is_extracted(self) -> None:
+        from nostroy_checko.nostroy_api import parse_member_payload
+
+        info = parse_member_payload(self.PAYLOAD, "7813692784")
+        self.assertTrue(info.found)
+        self.assertIn("Балтийский строительный комплекс", info.sro_name)
+        self.assertEqual(info.sro_number, "СРО-С-410-16122014")
+        # ИНН СРО не должен подменяться ИНН самой компании.
+        self.assertEqual(info.sro_inn, "7825489730")
+        self.assertNotEqual(info.sro_inn, info.inn)
+
+    def test_companies_are_read_without_header(self) -> None:
+        """Колонки определяются по содержимому: ИНН — по контрольной сумме."""
+        import openpyxl
+        from find_sro import read_companies
+
+        path = self.tmp_dir / "companies.xlsx"
+        book = openpyxl.Workbook()
+        sheet = book.active
+        sheet.append(["Наименование", "ИНН"])          # шапка — пропускается
+        sheet.append(['ООО "ОЛЛИ ИТ"', "7813692784"])
+        sheet.append(["7817158012", 'ООО "ФАКТСТРОЙ"'])  # колонки наоборот
+        sheet.append(['ООО "ДУБЛЬ"', "7813692784"])      # повтор ИНН
+        sheet.append(["мусор", "123"])                    # не ИНН
+        book.save(path)
+
+        companies = read_companies(path)
+        self.assertEqual([inn for _, inn in companies], ["7813692784", "7817158012"])
+        self.assertIn("ОЛЛИ", companies[0][0])
+        self.assertIn("ФАКТСТРОЙ", companies[1][0])
+
+
 class TestSroAddressNotInFallback(BaseTestCase):
     """Адрес СРО не должен возвращаться через запасные источники адреса."""
 

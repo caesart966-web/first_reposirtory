@@ -77,6 +77,10 @@ _IGNORE_KEY_RE = re.compile(
 )
 _DATE_KEY_RE = re.compile(r"(date|дата|_at$)", re.IGNORECASE)
 _STATUS_KEY_RE = re.compile(r"status|статус", re.IGNORECASE)
+#: Узел, описывающий саму СРО, а не компанию.
+_SRO_KEY_RE = re.compile(r"(^|_)sro($|_)|сро|саморегул|self_regul", re.IGNORECASE)
+#: Регистрационный номер СРО: СРО-С-410-16122014 (С — строители, П/И — проектировщики и изыскатели).
+_SRO_NUMBER_RE = re.compile(r"СРО-[А-ЯЁ]-\d{3}-\d{6,8}", re.IGNORECASE)
 _INN_KEY_RE = re.compile(r"^inn$|инн", re.IGNORECASE)
 #: Ключи с контактами члена (телефон/почта/адрес/руководитель).
 _PHONE_KEY_RE = re.compile(r"phone|tel|телефон", re.IGNORECASE)
@@ -95,6 +99,9 @@ class NostroyMemberInfo:
     date_exit: date | None = None
     status_text: str = ""            # статус членства как в реестре (текст)
     registry: str = ""               # какой реестр ответил: НОСТРОЙ или НОПРИЗ
+    sro_name: str = ""               # наименование СРО, в которой состоит компания
+    sro_number: str = ""             # регистрационный номер СРО (СРО-С-410-...)
+    sro_inn: str = ""                # ИНН самой СРО — для однозначной сверки
     phones: list[str] = field(default_factory=list)
     emails: list[str] = field(default_factory=list)
     addresses: list[str] = field(default_factory=list)
@@ -111,6 +118,9 @@ class NostroyMemberInfo:
             "date_exit": self.date_exit.isoformat() if self.date_exit else None,
             "status_text": self.status_text,
             "registry": self.registry,
+            "sro_name": self.sro_name,
+            "sro_number": self.sro_number,
+            "sro_inn": self.sro_inn,
             "phones": self.phones,
             "emails": self.emails,
             "addresses": self.addresses,
@@ -128,6 +138,9 @@ class NostroyMemberInfo:
             date_exit=parse_date(data.get("date_exit")),
             status_text=data.get("status_text", ""),
             registry=data.get("registry", ""),
+            sro_name=data.get("sro_name", ""),
+            sro_number=data.get("sro_number", ""),
+            sro_inn=data.get("sro_inn", ""),
             phones=list(data.get("phones", [])),
             emails=list(data.get("emails", [])),
             addresses=list(data.get("addresses", [])),
@@ -245,7 +258,59 @@ def parse_member_payload(payload: Any, inn: str) -> NostroyMemberInfo:
                 walk(item, path)
 
     walk(record)
+    _extract_sro(record, info)
     return info
+
+
+def _node_title(node: Any) -> str:
+    """Наименование из объекта СРО — у реестра оно лежит под разными ключами."""
+    if isinstance(node, str):
+        return clean_text(node)
+    if isinstance(node, dict):
+        for key in ("full_description", "full_name", "title", "name", "наименование", "наим"):
+            value = node.get(key)
+            if isinstance(value, str) and clean_text(value):
+                return clean_text(value)
+    return ""
+
+
+def _extract_sro(record: dict[str, Any], info: NostroyMemberInfo) -> None:
+    """Достаёт из записи, В КАКОЙ СРО состоит компания.
+
+    Реестр кладёт СРО отдельным узлом рядом с данными члена. Разбор ведётся
+    по смыслу ключей, а не по фиксированной схеме: имена полей у НОСТРОЙ
+    и НОПРИЗ различаются, и менялись со временем.
+    """
+    def visit(node: Any, inside_sro: bool = False) -> None:
+        if isinstance(node, dict):
+            for key, value in node.items():
+                key_text = str(key)
+                here = inside_sro or bool(_SRO_KEY_RE.search(key_text))
+
+                if here and not info.sro_name:
+                    title = _node_title(value)
+                    # Наименование СРО длинное («Ассоциация …»); короткие
+                    # строки — это статусы и идентификаторы, а не название.
+                    if len(title) >= 10:
+                        info.sro_name = title
+
+                if isinstance(value, (str, int)):
+                    text = clean_text(value)
+                    match = _SRO_NUMBER_RE.search(text)
+                    if match and not info.sro_number:
+                        info.sro_number = match.group(0).upper()
+                    if here and not info.sro_inn and _INN_KEY_RE.search(key_text):
+                        digits = re.sub(r"\D", "", text)
+                        if len(digits) == 10 and digits != info.inn:
+                            info.sro_inn = digits
+
+                if isinstance(value, (dict, list)):
+                    visit(value, here)
+        elif isinstance(node, list):
+            for item in node:
+                visit(item, inside_sro)
+
+    visit(record)
 
 
 # --------------------------------------------------------------------------- #
