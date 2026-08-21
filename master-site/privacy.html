@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- TODO: адрес сайта. В теге canonical ниже стоит домен-заглушка,
+     замените его на свой. См. README.md, раздел «Шаг 1». -->
+<title>Политика обработки персональных данных - ООО «МАСТЕР»</title>
+<meta name="description" content="Политика обработки персональных данных ООО «МАСТЕР», Ростов-на-Дону. Какие данные собирает сайт, зачем, сколько хранит и как их удалить.">
+<link rel="canonical" href="https://example.com/privacy.html">
+<meta name="robots" content="index, follow">
+
+<meta name="theme-color" content="#1f2124">
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="icon" href="assets/img/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+
+<link rel="preload" href="assets/fonts/onest-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/onest-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/literata-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/literata-latin.woff2" as="font" type="font/woff2" crossorigin>
+
+<!-- Тот же критический CSS, что и на главной. Меняете там - поменяйте и здесь. -->
+<style>
+
+@font-face{font-family:"Onest";src:url("assets/fonts/onest-cyrillic.woff2") format("woff2");font-weight:400 700;font-style:normal;font-display:swap;unicode-range:U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:"Onest";src:url("assets/fonts/onest-latin.woff2") format("woff2");font-weight:400 700;font-style:normal;font-display:swap;unicode-range:U+0000-00FF,U+2013,U+2018-201D,U+2022,U+2026}
+@font-face{font-family:"Literata";src:url("assets/fonts/literata-cyrillic.woff2") format("woff2");font-weight:400 700;font-style:normal;font-display:swap;unicode-range:U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:"Literata";src:url("assets/fonts/literata-latin.woff2") format("woff2");font-weight:400 700;font-style:normal;font-display:swap;unicode-range:U+0020-0040,U+005B-0060,U+007B-007E,U+00A0,U+00AB,U+00BB,U+00B0,U+00B7,U+00D7,U+2013,U+2018-201D,U+2022,U+2026}
+:root{--graphite:#1f2124;--graphite-2:#17191b;--stone:#5a5c60;--concrete:#edeff0;--brass:#c9a227;--brass-hi:#f0dfa8;--brass-lo:#b98d2e;--steel:#8fb2cc;--ink:#111315;--light:#f4f6f7;--light-2:#b4b8bc;--fs-1:clamp(2.5rem,1.5rem + 4.2vw,4.25rem);--fs-3:clamp(1.125rem,1.05rem + 0.4vw,1.375rem);--fs-5:.875rem;--fs-6:.75rem;--serif:"Literata",Georgia,"Times New Roman",serif;--sans:"Onest",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;--wrap:1280px;--pad:24px;--s1:8px;--s2:16px;--s3:24px;--s6:64px;--s7:96px;--radius:4px;--header-h:64px;--fs-2:clamp(1.75rem,1.25rem + 2.1vw,2.75rem);--fs-4:1rem;--s4:32px;--s5:48px;--concrete-2:#e2e5e7;--brass-ink:#7a5e10;--graphite-2:#17191b;--ease:cubic-bezier(.22,.61,.36,1);--dur:280ms}
+@media(min-width:768px){:root{--pad:40px;--header-h:72px}}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:calc(var(--header-h) + 16px)}
+body{margin:0;padding-bottom:56px;background:var(--concrete);color:var(--ink);font-family:var(--sans);font-size:1rem;line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+@media(min-width:1024px){body{padding-bottom:0}}
+h1,h2,h3{margin:0;font-family:var(--serif);font-weight:600;line-height:1.14;letter-spacing:-.015em}
+p{margin:0 0 var(--s2)}
+img,svg{display:block;max-width:100%}
+img{height:auto}
+.wrap{width:100%;max-width:var(--wrap);margin-inline:auto;padding-inline:var(--pad);position:relative}
+.skip{position:absolute;left:-9999px;top:0;z-index:200;background:var(--brass);color:var(--graphite);padding:12px 20px;font-weight:600}
+.skip:focus{left:0}
+.site-header{position:sticky;top:0;z-index:100;background:var(--graphite);color:var(--light);border-bottom:1px solid rgba(255,255,255,.14)}
+.site-header__bar{display:flex;align-items:center;gap:var(--s3);min-height:var(--header-h)}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;margin-right:auto;flex-shrink:0}
+.brand__mark{width:38px;height:28px;object-fit:contain}
+.brand__text{display:grid;gap:2px}
+.brand__name{font-size:var(--fs-5);font-weight:700;letter-spacing:.16em;line-height:1;color:var(--light)}
+.brand__sub{font-size:8px;letter-spacing:.2em;line-height:1;color:var(--light-2);text-transform:uppercase}
+@media(min-width:480px){.brand__mark{width:46px;height:34px}.brand__sub{font-size:9px}}
+.nav,.site-header__phone,.site-header__cta{display:none}
+.burger{display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;margin-right:-12px;background:none;border:0;cursor:pointer;color:var(--light)}
+.burger__box{position:relative;width:22px;height:14px}
+.burger__box span{position:absolute;left:0;right:0;height:2px;background:currentColor}
+.burger__box span:nth-child(1){top:0}.burger__box span:nth-child(2){top:6px}.burger__box span:nth-child(3){top:12px}
+@media(min-width:1024px){.nav,.site-header__phone{display:block}.site-header__cta{display:inline-flex}.burger{display:none}}
+.hero{position:relative;background:var(--graphite);color:var(--light);isolation:isolate;overflow:hidden}
+.hero__media{position:absolute;inset:0;z-index:-2}
+.hero__media img{width:100%;height:100%;object-fit:cover;object-position:50% 42%}
+.hero__shade{position:absolute;inset:0;z-index:-1;background:linear-gradient(to right,rgba(23,25,27,.94) 0%,rgba(23,25,27,.86) 42%,rgba(23,25,27,.5) 78%,rgba(23,25,27,.42) 100%),linear-gradient(to bottom,rgba(23,25,27,.7) 0%,rgba(23,25,27,.2) 40%,rgba(23,25,27,.8) 100%)}
+.hero__inner{position:relative;display:grid;align-content:center;min-height:min(760px,calc(100svh - var(--header-h)));padding-block:var(--s6) var(--s7);gap:var(--s3)}
+.hero__eyebrow{display:flex;align-items:center;gap:12px;font-size:var(--fs-6);letter-spacing:.22em;text-transform:uppercase;color:var(--light-2)}
+.hero__eyebrow::before{content:"";width:40px;height:2px;background:linear-gradient(to right,var(--brass-hi),var(--brass-lo));flex-shrink:0}
+.hero__title{font-size:var(--fs-1);max-width:15ch;letter-spacing:-.025em}
+.hero__title em{display:block;font-style:normal;color:var(--brass)}
+.hero__text{font-size:var(--fs-3);color:var(--light-2);max-width:46ch;line-height:1.5}
+.hero__actions{display:flex;flex-wrap:wrap;gap:var(--s2);margin-top:var(--s2)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--s1);min-height:48px;padding:12px var(--s3);border:1px solid transparent;border-radius:var(--radius);font-size:var(--fs-5);font-weight:500;letter-spacing:.02em;text-decoration:none;cursor:pointer}
+.btn--primary{background:var(--brass);color:var(--graphite);font-weight:600}
+.btn--ghost{background:transparent;border-color:rgba(255,255,255,.32);color:var(--light)}
+.hero__actions .btn{flex:1 1 auto;min-width:190px}
+@media(min-width:560px){.hero__actions .btn{flex:0 0 auto}}
+.hero__axes{position:absolute;inset:0;z-index:-1;pointer-events:none}
+.hero__axis{position:absolute;top:0;bottom:0;width:1px;background:linear-gradient(to bottom,rgba(255,255,255,.02),rgba(255,255,255,.16) 30%,rgba(255,255,255,.05));transform:scaleY(0);transform-origin:top}
+.hero__axis:nth-child(4n+3){background:linear-gradient(to bottom,rgba(201,162,39,.04),rgba(201,162,39,.3) 30%,rgba(201,162,39,.05))}
+.js-ready .hero__axis{animation:axis-draw 320ms var(--ease) forwards}
+@keyframes axis-draw{to{transform:scaleY(1)}}
+.section{position:relative;padding-block:var(--s6)}
+@media(min-width:768px){.section{padding-block:var(--s7)}}
+.section>.wrap{z-index:1}
+.axes{position:absolute;inset:0;pointer-events:none;z-index:0;--axis-cols:4;--axis-color:rgba(90,92,96,.1);background-image:repeating-linear-gradient(to right,var(--axis-color) 0 1px,transparent 1px calc(100%/var(--axis-cols)))}
+.hero .axes,.stats .axes{--axis-color:rgba(255,255,255,.08)}
+@media(min-width:768px){.axes{--axis-cols:6}}
+@media(min-width:1200px){.axes{--axis-cols:12}}
+.stats{padding-block:0;background:var(--graphite-2);color:var(--light);border-top:1px solid rgba(255,255,255,.14)}
+.stats__grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.stat{padding:var(--s3) var(--s2) var(--s3) 0;border-bottom:1px solid rgba(255,255,255,.14)}
+.stat:nth-child(odd){padding-right:var(--s3);border-right:1px solid rgba(255,255,255,.14)}
+.stat:last-child{grid-column:1/-1;border-right:0;border-bottom:0}
+.stat__value{font-family:var(--serif);font-size:var(--fs-2);font-weight:600;line-height:1;color:var(--light);font-feature-settings:"tnum";letter-spacing:-.02em}
+.stat__label{display:block;margin-top:10px;font-size:var(--fs-5);color:var(--light-2);line-height:1.4;max-width:24ch}
+@media(min-width:700px){.stats__grid{grid-template-columns:repeat(5,minmax(0,1fr))}.stat,.stat:nth-child(odd){padding:var(--s2) var(--s3);border-bottom:0;border-right:1px solid rgba(255,255,255,.14)}.stat:first-child{padding-left:0}.stat:last-child{grid-column:auto;border-right:0;padding-right:0}}
+/* Верх страницы политики - чтобы блок не переверстывался, когда доедет style.css */
+.shead__num{display:flex;align-items:center;gap:var(--s2);font-family:var(--serif);font-size:var(--fs-5);font-weight:600;letter-spacing:.08em;color:var(--brass-ink);font-feature-settings:"tnum"}
+.shead__num::after{content:"";flex:1;height:1px;background:linear-gradient(to right,var(--brass-lo),rgba(201,162,39,0))}
+.legal-hero .shead__num{color:var(--brass)}
+.legal-hero{position:relative;overflow:hidden;background:var(--graphite);color:var(--light);padding-block:var(--s6)}
+.legal-hero .axes{--axis-color:rgba(255,255,255,.08)}
+.legal-hero__title{font-size:var(--fs-2);max-width:24ch;margin-top:var(--s2)}
+.legal-hero__meta{margin-top:var(--s2);font-size:var(--fs-5);color:var(--light-2)}
+.legal{position:relative;padding-block:var(--s6) var(--s7)}
+.legal__grid{display:grid;gap:var(--s5)}
+.legal__toc ol{counter-reset:toc;border-top:1px solid rgba(90,92,96,.22)}
+.legal__toc li{counter-increment:toc;border-bottom:1px solid rgba(90,92,96,.22)}
+.legal__toc a{display:grid;grid-template-columns:2.2rem minmax(0,1fr);gap:var(--s1);padding:10px 0;font-size:var(--fs-5);color:var(--stone);text-decoration:none}
+.legal__toc a::before{content:counter(toc,decimal-leading-zero);font-family:var(--serif);font-weight:600;color:var(--brass-ink);font-feature-settings:"tnum"}
+.legal__body{max-width:74ch;counter-reset:sect}
+.legal__body h2{counter-increment:sect;display:grid;grid-template-columns:3rem minmax(0,1fr);gap:var(--s1);font-size:var(--fs-3);margin:var(--s6) 0 var(--s2)}
+.legal__body h2:first-child{margin-top:0}
+.legal__body h2::before{content:counter(sect,decimal-leading-zero);font-size:var(--fs-5);color:var(--brass-ink);font-feature-settings:"tnum";padding-top:.35em}
+.legal__body p,.legal__body li{font-size:var(--fs-5);color:var(--stone)}
+@media(min-width:1000px){.legal__grid{grid-template-columns:minmax(0,3fr) minmax(0,9fr);column-gap:var(--s6);align-items:start}.legal__toc{position:sticky;top:calc(var(--header-h) + var(--s3))}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.hero__axis{transform:scaleY(1);animation:none}}
+</style>
+
+<script>document.documentElement.className += " js-ready";</script>
+<link rel="preload" href="assets/css/style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="assets/css/style.css"></noscript>
+</head>
+
+<body>
+<a class="skip" href="#main">Перейти к содержанию</a>
+
+<header class="site-header" id="top">
+  <div class="wrap site-header__bar">
+    <a class="brand" href="index.html" aria-label="ООО МАСТЕР, строительная компания. На главную">
+      <picture>
+        <source srcset="assets/img/logo-mark-120.webp 120w, assets/img/logo-mark-240.webp 240w" sizes="46px" type="image/webp">
+        <img class="brand__mark" src="assets/img/logo-mark-120.png" width="120" height="88" alt="">
+      </picture>
+      <span class="brand__text">
+        <span class="brand__name">МАСТЕР</span>
+        <span class="brand__sub">строительная компания</span>
+      </span>
+    </a>
+
+    <nav class="nav" aria-label="Разделы сайта">
+      <ul class="nav__list">
+        <li><a class="nav__link" href="index.html#about">О компании</a></li>
+        <li><a class="nav__link" href="index.html#works">Виды работ</a></li>
+        <li><a class="nav__link" href="index.html#objects">Объекты</a></li>
+        <li><a class="nav__link" href="index.html#contacts">Контакты</a></li>
+      </ul>
+    </nav>
+
+    <a class="site-header__phone" href="tel:+79295555000" data-goal="phone">+7 (929) 555-50-00</a>
+    <a class="btn btn--primary site-header__cta" href="index.html#request">Оставить заявку</a>
+
+    <button class="burger" type="button" aria-expanded="false" aria-controls="mobile-nav">
+      <span class="burger__box" aria-hidden="true"><span></span><span></span><span></span></span>
+      <span class="visually-hidden">Меню</span>
+    </button>
+  </div>
+
+  <div class="mobile-nav" id="mobile-nav" hidden>
+    <div class="wrap">
+      <ul class="mobile-nav__list">
+        <li><a class="mobile-nav__link" href="index.html#about">О компании</a></li>
+        <li><a class="mobile-nav__link" href="index.html#works">Виды работ</a></li>
+        <li><a class="mobile-nav__link" href="index.html#objects">Объекты</a></li>
+        <li><a class="mobile-nav__link" href="index.html#resources">Ресурсы</a></li>
+        <li><a class="mobile-nav__link" href="index.html#contacts">Контакты и реквизиты</a></li>
+      </ul>
+      <div class="mobile-nav__foot">
+        <a class="mobile-nav__phone" href="tel:+79295555000" data-goal="phone">+7 (929) 555-50-00</a>
+        <a class="mobile-nav__phone" href="tel:+79495615407" data-goal="phone">+7 (949) 561-54-07</a>
+        <a class="btn btn--primary" href="index.html#request">Оставить заявку</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <section class="legal-hero">
+    <div class="axes" aria-hidden="true"></div>
+    <div class="wrap">
+      <p class="shead__num">Документ</p>
+      <h1 class="legal-hero__title">Политика обработки персональных данных</h1>
+      <p class="legal-hero__meta">ООО «МАСТЕР» · редакция от 21 августа 2026 года</p>
+    </div>
+  </section>
+
+  <section class="legal">
+    <div class="axes" aria-hidden="true"></div>
+    <div class="wrap">
+      <div class="legal__grid">
+        <nav class="legal__toc" aria-label="Содержание документа">
+          <ol>
+            <li><a href="#p1">Общие положения</a></li>
+            <li><a href="#p2">Оператор</a></li>
+            <li><a href="#p3">Какие данные мы обрабатываем</a></li>
+            <li><a href="#p4">Зачем мы их обрабатываем</a></li>
+            <li><a href="#p5">На каком основании</a></li>
+            <li><a href="#p6">Как и сколько мы храним данные</a></li>
+            <li><a href="#p7">Кому мы передаем данные</a></li>
+            <li><a href="#p8">Файлы cookie и статистика</a></li>
+            <li><a href="#p9">Ваши права</a></li>
+            <li><a href="#p10">Как отозвать согласие</a></li>
+            <li><a href="#p11">Как мы защищаем данные</a></li>
+            <li><a href="#p12">Изменения политики</a></li>
+          </ol>
+        </nav>
+
+        <div class="legal__body prose">
+          <h2 id="p1"><span>Общие положения</span></h2>
+          <p>
+            Эта политика объясняет, какие персональные данные собирает сайт ООО «МАСТЕР»,
+            зачем они нужны, сколько хранятся и что вы можете с ними сделать.
+            Политика составлена по Федеральному закону от 27.07.2006 № 152-ФЗ
+            «О персональных данных».
+          </p>
+          <p>
+            <strong>Персональные данные</strong> - любая информация, которая относится
+            к определенному человеку. <strong>Обработка</strong> - любое действие с
+            такими данными: сбор, запись, хранение, использование, передача, удаление.
+            <strong>Оператор</strong> - тот, кто определяет, зачем и как данные обрабатывать.
+          </p>
+          <p>
+            Политика действует для всех разделов сайта. Отправляя форму заявки,
+            вы подтверждаете, что прочитали этот документ и согласны с ним.
+            Если вы не согласны - просто не отправляйте форму: позвонить нам
+            можно и без нее.
+          </p>
+
+          <h2 id="p2"><span>Оператор</span></h2>
+          <dl>
+            <div><dt>Наименование</dt><dd>ООО «МАСТЕР»</dd></div>
+            <div><dt>ИНН</dt><dd>6165232967</dd></div>
+            <div><dt>КПП</dt><dd>616501001</dd></div>
+            <div><dt>ОГРН</dt><dd>1226100016284</dd></div>
+            <div><dt>Адрес</dt><dd>344010, Ростовская область, г. Ростов-на-Дону, ул. Петренко, д. 28, помещ. 23</dd></div>
+            <div><dt>Телефоны</dt><dd><a href="tel:+79295555000">+7 (929) 555-50-00</a>, <a href="tel:+79495615407">+7 (949) 561-54-07</a></dd></div>
+            <div><dt>Почта</dt><dd><a href="mailto:ooomaster2022@mail.ru">ooomaster2022@mail.ru</a></dd></div>
+            <div><dt>Генеральный директор</dt><dd>Багишев Ахад Багишевич</dd></div>
+          </dl>
+
+          <h2 id="p3"><span>Какие данные мы обрабатываем</span></h2>
+          <p>Через форму заявки вы сообщаете нам:</p>
+          <ul>
+            <li>имя - как к вам обращаться;</li>
+            <li>номер телефона;</li>
+            <li>адрес электронной почты, если вы его указали;</li>
+            <li>текст комментария, если вы его написали.</li>
+          </ul>
+          <p>Вместе с заявкой сервер записывает служебные сведения:</p>
+          <ul>
+            <li>дату и время отправки;</li>
+            <li>IP-адрес, с которого пришла заявка;</li>
+            <li>адрес страницы, с которой отправлена форма.</li>
+          </ul>
+          <p>
+            Мы не собираем специальные категории персональных данных: сведения о
+            здоровье, национальности, вероисповедании, политических взглядах,
+            судимости. Не собираем биометрию. Не собираем данные детей до 14 лет
+            намеренно.
+          </p>
+
+          <h2 id="p4"><span>Зачем мы их обрабатываем</span></h2>
+          <ul>
+            <li>чтобы перезвонить или написать вам в ответ на заявку;</li>
+            <li>чтобы обсудить объект, состав работ и подготовить смету;</li>
+            <li>чтобы заключить и исполнить договор, если мы договоримся;</li>
+            <li>чтобы отличить настоящую заявку от рассылки спам-роботов.</li>
+          </ul>
+          <p>
+            Мы не используем ваши данные для рекламных рассылок и не продаем их.
+          </p>
+
+          <h2 id="p5"><span>На каком основании</span></h2>
+          <ul>
+            <li>ваше согласие - вы ставите отметку под формой перед отправкой (п. 1 ч. 1 ст. 6 закона № 152-ФЗ);</li>
+            <li>подготовка и исполнение договора, стороной которого вы являетесь (п. 5 ч. 1 ст. 6);</li>
+            <li>наши законные интересы: ответить на обращение и защититься от спама (п. 7 ч. 1 ст. 6).</li>
+          </ul>
+
+          <h2 id="p6"><span>Как и сколько мы храним данные</span></h2>
+          <p>
+            Заявка приходит на корпоративную почту и хранится в почтовом ящике
+            компании. Данные обрабатываются на территории Российской Федерации.
+            Трансграничной передачи нет.
+          </p>
+          <ul>
+            <li>если договор не заключен - до 1 года с даты обращения;</li>
+            <li>если договор заключен - в течение срока действия договора и 5 лет после, как требует бухгалтерское и налоговое законодательство;</li>
+            <li>если вы отозвали согласие - удаляем в течение 30 дней, кроме данных, которые обязаны хранить по закону.</li>
+          </ul>
+
+          <h2 id="p7"><span>Кому мы передаем данные</span></h2>
+          <p>
+            Мы не передаем ваши данные третьим лицам, кроме двух случаев:
+          </p>
+          <ul>
+            <li>хостинг-провайдеру и почтовому сервису - они технически обеспечивают работу сайта и почты и обрабатывают данные по нашему поручению;</li>
+            <li>государственным органам - когда этого требует закон и есть официальный запрос.</li>
+          </ul>
+
+          <h2 id="p8"><span>Файлы cookie и статистика</span></h2>
+          <p>
+            Сам сайт не использует cookie для отслеживания и не показывает рекламу.
+          </p>
+          <p>
+            На сайте может быть подключен счетчик Яндекс.Метрики. Он собирает
+            обезличенные сведения о посещении: страницы, время на сайте, тип
+            устройства, город. Мы используем их только чтобы понимать, как люди
+            пользуются сайтом. Условия обработки описаны в документах Яндекса.
+            Отключить сбор можно настройками браузера, запретив файлы cookie.
+          </p>
+          <p>
+            Карта на странице контактов загружается только после того, как вы
+            нажмете кнопку. Пока вы этого не сделали, сайт не обращается к
+            сторонним сервисам.
+          </p>
+
+          <h2 id="p9"><span>Ваши права</span></h2>
+          <p>Вы вправе:</p>
+          <ul>
+            <li>узнать, обрабатываем ли мы ваши данные, и получить их копию;</li>
+            <li>потребовать исправить неточные данные;</li>
+            <li>потребовать удалить данные или прекратить их обработку;</li>
+            <li>отозвать согласие в любой момент;</li>
+            <li>пожаловаться в Роскомнадзор, если считаете, что мы нарушаем закон.</li>
+          </ul>
+          <p>
+            Ответ на обращение мы даем в течение 30 дней со дня получения.
+          </p>
+
+          <h2 id="p10"><span>Как отозвать согласие</span></h2>
+          <p>
+            Напишите на <a href="mailto:ooomaster2022@mail.ru">ooomaster2022@mail.ru</a>
+            или позвоните по телефону <a href="tel:+79295555000">+7 (929) 555-50-00</a>.
+            В письме укажите имя и телефон, которые вы оставляли в заявке, - так мы
+            найдем запись и удалим ее.
+          </p>
+
+          <h2 id="p11"><span>Как мы защищаем данные</span></h2>
+          <ul>
+            <li>сайт работает по защищенному протоколу HTTPS;</li>
+            <li>доступ к почте с заявками есть только у сотрудников, которым он нужен по работе;</li>
+            <li>форма защищена от автоматических отправок скрытым полем-ловушкой и ограничением частоты;</li>
+            <li>данные, которые больше не нужны, удаляются в сроки из раздела 06.</li>
+          </ul>
+
+          <h2 id="p12"><span>Изменения политики</span></h2>
+          <p>
+            Мы можем менять эту политику. Новая редакция публикуется на этой
+            странице и действует со дня публикации. Дата редакции указана в
+            начале документа.
+          </p>
+          <p>
+            Вопросы по документу: <a href="mailto:ooomaster2022@mail.ru">ooomaster2022@mail.ru</a>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="site-footer__bottom site-footer__bottom--bare">
+      <p>© <span id="year">2026</span> ООО «МАСТЕР»</p>
+      <p class="site-footer__links">
+        <a href="index.html">На главную</a>
+        <a href="#top">Наверх</a>
+      </p>
+    </div>
+  </div>
+</footer>
+
+<nav class="callbar" aria-label="Быстрые действия">
+  <a class="callbar__item" href="tel:+79295555000" data-goal="phone">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+      <path d="M6.2 3.5H9l1.4 4-2 1.6a12.4 12.4 0 0 0 6.3 6.3l1.6-2 4 1.4v2.8c0 1-.8 1.9-1.9 1.9A17.6 17.6 0 0 1 4.3 5.4c0-1 .9-1.9 1.9-1.9Z"/>
+    </svg>
+    Позвонить
+  </a>
+  <a class="callbar__item" href="index.html#request">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+      <path d="M4 4.5h16v15H4z"/>
+      <path d="M7.5 9.5h9M7.5 13h9M7.5 16h5"/>
+    </svg>
+    Оставить заявку
+  </a>
+</nav>
+
+<script src="assets/js/main.js" defer></script>
+</body>
+</html>
