@@ -45,7 +45,7 @@ class TestMatch(unittest.TestCase):
             code = нопориз.cmd_match(SimpleNamespace(
                 file=str(tmp / "мой.xlsx"), nopriz=str(tmp / "реестр.xlsx"),
                 out=str(out), inn_column="ИНН",
-                дата_стройки="Дата вступления НП"))
+                дата_стройки="Дата вступления НП", мин_дней=1))
             self.assertEqual(code, 0)
             header, rows = нопориз.read_rows(out)
             return header, rows
@@ -335,6 +335,14 @@ class TestJoinedAfter(unittest.TestCase):
         self.assertEqual(found[0]["Проектирование: дней после стройки"], "-846")
         self.assertEqual(found[0]["Изыскания: дней после стройки"], "859")
 
+    def test_min_days_filters_same_trip(self):
+        # Вступление через два дня — это один и тот же поход, а не «добрали потом»
+        rows = self._rows(("14.12.2022", "16.12.2022", ""))
+        self.assertEqual(len(нопориз.rows_joined_after(rows, "Дата вступления НП",
+                                                       self.HEADER)), 1)
+        self.assertEqual(нопориз.rows_joined_after(rows, "Дата вступления НП",
+                                                   self.HEADER, min_days=30), [])
+
     def test_not_in_nopriz_skipped(self):
         self.assertEqual(нопориз.rows_joined_after(self._rows(("22.04.2022", "", "")),
                                                    "Дата вступления НП", self.HEADER), [])
@@ -362,7 +370,7 @@ class TestJoinedAfter(unittest.TestCase):
             нопориз.cmd_match(SimpleNamespace(
                 file=str(tmp / "мой.xlsx"), nopriz=str(tmp / "реестр.xlsx"),
                 out=str(out), inn_column="ИНН",
-                дата_стройки="Дата вступления НП"))
+                дата_стройки="Дата вступления НП", мин_дней=1))
             from openpyxl import load_workbook
             book = load_workbook(out, read_only=True)
             self.assertEqual(book.sheetnames,

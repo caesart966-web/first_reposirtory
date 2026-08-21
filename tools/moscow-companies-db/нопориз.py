@@ -612,7 +612,7 @@ _AFTER_PAIRS = (("Проектирование: дата вступления", 
 
 
 def rows_joined_after(rows: list[dict], sro_date_column: str,
-                      header: list[str]) -> list[dict]:
+                      header: list[str], min_days: int = 1) -> list[dict]:
     """Компании, вступившие в проектную или изыскательскую СРО позже строительной.
 
     Смысл выборки: сначала компания получила допуск на строительство, а
@@ -622,6 +622,10 @@ def rows_joined_after(rows: list[dict], sro_date_column: str,
     Достаточно одного вида: если проектирование добрали позже, а изыскания
     были раньше, компания всё равно попадает в выборку — а разница в днях
     показана по каждому виду отдельно, чтобы это было видно.
+
+    min_days отсекает тех, кто оформил всё одним заходом: на живых данных
+    пятая часть выборки вступала в НОПРИЗ через 2–20 дней после строительной
+    СРО — это не «расширили профиль потом», а один и тот же поход.
     """
     if sro_date_column not in header:
         print(f"[сверка] колонки «{sro_date_column}» в файле нет — лист "
@@ -638,7 +642,7 @@ def rows_joined_after(rows: list[dict], sro_date_column: str,
         for date_column, gap_column in _AFTER_PAIRS:
             joined = _parse_date(row.get(date_column) or "")
             gaps[gap_column] = (joined - base).days if joined else None
-        if not any(g is not None and g > 0 for g in gaps.values()):
+        if not any(g is not None and g >= min_days for g in gaps.values()):
             continue
         extra = dict(row)
         for gap_column, days in gaps.items():
@@ -708,7 +712,7 @@ def cmd_match(args) -> int:
             row["В НОПРИЗ"] = "нет"; neither += 1
 
     after_columns = columns + AFTER_COLUMNS
-    after_rows = rows_joined_after(rows, args.дата_стройки, header)
+    after_rows = rows_joined_after(rows, args.дата_стройки, header, args.мин_дней)
 
     out_path = Path(args.out)
     sheets = [("Сверка с НОПРИЗ", columns, rows)]
@@ -876,6 +880,9 @@ def main(argv: list[str] | None = None) -> int:
                    help="выгрузка реестра, сделанная командой «выгрузка»")
     p.add_argument("--out", default="результат.xlsx", help="куда сохранить результат")
     p.add_argument("--inn-column", default="ИНН", help="имя колонки с ИНН")
+    p.add_argument("--мин-дней", type=int, default=1,
+                   help="минимальный разрыв в днях для листа «Вступили после "
+                        "стройки»: 30 отсеет тех, кто оформлял всё одним заходом")
     p.add_argument("--дата-стройки", default="Дата вступления НП",
                    help="колонка с датой вступления в строительную СРО — по ней "
                         "строится лист «Вступили после стройки»")
