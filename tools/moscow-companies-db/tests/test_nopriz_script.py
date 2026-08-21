@@ -188,5 +188,101 @@ class TestDumpColumns(unittest.TestCase):
         self.assertIn("Рег. номер СРО", нопориз.DUMP_COLUMNS)
 
 
+class TestReclassify(unittest.TestCase):
+    """Починка вида деятельности в уже скачанной выгрузке, без повторной качки."""
+
+    OLD_COLUMNS = ["ИНН", "Наименование", "ОГРН", "СРО", "ID СРО",
+                   "Вид деятельности", "Дата вступления", "Статус", "Бывший член"]
+
+    def _dump(self, tmp, rows, columns=None):
+        path = tmp / "реестр.xlsx"
+        нопориз.write_rows(path, list(columns or self.OLD_COLUMNS), rows, "НОПРИЗ")
+        return path
+
+    def test_company_name_leak_repaired(self):
+        # Старая выгрузка: вид определялся по всем строкам записи, поэтому
+        # ООО «Проектстрой» в изыскательской СРО получило оба вида
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            src = self._dump(tmp, [{"ИНН": "6164133875", "Наименование": "ООО Проектстрой",
+                                    "СРО": "Ассоциация изыскателей", "ID СРО": "7",
+                                    "Вид деятельности": "проектирование, изыскания"}])
+            out = tmp / "исправлено.xlsx"
+            code = нопориз.cmd_reclassify(SimpleNamespace(
+                nopriz=str(src), справочник=None, out=str(out)))
+            self.assertEqual(code, 0)
+            _h, rows = нопориз.read_rows(out)
+            self.assertEqual(rows[0]["Вид деятельности"], "изыскания")
+
+    def test_registration_number_wins_when_present(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            src = self._dump(tmp, [{"ИНН": "6164133875", "СРО": "Союз изыскателей",
+                                    "ID СРО": "7", "Рег. номер СРО": "СРО-П-147-09032010",
+                                    "Вид деятельности": ""}],
+                             columns=нопориз.DUMP_COLUMNS)
+            out = tmp / "исправлено.xlsx"
+            нопориз.cmd_reclassify(SimpleNamespace(nopriz=str(src), справочник=None,
+                                                   out=str(out)))
+            _h, rows = нопориз.read_rows(out)
+            self.assertEqual(rows[0]["Вид деятельности"], "проектирование")
+
+    def test_guide_fills_unrecognised_sro(self):
+        # У СРО нейтральное название — вид проставляется руками через справочник
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            src = self._dump(tmp, [{"ИНН": "6164133875", "СРО": "Союз «Гарант»",
+                                    "ID СРО": "42", "Вид деятельности": ""}])
+            guide = tmp / "виды.xlsx"
+            нопориз.write_rows(guide, нопориз.GUIDE_COLUMNS,
+                               [{"ID СРО": "42", "СРО": "Союз «Гарант»", "Записей": "5",
+                                 "Вид деятельности": "изыскания"}], "СРО")
+            out = tmp / "исправлено.xlsx"
+            нопориз.cmd_reclassify(SimpleNamespace(nopriz=str(src),
+                                                   справочник=str(guide), out=str(out)))
+            _h, rows = нопориз.read_rows(out)
+            self.assertEqual(rows[0]["Вид деятельности"], "изыскания")
+
+    def test_columns_preserved(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            src = self._dump(tmp, [{"ИНН": "6164133875", "СРО": "Ассоциация изыскателей",
+                                    "ID СРО": "7", "Вид деятельности": "",
+                                    "Дата вступления": "01.02.2020"}])
+            out = tmp / "исправлено.xlsx"
+            нопориз.cmd_reclassify(SimpleNamespace(nopriz=str(src), справочник=None,
+                                                   out=str(out)))
+            header, rows = нопориз.read_rows(out)
+            self.assertEqual(header, self.OLD_COLUMNS)
+            self.assertEqual(rows[0]["Дата вступления"], "01.02.2020")
+
+
+class TestKindsReport(unittest.TestCase):
+    def test_groups_by_sro_and_marks_unknown(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            src = tmp / "реестр.xlsx"
+            нопориз.write_rows(src, TestReclassify.OLD_COLUMNS, [
+                {"ИНН": "1", "СРО": "Ассоциация проектировщиков", "ID СРО": "1"},
+                {"ИНН": "2", "СРО": "Ассоциация проектировщиков", "ID СРО": "1"},
+                {"ИНН": "3", "СРО": "Союз «Гарант»", "ID СРО": "42"},
+            ], "НОПРИЗ")
+            out = tmp / "виды.xlsx"
+            code = нопориз.cmd_kinds(SimpleNamespace(nopriz=str(src), out=str(out)))
+            self.assertEqual(code, 0)
+            _h, rows = нопориз.read_rows(out)
+            self.assertEqual(len(rows), 2)
+            self.assertEqual(rows[0]["Записей"], "2")            # крупные сверху
+            self.assertEqual(rows[0]["Вид деятельности"], "проектирование")
+            self.assertEqual(rows[1]["Вид деятельности"], "")    # заполнить руками
+
+
+class TestCliArgs(unittest.TestCase):
+    def test_cyrillic_flag_parses(self):
+        parser_ok = нопориз.main(["пересчитать", "--nopriz", "нет.xlsx",
+                                  "--справочник", "нет.xlsx"])
+        self.assertEqual(parser_ok, 1)   # файлов нет, но разбор аргументов прошёл
+
+
 if __name__ == "__main__":
     unittest.main()

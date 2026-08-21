@@ -241,14 +241,35 @@ def activity_kind(record: dict) -> str:
     match = _SRO_NUMBER.search(sro_number(record))
     if match:
         return _SRO_NUMBER_KIND[match.group(1).upper()]
+    return kind_by_sro_name(sro_name(record))
 
-    text = sro_name(record).lower()
+
+def kind_by_sro_name(name: str) -> str:
+    """Вид деятельности по одному лишь наименованию СРО."""
+    text = (name or "").lower()
     kinds = []
     if any(w in text for w in _DESIGN_WORDS):
         kinds.append(DESIGN)
     if any(w in text for w in _SURVEY_WORDS):
         kinds.append(SURVEY)
     return ", ".join(kinds)
+
+
+def kind_of_row(row: dict, guide: dict[str, str] | None = None) -> str:
+    """Вид деятельности для строки готовой выгрузки.
+
+    Порядок доверия: регистрационный номер СРО (если он в выгрузке есть),
+    затем ручной справочник по СРО, затем слова в наименовании СРО.
+    """
+    match = _SRO_NUMBER.search(row.get("Рег. номер СРО") or "")
+    if match:
+        return _SRO_NUMBER_KIND[match.group(1).upper()]
+    if guide:
+        for key in (str(row.get("ID СРО") or "").strip(),
+                    (row.get("СРО") or "").strip().lower()):
+            if key and guide.get(key):
+                return guide[key]
+    return kind_by_sro_name(row.get("СРО") or "")
 
 
 def records_of(payload: Any) -> list[dict]:
@@ -638,6 +659,100 @@ def cmd_sample(args) -> int:
     return 0
 
 
+GUIDE_COLUMNS = ["ID СРО", "СРО", "Записей", "Вид деятельности"]
+
+
+def load_guide(path: Path) -> dict[str, str]:
+    """Справочник «СРО -> вид деятельности», заполненный руками.
+
+    Ключом годится и ID СРО, и наименование в нижнем регистре — чтобы
+    справочник можно было править как удобно, не сверяясь с идентификаторами.
+    """
+    _h, rows = read_rows(path)
+    guide: dict[str, str] = {}
+    for row in rows:
+        kind = (row.get("Вид деятельности") or "").strip().lower()
+        if kind not in (DESIGN, SURVEY, f"{DESIGN}, {SURVEY}"):
+            continue
+        for key in (str(row.get("ID СРО") or "").strip(),
+                    (row.get("СРО") or "").strip().lower()):
+            if key:
+                guide[key] = kind
+    return guide
+
+
+def cmd_kinds(args) -> int:
+    """Список СРО из выгрузки: сколько записей и какой вид определился.
+
+    Нужен, когда вид деятельности определился не у всех. Разных СРО в
+    НОПРИЗ пара сотен, поэтому глазами проверяется весь список целиком —
+    в отличие от полутора сотен тысяч записей.
+    """
+    path = Path(args.nopriz)
+    if not path.exists():
+        print(f"Файл {path} не найден.", file=sys.stderr)
+        return 1
+    _h, rows = read_rows(path)
+
+    seen: dict[str, dict] = {}
+    for row in rows:
+        name = (row.get("СРО") or "").strip()
+        key = str(row.get("ID СРО") or "").strip() or name.lower()
+        item = seen.setdefault(key, {"ID СРО": str(row.get("ID СРО") or "").strip(),
+                                     "СРО": name, "Записей": 0,
+                                     "Вид деятельности": kind_of_row(row)})
+        item["Записей"] += 1
+
+    items = sorted(seen.values(), key=lambda i: -i["Записей"])
+    unknown = [i for i in items if not i["Вид деятельности"]]
+    for item in items:
+        item["Записей"] = str(item["Записей"])
+
+    out_path = Path(args.out)
+    write_rows(out_path, GUIDE_COLUMNS, items, "СРО")
+    print(f"[виды] разных СРО: {len(items)}, из них без вида: {len(unknown)}")
+    for item in unknown[:30]:
+        print(f"[виды]   {item['Записей']:>7} записей — {item['СРО'][:70]}")
+    if len(unknown) > 30:
+        print(f"[виды]   и ещё {len(unknown) - 30}")
+    print(f"[виды] готово: {out_path} — заполните пустой «Вид деятельности» "
+          f"и передайте файл в «пересчитать --справочник»")
+    return 0
+
+
+def cmd_reclassify(args) -> int:
+    """Переписывает «Вид деятельности» в готовой выгрузке, не качая её заново."""
+    path = Path(args.nopriz)
+    if not path.exists():
+        print(f"Файл {path} не найден.", file=sys.stderr)
+        return 1
+    guide = {}
+    if args.справочник:
+        guide_path = Path(args.справочник)
+        if not guide_path.exists():
+            print(f"Файл {guide_path} не найден.", file=sys.stderr)
+            return 1
+        guide = load_guide(guide_path)
+        print(f"[пересчёт] в справочнике записей: {len(guide)}")
+
+    header, rows = read_rows(path)
+    changed = unknown = 0
+    for row in rows:
+        was = (row.get("Вид деятельности") or "").strip()
+        now = kind_of_row(row, guide)
+        if now != was:
+            row["Вид деятельности"] = now
+            changed += 1
+        if not now:
+            unknown += 1
+
+    out_path = Path(args.out)
+    write_rows(out_path, header, rows, "НОПРИЗ")
+    print(f"[пересчёт] записей: {len(rows)}, изменено: {changed}, без вида: {unknown}")
+    print(f"[пересчёт] готово: {out_path}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Реестр НОПРИЗ: проверка членства в проектных и изыскательских СРО")
@@ -659,6 +774,20 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--out", default="результат.xlsx", help="куда сохранить результат")
     p.add_argument("--inn-column", default="ИНН", help="имя колонки с ИНН")
     p.set_defaults(func=cmd_match)
+
+    p = sub.add_parser("виды", help="список СРО из выгрузки и их вид деятельности")
+    p.add_argument("--nopriz", default="нопориз_реестр.xlsx", help="выгрузка реестра")
+    p.add_argument("--out", default="виды_сро.xlsx", help="куда сохранить список")
+    p.set_defaults(func=cmd_kinds)
+
+    p = sub.add_parser("пересчитать",
+                       help="переписать вид деятельности в готовой выгрузке")
+    p.add_argument("--nopriz", default="нопориз_реестр.xlsx", help="выгрузка реестра")
+    p.add_argument("--справочник", default=None,
+                   help="файл из команды «виды» с заполненным видом деятельности")
+    p.add_argument("--out", default="нопориз_реестр_исправленный.xlsx",
+                   help="куда сохранить")
+    p.set_defaults(func=cmd_reclassify)
 
     p = sub.add_parser("образец", help="диагностика: сырая запись реестра")
     p.add_argument("--count", type=int, default=3, help="сколько записей разобрать")
