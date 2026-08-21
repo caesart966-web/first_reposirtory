@@ -1,0 +1,12 @@
+# robots.txt для сайта ООО «МАСТЕР»
+# TODO: в строке Sitemap ниже стоит домен-заглушка, замените его на свой.
+# См. README.md, раздел «Шаг 1».
+
+User-agent: *
+Allow: /
+Disallow: /send.php
+Disallow: /leads.log
+Disallow: /tools/
+Clean-param: utm_source&utm_medium&utm_campaign&utm_term&utm_content&yclid&gclid&from
+
+Sitemap: https://example.com/sitemap.xml
