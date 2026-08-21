@@ -354,6 +354,47 @@ class TestParser(unittest.TestCase):
         parsed = parse_text("ООО\n«Ромашка»\nИНН 7812345675")
         self.assertEqual(parsed.company.short_name, "ООО «Ромашка»")
 
+    def test_bank_statement_layout(self):
+        """Выписка банка: подпись поля напечатана ПОД значением.
+
+        Так устроены реквизиты из Т-Банка. Раньше наименованием компании
+        становился банк («АО «ТБанк»»), а адрес не находился вовсе, потому
+        что его подпись стоит ниже самого адреса.
+        """
+        parsed = parse_text(
+            "Реквизиты\n"
+            "ИНДИВИДУАЛЬНЫЙ ПРЕДПРИНИМАТЕЛЬ\n"
+            "ПАВЛОВ ЕВГЕНИЙ ИГОРЕВИЧ\n"
+            "Название организации\n"
+            "194294, РОССИЯ, Г САНКТ-ПЕТЕРБУРГ, П\n"
+            "ПАРГОЛОВО, УЛ ПЕРВОГО МАЯ, Д 107, КОРП 6,\n"
+            "ЛИТЕРА А, КВ 172\n"
+            "Юридический адрес организации\n"
+            "ИНН 440201318865\n"
+            "Расчетный счет 40802810300009858516\n"
+            "ОГРН/ОГРНИП 326784700250951\n"
+            "Банк АО «ТБанк»\n"
+            "БИК банка 044525974\n"
+            "ИНН банка 7710140679\n")
+        company = parsed.company
+
+        # Наименование — предпринимателя, а НЕ банка.
+        self.assertIn("ПАВЛОВ ЕВГЕНИЙ ИГОРЕВИЧ", company.full_name)
+        self.assertNotIn("ТБанк", company.full_name)
+        self.assertNotIn("ТБанк", company.short_name)
+
+        # Адрес собран из трёх строк, стоящих НАД подписью.
+        self.assertIn("ПАРГОЛОВО", company.legal_address)
+        self.assertIn("КВ 172", company.legal_address)
+
+        # Реквизиты предпринимателя, а не банка.
+        self.assertEqual(company.inn, "440201318865")
+        self.assertEqual(company.ogrn, "326784700250951")
+        self.assertEqual(company.applicant_kind, "entrepreneur")
+
+        # Подписант у предпринимателя — он сам.
+        self.assertEqual(company.director_full_name, "ПАВЛОВ ЕВГЕНИЙ ИГОРЕВИЧ")
+
     def test_card_number_is_not_taken_for_phone(self):
         """Номер карты или счёта, начинающийся с 8, не должен попасть в телефон.
 

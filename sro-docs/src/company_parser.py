@@ -72,7 +72,7 @@ NAME_QUOTED_RE = re.compile(
 #: «ИП ВОЛКОВ ВИТАЛИЙ ВИТАЛЬЕВИЧ», «Индивидуальный предприниматель Иванов И.И.»
 #: Без IGNORECASE: ФИО в карточке пишут с заглавной, и так меньше ложных срабатываний.
 NAME_IP_RE = re.compile(
-    r"(?P<form>Индивидуальный предприниматель|ИП)\.?\s+"
+    r"(?P<form>(?i:Индивидуальный предприниматель|ИП))\.?\s+"
     r"(?P<bare>[А-ЯЁ][А-ЯЁа-яё\-]+(?:\s+[А-ЯЁ][А-ЯЁа-яё.\-]*){1,2})")
 
 #: «ООО Ромашка» — без кавычек. Берём только из короткой строки без цифр:
@@ -87,6 +87,17 @@ _FORM_TAIL_RE = re.compile(
     r"(?:" + _FULL_FORMS_ALT + r"|\b(?:" + _SHORT_FORMS_ALT + r"))\s*$",
     re.IGNORECASE)
 _QUOTE_HEAD_RE = re.compile(r"^[«\"\']")
+
+#: «ИНДИВИДУАЛЬНЫЙ ПРЕДПРИНИМАТЕЛЬ» в одной строке, ФИО в следующей —
+#: так печатают выписки банков.
+_IP_TAIL_RE = re.compile(r"(?:Индивидуальный предприниматель|\bИП)\s*$",
+                         re.IGNORECASE)
+_FIO_HEAD_RE = re.compile(
+    r"^[А-ЯЁ][А-ЯЁа-яё\-]+(?:\s+[А-ЯЁ][А-ЯЁа-яё.\-]*){1,2}\s*$")
+
+#: Строки про БАНК: его наименование не должно попасть в наименование
+#: компании — «Банк АО «ТБанк»», «ИНН банка …», «Юридический адрес банка …».
+BANK_LINE_RE = re.compile(r"(?:^|\s)(?:банк|бик)\b|банка\b", re.IGNORECASE)
 
 
 @dataclass
@@ -132,7 +143,9 @@ def _looks_like_phone(candidate: str) -> bool:
 
 LABEL_MAP: list[tuple[tuple[str, ...], str]] = [
     (("полное наименование", "полное фирменное наименование", "наименование организации",
-      "полное название", "организация", "наименование юридического лица"), "full_name"),
+      "полное название", "организация", "наименование юридического лица",
+      # Выписки банков подписывают наименование так:
+      "название организации", "наименование клиента", "название клиента"), "full_name"),
     (("сокращенное наименование", "краткое наименование", "сокращенное название",
       "сокращенное фирменное наименование"), "short_name"),
     (("инн",), "inn"),
@@ -247,9 +260,11 @@ def join_wrapped_names(text: str) -> list[str]:
     index = 0
     while index < len(lines):
         current = lines[index].rstrip()
-        while (index + 1 < len(lines)
-               and _FORM_TAIL_RE.search(current.strip())
-               and _QUOTE_HEAD_RE.match(lines[index + 1].strip())):
+        while index + 1 < len(lines) and (
+                (_FORM_TAIL_RE.search(current.strip())
+                 and _QUOTE_HEAD_RE.match(lines[index + 1].strip()))
+                or (_IP_TAIL_RE.search(current.strip())
+                    and _FIO_HEAD_RE.match(lines[index + 1].strip()))):
             current = current.strip() + " " + lines[index + 1].strip()
             index += 1
         result.append(current)
@@ -409,6 +424,66 @@ def _split_account_and_bank(value: str) -> tuple[str, str]:
     return account, tail
 
 
+#: Все известные подписи полей — для проверки «строка целиком есть подпись».
+_ALL_LABEL_NAMES = {name for names, _ in LABEL_MAP for name in names}
+
+#: Хвосты, которые банки дописывают к подписи: «Юридический адрес ОРГАНИЗАЦИИ».
+_LABEL_TAILS = ("организации", "клиента", "компании", "предприятия",
+                "юридического лица")
+
+
+def _is_label_only(line: str) -> bool:
+    """Строка целиком — подпись поля, без самого значения.
+
+    Важно требовать ТОЧНОГО совпадения: иначе «Банк АО «ТБанк»» сойдёт
+    за подпись «Банк» и утащит в значение всё, что стояло выше.
+    """
+    if re.search(r"\d", line) or len(line) > 60:
+        return False
+    # «Почтовый адрес: -» — это подпись СО значением, её разбирает обычный
+    # проход. Одинокой подписью считаем только строку без значения после
+    # двоеточия, иначе такая строка утащит в значение всё, что стояло выше.
+    for sep in (":", "|"):
+        head, found, tail = line.partition(sep)
+        if found and tail.strip():
+            return False
+    norm = _norm_label(line)
+    if not norm:
+        return False
+    if norm in _ALL_LABEL_NAMES:
+        return True
+    for tail in _LABEL_TAILS:
+        if norm.endswith(" " + tail) and norm[:-len(tail) - 1].strip() in _ALL_LABEL_NAMES:
+            return True
+    return False
+
+
+def pairs_from_labels_below(lines: list[str]) -> list[tuple[str, str]]:
+    """Пары для карточек, где подпись поля напечатана ПОД значением.
+
+    Так устроены выписки некоторых банков: сверху значение (иногда в
+    несколько строк), под ним подпись — «Название организации»,
+    «Юридический адрес организации». Обычный разбор «подпись: значение»
+    такие карточки не видит вовсе.
+    """
+    found: list[tuple[str, str]] = []
+    buffer: list[str] = []
+    for raw in lines:
+        line = (raw or "").strip()
+        if not line:
+            buffer = []
+            continue
+        if _is_label_only(line):
+            if buffer:
+                found.append((line, " ".join(buffer)))
+            buffer = []
+            continue
+        buffer.append(line)
+        if len(buffer) > 4:      # больше четырёх строк одно значение не занимает
+            buffer.pop(0)
+    return found
+
+
 # --------------------------------------------------------------- главный разбор
 def parse_card(content: CardContent) -> ParseResult:
     """Разобрать содержимое карточки в реквизиты компании."""
@@ -433,10 +508,27 @@ def parse_card(content: CardContent) -> ParseResult:
             remember("director_full_name", fio)
             remember("director_basis", basis)
 
-    # 2. Строки вида «Подпись: значение» / «Подпись — значение».
     # Наименование в карточке нередко перенесено на две строки — склеиваем
     # такие переносы обратно, иначе ни одна строка не выглядит наименованием.
-    for line in join_wrapped_names(content.merged_text()):
+    lines = join_wrapped_names(content.merged_text())
+
+    # 1б. Карточки, где подпись поля напечатана ПОД значением (выписки банков).
+    for label, value in pairs_from_labels_below(lines):
+        key = _field_for_label(label)
+        if not key:
+            continue
+        if key in ("full_name", "short_name"):
+            # Выше значения мог оказаться заголовок вроде «Реквизиты» —
+            # берём из него именно наименование, а не строку целиком.
+            picked = find_company_name(value)
+            if picked:
+                kind, name = picked
+                remember("full_name" if kind == "full" else "short_name", name)
+        else:
+            remember(key, value)
+
+    # 2. Строки вида «Подпись: значение» / «Подпись — значение».
+    for line in lines:
         line = line.strip()
         if not line:
             continue
@@ -467,7 +559,9 @@ def parse_card(content: CardContent) -> ParseResult:
         # Наименование ищем в ЛЮБОМ месте строки: в шапке карточки оно
         # часто стоит после слов «Реквизиты», «Карточка предприятия»,
         # а у предпринимателя это «ИП ФАМИЛИЯ ИМЯ ОТЧЕСТВО» без кавычек.
-        found = find_company_name(line)
+        # Строку про банк за наименование компании не принимаем: иначе
+        # «Банк АО «ТБанк»» уезжает в название организации.
+        found = None if BANK_LINE_RE.search(line) else find_company_name(line)
         if found:
             kind, name = found
             remember("full_name" if kind == "full" else "short_name", name)
@@ -596,6 +690,17 @@ def parse_card(content: CardContent) -> ParseResult:
             "(по наименованию или по длине ИНН и ОГРНИП). Если это не так, "
             "переключите тип заявителя в верхней части окна."
         )
+        # У предпринимателя подписант — он сам, и его ФИО уже есть
+        # в наименовании. В карточках банков отдельной строки
+        # «руководитель» нет, поэтому берём ФИО оттуда.
+        if not company.director_full_name:
+            _, _, bare = split_company_name(company.full_name or company.short_name)
+            if bare:
+                company.director_full_name = bare
+                result.derived["director_full_name"] = (
+                    "Взято из наименования: у предпринимателя документы "
+                    "подписывает он сам. Проверьте написание ФИО."
+                )
 
     result.company = company
     return result
