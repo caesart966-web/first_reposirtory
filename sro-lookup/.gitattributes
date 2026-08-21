@@ -1,0 +1,5 @@
+# cmd.exe с кириллицей разбирает .bat с LF-окончаниями неверно и пытается
+# выполнять куски текста как команды — только CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.sh  text eol=lf
