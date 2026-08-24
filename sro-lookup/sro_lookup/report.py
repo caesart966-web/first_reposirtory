@@ -33,6 +33,24 @@ YES_FILL = PatternFill("solid", fgColor="D8EFD8")
 NO_FILL = PatternFill("solid", fgColor="EFEFEF")
 
 
+def all_negative_warning(rows: list[dict]) -> str:
+    """Предупреждение, если ни одна компания не нашлась.
+
+    Поголовно отрицательный результат бывает правдой, но бывает и признаком
+    того, что поиск сломался: реестр отвечает, а записи не находятся. Молча
+    выдавать 26 «не состоит» в такой ситуации нельзя — читатель поверит.
+    """
+    checked = [row for row in rows if not row.get("unchecked")]
+    if len(checked) < 5 or any(row.get("sro") for row in checked):
+        return ""
+    return (
+        "ВНИМАНИЕ: ни одна компания не найдена в реестрах. Это может быть верно "
+        "(членство в СРО нужно не всем), но может означать и сбой поиска. "
+        "Проверьте контрольным файлом: добавьте пару компаний, заведомо состоящих "
+        "в СРО, и запустите снова. Если и они не найдутся — результату верить нельзя."
+    )
+
+
 def write_report(
     rows: list[dict], path: Path, checked_on: date, target_label: str = ""
 ) -> None:
@@ -90,8 +108,13 @@ def write_report(
             elif row.get("target") == "Нет":
                 answer.fill = NO_FILL
 
+    warning = all_negative_warning(rows)
+    if warning:
+        cell = sheet.cell(len(rows) + 3, 1, warning)
+        cell.font = Font(name=FONT, size=10, bold=True, color="9C0006")
+
     note = sheet.cell(
-        len(rows) + 3, 1,
+        len(rows) + (5 if warning else 3), 1,
         "Источник: открытые реестры reestr.nostroy.ru (строители) и "
         f"reestr.nopriz.ru (проектировщики, изыскатели). Проверено {checked_on.strftime('%d.%m.%Y')}. "
         "Жёлтые строки — проверка не выполнена, реестр не ответил: их нужно перезапустить.",

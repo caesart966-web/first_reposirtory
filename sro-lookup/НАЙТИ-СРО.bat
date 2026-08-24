@@ -37,7 +37,17 @@ if "%INPUT%"=="" goto no_input
 if not exist "%INPUT%" goto not_found
 
 echo.
+echo Проверить членство в конкретной СРО? Введите её сокращение
+echo (например ОРС) и нажмите Enter. Чтобы пропустить — просто Enter.
+set "TARGET="
+set /p "TARGET=СРО: "
+echo.
+if "%TARGET%"=="" goto no_target
+".venv\Scripts\python.exe" find_sro.py "%INPUT%" --target-sro "%TARGET%"
+goto after_run
+:no_target
 ".venv\Scripts\python.exe" find_sro.py "%INPUT%"
+:after_run
 if errorlevel 1 goto failed
 
 echo.

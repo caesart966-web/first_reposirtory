@@ -25,7 +25,7 @@ from sro_lookup.config import Settings
 from sro_lookup.logging_setup import setup_logging
 from sro_lookup.lookup import lookup_companies
 from sro_lookup.reader import read_companies
-from sro_lookup.report import write_report
+from sro_lookup.report import all_negative_warning, write_report
 from sro_lookup.target import NO, UNKNOWN, YES, mark_target
 
 
@@ -81,6 +81,12 @@ def main() -> None:
         print(f"  да:           {sum(1 for v in by_inn.values() if v == YES)}")
         print(f"  нет:          {sum(1 for v in by_inn.values() if v == NO)}")
         print(f"  не проверено: {sum(1 for v in by_inn.values() if v == UNKNOWN)}")
+
+    warning = all_negative_warning(rows)
+    if warning:
+        print("\n" + "=" * 70)
+        print(warning)
+        print("=" * 70)
 
     print(f"\nГотово: {target}")
 

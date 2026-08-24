@@ -175,5 +175,29 @@ class TestTargetSro(unittest.TestCase):
         self.assertEqual(sheet.cell(2, 4).value, "Ассоциация «Объединение Ростовских Строителей»")
 
 
+class TestAllNegativeWarning(unittest.TestCase):
+    """Поголовно отрицательный результат — повод усомниться, а не вывод."""
+
+    def test_warns_when_nothing_found(self) -> None:
+        from sro_lookup.report import all_negative_warning
+
+        rows = [{"inn": str(i), "sro": "", "unchecked": False} for i in range(26)]
+        self.assertIn("ни одна компания не найдена", all_negative_warning(rows).lower())
+
+    def test_no_warning_when_at_least_one_found(self) -> None:
+        from sro_lookup.report import all_negative_warning
+
+        rows = [{"inn": str(i), "sro": "", "unchecked": False} for i in range(25)]
+        rows.append({"inn": "99", "sro": "Ассоциация «СРО»", "unchecked": False})
+        self.assertEqual(all_negative_warning(rows), "")
+
+    def test_unchecked_rows_do_not_trigger_warning(self) -> None:
+        """Если реестр не отвечал, это уже видно по жёлтым строкам."""
+        from sro_lookup.report import all_negative_warning
+
+        rows = [{"inn": str(i), "sro": "", "unchecked": True} for i in range(26)]
+        self.assertEqual(all_negative_warning(rows), "")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
