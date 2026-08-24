@@ -26,6 +26,7 @@ from sro_lookup.logging_setup import setup_logging
 from sro_lookup.lookup import lookup_companies
 from sro_lookup.reader import read_companies
 from sro_lookup.report import write_report
+from sro_lookup.target import NO, UNKNOWN, YES, mark_target
 
 
 def main() -> None:
@@ -35,6 +36,11 @@ def main() -> None:
     parser.add_argument("input", help="xlsx со списком компаний (название и ИНН)")
     parser.add_argument("--output", help="куда записать результат")
     parser.add_argument("--rps", type=float, default=1.0, help="запросов в секунду к реестру")
+    parser.add_argument(
+        "--target-sro",
+        default="",
+        help='отдельная колонка «состоит ли в этой СРО», например: --target-sro "ОРС"',
+    )
     args = parser.parse_args()
 
     source = Path(args.input)
@@ -55,7 +61,9 @@ def main() -> None:
     print(f"Компаний к проверке: {len(companies)}\n")
     settings = Settings(nostroy_rps=args.rps, sample_dir=str(work_dir))
     rows = lookup_companies(companies, settings)
-    write_report(rows, target, date.today())
+    if args.target_sro:
+        rows = mark_target(rows, args.target_sro)
+    write_report(rows, target, date.today(), target_label=args.target_sro)
 
     found = sum(1 for row in rows if row["sro"])
     no_sro = {row["inn"] for row in rows if not row["sro"] and not row["unchecked"]}
@@ -66,6 +74,14 @@ def main() -> None:
     print(f"Не состоят в СРО:      {len(no_sro)}")
     if unchecked:
         print(f"ПРОВЕРКА НЕ ВЫПОЛНЕНА: {len(unchecked)} — реестр не ответил, запустите позже")
+
+    if args.target_sro:
+        by_inn = {row["inn"]: row.get("target") for row in rows}
+        print(f"\nСостоят в {args.target_sro}:")
+        print(f"  да:           {sum(1 for v in by_inn.values() if v == YES)}")
+        print(f"  нет:          {sum(1 for v in by_inn.values() if v == NO)}")
+        print(f"  не проверено: {sum(1 for v in by_inn.values() if v == UNKNOWN)}")
+
     print(f"\nГотово: {target}")
 
 

@@ -111,5 +111,69 @@ class TestReport(unittest.TestCase):
         self.assertNotIn("не состоит", note)
 
 
+class TestTargetSro(unittest.TestCase):
+    """Отдельный ответ на вопрос «состоит ли в этой конкретной СРО»."""
+
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp(prefix="sro-test-"))
+
+    def test_abbreviation_does_not_match_inside_words(self) -> None:
+        """«ОРС» не должно находиться внутри «ПОМОРСКОГО»."""
+        from sro_lookup.target import build_matcher
+
+        matches = build_matcher("ОРС")
+        self.assertTrue(matches("Ассоциация «Объединение Ростовских Строителей»"))
+        self.assertTrue(matches("СРО Ассоциация ОРС"))
+        self.assertFalse(matches("Ассоциация строителей ПОМОРСКОГО края"))
+        self.assertFalse(matches("Ассоциация «Балтийский строительный комплекс»"))
+
+    def test_unchecked_never_becomes_no(self) -> None:
+        """Реестр не ответил — ответ «не проверено», а не «Нет»."""
+        from sro_lookup.target import NO, UNKNOWN, YES, mark_target
+
+        rows = [
+            {"inn": "1", "sro": "Ассоциация «Объединение Ростовских Строителей»",
+             "number": "", "unchecked": False},
+            {"inn": "2", "sro": "Ассоциация «Балтийский комплекс»", "number": "",
+             "unchecked": False},
+            {"inn": "3", "sro": "", "number": "", "unchecked": True},
+        ]
+        marked = {row["inn"]: row["target"] for row in mark_target(rows, "ОРС")}
+        self.assertEqual(marked["1"], YES)
+        self.assertEqual(marked["2"], NO)
+        self.assertEqual(marked["3"], UNKNOWN)
+
+    def test_answer_is_same_for_all_rows_of_one_company(self) -> None:
+        """Компания в двух СРО занимает две строки — ответ в них одинаковый."""
+        from sro_lookup.target import YES, mark_target
+
+        rows = [
+            {"inn": "7700000000", "sro": "Ассоциация «Объединение Ростовских Строителей»",
+             "number": "", "unchecked": False},
+            {"inn": "7700000000", "sro": "Ассоциация проектировщиков «Другая»",
+             "number": "", "unchecked": False},
+        ]
+        self.assertEqual([row["target"] for row in mark_target(rows, "ОРС")], [YES, YES])
+
+    def test_column_is_added_and_filled(self) -> None:
+        rows = [{
+            "name": "ИП Иванов Иван Иванович", "inn": "616519746524",
+            "sro": "Ассоциация «Объединение Ростовских Строителей»",
+            "number": "СРО-С-999-01012015", "registry": "НОСТРОЙ",
+            "status": "Является членом СРО", "join": date(2022, 3, 1),
+            "note": "", "unchecked": False, "target": "Да",
+        }]
+        path = self.tmp / "target.xlsx"
+        write_report(rows, path, date(2026, 8, 21), target_label="ОРС")
+
+        sheet = openpyxl.load_workbook(path)["Членство в СРО"]
+        headers = [cell.value for cell in sheet[1]]
+        self.assertEqual(headers[2], "Состоит в ОРС")
+        self.assertEqual(sheet.cell(2, 3).value, "Да")
+        # Колонки после вставленной не должны разъехаться.
+        self.assertEqual(headers[3], "СРО")
+        self.assertEqual(sheet.cell(2, 4).value, "Ассоциация «Объединение Ростовских Строителей»")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

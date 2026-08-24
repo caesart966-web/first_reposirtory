@@ -9,7 +9,7 @@ import openpyxl
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
-COLUMNS: list[tuple[str, int]] = [
+BASE_COLUMNS: list[tuple[str, int]] = [
     ("Название компании", 44),
     ("ИНН", 15),
     ("СРО", 52),
@@ -28,14 +28,27 @@ NO_SRO_FILL = PatternFill("solid", fgColor="FCE9E9")
 UNCHECKED_FILL = PatternFill("solid", fgColor="FFF4CE")
 THIN = Side(style="thin", color="D0D7E5")
 BORDER = Border(left=THIN, right=THIN, top=THIN, bottom=THIN)
+#: Заливки колонки «состоит в искомой СРО»: зелёная — да, серая — нет.
+YES_FILL = PatternFill("solid", fgColor="D8EFD8")
+NO_FILL = PatternFill("solid", fgColor="EFEFEF")
 
 
-def write_report(rows: list[dict], path: Path, checked_on: date) -> None:
+def write_report(
+    rows: list[dict], path: Path, checked_on: date, target_label: str = ""
+) -> None:
+    """Пишет отчёт. target_label добавляет колонку «Состоит в <СРО>» первой
+    после ИНН — это главный ответ, и искать его в конце таблицы неудобно."""
+    columns = list(BASE_COLUMNS)
+    target_at = 0
+    if target_label:
+        target_at = 3
+        columns.insert(target_at - 1, (f"Состоит в {target_label}", 18))
+
     book = openpyxl.Workbook()
     sheet = book.active
     sheet.title = "Членство в СРО"
 
-    for index, (title, width) in enumerate(COLUMNS, start=1):
+    for index, (title, width) in enumerate(columns, start=1):
         cell = sheet.cell(1, index, title)
         cell.font = Font(name=FONT, size=10, bold=True, color="FFFFFF")
         cell.fill = HEADER_FILL
@@ -49,6 +62,8 @@ def write_report(rows: list[dict], path: Path, checked_on: date) -> None:
             row["name"], row["inn"], row["sro"], row["number"],
             row["registry"], row["status"], row["join"], row["note"],
         ]
+        if target_label:
+            values.insert(target_at - 1, row.get("target", ""))
         for index, value in enumerate(values, start=1):
             cell = sheet.cell(line, index, value)
             cell.font = Font(name=FONT, size=10)
@@ -63,7 +78,17 @@ def write_report(rows: list[dict], path: Path, checked_on: date) -> None:
             elif not row["sro"]:
                 cell.fill = NO_SRO_FILL
         sheet.cell(line, 2).number_format = "@"
-        sheet.cell(line, 7).number_format = "DD.MM.YYYY"
+        date_at = 8 if target_label else 7
+        sheet.cell(line, date_at).number_format = "DD.MM.YYYY"
+
+        if target_label:
+            answer = sheet.cell(line, target_at)
+            answer.alignment = Alignment(horizontal="center", vertical="top")
+            answer.font = Font(name=FONT, size=10, bold=True)
+            if row.get("target") == "Да":
+                answer.fill = YES_FILL
+            elif row.get("target") == "Нет":
+                answer.fill = NO_FILL
 
     note = sheet.cell(
         len(rows) + 3, 1,
@@ -74,5 +99,5 @@ def write_report(rows: list[dict], path: Path, checked_on: date) -> None:
     note.font = Font(name=FONT, size=9, italic=True)
 
     sheet.freeze_panes = "A2"
-    sheet.auto_filter.ref = f"A1:{get_column_letter(len(COLUMNS))}1"
+    sheet.auto_filter.ref = f"A1:{get_column_letter(len(columns))}1"
     book.save(path)
