@@ -714,8 +714,15 @@ def cmd_match(args) -> int:
     after_columns = columns + AFTER_COLUMNS
     after_rows = rows_joined_after(rows, args.дата_стройки, header, args.мин_дней)
 
+    # Лист под обзвон: кому проектное или изыскательское СРО ещё не продано.
+    # Строки без ИНН сюда не идут — их не проверяли, и выдавать их за
+    # «точно не состоит» нельзя.
+    lead_rows = [r for r in rows if r["В НОПРИЗ"] == "нет"]
+
     out_path = Path(args.out)
     sheets = [("Сверка с НОПРИЗ", columns, rows)]
+    if lead_rows:
+        sheets.append(("Нет в НОПРИЗ", columns, lead_rows))
     if after_rows:
         sheets.append(("Вступили после стройки", after_columns, after_rows))
     write_sheets(out_path, sheets)
@@ -726,6 +733,9 @@ def cmd_match(args) -> int:
     print(f"[сверка]   не найдены в НОПРИЗ:            {neither}")
     if no_inn:
         print(f"[сверка]   строк без ИНН (не проверялись): {no_inn}")
+    if lead_rows:
+        print(f"[сверка] НЕ состоят в НОПРИЗ: {len(lead_rows)} — отдельный лист "
+              f"«Нет в НОПРИЗ», это и есть база под обзвон")
     if after_rows:
         print(f"[сверка] вступили в НОПРИЗ позже строительной СРО: {len(after_rows)} "
               f"— отдельный лист «Вступили после стройки»")

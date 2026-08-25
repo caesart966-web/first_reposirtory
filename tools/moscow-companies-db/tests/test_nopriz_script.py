@@ -378,5 +378,48 @@ class TestJoinedAfter(unittest.TestCase):
             book.close()
 
 
+class TestLeadSheet(unittest.TestCase):
+    """Лист «Нет в НОПРИЗ» — база под обзвон."""
+
+    def _run(self, user_rows, dump_rows, out_name="готово.xlsx"):
+        tmp = Path(tempfile.mkdtemp())
+        нопориз.write_rows(tmp / "мой.xlsx", ["Наименование", "ИНН"], user_rows, "Мои")
+        нопориз.write_rows(tmp / "реестр.xlsx", нопориз.DUMP_COLUMNS, dump_rows, "НОПРИЗ")
+        out = tmp / out_name
+        нопориз.cmd_match(SimpleNamespace(
+            file=str(tmp / "мой.xlsx"), nopriz=str(tmp / "реестр.xlsx"), out=str(out),
+            inn_column="ИНН", дата_стройки="Дата вступления НП", мин_дней=1))
+        from openpyxl import load_workbook
+        book = load_workbook(out, read_only=True)
+        sheets = list(book.sheetnames)
+        rows = ([dict(zip([c.value for c in next(book[s].iter_rows())],
+                          [c.value for c in r]))
+                 for s in ["Нет в НОПРИЗ"] if s in sheets
+                 for r in list(book[s].iter_rows())[1:]])
+        book.close()
+        return sheets, rows
+
+    def test_only_unmatched_companies(self):
+        sheets, leads = self._run(
+            [{"Наименование": "Есть", "ИНН": "6164133875"},
+             {"Наименование": "Нету", "ИНН": "7701234567"}],
+            [_dump_row("6164133875", "проектирование", "01.06.2023", "СРО-П")])
+        self.assertIn("Нет в НОПРИЗ", sheets)
+        self.assertEqual([r["ИНН"] for r in leads], ["7701234567"])
+
+    def test_rows_without_inn_are_not_leads(self):
+        # «Нет ИНН» значит «не проверяли», а не «точно не состоит»
+        _sheets, leads = self._run(
+            [{"Наименование": "Без ИНН", "ИНН": ""}],
+            [_dump_row("6164133875", "проектирование", "01.06.2023", "СРО-П")])
+        self.assertEqual(leads, [])
+
+    def test_sheet_absent_when_everyone_matched(self):
+        sheets, _leads = self._run(
+            [{"Наименование": "Есть", "ИНН": "6164133875"}],
+            [_dump_row("6164133875", "проектирование", "01.06.2023", "СРО-П")])
+        self.assertNotIn("Нет в НОПРИЗ", sheets)
+
+
 if __name__ == "__main__":
     unittest.main()
