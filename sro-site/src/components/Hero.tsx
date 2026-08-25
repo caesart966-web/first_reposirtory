@@ -9,6 +9,7 @@ import {
   ShieldCheck,
 } from 'lucide-react'
 import { CONFIGURED, LINKS, externalLinkProps } from '../content/contacts'
+import { BlueprintGrid, Themis } from './illustrations'
 import { ButtonLink } from './ui/Button'
 import { Reveal } from './ui/Reveal'
 
@@ -25,6 +26,9 @@ export function Hero() {
       <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
         <div className="absolute -top-32 right-[-10%] h-[420px] w-[420px] rounded-full bg-accent-100/60 blur-3xl" />
         <div className="absolute bottom-[-30%] left-[-10%] h-[360px] w-[360px] rounded-full bg-accent-50 blur-3xl" />
+        <BlueprintGrid className="absolute inset-0 h-full w-full text-accent-400/25" />
+        {/* Фемида — фирменный мотив с визитки, крупным водяным знаком */}
+        <Themis className="absolute -left-24 bottom-0 hidden h-[520px] w-auto text-accent-500/[0.10] xl:block" />
       </div>
 
       <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 pb-14 pt-12 sm:px-6 sm:pb-20 sm:pt-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:px-8">

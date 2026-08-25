@@ -7,6 +7,7 @@ import {
   SlidersHorizontal,
 } from 'lucide-react'
 import { CONTACTS } from '../content/contacts'
+import { EngineerBlueprint } from './illustrations'
 import { ButtonLink } from './ui/Button'
 import { Reveal } from './ui/Reveal'
 import { Section } from './ui/Section'
@@ -46,8 +47,12 @@ const ADVANTAGES = [
 
 export function AboutExpert() {
   return (
-    <Section id="about">
-      <div className="grid items-start gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-14">
+    <Section id="about" className="relative overflow-hidden">
+      <EngineerBlueprint
+        className="pointer-events-none absolute -left-20 bottom-0 hidden h-[420px] w-auto text-accent-500/[0.13] xl:block"
+        aria-hidden="true"
+      />
+      <div className="relative grid items-start gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-14">
         <Reveal>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent-600">
             О специалисте

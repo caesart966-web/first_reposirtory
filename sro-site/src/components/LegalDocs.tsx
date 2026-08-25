@@ -30,7 +30,7 @@ function DocBody({ doc }: { doc: LegalDocId }) {
     return (
       <div className="space-y-4 text-sm leading-relaxed text-neutral-700">
         <p>
-          Настоящая политика описывает, как {CONTACTS.name} (далее — Оператор) обрабатывает
+          Настоящая политика описывает, как {CONTACTS.fullName} (далее — Оператор) обрабатывает
           персональные данные посетителей сайта.
         </p>
         <p>
@@ -60,7 +60,7 @@ function DocBody({ doc }: { doc: LegalDocId }) {
   return (
     <div className="space-y-4 text-sm leading-relaxed text-neutral-700">
       <p>
-        Отправляя форму на сайте, вы даёте согласие {CONTACTS.name} на обработку указанных вами
+        Отправляя форму на сайте, вы даёте согласие {CONTACTS.fullName} на обработку указанных вами
         персональных данных: имени, номера телефона и адреса электронной почты.
       </p>
       <p>

@@ -30,7 +30,7 @@ npm run preview    # локальный просмотр прод-сборки
 
 | Плейсхолдер | Где заменить |
 | --- | --- |
-| `[ИМЯ]`, `[ТЕЛЕФОН]`, `[EMAIL]`, `[WHATSAPP_LINK]`, `[MAX_LINK]`, `[ГОРОД]` | `src/content/contacts.ts` — единственное место, весь сайт обновится сам |
+| `[ИМЯ]`, `[ТЕЛЕФОН]`, `[EMAIL]`, `[WHATSAPP_LINK]`, `[MAX_LINK]` | `src/content/contacts.ts` — единственное место, весь сайт обновится сам |
 | `[ЦЕНА]` (3 шт.) | `src/components/Pricing.tsx` |
 | Домен (`https://example.com/`) | `index.html` (canonical, og:url), `public/robots.txt` (Sitemap) |
 | Title / description под имя специалиста | `index.html` |

@@ -1,4 +1,5 @@
 import { CheckCircle2 } from 'lucide-react'
+import { DraftingTools } from './illustrations'
 import { ButtonLink } from './ui/Button'
 import { Reveal } from './ui/Reveal'
 import { Section } from './ui/Section'
@@ -31,6 +32,7 @@ export function Documents() {
           <ButtonLink href="#quiz" size="lg" className="mt-7">
             Проверить мои документы
           </ButtonLink>
+          <DraftingTools className="mt-10 hidden h-auto w-full max-w-sm text-accent-500/40 lg:block" />
         </Reveal>
         <Reveal delay={100}>
           <div className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-card sm:p-8">

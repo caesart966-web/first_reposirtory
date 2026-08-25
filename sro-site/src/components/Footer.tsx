@@ -8,9 +8,11 @@ export function Footer() {
       <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-10 md:flex-row md:justify-between">
           <div>
-            <p className="font-bold text-neutral-950">{CONTACTS.name}</p>
+            <p className="font-bold text-neutral-950">{CONTACTS.fullName}</p>
             <p className="mt-1 text-sm text-neutral-500">{CONTACTS.role}</p>
-            <p className="mt-4 text-sm text-neutral-500">{CONTACTS.city}</p>
+            <p className="mt-4 text-sm text-neutral-500">
+              Вступление в СРО во всех регионах России
+            </p>
           </div>
           <div className="grid gap-8 sm:grid-cols-2 md:gap-16">
             <div>
@@ -73,7 +75,7 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-10 border-t border-neutral-200 pt-6 text-sm text-neutral-500">
-          © {new Date().getFullYear()} {CONTACTS.name} · {CONTACTS.role}
+          © {new Date().getFullYear()} {CONTACTS.fullName} · {CONTACTS.role}
         </div>
       </div>
     </footer>

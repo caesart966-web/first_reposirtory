@@ -1,4 +1,4 @@
-import { Mail, MapPin, MessageCircle, Phone, Send } from 'lucide-react'
+import { Globe, Mail, MessageCircle, Phone, Send } from 'lucide-react'
 import { CONFIGURED, CONTACTS, LINKS, externalLinkProps } from '../content/contacts'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
@@ -49,8 +49,8 @@ export function Contacts() {
       </div>
       <Reveal className="mt-8">
         <p className="flex items-center justify-center gap-2 text-center text-sm text-neutral-500">
-          <MapPin className="h-4 w-4 text-accent-600" aria-hidden="true" />
-          {CONTACTS.city} · работаю с компаниями дистанционно
+          <Globe className="h-4 w-4 text-accent-600" aria-hidden="true" />
+          Вступление в СРО во всех регионах России — работаю дистанционно
         </p>
       </Reveal>
     </Section>
