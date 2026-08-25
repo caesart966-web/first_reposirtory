@@ -11,12 +11,16 @@ requests и openpyxl (уже стоят в .venv).
 1) Выгрузить членов нужных СРО, вступивших с начала 2026 года:
 
        .venv\\Scripts\\activate
-       python выгрузка_ностроя.py выгрузка --sro-id 247 75 ^
+       python выгрузка_ностроя.py выгрузка --sro-number С-230 С-306 ^
               --since 01.01.2026 --out новые_члены.xlsx
 
-   Если номер СРО неизвестен, его можно найти по названию:
+   Регистрационный номер («С-230» или полностью «СРО-С-230-07092010»)
+   скрипт сам переведёт в ID реестра. Можно задать и напрямую:
+       --sro-id 247 75            ID из адреса reestr.nostroy.ru/sro/247
+       --sro-name "часть названия"
+
+   Полный список СРО с номерами и ID:
        python выгрузка_ностроя.py список-сро --out сро.xlsx
-   либо искать прямо по части названия: --sro-name "часть названия"
 
 2) Дотянуть телефоны и почту из карточек компаний на сайте НОСТРОЙ:
 
@@ -252,6 +256,28 @@ def sro_id(record: dict) -> str:
         if isinstance(value, (str, int)) and str(value).strip():
             return str(value).strip()
     return ""
+
+
+def sro_registration_number(record: dict) -> str:
+    """Регистрационный номер СРО, например «СРО-С-230-07092010»."""
+    sro = _sro_block(record) or record
+    return _first_str(sro, "registration_number", "registry_number",
+                      "reg_number", "number")
+
+
+def number_core(text: Any) -> str:
+    """Ядро номера СРО: «СРО-С-230-07092010», «С-230» и «230» -> «С-230».
+
+    Люди называют СРО коротким номером, реестр хранит полный — сравнивать
+    их можно только приведя к общему виду. Латинскую C заодно приводим к
+    кириллической: на клавиатуре они неразличимы, а строки — различаются.
+    """
+    text = str(text or "").strip().upper().replace("C", "С")
+    match = re.search(r"С\s*-\s*(\d+)", text)
+    if match:
+        return f"С-{int(match.group(1))}"
+    digits = re.sub(r"\D", "", text)
+    return f"С-{int(digits)}" if digits else ""
 
 
 def member_status(record: dict) -> str:
@@ -554,10 +580,8 @@ def read_rows(path: Path) -> tuple[list[str], list[dict]]:
 # -- команды ------------------------------------------------------------
 
 
-def cmd_list_sro(args) -> int:
-    """Список всех СРО реестра — чтобы выбрать нужные и узнать их ID."""
-    session = make_session()
-    payload = None
+def fetch_sro_list(session: requests.Session) -> Any:
+    """Ответ реестра со списком всех СРО или None, если ни один адрес не отдал."""
     for url, method in _SRO_LIST_URLS:
         try:
             if method == "post":
@@ -573,9 +597,35 @@ def cmd_list_sro(args) -> int:
         except ValueError:
             continue
         if records_of(candidate):
-            payload = candidate
             print(f"[нострой] список СРО получен: {url}")
-            break
+            return candidate
+    return None
+
+
+def sro_ids_by_number(session: requests.Session,
+                      numbers: list[str]) -> dict[str, str]:
+    """Номер СРО («С-230») -> её ID в реестре.
+
+    Быстрый путь выгрузки работает по ID, а называют СРО номером — без
+    этого сопоставления пришлось бы перебирать весь реестр (полчаса против
+    секунд).
+    """
+    wanted = {number_core(n) for n in numbers} - {""}
+    payload = fetch_sro_list(session)
+    found: dict[str, str] = {}
+    for record in records_of(payload) if payload else []:
+        core = number_core(sro_registration_number(record))
+        if core in wanted:
+            sid = str(record.get("id") or "").strip() or sro_id(record)
+            if sid:
+                found[core] = sid
+    return found
+
+
+def cmd_list_sro(args) -> int:
+    """Список всех СРО реестра — чтобы выбрать нужные и узнать их ID."""
+    session = make_session()
+    payload = fetch_sro_list(session)
 
     if payload is None:
         # Запасной путь: собрать СРО из первых страниц списка членов
@@ -603,6 +653,7 @@ def cmd_list_sro(args) -> int:
         for record in records_of(payload):
             rows.append({
                 "ID": str(record.get("id") or record.get("registry_number") or ""),
+                "Рег. номер": sro_registration_number(record),
                 "Название": _first_str(record, "title", "full_description",
                                        "short_description", "name"),
                 "ИНН": str(record.get("inn") or ""),
@@ -614,7 +665,8 @@ def cmd_list_sro(args) -> int:
         return 1
 
     out = Path(args.out)
-    columns = ["ID", "Название"] + [c for c in ("ИНН", "Регион") if c in rows[0]]
+    columns = (["ID"] + [c for c in ("Рег. номер",) if c in rows[0]] + ["Название"]
+               + [c for c in ("ИНН", "Регион") if c in rows[0]])
     write_rows(out, columns, rows, "СРО")
     print(f"[нострой] готово: {out} ({len(rows)} СРО). "
           "Найдите нужные две и возьмите их ID для команды «выгрузка».")
@@ -639,20 +691,37 @@ def cmd_export(args) -> int:
     period = f"с {since:%d.%m.%Y}" + (f" по {until:%d.%m.%Y}" if until else "")
     wanted_ids = {str(i) for i in (args.sro_id or [])}
     wanted_names = [n.lower() for n in (args.sro_name or [])]
-    if not wanted_ids and not wanted_names:
-        print("Укажите СРО: --sro-id 123 456 или --sro-name «часть названия»",
-              file=sys.stderr)
+    wanted_numbers = {number_core(n) for n in (args.sro_number or [])} - {""}
+    if not wanted_ids and not wanted_names and not wanted_numbers:
+        print("Укажите СРО: --sro-number С-230 С-306, --sro-id 123 456 "
+              "или --sro-name «часть названия»", file=sys.stderr)
         return 1
+
+    session = make_session()
+
+    # Номера переводим в ID заранее: по ID работает быстрый путь (секунды),
+    # без него остаётся перебор всего реестра (полчаса)
+    if wanted_numbers:
+        найдено = sro_ids_by_number(session, sorted(wanted_numbers))
+        for номер, sid in sorted(найдено.items()):
+            print(f"[нострой] {номер} -> ID {sid}")
+            wanted_ids.add(sid)
+        пропали = sorted(wanted_numbers - set(найдено))
+        if пропали:
+            print(f"[нострой] не нашёл в списке СРО: {', '.join(пропали)} — "
+                  "они будут искаться перебором реестра по номеру",
+                  file=sys.stderr)
 
     def sro_matches(record: dict) -> bool:
         if wanted_ids and sro_id(record) in wanted_ids:
+            return True
+        if wanted_numbers and number_core(sro_registration_number(record)) in wanted_numbers:
             return True
         if wanted_names:
             name = sro_name(record).lower()
             return any(part in name for part in wanted_names)
         return False
 
-    session = make_session()
     out_path = Path(args.out)
     progress_path = out_path.with_suffix(out_path.suffix + ".progress.json")
 
@@ -819,6 +888,8 @@ def cmd_export(args) -> int:
     print(f"[нострой] беру вступивших {period}")
     if wanted_ids:
         print(f"[нострой] СРО по ID: {', '.join(sorted(wanted_ids))}")
+    if wanted_numbers:
+        print(f"[нострой] СРО по номеру: {', '.join(sorted(wanted_numbers))}")
     if wanted_names:
         print(f"[нострой] СРО по названию: {', '.join(args.sro_name)}")
 
@@ -1037,6 +1108,8 @@ def main(argv: list[str] | None = None) -> int:
 
     p = sub.add_parser("выгрузка", help="члены выбранных СРО, вступившие с даты")
     p.add_argument("--sro-id", nargs="+", default=None, help="ID нужных СРО")
+    p.add_argument("--sro-number", nargs="+", default=None,
+                   help="регистрационные номера СРО, например С-230 С-306")
     p.add_argument("--sro-name", nargs="+", default=None,
                    help="часть названия нужных СРО (если не знаете ID)")
     p.add_argument("--until", default=None,
