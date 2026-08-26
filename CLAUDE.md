@@ -2,6 +2,10 @@
 
 В репозитории два независимых проекта:
 
+> Текущее состояние работ по `tools/moscow-companies-db/` — в
+> `tools/moscow-companies-db/РАБОТА.md`. Читать в начале сессии: там статус
+> каждой задачи, готовые команды и список уже пройденных граблей.
+
 - **`orders-app/`** — PWA «Заказы»: учёт заказов фрилансера (React + Vite + TypeScript +
   Tailwind + Dexie/IndexedDB, офлайн, публикуется на GitHub Pages через
   `.github/workflows/deploy-orders-app.yml`). Структура, правила и инструкции —
