@@ -1,4 +1,4 @@
-name: 'Публикация на GitHub Pages: «Заказы», «Строй-Герой» и сайт ПТО'
+name: 'Публикация на GitHub Pages: «Заказы», «Строй-Герой», сайт ПТО и сайт СРО'
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
       - 'orders-app/**'
       - 'stroigeroi-site/**'
       - 'pto-site/**'
+      - 'sro-site/**'
       - '.github/workflows/deploy-orders-app.yml'
   workflow_dispatch: # позволяет запустить сборку руками из вкладки Actions
 
@@ -34,7 +35,9 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: orders-app/package-lock.json
+          cache-dependency-path: |
+            orders-app/package-lock.json
+            sro-site/package-lock.json
 
       - name: Установка зависимостей
         run: npm ci
@@ -61,6 +64,24 @@ jobs:
 
       - name: Добавляем сайт ПТО
         run: cp -r ../pto-site/dist dist/pto
+
+      # Сайт частного специалиста по СРО — это ПРЕВЬЮ для показа заказчику:
+      # подпапка вместо корня домена и запрет индексации, чтобы черновик
+      # (ещё не все цены и документы заполнены) не попал в поиск.
+      # Боевая сборка для своего домена делается без этих флагов.
+      - name: Устанавливаем зависимости сайта СРО
+        working-directory: sro-site
+        run: npm ci
+
+      - name: Собираем сайт СРО
+        working-directory: sro-site
+        run: |
+          npm run build -- --base=/${{ github.event.repository.name }}/sro/
+          printf 'User-agent: *\nDisallow: /\n' > dist/robots.txt
+          sed -i 's/name="robots" content="index, follow"/name="robots" content="noindex, nofollow"/' dist/index.html
+
+      - name: Добавляем сайт СРО
+        run: cp -r ../sro-site/dist dist/sro
 
       - uses: actions/configure-pages@v5
 
