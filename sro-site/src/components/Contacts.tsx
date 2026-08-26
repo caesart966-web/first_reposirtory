@@ -1,22 +1,42 @@
-import { Globe, Mail, MessageCircle, Phone, Send } from 'lucide-react'
+import { Globe, Mail, Phone } from 'lucide-react'
 import { CONFIGURED, CONTACTS, LINKS, externalLinkProps } from '../content/contacts'
+import { MaxIcon, TelegramIcon, WhatsAppIcon } from './icons'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
 
 const CARDS = [
-  { icon: Phone, label: 'Телефон', value: CONTACTS.phone, href: LINKS.tel, configured: false },
-  { icon: Mail, label: 'E-mail', value: CONTACTS.email, href: LINKS.mail, configured: false },
   {
-    icon: MessageCircle,
+    icon: Phone,
+    label: 'Телефон',
+    value: CONTACTS.phone,
+    href: LINKS.tel,
+    configured: false,
+  },
+  {
+    icon: Mail,
+    label: 'E-mail',
+    value: CONTACTS.email,
+    href: LINKS.mail,
+    configured: false,
+  },
+  {
+    icon: WhatsAppIcon,
     label: 'WhatsApp',
-    value: CONTACTS.whatsapp,
+    value: CONTACTS.phone,
     href: LINKS.whatsapp,
     configured: CONFIGURED.whatsapp,
   },
   {
-    icon: Send,
+    icon: TelegramIcon,
+    label: 'Telegram',
+    value: 'Написать в Telegram',
+    href: LINKS.telegram,
+    configured: CONFIGURED.telegram,
+  },
+  {
+    icon: MaxIcon,
     label: 'MAX',
-    value: CONTACTS.max,
+    value: CONFIGURED.max ? 'Написать в MAX' : CONTACTS.max,
     href: LINKS.max,
     configured: CONFIGURED.max,
   },
@@ -30,9 +50,9 @@ export function Contacts() {
         title="Свяжитесь удобным способом"
         subtitle="Телефон, почта или мессенджеры — отвечаю лично."
       />
-      <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {CARDS.map((card, index) => (
-          <Reveal key={card.label} delay={(index % 4) * 70} className="h-full">
+          <Reveal key={card.label} delay={(index % 5) * 60} className="h-full">
             <a
               href={card.href}
               {...externalLinkProps(card.configured)}
@@ -42,7 +62,7 @@ export function Contacts() {
                 <card.icon className="h-5 w-5" aria-hidden="true" />
               </div>
               <p className="mt-4 text-sm text-neutral-500">{card.label}</p>
-              <p className="mt-1 break-all font-semibold text-neutral-950">{card.value}</p>
+              <p className="mt-1 break-words font-semibold text-neutral-950">{card.value}</p>
             </a>
           </Reveal>
         ))}

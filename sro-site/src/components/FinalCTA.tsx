@@ -1,5 +1,6 @@
-import { MessageCircle, Phone, Send } from 'lucide-react'
+import { Phone } from 'lucide-react'
 import { CONFIGURED, LINKS, externalLinkProps } from '../content/contacts'
+import { MaxIcon, TelegramIcon, WhatsAppIcon } from './icons'
 import { CitySkyline } from './illustrations'
 import { ButtonLink } from './ui/Button'
 import { Reveal } from './ui/Reveal'
@@ -34,8 +35,17 @@ export function FinalCTA() {
               size="lg"
               {...externalLinkProps(CONFIGURED.whatsapp)}
             >
-              <MessageCircle className="h-4 w-4" aria-hidden="true" />
+              <WhatsAppIcon className="h-4 w-4" />
               WhatsApp
+            </ButtonLink>
+            <ButtonLink
+              href={LINKS.telegram}
+              variant="outlineInverse"
+              size="lg"
+              {...externalLinkProps(CONFIGURED.telegram)}
+            >
+              <TelegramIcon className="h-4 w-4" />
+              Telegram
             </ButtonLink>
             <ButtonLink
               href={LINKS.max}
@@ -43,7 +53,7 @@ export function FinalCTA() {
               size="lg"
               {...externalLinkProps(CONFIGURED.max)}
             >
-              <Send className="h-4 w-4" aria-hidden="true" />
+              <MaxIcon className="h-4 w-4" />
               MAX
             </ButtonLink>
           </div>

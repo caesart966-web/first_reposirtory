@@ -1,16 +1,8 @@
-import {
-  AlertCircle,
-  Check,
-  CheckCircle2,
-  ChevronLeft,
-  Loader2,
-  Mail,
-  MessageCircle,
-  Phone,
-} from 'lucide-react'
+import { AlertCircle, Check, CheckCircle2, ChevronLeft, Loader2, Mail, Phone } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { CONFIGURED, CONTACTS, LINKS, externalLinkProps } from '../content/contacts'
 import { buildLeadMessage, sendLead } from '../lib/lead'
+import { TelegramIcon, WhatsAppIcon } from './icons'
 import { useLegalDocs } from './LegalDocs'
 import { Button, ButtonLink } from './ui/Button'
 import { Reveal } from './ui/Reveal'
@@ -202,12 +194,20 @@ export function Quiz() {
                   href={whatsappSendHref}
                   {...externalLinkProps(CONFIGURED.whatsapp)}
                 >
-                  <MessageCircle className="h-4 w-4" aria-hidden="true" />
+                  <WhatsAppIcon className="h-4 w-4" />
                   Отправить в WhatsApp
                 </ButtonLink>
                 <ButtonLink href={emailSendHref} variant="secondary">
                   <Mail className="h-4 w-4" aria-hidden="true" />
                   Отправить на e-mail
+                </ButtonLink>
+                <ButtonLink
+                  href={LINKS.telegram}
+                  variant="secondary"
+                  {...externalLinkProps(CONFIGURED.telegram)}
+                >
+                  <TelegramIcon className="h-4 w-4" />
+                  Telegram
                 </ButtonLink>
                 <ButtonLink href={LINKS.tel} variant="secondary">
                   <Phone className="h-4 w-4" aria-hidden="true" />

@@ -1,13 +1,16 @@
-// Единая точка правды для персональных данных сайта.
-// Замените значения-заглушки на реальные — весь сайт обновится автоматически.
+// Единая точка правды для контактов сайта.
 export const CONTACTS = {
   name: 'Игорь Парфенов',
   fullName: 'Парфенов Игорь Владимирович',
   role: 'Эксперт по СРО',
   phone: '+7 900 133-02-19',
-  email: '[EMAIL]', // формат: name@domain.ru
-  whatsapp: '[WHATSAPP_LINK]', // формат: https://wa.me/79000000000
-  max: '[MAX_LINK]', // формат: ссылка на профиль в MAX
+  email: '9001330219@mail.ru',
+  whatsapp: 'https://wa.me/79001330219',
+  telegram: 'https://web.telegram.org/a/#5179303572',
+  // MAX не умеет ссылки по номеру телефона: личная ссылка вида
+  // https://max.ru/u/XXXX берётся в приложении («Поделиться» / QR-код).
+  // Подставьте её сюда — кнопки MAX заработают автоматически.
+  max: '[MAX_LINK]',
 } as const
 
 const isPlaceholder = (value: string) => value.startsWith('[') && value.endsWith(']')
@@ -16,15 +19,16 @@ export const CONFIGURED = {
   phone: !isPlaceholder(CONTACTS.phone),
   email: !isPlaceholder(CONTACTS.email),
   whatsapp: !isPlaceholder(CONTACTS.whatsapp),
+  telegram: !isPlaceholder(CONTACTS.telegram),
   max: !isPlaceholder(CONTACTS.max),
 }
 
-// Пока данные не заменены, ссылки ведут к блоку контактов;
-// после замены работают напрямую (tel:, mailto:, мессенджеры).
+// Пока значение не заменено, ссылка ведёт к блоку контактов.
 export const LINKS = {
   tel: CONFIGURED.phone ? `tel:${CONTACTS.phone.replace(/[^+\d]/g, '')}` : '#contacts',
   mail: CONFIGURED.email ? `mailto:${CONTACTS.email}` : '#contacts',
   whatsapp: CONFIGURED.whatsapp ? CONTACTS.whatsapp : '#contacts',
+  telegram: CONFIGURED.telegram ? CONTACTS.telegram : '#contacts',
   max: CONFIGURED.max ? CONTACTS.max : '#contacts',
 }
 

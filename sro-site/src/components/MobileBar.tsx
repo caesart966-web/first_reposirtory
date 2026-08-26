@@ -1,8 +1,9 @@
-import { MessageCircle, Phone, Send } from 'lucide-react'
+import { Phone } from 'lucide-react'
 import { CONFIGURED, LINKS, externalLinkProps } from '../content/contacts'
+import { MaxIcon, TelegramIcon, WhatsAppIcon } from './icons'
 
 const itemClasses =
-  'flex min-h-[56px] flex-col items-center justify-center gap-0.5 text-xs font-medium text-neutral-700 transition active:bg-neutral-50'
+  'flex min-h-[56px] flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-neutral-700 transition active:bg-neutral-50'
 
 // Фиксированная нижняя панель быстрых контактов — только на мобильных.
 export function MobileBar() {
@@ -12,7 +13,7 @@ export function MobileBar() {
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       aria-label="Быстрая связь"
     >
-      <div className="grid grid-cols-3 divide-x divide-neutral-200">
+      <div className="grid grid-cols-4 divide-x divide-neutral-200">
         <a href={LINKS.tel} className={itemClasses}>
           <Phone className="h-5 w-5 text-accent-600" aria-hidden="true" />
           Позвонить
@@ -22,11 +23,19 @@ export function MobileBar() {
           {...externalLinkProps(CONFIGURED.whatsapp)}
           className={itemClasses}
         >
-          <MessageCircle className="h-5 w-5 text-accent-600" aria-hidden="true" />
+          <WhatsAppIcon className="h-5 w-5 text-accent-600" />
           WhatsApp
         </a>
+        <a
+          href={LINKS.telegram}
+          {...externalLinkProps(CONFIGURED.telegram)}
+          className={itemClasses}
+        >
+          <TelegramIcon className="h-5 w-5 text-accent-600" />
+          Telegram
+        </a>
         <a href={LINKS.max} {...externalLinkProps(CONFIGURED.max)} className={itemClasses}>
-          <Send className="h-5 w-5 text-accent-600" aria-hidden="true" />
+          <MaxIcon className="h-5 w-5 text-accent-600" />
           MAX
         </a>
       </div>

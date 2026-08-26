@@ -1,14 +1,5 @@
-import {
-  BadgeCheck,
-  FileText,
-  Handshake,
-  MessageCircle,
-  Phone,
-  Search,
-  Send,
-  ShieldCheck,
-} from 'lucide-react'
-import { CONFIGURED, LINKS, externalLinkProps } from '../content/contacts'
+import { BadgeCheck, FileText, Handshake, Phone, Search, ShieldCheck } from 'lucide-react'
+import { LINKS } from '../content/contacts'
 import { BlueprintGrid, Themis } from './illustrations'
 import { ButtonLink } from './ui/Button'
 import { Reveal } from './ui/Reveal'
@@ -28,7 +19,8 @@ export function Hero() {
         <div className="absolute bottom-[-30%] left-[-10%] h-[360px] w-[360px] rounded-full bg-accent-50 blur-3xl" />
         <BlueprintGrid className="absolute inset-0 h-full w-full text-accent-400/25" />
         {/* Фемида — фирменный мотив с визитки, крупным водяным знаком */}
-        <Themis className="absolute -left-24 bottom-0 hidden h-[520px] w-auto text-accent-500/[0.10] xl:block" />
+        {/* Фемида — фоновый водяной знак во всю высоту первого экрана */}
+        <Themis className="absolute bottom-0 left-[42%] hidden h-full w-auto text-accent-600/[0.07] sm:block lg:left-[38%]" />
       </div>
 
       <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 pb-14 pt-12 sm:px-6 sm:pb-20 sm:pt-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:px-8">
@@ -52,24 +44,6 @@ export function Hero() {
             <ButtonLink href={LINKS.tel} variant="secondary" size="lg">
               <Phone className="h-4 w-4" aria-hidden="true" />
               Позвонить
-            </ButtonLink>
-            <ButtonLink
-              href={LINKS.whatsapp}
-              variant="secondary"
-              size="lg"
-              {...externalLinkProps(CONFIGURED.whatsapp)}
-            >
-              <MessageCircle className="h-4 w-4" aria-hidden="true" />
-              WhatsApp
-            </ButtonLink>
-            <ButtonLink
-              href={LINKS.max}
-              variant="secondary"
-              size="lg"
-              {...externalLinkProps(CONFIGURED.max)}
-            >
-              <Send className="h-4 w-4" aria-hidden="true" />
-              MAX
             </ButtonLink>
           </div>
           <p className="mt-6 text-sm text-neutral-500">

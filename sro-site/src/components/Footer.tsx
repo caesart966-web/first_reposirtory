@@ -39,6 +39,15 @@ export function Footer() {
                 </li>
                 <li>
                   <a
+                    href={LINKS.telegram}
+                    {...externalLinkProps(CONFIGURED.telegram)}
+                    className="transition hover:text-accent-700"
+                  >
+                    Telegram
+                  </a>
+                </li>
+                <li>
+                  <a
                     href={LINKS.max}
                     {...externalLinkProps(CONFIGURED.max)}
                     className="transition hover:text-accent-700"
