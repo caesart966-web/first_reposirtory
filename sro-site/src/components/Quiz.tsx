@@ -11,62 +11,23 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { CONFIGURED, CONTACTS, LINKS, externalLinkProps } from '../content/contacts'
 import { buildLeadMessage, sendLead } from '../lib/lead'
 import { TelegramIcon, WhatsAppIcon } from './icons'
+import { CitySkyline } from './illustrations'
 import { useLegalDocs } from './LegalDocs'
+import { QUESTIONS, TOTAL_STEPS, useQuiz } from './QuizContext'
 import { Button, ButtonLink } from './ui/Button'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
-
-type Question = {
-  id: string
-  question: string
-  options: string[]
-}
-
-const QUESTIONS: Question[] = [
-  {
-    id: 'Вид СРО',
-    question: 'Какой вид СРО нужен?',
-    options: [
-      'Строительство',
-      'Проектирование',
-      'Инженерные изыскания',
-      'Пока не знаю — нужна помощь с выбором',
-    ],
-  },
-  {
-    id: 'Срочность',
-    question: 'Насколько срочно нужно решить задачу?',
-    options: ['Максимально срочно', 'В ближайшее время', 'Пока изучаю вопрос'],
-  },
-  {
-    id: 'Специалисты НРС',
-    question: 'Есть ли специалисты, включённые в НРС?',
-    options: ['Да, есть', 'Нет', 'Не знаю, нужна проверка'],
-  },
-  {
-    id: 'Какая помощь',
-    question: 'Какая помощь нужна?',
-    options: [
-      'Вступление в СРО под ключ',
-      'Подбор и проверка СРО',
-      'Подготовка документов',
-      'Консультация по НРС / НОК',
-    ],
-  },
-]
-
-const TOTAL_STEPS = QUESTIONS.length + 1
 
 const inputClasses =
   'mt-1.5 w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-neutral-900 placeholder:text-neutral-500 focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/30'
 
 export function Quiz() {
-  const [step, setStep] = useState(0)
-  const [answers, setAnswers] = useState<Record<string, string>>({})
+  // Шаг, ответы и статус общие с героем (см. QuizContext): первый вопрос
+  // задаётся на первом экране, а продолжается квиз уже здесь.
+  const { step, setStep, answers, setAnswers, status, setStatus } = useQuiz()
   const [form, setForm] = useState({ name: '', phone: '', email: '' })
   const [consent, setConsent] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [status, setStatus] = useState<'idle' | 'sending' | 'done' | 'failed'>('idle')
   // Honeypot: человек поле не видит и не может сфокусировать, боты заполняют.
   const [botField, setBotField] = useState('')
   const advanceTimer = useRef<number | null>(null)
@@ -170,13 +131,19 @@ export function Quiz() {
   const telegramSendHref = LINKS.telegram
 
   return (
-    <Section id="quiz" className="bg-gradient-to-b from-white via-accent-50/50 to-white">
-      <SectionHeading
-        eyebrow="Квиз"
-        title="Ответьте на 4 вопроса — получите план действий"
-        subtitle="Это займёт меньше минуты. В конце оставьте контакты — вернусь с ответом по вашей ситуации."
-      />
-      <Reveal className="mt-10">
+    // Тёмная закрывающая секция: квиз поглотил отдельный финальный призыв,
+    // чтобы на странице не было двух блоков «оставьте заявку» подряд.
+    <Section id="quiz" className="relative overflow-hidden bg-accent-950">
+      <CitySkyline className="pointer-events-none absolute inset-x-0 bottom-0 h-20 w-full text-white/[0.09] sm:h-28" />
+      <div className="relative">
+        <SectionHeading
+          dark
+          eyebrow="Заявка"
+          title="Расскажите, какая задача стоит перед вашей компанией"
+          subtitle="4 вопроса меньше чем за минуту — отвечу лично и предложу план действий."
+        />
+      </div>
+      <Reveal className="relative mt-10">
         <div className="mx-auto max-w-2xl rounded-3xl border border-neutral-200 bg-white p-6 shadow-card sm:p-10">
           {status === 'done' ? (
             <div className="text-center">
@@ -455,7 +422,7 @@ export function Quiz() {
                     {status === 'sending' && (
                       <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
                     )}
-                    Получить консультацию
+                    Отправить заявку
                   </Button>
                 </form>
               )}
