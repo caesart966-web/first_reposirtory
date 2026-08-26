@@ -484,6 +484,67 @@ def pairs_from_labels_below(lines: list[str]) -> list[tuple[str, str]]:
     return found
 
 
+#: Поля, которые в карточках пишут «Подпись значение» БЕЗ двоеточия.
+#: Числовые реквизиты и контакты сюда не входят: они и так находятся поиском
+#: по всему тексту, а по подписи легко захватить лишнее — например,
+#: «Контактный телефон Марков Александр Анатольевич (Ген. директора)».
+NO_COLON_FIELDS = {"full_name", "short_name", "legal_address",
+                   "actual_address", "postal_address", "bank_name", "website"}
+
+#: Строка оборвана на середине: заканчивается запятой, дефисом или
+#: сокращением («…вн. тер. г.», «…ул. Николая Рубцова, д.»). Значит,
+#: значение продолжается на следующей строке.
+_CONTINUES_RE = re.compile(r"(?:,|[а-яё]-|\b[а-яё]{1,4}\.)\s*$", re.IGNORECASE)
+
+
+def split_label_value(line: str) -> tuple[str | None, str]:
+    """«Юридический адрес 194363, …» → ('legal_address', '194363, …').
+
+    Подпись ищем от КОРОТКОЙ к длинной: иначе «Полное наименование ООО»
+    целиком сойдёт за подпись и «ООО» пропадёт из наименования.
+    """
+    if ":" in line or "|" in line:
+        return None, ""          # «Подпись: значение» разбирает обычный проход
+    words = (line or "").split()
+    if len(words) < 2:
+        return None, ""
+    for count in range(1, min(4, len(words) - 1) + 1):
+        key = _field_for_label(" ".join(words[:count]))
+        if not key:
+            continue
+        if key not in NO_COLON_FIELDS:
+            return None, ""          # подпись знакомая, но значение брать нельзя
+        if key != "bank_name" and BANK_LINE_RE.search(line):
+            return None, ""          # реквизиты банка — не реквизиты компании
+        return key, " ".join(words[count:])
+    return None, ""
+
+
+def pairs_from_inline_labels(lines: list[str]) -> list[tuple[str, str]]:
+    """Пары «Подпись значение» без двоеточия, с дочитыванием переноса.
+
+    В карточках-«простынях» из PDF подпись и значение разделены одним
+    пробелом, а длинный адрес разбит на несколько строк.
+    """
+    found: list[tuple[str, str]] = []
+    index = 0
+    while index < len(lines):
+        key, value = split_label_value((lines[index] or "").strip())
+        if key:
+            steps = 0
+            while (steps < 4 and index + 1 < len(lines)
+                   and _CONTINUES_RE.search(value)):
+                following = (lines[index + 1] or "").strip()
+                if not following or split_label_value(following)[0]:
+                    break
+                value = value + " " + following
+                index += 1
+                steps += 1
+            found.append((key, value))
+        index += 1
+    return found
+
+
 # --------------------------------------------------------------- главный разбор
 def parse_card(content: CardContent) -> ParseResult:
     """Разобрать содержимое карточки в реквизиты компании."""
@@ -526,6 +587,10 @@ def parse_card(content: CardContent) -> ParseResult:
                 remember("full_name" if kind == "full" else "short_name", name)
         else:
             remember(key, value)
+
+    # 1в. Карточки-«простыни»: «Юридический адрес 194363, …» без двоеточия.
+    for key, value in pairs_from_inline_labels(lines):
+        remember(key, value)
 
     # 2. Строки вида «Подпись: значение» / «Подпись — значение».
     for line in lines:
@@ -573,15 +638,15 @@ def parse_card(content: CardContent) -> ParseResult:
     # 3. Резервный поиск по всему тексту.
     text = content.merged_text()
     if not raw_values.get("inn"):
-        match = re.search(r"\bИНН\D{0,4}(\d[\d\s]{8,14}\d)", text, flags=re.IGNORECASE)
+        match = re.search(r"\bИНН[^\d\n]{0,4}(\d[\d ]{8,14}\d)", text, flags=re.IGNORECASE)
         if match:
             remember("inn", match.group(1))
     if not raw_values.get("kpp"):
-        match = re.search(r"\bКПП\D{0,4}(\d[\d\s]{7,11}\d)", text, flags=re.IGNORECASE)
+        match = re.search(r"\bКПП[^\d\n]{0,4}(\d[\d ]{7,11}\d)", text, flags=re.IGNORECASE)
         if match:
             remember("kpp", match.group(1))
     if not raw_values.get("ogrn"):
-        match = re.search(r"\bОГРН(?:ИП)?\D{0,4}(\d[\d\s]{11,18}\d)", text, flags=re.IGNORECASE)
+        match = re.search(r"\bОГРН(?:ИП)?[^\d\n]{0,4}(\d[\d ]{11,18}\d)", text, flags=re.IGNORECASE)
         if match:
             remember("ogrn", match.group(1))
     if not raw_values.get("email"):
