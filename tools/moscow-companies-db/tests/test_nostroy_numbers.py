@@ -93,5 +93,41 @@ class TestIdsByNumber(unittest.TestCase):
         self.assertEqual(ностров.sro_ids_by_number(session, ["С-230"]), {})
 
 
+class _ProbeSession:
+    """Реестр, у которого есть только членские списки по ID СРО."""
+
+    def __init__(self, by_id: dict[int, str]):
+        self.by_id = by_id
+        self.asked: list[int] = []
+
+    def post(self, url, json=None, timeout=None):
+        sro = int(url.rstrip("/").split("/")[-3])
+        self.asked.append(sro)
+        number = self.by_id.get(sro)
+        if number is None:
+            return _FakeResponse({"data": {"data": [], "count": 0}})
+        return _FakeResponse({"data": {"data": [
+            {"inn": "7700000000", "sro": {"id": sro, "registration_number": number}}
+        ], "count": 1}})
+
+
+class TestProbeSroIds(unittest.TestCase):
+    def test_finds_ids_by_number(self):
+        session = _ProbeSession({3: "СРО-С-001-01012009", 7: "СРО-С-230-07092010"})
+        found = ностров.probe_sro_ids(session, ["С-230"], max_id=20, delay=0)
+        self.assertEqual(found, {"С-230": "7"})
+
+    def test_stops_as_soon_as_all_found(self):
+        # Перебор не должен доходить до конца, если нужное уже найдено
+        session = _ProbeSession({2: "СРО-С-230-07092010"})
+        ностров.probe_sro_ids(session, ["С-230"], max_id=500, delay=0)
+        self.assertLessEqual(max(session.asked), 3)
+
+    def test_missing_number_returns_empty(self):
+        session = _ProbeSession({1: "СРО-С-001-01012009"})
+        self.assertEqual(
+            ностров.probe_sro_ids(session, ["С-999"], max_id=5, delay=0), {})
+
+
 if __name__ == "__main__":
     unittest.main()

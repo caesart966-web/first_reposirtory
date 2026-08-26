@@ -622,6 +622,36 @@ def sro_ids_by_number(session: requests.Session,
     return found
 
 
+def probe_sro_ids(session: requests.Session, numbers: list[str],
+                  max_id: int = 700, delay: float = 0.15) -> dict[str, str]:
+    """Перебором ID находит, какой из них соответствует нужному номеру СРО.
+
+    Запасной путь на случай, когда отдельного списка СРО реестр не отдаёт.
+    Выглядит грубо, но считается быстро: у каждой СРО берём одну запись из
+    её членов и смотрим регистрационный номер. Несколько сотен коротких
+    запросов — это минуты против часов полного перебора реестра, где
+    записей четыреста тысяч.
+    """
+    wanted = {number_core(n) for n in numbers} - {""}
+    found: dict[str, str] = {}
+    print(f"[нострой] ищу ID перебором (до {max_id})…", flush=True)
+    for sro in range(1, max_id + 1):
+        payload = fetch_sro_page(session, str(sro), 1, 1, timeout=20, attempts=1)
+        for record in records_of(payload) if payload else []:
+            core = number_core(sro_registration_number(record))
+            if core in wanted and core not in found:
+                found[core] = str(sro)
+                print(f"[нострой] {core} -> ID {sro}", flush=True)
+            break
+        if len(found) == len(wanted):
+            break
+        if sro % 50 == 0:
+            print(f"[нострой]   проверено ID до {sro}, найдено "
+                  f"{len(found)} из {len(wanted)}", flush=True)
+        time.sleep(delay)
+    return found
+
+
 def cmd_list_sro(args) -> int:
     """Список всех СРО реестра — чтобы выбрать нужные и узнать их ID."""
     session = make_session()
@@ -707,9 +737,16 @@ def cmd_export(args) -> int:
             print(f"[нострой] {номер} -> ID {sid}")
             wanted_ids.add(sid)
         пропали = sorted(wanted_numbers - set(найдено))
+        if пропали and not args.no_probe:
+            print(f"[нострой] в списке СРО не нашлись: {', '.join(пропали)}")
+            for номер, sid in sorted(probe_sro_ids(session, пропали,
+                                                   args.probe_max_id).items()):
+                wanted_ids.add(sid)
+                найдено[номер] = sid
+            пропали = sorted(wanted_numbers - set(найдено))
         if пропали:
-            print(f"[нострой] не нашёл в списке СРО: {', '.join(пропали)} — "
-                  "они будут искаться перебором реестра по номеру",
+            print(f"[нострой] ID для {', '.join(пропали)} найти не вышло — "
+                  "они будут искаться перебором всего реестра (это часы)",
                   file=sys.stderr)
 
     def sro_matches(record: dict) -> bool:
@@ -917,14 +954,24 @@ def cmd_export(args) -> int:
                       file=sys.stderr)
                 break
 
-            if total_pages is None:
+            records = records_of(payload)
+
+            if total_pages is None and records:
+                # Реестр отдаёт своё число записей, игнорируя pageSize. Считать
+                # страницы по запрошенному размеру нельзя: при запрошенных 100
+                # и реальных 20 прогресс врёт в пять раз, и «осталось немного»
+                # оборачивается лишними часами ожидания.
+                actual_size = len(records)
+                if actual_size != args.page_size:
+                    print(f"[нострой] реестр отдаёт по {actual_size} записей на "
+                          f"страницу (запрашивали {args.page_size})")
                 total = total_of(payload)
                 if total:
-                    total_pages = (total + args.page_size - 1) // args.page_size
+                    total_pages = (total + actual_size - 1) // actual_size
+                    минут = round(total_pages * (args.delay + 0.5) / 60)
                     print(f"[нострой] всего записей в реестре: {total} "
-                          f"(~{total_pages} страниц)")
+                          f"(~{total_pages} страниц, примерно {минут} мин)")
 
-            records = records_of(payload)
             if not records:
                 completed = True
                 print(f"[нострой] страница {page} пустая — конец реестра")
@@ -1110,6 +1157,10 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--sro-id", nargs="+", default=None, help="ID нужных СРО")
     p.add_argument("--sro-number", nargs="+", default=None,
                    help="регистрационные номера СРО, например С-230 С-306")
+    p.add_argument("--probe-max-id", type=int, default=700,
+                   help="до какого ID искать СРО перебором, если списка нет")
+    p.add_argument("--no-probe", action="store_true",
+                   help="не искать ID перебором, сразу идти по всему реестру")
     p.add_argument("--sro-name", nargs="+", default=None,
                    help="часть названия нужных СРО (если не знаете ID)")
     p.add_argument("--until", default=None,
