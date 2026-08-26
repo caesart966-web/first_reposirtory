@@ -46,15 +46,18 @@ export function Footer() {
                     Telegram
                   </a>
                 </li>
-                <li>
-                  <a
-                    href={LINKS.max}
-                    {...externalLinkProps(CONFIGURED.max)}
-                    className="transition hover:text-accent-700"
-                  >
-                    MAX
-                  </a>
-                </li>
+                {/* MAX появится сам, как только в contacts.ts будет реальная ссылка */}
+                {CONFIGURED.max && (
+                  <li>
+                    <a
+                      href={LINKS.max}
+                      {...externalLinkProps(CONFIGURED.max)}
+                      className="transition hover:text-accent-700"
+                    >
+                      MAX
+                    </a>
+                  </li>
+                )}
               </ul>
             </div>
             <div>

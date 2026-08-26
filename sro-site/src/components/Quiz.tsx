@@ -1,4 +1,12 @@
-import { AlertCircle, Check, CheckCircle2, ChevronLeft, Loader2, Mail, Phone } from 'lucide-react'
+import {
+  AlertCircle,
+  Check,
+  CheckCircle2,
+  ChevronLeft,
+  Loader2,
+  Phone,
+  RotateCcw,
+} from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { CONFIGURED, CONTACTS, LINKS, externalLinkProps } from '../content/contacts'
 import { buildLeadMessage, sendLead } from '../lib/lead'
@@ -58,7 +66,9 @@ export function Quiz() {
   const [form, setForm] = useState({ name: '', phone: '', email: '' })
   const [consent, setConsent] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [status, setStatus] = useState<'idle' | 'sending' | 'done'>('idle')
+  const [status, setStatus] = useState<'idle' | 'sending' | 'done' | 'failed'>('idle')
+  // Honeypot: человек поле не видит и не может сфокусировать, боты заполняют.
+  const [botField, setBotField] = useState('')
   const advanceTimer = useRef<number | null>(null)
   const openLegal = useLegalDocs()
 
@@ -122,14 +132,24 @@ export function Quiz() {
     }
 
     setError(null)
+
+    // Заполненный honeypot — это бот: показываем обычный экран успеха,
+    // но заявку никуда не отправляем.
+    if (botField.trim()) {
+      focusPending.current = true
+      setStatus('done')
+      return
+    }
+
     setStatus('sending')
     try {
       await sendLead({ name, phone, email, answers })
       focusPending.current = true
       setStatus('done')
     } catch {
-      setStatus('idle')
-      setError('Не получилось отправить заявку. Позвоните или напишите в мессенджер — контакты ниже.')
+      // Введённые данные не сбрасываем: с экрана ошибки можно повторить отправку.
+      focusPending.current = true
+      setStatus('failed')
     }
   }
 
@@ -142,12 +162,12 @@ export function Quiz() {
     email: form.email.trim(),
     answers,
   })
+  // WhatsApp умеет принимать текст сообщения в ссылке, Telegram — нет,
+  // поэтому там просто открывается диалог.
   const whatsappSendHref = CONFIGURED.whatsapp
     ? `${CONTACTS.whatsapp}${CONTACTS.whatsapp.includes('?') ? '&' : '?'}text=${encodeURIComponent(leadMessage)}`
     : LINKS.whatsapp
-  const emailSendHref = CONFIGURED.email
-    ? `mailto:${CONTACTS.email}?subject=${encodeURIComponent('Заявка с сайта')}&body=${encodeURIComponent(leadMessage)}`
-    : LINKS.mail
+  const telegramSendHref = LINKS.telegram
 
   return (
     <Section id="quiz" className="bg-gradient-to-b from-white via-accent-50/50 to-white">
@@ -170,11 +190,10 @@ export function Quiz() {
                 tabIndex={-1}
                 className="mt-5 text-2xl font-semibold text-neutral-950 focus:outline-none"
               >
-                Спасибо{form.name.trim() ? `, ${form.name.trim()}` : ''}! Заявка готова
+                Заявка отправлена{form.name.trim() ? `, ${form.name.trim()}` : ''}
               </h3>
               <p className="mt-3 text-neutral-600">
-                Остался один шаг: отправьте её мне удобным способом — отвечу лично и предложу
-                план действий.
+                Свяжусь с вами лично, разберу ситуацию и предложу план действий.
               </p>
               <div className="mt-6 rounded-2xl bg-neutral-50 p-5 text-left text-sm">
                 <p className="font-semibold text-neutral-900">Ваши ответы</p>
@@ -189,29 +208,75 @@ export function Quiz() {
                   ))}
                 </ul>
               </div>
-              <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <p className="mt-6 text-sm text-neutral-500">
+                Хочется быстрее — напишите в WhatsApp или Telegram.
+              </p>
+              <div className="mt-3 flex flex-wrap justify-center gap-3">
                 <ButtonLink
                   href={whatsappSendHref}
+                  variant="secondary"
                   {...externalLinkProps(CONFIGURED.whatsapp)}
                 >
                   <WhatsAppIcon className="h-4 w-4" />
-                  Отправить в WhatsApp
-                </ButtonLink>
-                <ButtonLink href={emailSendHref} variant="secondary">
-                  <Mail className="h-4 w-4" aria-hidden="true" />
-                  Отправить на e-mail
+                  WhatsApp
                 </ButtonLink>
                 <ButtonLink
-                  href={LINKS.telegram}
+                  href={telegramSendHref}
                   variant="secondary"
                   {...externalLinkProps(CONFIGURED.telegram)}
                 >
                   <TelegramIcon className="h-4 w-4" />
                   Telegram
                 </ButtonLink>
+              </div>
+            </div>
+          ) : status === 'failed' ? (
+            <div className="text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-red-600">
+                <AlertCircle className="h-8 w-8" aria-hidden="true" />
+              </div>
+              <h3
+                ref={(el) => {
+                  stepHeadingRef.current = el
+                }}
+                tabIndex={-1}
+                className="mt-5 text-2xl font-semibold text-neutral-950 focus:outline-none"
+              >
+                Не удалось отправить заявку
+              </h3>
+              <p className="mt-3 text-neutral-600">
+                Ваши ответы сохранены — попробуйте отправить ещё раз или свяжитесь со мной
+                напрямую.
+              </p>
+              <div className="mt-6 flex flex-wrap justify-center gap-3">
+                <Button
+                  onClick={() => {
+                    focusPending.current = true
+                    setStatus('idle')
+                  }}
+                >
+                  <RotateCcw className="h-4 w-4" aria-hidden="true" />
+                  Попробовать снова
+                </Button>
                 <ButtonLink href={LINKS.tel} variant="secondary">
                   <Phone className="h-4 w-4" aria-hidden="true" />
                   Позвонить
+                </ButtonLink>
+                <ButtonLink
+                  href={whatsappSendHref}
+                  variant="secondary"
+                  {...externalLinkProps(CONFIGURED.whatsapp)}
+                >
+                  <WhatsAppIcon className="h-4 w-4" />
+                  WhatsApp
+                </ButtonLink>
+                <ButtonLink
+                  href={telegramSendHref}
+                  variant="secondary"
+                  {...externalLinkProps(CONFIGURED.telegram)}
+                >
+                  <TelegramIcon className="h-4 w-4" />
+                  Telegram
                 </ButtonLink>
               </div>
             </div>
@@ -295,6 +360,22 @@ export function Quiz() {
                   <p className="mt-2 text-neutral-600">
                     Оставьте контакты — свяжусь, уточню детали и предложу план действий.
                   </p>
+                  {/* Ловушка для ботов: скрыта визуально, вне таб-порядка,
+                      не читается скринридером. Заполнена — заявка не отправляется. */}
+                  <div aria-hidden="true">
+                    <label className="pointer-events-none absolute -left-[9999px] top-0 h-px w-px overflow-hidden opacity-0">
+                      Не заполняйте это поле
+                      <input
+                        type="text"
+                        name="company_website"
+                        tabIndex={-1}
+                        autoComplete="off"
+                        className="pointer-events-none absolute -left-[9999px] top-0 h-px w-px opacity-0"
+                        value={botField}
+                        onChange={(e) => setBotField(e.target.value)}
+                      />
+                    </label>
+                  </div>
                   <div className="mt-6 grid gap-4">
                     <label className="text-sm font-medium text-neutral-700">
                       Имя

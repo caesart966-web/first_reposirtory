@@ -10,37 +10,51 @@ const CARDS = [
     label: 'Телефон',
     value: CONTACTS.phone,
     href: LINKS.tel,
-    configured: false,
+    external: false,
   },
   {
     icon: Mail,
     label: 'E-mail',
     value: CONTACTS.email,
     href: LINKS.mail,
-    configured: false,
+    external: false,
   },
   {
     icon: WhatsAppIcon,
     label: 'WhatsApp',
     value: CONTACTS.phone,
     href: LINKS.whatsapp,
-    configured: CONFIGURED.whatsapp,
+    external: CONFIGURED.whatsapp,
   },
   {
     icon: TelegramIcon,
     label: 'Telegram',
     value: 'Написать в Telegram',
     href: LINKS.telegram,
-    configured: CONFIGURED.telegram,
+    external: CONFIGURED.telegram,
   },
-  {
-    icon: MaxIcon,
-    label: 'MAX',
-    value: CONFIGURED.max ? 'Написать в MAX' : CONTACTS.max,
-    href: LINKS.max,
-    configured: CONFIGURED.max,
-  },
+  // Канал показывается только когда для него задана рабочая ссылка:
+  // пока в contacts.ts стоит заглушка, MAX не появляется на сайте вообще.
+  ...(CONFIGURED.max
+    ? [
+        {
+          icon: MaxIcon,
+          label: 'MAX',
+          value: 'Написать в MAX',
+          href: LINKS.max,
+          external: true,
+        },
+      ]
+    : []),
 ]
+
+// Классы перечислены строками целиком: Tailwind собирает только те,
+// что реально встречаются в исходниках.
+const GRID_BY_COUNT: Record<number, string> = {
+  3: 'lg:grid-cols-3',
+  4: 'lg:grid-cols-4',
+  5: 'lg:grid-cols-5',
+}
 
 export function Contacts() {
   return (
@@ -50,12 +64,14 @@ export function Contacts() {
         title="Свяжитесь удобным способом"
         subtitle="Телефон, почта или мессенджеры — отвечаю лично."
       />
-      <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div
+        className={`mt-10 grid gap-4 sm:grid-cols-2 ${GRID_BY_COUNT[CARDS.length] ?? 'lg:grid-cols-4'}`}
+      >
         {CARDS.map((card, index) => (
           <Reveal key={card.label} delay={(index % 5) * 60} className="h-full">
             <a
               href={card.href}
-              {...externalLinkProps(card.configured)}
+              {...externalLinkProps(card.external)}
               className="flex h-full flex-col items-start rounded-2xl border border-neutral-200 bg-white p-6 shadow-card transition-all duration-200 hover:-translate-y-1 hover:border-accent-200 hover:shadow-card-hover"
             >
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent-50 text-accent-600">

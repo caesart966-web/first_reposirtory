@@ -73,8 +73,14 @@ jobs:
         working-directory: sro-site
         run: npm ci
 
+      # Куда уходят заявки из квиза. Секреты необязательны: без них сборка
+      # использует значения по умолчанию из src/lib/lead.ts (Web3Forms).
+      # Секреты нужны, когда приём заявок переносится на другой сервис.
       - name: Собираем сайт СРО
         working-directory: sro-site
+        env:
+          VITE_LEAD_ENDPOINT: ${{ secrets.VITE_LEAD_ENDPOINT }}
+          VITE_LEAD_ACCESS_KEY: ${{ secrets.VITE_LEAD_ACCESS_KEY }}
         run: |
           npm run build -- --base=/${{ github.event.repository.name }}/sro/
           printf 'User-agent: *\nDisallow: /\n' > dist/robots.txt
