@@ -6,7 +6,6 @@ import { Section, SectionHeading } from './ui/Section'
 const PLANS = [
   {
     name: 'Консультация',
-    price: 'от [ЦЕНА]',
     featured: false,
     items: [
       'Разбор вашей ситуации',
@@ -16,7 +15,6 @@ const PLANS = [
   },
   {
     name: 'Подготовка документов',
-    price: 'от [ЦЕНА]',
     featured: false,
     items: [
       'Проверка имеющихся документов',
@@ -26,7 +24,6 @@ const PLANS = [
   },
   {
     name: 'Вступление в СРО под ключ',
-    price: 'от [ЦЕНА]',
     featured: true,
     badge: 'Максимум задач на моей стороне',
     items: [
@@ -43,7 +40,7 @@ export function Pricing() {
       <SectionHeading
         eyebrow="Стоимость"
         title="Форматы работы"
-        subtitle="Точную стоимость назову после короткого разбора задачи — письменно и до начала работы."
+        subtitle="Стоимость зависит от вида СРО и готовности документов. Назову цифру после короткого разбора — письменно, до начала работы."
       />
       <div className="mt-10 grid gap-5 lg:grid-cols-3">
         {PLANS.map((plan, index) => (
@@ -58,10 +55,7 @@ export function Pricing() {
                   {plan.badge}
                 </span>
               )}
-              <h3 className="font-semibold text-neutral-950">{plan.name}</h3>
-              <p className="mt-3 text-3xl font-bold tracking-tight text-neutral-950">
-                {plan.price}
-              </p>
+              <h3 className="text-lg font-semibold text-neutral-950">{plan.name}</h3>
               <ul className="mt-5 space-y-2.5">
                 {plan.items.map((item) => (
                   <li key={item} className="flex items-start gap-2.5 text-sm text-neutral-600">
