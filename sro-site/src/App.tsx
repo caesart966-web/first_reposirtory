@@ -6,7 +6,6 @@ import { Footer } from './components/Footer'
 import { Header } from './components/Header'
 import { Hero } from './components/Hero'
 import { LegalProvider } from './components/LegalDocs'
-import { LegalServices } from './components/LegalServices'
 import { MobileBar } from './components/MobileBar'
 import { Pricing } from './components/Pricing'
 import { Problems } from './components/Problems'
@@ -30,7 +29,6 @@ export default function App() {
             <Trust />
             <Problems />
             <Services />
-            <LegalServices />
             <Process />
             <Documents />
             <Pricing />

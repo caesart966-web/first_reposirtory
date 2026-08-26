@@ -1,7 +1,7 @@
 import { ChevronRight, Phone } from 'lucide-react'
 import { LINKS } from '../content/contacts'
 import { BlueprintGrid } from './illustrations'
-import { QUESTIONS, useQuiz, useStartQuizFromHero } from './QuizContext'
+import { QUESTIONS, useQuiz, useStartQuiz } from './QuizContext'
 import { ButtonLink } from './ui/Button'
 import { Reveal } from './ui/Reveal'
 
@@ -10,7 +10,7 @@ import { Reveal } from './ui/Reveal'
 const FIRST_QUESTION = QUESTIONS[0]
 
 export function Hero() {
-  const startQuiz = useStartQuizFromHero()
+  const startQuiz = useStartQuiz()
   const { answers } = useQuiz()
 
   return (

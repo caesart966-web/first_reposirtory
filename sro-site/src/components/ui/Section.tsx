@@ -1,17 +1,27 @@
 import type { ReactNode } from 'react'
 import { Reveal } from './Reveal'
 
+// Ритм страницы: ключевые секции дышат шире, вторичные — компактнее,
+// иначе все двенадцать читаются одинаково важными.
+const PADDING = {
+  key: 'py-20 sm:py-28',
+  default: 'py-14 sm:py-20',
+  compact: 'py-10 sm:py-14',
+}
+
 export function Section({
   id,
   className = '',
+  size = 'default',
   children,
 }: {
   id?: string
   className?: string
+  size?: keyof typeof PADDING
   children: ReactNode
 }) {
   return (
-    <section id={id} className={`py-14 sm:py-20 ${className}`}>
+    <section id={id} className={`${PADDING[size]} ${className}`}>
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">{children}</div>
     </section>
   )

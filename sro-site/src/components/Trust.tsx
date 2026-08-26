@@ -1,22 +1,31 @@
-import { FileSignature, HandCoins, Lock, RussianRuble, UserRound } from 'lucide-react'
+import { FACTS, isPlaceholder } from '../content/facts'
 import { Reveal } from './ui/Reveal'
 
+// Лозунги вроде «прозрачная стоимость» ничего не сообщают: их пишут все.
+// Полоса под первым экраном показывает факты, которые можно проверить.
 const ITEMS = [
-  { icon: FileSignature, label: 'Договор' },
-  { icon: RussianRuble, label: 'Прозрачная стоимость' },
-  { icon: HandCoins, label: 'Без скрытых платежей' },
-  { icon: UserRound, label: 'Личная работа' },
-  { icon: Lock, label: 'Конфиденциальность' },
+  { value: FACTS.yearsOfPractice, label: 'лет занимаюсь СРО' },
+  { value: FACTS.companies, label: 'компаний сопровождал' },
+  { value: FACTS.regions, label: 'регионов России' },
+  { value: FACTS.responseTime, label: 'срок ответа на заявку' },
 ]
 
 export function Trust() {
   return (
-    <section className="border-y border-neutral-200/70 bg-neutral-50/70 py-9">
-      <Reveal className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-center gap-x-10 gap-y-4 px-4 sm:px-6 lg:px-8">
+    <section className="border-y border-neutral-200/70 bg-neutral-50/70 py-10">
+      <Reveal className="mx-auto grid w-full max-w-5xl grid-cols-2 gap-8 px-4 sm:px-6 lg:grid-cols-4 lg:px-8">
         {ITEMS.map((item) => (
-          <div key={item.label} className="flex items-center gap-2.5 text-sm font-medium text-neutral-700">
-            <item.icon className="h-5 w-5 text-accent-600" aria-hidden="true" />
-            {item.label}
+          <div key={item.label}>
+            {/* Пока вместо цифры стоит плейсхолдер, набираем его мелко:
+                крупным кеглем длинная строка в скобках ломает сетку. */}
+            <p
+              className={`font-bold tracking-tight text-neutral-950 tabular-nums ${
+                isPlaceholder(item.value) ? 'break-words text-base' : 'text-3xl'
+              }`}
+            >
+              {item.value}
+            </p>
+            <p className="mt-1 text-sm text-neutral-500">{item.label}</p>
           </div>
         ))}
       </Reveal>

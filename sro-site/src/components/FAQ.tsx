@@ -56,7 +56,7 @@ export function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(0)
 
   return (
-    <Section id="faq">
+    <Section id="faq" size="compact">
       <SectionHeading eyebrow="FAQ" title="Частые вопросы" />
       <Reveal className="mt-10">
         <div className="mx-auto max-w-3xl divide-y divide-neutral-200 rounded-2xl border border-neutral-200 bg-white shadow-card">

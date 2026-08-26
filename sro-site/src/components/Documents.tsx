@@ -16,7 +16,7 @@ const DOCUMENTS = [
 
 export function Documents() {
   return (
-    <Section id="documents">
+    <Section id="documents" size="compact">
       <div className="grid items-center gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-14">
         <Reveal>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent-600">
