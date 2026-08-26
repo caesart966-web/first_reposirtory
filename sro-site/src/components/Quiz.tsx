@@ -192,9 +192,7 @@ export function Quiz() {
               >
                 Заявка отправлена{form.name.trim() ? `, ${form.name.trim()}` : ''}
               </h3>
-              <p className="mt-3 text-neutral-600">
-                Свяжусь с вами лично, разберу ситуацию и предложу план действий.
-              </p>
+              <p className="mt-3 text-neutral-600">Отвечу лично.</p>
               <div className="mt-6 rounded-2xl bg-neutral-50 p-5 text-left text-sm">
                 <p className="font-semibold text-neutral-900">Ваши ответы</p>
                 <ul className="mt-3 space-y-2 text-neutral-600">
@@ -209,7 +207,7 @@ export function Quiz() {
                 </ul>
               </div>
               <p className="mt-6 text-sm text-neutral-500">
-                Хочется быстрее — напишите в WhatsApp или Telegram.
+                Если удобнее в мессенджере — напишите напрямую.
               </p>
               <div className="mt-3 flex flex-wrap justify-center gap-3">
                 <ButtonLink
