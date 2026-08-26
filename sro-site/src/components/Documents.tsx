@@ -32,7 +32,10 @@ export function Documents() {
           <ButtonLink href="#quiz" size="lg" className="mt-7">
             Проверить мои документы
           </ButtonLink>
-          <DraftingTools className="mt-10 hidden h-auto w-full max-w-sm text-accent-500/40 lg:block" />
+          {/* Иллюстрация: чертёж и инструменты проектировщика */}
+          <div className="mt-9 max-w-md rounded-2xl border border-accent-100 bg-gradient-to-br from-accent-50/80 to-white p-5 sm:p-6">
+            <DraftingTools className="h-auto w-full text-accent-600" />
+          </div>
         </Reveal>
         <Reveal delay={100}>
           <div className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-card sm:p-8">

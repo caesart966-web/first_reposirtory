@@ -1,19 +1,18 @@
 import { Phone } from 'lucide-react'
-import { CONFIGURED, LINKS, externalLinkProps } from '../content/contacts'
-import { MaxIcon, TelegramIcon, WhatsAppIcon } from './icons'
+import { LINKS } from '../content/contacts'
 import { CitySkyline } from './illustrations'
 import { ButtonLink } from './ui/Button'
 import { Reveal } from './ui/Reveal'
 
 export function FinalCTA() {
   return (
-    <section className="relative overflow-hidden bg-accent-950 py-16 sm:py-20">
+    <section className="relative overflow-hidden bg-accent-950">
       <div className="pointer-events-none absolute inset-0" aria-hidden="true">
         <div className="absolute -top-24 left-1/2 h-[380px] w-[640px] -translate-x-1/2 rounded-full bg-accent-600/25 blur-3xl" />
-        {/* Панорама стройки по нижней кромке секции */}
-        <CitySkyline className="absolute inset-x-0 bottom-0 h-32 w-full text-white/[0.16] sm:h-40" />
       </div>
-      <div className="relative mx-auto w-full max-w-6xl px-4 text-center sm:px-6 lg:px-8">
+      {/* Панорама стройки — только у нижней кромки, под контентом */}
+      <CitySkyline className="pointer-events-none absolute inset-x-0 bottom-0 h-20 w-full text-white/[0.09] sm:h-28" />
+      <div className="relative mx-auto w-full max-w-6xl px-4 pb-32 pt-16 text-center sm:px-6 sm:pb-44 sm:pt-20 lg:px-8">
         <Reveal>
           <h2 className="mx-auto max-w-3xl text-3xl font-bold tracking-tight text-white sm:text-4xl">
             Расскажите, какая задача стоит перед вашей компанией
@@ -28,33 +27,6 @@ export function FinalCTA() {
             <ButtonLink href={LINKS.tel} variant="outlineInverse" size="lg">
               <Phone className="h-4 w-4" aria-hidden="true" />
               Позвонить
-            </ButtonLink>
-            <ButtonLink
-              href={LINKS.whatsapp}
-              variant="outlineInverse"
-              size="lg"
-              {...externalLinkProps(CONFIGURED.whatsapp)}
-            >
-              <WhatsAppIcon className="h-4 w-4" />
-              WhatsApp
-            </ButtonLink>
-            <ButtonLink
-              href={LINKS.telegram}
-              variant="outlineInverse"
-              size="lg"
-              {...externalLinkProps(CONFIGURED.telegram)}
-            >
-              <TelegramIcon className="h-4 w-4" />
-              Telegram
-            </ButtonLink>
-            <ButtonLink
-              href={LINKS.max}
-              variant="outlineInverse"
-              size="lg"
-              {...externalLinkProps(CONFIGURED.max)}
-            >
-              <MaxIcon className="h-4 w-4" />
-              MAX
             </ButtonLink>
           </div>
         </Reveal>

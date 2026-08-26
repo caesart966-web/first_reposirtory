@@ -33,7 +33,7 @@ export function Header() {
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <a href="#top" className="flex flex-col leading-tight">
           <span className="text-[15px] font-bold tracking-tight text-neutral-950">
-            {CONTACTS.name}
+            {CONTACTS.fullName}
           </span>
           <span className="text-xs text-neutral-500">{CONTACTS.role}</span>
         </a>

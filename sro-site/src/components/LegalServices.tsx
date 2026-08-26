@@ -1,5 +1,5 @@
 import { Award, Briefcase, FilePen, Gavel } from 'lucide-react'
-import { JusticeScales, SurveyLegal } from './illustrations'
+import { SurveyLegal } from './illustrations'
 import { Reveal } from './ui/Reveal'
 import { Section } from './ui/Section'
 
@@ -29,9 +29,8 @@ const SERVICES = [
 
 export function LegalServices() {
   return (
-    <Section id="legal-services" className="relative overflow-hidden">
-      <JusticeScales className="pointer-events-none absolute right-2 top-1/2 hidden h-[320px] w-auto -translate-y-1/2 text-accent-500/[0.10] xl:block" />
-      <div className="relative grid items-start gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:gap-14">
+    <Section id="legal-services">
+      <div className="grid items-start gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:gap-14">
         <Reveal>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent-600">
             Юридическая практика
@@ -43,7 +42,10 @@ export function LegalServices() {
             Вопросы, которые часто идут в связке со вступлением в СРО, — решаю их в рамках
             одной задачи, без привлечения сторонних юристов.
           </p>
-          <SurveyLegal className="mt-8 hidden h-auto w-full max-w-sm text-accent-500/40 lg:block" />
+          {/* Иллюстрация: изыскания и юридические документы */}
+          <div className="mt-8 max-w-md rounded-2xl border border-accent-100 bg-gradient-to-br from-accent-50/80 to-white p-5 sm:p-6">
+            <SurveyLegal className="h-auto w-full text-accent-600" />
+          </div>
         </Reveal>
         <div className="grid gap-4 sm:grid-cols-2">
           {SERVICES.map((service, index) => (

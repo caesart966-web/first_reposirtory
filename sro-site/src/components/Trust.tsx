@@ -1,5 +1,4 @@
 import { FileSignature, HandCoins, Lock, RussianRuble, UserRound } from 'lucide-react'
-import { EngineerPortrait } from './illustrations'
 import { Reveal } from './ui/Reveal'
 
 const ITEMS = [
@@ -12,9 +11,8 @@ const ITEMS = [
 
 export function Trust() {
   return (
-    <section className="relative overflow-hidden border-y border-neutral-200/70 bg-neutral-50/70 py-9">
-      <EngineerPortrait className="pointer-events-none absolute -top-6 right-8 hidden h-[220px] w-auto text-accent-500/[0.10] xl:block" />
-      <Reveal className="relative mx-auto flex w-full max-w-6xl flex-wrap items-center justify-center gap-x-10 gap-y-4 px-4 sm:px-6 lg:px-8">
+    <section className="border-y border-neutral-200/70 bg-neutral-50/70 py-9">
+      <Reveal className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-center gap-x-10 gap-y-4 px-4 sm:px-6 lg:px-8">
         {ITEMS.map((item) => (
           <div key={item.label} className="flex items-center gap-2.5 text-sm font-medium text-neutral-700">
             <item.icon className="h-5 w-5 text-accent-600" aria-hidden="true" />

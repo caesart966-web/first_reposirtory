@@ -6,7 +6,8 @@ export const CONTACTS = {
   phone: '+7 900 133-02-19',
   email: '9001330219@mail.ru',
   whatsapp: 'https://wa.me/79001330219',
-  telegram: 'https://web.telegram.org/a/#5179303572',
+  // Публичная ссылка по номеру. Если появится @username — замените на https://t.me/username
+  telegram: 'https://t.me/+79001330219',
   // MAX не умеет ссылки по номеру телефона: личная ссылка вида
   // https://max.ru/u/XXXX берётся в приложении («Поделиться» / QR-код).
   // Подставьте её сюда — кнопки MAX заработают автоматически.
