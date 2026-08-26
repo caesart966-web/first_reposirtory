@@ -76,6 +76,19 @@ jobs:
       # Куда уходят заявки из квиза. Секреты необязательны: без них сборка
       # использует значения по умолчанию из src/lib/lead.ts (Web3Forms).
       # Секреты нужны, когда приём заявок переносится на другой сервис.
+      # Без ключа форма заявки на сайте не работает, поэтому проверяем явно.
+      # Сборку не роняем: в этом же job собираются другие сайты.
+      # Печатаем только длину — само значение в логи не попадает.
+      - name: Проверяем ключ приёма заявок
+        env:
+          VITE_LEAD_ACCESS_KEY: ${{ secrets.VITE_LEAD_ACCESS_KEY }}
+        run: |
+          if [ -z "$VITE_LEAD_ACCESS_KEY" ]; then
+            echo "::warning::VITE_LEAD_ACCESS_KEY не задан — форма заявки на сайте СРО работать не будет"
+          else
+            echo "Ключ приёма заявок задан, длина: ${#VITE_LEAD_ACCESS_KEY}"
+          fi
+
       - name: Собираем сайт СРО
         working-directory: sro-site
         env:
@@ -85,6 +98,12 @@ jobs:
           npm run build -- --base=/${{ github.event.repository.name }}/sro/
           printf 'User-agent: *\nDisallow: /\n' > dist/robots.txt
           sed -i 's/name="robots" content="index, follow"/name="robots" content="noindex, nofollow"/' dist/index.html
+          # Ключ подставляется в бандл на этапе сборки — убеждаемся, что он там есть.
+          if [ -n "$VITE_LEAD_ACCESS_KEY" ] && grep -qF "$VITE_LEAD_ACCESS_KEY" dist/assets/*.js; then
+            echo "Ключ приёма заявок попал в сборку — форма будет отправлять заявки"
+          else
+            echo "::warning::Ключ приёма заявок не попал в сборку — форма покажет экран ошибки"
+          fi
 
       - name: Добавляем сайт СРО
         run: cp -r ../sro-site/dist dist/sro
