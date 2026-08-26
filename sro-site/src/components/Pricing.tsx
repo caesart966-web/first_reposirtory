@@ -70,7 +70,7 @@ export function Pricing() {
       </div>
       <Reveal className="mt-9 text-center">
         <ButtonLink href="#quiz" size="lg">
-          Получить расчёт стоимости
+          Узнать стоимость для моей компании
         </ButtonLink>
       </Reveal>
     </Section>

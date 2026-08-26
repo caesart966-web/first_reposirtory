@@ -51,7 +51,7 @@ export function Header() {
         </nav>
 
         <div className="hidden lg:block">
-          <ButtonLink href="#quiz">Получить консультацию</ButtonLink>
+          <ButtonLink href="#quiz">Оставить заявку</ButtonLink>
         </div>
 
         <button
@@ -83,7 +83,7 @@ export function Header() {
               </a>
             ))}
             <ButtonLink href="#quiz" onClick={() => setOpen(false)} className="mt-2 w-full">
-              Получить консультацию
+              Оставить заявку
             </ButtonLink>
           </nav>
         </div>
