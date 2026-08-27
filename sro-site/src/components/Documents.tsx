@@ -1,6 +1,7 @@
 import { CheckCircle2 } from 'lucide-react'
-import { DraftingTools } from './illustrations'
+import { IMAGES } from '../content/images'
 import { ButtonLink } from './ui/Button'
+import { Figure } from './ui/Figure'
 import { Reveal } from './ui/Reveal'
 import { Section } from './ui/Section'
 
@@ -32,10 +33,13 @@ export function Documents() {
           <ButtonLink href="#quiz" size="lg" className="mt-7">
             Проверить мои документы
           </ButtonLink>
-          {/* Иллюстрация: чертёж и инструменты проектировщика */}
-          <div className="mt-9 max-w-md rounded-2xl border border-accent-100 bg-gradient-to-br from-accent-50/80 to-white p-5 sm:p-6">
-            <DraftingTools className="h-auto w-full text-accent-600" />
-          </div>
+          {/* Проектирование: архивный чертёж вместо прежней декоративной SVG —
+              в одной колонке два изображения подряд читаются как свалка. */}
+          <Figure
+            {...IMAGES.design}
+            className="mt-9 max-w-md"
+            caption="Проектная документация: собираю комплект под требования конкретной СРО."
+          />
         </Reveal>
         <Reveal delay={100}>
           <div className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-card sm:p-8">

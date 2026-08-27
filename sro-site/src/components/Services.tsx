@@ -11,14 +11,24 @@ import {
   Search,
   ShieldCheck,
   UserCheck,
+  type LucideIcon,
 } from 'lucide-react'
-import { SurveyLegal } from './illustrations'
+import { IMAGES, type PageImage } from '../content/images'
+import { Figure } from './ui/Figure'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
 
 // Восемь равнозначных карточек читались как каша, поэтому услуги разбиты
 // на две понятные группы: что делаем с самой СРО и что — со специалистами.
-const GROUPS = [
+// Тип явный: без него TypeScript выводит из массива объединение, у одного
+// члена которого поля figure нет, и сузить его проверкой не получается.
+type ServiceGroup = {
+  title: string
+  figure?: PageImage
+  items: { icon: LucideIcon; title: string; text: string }[]
+}
+
+const GROUPS: ServiceGroup[] = [
   {
     title: 'Вступление и сопровождение',
     items: [
@@ -46,6 +56,9 @@ const GROUPS = [
   },
   {
     title: 'Специалисты и реестры',
+    // Изыскания не показывает ни один конкурент — у всех только стройка,
+    // а это отдельная СРО и отдельный клиент.
+    figure: IMAGES.survey,
     items: [
       {
         icon: UserCheck,
@@ -126,6 +139,15 @@ export function Services() {
                 </Reveal>
               ))}
             </div>
+            {group.figure && (
+              <Reveal className="mt-6">
+                <Figure
+                  {...group.figure}
+                  className="max-w-sm"
+                  caption="Инженерные изыскания — отдельный вид СРО со своими требованиями к специалистам."
+                />
+              </Reveal>
+            )}
           </div>
         ))}
       </div>
@@ -145,7 +167,10 @@ export function Services() {
             </div>
           ))}
         </div>
-        <SurveyLegal className="mt-8 hidden h-auto w-full max-w-xs text-neutral-300 sm:block" />
+        {/* Юридическая часть: та же гравюрная эстетика, что и в подложке.
+            Заменяет прежнюю декоративную SVG — два рисунка в одном блоке
+            спорили друг с другом. */}
+        <Figure {...IMAGES.legal} className="mt-8 max-w-sm" />
       </Reveal>
     </Section>
   )
