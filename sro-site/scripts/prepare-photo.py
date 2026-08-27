@@ -34,13 +34,42 @@ LIGHT = (0xE6, 0xEC, 0xFF)  # accent-100
 WEBP_LIMIT_KB, AVIF_LIMIT_KB = 180, 120
 
 
-def duotone(img: Image.Image) -> Image.Image:
+def duotone(img: Image.Image, stretch: bool = False) -> Image.Image:
     """Обесцвечиваем и раскладываем яркость по градиенту DARK -> LIGHT."""
     gray = img.convert("L")
+    if stretch:
+        gray = normalize(gray)
     lut = []
     for channel in range(3):
         lut += [round(DARK[channel] + (LIGHT[channel] - DARK[channel]) * v / 255) for v in range(256)]
     return Image.merge("RGB", (gray, gray, gray)).point(lut)
+
+
+def normalize(gray: Image.Image) -> Image.Image:
+    """Растягиваем гистограмму, отбрасывая по 0.5% с краёв (аналог -normalize).
+
+    Нужно для малоконтрастных исходников вроде цианотипных синек: там весь
+    диапазон сидит в середине, и дуотон без растяжки даёт вялое сиреневое
+    пятно вместо чертежа.
+    """
+    hist = gray.histogram()
+    cut = sum(hist) * 0.005
+    acc, low = 0, 0
+    for value, count in enumerate(hist):
+        acc += count
+        if acc > cut:
+            low = value
+            break
+    acc, high = 0, 255
+    for value in range(255, -1, -1):
+        acc += hist[value]
+        if acc > cut:
+            high = value
+            break
+    if high <= low:
+        return gray
+    scale = 255.0 / (high - low)
+    return gray.point(lambda v: min(255, max(0, int((v - low) * scale))))
 
 
 def split_alpha(img: Image.Image) -> tuple[Image.Image, Image.Image | None]:
@@ -64,6 +93,11 @@ def main() -> int:
     ap.add_argument("--width", type=int, default=1200)
     ap.add_argument("--color", action="store_true", help="оставить в цвете (акцентный кадр)")
     ap.add_argument(
+        "--normalize",
+        action="store_true",
+        help="растянуть гистограмму перед дуотоном (для малоконтрастных исходников)",
+    )
+    ap.add_argument(
         "--flatten",
         action="store_true",
         help="положить прозрачный объект на белый фон вместо сохранения альфы",
@@ -74,7 +108,7 @@ def main() -> int:
 
     img, alpha = split_alpha(Image.open(args.source))
     if not args.color:
-        img = duotone(img)
+        img = duotone(img, stretch=args.normalize)
     if img.width != args.width:
         height = round(img.height * args.width / img.width)
         img = img.resize((args.width, height), Image.LANCZOS)

@@ -22,7 +22,7 @@ export const IMAGES = {
   design: {
     src: './img/design.webp',
     srcAvif: './img/design.avif',
-    alt: 'Архивный чертёж: план и разрез здания со штампом основной надписи',
+    alt: 'Архивная синька: продольный разрез жилого дома с лестничными маршами и перекрытиями',
     width: 1200,
     height: 900,
     ratio: 'aspect-[4/3]',

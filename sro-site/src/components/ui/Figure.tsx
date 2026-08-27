@@ -21,6 +21,9 @@ type FigureProps = {
   height: number
   caption?: ReactNode
   ratio?: string // 'aspect-[4/3]' | 'aspect-[20/7]'
+  // cover обрезает кадр под рамку — так и надо фотографии. Вырезанному объекту
+  // на прозрачном фоне (весы, печать) обрезка отрубает края, поэтому ему contain.
+  fit?: 'cover' | 'contain'
   priority?: boolean // true только для первого экрана
   className?: string
 }
@@ -33,6 +36,7 @@ export function Figure({
   height,
   caption,
   ratio = 'aspect-[4/3]',
+  fit = 'cover',
   priority = false,
   className = '',
 }: FigureProps) {
@@ -50,7 +54,7 @@ export function Figure({
             height={height}
             loading={priority ? 'eager' : 'lazy'}
             decoding="async"
-            className="h-full w-full object-cover"
+            className={`h-full w-full ${fit === 'contain' ? 'object-contain' : 'object-cover'}`}
           />
         </picture>
       </div>
