@@ -146,8 +146,12 @@ def block_media(site: Site, cfg: dict) -> str:
 
 
 def block_recommendations(site: Site, cfg: dict) -> str:
-    """Рекомендательные письма. У карточки без поля file ссылки нет —
-    так письмо можно показать текстом, не выкладывая сам документ."""
+    """Рекомендательные письма и награды. У карточки без поля file ссылки нет —
+    так документ можно показать текстом, не выкладывая сам файл.
+
+    Подписи строк можно переопределить (role_label, object_label, link_label):
+    у письма от компании это «Роль» и «Объект», а у благодарности от ведомства —
+    «Кому» и «Подписал». Одна вёрстка, разные подписи."""
     if not cfg or not cfg.get("items"):
         return ""
     cards = []
@@ -161,7 +165,7 @@ def block_recommendations(site: Site, cfg: dict) -> str:
             link = (f'<button class="rec__link" type="button"'
                     f' data-lightbox="{site.url(r["image"])}"'
                     f' data-caption="{esc(r["company"])} · {esc(r["city"])}, {esc(r["date"])}"'
-                    f'{pdf}>Посмотреть письмо</button>')
+                    f'{pdf}>{esc(r.get("link_label", "Посмотреть письмо"))}</button>')
         cards.append(f'''        <article class="card rec">
           <div class="rec__head">
             <h3>{esc(r["company"])}</h3>
@@ -169,9 +173,9 @@ def block_recommendations(site: Site, cfg: dict) -> str:
           </div>
           <blockquote class="rec__quote">{esc(r["quote"])}</blockquote>
           <div class="spec">
-            <div class="spec__row"><span class="spec__key">Роль</span>
+            <div class="spec__row"><span class="spec__key">{esc(r.get("role_label", "Роль"))}</span>
               <span class="spec__dots"></span><span class="spec__val">{esc(r["role"])}</span></div>
-            <div class="spec__row"><span class="spec__key">Объект</span>
+            <div class="spec__row"><span class="spec__key">{esc(r.get("object_label", "Объект"))}</span>
               <span class="spec__dots"></span><span class="spec__val">{esc(r["object"])}</span></div>
           </div>
           <p class="rec__scope">{esc(r["scope"])}</p>
