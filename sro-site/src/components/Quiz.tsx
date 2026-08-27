@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   ChevronLeft,
   Loader2,
+  Pencil,
   Phone,
   RotateCcw,
 } from 'lucide-react'
@@ -20,6 +21,22 @@ import { Section, SectionHeading } from './ui/Section'
 
 const inputClasses =
   'mt-1.5 w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-neutral-900 placeholder:text-neutral-500 focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/30'
+
+// Маска телефона без библиотек (T15): из любого ввода — «+7 900 000-00-00».
+// Ведущие 7/8 считаем кодом страны и съедаем; всё, кроме цифр, отбрасываем.
+// Если цифр не осталось (стёрли всё) — поле пустеет целиком, чтобы «+7 »
+// не застревал при удалении.
+function formatPhone(raw: string): string {
+  let digits = raw.replace(/\D/g, '')
+  if (digits.startsWith('7') || digits.startsWith('8')) digits = digits.slice(1)
+  digits = digits.slice(0, 10)
+  if (!digits) return ''
+  let out = `+7 ${digits.slice(0, 3)}`
+  if (digits.length > 3) out += ` ${digits.slice(3, 6)}`
+  if (digits.length > 6) out += `-${digits.slice(6, 8)}`
+  if (digits.length > 8) out += `-${digits.slice(8, 10)}`
+  return out
+}
 
 export function Quiz() {
   // Шаг, ответы и статус общие с героем (см. QuizContext): первый вопрос
@@ -55,11 +72,13 @@ export function Quiz() {
   function pickOption(questionId: string, option: string) {
     if (advanceTimer.current !== null) return
     setAnswers((prev) => ({ ...prev, [questionId]: option }))
+    // 400 мс вместо 280 (T16): выбранный вариант успевает подсветиться,
+    // и уход на следующий вопрос не ощущается рывком.
     advanceTimer.current = window.setTimeout(() => {
       advanceTimer.current = null
       focusPending.current = true
       setStep((prev) => Math.min(prev + 1, TOTAL_STEPS - 1))
-    }, 280)
+    }, 400)
   }
 
   function goBack() {
@@ -79,12 +98,14 @@ export function Quiz() {
       setError('Пожалуйста, укажите имя.')
       return
     }
-    if (phone.replace(/\D/g, '').length < 6) {
-      setError('Пожалуйста, укажите корректный номер телефона.')
+    // Маска гарантирует формат «+7 …», здесь проверяем только полноту номера.
+    if (phone.replace(/\D/g, '').length < 11) {
+      setError('Пожалуйста, укажите номер телефона полностью.')
       return
     }
-    if (!/^\S+@\S+\.\S+$/.test(email)) {
-      setError('Пожалуйста, укажите корректный e-mail.')
+    // E-mail опционален (T14): валидируем только непустое значение.
+    if (email && !/^\S+@\S+\.\S+$/.test(email)) {
+      setError('Пожалуйста, укажите корректный e-mail — или оставьте поле пустым.')
       return
     }
     if (!consent) {
@@ -249,7 +270,7 @@ export function Quiz() {
             <>
               <div className="mb-5 flex items-center justify-between text-sm text-neutral-500">
                 <span>
-                  Шаг {step + 1} из {TOTAL_STEPS}
+                  {question ? `Вопрос ${step + 1} из ${QUESTIONS.length}` : 'Последний шаг'}
                 </span>
                 {step > 0 && (
                   <button
@@ -325,6 +346,36 @@ export function Quiz() {
                   <p className="mt-2 text-neutral-600">
                     Оставьте контакты — свяжусь, уточню детали и предложу план действий.
                   </p>
+                  {/* Свод ответов (T16): последний шанс поправить ответ до
+                      отправки. Клик по строке возвращает на тот вопрос; после
+                      нового выбора квиз сам дойдёт обратно до контактов. */}
+                  <div className="mt-5 rounded-2xl bg-neutral-50 p-4">
+                    <p className="text-sm font-semibold text-neutral-900">Ваши ответы</p>
+                    <ul className="mt-2 divide-y divide-neutral-200/70">
+                      {QUESTIONS.filter((q) => answers[q.id]).map((q) => (
+                        <li key={q.id}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              focusPending.current = true
+                              setStep(QUESTIONS.findIndex((item) => item.id === q.id))
+                            }}
+                            className="group flex w-full items-center justify-between gap-4 py-2.5 text-left text-sm transition hover:text-accent-700"
+                            aria-label={`Изменить ответ: ${q.id}`}
+                          >
+                            <span className="text-neutral-500">{q.id}</span>
+                            <span className="flex min-w-0 items-center gap-2 text-right font-medium text-neutral-800 group-hover:text-accent-700">
+                              <span className="truncate">{answers[q.id]}</span>
+                              <Pencil
+                                className="h-3.5 w-3.5 shrink-0 text-neutral-400 transition group-hover:text-accent-600"
+                                aria-hidden="true"
+                              />
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                   {/* Ловушка для ботов: скрыта визуально, вне таб-порядка,
                       не читается скринридером. Заполнена — заявка не отправляется. */}
                   <div aria-hidden="true">
@@ -364,13 +415,18 @@ export function Quiz() {
                         inputMode="tel"
                         placeholder="+7 ___ ___-__-__"
                         value={form.phone}
-                        onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                        onChange={(e) => {
+                          const phone = formatPhone(e.target.value)
+                          setForm((f) => ({ ...f, phone }))
+                        }}
+                        maxLength={16}
                         className={inputClasses}
                         required
                       />
                     </label>
                     <label className="text-sm font-medium text-neutral-700">
-                      E-mail
+                      E-mail{' '}
+                      <span className="font-normal text-neutral-500">— если удобнее письмом</span>
                       <input
                         type="email"
                         name="email"
@@ -379,7 +435,6 @@ export function Quiz() {
                         value={form.email}
                         onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
                         className={inputClasses}
-                        required
                       />
                     </label>
                     <label className="flex items-start gap-3 text-sm text-neutral-600">
