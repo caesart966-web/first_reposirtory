@@ -31,7 +31,7 @@ export const IMAGES = {
   construction: {
     src: './img/construction.webp',
     srcAvif: './img/construction.avif',
-    alt: 'Два башенных крана на фоне чистого неба',
+    alt: 'Стопка папок с подшитыми документами крупным планом',
     width: 2000,
     height: 700,
     ratio: 'aspect-[20/7]',
