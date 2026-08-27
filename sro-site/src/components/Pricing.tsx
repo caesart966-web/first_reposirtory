@@ -36,7 +36,7 @@ const PLANS = [
 
 export function Pricing() {
   return (
-    <Section id="pricing" className="bg-neutral-50/70">
+    <Section id="pricing">
       <SectionHeading
         eyebrow="Стоимость"
         title="Форматы работы"
@@ -46,7 +46,7 @@ export function Pricing() {
         {PLANS.map((plan, index) => (
           <Reveal key={plan.name} delay={index * 80} className="h-full">
             <article
-              className={`relative flex h-full flex-col rounded-2xl border bg-white p-7 shadow-card transition-all duration-200 hover:-translate-y-1 hover:shadow-card-hover ${
+              className={`relative flex h-full flex-col rounded-2xl border bg-white p-7 shadow-card transition-colors duration-200 ${
                 plan.featured ? 'border-accent-300 ring-1 ring-accent-200' : 'border-neutral-200'
               }`}
             >

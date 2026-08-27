@@ -136,12 +136,12 @@ export function LegalProvider({ children }: { children: ReactNode }) {
                 type="button"
                 onClick={close}
                 aria-label="Закрыть"
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-neutral-200 text-neutral-600 transition hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-neutral-200 text-neutral-600 transition hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
               >
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
-            <p className="mt-4 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <p className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
               Это шаблон документа: в нём ещё нет реквизитов оператора персональных данных
               (правовой статус, ИНН, ОГРНИП, адрес). Перед публикацией сайта на своём домене
               его нужно заменить финальной редакцией.

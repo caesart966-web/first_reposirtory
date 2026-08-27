@@ -1,7 +1,7 @@
 import { ChevronRight, Phone } from 'lucide-react'
 import { LINKS } from '../content/contacts'
 import { BlueprintGrid } from './illustrations'
-import { QUESTIONS, useQuiz, useStartQuizFromHero } from './QuizContext'
+import { QUESTIONS, useQuiz, useStartQuiz } from './QuizContext'
 import { ButtonLink } from './ui/Button'
 import { Reveal } from './ui/Reveal'
 
@@ -10,12 +10,16 @@ import { Reveal } from './ui/Reveal'
 const FIRST_QUESTION = QUESTIONS[0]
 
 export function Hero() {
-  const startQuiz = useStartQuizFromHero()
+  const startQuiz = useStartQuiz()
   const { answers } = useQuiz()
 
   return (
     <section className="relative overflow-hidden">
       <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
+        {/* Белая вуаль поверх фоновой гравюры: на первом экране уже работают
+            сетка чертежа и два размытых пятна, третий фоновый мотив под ними
+            даёт грязь. Ниже первого экрана Фемида проступает в полную силу. */}
+        <div className="absolute inset-0 bg-white/75" />
         <div className="absolute -top-32 right-[-10%] h-[420px] w-[420px] rounded-full bg-accent-100/60 blur-3xl" />
         <div className="absolute bottom-[-30%] left-[-10%] h-[360px] w-[360px] rounded-full bg-accent-50 blur-3xl" />
         <BlueprintGrid className="absolute inset-0 h-full w-full text-accent-400/25" />
@@ -35,7 +39,9 @@ export function Hero() {
             процесс.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <ButtonLink href="#quiz" size="lg">
+            {/* На телефоне кнопка спрятана: карточка с тем же первым вопросом
+                стоит сразу под ней, и кнопка лишь прокручивала мимо неё. */}
+            <ButtonLink href="#quiz" size="lg" className="hidden sm:inline-flex">
               Подобрать СРО за 1 минуту
             </ButtonLink>
             <ButtonLink href={LINKS.tel} variant="secondary" size="lg">
@@ -43,7 +49,7 @@ export function Hero() {
               Позвонить
             </ButtonLink>
           </div>
-          <p className="mt-6 text-sm text-neutral-500">
+          <p className="mt-6 text-sm text-neutral-600">
             Работаю по договору · Стоимость обсуждаем до начала работы · Конфиденциально
           </p>
         </Reveal>

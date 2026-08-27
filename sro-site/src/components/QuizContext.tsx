@@ -85,16 +85,28 @@ export function useQuiz(): QuizContextValue {
   return value
 }
 
-// Ответ на вопрос из героя: сохраняем выбор, открываем квиз на следующем
-// вопросе и прокручиваем к нему. Статус сбрасываем, иначе после отправленной
-// заявки посетитель увидит старый экран успеха вместо вопроса.
-export function useStartQuizFromHero() {
-  const { setAnswers, setStep, setStatus } = useQuiz()
+// Вход в квиз из другой секции: сохраняем готовый ответ, открываем квиз на
+// первом вопросе, который ещё без ответа, и прокручиваем к нему. Статус
+// сбрасываем, иначе после отправленной заявки посетитель увидит старый экран
+// успеха вместо вопроса.
+//
+// Так работают и первый вопрос в герое (ответ на первый — откроется второй),
+// и сценарии в секции «Типовые ситуации» (ответ на любой вопрос — квиз
+// начнётся с того, что осталось выяснить).
+export function useStartQuiz() {
+  const { setAnswers, setStep, setStatus, status } = useQuiz()
 
   return (questionId: string, option: string) => {
-    setAnswers((prev) => ({ ...prev, [questionId]: option }))
+    setAnswers((prev) => {
+      // Заявка уже отправлена — значит это новая история: старые ответы
+      // не тащим, иначе посетитель попадёт сразу на форму контактов.
+      const base = status === 'done' ? {} : prev
+      const next = { ...base, [questionId]: option }
+      const firstUnanswered = QUESTIONS.findIndex((q) => !next[q.id])
+      setStep(firstUnanswered === -1 ? QUESTIONS.length : firstUnanswered)
+      return next
+    })
     setStatus('idle')
-    setStep(1)
 
     const target = document.getElementById('quiz')
     if (!target) return

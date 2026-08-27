@@ -1,6 +1,7 @@
 import { CheckCircle2 } from 'lucide-react'
-import { DraftingTools } from './illustrations'
+import { IMAGES } from '../content/images'
 import { ButtonLink } from './ui/Button'
+import { Figure } from './ui/Figure'
 import { Reveal } from './ui/Reveal'
 import { Section } from './ui/Section'
 
@@ -16,7 +17,7 @@ const DOCUMENTS = [
 
 export function Documents() {
   return (
-    <Section id="documents">
+    <Section id="documents" size="compact" className="bg-neutral-50/55">
       <div className="grid items-center gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-14">
         <Reveal>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent-600">
@@ -32,10 +33,13 @@ export function Documents() {
           <ButtonLink href="#quiz" size="lg" className="mt-7">
             Проверить мои документы
           </ButtonLink>
-          {/* Иллюстрация: чертёж и инструменты проектировщика */}
-          <div className="mt-9 max-w-md rounded-2xl border border-accent-100 bg-gradient-to-br from-accent-50/80 to-white p-5 sm:p-6">
-            <DraftingTools className="h-auto w-full text-accent-600" />
-          </div>
+          {/* Проектирование: архивный чертёж вместо прежней декоративной SVG —
+              в одной колонке два изображения подряд читаются как свалка. */}
+          <Figure
+            {...IMAGES.design}
+            className="mt-9 max-w-md"
+            caption="Архивная синька из фондов городского архива Амстердама: разрез жилого дома."
+          />
         </Reveal>
         <Reveal delay={100}>
           <div className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-card sm:p-8">

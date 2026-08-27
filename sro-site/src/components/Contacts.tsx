@@ -1,60 +1,20 @@
-import { Globe, Mail, Phone } from 'lucide-react'
 import { CONFIGURED, CONTACTS, LINKS, externalLinkProps } from '../content/contacts'
 import { MaxIcon, TelegramIcon, WhatsAppIcon } from './icons'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
 
-const CARDS = [
-  {
-    icon: Phone,
-    label: 'Телефон',
-    value: CONTACTS.phone,
-    href: LINKS.tel,
-    external: false,
-  },
-  {
-    icon: Mail,
-    label: 'E-mail',
-    value: CONTACTS.email,
-    href: LINKS.mail,
-    external: false,
-  },
-  {
-    icon: WhatsAppIcon,
-    label: 'WhatsApp',
-    value: CONTACTS.phone,
-    href: LINKS.whatsapp,
-    external: CONFIGURED.whatsapp,
-  },
-  {
-    icon: TelegramIcon,
-    label: 'Telegram',
-    value: 'Написать в Telegram',
-    href: LINKS.telegram,
-    external: CONFIGURED.telegram,
-  },
-  // Канал показывается только когда для него задана рабочая ссылка:
-  // пока в contacts.ts стоит заглушка, MAX не появляется на сайте вообще.
+// Канал попадает в список только когда для него настроена рабочая ссылка.
+const MESSENGERS = [
+  ...(CONFIGURED.whatsapp
+    ? [{ label: 'WhatsApp', hint: CONTACTS.phone, href: LINKS.whatsapp, icon: WhatsAppIcon }]
+    : []),
+  ...(CONFIGURED.telegram
+    ? [{ label: 'Telegram', hint: 'Написать в чат', href: LINKS.telegram, icon: TelegramIcon }]
+    : []),
   ...(CONFIGURED.max
-    ? [
-        {
-          icon: MaxIcon,
-          label: 'MAX',
-          value: 'Написать в MAX',
-          href: LINKS.max,
-          external: true,
-        },
-      ]
+    ? [{ label: 'MAX', hint: 'Написать в чат', href: LINKS.max, icon: MaxIcon }]
     : []),
 ]
-
-// Классы перечислены строками целиком: Tailwind собирает только те,
-// что реально встречаются в исходниках.
-const GRID_BY_COUNT: Record<number, string> = {
-  3: 'lg:grid-cols-3',
-  4: 'lg:grid-cols-4',
-  5: 'lg:grid-cols-5',
-}
 
 export function Contacts() {
   return (
@@ -62,33 +22,56 @@ export function Contacts() {
       <SectionHeading
         eyebrow="Контакты"
         title="Свяжитесь удобным способом"
-        subtitle="Телефон, почта или мессенджеры — отвечаю лично."
+        subtitle="Телефон, почта или мессенджеры — как вам удобнее."
       />
-      <div
-        className={`mt-10 grid gap-4 sm:grid-cols-2 ${GRID_BY_COUNT[CARDS.length] ?? 'lg:grid-cols-4'}`}
-      >
-        {CARDS.map((card, index) => (
-          <Reveal key={card.label} delay={(index % 5) * 60} className="h-full">
+      {/* Не пять одинаковых плиток: слева главный способ связи, справа —
+          мессенджеры списком. Телефон должен быть самым крупным элементом. */}
+      <div className="mx-auto mt-10 grid max-w-4xl gap-10 lg:grid-cols-2 lg:gap-16">
+        {/* Обе колонки в одном ритме: ярлык -> строки через тонкие
+            разделители. До этого левая начиналась сразу с телефона и висела
+            на другой базовой линии, чем ярлык «Мессенджеры» справа. */}
+        <Reveal>
+          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-neutral-600">
+            Позвонить или написать
+          </p>
+          <div className="mt-4 divide-y divide-neutral-200 border-y border-neutral-200">
             <a
-              href={card.href}
-              {...externalLinkProps(card.external)}
-              className="flex h-full flex-col items-start rounded-2xl border border-neutral-200 bg-white p-6 shadow-card transition-all duration-200 hover:-translate-y-1 hover:border-accent-200 hover:shadow-card-hover"
+              href={LINKS.tel}
+              className="block py-4 text-3xl font-bold tracking-tight text-neutral-950 transition-colors hover:text-accent-700 sm:text-4xl"
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent-50 text-accent-600">
-                <card.icon className="h-5 w-5" aria-hidden="true" />
-              </div>
-              <p className="mt-4 text-sm text-neutral-500">{card.label}</p>
-              <p className="mt-1 break-words font-semibold text-neutral-950">{card.value}</p>
+              {CONTACTS.phone}
             </a>
-          </Reveal>
-        ))}
+            <a
+              href={LINKS.mail}
+              className="block py-4 text-lg text-neutral-700 transition-colors hover:text-accent-700"
+            >
+              {CONTACTS.email}
+            </a>
+          </div>
+        </Reveal>
+
+        <Reveal delay={100}>
+          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-neutral-600">
+            Мессенджеры
+          </p>
+          <div className="mt-4 divide-y divide-neutral-200 border-y border-neutral-200">
+            {MESSENGERS.map((channel) => (
+              <a
+                key={channel.label}
+                href={channel.href}
+                {...externalLinkProps(true)}
+                className="group flex items-center gap-4 py-4 transition-colors duration-200 hover:bg-accent-50/40"
+              >
+                <channel.icon className="h-5 w-5 shrink-0 text-accent-600" />
+                <span className="min-w-0 flex-1">
+                  <span className="block font-medium text-neutral-950">{channel.label}</span>
+                  <span className="block text-sm text-neutral-600">{channel.hint}</span>
+                </span>
+              </a>
+            ))}
+          </div>
+        </Reveal>
       </div>
-      <Reveal className="mt-8">
-        <p className="flex items-center justify-center gap-2 text-center text-sm text-neutral-500">
-          <Globe className="h-4 w-4 text-accent-600" aria-hidden="true" />
-          Вступление в СРО во всех регионах России — работаю дистанционно
-        </p>
-      </Reveal>
     </Section>
   )
 }

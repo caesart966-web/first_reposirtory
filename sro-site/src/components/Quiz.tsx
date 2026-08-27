@@ -133,7 +133,7 @@ export function Quiz() {
   return (
     // Тёмная закрывающая секция: квиз поглотил отдельный финальный призыв,
     // чтобы на странице не было двух блоков «оставьте заявку» подряд.
-    <Section id="quiz" className="relative overflow-hidden bg-accent-950">
+    <Section id="quiz" size="key" className="relative overflow-hidden bg-accent-950">
       <CitySkyline className="pointer-events-none absolute inset-x-0 bottom-0 h-20 w-full text-white/[0.09] sm:h-28" />
       <div className="relative">
         <SectionHeading
@@ -255,7 +255,7 @@ export function Quiz() {
                   <button
                     type="button"
                     onClick={goBack}
-                    className="-my-2 inline-flex items-center gap-1 rounded-lg px-2 py-2.5 font-medium text-accent-600 transition hover:text-accent-700"
+                    className="-my-2 inline-flex items-center gap-1 rounded-xl px-2 py-2.5 font-medium text-accent-600 transition hover:text-accent-700"
                   >
                     <ChevronLeft className="h-4 w-4" aria-hidden="true" />
                     Назад
@@ -407,7 +407,7 @@ export function Quiz() {
                   </div>
                   <div aria-live="polite">
                     {error && (
-                      <p className="mt-4 flex items-start gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+                      <p className="mt-4 flex items-start gap-2 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
                         <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
                         {error}
                       </p>

@@ -22,6 +22,15 @@
       content="Помогу вступить в СРО без лишней переписки и ошибок в документах: подбор СРО, подготовка документов, НРС, НОК, личное сопровождение. Все регионы России."
     />
     <meta property="og:url" content="https://example.com/" />
+    <!-- Без JS reveal-блоки остались бы прозрачными: страница выглядела бы пустой -->
+    <noscript>
+      <style>
+        .reveal {
+          opacity: 1 !important;
+          transform: none !important;
+        }
+      </style>
+    </noscript>
   </head>
   <body>
     <div id="root"></div>
