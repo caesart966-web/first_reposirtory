@@ -199,5 +199,96 @@ class TestAllNegativeWarning(unittest.TestCase):
         self.assertEqual(all_negative_warning(rows), "")
 
 
+class TestReaderRobustness(unittest.TestCase):
+    """Файлы заказчика приходят разной степени аккуратности."""
+
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp(prefix="sro-test-"))
+
+    def test_leading_zero_is_restored(self) -> None:
+        """Excel теряет ведущий ноль в ИНН, если ячейка не помечена текстом."""
+        from sro_lookup.reader import restore_inn
+
+        self.assertEqual(restore_inn("274147157"), "0274147157")
+        self.assertEqual(restore_inn("26910573286"), "026910573286")
+        # Вслепую нули не дописываем: иначе любое число стало бы «ИНН».
+        self.assertEqual(restore_inn("12310"), "")
+        self.assertEqual(restore_inn("1234567890"), "")
+
+    def test_data_sheet_is_chosen_over_instructions(self) -> None:
+        """Данные могут лежать не на первом листе, а на втором."""
+        import openpyxl
+        from sro_lookup.reader import read_companies
+
+        path = self.tmp / "two_sheets.xlsx"
+        book = openpyxl.Workbook()
+        first = book.active
+        first.title = "Как пользоваться"
+        first.append(["Инструкция: файл содержит 2 листа"])
+        first.append(["Цвета: зелёный — есть СРО"])
+
+        data = book.create_sheet("Лиды")
+        data.append(["Приоритет", "Поставщик", "ИНН"])
+        data.append(["1. Высокий", 'ООО "МЕГАМЕЙД"', "7806479303"])
+        data.append(["2. Средний", 'АО "НЕВСКИЙ"', "7802148357"])
+        book.save(path)
+
+        companies = read_companies(path)
+        self.assertEqual(len(companies), 2)
+        # Наименование берётся из «Поставщик», а не из «Приоритет».
+        self.assertIn("МЕГАМЕЙД", companies[0][0])
+        self.assertNotIn("Высокий", companies[0][0])
+
+    def test_name_column_comes_from_header(self) -> None:
+        """При нескольких текстовых колонках заголовок решает, какая — имя."""
+        import openpyxl
+        from sro_lookup.reader import read_companies
+
+        path = self.tmp / "many_text.xlsx"
+        book = openpyxl.Workbook()
+        sheet = book.active
+        sheet.append(["Приоритет", "Наименование", "ИНН", "Регион", "Должность"])
+        sheet.append(["1. Срочно", "ТИМЕРКАЕВ РУСЛАН РУЗИЛЕВИЧ", "026910573286",
+                      "Республика Башкортостан", "ИП"])
+        book.save(path)
+
+        companies = read_companies(path)
+        self.assertEqual(companies, [("ТИМЕРКАЕВ РУСЛАН РУЗИЛЕВИЧ", "026910573286")])
+
+
+class TestSimpleTable(unittest.TestCase):
+    """Короткая таблица: одна строка на компанию, прямой ответ."""
+
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp(prefix="sro-test-"))
+
+    def test_one_row_per_company_with_all_sro_listed(self) -> None:
+        rows = [
+            {"name": "ООО «А»", "inn": "7806479303", "sro": "Ассоциация «Проектировщики»",
+             "number": "", "registry": "НОПРИЗ", "status": "", "join": None,
+             "note": "", "unchecked": False},
+            {"name": "ООО «А»", "inn": "7806479303", "sro": "Ассоциация «Строители»",
+             "number": "", "registry": "НОСТРОЙ", "status": "", "join": None,
+             "note": "", "unchecked": False},
+            {"name": "ООО «Б»", "inn": "7802148357", "sro": "", "number": "",
+             "registry": "", "status": "", "join": None, "note": "", "unchecked": False},
+            {"name": "ООО «В»", "inn": "7839058004", "sro": "", "number": "",
+             "registry": "", "status": "", "join": None, "note": "", "unchecked": True},
+        ]
+        path = self.tmp / "simple.xlsx"
+        write_report(rows, path, date(2026, 8, 25), simple=True)
+
+        sheet = openpyxl.load_workbook(path)["Членство в СРО"]
+        self.assertEqual([cell.value for cell in sheet[1]][:5],
+                         ["Поставщик", "ИНН", "Есть СРО", "В какой СРО", "Реестр"])
+        # Компания в двух СРО занимает одну строку, обе СРО перечислены.
+        self.assertEqual(sheet.cell(2, 3).value, "Да")
+        self.assertIn("Проектировщики", sheet.cell(2, 4).value)
+        self.assertIn("Строители", sheet.cell(2, 4).value)
+        self.assertEqual(sheet.cell(3, 3).value, "Нет")
+        # Недоступный реестр остаётся «не проверено», а не «Нет».
+        self.assertEqual(sheet.cell(4, 3).value, "не проверено")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

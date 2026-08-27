@@ -20,6 +20,15 @@ BASE_COLUMNS: list[tuple[str, int]] = [
     ("Результат проверки", 34),
 ]
 
+#: Короткая таблица: только ответ на вопрос, без реквизитов членства.
+SIMPLE_COLUMNS: list[tuple[str, int]] = [
+    ("Поставщик", 52),
+    ("ИНН", 15),
+    ("Есть СРО", 14),
+    ("В какой СРО", 52),
+    ("Реестр", 12),
+]
+
 FONT = "Arial"
 HEADER_FILL = PatternFill("solid", fgColor="1F3864")
 #: Компания не состоит ни в одной СРО — розовая заливка.
@@ -51,11 +60,98 @@ def all_negative_warning(rows: list[dict]) -> str:
     )
 
 
+def _write_simple(rows: list[dict], path: Path, checked_on: date) -> None:
+    """Короткая таблица: состоит или нет, и если да — где.
+
+    Одна строка на компанию: если компания состоит в нескольких СРО, они
+    перечисляются в одной ячейке, иначе таблица перестаёт быть простой.
+    """
+    order: list[str] = []
+    merged: dict[str, dict] = {}
+    for row in rows:
+        inn = row["inn"]
+        if inn not in merged:
+            order.append(inn)
+            merged[inn] = {
+                "name": row["name"], "inn": inn, "sro": [],
+                "registry": [], "unchecked": row.get("unchecked", False),
+            }
+        item = merged[inn]
+        if row.get("sro"):
+            item["sro"].append(row["sro"])
+            if row.get("registry") and row["registry"] not in item["registry"]:
+                item["registry"].append(row["registry"])
+        item["unchecked"] = item["unchecked"] and row.get("unchecked", False)
+
+    book = openpyxl.Workbook()
+    sheet = book.active
+    sheet.title = "Членство в СРО"
+
+    for index, (title, width) in enumerate(SIMPLE_COLUMNS, start=1):
+        cell = sheet.cell(1, index, title)
+        cell.font = Font(name=FONT, size=10, bold=True, color="FFFFFF")
+        cell.fill = HEADER_FILL
+        cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        cell.border = BORDER
+        sheet.column_dimensions[get_column_letter(index)].width = width
+    sheet.row_dimensions[1].height = 26
+
+    for line, inn in enumerate(order, start=2):
+        item = merged[inn]
+        if item["unchecked"]:
+            answer, fill = "не проверено", UNCHECKED_FILL
+        elif item["sro"]:
+            answer, fill = "Да", YES_FILL
+        else:
+            answer, fill = "Нет", NO_SRO_FILL
+
+        values = [
+            item["name"], inn, answer,
+            "\n".join(item["sro"]), ", ".join(item["registry"]),
+        ]
+        for index, value in enumerate(values, start=1):
+            cell = sheet.cell(line, index, value)
+            cell.font = Font(name=FONT, size=10, bold=index == 3)
+            cell.border = BORDER
+            cell.alignment = Alignment(
+                vertical="top",
+                wrap_text=index in (1, 4),
+                horizontal="center" if index in (2, 3, 5) else "left",
+            )
+            if index == 3:
+                cell.fill = fill
+        sheet.cell(line, 2).number_format = "@"
+
+    warning = all_negative_warning(rows)
+    if warning:
+        cell = sheet.cell(len(order) + 3, 1, warning)
+        cell.font = Font(name=FONT, size=10, bold=True, color="9C0006")
+
+    note = sheet.cell(
+        len(order) + (5 if warning else 3), 1,
+        "Источник: открытые реестры reestr.nostroy.ru и reestr.nopriz.ru. "
+        f"Проверено {checked_on.strftime('%d.%m.%Y')}. "
+        "«не проверено» — реестр не ответил, такую строку нужно перезапустить.",
+    )
+    note.font = Font(name=FONT, size=9, italic=True)
+
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = f"A1:{get_column_letter(len(SIMPLE_COLUMNS))}1"
+    book.save(path)
+
+
 def write_report(
-    rows: list[dict], path: Path, checked_on: date, target_label: str = ""
+    rows: list[dict],
+    path: Path,
+    checked_on: date,
+    target_label: str = "",
+    simple: bool = False,
 ) -> None:
     """Пишет отчёт. target_label добавляет колонку «Состоит в <СРО>» первой
     после ИНН — это главный ответ, и искать его в конце таблицы неудобно."""
+    if simple:
+        return _write_simple(rows, path, checked_on)
+
     columns = list(BASE_COLUMNS)
     target_at = 0
     if target_label:

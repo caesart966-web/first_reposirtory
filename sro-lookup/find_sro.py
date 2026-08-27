@@ -37,6 +37,11 @@ def main() -> None:
     parser.add_argument("--output", help="куда записать результат")
     parser.add_argument("--rps", type=float, default=1.0, help="запросов в секунду к реестру")
     parser.add_argument(
+        "--simple",
+        action="store_true",
+        help="короткая таблица: поставщик, ИНН, есть СРО, в какой",
+    )
+    parser.add_argument(
         "--target-sro",
         default="",
         help='отдельная колонка «состоит ли в этой СРО», например: --target-sro "ОРС"',
@@ -63,7 +68,9 @@ def main() -> None:
     rows = lookup_companies(companies, settings)
     if args.target_sro:
         rows = mark_target(rows, args.target_sro)
-    write_report(rows, target, date.today(), target_label=args.target_sro)
+    write_report(
+        rows, target, date.today(), target_label=args.target_sro, simple=args.simple
+    )
 
     found = sum(1 for row in rows if row["sro"])
     no_sro = {row["inn"] for row in rows if not row["sro"] and not row["unchecked"]}
