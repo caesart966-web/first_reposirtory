@@ -43,22 +43,52 @@ def duotone(img: Image.Image) -> Image.Image:
     return Image.merge("RGB", (gray, gray, gray)).point(lut)
 
 
+def split_alpha(img: Image.Image) -> tuple[Image.Image, Image.Image | None]:
+    """Отделяем прозрачность, если она есть.
+
+    Вырезанные PNG (весы, печати с rawpixel) приходят с альфой. Простой
+    convert("RGB") залил бы прозрачные пиксели чёрным, и вместо аккуратного
+    объекта получился бы чёрный прямоугольник. Поэтому альфу снимаем заранее,
+    обрабатываем только цвет и возвращаем её на место в конце.
+    """
+    if img.mode in ("RGBA", "LA") or "transparency" in img.info:
+        rgba = img.convert("RGBA")
+        return rgba.convert("RGB"), rgba.getchannel("A")
+    return img.convert("RGB"), None
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("source", type=Path, help="исходный файл (jpg/png/webp)")
     ap.add_argument("name", help="имя без расширения: design | construction | survey | legal")
     ap.add_argument("--width", type=int, default=1200)
     ap.add_argument("--color", action="store_true", help="оставить в цвете (акцентный кадр)")
+    ap.add_argument(
+        "--flatten",
+        action="store_true",
+        help="положить прозрачный объект на белый фон вместо сохранения альфы",
+    )
     ap.add_argument("--webp-quality", type=int, default=82)
     ap.add_argument("--avif-quality", type=int, default=55)
     args = ap.parse_args()
 
-    img = Image.open(args.source).convert("RGB")
+    img, alpha = split_alpha(Image.open(args.source))
     if not args.color:
         img = duotone(img)
     if img.width != args.width:
         height = round(img.height * args.width / img.width)
         img = img.resize((args.width, height), Image.LANCZOS)
+        if alpha is not None:
+            alpha = alpha.resize((args.width, height), Image.LANCZOS)
+    if alpha is not None:
+        if args.flatten:
+            # Кладём объект на белый: так он ведёт себя как обычная фотография.
+            white = Image.new("RGB", img.size, (255, 255, 255))
+            white.paste(img, mask=alpha)
+            img = white
+        else:
+            img = img.convert("RGBA")
+            img.putalpha(alpha)
 
     OUT.mkdir(parents=True, exist_ok=True)
     webp, avif = OUT / f"{args.name}.webp", OUT / f"{args.name}.avif"

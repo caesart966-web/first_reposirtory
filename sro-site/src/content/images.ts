@@ -2,12 +2,13 @@
 // месте: alt, размеры и пути нужны и в разметке, и в учёте лицензий
 // (public/img/CREDITS.md), и расходиться они не должны.
 //
-// ВНИМАНИЕ: construction и survey — боевые кадры, design и legal пока
-// подписанные заглушки из scripts/make-image-placeholders.py. Боевые кадры
-// обрабатываются scripts/prepare-photo.py и кладутся под теми же именами;
-// менять разметку при замене не нужно, кроме width/height, если пропорция
-// другая. Источник и лицензия установленных кадров ещё не подтверждены —
-// см. public/img/CREDITS.md, до этого сайт публиковать нельзя.
+// ВНИМАНИЕ: construction и survey — боевые кадры, источники и лицензии
+// подтверждены (см. public/img/CREDITS.md). design и legal пока подписанные
+// заглушки из scripts/make-image-placeholders.py: их источники известны, но
+// скачать файлы из этого окружения нельзя — политика egress блокирует
+// unsplash.com и rawpixel.com. Боевые кадры обрабатываются
+// scripts/prepare-photo.py и кладутся под теми же именами; менять разметку
+// при замене не нужно, кроме width/height, если пропорция другая.
 export type PageImage = {
   src: string
   srcAvif: string
