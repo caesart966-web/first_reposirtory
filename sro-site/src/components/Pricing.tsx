@@ -36,7 +36,7 @@ const PLANS = [
 
 export function Pricing() {
   return (
-    <Section id="pricing" className="bg-neutral-50/70">
+    <Section id="pricing" className="bg-neutral-50/55">
       <SectionHeading
         eyebrow="Стоимость"
         title="Форматы работы"

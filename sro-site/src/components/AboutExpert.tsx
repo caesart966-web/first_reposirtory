@@ -53,18 +53,18 @@ export function AboutExpert() {
 
         <Reveal delay={100}>
           <div className="rounded-2xl border border-neutral-200 bg-neutral-50/70 p-6">
-            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-neutral-500">
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-neutral-600">
               Реквизиты
             </p>
             <dl className="mt-4 space-y-3 text-sm">
               {REQUISITE_ROWS.map((row) => (
                 <div key={row.label} className="flex justify-between gap-4 border-b border-neutral-200 pb-3 last:border-0 last:pb-0">
-                  <dt className="text-neutral-500">{row.label}</dt>
+                  <dt className="text-neutral-600">{row.label}</dt>
                   <dd className="text-right font-medium text-neutral-900">{row.value}</dd>
                 </div>
               ))}
             </dl>
-            <p className="mt-5 text-sm text-neutral-500">
+            <p className="mt-5 text-sm text-neutral-600">
               Работаю по договору. Все договорённости — письменно, до начала работы.
             </p>
           </div>

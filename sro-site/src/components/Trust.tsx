@@ -12,7 +12,7 @@ const ITEMS = [
 
 export function Trust() {
   return (
-    <section className="border-y border-neutral-200/70 bg-neutral-50/70 py-10">
+    <section className="border-y border-neutral-200/70 bg-neutral-50/55 py-10">
       <Reveal className="mx-auto grid w-full max-w-5xl grid-cols-2 gap-8 px-4 sm:px-6 lg:grid-cols-4 lg:px-8">
         {ITEMS.map((item) => (
           <div key={item.label}>
@@ -25,7 +25,7 @@ export function Trust() {
             >
               {item.value}
             </p>
-            <p className="mt-1 text-sm text-neutral-500">{item.label}</p>
+            <p className="mt-1 text-sm text-neutral-600">{item.label}</p>
           </div>
         ))}
       </Reveal>

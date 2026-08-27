@@ -98,7 +98,7 @@ const LEGAL = [
 
 export function Services() {
   return (
-    <Section id="services" className="bg-neutral-50/70">
+    <Section id="services" className="bg-neutral-50/55">
       <SectionHeading
         eyebrow="Услуги"
         title="С чем помогу"
@@ -109,7 +109,7 @@ export function Services() {
         {GROUPS.map((group) => (
           <div key={group.title}>
             <Reveal>
-              <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-neutral-500">
+              <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-neutral-600">
                 {group.title}
               </h3>
             </Reveal>
@@ -131,7 +131,7 @@ export function Services() {
       </div>
 
       <Reveal className="mt-12 border-t border-neutral-200 pt-8">
-        <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-neutral-500">
+        <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-neutral-600">
           Смежные юридические задачи
         </h3>
         <div className="mt-5 grid gap-x-10 gap-y-4 sm:grid-cols-2">
@@ -140,7 +140,7 @@ export function Services() {
               <service.icon className="mt-0.5 h-5 w-5 shrink-0 text-neutral-400" aria-hidden="true" />
               <p className="text-sm text-neutral-700">
                 <span className="font-medium text-neutral-950">{service.title}</span>{' '}
-                <span className="text-neutral-500">— {service.text}</span>
+                <span className="text-neutral-600">— {service.text}</span>
               </p>
             </div>
           ))}

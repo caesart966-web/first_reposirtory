@@ -26,7 +26,7 @@ const STEPS = [
 
 export function Process() {
   return (
-    <Section id="process" size="compact" className="bg-neutral-50/70">
+    <Section id="process" size="compact" className="bg-neutral-50/55">
       <SectionHeading eyebrow="Процесс" title="Как проходит работа" />
       <div className="relative mt-12">
         <div

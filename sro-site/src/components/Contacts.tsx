@@ -41,14 +41,14 @@ export function Contacts() {
           >
             {CONTACTS.email}
           </a>
-          <p className="mt-6 flex items-center gap-2 text-sm text-neutral-500">
+          <p className="mt-6 flex items-center gap-2 text-sm text-neutral-600">
             <Globe className="h-4 w-4 shrink-0 text-neutral-400" aria-hidden="true" />
             Все регионы России, дистанционно
           </p>
         </Reveal>
 
         <Reveal delay={100}>
-          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-neutral-500">
+          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-neutral-600">
             Мессенджеры
           </p>
           <div className="mt-4 divide-y divide-neutral-200 border-y border-neutral-200">
@@ -62,7 +62,7 @@ export function Contacts() {
                 <channel.icon className="h-5 w-5 shrink-0 text-accent-600" />
                 <span className="min-w-0 flex-1">
                   <span className="block font-medium text-neutral-950">{channel.label}</span>
-                  <span className="block text-sm text-neutral-500">{channel.hint}</span>
+                  <span className="block text-sm text-neutral-600">{channel.hint}</span>
                 </span>
               </a>
             ))}

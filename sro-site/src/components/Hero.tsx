@@ -16,6 +16,10 @@ export function Hero() {
   return (
     <section className="relative overflow-hidden">
       <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
+        {/* Белая вуаль поверх фоновой гравюры: на первом экране уже работают
+            сетка чертежа и два размытых пятна, третий фоновый мотив под ними
+            даёт грязь. Ниже первого экрана Фемида проступает в полную силу. */}
+        <div className="absolute inset-0 bg-white/75" />
         <div className="absolute -top-32 right-[-10%] h-[420px] w-[420px] rounded-full bg-accent-100/60 blur-3xl" />
         <div className="absolute bottom-[-30%] left-[-10%] h-[360px] w-[360px] rounded-full bg-accent-50 blur-3xl" />
         <BlueprintGrid className="absolute inset-0 h-full w-full text-accent-400/25" />
@@ -43,7 +47,7 @@ export function Hero() {
               Позвонить
             </ButtonLink>
           </div>
-          <p className="mt-6 text-sm text-neutral-500">
+          <p className="mt-6 text-sm text-neutral-600">
             Работаю по договору · Стоимость обсуждаем до начала работы · Конфиденциально
           </p>
         </Reveal>
