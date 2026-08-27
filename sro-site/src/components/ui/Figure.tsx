@@ -24,6 +24,10 @@ type FigureProps = {
   // cover обрезает кадр под рамку — так и надо фотографии. Вырезанному объекту
   // на прозрачном фоне (весы, печать) обрезка отрубает края, поэтому ему contain.
   fit?: 'cover' | 'contain'
+  // frame=false — для вырезанных объектов: рамка с фоном превращала прозрачный
+  // объект в «серую плашку», которая читалась как незагрузившаяся картинка.
+  // Без рамки объект стоит прямо на фоне секции, как гравюра Фемиды.
+  frame?: boolean
   priority?: boolean // true только для первого экрана
   className?: string
 }
@@ -37,13 +41,18 @@ export function Figure({
   caption,
   ratio = 'aspect-[4/3]',
   fit = 'cover',
+  frame = true,
   priority = false,
   className = '',
 }: FigureProps) {
   return (
     <figure className={className}>
       <div
-        className={`overflow-hidden rounded-2xl border border-neutral-200/80 bg-neutral-100 ${ratio}`}
+        className={
+          frame
+            ? `overflow-hidden rounded-2xl border border-neutral-200/80 bg-neutral-100 ${ratio}`
+            : ratio
+        }
       >
         <picture>
           {srcAvif && <source type="image/avif" srcSet={srcAvif} />}

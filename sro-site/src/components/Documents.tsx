@@ -17,7 +17,7 @@ const DOCUMENTS = [
 
 export function Documents() {
   return (
-    <Section id="documents" size="compact">
+    <Section id="documents" size="compact" className="bg-neutral-50/55">
       <div className="grid items-center gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-14">
         <Reveal>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent-600">
@@ -38,7 +38,7 @@ export function Documents() {
           <Figure
             {...IMAGES.design}
             className="mt-9 max-w-md"
-            caption="Проектная документация: собираю комплект под требования конкретной СРО."
+            caption="Архивная синька из фондов городского архива Амстердама: разрез жилого дома."
           />
         </Reveal>
         <Reveal delay={100}>

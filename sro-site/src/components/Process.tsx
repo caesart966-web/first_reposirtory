@@ -28,7 +28,7 @@ const STEPS = [
 
 export function Process() {
   return (
-    <Section id="process" size="compact" className="bg-neutral-50/55">
+    <Section id="process" size="compact">
       <SectionHeading eyebrow="Процесс" title="Как проходит работа" />
       {/* Стройка: широкая полоса отделяет заголовок от шагов и задаёт секции
           масштаб — четыре мелкие карточки подряд иначе читаются как список. */}

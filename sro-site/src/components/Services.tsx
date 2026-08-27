@@ -45,7 +45,7 @@ const GROUPS: ServiceGroup[] = [
       {
         icon: FileText,
         title: 'Подготовка документов',
-        text: 'Соберу и проверю полный пакет, чтобы свести к минимуму риск замечаний и возвратов.',
+        text: 'Соберу полный пакет и выверю каждый документ перед подачей.',
       },
       {
         icon: ShieldCheck,
@@ -126,28 +126,44 @@ export function Services() {
                 {group.title}
               </h3>
             </Reveal>
-            <div className="mt-5 grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
-              {group.items.map((service, index) => (
-                <Reveal key={service.title} delay={(index % 4) * 70} className="h-full">
-                  <article className="h-full rounded-2xl border border-neutral-200 bg-white p-6 shadow-card transition-colors duration-200 hover:border-accent-300">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent-50 text-accent-600">
-                      <service.icon className="h-5 w-5" aria-hidden="true" />
-                    </div>
-                    <h4 className="mt-5 font-semibold text-neutral-950">{service.title}</h4>
-                    <p className="mt-2 text-sm leading-relaxed text-neutral-600">{service.text}</p>
-                  </article>
+            {/* Группа с фото: снимок — колонка в общей сетке, а не сирота под
+                ней. Полупустой ряд с одинокой картинкой был главной «рыхлостью»
+                страницы. Карточки при этом встают 2×2 рядом с фото. */}
+            <div
+              className={`mt-5 grid gap-4 sm:gap-5 ${
+                group.figure
+                  ? 'sm:grid-cols-2 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]'
+                  : 'sm:grid-cols-2 lg:grid-cols-4'
+              }`}
+            >
+              {group.figure && (
+                <Reveal className="sm:col-span-2 lg:col-span-1 lg:row-span-1">
+                  <Figure
+                    {...group.figure}
+                    caption="Инженерные изыскания — отдельный вид СРО со своими требованиями к специалистам."
+                  />
                 </Reveal>
-              ))}
+              )}
+              <div
+                className={
+                  group.figure
+                    ? 'grid gap-4 sm:col-span-2 sm:grid-cols-2 sm:gap-5 lg:col-span-1'
+                    : 'contents'
+                }
+              >
+                {group.items.map((service, index) => (
+                  <Reveal key={service.title} delay={(index % 4) * 70} className="h-full">
+                    <article className="h-full rounded-2xl border border-neutral-200 bg-white p-6 shadow-card transition-colors duration-200 hover:border-accent-300">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent-50 text-accent-600">
+                        <service.icon className="h-5 w-5" aria-hidden="true" />
+                      </div>
+                      <h4 className="mt-5 font-semibold text-neutral-950">{service.title}</h4>
+                      <p className="mt-2 text-sm leading-relaxed text-neutral-600">{service.text}</p>
+                    </article>
+                  </Reveal>
+                ))}
+              </div>
             </div>
-            {group.figure && (
-              <Reveal className="mt-6">
-                <Figure
-                  {...group.figure}
-                  className="max-w-sm"
-                  caption="Инженерные изыскания — отдельный вид СРО со своими требованиями к специалистам."
-                />
-              </Reveal>
-            )}
           </div>
         ))}
       </div>
@@ -156,21 +172,27 @@ export function Services() {
         <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-neutral-600">
           Смежные юридические задачи
         </h3>
-        <div className="mt-5 grid gap-x-10 gap-y-4 sm:grid-cols-2">
-          {LEGAL.map((service) => (
-            <div key={service.title} className="flex items-start gap-3">
-              <service.icon className="mt-0.5 h-5 w-5 shrink-0 text-neutral-400" aria-hidden="true" />
-              <p className="text-sm text-neutral-700">
-                <span className="font-medium text-neutral-950">{service.title}</span>{' '}
-                <span className="text-neutral-600">— {service.text}</span>
-              </p>
-            </div>
-          ))}
+        {/* Список слева, весы справа: раньше вырезанный объект стоял сиротой
+            под списком на серой плашке — читалось как незагрузившаяся картинка.
+            Без рамки он работает как гравюра, в паре с фоновой Фемидой. */}
+        <div className="mt-5 grid gap-8 lg:grid-cols-[minmax(0,8fr)_minmax(0,4fr)] lg:items-center">
+          <div className="grid gap-x-10 gap-y-4 sm:grid-cols-2">
+            {LEGAL.map((service) => (
+              <div key={service.title} className="flex items-start gap-3">
+                <service.icon className="mt-0.5 h-5 w-5 shrink-0 text-neutral-400" aria-hidden="true" />
+                <p className="text-sm text-neutral-700">
+                  <span className="font-medium text-neutral-950">{service.title}</span>{' '}
+                  <span className="text-neutral-600">— {service.text}</span>
+                </p>
+              </div>
+            ))}
+          </div>
+          <Figure
+            {...IMAGES.legal}
+            frame={false}
+            className="max-w-[170px] justify-self-center sm:max-w-[220px] lg:max-w-[260px]"
+          />
         </div>
-        {/* Юридическая часть: та же графика, что и в подложке — весы, а не
-            фото ноутбука с молотком. Заменяет прежнюю декоративную SVG:
-            два рисунка в одном блоке спорили друг с другом. */}
-        <Figure {...IMAGES.legal} className="mt-8 max-w-xs" />
       </Reveal>
     </Section>
   )

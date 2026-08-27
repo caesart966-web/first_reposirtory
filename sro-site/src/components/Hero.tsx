@@ -39,7 +39,9 @@ export function Hero() {
             процесс.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <ButtonLink href="#quiz" size="lg">
+            {/* На телефоне кнопка спрятана: карточка с тем же первым вопросом
+                стоит сразу под ней, и кнопка лишь прокручивала мимо неё. */}
+            <ButtonLink href="#quiz" size="lg" className="hidden sm:inline-flex">
               Подобрать СРО за 1 минуту
             </ButtonLink>
             <ButtonLink href={LINKS.tel} variant="secondary" size="lg">

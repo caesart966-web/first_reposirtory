@@ -3,14 +3,18 @@ import { Reveal } from './ui/Reveal'
 
 // Лозунги вроде «прозрачная стоимость» ничего не сообщают: их пишут все.
 // Полоса под первым экраном показывает факты, которые можно проверить.
+// Показываем только заполненные факты: четыре плейсхолдера в квадратных
+// скобках на первом экране читаются как сломанный сайт. Появятся цифры —
+// полоса вернётся сама, без правок разметки.
 const ITEMS = [
   { value: FACTS.yearsOfPractice, label: 'лет занимаюсь СРО' },
   { value: FACTS.companies, label: 'компаний сопровождал' },
   { value: FACTS.regions, label: 'регионов России' },
   { value: FACTS.responseTime, label: 'срок ответа на заявку' },
-]
+].filter((item) => !isPlaceholder(item.value))
 
 export function Trust() {
+  if (ITEMS.length === 0) return null
   return (
     <section className="border-y border-neutral-200/70 bg-neutral-50/55 py-10">
       <Reveal className="mx-auto grid w-full max-w-5xl grid-cols-2 gap-8 px-4 sm:px-6 lg:grid-cols-4 lg:px-8">

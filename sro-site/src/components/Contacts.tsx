@@ -1,4 +1,3 @@
-import { Globe } from 'lucide-react'
 import { CONFIGURED, CONTACTS, LINKS, externalLinkProps } from '../content/contacts'
 import { MaxIcon, TelegramIcon, WhatsAppIcon } from './icons'
 import { Reveal } from './ui/Reveal'
@@ -23,7 +22,7 @@ export function Contacts() {
       <SectionHeading
         eyebrow="Контакты"
         title="Свяжитесь удобным способом"
-        subtitle="Телефон, почта или мессенджеры — отвечаю лично."
+        subtitle="Телефон, почта или мессенджеры — как вам удобнее."
       />
       {/* Не пять одинаковых плиток: слева главный способ связи, справа —
           мессенджеры списком. Телефон должен быть самым крупным элементом. */}
@@ -41,10 +40,6 @@ export function Contacts() {
           >
             {CONTACTS.email}
           </a>
-          <p className="mt-6 flex items-center gap-2 text-sm text-neutral-600">
-            <Globe className="h-4 w-4 shrink-0 text-neutral-400" aria-hidden="true" />
-            Все регионы России, дистанционно
-          </p>
         </Reveal>
 
         <Reveal delay={100}>
