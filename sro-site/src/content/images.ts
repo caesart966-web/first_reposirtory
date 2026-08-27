@@ -16,6 +16,7 @@ export type PageImage = {
   width: number
   height: number
   ratio: string
+  fit?: 'cover' | 'contain'
 }
 
 export const IMAGES = {
@@ -46,9 +47,13 @@ export const IMAGES = {
   legal: {
     src: './img/legal.webp',
     srcAvif: './img/legal.avif',
-    alt: 'Гравюра: аптекарские весы, печать и документ',
+    alt: 'Штриховой рисунок: равновесные аптекарские весы с двумя чашами',
+    // Размеры родные, а не 1200×800 из ТЗ: это вырезанный объект, а не
+    // фотография — подгонять его под прямоугольник нечем, обрезка отрубила бы
+    // чаши и основание. Поэтому contain внутри рамки 4:3.
     width: 1200,
-    height: 800,
-    ratio: 'aspect-[3/2]',
+    height: 1238,
+    ratio: 'aspect-[4/3]',
+    fit: 'contain',
   },
 } satisfies Record<string, PageImage>

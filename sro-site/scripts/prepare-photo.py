@@ -72,6 +72,31 @@ def normalize(gray: Image.Image) -> Image.Image:
     return gray.point(lambda v: min(255, max(0, int((v - low) * scale))))
 
 
+CUTOUT_BLACK, CUTOUT_WHITE = 50, 230
+
+
+def cutout(img: Image.Image) -> tuple[Image.Image, Image.Image]:
+    """Восстанавливает прозрачность штриховой графики по яркости.
+
+    Вырезанные PNG часто приходят с УЖЕ ЗАПЕЧЁННОЙ в пиксели шашечкой: экспорт
+    или скриншот сплющил альфу в серо-белую клетку. Дуотон такого файла даёт
+    двухцветную сетку вместо чистого объекта.
+
+    Для чёрного штриха на светлом фоне это лечится: светлое — фон, тёмное —
+    объект. Строим альфу из яркости и заливаем сам объект фирменным тёмным
+    цветом, чтобы по краям не лезла серая кайма от сглаживания.
+
+    Работает только для контрастной штриховой графики. Для фотографии не
+    годится и не предназначено.
+    """
+    gray = img.convert("L")
+    span = CUTOUT_WHITE - CUTOUT_BLACK
+    alpha = gray.point(
+        lambda v: 255 if v <= CUTOUT_BLACK else (0 if v >= CUTOUT_WHITE else round(255 * (CUTOUT_WHITE - v) / span))
+    )
+    return Image.new("RGB", img.size, DARK), alpha
+
+
 def split_alpha(img: Image.Image) -> tuple[Image.Image, Image.Image | None]:
     """Отделяем прозрачность, если она есть.
 
@@ -93,6 +118,11 @@ def main() -> int:
     ap.add_argument("--width", type=int, default=1200)
     ap.add_argument("--color", action="store_true", help="оставить в цвете (акцентный кадр)")
     ap.add_argument(
+        "--cutout",
+        action="store_true",
+        help="штриховая графика: восстановить прозрачность из яркости и залить объект accent-900",
+    )
+    ap.add_argument(
         "--normalize",
         action="store_true",
         help="растянуть гистограмму перед дуотоном (для малоконтрастных исходников)",
@@ -107,7 +137,13 @@ def main() -> int:
     args = ap.parse_args()
 
     img, alpha = split_alpha(Image.open(args.source))
-    if not args.color:
+    if args.cutout:
+        if alpha is not None:
+            # Настоящая альфа есть — восстанавливать нечего, только зальём тон
+            img = Image.new("RGB", img.size, DARK)
+        else:
+            img, alpha = cutout(img)
+    elif not args.color:
         img = duotone(img, stretch=args.normalize)
     if img.width != args.width:
         height = round(img.height * args.width / img.width)
