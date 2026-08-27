@@ -27,19 +27,27 @@ export function Contacts() {
       {/* Не пять одинаковых плиток: слева главный способ связи, справа —
           мессенджеры списком. Телефон должен быть самым крупным элементом. */}
       <div className="mx-auto mt-10 grid max-w-4xl gap-10 lg:grid-cols-2 lg:gap-16">
+        {/* Обе колонки в одном ритме: ярлык -> строки через тонкие
+            разделители. До этого левая начиналась сразу с телефона и висела
+            на другой базовой линии, чем ярлык «Мессенджеры» справа. */}
         <Reveal>
-          <a
-            href={LINKS.tel}
-            className="block text-3xl font-bold tracking-tight text-neutral-950 transition-colors hover:text-accent-700 sm:text-4xl"
-          >
-            {CONTACTS.phone}
-          </a>
-          <a
-            href={LINKS.mail}
-            className="mt-4 block text-lg text-neutral-700 transition-colors hover:text-accent-700"
-          >
-            {CONTACTS.email}
-          </a>
+          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-neutral-600">
+            Позвонить или написать
+          </p>
+          <div className="mt-4 divide-y divide-neutral-200 border-y border-neutral-200">
+            <a
+              href={LINKS.tel}
+              className="block py-4 text-3xl font-bold tracking-tight text-neutral-950 transition-colors hover:text-accent-700 sm:text-4xl"
+            >
+              {CONTACTS.phone}
+            </a>
+            <a
+              href={LINKS.mail}
+              className="block py-4 text-lg text-neutral-700 transition-colors hover:text-accent-700"
+            >
+              {CONTACTS.email}
+            </a>
+          </div>
         </Reveal>
 
         <Reveal delay={100}>

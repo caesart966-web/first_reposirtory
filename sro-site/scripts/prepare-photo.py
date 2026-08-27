@@ -34,14 +34,25 @@ LIGHT = (0xE6, 0xEC, 0xFF)  # accent-100
 WEBP_LIMIT_KB, AVIF_LIMIT_KB = 180, 120
 
 
-def duotone(img: Image.Image, stretch: bool = False) -> Image.Image:
-    """Обесцвечиваем и раскладываем яркость по градиенту DARK -> LIGHT."""
+# Нижние точки дуотона. По умолчанию accent-900; для кадров со сплошным тёмным
+# фоном (синька) есть светлее — иначе кадр читается тяжёлым прямоугольником
+# рядом с воздушными соседями.
+DARK_POINTS = {
+    "900": (0x1E, 0x2A, 0x75),
+    "800": (0x20, 0x2F, 0x93),
+    "700": (0x24, 0x39, 0xB8),
+    "600": (0x2F, 0x4B, 0xDE),
+}
+
+
+def duotone(img: Image.Image, stretch: bool = False, dark: tuple = DARK) -> Image.Image:
+    """Обесцвечиваем и раскладываем яркость по градиенту dark -> LIGHT."""
     gray = img.convert("L")
     if stretch:
         gray = normalize(gray)
     lut = []
     for channel in range(3):
-        lut += [round(DARK[channel] + (LIGHT[channel] - DARK[channel]) * v / 255) for v in range(256)]
+        lut += [round(dark[channel] + (LIGHT[channel] - dark[channel]) * v / 255) for v in range(256)]
     return Image.merge("RGB", (gray, gray, gray)).point(lut)
 
 
@@ -118,6 +129,12 @@ def main() -> int:
     ap.add_argument("--width", type=int, default=1200)
     ap.add_argument("--color", action="store_true", help="оставить в цвете (акцентный кадр)")
     ap.add_argument(
+        "--dark",
+        choices=sorted(DARK_POINTS),
+        default="900",
+        help="нижняя точка дуотона (оттенок accent-N); светлее — для кадров со сплошным тёмным фоном",
+    )
+    ap.add_argument(
         "--cutout",
         action="store_true",
         help="штриховая графика: восстановить прозрачность из яркости и залить объект accent-900",
@@ -144,7 +161,7 @@ def main() -> int:
         else:
             img, alpha = cutout(img)
     elif not args.color:
-        img = duotone(img, stretch=args.normalize)
+        img = duotone(img, stretch=args.normalize, dark=DARK_POINTS[args.dark])
     if img.width != args.width:
         height = round(img.height * args.width / img.width)
         img = img.resize((args.width, height), Image.LANCZOS)
