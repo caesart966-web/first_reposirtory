@@ -579,11 +579,17 @@ _INNER_CITY_RE = re.compile(
 )
 
 
+#: Индекс, продублированный перед полным адресом: «197022  197022, г.СПб...».
+#: Так выгружают некоторые тендерные площадки, склеивая индекс и адрес.
+_DOUBLED_INDEX_RE = re.compile(r"^(\d{6})[\s,]+(?=\d{6}\s*,)")
+
+
 def tidy_address(value: Any) -> str:
     """Убирает из адреса административный шум, оставляя один читаемый адрес."""
     text = clean_text(value)
     if not text:
         return ""
+    text = _DOUBLED_INDEX_RE.sub("", text)
     text = _INNER_OKRUG_RE.sub("", text)
     text = _INNER_CITY_RE.sub(lambda match: f", г. {match.group(1).strip()}", text)
     text = re.sub(r"\s+", " ", text)

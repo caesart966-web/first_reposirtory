@@ -94,9 +94,11 @@ class TestReport(unittest.TestCase):
             {"name": "ООО «А»", "inn": "7813692784", "sro": "Ассоциация «СРО»",
              "number": "СРО-С-410-16122014", "registry": "НОСТРОЙ",
              "status": "Является членом СРО", "join": date(2023, 4, 12),
+             "address": "190000, г. Санкт-Петербург, ул. Примерная, д. 1",
              "note": "", "unchecked": False},
             {"name": "ООО «Б»", "inn": "7817158012", "sro": "", "number": "",
              "registry": "", "status": "", "join": None,
+             "address": "",
              "note": "ПРОВЕРКА НЕ ВЫПОЛНЕНА — нет связи с реестром: НОСТРОЙ, НОПРИЗ",
              "unchecked": True},
         ]
@@ -104,9 +106,11 @@ class TestReport(unittest.TestCase):
         write_report(rows, path, date(2026, 8, 20))
 
         sheet = openpyxl.load_workbook(path)["Членство в СРО"]
+        headers = [cell.value for cell in sheet[1]]
         self.assertEqual(sheet.cell(1, 3).value, "СРО")
         self.assertEqual(sheet.cell(2, 3).value, "Ассоциация «СРО»")
-        note = sheet.cell(3, 8).value
+        # Колонку ищем по заголовку: их состав меняется, номер — нет опора.
+        note = sheet.cell(3, headers.index("Результат проверки") + 1).value
         self.assertIn("НЕ ВЫПОЛНЕНА", note)
         self.assertNotIn("не состоит", note)
 

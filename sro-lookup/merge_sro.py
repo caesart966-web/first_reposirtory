@@ -26,8 +26,12 @@ from openpyxl.utils import get_column_letter
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from sro_lookup.reader import restore_inn
+from sro_lookup.textutils import tidy_address
 
 DEFAULT_COLUMNS = ("Телефон", "Email")
+#: Колонки, которые чистим при переносе: в выгрузках адрес приходит
+#: с продублированным индексом («197022  197022, г.СПб...»).
+CLEANED_COLUMNS = ("Адрес",)
 INN_HEADERS = ("инн",)
 
 
@@ -121,10 +125,13 @@ def main() -> None:
         if source:
             matched += 1
 
-        values = list(row) + [
-            (source[src_at[name]] if source and src_at[name] < len(source) else "")
-            for name in wanted
-        ]
+        extra = []
+        for name in wanted:
+            value = source[src_at[name]] if source and src_at[name] < len(source) else ""
+            if name in CLEANED_COLUMNS:
+                value = tidy_address(value)
+            extra.append(value)
+        values = list(row) + extra
         for index, value in enumerate(values, start=1):
             cell = sheet.cell(line, index, value)
             cell.font = Font(name="Arial", size=10)

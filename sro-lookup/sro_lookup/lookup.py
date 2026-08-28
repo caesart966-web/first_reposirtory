@@ -7,7 +7,7 @@ from pathlib import Path
 from .config import Settings
 from .logging_setup import get_logger
 from .registry import NOPRIZ_BASE, NOSTROY_BASE, NostroyClient
-from .textutils import shorten_company_name
+from .textutils import shorten_company_name, tidy_address
 
 logger = get_logger("sro-lookup")
 
@@ -61,6 +61,9 @@ def lookup_companies(companies: list[tuple[str, str]], settings: Settings) -> li
                             "registry": title,
                             "status": info.status_text,
                             "join": info.date_join,
+                            # Реестр отдаёт адрес вместе с записью о членстве —
+                            # он свежее адреса из исходного списка.
+                            "address": tidy_address(info.addresses[0]) if info.addresses else "",
                             "note": "" if info.sro_name else "СРО в ответе реестра не указана",
                             "unchecked": False,
                         }
@@ -75,6 +78,7 @@ def lookup_companies(companies: list[tuple[str, str]], settings: Settings) -> li
                         "registry": "",
                         "status": "",
                         "join": None,
+                        "address": "",
                         "note": (
                             "ПРОВЕРКА НЕ ВЫПОЛНЕНА — нет связи с реестром: "
                             + ", ".join(unreachable)

@@ -17,6 +17,7 @@ BASE_COLUMNS: list[tuple[str, int]] = [
     ("Реестр", 12),
     ("Статус членства", 24),
     ("Дата вступления", 16),
+    ("Адрес", 52),
     ("Результат проверки", 34),
 ]
 
@@ -27,6 +28,7 @@ SIMPLE_COLUMNS: list[tuple[str, int]] = [
     ("Есть СРО", 14),
     ("В какой СРО", 52),
     ("Реестр", 12),
+    ("Адрес", 52),
 ]
 
 FONT = "Arial"
@@ -74,13 +76,16 @@ def _write_simple(rows: list[dict], path: Path, checked_on: date) -> None:
             order.append(inn)
             merged[inn] = {
                 "name": row["name"], "inn": inn, "sro": [],
-                "registry": [], "unchecked": row.get("unchecked", False),
+                "registry": [], "address": row.get("address", ""),
+                "unchecked": row.get("unchecked", False),
             }
         item = merged[inn]
         if row.get("sro"):
             item["sro"].append(row["sro"])
             if row.get("registry") and row["registry"] not in item["registry"]:
                 item["registry"].append(row["registry"])
+        if not item["address"] and row.get("address"):
+            item["address"] = row["address"]
         item["unchecked"] = item["unchecked"] and row.get("unchecked", False)
 
     book = openpyxl.Workbook()
@@ -107,7 +112,7 @@ def _write_simple(rows: list[dict], path: Path, checked_on: date) -> None:
 
         values = [
             item["name"], inn, answer,
-            "\n".join(item["sro"]), ", ".join(item["registry"]),
+            "\n".join(item["sro"]), ", ".join(item["registry"]), item["address"],
         ]
         for index, value in enumerate(values, start=1):
             cell = sheet.cell(line, index, value)
@@ -115,7 +120,7 @@ def _write_simple(rows: list[dict], path: Path, checked_on: date) -> None:
             cell.border = BORDER
             cell.alignment = Alignment(
                 vertical="top",
-                wrap_text=index in (1, 4),
+                wrap_text=index in (1, 4, 6),
                 horizontal="center" if index in (2, 3, 5) else "left",
             )
             if index == 3:
@@ -174,7 +179,8 @@ def write_report(
     for line, row in enumerate(rows, start=2):
         values = [
             row["name"], row["inn"], row["sro"], row["number"],
-            row["registry"], row["status"], row["join"], row["note"],
+            row["registry"], row["status"], row["join"],
+            row.get("address", ""), row["note"],
         ]
         if target_label:
             values.insert(target_at - 1, row.get("target", ""))
@@ -184,7 +190,7 @@ def write_report(
             cell.border = BORDER
             cell.alignment = Alignment(
                 vertical="top",
-                wrap_text=index in (1, 3, 8),
+                wrap_text=index in (1, 3, 8, 9),
                 horizontal="center" if index in (2, 4, 5, 7) else "left",
             )
             if row.get("unchecked"):
