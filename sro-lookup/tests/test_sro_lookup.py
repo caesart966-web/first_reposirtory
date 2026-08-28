@@ -290,5 +290,55 @@ class TestSimpleTable(unittest.TestCase):
         self.assertEqual(sheet.cell(4, 3).value, "не проверено")
 
 
+class TestMerge(unittest.TestCase):
+    """Перенос колонок из исходного списка в отчёт по СРО."""
+
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp(prefix="sro-test-"))
+
+    def _make(self, name: str, rows: list[list]) -> Path:
+        import openpyxl
+
+        path = self.tmp / name
+        book = openpyxl.Workbook()
+        for row in rows:
+            book.active.append(row)
+        book.save(path)
+        return path
+
+    def test_columns_are_matched_by_inn(self) -> None:
+        import subprocess
+
+        sro = self._make("sro.xlsx", [
+            ["Название компании", "ИНН", "СРО"],
+            ["ООО «А»", "7806479303", "Ассоциация «Первая»"],
+            ["ООО «А»", "7806479303", "Ассоциация «Вторая»"],   # две СРО — две строки
+            ["ООО «Б»", "0274147157", "Ассоциация «Третья»"],   # ИНН с ведущим нулём
+        ])
+        # В источнике тот же ИНН записан числом, без ведущего нуля.
+        source = self._make("source.xlsx", [
+            ["Поставщик", "ИНН", "Телефон", "Email"],
+            ["ООО «А»", "7806479303", "+78124387788", "a@example.ru"],
+            ["ООО «Б»", 274147157, "+73472000000", "b@example.ru"],
+        ])
+        out = self.tmp / "merged.xlsx"
+
+        result = subprocess.run(
+            [sys.executable, str(Path(__file__).resolve().parent.parent / "merge_sro.py"),
+             "--sro", str(sro), "--source", str(source), "--output", str(out)],
+            capture_output=True, text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+        sheet = openpyxl.load_workbook(out)["Членство в СРО"]
+        headers = [cell.value for cell in sheet[1]]
+        self.assertEqual(headers[-2:], ["Телефон", "Email"])
+        # Обе строки одной компании получают её телефон.
+        self.assertEqual(sheet.cell(2, 4).value, "+78124387788")
+        self.assertEqual(sheet.cell(3, 4).value, "+78124387788")
+        # Ведущий ноль не мешает сопоставлению.
+        self.assertEqual(sheet.cell(4, 4).value, "+73472000000")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
