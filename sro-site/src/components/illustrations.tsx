@@ -8,20 +8,39 @@ export function CitySkyline({ className = '' }: Props) {
   )
 }
 
-export function DraftingTools({ className = '' }: Props) {
-  return (
-    <svg className={className} aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 420" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><g transform="rotate(-4 250 195)"><path d="M80,70 H420 V285 Q417,312 385,320 H80 Z" fill="currentColor" fillOpacity="0.04" strokeWidth="2.2"/><path d="M420,285 Q417,312 385,320 L420,285 Z" fill="currentColor" fillOpacity="0.07" stroke="none"/><path d="M420,285 L385,320" strokeWidth="1.5"/><path d="M96,98 V86 H108 M392,86 H404 V98 M96,292 V304 H108" strokeWidth="1.5"/><circle cx="352" cy="94" r="9"/><path d="M352,102 V86 M348.5,90.5 L352,86 L355.5,90.5" strokeWidth="1.5"/><rect x="137" y="208" width="85" height="65" fill="currentColor" fillOpacity="0.06" stroke="none"/><path d="M276,280 H320 V110 H130 V280 H244" strokeWidth="2.2"/><path d="M276,273 H313 V117 H137 V273 H244" strokeWidth="1.5"/><path d="M244,273 V280 M276,273 V280 M244,273 V241 M244,241 A32 32 0 0 1 276,273" strokeWidth="1.5"/><path d="M222,117 V196 M222,228 V273 M222,196 H254 M254,196 A32 32 0 0 1 222,228 M137,208 H190" strokeWidth="1.5"/><path d="M160,110 V117 M200,110 V117 M160,113.5 H200 M255,110 V117 M295,110 V117 M255,113.5 H295 M130,150 H137 M130,190 H137 M133.5,150 V190" strokeWidth="1.5"/><path d="M124,92 H326 M130,106 V88 M222,106 V88 M320,106 V88 M126,96 L134,88 M218,96 L226,88 M316,96 L324,88 M104,104 V214 M126,110 H100 M126,208 H100 M100,114 L108,106 M100,212 L108,204" strokeWidth="1.5"/><path d="M222,284 V296" strokeWidth="1.5"/><circle cx="222" cy="303" r="7" strokeWidth="1.5"/></g><path d="M414,222 A74 74 0 0 1 405,316" strokeWidth="1.5" strokeOpacity="0.45"/><g transform="rotate(-7 140 320)"><path d="M88,372 H198 L88,262 Z M108,350 H156 L108,302 Z" fill="currentColor" fillOpacity="0.05" fillRule="evenodd" strokeWidth="2.2"/><path d="M171,350.6 L165.3,356.3 M160,339.6 L156.4,343.2 M149,328.6 L145.4,332.2 M138,317.6 L132.3,323.3 M127,306.6 L123.4,310.2 M116,295.6 L112.4,299.2" strokeWidth="1.5"/></g><g transform="rotate(-11 320 355)"><path d="M262,348 H376 M262,362 H376 M376,348 V362 M384,348 V362" strokeWidth="2.2"/><path d="M384,348 C390,348 394,351 394,355 C394,359 390,362 384,362" strokeWidth="2.2"/><path d="M264,352.7 H374 M264,357.3 H374" strokeWidth="1.5" strokeOpacity="0.5"/><path d="M262,348 Q251,352.5 243,354.4 M262,362 Q251,357.5 243,355.6" strokeWidth="2.2"/><path d="M243,354.4 Q241,355 243,355.6" strokeWidth="1.5"/><path d="M242,355 H233" strokeWidth="2.2"/></g><g transform="rotate(6 400 180)"><circle cx="400" cy="88" r="6"/><path d="M400,94 V105"/><circle cx="400" cy="112" r="7"/><path d="M394,118 C384,168 372,220 362,266" strokeWidth="2.2"/><path d="M362,266 L358,276" strokeWidth="1.5"/><path d="M406,118 C416,166 426,210 431,246" strokeWidth="2.2"/><path d="M423.6,235.8 L434.4,234.2" strokeWidth="1.5"/><path d="M431,246 C433,254 435,262 436,268" strokeWidth="1.5"/><path d="M375,208 Q399,193 423,199" strokeWidth="1.5"/></g></svg>
-  )
-}
-
-export function SurveyLegal({ className = '' }: Props) {
-  return (
-    <svg className={className} aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 420" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M64 380Q157 387 248 380" strokeWidth="1.6" strokeOpacity=".5"/><path d="M198 116.5 266 95" strokeWidth="1.6" strokeOpacity=".8" strokeDasharray="10 10"/><circle cx="280" cy="91" r="6.5" strokeWidth="1.8"/><path d="M280 79.5V84.5M280 97.5V102.5M268.5 91H273.5M286.5 91H291.5" strokeWidth="1.8"/><path d="M146 179 92 379M174 179 226 379M158 179 180 378"/><rect x="132" y="170" width="56" height="10" rx="4"/><circle cx="145" cy="166.5" r="2.6" strokeWidth="1.7"/><circle cx="160" cy="166.5" r="2.6" strokeWidth="1.7"/><circle cx="175" cy="166.5" r="2.6" strokeWidth="1.7"/><rect x="138" y="152" width="44" height="10" rx="5"/><path d="M143 152V138Q143 126 148 120M177 152V138Q177 126 172 120"/><circle cx="160" cy="130" r="15" fill="currentColor" fillOpacity=".06"/><circle cx="160" cy="130" r="2.2" strokeWidth="1.8"/><g transform="rotate(-18 160 130)"><rect x="127" y="121" width="66" height="18" rx="9"/><path d="M184 122v16" strokeWidth="1.7"/><rect x="118.5" y="124.5" width="8.5" height="11" rx="2.5" strokeWidth="1.8"/><circle cx="169" cy="117.5" r="3.5" strokeWidth="1.8"/></g><path d="M160 183V234" strokeWidth="1.6" strokeDasharray="0.1 6"/><path d="M160 250C155 245 154.5 239 160 234.5C165.5 239 165 245 160 250Z" strokeWidth="1.8"/><g transform="translate(-8 0)"><path d="M308 380Q400 387 496 380" strokeWidth="1.6" strokeOpacity=".5"/><path d="M325 216V212Q325 204 333 204H439Q447 204 447 212V357Q447 365 439 365H435"/><path d="M411 216H321Q313 216 313 224V368Q313 376 321 376H427Q435 376 435 368V240Z"/><path d="M411 216Q412 237 435 240" strokeWidth="1.8"/><path d="M333 250H406M333 265H414M333 280H392" strokeWidth="1.7"/><circle cx="355" cy="329" r="23.5" fill="currentColor" fillOpacity=".06"/><circle cx="355" cy="329" r="16" strokeWidth="2" strokeDasharray="0.1 6.5"/><path d="M355 318.5Q357.5 326.5 365.5 329Q357.5 331.5 355 339.5Q352.5 331.5 344.5 329Q352.5 326.5 355 318.5Z" strokeWidth="1.8"/><path d="M383 349C388 337 396 335 398 345C399.5 351 406 352 410 346C413 341.5 419 341.5 422 347" strokeWidth="1.7"/><ellipse cx="474" cy="337" rx="15" ry="4.5"/><path d="M459 337C459 343 461 346 464 348M489 337C489 343 487 346 484 348"/><path d="M464 348C452 353 447 363 451 372Q453.5 378 461 378H487Q494.5 378 497 372C501 363 496 353 484 348"/><path d="M472 334C473 305 477 275 485 248C488 237 491 226 496 214"/><path d="M496 214C486 224 477 243 471 264C467.5 277 468 292 472.5 303"/><path d="M496 214C498 230 496.5 249 491.5 267C488 280 481 294 475.5 303"/><path d="M491 228C487.5 231 484 235.5 481 241M487 243C482 247 477.5 253 474.5 259M482.5 262C478.5 266 475.5 271 473.5 276" strokeWidth="1.5"/></g></svg>
-  )
-}
-
 export function BlueprintGrid({ className = '' }: Props) {
   return (
     <svg className={className} aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"><defs><radialGradient id="blueprintgrid-sro-fade" cx="46%" cy="44%" r="70%"><stop offset="0" stopColor="#fff"/><stop offset="0.65" stopColor="#fff" stopOpacity="0.6"/><stop offset="1" stopColor="#fff" stopOpacity="0"/></radialGradient><mask id="blueprintgrid-sro-gridmask"><rect width="800" height="600" fill="url(#blueprintgrid-sro-fade)"/></mask></defs><g mask="url(#blueprintgrid-sro-gridmask)" strokeWidth="1.5"><path strokeOpacity="0.07" d="M40 0V600M80 0V600M120 0V600M160 0V600M200 0V600M240 0V600M280 0V600M320 0V600M360 0V600M400 0V600M440 0V600M480 0V600M520 0V600M560 0V600M600 0V600M640 0V600M680 0V600M720 0V600M760 0V600M0 40H800M0 80H800M0 120H800M0 160H800M0 200H800M0 240H800M0 280H800M0 320H800M0 360H800M0 400H800M0 440H800M0 480H800M0 520H800M0 560H800"/><path strokeOpacity="0.11" d="M200 0V600M400 0V600M600 0V600M0 200H800M0 400H800"/></g><g strokeWidth="1.5" strokeOpacity="0.3" strokeDasharray="22 7 3 7"><path d="M170 220H684M200 132V520M430 420H736"/></g><g strokeWidth="2" strokeOpacity="0.5"><circle cx="704" cy="220" r="20"/><circle cx="200" cy="110" r="20"/><circle cx="756" cy="420" r="20"/></g><g fill="currentColor" stroke="none" fillOpacity="0.05"><path d="M192 212H360V228H208V460H192Z"/><path d="M440 212H560V228H440Z"/><path d="M460 412H560V428H460Z"/><path d="M620 412H680V428H620Z"/></g><path fill="currentColor" stroke="none" fillOpacity="0.04" d="M360 228H440A80 80 0 0 1 360 308Z"/><path fill="currentColor" stroke="none" fillOpacity="0.04" d="M620 412H560A60 60 0 0 1 620 352Z"/><g strokeWidth="2" strokeOpacity="0.55" fill="currentColor" fillOpacity="0.08"><rect x="187" y="207" width="26" height="26" rx="2"/><rect x="448" y="408" width="24" height="24" rx="2"/></g><g strokeWidth="2.2" strokeOpacity="0.75"><path d="M560 212H192V460"/><path d="M560 228H440M360 228H208V460"/><path d="M560 212V228M192 460H208M360 212V228M440 212V228"/><path d="M460 412H560M620 412H680M460 428H560M620 428H680M460 412V428M680 412V428M560 412V428M620 412V428"/></g><g strokeWidth="2" strokeOpacity="0.55"><path d="M360 228V308M440 228A80 80 0 0 1 360 308"/><path d="M620 412V352M560 412A60 60 0 0 1 620 352"/></g><g strokeWidth="1.5" strokeOpacity="0.5"><path d="M192 200V150M360 200V150M440 200V150M560 200V150M176 160H576"/><path d="M204 155L192 160L204 165M548 155L560 160L548 165"/><path d="M353 167L367 153M433 167L447 153"/><path d="M180 212H130M180 460H130M140 198V474"/><path d="M135 224L140 212L145 224M135 448L140 460L145 448"/><path d="M460 436V496M680 436V496M446 488H694"/><path d="M472 483L460 488L472 493M668 483L680 488L668 493"/></g><g strokeWidth="1.5" strokeOpacity="0.35"><path d="M630 120H650M640 110V130M94 508H114M104 498V518M442 72H462M452 62V82"/></g></svg>
+  )
+}
+
+// Знак в шапке: весы Фемиды. Пропорции сняты с той же гравюры Раймонди, что
+// стоит фоном страницы (размах коромысла принят за 1: чаша 0,50, подвес 0,48,
+// подъём центра 0,07) — но не обводка: штрих гравюры составляет около 1%
+// ширины объекта, а значку на 20-24px нужно примерно 5%, поэтому линии здесь
+// собственные. Пропорция бокса 46x26 — родная для весов, отсюда и широкий
+// плоский силуэт.
+export function ScalesMark({ className = '' }: Props) {
+  return (
+    <svg
+      className={className}
+      aria-hidden="true"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 46 26"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M23 1.8V5" />
+      <path d="M8.98 7 23 5l14.04 2" />
+      <path d="M8.98 7 1.99 21M8.98 7l6.99 14" />
+      <path d="M1.99 21a8.9 8.9 0 0 0 13.98 0" />
+      <path d="M1.99 21h13.98" />
+      <path d="M37.02 7 30.03 21M37.02 7l6.99 14" />
+      <path d="M30.03 21a8.9 8.9 0 0 0 13.98 0" />
+      <path d="M30.03 21h13.98" />
+    </svg>
   )
 }

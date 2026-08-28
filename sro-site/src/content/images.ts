@@ -1,14 +1,12 @@
-// Четыре тематических изображения страницы (ЧАСТЬ 4 ТЗ). Держим их в одном
-// месте: alt, размеры и пути нужны и в разметке, и в учёте лицензий
+// Тематические изображения страницы (ЧАСТЬ 4 ТЗ). Держим их в одном месте:
+// alt, размеры и пути нужны и в разметке, и в учёте лицензий
 // (public/img/CREDITS.md), и расходиться они не должны.
 //
-// ВНИМАНИЕ: construction и survey — боевые кадры, источники и лицензии
-// подтверждены (см. public/img/CREDITS.md). design и legal пока подписанные
-// заглушки из scripts/make-image-placeholders.py: их источники известны, но
-// скачать файлы из этого окружения нельзя — политика egress блокирует
-// unsplash.com и rawpixel.com. Боевые кадры обрабатываются
-// scripts/prepare-photo.py и кладутся под теми же именами; менять разметку
-// при замене не нужно, кроме width/height, если пропорция другая.
+// Все кадры — боевые, источники и лицензии подтверждены. Слот проектирования
+// (архивная синька) снят: секция «Документы» про пакет бумаг, а не про разрез
+// здания, и кадр туда не попадал по смыслу. Файлы лежат в assets-src/
+// (blueprint-spare.webp и исходник blueprint-crop-spare.jpg) — в сборку они
+// не идут, но остаются под рукой.
 export type PageImage = {
   src: string
   srcAvif: string
@@ -20,21 +18,13 @@ export type PageImage = {
 }
 
 export const IMAGES = {
-  design: {
-    src: './img/design.webp',
-    srcAvif: './img/design.avif',
-    alt: 'Архивная синька: продольный разрез жилого дома с лестничными маршами и перекрытиями',
-    width: 1200,
-    height: 900,
-    ratio: 'aspect-[4/3]',
-  },
-  construction: {
-    src: './img/construction.webp',
-    srcAvif: './img/construction.avif',
+  documents: {
+    src: './img/documents.webp',
+    srcAvif: './img/documents.avif',
     alt: 'Стопка папок с подшитыми документами крупным планом',
-    width: 2000,
-    height: 700,
-    ratio: 'aspect-[20/7]',
+    width: 1200,
+    height: 899,
+    ratio: 'aspect-[4/3]',
   },
   survey: {
     src: './img/survey.webp',

@@ -1,6 +1,7 @@
 import { Menu, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { CONTACTS } from '../content/contacts'
+import { ScalesMark } from './illustrations'
 import { ButtonLink } from './ui/Button'
 
 const NAV = [
@@ -31,11 +32,16 @@ export function Header() {
       }`}
     >
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <a href="#top" className="flex flex-col leading-tight">
-          <span className="text-[15px] font-bold tracking-tight text-neutral-950">
-            {CONTACTS.fullName}
+        {/* Знак aria-hidden: имя рядом уже озвучено, второй раз объяснять
+            картинку скринридеру нечем. */}
+        <a href="#top" className="flex items-center gap-2.5">
+          <ScalesMark className="h-[22px] w-auto shrink-0 text-accent-600" />
+          <span className="flex flex-col leading-tight">
+            <span className="text-[15px] font-bold tracking-tight text-neutral-950">
+              {CONTACTS.fullName}
+            </span>
+            <span className="text-xs text-neutral-500">{CONTACTS.role}</span>
           </span>
-          <span className="text-xs text-neutral-500">{CONTACTS.role}</span>
         </a>
 
         <nav className="hidden items-center gap-7 lg:flex" aria-label="Основная навигация">

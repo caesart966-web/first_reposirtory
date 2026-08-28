@@ -138,10 +138,7 @@ export function Services() {
             >
               {group.figure && (
                 <Reveal className="sm:col-span-2 lg:col-span-1 lg:row-span-1">
-                  <Figure
-                    {...group.figure}
-                    caption="Инженерные изыскания — отдельный вид СРО со своими требованиями к специалистам."
-                  />
+                  <Figure {...group.figure} />
                 </Reveal>
               )}
               <div

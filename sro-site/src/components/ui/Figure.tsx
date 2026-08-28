@@ -14,11 +14,14 @@ import type { ReactNode } from 'react'
 // fetchPriority здесь нет намеренно: React 18 такого пропса не знает, роняет
 // его и пишет предупреждение в консоль. Приоритет задаётся через loading.
 type FigureProps = {
-  src: string // './img/design.webp'
-  srcAvif?: string // './img/design.avif'
+  src: string // './img/documents.webp'
+  srcAvif?: string // './img/documents.avif'
   alt: string // осмысленный, не «картинка»
   width: number
   height: number
+  // Проп из спецификации T28. Сейчас ни один слот подпись не показывает:
+  // либо подписаны все фотографии, либо ни одна, а осмысленной подписи
+  // нашлась ровно одна на три кадра — одиночка читалась как случайность.
   caption?: ReactNode
   ratio?: string // 'aspect-[4/3]' | 'aspect-[20/7]'
   // cover обрезает кадр под рамку — так и надо фотографии. Вырезанному объекту
