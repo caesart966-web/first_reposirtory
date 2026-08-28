@@ -1,5 +1,3 @@
-import { IMAGES } from '../content/images'
-import { Figure } from './ui/Figure'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
 
@@ -30,11 +28,8 @@ export function Process() {
   return (
     <Section id="process" size="compact">
       <SectionHeading eyebrow="Процесс" title="Как проходит работа" />
-      {/* Стройка: широкая полоса отделяет заголовок от шагов и задаёт секции
-          масштаб — четыре мелкие карточки подряд иначе читаются как список. */}
-      <Reveal className="mt-10">
-        <Figure {...IMAGES.construction} />
-      </Reveal>
+      {/* Без фотографии намеренно: «как проходит работа» — это сами шаги,
+          а любой кадр здесь был бы иллюстрацией к чему-то другому. */}
       <div className="relative mt-12">
         <div
           className="absolute left-0 right-0 top-7 hidden border-t-2 border-dashed border-neutral-200 lg:block"

@@ -5,11 +5,11 @@
 
     magick input.jpg -colorspace Gray \
       \( -size 256x1 gradient:'#1E2A75-#E6ECFF' \) -clut \
-      -resize 1200x -quality 82 public/img/design.webp
-    magick public/img/design.webp -quality 55 public/img/design.avif
+      -resize 1200x -quality 82 public/img/documents.webp
+    magick public/img/documents.webp -quality 55 public/img/documents.avif
 
 Здесь то же самое на Pillow, чтобы обработку можно было повторить без
-установки magick. Смысл: четыре кадра из четырёх источников выглядят как
+установки magick. Смысл: разные кадры из разных источников выглядят как
 четыре разных сайта; перевод в дуотон на фирменном синем сводит их в одну
 серию и заодно прячет «стоковость».
 

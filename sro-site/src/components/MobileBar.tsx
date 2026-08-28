@@ -1,5 +1,5 @@
 import { Phone } from 'lucide-react'
-import type { ComponentType } from 'react'
+import { useEffect, useState, type ComponentType } from 'react'
 import { CONFIGURED, LINKS, externalLinkProps } from '../content/contacts'
 import { MaxIcon, TelegramIcon, WhatsAppIcon } from './icons'
 
@@ -34,12 +34,27 @@ const GRID_BY_COUNT: Record<number, string> = {
 }
 
 // Фиксированная нижняя панель быстрых контактов — только на мобильных.
+// Появляется после прокрутки ниже первого экрана (T18): пока посетитель
+// видит герой с кнопкой «Позвонить» и карточкой квиза, панель дублировала бы
+// их и съедала нижнюю кромку экрана.
 export function MobileBar() {
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const onScroll = () => setVisible(window.scrollY > window.innerHeight * 0.8)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-neutral-200 bg-white/95 backdrop-blur md:hidden"
+      className={`fixed inset-x-0 bottom-0 z-50 border-t border-neutral-200 bg-white/95 backdrop-blur transition-transform duration-300 md:hidden ${
+        visible ? 'translate-y-0' : 'pointer-events-none translate-y-full'
+      }`}
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       aria-label="Быстрая связь"
+      aria-hidden={!visible}
     >
       <div
         className={`grid divide-x divide-neutral-200 ${GRID_BY_COUNT[CHANNELS.length] ?? 'grid-cols-3'}`}

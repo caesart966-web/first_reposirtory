@@ -33,13 +33,9 @@ export function Documents() {
           <ButtonLink href="#quiz" size="lg" className="mt-7">
             Проверить мои документы
           </ButtonLink>
-          {/* Проектирование: архивный чертёж вместо прежней декоративной SVG —
-              в одной колонке два изображения подряд читаются как свалка. */}
-          <Figure
-            {...IMAGES.design}
-            className="mt-9 max-w-md"
-            caption="Архивная синька из фондов городского архива Амстердама: разрез жилого дома."
-          />
+          {/* Папки: буквально то, о чём секция. Раньше кадр стоял полосой
+              в «Процессе», а здесь висел архивный разрез здания — оба не по теме. */}
+          <Figure {...IMAGES.documents} className="mt-9 max-w-md" />
         </Reveal>
         <Reveal delay={100}>
           <div className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-card sm:p-8">

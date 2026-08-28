@@ -22,56 +22,63 @@ export function Contacts() {
       <SectionHeading
         eyebrow="Контакты"
         title="Свяжитесь удобным способом"
-        subtitle="Телефон, почта или мессенджеры — как вам удобнее."
+        subtitle="Телефон, почта или мессенджеры — как вам удобнее. Первый разговор — бесплатный."
       />
-      {/* Не пять одинаковых плиток: слева главный способ связи, справа —
-          мессенджеры списком. Телефон должен быть самым крупным элементом. */}
-      <div className="mx-auto mt-10 grid max-w-4xl gap-10 lg:grid-cols-2 lg:gap-16">
-        {/* Обе колонки в одном ритме: ярлык -> строки через тонкие
-            разделители. До этого левая начиналась сразу с телефона и висела
-            на другой базовой линии, чем ярлык «Мессенджеры» справа. */}
-        <Reveal>
-          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-neutral-600">
-            Позвонить или написать
-          </p>
-          <div className="mt-4 divide-y divide-neutral-200 border-y border-neutral-200">
-            <a
-              href={LINKS.tel}
-              className="block py-4 text-3xl font-bold tracking-tight text-neutral-950 transition-colors hover:text-accent-700 sm:text-4xl"
-            >
-              {CONTACTS.phone}
-            </a>
-            <a
-              href={LINKS.mail}
-              className="block py-4 text-lg text-neutral-700 transition-colors hover:text-accent-700"
-            >
-              {CONTACTS.email}
-            </a>
-          </div>
-        </Reveal>
-
-        <Reveal delay={100}>
-          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-neutral-600">
-            Мессенджеры
-          </p>
-          <div className="mt-4 divide-y divide-neutral-200 border-y border-neutral-200">
-            {MESSENGERS.map((channel) => (
+      {/* Вся секция — одна панель-визитка (rounded-3xl, как у панелей этого
+          масштаба: карточка героя, квиз, «Что войдёт в пакет»). Колонки делит
+          тонкий фирменный разделитель, а не пустой отступ: раньше два столбца
+          текста «парили» в воздухе. На мобильном разделитель горизонтальный.
+          Внутри — только линии между строками: рамка в рамке тяжелит. */}
+      <Reveal className="mx-auto mt-10 max-w-4xl">
+        <div className="grid rounded-3xl border border-neutral-200 bg-white p-6 shadow-card sm:p-10 lg:grid-cols-[1fr_auto_1fr] lg:gap-10">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-neutral-600">
+              Позвонить или написать
+            </p>
+            <div className="mt-4 divide-y divide-neutral-200">
               <a
-                key={channel.label}
-                href={channel.href}
-                {...externalLinkProps(true)}
-                className="group flex items-center gap-4 py-4 transition-colors duration-200 hover:bg-accent-50/40"
+                href={LINKS.tel}
+                className="block py-4 text-3xl font-bold tracking-tight text-neutral-950 transition-colors hover:text-accent-700 sm:text-4xl"
               >
-                <channel.icon className="h-5 w-5 shrink-0 text-accent-600" />
-                <span className="min-w-0 flex-1">
-                  <span className="block font-medium text-neutral-950">{channel.label}</span>
-                  <span className="block text-sm text-neutral-600">{channel.hint}</span>
-                </span>
+                {CONTACTS.phone}
               </a>
-            ))}
+              <a
+                href={LINKS.mail}
+                className="block py-4 text-lg text-neutral-700 transition-colors hover:text-accent-700"
+              >
+                {CONTACTS.email}
+              </a>
+            </div>
           </div>
-        </Reveal>
-      </div>
+
+          <div
+            className="my-8 h-px w-full bg-accent-200 lg:my-0 lg:h-auto lg:w-0.5 lg:self-stretch"
+            aria-hidden="true"
+          />
+
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-neutral-600">
+              Мессенджеры
+            </p>
+            <div className="mt-4 divide-y divide-neutral-200">
+              {MESSENGERS.map((channel) => (
+                <a
+                  key={channel.label}
+                  href={channel.href}
+                  {...externalLinkProps(true)}
+                  className="group flex items-center gap-4 py-4 transition-colors duration-200 hover:bg-accent-50/40"
+                >
+                  <channel.icon className="h-5 w-5 shrink-0 text-accent-600" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-medium text-neutral-950">{channel.label}</span>
+                    <span className="block text-sm text-neutral-600">{channel.hint}</span>
+                  </span>
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Reveal>
     </Section>
   )
 }
