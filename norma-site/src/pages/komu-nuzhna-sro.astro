@@ -101,7 +101,7 @@ const faqSchema = {
         <span class="rule-ic"><Icon name="scales" size={26} /></span>
         <div>
           <span class="eyebrow">Главное правило</span>
-          <h2>Сначала — с кем договор. Только потом — на какую сумму</h2>
+          <h2>Сначала — <em>с кем договор</em>. Только потом — на какую сумму</h2>
           <p>
             Большинство ошибок начинается с того, что человек сразу смотрит на цену договора.
             А норма построена иначе: сначала проверяется <b>сторона договора</b>, и только если
@@ -123,7 +123,7 @@ const faqSchema = {
     <div class="wrap">
       <div class="s-head rv">
         <span class="eyebrow">Проверка сайтов</span>
-        <h2>Шесть утверждений, по которым видно устаревший сайт</h2>
+        <h2>Шесть утверждений, по которым видно <em>устаревший сайт</em></h2>
         <p>
           Слева — то, что до сих пор написано на многих сайтах. Справа — то, как обстоят дела
           на самом деле. Проверьте по этому списку любую площадку, включая эту.
@@ -152,7 +152,7 @@ const faqSchema = {
   <section class="section section--tight">
     <div class="wrap">
       <div class="s-head rv">
-        <h2>Частые случаи</h2>
+        <h2>Частые <em>случаи</em></h2>
       </div>
       <div class="faq rv">
         {faq.map((f, i) => (
@@ -195,7 +195,7 @@ const faqSchema = {
   .head-tags { margin-top: 22px; }
 
   .rule { display: grid; grid-template-columns: 52px 1fr; gap: 20px; align-items: start; }
-  .rule-ic { width: 48px; height: 48px; border-radius: 13px; background: rgba(53, 214, 204, 0.15); color: var(--acc-bright); display: grid; place-items: center; }
+  .rule-ic { width: 48px; height: 48px; border-radius: 13px; background: color-mix(in srgb, var(--acc-bright) 15%, transparent); color: var(--acc-bright); display: grid; place-items: center; }
   .rule h2 { color: #fff; margin: 10px 0 12px; max-width: 24ch; }
   .rule p { color: var(--on-navy-muted); font-size: 16px; max-width: 74ch; }
   .rule p + p { margin-top: 10px; }
@@ -242,7 +242,7 @@ const faqSchema = {
   .cta-split { display: grid; grid-template-columns: 0.75fr 1.25fr; gap: 20px; align-items: start; }
   .cs-calc {
     background: var(--acc-soft);
-    border: 1px solid rgba(13, 138, 131, 0.3);
+    border: 1px solid color-mix(in srgb, var(--acc) 30%, transparent);
     border-radius: var(--r-l);
     padding: 26px;
     display: grid;

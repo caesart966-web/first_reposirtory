@@ -1,6 +1,6 @@
 /* ────────────────────────────────────────────────────────────────
    Дизайн-система сайта «НОРМА».
-   Палитра согласована с заказчиком: тёмно-синий + бирюзовый акцент.
+   Палитра: тёмно-синий фон + синий акцент, по образцу, который выбрал заказчик.
    ──────────────────────────────────────────────────────────────── */
 
 :root {
@@ -16,12 +16,17 @@
   --on-navy: #EAF1FA;
   --on-navy-muted: #9FB1C7;
 
-  --acc: #0D8A83;          /* бирюза: декоративные элементы */
-  --acc-btn: #0B766F;      /* бирюза потемнее: фон кнопок (контраст с белым текстом) */
-  --acc-btn-hover: #095F59;
-  --acc-deep: #085F5A;     /* бирюзовый текст на белом */
-  --acc-soft: #E2F4F2;     /* бирюзовые подложки */
-  --acc-bright: #35D6CC;   /* бирюза на тёмно-синем */
+  /* Акцентный цвет — синий, как на сайте-образце. Меняется в одном месте:
+     впишите сюда бирюзовые значения из строки ниже, и весь сайт перекрасится —
+     кнопки, ссылки, чипы норм, знак в шапке, иконки.
+     Бирюза: #0D8A83 / #0B766F / #095F59 / #085F5A / #E2F4F2 / #35D6CC */
+  --acc: #2563EB;          /* синий: декоративные элементы */
+  --acc-btn: #2563EB;      /* фон кнопок */
+  --acc-btn-hover: #1D4FD0;
+  --acc-deep: #1A4FBF;     /* синий текст на белом */
+  --acc-soft: #E7EFFE;     /* синие подложки */
+  --acc-bright: #6BA3FF;   /* синий на тёмно-синем; светлее #4C8DFF —
+                              тот не дотягивал по контрасту в мелких чипах норм */
 
   /* Зелёный «всё в порядке»: вердикт «СРО не нужна», штампы проверки.
      Тёмный оттенок выбран не случайно — светлее он не проходит по контрасту
@@ -127,6 +132,24 @@ section[id], [data-anchor] { scroll-margin-top: 84px; }
 .section--dark .lead b, .section--dark .lead strong { color: var(--on-navy); }
 
 .s-head { max-width: 76ch; display: grid; gap: 10px; margin-bottom: 28px; }
+
+/* Заголовки секций — в верхнем регистре, как на образце: одно слово
+   выделяется акцентом через <em>. Капс задаётся здесь, а не в тексте,
+   чтобы в разметке остались нормальные буквы: программы чтения с экрана
+   произносят «НОРМА» капсом как отдельные буквы, а не как слово. */
+.s-head h2, .page-title {
+  text-transform: uppercase;
+  letter-spacing: -0.005em;
+  line-height: 1.08;
+}
+.s-head h2 em, .page-title em { font-style: normal; color: var(--acc-deep); }
+/* Светлый оттенок акцента — на любом тёмном фоне, не только в .section--dark:
+   тёмно-синий текст на тёмно-синем фоне даёт 2.35:1 вместо нужных 4.5. */
+.section--dark .s-head h2 em,
+.section--dark .page-title em,
+#calc .s-head h2 em,
+.hero .page-title em,
+.page-head h1 em { color: var(--acc-bright); }
 .s-head p { color: var(--muted); max-width: 64ch; }
 .section--dark .s-head p { color: var(--on-navy-muted); }
 
@@ -172,7 +195,7 @@ section[id], [data-anchor] { scroll-margin-top: 84px; }
   letter-spacing: 0.02em;
   color: var(--acc-deep);
   background: var(--acc-soft);
-  border: 1px solid rgba(13, 138, 131, 0.35);
+  border: 1px solid color-mix(in srgb, var(--acc) 35%, transparent);
   padding: 3px 9px;
   border-radius: 6px;
   white-space: nowrap;
@@ -183,8 +206,8 @@ section[id], [data-anchor] { scroll-margin-top: 84px; }
 .section--dark .law,
 .law--dark {
   color: var(--acc-bright);
-  background: rgba(53, 214, 204, 0.12);
-  border-color: rgba(53, 214, 204, 0.35);
+  background: color-mix(in srgb, var(--acc-bright) 14%, transparent);
+  border-color: color-mix(in srgb, var(--acc-bright) 40%, transparent);
 }
 
 .stamp {

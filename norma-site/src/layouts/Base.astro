@@ -115,6 +115,14 @@ const graph = {
     </main>
     <Footer />
 
+    <!-- Круглая кнопка связи в углу, как на образце. На компьютере это
+         единственный быстрый путь к контактам при долгой прокрутке;
+         на телефоне её роль выполняет нижняя панель, поэтому там она скрыта. -->
+    <a class="float-cta" href={href('/kontakty/#form')} aria-label="Оставить заявку">
+      <Icon name="mail" size={24} />
+      <span>Оставить заявку</span>
+    </a>
+
     <!-- Панель связи на мобильных: появляется после первого экрана -->
     <nav class="mobile-bar" aria-label="Быстрая связь">
       <a href={SITE.phoneHref} data-goal="click_phone">
@@ -149,6 +157,45 @@ const graph = {
     )}
 
     <style>
+      /* Кнопка связи в углу: сжата до круга, разворачивается при наведении */
+      .float-cta {
+        position: fixed;
+        right: 22px;
+        bottom: 22px;
+        z-index: 55;
+        display: none;
+        align-items: center;
+        gap: 10px;
+        height: 58px;
+        padding: 0 17px;
+        border-radius: 999px;
+        background: var(--acc-btn);
+        color: #fff;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 15px;
+        box-shadow: 0 14px 34px -12px rgba(37, 99, 235, 0.65);
+        transition: background-color 0.2s ease, box-shadow 0.2s ease;
+        white-space: nowrap;
+      }
+      .float-cta span {
+        max-width: 0;
+        overflow: hidden;
+        opacity: 0;
+        transition: max-width 0.28s ease, opacity 0.2s ease;
+      }
+      .float-cta:hover, .float-cta:focus-visible {
+        background: var(--acc-btn-hover);
+        color: #fff;
+      }
+      .float-cta:hover span, .float-cta:focus-visible span { max-width: 190px; opacity: 1; }
+
+      @media (min-width: 768px) { .float-cta { display: flex; } }
+      @media (prefers-reduced-motion: reduce) {
+        .float-cta span { transition: none; }
+      }
+      @media print { .float-cta { display: none !important; } }
+
       .skip {
         position: absolute;
         left: -9999px;

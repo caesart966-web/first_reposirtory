@@ -10,7 +10,7 @@ import Icon from './Icon.astro'
   <div class="wrap">
     <div class="s-head rv">
       <span class="eyebrow">Проверяемость</span>
-      <h2>Проверьте нас и любую СРО в госреестре</h2>
+      <h2>Проверьте нас и любую СРО <em>в госреестре</em></h2>
       <p>
         Не верьте на слово ни мне, ни кому-либо ещё на этом рынке. Всё проверяется
         бесплатно и за минуту в официальных реестрах национальных объединений.
@@ -47,6 +47,54 @@ import Icon from './Icon.astro'
       </a>
     </div>
 
+    <!-- Карточка реквизитов в стиле образца. Важное отличие: на образце
+         в такой карточке стоят атрибуты самой СРО — номер в госреестре,
+         число членов, сканы свидетельств. Здесь их быть не может: заказчик
+         не саморегулируемая организация, а специалист, который помогает
+         в неё вступить. Поэтому в карточке только его настоящие реквизиты. -->
+    <div class="ident rv">
+      <h3 class="ident-title">Кто я и как меня проверить</h3>
+
+      <dl class="ident-rows">
+        <div>
+          <dt>Полное наименование</dt>
+          <dd>{SITE.legalName}</dd>
+        </div>
+        <div>
+          <dt>Статус</dt>
+          <dd class="with-mark">
+            Индивидуальный предприниматель
+            <span class="verified"><Icon name="check" size={14} /> проверяется в ЕГРИП</span>
+          </dd>
+        </div>
+        <div>
+          <dt>ИНН</dt>
+          <dd class="mono">{SITE.inn}</dd>
+        </div>
+        {SITE.ogrnip && (
+          <div>
+            <dt>ОГРНИП</dt>
+            <dd class="mono">{SITE.ogrnip}</dd>
+          </div>
+        )}
+        <div>
+          <dt>География</dt>
+          <dd>{SITE.geo}</dd>
+        </div>
+        <div>
+          <dt>Телефон</dt>
+          <dd><a class="ident-phone" href={SITE.phoneHref} data-goal="click_phone">{SITE.phone}</a></dd>
+        </div>
+      </dl>
+
+      <p class="ident-note">
+        <b>Я не саморегулируемая организация.</b> Я не веду реестр, не принимаю взносы
+        и не выдаю документы о членстве: решение принимает СРО, взносы вы переводите
+        напрямую на её счёт. Моя работа — разобрать вашу ситуацию, подобрать СРО
+        и подготовить документы.
+      </p>
+    </div>
+
     <div class="reg-note rv">
       <p>
         <b>Не путайте объединения:</b> НОСТРОЙ — это строители, НОПРИЗ — проектировщики
@@ -76,10 +124,61 @@ import Icon from './Icon.astro'
     margin-top: 4px;
   }
 
+  .ident {
+    margin-top: 18px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--r-l);
+    padding: 26px 28px;
+  }
+  .ident-title { font-size: 19px; margin-bottom: 20px; }
+  .ident-rows { margin: 0; display: grid; gap: 18px; }
+  .ident-rows > div { display: grid; gap: 4px; }
+  .ident-rows dt {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .ident-rows dd { margin: 0; font-size: 16px; }
+  .ident-rows dd.mono { font-family: var(--font-mono); font-size: 15px; }
+  .with-mark { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  /* Зелёная плашка с галочкой — приём с образца, но подтверждает она
+     проверяемый факт, а не рекламное утверждение. */
+  .verified {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--good);
+    background: var(--good-bg);
+    border: 1px solid color-mix(in srgb, var(--good) 40%, transparent);
+    padding: 4px 11px;
+    border-radius: 999px;
+  }
+  .ident-phone { font-family: var(--font-mono); font-size: 19px; color: var(--acc-deep); text-decoration: none; }
+  .ident-phone:hover { text-decoration: underline; }
+  .ident-note {
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.6;
+    max-width: 78ch;
+  }
+  .ident-note b { color: var(--ink); }
+
+  @media (min-width: 700px) {
+    .ident-rows { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 40px; }
+  }
+
   .reg-note {
     margin-top: 18px;
     background: var(--acc-soft);
-    border: 1px solid rgba(13, 138, 131, 0.25);
+    border: 1px solid color-mix(in srgb, var(--acc) 25%, transparent);
     border-radius: var(--r-m);
     padding: 18px 22px;
     display: grid;

@@ -185,7 +185,7 @@ const serviceSchema = {
   .prose :global(strong) { font-weight: 600; }
   .prose :global(.callout) {
     background: var(--acc-soft);
-    border: 1px solid rgba(13, 138, 131, 0.3);
+    border: 1px solid color-mix(in srgb, var(--acc) 30%, transparent);
     border-radius: var(--r-m);
     padding: 18px 22px;
     margin: 0 0 20px;
@@ -205,7 +205,7 @@ const serviceSchema = {
 
   .svc-side { display: grid; gap: 14px; position: sticky; top: 96px; }
   .side-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--r-l); padding: 22px; display: grid; gap: 10px; }
-  .side-card--acc { background: var(--acc-soft); border-color: rgba(13, 138, 131, 0.3); }
+  .side-card--acc { background: var(--acc-soft); border-color: color-mix(in srgb, var(--acc) 30%, transparent); }
   .side-card--dark { background: var(--navy); border-color: var(--navy-line); }
   .sc-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
   .side-card--dark .sc-label { color: var(--on-navy-muted); }

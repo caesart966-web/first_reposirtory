@@ -21,7 +21,7 @@ const PHONE = site?.SITE?.phone ?? '+7 931 969-86-64'
 const markFile = await readFile(resolve(here, '../src/components/LogoMark.astro'), 'utf8')
 const MARK = markFile.slice(markFile.indexOf('<svg'), markFile.lastIndexOf('</svg>') + 6)
   .replace(/height=\{[^}]+\}/, 'height="58"')
-  .replace(/width=\{[^}]+\}/, 'width="47"')
+  .replace(/width=\{[^}]+\}/, 'width="58"')
   .replace(/class=\{[^}]+\}/, '')
 
 const html = `<!doctype html>

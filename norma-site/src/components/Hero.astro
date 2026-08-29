@@ -1,51 +1,44 @@
 ---
 import { SITE, href } from '../config/site'
 import { LAW, TERMS } from '../config/facts'
+import Icon from './Icon.astro'
+import Skyline from './Skyline.astro'
+
+// Три коротких обещания под заголовком — как на образце, но каждое
+// правдиво и раскрыто ниже по странице, а не просто лозунг.
+const PROMISES = [
+  { icon: 'clock', text: `Выписка за ${TERMS.extract}` },
+  { icon: 'wallet', text: 'Сопровождение — 0 ₽' },
+  { icon: 'scales', text: 'Скажу, если СРО не нужна' },
+]
 ---
 
 <section class="hero">
-  <div class="wrap hero-in">
-    <div class="hero-main">
-      <span class="geo"><i></i>{SITE.geo}</span>
-      <h1>Вступление в СРО с выпиской из реестра <em>за {TERMS.extract}</em></h1>
-      <p class="hero-sub">
-        Строителям, проектировщикам и изыскателям. Подготовка документов и сопровождение —
-        <b>бесплатно</b>, вы платите только взносы, и напрямую в СРО.
-        Если членство вам не требуется — <b>скажу прямо</b> и покажу, на основании какой нормы.
-      </p>
-      <div class="hero-cta">
-        <a class="btn btn--acc" href="#calc">Проверить, нужна ли СРО</a>
-        <a class="btn btn--ghost-dark" href={href('/stoimost/')}>Посмотреть стоимость</a>
-      </div>
-      <p class="hero-note">2 минуты · 4 вопроса · честный ответ со ссылкой на закон</p>
-    </div>
+  <Skyline />
+  <div class="veil"></div>
 
-    <div class="hero-steps">
-      <h2 class="steps-title">Как это работает</h2>
-      <ol>
+  <div class="wrap hero-in">
+    <span class="geo"><i></i>{SITE.geo}</span>
+
+    <h1 class="page-title">
+      Вступить в <em>СРО</em><br />без устаревших норм
+    </h1>
+    <p class="tagline">Точно. Честно. За 24 часа.</p>
+
+    <ul class="promises">
+      {PROMISES.map((p) => (
         <li>
-          <span class="n">1</span>
-          <div>
-            <b>Разбираем задачу и готовим документы</b>
-            <small>Проверяю, нужна ли вам СРО вообще. Пакет документов собираю за вас — <em>0 ₽</em></small>
-          </div>
+          <span class="pic"><Icon name={p.icon} size={20} /></span>
+          {p.text}
         </li>
-        <li>
-          <span class="n">2</span>
-          <div>
-            <b>Подбираем СРО и проверяем её в госреестре</b>
-            <small>Показываю выписку по самой СРО до того, как вы что-то оплатите</small>
-          </div>
-        </li>
-        <li>
-          <span class="n">3</span>
-          <div>
-            <b>Взносы — напрямую в СРО, выписка за {TERMS.extract}</b>
-            <small>Деньги идут на счёт СРО, минуя посредников. Я не принимаю взносы и не беру процент</small>
-          </div>
-        </li>
-      </ol>
+      ))}
+    </ul>
+
+    <div class="cta">
+      <a class="btn btn--acc btn--lg" href="#calc">Проверить, нужна ли СРО</a>
+      <a class="btn btn--ghost-dark btn--lg" href={href('/stoimost/')}>Узнать стоимость</a>
     </div>
+    <p class="note">2 минуты · 4 вопроса · ответ со ссылкой на закон</p>
   </div>
 
   <div class="wrap">
@@ -74,31 +67,27 @@ import { LAW, TERMS } from '../config/facts'
 
 <style>
   .hero {
+    position: relative;
     background: var(--navy);
     color: var(--on-navy);
-    position: relative;
     overflow: hidden;
-    padding: 52px 0 0;
-    background-image:
-      linear-gradient(var(--navy-line) 1px, transparent 1px),
-      linear-gradient(90deg, var(--navy-line) 1px, transparent 1px);
-    background-size: 46px 46px;
+    padding: 64px 0 0;
+    isolation: isolate;
   }
-  .hero::after {
-    content: '';
+
+  /* Затемнение поверх силуэта: без него крупный текст спорит с домами
+     и падает контраст. Снизу плотнее — там стоят цифры. */
+  .veil {
     position: absolute;
     inset: 0;
+    background:
+      radial-gradient(900px 460px at 78% 6%, rgba(107, 163, 255, 0.20), transparent 68%),
+      linear-gradient(180deg, rgba(11, 29, 51, 0.55) 0%, rgba(11, 29, 51, 0.80) 55%, rgba(11, 29, 51, 0.94) 100%);
     pointer-events: none;
-    background: radial-gradient(760px 360px at 78% 0%, rgba(53, 214, 204, 0.16), transparent 70%);
   }
-  .hero > * { position: relative; z-index: 1; }
 
-  .hero-in {
-    display: grid;
-    grid-template-columns: 1.25fr 0.9fr;
-    gap: 40px;
-    align-items: start;
-  }
+  .hero-in, .hero .wrap { position: relative; z-index: 1; }
+  .hero-in { padding-bottom: 44px; }
 
   .geo {
     display: inline-flex;
@@ -111,62 +100,68 @@ import { LAW, TERMS } from '../config/facts'
     border: 1px solid var(--navy-line);
     padding: 5px 12px;
     border-radius: 999px;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
   }
   .geo i { width: 6px; height: 6px; border-radius: 50%; background: var(--acc-bright); flex: none; }
 
-  h1 { color: #fff; max-width: 18ch; }
-  h1 em { font-style: normal; color: var(--acc-bright); }
-
-  .hero-sub { color: var(--on-navy-muted); font-size: 16.5px; max-width: 54ch; margin: 18px 0 26px; }
-  .hero-sub b { color: var(--on-navy); font-weight: 600; }
-
-  .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; }
-  .hero-note { font-size: 13px; color: var(--on-navy-muted); margin-top: 14px; }
-
-  .hero-steps {
-    background: rgba(255, 255, 255, 0.045);
-    border: 1px solid var(--navy-line);
-    border-radius: var(--r-l);
-    padding: 22px 22px 10px;
+  .page-title {
+    color: #fff;
+    font-size: clamp(34px, 6.6vw, 68px);
+    font-weight: 800;
+    max-width: 16ch;
   }
-  .steps-title {
-    font-family: var(--font-mono);
-    font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 0.1em;
+
+  .tagline {
+    color: var(--on-navy);
+    font-size: clamp(16px, 2.2vw, 21px);
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--on-navy-muted);
-    margin-bottom: 14px;
+    margin-top: 16px;
+    font-weight: 500;
   }
-  .hero-steps ol { list-style: none; margin: 0; padding: 0; }
-  .hero-steps li { display: grid; grid-template-columns: 34px 1fr; gap: 14px; padding: 13px 0 16px; }
-  .hero-steps li + li { border-top: 1px dashed var(--navy-line); }
-  .n {
-    width: 30px; height: 30px;
-    border-radius: 9px;
-    display: grid; place-items: center;
-    background: rgba(53, 214, 204, 0.18);
-    color: var(--acc-bright);
-    font-family: var(--font-mono);
-    font-size: 13px;
-    margin-top: 2px;
+
+  .promises {
+    list-style: none;
+    margin: 30px 0 0;
+    padding: 0;
+    display: grid;
+    gap: 14px;
+    justify-items: start;
   }
-  .hero-steps b { display: block; color: #fff; font-size: 15px; font-weight: 600; }
-  .hero-steps small { display: block; font-size: 13px; color: var(--on-navy-muted); line-height: 1.5; margin-top: 3px; }
-  .hero-steps em { font-style: normal; color: var(--acc-bright); font-weight: 600; }
+  .promises li {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 14px;
+    align-items: center;
+    font-size: clamp(16px, 2vw, 19px);
+    font-weight: 600;
+    color: #fff;
+  }
+  .pic {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--acc-btn);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    flex: none;
+  }
+
+  .cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 34px; }
+  .btn--lg { padding: 16px 28px; font-size: 16px; min-height: 54px; }
+  .note { font-size: 13px; color: var(--on-navy-muted); margin-top: 14px; }
 
   .stats {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     border-top: 1px solid var(--navy-line);
-    margin-top: 40px;
   }
-  .stat { padding: 20px 20px 22px; border-left: 1px solid var(--navy-line); display: grid; gap: 4px; align-content: start; }
+  .stat { padding: 22px 20px 26px; border-left: 1px solid var(--navy-line); display: grid; gap: 4px; align-content: start; }
   .stat:first-child { border-left: 0; padding-left: 0; }
   .v {
     font-family: var(--font-head);
-    font-size: 27px;
+    font-size: 28px;
     font-weight: 800;
     color: #fff;
     font-variant-numeric: tabular-nums;
@@ -177,15 +172,13 @@ import { LAW, TERMS } from '../config/facts'
   .stat .law { justify-self: start; margin-top: 6px; }
 
   @media (max-width: 900px) {
-    .hero-in { grid-template-columns: 1fr; gap: 28px; }
     .stats { grid-template-columns: repeat(2, 1fr); }
     .stat { border-left: 0; padding-left: 0; padding-right: 14px; }
   }
 
   @media (max-width: 560px) {
-    .hero { padding-top: 36px; }
-    .hero-cta .btn { width: 100%; }
-    .stats { grid-template-columns: 1fr 1fr; }
+    .hero { padding-top: 40px; }
+    .cta .btn { width: 100%; }
     .v { font-size: 23px; }
   }
 </style>
