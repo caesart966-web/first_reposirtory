@@ -1,5 +1,6 @@
 ---
 import { SITE, REGISTRIES, href } from '../config/site'
+import LogoMark from './LogoMark.astro'
 
 const services = [
   { label: 'СРО строителей', url: href('/uslugi/sro-stroiteley/') },
@@ -26,7 +27,7 @@ const year = new Date().getFullYear()
     <div class="cols">
       <div class="brand-col">
         <div class="logo">
-          <span class="logo-mark">§</span>
+          <LogoMark size={30} class="logo-mark" />
           <span class="logo-text"><b>{SITE.brand}</b><small>{SITE.brandTag}</small></span>
         </div>
         <p class="tagline">
@@ -100,16 +101,10 @@ const year = new Date().getFullYear()
   .brand-col { display: grid; gap: 12px; align-content: start; }
 
   .logo { display: flex; align-items: center; gap: 10px; color: #fff; }
-  .logo-mark {
-    font-family: Georgia, 'Times New Roman', serif;
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--acc-bright);
-    border: 1.5px solid rgba(53, 214, 204, 0.4);
-    border-radius: 8px;
-    width: 34px; height: 34px;
-    display: grid; place-items: center;
-  }
+  /* :global обязателен — знак приходит из отдельного компонента, и обычное
+     правило до него не достаёт: Astro привязывает стили к служебному атрибуту,
+     которого у чужой разметки нет. Без этого знак остался бы белым. */
+  .logo :global(.logo-mark) { color: var(--acc-bright); flex: none; display: block; }
   .logo-text { display: grid; line-height: 1.15; }
   .logo-text b { font-family: var(--font-head); font-size: 17px; font-weight: 800; letter-spacing: 0.06em; }
   .logo-text small { font-size: 11px; color: var(--on-navy-muted); }

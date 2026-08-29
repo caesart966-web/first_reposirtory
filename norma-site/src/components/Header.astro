@@ -1,6 +1,7 @@
 ---
 import { SITE, href } from '../config/site'
 import Icon from './Icon.astro'
+import LogoMark from './LogoMark.astro'
 
 const nav = [
   { label: 'Услуги', url: href('/uslugi/') },
@@ -14,7 +15,7 @@ const nav = [
 <header class="site-header">
   <div class="wrap hdr">
     <a class="logo" href={href('/')}>
-      <span class="logo-mark">§</span>
+      <LogoMark size={30} class="logo-mark" />
       <span class="logo-text">
         <b>{SITE.brand}</b>
         <small>{SITE.brandTag}</small>
@@ -75,19 +76,12 @@ const nav = [
   }
 
   .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #fff; flex: none; }
-  .logo-mark {
-    font-family: Georgia, 'Times New Roman', serif;
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--acc-bright);
-    line-height: 1;
-    border: 1.5px solid rgba(53, 214, 204, 0.4);
-    border-radius: 8px;
-    width: 34px;
-    height: 34px;
-    display: grid;
-    place-items: center;
-  }
+  /* Монограмма стоит без рамки: знак самодостаточный, рамка спорила бы
+     с его собственной геометрией.
+     :global обязателен — знак приходит из отдельного компонента, и обычное
+     правило до него не достаёт: Astro привязывает стили к служебному атрибуту,
+     которого у чужой разметки нет. Без этого знак остался бы белым. */
+  .logo :global(.logo-mark) { color: var(--acc-bright); flex: none; display: block; }
   .logo-text { display: grid; line-height: 1.15; }
   .logo-text b { font-family: var(--font-head); font-size: 17px; font-weight: 800; letter-spacing: 0.06em; }
   .logo-text small { font-size: 11px; color: var(--on-navy-muted); }
