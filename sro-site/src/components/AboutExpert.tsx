@@ -76,13 +76,16 @@ export function AboutExpert() {
               </li>
             ))}
           </ul>
+          {/* Без контейнеров: обведённый rounded-full пилюлей в системе нет,
+              и рядом с настоящей кнопкой «Обсудить задачу» такие чипы читались
+              как ещё две кнопки. Та же форма, что у этих строк в карточке. */}
           {!HAS_REQUISITES && (
-            <div className="mt-7 flex flex-wrap gap-2.5">
-              <span className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-700">
+            <div className="mt-7 flex flex-wrap items-center gap-x-7 gap-y-2.5">
+              <span className="inline-flex items-center gap-2 text-sm text-neutral-700">
                 <Globe className="h-4 w-4 shrink-0 text-accent-600" aria-hidden="true" />
                 Все регионы России, дистанционно
               </span>
-              <span className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-700">
+              <span className="inline-flex items-center gap-2 text-sm text-neutral-700">
                 <FileCheck className="h-4 w-4 shrink-0 text-accent-600" aria-hidden="true" />
                 Работаю по договору
               </span>
