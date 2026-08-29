@@ -112,10 +112,51 @@ for (const c of cases) {
   }
 }
 
+// ── Оформление ────────────────────────────────────────────────────────────
+// Вопросы и вердикт создаёт скрипт. Если стили к такой разметке не применятся,
+// логика останется верной, а на экране будут серые системные кнопки и простыня
+// текста. Поэтому проверяем не только текст, но и то, что оформление на месте.
+await page.goto(BASE + '/', { waitUntil: 'networkidle' })
+await page.waitForSelector('#calc-body .opt')
+
+const optionLook = await page.evaluate(() => {
+  const el = document.querySelector('#calc-body .opt')
+  const s = getComputedStyle(el)
+  return { radius: parseFloat(s.borderRadius), padding: parseFloat(s.paddingLeft), display: s.display }
+})
+const optOk = optionLook.radius >= 8 && optionLook.padding >= 12 && optionLook.display === 'grid'
+console.log(optOk ? '✓ Кнопки ответов оформлены' : `✗ Кнопки ответов без оформления — ${JSON.stringify(optionLook)}`)
+if (!optOk) failed++
+
+for (const t of ['Строительство, реконструкция', 'С генподрядчиком']) {
+  await page.locator('#calc-body .opt', { hasText: t }).first().click()
+  await page.waitForTimeout(150)
+}
+await page.waitForSelector('.verdict')
+
+const verdictLook = await page.evaluate(() => {
+  const badge = document.querySelector('.v-badge')
+  const title = document.querySelector('.v-title')
+  const bs = getComputedStyle(badge)
+  const ts = getComputedStyle(title)
+  return {
+    badgeBg: bs.backgroundColor,
+    badgeRadius: parseFloat(bs.borderRadius),
+    titleSize: parseFloat(ts.fontSize),
+    titleColor: ts.color,
+  }
+})
+const verdictOk =
+  verdictLook.badgeRadius >= 10 &&
+  verdictLook.badgeBg !== 'rgba(0, 0, 0, 0)' &&
+  verdictLook.titleSize >= 20
+console.log(verdictOk ? '✓ Вердикт оформлен' : `✗ Вердикт без оформления — ${JSON.stringify(verdictLook)}`)
+if (!verdictOk) failed++
+
 await browser.close()
 
 if (failed) {
-  console.log(`\nОШИБОК: ${failed} из ${cases.length}`)
+  console.log(`\nОШИБОК: ${failed}`)
   process.exit(1)
 }
-console.log(`\n✓ Все ${cases.length} сценариев калькулятора дают верный ответ.`)
+console.log(`\n✓ Все ${cases.length} сценариев калькулятора дают верный ответ, оформление на месте.`)
