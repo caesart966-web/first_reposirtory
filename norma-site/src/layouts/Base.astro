@@ -1,0 +1,215 @@
+---
+import '../styles/fonts.css'
+import '../styles/global.css'
+
+import Header from '../components/Header.astro'
+import Footer from '../components/Footer.astro'
+import Icon from '../components/Icon.astro'
+import { SITE, href } from '../config/site'
+
+interface Props {
+  title: string
+  description: string
+  /** Дополнительные блоки микроразметки Schema.org (FAQ, HowTo, Article) */
+  schema?: object[]
+  /** Хлебные крошки: [{ label, url }] — последний элемент текущая страница */
+  breadcrumbs?: { label: string; url?: string }[]
+}
+
+const { title, description, schema = [], breadcrumbs = [] } = Astro.props
+
+// Полный адрес страницы: нужен для canonical, Open Graph и микроразметки.
+const canonical = new URL(Astro.url.pathname, Astro.site).toString()
+
+// Черновик на превью-ссылке не должен попадать в поиск. Боевая сборка на своём
+// домене делается без NOINDEX — тогда сайт открыт для индексации.
+const noindex = import.meta.env.PUBLIC_NOINDEX === '1'
+
+// Организация — базовый блок разметки, есть на каждой странице.
+const orgSchema = {
+  '@type': 'ProfessionalService',
+  '@id': new URL('/', Astro.site).toString() + '#org',
+  name: `${SITE.brand} — вступление в СРО`,
+  description:
+    'Помощь строительным, проектным и изыскательским компаниям во вступлении в СРО, внесении специалистов в НРС, прохождении НОК и получении лицензий.',
+  url: new URL('/', Astro.site).toString(),
+  telephone: SITE.phone,
+  email: SITE.email,
+  founder: { '@type': 'Person', name: 'Багишев Алихан Ахадович' },
+  taxID: SITE.inn,
+  areaServed: { '@type': 'Country', name: 'Россия' },
+  address: [
+    { '@type': 'PostalAddress', addressLocality: 'Санкт-Петербург', addressCountry: 'RU' },
+    { '@type': 'PostalAddress', addressLocality: 'Ростов-на-Дону', addressCountry: 'RU' },
+  ],
+  sameAs: [SITE.whatsapp, SITE.telegram, SITE.maxLink].filter(Boolean),
+}
+
+const crumbSchema =
+  breadcrumbs.length > 0
+    ? [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: breadcrumbs.map((c, i) => ({
+            '@type': 'ListItem',
+            position: i + 1,
+            name: c.label,
+            ...(c.url ? { item: new URL(c.url, Astro.site).toString() } : {}),
+          })),
+        },
+      ]
+    : []
+
+const graph = {
+  '@context': 'https://schema.org',
+  '@graph': [orgSchema, ...crumbSchema, ...schema],
+}
+---
+
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow'} />
+
+    <!-- Шрифты грузим заранее и в режиме optional (см. styles/fonts.css):
+         так они успевают к первой отрисовке и вёрстка не дёргается.
+         Латиница нужна не ради латинских слов, а ради цифр: «24 часа», «10 млн ₽». -->
+    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/onest-cyrillic.woff2')} crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/onest-latin.woff2')} crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/golos-text-cyrillic.woff2')} crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/golos-text-latin.woff2')} crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/jetbrains-mono-cyrillic.woff2')} crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/jetbrains-mono-latin.woff2')} crossorigin />
+
+    <link rel="icon" type="image/svg+xml" href={href('/favicon.svg')} />
+    <meta name="theme-color" content="#0B1D33" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={SITE.brand} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content="ru_RU" />
+    <meta property="og:image" content={new URL(href('/og.png'), Astro.site).toString()} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <script type="application/ld+json" set:html={JSON.stringify(graph)} />
+
+    <!-- Прятать блоки под анимацию можно только когда скрипт точно работает.
+         Ставим класс до отрисовки, чтобы не было мигания. -->
+    <script is:inline>document.documentElement.classList.add('js')</script>
+  </head>
+
+  <body data-base={import.meta.env.BASE_URL}>
+    <a class="skip" href="#main">Перейти к содержанию</a>
+    <Header />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+
+    <!-- Панель связи на мобильных: появляется после первого экрана -->
+    <nav class="mobile-bar" aria-label="Быстрая связь">
+      <a href={SITE.phoneHref} data-goal="click_phone">
+        <Icon name="phone" size={20} />
+        Позвонить
+      </a>
+      <a href={SITE.whatsapp} target="_blank" rel="noopener noreferrer" data-goal="click_whatsapp">
+        <Icon name="whatsapp" size={20} />
+        WhatsApp
+      </a>
+      <a href={SITE.telegram} target="_blank" rel="noopener noreferrer" data-goal="click_telegram">
+        <Icon name="telegram" size={20} />
+        Telegram
+      </a>
+    </nav>
+
+    <!-- ═══ МЕСТО ПОД СЧЁТЧИК ЯНДЕКС.МЕТРИКИ ═══
+         Номер счётчика вписывается в src/config/site.ts → metrikaId.
+         Пока он пустой, код счётчика на страницы не попадает. -->
+    {SITE.metrikaId && (
+      <script is:inline define:vars={{ id: SITE.metrikaId }}>
+        (function (m, e, t, r, i, k, a) {
+          m[i] = m[i] || function () { (m[i].a = m[i].a || []).push(arguments) }
+          m[i].l = 1 * new Date()
+          for (var j = 0; j < document.scripts.length; j++) { if (document.scripts[j].src === r) return }
+          k = e.createElement(t); a = e.getElementsByTagName(t)[0]
+          k.async = 1; k.src = r; a.parentNode.insertBefore(k, a)
+        })(window, document, 'script', 'https://mc.yandex.ru/metrika/tag.js', 'ym')
+        ym(id, 'init', { clickmap: true, trackLinks: true, accurateTrackBounce: true, webvisor: true })
+      </script>
+      <noscript><div><img src={`https://mc.yandex.ru/watch/${SITE.metrikaId}`} style="position:absolute;left:-9999px" alt="" /></div></noscript>
+    )}
+
+    <style>
+      .skip {
+        position: absolute;
+        left: -9999px;
+        background: var(--acc-btn);
+        color: #fff;
+        padding: 10px 16px;
+        z-index: 100;
+        border-radius: 0 0 var(--r-s) 0;
+      }
+      .skip:focus { left: 0; top: 0; }
+    </style>
+
+    <script>
+      // Плавное появление блоков при прокрутке.
+      const reveal = () => {
+        const items = document.querySelectorAll('.rv')
+        if (!('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          items.forEach((el) => el.classList.add('in'))
+          return
+        }
+        const io = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('in')
+                io.unobserve(entry.target)
+              }
+            })
+          },
+          { rootMargin: '0px 0px -8% 0px' },
+        )
+        items.forEach((el) => io.observe(el))
+
+        // Страховка: если наблюдатель почему-то не сработал, через 3 секунды
+        // показываем всё принудительно. Невидимый текст хуже отсутствия анимации.
+        setTimeout(() => items.forEach((el) => el.classList.add('in')), 3000)
+      }
+      reveal()
+
+      // Нижняя панель связи показывается, когда посетитель ушёл с первого экрана.
+      const bar = document.querySelector('.mobile-bar')
+      if (bar) {
+        const toggle = () => bar.classList.toggle('show', window.scrollY > window.innerHeight * 0.6)
+        toggle()
+        window.addEventListener('scroll', toggle, { passive: true })
+      }
+
+      // Цели Яндекс.Метрики на кликах по контактам.
+      document.querySelectorAll('[data-goal]').forEach((el) => {
+        el.addEventListener('click', () => {
+          const goal = (el as HTMLElement).dataset.goal
+          const w = window as unknown as { ym?: (...a: unknown[]) => void; __metrikaId?: string }
+          if (goal && typeof w.ym === 'function' && w.__metrikaId) w.ym(w.__metrikaId, 'reachGoal', goal)
+        })
+      })
+    </script>
+
+    {SITE.metrikaId && (
+      <script is:inline define:vars={{ id: SITE.metrikaId }}>
+        window.__metrikaId = id
+      </script>
+    )}
+  </body>
+</html>

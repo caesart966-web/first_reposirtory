@@ -1,0 +1,583 @@
+---
+// Калькулятор «Нужна ли вам СРО» — главный элемент сайта.
+//
+// ПРИНЦИП: калькулятор обязан уметь отвечать «не нужна». Требование членства
+// привязано к тому, С КЕМ заключён договор, а не только к его сумме, —
+// это и есть ошибка, на которой ловятся конкуренты.
+import { LAW, THRESHOLD_BUILD } from '../config/facts'
+import { href } from '../config/site'
+import Icon from './Icon.astro'
+---
+
+<section class="calc section" id="calc" data-anchor>
+  <div class="wrap">
+    <div class="s-head rv">
+      <span class="eyebrow">Калькулятор</span>
+      <h2>Нужна ли вам СРО</h2>
+      <p>
+        Четыре вопроса, честный ответ со ссылкой на норму закона. Если членство вам
+        не требуется — калькулятор так и скажет, а не поведёт оформлять ненужное.
+      </p>
+    </div>
+
+    <div class="calc-box rv" id="calc-box">
+      <!-- Прогресс -->
+      <div class="calc-top">
+        <span class="step-label" id="calc-step-label">Вопрос 1 из 4</span>
+        <div class="bar" aria-hidden="true"><i id="calc-bar" style="width:25%"></i></div>
+      </div>
+
+      <!-- Вопросы подставляются скриптом -->
+      <div id="calc-body" class="calc-body">
+        <noscript>
+          <p class="ns">
+            Калькулятор работает с включённым JavaScript. Короткий ответ без него:
+            строителю членство нужно, если обязательства по договору с застройщиком,
+            техзаказчиком, ответственным за эксплуатацию или регоператором превышают
+            {' '}{THRESHOLD_BUILD} (<span class="law">{LAW.build}</span>); проектировщику
+            и изыскателю — при любой сумме такого договора; субподрядчику от
+            генподрядчика — не нужно ни при какой сумме. Разберём вашу ситуацию
+            по телефону: <a href={href('/kontakty/')}>контакты</a>.
+          </p>
+        </noscript>
+      </div>
+
+      <div class="calc-foot" id="calc-foot">
+        <button class="link-btn" type="button" id="calc-back" hidden>← Назад</button>
+        <span class="foot-note">2 минуты · 4 вопроса · ответ со ссылкой на закон</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .calc { background: var(--navy); color: var(--on-navy); }
+  .calc .eyebrow { color: var(--acc-bright); }
+  .calc h2 { color: #fff; }
+  .calc .s-head p { color: var(--on-navy-muted); }
+
+  .calc-box {
+    background: var(--card);
+    color: var(--ink);
+    border-radius: var(--r-l);
+    padding: 26px;
+    max-width: 860px;
+    box-shadow: var(--shadow);
+  }
+
+  .calc-top { display: grid; gap: 8px; margin-bottom: 22px; }
+  .step-label {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .bar { height: 4px; background: var(--line); border-radius: 999px; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--acc-btn); border-radius: 999px; transition: width 0.3s ease; }
+
+  .calc-body { min-height: 220px; }
+
+  .q-title { font-family: var(--font-head); font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+  .q-hint { color: var(--muted); font-size: 14.5px; margin-bottom: 18px; max-width: 62ch; }
+
+  .opts { display: grid; gap: 10px; }
+  .opt {
+    display: grid;
+    grid-template-columns: 1fr 22px;
+    gap: 12px;
+    align-items: center;
+    text-align: left;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--r-m);
+    padding: 15px 18px;
+    font: inherit;
+    color: var(--ink);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+    min-height: 52px;
+  }
+  .opt:hover { border-color: var(--acc-btn); background: var(--acc-soft); }
+  .opt b { display: block; font-size: 15.5px; font-weight: 600; }
+  .opt small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; line-height: 1.45; }
+  .opt svg { color: var(--muted); }
+  .opt:hover svg { color: var(--acc-deep); }
+
+  .calc-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+  }
+  .link-btn {
+    background: none;
+    border: 0;
+    font: inherit;
+    font-size: 14px;
+    color: var(--acc-deep);
+    cursor: pointer;
+    padding: 6px 0;
+  }
+  .link-btn:hover { text-decoration: underline; }
+  .foot-note { font-size: 13px; color: var(--muted); margin-left: auto; }
+
+  /* ── Вердикт ── */
+  .verdict { display: grid; gap: 16px; }
+  .v-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .v-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 999px;
+  }
+  .v-no .v-badge { background: var(--good-bg); color: var(--good); border: 1px solid var(--good); }
+  .v-yes .v-badge { background: var(--acc-soft); color: var(--acc-deep); border: 1px solid var(--acc); }
+  .v-cond .v-badge { background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn); }
+
+  .v-title { font-family: var(--font-head); font-size: clamp(22px, 3vw, 30px); font-weight: 800; }
+  .v-no .v-title { color: var(--good); }
+
+  .v-text { color: var(--muted); font-size: 15.5px; max-width: 66ch; }
+  .v-text b { color: var(--ink); }
+  .v-text + .v-text { margin-top: 10px; }
+
+  .v-costs { background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-m); padding: 18px 20px; }
+  .v-costs h4 { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
+  .v-costs ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; font-size: 14.5px; }
+  .v-costs li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; align-items: baseline; }
+  .v-costs li span { color: var(--muted); }
+  /* Только прямой потомок: иначе жирный текст внутри описания не переносится
+     и вердикт калькулятора распирает экран телефона. */
+  .v-costs li > b { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .v-costs .total { border-top: 1px solid var(--line); padding-top: 8px; margin-top: 2px; }
+  .v-costs .disclaim { font-size: 12.5px; color: var(--muted); margin-top: 10px; line-height: 1.5; }
+
+  .v-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+  .summary { display: grid; gap: 6px; font-size: 13.5px; color: var(--muted); }
+  .summary div { display: grid; grid-template-columns: minmax(0, 200px) 1fr; gap: 10px; }
+  .summary dt { color: var(--muted); }
+  .summary dd { margin: 0; color: var(--ink); }
+
+  .ns { font-size: 15px; color: var(--muted); line-height: 1.6; }
+  .ns .law { margin: 0 2px; }
+
+  @media (max-width: 560px) {
+    .calc-box { padding: 20px 16px; }
+    .summary div { grid-template-columns: 1fr; gap: 0; }
+  }
+</style>
+
+<script>
+  type Option = { id: string; label: string; hint?: string }
+  type Question = { id: string; title: string; hint?: string; options: Option[] }
+
+  const answers: Record<string, string> = {}
+  const labels: Record<string, string> = {}
+  const path: string[] = []
+
+  const box = document.getElementById('calc-body')
+  const bar = document.getElementById('calc-bar')
+  const stepLabel = document.getElementById('calc-step-label')
+  const backBtn = document.getElementById('calc-back') as HTMLButtonElement | null
+  const base = document.body.dataset.base || '/'
+
+  const link = (p: string) => base.replace(/\/$/, '') + p
+
+  // ── Вопросы ───────────────────────────────────────────────────────────────
+
+  const Q_WORK: Question = {
+    id: 'work',
+    title: 'Какие работы вы выполняете?',
+    hint: 'От вида работ зависит и сама обязанность вступать в СРО, и то, какая именно СРО нужна.',
+    options: [
+      { id: 'build', label: 'Строительство, реконструкция, капитальный ремонт', hint: 'СРО строителей, реестр НОСТРОЙ' },
+      { id: 'design', label: 'Подготовка проектной документации', hint: 'СРО проектировщиков, реестр НОПРИЗ' },
+      { id: 'survey', label: 'Инженерные изыскания', hint: 'СРО изыскателей, реестр НОПРИЗ' },
+      { id: 'demolition', label: 'Снос объектов капитального строительства', hint: 'Отдельное правило по сумме договора' },
+    ],
+  }
+
+  const Q_PARTY: Question = {
+    id: 'party',
+    title: 'С кем вы заключаете договор?',
+    hint: 'Это главный вопрос. Обязанность членства привязана к тому, с кем заключён договор, а не только к его сумме — на этом ошибается половина сайтов.',
+    options: [
+      {
+        id: 'direct',
+        label: 'С застройщиком или техническим заказчиком',
+        hint: 'Также: с лицом, ответственным за эксплуатацию здания, или с региональным оператором капремонта',
+      },
+      {
+        id: 'sub',
+        label: 'С генподрядчиком или генпроектировщиком — я субподрядчик',
+        hint: 'Договор не с застройщиком, а с другой подрядной организацией',
+      },
+      {
+        id: 'private',
+        label: 'С физлицом: ИЖС, садовый дом, гараж',
+        hint: 'Индивидуальное жилищное строительство и объекты, для которых разрешение не требуется',
+      },
+      {
+        id: 'state',
+        label: 'С государственным или муниципальным заказчиком',
+        hint: 'Контракт по 44-ФЗ или 223-ФЗ',
+      },
+    ],
+  }
+
+  const Q_SUM_BUILD: Question = {
+    id: 'sum',
+    title: 'Какая сумма обязательств по договору?',
+    hint: `Порог для строителей — ${'10 млн ₽'}. Он действует с 1 мая 2022 года: закон 124-ФЗ поднял его с прежних 3 млн, но многие сайты до сих пор пишут старую цифру.`,
+    options: [
+      { id: 'low', label: 'До 10 млн ₽ включительно' },
+      { id: 'high', label: 'Свыше 10 млн ₽' },
+    ],
+  }
+
+  const Q_SUM_DESIGN: Question = {
+    id: 'sum',
+    title: 'Какая сумма обязательств по договору?',
+    hint: 'Для проектировщиков и изыскателей порога нет — членство требуется при любой сумме прямого договора. Сумма нужна только для того, чтобы определить уровень ответственности и размер взноса.',
+    options: [
+      { id: 'l1', label: 'До 25 млн ₽', hint: 'Первый уровень ответственности' },
+      { id: 'l2', label: 'До 50 млн ₽', hint: 'Второй уровень' },
+      { id: 'l3', label: 'До 300 млн ₽', hint: 'Третий уровень' },
+      { id: 'l4', label: '300 млн ₽ и более', hint: 'Четвёртый уровень' },
+    ],
+  }
+
+  const Q_SUM_DEMO: Question = {
+    id: 'sum',
+    title: 'Какая сумма договора на снос?',
+    hint: 'Для сноса действует отдельный порог.',
+    options: [
+      { id: 'low', label: 'До 1 млн ₽' },
+      { id: 'high', label: '1 млн ₽ и более' },
+    ],
+  }
+
+  const Q_TENDER: Question = {
+    id: 'tender',
+    title: 'Планируете участвовать в конкурентных закупках?',
+    hint: 'Торги, аукционы, конкурсы по 44-ФЗ и 223-ФЗ. От ответа зависит второй, отдельный взнос — в компенсационный фонд обеспечения договорных обязательств.',
+    options: [
+      { id: 'yes', label: 'Да, планируем участвовать в торгах' },
+      { id: 'no', label: 'Нет, работаем по прямым договорам' },
+    ],
+  }
+
+  // Какие вопросы задавать дальше — зависит от предыдущих ответов.
+  function buildQueue(): Question[] {
+    const work = answers.work
+    const party = answers.party
+    const queue: Question[] = [Q_WORK]
+
+    if (!work) return queue
+    queue.push(Q_PARTY)
+    if (!party) return queue
+
+    // Субподряд и ИЖС снимают вопрос о сумме: членство не требуется в любом случае.
+    if (party === 'sub' || party === 'private') return queue
+
+    if (work === 'demolition') queue.push(Q_SUM_DEMO)
+    else if (work === 'build') queue.push(Q_SUM_BUILD)
+    else queue.push(Q_SUM_DESIGN)
+
+    if (!answers.sum) return queue
+
+    // Строителю ниже порога торги ничего не меняют: членства не требуется.
+    if (work === 'build' && answers.sum === 'low') return queue
+    if (work === 'demolition' && answers.sum === 'low') return queue
+
+    queue.push(Q_TENDER)
+    return queue
+  }
+
+  // ── Вердикт ───────────────────────────────────────────────────────────────
+
+  type Verdict = {
+    kind: 'no' | 'yes' | 'cond'
+    badge: string
+    title: string
+    body: string[]
+    law: string
+    costs?: boolean
+  }
+
+  function decide(): Verdict {
+    const { work, party, sum, tender } = answers
+
+    if (party === 'sub') {
+      return {
+        kind: 'no',
+        badge: 'Членство не требуется',
+        title: 'СРО вам не нужна',
+        body: [
+          'Вы работаете субподрядчиком: договор заключён не с застройщиком и не с техническим заказчиком, а с другой подрядной организацией. <b>Требование членства привязано к тому, с кем заключён договор, а не к его сумме</b> — поэтому оно на вас не распространяется независимо от того, идёт речь о миллионе или о ста.',
+          'Ответственность за наличие членства несёт генподрядчик — та компания, которая заключила договор с застройщиком. Если генподрядчик требует от вас «допуск СРО», спросите у него, на какую норму он ссылается: чаще всего это его внутреннее требование, а не закон.',
+          'Если завтра вы захотите работать с застройщиком напрямую — членство понадобится. Тогда возвращайтесь, поможем.',
+        ],
+        law: 'ч. 2.1 ст. 52 ГрК РФ',
+      }
+    }
+
+    if (party === 'private') {
+      return {
+        kind: 'no',
+        badge: 'Членство не требуется',
+        title: 'СРО вам не нужна',
+        body: [
+          'Объекты индивидуального жилищного строительства, садовые дома и гаражи выведены из-под требования о членстве. <b>Сумма договора здесь роли не играет.</b>',
+          'Осторожно с определениями: дом выше трёх этажей, блокированная застройка на несколько семей или объект, который вы строите для последующей продажи как многоквартирный, — это уже не ИЖС. Если сомневаетесь, что именно строите, лучше разобрать конкретный случай, чем оформлять ненужное членство или, наоборот, работать без него.',
+        ],
+        law: 'ч. 2.1 ст. 52 ГрК РФ',
+      }
+    }
+
+    if (work === 'demolition' && sum === 'low') {
+      return {
+        kind: 'no',
+        badge: 'Членство не требуется',
+        title: 'СРО вам не нужна',
+        body: [
+          'Для работ по сносу объектов капитального строительства порог — <b>1 млн ₽</b>. Ваш договор ниже, поэтому членство не требуется.',
+          'Учтите: порог считается по каждому договору. Если договоров несколько и по каждому обязательства не превышают миллиона, требование по-прежнему не возникает — но подменять один крупный договор цепочкой мелких, чтобы обойти закон, рискованно: это оспаривается.',
+        ],
+        law: 'ст. 55.31 ГрК РФ',
+      }
+    }
+
+    if (work === 'build' && sum === 'low') {
+      return {
+        kind: 'no',
+        badge: 'Членство не требуется',
+        title: 'СРО вам не нужна',
+        body: [
+          'Обязательства по договору не превышают <b>10 млн ₽</b> — при такой сумме членство в СРО не требуется, даже по прямому договору с застройщиком.',
+          'Именно здесь чаще всего ошибаются: половина сайтов до сих пор пишет старый порог в 3 млн ₽. Он был поднят до 10 млн законом 124-ФЗ <b>с 1 мая 2022 года</b>. Если вам говорят про 3 млн — вам показывают устаревшую информацию.',
+          'Обратите внимание: порог считается по каждому отдельному договору. Как только по одному договору обязательства превысят 10 млн ₽, членство станет обязательным — и на момент подписания, а не потом.',
+        ],
+        law: 'ч. 2.1 ст. 52 ГрК РФ',
+      }
+    }
+
+    // Дальше — случаи, когда членство требуется.
+    const workName =
+      work === 'build' ? 'строителей' : work === 'design' ? 'проектировщиков' : work === 'survey' ? 'изыскателей' : 'строителей'
+
+    const body: string[] = []
+    let law = 'ч. 2.1 ст. 52 ГрК РФ'
+
+    if (work === 'design' || work === 'survey') {
+      law = work === 'design' ? 'ч. 4 ст. 48 ГрК РФ' : 'ч. 4 ст. 47 ГрК РФ'
+      body.push(
+        `Вы работаете по прямому договору, значит членство в СРО ${workName} обязательно. <b>Порога по сумме здесь нет</b>: требование действует при любой цене договора — хоть 200 тысяч, хоть 200 миллионов. Порог в 10 млн ₽ относится только к строителям, его часто ошибочно переносят на проектирование.`,
+        'Ещё одна распространённая ошибка, которую допускают даже крупные площадки: <b>для проектировщиков и изыскателей нет региональной привязки</b>. Вы можете вступить в СРО любого субъекта РФ, а не только своего. Это позволяет выбирать по надёжности и стоимости, а не по географии.',
+      )
+    } else if (work === 'demolition') {
+      law = 'ст. 55.31 ГрК РФ'
+      body.push(
+        'Договор на снос — от 1 млн ₽, значит членство в СРО строителей обязательно.',
+        '<b>Строительная СРО должна быть зарегистрирована в вашем субъекте РФ</b>; если в регионе подходящей нет — можно вступить в СРО соседнего субъекта. Это региональный принцип, он действует только для строителей.',
+      )
+    } else {
+      body.push(
+        'Обязательства по договору превышают <b>10 млн ₽</b>, договор прямой — членство в СРО строителей обязательно. Причём на момент заключения договора, а не после начала работ.',
+        '<b>Строительная СРО должна быть зарегистрирована в том же субъекте РФ, где зарегистрированы вы</b>; если подходящей СРО в регионе нет — допускается вступить в СРО соседнего субъекта. Это региональный принцип, и это ошибка, которую допускают даже крупные площадки, предлагая «СРО в любом регионе».',
+      )
+    }
+
+    body.push(
+      'Понадобятся <b>минимум два специалиста в национальном реестре (НРС)</b> в штате. Для включения в НРС специалист проходит независимую оценку квалификации (НОК); свидетельство действует ограниченный срок, после чего оценку проходят заново. Просроченная НОК означает исключение из НРС — и компания перестаёт соответствовать требованиям СРО.',
+      'Срок рассмотрения заявления — <b>не более двух месяцев по закону</b>. На практике, когда документы собраны правильно, решение принимается за считаные дни, а выписку из реестра мы получаем за 24 часа.',
+    )
+
+    if (tender === 'yes') {
+      return {
+        kind: 'cond',
+        badge: 'Нужна + отдельный взнос',
+        title: 'СРО нужна, и для торгов — второй взнос',
+        body: [
+          ...body,
+          '<b>Раз вы идёте на конкурентные закупки, одного членства недостаточно.</b> Помимо взноса в компенсационный фонд возмещения вреда потребуется отдельный взнос — в компенсационный фонд обеспечения договорных обязательств (КФ ОДО). Без него заявку на торгах отклонят, и это одна из трёх самых частых причин отказа. Многие узнают об этом уже после оплаты первого взноса — потому что на сайтах, обещающих «без скрытых платежей», про КФ ОДО не написано.',
+        ],
+        law,
+        costs: true,
+      }
+    }
+
+    return {
+      kind: 'yes',
+      badge: 'Членство обязательно',
+      title: `Да, нужна СРО ${workName}`,
+      body: [
+        ...body,
+        'Взнос в компенсационный фонд обеспечения договорных обязательств (КФ ОДО) вам сейчас не нужен — он требуется только для участия в конкурентных закупках. Если планы изменятся, взнос можно внести позже, повысив уровень ответственности.',
+      ],
+      law,
+      costs: true,
+    }
+  }
+
+  // ── Отрисовка ─────────────────────────────────────────────────────────────
+
+  function goal(name: string) {
+    const w = window as unknown as { ym?: (...a: unknown[]) => void; __metrikaId?: string }
+    if (typeof w.ym === 'function' && w.__metrikaId) w.ym(w.__metrikaId, 'reachGoal', name)
+  }
+
+  function renderQuestion(q: Question, index: number, total: number) {
+    if (!box || !stepLabel || !bar) return
+    stepLabel.textContent = `Вопрос ${index + 1} из ${total}`
+    bar.style.width = `${Math.round(((index + 1) / total) * 100)}%`
+    if (backBtn) backBtn.hidden = index === 0
+
+    box.innerHTML = `
+      <div class="q-title">${q.title}</div>
+      ${q.hint ? `<p class="q-hint">${q.hint}</p>` : ''}
+      <div class="opts" role="group">
+        ${q.options
+          .map(
+            (o) => `
+          <button class="opt" type="button" data-q="${q.id}" data-id="${o.id}" data-label="${o.label.replace(/"/g, '&quot;')}">
+            <span><b>${o.label}</b>${o.hint ? `<small>${o.hint}</small>` : ''}</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>`,
+          )
+          .join('')}
+      </div>`
+
+    box.querySelectorAll<HTMLButtonElement>('.opt').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const qid = btn.dataset.q!
+        answers[qid] = btn.dataset.id!
+        labels[qid] = btn.dataset.label!
+        path.push(qid)
+        if (path.length === 1) goal('quiz_start')
+        goal(`quiz_step_${path.length}`)
+        render()
+      })
+    })
+    // Фокус на первый вариант — чтобы клавиатура работала без лишних Tab.
+    box.querySelector<HTMLButtonElement>('.opt')?.focus({ preventScroll: true })
+  }
+
+  function renderVerdict() {
+    if (!box || !stepLabel || !bar) return
+    const v = decide()
+    stepLabel.textContent = 'Результат'
+    bar.style.width = '100%'
+    if (backBtn) backBtn.hidden = false
+    goal('quiz_finish')
+
+    const summary = Object.keys(labels)
+      .map((k) => {
+        const names: Record<string, string> = { work: 'Работы', party: 'Договор', sum: 'Сумма', tender: 'Торги' }
+        return `<div><dt>${names[k] || k}</dt><dd>${labels[k]}</dd></div>`
+      })
+      .join('')
+
+    const costs = v.costs
+      ? `<div class="v-costs">
+           <h4>Из чего сложатся расходы</h4>
+           <ul>
+             <li><span>Взнос в компенсационный фонд возмещения вреда — обязателен всем, размер зависит от уровня ответственности</span><b>по закону</b></li>
+             ${
+               answers.tender === 'yes'
+                 ? '<li><span>Взнос в компенсационный фонд обеспечения договорных обязательств — только для торгов</span><b>по закону</b></li>'
+                 : ''
+             }
+             <li><span>Вступительный и членские взносы СРО</span><b>по тарифам СРО</b></li>
+             <li><span>Целевой взнос в национальное объединение</span><b>по тарифам</b></li>
+             <li><span>Страхование гражданской ответственности</span><b>по тарифам</b></li>
+             <li><span>Независимая оценка квалификации для специалистов НРС</span><b>при необходимости</b></li>
+             <li class="total"><span><b>Подготовка документов и сопровождение — мои услуги</b></span><b>0 ₽</b></li>
+           </ul>
+           <p class="disclaim">
+             Точные суммы взносов по каждому уровню ответственности — на странице
+             <a href="${link('/stoimost/')}">«Стоимость»</a>: там открытая разбивка со ссылками на статьи закона.
+             Взносы вносятся напрямую в СРО, я их не принимаю и не беру процент.
+           </p>
+         </div>`
+      : ''
+
+    const actions =
+      v.kind === 'no'
+        ? `<div class="v-actions">
+             <a class="btn btn--ghost" href="${link('/komu-nuzhna-sro/')}">Подробнее, кому нужна СРО</a>
+             <a class="btn btn--ghost" href="${link('/kontakty/')}">Задать вопрос по своей ситуации</a>
+           </div>`
+        : `<div class="v-actions">
+             <a class="btn btn--acc" href="${link('/kontakty/')}#form">Получить расчёт для моей компании</a>
+             <a class="btn btn--ghost" href="${link('/stoimost/')}">Посмотреть разбивку расходов</a>
+           </div>`
+
+    box.innerHTML = `
+      <div class="verdict v-${v.kind}">
+        <div class="v-head">
+          <span class="v-badge">${v.badge}</span>
+          <span class="law">${v.law}</span>
+        </div>
+        <div class="v-title">${v.title}</div>
+        <div>${v.body.map((p) => `<p class="v-text">${p}</p>`).join('')}</div>
+        ${costs}
+        ${actions}
+        <dl class="summary">${summary}</dl>
+        <button class="link-btn" type="button" id="calc-reset">Пройти заново</button>
+      </div>`
+
+    document.getElementById('calc-reset')?.addEventListener('click', () => {
+      Object.keys(answers).forEach((k) => delete answers[k])
+      Object.keys(labels).forEach((k) => delete labels[k])
+      path.length = 0
+      render()
+    })
+  }
+
+  // Сколько всего вопросов будет задано. Путь зависит от ответов: субподрядчику
+  // и частнику хватает двух вопросов, строителю ниже порога — трёх.
+  // Пока путь не определён, показываем обычные четыре.
+  function expectedTotal(): number {
+    const { work, party, sum } = answers
+    if (!work || !party) return 4
+    if (party === 'sub' || party === 'private') return 2
+    if (!sum) return 4
+    if ((work === 'build' || work === 'demolition') && sum === 'low') return 3
+    return 4
+  }
+
+  function render() {
+    const queue = buildQueue()
+    const answered = queue.filter((q) => answers[q.id]).length
+
+    if (answered >= queue.length) {
+      renderVerdict()
+      return
+    }
+    renderQuestion(queue[answered], answered, Math.max(expectedTotal(), queue.length))
+  }
+
+  if (box) {
+    render()
+    backBtn?.addEventListener('click', () => {
+      const last = path.pop()
+      if (last) {
+        delete answers[last]
+        delete labels[last]
+      }
+      render()
+    })
+  }
+</script>

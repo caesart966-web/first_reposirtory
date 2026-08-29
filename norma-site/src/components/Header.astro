@@ -1,0 +1,180 @@
+---
+import { SITE, href } from '../config/site'
+import Icon from './Icon.astro'
+
+const nav = [
+  { label: 'Услуги', url: href('/uslugi/') },
+  { label: 'Стоимость', url: href('/stoimost/') },
+  { label: 'Кому нужна СРО', url: href('/komu-nuzhna-sro/') },
+  { label: 'База знаний', url: href('/baza-znaniy/') },
+  { label: 'Контакты', url: href('/kontakty/') },
+]
+---
+
+<header class="site-header">
+  <div class="wrap hdr">
+    <a class="logo" href={href('/')}>
+      <span class="logo-mark">§</span>
+      <span class="logo-text">
+        <b>{SITE.brand}</b>
+        <small>{SITE.brandTag}</small>
+      </span>
+    </a>
+
+    <nav class="nav" aria-label="Основное меню">
+      {nav.map((item) => <a href={item.url}>{item.label}</a>)}
+    </nav>
+
+    <div class="hdr-right">
+      <a class="phone" href={SITE.phoneHref}>
+        <Icon name="phone" size={16} />
+        <span>
+          <b>{SITE.phone}</b>
+          <small>{SITE.geoShort}</small>
+        </span>
+      </a>
+      <a class="btn btn--acc btn--sm hdr-cta" href={href('/#calc')}>Проверить, нужна ли СРО</a>
+      <!-- На телефоне номер должен быть виден с первого экрана, не только
+           в нижней панели, которая появляется после прокрутки. -->
+      <a class="icon-phone" href={SITE.phoneHref} aria-label={`Позвонить ${SITE.phone}`} data-goal="click_phone">
+        <Icon name="phone" size={19} />
+      </a>
+      <button class="burger" type="button" aria-label="Меню" aria-expanded="false" aria-controls="mobile-menu">
+        <Icon name="menu" size={22} />
+      </button>
+    </div>
+  </div>
+
+  <div class="mobile-menu" id="mobile-menu" hidden>
+    <div class="wrap">
+      <nav aria-label="Меню на мобильном">
+        {nav.map((item) => <a href={item.url}>{item.label}</a>)}
+      </nav>
+      <a class="btn btn--acc mm-cta" href={href('/#calc')}>Проверить, нужна ли СРО</a>
+      <a class="mm-phone" href={SITE.phoneHref}>{SITE.phone}</a>
+    </div>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--navy);
+    color: var(--on-navy);
+    border-bottom: 1px solid var(--navy-line);
+  }
+
+  .hdr {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #fff; flex: none; }
+  .logo-mark {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--acc-bright);
+    line-height: 1;
+    border: 1.5px solid rgba(53, 214, 204, 0.4);
+    border-radius: 8px;
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+  }
+  .logo-text { display: grid; line-height: 1.15; }
+  .logo-text b { font-family: var(--font-head); font-size: 17px; font-weight: 800; letter-spacing: 0.06em; }
+  .logo-text small { font-size: 11px; color: var(--on-navy-muted); }
+
+  .nav { display: none; gap: 20px; font-size: 14.5px; }
+  .nav a { color: var(--on-navy-muted); text-decoration: none; white-space: nowrap; }
+  .nav a:hover { color: #fff; }
+
+  .hdr-right { margin-left: auto; display: flex; align-items: center; gap: 14px; }
+
+  .phone { display: none; align-items: center; gap: 8px; color: #fff; text-decoration: none; }
+  .phone svg { color: var(--acc-bright); flex: none; }
+  .phone span { display: grid; line-height: 1.2; }
+  .phone b { font-family: var(--font-mono); font-size: 14px; font-weight: 500; white-space: nowrap; }
+  .phone small { font-size: 10.5px; color: var(--on-navy-muted); white-space: nowrap; }
+
+  .hdr-cta { display: none; }
+
+  .burger,
+  .icon-phone {
+    background: transparent;
+    border: 1px solid var(--navy-line);
+    border-radius: var(--r-s);
+    color: var(--on-navy);
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    text-decoration: none;
+    flex: none;
+  }
+  .icon-phone { color: var(--acc-bright); border-color: rgba(53, 214, 204, 0.4); }
+
+  .mobile-menu { border-top: 1px solid var(--navy-line); padding: 14px 0 20px; }
+  .mobile-menu nav { display: grid; }
+  .mobile-menu nav a {
+    color: var(--on-navy);
+    text-decoration: none;
+    padding: 13px 0;
+    border-bottom: 1px solid var(--navy-line);
+    font-size: 16px;
+  }
+  .mm-cta { margin-top: 16px; width: 100%; }
+  .mm-phone {
+    display: block;
+    margin-top: 12px;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 17px;
+    color: var(--acc-bright);
+    text-decoration: none;
+  }
+
+  @media (min-width: 768px) {
+    .phone { display: flex; }
+    .hdr-cta { display: inline-flex; }
+    .burger, .icon-phone { display: none; }
+    .mobile-menu { display: none !important; }
+  }
+
+  @media (min-width: 1000px) {
+    .nav { display: flex; }
+  }
+</style>
+
+<script>
+  const burger = document.querySelector<HTMLButtonElement>('.burger')
+  const menu = document.getElementById('mobile-menu')
+
+  if (burger && menu) {
+    const setOpen = (open: boolean) => {
+      menu.hidden = !open
+      burger.setAttribute('aria-expanded', String(open))
+      document.body.style.overflow = open ? 'hidden' : ''
+    }
+
+    burger.addEventListener('click', () => setOpen(menu.hidden))
+
+    // Закрытие по Esc и по клику вне меню — иначе на телефоне из него не выйти.
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !menu.hidden) setOpen(false)
+    })
+    document.addEventListener('click', (e) => {
+      const target = e.target as Node
+      if (!menu.hidden && !menu.contains(target) && !burger.contains(target)) setOpen(false)
+    })
+    menu.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => setOpen(false)))
+  }
+</script>
