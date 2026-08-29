@@ -88,7 +88,7 @@ export function FAQ() {
                   aria-labelledby={`faq-button-${index}`}
                   aria-hidden={!open}
                   className={`grid transition-all duration-300 ease-in-out ${
-                    open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                    open ? 'visible grid-rows-[1fr] opacity-100' : 'invisible grid-rows-[0fr] opacity-0'
                   }`}
                 >
                   <div className="overflow-hidden">
