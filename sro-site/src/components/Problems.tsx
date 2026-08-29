@@ -55,21 +55,27 @@ export function Problems() {
             key={scenario.title}
             type="button"
             onClick={() => startQuiz(scenario.questionId, scenario.answer)}
-            className="group flex w-full items-center gap-5 py-6 text-left transition-colors duration-200 hover:bg-accent-50/40 sm:gap-8"
+            className="group flex w-full flex-col gap-2 py-6 text-left transition-colors duration-200 hover:bg-accent-50/40 sm:flex-row sm:items-center sm:gap-8"
           >
-            <span className="w-28 shrink-0 text-xs font-semibold uppercase tracking-[0.14em] text-accent-600 sm:w-32">
+            {/* До sm строка вертикальная: колонка тега шириной 112px оставляла
+                тексту ~190px из 358 — описания рвались на 5-7 коротких строк. */}
+            <span className="shrink-0 text-xs font-semibold uppercase tracking-[0.14em] text-accent-600 sm:w-32">
               {scenario.tag}
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block font-semibold text-neutral-950 sm:text-lg">
+              <span className="flex items-center gap-2 font-semibold text-neutral-950 sm:text-lg">
                 {scenario.title}
+                <ArrowRight
+                  className="h-4 w-4 shrink-0 text-neutral-400 transition-all duration-200 group-hover:translate-x-1 group-hover:text-accent-600 sm:hidden"
+                  aria-hidden="true"
+                />
               </span>
               <span className="mt-1 block text-sm leading-relaxed text-neutral-600">
                 {scenario.text}
               </span>
             </span>
             <ArrowRight
-              className="h-5 w-5 shrink-0 text-neutral-400 transition-all duration-200 group-hover:translate-x-1 group-hover:text-accent-600"
+              className="hidden h-5 w-5 shrink-0 text-neutral-400 transition-all duration-200 group-hover:translate-x-1 group-hover:text-accent-600 sm:block"
               aria-hidden="true"
             />
           </button>

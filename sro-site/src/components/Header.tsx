@@ -4,9 +4,12 @@ import { CONFIGURED, CONTACTS, LINKS } from "../content/contacts";
 import { ScalesMark } from "./illustrations";
 import { ButtonLink } from "./ui/Button";
 
+// «Стоимость» вместо «Как работаем»: вопрос цены звучит в герое, Pricing и FAQ,
+// а ответа в навигации не было. Пятым пунктом нельзя — на 1440px номер телефона
+// показан текстом, и запас ширины (~125px) меньше цены нового пункта.
 const NAV = [
   { href: "#services", label: "Услуги" },
-  { href: "#process", label: "Как работаем" },
+  { href: "#pricing", label: "Стоимость" },
   { href: "#about", label: "О специалисте" },
   { href: "#faq", label: "FAQ" },
 ];
