@@ -438,6 +438,12 @@ import Icon from './Icon.astro'
     if (typeof w.ym === 'function' && w.__metrikaId) w.ym(w.__metrikaId, 'reachGoal', name)
   }
 
+  // Фокус переводим на первый вариант только после ответа посетителя.
+  // При первой отрисовке этого делать нельзя: страница ещё грузится,
+  // а фокус уже уехал в середину — человек нажимает Tab и оказывается
+  // неизвестно где, вместо начала страницы.
+  let userInteracted = false
+
   function renderQuestion(q: Question, index: number, total: number) {
     if (!box || !stepLabel || !bar) return
     stepLabel.textContent = `Вопрос ${index + 1} из ${total}`
@@ -465,13 +471,15 @@ import Icon from './Icon.astro'
         answers[qid] = btn.dataset.id!
         labels[qid] = btn.dataset.label!
         path.push(qid)
+        userInteracted = true
         if (path.length === 1) goal('quiz_start')
         goal(`quiz_step_${path.length}`)
         render()
       })
     })
-    // Фокус на первый вариант — чтобы клавиатура работала без лишних Tab.
-    box.querySelector<HTMLButtonElement>('.opt')?.focus({ preventScroll: true })
+    if (userInteracted) {
+      box.querySelector<HTMLButtonElement>('.opt')?.focus({ preventScroll: true })
+    }
   }
 
   function renderVerdict() {
@@ -542,6 +550,7 @@ import Icon from './Icon.astro'
       Object.keys(answers).forEach((k) => delete answers[k])
       Object.keys(labels).forEach((k) => delete labels[k])
       path.length = 0
+      userInteracted = true
       render()
     })
   }

@@ -34,7 +34,10 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # 22, а не 20: Astro 7 (сайт «НОРМА») требует >= 22.12,
+          # а поддержка Node 20 закончилась. Vite 5 и 8 в остальных
+          # проектах на 22 работают без изменений.
+          node-version: 22
           cache: npm
           cache-dependency-path: |
             orders-app/package-lock.json

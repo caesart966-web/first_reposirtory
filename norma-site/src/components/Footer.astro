@@ -124,16 +124,18 @@ const year = new Date().getFullYear()
     font-weight: 500;
   }
   .fphone:hover { color: var(--acc-bright); }
-  .fmail { color: var(--on-navy-muted); text-decoration: none; }
+  /* Ссылки в подвале — навигация, а не текст в абзаце: по стандарту
+     доступности в них нужно попадать пальцем, поэтому высота от 24 px. */
+  .fmail { color: var(--on-navy-muted); text-decoration: none; padding: 3px 0; display: inline-block; }
   .fmail:hover { color: var(--acc-bright); }
 
   .msgs { display: flex; gap: 14px; flex-wrap: wrap; }
-  .msgs a { color: var(--acc-bright); text-decoration: none; font-size: 14px; }
+  .msgs a { color: var(--acc-bright); text-decoration: none; font-size: 14px; padding: 4px 0; }
   .msgs a:hover { text-decoration: underline; }
 
   h3 { color: #fff; font-size: 15px; font-weight: 700; margin-bottom: 12px; }
-  ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 9px; }
-  ul a { color: var(--on-navy-muted); text-decoration: none; }
+  ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+  ul a { color: var(--on-navy-muted); text-decoration: none; display: inline-block; padding: 4px 0; }
   ul a:hover { color: var(--acc-bright); }
 
   .note { margin-top: 12px; font-size: 12.5px; line-height: 1.5; max-width: 34ch; }
