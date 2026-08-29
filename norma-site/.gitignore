@@ -1,0 +1,13 @@
+# Сборка и служебные файлы
+dist/
+.astro/
+node_modules/
+screenshots/
+
+# Локальные настройки приёма заявок (ключи не хранятся в репозитории)
+.env
+.env.local
+.env.production
+
+# Журнал заявок с боевого хостинга сюда попадать не должен
+public/api/leads.jsonl

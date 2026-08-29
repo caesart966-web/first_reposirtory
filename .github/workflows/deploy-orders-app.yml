@@ -1,4 +1,4 @@
-name: 'Публикация на GitHub Pages: «Заказы», «Строй-Герой», сайт ПТО и сайт СРО'
+name: 'Публикация на GitHub Pages: «Заказы», «Строй-Герой», сайт ПТО и сайты СРО'
 
 on:
   push:
@@ -8,6 +8,7 @@ on:
       - 'stroigeroi-site/**'
       - 'pto-site/**'
       - 'sro-site/**'
+      - 'norma-site/**'
       - '.github/workflows/deploy-orders-app.yml'
   workflow_dispatch: # позволяет запустить сборку руками из вкладки Actions
 
@@ -33,11 +34,15 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # 22, а не 20: Astro 7 (сайт «НОРМА») требует >= 22.12,
+          # а поддержка Node 20 закончилась. Vite 5 и 8 в остальных
+          # проектах на 22 работают без изменений.
+          node-version: 22
           cache: npm
           cache-dependency-path: |
             orders-app/package-lock.json
             sro-site/package-lock.json
+            norma-site/package-lock.json
 
       - name: Установка зависимостей
         run: npm ci
@@ -110,6 +115,30 @@ jobs:
 
       - name: Добавляем сайт СРО
         run: cp -r ../sro-site/dist dist/sro
+
+      # Сайт «НОРМА» — вступление в СРО (ИП Багишев). Здесь это ПРЕВЬЮ
+      # для показа заказчику: подпапка /norma/ вместо корня домена и запрет
+      # индексации, чтобы черновик не попал в поиск. Боевая сборка для своего
+      # домена делается без BASE_PATH и без PUBLIC_NOINDEX.
+      - name: Устанавливаем зависимости сайта «НОРМА»
+        working-directory: norma-site
+        run: npm ci --omit=dev
+
+      - name: Собираем сайт «НОРМА»
+        working-directory: norma-site
+        env:
+          SITE_URL: https://${{ github.repository_owner }}.github.io
+          BASE_PATH: /${{ github.event.repository.name }}/norma/
+          PUBLIC_NOINDEX: '1'
+        run: |
+          npm run build
+          # PHP-обработчик заявок работает только на хостинге с PHP.
+          # Pages его не выполнит, а отдаст исходником — убираем из выкладки.
+          # Форма без него честно показывает телефон и мессенджеры.
+          rm -rf dist/api
+
+      - name: Добавляем сайт «НОРМА»
+        run: cp -r ../norma-site/dist dist/norma
 
       - uses: actions/configure-pages@v5
 

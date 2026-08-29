@@ -1,0 +1,90 @@
+---
+// Блок проверяемости: прямые ссылки на официальные реестры.
+// Ни один конкурент этого не делает — а это самый простой способ показать,
+// что скрывать нечего.
+import { REGISTRIES, SITE } from '../config/site'
+import Icon from './Icon.astro'
+---
+
+<section class="section reg" id="proverka" data-anchor>
+  <div class="wrap">
+    <div class="s-head rv">
+      <span class="eyebrow">Проверяемость</span>
+      <h2>Проверьте нас и любую СРО в госреестре</h2>
+      <p>
+        Не верьте на слово ни мне, ни кому-либо ещё на этом рынке. Всё проверяется
+        бесплатно и за минуту в официальных реестрах национальных объединений.
+        Ссылки прямые — открываются в новой вкладке.
+      </p>
+    </div>
+
+    <div class="grid-2">
+      <a class="card reg-card rv" href={REGISTRIES.nostroy} target="_blank" rel="noopener noreferrer">
+        <div class="rc-top">
+          <Icon name="search" size={20} />
+          <span class="host">reestr.nostroy.ru</span>
+        </div>
+        <h3>Реестр НОСТРОЙ — строители</h3>
+        <p>
+          Единый реестр членов СРО в строительстве. Здесь видно, состоит ли компания
+          в СРО, с какого числа, какой у неё уровень ответственности и не исключена ли она.
+          Там же — национальный реестр специалистов (НРС).
+        </p>
+        <span class="go">Открыть реестр <Icon name="arrow" size={16} /></span>
+      </a>
+
+      <a class="card reg-card rv" href={REGISTRIES.nopriz} target="_blank" rel="noopener noreferrer">
+        <div class="rc-top">
+          <Icon name="search" size={20} />
+          <span class="host">nopriz.ru</span>
+        </div>
+        <h3>Реестр НОПРИЗ — проектировщики и изыскатели</h3>
+        <p>
+          Национальное объединение изыскателей и проектировщиков. Реестр членов СРО
+          и реестр специалистов для проектных и изыскательских компаний.
+        </p>
+        <span class="go">Открыть реестр <Icon name="arrow" size={16} /></span>
+      </a>
+    </div>
+
+    <div class="reg-note rv">
+      <p>
+        <b>Не путайте объединения:</b> НОСТРОЙ — это строители, НОПРИЗ — проектировщики
+        и изыскатели. Если на сайте вам предлагают «СРО НОСТРОЙ для проектирования» —
+        перед вами человек, который не разбирается в предмете.
+      </p>
+      <p class="who">
+        Мои реквизиты для проверки: {SITE.legalName}, ИНН {SITE.inn}
+        {SITE.ogrnip && `, ОГРНИП ${SITE.ogrnip}`}. Проверяются на сайте ФНС.
+      </p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .reg-card { display: grid; gap: 10px; align-content: start; }
+  .rc-top { display: flex; align-items: center; gap: 10px; color: var(--acc-deep); }
+  .host { font-family: var(--font-mono); font-size: 13px; }
+  .reg-card h3 { margin: 0; }
+  .go {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--acc-deep);
+    margin-top: 4px;
+  }
+
+  .reg-note {
+    margin-top: 18px;
+    background: var(--acc-soft);
+    border: 1px solid rgba(13, 138, 131, 0.25);
+    border-radius: var(--r-m);
+    padding: 18px 22px;
+    display: grid;
+    gap: 8px;
+  }
+  .reg-note p { font-size: 14.5px; }
+  .who { color: var(--muted); font-size: 13.5px; }
+</style>

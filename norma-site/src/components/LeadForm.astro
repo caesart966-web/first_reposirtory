@@ -1,0 +1,389 @@
+---
+// Форма заявки.
+//
+// Три вещи, ради которых она написана именно так:
+// 1. Заявка НИКОГДА не теряется: перед отправкой она сохраняется в браузере
+//    посетителя, и при сбое почты её видно в экране ошибки — вместе с рабочими
+//    кнопками «позвонить / написать».
+// 2. Молчаливого «успеха» не бывает: если сервер не подтвердил доставку —
+//    показываем ошибку, а не «спасибо».
+// 3. Антиспам без капчи: скрытое поле-ловушка + минимальное время заполнения.
+import { SITE, href } from '../config/site'
+import Icon from './Icon.astro'
+
+interface Props {
+  title?: string
+  subtitle?: string
+  id?: string
+}
+const {
+  title = 'Оставьте заявку — отвечу лично',
+  subtitle = 'Разберу вашу ситуацию и скажу прямо, нужна ли вам СРО. Если не нужна — так и напишу.',
+  id = 'form',
+} = Astro.props
+
+// Адрес приёмника заявок и токен. Задаются при сборке; на превью-хостинге
+// без PHP форма честно покажет прямые каналы связи вместо ложного «отправлено».
+const endpoint = import.meta.env.PUBLIC_LEAD_ENDPOINT || ''
+const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
+---
+
+<div class="lead-form" id={id} data-anchor data-endpoint={endpoint} data-token={token}>
+  <div class="lf-head">
+    <h2>{title}</h2>
+    <p>{subtitle}</p>
+  </div>
+
+  <form novalidate id="lead-form-el">
+    <div class="row">
+      <div class="field" data-field="name">
+        <label for="lf-name">Ваше имя <span aria-hidden="true">*</span></label>
+        <input type="text" id="lf-name" name="name" autocomplete="name" required maxlength="80" />
+        <span class="error" id="err-name">Напишите, как к вам обращаться</span>
+      </div>
+
+      <div class="field" data-field="phone">
+        <label for="lf-phone">Телефон <span aria-hidden="true">*</span></label>
+        <input type="tel" id="lf-phone" name="phone" autocomplete="tel" inputmode="tel" required placeholder="+7 900 000-00-00" />
+        <span class="error" id="err-phone">Нужен телефон в формате +7 900 000-00-00</span>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="field" data-field="email">
+        <label for="lf-email">E-mail</label>
+        <input type="email" id="lf-email" name="email" autocomplete="email" maxlength="120" />
+        <span class="hint">Необязательно — если удобнее письмом</span>
+        <span class="error" id="err-email">Проверьте адрес почты</span>
+      </div>
+
+      <div class="field" data-field="city">
+        <label for="lf-city">Город и вид работ</label>
+        <input type="text" id="lf-city" name="city" maxlength="120" placeholder="Например: Ростов-на-Дону, проектирование" />
+      </div>
+    </div>
+
+    <div class="field" data-field="message">
+      <label for="lf-message">Что нужно сделать</label>
+      <textarea id="lf-message" name="message" rows="3" maxlength="1500"
+        placeholder="Коротко о задаче: какие работы, с кем договор, на какую сумму. Или просто «перезвоните»."></textarea>
+    </div>
+
+    <!-- Ловушка для ботов: человек этого поля не видит и не заполнит -->
+    <div class="hp-field" aria-hidden="true">
+      <label for="lf-company-site">Не заполняйте это поле</label>
+      <input type="text" id="lf-company-site" name="company_site" tabindex="-1" autocomplete="off" />
+    </div>
+
+    <label class="agree" data-field="agree">
+      <input type="checkbox" id="lf-agree" name="agree" required />
+      <span>
+        Согласен на обработку персональных данных в соответствии с
+        <a href={href('/politika/')} target="_blank" rel="noopener">политикой обработки данных</a>
+      </span>
+    </label>
+    <span class="error agree-error" id="err-agree">Без согласия отправить заявку нельзя</span>
+
+    <button class="btn btn--acc submit" type="submit" id="lf-submit">Отправить заявку</button>
+
+    <p class="fine">
+      Отвечаю лично, обычно в течение рабочего дня. Заявка ни к чему вас не обязывает
+      и не означает согласия на вступление в СРО.
+    </p>
+  </form>
+
+  <!-- Экран успеха -->
+  <div class="state state--ok" hidden id="lf-ok">
+    <span class="state-ic ok"><Icon name="check" size={26} /></span>
+    <h3>Заявка отправлена</h3>
+    <p>Отвечу лично, обычно в течение рабочего дня. Если нужно быстрее — напишите напрямую:</p>
+    <div class="state-actions">
+      <a class="btn btn--acc" href={SITE.phoneHref}>{SITE.phone}</a>
+      <a class="btn btn--ghost" href={SITE.whatsapp} target="_blank" rel="noopener noreferrer">WhatsApp</a>
+      <a class="btn btn--ghost" href={SITE.telegram} target="_blank" rel="noopener noreferrer">Telegram</a>
+    </div>
+  </div>
+
+  <!-- Экран ошибки: данные не теряются -->
+  <div class="state state--err" hidden id="lf-err">
+    <span class="state-ic err"><Icon name="alert" size={26} /></span>
+    <h3>Не удалось отправить заявку</h3>
+    <p id="lf-err-reason">Связь с сервером не установлена.</p>
+    <p><b>Ваши данные сохранены</b> и подставятся обратно в форму — ничего заполнять заново не нужно. Свяжитесь напрямую или попробуйте ещё раз:</p>
+    <div class="state-actions">
+      <a class="btn btn--acc" href={SITE.phoneHref}>{SITE.phone}</a>
+      <a class="btn btn--ghost" href={SITE.whatsapp} target="_blank" rel="noopener noreferrer">WhatsApp</a>
+      <a class="btn btn--ghost" href={SITE.telegram} target="_blank" rel="noopener noreferrer">Telegram</a>
+      <button class="btn btn--ghost" type="button" id="lf-retry">Попробовать снова</button>
+    </div>
+    <details class="copy-box">
+      <summary>Скопировать текст заявки</summary>
+      <pre id="lf-dump"></pre>
+    </details>
+  </div>
+</div>
+
+<style>
+  .lead-form {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--r-l);
+    padding: 28px;
+  }
+  .lf-head { margin-bottom: 22px; display: grid; gap: 8px; }
+  .lf-head h2 { font-size: clamp(21px, 2.6vw, 27px); }
+  .lf-head p { color: var(--muted); font-size: 15.5px; max-width: 60ch; }
+
+  form { display: grid; gap: 16px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  .agree {
+    display: grid;
+    grid-template-columns: 20px 1fr;
+    gap: 10px;
+    align-items: start;
+    font-size: 14px;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .agree input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--acc-btn); }
+  .agree-error { display: none; font-size: 13px; color: #B4231F; margin-top: -8px; }
+  .agree-error.show { display: block; }
+
+  .submit { justify-self: start; min-width: 220px; }
+  .submit[disabled] { opacity: 0.6; cursor: progress; }
+
+  .fine { font-size: 12.5px; color: var(--muted); line-height: 1.5; max-width: 62ch; }
+
+  .state { display: grid; gap: 12px; justify-items: start; }
+  .state-ic { width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center; }
+  .state-ic.ok { background: var(--good-bg); color: var(--good); }
+  .state-ic.err { background: #FBEAE9; color: #B4231F; }
+  .state h3 { font-size: 22px; }
+  .state p { color: var(--muted); font-size: 15.5px; max-width: 62ch; }
+  .state p b { color: var(--ink); }
+  .state-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+
+  .copy-box { margin-top: 6px; font-size: 14px; width: 100%; }
+  .copy-box summary { cursor: pointer; color: var(--acc-deep); }
+  .copy-box pre {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--r-s);
+    padding: 14px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    white-space: pre-wrap;
+    overflow-x: auto;
+    margin-top: 10px;
+  }
+
+  @media (max-width: 640px) {
+    .lead-form { padding: 22px 18px; }
+    .row { grid-template-columns: 1fr; }
+    .submit { width: 100%; justify-self: stretch; }
+    .state-actions .btn { width: 100%; }
+  }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>('.lead-form')
+  const form = document.getElementById('lead-form-el') as HTMLFormElement | null
+
+  if (root && form) {
+    const okBox = document.getElementById('lf-ok')!
+    const errBox = document.getElementById('lf-err')!
+    const errReason = document.getElementById('lf-err-reason')!
+    const dump = document.getElementById('lf-dump')!
+    const submit = document.getElementById('lf-submit') as HTMLButtonElement
+    const endpoint = root.dataset.endpoint || ''
+    const token = root.dataset.token || ''
+    const STORAGE_KEY = 'norma-lead-draft'
+    const openedAt = Date.now()
+
+    // ── Черновик: заявка не теряется ни при сбое сети, ни при закрытии вкладки
+    const saveDraft = () => {
+      try {
+        const data = Object.fromEntries(new FormData(form).entries())
+        delete data.company_site
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ saved: new Date().toISOString(), data }))
+      } catch {
+        /* приватный режим браузера — не беда, просто без черновика */
+      }
+    }
+    const restoreDraft = () => {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY)
+        if (!raw) return
+        const { data } = JSON.parse(raw) as { data: Record<string, string> }
+        Object.entries(data).forEach(([k, v]) => {
+          const el = form.elements.namedItem(k) as HTMLInputElement | null
+          if (el && typeof v === 'string' && el.type !== 'checkbox') el.value = v
+        })
+      } catch {
+        /* повреждённый черновик игнорируем */
+      }
+    }
+    restoreDraft()
+    form.addEventListener('input', saveDraft)
+
+    // ── Телефон: приводим к единому виду прямо при вводе
+    const phone = document.getElementById('lf-phone') as HTMLInputElement
+    phone.addEventListener('input', () => {
+      let digits = phone.value.replace(/\D/g, '')
+      if (digits.startsWith('8')) digits = '7' + digits.slice(1)
+      if (digits && !digits.startsWith('7')) digits = '7' + digits
+      digits = digits.slice(0, 11)
+      const p = digits.slice(1)
+      let out = digits ? '+7' : ''
+      if (p.length) out += ' ' + p.slice(0, 3)
+      if (p.length > 3) out += ' ' + p.slice(3, 6)
+      if (p.length > 6) out += '-' + p.slice(6, 8)
+      if (p.length > 8) out += '-' + p.slice(8, 10)
+      phone.value = out
+    })
+
+    // ── Валидация
+    const setError = (name: string, on: boolean) => {
+      const field = form.querySelector(`[data-field="${name}"]`)
+      if (name === 'agree') {
+        document.getElementById('err-agree')?.classList.toggle('show', on)
+      } else {
+        field?.classList.toggle('field--error', on)
+      }
+    }
+
+    const validate = (): boolean => {
+      const name = (form.elements.namedItem('name') as HTMLInputElement).value.trim()
+      const tel = phone.value.replace(/\D/g, '')
+      const mail = (form.elements.namedItem('email') as HTMLInputElement).value.trim()
+      const agree = (form.elements.namedItem('agree') as HTMLInputElement).checked
+
+      const bad = {
+        name: name.length < 2,
+        phone: tel.length !== 11,
+        email: mail !== '' && !/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(mail),
+        agree: !agree,
+      }
+      Object.entries(bad).forEach(([k, v]) => setError(k, v))
+      const firstBad = Object.entries(bad).find(([, v]) => v)
+      if (firstBad) {
+        const el = form.querySelector<HTMLElement>(`[data-field="${firstBad[0]}"] input`)
+        el?.focus()
+        return false
+      }
+      return true
+    }
+
+    const buildMessage = (): string => {
+      const get = (n: string) => ((form.elements.namedItem(n) as HTMLInputElement)?.value || '').trim()
+      return [
+        'Заявка с сайта',
+        `Имя: ${get('name')}`,
+        `Телефон: ${get('phone')}`,
+        get('email') && `E-mail: ${get('email')}`,
+        get('city') && `Город и вид работ: ${get('city')}`,
+        get('message') && `Задача: ${get('message')}`,
+        `Страница: ${location.href}`,
+      ]
+        .filter(Boolean)
+        .join('\n')
+    }
+
+    const goal = (n: string) => {
+      const w = window as unknown as { ym?: (...a: unknown[]) => void; __metrikaId?: string }
+      if (typeof w.ym === 'function' && w.__metrikaId) w.ym(w.__metrikaId, 'reachGoal', n)
+    }
+
+    const showState = (which: 'ok' | 'err', reason = '') => {
+      form.hidden = which === 'ok'
+      root.querySelector('.lf-head')!.setAttribute('hidden', '')
+      okBox.hidden = which !== 'ok'
+      errBox.hidden = which !== 'err'
+      if (which === 'err') {
+        errReason.textContent = reason
+        dump.textContent = buildMessage()
+        form.hidden = false
+        root.querySelector('.lf-head')!.removeAttribute('hidden')
+      }
+      ;(which === 'ok' ? okBox : errBox).scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+
+    document.getElementById('lf-retry')?.addEventListener('click', () => {
+      errBox.hidden = true
+      form.requestSubmit()
+    })
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault()
+      if (!validate()) return
+
+      // Бот заполнил скрытое поле или отправил форму мгновенно — тихо «успех».
+      const trap = (form.elements.namedItem('company_site') as HTMLInputElement).value
+      if (trap || Date.now() - openedAt < 2500) {
+        showState('ok')
+        return
+      }
+
+      const name = (form.elements.namedItem('name') as HTMLInputElement).value.trim()
+      const tel = phone.value
+      const mail = (form.elements.namedItem('email') as HTMLInputElement).value.trim()
+
+      // Приёмник не настроен (превью без PHP) — честно показываем прямые каналы,
+      // а не ложное «отправлено».
+      if (!endpoint) {
+        showState(
+          'err',
+          'На этой демонстрационной версии сайта отправка почты не подключена — она заработает после переезда на рабочий домен.',
+        )
+        return
+      }
+
+      submit.disabled = true
+      submit.textContent = 'Отправляем…'
+
+      const controller = new AbortController()
+      const timer = setTimeout(() => controller.abort(), 10000)
+
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          signal: controller.signal,
+          body: JSON.stringify({
+            access_key: token,
+            subject: `Заявка с сайта — ${name}, ${tel}`,
+            from_name: name,
+            ...(mail ? { replyto: mail } : {}),
+            message: buildMessage(),
+          }),
+        })
+
+        if (!res.ok) throw new Error(`Сервер ответил ${res.status}`)
+
+        // Ответ 200 без подтверждения — это отказ, а не успех: так выглядит
+        // заглушка хостинга или неисполненный PHP. Молчаливой потери заявок быть не должно.
+        const data = (await res.json().catch(() => null)) as { success?: boolean } | null
+        if (!data || data.success === false) throw new Error('Сервер не подтвердил доставку заявки')
+
+        goal('lead_submit')
+        try {
+          localStorage.removeItem(STORAGE_KEY)
+        } catch {
+          /* нет доступа к хранилищу — не критично */
+        }
+        showState('ok')
+      } catch (err) {
+        const reason =
+          err instanceof DOMException && err.name === 'AbortError'
+            ? 'Сервер не ответил за 10 секунд.'
+            : `Ошибка отправки: ${(err as Error).message}.`
+        showState('err', reason)
+      } finally {
+        clearTimeout(timer)
+        submit.disabled = false
+        submit.textContent = 'Отправить заявку'
+      }
+    })
+  }
+</script>

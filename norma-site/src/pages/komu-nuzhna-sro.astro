@@ -1,0 +1,262 @@
+---
+import Base from '../layouts/Base.astro'
+import ComparisonTable from '../components/ComparisonTable.astro'
+import LeadForm from '../components/LeadForm.astro'
+import Icon from '../components/Icon.astro'
+import { LAW } from '../config/facts'
+import { href, SITE } from '../config/site'
+
+const myths = [
+  {
+    wrong: 'Порог — 3 млн ₽',
+    right: 'Порог — 10 млн ₽',
+    text: 'Поднят законом 124-ФЗ с 1 мая 2022 года. Старую цифру до сих пор пишет примерно половина сайтов по теме. Это самый быстрый способ проверить, обновлялся ли сайт за последние четыре года.',
+  },
+  {
+    wrong: 'Нужен допуск СРО',
+    right: 'Допуски отменены в 2017 году',
+    text: 'Свидетельства о допуске к работам отменены с 1 июля 2017 года законом 372-ФЗ. Право выполнять работы подтверждают членство в СРО и выписка из реестра членов. Слово «допуск» осталось в разговорной речи, но документа с таким названием не существует.',
+  },
+  {
+    wrong: 'Работаем по перечню из приказа № 624',
+    right: 'Приказ Минрегиона № 624 утратил значение',
+    text: 'Перечень видов работ, влияющих на безопасность объектов, был привязан к системе свидетельств о допуске. Вместе с ней он потерял практический смысл. Ссылка на этот приказ — верный признак устаревшей консультации.',
+  },
+  {
+    wrong: 'СРО можно выбрать в любом регионе',
+    right: 'Для строителей действует региональный принцип',
+    text: 'Строительная компания вправе вступить только в СРО, зарегистрированную в том же субъекте РФ; если подходящей в регионе нет — допускается СРО соседнего субъекта. А вот для проектировщиков и изыскателей региональной привязки нет вообще. Эту разницу путают даже крупные площадки.',
+  },
+  {
+    wrong: 'Проектировщикам СРО нужна от 10 млн ₽',
+    right: 'У проектировщиков и изыскателей порога нет',
+    text: 'Денежный порог установлен только для строительных работ. Для подготовки проектной документации и инженерных изысканий членство требуется при любой сумме прямого договора — хоть 150 тысяч рублей.',
+  },
+  {
+    wrong: 'Вступление занимает один день',
+    right: 'Срок по закону — не более двух месяцев',
+    text: 'Заявление рассматривается в срок не более двух месяцев. На практике при готовом комплекте документов решение принимается за считаные дни, а выписка из реестра готова за 24 часа после решения и оплаты взноса. Но обещать «СРО за день» — значит обещать не свою часть работы.',
+  },
+]
+
+const faq = [
+  {
+    q: 'Нужна ли СРО субподрядчику?',
+    a: 'Нет. Требование о членстве привязано к тому, с кем заключён договор. Договор с генподрядчиком, а не с застройщиком, обязанности вступать в СРО не создаёт — независимо от суммы. Ответственность за наличие членства несёт генподрядчик.',
+  },
+  {
+    q: 'Нужна ли СРО при строительстве частного дома?',
+    a: 'Нет. Объекты индивидуального жилищного строительства, садовые дома и гаражи выведены из-под требования о членстве, и сумма договора здесь роли не играет. Важно правильно определить, что именно вы строите: дом выше трёх этажей или блокированная застройка — это уже не ИЖС.',
+  },
+  {
+    q: 'Нужна ли СРО государственному учреждению?',
+    a: 'Нет. Государственным и муниципальным унитарным предприятиям, учреждениям, а также юридическим лицам с долей публично-правовых образований более 50 процентов членство в СРО не требуется — это отдельное исключение в части 2.2 статьи 52 ГрК РФ.',
+  },
+  {
+    q: 'А если договоров несколько и все меньше 10 млн?',
+    a: 'Порог считается по каждому отдельному договору, а не по их сумме. Пять договоров по 5 млн ₽ каждый членства не требуют. Но искусственное дробление одного крупного договора на несколько мелких, чтобы обойти требование, оспаривается и создаёт риски.',
+  },
+  {
+    q: 'Что будет, если работать без членства, когда оно нужно?',
+    a: 'Это административное правонарушение с ответственностью для компании и должностных лиц. Кроме того, договор, заключённый без необходимого членства, может быть оспорен, а результат работ — не принят. Отдельный практический риск: заказчик проверяет реестр перед оплатой.',
+  },
+]
+
+const faqSchema = {
+  '@type': 'FAQPage',
+  mainEntity: faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+}
+---
+
+<Base
+  title="Кому нужна СРО, а кому не нужна — разбор по закону | НОРМА"
+  description="Когда членство в СРО обязательно, а когда нет: порог 10 млн для строителей, отсутствие порога у проектировщиков, субподряд, ИЖС, снос — со ссылками на статьи ГрК РФ."
+  schema={[faqSchema]}
+  breadcrumbs={[{ label: 'Главная', url: href('/') }, { label: 'Кому нужна СРО' }]}
+>
+  <section class="section page-head">
+    <div class="wrap">
+      <span class="eyebrow">Без умолчаний</span>
+      <h1>Кому нужна СРО, а кому она не нужна</h1>
+      <p class="lead">
+        Этот разбор написан так, чтобы вы могли <b>не вступать</b>, если вступать не нужно.
+        Каждый случай — со ссылкой на конкретную норму, которую вы можете открыть и прочитать сами.
+      </p>
+      <div class="head-tags">
+        <span class="stamp">Сверено с ГрК РФ · {SITE.checkedDate}</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="rv"><ComparisonTable headingLevel={2} /></div>
+    </div>
+  </section>
+
+  <!-- Главное правило -->
+  <section class="section section--dark">
+    <div class="wrap">
+      <div class="rule rv">
+        <span class="rule-ic"><Icon name="scales" size={26} /></span>
+        <div>
+          <span class="eyebrow">Главное правило</span>
+          <h2>Сначала — с кем договор. Только потом — на какую сумму</h2>
+          <p>
+            Большинство ошибок начинается с того, что человек сразу смотрит на цену договора.
+            А норма построена иначе: сначала проверяется <b>сторона договора</b>, и только если
+            это застройщик, технический заказчик, лицо, ответственное за эксплуатацию, или
+            региональный оператор — тогда смотрим сумму.
+          </p>
+          <p>
+            Если договор субподрядный, до вопроса о сумме дело не доходит вообще. Именно поэтому
+            субподрядчику членство не нужно ни при 5 млн, ни при 500 млн.
+          </p>
+          <span class="law law--dark">{LAW.build}</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Мифы -->
+  <section class="section" id="mify" data-anchor>
+    <div class="wrap">
+      <div class="s-head rv">
+        <span class="eyebrow">Проверка сайтов</span>
+        <h2>Шесть утверждений, по которым видно устаревший сайт</h2>
+        <p>
+          Слева — то, что до сих пор написано на многих сайтах. Справа — то, как обстоят дела
+          на самом деле. Проверьте по этому списку любую площадку, включая эту.
+        </p>
+      </div>
+
+      <div class="myths">
+        {myths.map((m) => (
+          <div class="myth rv">
+            <div class="m-wrong">
+              <span class="m-label"><Icon name="x" size={14} /> Устарело или неверно</span>
+              <b>{m.wrong}</b>
+            </div>
+            <div class="m-right">
+              <span class="m-label m-label--ok"><Icon name="check" size={14} /> Как на самом деле</span>
+              <b>{m.right}</b>
+              <p>{m.text}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section section--tight">
+    <div class="wrap">
+      <div class="s-head rv">
+        <h2>Частые случаи</h2>
+      </div>
+      <div class="faq rv">
+        {faq.map((f, i) => (
+          <details name="komufaq" open={i === 0}>
+            <summary>{f.q}</summary>
+            <div class="fa"><p>{f.a}</p></div>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="cta-split rv">
+        <div class="cs-calc">
+          <span class="eyebrow">Быстрее всего</span>
+          <h2>Проверьте свой случай за две минуты</h2>
+          <p>Четыре вопроса — и ответ со ссылкой на норму. Включая честное «членство не требуется».</p>
+          <a class="btn btn--acc" href={href('/#calc')}>Открыть калькулятор</a>
+        </div>
+        <div class="cs-form">
+          <LeadForm
+            title="Ваш случай не подходит ни под один пункт?"
+            subtitle="Опишите ситуацию — разберу лично и отвечу прямо, даже если ответ будет «вам это не нужно»."
+            id="vopros"
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .page-head { background: var(--navy); color: var(--on-navy); padding-bottom: 44px; }
+  .page-head .eyebrow { color: var(--acc-bright); }
+  .page-head h1 { color: #fff; margin: 12px 0 16px; max-width: 22ch; }
+  .page-head .lead { color: var(--on-navy-muted); }
+  .page-head .lead b { color: #fff; }
+  .head-tags { margin-top: 22px; }
+
+  .rule { display: grid; grid-template-columns: 52px 1fr; gap: 20px; align-items: start; }
+  .rule-ic { width: 48px; height: 48px; border-radius: 13px; background: rgba(53, 214, 204, 0.15); color: var(--acc-bright); display: grid; place-items: center; }
+  .rule h2 { color: #fff; margin: 10px 0 12px; max-width: 24ch; }
+  .rule p { color: var(--on-navy-muted); font-size: 16px; max-width: 74ch; }
+  .rule p + p { margin-top: 10px; }
+  .rule p b { color: #fff; }
+  .rule .law { margin-top: 14px; }
+
+  .myths { display: grid; gap: 12px; }
+  .myth {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.6fr);
+    gap: 0;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--r-l);
+    overflow: hidden;
+  }
+  .m-wrong { padding: 22px 24px; background: #FBEAE9; border-right: 1px solid var(--line); }
+  .m-right { padding: 22px 24px; }
+  .m-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #B4231F;
+    margin-bottom: 8px;
+  }
+  .m-label--ok { color: var(--good); }
+  .m-wrong b { display: block; font-size: 16.5px; color: #8A1A17; text-decoration: line-through; text-decoration-thickness: 1px; }
+  .m-right b { display: block; font-size: 16.5px; margin-bottom: 8px; }
+  .m-right p { color: var(--muted); font-size: 14.5px; max-width: 70ch; }
+
+  .faq { display: grid; gap: 10px; max-width: 900px; }
+  .faq details { background: var(--card); border: 1px solid var(--line); border-radius: var(--r-m); overflow: hidden; }
+  .faq summary { padding: 18px 22px; font-weight: 600; font-size: 16px; cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 14px; align-items: center; }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: '+'; font-family: var(--font-mono); font-size: 20px; color: var(--acc-deep); flex: none; }
+  .faq details[open] summary::after { content: '−'; }
+  .faq .fa { padding: 0 22px 20px; }
+  .faq .fa p { color: var(--muted); font-size: 15.5px; max-width: 76ch; }
+
+  .cta-split { display: grid; grid-template-columns: 0.75fr 1.25fr; gap: 20px; align-items: start; }
+  .cs-calc {
+    background: var(--acc-soft);
+    border: 1px solid rgba(13, 138, 131, 0.3);
+    border-radius: var(--r-l);
+    padding: 26px;
+    display: grid;
+    gap: 10px;
+    align-content: start;
+  }
+  .cs-calc h2 { font-size: 21px; }
+  .cs-calc p { color: var(--muted); font-size: 15px; }
+  .cs-calc .btn { justify-self: start; margin-top: 4px; }
+
+  @media (max-width: 860px) {
+    .myth { grid-template-columns: 1fr; }
+    .m-wrong { border-right: 0; border-bottom: 1px solid var(--line); }
+    .cta-split { grid-template-columns: 1fr; }
+    .rule { grid-template-columns: 1fr; }
+  }
+</style>

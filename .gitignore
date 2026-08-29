@@ -18,6 +18,11 @@ backend/construction-mcp/data/
 .idea/
 .vscode/
 
+# Служебные папки сборщиков: иногда создаются в корне, если команду
+# запустили не из папки проекта. В репозиторий они не нужны.
+node_modules/
+.astro/
+
 # pto-site: реальные токены приёма заявок (заливаются на хостинг руками)
 pto-site/assets/config.js
 pto-site/dist/assets/config.js

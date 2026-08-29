@@ -1,0 +1,351 @@
+/* ────────────────────────────────────────────────────────────────
+   Дизайн-система сайта «НОРМА».
+   Палитра согласована с заказчиком: тёмно-синий + бирюзовый акцент.
+   ──────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Цвета */
+  --paper: #EFF3F9;        /* холодный бумажный фон страниц */
+  --card: #FFFFFF;         /* карточки */
+  --ink: #0C1B2E;          /* основной текст */
+  --muted: #54657C;        /* вторичный текст */
+  --line: #D8E1ED;         /* границы */
+  --navy: #0B1D33;         /* тёмно-синие секции, шапка, подвал */
+  --navy-2: #122844;
+  --navy-line: rgba(255, 255, 255, 0.10);
+  --on-navy: #EAF1FA;
+  --on-navy-muted: #9FB1C7;
+
+  --acc: #0D8A83;          /* бирюза: декоративные элементы */
+  --acc-btn: #0B766F;      /* бирюза потемнее: фон кнопок (контраст с белым текстом) */
+  --acc-btn-hover: #095F59;
+  --acc-deep: #085F5A;     /* бирюзовый текст на белом */
+  --acc-soft: #E2F4F2;     /* бирюзовые подложки */
+  --acc-bright: #35D6CC;   /* бирюза на тёмно-синем */
+
+  /* Зелёный «всё в порядке»: вердикт «СРО не нужна», штампы проверки.
+     Тёмный оттенок выбран не случайно — светлее он не проходит по контрасту
+     для мелкого текста на бледно-зелёной подложке. */
+  --good: #15734A;
+  --good-bg: #E9F6EF;
+  --warn: #8A5D00;         /* вердикт «нужна при условии» */
+  --warn-bg: #FBF3DE;
+
+  /* Радиусы: кнопки/поля → карточки → крупные контейнеры */
+  --r-s: 10px;
+  --r-m: 14px;
+  --r-l: 20px;
+
+  --shadow: 0 20px 50px -28px rgba(11, 29, 51, 0.35);
+
+  /* Запасные шрифты («… Fallback») подогнаны по размеру в fonts.css —
+     благодаря этому подмена шрифта не сдвигает вёрстку. */
+  --font-head: 'Onest Variable', 'Onest Fallback', 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'Golos Text Variable', 'Golos Fallback', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'Mono Fallback', ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+
+/* Скрытое должно быть скрытым. Собственные display: grid и display: flex
+   в компонентах сильнее браузерного правила для атрибута hidden — без этой
+   строки спрятанные экраны (успех, ошибка, меню) видны на странице всегда. */
+[hidden] { display: none !important; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16.5px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  overflow-wrap: break-word;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-head);
+  line-height: 1.15;
+  text-wrap: balance;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+h1 { font-size: clamp(30px, 4.6vw, 46px); font-weight: 800; }
+h2 { font-size: clamp(25px, 3.4vw, 34px); font-weight: 800; }
+h3 { font-size: 20px; font-weight: 700; }
+
+p { margin: 0; }
+
+a { color: var(--acc-deep); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+a:hover { color: var(--acc-btn-hover); }
+
+img { max-width: 100%; height: auto; }
+
+::selection { background: var(--acc-soft); }
+
+:focus-visible {
+  outline: 2px solid var(--acc-btn);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Якоря не прячутся под липкой шапкой */
+section[id], [data-anchor] { scroll-margin-top: 84px; }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+
+/* ── Типографические роли ── */
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--acc-deep);
+}
+
+.lead { font-size: 18px; color: var(--muted); max-width: 64ch; }
+.lead b, .lead strong { color: var(--ink); }
+
+.muted { color: var(--muted); }
+
+.mono { font-family: var(--font-mono); }
+
+.num { font-variant-numeric: tabular-nums; }
+
+/* ── Секции ── */
+
+.section { padding: 56px 0; }
+.section--tight { padding: 40px 0; }
+.section--dark { background: var(--navy); color: var(--on-navy); }
+.section--dark .eyebrow { color: var(--acc-bright); }
+.section--dark h2 { color: #fff; }
+.section--dark .lead { color: var(--on-navy-muted); }
+.section--dark .lead b, .section--dark .lead strong { color: var(--on-navy); }
+
+.s-head { max-width: 76ch; display: grid; gap: 10px; margin-bottom: 28px; }
+.s-head p { color: var(--muted); max-width: 64ch; }
+.section--dark .s-head p { color: var(--on-navy-muted); }
+
+/* ── Кнопки ── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1.2;
+  border-radius: var(--r-s);
+  padding: 13px 22px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  min-height: 46px;
+  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.btn--acc { background: var(--acc-btn); color: #fff; }
+.btn--acc:hover { background: var(--acc-btn-hover); color: #fff; }
+
+.btn--ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.btn--ghost:hover { border-color: var(--acc-btn); color: var(--acc-deep); }
+
+.btn--ghost-dark { background: transparent; color: #fff; border-color: rgba(255, 255, 255, 0.35); }
+.btn--ghost-dark:hover { border-color: var(--acc-bright); color: var(--acc-bright); }
+
+.btn--sm { padding: 9px 16px; font-size: 14px; min-height: 40px; }
+
+/* ── Чип нормы закона и штамп проверки ── */
+
+.law {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  color: var(--acc-deep);
+  background: var(--acc-soft);
+  border: 1px solid rgba(13, 138, 131, 0.35);
+  padding: 3px 9px;
+  border-radius: 6px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.law::before { content: '§'; font-weight: 700; }
+
+.section--dark .law,
+.law--dark {
+  color: var(--acc-bright);
+  background: rgba(53, 214, 204, 0.12);
+  border-color: rgba(53, 214, 204, 0.35);
+}
+
+.stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--good);
+  border: 1.5px solid var(--good);
+  border-radius: 6px;
+  padding: 3px 10px;
+  background: var(--good-bg);
+  transform: rotate(-1.2deg);
+  white-space: nowrap;
+}
+.stamp::before { content: '✓'; font-weight: 700; }
+
+/* ── Карточки и сетки ── */
+
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-l);
+  padding: 26px;
+}
+.card h3 { margin-bottom: 10px; }
+.card p { color: var(--muted); font-size: 15px; }
+.card p + p { margin-top: 10px; }
+
+a.card { text-decoration: none; color: inherit; display: block; transition: border-color 0.18s ease, transform 0.18s ease; }
+a.card:hover { border-color: var(--acc-btn); transform: translateY(-2px); }
+
+/* ── Таблицы ── */
+
+.tbl-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r-l);
+  background: var(--card);
+}
+
+table.data { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 15px; }
+table.data th {
+  text-align: left;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 11.5px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+}
+table.data td {
+  padding: 13px 20px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  font-variant-numeric: tabular-nums;
+}
+table.data tr:last-child td { border-bottom: 0; }
+table.data td.strong { font-weight: 600; }
+
+/* ── Списки с чекмарками ── */
+
+.checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.checks li { display: grid; grid-template-columns: 24px 1fr; gap: 10px; align-items: start; }
+.checks li::before { content: '✓'; color: var(--acc-deep); font-weight: 700; font-family: var(--font-mono); }
+.checks--no li::before { content: '—'; color: var(--good); }
+
+/* ── Появление при прокрутке ──
+   Прятать блоки можно ТОЛЬКО когда скрипт точно работает: класс .js ставится
+   встроенным скриптом в <head>. Иначе при любой осечке JavaScript посетитель
+   увидел бы пустую страницу — а это худшее, что может случиться с сайтом. */
+
+.js .rv { opacity: 0; transform: translateY(14px); transition: opacity 0.5s ease, transform 0.5s ease; }
+.js .rv.in { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .js .rv { opacity: 1; transform: none; transition: none; }
+  .btn, a.card { transition: none; }
+}
+
+/* ── Формы ── */
+
+.field { display: grid; gap: 6px; }
+.field label { font-size: 14px; font-weight: 600; }
+.field input[type='text'],
+.field input[type='tel'],
+.field input[type='email'],
+.field textarea {
+  font: inherit;
+  font-size: 16px;
+  color: var(--ink);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-s);
+  padding: 12px 14px;
+  width: 100%;
+}
+.field input:focus, .field textarea:focus {
+  outline: 2px solid var(--acc-btn);
+  outline-offset: 0;
+  border-color: var(--acc-btn);
+}
+.field .hint { font-size: 12.5px; color: var(--muted); }
+.field--error input { border-color: #B4231F; }
+.field .error { font-size: 13px; color: #B4231F; display: none; }
+.field--error .error { display: block; }
+
+/* Ловушка для ботов: поле спрятано от людей, но не через type=hidden */
+.hp-field {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ── Мобильная нижняя панель ── */
+
+.mobile-bar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 60;
+  display: none;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--navy-line);
+  border-top: 1px solid var(--navy-line);
+  transform: translateY(100%);
+  transition: transform 0.25s ease;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.mobile-bar.show { transform: none; }
+.mobile-bar a {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  background: var(--navy);
+  color: var(--on-navy);
+  text-decoration: none;
+  font-size: 11.5px;
+  padding: 9px 4px 10px;
+}
+.mobile-bar a svg { width: 20px; height: 20px; color: var(--acc-bright); }
+
+@media (max-width: 767px) {
+  .mobile-bar { display: grid; }
+  body { padding-bottom: 58px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-bar { transition: none; }
+}
+
+@media print {
+  .mobile-bar, .site-header, .site-footer { display: none !important; }
+}

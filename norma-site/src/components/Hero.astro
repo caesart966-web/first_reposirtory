@@ -1,0 +1,191 @@
+---
+import { SITE, href } from '../config/site'
+import { LAW, TERMS } from '../config/facts'
+---
+
+<section class="hero">
+  <div class="wrap hero-in">
+    <div class="hero-main">
+      <span class="geo"><i></i>{SITE.geo}</span>
+      <h1>Вступление в СРО с выпиской из реестра <em>за {TERMS.extract}</em></h1>
+      <p class="hero-sub">
+        Строителям, проектировщикам и изыскателям. Подготовка документов и сопровождение —
+        <b>бесплатно</b>, вы платите только взносы, и напрямую в СРО.
+        Если членство вам не требуется — <b>скажу прямо</b> и покажу, на основании какой нормы.
+      </p>
+      <div class="hero-cta">
+        <a class="btn btn--acc" href="#calc">Проверить, нужна ли СРО</a>
+        <a class="btn btn--ghost-dark" href={href('/stoimost/')}>Посмотреть стоимость</a>
+      </div>
+      <p class="hero-note">2 минуты · 4 вопроса · честный ответ со ссылкой на закон</p>
+    </div>
+
+    <div class="hero-steps">
+      <h2 class="steps-title">Как это работает</h2>
+      <ol>
+        <li>
+          <span class="n">1</span>
+          <div>
+            <b>Разбираем задачу и готовим документы</b>
+            <small>Проверяю, нужна ли вам СРО вообще. Пакет документов собираю за вас — <em>0 ₽</em></small>
+          </div>
+        </li>
+        <li>
+          <span class="n">2</span>
+          <div>
+            <b>Подбираем СРО и проверяем её в госреестре</b>
+            <small>Показываю выписку по самой СРО до того, как вы что-то оплатите</small>
+          </div>
+        </li>
+        <li>
+          <span class="n">3</span>
+          <div>
+            <b>Взносы — напрямую в СРО, выписка за {TERMS.extract}</b>
+            <small>Деньги идут на счёт СРО, минуя посредников. Я не принимаю взносы и не беру процент</small>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="stats">
+      <div class="stat">
+        <div class="v">{TERMS.extract}</div>
+        <div class="d">выписка из реестра членов СРО после решения о приёме</div>
+      </div>
+      <div class="stat">
+        <div class="v">0 ₽</div>
+        <div class="d">подготовка документов и сопровождение — мои услуги</div>
+      </div>
+      <div class="stat">
+        <div class="v">10 <em>млн ₽</em></div>
+        <div class="d">порог, с которого строителю нужно членство</div>
+        <span class="law law--dark">{LAW.build}</span>
+      </div>
+      <div class="stat">
+        <div class="v">≤ 2 <em>мес.</em></div>
+        <div class="d">срок рассмотрения по закону; с готовыми документами — дни</div>
+        <span class="law law--dark">{LAW.term}</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    background: var(--navy);
+    color: var(--on-navy);
+    position: relative;
+    overflow: hidden;
+    padding: 52px 0 0;
+    background-image:
+      linear-gradient(var(--navy-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--navy-line) 1px, transparent 1px);
+    background-size: 46px 46px;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(760px 360px at 78% 0%, rgba(53, 214, 204, 0.16), transparent 70%);
+  }
+  .hero > * { position: relative; z-index: 1; }
+
+  .hero-in {
+    display: grid;
+    grid-template-columns: 1.25fr 0.9fr;
+    gap: 40px;
+    align-items: start;
+  }
+
+  .geo {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.04em;
+    color: var(--on-navy-muted);
+    border: 1px solid var(--navy-line);
+    padding: 5px 12px;
+    border-radius: 999px;
+    margin-bottom: 20px;
+  }
+  .geo i { width: 6px; height: 6px; border-radius: 50%; background: var(--acc-bright); flex: none; }
+
+  h1 { color: #fff; max-width: 18ch; }
+  h1 em { font-style: normal; color: var(--acc-bright); }
+
+  .hero-sub { color: var(--on-navy-muted); font-size: 16.5px; max-width: 54ch; margin: 18px 0 26px; }
+  .hero-sub b { color: var(--on-navy); font-weight: 600; }
+
+  .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; }
+  .hero-note { font-size: 13px; color: var(--on-navy-muted); margin-top: 14px; }
+
+  .hero-steps {
+    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid var(--navy-line);
+    border-radius: var(--r-l);
+    padding: 22px 22px 10px;
+  }
+  .steps-title {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--on-navy-muted);
+    margin-bottom: 14px;
+  }
+  .hero-steps ol { list-style: none; margin: 0; padding: 0; }
+  .hero-steps li { display: grid; grid-template-columns: 34px 1fr; gap: 14px; padding: 13px 0 16px; }
+  .hero-steps li + li { border-top: 1px dashed var(--navy-line); }
+  .n {
+    width: 30px; height: 30px;
+    border-radius: 9px;
+    display: grid; place-items: center;
+    background: rgba(53, 214, 204, 0.18);
+    color: var(--acc-bright);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    margin-top: 2px;
+  }
+  .hero-steps b { display: block; color: #fff; font-size: 15px; font-weight: 600; }
+  .hero-steps small { display: block; font-size: 13px; color: var(--on-navy-muted); line-height: 1.5; margin-top: 3px; }
+  .hero-steps em { font-style: normal; color: var(--acc-bright); font-weight: 600; }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-top: 1px solid var(--navy-line);
+    margin-top: 40px;
+  }
+  .stat { padding: 20px 20px 22px; border-left: 1px solid var(--navy-line); display: grid; gap: 4px; align-content: start; }
+  .stat:first-child { border-left: 0; padding-left: 0; }
+  .v {
+    font-family: var(--font-head);
+    font-size: 27px;
+    font-weight: 800;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+  }
+  .v em { font-style: normal; color: var(--acc-bright); font-size: 20px; }
+  .d { font-size: 13px; color: var(--on-navy-muted); line-height: 1.45; }
+  .stat .law { justify-self: start; margin-top: 6px; }
+
+  @media (max-width: 900px) {
+    .hero-in { grid-template-columns: 1fr; gap: 28px; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .stat { border-left: 0; padding-left: 0; padding-right: 14px; }
+  }
+
+  @media (max-width: 560px) {
+    .hero { padding-top: 36px; }
+    .hero-cta .btn { width: 100%; }
+    .stats { grid-template-columns: 1fr 1fr; }
+    .v { font-size: 23px; }
+  }
+</style>

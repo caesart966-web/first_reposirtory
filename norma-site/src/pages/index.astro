@@ -1,0 +1,486 @@
+---
+import Base from '../layouts/Base.astro'
+import Hero from '../components/Hero.astro'
+import Calculator from '../components/Calculator.astro'
+import TenderRejects from '../components/TenderRejects.astro'
+import ComparisonTable from '../components/ComparisonTable.astro'
+import RegistryCheck from '../components/RegistryCheck.astro'
+import ServicesGrid from '../components/ServicesGrid.astro'
+import LeadForm from '../components/LeadForm.astro'
+import Icon from '../components/Icon.astro'
+import { getCollection } from 'astro:content'
+import { SITE, href } from '../config/site'
+import { LAW, TERMS } from '../config/facts'
+
+const articles = (await getCollection('articles'))
+  .sort((a, b) => (b.data.updated ?? b.data.published).getTime() - (a.data.updated ?? a.data.published).getTime())
+  .slice(0, 3)
+
+const fmt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
+
+const steps = [
+  {
+    t: 'Разбор ситуации',
+    d: 'Смотрю, что за работы, с кем договор и на какую сумму. Если членство не требуется — говорю об этом сразу и работу не начинаю.',
+    time: '15–30 минут',
+  },
+  {
+    t: 'Подбор СРО и проверка',
+    d: 'Подбираю СРО под ваш регион и уровень ответственности, проверяю её в госреестре и показываю выписку вам. Для строителей действует региональный принцип, для проектировщиков и изыскателей — нет.',
+    time: '1–2 дня',
+  },
+  {
+    t: 'Подготовка документов',
+    d: 'Собираю комплект: заявление, учредительные документы, документы по специалистам НРС, справки. Это моя часть работы, и она бесплатна.',
+    time: '2–5 дней',
+  },
+  {
+    t: 'Подача и решение СРО',
+    d: `Заявление рассматривается ${TERMS.law} по закону. На практике при готовом комплекте решение принимается за считаные дни.`,
+    time: 'до 2 месяцев по закону',
+  },
+  {
+    t: 'Взносы и выписка',
+    d: `Взносы вы переводите напрямую в СРО. После оплаты компенсационного фонда получаю выписку из реестра — за ${TERMS.extract}.`,
+    time: TERMS.extract,
+  },
+]
+
+const faq = [
+  {
+    q: 'Существуют ли ещё допуски СРО?',
+    a: 'Нет. Свидетельства о допуске к работам отменены с 1 июля 2017 года законом 372-ФЗ. Право выполнять работы подтверждается самим членством в СРО и выпиской из реестра членов. Если вам предлагают «оформить допуск СРО» — это либо разговорный оборот, либо признак того, что человек не следит за законодательством.',
+  },
+  {
+    q: 'Правда ли, что порог для строителей — 3 млн ₽?',
+    a: 'Нет, это устаревшая информация. Порог поднят до 10 млн ₽ законом 124-ФЗ с 1 мая 2022 года. Цифру в 3 млн до сих пор пишет примерно половина сайтов по теме — это самый простой способ проверить, следит ли площадка за изменениями.',
+  },
+  {
+    q: 'Можно ли вступить в СРО другого региона?',
+    a: 'Для строителей — по общему правилу нет: СРО должна быть зарегистрирована в том же субъекте РФ, что и компания. Если подходящей СРО в вашем регионе нет, допускается вступление в СРО соседнего субъекта. А вот для проектировщиков и изыскателей региональной привязки не существует вовсе — они выбирают СРО в любом регионе. Эту разницу путают даже крупные площадки.',
+  },
+  {
+    q: 'Сколько времени занимает вступление?',
+    a: `По закону заявление рассматривается ${TERMS.law}. На практике, когда документы подготовлены правильно, решение принимается за несколько дней, а выписку из реестра я получаю за ${TERMS.extract} после решения и оплаты взноса.`,
+  },
+  {
+    q: 'Какие взносы придётся платить и когда?',
+    a: 'При вступлении — взнос в компенсационный фонд возмещения вреда (обязателен всем) и вступительный взнос СРО. Для участия в конкурентных закупках дополнительно нужен взнос в компенсационный фонд обеспечения договорных обязательств. Дальше ежегодно платятся членские взносы — они не исчезают со второго года, это регулярный платёж, и я говорю об этом сразу. Полная разбивка со ссылками на нормы — на странице «Стоимость».',
+  },
+  {
+    q: 'У меня нет двух специалистов для НРС. Что делать?',
+    a: 'Помогу найти и трудоустроить специалистов, отвечающих требованиям, и подготовлю документы для внесения их в реестр. Обратите внимание на формулировки конкурентов: «предоставим специалистов» означает фиктивное трудоустройство — это серая схема, при проверке она приводит к исключению из СРО. Специалисты должны реально работать в вашей компании.',
+  },
+  {
+    q: 'Чем вы отличаетесь от других?',
+    a: 'Тем, что говорю «вам это не нужно», когда это действительно так, и показываю норму, на которую опираюсь. И тем, что все цифры на этом сайте сверены с действующей редакцией Градостроительного кодекса — дата сверки указана внизу каждой страницы.',
+  },
+]
+
+const faqSchema = {
+  '@type': 'FAQPage',
+  mainEntity: faq.map((f) => ({
+    '@type': 'Question',
+    name: f.q,
+    acceptedAnswer: { '@type': 'Answer', text: f.a },
+  })),
+}
+
+const howToSchema = {
+  '@type': 'HowTo',
+  name: 'Как вступить в СРО',
+  description: 'Порядок вступления в саморегулируемую организацию строителей, проектировщиков или изыскателей.',
+  step: steps.map((s, i) => ({
+    '@type': 'HowToStep',
+    position: i + 1,
+    name: s.t,
+    text: s.d,
+  })),
+}
+---
+
+<Base
+  title="Вступление в СРО — строителям и проектировщикам | НОРМА"
+  description="Выписка из реестра за 24 часа, подготовка документов и сопровождение бесплатно. Калькулятор покажет, нужна ли вам СРО, — со ссылкой на статью закона."
+  schema={[faqSchema, howToSchema]}
+>
+  <Hero />
+
+  <!-- Честность как позиция, а не строчка в подвале -->
+  <section class="section section--tight honest">
+    <div class="wrap">
+      <div class="honest-in rv">
+        <span class="hi"><Icon name="scales" size={24} /></span>
+        <div>
+          <h2>Половине обратившихся СРО не нужна. Я говорю об этом первым</h2>
+          <p>
+            Требование о членстве привязано к тому, <b>с кем заключён договор</b>, а не только
+            к его сумме. Субподрядчику, работающему от генподрядчика, членство не требуется
+            ни при какой цене договора — но на этом зарабатывают целые компании.
+            Проверьте свою ситуацию за две минуты, прежде чем кому-либо платить.
+          </p>
+          <div class="honest-cta">
+            <a class="btn btn--acc" href="#calc">Проверить свою ситуацию</a>
+            <a class="btn btn--ghost" href={href('/komu-nuzhna-sro/')}>Кому нужна СРО, а кому нет</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <Calculator />
+
+  <TenderRejects />
+
+  <!-- Кому нужна / кому нет -->
+  <section class="section" id="komu" data-anchor>
+    <div class="wrap">
+      <div class="s-head rv">
+        <span class="eyebrow">Без умолчаний</span>
+        <h2>Кому нужна СРО, а кому нет</h2>
+        <p>
+          Оба столбца одинаково важны. Правый — тот, который обычно прячут:
+          на нём не заработать, но именно он экономит компаниям сотни тысяч рублей.
+        </p>
+      </div>
+      <div class="rv"><ComparisonTable compact /></div>
+      <p class="more rv">
+        <a href={href('/komu-nuzhna-sro/')}>Полный разбор всех случаев со ссылками на нормы →</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- Стоимость: тизер -->
+  <section class="section section--dark" id="stoimost-teaser" data-anchor>
+    <div class="wrap">
+      <div class="s-head rv">
+        <span class="eyebrow">Стоимость</span>
+        <h2>Открыто: из чего складываются расходы</h2>
+        <p>
+          Мои услуги — подготовка документов и сопровождение — стоят 0 ₽. Платите вы только
+          установленные законом и СРО взносы, и платите их напрямую в СРО, минуя меня.
+        </p>
+      </div>
+
+      <div class="cost-grid">
+        <div class="cost-card rv">
+          <span class="cc-ic"><Icon name="wallet" size={20} /></span>
+          <h3>Компенсационный фонд возмещения вреда</h3>
+          <p>Обязателен для всех. Размер зависит от уровня ответственности — от 50 000 ₽ для проектировщиков и от 100 000 ₽ для строителей.</p>
+          <span class="law law--dark">{LAW.funds}</span>
+        </div>
+
+        <div class="cost-card cost-card--accent rv">
+          <span class="cc-ic"><Icon name="alert" size={20} /></span>
+          <h3>Компенсационный фонд обеспечения договорных обязательств</h3>
+          <p>
+            <b>Отдельный второй взнос — только для конкурентных закупок.</b> Без него заявку
+            на торгах отклонят. Именно об этом молчат сайты с обещанием «без скрытых платежей».
+          </p>
+          <span class="law law--dark">{LAW.funds}</span>
+        </div>
+
+        <div class="cost-card rv">
+          <span class="cc-ic"><Icon name="doc" size={20} /></span>
+          <h3>Взносы СРО и страхование</h3>
+          <p>Вступительный взнос, целевой взнос в национальное объединение и членские взносы. <b>Членские взносы платятся ежегодно</b> — со второго года тоже.</p>
+        </div>
+
+        <div class="cost-card rv">
+          <span class="cc-ic"><Icon name="users" size={20} /></span>
+          <h3>Специалисты: НРС и НОК</h3>
+          <p>Расходы на независимую оценку квалификации для специалистов, которых нужно внести в национальный реестр.</p>
+        </div>
+      </div>
+
+      <div class="cost-cta rv">
+        <a class="btn btn--acc" href={href('/stoimost/')}>Полная разбивка с суммами по уровням</a>
+        <span>Все суммы — со ссылками на статьи закона</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Как проходит вступление -->
+  <section class="section" id="process" data-anchor>
+    <div class="wrap">
+      <div class="s-head rv">
+        <span class="eyebrow">Порядок работы</span>
+        <h2>Как проходит вступление</h2>
+        <p>Сроки реальные, а не рекламные: там, где закон даёт два месяца, я так и пишу.</p>
+      </div>
+
+      <ol class="steps">
+        {steps.map((s, i) => (
+          <li class="rv">
+            <span class="sn">{i + 1}</span>
+            <div class="sc">
+              <div class="sc-top">
+                <h3>{s.t}</h3>
+                <span class="stime">{s.time}</span>
+              </div>
+              <p>{s.d}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <RegistryCheck />
+
+  <ServicesGrid />
+
+  <!-- База знаний -->
+  {articles.length > 0 && (
+    <section class="section section--tight kb">
+      <div class="wrap">
+        <div class="s-head rv">
+          <span class="eyebrow">База знаний</span>
+          <h2>Свежие разборы</h2>
+          <p>У каждой статьи — дата публикации и дата последней проверки. В теме, где нормы меняются каждый год, статья без даты не стоит ничего.</p>
+        </div>
+        <div class="grid-3">
+          {articles.map((a) => (
+            <a class="card art rv" href={href(`/baza-znaniy/${a.id}/`)}>
+              <div class="art-dates">
+                <time datetime={a.data.published.toISOString().slice(0, 10)}>{fmt(a.data.published)}</time>
+                {a.data.updated && <span class="upd">обновлено {fmt(a.data.updated)}</span>}
+              </div>
+              <h3>{a.data.title}</h3>
+              <p>{a.data.excerpt}</p>
+              <span class="go">Читать <Icon name="arrow" size={15} /></span>
+            </a>
+          ))}
+        </div>
+        <p class="more rv"><a href={href('/baza-znaniy/')}>Все статьи базы знаний →</a></p>
+      </div>
+    </section>
+  )}
+
+  <!-- FAQ -->
+  <section class="section" id="faq" data-anchor>
+    <div class="wrap">
+      <div class="s-head rv">
+        <span class="eyebrow">Вопросы</span>
+        <h2>Частые вопросы</h2>
+      </div>
+      <div class="faq rv">
+        {faq.map((f, i) => (
+          <details name="faq" open={i === 0}>
+            <summary>{f.q}</summary>
+            <div class="fa"><p>{f.a}</p></div>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Контакты -->
+  <section class="section contacts-cta" id="zayavka" data-anchor>
+    <div class="wrap">
+      <div class="cc-grid">
+        <div class="rv">
+          <LeadForm />
+        </div>
+        <aside class="rv side">
+          <h3>Или свяжитесь напрямую</h3>
+          <a class="big-phone" href={SITE.phoneHref} data-goal="click_phone">{SITE.phone}</a>
+          <a class="mail" href={`mailto:${SITE.email}`}>{SITE.email}</a>
+          <div class="msg-list">
+            <a href={SITE.whatsapp} target="_blank" rel="noopener noreferrer" data-goal="click_whatsapp">
+              <Icon name="whatsapp" size={18} /> WhatsApp
+            </a>
+            <a href={SITE.telegram} target="_blank" rel="noopener noreferrer" data-goal="click_telegram">
+              <Icon name="telegram" size={18} /> Telegram
+            </a>
+            {SITE.maxLink && (
+              <a href={SITE.maxLink} target="_blank" rel="noopener noreferrer">
+                <Icon name="phone" size={18} /> MAX
+              </a>
+            )}
+          </div>
+          <p class="side-note">
+            {SITE.geo}. Работаю дистанционно: личная встреча для вступления в СРО не нужна,
+            документы подписываются электронно или пересылаются.
+          </p>
+          <div class="checked">
+            <span class="stamp">Проверено · {SITE.checkedDate}</span>
+            <p>Все нормы и суммы на сайте сверены с действующей редакцией Градостроительного кодекса РФ.</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* Честный блок */
+  .honest { background: var(--card); border-bottom: 1px solid var(--line); }
+  .honest-in { display: grid; grid-template-columns: 56px 1fr; gap: 20px; align-items: start; }
+  .hi {
+    width: 52px; height: 52px;
+    border-radius: 14px;
+    background: var(--acc-soft);
+    color: var(--acc-deep);
+    display: grid; place-items: center;
+  }
+  .honest h2 { font-size: clamp(21px, 2.8vw, 28px); margin-bottom: 10px; }
+  .honest p { color: var(--muted); font-size: 16px; max-width: 74ch; }
+  .honest p b { color: var(--ink); }
+  .honest-cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
+
+  .more { margin-top: 18px; font-size: 15px; font-weight: 600; }
+
+  /* Стоимость-тизер */
+  .cost-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .cost-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--navy-line);
+    border-radius: var(--r-l);
+    padding: 22px;
+    display: grid;
+    gap: 10px;
+    align-content: start;
+  }
+  .cost-card--accent { border-color: rgba(53, 214, 204, 0.45); background: rgba(53, 214, 204, 0.07); }
+  .cc-ic {
+    width: 38px; height: 38px;
+    border-radius: var(--r-s);
+    background: rgba(53, 214, 204, 0.15);
+    color: var(--acc-bright);
+    display: grid; place-items: center;
+  }
+  .cost-card h3 { color: #fff; font-size: 16.5px; }
+  .cost-card p { color: var(--on-navy-muted); font-size: 14.5px; }
+  .cost-card p b { color: #fff; }
+  .cost-card .law { justify-self: start; }
+  .cost-cta { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 22px; }
+  .cost-cta span { color: var(--on-navy-muted); font-size: 14px; }
+
+  /* Шаги */
+  .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  .steps li { display: grid; grid-template-columns: 44px 1fr; gap: 18px; align-items: start; }
+  .sn {
+    width: 38px; height: 38px;
+    border-radius: 11px;
+    background: var(--acc-soft);
+    color: var(--acc-deep);
+    font-family: var(--font-mono);
+    font-size: 15px;
+    display: grid; place-items: center;
+    position: relative;
+  }
+  .steps li:not(:last-child) .sn::after {
+    content: '';
+    position: absolute;
+    top: 42px; bottom: -22px;
+    left: 50%;
+    width: 1px;
+    background: var(--line);
+  }
+  .sc { padding-bottom: 26px; }
+  .sc-top { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 6px; }
+  .sc-top h3 { font-size: 18px; }
+  .stime {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--acc-deep);
+    background: var(--acc-soft);
+    padding: 2px 9px;
+    border-radius: 6px;
+    white-space: nowrap;
+  }
+  .sc p { color: var(--muted); font-size: 15.5px; max-width: 74ch; }
+
+  /* Статьи */
+  .kb { background: var(--card); border-top: 1px solid var(--line); }
+  .art { display: grid; gap: 9px; align-content: start; }
+  .art-dates { display: flex; gap: 10px; flex-wrap: wrap; font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); }
+  .upd { color: var(--good); }
+  .art h3 { font-size: 17.5px; margin: 0; }
+  .go { display: inline-flex; align-items: center; gap: 6px; font-size: 14.5px; font-weight: 600; color: var(--acc-deep); }
+
+  /* FAQ */
+  .faq { display: grid; gap: 10px; max-width: 900px; }
+  .faq details {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--r-m);
+    overflow: hidden;
+  }
+  .faq summary {
+    padding: 18px 22px;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    align-items: center;
+  }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after {
+    content: '+';
+    font-family: var(--font-mono);
+    font-size: 20px;
+    color: var(--acc-deep);
+    flex: none;
+  }
+  .faq details[open] summary::after { content: '−'; }
+  .faq .fa { padding: 0 22px 20px; }
+  .faq .fa p { color: var(--muted); font-size: 15.5px; max-width: 76ch; }
+
+  /* Контакты */
+  .contacts-cta { background: var(--paper); }
+  .cc-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; align-items: start; }
+  .side {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--r-l);
+    padding: 26px;
+    display: grid;
+    gap: 12px;
+    align-content: start;
+  }
+  .side h3 { font-size: 17px; }
+  .big-phone {
+    font-family: var(--font-mono);
+    font-size: clamp(22px, 3vw, 28px);
+    font-weight: 500;
+    color: var(--ink);
+    text-decoration: none;
+    line-height: 1.2;
+  }
+  .big-phone:hover { color: var(--acc-deep); }
+  .mail { color: var(--muted); text-decoration: none; font-size: 15px; }
+  .mail:hover { color: var(--acc-deep); }
+  .msg-list { display: grid; gap: 8px; }
+  .msg-list a {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 15px;
+    padding: 9px 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-s);
+  }
+  .msg-list a:hover { border-color: var(--acc-btn); color: var(--acc-deep); }
+  .msg-list svg { color: var(--acc-deep); }
+  .side-note { font-size: 13.5px; color: var(--muted); line-height: 1.55; }
+  .checked { border-top: 1px solid var(--line); padding-top: 14px; display: grid; gap: 8px; justify-items: start; }
+  .checked p { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+
+  @media (max-width: 900px) {
+    .cc-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .honest-in { grid-template-columns: 1fr; gap: 14px; }
+    .honest-cta .btn, .cost-cta .btn { width: 100%; }
+    .steps li { grid-template-columns: 34px 1fr; gap: 12px; }
+    .sn { width: 30px; height: 30px; font-size: 13px; }
+    .steps li:not(:last-child) .sn::after { top: 34px; }
+  }
+</style>
