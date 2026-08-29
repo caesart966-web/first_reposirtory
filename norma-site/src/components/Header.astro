@@ -1,6 +1,7 @@
 ---
 import { SITE, href } from '../config/site'
 import Icon from './Icon.astro'
+import LogoMark from './LogoMark.astro'
 
 const nav = [
   { label: 'Услуги', url: href('/uslugi/') },
@@ -14,7 +15,7 @@ const nav = [
 <header class="site-header">
   <div class="wrap hdr">
     <a class="logo" href={href('/')}>
-      <span class="logo-mark">§</span>
+      <LogoMark size={30} class="logo-mark" />
       <span class="logo-text">
         <b>{SITE.brand}</b>
         <small>{SITE.brandTag}</small>
@@ -40,7 +41,8 @@ const nav = [
         <Icon name="phone" size={19} />
       </a>
       <button class="burger" type="button" aria-label="Меню" aria-expanded="false" aria-controls="mobile-menu">
-        <Icon name="menu" size={22} />
+        <span class="burger-open"><Icon name="menu" size={22} /></span>
+        <span class="burger-close"><Icon name="x" size={22} /></span>
       </button>
     </div>
   </div>
@@ -75,19 +77,12 @@ const nav = [
   }
 
   .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #fff; flex: none; }
-  .logo-mark {
-    font-family: Georgia, 'Times New Roman', serif;
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--acc-bright);
-    line-height: 1;
-    border: 1.5px solid rgba(53, 214, 204, 0.4);
-    border-radius: 8px;
-    width: 34px;
-    height: 34px;
-    display: grid;
-    place-items: center;
-  }
+  /* Монограмма стоит без рамки: знак самодостаточный, рамка спорила бы
+     с его собственной геометрией.
+     :global обязателен — знак приходит из отдельного компонента, и обычное
+     правило до него не достаёт: Astro привязывает стили к служебному атрибуту,
+     которого у чужой разметки нет. Без этого знак остался бы белым. */
+  .logo :global(.logo-mark) { color: var(--acc-bright); flex: none; display: block; }
   .logo-text { display: grid; line-height: 1.15; }
   .logo-text b { font-family: var(--font-head); font-size: 17px; font-weight: 800; letter-spacing: 0.06em; }
   .logo-text small { font-size: 11px; color: var(--on-navy-muted); }
@@ -120,18 +115,33 @@ const nav = [
     text-decoration: none;
     flex: none;
   }
-  .icon-phone { color: var(--acc-bright); border-color: rgba(53, 214, 204, 0.4); }
+  .icon-phone { color: var(--acc-bright); border-color: color-mix(in srgb, var(--acc-bright) 40%, transparent); }
 
-  .mobile-menu { border-top: 1px solid var(--navy-line); padding: 14px 0 20px; }
-  .mobile-menu nav { display: grid; }
+  .burger-close { display: none; }
+  .burger[aria-expanded='true'] .burger-open { display: none; }
+  .burger[aria-expanded='true'] .burger-close { display: block; }
+
+  /* Меню на весь экран, как на образце: тёмная подложка, крупные ссылки
+     по центру. Шапка остаётся видимой сверху, поэтому отступ под неё. */
+  .mobile-menu {
+    position: fixed;
+    inset: 68px 0 0;
+    background: var(--navy);
+    padding: 28px 0 40px;
+    overflow-y: auto;
+    z-index: 49;
+  }
+  .mobile-menu .wrap { min-height: 100%; display: grid; align-content: center; gap: 4px; }
+  .mobile-menu nav { display: grid; justify-items: center; gap: 4px; }
   .mobile-menu nav a {
     color: var(--on-navy);
     text-decoration: none;
-    padding: 13px 0;
-    border-bottom: 1px solid var(--navy-line);
-    font-size: 16px;
+    padding: 15px 10px;
+    font-size: 20px;
+    text-align: center;
   }
-  .mm-cta { margin-top: 16px; width: 100%; }
+  .mobile-menu nav a:hover { color: var(--acc-bright); }
+  .mm-cta { margin-top: 24px; width: 100%; }
   .mm-phone {
     display: block;
     margin-top: 12px;

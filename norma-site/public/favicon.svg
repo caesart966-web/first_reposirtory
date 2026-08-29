@@ -1,4 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <rect width="64" height="64" rx="14" fill="#0B1D33"/>
-  <text x="32" y="45" font-size="38" text-anchor="middle" fill="#35D6CC" font-family="Georgia, 'Times New Roman', serif" font-weight="bold">§</text>
+  <!-- Знак посажен почти без полей: на 16 пикселях каждая доля размера
+       решает, читается монограмма или сливается в пятно. -->
+  <g transform="translate(6 6) scale(0.52)" fill="none" stroke="#6BA3FF">
+    <circle cx="50" cy="50" r="46.8" stroke-width="6.4"/>
+    <g stroke-width="7.1">
+      <path d="M30.6 22.5v55.3M69.4 22.5v55.3"/>
+      <path d="M29.4 22.5 72.4 79.9"/>
+    </g>
+  </g>
 </svg>

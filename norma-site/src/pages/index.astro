@@ -112,7 +112,7 @@ const howToSchema = {
       <div class="honest-in rv">
         <span class="hi"><Icon name="scales" size={24} /></span>
         <div>
-          <h2>Половине обратившихся СРО не нужна. Я говорю об этом первым</h2>
+          <h2>Половине обратившихся СРО <em>не нужна</em>. Я говорю об этом первым</h2>
           <p>
             Требование о членстве привязано к тому, <b>с кем заключён договор</b>, а не только
             к его сумме. Субподрядчику, работающему от генподрядчика, членство не требуется
@@ -137,7 +137,7 @@ const howToSchema = {
     <div class="wrap">
       <div class="s-head rv">
         <span class="eyebrow">Без умолчаний</span>
-        <h2>Кому нужна СРО, а кому нет</h2>
+        <h2>Кому нужна СРО, <em>а кому нет</em></h2>
         <p>
           Оба столбца одинаково важны. Правый — тот, который обычно прячут:
           на нём не заработать, но именно он экономит компаниям сотни тысяч рублей.
@@ -155,41 +155,55 @@ const howToSchema = {
     <div class="wrap">
       <div class="s-head rv">
         <span class="eyebrow">Стоимость</span>
-        <h2>Открыто: из чего складываются расходы</h2>
+        <h2>Открыто: из чего складываются <em>расходы</em></h2>
         <p>
           Мои услуги — подготовка документов и сопровождение — стоят 0 ₽. Платите вы только
           установленные законом и СРО взносы, и платите их напрямую в СРО, минуя меня.
         </p>
       </div>
 
-      <div class="cost-grid">
-        <div class="cost-card rv">
-          <span class="cc-ic"><Icon name="wallet" size={20} /></span>
-          <h3>Компенсационный фонд возмещения вреда</h3>
-          <p>Обязателен для всех. Размер зависит от уровня ответственности — от 50 000 ₽ для проектировщиков и от 100 000 ₽ для строителей.</p>
-          <span class="law law--dark">{LAW.funds}</span>
+      <div class="price-cards">
+        <div class="pcard rv">
+          <span class="ptag">Строителям</span>
+          <h3>Первый уровень ответственности</h3>
+          <p class="psub">Договоры до 90 млн ₽</p>
+          <ul>
+            <li><span>Компенсационный фонд возмещения вреда<small>однократно, по закону</small></span><b>100 000 ₽</b></li>
+            <li><span>Вступительный взнос<small>устанавливает СРО</small></span><b class="muted-v">по тарифам</b></li>
+            <li><span>Членские взносы<small>ежегодно, и со второго года тоже</small></span><b class="warn-v">по тарифам</b></li>
+            <li><span>Подготовка документов и сопровождение<small>моя работа</small></span><b class="free-v">0 ₽</b></li>
+            <li class="ptotal"><span>Установлено законом</span><b>100 000 ₽</b></li>
+          </ul>
+          <a class="btn btn--acc" href={href('/stoimost/')}>Все уровни и суммы</a>
         </div>
 
-        <div class="cost-card cost-card--accent rv">
-          <span class="cc-ic"><Icon name="alert" size={20} /></span>
-          <h3>Компенсационный фонд обеспечения договорных обязательств</h3>
-          <p>
-            <b>Отдельный второй взнос — только для конкурентных закупок.</b> Без него заявку
-            на торгах отклонят. Именно об этом молчат сайты с обещанием «без скрытых платежей».
+        <div class="pcard rv">
+          <span class="ptag">Проектировщикам и изыскателям</span>
+          <h3>Первый уровень ответственности</h3>
+          <p class="psub">Договоры до 25 млн ₽</p>
+          <ul>
+            <li><span>Компенсационный фонд возмещения вреда<small>однократно, по закону</small></span><b>50 000 ₽</b></li>
+            <li><span>Вступительный взнос<small>устанавливает СРО</small></span><b class="muted-v">по тарифам</b></li>
+            <li><span>Членские взносы<small>ежегодно, и со второго года тоже</small></span><b class="warn-v">по тарифам</b></li>
+            <li><span>Подготовка документов и сопровождение<small>моя работа</small></span><b class="free-v">0 ₽</b></li>
+            <li class="ptotal"><span>Установлено законом</span><b>50 000 ₽</b></li>
+          </ul>
+          <a class="btn btn--acc" href={href('/stoimost/')}>Все уровни и суммы</a>
+        </div>
+
+        <div class="pcard pcard--warn rv">
+          <span class="ptag ptag--warn">Идёте на торги</span>
+          <h3>Нужен второй взнос — КФ ОДО</h3>
+          <p class="psub">Компенсационный фонд обеспечения договорных обязательств</p>
+          <ul>
+            <li><span>Строителям, первый уровень<small>сверх взноса выше, не вместо</small></span><b>200 000 ₽</b></li>
+            <li><span>Проектировщикам и изыскателям<small>первый уровень</small></span><b>150 000 ₽</b></li>
+          </ul>
+          <p class="pnote">
+            Без этого взноса заявку на конкурентных закупках отклонят. Именно о нём
+            молчат сайты с обещанием «без скрытых платежей».
           </p>
-          <span class="law law--dark">{LAW.funds}</span>
-        </div>
-
-        <div class="cost-card rv">
-          <span class="cc-ic"><Icon name="doc" size={20} /></span>
-          <h3>Взносы СРО и страхование</h3>
-          <p>Вступительный взнос, целевой взнос в национальное объединение и членские взносы. <b>Членские взносы платятся ежегодно</b> — со второго года тоже.</p>
-        </div>
-
-        <div class="cost-card rv">
-          <span class="cc-ic"><Icon name="users" size={20} /></span>
-          <h3>Специалисты: НРС и НОК</h3>
-          <p>Расходы на независимую оценку квалификации для специалистов, которых нужно внести в национальный реестр.</p>
+          <a class="btn btn--ghost-dark" href="#torgi">Три причины отказа на торгах</a>
         </div>
       </div>
 
@@ -205,7 +219,7 @@ const howToSchema = {
     <div class="wrap">
       <div class="s-head rv">
         <span class="eyebrow">Порядок работы</span>
-        <h2>Как проходит вступление</h2>
+        <h2>Как проходит <em>вступление</em></h2>
         <p>Сроки реальные, а не рекламные: там, где закон даёт два месяца, я так и пишу.</p>
       </div>
 
@@ -236,7 +250,7 @@ const howToSchema = {
       <div class="wrap">
         <div class="s-head rv">
           <span class="eyebrow">База знаний</span>
-          <h2>Свежие разборы</h2>
+          <h2>Свежие <em>разборы</em></h2>
           <p>У каждой статьи — дата публикации и дата последней проверки. В теме, где нормы меняются каждый год, статья без даты не стоит ничего.</p>
         </div>
         <div class="grid-3">
@@ -262,7 +276,7 @@ const howToSchema = {
     <div class="wrap">
       <div class="s-head rv">
         <span class="eyebrow">Вопросы</span>
-        <h2>Частые вопросы</h2>
+        <h2>Частые <em>вопросы</em></h2>
       </div>
       <div class="faq rv">
         {faq.map((f, i) => (
@@ -331,7 +345,48 @@ const howToSchema = {
 
   .more { margin-top: 18px; font-size: 15px; font-weight: 600; }
 
-  /* Стоимость-тизер */
+  /* Стоимость-тизер: карточки в стиле образца */
+  .price-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+  .pcard {
+    background: var(--card);
+    color: var(--ink);
+    border-radius: var(--r-l);
+    padding: 26px 24px 24px;
+    display: grid;
+    gap: 12px;
+    align-content: start;
+  }
+  .ptag {
+    justify-self: center;
+    margin-top: -40px;
+    background: var(--acc-btn);
+    color: #fff;
+    font-weight: 700;
+    font-size: 13.5px;
+    padding: 8px 20px;
+    border-radius: 999px;
+    text-align: center;
+  }
+  .ptag--warn { background: #B4231F; }
+  .pcard h3 { font-size: 19px; margin: 4px 0 0; text-align: center; }
+  .psub { font-size: 13.5px; color: var(--muted); text-align: center; margin-bottom: 6px; }
+  .pcard ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+  .pcard li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: baseline; font-size: 15px; }
+  .pcard li span { display: grid; gap: 2px; }
+  .pcard li small { color: var(--muted); font-size: 12.5px; line-height: 1.4; }
+  .pcard li > b { font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 16px; }
+  .free-v { color: var(--good); }
+  .warn-v { color: #B4231F; font-weight: 600; font-size: 14px !important; }
+  .muted-v { color: var(--muted); font-weight: 500; font-size: 14px !important; }
+  .ptotal { border-top: 1px solid var(--line); padding-top: 14px; }
+  .ptotal > b { color: var(--acc-deep); font-size: 22px !important; }
+  .pnote { font-size: 13.5px; color: var(--muted); line-height: 1.55; }
+  .pcard .btn { justify-self: stretch; margin-top: 4px; }
+  .pcard--warn { background: var(--navy-2); color: var(--on-navy); }
+  .pcard--warn h3 { color: #fff; }
+  .pcard--warn .psub, .pcard--warn li small, .pcard--warn .pnote { color: var(--on-navy-muted); }
+  .pcard--warn li > b { color: #fff; }
+
   .cost-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
   .cost-card {
     background: rgba(255, 255, 255, 0.05);
@@ -342,11 +397,11 @@ const howToSchema = {
     gap: 10px;
     align-content: start;
   }
-  .cost-card--accent { border-color: rgba(53, 214, 204, 0.45); background: rgba(53, 214, 204, 0.07); }
+  .cost-card--accent { border-color: color-mix(in srgb, var(--acc-bright) 45%, transparent); background: color-mix(in srgb, var(--acc-bright) 7%, transparent); }
   .cc-ic {
     width: 38px; height: 38px;
     border-radius: var(--r-s);
-    background: rgba(53, 214, 204, 0.15);
+    background: color-mix(in srgb, var(--acc-bright) 15%, transparent);
     color: var(--acc-bright);
     display: grid; place-items: center;
   }
@@ -359,24 +414,31 @@ const howToSchema = {
 
   /* Шаги */
   .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
-  .steps li { display: grid; grid-template-columns: 44px 1fr; gap: 18px; align-items: start; }
+  .steps li { display: grid; grid-template-columns: 50px 1fr; gap: 20px; align-items: start; }
   .sn {
-    width: 38px; height: 38px;
-    border-radius: 11px;
-    background: var(--acc-soft);
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--card);
+    border: 2px solid var(--acc-soft);
     color: var(--acc-deep);
-    font-family: var(--font-mono);
-    font-size: 15px;
+    font-family: var(--font-head);
+    font-weight: 800;
+    font-size: 17px;
     display: grid; place-items: center;
     position: relative;
+    z-index: 1;
   }
+  /* Первый шаг залит акцентом — глаз сразу находит начало ленты */
+  .steps li:first-child .sn { background: var(--acc-btn); border-color: var(--acc-btn); color: #fff; }
   .steps li:not(:last-child) .sn::after {
     content: '';
     position: absolute;
-    top: 42px; bottom: -22px;
+    top: 46px; bottom: -30px;
     left: 50%;
-    width: 1px;
+    width: 2px;
+    margin-left: -1px;
     background: var(--line);
+    z-index: 0;
   }
   .sc { padding-bottom: 26px; }
   .sc-top { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 6px; }
@@ -479,8 +541,8 @@ const howToSchema = {
   @media (max-width: 640px) {
     .honest-in { grid-template-columns: 1fr; gap: 14px; }
     .honest-cta .btn, .cost-cta .btn { width: 100%; }
-    .steps li { grid-template-columns: 34px 1fr; gap: 12px; }
-    .sn { width: 30px; height: 30px; font-size: 13px; }
-    .steps li:not(:last-child) .sn::after { top: 34px; }
+    .steps li { grid-template-columns: 40px 1fr; gap: 14px; }
+    .sn { width: 36px; height: 36px; font-size: 15px; }
+    .steps li:not(:last-child) .sn::after { top: 38px; }
   }
 </style>

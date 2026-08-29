@@ -5,7 +5,7 @@
 // Повторять нужно, только если поменялись название, телефон или оформление.
 
 import { chromium } from 'playwright'
-import { writeFile } from 'node:fs/promises'
+import { writeFile, readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 
@@ -15,6 +15,14 @@ const out = resolve(here, '../public/og.png')
 // Данные берём из того же конфига, что и сайт, — чтобы картинка не разошлась с текстом.
 const site = await import(resolve(here, '../src/config/site.ts')).catch(() => null)
 const PHONE = site?.SITE?.phone ?? '+7 931 969-86-64'
+
+// Фирменный знак берём из того же файла, что и сайт, — чтобы картинка-превью
+// не разошлась с логотипом в шапке.
+const markFile = await readFile(resolve(here, '../src/components/LogoMark.astro'), 'utf8')
+const MARK = markFile.slice(markFile.indexOf('<svg'), markFile.lastIndexOf('</svg>') + 6)
+  .replace(/height=\{[^}]+\}/, 'height="58"')
+  .replace(/width=\{[^}]+\}/, 'width="58"')
+  .replace(/class=\{[^}]+\}/, '')
 
 const html = `<!doctype html>
 <html><head><meta charset="utf-8">
@@ -36,11 +44,7 @@ const html = `<!doctype html>
   }
   .glow { position: absolute; inset: 0; background: radial-gradient(700px 400px at 82% 8%, rgba(53,214,204,.22), transparent 70%); }
   .row { position: relative; display: flex; align-items: center; gap: 16px; }
-  .mark {
-    width: 54px; height: 54px; border: 2px solid rgba(53,214,204,.45); border-radius: 13px;
-    display: grid; place-items: center; color: #35D6CC;
-    font-family: Georgia, serif; font-size: 32px; font-weight: bold;
-  }
+  .mark { display: grid; place-items: center; color: #35D6CC; }
   .brand b { font-size: 26px; font-weight: 800; letter-spacing: .07em; display: block; line-height: 1.1; }
   .brand span { font-size: 15px; color: #9FB1C7; }
   h1 { position: relative; font-size: 62px; font-weight: 800; line-height: 1.1; letter-spacing: -.02em; max-width: 17ch; }
@@ -54,7 +58,7 @@ const html = `<!doctype html>
 <body>
   <div class="glow"></div>
   <div class="row">
-    <div class="mark">§</div>
+    <div class="mark">${MARK}</div>
     <div class="brand"><b>НОРМА</b><span>вступление в СРО · НРС · НОК · лицензии</span></div>
   </div>
   <h1>Вступление в СРО <em>без устаревших норм</em></h1>

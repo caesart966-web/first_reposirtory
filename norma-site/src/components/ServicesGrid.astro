@@ -16,7 +16,7 @@ const list = SERVICES.filter((s) => s.slug !== exclude)
   <div class="wrap">
     <div class="s-head rv">
       <span class="eyebrow">Направления</span>
-      <h2>{title}</h2>
+      <h2 set:html={title.replace(/(\S+)$/, "<em>$1</em>")} />
       <p>
         У каждой услуги — отдельная страница с нормами, сроками и составом документов.
         Ничего не выдумываю: если по вашей задаче членство не требуется, я скажу об этом

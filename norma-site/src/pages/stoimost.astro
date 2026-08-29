@@ -61,7 +61,7 @@ const faqSchema = {
     <div class="wrap">
       <div class="s-head rv">
         <span class="eyebrow">Состав расходов</span>
-        <h2>Шесть строк, из которых складывается бюджет</h2>
+        <h2>Шесть строк, из которых складывается <em>бюджет</em></h2>
         <p>Ни одна не спрятана. Порядок — от обязательного к ситуативному.</p>
       </div>
 
@@ -180,7 +180,7 @@ const faqSchema = {
     <div class="wrap">
       <div class="s-head rv">
         <span class="eyebrow">Минимумы по закону</span>
-        <h2>Взносы в компенсационные фонды по уровням ответственности</h2>
+        <h2>Взносы в компенсационные фонды <em>по уровням ответственности</em></h2>
         <p>
           Это минимальные размеры, установленные статьёй 55.16 ГрК РФ. Конкретная СРО не вправе
           брать меньше. Уровень выбираете вы — исходя из максимальной суммы одного договора,
@@ -271,7 +271,7 @@ const faqSchema = {
     <div class="wrap">
       <div class="s-head rv">
         <span class="eyebrow">Как это считается</span>
-        <h2>Пример: строительная компания идёт на торги</h2>
+        <h2>Пример: строительная компания <em>идёт на торги</em></h2>
         <p>
           Условия: договоры до 90 млн ₽ (первый уровень), участие в конкурентных закупках,
           два специалиста уже есть в штате и внесены в НРС.
@@ -315,7 +315,7 @@ const faqSchema = {
   <section class="section section--tight">
     <div class="wrap">
       <div class="s-head rv">
-        <h2>Вопросы про деньги</h2>
+        <h2>Вопросы <em>про деньги</em></h2>
       </div>
       <div class="faq rv">
         {faq.map((f, i) => (
@@ -357,7 +357,7 @@ const faqSchema = {
     padding: 22px 24px;
     align-items: start;
   }
-  .parts li.accent { border-color: rgba(13, 138, 131, 0.45); background: var(--acc-soft); }
+  .parts li.accent { border-color: color-mix(in srgb, var(--acc) 45%, transparent); background: var(--acc-soft); }
   .parts li.free { border-color: rgba(30, 142, 90, 0.4); background: var(--good-bg); }
 
   .p-num {
@@ -409,12 +409,12 @@ const faqSchema = {
     display: grid;
     grid-template-columns: 44px 1fr;
     gap: 16px;
-    background: rgba(53, 214, 204, 0.08);
-    border: 1px solid rgba(53, 214, 204, 0.4);
+    background: color-mix(in srgb, var(--acc-bright) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--acc-bright) 40%, transparent);
     border-radius: var(--r-l);
     padding: 22px 24px;
   }
-  .oc-ic { width: 40px; height: 40px; border-radius: 11px; background: rgba(53, 214, 204, 0.16); color: var(--acc-bright); display: grid; place-items: center; }
+  .oc-ic { width: 40px; height: 40px; border-radius: 11px; background: color-mix(in srgb, var(--acc-bright) 16%, transparent); color: var(--acc-bright); display: grid; place-items: center; }
   .odo-callout h3 { color: #fff; font-size: 17.5px; margin-bottom: 8px; }
   .odo-callout p { color: var(--on-navy-muted); font-size: 15px; max-width: 76ch; }
   .odo-callout p b { color: #fff; }
