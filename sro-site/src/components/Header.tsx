@@ -33,7 +33,10 @@ export function Header() {
             <span className="text-[15px] font-bold tracking-tight text-neutral-950">
               {CONTACTS.fullName}
             </span>
-            <span className="text-xs text-neutral-500">{CONTACTS.role}</span>
+            {/* neutral-600, а не 500: тёплая нейтральная шкала темнее прежней серой
+                по цвету, но светлее по контрасту, и на 500 подпись давала
+                4.46:1 при норме 4.5. Замерено на странице. */}
+            <span className="text-xs text-neutral-600">{CONTACTS.role}</span>
           </span>
         </a>
 

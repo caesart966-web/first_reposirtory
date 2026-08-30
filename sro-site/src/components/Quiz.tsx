@@ -12,13 +12,26 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { CONFIGURED, CONTACTS, LINKS, externalLinkProps } from '../content/contacts'
 import { buildLeadMessage, sendLead } from '../lib/lead'
 import { TelegramIcon, WhatsAppIcon } from './icons'
-import { CitySkyline } from './illustrations'
 import { useLegalDocs } from './LegalDocs'
 import { plural } from '../lib/plural'
 import { QUESTIONS, TOTAL_STEPS, useQuiz } from './QuizContext'
 import { Button, ButtonLink } from './ui/Button'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
+
+// Фон тёмной секции заявки. ОДНА ТОЧКА ПРАВКИ: заказчик присылает свой кадр,
+// он кладётся в public/img/ и подставляется сюда.
+//
+// Сейчас стоит временный кадр из имеющихся — папки с документами. Он ближе
+// прочих к тому, что нужно по смыслу (документация), но повторяет иллюстрацию
+// секции «Документы», и потому это заглушка, а не решение.
+//
+// Требования к кадру, выведенные на этой же странице опытом: горизонтальный,
+// от 1600 px, крупная читаемая форма, светлый (тёмный на тёмно-синем исчезнет),
+// без людей, вывесок и гербов. И не повторяющий занятые мотивы: краны стоят в
+// карточке «СРО строителей», разрез здания — у проектировщиков, геодезический
+// прибор — у изыскателей.
+const QUIZ_BG = './img/documents.webp'
 
 const inputClasses =
   'mt-1.5 w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-neutral-900 placeholder:text-neutral-500 focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/30'
@@ -173,28 +186,32 @@ export function Quiz() {
     // Тёмная закрывающая секция: квиз поглотил отдельный финальный призыв,
     // чтобы на странице не было двух блоков «оставьте заявку» подряд.
     <Section id="quiz" size="key" className="relative overflow-hidden bg-accent-950">
-      {/* Фон секции: план этажа языком рабочего чертежа, нарисованный нами
-          (scripts/make-floorplan.py). Не фотография намеренно — все три
-          снимка сайта заняты карточками видов СРО, и любой из них здесь
-          повторял бы карточку, стоящую выше по странице.
+      {/* Фон секции — фотография в полную силу, а не намёком.
+          ВРЕМЕННЫЙ КАДР: заменить на присланный заказчиком, поменяв QUIZ_BG.
 
-          Мотив выбран так, чтобы не совпасть ни с одним уже занятым: разрез
-          здания стоит в карточке проектировщиков, сетка чертежа — в герое,
-          силуэт города — внизу этой же секции, весы — фоном всей страницы.
-          План этажа узнаётся всеми тремя аудиториями сразу.
+          Почему именно так. Сначала фон ставился на 13% прозрачности, и там
+          фотография перестаёт быть изображением: она держится на полутонах, а
+          их такая прозрачность съедает первыми — остаётся светлое пятно,
+          читающееся дефектом. Линейная графика (нарисованный план этажа,
+          scripts/make-floorplan.py) при той же слабости работала, потому что
+          рисунок и состоит из линий. Проверено на странице обоими способами.
 
-          Линии в файле белые, плотность задаётся здесь: так один файл годится
-          под любую тёмную подложку. Маска гасит края — без неё чертёж
-          обрывается ровной линией и читается вставкой, а не фоном. */}
+          Отсюда две связанные величины, которые нельзя менять по отдельности:
+          кадр виден на 42%, а поверх лежит плёнка accent-950/45 — она держит
+          контраст заголовка и белой карточки. Ослабите плёнку — текст поплывёт;
+          ослабите кадр — вернётся пятно.
+
+          Силуэт города снизу в этом режиме снят: на читаемой фотографии зданий
+          он оказывается вторым рядом зданий в одной секции. */}
       <img
-        src="./img/floorplan.svg"
+        src={QUIZ_BG}
         alt=""
         aria-hidden="true"
         loading="lazy"
         decoding="async"
-        className="pointer-events-none absolute inset-0 h-full w-full select-none object-cover opacity-[0.13] [mask-image:radial-gradient(120%_95%_at_50%_50%,#000_0%,#000_45%,transparent_100%)] [-webkit-mask-image:radial-gradient(120%_95%_at_50%_50%,#000_0%,#000_45%,transparent_100%)]"
+        className="pointer-events-none absolute inset-0 h-full w-full select-none object-cover opacity-[0.42]"
       />
-      <CitySkyline className="pointer-events-none absolute inset-x-0 bottom-0 h-20 w-full text-white/[0.09] sm:h-28" />
+      <div className="pointer-events-none absolute inset-0 bg-accent-950/45" />
       <div className="relative">
         <SectionHeading
           dark
