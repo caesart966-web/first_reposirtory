@@ -1,13 +1,13 @@
 import {
-  Award,
-  Briefcase,
   Building2,
-  FilePen,
   FileText,
   Gavel,
   GraduationCap,
   Handshake,
+  Landmark,
   ListPlus,
+  Medal,
+  ScrollText,
   Search,
   ShieldCheck,
   UserCheck,
@@ -82,16 +82,22 @@ const GROUPS: ServiceGroup[] = [
   },
 ]
 
-// Смежные юридические задачи с визитки: вторичная услуга, поэтому компактным
-// списком под основной сеткой и нейтральными иконками, а не акцентными.
+// Смежные юридические задачи с визитки. Услуга вторичная, но «вторичная» —
+// это про размер и место, а не про небрежность: раньше иконки стояли голыми
+// и бледно-серыми и читались как неудавшаяся картинка. Теперь у них та же
+// оправа, что у карточек услуг выше, только подложка нейтральная вместо
+// акцентной — иерархия держится цветом, а не отсутствием оформления.
+//
+// Глифы подобраны по смыслу, а не «что-нибудь юридическое»: здание с колоннами
+// — регистрирующий орган, свиток — устав, молоток — суд, медаль — аттестация.
 const LEGAL = [
   {
-    icon: Briefcase,
+    icon: Landmark,
     title: 'Регистрация и ликвидация',
     text: 'Юридических лиц и предпринимателей — от подачи до внесения записи.',
   },
   {
-    icon: FilePen,
+    icon: ScrollText,
     title: 'Изменения в учредительных документах',
     text: 'Подготовлю пакет и сопровожу внесение изменений в ЕГРЮЛ.',
   },
@@ -101,7 +107,7 @@ const LEGAL = [
     text: 'Досудебная работа и защита позиции компании в судебных спорах.',
   },
   {
-    icon: Award,
+    icon: Medal,
     title: 'Повышение квалификации и аттестации',
     text: 'Помогу организовать обучение и аттестацию специалистов для СРО и НРС.',
   },
@@ -156,11 +162,18 @@ export function Services() {
         <div className="mt-5 grid gap-8 lg:grid-cols-[minmax(0,8fr)_minmax(0,4fr)] lg:items-center">
           <div className="grid gap-x-10 gap-y-4 sm:grid-cols-2">
             {LEGAL.map((service) => (
-              <div key={service.title} className="flex items-start gap-3">
-                <service.icon className="mt-0.5 h-5 w-5 shrink-0 text-neutral-400" aria-hidden="true" />
-                <p className="text-sm text-neutral-700">
-                  <span className="font-medium text-neutral-950">{service.title}</span>{' '}
-                  <span className="text-neutral-600">— {service.text}</span>
+              <div key={service.title} className="flex items-start gap-4">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-neutral-200 bg-neutral-100 text-accent-600">
+                  <service.icon className="h-[18px] w-[18px]" aria-hidden="true" />
+                </span>
+                {/* Заголовок отдельной строкой, а не в подбор с описанием:
+                    в подбор он терялся, и четыре пункта читались сплошным
+                    текстом с тире посередине. */}
+                <p className="min-w-0 text-sm">
+                  <span className="block font-semibold text-neutral-950">{service.title}</span>
+                  <span className="mt-0.5 block leading-relaxed text-neutral-600">
+                    {service.text}
+                  </span>
                 </p>
               </div>
             ))}
