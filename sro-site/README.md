@@ -123,7 +123,8 @@ sro-site/
 ├── scripts/
 │   ├── prepare-photo.py        # дуотон, гамма, контроль веса кадров
 │   ├── prepare-themis.py       # фоновая гравюра
-│   ├── make-floorplan.py       # план этажа — фон тёмной секции
+│   ├── make-desk.py            # рабочий стол — фон секции заявки
+│   ├── make-floorplan.py       # план этажа (в архиве)
 │   ├── make-lawbooks.py        # стопка кодексов (в архиве, не на странице)
 │   └── make-image-placeholders.py
 └── src/
