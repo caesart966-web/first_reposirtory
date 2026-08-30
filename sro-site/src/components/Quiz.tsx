@@ -29,7 +29,8 @@ import { Section, SectionHeading } from './ui/Section'
 //
 // Предметы разнесены по краям холста намеренно: по центру секции лежит белая
 // карточка квиза, и всё, что окажется под ней, пропадёт.
-const QUIZ_BG = './img/desk.svg'
+const QUIZ_BG = './img/desk.webp'
+const QUIZ_BG_AVIF = './img/desk.avif'
 
 const inputClasses =
   'mt-1.5 w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-neutral-900 placeholder:text-neutral-500 focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/30'
@@ -189,20 +190,29 @@ export function Quiz() {
           их такая прозрачность съедает первыми. Проверено на странице обоими
           способами — линейная графика на 13% работала, фотография нет.
 
-          Здесь линейная графика, поэтому затемняющая плёнка не нужна: линии
-          светлые, и плёнка только съела бы их. Для фотографии в этом слоте
-          (если заказчик пришлёт кадр) плёнка обязательна — иначе поплывёт
-          заголовок; тогда меняются обе величины разом.
+          Кадр обязан идти с плёнкой. Без неё светлые места снимка —
+          освещённый бетон и белая бумага планов — поднимают яркость подложки
+          под белым заголовком, и контраст уходит ниже нормы. У линейной
+          графики было наоборот: плёнка съедала бы светлые линии, и там её не
+          было. Меняете картинку с рисунка на фото или обратно — меняете обе
+          величины разом.
 
           Маска гасит края: без неё сцена обрывается ровной линией по кромке
           секции и читается вставкой, а не фоном. */}
-      <img
-        src={QUIZ_BG}
-        alt=""
+      <picture>
+        <source srcSet={QUIZ_BG_AVIF} type="image/avif" />
+        <img
+          src={QUIZ_BG}
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+          decoding="async"
+          className="pointer-events-none absolute inset-0 h-full w-full select-none object-cover opacity-50 [mask-image:radial-gradient(125%_100%_at_50%_50%,#000_0%,#000_55%,transparent_100%)] [-webkit-mask-image:radial-gradient(125%_100%_at_50%_50%,#000_0%,#000_55%,transparent_100%)]"
+        />
+      </picture>
+      <div
         aria-hidden="true"
-        loading="lazy"
-        decoding="async"
-        className="pointer-events-none absolute inset-0 h-full w-full select-none object-cover object-right opacity-[0.3] sm:object-center [mask-image:radial-gradient(125%_100%_at_50%_50%,#000_0%,#000_55%,transparent_100%)] [-webkit-mask-image:radial-gradient(125%_100%_at_50%_50%,#000_0%,#000_55%,transparent_100%)]"
+        className="pointer-events-none absolute inset-0 bg-accent-950/65"
       />
       <div className="relative">
         <SectionHeading
