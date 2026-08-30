@@ -158,7 +158,16 @@ import Icon from './Icon.astro'
     padding: 4px 11px;
     border-radius: 999px;
   }
-  .ident-phone { font-family: var(--font-mono); font-size: 19px; color: var(--acc-deep); text-decoration: none; }
+  /* Отступы сверху и снизу — чтобы в номер можно было попасть пальцем:
+     по стандарту доступности высота ссылки-кнопки от 24 px. */
+  .ident-phone {
+    font-family: var(--font-mono);
+    font-size: 19px;
+    color: var(--acc-deep);
+    text-decoration: none;
+    display: inline-block;
+    padding: 3px 0;
+  }
   .ident-phone:hover { text-decoration: underline; }
   .ident-note {
     margin-top: 20px;

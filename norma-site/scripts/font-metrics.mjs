@@ -30,7 +30,7 @@ const result = await page.evaluate(async () => {
   const pairs = [
     ['Playfair Variable', '"Times New Roman"'],
     ['PT Serif Web', '"Times New Roman"'],
-    ['JetBrains Mono Variable', 'monospace'],
+    ['PT Mono Web', 'monospace'],
   ]
 
   return pairs.map(([real, fallback]) => {

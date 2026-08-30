@@ -47,7 +47,7 @@
      благодаря этому подмена шрифта не сдвигает вёрстку. */
   --font-head: 'Playfair Variable', 'Playfair Fallback', 'Times New Roman', Georgia, serif;
   --font-body: 'PT Serif Web', 'PT Serif Fallback', 'Times New Roman', Georgia, serif;
-  --font-mono: 'JetBrains Mono Variable', 'Mono Fallback', ui-monospace, monospace;
+  --font-mono: 'PT Mono Web', 'Mono Fallback', ui-monospace, monospace;
 }
 
 * { box-sizing: border-box; }
@@ -212,6 +212,10 @@ section[id], [data-anchor] { scroll-margin-top: 84px; }
 
 .btn--ghost-dark { background: transparent; color: #fff; border-color: rgba(255, 255, 255, 0.35); }
 .btn--ghost-dark:hover { border-color: var(--acc-bright); color: var(--acc-bright); }
+/* Белая кнопка — для синего блока с предложением: акцентная синяя на синем
+   фоне не читалась бы как главное действие. */
+.btn--white { background: #fff; color: var(--acc-deep); }
+.btn--white:hover { background: #EAF1FF; color: var(--acc-deep); }
 
 .btn--sm { padding: 9px 16px; font-size: 14px; min-height: 40px; }
 

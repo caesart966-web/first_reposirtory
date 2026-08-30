@@ -5,6 +5,7 @@ import '../styles/global.css'
 import Header from '../components/Header.astro'
 import Footer from '../components/Footer.astro'
 import Icon from '../components/Icon.astro'
+import OfferToast from '../components/OfferToast.astro'
 import { SITE, href } from '../config/site'
 
 interface Props {
@@ -37,11 +38,10 @@ const orgSchema = {
   email: SITE.email,
   founder: { '@type': 'Person', name: 'Багишев Алихан Ахадович' },
   taxID: SITE.inn,
+  // Работа дистанционная по всей стране. Конкретные города в разметке
+  // сузили бы выдачу: поисковик решил бы, что это местная фирма.
   areaServed: { '@type': 'Country', name: 'Россия' },
-  address: [
-    { '@type': 'PostalAddress', addressLocality: 'Санкт-Петербург', addressCountry: 'RU' },
-    { '@type': 'PostalAddress', addressLocality: 'Ростов-на-Дону', addressCountry: 'RU' },
-  ],
+  address: { '@type': 'PostalAddress', addressCountry: 'RU' },
   sameAs: [SITE.whatsapp, SITE.telegram, SITE.maxLink].filter(Boolean),
 }
 
@@ -86,8 +86,8 @@ const graph = {
     <link rel="preload" as="font" type="font/woff2" href={href('/fonts/pt-serif-latin.woff2')} crossorigin />
     <link rel="preload" as="font" type="font/woff2" href={href('/fonts/pt-serif-cyrillic-700.woff2')} crossorigin />
     <link rel="preload" as="font" type="font/woff2" href={href('/fonts/pt-serif-latin-700.woff2')} crossorigin />
-    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/jetbrains-mono-cyrillic.woff2')} crossorigin />
-    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/jetbrains-mono-latin.woff2')} crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/pt-mono-cyrillic.woff2')} crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/pt-mono-latin.woff2')} crossorigin />
 
     <link rel="icon" type="image/svg+xml" href={href('/favicon.svg')} />
     <meta name="theme-color" content="#0B1D33" />
@@ -125,6 +125,8 @@ const graph = {
       <Icon name="mail" size={24} />
       <span>Оставить заявку</span>
     </a>
+
+    <OfferToast />
 
     <!-- Панель связи на мобильных: появляется после первого экрана -->
     <nav class="mobile-bar" aria-label="Быстрая связь">
