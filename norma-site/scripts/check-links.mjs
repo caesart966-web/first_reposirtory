@@ -17,6 +17,30 @@ import { join, relative, resolve } from 'node:path'
 
 const DIST = resolve(process.argv[2] || 'dist')
 
+// Подпапка, в которую собран сайт.
+//
+// Превью на GitHub Pages лежит не в корне домена, а в /имя-репозитория/norma/,
+// и все внутренние адреса в сборке начинаются с этой приставки. На диске же
+// такой папки нет — dist/ и есть корень сайта. Без этой поправки проверка
+// объявила бы битой каждую ссылку боевой сборки.
+//
+// Приставку берём из canonical на главной: Astro пишет туда полный адрес
+// страницы, а главная — это и есть корень сайта.
+async function detectBase() {
+  const home = join(DIST, 'index.html')
+  if (!existsSync(home)) return '/'
+  const m = (await readFile(home, 'utf8')).match(
+    /<link rel="canonical" href="https?:\/\/[^/"]+([^"]*)"/,
+  )
+  return m && m[1] ? m[1] : '/'
+}
+const BASE = await detectBase()
+// Убираем приставку у внутреннего адреса: '/repo/norma/uslugi/' → '/uslugi/'.
+const unbase = (p) =>
+  BASE !== '/' && (p === BASE.slice(0, -1) || p.startsWith(BASE))
+    ? '/' + p.slice(BASE.length)
+    : p
+
 async function htmlFiles(dir) {
   const out = []
   for (const entry of await readdir(dir, { withFileTypes: true })) {
@@ -82,7 +106,7 @@ for (const file of files) {
 
     // Абсолютные внутренние адреса проверяем по файлам сборки.
     const target = pathPart.startsWith('/')
-      ? join(DIST, pathPart)
+      ? join(DIST, unbase(pathPart))
       : resolve(file, '..', pathPart)
 
     const candidates = [target, join(target, 'index.html'), `${target}.html`]
