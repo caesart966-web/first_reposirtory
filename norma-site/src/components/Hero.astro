@@ -18,27 +18,50 @@ const PROMISES = [
   <div class="veil"></div>
 
   <div class="wrap hero-in">
-    <span class="geo"><i></i>{SITE.geo}</span>
+    <div class="hero-text">
+      <span class="geo"><i></i>{SITE.geo}</span>
 
-    <h1 class="page-title">
-      Вступить в <em>СРО</em><br />без устаревших норм
-    </h1>
-    <p class="tagline">Точно. Честно. За 24 часа.</p>
+      <h1 class="page-title">
+        Вступить в <em>СРО</em><br />без устаревших норм
+      </h1>
+      <p class="tagline">Точно. Честно. За 24 часа.</p>
 
-    <ul class="promises">
-      {PROMISES.map((p) => (
-        <li>
-          <span class="pic"><Icon name={p.icon} size={20} /></span>
-          {p.text}
-        </li>
-      ))}
-    </ul>
+      <ul class="promises">
+        {PROMISES.map((p) => (
+          <li>
+            <span class="pic"><Icon name={p.icon} size={20} /></span>
+            {p.text}
+          </li>
+        ))}
+      </ul>
 
-    <div class="cta">
-      <a class="btn btn--acc btn--lg" href="#calc">Проверить, нужна ли СРО</a>
-      <a class="btn btn--ghost-dark btn--lg" href={href('/stoimost/')}>Узнать стоимость</a>
+      <div class="cta">
+        <a class="btn btn--acc btn--lg" href="#calc">Проверить, нужна ли СРО</a>
+        <a class="btn btn--ghost-dark btn--lg" href={href('/stoimost/')}>Узнать стоимость</a>
+      </div>
+      <p class="note">2 минуты · 4 вопроса · ответ со ссылкой на закон</p>
     </div>
-    <p class="note">2 минуты · 4 вопроса · ответ со ссылкой на закон</p>
+
+    <!-- Предложение вынесено на первый экран: на компьютере оно занимает
+         правую половину, где раньше было только видео, на телефоне встаёт
+         под кнопками. Карточка белая — на тёмном фоне поверх видео это
+         единственное светлое пятно, мимо него не пройти. -->
+    <aside class="hero-offer">
+      <span class="ho-tag"><Icon name="gift" size={15} /> Только через меня</span>
+      <p class="ho-title">Сайт компании — <b>бесплатно</b></p>
+      <p class="ho-text">
+        Вступаете в СРО через меня — мои маркетологи делают вашей компании
+        сайт и не берут за это денег.
+      </p>
+      <ul class="ho-list">
+        <li><Icon name="check" size={15} /> Сайт, готовый к поиску</li>
+        <li><Icon name="check" size={15} /> Карточки в Яндекс Бизнесе и 2ГИС</li>
+        <li><Icon name="check" size={15} /> Ваше членство в СРО на виду</li>
+      </ul>
+      <a class="ho-go" href={href('/uslugi/marketing/')}>
+        Что входит и что нет <Icon name="arrow" size={15} />
+      </a>
+    </aside>
   </div>
 
   <div class="wrap">
@@ -83,13 +106,87 @@ const PROMISES = [
     position: absolute;
     inset: 0;
     background:
-      linear-gradient(100deg, rgba(9, 24, 43, 0.9) 0%, rgba(9, 24, 43, 0.72) 48%, rgba(9, 24, 43, 0.24) 100%),
-      linear-gradient(180deg, rgba(11, 29, 51, 0.38) 0%, rgba(11, 29, 51, 0.28) 48%, rgba(11, 29, 51, 0.92) 100%);
+      linear-gradient(100deg, rgba(9, 24, 43, 0.91) 0%, rgba(9, 24, 43, 0.7) 48%, rgba(9, 24, 43, 0.1) 100%),
+      linear-gradient(180deg, rgba(11, 29, 51, 0.26) 0%, rgba(11, 29, 51, 0.14) 48%, rgba(11, 29, 51, 0.9) 100%);
     pointer-events: none;
   }
 
+  /* На телефоне текст занимает всю ширину, поэтому приём «слева гуще,
+     справа светлее» не работает: справа тоже стоят буквы. Там пелена
+     ровная и плотнее. Проверяется scripts/test-hero-contrast.mjs. */
+  @media (max-width: 767px) {
+    .veil {
+      background: linear-gradient(
+        180deg,
+        rgba(9, 24, 43, 0.74) 0%,
+        rgba(9, 24, 43, 0.66) 52%,
+        rgba(11, 29, 51, 0.93) 100%
+      );
+    }
+  }
+
   .hero-in, .hero .wrap { position: relative; z-index: 1; }
-  .hero-in { padding-bottom: 44px; }
+  .hero-in {
+    padding-bottom: 44px;
+    display: grid;
+    gap: 30px;
+    align-items: start;
+  }
+  /* На широком экране справа пустует видео — туда и уходит предложение.
+     Ниже 1024 px карточка встаёт под кнопками: на узком экране две колонки
+     сжали бы заголовок до нечитаемого. */
+  @media (min-width: 1024px) {
+    .hero-in { grid-template-columns: minmax(0, 1fr) 340px; gap: 52px; }
+  }
+
+  .hero-offer {
+    background: #fff;
+    color: var(--ink);
+    border-radius: var(--r-l);
+    padding: 24px 22px 20px;
+    display: grid;
+    gap: 12px;
+    align-content: start;
+    box-shadow: 0 28px 60px -22px rgba(4, 16, 34, 0.75);
+  }
+  .ho-tag {
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--acc-btn);
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 6px 12px;
+    border-radius: 999px;
+  }
+  .ho-title { font-size: 23px; line-height: 1.2; font-weight: 700; margin: 0; }
+  .ho-title b { color: var(--acc-deep); }
+  .ho-text { font-size: 14.5px; color: var(--muted); line-height: 1.55; margin: 0; }
+  .ho-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+  .ho-list li {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 9px;
+    align-items: start;
+    font-size: 14.5px;
+    color: var(--ink);
+  }
+  .ho-list :global(svg) { color: var(--good); margin-top: 3px; }
+  .ho-go {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    justify-self: start;
+    color: var(--acc-deep);
+    font-weight: 700;
+    font-size: 14.5px;
+    text-decoration: none;
+    padding: 6px 0 2px;
+  }
+  .ho-go:hover { text-decoration: underline; }
 
   .geo {
     display: inline-flex;

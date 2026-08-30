@@ -15,7 +15,7 @@ const nav = [
 <header class="site-header">
   <div class="wrap hdr">
     <a class="logo" href={href('/')}>
-      <LogoMark size={30} class="logo-mark" />
+      <LogoMark size={27} class="logo-mark" />
       <span class="logo-text">
         <b>{SITE.brand}</b>
         <small>{SITE.brandTag}</small>
@@ -76,7 +76,7 @@ const nav = [
     padding-bottom: 12px;
   }
 
-  .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #fff; flex: none; }
+  .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #fff; flex: none; }
   /* Монограмма стоит без рамки: знак самодостаточный, рамка спорила бы
      с его собственной геометрией.
      :global обязателен — знак приходит из отдельного компонента, и обычное
@@ -84,8 +84,8 @@ const nav = [
      которого у чужой разметки нет. Без этого знак остался бы белым. */
   .logo :global(.logo-mark) { color: var(--acc-bright); flex: none; display: block; }
   .logo-text { display: grid; line-height: 1.15; }
-  .logo-text b { font-family: var(--font-head); font-size: 17px; font-weight: 800; letter-spacing: 0.06em; }
-  .logo-text small { font-size: 11px; color: var(--on-navy-muted); }
+  .logo-text b { font-family: var(--font-head); font-size: 17px; font-weight: 800; letter-spacing: 0.08em; }
+  .logo-text small { font-size: 11px; letter-spacing: 0.01em; color: var(--on-navy-muted); }
 
   .nav { display: none; gap: 20px; font-size: 14.5px; }
   .nav a { color: var(--on-navy-muted); text-decoration: none; white-space: nowrap; }

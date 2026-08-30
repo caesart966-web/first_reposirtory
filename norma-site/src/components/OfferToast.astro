@@ -158,16 +158,18 @@ import Icon from './Icon.astro'
     // Ушёл по ссылке — предложение своё дело сделало, больше не показываем.
     toast.querySelector('.tlink')?.addEventListener('click', remember)
 
-    // Показываем, когда человек уже что-то прочитал: либо пролистал
-    // треть страницы, либо провёл на ней двадцать секунд.
+    // Показываем поздно и намеренно: то же предложение стоит белой карточкой
+    // на первом экране, и повторять его сразу же — назойливо. Карточка в углу
+    // работает как напоминание тому, кто ушёл глубоко в страницу и до сих пор
+    // ничего не нажал: больше половины прокрутки или сорок пять секунд.
     const onScroll = () => {
       const seenPart = (window.scrollY + window.innerHeight) / document.body.scrollHeight
-      if (seenPart > 0.33) {
+      if (seenPart > 0.6) {
         show()
         window.removeEventListener('scroll', onScroll)
       }
     }
     window.addEventListener('scroll', onScroll, { passive: true })
-    setTimeout(show, 20000)
+    setTimeout(show, 45000)
   }
 </script>
