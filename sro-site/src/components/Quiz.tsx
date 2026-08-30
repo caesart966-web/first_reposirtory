@@ -202,7 +202,7 @@ export function Quiz() {
         aria-hidden="true"
         loading="lazy"
         decoding="async"
-        className="pointer-events-none absolute inset-0 h-full w-full select-none object-cover opacity-[0.3] [mask-image:radial-gradient(125%_100%_at_50%_50%,#000_0%,#000_55%,transparent_100%)] [-webkit-mask-image:radial-gradient(125%_100%_at_50%_50%,#000_0%,#000_55%,transparent_100%)]"
+        className="pointer-events-none absolute inset-0 h-full w-full select-none object-cover object-right opacity-[0.3] sm:object-center [mask-image:radial-gradient(125%_100%_at_50%_50%,#000_0%,#000_55%,transparent_100%)] [-webkit-mask-image:radial-gradient(125%_100%_at_50%_50%,#000_0%,#000_55%,transparent_100%)]"
       />
       <div className="relative">
         <SectionHeading
