@@ -27,11 +27,7 @@ const result = await page.evaluate(async () => {
     }
   }
 
-  const pairs = [
-    ['Playfair Variable', '"Times New Roman"'],
-    ['PT Serif Web', '"Times New Roman"'],
-    ['PT Mono Web', 'monospace'],
-  ]
+  const pairs = [['Inter Variable', 'Arial']]
 
   return pairs.map(([real, fallback]) => {
     const r = measure(`"${real}"`)
