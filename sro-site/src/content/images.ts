@@ -11,7 +11,8 @@
 // точными гаммами записан в public/img/CREDITS.md.
 export type PageImage = {
   src: string
-  srcAvif: string
+  // Необязателен: у векторной графики второго формата нет и не нужно.
+  srcAvif?: string
   alt: string
   width: number
   height: number
@@ -51,6 +52,16 @@ export const IMAGES = {
     width: 1200,
     height: 899,
     ratio: 'aspect-[4/3]',
+  },
+  lawbooks: {
+    src: './img/lawbooks.svg',
+    alt: 'Штриховой рисунок: стопка книг-кодексов с закладкой',
+    // Рисунок наш (scripts/make-lawbooks.py). Пропорция родная: холст в
+    // генераторе подогнан по самой стопке, полей вокруг нет и обрезать нечего.
+    width: 560,
+    height: 330,
+    ratio: 'aspect-[560/330]',
+    fit: 'contain',
   },
   legal: {
     src: './img/legal.webp',

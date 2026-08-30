@@ -123,6 +123,8 @@ sro-site/
 ├── scripts/
 │   ├── prepare-photo.py        # дуотон, гамма, контроль веса кадров
 │   ├── prepare-themis.py       # фоновая гравюра
+│   ├── make-floorplan.py       # план этажа — фон тёмной секции
+│   ├── make-lawbooks.py        # стопка кодексов — блок юридических задач
 │   └── make-image-placeholders.py
 └── src/
     ├── content/contacts.ts     # все контакты и плейсхолдеры (единая точка правды)

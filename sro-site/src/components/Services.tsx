@@ -156,9 +156,11 @@ export function Services() {
         <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-neutral-600">
           Смежные юридические задачи
         </h3>
-        {/* Список слева, весы справа: раньше вырезанный объект стоял сиротой
-            под списком на серой плашке — читалось как незагрузившаяся картинка.
-            Без рамки он работает как гравюра, в паре с фоновой Фемидой. */}
+        {/* Список слева, рисунок справа, без рамки — на серой плашке
+            вырезанный объект читался как незагрузившаяся картинка.
+            Здесь стояли весы, но они же служат знаком в шапке и гравюрой
+            Фемиды фоном: один мотив трижды читается не фирменным стилем, а
+            нехваткой картинок. Стопка кодексов ту же мысль говорит иначе. */}
         <div className="mt-5 grid gap-8 lg:grid-cols-[minmax(0,8fr)_minmax(0,4fr)] lg:items-center">
           <div className="grid gap-x-10 gap-y-4 sm:grid-cols-2">
             {LEGAL.map((service) => (
@@ -179,9 +181,9 @@ export function Services() {
             ))}
           </div>
           <Figure
-            {...IMAGES.legal}
+            {...IMAGES.lawbooks}
             frame={false}
-            className="max-w-[170px] justify-self-center sm:max-w-[220px] lg:max-w-[260px]"
+            className="max-w-[170px] justify-self-center sm:max-w-[210px] lg:max-w-[240px]"
           />
         </div>
       </Reveal>
