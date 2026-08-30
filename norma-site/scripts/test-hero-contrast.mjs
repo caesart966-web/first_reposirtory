@@ -47,10 +47,20 @@ for (const [width, height, name] of [[1280, 900, 'компьютер'], [390, 80
     }).filter(Boolean),
   )
 
-  // Прячем сам текст, оставляя его на месте: visibility сохраняет разметку,
-  // поэтому прямоугольники выше остаются верными, а в кадр попадает только
-  // фон. Без этого в замер попадали бы белые буквы, и контраст выходил 1:1.
-  await page.addStyleTag({ content: '.hero .wrap * { visibility: hidden !important }' })
+  // Делаем буквы прозрачными, но НЕ прячем их. Тень под текстом рисуется
+  // по контуру глифа и остаётся на месте — значит в замер попадает ровно
+  // то, на чём буква лежит на самом деле: кадр плюс её собственная тень.
+  //
+  // Прятать текст через visibility было бы неверно: тень исчезла бы вместе
+  // с ним, и замер показал бы фон светлее, чем видит посетитель. А не прятать
+  // вовсе нельзя — сами белые буквы дали бы контраст 1:1.
+  await page.addStyleTag({
+    content: `.hero .wrap, .hero .wrap * {
+      color: transparent !important;
+      -webkit-text-fill-color: transparent !important;
+    }
+    .hero .wrap svg, .hero .hero-offer { visibility: hidden !important }`,
+  })
 
   const worst = new Map()
 
