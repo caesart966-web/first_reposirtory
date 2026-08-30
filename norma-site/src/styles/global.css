@@ -45,8 +45,8 @@
 
   /* Запасные шрифты («… Fallback») подогнаны по размеру в fonts.css —
      благодаря этому подмена шрифта не сдвигает вёрстку. */
-  --font-head: 'Onest Variable', 'Onest Fallback', 'Segoe UI', system-ui, sans-serif;
-  --font-body: 'Golos Text Variable', 'Golos Fallback', 'Segoe UI', system-ui, sans-serif;
+  --font-head: 'Playfair Variable', 'Playfair Fallback', 'Times New Roman', Georgia, serif;
+  --font-body: 'PT Serif Web', 'PT Serif Fallback', 'Times New Roman', Georgia, serif;
   --font-mono: 'JetBrains Mono Variable', 'Mono Fallback', ui-monospace, monospace;
 }
 
@@ -73,8 +73,20 @@ body {
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-body);
-  font-size: 16.5px;
-  line-height: 1.65;
+  /* У антиквы строчные буквы ниже, чем у рубленого шрифта, при том же
+     размере в пикселях. Чтобы текст читался так же крупно, как раньше,
+     базовый размер поднят с 16.5 до 17.5 px. */
+  font-size: 17.5px;
+  line-height: 1.6;
+  /* Playfair по умолчанию рисует «старостильные» цифры: 2, 0, 1 ростом со
+     строчную букву, 7 и 9 с хвостом вниз. В книге это красиво, а на сайте
+     про суммы и статьи закона «10 млн ₽» начинает выглядеть опечаткой.
+     Просим обычные цифры одной высоты.
+
+     Важно: везде, где рядом включают моноширинные цифры (tabular-nums),
+     lining-nums нужно повторить. Указание одного свойства сбрасывает
+     остальные, и старостильные цифры возвращаются. */
+  font-variant-numeric: lining-nums;
   -webkit-font-smoothing: antialiased;
   /* Переносим по слогам только то, что иначе вылезет за экран (длинные
      адреса и почта). break-word рвал бы обычные слова посередине, стоит
@@ -136,7 +148,7 @@ section[id], [data-anchor] { scroll-margin-top: 84px; }
 
 .mono { font-family: var(--font-mono); }
 
-.num { font-variant-numeric: tabular-nums; }
+.num { font-variant-numeric: lining-nums tabular-nums; }
 
 /* ── Секции ── */
 
@@ -156,8 +168,10 @@ section[id], [data-anchor] { scroll-margin-top: 84px; }
    произносят «НОРМА» капсом как отдельные буквы, а не как слово. */
 .s-head h2, .page-title {
   text-transform: uppercase;
-  letter-spacing: -0.005em;
-  line-height: 1.08;
+  /* Прописные буквы в антикве нужно чуть развести: рисунок у них
+     плотнее строчных, и без просвета заголовок читается как стена. */
+  letter-spacing: 0.012em;
+  line-height: 1.1;
 }
 .s-head h2 em, .page-title em { font-style: normal; color: var(--acc-deep); }
 /* Светлый оттенок акцента — на любом тёмном фоне, не только в .section--dark:
@@ -287,7 +301,7 @@ table.data td {
   padding: 13px 20px;
   border-bottom: 1px solid var(--line);
   vertical-align: top;
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: lining-nums tabular-nums;
 }
 table.data tr:last-child td { border-bottom: 0; }
 table.data td.strong { font-weight: 600; }
