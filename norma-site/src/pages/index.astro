@@ -355,6 +355,10 @@ const howToSchema = {
     display: grid;
     gap: 12px;
     align-content: start;
+    /* Замер ширины карточки для правила ниже. Считаем в em, поэтому если
+       посетитель увеличил размер текста в браузере, карточка «сужается»
+       в этих единицах и строки перестраиваются, а не вылезают за край. */
+    container-type: inline-size;
   }
   .ptag {
     justify-self: center;
@@ -380,6 +384,13 @@ const howToSchema = {
   .muted-v { color: var(--muted); font-weight: 500; font-size: 14px !important; }
   .ptotal { border-top: 1px solid var(--line); padding-top: 14px; }
   .ptotal > b { color: var(--acc-deep); font-size: 22px !important; }
+
+  /* Крупный текст: название и сумма встают друг под другом.
+     Иначе на узкой колонке длинное слово не помещается рядом с цифрой. */
+  @container (max-width: 13em) {
+    .pcard li { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+    .pcard li > b { justify-self: start; }
+  }
   .pnote { font-size: 13.5px; color: var(--muted); line-height: 1.55; }
   .pcard .btn { justify-self: stretch; margin-top: 4px; }
   .pcard--warn { background: var(--navy-2); color: var(--on-navy); }

@@ -57,7 +57,16 @@
    строки спрятанные экраны (успех, ошибка, меню) видны на странице всегда. */
 [hidden] { display: none !important; }
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  /* Запрет на самовольное увеличение шрифтов браузером.
+     Android в режиме «версия для ПК» раздувает текст, оставляя ширины блоков
+     прежними: слова начинают рваться посередине, а колонки — наезжать друг
+     на друга. Именно это заказчик и увидел. Размеры шрифтов у нас заданы
+     и так адаптивные, подгонять их за нас не нужно. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
 
 body {
   margin: 0;
@@ -67,8 +76,16 @@ body {
   font-size: 16.5px;
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
-  overflow-wrap: break-word;
+  /* Переносим по слогам только то, что иначе вылезет за экран (длинные
+     адреса и почта). break-word рвал бы обычные слова посередине, стоит
+     тексту чуть не поместиться. */
+  overflow-wrap: normal;
+  word-break: normal;
 }
+
+/* Длинные непрерывные строки — адреса сайтов, почта, номера — переносим
+   в любом месте: иначе они распирают страницу вбок. */
+a[href^='mailto:'], .mono, code, .ident-rows dd { overflow-wrap: anywhere; }
 
 h1, h2, h3, h4 {
   font-family: var(--font-head);
