@@ -13,18 +13,15 @@ import {
   UserCheck,
   type LucideIcon,
 } from 'lucide-react'
-import { IMAGES, type PageImage } from '../content/images'
+import { IMAGES } from '../content/images'
 import { Figure } from './ui/Figure'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
 
 // Восемь равнозначных карточек читались как каша, поэтому услуги разбиты
 // на две понятные группы: что делаем с самой СРО и что — со специалистами.
-// Тип явный: без него TypeScript выводит из массива объединение, у одного
-// члена которого поля figure нет, и сузить его проверкой не получается.
 type ServiceGroup = {
   title: string
-  figure?: PageImage
   items: { icon: LucideIcon; title: string; text: string }[]
 }
 
@@ -56,9 +53,9 @@ const GROUPS: ServiceGroup[] = [
   },
   {
     title: 'Специалисты и реестры',
-    // Изыскания не показывает ни один конкурент — у всех только стройка,
-    // а это отдельная СРО и отдельный клиент.
-    figure: IMAGES.survey,
+    // Кадр изысканий отсюда уехал в секцию «Виды СРО»: там он один из трёх
+    // и работает по назначению — показывает область, — а здесь стоял рядом
+    // с карточками про НРС и НОК, к которым отношения не имеет.
     items: [
       {
         icon: UserCheck,
@@ -126,40 +123,21 @@ export function Services() {
                 {group.title}
               </h3>
             </Reveal>
-            {/* Группа с фото: снимок — колонка в общей сетке, а не сирота под
-                ней. Полупустой ряд с одинокой картинкой был главной «рыхлостью»
-                страницы. Карточки при этом встают 2×2 рядом с фото. */}
-            <div
-              className={`mt-5 grid gap-4 sm:gap-5 ${
-                group.figure
-                  ? 'sm:grid-cols-2 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]'
-                  : 'sm:grid-cols-2 lg:grid-cols-4'
-              }`}
-            >
-              {group.figure && (
-                <Reveal className="sm:col-span-2 lg:col-span-1 lg:row-span-1">
-                  <Figure {...group.figure} />
+            {/* Фотографий в сетке услуг нет: обе группы — про действия, а не
+                про области, и любой кадр здесь иллюстрировал бы соседнюю тему.
+                Области показаны выше, в «Видах СРО», каждая своим снимком. */}
+            <div className="mt-5 grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
+              {group.items.map((service, index) => (
+                <Reveal key={service.title} delay={(index % 4) * 70} className="h-full">
+                  <article className="h-full rounded-2xl border border-neutral-200 bg-white p-6 shadow-card transition-colors duration-200 hover:border-accent-300">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent-50 text-accent-600">
+                      <service.icon className="h-5 w-5" aria-hidden="true" />
+                    </div>
+                    <h4 className="mt-5 font-semibold text-neutral-950">{service.title}</h4>
+                    <p className="mt-2 text-sm leading-relaxed text-neutral-600">{service.text}</p>
+                  </article>
                 </Reveal>
-              )}
-              <div
-                className={
-                  group.figure
-                    ? 'grid gap-4 sm:col-span-2 sm:grid-cols-2 sm:gap-5 lg:col-span-1'
-                    : 'contents'
-                }
-              >
-                {group.items.map((service, index) => (
-                  <Reveal key={service.title} delay={(index % 4) * 70} className="h-full">
-                    <article className="h-full rounded-2xl border border-neutral-200 bg-white p-6 shadow-card transition-colors duration-200 hover:border-accent-300">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent-50 text-accent-600">
-                        <service.icon className="h-5 w-5" aria-hidden="true" />
-                      </div>
-                      <h4 className="mt-5 font-semibold text-neutral-950">{service.title}</h4>
-                      <p className="mt-2 text-sm leading-relaxed text-neutral-600">{service.text}</p>
-                    </article>
-                  </Reveal>
-                ))}
-              </div>
+              ))}
             </div>
           </div>
         ))}

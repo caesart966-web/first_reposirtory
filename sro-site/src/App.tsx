@@ -13,6 +13,7 @@ import { Process } from './components/Process'
 import { Quiz } from './components/Quiz'
 import { QuizProvider } from './components/QuizContext'
 import { Services } from './components/Services'
+import { SroTypes } from './components/SroTypes'
 import { Trust } from './components/Trust'
 import { ThemisBackdrop } from './components/ui/ThemisBackdrop'
 
@@ -32,6 +33,9 @@ export default function App() {
                   его первый вопрос задаётся ещё на первом экране, в Hero. */}
               <Hero />
               <Trust />
+              {/* Сразу под первым экраном — три вида СРО: посетитель должен
+                  узнать свою область раньше, чем начнёт читать про услуги. */}
+              <SroTypes />
               <Problems />
               <Services />
               <Process />

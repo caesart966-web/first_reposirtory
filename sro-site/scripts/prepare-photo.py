@@ -45,11 +45,13 @@ DARK_POINTS = {
 }
 
 
-def duotone(img: Image.Image, stretch: bool = False, dark: tuple = DARK) -> Image.Image:
+def duotone(img: Image.Image, stretch: bool = False, dark: tuple = DARK, gamma: float = 1.0) -> Image.Image:
     """Обесцвечиваем и раскладываем яркость по градиенту dark -> LIGHT."""
     gray = img.convert("L")
     if stretch:
         gray = normalize(gray)
+    if gamma != 1.0:
+        gray = apply_gamma(gray, gamma)
     lut = []
     for channel in range(3):
         lut += [round(dark[channel] + (LIGHT[channel] - dark[channel]) * v / 255) for v in range(256)]
@@ -81,6 +83,22 @@ def normalize(gray: Image.Image) -> Image.Image:
         return gray
     scale = 255.0 / (high - low)
     return gray.point(lambda v: min(255, max(0, int((v - low) * scale))))
+
+
+def apply_gamma(gray: Image.Image, gamma: float) -> Image.Image:
+    """Гнём кривую яркости: gamma > 1 темнит, gamma < 1 высветляет.
+
+    Растяжка гистограммы выравнивает ДИАПАЗОН, но не РАСПРЕДЕЛЕНИЕ. Кадры,
+    у которых сюжет занимает меньшую часть площади (лес белых папок на белом,
+    тахеометр на пасмурном небе), после растяжки всё равно остаются светлым
+    пятном: их гистограмма прижата к правому краю. Рядом с кадрами поплотнее
+    такой снимок в серии читается как незагрузившийся.
+
+    Гамма правит именно это — сдвигает середину, не трогая крайние точки,
+    поэтому белое остаётся белым, чёрное чёрным, а средняя яркость приходит
+    к общей для серии.
+    """
+    return gray.point(lambda v: round(255 * (v / 255) ** gamma))
 
 
 CUTOUT_BLACK, CUTOUT_WHITE = 50, 230
@@ -145,6 +163,12 @@ def main() -> int:
         help="растянуть гистограмму перед дуотоном (для малоконтрастных исходников)",
     )
     ap.add_argument(
+        "--gamma",
+        type=float,
+        default=1.0,
+        help="кривая яркости после растяжки: >1 темнит, <1 высветляет; нужна, чтобы свести кадры серии к общей плотности",
+    )
+    ap.add_argument(
         "--flatten",
         action="store_true",
         help="положить прозрачный объект на белый фон вместо сохранения альфы",
@@ -161,7 +185,7 @@ def main() -> int:
         else:
             img, alpha = cutout(img)
     elif not args.color:
-        img = duotone(img, stretch=args.normalize, dark=DARK_POINTS[args.dark])
+        img = duotone(img, stretch=args.normalize, dark=DARK_POINTS[args.dark], gamma=args.gamma)
     if img.width != args.width:
         height = round(img.height * args.width / img.width)
         img = img.resize((args.width, height), Image.LANCZOS)
@@ -181,6 +205,12 @@ def main() -> int:
     webp, avif = OUT / f"{args.name}.webp", OUT / f"{args.name}.avif"
     img.save(webp, "WEBP", quality=args.webp_quality, method=6)
     img.save(avif, "AVIF", quality=args.avif_quality)
+
+    # Средняя яркость — рабочий показатель, а не украшение отчёта: кадры одной
+    # серии должны сойтись по нему, иначе рядом они читаются разнобоем.
+    gray = img.convert("L")
+    mean = sum(v * c for v, c in enumerate(gray.histogram())) / (gray.width * gray.height)
+    print(f"средняя яркость: {mean:.0f}")
 
     over = False
     for path, limit in ((webp, WEBP_LIMIT_KB), (avif, AVIF_LIMIT_KB)):
