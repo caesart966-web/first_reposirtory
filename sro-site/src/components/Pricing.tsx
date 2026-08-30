@@ -22,7 +22,7 @@ const PLANS = [
   {
     name: 'Подготовка документов',
     price: 'По задаче',
-    priceNote: 'назову письменно до начала работы',
+    priceNote: 'зависит от объёма и готовности бумаг',
     free: false,
     featured: false,
     items: [
@@ -34,7 +34,7 @@ const PLANS = [
   {
     name: 'Вступление в СРО под ключ',
     price: 'По задаче',
-    priceNote: 'назову письменно до начала работы',
+    priceNote: 'зависит от вида СРО и состава работ',
     free: false,
     featured: true,
     badge: 'Максимум задач на моей стороне',

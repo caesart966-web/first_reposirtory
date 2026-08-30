@@ -90,7 +90,7 @@ def apply_gamma(gray: Image.Image, gamma: float) -> Image.Image:
 
     Растяжка гистограммы выравнивает ДИАПАЗОН, но не РАСПРЕДЕЛЕНИЕ. Кадры,
     у которых сюжет занимает меньшую часть площади (лес белых папок на белом,
-    тахеометр на пасмурном небе), после растяжки всё равно остаются светлым
+    геодезический прибор на пасмурном небе), после растяжки всё равно остаются светлым
     пятном: их гистограмма прижата к правому краю. Рядом с кадрами поплотнее
     такой снимок в серии читается как незагрузившийся.
 
@@ -177,6 +177,13 @@ def main() -> int:
     ap.add_argument("--avif-quality", type=int, default=55)
     args = ap.parse_args()
 
+    if args.gamma != 1.0 and (args.color or args.cutout):
+        print(
+            "--gamma действует только на дуотон: с --color и --cutout яркость не трогаем.",
+            file=sys.stderr,
+        )
+        return 1
+
     img, alpha = split_alpha(Image.open(args.source))
     if args.cutout:
         if alpha is not None:
@@ -208,7 +215,11 @@ def main() -> int:
 
     # Средняя яркость — рабочий показатель, а не украшение отчёта: кадры одной
     # серии должны сойтись по нему, иначе рядом они читаются разнобоем.
-    gray = img.convert("L")
+    #
+    # У вырезанного объекта прозрачные пиксели в среднюю яркость не входят:
+    # convert("L") подставил бы им чёрный, и число получилось бы про размер
+    # выреза, а не про плотность самого объекта.
+    gray = img.convert("RGB").convert("L") if alpha is None else img.convert("RGBA").convert("L")
     mean = sum(v * c for v, c in enumerate(gray.histogram())) / (gray.width * gray.height)
     print(f"средняя яркость: {mean:.0f}")
 

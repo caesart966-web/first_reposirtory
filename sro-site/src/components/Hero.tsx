@@ -1,5 +1,6 @@
 import { ChevronRight, Phone } from 'lucide-react'
 import { LINKS } from '../content/contacts'
+import { plural } from '../lib/plural'
 import { BlueprintGrid } from './illustrations'
 import { QUESTIONS, useQuiz, useStartQuiz } from './QuizContext'
 import { ButtonLink } from './ui/Button'
@@ -90,7 +91,8 @@ export function Hero() {
                 })}
               </div>
               <p className="mt-4 text-sm text-neutral-500">
-                1 минута, {QUESTIONS.length} вопроса. Отвечу лично.
+                1 минута, {QUESTIONS.length}{' '}
+                {plural(QUESTIONS.length, 'вопрос', 'вопроса', 'вопросов')}. Отвечу лично.
               </p>
             </div>
           </div>

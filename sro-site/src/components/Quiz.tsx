@@ -14,6 +14,7 @@ import { buildLeadMessage, sendLead } from '../lib/lead'
 import { TelegramIcon, WhatsAppIcon } from './icons'
 import { CitySkyline } from './illustrations'
 import { useLegalDocs } from './LegalDocs'
+import { plural } from '../lib/plural'
 import { QUESTIONS, TOTAL_STEPS, useQuiz } from './QuizContext'
 import { Button, ButtonLink } from './ui/Button'
 import { Reveal } from './ui/Reveal'
@@ -26,6 +27,22 @@ const inputClasses =
 // Ведущие 7/8 считаем кодом страны и съедаем; всё, кроме цифр, отбрасываем.
 // Если цифр не осталось (стёрли всё) — поле пустеет целиком, чтобы «+7 »
 // не застревал при удалении.
+// Куда идти после ответа: к первому вопросу НИЖЕ текущего, на который ещё
+// не отвечали, а если таких нет — на экран контактов.
+//
+// Просто «шаг + 1» здесь не годится. Часть ответов приходит с самой страницы:
+// вид СРО выбирают карточкой в секции «Виды СРО», сценарий — строкой в
+// «Типовых ситуациях». Со сдвигом на единицу квиз показывал такой вопрос
+// второй раз, уже с подсвеченным ответом, — то есть заставлял отвечать на то,
+// на что человек только что ответил кликом по фотографии.
+//
+// Назад (goBack) при этом ходит ровно на шаг: там посетитель правит ответ
+// осознанно, и перепрыгивать через вопросы нельзя.
+function nextStep(from: number, answers: Record<string, string>): number {
+  const index = QUESTIONS.findIndex((q, i) => i > from && !answers[q.id])
+  return index === -1 ? Math.min(QUESTIONS.length, TOTAL_STEPS - 1) : index
+}
+
 function formatPhone(raw: string): string {
   let digits = raw.replace(/\D/g, '')
   if (digits.startsWith('7') || digits.startsWith('8')) digits = digits.slice(1)
@@ -71,13 +88,14 @@ export function Quiz() {
 
   function pickOption(questionId: string, option: string) {
     if (advanceTimer.current !== null) return
-    setAnswers((prev) => ({ ...prev, [questionId]: option }))
+    const next = { ...answers, [questionId]: option }
+    setAnswers(next)
     // 400 мс вместо 280 (T16): выбранный вариант успевает подсветиться,
     // и уход на следующий вопрос не ощущается рывком.
     advanceTimer.current = window.setTimeout(() => {
       advanceTimer.current = null
       focusPending.current = true
-      setStep((prev) => Math.min(prev + 1, TOTAL_STEPS - 1))
+      setStep(nextStep(step, next))
     }, 400)
   }
 
@@ -161,7 +179,12 @@ export function Quiz() {
           dark
           eyebrow="Заявка"
           title="Расскажите, какая задача стоит перед вашей компанией"
-          subtitle={`${QUESTIONS.length} вопроса меньше чем за минуту. Отвечу лично, консультация бесплатная.`}
+          subtitle={`${QUESTIONS.length} ${plural(
+            QUESTIONS.length,
+            'вопрос',
+            'вопроса',
+            'вопросов',
+          )} меньше чем за минуту. Отвечу лично, консультация бесплатная.`}
         />
       </div>
       <Reveal className="relative mt-10">

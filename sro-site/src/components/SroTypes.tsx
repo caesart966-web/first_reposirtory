@@ -1,51 +1,56 @@
 import { ArrowRight } from 'lucide-react'
 import { IMAGES, type PageImage } from '../content/images'
-import { QUESTIONS, QUESTION_IDS, useStartQuiz } from './QuizContext'
+import { QUESTIONS, QUESTION_IDS, SRO_TYPES, useStartQuiz } from './QuizContext'
 import { Figure } from './ui/Figure'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
 
 // Секция — это вопрос квиза «какой вид СРО нужен», показанный картинками:
 // посетитель узнаёт себя по кадру и заголовку и входит в квиз с уже выбранным
-// ответом. Вопрос берётся по имени, а варианты — прямо из него: разъехаться
-// подписи карточек и варианты квиза не могут.
-const TYPE_QUESTION = QUESTIONS.find((q) => q.id === QUESTION_IDS.type)!
+// ответом. Вопрос ищем по имени, варианты берём из общих констант — так
+// карточка и вариант квиза physically одна и та же строка.
+const TYPE_QUESTION = QUESTIONS.find((q) => q.id === QUESTION_IDS.type)
 
-// Карточки описаны по вариантам ответа, а не списком рядом с ними: ключ здесь —
-// та же строка, что уходит в квиз и в письмо с заявкой. Разъехаться подписи
-// и варианты не могут, а лишний или переименованный вариант виден сразу.
+// Три карточки — три варианта ответа. Порядок и состав заданы здесь, а не
+// выводятся из options фильтрацией: раньше карточка, чей вариант переименовали,
+// просто исчезала из сетки, и никто бы этого не заметил.
 //
 // Формулировки состава работ — из градостроительного законодательства (виды
-// СРО и области их деятельности), а не наши: придумывать их нельзя.
-const CARDS: Record<string, { title: string; text: string; image: PageImage }> = {
-  Строительство: {
+// СРО и области их деятельности), а не наши: придумывать их нельзя. Область
+// строителей и проектировщиков — по ГрК РФ (ст. 55.8), пять видов изысканий —
+// по постановлению Правительства РФ № 402. Перечень изысканий полный: четыре
+// пункта без геотехнических читались бы как исчерпывающий список, которым
+// они не являются.
+type TypeCard = { answer: string; title: string; text: string; image: PageImage }
+
+const TYPES: TypeCard[] = [
+  {
+    answer: SRO_TYPES.construction,
     title: 'СРО строителей',
     text: 'Строительство, реконструкция, капитальный ремонт и снос объектов капитального строительства.',
     image: IMAGES.construction,
   },
-  Проектирование: {
+  {
+    answer: SRO_TYPES.design,
     title: 'СРО проектировщиков',
-    text: 'Подготовка проектной документации — архитектурно-строительное проектирование объектов.',
+    text: 'Подготовка проектной документации — архитектурно-строительное проектирование объектов капитального строительства.',
     image: IMAGES.design,
   },
-  'Инженерные изыскания': {
+  {
+    answer: SRO_TYPES.survey,
     title: 'СРО изыскателей',
-    text: 'Инженерные изыскания: геодезические, геологические, гидрометеорологические, экологические.',
+    text: 'Инженерные изыскания: геодезические, геологические, гидрометеорологические, экологические, геотехнические.',
     image: IMAGES.survey,
   },
-}
-
-const TYPES = TYPE_QUESTION.options
-  .map((answer) => ({ answer, card: CARDS[answer] }))
-  .filter((item): item is { answer: string; card: (typeof CARDS)[string] } => Boolean(item.card))
-
-// Оставшийся вариант того же вопроса («пока не знаю») — для тех, кто пришёл
-// без готового ответа. Отдельной карточкой он был бы четвёртым в ряду из трёх
-// и ломал бы сетку, поэтому стоит строкой под ней.
-const UNSURE = TYPE_QUESTION.options.find((option) => !CARDS[option])
+]
 
 export function SroTypes() {
   const startQuiz = useStartQuiz()
+
+  // Вопроса нет — показывать нечего. Раньше здесь стоял `!`, и пропавший
+  // вопрос ронял вычисление модуля, то есть белый экран всего сайта вместо
+  // одной недостающей секции.
+  if (!TYPE_QUESTION) return null
 
   return (
     <Section id="types">
@@ -55,20 +60,25 @@ export function SroTypes() {
         subtitle="Работаю со всеми тремя видами саморегулируемых организаций. Выберите свой — уточню детали и назову порядок действий."
       />
       <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {TYPES.map(({ answer, card }, index) => (
-          <Reveal key={answer} delay={index * 80} className="h-full">
+        {TYPES.map((type, index) => (
+          <Reveal key={type.answer} delay={index * 80} className="h-full">
             {/* Карточка кликается целиком: псевдоэлемент кнопки растянут по
                 article. Доступное имя при этом остаётся у одной кнопки, а не
                 размазывается по картинке и заголовку. */}
             <article className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-card transition-colors duration-200 hover:border-accent-300">
-              <Figure {...card.image} frame={false} />
+              <Figure {...type.image} frame={false} />
               <div className="flex flex-1 flex-col p-6">
-                <h3 className="text-lg font-semibold text-neutral-950">{card.title}</h3>
-                <p className="mt-2 flex-1 text-sm leading-relaxed text-neutral-600">{card.text}</p>
+                <h3 className="text-lg font-semibold text-neutral-950">{type.title}</h3>
+                <p className="mt-2 flex-1 text-sm leading-relaxed text-neutral-600">{type.text}</p>
+                {/* Видимая подпись стоит в начале доступного имени, а не в
+                    конце: WCAG 2.5.3 требует, чтобы имя начиналось с того, что
+                    написано на кнопке, — иначе голосовое управление на команду
+                    «нажми Подобрать СРО» кнопку не найдёт. Хвост с названием
+                    вида нужен, чтобы три одинаковые кнопки различались на слух. */}
                 <button
                   type="button"
-                  onClick={() => startQuiz(TYPE_QUESTION.id, answer)}
-                  aria-label={`${card.title}: подобрать и обсудить задачу`}
+                  onClick={() => startQuiz(TYPE_QUESTION.id, type.answer)}
+                  aria-label={`Подобрать СРО: ${type.title}`}
                   className="mt-5 inline-flex items-center gap-2 self-start rounded-xl text-sm font-semibold text-accent-700 transition hover:text-accent-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 after:absolute after:inset-0 after:rounded-2xl"
                 >
                   Подобрать СРО
@@ -79,18 +89,16 @@ export function SroTypes() {
           </Reveal>
         ))}
       </div>
-      {UNSURE && (
-        <Reveal className="mt-7 text-center text-sm text-neutral-600">
-          Не знаете, какой вид нужен?{' '}
-          <button
-            type="button"
-            onClick={() => startQuiz(TYPE_QUESTION.id, UNSURE)}
-            className="font-semibold text-accent-700 underline underline-offset-2 transition hover:text-accent-800"
-          >
-            Помогу определить
-          </button>
-        </Reveal>
-      )}
+      <Reveal className="mt-7 text-center text-sm text-neutral-600">
+        Ваша область не назвалась?{' '}
+        <button
+          type="button"
+          onClick={() => startQuiz(TYPE_QUESTION.id, SRO_TYPES.unsure)}
+          className="font-semibold text-accent-700 underline underline-offset-2 transition hover:text-accent-800"
+        >
+          Помогу определить
+        </button>
+      </Reveal>
     </Section>
   )
 }

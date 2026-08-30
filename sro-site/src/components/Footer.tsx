@@ -42,8 +42,11 @@ export function Footer() {
               <span className="flex flex-col leading-tight">
                 <span className="font-bold text-neutral-950">{CONTACTS.fullName}</span>
                 {/* neutral-600, а не neutral-500 как в шапке: там подпись лежит
-                    на белом, здесь — на neutral-50, и на 500 контраст падает
-                    до 4.39:1 при норме 4.5. */}
+                    на белом, а здесь под ней ещё и фоновая гравюра Фемиды. Над
+                    самой тёмной её точкой контраст neutral-500 падает до
+                    4.39:1 при норме 4.5 — замерено на странице, а не по
+                    заливке секции (по одной заливке вышло бы 4.62:1, и ошибку
+                    было бы не видно). */}
                 <span className="text-xs text-neutral-600">{CONTACTS.role}</span>
               </span>
             </div>
@@ -68,6 +71,9 @@ export function Footer() {
               </ul>
             </div>
 
+            {/* Колонка целиком условная: заголовок над пустотой — та же ошибка,
+                что и в «Контактах», и лечится так же. */}
+            {(CONFIGURED.phone || CONFIGURED.email || MESSENGERS.length > 0) && (
             <div>
               <p className="text-sm font-semibold text-neutral-900">Связь</p>
               <ul className="mt-3 space-y-2 text-sm text-neutral-600">
@@ -113,6 +119,7 @@ export function Footer() {
                 </div>
               )}
             </div>
+            )}
 
             <div>
               <p className="text-sm font-semibold text-neutral-900">Документы</p>

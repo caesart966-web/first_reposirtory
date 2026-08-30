@@ -1,7 +1,7 @@
 import { Menu, Phone, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { CONFIGURED, CONTACTS, LINKS } from "../content/contacts";
-import { HEADER_NAV as NAV } from "../content/nav";
+import { HEADER_NAV as NAV, SECTIONS } from "../content/nav";
 import { ScalesMark } from "./illustrations";
 import { ButtonLink } from "./ui/Button";
 
@@ -103,7 +103,10 @@ export function Header() {
             className="mx-auto flex w-full max-w-6xl flex-col px-4 py-3 sm:px-6"
             aria-label="Мобильная навигация"
           >
-            {NAV.map((item) => (
+            {/* SECTIONS, а не NAV: список шапки урезан шириной строки, а в
+                выпадающем меню ширина не ограничена — и «Виды СРО» с
+                «Контактами» иначе с телефона доступны только через подвал. */}
+            {SECTIONS.map((item) => (
               <a
                 key={item.href}
                 href={item.href}

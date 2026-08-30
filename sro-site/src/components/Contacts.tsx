@@ -62,6 +62,7 @@ export function Contacts() {
               Позвонить или написать
             </p>
           )}
+          {(CONFIGURED.phone || CONFIGURED.email) && (
           <div className="mt-4 divide-y divide-neutral-200">
             {CONFIGURED.phone && (
               <a
@@ -86,6 +87,7 @@ export function Contacts() {
               </a>
             )}
           </div>
+          )}
 
           {MESSENGERS.length > 0 && (
             <>
