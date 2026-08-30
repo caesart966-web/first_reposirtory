@@ -7,7 +7,7 @@ import HeroVideo from './HeroVideo.astro'
 // Три коротких обещания под заголовком — как на образце, но каждое
 // правдиво и раскрыто ниже по странице, а не просто лозунг.
 const PROMISES = [
-  { icon: 'clock', text: `Выписка за ${TERMS.extract}` },
+  { icon: 'clock', text: `От подачи до выписки — ${TERMS.extract}` },
   { icon: 'wallet', text: 'Сопровождение — 0 ₽' },
   { icon: 'scales', text: 'Скажу, если СРО не нужна' },
 ]
@@ -24,7 +24,7 @@ const PROMISES = [
       <h1 class="page-title">
         Вступить в <em>СРО</em><br />без устаревших норм
       </h1>
-      <p class="tagline">Точно. Честно. За 24 часа.</p>
+      <p class="tagline">Точно. Честно. За 2–3 дня.</p>
 
       <ul class="promises">
         {PROMISES.map((p) => (
@@ -68,7 +68,7 @@ const PROMISES = [
     <div class="stats">
       <div class="stat">
         <div class="v">{TERMS.extract}</div>
-        <div class="d">выписка из реестра членов СРО после решения о приёме</div>
+        <div class="d">от подачи документов до выписки из реестра, {TERMS.extractTypical}</div>
       </div>
       <div class="stat">
         <div class="v">0 ₽</div>
