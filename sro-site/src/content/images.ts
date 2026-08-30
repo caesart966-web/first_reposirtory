@@ -53,16 +53,6 @@ export const IMAGES = {
     height: 899,
     ratio: 'aspect-[4/3]',
   },
-  lawbooks: {
-    src: './img/lawbooks.svg',
-    alt: 'Штриховой рисунок: стопка книг-кодексов с закладкой',
-    // Рисунок наш (scripts/make-lawbooks.py). Пропорция родная: холст в
-    // генераторе подогнан по самой стопке, полей вокруг нет и обрезать нечего.
-    width: 560,
-    height: 330,
-    ratio: 'aspect-[560/330]',
-    fit: 'contain',
-  },
   legal: {
     src: './img/legal.webp',
     srcAvif: './img/legal.avif',

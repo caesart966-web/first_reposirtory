@@ -156,11 +156,17 @@ export function Services() {
         <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-neutral-600">
           Смежные юридические задачи
         </h3>
-        {/* Список слева, рисунок справа, без рамки — на серой плашке
-            вырезанный объект читался как незагрузившаяся картинка.
-            Здесь стояли весы, но они же служат знаком в шапке и гравюрой
-            Фемиды фоном: один мотив трижды читается не фирменным стилем, а
-            нехваткой картинок. Стопка кодексов ту же мысль говорит иначе. */}
+        {/* Список слева, весы справа, без рамки — на серой плашке вырезанный
+            объект читался как незагрузившаяся картинка.
+
+            Пробовали заменить весы рисованной стопкой кодексов: мотив весов
+            работает ещё знаком в шапке и гравюрой Фемиды фоном, и трёхкратный
+            повтор смущал. Заказчик посмотрел и вернул весы — по характеру
+            линии гравюра сильнее любого построения, а повтор здесь читается
+            фирменной константой, а не нехваткой картинок.
+
+            Рисунок и генератор оставлены: assets-src/lawbooks.svg,
+            scripts/make-lawbooks.py. */}
         <div className="mt-5 grid gap-8 lg:grid-cols-[minmax(0,8fr)_minmax(0,4fr)] lg:items-center">
           <div className="grid gap-x-10 gap-y-4 sm:grid-cols-2">
             {LEGAL.map((service) => (
@@ -181,9 +187,9 @@ export function Services() {
             ))}
           </div>
           <Figure
-            {...IMAGES.lawbooks}
+            {...IMAGES.legal}
             frame={false}
-            className="max-w-[170px] justify-self-center sm:max-w-[210px] lg:max-w-[240px]"
+            className="max-w-[170px] justify-self-center sm:max-w-[220px] lg:max-w-[260px]"
           />
         </div>
       </Reveal>
