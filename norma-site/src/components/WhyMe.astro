@@ -1,0 +1,139 @@
+---
+import { href } from '../config/site'
+import { LAW, TERMS } from '../config/facts'
+import Icon from './Icon.astro'
+
+// Аргументы в пользу работы через специалиста.
+//
+// Правило блока: каждый пункт либо проверяется посетителем сам (ссылка
+// на норму, ссылка на реестр), либо описывает порядок работы, который
+// я готов соблюдать. Ни одного утверждения вида «15 лет опыта»
+// и «1000 довольных клиентов» — таких цифр у нас нет, а выдуманные
+// разрушили бы то единственное, на чём стоит сайт.
+
+const POINTS = [
+  {
+    icon: 'users',
+    t: 'Вы говорите с тем, кто ведёт ваше дело',
+    d: 'Не с менеджером колл-центра, который передаст вопрос дальше. Один человек от первого звонка до выписки из реестра — и он же отвечает, если что-то пойдёт не так.',
+  },
+  {
+    icon: 'wallet',
+    t: 'Подготовка и сопровождение — 0 ₽',
+    d: 'Взносы вы платите напрямую на счёт СРО, а не мне. Я не принимаю платежи, не беру процент со взносов и не «включаю сопровождение в стоимость».',
+    link: { label: 'Вся разбивка расходов', url: href('/stoimost/') },
+  },
+  {
+    icon: 'scales',
+    t: 'Скажу, если СРО вам не нужна',
+    d: 'Требование о членстве привязано к тому, с кем заключён договор, а не только к сумме. Субподрядчику от генподрядчика членство не нужно ни при какой цене — и я скажу это до оплаты, а не после.',
+    link: { label: 'Проверить за 2 минуты', url: href('/#calc') },
+  },
+  {
+    icon: 'doc',
+    t: 'Нормы актуальные, и это видно',
+    d: `У каждого факта на сайте стоит статья закона, у каждой страницы — дата сверки. Порог для строителей — 10 млн ₽, а не 3 млн: его подняли в 2022 году, но половина сайтов до сих пор пишет старую цифру.`,
+    law: LAW.build,
+  },
+  {
+    icon: 'search',
+    t: 'Всё проверяется без меня',
+    d: 'И статус СРО, и ваше будущее членство видны в официальных реестрах НОСТРОЙ и НОПРИЗ — бесплатно и за минуту. Верить мне на слово не нужно ни в одном пункте.',
+    link: { label: 'Как проверить', url: href('/#proverka') },
+  },
+  {
+    icon: 'clock',
+    t: 'Не исчезаю после выписки',
+    d: `Выписка приходит за ${TERMS.extract} после решения о приёме — но на ней работа не заканчивается. Продление, смена уровня ответственности, сроки НОК у специалистов, изменения в реестре — остаюсь на связи по всему этому.`,
+  },
+]
+---
+
+<section class="section section--dark why" id="pochemu" data-anchor>
+  <div class="wrap">
+    <div class="s-head rv">
+      <span class="eyebrow">Почему через меня</span>
+      <h2>Шесть причин, которые можно <em>проверить</em></h2>
+      <p>
+        Ни одна из них не про опыт и регалии. Всё, что написано ниже, вы либо проверяете
+        по ссылке сами, либо спрашиваете с меня по ходу работы.
+      </p>
+    </div>
+
+    <div class="wgrid">
+      {POINTS.map((p) => (
+        <article class="wcard rv">
+          <span class="wic"><Icon name={p.icon} size={21} /></span>
+          <h3>{p.t}</h3>
+          <p>{p.d}</p>
+          {p.law && <span class="law law--dark">{p.law}</span>}
+          {p.link && (
+            <a class="wgo" href={p.link.url}>
+              {p.link.label} <Icon name="arrow" size={14} />
+            </a>
+          )}
+        </article>
+      ))}
+    </div>
+
+    <p class="wfoot rv">
+      Чего здесь нет и не будет: обещания «гарантируем вступление», предложения
+      «предоставим специалистов» и цены «от 15 000 ₽ под ключ». Первое не в моей власти —
+      решение принимает СРО. Второе означает фиктивное трудоустройство и при проверке
+      выводит компанию из СРО. Третье — приманка, за которой всё равно откроются взносы,
+      установленные законом.
+    </p>
+  </div>
+</section>
+
+<style>
+  .wgrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+  }
+
+  .wcard {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--navy-line);
+    border-radius: var(--r-l);
+    padding: 24px 22px;
+    display: grid;
+    gap: 10px;
+    align-content: start;
+  }
+  .wic {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--acc-btn);
+    color: #fff;
+    display: grid;
+    place-items: center;
+  }
+  .wcard h3 { font-size: 18px; margin: 2px 0 0; color: #fff; }
+  .wcard p { color: var(--on-navy-muted); font-size: 15.5px; line-height: 1.6; margin: 0; }
+
+  .wgo {
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--acc-bright);
+    font-weight: 700;
+    font-size: 14.5px;
+    text-decoration: none;
+    padding: 4px 0;
+  }
+  .wgo:hover { text-decoration: underline; }
+
+  .wfoot {
+    margin-top: 26px;
+    padding-top: 22px;
+    border-top: 1px solid var(--navy-line);
+    color: var(--on-navy-muted);
+    font-size: 15.5px;
+    line-height: 1.65;
+    max-width: 88ch;
+  }
+</style>

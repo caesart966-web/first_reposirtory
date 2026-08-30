@@ -1,0 +1,142 @@
+---
+import { href } from '../config/site'
+import Icon from './Icon.astro'
+
+// Отличие от конкурентов, которое видно сразу: при вступлении в СРО
+// через меня команда маркетологов делает компании сайт бесплатно.
+//
+// Блок намеренно самый яркий на странице — это единственное место,
+// где сайт «повышает голос». Остальное оформление сдержанное, поэтому
+// один акцентный блок читается как предложение, а не как баннер.
+
+const INCLUDED = [
+  { icon: 'monitor', t: 'Сайт компании', d: 'Страницы об услугах, объектах и контактах. На телефоне открывается так же, как на компьютере.' },
+  { icon: 'shield', t: 'Ваше членство в СРО — на виду', d: 'Номер в реестре и ссылка на его проверку прямо на сайте: заказчику не нужно верить на слово.' },
+  { icon: 'search', t: 'Готовность к поиску', d: 'Заголовки, описания и карта сайта настроены так, чтобы Яндекс и Google могли его нормально прочитать.' },
+  { icon: 'pin', t: 'Карточки в Яндекс Бизнесе и 2ГИС', d: 'Заполним и свяжем с сайтом, чтобы компанию находили на картах.' },
+]
+---
+
+<section class="section bonus" id="bonus" data-anchor>
+  <div class="wrap">
+    <div class="bcard rv">
+      <div class="bmain">
+        <span class="btag"><Icon name="gift" size={16} /> Только при вступлении через меня</span>
+        <h2>Сайт вашей компании — <em>бесплатно</em></h2>
+        <p class="blead">
+          Вступаете в СРО через меня — мои маркетологи делают вашей компании сайт
+          и не берут за это денег. Ни за работу, ни «за поддержку потом».
+        </p>
+        <p class="bwhy">
+          Почему так. Членство в СРО открывает доступ к договорам и торгам, но заказчик,
+          который вас нашёл, идёт смотреть, кто вы такие. Если смотреть нечего, членство
+          работает вполсилы. Мне выгодно, чтобы у вас пошли заказы: тогда вы останетесь
+          со мной на продлении, НРС и НОК, а не уйдёте после первой выписки.
+        </p>
+
+        <ul class="bwhat">
+          {INCLUDED.map((i) => (
+            <li>
+              <span class="bic"><Icon name={i.icon} size={19} /></span>
+              <div>
+                <b>{i.t}</b>
+                <span>{i.d}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
+
+        <div class="bcta">
+          <a class="btn btn--white btn--lg" href={href('/kontakty/#form')}>Оставить заявку</a>
+          <a class="btn btn--ghost-dark btn--lg" href={href('/uslugi/marketing/')}>Что входит и что нет</a>
+        </div>
+        <p class="bnote">
+          Честная оговорка: бесплатно — сайт. Домен и хостинг оплачиваются
+          их поставщикам напрямую, это не мои деньги и не мой заработок.
+          Сколько именно — скажу до начала работы.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .bonus { padding-top: 8px; }
+
+  .bcard {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--r-l);
+    padding: 40px 38px 34px;
+    color: #fff;
+    background:
+      radial-gradient(720px 380px at 88% 0%, rgba(107, 163, 255, 0.34), transparent 70%),
+      linear-gradient(135deg, var(--acc-deep) 0%, #123A8C 52%, #0E2A63 100%);
+  }
+
+  .btag {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    padding: 7px 14px;
+    border-radius: 999px;
+    font-size: 13.5px;
+    font-weight: 700;
+    margin-bottom: 18px;
+  }
+
+  .bcard h2 {
+    font-size: clamp(26px, 3.9vw, 42px);
+    text-transform: uppercase;
+    letter-spacing: 0.012em;
+    line-height: 1.1;
+    margin: 0 0 14px;
+  }
+  .bcard h2 em { font-style: normal; color: #BBD3FF; }
+
+  .blead { font-size: 19px; max-width: 58ch; margin-bottom: 12px; }
+  .bwhy { color: rgba(255, 255, 255, 0.82); max-width: 68ch; font-size: 16px; }
+
+  .bwhat {
+    list-style: none;
+    margin: 26px 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(255px, 1fr));
+    gap: 18px 26px;
+  }
+  /* Пунктов четыре: на широком экране раскладываем их 2×2. Иначе выходит
+     три в ряд и один сиротой на второй строке. */
+  @media (min-width: 900px) {
+    .bwhat { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 40px; }
+  }
+  .bwhat li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 13px; align-items: start; }
+  .bwhat div { display: grid; gap: 3px; }
+  .bwhat b { font-size: 16px; }
+  .bwhat span { font-size: 14.5px; color: rgba(255, 255, 255, 0.8); line-height: 1.5; }
+  .bic {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    display: grid;
+    place-items: center;
+    flex: none;
+  }
+
+  .bcta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 30px; }
+  .bnote {
+    margin-top: 18px;
+    font-size: 13.5px;
+    color: rgba(255, 255, 255, 0.72);
+    max-width: 72ch;
+    line-height: 1.55;
+  }
+
+  @media (max-width: 640px) {
+    .bcard { padding: 30px 20px 26px; }
+    .blead { font-size: 17px; }
+  }
+</style>

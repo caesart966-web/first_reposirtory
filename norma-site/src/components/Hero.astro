@@ -2,7 +2,7 @@
 import { SITE, href } from '../config/site'
 import { LAW, TERMS } from '../config/facts'
 import Icon from './Icon.astro'
-import Skyline from './Skyline.astro'
+import HeroVideo from './HeroVideo.astro'
 
 // Три коротких обещания под заголовком — как на образце, но каждое
 // правдиво и раскрыто ниже по странице, а не просто лозунг.
@@ -14,7 +14,7 @@ const PROMISES = [
 ---
 
 <section class="hero">
-  <Skyline />
+  <HeroVideo />
   <div class="veil"></div>
 
   <div class="wrap hero-in">
@@ -75,14 +75,16 @@ const PROMISES = [
     isolation: isolate;
   }
 
-  /* Затемнение поверх силуэта: без него крупный текст спорит с домами
-     и падает контраст. Снизу плотнее — там стоят цифры. */
+  /* Затемнение поверх видео. Ролик снят на рассвете и в кадре много неба,
+     поэтому пелена плотная: белый заголовок должен читаться на любом кадре,
+     а не только на тёмных. Слева гуще — там весь текст; справа светлее,
+     чтобы кадр было видно. Снизу совсем плотно: там стоят цифры. */
   .veil {
     position: absolute;
     inset: 0;
     background:
-      radial-gradient(900px 460px at 78% 6%, rgba(107, 163, 255, 0.20), transparent 68%),
-      linear-gradient(180deg, rgba(11, 29, 51, 0.55) 0%, rgba(11, 29, 51, 0.80) 55%, rgba(11, 29, 51, 0.94) 100%);
+      linear-gradient(100deg, rgba(9, 24, 43, 0.9) 0%, rgba(9, 24, 43, 0.72) 48%, rgba(9, 24, 43, 0.24) 100%),
+      linear-gradient(180deg, rgba(11, 29, 51, 0.38) 0%, rgba(11, 29, 51, 0.28) 48%, rgba(11, 29, 51, 0.92) 100%);
     pointer-events: none;
   }
 
@@ -92,11 +94,13 @@ const PROMISES = [
   .geo {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    font-family: var(--font-mono);
-    font-size: 11.5px;
-    letter-spacing: 0.04em;
-    color: var(--on-navy-muted);
+    gap: 9px;
+    /* Не моноширинный: это обычная фраза, а не номер и не статья закона.
+       Моноширинный с разрядкой читался здесь как строка из терминала. */
+    font-family: var(--font-body);
+    font-size: 14px;
+    letter-spacing: 0.01em;
+    color: var(--on-navy);
     border: 1px solid var(--navy-line);
     padding: 5px 12px;
     border-radius: 999px;

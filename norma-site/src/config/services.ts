@@ -5,7 +5,7 @@ export type Service = {
   short: string
   icon: string
   excerpt: string
-  group: 'sro' | 'people'
+  group: 'sro' | 'people' | 'marketing'
 }
 
 export const SERVICES: Service[] = [
@@ -62,6 +62,15 @@ export const SERVICES: Service[] = [
     excerpt:
       'Лицензия МЧС на монтаж и обслуживание средств противопожарной защиты, лицензия Минкультуры на работы с объектами культурного наследия и другие разрешения.',
     group: 'people',
+  },
+  {
+    slug: 'marketing',
+    title: 'Сайт и продвижение для строительной компании',
+    short: 'Сайт и маркетинг',
+    icon: 'monitor',
+    excerpt:
+      'Сайт, поисковое продвижение, карточки в Яндекс Бизнесе и 2ГИС. Тем, кто вступает в СРО через меня, сайт делаем бесплатно.',
+    group: 'marketing',
   },
 ]
 
