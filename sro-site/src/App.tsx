@@ -1,5 +1,4 @@
 import { AboutExpert } from './components/AboutExpert'
-import { Contacts } from './components/Contacts'
 import { Documents } from './components/Documents'
 import { FAQ } from './components/FAQ'
 import { Footer } from './components/Footer'
@@ -42,10 +41,11 @@ export default function App() {
               <Documents />
               <Pricing />
               <AboutExpert />
-              {/* Контакты в середине: убеждение уже сработало (человек узнал
-                  про эксперта), а финалом страницы остаётся квиз — главная
-                  точка конверсии и положена последней. */}
-              <Contacts />
+              {/* Отдельной секции контактов нет намеренно. Она была четвёртым
+                  призывом связаться подряд (шапка, мобильная панель, квиз,
+                  она) и уводила от квиза — главной точки конверсии. Все
+                  способы связи собраны в подвале, туда же ведёт якорь
+                  #contacts из меню. */}
               <FAQ />
               <Quiz />
             </main>

@@ -11,6 +11,7 @@ export const SECTIONS = [
   { href: '#pricing', label: 'Стоимость', inHeader: true },
   { href: '#about', label: 'О специалисте', inHeader: true },
   { href: '#faq', label: 'FAQ', inHeader: true },
+  // Ведёт в подвал: отдельной секции контактов нет, все каналы собраны там.
   { href: '#contacts', label: 'Контакты', inHeader: false },
 ] as const
 

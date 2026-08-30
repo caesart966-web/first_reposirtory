@@ -1,14 +1,19 @@
 import { Mail, Phone } from 'lucide-react'
-import { CONFIGURED, CONTACTS, LINKS } from '../content/contacts'
+import { CONFIGURED, CONTACTS, LINKS, externalLinkProps } from '../content/contacts'
 import { SECTIONS } from '../content/nav'
 import { ScalesMark } from './illustrations'
 import { useLegalDocs } from './LegalDocs'
+import { MESSENGERS } from './messengers'
 
 export function Footer() {
   const openLegal = useLegalDocs()
 
   return (
-    <footer className="border-t border-neutral-200 bg-neutral-50/55">
+    // id="contacts" — на подвале, а не на секции: отдельной секции контактов
+    // больше нет, но якорь на неё ведёт из меню, из подвала и из запасных
+    // ссылок в contacts.ts. Подвал и есть теперь место, где собраны все
+    // способы связи, поэтому якорь указывает сюда, а не в никуда.
+    <footer id="contacts" className="border-t border-neutral-200 bg-neutral-50/55">
       <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.9fr)] lg:gap-16">
           <div>
@@ -31,14 +36,25 @@ export function Footer() {
               Вступление в СРО во всех регионах России: строительство, проектирование, инженерные
               изыскания.
             </p>
-            <p className="mt-3 text-sm font-medium text-accent-700">Консультация бесплатная</p>
+            {/* Формулировка «и первая, и все следующие» переехала сюда из
+                убранной секции «Контакты». Она нигде больше на странице не
+                повторяется дословно, а это условие заказчика — консультация
+                бесплатна всегда, а не в первый разговор, — и оно обязано
+                быть сказано прямо, а не подразумеваться. */}
+            <p className="mt-3 text-sm font-medium text-accent-700">
+              Консультация бесплатная — и первая, и все следующие
+            </p>
           </div>
 
           <div className="grid gap-8 sm:grid-cols-3 sm:gap-10">
             <div>
               <p className="text-sm font-semibold text-neutral-900">Разделы</p>
+              {/* «Контакты» из списка выкинуты: якорь ведёт на сам подвал, и
+                  внутри подвала это ссылка в никуда — щелчок ничего не
+                  меняет. В шапке и в мобильном меню пункт остаётся: оттуда
+                  он честно прокручивает страницу сюда. */}
               <ul className="mt-3 space-y-2 text-sm text-neutral-600">
-                {SECTIONS.map((section) => (
+                {SECTIONS.filter((section) => section.href !== '#contacts').map((section) => (
                   <li key={section.href}>
                     <a href={section.href} className="transition hover:text-accent-700">
                       {section.label}
@@ -48,12 +64,19 @@ export function Footer() {
               </ul>
             </div>
 
-            {/* Колонка целиком условная: заголовок над пустотой — та же ошибка,
-                что и в «Контактах», и лечится так же. */}
-            {(CONFIGURED.phone || CONFIGURED.email) && (
+            {/* Единственное место на странице, где собраны все способы связи:
+                секция «Контакты» убрана — она была четвёртым по счёту призывом
+                связаться (шапка, квиз, мобильная панель, она) и растаскивала
+                внимание с квиза, который и есть точка конверсии.
+
+                Порядок сверху вниз — от самого прямого канала к самому
+                отложенному: звонок, почта, мессенджеры. Колонка целиком
+                условная: заголовок над пустотой — та же ошибка, что была в
+                «Контактах», и лечится так же. */}
+            {(CONFIGURED.phone || CONFIGURED.email || MESSENGERS.length > 0) && (
             <div>
-              <p className="text-sm font-semibold text-neutral-900">Связь</p>
-              <ul className="mt-3 space-y-2 text-sm text-neutral-600">
+              <p className="text-sm font-semibold text-neutral-900">Связаться</p>
+              <ul className="mt-3 space-y-2.5 text-sm text-neutral-600">
                 {CONFIGURED.phone && (
                   <li>
                     <a
@@ -61,7 +84,12 @@ export function Footer() {
                       className="inline-flex items-center gap-2 transition hover:text-accent-700"
                     >
                       <Phone className="h-4 w-4 shrink-0 text-accent-600" aria-hidden="true" />
-                      {CONTACTS.phone}
+                      {/* Телефон крупнее и плотнее остальных строк: из всех
+                          каналов он самый быстрый, и глаз должен находить его
+                          первым, не читая колонку целиком. */}
+                      <span className="text-base font-semibold text-neutral-950">
+                        {CONTACTS.phone}
+                      </span>
                     </a>
                   </li>
                 )}
@@ -79,16 +107,22 @@ export function Footer() {
                     </a>
                   </li>
                 )}
+                {/* Мессенджеры — такими же строками, а не рядом голых иконок:
+                    иконка без подписи опознаётся только по силуэту, а MAX ещё
+                    мало кому знаком. Подпись снимает вопрос. */}
+                {MESSENGERS.map((channel) => (
+                  <li key={channel.label}>
+                    <a
+                      href={channel.href}
+                      {...externalLinkProps(true)}
+                      className="inline-flex items-center gap-2 transition hover:text-accent-700"
+                    >
+                      <channel.icon className="h-4 w-4 shrink-0 text-accent-600" />
+                      {channel.label}
+                    </a>
+                  </li>
+                ))}
               </ul>
-              {/* Иконок мессенджеров здесь больше нет: они повторяли плитки
-                  из секции «Контакты» один в один. Телефон и почта в подвале —
-                  норма, за остальным ведёт ссылка. */}
-              <a
-                href="#contacts"
-                className="mt-3 inline-block text-sm text-neutral-600 transition hover:text-accent-700"
-              >
-                Все способы связи →
-              </a>
             </div>
             )}
 
