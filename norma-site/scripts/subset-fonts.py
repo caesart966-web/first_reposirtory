@@ -22,7 +22,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / "node_modules" / "@fontsource-variable"
+MODULES = ROOT / "node_modules"
 OUT = ROOT / "public" / "fonts"
 
 # Латиница, цифры, знаки препинания — то, что попадает в латинскую часть.
@@ -31,14 +31,23 @@ LATIN = "".join(chr(c) for c in range(0x20, 0x7F)) + " " + "«»„“”‘’
 # Кириллица — русский алфавит целиком плюс знак номера и рубля.
 CYRILLIC = "".join(chr(c) for c in range(0x410, 0x450)) + "ЁёЄєІіЇїҐґ№₽"
 
-# Какие файлы урезаем: (пакет, исходный файл, итоговое имя, набор знаков)
+# Какие файлы урезаем: (пакет npm, исходный файл, итоговое имя, набор знаков).
+#
+# Playfair Display — переменный шрифт: один файл на все начертания.
+# PT Serif — обычный, поэтому светлое, жирное и курсив лежат отдельно.
+# Курсив нужен только в статьях, поэтому его файлы не грузятся заранее
+# (см. styles/fonts.css): браузер возьмёт их, только если курсив на странице есть.
 JOBS = [
-    ("onest", "onest-cyrillic-wght-normal.woff2", "onest-cyrillic.woff2", CYRILLIC),
-    ("onest", "onest-latin-wght-normal.woff2", "onest-latin.woff2", LATIN),
-    ("golos-text", "golos-text-cyrillic-wght-normal.woff2", "golos-text-cyrillic.woff2", CYRILLIC),
-    ("golos-text", "golos-text-latin-wght-normal.woff2", "golos-text-latin.woff2", LATIN),
-    ("jetbrains-mono", "jetbrains-mono-cyrillic-wght-normal.woff2", "jetbrains-mono-cyrillic.woff2", CYRILLIC),
-    ("jetbrains-mono", "jetbrains-mono-latin-wght-normal.woff2", "jetbrains-mono-latin.woff2", LATIN),
+    ("@fontsource-variable/playfair-display", "playfair-display-cyrillic-wght-normal.woff2", "playfair-cyrillic.woff2", CYRILLIC),
+    ("@fontsource-variable/playfair-display", "playfair-display-latin-wght-normal.woff2", "playfair-latin.woff2", LATIN),
+    ("@fontsource/pt-serif", "pt-serif-cyrillic-400-normal.woff2", "pt-serif-cyrillic.woff2", CYRILLIC),
+    ("@fontsource/pt-serif", "pt-serif-latin-400-normal.woff2", "pt-serif-latin.woff2", LATIN),
+    ("@fontsource/pt-serif", "pt-serif-cyrillic-700-normal.woff2", "pt-serif-cyrillic-700.woff2", CYRILLIC),
+    ("@fontsource/pt-serif", "pt-serif-latin-700-normal.woff2", "pt-serif-latin-700.woff2", LATIN),
+    ("@fontsource/pt-serif", "pt-serif-cyrillic-400-italic.woff2", "pt-serif-cyrillic-italic.woff2", CYRILLIC),
+    ("@fontsource/pt-serif", "pt-serif-latin-400-italic.woff2", "pt-serif-latin-italic.woff2", LATIN),
+    ("@fontsource-variable/jetbrains-mono", "jetbrains-mono-cyrillic-wght-normal.woff2", "jetbrains-mono-cyrillic.woff2", CYRILLIC),
+    ("@fontsource-variable/jetbrains-mono", "jetbrains-mono-latin-wght-normal.woff2", "jetbrains-mono-latin.woff2", LATIN),
 ]
 
 
@@ -46,7 +55,7 @@ def subset_one(pkg: str, src_name: str, out_name: str, chars: str) -> tuple[int,
     from fontTools.ttLib import TTFont
     from fontTools.subset import Subsetter, Options
 
-    src = SRC / pkg / "files" / src_name
+    src = MODULES / pkg / "files" / src_name
     font = TTFont(src)
 
     # Оставляем только те знаки, которые в этом файле вообще есть:

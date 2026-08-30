@@ -28,8 +28,8 @@ const result = await page.evaluate(async () => {
   }
 
   const pairs = [
-    ['Onest Variable', 'Arial'],
-    ['Golos Text Variable', 'Arial'],
+    ['Playfair Variable', '"Times New Roman"'],
+    ['PT Serif Web', '"Times New Roman"'],
     ['JetBrains Mono Variable', 'monospace'],
   ]
 

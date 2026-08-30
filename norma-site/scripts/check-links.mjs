@@ -4,7 +4,10 @@
 //  1. внутренние ссылки в никуда (опечатка в адресе — страница 404);
 //  2. заглушки href="#" — кнопка, которая никуда не ведёт;
 //  3. проблемы SEO: нет title/description, нет H1 или их несколько,
-//     одинаковые title и description на разных страницах.
+//     одинаковые title и description на разных страницах;
+//  4. слипшиеся слова: Astro съедает перенос строки перед <b>, <a> и <strong>,
+//     и в тексте появляется «конкретной СРО.Мои услуги». Лечится {' '}
+//     в конце предыдущей строки.
 //
 // Запуск: node scripts/check-links.mjs [папка_сборки]
 
@@ -34,6 +37,16 @@ const files = await htmlFiles(DIST)
 for (const file of files) {
   const html = await readFile(file, 'utf8')
   const pageUrl = '/' + relative(DIST, file).replace(/index\.html$/, '').replace(/\\/g, '/')
+
+  // Слипшиеся слова на стыке с выделением. Пустой <i></i> — это кружок
+  // в плашке городов, там пробел не нужен, поэтому он исключён.
+  const text = html.replace(/<(script|style)\b[\s\S]*?<\/\1>/g, '')
+  for (const m of text.matchAll(/[\wА-Яа-яЁё.,;:!?»)]<(?:b|strong|em|a|code)\b[^>]*>[^<]{0,30}/g)) {
+    problems.push(`${pageUrl}: пропал пробел → ${m[0].slice(0, 45)}`)
+  }
+  for (const m of text.matchAll(/<\/(?:b|strong|em|a|code)>[\wА-Яа-яЁё]/g)) {
+    problems.push(`${pageUrl}: пропал пробел после выделения → ${m[0]}`)
+  }
 
   // ── SEO ──
   const title = html.match(/<title>([\s\S]*?)<\/title>/)?.[1]?.trim()
@@ -92,4 +105,4 @@ if (problems.length) {
   process.exit(1)
 }
 
-console.log('\n✓ Битых ссылок и заглушек нет, мета-теги на месте и уникальны.')
+console.log('\n✓ Битых ссылок и заглушек нет, мета-теги уникальны, слова не слиплись.')

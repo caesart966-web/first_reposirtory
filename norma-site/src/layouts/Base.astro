@@ -78,11 +78,14 @@ const graph = {
 
     <!-- Шрифты грузим заранее и в режиме optional (см. styles/fonts.css):
          так они успевают к первой отрисовке и вёрстка не дёргается.
-         Латиница нужна не ради латинских слов, а ради цифр: «24 часа», «10 млн ₽». -->
-    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/onest-cyrillic.woff2')} crossorigin />
-    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/onest-latin.woff2')} crossorigin />
-    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/golos-text-cyrillic.woff2')} crossorigin />
-    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/golos-text-latin.woff2')} crossorigin />
+         Латиница нужна не ради латинских слов, а ради цифр: «24 часа», «10 млн ₽».
+         Курсив PT Serif заранее не грузим: он встречается только в статьях. -->
+    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/playfair-cyrillic.woff2')} crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/playfair-latin.woff2')} crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/pt-serif-cyrillic.woff2')} crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/pt-serif-latin.woff2')} crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/pt-serif-cyrillic-700.woff2')} crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/pt-serif-latin-700.woff2')} crossorigin />
     <link rel="preload" as="font" type="font/woff2" href={href('/fonts/jetbrains-mono-cyrillic.woff2')} crossorigin />
     <link rel="preload" as="font" type="font/woff2" href={href('/fonts/jetbrains-mono-latin.woff2')} crossorigin />
 
