@@ -1,159 +1,83 @@
 /* ────────────────────────────────────────────────────────────────
-   Шрифты сайта. Подключаем сами, а не пакетом целиком, по трём причинам:
+   Шрифт сайта — один на всё: Inter.
 
-   1. Берём только кириллицу и латиницу и урезаем каждый файл до знаков,
-      которые на сайте реально встречаются (scripts/subset-fonts.py).
-      Файлы весят 9-31 КБ вместо 20-39 КБ.
+   Тот же шрифт стоит на соседнем сайте заказчика, и он попросил
+   привести «НОРМУ» к нему. Раньше здесь работали три шрифта — антиква
+   для заголовков, антиква для текста и моноширинный для статей закона
+   и цифр. Теперь один: заголовки, текст, номера статей, телефон
+   и подписи набраны Inter разной насыщенности.
+
+   Что это дало помимо единообразия: вместо десяти файлов шрифтов стало
+   четыре, и заранее грузятся только два (42 КБ вместо 157 КБ).
+
+   Как всё устроено:
+
+   1. Из шрифта вырезаны только те знаки, которые на сайте встречаются
+      (scripts/subset-fonts.py). Кириллица и латиница — отдельными файлами,
+      браузер качает лишь нужное.
 
    2. font-display: optional — страница не дёргается. Раньше браузер рисовал
       текст системным шрифтом, потом подменял фирменным, и всё содержимое
       прыгало вниз. В режиме optional подмены по ходу не бывает: если шрифт
       не успел за отведённое время, страница целиком рисуется запасным.
-      Файлы лежат на том же домене, а главные ещё и загружаются заранее
-      (preload в layouts/Base.astro), поэтому обычно успевают.
+      Файлы лежат на том же домене и грузятся заранее, поэтому успевают.
 
-   3. Запасные шрифты подогнаны по размеру (size-adjust, ascent-override):
-      когда используются они, текст занимает столько же места, что и
-      фирменный. Числа измерены скриптом scripts/font-metrics.mjs.
+   3. Запасной шрифт подогнан по размеру (size-adjust, ascent-override):
+      когда используется он, текст занимает столько же места, что и Inter.
+      Числа измерены скриптом scripts/font-metrics.mjs.
 
-   Какие шрифты и почему:
-
-   • Playfair Display — заголовки. Крупный контраст между толстыми и
-     тонкими штрихами: на больших размерах читается как журнальный
-     или книжный титул, а не как интерфейс.
-   • PT Serif — весь основной текст. Сделан «Паратайпом» специально
-     под русский язык; по строению это тот же тип шрифта, что и Times
-     New Roman, но нарисованный под экран, а не под типографскую печать.
-   • PT Mono — нормы закона, телефон, цифры счётчиков. Моноширинный
-     на фоне антиквы читается как «машинная» точность и отделяет ссылку
-     на статью кодекса от обычного текста. Ноль без точки внутри.
+   Курсив — отдельный файл. Заранее не грузится: он нужен только в статьях,
+   и браузер возьмёт его сам, если курсив на странице действительно есть.
    ──────────────────────────────────────────────────────────────── */
 
 /* Диапазоны знаков. Браузер качает файл, только если на странице есть
    знак из его диапазона: кириллический и латинский идут отдельно. */
 
-/* ── Playfair Display: заголовки ── */
 @font-face {
-  font-family: 'Playfair Variable';
+  font-family: 'Inter Variable';
   font-style: normal;
   font-display: optional;
-  font-weight: 400 900;
-  src: url('/fonts/playfair-cyrillic.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  src: url('/fonts/inter-cyrillic.woff2') format('woff2-variations');
   unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
 }
 @font-face {
-  font-family: 'Playfair Variable';
+  font-family: 'Inter Variable';
   font-style: normal;
   font-display: optional;
-  font-weight: 400 900;
-  src: url('/fonts/playfair-latin.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  src: url('/fonts/inter-latin.woff2') format('woff2-variations');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
     U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+20BD, U+2122, U+2191, U+2193, U+2212,
     U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  font-family: 'Playfair Fallback';
-  src: local('Times New Roman'), local('Liberation Serif'), local('Tinos'), local('Georgia'),
-    local('DejaVu Serif');
-  size-adjust: 111.84%;
-  ascent-override: 96.57%;
-  descent-override: 22.35%;
 }
 
-/* ── PT Serif: основной текст ──
-   Шрифт обычный, не переменный, поэтому светлое, жирное и курсив —
-   отдельные файлы. Заранее (preload) грузятся только светлое и жирное:
-   курсив встречается лишь в статьях, и браузер возьмёт его сам, если
-   на странице действительно есть выделенный курсивом текст. */
 @font-face {
-  font-family: 'PT Serif Web';
-  font-style: normal;
-  font-display: optional;
-  font-weight: 400;
-  src: url('/fonts/pt-serif-cyrillic.woff2') format('woff2');
-  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
-}
-@font-face {
-  font-family: 'PT Serif Web';
-  font-style: normal;
-  font-display: optional;
-  font-weight: 400;
-  src: url('/fonts/pt-serif-latin.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
-    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+20BD, U+2122, U+2191, U+2193, U+2212,
-    U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  font-family: 'PT Serif Web';
-  font-style: normal;
-  font-display: optional;
-  font-weight: 700;
-  src: url('/fonts/pt-serif-cyrillic-700.woff2') format('woff2');
-  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
-}
-@font-face {
-  font-family: 'PT Serif Web';
-  font-style: normal;
-  font-display: optional;
-  font-weight: 700;
-  src: url('/fonts/pt-serif-latin-700.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
-    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+20BD, U+2122, U+2191, U+2193, U+2212,
-    U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  font-family: 'PT Serif Web';
+  font-family: 'Inter Variable';
   font-style: italic;
   font-display: optional;
-  font-weight: 400;
-  src: url('/fonts/pt-serif-cyrillic-italic.woff2') format('woff2');
+  font-weight: 100 900;
+  src: url('/fonts/inter-cyrillic-italic.woff2') format('woff2-variations');
   unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
 }
 @font-face {
-  font-family: 'PT Serif Web';
+  font-family: 'Inter Variable';
   font-style: italic;
   font-display: optional;
-  font-weight: 400;
-  src: url('/fonts/pt-serif-latin-italic.woff2') format('woff2');
+  font-weight: 100 900;
+  src: url('/fonts/inter-latin-italic.woff2') format('woff2-variations');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
     U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+20BD, U+2122, U+2191, U+2193, U+2212,
     U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  font-family: 'PT Serif Fallback';
-  src: local('Times New Roman'), local('Liberation Serif'), local('Tinos'), local('Georgia'),
-    local('DejaVu Serif');
-  size-adjust: 109.83%;
-  ascent-override: 94.69%;
-  descent-override: 26.4%;
 }
 
-/* ── PT Mono: нормы закона, телефон, цифры счётчиков ──
-   Заменил JetBrains Mono: тот рисует ноль с точкой внутри, и «100 000 ₽»
-   с «+7 931 969-86-64» выглядели как код в редакторе. У PT Mono ноль
-   чистый, а кириллица от того же «Паратайпа», что и основной шрифт. */
+/* Запасной шрифт: системный, но подогнанный под размеры Inter.
+   Он показывается только в те редкие разы, когда фирменный не успел. */
 @font-face {
-  font-family: 'PT Mono Web';
-  font-style: normal;
-  font-display: optional;
-  font-weight: 400;
-  src: url('/fonts/pt-mono-cyrillic.woff2') format('woff2');
-  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
-}
-@font-face {
-  font-family: 'PT Mono Web';
-  font-style: normal;
-  font-display: optional;
-  font-weight: 400;
-  src: url('/fonts/pt-mono-latin.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
-    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+20BD, U+2122, U+2191, U+2193, U+2212,
-    U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  font-family: 'Mono Fallback';
-  src: local('Courier New'), local('Liberation Mono'), local('DejaVu Sans Mono'), local('Roboto Mono');
-  size-adjust: 99.66%;
-  ascent-override: 89.3%;
-  descent-override: 24.08%;
+  font-family: 'Inter Fallback';
+  src: local('Helvetica Neue'), local('Arial'), local('Liberation Sans'), local('Segoe UI'),
+    local('Roboto');
+  size-adjust: 105.91%;
+  ascent-override: 91.59%;
+  descent-override: 22.66%;
 }

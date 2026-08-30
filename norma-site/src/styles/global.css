@@ -45,9 +45,12 @@
 
   /* Запасные шрифты («… Fallback») подогнаны по размеру в fonts.css —
      благодаря этому подмена шрифта не сдвигает вёрстку. */
-  --font-head: 'Playfair Variable', 'Playfair Fallback', 'Times New Roman', Georgia, serif;
-  --font-body: 'PT Serif Web', 'PT Serif Fallback', 'Times New Roman', Georgia, serif;
-  --font-mono: 'PT Mono Web', 'Mono Fallback', ui-monospace, monospace;
+  /* Один шрифт на весь сайт. Три переменные оставлены нарочно: если
+     когда-нибудь захочется развести заголовки и текст, менять придётся
+     одну строку здесь, а не половину файлов проекта. */
+  --font-head: 'Inter Variable', 'Inter Fallback', 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'Inter Variable', 'Inter Fallback', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'Inter Variable', 'Inter Fallback', 'Segoe UI', system-ui, sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -73,19 +76,11 @@ body {
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-body);
-  /* У антиквы строчные буквы ниже, чем у рубленого шрифта, при том же
-     размере в пикселях. Чтобы текст читался так же крупно, как раньше,
-     базовый размер поднят с 16.5 до 17.5 px. */
-  font-size: 17.5px;
-  line-height: 1.6;
-  /* Playfair по умолчанию рисует «старостильные» цифры: 2, 0, 1 ростом со
-     строчную букву, 7 и 9 с хвостом вниз. В книге это красиво, а на сайте
-     про суммы и статьи закона «10 млн ₽» начинает выглядеть опечаткой.
-     Просим обычные цифры одной высоты.
-
-     Важно: везде, где рядом включают моноширинные цифры (tabular-nums),
-     lining-nums нужно повторить. Указание одного свойства сбрасывает
-     остальные, и старостильные цифры возвращаются. */
+  font-size: 16.5px;
+  line-height: 1.65;
+  /* Цифры одной высоты. У Inter они такие и по умолчанию, но правило
+     оставлено: оно защищает от шрифта, который однажды поставят вместо него
+     и у которого по умолчанию цифры будут разной высоты. */
   font-variant-numeric: lining-nums;
   -webkit-font-smoothing: antialiased;
   /* Переносим по слогам только то, что иначе вылезет за экран (длинные
@@ -168,10 +163,10 @@ section[id], [data-anchor] { scroll-margin-top: 84px; }
    произносят «НОРМА» капсом как отдельные буквы, а не как слово. */
 .s-head h2, .page-title {
   text-transform: uppercase;
-  /* Прописные буквы в антикве нужно чуть развести: рисунок у них
-     плотнее строчных, и без просвета заголовок читается как стена. */
-  letter-spacing: 0.012em;
-  line-height: 1.1;
+  /* Крупный капс рубленым шрифтом наоборот поджимают: при большом кегле
+     буквы кажутся расставленными шире, чем есть. */
+  letter-spacing: -0.01em;
+  line-height: 1.08;
 }
 .s-head h2 em, .page-title em { font-style: normal; color: var(--acc-deep); }
 /* Светлый оттенок акцента — на любом тёмном фоне, не только в .section--dark:

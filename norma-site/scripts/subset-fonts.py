@@ -33,22 +33,14 @@ CYRILLIC = "".join(chr(c) for c in range(0x410, 0x450)) + "ЁёЄєІіЇїҐґ�
 
 # Какие файлы урезаем: (пакет npm, исходный файл, итоговое имя, набор знаков).
 #
-# Playfair Display — переменный шрифт: один файл на все начертания.
-# PT Serif и PT Mono — обычные, поэтому начертания лежат отдельными файлами.
-# У PT Mono берём только светлое: жирного моноширинного на сайте нет.
-# Курсив нужен только в статьях, поэтому его файлы не грузятся заранее
-# (см. styles/fonts.css): браузер возьмёт их, только если курсив на странице есть.
+# Inter — переменный шрифт: один файл обслуживает все начертания от светлого
+# до жирного. Курсив лежит отдельным файлом и заранее не грузится: он нужен
+# только в статьях, и браузер возьмёт его сам, если курсив на странице есть.
 JOBS = [
-    ("@fontsource-variable/playfair-display", "playfair-display-cyrillic-wght-normal.woff2", "playfair-cyrillic.woff2", CYRILLIC),
-    ("@fontsource-variable/playfair-display", "playfair-display-latin-wght-normal.woff2", "playfair-latin.woff2", LATIN),
-    ("@fontsource/pt-serif", "pt-serif-cyrillic-400-normal.woff2", "pt-serif-cyrillic.woff2", CYRILLIC),
-    ("@fontsource/pt-serif", "pt-serif-latin-400-normal.woff2", "pt-serif-latin.woff2", LATIN),
-    ("@fontsource/pt-serif", "pt-serif-cyrillic-700-normal.woff2", "pt-serif-cyrillic-700.woff2", CYRILLIC),
-    ("@fontsource/pt-serif", "pt-serif-latin-700-normal.woff2", "pt-serif-latin-700.woff2", LATIN),
-    ("@fontsource/pt-serif", "pt-serif-cyrillic-400-italic.woff2", "pt-serif-cyrillic-italic.woff2", CYRILLIC),
-    ("@fontsource/pt-serif", "pt-serif-latin-400-italic.woff2", "pt-serif-latin-italic.woff2", LATIN),
-    ("@fontsource/pt-mono", "pt-mono-cyrillic-400-normal.woff2", "pt-mono-cyrillic.woff2", CYRILLIC),
-    ("@fontsource/pt-mono", "pt-mono-latin-400-normal.woff2", "pt-mono-latin.woff2", LATIN),
+    ("@fontsource-variable/inter", "inter-cyrillic-wght-normal.woff2", "inter-cyrillic.woff2", CYRILLIC),
+    ("@fontsource-variable/inter", "inter-latin-wght-normal.woff2", "inter-latin.woff2", LATIN),
+    ("@fontsource-variable/inter", "inter-cyrillic-wght-italic.woff2", "inter-cyrillic-italic.woff2", CYRILLIC),
+    ("@fontsource-variable/inter", "inter-latin-wght-italic.woff2", "inter-latin-italic.woff2", LATIN),
 ]
 
 
