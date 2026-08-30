@@ -173,24 +173,26 @@ export function Quiz() {
     // Тёмная закрывающая секция: квиз поглотил отдельный финальный призыв,
     // чтобы на странице не было двух блоков «оставьте заявку» подряд.
     <Section id="quiz" size="key" className="relative overflow-hidden bg-accent-950">
-      {/* Фон секции: та же архивная синька, что стоит кадром в карточке
-          «СРО проектировщиков». Взята уже обработанной — она дуотон на том же
-          фирменном синем, поэтому на accent-950 ложится своей же гаммой.
+      {/* Фон секции: план этажа языком рабочего чертежа, нарисованный нами
+          (scripts/make-floorplan.py). Не фотография намеренно — все три
+          снимка сайта заняты карточками видов СРО, и любой из них здесь
+          повторял бы карточку, стоящую выше по странице.
 
-          mix-blend-screen вместо простой прозрачности: у кадра тёмная основа,
-          и на тёмной секции она бы просто утяжелила фон серым прямоугольником.
-          При screen тёмное уходит в прозрачность, остаются только светлые
-          линии чертежа — ровно то, что нужно от фона.
+          Мотив выбран так, чтобы не совпасть ни с одним уже занятым: разрез
+          здания стоит в карточке проектировщиков, сетка чертежа — в герое,
+          силуэт города — внизу этой же секции, весы — фоном всей страницы.
+          План этажа узнаётся всеми тремя аудиториями сразу.
 
-          Маска гасит верх и низ: без неё кадр обрывается ровной линией по краю
-          секции и читается не фоном, а вставленной картинкой. */}
+          Линии в файле белые, плотность задаётся здесь: так один файл годится
+          под любую тёмную подложку. Маска гасит края — без неё чертёж
+          обрывается ровной линией и читается вставкой, а не фоном. */}
       <img
-        src="./img/design.webp"
+        src="./img/floorplan.svg"
         alt=""
         aria-hidden="true"
         loading="lazy"
         decoding="async"
-        className="pointer-events-none absolute inset-0 h-full w-full select-none object-cover opacity-[0.14] mix-blend-screen [mask-image:linear-gradient(to_bottom,transparent,#000_35%,#000_65%,transparent)] [-webkit-mask-image:linear-gradient(to_bottom,transparent,#000_35%,#000_65%,transparent)]"
+        className="pointer-events-none absolute inset-0 h-full w-full select-none object-cover opacity-[0.13] [mask-image:radial-gradient(120%_95%_at_50%_50%,#000_0%,#000_45%,transparent_100%)] [-webkit-mask-image:radial-gradient(120%_95%_at_50%_50%,#000_0%,#000_45%,transparent_100%)]"
       />
       <CitySkyline className="pointer-events-none absolute inset-x-0 bottom-0 h-20 w-full text-white/[0.09] sm:h-28" />
       <div className="relative">

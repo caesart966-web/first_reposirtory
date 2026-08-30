@@ -54,7 +54,7 @@ export function SroTypes() {
   if (!TYPE_QUESTION) return null
 
   return (
-    <Section id="types">
+    <Section id="types" size="compact">
       <SectionHeading
         eyebrow="Виды СРО"
         title="Строительство, проектирование, изыскания"

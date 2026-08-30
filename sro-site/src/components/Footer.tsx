@@ -1,31 +1,8 @@
 import { Mail, Phone } from 'lucide-react'
-import type { ComponentType } from 'react'
-import { CONFIGURED, CONTACTS, LINKS, externalLinkProps } from '../content/contacts'
+import { CONFIGURED, CONTACTS, LINKS } from '../content/contacts'
 import { SECTIONS } from '../content/nav'
-import { MaxIcon, TelegramIcon, WhatsAppIcon } from './icons'
 import { ScalesMark } from './illustrations'
 import { useLegalDocs } from './LegalDocs'
-
-type IconLink = {
-  label: string
-  href: string
-  icon: ComponentType<{ className?: string }>
-}
-
-// Мессенджеры в подвале — иконками без подписей: подписи уже стоят в секции
-// «Контакты», а здесь важен не выбор канала, а то, что каналы вообще есть.
-const MESSENGERS: IconLink[] = [
-  ...(CONFIGURED.whatsapp
-    ? [{ label: 'WhatsApp', href: LINKS.whatsapp, icon: WhatsAppIcon }]
-    : []),
-  ...(CONFIGURED.telegram
-    ? [{ label: 'Telegram', href: LINKS.telegram, icon: TelegramIcon }]
-    : []),
-  ...(CONFIGURED.max ? [{ label: 'MAX', href: LINKS.max, icon: MaxIcon }] : []),
-]
-
-const iconButton =
-  'inline-flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-200 bg-white text-accent-600 transition hover:border-accent-300 hover:bg-accent-50/40'
 
 export function Footer() {
   const openLegal = useLegalDocs()
@@ -73,7 +50,7 @@ export function Footer() {
 
             {/* Колонка целиком условная: заголовок над пустотой — та же ошибка,
                 что и в «Контактах», и лечится так же. */}
-            {(CONFIGURED.phone || CONFIGURED.email || MESSENGERS.length > 0) && (
+            {(CONFIGURED.phone || CONFIGURED.email) && (
             <div>
               <p className="text-sm font-semibold text-neutral-900">Связь</p>
               <ul className="mt-3 space-y-2 text-sm text-neutral-600">
@@ -103,21 +80,15 @@ export function Footer() {
                   </li>
                 )}
               </ul>
-              {MESSENGERS.length > 0 && (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {MESSENGERS.map((channel) => (
-                    <a
-                      key={channel.label}
-                      href={channel.href}
-                      {...externalLinkProps(true)}
-                      aria-label={`${channel.label}: написать`}
-                      className={iconButton}
-                    >
-                      <channel.icon className="h-5 w-5" />
-                    </a>
-                  ))}
-                </div>
-              )}
+              {/* Иконок мессенджеров здесь больше нет: они повторяли плитки
+                  из секции «Контакты» один в один. Телефон и почта в подвале —
+                  норма, за остальным ведёт ссылка. */}
+              <a
+                href="#contacts"
+                className="mt-3 inline-block text-sm text-neutral-600 transition hover:text-accent-700"
+              >
+                Все способы связи →
+              </a>
             </div>
             )}
 
