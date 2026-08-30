@@ -23,10 +23,6 @@ import { Section, SectionHeading } from './ui/Section'
 const inputClasses =
   'mt-1.5 w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-neutral-900 placeholder:text-neutral-500 focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/30'
 
-// Маска телефона без библиотек (T15): из любого ввода — «+7 900 000-00-00».
-// Ведущие 7/8 считаем кодом страны и съедаем; всё, кроме цифр, отбрасываем.
-// Если цифр не осталось (стёрли всё) — поле пустеет целиком, чтобы «+7 »
-// не застревал при удалении.
 // Куда идти после ответа: к первому вопросу НИЖЕ текущего, на который ещё
 // не отвечали, а если таких нет — на экран контактов.
 //
@@ -43,6 +39,10 @@ function nextStep(from: number, answers: Record<string, string>): number {
   return index === -1 ? Math.min(QUESTIONS.length, TOTAL_STEPS - 1) : index
 }
 
+// Маска телефона без библиотек (T15): из любого ввода — «+7 900 000-00-00».
+// Ведущие 7/8 считаем кодом страны и съедаем; всё, кроме цифр, отбрасываем.
+// Если цифр не осталось (стёрли всё) — поле пустеет целиком, чтобы «+7 »
+// не застревал при удалении.
 function formatPhone(raw: string): string {
   let digits = raw.replace(/\D/g, '')
   if (digits.startsWith('7') || digits.startsWith('8')) digits = digits.slice(1)
@@ -173,6 +173,25 @@ export function Quiz() {
     // Тёмная закрывающая секция: квиз поглотил отдельный финальный призыв,
     // чтобы на странице не было двух блоков «оставьте заявку» подряд.
     <Section id="quiz" size="key" className="relative overflow-hidden bg-accent-950">
+      {/* Фон секции: та же архивная синька, что стоит кадром в карточке
+          «СРО проектировщиков». Взята уже обработанной — она дуотон на том же
+          фирменном синем, поэтому на accent-950 ложится своей же гаммой.
+
+          mix-blend-screen вместо простой прозрачности: у кадра тёмная основа,
+          и на тёмной секции она бы просто утяжелила фон серым прямоугольником.
+          При screen тёмное уходит в прозрачность, остаются только светлые
+          линии чертежа — ровно то, что нужно от фона.
+
+          Маска гасит верх и низ: без неё кадр обрывается ровной линией по краю
+          секции и читается не фоном, а вставленной картинкой. */}
+      <img
+        src="./img/design.webp"
+        alt=""
+        aria-hidden="true"
+        loading="lazy"
+        decoding="async"
+        className="pointer-events-none absolute inset-0 h-full w-full select-none object-cover opacity-[0.14] mix-blend-screen [mask-image:linear-gradient(to_bottom,transparent,#000_35%,#000_65%,transparent)] [-webkit-mask-image:linear-gradient(to_bottom,transparent,#000_35%,#000_65%,transparent)]"
+      />
       <CitySkyline className="pointer-events-none absolute inset-x-0 bottom-0 h-20 w-full text-white/[0.09] sm:h-28" />
       <div className="relative">
         <SectionHeading

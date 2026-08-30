@@ -1,6 +1,7 @@
 import { ArrowRight } from 'lucide-react'
 import { IMAGES, type PageImage } from '../content/images'
 import { QUESTIONS, QUESTION_IDS, SRO_TYPES, useStartQuiz } from './QuizContext'
+import { cardHover } from './ui/card'
 import { Figure } from './ui/Figure'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
@@ -65,8 +66,17 @@ export function SroTypes() {
             {/* Карточка кликается целиком: псевдоэлемент кнопки растянут по
                 article. Доступное имя при этом остаётся у одной кнопки, а не
                 размазывается по картинке и заголовку. */}
-            <article className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-card transition-colors duration-200 hover:border-accent-300">
-              <Figure {...type.image} frame={false} />
+            <article
+              className={`group relative flex h-full flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-card ${cardHover}`}
+            >
+              {/* Кадр слегка наезжает при наведении: карточка с фотографией
+                  должна отзываться самой фотографией, а не только рамкой.
+                  scale-[1.03] — предел, за которым видно потерю резкости. */}
+              <div className="overflow-hidden">
+                <div className="transition-transform duration-300 group-hover:scale-[1.03]">
+                  <Figure {...type.image} frame={false} />
+                </div>
+              </div>
               <div className="flex flex-1 flex-col p-6">
                 <h3 className="text-lg font-semibold text-neutral-950">{type.title}</h3>
                 <p className="mt-2 flex-1 text-sm leading-relaxed text-neutral-600">{type.text}</p>

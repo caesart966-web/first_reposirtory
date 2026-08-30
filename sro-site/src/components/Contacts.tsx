@@ -2,6 +2,7 @@ import { Mail, Phone } from 'lucide-react'
 import type { ComponentType } from 'react'
 import { CONFIGURED, CONTACTS, LINKS, externalLinkProps } from '../content/contacts'
 import { MaxIcon, TelegramIcon, WhatsAppIcon } from './icons'
+import { cardHover } from './ui/card'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
 
@@ -110,7 +111,7 @@ export function Contacts() {
                     key={channel.label}
                     href={channel.href}
                     {...externalLinkProps(true)}
-                    className="flex items-center gap-3 rounded-2xl border border-neutral-200 p-4 transition-colors duration-200 hover:border-accent-300 hover:bg-accent-50/40"
+                    className={`flex items-center gap-3 rounded-2xl border border-neutral-200 bg-white p-4 shadow-card ${cardHover}`}
                   >
                     <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600">
                       <channel.icon className="h-5 w-5" />

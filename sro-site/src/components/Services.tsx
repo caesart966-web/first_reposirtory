@@ -14,6 +14,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { IMAGES } from '../content/images'
+import { cardHoverStatic } from './ui/card'
 import { Figure } from './ui/Figure'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
@@ -129,7 +130,9 @@ export function Services() {
             <div className="mt-5 grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
               {group.items.map((service, index) => (
                 <Reveal key={service.title} delay={(index % 4) * 70} className="h-full">
-                  <article className="h-full rounded-2xl border border-neutral-200 bg-white p-6 shadow-card transition-colors duration-200 hover:border-accent-300">
+                  <article
+                    className={`h-full rounded-2xl border border-neutral-200 bg-white p-6 shadow-card ${cardHoverStatic}`}
+                  >
                     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent-50 text-accent-600">
                       <service.icon className="h-5 w-5" aria-hidden="true" />
                     </div>
