@@ -136,14 +136,21 @@ export function Services() {
             <div className="mt-5 grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
               {group.items.map((service, index) => (
                 <Reveal key={service.title} delay={(index % 4) * 70} className="h-full">
+                  {/* До sm иконка стоит в строке с заголовком, а не над ним:
+                        столбик «иконка / заголовок / текст» растягивал восемь
+                        услуг на четыре экрана прокрутки. С 640px карточек в
+                        строке уже две и высота не в дефиците — там прежний
+                        столбик, он читается спокойнее. */}
                   <article
-                    className={`h-full rounded-2xl border border-neutral-200 bg-white p-6 shadow-card ${cardHoverStatic}`}
+                    className={`h-full rounded-2xl border border-neutral-200 bg-white p-5 shadow-card sm:p-6 ${cardHoverStatic}`}
                   >
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent-50 text-accent-600">
-                      <service.icon className="h-5 w-5" aria-hidden="true" />
+                    <div className="flex items-center gap-3.5 sm:block">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 sm:h-11 sm:w-11">
+                        <service.icon className="h-5 w-5" aria-hidden="true" />
+                      </div>
+                      <h4 className="font-semibold text-neutral-950 sm:mt-5">{service.title}</h4>
                     </div>
-                    <h4 className="mt-5 font-semibold text-neutral-950">{service.title}</h4>
-                    <p className="mt-2 text-sm leading-relaxed text-neutral-600">{service.text}</p>
+                    <p className="mt-2.5 text-sm leading-relaxed text-neutral-600 sm:mt-2">{service.text}</p>
                   </article>
                 </Reveal>
               ))}

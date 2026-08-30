@@ -100,7 +100,7 @@ export function SroTypes() {
         ))}
       </div>
       <Reveal className="mt-7 text-center text-sm text-neutral-600">
-        Ваша область не назвалась?{' '}
+        Не нашли свою область?{' '}
         <button
           type="button"
           onClick={() => startQuiz(TYPE_QUESTION.id, SRO_TYPES.unsure)}
