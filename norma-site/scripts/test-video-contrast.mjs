@@ -107,6 +107,7 @@ for (const page_ of PAGES) {
     })
 
     const worst = new Map()
+    const skipped = new Set()
 
     for (const t of MOMENTS) {
       await page.evaluate((sec) => {
@@ -121,7 +122,13 @@ for (const page_ of PAGES) {
       await page.waitForTimeout(250)
 
       for (const a of areas) {
-        if (a.y < 0 || a.y + a.h > height || a.w < 4) continue
+        // Замерить можно только то, что попало в окно: снимок берётся
+        // с видимой области. Пропуски не проглатываем — о них сказано ниже,
+        // иначе перестановка блока молча снимает проверку с текста.
+        if (a.y < 0 || a.y + a.h > height || a.w < 4) {
+          skipped.add(a.sel)
+          continue
+        }
         const buf = await page.screenshot({ clip: { x: a.x, y: a.y, width: a.w, height: a.h } })
         const png = PNG.sync.read(buf)
         // Берём 5% самых светлых пикселей: одиночная светлая точка погоды
@@ -144,6 +151,13 @@ for (const page_ of PAGES) {
       checked++
       const where = `${page_.url} · ${screen}`
       console.log(`${ok ? '✓' : '✗'} ${where.padEnd(30)} ${sel.padEnd(13)} ${c.toFixed(2)}:1 (на ${t} с)`)
+    }
+    // Скрытый от замера текст — не ошибка, но и не тишина: чаще всего он
+    // просто ушёл ниже сгиба, и видео под ним уже нет.
+    for (const sel of skipped) {
+      if (!worst.has(sel)) {
+        console.log(`· ${`${page_.url} · ${screen}`.padEnd(30)} ${sel.padEnd(13)} не замерен: не попал в окно`)
+      }
     }
     await ctx.close()
   }
