@@ -38,9 +38,10 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from stage1_sites import (HEADERS, TIMEOUT, RETRIES, decode_response, fetch,
                           normalize_site, strip_www, _lock)
 
-SEARCH_THREADS = 4          # поисковик не любит параллелизм — держим низким
+SEARCH_THREADS = 2          # поисковик не любит параллелизм — держим низким
 VERIFY_THREADS = 12
-SEARCH_PAUSE = 1.5          # сек между запросами к поисковику
+SEARCH_PAUSE = 4.0          # сек между запросами; меняется ключом --pause
+SEARCH_RETRY_WAIT = 25      # пауза после отказа поисковика (rate limit)
 CHECK_PATHS = ["", "/contacts", "/kontakty", "/about", "/o-kompanii",
                "/rekvizity", "/requisites"]
 
@@ -81,6 +82,7 @@ def is_aggregator(url):
 RE_DDG_LINK = re.compile(r'<a[^>]+class="result__a"[^>]+href="([^"]+)"', re.I)
 RE_DDG_ANY = re.compile(r'href="(/l/\?uddg=[^"]+)"', re.I)
 _search_lock = threading.Lock()
+BLOCKED = [0]
 _last_search = [0.0]
 
 
@@ -94,15 +96,27 @@ def _throttle():
 
 def ddg_search(query, log, max_results=10):
     """DuckDuckGo HTML — без ключа. Возвращает список URL."""
-    _throttle()
     url = "https://html.duckduckgo.com/html/?q=" + quote_plus(query)
-    session = requests.Session()
-    try:
-        html, err = fetch(session, url, log)
-    finally:
-        session.close()
+    html = None
+    for attempt in range(2):
+        _throttle()
+        session = requests.Session()
+        try:
+            html, err = fetch(session, url, log)
+        finally:
+            session.close()
+        if html is not None:
+            break
+        # почти всегда это rate limit — ждём заметно дольше и пробуем ещё раз
+        BLOCKED[0] += 1
+        log(f"  поиск отбит [{query}]: {err}; жду {SEARCH_RETRY_WAIT} c")
+        time.sleep(SEARCH_RETRY_WAIT)
     if html is None:
-        log(f"  поиск не удался [{query}]: {err}")
+        log(f"  поиск не удался [{query}]")
+        return []
+    if "anomaly" in html[:4000].lower() or "captcha" in html[:4000].lower():
+        BLOCKED[0] += 1
+        log(f"  капча вместо выдачи [{query}]")
         return []
 
     urls = []
@@ -282,13 +296,17 @@ def append_row(path, row):
 
 
 def main():
+    global SEARCH_PAUSE
     ap = argparse.ArgumentParser(description="Поиск сайта компании по ИНН с проверкой по ИНН")
     here = os.path.dirname(os.path.abspath(__file__))
     ap.add_argument("--input", default="", help="путь к xlsx (по умолчанию ищется рядом)")
     ap.add_argument("--outdir", default=os.path.join(here, "result"))
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--threads", type=int, default=SEARCH_THREADS)
+    ap.add_argument("--pause", type=float, default=SEARCH_PAUSE,
+                    help="секунд между запросами к поисковику (больше = меньше блокировок)")
     args = ap.parse_args()
+    SEARCH_PAUSE = args.pause
 
     inp, outdir = find_input(args.input), os.path.abspath(args.outdir)
     os.makedirs(outdir, exist_ok=True)
@@ -314,8 +332,9 @@ def main():
     if os.environ.get("SERPAPI_KEY"):
         print("Поиск: SerpAPI (ключ найден)")
     else:
-        print("Поиск: DuckDuckGo HTML (без ключа). Если начнёт блокировать —")
-        print("       задайте SERPAPI_KEY и перезапустите, прогресс сохранится.")
+        print(f"Поиск: DuckDuckGo HTML (без ключа), пауза {SEARCH_PAUSE} c, "
+              f"потоков {args.threads}.")
+        print("       Много отбитых запросов в итоге -> увеличьте --pause.")
 
     ok = 0
     t0 = time.time()
@@ -342,6 +361,8 @@ def main():
     print("\n" + "=" * 60)
     print(f"Обработано: {len(todo)} за {time.time()-t0:.1f} c")
     print(f"Сайт найден и подтверждён по ИНН: {ok}")
+    print(f"Поисковик отбивал запросы: {BLOCKED[0]} раз"
+          + ("   <-- много: результат недостоверен, увеличьте --pause" if BLOCKED[0] > 5 else ""))
     print(f"Файл: {csv_path}")
     print("Дальше:  python stage1_sites.py --extra-sites result/discovered_sites.csv")
 
