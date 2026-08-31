@@ -1,30 +1,28 @@
 import {
-  Award,
-  Briefcase,
   Building2,
-  FilePen,
   FileText,
   Gavel,
   GraduationCap,
   Handshake,
+  Landmark,
   ListPlus,
+  Medal,
+  ScrollText,
   Search,
   ShieldCheck,
   UserCheck,
   type LucideIcon,
 } from 'lucide-react'
-import { IMAGES, type PageImage } from '../content/images'
+import { IMAGES } from '../content/images'
+import { cardHoverStatic } from './ui/card'
 import { Figure } from './ui/Figure'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
 
 // Восемь равнозначных карточек читались как каша, поэтому услуги разбиты
 // на две понятные группы: что делаем с самой СРО и что — со специалистами.
-// Тип явный: без него TypeScript выводит из массива объединение, у одного
-// члена которого поля figure нет, и сузить его проверкой не получается.
 type ServiceGroup = {
   title: string
-  figure?: PageImage
   items: { icon: LucideIcon; title: string; text: string }[]
 }
 
@@ -56,9 +54,9 @@ const GROUPS: ServiceGroup[] = [
   },
   {
     title: 'Специалисты и реестры',
-    // Изыскания не показывает ни один конкурент — у всех только стройка,
-    // а это отдельная СРО и отдельный клиент.
-    figure: IMAGES.survey,
+    // Кадр изысканий отсюда уехал в секцию «Виды СРО»: там он один из трёх
+    // и работает по назначению — показывает область, — а здесь стоял рядом
+    // с карточками про НРС и НОК, к которым отношения не имеет.
     items: [
       {
         icon: UserCheck,
@@ -84,16 +82,22 @@ const GROUPS: ServiceGroup[] = [
   },
 ]
 
-// Смежные юридические задачи с визитки: вторичная услуга, поэтому компактным
-// списком под основной сеткой и нейтральными иконками, а не акцентными.
+// Смежные юридические задачи с визитки. Услуга вторичная, но «вторичная» —
+// это про размер и место, а не про небрежность: раньше иконки стояли голыми
+// и бледно-серыми и читались как неудавшаяся картинка. Теперь у них та же
+// оправа, что у карточек услуг выше, только подложка нейтральная вместо
+// акцентной — иерархия держится цветом, а не отсутствием оформления.
+//
+// Глифы подобраны по смыслу, а не «что-нибудь юридическое»: здание с колоннами
+// — регистрирующий орган, свиток — устав, молоток — суд, медаль — аттестация.
 const LEGAL = [
   {
-    icon: Briefcase,
+    icon: Landmark,
     title: 'Регистрация и ликвидация',
     text: 'Юридических лиц и предпринимателей — от подачи до внесения записи.',
   },
   {
-    icon: FilePen,
+    icon: ScrollText,
     title: 'Изменения в учредительных документах',
     text: 'Подготовлю пакет и сопровожу внесение изменений в ЕГРЮЛ.',
   },
@@ -103,7 +107,7 @@ const LEGAL = [
     text: 'Досудебная работа и защита позиции компании в судебных спорах.',
   },
   {
-    icon: Award,
+    icon: Medal,
     title: 'Повышение квалификации и аттестации',
     text: 'Помогу организовать обучение и аттестацию специалистов для СРО и НРС.',
   },
@@ -126,40 +130,30 @@ export function Services() {
                 {group.title}
               </h3>
             </Reveal>
-            {/* Группа с фото: снимок — колонка в общей сетке, а не сирота под
-                ней. Полупустой ряд с одинокой картинкой был главной «рыхлостью»
-                страницы. Карточки при этом встают 2×2 рядом с фото. */}
-            <div
-              className={`mt-5 grid gap-4 sm:gap-5 ${
-                group.figure
-                  ? 'sm:grid-cols-2 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]'
-                  : 'sm:grid-cols-2 lg:grid-cols-4'
-              }`}
-            >
-              {group.figure && (
-                <Reveal className="sm:col-span-2 lg:col-span-1 lg:row-span-1">
-                  <Figure {...group.figure} />
-                </Reveal>
-              )}
-              <div
-                className={
-                  group.figure
-                    ? 'grid gap-4 sm:col-span-2 sm:grid-cols-2 sm:gap-5 lg:col-span-1'
-                    : 'contents'
-                }
-              >
-                {group.items.map((service, index) => (
-                  <Reveal key={service.title} delay={(index % 4) * 70} className="h-full">
-                    <article className="h-full rounded-2xl border border-neutral-200 bg-white p-6 shadow-card transition-colors duration-200 hover:border-accent-300">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent-50 text-accent-600">
+            {/* Фотографий в сетке услуг нет: обе группы — про действия, а не
+                про области, и любой кадр здесь иллюстрировал бы соседнюю тему.
+                Области показаны выше, в «Видах СРО», каждая своим снимком. */}
+            <div className="mt-5 grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
+              {group.items.map((service, index) => (
+                <Reveal key={service.title} delay={(index % 4) * 70} className="h-full">
+                  {/* До sm иконка стоит в строке с заголовком, а не над ним:
+                        столбик «иконка / заголовок / текст» растягивал восемь
+                        услуг на четыре экрана прокрутки. С 640px карточек в
+                        строке уже две и высота не в дефиците — там прежний
+                        столбик, он читается спокойнее. */}
+                  <article
+                    className={`h-full rounded-2xl border border-neutral-200 bg-white p-5 shadow-card sm:p-6 ${cardHoverStatic}`}
+                  >
+                    <div className="flex items-center gap-3.5 sm:block">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 sm:h-11 sm:w-11">
                         <service.icon className="h-5 w-5" aria-hidden="true" />
                       </div>
-                      <h4 className="mt-5 font-semibold text-neutral-950">{service.title}</h4>
-                      <p className="mt-2 text-sm leading-relaxed text-neutral-600">{service.text}</p>
-                    </article>
-                  </Reveal>
-                ))}
-              </div>
+                      <h4 className="font-semibold text-neutral-950 sm:mt-5">{service.title}</h4>
+                    </div>
+                    <p className="mt-2.5 text-sm leading-relaxed text-neutral-600 sm:mt-2">{service.text}</p>
+                  </article>
+                </Reveal>
+              ))}
             </div>
           </div>
         ))}
@@ -169,17 +163,32 @@ export function Services() {
         <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-neutral-600">
           Смежные юридические задачи
         </h3>
-        {/* Список слева, весы справа: раньше вырезанный объект стоял сиротой
-            под списком на серой плашке — читалось как незагрузившаяся картинка.
-            Без рамки он работает как гравюра, в паре с фоновой Фемидой. */}
+        {/* Список слева, весы справа, без рамки — на серой плашке вырезанный
+            объект читался как незагрузившаяся картинка.
+
+            Пробовали заменить весы рисованной стопкой кодексов: мотив весов
+            работает ещё знаком в шапке и гравюрой Фемиды фоном, и трёхкратный
+            повтор смущал. Заказчик посмотрел и вернул весы — по характеру
+            линии гравюра сильнее любого построения, а повтор здесь читается
+            фирменной константой, а не нехваткой картинок.
+
+            Рисунок и генератор оставлены: assets-src/lawbooks.svg,
+            scripts/make-lawbooks.py. */}
         <div className="mt-5 grid gap-8 lg:grid-cols-[minmax(0,8fr)_minmax(0,4fr)] lg:items-center">
           <div className="grid gap-x-10 gap-y-4 sm:grid-cols-2">
             {LEGAL.map((service) => (
-              <div key={service.title} className="flex items-start gap-3">
-                <service.icon className="mt-0.5 h-5 w-5 shrink-0 text-neutral-400" aria-hidden="true" />
-                <p className="text-sm text-neutral-700">
-                  <span className="font-medium text-neutral-950">{service.title}</span>{' '}
-                  <span className="text-neutral-600">— {service.text}</span>
+              <div key={service.title} className="flex items-start gap-4">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-neutral-200 bg-neutral-100 text-accent-600">
+                  <service.icon className="h-[18px] w-[18px]" aria-hidden="true" />
+                </span>
+                {/* Заголовок отдельной строкой, а не в подбор с описанием:
+                    в подбор он терялся, и четыре пункта читались сплошным
+                    текстом с тире посередине. */}
+                <p className="min-w-0 text-sm">
+                  <span className="block font-semibold text-neutral-950">{service.title}</span>
+                  <span className="mt-0.5 block leading-relaxed text-neutral-600">
+                    {service.text}
+                  </span>
                 </p>
               </div>
             ))}

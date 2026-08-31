@@ -1,7 +1,7 @@
 import { Phone } from 'lucide-react'
 import { useEffect, useState, type ComponentType } from 'react'
-import { CONFIGURED, LINKS, externalLinkProps } from '../content/contacts'
-import { MaxIcon, TelegramIcon, WhatsAppIcon } from './icons'
+import { LINKS, externalLinkProps } from '../content/contacts'
+import { MESSENGERS } from './messengers'
 
 const itemClasses =
   'flex min-h-[56px] flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-neutral-700 transition active:bg-neutral-50'
@@ -13,16 +13,12 @@ type Channel = {
   external: boolean
 }
 
-// Канал попадает в панель только если для него настроена рабочая ссылка.
+// Звонок плюс мессенджеры из общего списка (components/messengers.ts):
+// раньше каналы перечислялись здесь заново, и панель могла разойтись с
+// подвалом.
 const CHANNELS: Channel[] = [
   { label: 'Позвонить', href: LINKS.tel, icon: Phone, external: false },
-  ...(CONFIGURED.whatsapp
-    ? [{ label: 'WhatsApp', href: LINKS.whatsapp, icon: WhatsAppIcon, external: true }]
-    : []),
-  ...(CONFIGURED.telegram
-    ? [{ label: 'Telegram', href: LINKS.telegram, icon: TelegramIcon, external: true }]
-    : []),
-  ...(CONFIGURED.max ? [{ label: 'MAX', href: LINKS.max, icon: MaxIcon, external: true }] : []),
+  ...MESSENGERS.map((m) => ({ label: m.label, href: m.href, icon: m.icon, external: true })),
 ]
 
 // Классы перечислены целиком: Tailwind собирает только то, что видит в коде.

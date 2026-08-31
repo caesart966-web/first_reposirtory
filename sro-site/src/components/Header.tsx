@@ -1,15 +1,9 @@
 import { Menu, Phone, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { CONFIGURED, CONTACTS, LINKS } from "../content/contacts";
+import { HEADER_NAV as NAV, SECTIONS } from "../content/nav";
 import { ScalesMark } from "./illustrations";
 import { ButtonLink } from "./ui/Button";
-
-const NAV = [
-  { href: "#services", label: "Услуги" },
-  { href: "#process", label: "Как работаем" },
-  { href: "#about", label: "О специалисте" },
-  { href: "#faq", label: "FAQ" },
-];
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -39,7 +33,10 @@ export function Header() {
             <span className="text-[15px] font-bold tracking-tight text-neutral-950">
               {CONTACTS.fullName}
             </span>
-            <span className="text-xs text-neutral-500">{CONTACTS.role}</span>
+            {/* neutral-600, а не 500: тёплая нейтральная шкала темнее прежней серой
+                по цвету, но светлее по контрасту, и на 500 подпись давала
+                4.46:1 при норме 4.5. Замерено на странице. */}
+            <span className="text-xs text-neutral-600">{CONTACTS.role}</span>
           </span>
         </a>
 
@@ -109,7 +106,10 @@ export function Header() {
             className="mx-auto flex w-full max-w-6xl flex-col px-4 py-3 sm:px-6"
             aria-label="Мобильная навигация"
           >
-            {NAV.map((item) => (
+            {/* SECTIONS, а не NAV: список шапки урезан шириной строки, а в
+                выпадающем меню ширина не ограничена — и «Виды СРО» с
+                «Контактами» иначе с телефона доступны только через подвал. */}
+            {SECTIONS.map((item) => (
               <a
                 key={item.href}
                 href={item.href}

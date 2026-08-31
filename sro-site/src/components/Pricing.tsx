@@ -1,11 +1,18 @@
 import { Check } from 'lucide-react'
 import { ButtonLink } from './ui/Button'
+import { cardHoverStatic } from './ui/card'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
 
+// Строка цены есть у всех трёх форматов, а не только у бесплатного: карточка
+// без неё выглядела бы так, будто цену скрывают, и ряд разъезжался бы по высоте.
+// Цифр здесь нет и быть не может — их называют после разбора задачи.
 const PLANS = [
   {
     name: 'Консультация',
+    price: 'Бесплатно',
+    priceNote: 'на любом этапе, не только первый разговор',
+    free: true,
     featured: false,
     items: [
       'Разбор вашей ситуации',
@@ -15,6 +22,9 @@ const PLANS = [
   },
   {
     name: 'Подготовка документов',
+    price: 'По задаче',
+    priceNote: 'зависит от объёма и готовности бумаг',
+    free: false,
     featured: false,
     items: [
       'Проверка имеющихся документов',
@@ -24,6 +34,9 @@ const PLANS = [
   },
   {
     name: 'Вступление в СРО под ключ',
+    price: 'По задаче',
+    priceNote: 'зависит от вида СРО и состава работ',
+    free: false,
     featured: true,
     badge: 'Максимум задач на моей стороне',
     items: [
@@ -40,13 +53,13 @@ export function Pricing() {
       <SectionHeading
         eyebrow="Стоимость"
         title="Форматы работы"
-        subtitle="Стоимость зависит от вида СРО и готовности документов. Назову цифру после короткого разбора — письменно, до начала работы."
+        subtitle="Консультация бесплатная — платите только за работу. Её стоимость зависит от вида СРО и готовности документов; назову цифру письменно, до начала."
       />
       <div className="mt-10 grid gap-5 lg:grid-cols-3">
         {PLANS.map((plan, index) => (
           <Reveal key={plan.name} delay={index * 80} className="h-full">
             <article
-              className={`relative flex h-full flex-col rounded-2xl border bg-white p-7 shadow-card transition-colors duration-200 ${
+              className={`relative flex h-full flex-col rounded-2xl border bg-white p-7 shadow-card ${cardHoverStatic} ${
                 plan.featured ? 'border-accent-300 ring-1 ring-accent-200' : 'border-neutral-200'
               }`}
             >
@@ -56,7 +69,15 @@ export function Pricing() {
                 </span>
               )}
               <h3 className="text-lg font-semibold text-neutral-950">{plan.name}</h3>
-              <ul className="mt-5 space-y-2.5">
+              <p
+                className={`mt-3 text-2xl font-bold tracking-tight ${
+                  plan.free ? 'text-accent-600' : 'text-neutral-950'
+                }`}
+              >
+                {plan.price}
+              </p>
+              <p className="mt-1 text-sm text-neutral-500">{plan.priceNote}</p>
+              <ul className="mt-5 space-y-2.5 border-t border-neutral-200 pt-5">
                 {plan.items.map((item) => (
                   <li key={item} className="flex items-start gap-2.5 text-sm text-neutral-600">
                     <Check className="mt-0.5 h-4 w-4 shrink-0 text-accent-600" aria-hidden="true" />

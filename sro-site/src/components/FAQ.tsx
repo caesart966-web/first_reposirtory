@@ -20,11 +20,16 @@ const ITEMS: { q: string; a: ReactNode }[] = [
   },
   {
     q: 'Сколько стоит?',
+    // Единственный ответ, который не отвечал: отсылал на два экрана назад,
+    // к разделу, где цифры тоже нет. Теперь отвечает на месте (формулировкой
+    // из «Стоимости») и ведёт вперёд — к квизу, а не против течения страницы.
     a: (
       <>
-        Форматы работы и порядок расчёта — в разделе{' '}
-        <a href="#pricing" className="font-medium text-accent-700 underline underline-offset-2">
-          «Стоимость»
+        Платить нужно только за работу: разговоры и разбор задачи не тарифицируются, сколько
+        бы их ни потребовалось. Цена работы зависит от вида СРО и объёма — что уже готово,
+        а что придётся собирать. Точную сумму назову письменно до начала. Быстрее всего —{' '}
+        <a href="#quiz" className="font-medium text-accent-700 underline underline-offset-2">
+          ответить на несколько вопросов в форме ниже
         </a>
         .
       </>
@@ -84,7 +89,7 @@ export function FAQ() {
                   aria-labelledby={`faq-button-${index}`}
                   aria-hidden={!open}
                   className={`grid transition-all duration-300 ease-in-out ${
-                    open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                    open ? 'visible grid-rows-[1fr] opacity-100' : 'invisible grid-rows-[0fr] opacity-0'
                   }`}
                 >
                   <div className="overflow-hidden">

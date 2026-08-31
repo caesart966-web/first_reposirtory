@@ -2,14 +2,17 @@
 // alt, размеры и пути нужны и в разметке, и в учёте лицензий
 // (public/img/CREDITS.md), и расходиться они не должны.
 //
-// Все кадры — боевые, источники и лицензии подтверждены. Слот проектирования
-// (архивная синька) снят: секция «Документы» про пакет бумаг, а не про разрез
-// здания, и кадр туда не попадал по смыслу. Файлы лежат в assets-src/
-// (blueprint-spare.webp и исходник blueprint-crop-spare.jpg) — в сборку они
-// не идут, но остаются под рукой.
+// Все кадры — боевые, источники и лицензии подтверждены.
+//
+// Три кадра construction/design/survey — одна серия: они стоят рядом в секции
+// «Виды СРО», по одному на вид, и потому приведены к общей плотности
+// (средняя яркость 91-103) и к общей пропорции 16:9. Меняете один — приводите
+// к серии и остальные, иначе карточки в ряду разъедутся по тону; рецепт с
+// точными гаммами записан в public/img/CREDITS.md.
 export type PageImage = {
   src: string
-  srcAvif: string
+  // Необязателен: у векторной графики второго формата нет и не нужно.
+  srcAvif?: string
   alt: string
   width: number
   height: number
@@ -18,20 +21,36 @@ export type PageImage = {
 }
 
 export const IMAGES = {
+  construction: {
+    src: './img/construction.webp',
+    srcAvif: './img/construction.avif',
+    alt: 'Два башенных крана на фоне неба',
+    width: 1000,
+    height: 563,
+    ratio: 'aspect-[16/9]',
+  },
+  design: {
+    src: './img/design.webp',
+    srcAvif: './img/design.avif',
+    alt: 'Архивный чертёж: продольный разрез жилого дома',
+    width: 1000,
+    height: 563,
+    ratio: 'aspect-[16/9]',
+  },
+  survey: {
+    src: './img/survey.webp',
+    srcAvif: './img/survey.avif',
+    alt: 'Геодезический прибор на штативе на площадке инженерных изысканий',
+    width: 1000,
+    height: 562,
+    ratio: 'aspect-[16/9]',
+  },
   documents: {
     src: './img/documents.webp',
     srcAvif: './img/documents.avif',
     alt: 'Стопка папок с подшитыми документами крупным планом',
     width: 1200,
     height: 899,
-    ratio: 'aspect-[4/3]',
-  },
-  survey: {
-    src: './img/survey.webp',
-    srcAvif: './img/survey.avif',
-    alt: 'Тахеометр на штативе на площадке инженерных изысканий',
-    width: 1200,
-    height: 900,
     ratio: 'aspect-[4/3]',
   },
   legal: {

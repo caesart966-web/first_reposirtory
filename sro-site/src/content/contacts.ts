@@ -8,10 +8,12 @@ export const CONTACTS = {
   whatsapp: 'https://wa.me/79001330219',
   // Публичная ссылка по номеру. Если появится @username — замените на https://t.me/username
   telegram: 'https://t.me/+79001330219',
-  // MAX не умеет ссылки по номеру телефона: личная ссылка вида
-  // https://max.ru/u/XXXX берётся в приложении («Поделиться» / QR-код).
-  // Подставьте её сюда — кнопки MAX заработают автоматически.
-  max: '[MAX_LINK]',
+  // MAX. Личная ссылка профиля — расшифрована из QR-кода, который заказчик
+  // выгрузил из приложения (аватар -> значок QR) и прислал 30.08.2026; ссылки
+  // по номеру телефона у MAX не существует намеренно, номер собеседника там
+  // не показывается нигде. Если заказчик пересоздаст QR в приложении, хеш
+  // может смениться — тогда ссылку нужно обновить тем же путём.
+  max: 'https://max.ru/u/f9LHodD0cOJH-7DT2fACPZwYLPwbc7t7KpCPXfuGhpg987BNumzPfeB0RNk',
 } as const
 
 const isPlaceholder = (value: string) => value.startsWith('[') && value.endsWith(']')
@@ -24,7 +26,7 @@ export const CONFIGURED = {
   max: !isPlaceholder(CONTACTS.max),
 }
 
-// Пока значение не заменено, ссылка ведёт к блоку контактов.
+// Пока значение не заменено, ссылка ведёт к подвалу — там собраны все каналы.
 export const LINKS = {
   tel: CONFIGURED.phone ? `tel:${CONTACTS.phone.replace(/[^+\d]/g, '')}` : '#contacts',
   mail: CONFIGURED.email ? `mailto:${CONTACTS.email}` : '#contacts',
