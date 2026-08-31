@@ -11,15 +11,8 @@ import WhyMe from '../components/WhyMe.astro'
 import ServicesGrid from '../components/ServicesGrid.astro'
 import LeadForm from '../components/LeadForm.astro'
 import Icon from '../components/Icon.astro'
-import { getCollection } from 'astro:content'
 import { SITE, href } from '../config/site'
 import { LAW, TERMS } from '../config/facts'
-
-const articles = (await getCollection('articles'))
-  .sort((a, b) => (b.data.updated ?? b.data.published).getTime() - (a.data.updated ?? a.data.published).getTime())
-  .slice(0, 3)
-
-const fmt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
 
 const steps = [
   {
@@ -104,28 +97,6 @@ const howToSchema = {
   schema={[faqSchema, howToSchema]}
 >
   <Hero />
-
-  <!-- Честность как позиция, а не строчка в подвале -->
-  <section class="section section--tight honest">
-    <div class="wrap">
-      <div class="honest-in rv">
-        <span class="hi"><Icon name="scales" size={24} /></span>
-        <div>
-          <h2>Половине обратившихся СРО <em>не нужна</em>. Я говорю об этом первым</h2>
-          <p>
-            Требование о членстве привязано к тому, <b>с кем заключён договор</b>, а не только
-            к его сумме. Субподрядчику, работающему от генподрядчика, членство не требуется
-            ни при какой цене договора — но на этом зарабатывают целые компании.
-            Проверьте свою ситуацию за две минуты, прежде чем кому-либо платить.
-          </p>
-          <div class="honest-cta">
-            <a class="btn btn--acc" href="#calc">Проверить свою ситуацию</a>
-            <a class="btn btn--ghost" href={href('/komu-nuzhna-sro/')}>Кому нужна СРО, а кому нет</a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
 
   <Calculator />
 
@@ -250,33 +221,6 @@ const howToSchema = {
 
   <ServicesGrid />
 
-  <!-- База знаний -->
-  {articles.length > 0 && (
-    <section class="section section--tight kb">
-      <div class="wrap">
-        <div class="s-head rv">
-          <span class="eyebrow">База знаний</span>
-          <h2>Свежие <em>разборы</em></h2>
-          <p>У каждой статьи — дата публикации и дата последней проверки. В теме, где нормы меняются каждый год, статья без даты не стоит ничего.</p>
-        </div>
-        <div class="grid-3">
-          {articles.map((a) => (
-            <a class="card art rv" href={href(`/baza-znaniy/${a.id}/`)}>
-              <div class="art-dates">
-                <time datetime={a.data.published.toISOString().slice(0, 10)}>{fmt(a.data.published)}</time>
-                {a.data.updated && <span class="upd">обновлено {fmt(a.data.updated)}</span>}
-              </div>
-              <h3>{a.data.title}</h3>
-              <p>{a.data.excerpt}</p>
-              <span class="go">Читать <Icon name="arrow" size={15} /></span>
-            </a>
-          ))}
-        </div>
-        <p class="more rv"><a href={href('/baza-znaniy/')}>Все статьи базы знаний →</a></p>
-      </div>
-    </section>
-  )}
-
   <!-- FAQ -->
   <section class="section" id="faq" data-anchor>
     <div class="wrap">
@@ -335,19 +279,6 @@ const howToSchema = {
 
 <style>
   /* Честный блок */
-  .honest { background: var(--card); border-bottom: 1px solid var(--line); }
-  .honest-in { display: grid; grid-template-columns: 56px 1fr; gap: 20px; align-items: start; }
-  .hi {
-    width: 52px; height: 52px;
-    border-radius: 14px;
-    background: var(--acc-soft);
-    color: var(--acc-deep);
-    display: grid; place-items: center;
-  }
-  .honest h2 { font-size: clamp(21px, 2.8vw, 28px); margin-bottom: 10px; }
-  .honest p { color: var(--muted); font-size: 16px; max-width: 74ch; }
-  .honest p b { color: var(--ink); }
-  .honest-cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
 
   .more { margin-top: 18px; font-size: 15px; font-weight: 600; }
 
@@ -472,11 +403,6 @@ const howToSchema = {
   .sc p { color: var(--muted); font-size: 15.5px; max-width: 74ch; }
 
   /* Статьи */
-  .kb { background: var(--card); border-top: 1px solid var(--line); }
-  .art { display: grid; gap: 9px; align-content: start; }
-  .art-dates { display: flex; gap: 10px; flex-wrap: wrap; font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); }
-  .upd { color: var(--good); }
-  .art h3 { font-size: 17.5px; margin: 0; }
   .go { display: inline-flex; align-items: center; gap: 6px; font-size: 14.5px; font-weight: 600; color: var(--acc-deep); }
 
   /* FAQ */
@@ -556,8 +482,7 @@ const howToSchema = {
     .cc-grid { grid-template-columns: 1fr; }
   }
   @media (max-width: 640px) {
-    .honest-in { grid-template-columns: 1fr; gap: 14px; }
-    .honest-cta .btn, .cost-cta .btn { width: 100%; }
+    .cost-cta .btn { width: 100%; }
     .steps li { grid-template-columns: 40px 1fr; gap: 14px; }
     .sn { width: 36px; height: 36px; font-size: 15px; }
     .steps li:not(:last-child) .sn::after { top: 38px; }

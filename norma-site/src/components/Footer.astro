@@ -1,16 +1,11 @@
 ---
 import { SITE, REGISTRIES, href } from '../config/site'
+import { SERVICES } from '../config/services'
 import LogoMark from './LogoMark.astro'
 
-const services = [
-  { label: 'СРО строителей', url: href('/uslugi/sro-stroiteley/') },
-  { label: 'СРО проектировщиков', url: href('/uslugi/sro-proektirovshchikov/') },
-  { label: 'СРО изыскателей', url: href('/uslugi/sro-izyskateley/') },
-  { label: 'Специалисты НРС', url: href('/uslugi/nrs/') },
-  { label: 'НОК', url: href('/uslugi/nok/') },
-  { label: 'Лицензии', url: href('/uslugi/licenzii/') },
-  { label: 'Сайт и маркетинг', url: href('/uslugi/marketing/') },
-]
+// Список услуг берётся из config/services.ts, а не переписан здесь руками:
+// раньше он был копией и при добавлении услуги подвал молча отставал.
+const services = SERVICES.map((s) => ({ label: s.short, url: href(`/uslugi/${s.slug}/`) }))
 
 const pages = [
   { label: 'Кому нужна СРО, а кому нет', url: href('/komu-nuzhna-sro/') },
@@ -57,14 +52,16 @@ const year = new Date().getFullYear()
       </div>
 
       <div>
-        <h3>Проверьте нас и СРО</h3>
+        <h3>Проверить СРО</h3>
         <ul>
           <li><a href={REGISTRIES.nostroy} target="_blank" rel="noopener noreferrer">reestr.nostroy.ru — строители</a></li>
           <li><a href={REGISTRIES.nopriz} target="_blank" rel="noopener noreferrer">nopriz.ru — проектировщики и изыскатели</a></li>
         </ul>
         <p class="note">
           Официальные реестры национальных объединений. Членство любой компании
-          и статус любой СРО проверяются там бесплатно и за минуту.
+          и статус любой СРО проверяются там бесплатно и за минуту. Меня в этих
+          реестрах нет: я не саморегулируемая организация. Мои реквизиты — в ЕГРИП
+          на сайте ФНС.
         </p>
       </div>
     </div>

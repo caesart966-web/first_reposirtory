@@ -1,6 +1,6 @@
 ---
 import Base from '../layouts/Base.astro'
-import LeadForm from '../components/LeadForm.astro'
+import ConsultBlock from '../components/ConsultBlock.astro'
 import Icon from '../components/Icon.astro'
 import { href, SITE, REGISTRIES } from '../config/site'
 ---
@@ -23,11 +23,7 @@ import { href, SITE, REGISTRIES } from '../config/site'
 
   <section class="section">
     <div class="wrap">
-      <div class="cols">
-        <div class="rv">
-          <LeadForm />
-        </div>
-
+      <div class="details">
         <aside class="side rv">
           <div class="side-block">
             <span class="sb-label">Телефон</span>
@@ -91,6 +87,8 @@ import { href, SITE, REGISTRIES } from '../config/site'
     </div>
   </section>
 
+  <ConsultBlock />
+
   <section class="section section--tight before-ask">
     <div class="wrap">
       <div class="s-head rv">
@@ -119,9 +117,20 @@ import { href, SITE, REGISTRIES } from '../config/site'
   .page-head h1 { color: #fff; margin: 12px 0 16px; }
   .page-head .lead { color: var(--on-navy-muted); }
 
-  .cols { display: grid; grid-template-columns: 1.35fr 1fr; gap: 20px; align-items: start; }
+  /* Контактные данные без формы: она переехала в блок консультации ниже.
+     Три-четыре карточки в ряд читаются лучше, чем узкая колонка сбоку. */
+  .side { display: grid; gap: 16px; }
+  @media (min-width: 760px) {
+    .side { grid-template-columns: 1fr 1fr; }
+  }
+  @media (min-width: 1100px) {
+    .side { grid-template-columns: repeat(4, 1fr); }
+    /* Реквизиты — пятая карточка при четырёх колонках, и в одиночку
+       на второй строке они смотрятся оборванными. Растягиваем на всю ширину:
+       содержание у них и правда другое — не способ связи, а проверка. */
+    .side-block--legal { grid-column: 1 / -1; }
+  }
 
-  .side { display: grid; gap: 12px; }
   .side-block {
     background: var(--card);
     border: 1px solid var(--line);
@@ -179,6 +188,5 @@ import { href, SITE, REGISTRIES } from '../config/site'
   .ic { width: 40px; height: 40px; border-radius: var(--r-s); background: var(--acc-soft); color: var(--acc-deep); display: grid; place-items: center; }
 
   @media (max-width: 900px) {
-    .cols { grid-template-columns: 1fr; }
   }
 </style>
