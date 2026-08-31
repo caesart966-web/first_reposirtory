@@ -150,52 +150,6 @@ class TestActivityKind(unittest.TestCase):
         self.assertEqual(нопориз.activity_kind({"sro": {"short_description": "Союз"}}), "")
 
 
-class _FakeResponse:
-    status_code = 200
-
-    def __init__(self, payload):
-        self._payload = payload
-
-    def json(self):
-        return self._payload
-
-
-class _FakeSession:
-    """Реестр, который слушается только одного имени параметра."""
-
-    def __init__(self, honours: str | None, default_size: int = 20,
-                 paginates: bool = True):
-        self.honours, self.default_size, self.paginates = honours, default_size, paginates
-        self.calls = []
-
-    def post(self, _url, json=None, timeout=None):
-        self.calls.append(dict(json))
-        size = json.get(self.honours, self.default_size) if self.honours else self.default_size
-        page = json["page"] if self.paginates else 1
-        start = (page - 1) * size
-        data = [{"id": start + i, "inn": f"{start + i:010d}"} for i in range(size)]
-        return _FakeResponse({"data": {"data": data, "count": 1000}})
-
-
-class TestProbePageSize(unittest.TestCase):
-    def test_finds_working_key(self):
-        session = _FakeSession(honours="limit")
-        key, size = нопориз.probe_page_size(session, 100)
-        self.assertEqual((key, size), ("limit", 100))
-
-    def test_falls_back_when_nothing_works(self):
-        session = _FakeSession(honours=None)
-        key, size = нопориз.probe_page_size(session, 100)
-        self.assertEqual((key, size), ("pageSize", 20))
-
-    def test_rejects_key_that_ignores_page(self):
-        # Размер слушается, но вторая страница повторяет первую (limit/offset):
-        # такой ключ дал бы десять тысяч копий первой страницы
-        session = _FakeSession(honours="limit", paginates=False)
-        key, size = нопориз.probe_page_size(session, 100)
-        self.assertEqual(key, "pageSize")
-
-
 class TestDumpColumns(unittest.TestCase):
     def test_registration_number_stored(self):
         # Без него вид деятельности не пересчитать, не выкачивая реестр заново
@@ -419,6 +373,72 @@ class TestLeadSheet(unittest.TestCase):
             [{"Наименование": "Есть", "ИНН": "6164133875"}],
             [_dump_row("6164133875", "проектирование", "01.06.2023", "СРО-П")])
         self.assertNotIn("Нет в НОПРИЗ", sheets)
+
+
+class TestТелоЗапроса(unittest.TestCase):
+    def test_формат_как_у_сайта(self):
+        # Подсмотрено в браузере: pageCount строкой, поиск через searchString.
+        # Мы слали pageSize, и реестр молча отдавал свои 20 записей на страницу
+        тело = нопориз._тело(3, 500)
+        self.assertEqual(тело, {"filters": {}, "page": 3, "pageCount": "500",
+                                "searchString": "", "sortBy": {}})
+
+    def test_поиск_по_инн(self):
+        тело = нопориз._тело(1, 50, search="6150033422")
+        self.assertEqual(тело["searchString"], "6150033422")
+
+
+def _member(inn, номер_сро, дата, статус="Является членом", имя="СРО"):
+    return {"inn": inn, "registry_registration_date": дата,
+            "member_status": {"title": статус},
+            "sro": {"registration_number": номер_сро, "short_description": имя}}
+
+
+class TestЧленства(unittest.TestCase):
+    def _payload(self, records):
+        return {"data": {"data": records, "count": len(records)}}
+
+    def test_вид_по_номеру_сро(self):
+        payload = self._payload([
+            _member("6150033422", "СРО-П-152-30032010", "2026-07-28T00:00:00+03:00"),
+            _member("6150033422", "СРО-И-025-28012010", "2024-02-01T00:00:00+03:00"),
+        ])
+        п, и = нопориз.членства(payload, "6150033422")
+        self.assertEqual(п[0].strftime("%d.%m.%Y"), "28.07.2026")
+        self.assertEqual(и[0].strftime("%d.%m.%Y"), "01.02.2024")
+
+    def test_чужие_записи_отброшены(self):
+        # Поиск идёт по строке, в ответ может попасть посторонняя компания
+        payload = self._payload([
+            _member("7700000000", "СРО-П-152-30032010", "2020-01-01T00:00:00+03:00"),
+        ])
+        self.assertEqual(нопориз.членства(payload, "6150033422"), (None, None))
+
+    def test_исключённые_не_считаются(self):
+        payload = self._payload([
+            _member("6150033422", "СРО-П-152-30032010", "2020-01-01T00:00:00+03:00",
+                    статус="Исключен"),
+        ])
+        self.assertEqual(нопориз.членства(payload, "6150033422"), (None, None))
+
+    def test_берётся_самое_раннее_действующее(self):
+        payload = self._payload([
+            _member("6150033422", "СРО-П-152-30032010", "2022-05-05T00:00:00+03:00"),
+            _member("6150033422", "СРО-П-153-30032010", "2019-03-03T00:00:00+03:00"),
+        ])
+        п, _и = нопориз.членства(payload, "6150033422")
+        self.assertEqual(п[0].strftime("%d.%m.%Y"), "03.03.2019")
+
+    def test_ведущий_ноль_в_инн(self):
+        payload = self._payload([
+            _member("0816034124", "СРО-И-025-28012010", "2023-09-09T00:00:00+03:00"),
+        ])
+        _п, и = нопориз.членства(payload, "0816034124")
+        self.assertIsNotNone(и)
+
+    def test_пустой_ответ(self):
+        self.assertEqual(нопориз.членства(self._payload([]), "6150033422"),
+                         (None, None))
 
 
 if __name__ == "__main__":

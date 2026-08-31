@@ -21,11 +21,13 @@
        .venv\\Scripts\\activate
        python нопориз.py выгрузка --out нопориз_реестр.xlsx
 
-   Реестр отдаёт по 20 записей на страницу и обычно игнорирует pageSize,
-   поэтому скрипт сам подбирает имя параметра размера страницы. Если
-   подобрать не удалось, страниц выходит больше десяти тысяч и выгрузка
-   идёт пару часов. Прерывать можно: прогресс сохраняется, повтор
-   с --resume продолжит с места обрыва.
+   Прерывать можно: прогресс сохраняется, повтор с --resume продолжит
+   с места обрыва.
+
+3) Проверить свои ИНН точечно, без общей выгрузки — надёжнее и быстрее:
+
+       python нопориз.py проверить --file мои_компании.xlsx ^
+              --out проверка.xlsx
 
 2) Сверить свой файл (колонка ИНН обязательна):
 
@@ -59,8 +61,6 @@ import requests
 BASE = "https://reestr.nopriz.ru"
 MEMBER_LIST_URL = f"{BASE}/api/sro/all/member/list"
 
-# Имена параметра «размер страницы», которые встречаются у таких реестров
-_PAGE_SIZE_KEYS = ("pageSize", "perPage", "per_page", "page_size", "limit", "size")
 
 # Дата вступления. Первым — точное имя поля, каким его отдаёт платформа
 # (проверено на НОСТРОЕ: registry_registration_date вида
@@ -314,11 +314,21 @@ def make_session() -> requests.Session:
     return session
 
 
+def _тело(page: int, page_size: int, search: str = "") -> dict:
+    """Тело запроса ровно в том виде, в каком его шлёт сам сайт реестра.
+
+    Подсмотрено в браузере: размер страницы называется pageCount и передаётся
+    строкой, а поиск — searchString. Мы полгода слали pageSize, реестр молча
+    его игнорировал и отдавал свои 20 записей на страницу.
+    """
+    return {"filters": {}, "page": page, "pageCount": str(page_size),
+            "searchString": search, "sortBy": {}}
+
+
 def fetch_page(session: requests.Session, page: int, page_size: int,
-               size_key: str = "pageSize",
                timeout: int = 60, attempts: int = 6) -> dict | None:
     """Страница реестра. Реестр периодически отвечает 500 — повторяем."""
-    body = {"page": page, size_key: page_size}
+    body = _тело(page, page_size)
     for attempt in range(1, attempts + 1):
         try:
             resp = session.post(MEMBER_LIST_URL, json=body, timeout=timeout)
@@ -333,41 +343,51 @@ def fetch_page(session: requests.Session, page: int, page_size: int,
     return None
 
 
-def _record_ids(records: list[dict]) -> list[str]:
-    return [str(r.get("id") or r.get("inn") or "") for r in records]
+def fetch_by_inn(session: requests.Session, inn: str, page_size: int = 50,
+                 timeout: int = 60, attempts: int = 4) -> dict | None:
+    """Все членства одной компании по ИНН.
 
-
-def probe_page_size(session: requests.Session, wanted: int,
-                    attempts: int = 2) -> tuple[str, int]:
-    """Каким параметром реестр реально ограничивает размер страницы.
-
-    По умолчанию он отдаёт по 20 записей, игнорируя pageSize, — а записей
-    в реестре больше двухсот тысяч, то есть десять тысяч страниц и часы
-    ожидания. Иногда работает другое имя параметра, и его стоит поискать:
-    перебор стоит десяток запросов и экономит часы.
-
-    Мало найти имя, при котором записей вернулось больше. Если размер
-    задаётся парой limit/offset, а не номером страницы, то «страница 2»
-    вернёт ровно то же самое — и выгрузка тихо превратится в десять тысяч
-    копий первой страницы. Поэтому кандидат принимается только после
-    проверки, что вторая страница отличается от первой.
+    Это тот же поиск, что на сайте реестра, и он даёт то, чего не дала
+    постраничная выгрузка: она оборвалась на 147 тысячах записей из
+    заявленных 212 тысяч, и часть компаний в неё просто не попала.
     """
-    best_key, best_size = "pageSize", 0
-    for key in _PAGE_SIZE_KEYS:
-        first = records_of(fetch_page(session, 1, wanted, key, attempts=attempts) or {})
-        if len(first) <= best_size:
+    body = _тело(1, page_size, search=inn)
+    for attempt in range(1, attempts + 1):
+        try:
+            resp = session.post(MEMBER_LIST_URL, json=body, timeout=timeout)
+            if resp.status_code == 200:
+                return resp.json()
+            print(f"[нопориз] ИНН {inn}: HTTP {resp.status_code} "
+                  f"(попытка {attempt}/{attempts})", flush=True)
+        except (requests.RequestException, ValueError) as exc:
+            print(f"[нопориз] ИНН {inn}: {type(exc).__name__} "
+                  f"(попытка {attempt}/{attempts})", flush=True)
+        time.sleep(min(2 ** attempt, 20))
+    return None
+
+
+def членства(payload: Any, inn: str) -> tuple:
+    """Из ответа поиска — самое раннее действующее членство каждого вида.
+
+    Поиск идёт по строке, поэтому в ответ может попасть и чужая компания
+    (например, если ИНН встретился в другом поле). Сверяем ИНН каждой записи.
+    """
+    проект = изыск = None
+    for record in records_of(payload):
+        if norm_inn(record.get("inn")) != inn:
             continue
-        second = records_of(fetch_page(session, 2, wanted, key, attempts=attempts) or {})
-        if not second or _record_ids(second) == _record_ids(first):
-            print(f"[нопориз] параметр {key}: вторая страница повторяет первую — "
-                  "не годится", flush=True)
+        if is_former(record):
             continue
-        best_key, best_size = key, len(first)
-        print(f"[нопориз] параметр {key}: по {best_size} записей на страницу",
-              flush=True)
-        if best_size >= wanted:
-            break
-    return best_key, best_size
+        started = start_date(record)
+        if started is None:
+            continue
+        вид = activity_kind(record)
+        имя = sro_name(record)
+        if DESIGN in вид and (проект is None or started < проект[0]):
+            проект = (started, имя)
+        if SURVEY in вид and (изыск is None or started < изыск[0]):
+            изыск = (started, имя)
+    return проект, изыск
 
 
 # -- файлы --------------------------------------------------------------
@@ -470,12 +490,6 @@ def cmd_dump(args) -> int:
     out_path = Path(args.out)
     progress_path = out_path.with_suffix(out_path.suffix + ".progress.json")
 
-    size_key = args.page_size_key
-    if size_key == "авто":
-        size_key, probed = probe_page_size(session, args.page_size)
-        if not probed:
-            print("[нопориз] размер страницы подобрать не вышло — качаю как есть")
-
     rows: list[dict] = []
     start_page = 1
     if args.resume and progress_path.exists():
@@ -497,7 +511,7 @@ def cmd_dump(args) -> int:
 
     try:
         while True:
-            payload = fetch_page(session, page, args.page_size, size_key)
+            payload = fetch_page(session, page, args.page_size)
             if payload is None:
                 failed_pages.append(page)
                 print(f"[нопориз] страница {page} не отдалась — пропускаю, "
@@ -561,7 +575,7 @@ def cmd_dump(args) -> int:
         print(f"[нопориз] повторяю {len(failed_pages)} сбойных страниц")
         still: list[int] = []
         for p in failed_pages:
-            payload = fetch_page(session, p, args.page_size, size_key)
+            payload = fetch_page(session, p, args.page_size)
             if payload is None:
                 still.append(p)
                 continue
@@ -743,6 +757,96 @@ def cmd_match(args) -> int:
     return 0
 
 
+def cmd_recheck(args) -> int:
+    """Точечная проверка своих ИНН прямо в реестре, без общей выгрузки."""
+    file_path = Path(args.file)
+    if not file_path.exists():
+        print(f"Файл {file_path} не найден.", file=sys.stderr)
+        return 1
+    header, rows = read_rows(file_path)
+    inn_col = args.inn_column
+    if inn_col not in header:
+        print(f"В файле нет колонки «{inn_col}». Есть: {', '.join(header)}",
+              file=sys.stderr)
+        return 1
+
+    out_path = Path(args.out)
+    progress_path = out_path.with_suffix(out_path.suffix + ".progress.json")
+    готово: dict[str, dict] = {}
+    if args.resume and progress_path.exists():
+        готово = json.loads(progress_path.read_text(encoding="utf-8"))
+        print(f"[проверка] продолжаю, уже проверено {len(готово)}")
+
+    session = make_session()
+    инны = [norm_inn(r.get(inn_col)) for r in rows]
+    к_проверке = [i for i in dict.fromkeys(инны) if i and i not in готово]
+    print(f"[проверка] ИНН к проверке: {len(к_проверке)}")
+
+    осечки = 0
+    try:
+        for номер, инн in enumerate(к_проверке, 1):
+            payload = fetch_by_inn(session, инн)
+            if payload is None:
+                осечки += 1
+                print(f"[проверка] ИНН {инн} не проверился — пропускаю",
+                      file=sys.stderr)
+                continue
+            п, и = членства(payload, инн)
+            готово[инн] = {
+                "Проектирование: дата вступления": п[0].strftime("%d.%m.%Y") if п else "",
+                "Проектирование: СРО": п[1] if п else "",
+                "Изыскания: дата вступления": и[0].strftime("%d.%m.%Y") if и else "",
+                "Изыскания: СРО": и[1] if и else "",
+            }
+            if номер % 25 == 0:
+                print(f"[проверка] {номер}/{len(к_проверке)}", flush=True)
+                progress_path.write_text(json.dumps(готово, ensure_ascii=False),
+                                         encoding="utf-8")
+            time.sleep(args.delay)
+    except KeyboardInterrupt:
+        print("\n[проверка] прервано — прогресс сохранён "
+              "(продолжить: та же команда с --resume)")
+        progress_path.write_text(json.dumps(готово, ensure_ascii=False),
+                                 encoding="utf-8")
+        return 1
+
+    new_cols = ["Проектирование: дата вступления", "Проектирование: СРО",
+                "Изыскания: дата вступления", "Изыскания: СРО", "В НОПРИЗ"]
+    columns = header + [c for c in new_cols if c not in header]
+    both = only_design = only_survey = neither = no_inn = 0
+    for row, инн in zip(rows, инны):
+        найдено = готово.get(инн)
+        if not инн:
+            row["В НОПРИЗ"] = "нет ИНН"; no_inn += 1
+            continue
+        if найдено is None:
+            row["В НОПРИЗ"] = "не проверено"
+            continue
+        row.update(найдено)
+        д = bool(найдено["Проектирование: дата вступления"])
+        и_ = bool(найдено["Изыскания: дата вступления"])
+        if д and и_: row["В НОПРИЗ"] = "проектирование и изыскания"; both += 1
+        elif д: row["В НОПРИЗ"] = "проектирование"; only_design += 1
+        elif и_: row["В НОПРИЗ"] = "изыскания"; only_survey += 1
+        else: row["В НОПРИЗ"] = "нет"; neither += 1
+
+    write_rows(out_path, columns, rows, "Проверка по НОПРИЗ")
+    if осечки == 0 and progress_path.exists():
+        progress_path.unlink()
+    print(f"[проверка] компаний в файле: {len(rows)}")
+    print(f"[проверка]   и проектирование, и изыскания: {both}")
+    print(f"[проверка]   только проектирование:          {only_design}")
+    print(f"[проверка]   только изыскания:               {only_survey}")
+    print(f"[проверка]   не найдены в НОПРИЗ:            {neither}")
+    if no_inn:
+        print(f"[проверка]   без ИНН:                        {no_inn}")
+    if осечки:
+        print(f"[проверка] ВНИМАНИЕ: {осечки} ИНН реестр не отдал — повторите "
+              "с --resume", file=sys.stderr)
+    print(f"[проверка] готово: {out_path}")
+    return 0
+
+
 def cmd_sample(args) -> int:
     """Сырая запись реестра и что из неё извлекает скрипт."""
     session = make_session()
@@ -878,8 +982,6 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("выгрузка", help="скачать реестр НОПРИЗ целиком (один раз)")
     p.add_argument("--out", default="нопориз_реестр.xlsx", help="куда сохранить")
     p.add_argument("--page-size", type=int, default=100, help="записей на страницу")
-    p.add_argument("--page-size-key", default="авто",
-                   help="имя параметра размера страницы; «авто» — подобрать")
     p.add_argument("--delay", type=float, default=0.3, help="пауза между страницами, сек")
     p.add_argument("--resume", action="store_true", help="продолжить прерванную выгрузку")
     p.set_defaults(func=cmd_dump)
@@ -911,6 +1013,15 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--out", default="нопориз_реестр_исправленный.xlsx",
                    help="куда сохранить")
     p.set_defaults(func=cmd_reclassify)
+
+    p = sub.add_parser("проверить",
+                       help="пробить свои ИНН прямо в реестре (без общей выгрузки)")
+    p.add_argument("--file", required=True, help="ваш файл с колонкой ИНН")
+    p.add_argument("--out", default="проверка_НОПРИЗ.xlsx", help="куда сохранить")
+    p.add_argument("--inn-column", default="ИНН", help="имя колонки с ИНН")
+    p.add_argument("--delay", type=float, default=0.4, help="пауза между ИНН, сек")
+    p.add_argument("--resume", action="store_true", help="продолжить прерванную проверку")
+    p.set_defaults(func=cmd_recheck)
 
     p = sub.add_parser("образец", help="диагностика: сырая запись реестра")
     p.add_argument("--count", type=int, default=3, help="сколько записей разобрать")
