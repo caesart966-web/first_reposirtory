@@ -176,6 +176,7 @@ section[id], [data-anchor] { scroll-margin-top: 84px; }
 #calc .s-head h2 em,
 .hero .page-title em,
 .page-head h1 em { color: var(--acc-bright); }
+
 .s-head p { color: var(--muted); max-width: 64ch; }
 .section--dark .s-head p { color: var(--on-navy-muted); }
 
