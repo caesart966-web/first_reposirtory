@@ -60,6 +60,12 @@ PILOT_GAIN = GAIN * PILOT / 1000                       # млн руб. за 3 �
 PILOT_CAPEX = (EV_PAID + P['hub_capex']) * PILOT / 1000
 POWER = {n: n * P['km_year'] / 365 * P['ev_kwh100'] / 100
             * (1 + P['ev_charge_loss']) / 8 for n in (20, 50, 100, 200)}
+BAT_WARRANTY_KM = 150_000        # гарантия на тяговую батарею Evolute
+CAR_WARRANTY_KM = 100_000        # общая гарантия на автомобиль
+BAT_M = round(BAT_WARRANTY_KM / P['km_year'] * 12)     # месяцев из 36
+CAR_M = round(CAR_WARRANTY_KM / P['km_year'] * 12)
+KM_TOTAL = P['km_year'] * P['years']
+BAT_UNCOVERED = (KM_TOTAL - BAT_WARRANTY_KM) // 1000   # тыс. км без гарантии
 
 SRC_BASE = ('Минпромторг России; АвтоВАЗ; Evolute; Driff; Росстат; Auto.ru; '
             'Кубанские новости; 93.ru; расчёт рабочей группы')
@@ -126,7 +132,8 @@ def slide_exec_summary(prs):
           [('Аренда водителю поднята на ', {}), ('~600 ₽/сутки', {'bold': True}),
            (' — иначе экономию на топливе заберёт водитель, а не парк', {})],
           [('Гарантия на батарею расширена по пробегу: ', {}),
-           ('заводская кончится на 13-м месяце', {'bold': True}),
+           (f'заводских {ru(BAT_WARRANTY_KM // 1000)} тыс. км хватит '
+            f'на {BAT_M} месяцев из 36', {'bold': True}),
            (' при таксомоторном пробеге', {})]]),
     ]
     for x, color, head, bullets in cols:
@@ -136,7 +143,7 @@ def slide_exec_summary(prs):
         tb.text_frame.word_wrap = True
 
     # --- решение
-    block_title(s, LEFT, 4.92, CW, 'Решение: запустить пилот и вернуться к '
+    block_title(s, LEFT, 4.88, CW, 'Решение: запустить пилот и вернуться к '
                 'вопросу масштабирования через год', size=12)
     tiles = [(f'{ru(PILOT_CAPEX)} млн ₽',
               'инвестиции в пилот\nчерез льготный лизинг', LIGHT, ACCENT),
@@ -146,7 +153,7 @@ def slide_exec_summary(prs):
              ('12 месяцев', 'до решения о масштабировании\nпо 4 метрикам', LIGHT, ACCENT)]
     tw = (CW - 3 * 0.20) / 4
     for i, (v, c, f, vc) in enumerate(tiles):
-        kpi(s, LEFT + i * (tw + 0.20), 5.32, tw, 1.35, v, c, fill=f,
+        kpi(s, LEFT + i * (tw + 0.20), 5.24, tw, 0.96, v, c, fill=f,
             value_color=vc, value_size=18, caption_size=10)
     return s
 
@@ -180,7 +187,8 @@ TREE = [
        f'Топливо +20% поднимает выгоду до '
        f'{ru(sens(ice_fuel=P["ice_fuel"] * 1.2))} тыс. ₽', POS),
       ('Актив: как деградирует батарея за 270 тыс. км?',
-       'Гарантия на батарею втрое короче пробега такси', NEG)]),
+       f'Гарантия на батарею {BAT_WARRANTY_KM // 1000} тыс. км '
+       f'против пробега {KM_TOTAL // 1000} тыс. км', NEG)]),
 ]
 
 
@@ -443,8 +451,11 @@ def slide_risks(prs):
                'Фиксируем субсидию в договоре лизинга до заказа партии; '
                'без подтверждения — не заказываем'],
               [('Ресурс батареи', {'bold': True}),
-               'Гарантия — 3 года или 100 тыс. км, а такси проезжает '
-               '270 тыс. км за те же 3 года: гарантия кончится на 13-м месяце',
+               f'Гарантия на батарею — 8 лет или {BAT_WARRANTY_KM // 1000} '
+               f'тыс. км, но такси проезжает {KM_TOTAL // 1000} тыс. км '
+               f'за 3 года: последние {BAT_UNCOVERED} тыс. км — без гарантии '
+               f'на самый дорогой узел (общая гарантия на автомобиль — '
+               f'{CAR_WARRANTY_KM // 1000} тыс. км, это {CAR_M} месяцев)',
                'Требуем расширенную гарантию по пробегу или закладываем '
                'резерв на замену батареи в цену контракта'],
               [('Мощность сети', {'bold': True}),
@@ -593,11 +604,11 @@ def slide_assumptions(prs):
                f'{ru(P["revenue_year"])} тыс. ₽/год',
                'Оценка: 6 000 ₽ в сутки среднегодовые для Сочи'],
           ],
-          row_h=0.53, size=10,
+          row_h=0.51, size=10,
           aligns=[PP_ALIGN.LEFT, PP_ALIGN.CENTER, PP_ALIGN.CENTER, PP_ALIGN.LEFT],
           bolds=[True, False, False, False],
           colors=[TEXT, TEXT, TEXT, GRAY])
-    textbox(s, LEFT, 6.40, 11.25, 0.42, [
+    textbox(s, LEFT, 6.30, 11.25, 0.45, [
         [('Что сознательно не учтено: ', {'bold': True}),
          ('НДС и страхование — одинаковы для обоих вариантов; ускоренный износ '
           'шин у ЭМ (минус к результату ЭМ) и региональные льготы по '
