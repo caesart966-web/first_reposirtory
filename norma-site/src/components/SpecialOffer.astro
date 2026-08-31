@@ -1,0 +1,163 @@
+---
+import { OFFER, OFFER_DISCLAIMER } from '../config/offer'
+import { href } from '../config/site'
+import Icon from './Icon.astro'
+
+// Главное предложение сайта: условия вступления, которых нет у конкурентов.
+//
+// Самый яркий блок на странице — так и задумано. Это единственное место,
+// где сайт говорит не «вот как устроен закон», а «вот что предлагаю я»,
+// и его должно быть видно сразу.
+//
+// Текст условий не здесь, а в src/config/offer.ts — там же записано правило,
+// по которому эти пункты нельзя подавать как нормы закона. Оговорка внизу
+// блока обязательная, снимать её нельзя.
+---
+
+<section class="section offer" id="predlozhenie" data-anchor>
+  <div class="wrap">
+    <div class="obox rv">
+      <div class="ohead">
+        <span class="otag"><Icon name="star" size={15} /> Условия, которых нет больше нигде</span>
+        <h2>Вступление в СРО <em>без стартовых расходов</em></h2>
+        <p class="olead">
+          Пять условий сразу. Из обязательных платежей первого года остаётся
+          компенсационный фонд — и даже он в части случаев за мой счёт.
+        </p>
+      </div>
+
+      <ol class="olist">
+        {OFFER.map((p, i) => (
+          <li>
+            <span class="on">{String(i + 1).padStart(2, '0')}</span>
+            <div class="ob">
+              <b>{p.full}</b>
+              <p>{p.note}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+
+      <div class="ofoot">
+        <p class="odis">
+          <Icon name="alert" size={16} />
+          <span>{OFFER_DISCLAIMER}</span>
+        </p>
+        <div class="oacts">
+          <a class="btn btn--white btn--lg" href={href('/kontakty/#form')}>Узнать условия для моей компании</a>
+          <a class="oplus" href={href('/uslugi/marketing/')}>
+            <Icon name="gift" size={16} />
+            <span>И сайт компании бесплатно — отдельным подарком</span>
+            <Icon name="arrow" size={15} />
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Ярче всего на странице — намеренно. Ниже по странице встречается
+     второй цветной блок (предложение про сайт); он мягче, чтобы порядок
+     важности читался с первого взгляда. */
+  .obox {
+    background: linear-gradient(150deg, var(--acc-btn) 0%, var(--acc-deep) 52%, #12327E 100%);
+    color: #fff;
+    border-radius: var(--r-l);
+    padding: 34px;
+    display: grid;
+    gap: 24px;
+    box-shadow: 0 30px 70px -34px rgba(20, 58, 140, 0.75);
+  }
+  @media (min-width: 900px) {
+    .obox { padding: 42px 46px; }
+  }
+
+  .ohead { display: grid; gap: 10px; justify-items: start; }
+  .otag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.16);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .obox h2 { color: #fff; margin: 4px 0 0; }
+  /* Выделенное слово в заголовке: на синем акцентный синий не читается,
+     поэтому здесь белый с подчёркиванием, а не цветом. */
+  .obox h2 :global(em) {
+    color: #fff;
+    font-style: normal;
+    box-shadow: inset 0 -0.14em rgba(255, 255, 255, 0.45);
+  }
+  .olead { color: rgba(255, 255, 255, 0.88); font-size: 17px; line-height: 1.6; margin: 0; max-width: 62ch; }
+
+  .olist { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  @media (min-width: 1040px) {
+    .olist { grid-template-columns: 1fr 1fr; gap: 2px 34px; }
+    /* Условий пять, то есть нечётное число: последнее занимает обе колонки,
+       иначе справа от него остаётся пустая половина строки. */
+    .olist li:last-child { grid-column: 1 / -1; }
+  }
+  .olist li {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 14px;
+    align-items: start;
+    padding: 16px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.18);
+  }
+  .on {
+    font-family: var(--font-mono);
+    font-variant-numeric: lining-nums tabular-nums;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.6);
+    padding-top: 3px;
+  }
+  .ob { display: grid; gap: 5px; }
+  .ob b { font-size: 17px; line-height: 1.35; }
+  .ob p { margin: 0; color: rgba(255, 255, 255, 0.82); font-size: 14.5px; line-height: 1.6; }
+
+  .ofoot { display: grid; gap: 18px; }
+  .odis {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 11px;
+    align-items: start;
+    margin: 0;
+    padding: 15px 17px;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: var(--r-m);
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .odis :global(svg) { margin-top: 2px; flex: none; }
+
+  .oacts { display: grid; gap: 14px; justify-items: start; align-items: center; }
+  @media (min-width: 760px) {
+    .oacts { grid-template-columns: auto minmax(0, 1fr); gap: 22px; }
+  }
+  .oplus {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    color: #fff;
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.45);
+  }
+  .oplus:hover { color: #fff; border-bottom-color: #fff; }
+
+  @media print {
+    .obox { background: none; color: #000; border: 1px solid #000; box-shadow: none; }
+    .obox h2, .ob b { color: #000; }
+    .olead, .ob p, .odis { color: #000; }
+  }
+</style>
