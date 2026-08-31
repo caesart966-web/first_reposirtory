@@ -1,5 +1,5 @@
 import { Mail, Phone } from 'lucide-react'
-import { CONFIGURED, CONTACTS, LINKS, externalLinkProps } from '../content/contacts'
+import { CONFIGURED, CONTACTS, LINKS } from '../content/contacts'
 import { SECTIONS } from '../content/nav'
 import { ScalesMark } from './illustrations'
 import { useLegalDocs } from './LegalDocs'
@@ -114,7 +114,7 @@ export function Footer() {
                   <li key={channel.label}>
                     <a
                       href={channel.href}
-                      {...externalLinkProps(true)}
+                      data-channel={channel.label}
                       className="inline-flex items-center gap-2 transition hover:text-accent-700"
                     >
                       <channel.icon className="h-4 w-4 shrink-0 text-accent-600" />

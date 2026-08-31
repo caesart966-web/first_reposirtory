@@ -9,7 +9,7 @@ import {
   RotateCcw,
 } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { CONFIGURED, CONTACTS, LINKS, externalLinkProps } from '../content/contacts'
+import { CONFIGURED, CONTACTS, LINKS } from '../content/contacts'
 import { buildLeadMessage, sendLead } from '../lib/lead'
 import { TelegramIcon, WhatsAppIcon } from './icons'
 import { useLegalDocs } from './LegalDocs'
@@ -264,7 +264,7 @@ export function Quiz() {
                 <ButtonLink
                   href={whatsappSendHref}
                   variant="secondary"
-                  {...externalLinkProps(CONFIGURED.whatsapp)}
+                  data-channel="WhatsApp"
                 >
                   <WhatsAppIcon className="h-4 w-4" />
                   WhatsApp
@@ -272,7 +272,7 @@ export function Quiz() {
                 <ButtonLink
                   href={telegramSendHref}
                   variant="secondary"
-                  {...externalLinkProps(CONFIGURED.telegram)}
+                  data-channel="Telegram"
                 >
                   <TelegramIcon className="h-4 w-4" />
                   Telegram
@@ -314,7 +314,7 @@ export function Quiz() {
                 <ButtonLink
                   href={whatsappSendHref}
                   variant="secondary"
-                  {...externalLinkProps(CONFIGURED.whatsapp)}
+                  data-channel="WhatsApp"
                 >
                   <WhatsAppIcon className="h-4 w-4" />
                   WhatsApp
@@ -322,7 +322,7 @@ export function Quiz() {
                 <ButtonLink
                   href={telegramSendHref}
                   variant="secondary"
-                  {...externalLinkProps(CONFIGURED.telegram)}
+                  data-channel="Telegram"
                 >
                   <TelegramIcon className="h-4 w-4" />
                   Telegram

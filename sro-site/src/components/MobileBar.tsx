@@ -1,6 +1,6 @@
 import { Phone } from 'lucide-react'
 import { useEffect, useState, type ComponentType } from 'react'
-import { LINKS, externalLinkProps } from '../content/contacts'
+import { LINKS } from '../content/contacts'
 import { MESSENGERS } from './messengers'
 
 const itemClasses =
@@ -59,7 +59,7 @@ export function MobileBar() {
           <a
             key={channel.label}
             href={channel.href}
-            {...externalLinkProps(channel.external)}
+            data-channel={channel.label}
             className={itemClasses}
           >
             <channel.icon className="h-5 w-5 text-accent-600" />
