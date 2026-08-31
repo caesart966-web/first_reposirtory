@@ -3,12 +3,13 @@ import { SITE, href } from '../config/site'
 import { LAW, TERMS } from '../config/facts'
 import Icon from './Icon.astro'
 import BgVideo from './BgVideo.astro'
+import { OFFER } from '../config/offer'
 
 // Три коротких обещания под заголовком — как на образце, но каждое
 // правдиво и раскрыто ниже по странице, а не просто лозунг.
 const PROMISES = [
   { icon: 'clock', text: `От подачи до выписки — ${TERMS.extract}` },
-  { icon: 'wallet', text: 'Сопровождение — 0 ₽' },
+  { icon: 'doc', text: 'У каждого факта — статья закона' },
   { icon: 'scales', text: 'Скажу, если СРО не нужна' },
 ]
 ---
@@ -47,19 +48,15 @@ const PROMISES = [
          под кнопками. Карточка белая — на тёмном фоне поверх видео это
          единственное светлое пятно, мимо него не пройти. -->
     <aside class="hero-offer">
-      <span class="ho-tag"><Icon name="gift" size={15} /> Только через меня</span>
-      <p class="ho-title">Сайт компании — <b>бесплатно</b></p>
-      <p class="ho-text">
-        Вступаете в СРО через меня — мои маркетологи делают вашей компании
-        сайт и не берут за это денег.
-      </p>
+      <span class="ho-tag"><Icon name="star" size={15} /> Только через меня</span>
+      <p class="ho-title">Вступление <b>без стартовых расходов</b></p>
       <ul class="ho-list">
-        <li><Icon name="check" size={15} /> Сайт, готовый к поиску</li>
-        <li><Icon name="check" size={15} /> Карточки в Яндекс Бизнесе и 2ГИС</li>
-        <li><Icon name="check" size={15} /> Ваше членство в СРО на виду</li>
+        {OFFER.map((p) => (
+          <li><Icon name="check" size={15} /> {p.short}</li>
+        ))}
       </ul>
-      <a class="ho-go" href={href('/uslugi/marketing/')}>
-        Что входит и что нет <Icon name="arrow" size={15} />
+      <a class="ho-go" href={href('/#predlozhenie')}>
+        Все пять условий <Icon name="arrow" size={15} />
       </a>
     </aside>
   </div>
@@ -171,6 +168,29 @@ const PROMISES = [
     gap: 30px;
     align-items: start;
   }
+
+  /* Телефон. Карточка с предложением должна попасть на первый экран,
+     а под кнопками она оказывалась ниже сгиба — то есть большинство
+     посетителей её не видело вовсе.
+     Приём: .hero-text перестаёт быть блоком (display: contents), его
+     содержимое становится прямым содержимым сетки первого экрана, и
+     карточку можно поставить сразу после подзаголовка. Порядок в разметке
+     при этом не меняется: заголовок страницы остаётся первым по смыслу
+     и для поисковиков, переставлено только отображение. */
+  @media (max-width: 1023px) {
+    .hero-in { gap: 22px; }
+    .hero-text { display: contents; }
+    .hero-in .geo { order: 1; }
+    .hero-in .page-title { order: 2; }
+    .hero-in .tagline { order: 3; }
+    .hero-in .hero-offer { order: 4; }
+    .hero-in .promises { order: 5; }
+    .hero-in .cta { order: 6; }
+    .hero-in .note { order: 7; }
+    /* Отступы, которые раньше давал внутренний блок. */
+    .hero-in .tagline { margin-bottom: 2px; }
+    .hero-in .promises { margin-top: 0; }
+  }
   /* На широком экране справа пустует видео — туда и уходит предложение.
      Ниже 1024 px карточка встаёт под кнопками: на узком экране две колонки
      сжали бы заголовок до нечитаемого. */
@@ -178,6 +198,9 @@ const PROMISES = [
     .hero-in { grid-template-columns: minmax(0, 1fr) 340px; gap: 52px; }
   }
 
+  /* Главное предложение сайта, и его должно быть видно первым. Поэтому
+     светлое кольцо по краю: белая карточка на светлом кадре видео местами
+     сливалась с ним, а кольцо отделяет её при любом кадре. */
   .hero-offer {
     background: #fff;
     color: var(--ink);
@@ -186,7 +209,10 @@ const PROMISES = [
     display: grid;
     gap: 12px;
     align-content: start;
-    box-shadow: 0 28px 60px -22px rgba(4, 16, 34, 0.75);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.55),
+      0 0 0 7px rgba(37, 99, 235, 0.18),
+      0 28px 60px -22px rgba(4, 16, 34, 0.8);
   }
   .ho-tag {
     justify-self: start;
@@ -201,7 +227,7 @@ const PROMISES = [
     padding: 6px 12px;
     border-radius: 999px;
   }
-  .ho-title { font-size: 23px; line-height: 1.2; font-weight: 700; margin: 0; }
+  .ho-title { font-size: 25px; line-height: 1.18; font-weight: 800; margin: 0; }
   .ho-title b { color: var(--acc-deep); }
   .ho-text { font-size: 14.5px; color: var(--muted); line-height: 1.55; margin: 0; }
   .ho-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
@@ -210,7 +236,7 @@ const PROMISES = [
     grid-template-columns: auto minmax(0, 1fr);
     gap: 9px;
     align-items: start;
-    font-size: 14.5px;
+    font-size: 15px;
     color: var(--ink);
   }
   .ho-list :global(svg) { color: var(--good); margin-top: 3px; }
