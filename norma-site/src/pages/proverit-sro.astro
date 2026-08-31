@@ -1,0 +1,347 @@
+---
+import Base from '../layouts/Base.astro'
+import LeadForm from '../components/LeadForm.astro'
+import Icon from '../components/Icon.astro'
+import { LAW, THRESHOLD_BUILD, TERMS } from '../config/facts'
+import { href, REGISTRIES, SITE } from '../config/site'
+
+// Страница «Как проверить СРО».
+//
+// ЗАЧЕМ ОНА ЕСТЬ. Это единственная страница на сайте, которая учит посетителя
+// обходиться без меня: проверить организацию, проверить себя, проверить
+// специалистов — всё бесплатно и за минуту. Конкуренты такого не пишут,
+// потому что это работает против них. На сайте, который стоит на честности,
+// она работает наоборот.
+//
+// ГРАНИЦА ДОСТОВЕРНОСТИ, соблюдать при правках. Здесь описано, ЧТО и ГДЕ
+// смотреть — то, что посетитель проверит своими глазами за минуту. Здесь
+// намеренно НЕТ разбора юридических последствий исключения СРО из
+// государственного реестра (что происходит с компенсационным фондом, в какой
+// срок нужно перейти в другую СРО): это требует точной сверки с действующей
+// редакцией, а непроверенная деталь на этой странице обесценила бы весь сайт.
+// Понадобится — сверяйтесь с законом и добавляйте с чипом статьи, как везде.
+
+const before = [
+  {
+    n: '01',
+    t: 'Найдите СРО в реестре национального объединения',
+    d: 'Строительные СРО — в реестре НОСТРОЙ, проектные и изыскательские — в реестре НОПРИЗ. Организации, которой там нет, не существует как СРО, чем бы она себя ни называла.',
+  },
+  {
+    n: '02',
+    t: 'Посмотрите статус и дату регистрации',
+    d: 'Действующая организация или исключённая — видно сразу. Дата регистрации показывает, сколько СРО работает: контора, зарегистрированная в прошлом месяце, вряд ли лучший выбор для многолетнего членства.',
+  },
+  {
+    n: '03',
+    t: 'Проверьте число членов',
+    d: 'Компенсационный фонд формируется взносами членов. У СРО с двумя десятками членов и фонд соответствующий — а отвечает он по обязательствам всех.',
+  },
+  {
+    n: '04',
+    t: 'Сверьте регион',
+    d: `Строительная СРО должна быть зарегистрирована в вашем субъекте РФ; если подходящей в регионе нет — допускается СРО соседнего. У проектировщиков и изыскателей такой привязки нет вообще, они выбирают СРО в любом регионе.`,
+    law: LAW.membership,
+  },
+  {
+    n: '05',
+    t: 'Спросите про компенсационный фонд договорных обязательств',
+    d: 'Если планируете торги — уточните, сформирован ли в СРО второй фонд. Не во всех СРО он есть. Узнать об этом после отклонённой заявки дороже, чем спросить заранее.',
+    law: LAW.funds,
+  },
+]
+
+const after = [
+  'Сама компания — в реестре членов, с датой вступления',
+  'Уровень ответственности по компенсационному фонду возмещения вреда',
+  'Отметка об участии в фонде договорных обязательств, если вы шли на торги',
+  'Ваши специалисты — в национальном реестре специалистов',
+]
+
+const flags = [
+  {
+    t: '«Оформим допуск СРО»',
+    d: 'Свидетельств о допуске не существует с 1 июля 2017 года. Тот, кто предлагает их оформить, либо не обновлял свои материалы девять лет, либо рассчитывает, что вы не в курсе.',
+    law: LAW.noAdmission,
+  },
+  {
+    t: '«СРО нужна от 3 млн ₽»',
+    d: `Порог для строителей — ${THRESHOLD_BUILD}, поднят в мае 2022 года. Старая цифра — самый быстрый способ понять, что консультация устарела на четыре года.`,
+    law: LAW.build,
+  },
+  {
+    t: '«Предоставим специалистов»',
+    d: 'Означает фиктивное трудоустройство: специалисты числятся в штате только на бумаге. При проверке это выводит компанию из СРО, а деньги за «предоставление» никто не вернёт.',
+    law: LAW.specialists,
+  },
+  {
+    t: '«Компфонд в рассрочку»',
+    d: 'Взнос в компенсационный фонд вносится единовременно, рассрочка запрещена законом. Если рассрочку предлагают — платить будете не в фонд, а посреднику, и в реестре это не отразится.',
+    law: LAW.funds,
+  },
+  {
+    t: '«Вступление за один день, гарантия 100%»',
+    d: `Решение принимает СРО, и закон даёт ей на рассмотрение ${TERMS.law}. Гарантировать чужое решение невозможно. На практике с правильно собранным комплектом выписка выходит за ${TERMS.extract} — но это следствие подготовки, а не обещание за вас.`,
+    law: LAW.term,
+  },
+  {
+    t: '«СРО в любом регионе» — строителю',
+    d: 'Для строительных компаний действует региональный принцип. Предложение вступить в СРО любого региона показывает, что говорящий не различает строителей и проектировщиков.',
+    law: LAW.membership,
+  },
+]
+---
+
+<Base
+  title="Как проверить СРО перед вступлением — реестры НОСТРОЙ и НОПРИЗ | НОРМА"
+  description="Пять проверок СРО до вступления и четыре — после, бесплатно и за минуту в официальных реестрах. Плюс шесть обещаний, каждое из которых само себя выдаёт."
+  breadcrumbs={[{ label: 'Главная', url: href('/') }, { label: 'Как проверить СРО' }]}
+>
+  <section class="section page-head">
+    <div class="wrap">
+      <span class="eyebrow">Проверяемость</span>
+      <h1>Как проверить СРО <em>без посредника</em></h1>
+      <p class="lead">
+        Всё, что нужно знать о саморегулируемой организации, лежит в открытых реестрах:
+        бесплатно, без регистрации, за минуту. <b>Эта страница учит обходиться без меня</b> —
+        и это осознанно: доверять на слово здесь не нужно никому, включая меня.
+      </p>
+      <div class="head-tags">
+        <span class="stamp">Сверено с законом · {SITE.checkedDate}</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Куда идти -->
+  <section class="section">
+    <div class="wrap">
+      <div class="s-head rv">
+        <span class="eyebrow">Где смотреть</span>
+        <h2>Два реестра, и оба <em>открытые</em></h2>
+        <p>Ссылки прямые, открываются в новой вкладке. Ничего вводить и никуда входить не нужно.</p>
+      </div>
+
+      <div class="grid-2">
+        <a class="card rcard rv" href={REGISTRIES.nostroy} target="_blank" rel="noopener noreferrer">
+          <div class="rc-top">
+            <Icon name="search" size={20} />
+            <span class="host">reestr.nostroy.ru</span>
+          </div>
+          <h3>Строителям — реестр НОСТРОЙ</h3>
+          <p>
+            Единый реестр членов СРО в строительстве и национальный реестр
+            специалистов. Здесь же видно, действует ли сама СРО.
+          </p>
+          <span class="go">Открыть реестр <Icon name="arrow" size={16} /></span>
+        </a>
+
+        <a class="card rcard rv" href={REGISTRIES.nopriz} target="_blank" rel="noopener noreferrer">
+          <div class="rc-top">
+            <Icon name="search" size={20} />
+            <span class="host">nopriz.ru</span>
+          </div>
+          <h3>Проектировщикам и изыскателям — НОПРИЗ</h3>
+          <p>
+            Национальное объединение изыскателей и проектировщиков: реестр членов
+            СРО и реестр специалистов для проектных компаний.
+          </p>
+          <span class="go">Открыть реестр <Icon name="arrow" size={16} /></span>
+        </a>
+      </div>
+
+      <p class="mixnote rv">
+        <Icon name="alert" size={16} />
+        <span>
+          Реестры не взаимозаменяемы. Строительную компанию в НОПРИЗ вы не найдёте,
+          проектную в НОСТРОЙ — тоже. Если консультант путает эти два объединения,
+          это само по себе ответ на вопрос о его квалификации.
+        </span>
+      </p>
+    </div>
+  </section>
+
+  <!-- До вступления -->
+  <section class="section section--dark">
+    <div class="wrap">
+      <div class="s-head rv">
+        <span class="eyebrow">До вступления</span>
+        <h2>Пять проверок <em>самой СРО</em></h2>
+        <p>По порядку. Занимают вместе меньше пяти минут.</p>
+      </div>
+
+      <ol class="pchecks">
+        {before.map((c) => (
+          <li class="rv">
+            <span class="c-n">{c.n}</span>
+            <div class="c-body">
+              <h3>{c.t}</h3>
+              <p>{c.d}</p>
+              {c.law && <span class="law law--dark">{c.law}</span>}
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <!-- После вступления -->
+  <section class="section">
+    <div class="wrap">
+      <div class="after rv">
+        <div>
+          <span class="eyebrow">После вступления</span>
+          <h2>Что должно появиться <em>в реестре</em></h2>
+          <p class="alead">
+            Выписка на руках — это ещё не всё. Сведения о вас должны быть видны
+            в реестре любому, включая заказчика, который будет проверять вас перед
+            заключением договора. Проверьте сами, что там появилось:
+          </p>
+        </div>
+        <ul class="alist">
+          {after.map((a) => (
+            <li><Icon name="check" size={17} /><span>{a}</span></li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Красные флаги -->
+  <section class="section">
+    <div class="wrap">
+      <div class="s-head rv">
+        <span class="eyebrow">Само себя выдаёт</span>
+        <h2>Шесть обещаний, после которых можно <em>не продолжать</em></h2>
+        <p>
+          Каждое из них противоречит действующему закону. Это не вопрос вкуса
+          и не «разные подходы» — это проверяемая ошибка, и рядом стоит норма.
+        </p>
+      </div>
+
+      <div class="flags">
+        {flags.map((f) => (
+          <article class="fcard rv">
+            <span class="fx"><Icon name="x" size={15} /></span>
+            <div>
+              <h3>{f.t}</h3>
+              <p>{f.d}</p>
+              <span class="law">{f.law}</span>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="zayavka" data-anchor>
+    <div class="wrap narrow">
+      <LeadForm
+        title="Проверю выбранную СРО вместе с вами"
+        subtitle="Пришлите название организации — посмотрю её по реестру, сверю с вашим регионом и видом работ и скажу, что вижу. Без обязательств и бесплатно."
+      />
+    </div>
+  </section>
+</Base>
+
+<style>
+  .page-head { background: var(--navy); color: var(--on-navy); padding-bottom: 44px; }
+  .page-head .eyebrow { color: var(--acc-bright); }
+  .page-head h1 { color: #fff; margin: 12px 0 16px; max-width: 20ch; }
+  .page-head .lead { color: var(--on-navy-muted); }
+  .page-head .lead b { color: #fff; }
+  .head-tags { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 22px; align-items: center; }
+
+  .rcard { display: grid; gap: 9px; align-content: start; text-decoration: none; color: inherit; }
+  .rc-top { display: flex; align-items: center; gap: 9px; color: var(--acc-deep); }
+  .host { font-family: var(--font-mono); font-size: 13px; }
+  .rcard h3 { font-size: 18px; margin: 2px 0 0; }
+  .rcard p { color: var(--muted); font-size: 15px; line-height: 1.6; margin: 0; }
+  .go { display: inline-flex; align-items: center; gap: 7px; color: var(--acc-deep); font-weight: 700; font-size: 14.5px; margin-top: 4px; }
+  .rcard:hover { border-color: var(--acc-btn); }
+
+  .mixnote {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 11px;
+    align-items: start;
+    margin-top: 20px;
+    padding: 16px 18px;
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--warn);
+    border-radius: var(--r-m);
+    color: var(--muted);
+    font-size: 14.5px;
+    line-height: 1.6;
+    max-width: 92ch;
+  }
+  .mixnote :global(svg) { color: var(--warn); margin-top: 2px; }
+
+  .pchecks { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+  .pchecks li {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--navy-line);
+    border-radius: var(--r-l);
+    padding: 20px 22px;
+  }
+  .c-n {
+    font-family: var(--font-mono);
+    font-variant-numeric: lining-nums tabular-nums;
+    font-size: 15px;
+    color: var(--acc-bright);
+    padding-top: 2px;
+  }
+  .c-body { display: grid; gap: 7px; }
+  .c-body h3 { color: #fff; font-size: 18px; margin: 0; }
+  .c-body p { color: var(--on-navy-muted); font-size: 15.5px; line-height: 1.6; margin: 0; }
+  .c-body .law { justify-self: start; }
+
+  .after { display: grid; gap: 22px; }
+  @media (min-width: 900px) {
+    .after { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; align-items: start; }
+  }
+  .alead { color: var(--muted); font-size: 16px; line-height: 1.65; margin-top: 12px; }
+  .alist {
+    list-style: none;
+    margin: 0;
+    padding: 22px;
+    display: grid;
+    gap: 14px;
+    background: var(--acc-soft);
+    border-radius: var(--r-l);
+  }
+  .alist li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: start; }
+  .alist :global(svg) { color: var(--good); margin-top: 2px; }
+  .alist span { font-size: 15.5px; line-height: 1.5; }
+
+  .flags { display: grid; gap: 12px; }
+  @media (min-width: 900px) {
+    .flags { grid-template-columns: 1fr 1fr; }
+  }
+  .fcard {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 14px;
+    align-items: start;
+    border: 1px solid var(--line);
+    border-radius: var(--r-l);
+    padding: 20px 22px;
+    background: var(--card);
+  }
+  .fx {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--warn-bg);
+    color: var(--warn);
+    display: grid;
+    place-items: center;
+    flex: none;
+  }
+  .fcard h3 { font-size: 17px; margin: 3px 0 7px; }
+  .fcard p { color: var(--muted); font-size: 14.5px; line-height: 1.6; margin: 0 0 10px; }
+  .fcard .law { display: inline-flex; }
+</style>
