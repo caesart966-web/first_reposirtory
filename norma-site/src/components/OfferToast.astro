@@ -1,0 +1,175 @@
+---
+import { href } from '../config/site'
+import Icon from './Icon.astro'
+
+// Окно с предложением о бесплатном сайте.
+//
+// Почему не всплывающее окно во весь экран. Такое окно перекрывает текст
+// и требует его закрыть, прежде чем читать дальше. Оно повышает число
+// показов предложения и снижает доверие — а доверие здесь весь смысл
+// сайта. Поэтому карточка выезжает в углу, не мешает читать и листать,
+// закрывается одной кнопкой и клавишей Esc.
+//
+// Показывается один раз: после закрытия браузер запоминает решение
+// и больше не показывает карточку этому посетителю.
+//
+// Отключить совсем — уберите <OfferToast /> из src/layouts/Base.astro.
+---
+
+<aside class="toast" id="offer-toast" hidden aria-labelledby="toast-title">
+  <button class="tclose" type="button" aria-label="Закрыть предложение">
+    <Icon name="x" size={18} />
+  </button>
+  <span class="tic"><Icon name="gift" size={22} /></span>
+  <div class="tbody">
+    <b id="toast-title">Сайт компании — бесплатно</b>
+    <p>Вступаете в СРО через меня — мои маркетологи делают вашей компании сайт и не берут за это денег.</p>
+    <a class="tlink" href={href('/uslugi/marketing/')}>
+      Что входит <Icon name="arrow" size={14} />
+    </a>
+  </div>
+</aside>
+
+<style>
+  .toast {
+    position: fixed;
+    left: 22px;
+    bottom: 22px;
+    z-index: 60;
+    width: min(340px, calc(100vw - 32px));
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 13px;
+    padding: 18px 18px 16px;
+    border-radius: var(--r-l);
+    color: #fff;
+    background: linear-gradient(140deg, var(--acc-deep), #0E2A63);
+    box-shadow: 0 26px 60px -20px rgba(6, 20, 40, 0.7);
+    /* Появление снизу. Пока класс не поставлен скриптом, карточка
+       спрятана атрибутом hidden и в разметке участия не принимает. */
+    transform: translateY(18px);
+    opacity: 0;
+    transition: transform 0.45s cubic-bezier(0.2, 0.7, 0.3, 1), opacity 0.45s ease;
+  }
+  .toast.in { transform: none; opacity: 1; }
+
+  .tic {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.16);
+    display: grid;
+    place-items: center;
+    flex: none;
+  }
+  .tbody { display: grid; gap: 5px; }
+  /* Место под крестик: без отступа он ложится на последнее слово. */
+  .tbody b { font-size: 16px; line-height: 1.25; padding-right: 26px; }
+  .tbody p { font-size: 14px; line-height: 1.5; color: rgba(255, 255, 255, 0.85); margin: 0; }
+
+  .tlink {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 14.5px;
+    text-decoration: none;
+    margin-top: 4px;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+    justify-self: start;
+  }
+  .tlink:hover { color: #fff; border-bottom-color: #fff; }
+
+  .tclose {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.75);
+    cursor: pointer;
+    border-radius: 50%;
+  }
+  .tclose:hover { color: #fff; background: rgba(255, 255, 255, 0.14); }
+
+  /* На телефоне снизу уже стоит панель связи — поднимаем карточку над ней. */
+  @media (max-width: 767px) {
+    .toast { left: 12px; right: 12px; bottom: 78px; width: auto; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .toast { transition: none; }
+  }
+  @media print { .toast { display: none !important; } }
+</style>
+
+<script>
+  const KEY = 'norma-offer-seen'
+  const toast = document.getElementById('offer-toast')
+
+  // Хранилище может быть недоступно: режим инкогнито, запрет на данные
+  // сайтов. Тогда просто не запоминаем решение — показать карточку ещё раз
+  // не страшно, а вот падение скрипта уронило бы вместе с собой всё
+  // остальное на странице.
+  const seen = () => {
+    try {
+      return localStorage.getItem(KEY) === '1'
+    } catch {
+      return false
+    }
+  }
+  const remember = () => {
+    try {
+      localStorage.setItem(KEY, '1')
+    } catch {
+      /* не запомнили — не беда */
+    }
+  }
+
+  if (toast && !seen()) {
+    const close = () => {
+      toast.classList.remove('in')
+      remember()
+      // Убираем из разметки только после того, как уехала анимация.
+      setTimeout(() => {
+        toast.hidden = true
+      }, 450)
+      document.removeEventListener('keydown', onKey)
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') close()
+    }
+
+    const show = () => {
+      if (toast.hidden === false) return
+      toast.hidden = false
+      // Кадр на то, чтобы браузер увидел исходное состояние и анимировал переход.
+      requestAnimationFrame(() => toast.classList.add('in'))
+      document.addEventListener('keydown', onKey)
+    }
+
+    toast.querySelector('.tclose')?.addEventListener('click', close)
+    // Ушёл по ссылке — предложение своё дело сделало, больше не показываем.
+    toast.querySelector('.tlink')?.addEventListener('click', remember)
+
+    // Показываем поздно и намеренно: то же предложение стоит белой карточкой
+    // на первом экране, и повторять его сразу же — назойливо. Карточка в углу
+    // работает как напоминание тому, кто ушёл глубоко в страницу и до сих пор
+    // ничего не нажал: больше половины прокрутки или сорок пять секунд.
+    const onScroll = () => {
+      const seenPart = (window.scrollY + window.innerHeight) / document.body.scrollHeight
+      if (seenPart > 0.6) {
+        show()
+        window.removeEventListener('scroll', onScroll)
+      }
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    setTimeout(show, 45000)
+  }
+</script>

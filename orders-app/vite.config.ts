@@ -19,6 +19,12 @@ export default defineConfig({
         // открывается и работает без интернета.
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         navigateFallback: base + 'index.html',
+        // Рядом с приложением на том же адресе лежат другие сайты:
+        // /norma/, /sro/, /pto/, /stroigeroi/. Без этой строки служебный
+        // скрипт приложения перехватывал переходы на них и подставлял
+        // экран «Заказов» — посетитель открывал ссылку на сайт СРО
+        // и попадал в приложение. Эти адреса отдаём сети как есть.
+        navigateFallbackDenylist: [new RegExp(`^${base}(norma|sro|pto|stroigeroi)(/|$)`)],
         cleanupOutdatedCaches: true,
         runtimeCaching: [
           {

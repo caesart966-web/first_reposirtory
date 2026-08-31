@@ -1,0 +1,458 @@
+---
+import Base from '../layouts/Base.astro'
+import LeadForm from '../components/LeadForm.astro'
+import Icon from '../components/Icon.astro'
+import { FUNDS, LAW, TERMS } from '../config/facts'
+import { href, SITE } from '../config/site'
+
+const faq = [
+  {
+    q: 'Правда ли, что ваши услуги бесплатны?',
+    a: 'Да. Подготовка документов, подбор СРО и сопровождение до получения выписки — 0 ₽. Вы оплачиваете только взносы, установленные законом и внутренними документами СРО, и переводите их напрямую на счёт саморегулируемой организации. Я не принимаю взносы и не беру с них процент.',
+  },
+  {
+    q: 'Есть ли платежи со второго года?',
+    a: 'Да, есть, и я говорю об этом сразу. Членские взносы платятся ежегодно, пока компания состоит в СРО. Страхование гражданской ответственности тоже продлевается каждый год. Обещание «без ежемесячных взносов» при наличии годовых членских — это игра словами, и вы должны знать о ней заранее.',
+  },
+  {
+    q: 'Взнос в компенсационный фонд возвращается при выходе из СРО?',
+    a: 'По общему правилу — нет. Средства компенсационного фонда не возвращаются члену при добровольном выходе или исключении. Это существенное отличие взноса в компфонд от обычного платежа за услугу, и его стоит учитывать при выборе уровня ответственности.',
+  },
+  {
+    q: 'Можно ли внести взнос в компенсационный фонд частями?',
+    a: 'Нет. Закон прямо запрещает уплату взноса в компенсационный фонд в рассрочку или иным способом, исключающим единовременную уплату. Если вам предлагают «рассрочку на компфонд» — это либо рассрочка по договору с посредником, либо схема, которая создаст проблемы.',
+  },
+  {
+    q: 'Почему у разных СРО разные суммы?',
+    a: 'Взносы в компенсационные фонды одинаковы для всех: это минимумы, установленные статьёй 55.16 ГрК РФ, и брать меньше СРО не вправе. А вот вступительный взнос, членские взносы и целевой взнос каждая СРО устанавливает своими документами — здесь суммы действительно различаются, и именно их надо сравнивать при выборе.',
+  },
+]
+
+const faqSchema = {
+  '@type': 'FAQPage',
+  mainEntity: faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+}
+---
+
+<Base
+  title="Стоимость вступления в СРО — открытая разбивка взносов 2026 | НОРМА"
+  description="Из чего складываются расходы на вступление в СРО: взносы в компенсационные фонды по уровням, вступительный и членские взносы, страхование, НРС и НОК. Отдельно — КФ ОДО для торгов."
+  schema={[faqSchema]}
+  breadcrumbs={[{ label: 'Главная', url: href('/') }, { label: 'Стоимость' }]}
+>
+  <section class="section page-head">
+    <div class="wrap">
+      <span class="eyebrow">Стоимость</span>
+      <h1>Сколько стоит вступление в СРО</h1>
+      <p class="lead">
+        Здесь нет строчки «от N рублей». Есть перечень всех платежей, которые вас ждут,
+        с указанием, что установлено законом, а что — конкретной СРО.{' '}
+        <b>Мои услуги стоят 0 ₽</b>, взносы вы платите напрямую в СРО.
+      </p>
+      <div class="head-tags">
+        <span class="stamp">Суммы сверены · {SITE.checkedDate}</span>
+        <span class="law law--dark">{LAW.funds}</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Из чего складывается -->
+  <section class="section">
+    <div class="wrap">
+      <div class="s-head rv">
+        <span class="eyebrow">Состав расходов</span>
+        <h2>Шесть строк, из которых складывается <em>бюджет</em></h2>
+        <p>Ни одна не спрятана. Порядок — от обязательного к ситуативному.</p>
+      </div>
+
+      <ol class="parts">
+        <li class="rv">
+          <div class="p-num">1</div>
+          <div class="p-body">
+            <h3>Взнос в компенсационный фонд возмещения вреда (КФ ВВ)</h3>
+            <p>
+              Обязателен для всех членов СРО без исключения. Размер зависит от уровня
+              ответственности, то есть от максимальной суммы одного договора, который вы
+              планируете заключать. Минимумы установлены законом — ниже них не берёт никто.
+            </p>
+            <p class="p-warn">
+              Взнос вносится <b>единовременно</b>: рассрочка прямо запрещена законом.
+              При выходе из СРО он <b>не возвращается</b>.
+            </p>
+            <span class="law">{LAW.funds}</span>
+          </div>
+          <div class="p-tag">по закону</div>
+        </li>
+
+        <li class="rv accent">
+          <div class="p-num">2</div>
+          <div class="p-body">
+            <h3>Взнос в компенсационный фонд обеспечения договорных обязательств (КФ ОДО)</h3>
+            <p>
+              <b>Это отдельный второй взнос, а не часть первого.</b> Нужен только тем, кто участвует
+              в конкурентных закупках — торгах, аукционах, конкурсах. Без него заявку на торгах
+              отклонят, и это одна из трёх самых частых причин отказа.
+            </p>
+            <p>
+              Именно про этот взнос молчат сайты, обещающие «без скрытых платежей». Формально
+              они правы — если вы не идёте на торги, он не нужен. Но если идёте и узнали о нём
+              после отклонённой заявки, цена такой «прозрачности» получается высокой.
+            </p>
+            <span class="law">{LAW.funds}</span>
+          </div>
+          <div class="p-tag">для торгов</div>
+        </li>
+
+        <li class="rv">
+          <div class="p-num">3</div>
+          <div class="p-body">
+            <h3>Вступительный взнос СРО</h3>
+            <p>
+              Разовый платёж при приёме в члены. Устанавливается каждой СРО самостоятельно,
+              поэтому суммы различаются. В части СРО он нулевой — это как раз то, что имеет
+              смысл сравнивать при выборе.
+            </p>
+          </div>
+          <div class="p-tag">по тарифам СРО</div>
+        </li>
+
+        <li class="rv">
+          <div class="p-num">4</div>
+          <div class="p-body">
+            <h3>Членские взносы</h3>
+            <p>
+              Регулярный платёж, обычно ежеквартальный или ежегодный. <b>Он не исчезает
+              со второго года</b> — платится всё время, пока компания состоит в СРО.
+              Если вам обещают членство «без последующих платежей» — уточните, что именно имеется в виду.
+            </p>
+          </div>
+          <div class="p-tag">ежегодно</div>
+        </li>
+
+        <li class="rv">
+          <div class="p-num">5</div>
+          <div class="p-body">
+            <h3>Целевой взнос в национальное объединение и страхование</h3>
+            <p>
+              Целевой взнос идёт в НОСТРОЙ (для строителей) или НОПРИЗ (для проектировщиков
+              и изыскателей). Страхование гражданской ответственности требуется большинством СРО
+              и продлевается ежегодно.
+            </p>
+          </div>
+          <div class="p-tag">ежегодно</div>
+        </li>
+
+        <li class="rv">
+          <div class="p-num">6</div>
+          <div class="p-body">
+            <h3>Расходы на специалистов: НРС и НОК</h3>
+            <p>
+              Нужны минимум два специалиста в национальном реестре. Для включения в НРС специалист
+              проходит независимую оценку квалификации — это платная процедура. Свидетельство
+              действует {TERMS.nokValidity}, после чего оценку проходят заново.
+            </p>
+            <p>
+              Если подходящих специалистов в штате нет — помогу найти и трудоустроить.
+              Обратите внимание: формулировка «предоставим специалистов» у конкурентов означает
+              фиктивное трудоустройство. Это серая схема, при проверке она ведёт к исключению из СРО.
+            </p>
+          </div>
+          <div class="p-tag">при необходимости</div>
+        </li>
+
+        <li class="rv free">
+          <div class="p-num"><Icon name="check" size={18} /></div>
+          <div class="p-body">
+            <h3>Мои услуги: подготовка документов и сопровождение</h3>
+            <p>
+              Разбор ситуации, подбор и проверка СРО, сбор и оформление комплекта документов,
+              подача, сопровождение до получения выписки из реестра.
+            </p>
+          </div>
+          <div class="p-tag p-tag--free">0 ₽</div>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- Таблицы взносов -->
+  <section class="section section--dark" id="tablicy" data-anchor>
+    <div class="wrap">
+      <div class="s-head rv">
+        <span class="eyebrow">Минимумы по закону</span>
+        <h2>Взносы в компенсационные фонды <em>по уровням ответственности</em></h2>
+        <p>
+          Это минимальные размеры, установленные статьёй 55.16 ГрК РФ. Конкретная СРО не вправе
+          брать меньше. Уровень выбираете вы — исходя из максимальной суммы одного договора,
+          который планируете заключать.
+        </p>
+      </div>
+
+      <div class="tables">
+        <div class="tbl-block rv">
+          <h3>Строительство, реконструкция, капитальный ремонт</h3>
+          <div class="tbl-wrap dark">
+            <table class="data">
+              <thead>
+                <tr>
+                  <th>Уровень</th>
+                  <th>Стоимость одного договора</th>
+                  <th>КФ возмещения вреда</th>
+                  <th>КФ договорных обязательств</th>
+                </tr>
+              </thead>
+              <tbody>
+                {FUNDS.buildHarm.map((row, i) => (
+                  <tr>
+                    <td class="strong">{row.level}</td>
+                    <td>{row.limit}</td>
+                    <td class="strong">{row.amount}</td>
+                    <td class="odo">{FUNDS.buildContract[i].amount}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p class="tbl-note">
+            Первый уровень действует до 90 млн ₽ — порог поднят с 60 млн законом 435-ФЗ
+            с 15 августа 2023 года.
+          </p>
+        </div>
+
+        <div class="tbl-block rv">
+          <h3>Проектирование и инженерные изыскания</h3>
+          <div class="tbl-wrap dark">
+            <table class="data">
+              <thead>
+                <tr>
+                  <th>Уровень</th>
+                  <th>Стоимость одного договора</th>
+                  <th>КФ возмещения вреда</th>
+                  <th>КФ договорных обязательств</th>
+                </tr>
+              </thead>
+              <tbody>
+                {FUNDS.designHarm.map((row, i) => (
+                  <tr>
+                    <td class="strong">{row.level}</td>
+                    <td>{row.limit}</td>
+                    <td class="strong">{row.amount}</td>
+                    <td class="odo">{FUNDS.designContract[i].amount}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p class="tbl-note">
+            У проектировщиков и изыскателей четыре уровня ответственности, а не пять.
+            И напомню: денежного порога, ниже которого членство не нужно, у них нет вообще —
+            в отличие от строителей.
+          </p>
+        </div>
+      </div>
+
+      <div class="odo-callout rv">
+        <span class="oc-ic"><Icon name="alert" size={22} /></span>
+        <div>
+          <h3>Последний столбец — это не альтернатива, а дополнение</h3>
+          <p>
+            Взнос в КФ ОДО платится <b>сверх</b> взноса в КФ возмещения вреда, а не вместо него.
+            Строительная компания первого уровня, идущая на торги, вносит 100 000 ₽ в первый фонд{' '}
+            <b> и</b> 200 000 ₽ во второй. Тем, кто работает по прямым договорам без закупок,
+            второй взнос не нужен.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Пример расчёта -->
+  <section class="section">
+    <div class="wrap">
+      <div class="s-head rv">
+        <span class="eyebrow">Как это считается</span>
+        <h2>Пример: строительная компания <em>идёт на торги</em></h2>
+        <p>
+          Условия: договоры до 90 млн ₽ (первый уровень), участие в конкурентных закупках,
+          два специалиста уже есть в штате и внесены в НРС.
+        </p>
+      </div>
+
+      <div class="calc-example rv">
+        <ul>
+          <li>
+            <span>Взнос в компенсационный фонд возмещения вреда, 1-й уровень</span>
+            <b>100 000 ₽</b>
+          </li>
+          <li>
+            <span>Взнос в компенсационный фонд обеспечения договорных обязательств, 1-й уровень</span>
+            <b>200 000 ₽</b>
+          </li>
+          <li>
+            <span>Вступительный взнос, членские взносы, целевой взнос, страхование</span>
+            <b>по тарифам СРО</b>
+          </li>
+          <li>
+            <span>Подготовка документов и сопровождение — мои услуги</span>
+            <b class="free-b">0 ₽</b>
+          </li>
+          <li class="total">
+            <span><b>Установлено законом, платится напрямую в СРО</b></span>
+            <b>300 000 ₽</b>
+          </li>
+        </ul>
+        <p class="ce-note">
+          Суммы взносов в компенсационные фонды одинаковы во всех СРО — это минимумы по закону.
+          Различаются только вступительный, членские и целевой взносы, поэтому именно их
+          я сравниваю при подборе СРО и показываю вам до принятия решения.
+          Если бы компания не участвовала в торгах, вторая строка была бы не нужна.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section section--tight">
+    <div class="wrap">
+      <div class="s-head rv">
+        <h2>Вопросы <em>про деньги</em></h2>
+      </div>
+      <div class="faq rv">
+        {faq.map((f, i) => (
+          <details name="pricefaq" open={i === 0}>
+            <summary>{f.q}</summary>
+            <div class="fa"><p>{f.a}</p></div>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="raschet" data-anchor>
+    <div class="wrap narrow">
+      <LeadForm
+        title="Назову точную сумму для вашей компании"
+        subtitle="Напишите вид работ, регион и максимальную сумму договора — посчитаю все взносы по вашему случаю и пришлю письменно, до начала работы."
+      />
+    </div>
+  </section>
+</Base>
+
+<style>
+  .page-head { background: var(--navy); color: var(--on-navy); padding-bottom: 44px; }
+  .page-head .eyebrow { color: var(--acc-bright); }
+  .page-head h1 { color: #fff; margin: 12px 0 16px; }
+  .page-head .lead { color: var(--on-navy-muted); }
+  .page-head .lead b { color: #fff; }
+  .head-tags { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 22px; align-items: center; }
+
+  .parts { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+  .parts li {
+    display: grid;
+    grid-template-columns: 44px 1fr auto;
+    gap: 18px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--r-l);
+    padding: 22px 24px;
+    align-items: start;
+  }
+  .parts li.accent { border-color: color-mix(in srgb, var(--acc) 45%, transparent); background: var(--acc-soft); }
+  .parts li.free { border-color: rgba(30, 142, 90, 0.4); background: var(--good-bg); }
+
+  .p-num {
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    color: var(--acc-deep);
+    font-family: var(--font-mono);
+    font-size: 15px;
+    display: grid; place-items: center;
+  }
+  .free .p-num { background: rgba(30, 142, 90, 0.15); border-color: transparent; color: var(--good); }
+
+  .p-body h3 { font-size: 18px; margin-bottom: 8px; }
+  .p-body p { color: var(--muted); font-size: 15px; max-width: 72ch; }
+  .p-body p + p { margin-top: 9px; }
+  .p-body p b { color: var(--ink); }
+  .p-warn { color: var(--ink) !important; }
+  .p-body .law { margin-top: 12px; }
+
+  .p-tag {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 4px 10px;
+    white-space: nowrap;
+  }
+  .p-tag--free { color: var(--good); border-color: var(--good); background: #fff; font-weight: 500; }
+
+  /* Тёмные таблицы. min-width: 0 не даёт широкой таблице распереть
+     страницу на телефоне — вместо этого прокручивается сама таблица. */
+  .tables { display: grid; gap: 28px; }
+  .tbl-block { min-width: 0; }
+  .tbl-block h3 { color: #fff; font-size: 19px; margin-bottom: 14px; }
+  .tbl-wrap.dark { background: rgba(255, 255, 255, 0.04); border-color: var(--navy-line); }
+  .tbl-wrap.dark :global(table.data th) { background: rgba(255, 255, 255, 0.05); color: var(--on-navy-muted); border-color: var(--navy-line); }
+  .tbl-wrap.dark :global(table.data td) { color: var(--on-navy); border-color: var(--navy-line); }
+  .tbl-wrap.dark :global(table.data td.strong) { color: #fff; }
+  .tbl-wrap.dark :global(table.data td.odo) { color: var(--acc-bright); font-weight: 500; }
+  .tbl-note { font-size: 13.5px; color: var(--on-navy-muted); margin-top: 12px; max-width: 74ch; }
+
+  .odo-callout {
+    margin-top: 26px;
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 16px;
+    background: color-mix(in srgb, var(--acc-bright) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--acc-bright) 40%, transparent);
+    border-radius: var(--r-l);
+    padding: 22px 24px;
+  }
+  .oc-ic { width: 40px; height: 40px; border-radius: 11px; background: color-mix(in srgb, var(--acc-bright) 16%, transparent); color: var(--acc-bright); display: grid; place-items: center; }
+  .odo-callout h3 { color: #fff; font-size: 17.5px; margin-bottom: 8px; }
+  .odo-callout p { color: var(--on-navy-muted); font-size: 15px; max-width: 76ch; }
+  .odo-callout p b { color: #fff; }
+
+  /* Пример расчёта */
+  .calc-example {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--r-l);
+    padding: 26px;
+    max-width: 780px;
+  }
+  .calc-example ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+  .calc-example li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 20px; align-items: baseline; font-size: 15.5px; }
+  .calc-example li span { color: var(--muted); }
+  /* Только прямой потомок: жирный текст внутри описания должен переноситься,
+     иначе строка не помещается на телефоне и страница едет вбок. */
+  .calc-example li > b { font-variant-numeric: lining-nums tabular-nums; white-space: nowrap; }
+  .free-b { color: var(--good); }
+  .calc-example .total { border-top: 1px solid var(--line); padding-top: 14px; margin-top: 4px; font-size: 17px; }
+  .calc-example .total b { color: var(--acc-deep); font-size: 20px; }
+  .ce-note { font-size: 13.5px; color: var(--muted); margin-top: 16px; line-height: 1.6; }
+
+  .faq { display: grid; gap: 10px; max-width: 900px; }
+  .faq details { background: var(--card); border: 1px solid var(--line); border-radius: var(--r-m); overflow: hidden; }
+  .faq summary { padding: 18px 22px; font-weight: 600; font-size: 16px; cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 14px; align-items: center; }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: '+'; font-family: var(--font-mono); font-size: 20px; color: var(--acc-deep); flex: none; }
+  .faq details[open] summary::after { content: '−'; }
+  .faq .fa { padding: 0 22px 20px; }
+  .faq .fa p { color: var(--muted); font-size: 15.5px; max-width: 76ch; }
+
+  .narrow { max-width: 780px; }
+
+  @media (max-width: 700px) {
+    .parts li { grid-template-columns: 34px 1fr; }
+    .p-tag { grid-column: 2; justify-self: start; }
+    .odo-callout { grid-template-columns: 1fr; }
+    .calc-example li { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  }
+</style>

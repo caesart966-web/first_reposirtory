@@ -1,0 +1,184 @@
+---
+import Base from '../layouts/Base.astro'
+import LeadForm from '../components/LeadForm.astro'
+import Icon from '../components/Icon.astro'
+import { href, SITE, REGISTRIES } from '../config/site'
+---
+
+<Base
+  title="Контакты — Алихан Багишев, помощь по СРО, НРС, НОК | НОРМА"
+  description="Телефон, WhatsApp, Telegram и почта для связи. ИП Багишев Алихан Ахадович. Работаем по всей России дистанционно, от подачи до выписки из реестра 2–3 дня."
+  breadcrumbs={[{ label: 'Главная', url: href('/') }, { label: 'Контакты' }]}
+>
+  <section class="section page-head">
+    <div class="wrap">
+      <span class="eyebrow">Контакты</span>
+      <h1>Свяжитесь напрямую</h1>
+      <p class="lead">
+        Отвечаю лично — не отдел продаж и не колл-центр. Опишите задачу, и я скажу прямо,
+        нужна ли вам СРО, во что это обойдётся и сколько займёт.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="cols">
+        <div class="rv">
+          <LeadForm />
+        </div>
+
+        <aside class="side rv">
+          <div class="side-block">
+            <span class="sb-label">Телефон</span>
+            <a class="big-phone" href={SITE.phoneHref} data-goal="click_phone">{SITE.phone}</a>
+            <p class="sb-note">
+              Тот же номер в WhatsApp, Telegram и MAX. Если не отвечаю — значит, на встрече;
+              напишите в мессенджер, отвечу текстом.
+            </p>
+          </div>
+
+          <div class="side-block">
+            <span class="sb-label">Мессенджеры</span>
+            <div class="msgs">
+              <a href={SITE.whatsapp} target="_blank" rel="noopener noreferrer" data-goal="click_whatsapp">
+                <Icon name="whatsapp" size={19} /> WhatsApp
+              </a>
+              <a href={SITE.telegram} target="_blank" rel="noopener noreferrer" data-goal="click_telegram">
+                <Icon name="telegram" size={19} /> Telegram
+              </a>
+              {SITE.maxLink ? (
+                <a href={SITE.maxLink} target="_blank" rel="noopener noreferrer">
+                  <Icon name="phone" size={19} /> MAX
+                </a>
+              ) : (
+                <a href={SITE.phoneHref} data-goal="click_phone">
+                  <Icon name="phone" size={19} /> MAX — по номеру {SITE.phone}
+                </a>
+              )}
+            </div>
+          </div>
+
+          <div class="side-block">
+            <span class="sb-label">Почта</span>
+            <a class="mail" href={`mailto:${SITE.email}`}>{SITE.email}</a>
+            <p class="sb-note">Для документов и письменных расчётов.</p>
+          </div>
+
+          <div class="side-block">
+            <span class="sb-label">География</span>
+            <p class="geo">{SITE.geo}</p>
+            <p class="sb-note">
+              Работаю дистанционно. Для вступления в СРО личная встреча не требуется:
+              документы подписываются электронной подписью либо пересылаются.
+            </p>
+          </div>
+
+          <div class="side-block side-block--legal">
+            <span class="sb-label">Реквизиты для проверки</span>
+            <p class="req">{SITE.legalName}</p>
+            <p class="req mono">ИНН {SITE.inn}</p>
+            {SITE.ogrnip && <p class="req mono">ОГРНИП {SITE.ogrnip}</p>}
+            <p class="sb-note">
+              Проверить статус ИП можно на сайте ФНС по ИНН. Членство любой компании и статус
+              любой СРО — в реестрах{' '}
+              <a href={REGISTRIES.nostroy} target="_blank" rel="noopener noreferrer">НОСТРОЙ</a> и{' '}
+              <a href={REGISTRIES.nopriz} target="_blank" rel="noopener noreferrer">НОПРИЗ</a>.
+            </p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--tight before-ask">
+    <div class="wrap">
+      <div class="s-head rv">
+        <h2>Прежде чем писать — можно проверить себя самому</h2>
+        <p>Два инструмента, которые часто снимают вопрос без всякого общения.</p>
+      </div>
+      <div class="grid-2">
+        <a class="card ba rv" href={href('/#calc')}>
+          <span class="ic"><Icon name="calculator" size={20} /></span>
+          <h3>Калькулятор «Нужна ли вам СРО»</h3>
+          <p>Четыре вопроса и честный ответ со ссылкой на норму — включая ответ «не нужна».</p>
+        </a>
+        <a class="card ba rv" href={href('/stoimost/')}>
+          <span class="ic"><Icon name="wallet" size={20} /></span>
+          <h3>Открытая разбивка стоимости</h3>
+          <p>Все взносы с суммами по уровням ответственности, включая отдельный взнос для торгов.</p>
+        </a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .page-head { background: var(--navy); color: var(--on-navy); padding-bottom: 40px; }
+  .page-head .eyebrow { color: var(--acc-bright); }
+  .page-head h1 { color: #fff; margin: 12px 0 16px; }
+  .page-head .lead { color: var(--on-navy-muted); }
+
+  .cols { display: grid; grid-template-columns: 1.35fr 1fr; gap: 20px; align-items: start; }
+
+  .side { display: grid; gap: 12px; }
+  .side-block {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--r-l);
+    padding: 22px 24px;
+    display: grid;
+    gap: 8px;
+  }
+  .side-block--legal { background: var(--paper); }
+  .sb-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .big-phone {
+    font-family: var(--font-mono);
+    font-size: clamp(23px, 3.4vw, 30px);
+    font-weight: 500;
+    color: var(--ink);
+    text-decoration: none;
+    line-height: 1.15;
+  }
+  .big-phone:hover { color: var(--acc-deep); }
+  .sb-note { font-size: 13.5px; color: var(--muted); line-height: 1.55; }
+  .sb-note a { color: var(--acc-deep); }
+
+  .msgs { display: grid; gap: 8px; }
+  .msgs a {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 15px;
+    padding: 11px 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-s);
+    min-height: 46px;
+  }
+  .msgs a:hover { border-color: var(--acc-btn); color: var(--acc-deep); }
+  .msgs svg { color: var(--acc-deep); flex: none; }
+
+  .mail { font-size: 17px; color: var(--ink); text-decoration: none; overflow-wrap: anywhere; }
+  .mail:hover { color: var(--acc-deep); }
+
+  .geo { font-size: 15.5px; }
+  .req { font-size: 14.5px; }
+  .req.mono { font-family: var(--font-mono); font-size: 13.5px; }
+
+  .before-ask { background: var(--card); border-top: 1px solid var(--line); }
+  .ba { display: grid; gap: 10px; align-content: start; }
+  .ba h3 { font-size: 17.5px; margin: 0; }
+  .ic { width: 40px; height: 40px; border-radius: var(--r-s); background: var(--acc-soft); color: var(--acc-deep); display: grid; place-items: center; }
+
+  @media (max-width: 900px) {
+    .cols { grid-template-columns: 1fr; }
+  }
+</style>

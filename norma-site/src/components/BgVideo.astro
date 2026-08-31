@@ -1,0 +1,145 @@
+---
+import { href } from '../config/site'
+
+interface Props {
+  /** Имя файлов в public/video/ без расширения: 'hero', 'uslugi', 'stoimost'. */
+  name: string
+  /**
+   * Первый экран на телефоне. Он высокий и узкий, а ролик широкий: если
+   * растянуть его на всю высоту, в кадр попадёт вертикальная полоска
+   * шириной в седьмую часть — небо и дымка над горизонтом, по которым
+   * не понять, что это стройка. С этим свойством ролик на телефоне идёт
+   * полосой сверху и внизу растворяется в фирменном синем: кадр
+   * обрезается вдвое меньше, и в нём видно и краны, и перекрытия.
+   * Шапкам внутренних страниц это не нужно — они и так невысокие.
+   */
+  band?: boolean
+}
+const { name, band = false } = Astro.props
+
+// Фоновый ролик. Один компонент на первый экран и на шапки страниц.
+//
+// Видео — украшение, а не содержание, поэтому оно не должно мешать
+// открыть сайт. Устроено так:
+//
+// 0. Контраст, яркость и насыщенность подняты прямо в файлах при сжатии:
+//    исходники сняты в утренней дымке и на сайте выглядели блёкло.
+//    Делать это фильтром в браузере нельзя — он пересчитывает каждый кадр
+//    на видеокарте и заметно греет телефон. Сжатие и обработка —
+//    scripts/encode-video.mjs.
+// 1. Сначала показывается картинка-заглушка — первый кадр ролика.
+//    Она грузится вместе со страницей, и фон выглядит готовым сразу.
+// 2. Ролик браузер начинает качать только после того, как страница полностью
+//    загрузилась и освободилась. Атрибут preload="none" запрещает загрузку
+//    до этого момента, а ожидание события load — обязательное условие:
+//    иначе ролик отнимает канал у шрифтов и стилей, и страница открывается
+//    заметно дольше (проверено замером скорости: 89 против 96 баллов).
+//    Файлов два: WebM для Chrome, Firefox, Яндекс.Браузера и Edge,
+//    MP4 для Safari и айфонов. Браузер берёт тот, который умеет.
+// 3. Ролик не грузится совсем, если посетитель включил экономию трафика
+//    или в системе стоит «уменьшить движение». Тогда остаётся заглушка.
+// 4. Звука в файле нет. Это не только уместнее — браузеры запрещают
+//    автозапуск со звуком, и ролик просто не пошёл бы.
+//
+// Заменить ролик: положите свои файлы в public/video/ под теми же именами.
+// Как их подготовить — написано в README, раздел про видео.
+---
+
+<div class:list={['bgv', band && 'bgv--band']} aria-hidden="true">
+  <video
+    class="bgv-video"
+    poster={href(`/video/${name}-poster.webp`)}
+    preload="none"
+    muted
+    loop
+    playsinline
+    disablepictureinpicture
+    tabindex="-1"
+    data-webm={href(`/video/${name}.webm`)}
+    data-mp4={href(`/video/${name}.mp4`)}></video>
+</div>
+
+<style>
+  .bgv {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    /* Тот же тёмно-синий, что и у секции: пока картинка не пришла,
+       фон не мигает светлым. */
+    background: var(--navy);
+  }
+
+  .bgv-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  /* Плавного появления здесь намеренно нет. Заглушка — это первый кадр
+     того же ролика с той же обработкой, и ролик начинается тоже с него:
+     в момент подмены на экране не меняется ничего, показывать нечего.
+     Прозрачность накладывать было бы и нельзя: заглушку рисует сам
+     элемент video, и вместе с кадрами исчезла бы она. */
+
+  @media (max-width: 767px) {
+    .bgv--band {
+      bottom: auto;
+      height: 46%;
+      mask-image: linear-gradient(180deg, #000 62%, transparent 100%);
+      -webkit-mask-image: linear-gradient(180deg, #000 62%, transparent 100%);
+    }
+  }
+</style>
+
+<script>
+  // Ролики подключаются только после того, как страница отрисована,
+  // и только если это уместно. Всё остальное время висят заглушки.
+  //
+  // Скрипт общий на страницу: Astro собирает его один раз, сколько бы
+  // роликов на ней ни стояло, поэтому берём сразу все.
+  const videos = Array.from(document.querySelectorAll<HTMLVideoElement>('.bgv-video'))
+
+  if (videos.length) {
+    const conn = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection
+    const saveData = conn?.saveData === true
+    const calmer = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+    if (!saveData && !calmer) {
+      const start = () => {
+        for (const video of videos) {
+          // Спрашиваем сам браузер, что он умеет: 'probably' или 'maybe'
+          // означают, что формат поддерживается, пустая строка — что нет.
+          const src = video.canPlayType('video/webm; codecs="vp9"')
+            ? video.dataset.webm
+            : video.dataset.mp4
+          if (!src) continue
+          video.src = src
+          // play() возвращает обещание, которое браузер может отклонить
+          // (например, экономия энергии на ноутбуке). Это не ошибка:
+          // тогда просто остаётся картинка-заглушка.
+          video.play().catch(() => {})
+        }
+      }
+
+      // Ждём полной загрузки страницы, и только потом — свободной минуты
+      // у браузера. requestIdleCallback есть не везде, поэтому запасной
+      // вариант — обычная задержка.
+      const queue = () => {
+        if ('requestIdleCallback' in window) requestIdleCallback(start, { timeout: 3000 })
+        else setTimeout(start, 900)
+      }
+      if (document.readyState === 'complete') queue()
+      else window.addEventListener('load', queue, { once: true })
+
+      // Ушли со вкладки — останавливаем: незачем греть телефон
+      // роликом, которого никто не видит.
+      document.addEventListener('visibilitychange', () => {
+        for (const video of videos) {
+          if (!video.src) continue
+          if (document.hidden) video.pause()
+          else video.play().catch(() => {})
+        }
+      })
+    }
+  }
+</script>

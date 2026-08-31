@@ -1,0 +1,197 @@
+---
+import Base from '../../layouts/Base.astro'
+import Icon from '../../components/Icon.astro'
+import { getCollection, render } from 'astro:content'
+import { href, SITE } from '../../config/site'
+
+export async function getStaticPaths() {
+  const articles = await getCollection('articles')
+  return articles.map((article) => ({ params: { slug: article.id }, props: { article } }))
+}
+
+const { article } = Astro.props
+const { Content } = await render(article)
+
+const fmt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
+
+// Другие статьи — чтобы читатель не уходил после одной страницы.
+const others = (await getCollection('articles'))
+  .filter((a) => a.id !== article.id)
+  .sort((a, b) => (b.data.updated ?? b.data.published).getTime() - (a.data.updated ?? a.data.published).getTime())
+  .slice(0, 2)
+
+const articleSchema = {
+  '@type': 'Article',
+  headline: article.data.title,
+  description: article.data.description,
+  datePublished: article.data.published.toISOString(),
+  dateModified: (article.data.updated ?? article.data.published).toISOString(),
+  author: { '@type': 'Person', name: 'Багишев Алихан Ахадович' },
+  publisher: { '@id': new URL('/', Astro.site).toString() + '#org' },
+  mainEntityOfPage: new URL(Astro.url.pathname, Astro.site).toString(),
+  inLanguage: 'ru-RU',
+}
+---
+
+<Base
+  title={`${article.data.metaTitle ?? article.data.title} | НОРМА`}
+  description={article.data.description}
+  schema={[articleSchema]}
+  breadcrumbs={[
+    { label: 'Главная', url: href('/') },
+    { label: 'База знаний', url: href('/baza-znaniy/') },
+    { label: article.data.title },
+  ]}
+>
+  <article class="art">
+    <header class="art-head">
+      <div class="wrap">
+        <nav class="crumbs" aria-label="Хлебные крошки">
+          <a href={href('/')}>Главная</a>
+          <span aria-hidden="true">/</span>
+          <a href={href('/baza-znaniy/')}>База знаний</a>
+        </nav>
+        <h1>{article.data.title}</h1>
+        <div class="meta">
+          <time datetime={article.data.published.toISOString().slice(0, 10)}>
+            Опубликовано {fmt(article.data.published)}
+          </time>
+          {article.data.updated && (
+            <span class="upd">
+              <Icon name="check" size={14} />
+              Сверено с законом {fmt(article.data.updated)}
+            </span>
+          )}
+        </div>
+      </div>
+    </header>
+
+    <div class="wrap art-body">
+      <div class="prose">
+        <Content />
+      </div>
+
+      <aside class="art-side">
+        {article.data.relatedService && (
+          <div class="side-card side-card--acc">
+            <span class="sc-label">По этой теме</span>
+            <h2>{article.data.relatedService.label}</h2>
+            <p>Разбор нормы — это половина дела. Вторая половина — правильно оформленные документы.</p>
+            <a class="btn btn--acc" href={href(article.data.relatedService.url)}>Перейти к услуге</a>
+          </div>
+        )}
+
+        <div class="side-card">
+          <span class="sc-label">Быстрая проверка</span>
+          <h2>Нужна ли СРО именно вам</h2>
+          <p>Четыре вопроса, ответ со ссылкой на норму. Если членство не требуется — так и напишем.</p>
+          <a class="btn btn--ghost" href={href('/#calc')}>Открыть калькулятор</a>
+        </div>
+
+        <div class="side-card side-card--quiet">
+          <span class="sc-label">Связаться</span>
+          <a class="side-phone" href={SITE.phoneHref} data-goal="click_phone">{SITE.phone}</a>
+          <p>{SITE.geoShort}. Отвечаю лично.</p>
+          <div class="side-msgs">
+            <a href={SITE.whatsapp} target="_blank" rel="noopener noreferrer" data-goal="click_whatsapp">WhatsApp</a>
+            <a href={SITE.telegram} target="_blank" rel="noopener noreferrer" data-goal="click_telegram">Telegram</a>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    {others.length > 0 && (
+      <section class="section next">
+        <div class="wrap">
+          <h2>Читайте дальше</h2>
+          <div class="grid-2">
+            {others.map((a) => (
+              <a class="card next-card" href={href(`/baza-znaniy/${a.id}/`)}>
+                <span class="nc-date">{fmt(a.data.updated ?? a.data.published)}</span>
+                <h3>{a.data.title}</h3>
+                <p>{a.data.excerpt}</p>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+  </article>
+</Base>
+
+<style>
+  .art-head { background: var(--navy); color: var(--on-navy); padding: 34px 0 40px; }
+  .crumbs { display: flex; gap: 8px; font-size: 13px; color: var(--on-navy-muted); margin-bottom: 18px; flex-wrap: wrap; }
+  .crumbs a { color: var(--on-navy-muted); text-decoration: none; }
+  .crumbs a:hover { color: var(--acc-bright); }
+  .art-head h1 { color: #fff; max-width: 24ch; }
+  .meta { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 18px; font-family: var(--font-mono); font-size: 12px; color: var(--on-navy-muted); }
+  .upd { display: inline-flex; align-items: center; gap: 6px; color: var(--acc-bright); }
+
+  .art-body { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 40px; padding-top: 40px; padding-bottom: 20px; align-items: start; }
+
+  .prose { max-width: 68ch; min-width: 0; font-size: 17px; line-height: 1.72; }
+  .prose :global(p) { margin: 0 0 20px; }
+  .prose :global(h2) { font-size: 25px; margin: 36px 0 14px; }
+  .prose :global(h3) { font-size: 19px; margin: 28px 0 10px; }
+  .prose :global(ul), .prose :global(ol) { margin: 0 0 20px; padding-left: 24px; display: grid; gap: 8px; }
+  .prose :global(li) { line-height: 1.65; }
+  .prose :global(strong) { font-weight: 600; }
+  .prose :global(a) { color: var(--acc-deep); }
+  .prose :global(blockquote) {
+    margin: 0 0 20px;
+    padding: 14px 20px;
+    border-left: 3px solid var(--acc);
+    background: var(--acc-soft);
+    border-radius: 0 var(--r-s) var(--r-s) 0;
+  }
+  .prose :global(code) {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 1px 5px;
+  }
+
+  .art-side { display: grid; gap: 14px; position: sticky; top: 96px; }
+  .side-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--r-l);
+    padding: 22px;
+    display: grid;
+    gap: 10px;
+  }
+  .side-card--acc { background: var(--acc-soft); border-color: color-mix(in srgb, var(--acc) 30%, transparent); }
+  .side-card--quiet { background: var(--navy); border-color: var(--navy-line); color: var(--on-navy); }
+  .sc-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .side-card--quiet .sc-label { color: var(--on-navy-muted); }
+  .side-card h2 { font-size: 17px; }
+  .side-card--quiet h2 { color: #fff; }
+  .side-card p { font-size: 14px; color: var(--muted); }
+  .side-card--quiet p { color: var(--on-navy-muted); }
+  .side-card .btn { justify-self: start; }
+
+  .side-phone { font-family: var(--font-mono); font-size: 19px; color: #fff; text-decoration: none; }
+  .side-phone:hover { color: var(--acc-bright); }
+  .side-msgs { display: flex; gap: 14px; }
+  .side-msgs a { color: var(--acc-bright); font-size: 14px; text-decoration: none; }
+
+  .next { background: var(--card); border-top: 1px solid var(--line); }
+  .next h2 { font-size: 22px; margin-bottom: 18px; }
+  .next-card { display: grid; gap: 8px; align-content: start; }
+  .nc-date { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); }
+  .next-card h3 { font-size: 17px; margin: 0; }
+
+  @media (max-width: 900px) {
+    .art-body { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+    .art-side { position: static; }
+  }
+</style>

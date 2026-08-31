@@ -1,0 +1,59 @@
+---
+import { SERVICES } from '../config/services'
+import { href } from '../config/site'
+import Icon from './Icon.astro'
+
+interface Props {
+  /** Какую услугу не показывать (на её собственной странице) */
+  exclude?: string
+  title?: string
+}
+const { exclude, title = 'Услуги' } = Astro.props
+const list = SERVICES.filter((s) => s.slug !== exclude)
+---
+
+<section class="section" id="uslugi" data-anchor>
+  <div class="wrap">
+    <div class="s-head rv">
+      <span class="eyebrow">Направления</span>
+      <h2 set:html={title.replace(/(\S+)$/, "<em>$1</em>")} />
+      <p>
+        У каждой услуги — отдельная страница с нормами, сроками и составом документов.
+        Ничего не выдумываю: если по вашей задаче членство не требуется, я скажу об этом
+        до начала работы, а не после оплаты.
+      </p>
+    </div>
+
+    <div class="grid-3">
+      {list.map((s) => (
+        <a class="card srv rv" href={href(`/uslugi/${s.slug}/`)}>
+          <span class="ic"><Icon name={s.icon} size={20} /></span>
+          <h3>{s.title}</h3>
+          <p>{s.excerpt}</p>
+          <span class="go">Подробнее <Icon name="arrow" size={15} /></span>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .srv { display: grid; gap: 10px; align-content: start; }
+  .srv h3 { font-size: 18px; margin: 0; }
+  .ic {
+    width: 40px; height: 40px;
+    border-radius: var(--r-s);
+    background: var(--acc-soft);
+    color: var(--acc-deep);
+    display: grid; place-items: center;
+  }
+  .go {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--acc-deep);
+    margin-top: 2px;
+  }
+</style>

@@ -1,0 +1,128 @@
+---
+// Три причины, по которым заявку отклоняют на торгах.
+// Уникальный блок: у конкурентов его нет, а для подрядчика это самая
+// дорогая ошибка — узнать про КФ ОДО уже после проигранного тендера.
+import { LAW } from '../config/facts'
+import { href } from '../config/site'
+---
+
+<section class="section rejects" id="torgi" data-anchor>
+  <div class="wrap">
+    <div class="s-head rv">
+      <span class="eyebrow">Госзакупки</span>
+      <h2>Три причины, по которым заявку <em>отклоняют</em> на торгах</h2>
+      <p>
+        Все три проверяются автоматически, до рассмотрения вашего ценового предложения.
+        Ни одна не лечится «по ходу»: если чего-то нет на момент подачи заявки — вы выбываете.
+      </p>
+    </div>
+
+    <ol class="rej-list">
+      <li class="rv">
+        <span class="rn">01</span>
+        <div>
+          <h3>Нет членства в СРО</h3>
+          <p>
+            Самый очевидный случай и самый обидный: компания подаёт заявку, пока
+            «документы на вступление в работе». Членство возникает не с момента подачи
+            заявления и не с момента оплаты, а с даты решения СРО о приёме — и только
+            при условии, что взнос в компенсационный фонд уже поступил.
+          </p>
+          <span class="law">{LAW.rights}</span>
+        </div>
+      </li>
+
+      <li class="rv">
+        <span class="rn">02</span>
+        <div>
+          <h3>Уровень ответственности ниже вашего ценового предложения</h3>
+          <p>
+            Членство есть, но оформлено по первому уровню — а вы подаёте предложение
+            на сумму, которая в него не укладывается. Заявку отклонят, даже если по цене
+            вы лучший. Уровень ответственности определяется размером внесённого взноса,
+            поэтому «дотянуть» его задним числом, когда заявка уже подана, невозможно.
+          </p>
+          <span class="law">{LAW.funds}</span>
+        </div>
+      </li>
+
+      <li class="rv">
+        <span class="rn">03</span>
+        <div>
+          <h3>Не внесён взнос в компенсационный фонд обеспечения договорных обязательств</h3>
+          <p>
+            Самая частая и самая дорогая неожиданность. <b>КФ ОДО — это отдельный второй взнос,
+            не тот, который вносится при вступлении.</b> Первый фонд (возмещения вреда) обязателен
+            всем; второй нужен именно для участия в конкурентных закупках. Компания вступает
+            в СРО, платит один взнос, идёт на торги — и узнаёт про второй уже там.
+          </p>
+          <p>
+            Именно об этом умалчивают сайты с обещанием «без скрытых платежей».
+            У нас КФ ОДО показан отдельной строкой на{' '}
+            <a href={href('/stoimost/')}>странице стоимости</a> — до того, как вы что-то заплатите.
+          </p>
+          <span class="law">{LAW.funds}</span>
+        </div>
+      </li>
+    </ol>
+
+    <div class="rej-cta rv">
+      <p>
+        Идёте на торги? Разберём заранее, какой уровень ответственности вам нужен
+        и во сколько обойдутся оба фонда.
+      </p>
+      <a class="btn btn--acc" href={href('/kontakty/')}>Разобрать мою ситуацию</a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .rejects { background: var(--card); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+
+  .rej-list { list-style: none; margin: 0; padding: 0; display: grid; }
+  .rej-list li {
+    display: grid;
+    grid-template-columns: 68px 1fr;
+    gap: 20px;
+    padding: 26px 0;
+    align-items: start;
+  }
+  .rej-list li + li { border-top: 1px solid var(--line); }
+
+  /* Номера читаемого цвета: прежний светло-серый давал контраст 1.3:1
+     при норме 4.5 — на светлом экране они попросту пропадали. */
+  .rn {
+    font-family: var(--font-mono);
+    font-size: 26px;
+    font-weight: 500;
+    color: var(--muted);
+    line-height: 1;
+    padding-top: 4px;
+  }
+
+  .rej-list h3 { margin-bottom: 8px; }
+  .rej-list p { color: var(--muted); font-size: 15.5px; max-width: 72ch; }
+  .rej-list p b { color: var(--ink); }
+  .rej-list p + p { margin-top: 10px; }
+  .rej-list .law { margin-top: 12px; }
+
+  .rej-cta {
+    margin-top: 10px;
+    padding: 22px 24px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--r-l);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .rej-cta p { font-size: 15.5px; max-width: 56ch; }
+
+  @media (max-width: 640px) {
+    .rej-list li { grid-template-columns: 1fr; gap: 8px; }
+    .rn { font-size: 20px; padding-top: 0; }
+    .rej-cta .btn { width: 100%; }
+  }
+</style>

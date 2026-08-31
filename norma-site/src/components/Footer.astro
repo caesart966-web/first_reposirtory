@@ -1,0 +1,144 @@
+---
+import { SITE, REGISTRIES, href } from '../config/site'
+import LogoMark from './LogoMark.astro'
+
+const services = [
+  { label: 'СРО строителей', url: href('/uslugi/sro-stroiteley/') },
+  { label: 'СРО проектировщиков', url: href('/uslugi/sro-proektirovshchikov/') },
+  { label: 'СРО изыскателей', url: href('/uslugi/sro-izyskateley/') },
+  { label: 'Специалисты НРС', url: href('/uslugi/nrs/') },
+  { label: 'НОК', url: href('/uslugi/nok/') },
+  { label: 'Лицензии', url: href('/uslugi/licenzii/') },
+  { label: 'Сайт и маркетинг', url: href('/uslugi/marketing/') },
+]
+
+const pages = [
+  { label: 'Кому нужна СРО, а кому нет', url: href('/komu-nuzhna-sro/') },
+  { label: 'Стоимость', url: href('/stoimost/') },
+  { label: 'База знаний', url: href('/baza-znaniy/') },
+  { label: 'Контакты', url: href('/kontakty/') },
+  { label: 'Политика обработки данных', url: href('/politika/') },
+]
+
+const year = new Date().getFullYear()
+---
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="cols">
+      <div class="brand-col">
+        <div class="logo">
+          <LogoMark size={28} class="logo-mark" />
+          <span class="logo-text"><b>{SITE.brand}</b><small>{SITE.brandTag}</small></span>
+        </div>
+        <p class="tagline">
+          Помощь во вступлении в СРО, внесении специалистов в НРС, прохождении НОК
+          и получении лицензий. Если СРО вам не нужна — скажу прямо.
+        </p>
+        <a class="fphone" href={SITE.phoneHref}>{SITE.phone}</a>
+        <a class="fmail" href={`mailto:${SITE.email}`}>{SITE.email}</a>
+        <div class="msgs">
+          <a href={SITE.whatsapp} target="_blank" rel="noopener noreferrer">WhatsApp</a>
+          <a href={SITE.telegram} target="_blank" rel="noopener noreferrer">Telegram</a>
+          {SITE.maxLink && <a href={SITE.maxLink} target="_blank" rel="noopener noreferrer">MAX</a>}
+        </div>
+      </div>
+
+      <div>
+        <h3>Услуги</h3>
+        <ul>{services.map((s) => <li><a href={s.url}>{s.label}</a></li>)}</ul>
+      </div>
+
+      <div>
+        <h3>Разделы</h3>
+        <ul>{pages.map((p) => <li><a href={p.url}>{p.label}</a></li>)}</ul>
+      </div>
+
+      <div>
+        <h3>Проверьте нас и СРО</h3>
+        <ul>
+          <li><a href={REGISTRIES.nostroy} target="_blank" rel="noopener noreferrer">reestr.nostroy.ru — строители</a></li>
+          <li><a href={REGISTRIES.nopriz} target="_blank" rel="noopener noreferrer">nopriz.ru — проектировщики и изыскатели</a></li>
+        </ul>
+        <p class="note">
+          Официальные реестры национальных объединений. Членство любой компании
+          и статус любой СРО проверяются там бесплатно и за минуту.
+        </p>
+      </div>
+    </div>
+
+    <div class="legal">
+      <p>
+        {SITE.legalName}. ИНН {SITE.inn}.{SITE.ogrnip && ` ОГРНИП ${SITE.ogrnip}.`} {SITE.geo}.
+      </p>
+      <p class="disclaimer">
+        Сайт носит информационный характер и не является публичной офертой.
+        Мы не являемся саморегулируемой организацией и не выдаём документы о членстве:
+        решение о приёме принимает СРО, взносы вносятся напрямую в неё.
+        Информация на сайте сверена с действующей редакцией Градостроительного кодекса РФ
+        {' '}{SITE.checkedDate}.
+      </p>
+      <p class="copy">© {year} {SITE.brand}</p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background: var(--navy);
+    color: var(--on-navy-muted);
+    padding: 48px 0 32px;
+    font-size: 14.5px;
+  }
+
+  .cols {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 32px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--navy-line);
+  }
+
+  .brand-col { display: grid; gap: 12px; align-content: start; }
+
+  .logo { display: flex; align-items: center; gap: 12px; color: #fff; }
+  /* :global обязателен — знак приходит из отдельного компонента, и обычное
+     правило до него не достаёт: Astro привязывает стили к служебному атрибуту,
+     которого у чужой разметки нет. Без этого знак остался бы белым. */
+  .logo :global(.logo-mark) { color: var(--acc-bright); flex: none; display: block; }
+  .logo-text { display: grid; line-height: 1.15; }
+  .logo-text b { font-family: var(--font-head); font-size: 17px; font-weight: 800; letter-spacing: 0.08em; }
+  .logo-text small { font-size: 11px; color: var(--on-navy-muted); }
+
+  .tagline { max-width: 40ch; }
+
+  .fphone {
+    font-family: var(--font-mono);
+    font-size: 19px;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .fphone:hover { color: var(--acc-bright); }
+  /* Ссылки в подвале — навигация, а не текст в абзаце: по стандарту
+     доступности в них нужно попадать пальцем, поэтому высота от 24 px. */
+  .fmail { color: var(--on-navy-muted); text-decoration: none; padding: 3px 0; display: inline-block; }
+  .fmail:hover { color: var(--acc-bright); }
+
+  .msgs { display: flex; gap: 14px; flex-wrap: wrap; }
+  .msgs a { color: var(--acc-bright); text-decoration: none; font-size: 14px; padding: 4px 0; }
+  .msgs a:hover { text-decoration: underline; }
+
+  h3 { color: #fff; font-size: 15px; font-weight: 700; margin-bottom: 12px; }
+  ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+  ul a { color: var(--on-navy-muted); text-decoration: none; display: inline-block; padding: 4px 0; }
+  ul a:hover { color: var(--acc-bright); }
+
+  .note { margin-top: 12px; font-size: 12.5px; line-height: 1.5; max-width: 34ch; }
+
+  .legal { padding-top: 24px; display: grid; gap: 10px; font-size: 13px; }
+  .disclaimer { max-width: 88ch; line-height: 1.55; }
+  /* Не приглушаем сильнее: на тёмном фоне более бледный серый
+     не проходит по контрасту для мелкого текста. */
+  .copy { color: var(--on-navy-muted); }
+</style>

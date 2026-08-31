@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b --noEmit && vite build",
     "preview": "vite preview",
-    "icons": "node scripts/generate-icons.mjs"
+    "icons": "node scripts/generate-icons.mjs",
+    "check": "node scripts/check-neighbours.mjs"
   },
   "dependencies": {
     "dexie": "^4.4.4",

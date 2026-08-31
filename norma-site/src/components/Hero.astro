@@ -1,0 +1,324 @@
+---
+import { SITE, href } from '../config/site'
+import { LAW, TERMS } from '../config/facts'
+import Icon from './Icon.astro'
+import BgVideo from './BgVideo.astro'
+
+// Три коротких обещания под заголовком — как на образце, но каждое
+// правдиво и раскрыто ниже по странице, а не просто лозунг.
+const PROMISES = [
+  { icon: 'clock', text: `От подачи до выписки — ${TERMS.extract}` },
+  { icon: 'wallet', text: 'Сопровождение — 0 ₽' },
+  { icon: 'scales', text: 'Скажу, если СРО не нужна' },
+]
+---
+
+<section class="hero">
+  <BgVideo name="hero" band />
+  <div class="veil"></div>
+
+  <div class="wrap hero-in">
+    <div class="hero-text">
+      <span class="geo"><i></i>{SITE.geo}</span>
+
+      <h1 class="page-title">
+        Вступить в <em>СРО</em><br />без устаревших норм
+      </h1>
+      <p class="tagline">Точно. Честно. За 2–3 дня.</p>
+
+      <ul class="promises">
+        {PROMISES.map((p) => (
+          <li>
+            <span class="pic"><Icon name={p.icon} size={20} /></span>
+            {p.text}
+          </li>
+        ))}
+      </ul>
+
+      <div class="cta">
+        <a class="btn btn--acc btn--lg" href="#calc">Проверить, нужна ли СРО</a>
+        <a class="btn btn--ghost-dark btn--lg" href={href('/stoimost/')}>Узнать стоимость</a>
+      </div>
+      <p class="note">2 минуты · 4 вопроса · ответ со ссылкой на закон</p>
+    </div>
+
+    <!-- Предложение вынесено на первый экран: на компьютере оно занимает
+         правую половину, где раньше было только видео, на телефоне встаёт
+         под кнопками. Карточка белая — на тёмном фоне поверх видео это
+         единственное светлое пятно, мимо него не пройти. -->
+    <aside class="hero-offer">
+      <span class="ho-tag"><Icon name="gift" size={15} /> Только через меня</span>
+      <p class="ho-title">Сайт компании — <b>бесплатно</b></p>
+      <p class="ho-text">
+        Вступаете в СРО через меня — мои маркетологи делают вашей компании
+        сайт и не берут за это денег.
+      </p>
+      <ul class="ho-list">
+        <li><Icon name="check" size={15} /> Сайт, готовый к поиску</li>
+        <li><Icon name="check" size={15} /> Карточки в Яндекс Бизнесе и 2ГИС</li>
+        <li><Icon name="check" size={15} /> Ваше членство в СРО на виду</li>
+      </ul>
+      <a class="ho-go" href={href('/uslugi/marketing/')}>
+        Что входит и что нет <Icon name="arrow" size={15} />
+      </a>
+    </aside>
+  </div>
+
+  <div class="wrap">
+    <div class="stats">
+      <div class="stat">
+        <div class="v">{TERMS.extract}</div>
+        <div class="d">от подачи документов до выписки из реестра, {TERMS.extractTypical}</div>
+      </div>
+      <div class="stat">
+        <div class="v">0 ₽</div>
+        <div class="d">подготовка документов и сопровождение — мои услуги</div>
+      </div>
+      <div class="stat">
+        <div class="v">10 <em>млн ₽</em></div>
+        <div class="d">порог, с которого строителю нужно членство</div>
+        <span class="law law--dark">{LAW.build}</span>
+      </div>
+      <div class="stat">
+        <div class="v">≤ 2 <em>мес.</em></div>
+        <div class="d">срок рассмотрения по закону; с готовыми документами — дни</div>
+        <span class="law law--dark">{LAW.term}</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    background: var(--navy);
+    color: var(--on-navy);
+    overflow: hidden;
+    padding: 64px 0 0;
+    isolation: isolate;
+  }
+
+  /* Затемнение поверх видео — ровное, во всю ширину кадра.
+     Тёмного пятна под текстом здесь больше нет: оно гасило левую половину,
+     и ролик было видно только справа.
+
+     Раз пелена ровная и лёгкая, читаемость держит не она, а собственная
+     тень у каждой буквы (правило .hero-in ниже). Тень идёт по контуру
+     глифа: она затемняет ровно то место, куда попадает буква, и не трогает
+     остальной кадр. Плотнее только у нижнего края — там строка с цифрами
+     лежит на самой светлой части ролика.
+
+     Плотность подобрана замером: scripts/test-video-contrast.mjs снимает
+     настоящие пиксели на пяти секундах ролика и берёт худший кадр. */
+  .veil {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      rgba(9, 24, 43, 0.68) 0%,
+      rgba(9, 24, 43, 0.64) 46%,
+      rgba(11, 29, 51, 0.9) 100%
+    );
+    pointer-events: none;
+  }
+
+  /* Тень под текстом первого экрана. Не украшение: она заменяет собой
+     тёмную подложку и позволяет показывать ролик во всю ширину.
+     Два слоя — широкий мягкий ореол и узкий плотный контур: первый
+     отделяет текст от светлого неба, второй держит края букв. */
+  .hero-in .geo,
+  .hero-in .page-title,
+  .hero-in .tagline,
+  .hero-in .promises,
+  .hero-in .note,
+  .hero .stats {
+    text-shadow:
+      0 1px 2px rgba(5, 15, 28, 0.9),
+      0 2px 26px rgba(5, 15, 28, 0.85);
+  }
+
+  /* Чисто белый, а не обычный светло-синий #EAF1FA.
+     Разницы на глаз нет — а по стандарту есть: #EAF1FA требует фона
+     на 15% темнее, и на телефоне эти две строки не дотягивали до нормы
+     (4.22:1 и 4.35:1 при требуемых 4.5). Поднять белизну текста дешевле,
+     чем гасить ролик: заказчик просил его поярче, а не потемнее.
+     Замер — scripts/test-video-contrast.mjs. */
+  .hero-in .geo,
+  .hero-in .tagline {
+    color: #fff;
+  }
+
+  /* На телефоне ролик идёт полосой в верхней части экрана и внизу уходит
+     в сплошной синий (см. BgVideo.astro). Светлого кадра под текстом
+     остаётся меньше, поэтому пелена здесь чуть легче — иначе верх первого
+     экрана становится почти чёрным и ролика опять не видно.
+     Числа подобраны замером: scripts/test-video-contrast.mjs. */
+  @media (max-width: 767px) {
+    .veil {
+      background: linear-gradient(
+        180deg,
+        rgba(9, 24, 43, 0.62) 0%,
+        rgba(9, 24, 43, 0.58) 52%,
+        rgba(11, 29, 51, 0.88) 100%
+      );
+    }
+  }
+
+  .hero-in, .hero .wrap { position: relative; z-index: 1; }
+  .hero-in {
+    padding-bottom: 44px;
+    display: grid;
+    gap: 30px;
+    align-items: start;
+  }
+  /* На широком экране справа пустует видео — туда и уходит предложение.
+     Ниже 1024 px карточка встаёт под кнопками: на узком экране две колонки
+     сжали бы заголовок до нечитаемого. */
+  @media (min-width: 1024px) {
+    .hero-in { grid-template-columns: minmax(0, 1fr) 340px; gap: 52px; }
+  }
+
+  .hero-offer {
+    background: #fff;
+    color: var(--ink);
+    border-radius: var(--r-l);
+    padding: 24px 22px 20px;
+    display: grid;
+    gap: 12px;
+    align-content: start;
+    box-shadow: 0 28px 60px -22px rgba(4, 16, 34, 0.75);
+  }
+  .ho-tag {
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--acc-btn);
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 6px 12px;
+    border-radius: 999px;
+  }
+  .ho-title { font-size: 23px; line-height: 1.2; font-weight: 700; margin: 0; }
+  .ho-title b { color: var(--acc-deep); }
+  .ho-text { font-size: 14.5px; color: var(--muted); line-height: 1.55; margin: 0; }
+  .ho-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+  .ho-list li {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 9px;
+    align-items: start;
+    font-size: 14.5px;
+    color: var(--ink);
+  }
+  .ho-list :global(svg) { color: var(--good); margin-top: 3px; }
+  .ho-go {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    justify-self: start;
+    color: var(--acc-deep);
+    font-weight: 700;
+    font-size: 14.5px;
+    text-decoration: none;
+    padding: 6px 0 2px;
+  }
+  .ho-go:hover { text-decoration: underline; }
+
+  .geo {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    /* Не моноширинный: это обычная фраза, а не номер и не статья закона.
+       Моноширинный с разрядкой читался здесь как строка из терминала. */
+    font-family: var(--font-body);
+    font-size: 14px;
+    letter-spacing: 0.01em;
+    color: var(--on-navy);
+    border: 1px solid var(--navy-line);
+    padding: 5px 12px;
+    border-radius: 999px;
+    margin-bottom: 24px;
+  }
+  .geo i { width: 6px; height: 6px; border-radius: 50%; background: var(--acc-bright); flex: none; }
+
+  .page-title {
+    color: #fff;
+    font-size: clamp(34px, 6.6vw, 68px);
+    font-weight: 800;
+    max-width: 16ch;
+  }
+
+  .tagline {
+    color: var(--on-navy);
+    font-size: clamp(16px, 2.2vw, 21px);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-top: 16px;
+    font-weight: 500;
+  }
+
+  .promises {
+    list-style: none;
+    margin: 30px 0 0;
+    padding: 0;
+    display: grid;
+    gap: 14px;
+    justify-items: start;
+  }
+  .promises li {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 14px;
+    align-items: center;
+    font-size: clamp(16px, 2vw, 19px);
+    font-weight: 600;
+    color: #fff;
+  }
+  .pic {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--acc-btn);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    flex: none;
+  }
+
+  .cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 34px; }
+  .btn--lg { padding: 16px 28px; font-size: 16px; min-height: 54px; }
+  .note { font-size: 13px; color: var(--on-navy-muted); margin-top: 14px; }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-top: 1px solid var(--navy-line);
+  }
+  .stat { padding: 22px 20px 26px; border-left: 1px solid var(--navy-line); display: grid; gap: 4px; align-content: start; }
+  .stat:first-child { border-left: 0; padding-left: 0; }
+  .v {
+    font-family: var(--font-head);
+    font-size: 28px;
+    font-weight: 800;
+    color: #fff;
+    font-variant-numeric: lining-nums tabular-nums;
+    line-height: 1.1;
+  }
+  .v em { font-style: normal; color: var(--acc-bright); font-size: 20px; }
+  .d { font-size: 13px; color: var(--on-navy-muted); line-height: 1.45; }
+  .stat .law { justify-self: start; margin-top: 6px; }
+
+  @media (max-width: 900px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .stat { border-left: 0; padding-left: 0; padding-right: 14px; }
+  }
+
+  @media (max-width: 560px) {
+    .hero { padding-top: 40px; }
+    .cta .btn { width: 100%; }
+    .v { font-size: 23px; }
+  }
+</style>

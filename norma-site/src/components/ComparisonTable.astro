@@ -1,0 +1,142 @@
+---
+// Кому нужна СРО, а кому нет — два честных столбца.
+// Блок «не нужна» обязателен и стоит наравне с «нужна», а не мелким шрифтом внизу.
+import { LAW } from '../config/facts'
+import Icon from './Icon.astro'
+
+interface Props {
+  compact?: boolean
+  /** Уровень заголовков колонок. На странице, где перед таблицей нет своего
+      заголовка второго уровня, ставим 2 — иначе порядок заголовков рвётся
+      и страдают программы чтения с экрана. */
+  headingLevel?: 2 | 3
+}
+const { compact = false, headingLevel = 3 } = Astro.props
+const H = `h${headingLevel}` as 'h2' | 'h3'
+
+const needed = [
+  {
+    t: 'Строителям — если обязательства по договору превышают 10 млн ₽',
+    d: 'Договор с застройщиком, техническим заказчиком, лицом, ответственным за эксплуатацию здания, или региональным оператором капремонта.',
+    law: LAW.build,
+  },
+  {
+    t: 'Проектировщикам — при любой сумме договора',
+    d: 'Порога нет. Прямой договор на подготовку проектной документации требует членства независимо от цены.',
+    law: 'ч. 4 ст. 48 ГрК РФ',
+  },
+  {
+    t: 'Изыскателям — при любой сумме договора',
+    d: 'То же правило: для инженерных изысканий денежного порога не установлено.',
+    law: 'ч. 4 ст. 47 ГрК РФ',
+  },
+  {
+    t: 'Участникам строительных госзакупок от 10 млн ₽',
+    d: 'Плюс отдельный взнос в компенсационный фонд обеспечения договорных обязательств — без него заявку отклонят.',
+    law: LAW.rights,
+  },
+  {
+    t: 'Подрядчикам на капремонте общего имущества МКД',
+    d: 'Договор с региональным оператором капитального ремонта — членство требуется при любой сумме.',
+    law: LAW.build,
+  },
+  {
+    t: 'Техническим заказчикам',
+    d: 'Организация, выполняющая функции технического заказчика, должна быть членом соответствующей СРО.',
+    law: 'ч. 4 ст. 52 ГрК РФ',
+  },
+]
+
+const notNeeded = [
+  {
+    t: 'Субподрядчикам, работающим от генподрядчика — при любой сумме',
+    d: 'Требование привязано к тому, с кем заключён договор, а не к его размеру. Договор с подрядной организацией, а не с застройщиком, обязанности членства не создаёт.',
+    law: LAW.build,
+  },
+  {
+    t: 'На объектах ИЖС, садовых домах, гаражах',
+    d: 'Индивидуальное жилищное строительство и объекты, для которых не требуется разрешение на строительство, выведены из-под требования.',
+    law: LAW.build,
+  },
+  {
+    t: 'При сносе, если договор до 1 млн ₽',
+    d: 'Для работ по сносу объектов капитального строительства установлен собственный порог.',
+    law: LAW.demolition,
+  },
+  {
+    t: 'ГУП, МУП, учреждениям и компаниям с госучастием свыше 50%',
+    d: 'Государственным и муниципальным унитарным предприятиям, учреждениям, а также юрлицам с долей публично-правовых образований более 50% членство не требуется.',
+    law: LAW.buildExempt,
+  },
+  {
+    t: 'Строителям — если обязательства по договору не превышают 10 млн ₽',
+    d: 'Порог поднят с 3 млн до 10 млн законом 124-ФЗ с 1 мая 2022 года. Половина сайтов до сих пор пишет старую цифру.',
+    law: LAW.build,
+  },
+]
+
+const shown = compact ? { needed: needed.slice(0, 4), notNeeded: notNeeded.slice(0, 4) } : { needed, notNeeded }
+---
+
+<div class="cols">
+  <div class="col col--yes">
+    <div class="col-head">
+      <span class="ic ic--yes"><Icon name="check" size={18} /></span>
+      <H>Членство обязательно</H>
+    </div>
+    <ul>
+      {shown.needed.map((row) => (
+        <li>
+          <b>{row.t}</b>
+          <p>{row.d}</p>
+          <span class="law">{row.law}</span>
+        </li>
+      ))}
+    </ul>
+  </div>
+
+  <div class="col col--no">
+    <div class="col-head">
+      <span class="ic ic--no"><Icon name="x" size={18} /></span>
+      <H>Членство не требуется</H>
+    </div>
+    <ul>
+      {shown.notNeeded.map((row) => (
+        <li>
+          <b>{row.t}</b>
+          <p>{row.d}</p>
+          <span class="law">{row.law}</span>
+        </li>
+      ))}
+    </ul>
+  </div>
+</div>
+
+<style>
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+
+  .col { background: var(--card); border: 1px solid var(--line); border-radius: var(--r-l); padding: 24px; }
+  .col--no { background: var(--good-bg); border-color: rgba(30, 142, 90, 0.3); }
+
+  .col-head { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+  .col-head h2, .col-head h3 { font-size: 18px; }
+  .ic { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; flex: none; }
+  .ic--yes { background: var(--acc-soft); color: var(--acc-deep); }
+  .ic--no { background: rgba(30, 142, 90, 0.14); color: var(--good); }
+
+  ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 18px; }
+  li { display: grid; gap: 5px; }
+  li b { font-size: 15.5px; font-weight: 600; line-height: 1.4; }
+  li p { font-size: 14px; color: var(--muted); }
+  li .law { justify-self: start; }
+
+  .col--no li .law {
+    color: var(--good);
+    background: rgba(30, 142, 90, 0.1);
+    border-color: rgba(30, 142, 90, 0.35);
+  }
+
+  @media (max-width: 800px) {
+    .cols { grid-template-columns: 1fr; }
+  }
+</style>

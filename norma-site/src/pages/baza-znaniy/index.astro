@@ -1,0 +1,120 @@
+---
+import Base from '../../layouts/Base.astro'
+import Icon from '../../components/Icon.astro'
+import { getCollection } from 'astro:content'
+import { href, SITE } from '../../config/site'
+
+const articles = (await getCollection('articles')).sort(
+  (a, b) => (b.data.updated ?? b.data.published).getTime() - (a.data.updated ?? a.data.published).getTime(),
+)
+
+const fmt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
+---
+
+<Base
+  title="База знаний о СРО — разборы норм с датами проверки | НОРМА"
+  description="Разборы норм о СРО, НРС и НОК: порог 10 млн, субподряд, отмена допусков, причины отказа на торгах. У каждой статьи указаны дата публикации и дата последней сверки с законом."
+  breadcrumbs={[
+    { label: 'Главная', url: href('/') },
+    { label: 'База знаний' },
+  ]}
+>
+  <section class="section hero-page">
+    <div class="wrap">
+      <span class="eyebrow">База знаний</span>
+      <h1>Разборы норм — с датами, а не «вообще»</h1>
+      <p class="lead">
+        В этой теме законодательство меняется каждый год, а статьи живут в поиске десятилетиями.
+        Поэтому у каждого материала здесь стоят <b>две даты</b>: когда он написан и когда в последний
+        раз сверен с действующей редакцией закона. Если даты нет — читать такой текст опасно,
+        неважно, чей это сайт.
+      </p>
+      <div class="stamp-row">
+        <span class="stamp">Все материалы сверены · {SITE.checkedDate}</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--tight">
+    <div class="wrap">
+      <div class="list">
+        {articles.map((a) => (
+          <article class="row rv">
+            <div class="dates">
+              <time datetime={a.data.published.toISOString().slice(0, 10)}>
+                Опубликовано {fmt(a.data.published)}
+              </time>
+              {a.data.updated && (
+                <time class="upd" datetime={a.data.updated.toISOString().slice(0, 10)}>
+                  Проверено {fmt(a.data.updated)}
+                </time>
+              )}
+            </div>
+            <h2><a href={href(`/baza-znaniy/${a.id}/`)}>{a.data.title}</a></h2>
+            <p>{a.data.excerpt}</p>
+            <div class="row-foot">
+              <a class="go" href={href(`/baza-znaniy/${a.id}/`)}>Читать разбор <Icon name="arrow" size={15} /></a>
+              {a.data.relatedService && (
+                <a class="rel" href={href(a.data.relatedService.url)}>
+                  Услуга: {a.data.relatedService.label}
+                </a>
+              )}
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <div class="ask rv">
+        <div>
+          <h2>Не нашли свой случай?</h2>
+          <p>Опишите ситуацию — разберу и отвечу лично. Если членство вам не нужно, я так и скажу.</p>
+        </div>
+        <a class="btn btn--acc" href={href('/kontakty/')}>Задать вопрос</a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .hero-page { background: var(--navy); color: var(--on-navy); padding-bottom: 44px; }
+  .hero-page .eyebrow { color: var(--acc-bright); }
+  .hero-page h1 { color: #fff; margin: 12px 0 16px; max-width: 20ch; }
+  .hero-page .lead { color: var(--on-navy-muted); }
+  .hero-page .lead b { color: #fff; }
+  .stamp-row { margin-top: 22px; }
+
+  .list { display: grid; }
+  .row { padding: 28px 0; border-bottom: 1px solid var(--line); display: grid; gap: 8px; }
+  .row:first-child { padding-top: 0; }
+
+  .dates { display: flex; gap: 14px; flex-wrap: wrap; font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); }
+  .upd { color: var(--good); font-weight: 500; }
+
+  .row h2 { font-size: clamp(20px, 2.6vw, 25px); }
+  .row h2 a { color: var(--ink); text-decoration: none; }
+  .row h2 a:hover { color: var(--acc-deep); }
+  .row p { color: var(--muted); font-size: 15.5px; max-width: 78ch; }
+
+  .row-foot { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
+  .go { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 15px; color: var(--acc-deep); text-decoration: none; }
+  .rel { font-size: 13.5px; color: var(--muted); }
+
+  .ask {
+    margin-top: 32px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--r-l);
+    padding: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .ask h2 { font-size: 21px; margin-bottom: 6px; }
+  .ask p { color: var(--muted); font-size: 15px; max-width: 56ch; }
+
+  @media (max-width: 600px) {
+    .ask .btn { width: 100%; }
+  }
+</style>
