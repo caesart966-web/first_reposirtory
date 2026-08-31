@@ -1,0 +1,491 @@
+---
+import { FUNDS, LAW } from '../config/facts'
+import { href } from '../config/site'
+import Icon from './Icon.astro'
+
+// Калькулятор взносов в компенсационные фонды.
+//
+// ПРИНЦИП, тот же что и у калькулятора «нужна ли СРО»: считаем только то,
+// что установлено законом, и прямо говорим, чего в этой сумме нет.
+//
+// Почему это не «калькулятор стоимости вступления». Взносы в компфонды —
+// единственная часть расходов, размер которой задан статьёй 55.16 ГрК РФ
+// и одинакова у всех СРО. Вступительный, членский и целевой взносы каждая
+// СРО назначает своими документами, и подставить сюда правдоподобное число
+// было бы ровно тем, за что этот сайт ругает конкурентов. Поэтому итог
+// подписан честно: «взносы, установленные законом», а рядом перечислено,
+// что придёт сверх них.
+//
+// Почему не пошаговый опрос, как на главной. Тот отвечает на вопрос «да или
+// нет» — там шаги уместны. Здесь человек прикидывает бюджет и хочет
+// перещёлкнуть уровень и сразу увидеть разницу. Поэтому все поля открыты
+// сразу, а сумма пересчитывается на лету.
+//
+// Данные берутся из FUNDS в src/config/facts.ts — сюда числа не вписаны.
+// Разметка вариантов создаётся при сборке, поэтому без JavaScript посетитель
+// видит те же уровни и суммы обычным списком.
+
+const DIRECTIONS = [
+  { id: 'build', label: 'Строительство', hint: 'реконструкция, капремонт, снос', harm: FUNDS.buildHarm, contract: FUNDS.buildContract },
+  { id: 'design', label: 'Проектирование', hint: 'подготовка проектной документации', harm: FUNDS.designHarm, contract: FUNDS.designContract },
+  { id: 'survey', label: 'Изыскания', hint: 'инженерные изыскания', harm: FUNDS.designHarm, contract: FUNDS.designContract },
+]
+
+// Проектировщики и изыскатели платят по одной таблице (ч. 10 и ч. 11
+// ст. 55.16), поэтому наборы уровней для них общие. Строителям — свой.
+const TABLES = [
+  { id: 'build', harm: FUNDS.buildHarm, contract: FUNDS.buildContract },
+  { id: 'design', harm: FUNDS.designHarm, contract: FUNDS.designContract },
+]
+const tableOf = (dir: string) => (dir === 'build' ? 'build' : 'design')
+---
+
+<section class="section cost" id="kalkulyator" data-anchor>
+  <div class="wrap">
+    <div class="s-head rv">
+      <span class="eyebrow">Расчёт</span>
+      <h2>Посчитайте взносы <em>в компенсационные фонды</em></h2>
+      <p>
+        Это самая крупная часть расходов и единственная, размер которой установлен
+        законом одинаково для всех СРО. Считается сразу, без заявки и без телефона.
+      </p>
+    </div>
+
+    <div class="cost-box rv" id="cost-box">
+      <div class="cost-form">
+        <!-- 1. Направление -->
+        <fieldset class="fs">
+          <legend class="fs-t"><span class="fs-n">1</span> Чем занимаетесь</legend>
+          <div class="segs" role="radiogroup" aria-label="Направление работ">
+            {DIRECTIONS.map((d, i) => (
+              <label class="seg">
+                <input type="radio" name="cost-dir" value={d.id} data-table={tableOf(d.id)} checked={i === 0} />
+                <span class="seg-in">
+                  <b>{d.label}</b>
+                  <i>{d.hint}</i>
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
+        <!-- 2. Уровень для КФ ВВ -->
+        <fieldset class="fs">
+          <legend class="fs-t"><span class="fs-n">2</span> Самый крупный договор, который планируете</legend>
+          <p class="fs-hint">
+            Уровень ответственности выбирают не по текущим договорам, а с расчётом
+            на те, за которыми собираются идти: поднять уровень в момент подачи
+            заявки на торги уже нельзя.
+          </p>
+          {TABLES.map((t) => (
+            <div class="lvls" data-for={t.id} hidden={t.id !== 'build'}>
+              {t.harm.map((row, i) => (
+                <label class="lvl">
+                  <input type="radio" name={`cost-harm-${t.id}`} value={row.level} data-amount={row.amountNum} checked={i === 0} />
+                  <span class="lvl-in">
+                    <span class="lvl-lim">{row.limit}</span>
+                    <span class="lvl-sum">{row.amount}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          ))}
+        </fieldset>
+
+        <!-- 3. Торги -->
+        <fieldset class="fs">
+          <legend class="fs-t"><span class="fs-n">3</span> Участвуете в торгах</legend>
+          <p class="fs-hint">
+            Конкурентные закупки: аукционы, конкурсы, запросы предложений. Если да —
+            нужен второй, отдельный взнос. Именно о нём молчат обещания
+            «без скрытых платежей».
+          </p>
+          <div class="segs segs--2" role="radiogroup" aria-label="Участие в торгах">
+            <label class="seg">
+              <input type="radio" name="cost-odo" value="no" checked />
+              <span class="seg-in"><b>Нет</b><i>работаю по прямым договорам</i></span>
+            </label>
+            <label class="seg">
+              <input type="radio" name="cost-odo" value="yes" />
+              <span class="seg-in"><b>Да</b><i>хожу на аукционы и конкурсы</i></span>
+            </label>
+          </div>
+        </fieldset>
+
+        <!-- 4. Уровень для КФ ОДО -->
+        <fieldset class="fs" id="cost-odo-block" hidden>
+          <legend class="fs-t"><span class="fs-n">4</span> Все договоры с торгов вместе</legend>
+          <p class="fs-hint">
+            Здесь считают иначе, чем в пункте 2: не по одному договору, а по{' '}
+            <b>совокупному размеру обязательств</b> по всем договорам, заключённым
+            на торгах и не исполненным на данный момент.
+          </p>
+          {TABLES.map((t) => (
+            <div class="lvls" data-for={t.id} hidden={t.id !== 'build'}>
+              {t.contract.map((row, i) => (
+                <label class="lvl">
+                  <input type="radio" name={`cost-contract-${t.id}`} value={row.level} data-amount={row.amountNum} checked={i === 0} />
+                  <span class="lvl-in">
+                    <span class="lvl-lim">{row.limit}</span>
+                    <span class="lvl-sum">{row.amount}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          ))}
+        </fieldset>
+      </div>
+
+      <!-- Итог -->
+      <aside class="cost-out" id="cost-out">
+        <div class="out-sum" aria-live="polite">
+        <span class="out-cap">Взносы, установленные законом</span>
+
+        <dl class="out-rows">
+          <div>
+            <dt>Компенсационный фонд возмещения вреда</dt>
+            <dd class="mono" id="out-harm">—</dd>
+          </div>
+          <div id="out-odo-row" hidden>
+            <dt>Компенсационный фонд договорных обязательств</dt>
+            <dd class="mono" id="out-odo">—</dd>
+          </div>
+        </dl>
+
+        <div class="out-total">
+          <span>Итого по закону</span>
+          <b class="mono" id="out-total">—</b>
+        </div>
+        </div>
+
+        <div class="out-rest">
+        <p class="out-once">
+          <Icon name="alert" size={15} />
+          <span>Вносится <b>единовременно</b>: рассрочка по компенсационным фондам
+          запрещена законом. При выходе из СРО взносы не возвращаются.</span>
+        </p>
+
+        <div class="out-more">
+          <b>Чего в этой сумме нет</b>
+          <ul>
+            <li>Вступительный взнос СРО — разовый, у части СРО нулевой</li>
+            <li>Членские взносы — ежегодно, всё время членства</li>
+            <li>Целевой взнос в национальное объединение и страхование</li>
+            <li>Независимая оценка квалификации специалистов для НРС</li>
+          </ul>
+          <p>
+            Размеры этих взносов закон не устанавливает — каждая СРО назначает свои,
+            и различаются они существенно. Подставить сюда правдоподобное число
+            я не могу: это было бы ровно тем, за что на этом сайте ругают
+            «стоимость под ключ». Назову точные суммы, когда подберём конкретную СРО.
+          </p>
+        </div>
+
+        <a class="btn btn--white out-cta" href={href('/kontakty/#form')}>
+          Подобрать СРО и назвать точные суммы
+        </a>
+        <span class="law law--dark out-law">{LAW.funds}</span>
+        </div>
+      </aside>
+    </div>
+
+    <p class="cost-note rv">
+      Суммы в расчёте — минимумы, установленные {LAW.funds}. Брать меньше СРО не вправе;
+      внутренними документами суммы могут быть выше. Полная разбивка всех платежей —
+      <a href={href('/stoimost/')}>на странице стоимости</a>.
+    </p>
+  </div>
+</section>
+
+<style>
+  .cost { background: var(--navy); color: var(--on-navy); }
+  .cost .eyebrow { color: var(--acc-bright); }
+  .cost h2 { color: #fff; }
+  .cost .s-head p { color: var(--on-navy-muted); }
+
+  /* На узком экране колонка одна, и порядок в ней меняется: сводка
+     с суммой уходит наверх и прилипает под шапкой, а форма листается под
+     ней. Иначе число оказывается под четырьмя блоками вопросов, и человек
+     не видит, как оно меняется, когда он выбирает уровень.
+
+     Раскладка здесь именно flex, а не grid: у элемента сетки «областью
+     прилипания» становится его собственная строка высотой в него самого,
+     и sticky не сдвигается ни на пиксель. У элемента flex-контейнера
+     область — весь контейнер, поэтому сводка едет вдоль всей формы. */
+  .cost-box {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .cost-out { display: contents; }
+  .out-sum {
+    order: -1;
+    position: sticky;
+    /* Высота прилипшей шапки сайта. */
+    top: 69px;
+    z-index: 4;
+  }
+  .out-sum,
+  .out-rest {
+    background: linear-gradient(160deg, var(--navy-2), #0A1B30);
+    border: 1px solid var(--navy-line);
+    border-radius: var(--r-l);
+    padding: 18px;
+    display: grid;
+    gap: 12px;
+    align-content: start;
+  }
+
+  @media (min-width: 980px) {
+    .cost-box { display: grid; grid-template-columns: minmax(0, 1fr) 372px; gap: 22px; align-items: start; }
+    /* На широком экране сводка и пояснения снова одна карточка справа,
+       и прилипает она целиком. */
+    .cost-out {
+      display: grid;
+      gap: 14px;
+      position: sticky;
+      top: 88px;
+      align-content: start;
+    }
+    .out-sum,
+    .out-rest {
+      background: none;
+      border: 0;
+      border-radius: 0;
+      padding: 0;
+    }
+    .cost-out {
+      background: linear-gradient(160deg, var(--navy-2), #0A1B30);
+      border: 1px solid var(--navy-line);
+      border-radius: var(--r-l);
+      padding: 22px;
+    }
+  }
+
+  .cost-form {
+    background: var(--card);
+    color: var(--ink);
+    border-radius: var(--r-l);
+    padding: 24px;
+    display: grid;
+    gap: 26px;
+    box-shadow: var(--shadow);
+  }
+
+  .fs { border: 0; padding: 0; margin: 0; }
+  .fs-t {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-head);
+    font-size: 18px;
+    font-weight: 800;
+    padding: 0;
+    margin-bottom: 6px;
+  }
+  .fs-n {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--acc-btn);
+    color: #fff;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    display: grid;
+    place-items: center;
+    flex: none;
+  }
+  .fs-hint { color: var(--muted); font-size: 14.5px; line-height: 1.55; margin: 0 0 14px; max-width: 62ch; }
+
+  /* Переключатели-плитки */
+  .segs { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .segs--2 { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+
+  /* Сам переключатель растянут на всю плитку и сделан прозрачным.
+     Так у него остаётся настоящая область нажатия во всю карточку —
+     а не точка нулевого размера, которую браузеры и программы экранного
+     доступа обрабатывают по-разному. Видимое состояние рисует .seg-in. */
+  .seg,
+  .lvl {
+    position: relative;
+    display: block;
+  }
+  .seg input,
+  .lvl input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .seg-in {
+    display: grid;
+    gap: 3px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-m);
+    padding: 13px 15px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+    height: 100%;
+    align-content: start;
+  }
+  .seg-in b { font-size: 15.5px; }
+  .seg-in i { font-style: normal; color: var(--muted); font-size: 13px; line-height: 1.4; }
+  .seg-in:hover { border-color: var(--acc-btn); }
+  .seg input:checked + .seg-in {
+    border-color: var(--acc-btn);
+    background: color-mix(in srgb, var(--acc-btn) 8%, transparent);
+    box-shadow: inset 0 0 0 1px var(--acc-btn);
+  }
+  /* Рамка фокуса: сам переключатель спрятан, поэтому её рисует плитка.
+     Без этого пройти форму с клавиатуры вслепую невозможно. */
+  .seg input:focus-visible + .seg-in,
+  .lvl input:focus-visible + .lvl-in {
+    outline: 3px solid var(--acc-bright);
+    outline-offset: 2px;
+  }
+
+  /* Строки уровней */
+  .lvls { display: grid; gap: 8px; }
+  .lvl-in {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-m);
+    padding: 11px 15px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+  }
+  .lvl-in:hover { border-color: var(--acc-btn); }
+  .lvl input:checked + .lvl-in {
+    border-color: var(--acc-btn);
+    background: color-mix(in srgb, var(--acc-btn) 8%, transparent);
+    box-shadow: inset 0 0 0 1px var(--acc-btn);
+  }
+  .lvl-lim { font-size: 15px; }
+  .lvl-sum {
+    font-family: var(--font-mono);
+    font-variant-numeric: lining-nums tabular-nums;
+    font-size: 14.5px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .lvl input:checked + .lvl-in .lvl-sum { color: var(--ink); font-weight: 700; }
+
+  .out-cap {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--acc-bright);
+  }
+
+  .out-rows { display: grid; gap: 10px; margin: 0; }
+  .out-rows > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: baseline; }
+  .out-rows dt { color: var(--on-navy-muted); font-size: 14px; line-height: 1.4; }
+  .out-rows dd { margin: 0; color: #fff; font-size: 15px; font-weight: 700; white-space: nowrap; }
+
+  .out-total {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--navy-line);
+    color: #fff;
+  }
+  .out-total span { font-size: 15px; }
+  .out-total b { font-size: 26px; white-space: nowrap; }
+
+  .mono { font-family: var(--font-mono); font-variant-numeric: lining-nums tabular-nums; }
+
+  .out-once {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 9px;
+    align-items: start;
+    margin: 0;
+    color: var(--on-navy-muted);
+    font-size: 13.5px;
+    line-height: 1.5;
+  }
+  .out-once b { color: #fff; }
+
+  .out-more {
+    border-top: 1px solid var(--navy-line);
+    padding-top: 14px;
+    display: grid;
+    gap: 8px;
+  }
+  .out-more b { color: #fff; font-size: 14.5px; }
+  .out-more ul { margin: 0; padding-left: 18px; display: grid; gap: 5px; }
+  .out-more li { color: var(--on-navy-muted); font-size: 13.5px; line-height: 1.45; }
+  .out-more p { color: var(--on-navy-muted); font-size: 13.5px; line-height: 1.55; margin: 4px 0 0; }
+
+  .out-cta { width: 100%; }
+  .out-law { justify-self: start; }
+
+  .cost-note {
+    margin-top: 20px;
+    color: var(--on-navy-muted);
+    font-size: 14.5px;
+    line-height: 1.6;
+    max-width: 88ch;
+  }
+  .cost-note a { color: var(--acc-bright); }
+</style>
+
+<script>
+  // Пересчёт суммы. Числа берутся из data-amount у выбранных вариантов,
+  // то есть из facts.ts, — здесь ни одной вписанной цифры.
+  const box = document.getElementById('cost-box')
+
+  if (box) {
+    const odoBlock = document.getElementById('cost-odo-block')
+    const odoRow = document.getElementById('out-odo-row')
+    const outHarm = document.getElementById('out-harm')
+    const outOdo = document.getElementById('out-odo')
+    const outTotal = document.getElementById('out-total')
+
+    // Неразрывные пробелы между разрядами: иначе «1 500 000 ₽» переносится
+    // посреди числа, если в колонке становится тесно.
+    const money = (n: number) => n.toLocaleString('ru-RU').replace(/\s/g, ' ') + ' ₽'
+
+    const picked = (name: string) =>
+      box.querySelector<HTMLInputElement>(`input[name="${name}"]:checked`)
+
+    const recount = () => {
+      const dir = picked('cost-dir')
+      if (!dir) return
+      const table = dir.dataset.table || 'build'
+
+      // Показываем набор уровней для выбранного направления и прячем остальные.
+      // Спрятанные наборы ещё и выключаем — на случай, если правило
+      // [hidden] в стилях когда-нибудь перебьют: тогда невидимые поля
+      // хотя бы не попадут в перебор с клавиатуры.
+      for (const group of box.querySelectorAll<HTMLElement>('.lvls')) {
+        const mine = group.dataset.for === table
+        group.hidden = !mine
+        for (const input of group.querySelectorAll('input')) input.disabled = !mine
+      }
+
+      const onTender = picked('cost-odo')?.value === 'yes'
+      if (odoBlock) odoBlock.hidden = !onTender
+      if (odoRow) odoRow.hidden = !onTender
+
+      const harm = Number(picked(`cost-harm-${table}`)?.dataset.amount || 0)
+      const odo = onTender ? Number(picked(`cost-contract-${table}`)?.dataset.amount || 0) : 0
+
+      if (outHarm) outHarm.textContent = money(harm)
+      if (outOdo) outOdo.textContent = money(odo)
+      if (outTotal) outTotal.textContent = money(harm + odo)
+    }
+
+    box.addEventListener('change', recount)
+    recount()
+  }
+</script>

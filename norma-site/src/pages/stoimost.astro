@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro'
 import LeadForm from '../components/LeadForm.astro'
 import Icon from '../components/Icon.astro'
+import CostCalculator from '../components/CostCalculator.astro'
 import { FUNDS, LAW, TERMS } from '../config/facts'
 import { href, SITE } from '../config/site'
 
@@ -55,6 +56,8 @@ const faqSchema = {
       </div>
     </div>
   </section>
+
+  <CostCalculator />
 
   <!-- Из чего складывается -->
   <section class="section">
@@ -196,7 +199,7 @@ const faqSchema = {
               <thead>
                 <tr>
                   <th>Уровень</th>
-                  <th>Стоимость одного договора</th>
+                  <th>Предельный размер обязательств</th>
                   <th>КФ возмещения вреда</th>
                   <th>КФ договорных обязательств</th>
                 </tr>
@@ -226,7 +229,7 @@ const faqSchema = {
               <thead>
                 <tr>
                   <th>Уровень</th>
-                  <th>Стоимость одного договора</th>
+                  <th>Предельный размер обязательств</th>
                   <th>КФ возмещения вреда</th>
                   <th>КФ договорных обязательств</th>
                 </tr>

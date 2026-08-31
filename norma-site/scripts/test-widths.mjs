@@ -13,7 +13,7 @@
 import { chromium } from 'playwright'
 
 const BASE = process.argv[2] || 'http://127.0.0.1:4321'
-const PAGES = ['/', '/stoimost/', '/komu-nuzhna-sro/', '/kontakty/', '/uslugi/sro-stroiteley/']
+const PAGES = ['/', '/stoimost/', '/komu-nuzhna-sro/', '/kontakty/', '/uslugi/sro-stroiteley/', '/dokumenty/', '/proverit-sro/']
 
 // Ширины, на которых чаще всего ломается: край брейкпоинтов и режим «для ПК».
 const WIDTHS = [360, 390, 480, 640, 767, 768, 899, 900, 980, 1024, 1279, 1360]
