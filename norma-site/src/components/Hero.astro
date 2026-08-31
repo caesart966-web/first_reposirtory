@@ -2,7 +2,7 @@
 import { SITE, href } from '../config/site'
 import { LAW, TERMS } from '../config/facts'
 import Icon from './Icon.astro'
-import HeroVideo from './HeroVideo.astro'
+import BgVideo from './BgVideo.astro'
 
 // Три коротких обещания под заголовком — как на образце, но каждое
 // правдиво и раскрыто ниже по странице, а не просто лозунг.
@@ -14,7 +14,7 @@ const PROMISES = [
 ---
 
 <section class="hero">
-  <HeroVideo />
+  <BgVideo name="hero" band />
   <div class="veil"></div>
 
   <div class="wrap hero-in">
@@ -108,7 +108,7 @@ const PROMISES = [
      остальной кадр. Плотнее только у нижнего края — там строка с цифрами
      лежит на самой светлой части ролика.
 
-     Плотность подобрана замером: scripts/test-hero-contrast.mjs снимает
+     Плотность подобрана замером: scripts/test-video-contrast.mjs снимает
      настоящие пиксели на пяти секундах ролика и берёт худший кадр. */
   .veil {
     position: absolute;
@@ -137,11 +137,22 @@ const PROMISES = [
       0 2px 26px rgba(5, 15, 28, 0.85);
   }
 
+  /* Чисто белый, а не обычный светло-синий #EAF1FA.
+     Разницы на глаз нет — а по стандарту есть: #EAF1FA требует фона
+     на 15% темнее, и на телефоне эти две строки не дотягивали до нормы
+     (4.22:1 и 4.35:1 при требуемых 4.5). Поднять белизну текста дешевле,
+     чем гасить ролик: заказчик просил его поярче, а не потемнее.
+     Замер — scripts/test-video-contrast.mjs. */
+  .hero-in .geo,
+  .hero-in .tagline {
+    color: #fff;
+  }
+
   /* На телефоне ролик идёт полосой в верхней части экрана и внизу уходит
-     в сплошной синий (см. HeroVideo.astro). Светлого кадра под текстом
+     в сплошной синий (см. BgVideo.astro). Светлого кадра под текстом
      остаётся меньше, поэтому пелена здесь чуть легче — иначе верх первого
      экрана становится почти чёрным и ролика опять не видно.
-     Числа подобраны замером: scripts/test-hero-contrast.mjs. */
+     Числа подобраны замером: scripts/test-video-contrast.mjs. */
   @media (max-width: 767px) {
     .veil {
       background: linear-gradient(

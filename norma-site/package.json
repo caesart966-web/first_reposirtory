@@ -8,7 +8,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "check": "node scripts/check-links.mjs dist",
-    "test": "node scripts/test-calc.mjs && node scripts/test-form.mjs && node scripts/test-a11y.mjs && node scripts/test-widths.mjs && node scripts/test-hero-contrast.mjs",
+    "test": "node scripts/test-calc.mjs && node scripts/test-form.mjs && node scripts/test-a11y.mjs && node scripts/test-widths.mjs && node scripts/test-video-contrast.mjs",
     "og": "node scripts/make-og.mjs",
     "shots": "node scripts/screenshots.mjs",
     "fonts": "python3 scripts/subset-fonts.py"
