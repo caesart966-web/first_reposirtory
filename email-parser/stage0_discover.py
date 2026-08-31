@@ -202,6 +202,35 @@ def discover(company, log):
 FIELDS = ["inn", "name", "site", "verified_by", "candidates", "status", "note", "ts"]
 
 
+def find_input(explicit):
+    """Ищем xlsx: явный путь -> рядом со скриптом -> на уровень выше -> любой xlsx рядом."""
+    if explicit:
+        p = os.path.abspath(explicit)
+        if os.path.exists(p):
+            return p
+        raise SystemExit(f"!! не найден файл: {p}")
+    here = os.path.dirname(os.path.abspath(__file__))
+    names = ["Компании (4).xlsx", "Компании(4).xlsx", "Компании.xlsx"]
+    for d in (here, os.path.dirname(here)):
+        for n in names:
+            p = os.path.join(d, n)
+            if os.path.exists(p):
+                return p
+    for d in (here, os.path.dirname(here)):
+        try:
+            cands = [f for f in os.listdir(d)
+                     if f.lower().endswith(".xlsx") and not f.startswith("~$")
+                     and "stage" not in f.lower() and "результат" not in f.lower()]
+        except OSError:
+            continue
+        if len(cands) == 1:
+            return os.path.join(d, cands[0])
+    raise SystemExit(
+        "!! Не нашёл входной xlsx.\n"
+        "   Положите файл рядом со скриптом или укажите путь:\n"
+        '   python stage1_sites.py --input "C:\\parser\\Компании (4).xlsx"')
+
+
 def read_input(path):
     wb = load_workbook(path, data_only=True, read_only=True)
     ws = wb[wb.sheetnames[0]]
@@ -255,13 +284,13 @@ def append_row(path, row):
 def main():
     ap = argparse.ArgumentParser(description="Поиск сайта компании по ИНН с проверкой по ИНН")
     here = os.path.dirname(os.path.abspath(__file__))
-    ap.add_argument("--input", default=os.path.join(here, "..", "Компании (4).xlsx"))
+    ap.add_argument("--input", default="", help="путь к xlsx (по умолчанию ищется рядом)")
     ap.add_argument("--outdir", default=os.path.join(here, "result"))
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--threads", type=int, default=SEARCH_THREADS)
     args = ap.parse_args()
 
-    inp, outdir = os.path.abspath(args.input), os.path.abspath(args.outdir)
+    inp, outdir = find_input(args.input), os.path.abspath(args.outdir)
     os.makedirs(outdir, exist_ok=True)
     csv_path = os.path.join(outdir, "discovered_sites.csv")
     log_path = os.path.join(outdir, "stage0_errors.log")

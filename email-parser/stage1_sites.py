@@ -335,6 +335,35 @@ def process(company, log):
 # ────────────────────────── чтение входа ─────────────────────────
 
 
+def find_input(explicit):
+    """Ищем xlsx: явный путь -> рядом со скриптом -> на уровень выше -> любой xlsx рядом."""
+    if explicit:
+        p = os.path.abspath(explicit)
+        if os.path.exists(p):
+            return p
+        raise SystemExit(f"!! не найден файл: {p}")
+    here = os.path.dirname(os.path.abspath(__file__))
+    names = ["Компании (4).xlsx", "Компании(4).xlsx", "Компании.xlsx"]
+    for d in (here, os.path.dirname(here)):
+        for n in names:
+            p = os.path.join(d, n)
+            if os.path.exists(p):
+                return p
+    for d in (here, os.path.dirname(here)):
+        try:
+            cands = [f for f in os.listdir(d)
+                     if f.lower().endswith(".xlsx") and not f.startswith("~$")
+                     and "stage" not in f.lower() and "результат" not in f.lower()]
+        except OSError:
+            continue
+        if len(cands) == 1:
+            return os.path.join(d, cands[0])
+    raise SystemExit(
+        "!! Не нашёл входной xlsx.\n"
+        "   Положите файл рядом со скриптом или укажите путь:\n"
+        '   python stage1_sites.py --input "C:\\parser\\Компании (4).xlsx"')
+
+
 def load_extra_sites(path):
     """ИНН -> сайт из stage0_discover.py. Берём только подтверждённые по ИНН."""
     m = {}
@@ -437,8 +466,7 @@ def write_xlsx(out, results, skipped):
 
 def main():
     ap = argparse.ArgumentParser(description="Сбор email с сайтов компаний")
-    ap.add_argument("--input", default=os.path.join(os.path.dirname(__file__) or ".",
-                                                    "..", "Компании (4).xlsx"))
+    ap.add_argument("--input", default="", help="путь к xlsx (по умолчанию ищется рядом)")
     ap.add_argument("--outdir", default=os.path.join(os.path.dirname(__file__) or ".", "result"))
     ap.add_argument("--limit", type=int, default=0, help="обработать только первые N (0 = все)")
     ap.add_argument("--threads", type=int, default=THREADS)
@@ -446,15 +474,12 @@ def main():
                     help="CSV из stage0_discover.py: подтверждённые по ИНН сайты")
     args = ap.parse_args()
 
-    inp = os.path.abspath(args.input)
+    inp = find_input(args.input)
     outdir = os.path.abspath(args.outdir)
     os.makedirs(outdir, exist_ok=True)
     progress_csv = os.path.join(outdir, "progress.csv")
     log_path = os.path.join(outdir, "errors.log")
     out_xlsx = os.path.join(outdir, "stage1_emails.xlsx")
-
-    if not os.path.exists(inp):
-        raise SystemExit(f"!! не найден входной файл: {inp}")
 
     logfile = open(log_path, "a", encoding="utf-8")
 
