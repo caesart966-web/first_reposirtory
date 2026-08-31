@@ -2,7 +2,7 @@
 // Блок проверяемости: прямые ссылки на официальные реестры.
 // Ни один конкурент этого не делает — а это самый простой способ показать,
 // что скрывать нечего.
-import { REGISTRIES, SITE } from '../config/site'
+import { REGISTRIES, SITE, href } from '../config/site'
 import Icon from './Icon.astro'
 ---
 
@@ -16,6 +16,9 @@ import Icon from './Icon.astro'
         бесплатно и за минуту в официальных реестрах национальных объединений.
         Ссылки прямые — открываются в новой вкладке.
       </p>
+      <a class="s-more" href={href('/proverit-sro/')}>
+        Пять проверок СРО до вступления <Icon name="arrow" size={15} />
+      </a>
     </div>
 
     <div class="grid-2">
@@ -110,6 +113,20 @@ import Icon from './Icon.astro'
 </section>
 
 <style>
+  /* Ссылка на подробную страницу проверки — под подзаголовком блока. */
+  .s-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 14px;
+    color: var(--acc-deep);
+    font-weight: 700;
+    font-size: 15px;
+    text-decoration: none;
+    padding: 4px 0;
+  }
+  .s-more:hover { text-decoration: underline; }
+
   .reg-card { display: grid; gap: 10px; align-content: start; }
   .rc-top { display: flex; align-items: center; gap: 10px; color: var(--acc-deep); }
   .host { font-family: var(--font-mono); font-size: 13px; }

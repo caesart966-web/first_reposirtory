@@ -1,0 +1,418 @@
+---
+import Base from '../layouts/Base.astro'
+import LeadForm from '../components/LeadForm.astro'
+import Icon from '../components/Icon.astro'
+import { LAW, TERMS } from '../config/facts'
+import { href, SITE } from '../config/site'
+
+// Страница «Какие документы нужны».
+//
+// ЧТО ЭТО ЗА СТРАНИЦА. Главный страх клиента перед вступлением — «это же
+// гора бумаг и полгода беготни». Здесь показано, что собрать нужно немного
+// и что половина документов у компании уже есть.
+//
+// ГРАНИЦА ДОСТОВЕРНОСТИ, соблюдать при правках. Сама обязанность подать
+// заявление и подтвердить соответствие требованиям установлена статьёй 55.6
+// ГрК РФ, требование к специалистам — статьёй 55.5-1. Но КОНКРЕТНЫЙ перечень
+// бумаг закон не перечисляет построчно: его добирает каждая СРО своими
+// внутренними документами, и он у разных СРО разный.
+//
+// Поэтому на странице списки подписаны «обычно просят», а не «требует закон»,
+// и нигде не проставлены номера пунктов вроде «п. 3 ч. 2 ст. 55.6»: ссылка
+// на статью — та, что уже стоит на сайте, а на пункты — была бы придумана.
+// Не превращайте эти списки в цитату закона.
+
+const company = [
+  { t: 'Выписка из ЕГРЮЛ или ЕГРИП', d: 'Свежая. Заказывается на сайте ФНС бесплатно, приходит за минуты — я подскажу как.' },
+  { t: 'Устав и решение о создании', d: 'Только для юридического лица. У ИП учредительных документов нет, и просить их не должны.' },
+  { t: 'Свидетельства ИНН и ОГРН', d: 'Или листы записи, если регистрация была после отмены бумажных свидетельств.' },
+  { t: 'Банковские реквизиты', d: 'Нужны для оплаты взносов — вы платите напрямую на счёт СРО, минуя меня.' },
+  { t: 'Контакты для связи', d: 'Телефон, почта, адрес. По ним СРО будет обращаться к вам напрямую.' },
+]
+
+const people = [
+  { t: 'Подтверждение, что специалист у вас в штате', d: 'Трудовой договор или приказ о приёме. Именно штат: договор подряда здесь не подходит.' },
+  { t: 'Диплом о профильном высшем образовании', d: 'Специальность должна попадать в перечень для национального реестра.' },
+  { t: 'Документы о стаже по специальности', d: 'Трудовая книжка или сведения о трудовой деятельности из СФР.' },
+  { t: 'Действующее свидетельство о независимой оценке квалификации', d: `Оно действует ${TERMS.nokValidity}. Просроченное означает исключение из НРС — и компания перестаёт соответствовать требованиям СРО.` },
+  { t: 'СНИЛС и паспортные данные', d: 'Для внесения сведений в национальный реестр специалистов.' },
+]
+
+const mine = [
+  'Разбираю ситуацию и говорю, нужна ли вам СРО вообще',
+  'Подбираю СРО и проверяю её по государственному реестру',
+  'Готовлю заявление и весь комплект под требования конкретной СРО',
+  'Подаю документы и веду переписку с СРО',
+  'Довожу до выписки из реестра и передаю её вам',
+]
+
+const not = [
+  {
+    t: 'Ехать в СРО лично',
+    d: 'Документы подаются дистанционно. Личный визит не требуется ни на одном этапе — ни вам, ни вашим специалистам.',
+  },
+  {
+    t: 'Заверять у нотариуса всё подряд',
+    d: 'Часть копий заверяет сама компания печатью и подписью. Что именно требует нотариального заверения — зависит от конкретной СРО, и я говорю это до того, как вы пойдёте к нотариусу, а не после.',
+  },
+  {
+    t: 'Искать, у кого «взять» специалистов',
+    d: 'Специалисты должны быть у вас в штате по-настоящему. Предложения «предоставим специалистов» означают фиктивное трудоустройство: при проверке это выводит компанию из СРО. Если своих нет — помогу найти и трудоустроить настоящих.',
+  },
+  {
+    t: 'Собирать «допуск СРО»',
+    d: 'Такого документа не существует с 1 июля 2017 года. Право работать подтверждают членство в СРО и выписка из реестра. Если у вас просят допуск — просят несуществующее.',
+  },
+]
+
+const faq = [
+  {
+    q: 'Сколько всего документов получается?',
+    a: 'По компании — пять позиций, и все они у вас уже есть. По каждому специалисту — ещё пять, и они есть у самого специалиста. Заявление и сопроводительные документы готовлю я. Собрать комплект обычно занимает у клиента один вечер.',
+  },
+  {
+    q: 'У меня ИП, а не ООО. Список другой?',
+    a: 'Короче: учредительных документов у ИП нет, поэтому устав и решение о создании не нужны. Всё остальное совпадает, включая требование к специалистам в национальном реестре.',
+  },
+  {
+    q: 'Что, если специалист один?',
+    a: 'Членство оформить не получится: требуется минимум двое в национальном реестре. Это требование закона, и обойти его нельзя. Варианта два — найти и трудоустроить второго либо провести независимую оценку квалификации сотруднику, который подходит по образованию и стажу. Помогу с обоими.',
+  },
+  {
+    q: 'Нужны оригиналы или хватит сканов?',
+    a: 'На этапе подготовки хватает сканов или фотографий — по ним я собираю комплект и вижу, чего не хватает. Требования к оригиналам и заверению зависят от конкретной СРО; назову их, когда СРО будет выбрана.',
+  },
+  {
+    q: 'А если чего-то не хватает?',
+    a: 'Тогда я говорю об этом сразу, а не после подачи. Неполный комплект — самая частая причина, по которой рассмотрение затягивается: СРО запрашивает недостающее, и сроки уезжают. Поэтому комплект проверяется до подачи, а не в процессе.',
+  },
+]
+
+const faqSchema = {
+  '@type': 'FAQPage',
+  mainEntity: faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+}
+---
+
+<Base
+  title="Какие документы нужны для вступления в СРО — список 2026 | НОРМА"
+  description="Что собрать для вступления в СРО: документы по компании и по специалистам национального реестра. Что делаю я, а чего делать не нужно. Без беготни и личных визитов."
+  schema={[faqSchema]}
+  breadcrumbs={[{ label: 'Главная', url: href('/') }, { label: 'Документы' }]}
+>
+  <section class="section page-head">
+    <div class="wrap">
+      <span class="eyebrow">Что нужно от вас</span>
+      <h1>Какие документы <em>собрать</em></h1>
+      <p class="lead">
+        Меньше, чем принято думать. Пять позиций по компании и пять по каждому специалисту —
+        и почти всё это у вас уже есть. <b>Заявление и комплектование — моя работа</b>,
+        от вас нужны только сканы.
+      </p>
+      <div class="head-tags">
+        <span class="stamp">Сверено с законом · {SITE.checkedDate}</span>
+        <span class="law law--dark">{LAW.membership}</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Два списка -->
+  <section class="section">
+    <div class="wrap">
+      <div class="s-head rv">
+        <span class="eyebrow">Комплект</span>
+        <h2>Два списка, и оба <em>короткие</em></h2>
+        <p>
+          Первый — про компанию, второй — про специалистов. Третьего списка нет:
+          всё остальное делаю я.
+        </p>
+      </div>
+
+      <div class="lists">
+        <div class="dcard rv">
+          <div class="d-top">
+            <span class="d-ic"><Icon name="building" size={20} /></span>
+            <div>
+              <h3>По компании</h3>
+              <p class="d-sub">Собирает бухгалтер или руководитель</p>
+            </div>
+          </div>
+          <ul class="docs">
+            {company.map((d) => (
+              <li>
+                <Icon name="check" size={16} />
+                <span><b>{d.t}</b><small>{d.d}</small></span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div class="dcard rv">
+          <div class="d-top">
+            <span class="d-ic"><Icon name="users" size={20} /></span>
+            <div>
+              <h3>По каждому специалисту</h3>
+              <p class="d-sub">Минимум на двоих — это требование закона</p>
+            </div>
+          </div>
+          <ul class="docs">
+            {people.map((d) => (
+              <li>
+                <Icon name="check" size={16} />
+                <span><b>{d.t}</b><small>{d.d}</small></span>
+              </li>
+            ))}
+          </ul>
+          <span class="law">{LAW.specialists}</span>
+        </div>
+      </div>
+
+      <p class="note rv">
+        <Icon name="alert" size={16} />
+        <span>
+          Окончательный перечень устанавливает та СРО, в которую вы вступаете:
+          закон задаёт требования к членству, а список подтверждающих бумаг каждая
+          СРО добирает своими внутренними документами. Поэтому здесь написано
+          «обычно просят», а не «требует закон». Точный список по выбранной СРО
+          я называю до того, как вы начнёте что-то собирать.
+        </span>
+      </p>
+    </div>
+  </section>
+
+  <!-- Что делаю я -->
+  <section class="section section--dark">
+    <div class="wrap">
+      <div class="two">
+        <div class="rv">
+          <span class="eyebrow">Моя часть</span>
+          <h2>Что делаю <em>я</em></h2>
+          <ol class="mine">
+            {mine.map((m) => <li>{m}</li>)}
+          </ol>
+          <p class="mine-note">
+            Всё перечисленное — <b>0 ₽</b>. Вы оплачиваете только взносы и переводите
+            их напрямую на счёт СРО.
+          </p>
+        </div>
+
+        <div class="rv terms">
+          <h3>Сколько это занимает</h3>
+          <dl>
+            <div>
+              <dt>Собрать документы</dt>
+              <dd>обычно один вечер</dd>
+            </div>
+            <div>
+              <dt>От подачи до выписки</dt>
+              <dd>{TERMS.extract}, {TERMS.extractTypical}</dd>
+            </div>
+            <div>
+              <dt>Максимум по закону</dt>
+              <dd>{TERMS.law}</dd>
+            </div>
+          </dl>
+          <p>
+            Двухмесячный срок — установленное законом право СРО на рассмотрение
+            заявления. Называю его рядом с быстрыми сроками намеренно: обещать
+            чужую часть работы как гарантию нельзя.
+          </p>
+          <span class="law law--dark">{LAW.term}</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Чего не нужно -->
+  <section class="section">
+    <div class="wrap">
+      <div class="s-head rv">
+        <span class="eyebrow">Без этого</span>
+        <h2>Чего делать <em>не нужно</em></h2>
+        <p>
+          Четыре вещи, которые вам могут предложить и за которые могут взять деньги.
+          Ни одна из них не требуется.
+        </p>
+      </div>
+
+      <div class="nots">
+        {not.map((n) => (
+          <article class="card ncard rv">
+            <span class="nx"><Icon name="x" size={16} /></span>
+            <h3>{n.t}</h3>
+            <p>{n.d}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Вопросы -->
+  <section class="section">
+    <div class="wrap narrow">
+      <div class="s-head rv">
+        <span class="eyebrow">Вопросы</span>
+        <h2>О документах <em>подробнее</em></h2>
+      </div>
+      <div class="faq rv">
+        {faq.map((f) => (
+          <details>
+            <summary>{f.q}</summary>
+            <p>{f.a}</p>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="zayavka" data-anchor>
+    <div class="wrap narrow">
+      <LeadForm
+        title="Пришлю точный список под вашу СРО"
+        subtitle="Напишите вид работ и регион — подберу СРО и назову, что именно нужно собрать, до начала работы и без обязательств."
+      />
+    </div>
+  </section>
+</Base>
+
+<style>
+  .page-head { background: var(--navy); color: var(--on-navy); padding-bottom: 44px; }
+  .page-head .eyebrow { color: var(--acc-bright); }
+  .page-head h1 { color: #fff; margin: 12px 0 16px; max-width: 20ch; }
+  .page-head .lead { color: var(--on-navy-muted); }
+  .page-head .lead b { color: #fff; }
+  .head-tags { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 22px; align-items: center; }
+
+  .lists { display: grid; gap: 16px; }
+  @media (min-width: 900px) {
+    .lists { grid-template-columns: 1fr 1fr; }
+  }
+
+  .dcard {
+    border: 1px solid var(--line);
+    border-radius: var(--r-l);
+    padding: 24px;
+    background: var(--card);
+    display: grid;
+    gap: 18px;
+    align-content: start;
+  }
+  .d-top { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 13px; align-items: center; }
+  .d-ic {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--acc-btn);
+    color: #fff;
+    display: grid;
+    place-items: center;
+  }
+  .dcard h3 { font-size: 19px; margin: 0; }
+  .d-sub { color: var(--muted); font-size: 14px; margin: 2px 0 0; }
+
+  .docs { list-style: none; margin: 0; padding: 0; display: grid; gap: 13px; }
+  .docs li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 11px; align-items: start; }
+  .docs :global(svg) { color: var(--good); margin-top: 3px; flex: none; }
+  .docs b { display: block; font-size: 15.5px; line-height: 1.35; }
+  .docs small { display: block; color: var(--muted); font-size: 13.5px; line-height: 1.5; margin-top: 3px; }
+
+  .note {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 11px;
+    align-items: start;
+    margin-top: 22px;
+    padding: 16px 18px;
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--acc-btn);
+    border-radius: var(--r-m);
+    color: var(--muted);
+    font-size: 14.5px;
+    line-height: 1.6;
+    max-width: 92ch;
+  }
+  .note :global(svg) { color: var(--acc-btn); margin-top: 2px; }
+
+  .two { display: grid; gap: 26px; }
+  @media (min-width: 900px) {
+    .two { grid-template-columns: minmax(0, 1fr) 340px; gap: 34px; align-items: start; }
+  }
+  .two .eyebrow { color: var(--acc-bright); }
+  .two h2 { color: #fff; }
+
+  .mine { margin: 18px 0 0; padding-left: 20px; display: grid; gap: 10px; }
+  .mine li { color: var(--on-navy-muted); font-size: 15.5px; line-height: 1.55; }
+  .mine li::marker { color: var(--acc-bright); font-family: var(--font-mono); }
+  .mine-note { margin-top: 18px; color: var(--on-navy-muted); font-size: 15px; }
+  .mine-note b { color: #fff; }
+
+  .terms {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--navy-line);
+    border-radius: var(--r-l);
+    padding: 22px;
+    display: grid;
+    gap: 12px;
+    align-content: start;
+  }
+  .terms h3 { color: #fff; font-size: 18px; margin: 0; }
+  .terms dl { margin: 0; display: grid; gap: 10px; }
+  .terms dl > div { display: grid; gap: 2px; padding-bottom: 10px; border-bottom: 1px solid var(--navy-line); }
+  .terms dl > div:last-child { border-bottom: 0; padding-bottom: 0; }
+  .terms dt { color: var(--on-navy-muted); font-size: 13.5px; }
+  .terms dd { margin: 0; color: #fff; font-size: 16px; font-weight: 700; }
+  .terms p { color: var(--on-navy-muted); font-size: 13.5px; line-height: 1.55; margin: 4px 0 0; }
+  .terms .law { justify-self: start; }
+
+  /* Карточек ровно четыре, поэтому колонок именно две, а не «сколько
+     влезет»: общий .grid-2 на широком экране раскладывает их 3 + 1,
+     и последняя висит в одиночестве. */
+  .nots { display: grid; gap: 16px; }
+  @media (min-width: 900px) {
+    .nots { grid-template-columns: 1fr 1fr; }
+  }
+  .ncard { display: grid; gap: 9px; align-content: start; }
+  /* Знак «этого не нужно» — в предупреждающем янтарном, а не в красном.
+     Красного в палитре сайта нет намеренно: здесь не ошибка посетителя,
+     а предупреждение о том, на чём его могут поймать. */
+  .nx {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--warn-bg);
+    color: var(--warn);
+    display: grid;
+    place-items: center;
+  }
+  .ncard h3 { font-size: 17.5px; margin: 2px 0 0; }
+  .ncard p { color: var(--muted); font-size: 15px; line-height: 1.6; margin: 0; }
+
+  .faq { display: grid; gap: 10px; }
+  .faq details {
+    border: 1px solid var(--line);
+    border-radius: var(--r-m);
+    background: var(--card);
+    padding: 0 18px;
+  }
+  .faq summary {
+    cursor: pointer;
+    padding: 15px 0;
+    font-weight: 700;
+    font-size: 16px;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    align-items: center;
+  }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after {
+    content: '+';
+    font-family: var(--font-mono);
+    font-size: 20px;
+    color: var(--acc-btn);
+    flex: none;
+  }
+  .faq details[open] summary::after { content: '−'; }
+  .faq p { margin: 0 0 16px; color: var(--muted); font-size: 15px; line-height: 1.65; }
+</style>
