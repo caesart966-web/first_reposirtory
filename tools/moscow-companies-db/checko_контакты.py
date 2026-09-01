@@ -27,6 +27,11 @@ openpyxl (уже стоят в .venv).
 
 Файл сохраняется каждые 10 компаний, так что обрыв связи или Ctrl+C
 ничего не теряют.
+
+Каждый прогон дополнительно кладёт рядом отдельный файл только со своей
+порцией — `спб_для_checko_прогон_2026-09-01_1522.xlsx`. Общий файл при этом
+продолжает пополняться: именно по нему скрипт понимает, кого уже пробил, и
+не тратит лимит на повторы. Отключается флагом --без-порции.
 """
 
 from __future__ import annotations
@@ -36,6 +41,7 @@ import os
 import re
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Iterator
 
@@ -294,6 +300,11 @@ def main(argv: list[str] | None = None) -> int:
                         help="пауза между запросами, сек")
     parser.add_argument("--inn-column", default="ИНН",
                         help="как называется колонка с ИНН (по умолчанию «ИНН»)")
+    parser.add_argument("--порция", default=None,
+                        help="куда сложить результат именно этого прогона; "
+                             "по умолчанию рядом с общим файлом, с датой в имени")
+    parser.add_argument("--без-порции", action="store_true",
+                        help="не создавать отдельный файл на прогон")
     parser.add_argument("--redo", action="store_true",
                         help="перезапросить и те строки, что уже заполнены")
     args = parser.parse_args(argv)
@@ -348,6 +359,7 @@ def main(argv: list[str] | None = None) -> int:
 
     done = with_phone = failed = 0
     stop_reason = ""
+    за_прогон: list[dict] = []
     try:
         for row in todo:
             if args.limit and done >= args.limit:
@@ -380,6 +392,7 @@ def main(argv: list[str] | None = None) -> int:
                       f"e-mail {len(info['E-mail (Checko)'].split('; ')) if info['E-mail (Checko)'] else 0}",
                       flush=True)
             done += 1
+            за_прогон.append(row)
             if done % 10 == 0:
                 write_rows(path, columns, rows)
             time.sleep(args.delay)
@@ -396,7 +409,16 @@ def main(argv: list[str] | None = None) -> int:
     if left > 0:
         print(f"[checko] осталось на следующий раз: {left} — запустите ту же "
               "команду завтра (или сегодня со вторым ключом: --key <второй>)")
-    print(f"[checko] файл сохранён: {path}")
+    print(f"[checko] общий файл сохранён: {path}")
+
+    if за_прогон and not args.без_порции:
+        порция = Path(args.порция) if args.порция else path.with_name(
+            f"{path.stem}_прогон_{datetime.now():%Y-%m-%d_%H%M}{path.suffix}")
+        write_rows(порция, columns, за_прогон)
+        с_телефоном = sum(1 for r in за_прогон
+                          if (r.get("Телефоны (Checko)") or "").strip())
+        print(f"[checko] порция этого прогона: {порция} "
+              f"({len(за_прогон)} компаний, с телефоном {с_телефоном})")
     return 0
 
 

@@ -33,5 +33,17 @@ class TestНужноПовторить(unittest.TestCase):
         self.assertFalse(checko.нужно_повторить({"Статус (Checko)": "   "}))
 
 
+class TestИмяПорции(unittest.TestCase):
+    def test_имя_рядом_с_общим_файлом(self):
+        # Порция должна ложиться рядом с исходным файлом и не затирать его
+        from datetime import datetime
+        path = Path("C:/mosstroybase/спб_для_checko.xlsx")
+        имя = path.with_name(
+            f"{path.stem}_прогон_{datetime(2026, 9, 1, 15, 22):%Y-%m-%d_%H%M}{path.suffix}")
+        self.assertEqual(имя.name, "спб_для_checko_прогон_2026-09-01_1522.xlsx")
+        self.assertEqual(имя.parent, path.parent)
+        self.assertNotEqual(имя, path)
+
+
 if __name__ == "__main__":
     unittest.main()
