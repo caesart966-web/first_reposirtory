@@ -30,7 +30,7 @@ LIBREOFFICE_WINDOWS_PATHS = (
 )
 
 
-def _find_libreoffice() -> str | None:
+def find_libreoffice() -> str | None:
     for name in LIBREOFFICE_NAMES:
         found = shutil.which(name)
         if found:
@@ -84,7 +84,7 @@ def convert_many(paths: list[Path]) -> tuple[list[Path], str]:
         except Exception as exc:  # Word может быть не установлен или занят
             log.warning("Не удалось создать PDF через Word: %s", exc)
 
-    executable = _find_libreoffice()
+    executable = find_libreoffice()
     if executable:
         try:
             created = _convert_with_libreoffice(paths, executable)

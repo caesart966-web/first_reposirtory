@@ -463,6 +463,34 @@ class TestParser(unittest.TestCase):
         uneven = [("Банковский счет", "ПАО Сбербанк\nБИК 044525225\nК/С 301\nР/С 407")]
         self.assertEqual(expand_multiline_pairs(uneven), uneven)
 
+    def test_old_doc_is_supported(self):
+        """Старый формат .doc принимается и пересохраняется автоматически."""
+        from src import readers
+
+        self.assertIn(".doc", readers.SUPPORTED_SUFFIXES)
+        self.assertIn(".doc", readers.READERS)
+
+    def test_old_doc_without_converter_explains_what_to_do(self):
+        """Если ни Word, ни LibreOffice нет — сообщение должно быть понятным."""
+        from src import readers
+
+        saved = (readers._convert_doc_with_libreoffice,
+                 readers._convert_doc_with_word)
+        readers._convert_doc_with_libreoffice = lambda source, folder: None
+        readers._convert_doc_with_word = lambda source, folder: None
+        try:
+            with tempfile.TemporaryDirectory() as folder:
+                fake = Path(folder) / "Карточка.doc"
+                fake.write_bytes(b"\xd0\xcf\x11\xe0 old word file")
+                with self.assertRaises(readers.ReadError) as ctx:
+                    readers.read_card(fake)
+            message = str(ctx.exception)
+            self.assertIn("Сохранить как", message)
+            self.assertIn(".docx", message)
+        finally:
+            (readers._convert_doc_with_libreoffice,
+             readers._convert_doc_with_word) = saved
+
     def test_card_number_is_not_taken_for_phone(self):
         """Номер карты или счёта, начинающийся с 8, не должен попасть в телефон.
 

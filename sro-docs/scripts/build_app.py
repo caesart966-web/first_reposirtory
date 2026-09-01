@@ -39,6 +39,11 @@ DATA_DIRS = ["sro", "config", "assets"]
 # Библиотеки, которые PyInstaller иногда не находит сам.
 COLLECT_ALL = ["tkinterdnd2"]
 
+# Модули Word (COM) — через них программа пересохраняет старые .doc в .docx
+# и делает PDF. Импортируются лениво, внутри функций, поэтому сборщику
+# их нужно назвать явно. На не-Windows их просто нет — тогда пропускаем.
+HIDDEN_IMPORTS = ["win32com", "win32com.client", "pythoncom"]
+
 
 def say(text: str = "") -> None:
     print(text)
@@ -59,6 +64,12 @@ def run_pyinstaller() -> None:
     icon = ROOT / "assets" / "icon.ico"
     if icon.exists():
         args += ["--icon", str(icon)]
+    for module in HIDDEN_IMPORTS:
+        try:
+            __import__(module)
+        except Exception:  # noqa: BLE001
+            continue       # на этой системе модуля нет — и не нужно
+        args += ["--hidden-import", module]
     for package in COLLECT_ALL:
         try:
             __import__(package)

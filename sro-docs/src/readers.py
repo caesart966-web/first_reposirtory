@@ -14,7 +14,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-SUPPORTED_SUFFIXES = {".docx", ".xlsx", ".xlsm", ".pdf", ".txt", ".csv",
+SUPPORTED_SUFFIXES = {".doc", ".docx", ".xlsx", ".xlsm", ".pdf", ".txt", ".csv",
                       ".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp"}
 
 
@@ -49,8 +49,7 @@ def read_docx(path: Path) -> CardContent:
     except Exception as exc:
         raise ReadError(
             f"Не удалось открыть файл «{path.name}». Возможно, он повреждён "
-            f"или это не документ Word (.docx). Файлы старого формата .doc "
-            f"нужно пересохранить в Word как .docx."
+            f"или это не документ Word."
         ) from exc
 
     lines: list[str] = []
@@ -196,8 +195,99 @@ def read_text_file(path: Path) -> CardContent:
     )
 
 
+# ---------------------------------------------------------------- старый .doc
+def _convert_doc_with_libreoffice(source: Path, folder: Path) -> Path | None:
+    """Преобразовать .doc в .docx установленным LibreOffice."""
+    import subprocess
+
+    from .pdf_export import find_libreoffice
+
+    executable = find_libreoffice()
+    if not executable:
+        return None
+    try:
+        subprocess.run(
+            [executable, "--headless", "--norestore", "--convert-to", "docx",
+             "--outdir", str(folder), str(source)],
+            check=True, capture_output=True, timeout=180)
+    except Exception:      # noqa: BLE001 — не вышло, попробуем Word
+        return None
+    target = folder / (source.stem + ".docx")
+    return target if target.exists() else None
+
+
+def _convert_doc_with_word(source: Path, folder: Path) -> Path | None:
+    """Преобразовать .doc в .docx установленным Microsoft Word (Windows)."""
+    try:
+        import pythoncom
+        import win32com.client
+    except ImportError:
+        return None
+
+    target = folder / (source.stem + ".docx")
+    pythoncom.CoInitialize()
+    word = None
+    try:
+        word = win32com.client.Dispatch("Word.Application")
+        word.Visible = False
+        word.DisplayAlerts = False
+        document = word.Documents.Open(
+            str(source), ConfirmConversions=False, ReadOnly=True,
+            AddToRecentFiles=False)
+        try:
+            document.SaveAs2(str(target), FileFormat=16)   # 16 — обычный .docx
+        finally:
+            document.Close(False)
+    except Exception:      # noqa: BLE001 — Word не установлен или занят
+        return None
+    finally:
+        if word is not None:
+            try:
+                word.Quit()
+            except Exception:      # noqa: BLE001
+                pass
+        pythoncom.CoUninitialize()
+    return target if target.exists() else None
+
+
+def read_doc(path: Path) -> CardContent:
+    """Прочитать карточку в старом формате Word (.doc).
+
+    Такой файл — не ZIP с XML, как .docx, а двоичный формат, читать его
+    напрямую нечем. Поэтому программа сама пересохраняет его в .docx:
+    сначала пробует LibreOffice (он не показывает окон и не зависает —
+    стоит ограничение по времени), затем установленный Microsoft Word.
+    Исходный файл при этом не меняется: работа идёт с временной копией.
+    """
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as folder:
+        folder = Path(folder)
+        # Копию кладём рядом: конвертеры пишут результат по имени исходника,
+        # а исходную папку пользователя трогать нельзя.
+        copy = folder / path.name
+        try:
+            copy.write_bytes(path.read_bytes())
+        except OSError as exc:
+            raise ReadError(f"Не удалось прочитать файл «{path.name}».") from exc
+
+        converted = (_convert_doc_with_libreoffice(copy, folder)
+                     or _convert_doc_with_word(copy, folder))
+        if converted is None:
+            raise ReadError(
+                f"Файл «{path.name}» — старого формата Word (.doc). "
+                f"Преобразовать его не удалось: на компьютере не найден "
+                f"ни Microsoft Word, ни LibreOffice.\n\n"
+                f"Откройте файл в Word и сохраните как .docx "
+                f"(Файл — Сохранить как — тип «Документ Word»), "
+                f"затем загрузите снова."
+            )
+        return read_docx(converted)
+
+
 # ---------------------------------------------------------------- точка входа
 READERS = {
+    ".doc": read_doc,
     ".docx": read_docx,
     ".xlsx": read_xlsx,
     ".xlsm": read_xlsx,
@@ -222,11 +312,6 @@ def read_card(path: str | Path) -> CardContent:
         raise ReadError(f"«{path.name}» — это папка, а не файл карточки.")
 
     suffix = path.suffix.lower()
-    if suffix == ".doc":
-        raise ReadError(
-            f"Файл «{path.name}» — старого формата Word (.doc). "
-            f"Откройте его в Word и сохраните как .docx, затем загрузите снова."
-        )
     if suffix not in READERS:
         supported = ", ".join(sorted(SUPPORTED_SUFFIXES))
         raise ReadError(
