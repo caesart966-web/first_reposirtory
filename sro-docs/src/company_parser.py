@@ -545,6 +545,27 @@ def pairs_from_inline_labels(lines: list[str]) -> list[tuple[str, str]]:
     return found
 
 
+def expand_multiline_pairs(
+        pairs: list[tuple[str, str]]) -> list[tuple[str, str]]:
+    """Разбить строку таблицы, в которой сразу несколько подписей.
+
+    В карточках встречается такая строка: слева в одной ячейке
+    «Генеральный директор» и «Главный бухгалтер» через пустую строку,
+    справа — две фамилии. Целиком это не читается («Генеральный директор
+    Главный бухгалтер» не похоже на должность), а построчно — читается.
+    Разбиваем только когда подписей и значений поровну.
+    """
+    expanded: list[tuple[str, str]] = []
+    for label, value in pairs:
+        label_lines = [x.strip() for x in (label or "").splitlines() if x.strip()]
+        value_lines = [x.strip() for x in (value or "").splitlines() if x.strip()]
+        if len(label_lines) > 1 and len(label_lines) == len(value_lines):
+            expanded.extend(zip(label_lines, value_lines))
+        else:
+            expanded.append((label, value))
+    return expanded
+
+
 # --------------------------------------------------------------- главный разбор
 def parse_card(content: CardContent) -> ParseResult:
     """Разобрать содержимое карточки в реквизиты компании."""
@@ -559,7 +580,7 @@ def parse_card(content: CardContent) -> ParseResult:
             raw_values[key] = value
 
     # 1. Пары из таблиц.
-    for label, value in content.pairs:
+    for label, value in expand_multiline_pairs(content.pairs):
         key = _field_for_label(label)
         if key:
             remember(key, value)
