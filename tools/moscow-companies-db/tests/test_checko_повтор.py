@@ -45,5 +45,40 @@ class TestИмяПорции(unittest.TestCase):
         self.assertNotEqual(имя, path)
 
 
+class TestТелефонИзПочты(unittest.TestCase):
+    """Номер, спрятанный в имени почтового ящика."""
+
+    def test_номер_вытащен(self):
+        # 89281891734@mail.ru — живой мобильный, который иначе пропал бы
+        info = checko.extract({"Контакты": {"Емэйл": "89281891734@mail.ru"}})
+        self.assertEqual(info["Телефон из почты"], "+79281891734")
+        self.assertEqual(info["Есть телефон"], "да")
+
+    def test_обычная_почта_ничего_не_даёт(self):
+        info = checko.extract({"Контакты": {"Емэйл": "info@stroy2024.ru"}})
+        self.assertEqual(info["Телефон из почты"], "")
+        self.assertEqual(info["Есть телефон"], "нет")
+
+    def test_домен_не_разбирается(self):
+        # Цифры после @ — часть домена, а не номер
+        info = checko.extract({"Контакты": {"Емэйл": "director@89281891734.ru"}})
+        self.assertEqual(info["Телефон из почты"], "")
+
+    def test_дубль_не_добавляется(self):
+        info = checko.extract({"Контакты": {"Тел": "+7 928 189-17-34",
+                                            "Емэйл": "89281891734@mail.ru"}})
+        self.assertEqual(info["Телефоны (Checko)"], "+79281891734")
+        self.assertEqual(info["Телефон из почты"], "")
+        self.assertEqual(info["Есть телефон"], "да")
+
+    def test_есть_телефон_по_обычному_номеру(self):
+        info = checko.extract({"Контакты": {"Тел": "+7 (812) 313-10-04"}})
+        self.assertEqual(info["Есть телефон"], "да")
+
+    def test_колонки_объявлены(self):
+        for имя in ("Телефон из почты", "Есть телефон"):
+            self.assertIn(имя, checko.CONTACT_COLUMNS)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -55,7 +55,8 @@ API_KEY_ENV = "CHECKO_API_KEY"
 # есть свои «Статус» и «Адрес», и без пометки скрипт принимал бы их за свои
 # и считал строку заполненной.
 CONTACT_COLUMNS = [
-    "Телефоны (Checko)", "E-mail (Checko)", "Сайт", "Руководитель", "Должность",
+    "Телефоны (Checko)", "Телефон из почты", "Есть телефон",
+    "E-mail (Checko)", "Сайт", "Руководитель", "Должность",
     "Сотрудников (СЧР)", "Налоги уплачено, ₽", "Банкротство",
     "Адрес (Checko)", "Статус (Checko)",
 ]
@@ -114,6 +115,17 @@ def _strings(value: Any) -> Iterator[str]:
                 yield leaf
 
 
+def _phones_in(text: str) -> list[str]:
+    """Российские номера из произвольного текста, в виде +7XXXXXXXXXX."""
+    found = []
+    for m in _PHONE_RE.finditer(text or ""):
+        code, a, b, c = m.groups()
+        phone = f"+7{code}{a}{b}{c}"
+        if phone not in found:
+            found.append(phone)
+    return found
+
+
 def extract(data: dict) -> dict:
     """Контакты и признаки живости из ответа Checko."""
     info: dict = {}
@@ -136,6 +148,16 @@ def extract(data: dict) -> dict:
                 if email not in emails:
                     emails.append(email)
     info["E-mail (Checko)"] = "; ".join(emails)
+
+    # Номер, спрятанный в имени почтового ящика: 89281891734@mail.ru — живой
+    # мобильный, который иначе пропал бы вместе с адресом
+    из_почты = []
+    for email in emails:
+        for phone in _phones_in(email.split("@")[0]):
+            if phone not in phones and phone not in из_почты:
+                из_почты.append(phone)
+    info["Телефон из почты"] = "; ".join(из_почты)
+    info["Есть телефон"] = "да" if (phones or из_почты) else "нет"
 
     site = ""
     for value in deep_find(data, ("Сайт", "ВебСайт")):
