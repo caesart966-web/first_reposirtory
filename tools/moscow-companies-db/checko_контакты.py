@@ -56,6 +56,20 @@ CONTACT_COLUMNS = [
 # По этим колонкам определяется, обработана ли строка — только свои!
 _DONE_MARKERS = ("Телефоны (Checko)", "E-mail (Checko)", "Статус (Checko)")
 
+# Осечки, после которых компанию надо пробовать заново. Без этого списка
+# любой таймаут навсегда исключал бы компанию из работы: пометка о неудаче
+# ложится в «Статус (Checko)», а по нему строка считается обработанной.
+_ВРЕМЕННЫЕ_ОСЕЧКИ = ("сеть:", "ответ не разобрался", "лимит запросов исчерпан",
+                     "HTTP 5", "HTTP 429")
+
+
+def нужно_повторить(row: dict) -> bool:
+    """Строка помечена неудачей, которая может пройти сама собой."""
+    статус = (row.get("Статус (Checko)") or "").strip()
+    if not статус:
+        return False
+    return статус.startswith(_ВРЕМЕННЫЕ_ОСЕЧКИ)
+
 # Телефон РФ: код начинается с 3/4/8/9. Границы (?<!\d) и (?!\d) не дают
 # выхватить куски длинных номеров документов — на этом уже обжигались
 _PHONE_RE = re.compile(
@@ -189,7 +203,7 @@ def extract(data: dict) -> dict:
 
 
 def fetch(inn: str, api_key: str, session: requests.Session,
-          timeout: int = 30) -> tuple[dict | None, str]:
+          timeout: int = 60) -> tuple[dict | None, str]:
     """(данные, пометка). Пометка непустая — если запрос не удался."""
     try:
         resp = session.get(CHECKO_URL, params={"key": api_key, "inn": inn},
@@ -310,13 +324,16 @@ def main(argv: list[str] | None = None) -> int:
     todo = []
     for row in rows:
         done = any((row.get(c) or "").strip() for c in _DONE_MARKERS)
-        if args.redo or not done:
+        if args.redo or not done or нужно_повторить(row):
             inn = (row.get(args.inn_column) or "").strip()
             if inn:
                 todo.append(row)
+    повторно = sum(1 for row in todo if нужно_повторить(row))
     already = len(rows) - len(todo)
     if already:
         print(f"[checko] уже заполнено ранее: {already} (пропускаю)")
+    if повторно:
+        print(f"[checko] повторю после прошлых осечек: {повторно}")
     if not todo:
         print("[checko] все строки уже заполнены — работа не нужна")
         return 0
@@ -354,6 +371,8 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 info = extract(data)
                 row.update(info)
+                if not info.get("Статус (Checko)"):
+                    row["Статус (Checko)"] = ""   # затираем прошлую осечку
                 if info["Телефоны (Checko)"]:
                     with_phone += 1
                 print(f"[checko] {done + 1}/{plan} {inn} {name}: "
