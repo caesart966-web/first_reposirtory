@@ -29,3 +29,19 @@ pto-site/dist/assets/config.js
 
 # master-site: журнал заявок, если письмо не ушло (создаётся на хостинге)
 master-site/leads.log
+
+# sro-leads: секреты, база, снапшоты реестров, входящие выгрузки, отчёты, логи
+sro-leads/.env
+sro-leads/data/snapshots/*
+!sro-leads/data/snapshots/.gitkeep
+sro-leads/data/tenderguru/*
+!sro-leads/data/tenderguru/.gitkeep
+!sro-leads/data/tenderguru/processed/
+sro-leads/data/tenderguru/processed/*
+!sro-leads/data/tenderguru/processed/.gitkeep
+sro-leads/data/companies/*
+!sro-leads/data/companies/.gitkeep
+sro-leads/output/*
+!sro-leads/output/.gitkeep
+sro-leads/logs/*
+!sro-leads/logs/.gitkeep

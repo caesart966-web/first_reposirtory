@@ -1,0 +1,179 @@
+# sro-leads — конфигурация. Секреты (токены API) лежат в .env, не здесь.
+# Пути — относительно папки проекта (там, где run.py).
+
+paths:
+  db: data/sro_leads.db
+  snapshots_dir: data/snapshots
+  tenderguru_dir: data/tenderguru
+  tenderguru_processed_dir: data/tenderguru/processed
+  companies_dir: data/companies          # локальные справочники компаний (xlsx) для обогащения
+  output_dir: output
+  logs_dir: logs
+
+http:
+  timeout: 10            # секунд на один запрос
+  retries: 3             # повторов при сетевой ошибке / 5xx
+  backoff_base: 2        # паузы 2, 4, 8 секунд
+  domain_delay: 1.5      # вежливая пауза между запросами к одному домену, секунд
+  user_agent: "Mozilla/5.0 (compatible; sro-leads/1.0)"
+
+collectors:
+  # Порядок важен: tender_match сверяется со снапшотами реестров, поэтому идёт последним.
+  enabled: [nostroy_registry, nopriz_registry, tender_match]
+
+# ---------------------------------------------------------------------------
+# Реестры членов СРО. Эндпоинты и карта полей — здесь, в коде их нет.
+# Если рабочий пайплайн использует другие адреса/параметры — правьте только этот блок.
+# ---------------------------------------------------------------------------
+registry:
+  keep_days: 14            # сколько дней снапшотов хранить в БД; сырые JSON на диске не удаляются
+  min_size_ratio: 0.5      # снапшот меньше 50% предыдущего = сбой API: дифф не строим, снапшот не пишем
+  compress_raw: true       # сырые снапшоты писать как .json.gz
+  max_pages: 5000          # защита от бесконечной пагинации
+  page_delay: 0.3          # пауза между страницами, секунд
+  # Классификация статуса членства по подстрокам (без учёта регистра).
+  # Сначала проверяется excluded, потом suspended, потом active.
+  status_classes:
+    excluded: ["исключ", "прекращ", "excluded", "terminated"]
+    suspended: ["приостанов", "suspended"]
+    active: ["действ", "является членом", "member", "active"]
+
+  nostroy:
+    base_url: https://api-open-nostroy.nostroy.ru
+    # Полный список членов всех СРО одним эндпоинтом.
+    members_endpoint: /api/sro/all/member/list
+    # Если общий эндпоинт не отвечает — режим обхода по СРО: раскомментировать
+    # sro_list_endpoint и указать members_endpoint с плейсхолдером {sro_id}.
+    # sro_list_endpoint: /api/sro/list
+    # members_endpoint: /api/sro/{sro_id}/member/list
+    method: POST
+    page_size: 500
+    page_count_as_string: true         # грабли: pageCount строкой, иначе API отдаёт пустоту
+    request_body:
+      filters: {}
+      sortBy: {id: ASC}
+    fields:                            # пути к полям ответа, через точку; список = варианты по порядку
+      items: [data.data, data.items, data, items]
+      total: [data.total, total, data.count]
+      inn: [inn, member.inn]
+      ogrn: [ogrn]
+      name: [short_description, full_description, name]
+      sro_name: [sro.short_description, sro.full_description, sro_name, sro.name]
+      sro_id: [sro.id, sro_id]
+      reg_number: [registration_number, reg_number]
+      status: [member_status.title, member_status.code, status.title, status]
+      member_id: [id, member_id]
+      region: [region.title, region]
+    member_url: "https://reestr.nostroy.ru/reestr/clients/{sro_id}/members/{member_id}"
+
+  nopriz:
+    base_url: https://reestr.nopriz.ru
+    members_endpoint: /api/sro/all/member/list
+    # sro_list_endpoint: /api/sro/list
+    # members_endpoint: /api/sro/{sro_id}/member/list
+    method: POST
+    page_size: 500
+    page_count_as_string: true
+    request_body:
+      filters: {}
+      sortBy: {id: ASC}
+    fields:
+      items: [data.data, data.items, data, items]
+      total: [data.total, total, data.count]
+      inn: [inn, member.inn]
+      ogrn: [ogrn]
+      name: [short_description, full_description, name]
+      sro_name: [sro.short_description, sro.full_description, sro_name, sro.name]
+      sro_id: [sro.id, sro_id]
+      reg_number: [registration_number, reg_number]
+      status: [member_status.title, member_status.code, status.title, status]
+      member_id: [id, member_id]
+      region: [region.title, region]
+    member_url: "https://reestr.nopriz.ru/reestr/clients/{sro_id}/members/{member_id}"
+
+# ---------------------------------------------------------------------------
+# TenderGuru: выгрузки mail_*_contracts.xlsx из data/tenderguru/
+# ---------------------------------------------------------------------------
+tenderguru:
+  file_glob: "*.xlsx"
+  # Чьи ИНН считать лидами: supplier (подрядчик/победитель/участник), customer (заказчик).
+  lead_roles: [supplier]
+  # Без свежего снапшота реестра нельзя понять, есть ли у компании СРО, —
+  # тогда сигналы этого типа не генерируем (иначе лидом станет каждый участник).
+  require_registry_snapshot: true
+  design_okpd_prefixes: ["71"]               # проектирование, изыскания — СРО нужна при любой сумме
+  build_okpd_prefixes: ["41", "42", "43"]    # строительство
+  build_keywords: ["строител", "ремонт", "реконструкц", "капитальн"]  # если ОКПД в строке нет
+  build_high_threshold: 10000000             # > 10 млн — tender_no_sro_build_high
+  build_mid_threshold: 5000000               # 5–10 млн — tender_no_sro_build_mid
+  # Подстроки заголовков колонок (без учёта регистра). Первая совпавшая колонка и берётся.
+  columns:
+    customer_inn: ["инн заказчика", "заказчик инн", "инн зак"]
+    customer_name: ["заказчик"]
+    supplier_inn: ["инн поставщика", "инн подрядчика", "инн победителя", "инн участника", "инн исполнителя", "поставщик инн"]
+    supplier_name: ["поставщик", "подрядчик", "победитель", "участник", "исполнитель"]
+    sum: ["сумма", "цена контракта", "цена", "нмцк", "стоимость"]
+    okpd: ["окпд"]
+    date: ["дата заключения", "дата контракта", "дата"]
+    subject: ["предмет", "наименование", "объект закупки"]
+    url: ["ссылка", "url", "адрес в еис"]
+    number: ["реестровый номер", "номер контракта", "номер извещения", "№"]
+
+# ---------------------------------------------------------------------------
+# Скоринг
+# ---------------------------------------------------------------------------
+scoring:
+  weights:
+    excluded_from_sro: 100
+    tender_no_sro_design: 90
+    tender_no_sro_build_high: 80
+    suspended: 70
+    tender_no_sro_build_mid: 50
+    joined_sro: 0                 # не лид, хранится для сверки
+  fresh_days: 7
+  fresh_multiplier: 1.3
+  stale_days: 90
+  stale_multiplier: 0.5
+  multi_type_bonus: 30            # два и более разных типа сигнала по одному ИНН
+  priority_1_min: 100
+  priority_2_min: 60
+  # joined_sro новее последнего лидового сигнала = компания уже вступила куда-то ещё: скор 0.
+  suppress_if_joined_later: true
+
+# ---------------------------------------------------------------------------
+# Обогащение
+# ---------------------------------------------------------------------------
+enrich:
+  min_score: 60                   # обогащаем только тех, у кого скор не ниже порога
+  max_per_run: 200                # лимит на один прогон, чтобы не жечь лимиты API
+  reenrich_after_days: 30
+  dadata:
+    enabled: true
+    url: https://suggestions.dadata.ru/suggestions/api/4_1/rs/findById/party
+  local_directory:
+    enabled: true                 # xlsx-справочники из paths.companies_dir (колонки: ИНН, Название, Телефоны, email, Сайт...)
+    file_glob: "*.xlsx"
+  site_search:
+    enabled: true
+    # HTML-версия DuckDuckGo: без ключа. Заменить на API поисковика при желании.
+    url: "https://html.duckduckgo.com/html/?q={query}"
+    # Агрегаторы и справочники: это не сайт компании.
+    skip_domains: [rusprofile.ru, list-org.com, checko.ru, sbis.ru, zachestnyibiznes.ru, egrul.nalog.ru,
+                   companies.rbc.ru, spark-interfax.ru, kontur.ru, focus.kontur.ru, audit-it.ru,
+                   vbankcenter.ru, saby.ru, e-ecolog.ru, rusbase.com, findorg.ru, synapsenet.ru,
+                   nostroy.ru, nopriz.ru, zakupki.gov.ru, tenderguru.ru, hh.ru, 2gis.ru, yandex.ru,
+                   google.com, vk.com, ok.ru, t.me, wikipedia.org, duckduckgo.com, ofdata.ru, bo.nalog.ru]
+  site_parse:
+    enabled: true
+    pages: ["/", "/contacts", "/kontakty", "/about", "/contact", "/o-kompanii"]
+    max_bytes: 2000000
+
+# ---------------------------------------------------------------------------
+# Экспорт
+# ---------------------------------------------------------------------------
+export:
+  filename: "Лиды_{date}.xlsx"
+  regions: []                     # подстроки региона, например ["Санкт-Петербург", "Ленинградская"]; пусто = все
+  min_score: 1
+  outreach_statuses: [new]        # кого выгружать по статусу обзвона
+  exclude_liquidated: true

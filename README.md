@@ -1,8 +1,11 @@
-# Репозиторий: два проекта
+# Репозиторий: несколько проектов
 
 1. **`orders-app/`** — приложение учёта заказов фрилансера (PWA, ставится на телефон,
    работает офлайн). Инструкция и описание — [`orders-app/README.md`](orders-app/README.md).
-2. **`.claude/skills/construction-control/`** — Claude Code skill «ИИ-ассистент
+2. **`sro-leads/`** — система сбора лидов на вступление в СРО: ежедневные снапшоты
+   реестров НОСТРОЙ/НОПРИЗ, сверка выгрузок TenderGuru, скоринг, обогащение,
+   Excel для обзвона. Инструкция — [`sro-leads/README.md`](sro-leads/README.md).
+3. **`.claude/skills/construction-control/`** — Claude Code skill «ИИ-ассистент
    строительного контроля» (описан ниже).
 
 ---
