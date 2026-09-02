@@ -87,6 +87,19 @@ python run.py --full                                  # далее ежедне�
 python run.py --drop-snapshot nostroy --date 2026-09-02
 ```
 
+Что именно пришло в снапшоте, показывает отчёт:
+
+```bat
+python run.py --snapshot-report nostroy
+```
+
+Он печатает число записей и полноту, распределение по `status_code` с расшифровкой и
+долями, заполненность `status_date` и `reg_date` с минимумом и максимумом, число записей
+в окнах 30, 90 и 180 дней от даты снапшота, и вердикт одной строкой: применим ли
+backfill или API отдаёт только срез действующих членов и остаётся ждать первого диффа.
+БД отчёт не меняет. Расшифровки кодов статуса можно заполнить в
+`registry.status_code_titles`, по умолчанию берётся текст статуса из ответа API.
+
 Планировщик задач Windows: ежедневно в 08:00 запускать `run.bat` (рабочая папка —
 папка проекта). После прогона откроется папка `output`.
 
@@ -101,6 +114,7 @@ python run.py --drop-snapshot nostroy --date 2026-09-02
 --mark ИНН статус [комментарий]   статус обзвона: new | called | in_progress | won | dead
 --check-api nostroy|nopriz  один запрос к API реестра и сверка карты полей, в БД не пишет
 --drop-snapshot ИСТОЧНИК [--date YYYY-MM-DD]   удалить снапшот за дату (по умолчанию последний)
+--snapshot-report ИСТОЧНИК [--date YYYY-MM-DD] отчёт по снапшоту: статусы, даты, применим ли backfill
 ```
 
 Статусы обзвона живут в таблице `outreach`: экспорт по умолчанию берёт только `new`,
@@ -159,6 +173,7 @@ core/models.py        Signal, Org, RegistryRow, Snapshot
 core/scoring.py       скоринг
 core/enrich.py        обогащение
 core/export.py        Excel
+core/report.py        отчёты по снапшоту и карточки организаций (только чтение)
 core/utils.py         конфиг, логи, нормализация ИНН, HTTP с ретраями
 collectors/base.py    базовый Collector и общая логика реестров (снапшот, дифф)
 collectors/*.py       коллекторы; новый = один файл с подклассом Collector

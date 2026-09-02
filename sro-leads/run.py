@@ -8,6 +8,7 @@
   python run.py --export-only             # только пересобрать Excel из БД
   python run.py --mark 7814858513 called "перезвонить в четверг"   # статус обзвона
   python run.py --check-api nostroy       # один запрос к API и сверка карты полей, в БД не пишет
+  python run.py --snapshot-report nostroy  # что за статусы и даты в снапшоте, применим ли backfill
   python run.py --drop-snapshot nostroy --date 2026-09-02   # удалить снапшот за дату, чтобы снять заново
 """
 from __future__ import annotations
@@ -23,7 +24,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from core.db import Database  # noqa: E402
 from core.enrich import Enricher  # noqa: E402
-from core.export import build_export  # noqa: E402
+from core.export import build_export
+from core.report import snapshot_report  # noqa: E402
 from core.models import OUTREACH_STATUSES  # noqa: E402
 from core.scoring import rescore_all  # noqa: E402
 from core.utils import HttpClient, load_config, resolve_path, setup_logging  # noqa: E402
@@ -86,6 +88,13 @@ def drop_snapshot(cfg: dict, db: Database, source: str, date: Optional[str]) -> 
     return 0
 
 
+def print_snapshot_report(cfg: dict, db: Database, source: str, date: Optional[str]) -> int:
+    """Отчёт по снапшоту: что за статусы и даты пришли, применим ли backfill. Только чтение."""
+    ok, report = snapshot_report(db, cfg, source, date)
+    print(report)
+    return 0 if ok else 1
+
+
 def check_api(cfg: dict, source: str) -> int:
     """Диагностика живого коннектора: печатает отчёт в консоль, БД не трогает."""
     from collectors.base import RegistryCollector
@@ -122,7 +131,9 @@ def main(argv: list[str] | None = None) -> int:
                         help=f"статус обзвона: INN STATUS [комментарий]; статусы: {', '.join(OUTREACH_STATUSES)}")
     parser.add_argument("--drop-snapshot", metavar="SOURCE", help="удалить снапшот источника (nostroy | nopriz) "
                         "за дату --date (по умолчанию последний), чтобы снять его заново")
-    parser.add_argument("--date", metavar="YYYY-MM-DD", help="дата снапшота для --drop-snapshot")
+    parser.add_argument("--date", metavar="YYYY-MM-DD", help="дата снапшота для --drop-snapshot и --snapshot-report")
+    parser.add_argument("--snapshot-report", metavar="SOURCE", help="отчёт по снятому снапшоту источника "
+                        "(nostroy | nopriz) за --date (по умолчанию последний): статусы, даты, применим ли backfill")
     parser.add_argument("--check-api", metavar="SOURCE", help="один запрос к API реестра (nostroy | nopriz) "
                         "и сверка карты полей; в БД ничего не пишет")
     parser.add_argument("--config", help="путь к config.yaml")
@@ -135,6 +146,9 @@ def main(argv: list[str] | None = None) -> int:
     db = Database(resolve_path(cfg, "db", "data/sro_leads.db"))
     started = time.monotonic()
     try:
+        if args.snapshot_report:
+            return print_snapshot_report(cfg, db, args.snapshot_report, args.date)
+
         if args.drop_snapshot:
             return drop_snapshot(cfg, db, args.drop_snapshot, args.date)
 
