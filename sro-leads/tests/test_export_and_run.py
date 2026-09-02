@@ -87,8 +87,12 @@ def test_run_check_api_writes_nothing(tmp_path, monkeypatch):
         cfg["paths"][k] = str(tmp_path / cfg["paths"][k])
     cfg_path = tmp_path / "config.yaml"
     cfg_path.write_text(yaml.safe_dump(cfg, allow_unicode=True), encoding="utf-8")
-    monkeypatch.setattr(nr.NostroyRegistry, "check_api", lambda self, page_size=3: (True, "ОТЧЁТ"))
+    monkeypatch.setattr(nr.NostroyRegistry, "check_api", lambda self, **kw: ("ok", "ОТЧЁТ"))
     assert run.main(["--check-api", "nostroy", "--config", str(cfg_path)]) == 0
+    monkeypatch.setattr(nr.NostroyRegistry, "check_api", lambda self, **kw: ("warn", "ВНИМАНИЕ"))
+    assert run.main(["--check-api", "nostroy", "--config", str(cfg_path)]) == 0   # предупреждение — не отказ
+    monkeypatch.setattr(nr.NostroyRegistry, "check_api", lambda self, **kw: ("error", "ОШИБКА"))
+    assert run.main(["--check-api", "nostroy", "--config", str(cfg_path)]) == 1
     assert not (tmp_path / "data" / "sro_leads.db").exists()          # БД не создаётся и не пишется
     assert run.main(["--check-api", "nope", "--config", str(cfg_path)]) == 2
 

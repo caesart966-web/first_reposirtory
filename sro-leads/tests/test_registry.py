@@ -288,37 +288,42 @@ class FakeHttp:
         self.payload, self.status, self.calls = payload, status, []
 
     def post(self, url, **kw):
-        self.calls.append((url, kw.get("json")))
-        return FakeResp(self.payload, self.status)
+        body = kw.get("json")
+        self.calls.append((url, body))
+        payload = self.payload(body) if callable(self.payload) else self.payload
+        return FakeResp(payload, self.status)
 
     def get(self, url, **kw):
         return self.post(url, **kw)
 
 
 def test_check_api_reports_field_mapping(cfg):
+    cfg["registry"]["nostroy"]["probe_params"] = []
     payload = {"success": True, "data": {"data": [api_item_dated("1000000001", "Исключен", "2026-03-20"),
                                                   api_item("1000000002")], "total": 12345}}
     http = FakeHttp(payload)
-    ok, report = NostroyRegistry(cfg, db=None, http=http).check_api()
-    assert ok
+    tag, report = NostroyRegistry(cfg, db=None, http=http).check_api()
+    assert tag == "ok"
     assert http.calls[0][1]["pageCount"] == "3"                        # минимальная страница, строкой
     assert "HTTP 200" in report and "['success', 'data']" in report
     assert "data.data" in report and "12345" in report
     assert "member_status_date" in report and "2026-03-20" in report   # status_date нашёлся
     assert re.search(r"reg_date\s+-\s+-\s+<-- НЕ НАЙДЕНО", report)      # reg_date в ответе нет — помечено явно
-    assert "1000000001" in report and "карта полей сошлась" in report
+    assert "1000000001" in report and "OK: карта полей совпала, backfill применим" in report
     assert report.count("--- запись") == 2
 
 
 def test_check_api_detects_mismatch_and_errors(cfg):
-    ok, report = NostroyRegistry(cfg, db=None, http=FakeHttp({"result": {"rows": [{"tax_id": "1"}]}})).check_api()
-    assert not ok and "ЗАПИСЕЙ НЕТ" in report and re.search(r"items\s+НЕ НАЙДЕНО", report)
-    ok, report = NostroyRegistry(cfg, db=None, http=FakeHttp({"data": {"data": [{"foo": 1}]}})).check_api()
-    assert not ok and re.search(r"inn\s+-\s+-\s+<-- НЕ НАЙДЕНО \(обязательное\)", report) and "НЕ СОШЛАСЬ" in report
-    ok, report = NostroyRegistry(cfg, db=None, http=FakeHttp("<html>403</html>", 403)).check_api()
-    assert not ok and "HTTP 403" in report
-    ok, report = NostroyRegistry(cfg, db=None, http=FakeHttp("<html>", 200)).check_api()
-    assert not ok and "не JSON" in report
+    tag, report = NostroyRegistry(cfg, db=None, http=FakeHttp({"result": {"rows": [{"tax_id": "1"}]}})).check_api()
+    assert tag == "error" and "ЗАПИСЕЙ НЕТ" in report and re.search(r"items\s+НЕ НАЙДЕНО", report)
+    assert "ОШИБКА: поля items не найдены" in report
+    tag, report = NostroyRegistry(cfg, db=None, http=FakeHttp({"data": {"data": [{"foo": 1}]}})).check_api()
+    assert tag == "error" and re.search(r"inn\s+-\s+-\s+<-- НЕ НАЙДЕНО \(обязательное\)", report)
+    assert "ОШИБКА: поля" in report and "inn" in report and "registry.nostroy.fields" in report
+    tag, report = NostroyRegistry(cfg, db=None, http=FakeHttp("<html>403</html>", 403)).check_api()
+    assert tag == "error" and "HTTP 403" in report
+    tag, report = NostroyRegistry(cfg, db=None, http=FakeHttp("<html>", 200)).check_api()
+    assert tag == "error" and "не JSON" in report
 
 
 def test_check_api_per_sro_mode(cfg):
@@ -332,8 +337,9 @@ def test_check_api_per_sro_mode(cfg):
 
     cfg["registry"]["nostroy"]["sro_list_endpoint"] = "/api/sro/list"
     cfg["registry"]["nostroy"]["members_endpoint"] = "/api/sro/{sro_id}/member/list"
-    ok, report = NostroyRegistry(cfg, db=None, http=Http(None)).check_api()
-    assert ok and "первая СРО: id=5" in report
+    cfg["registry"]["nostroy"]["probe_params"] = []
+    tag, report = NostroyRegistry(cfg, db=None, http=Http(None)).check_api()
+    assert tag == "warn" and "первая СРО: id=5" in report   # в моке один статус на всю выборку
 
 
 # --------------------------------------------------- полнота снапшота (meta)
@@ -431,3 +437,57 @@ def test_drop_snapshot_command(cfg, db, monkeypatch, capsys):
     assert run.drop_snapshot(cfg, db, "nostroy", "2026-01-01") == 2  # даты нет
     assert run.drop_snapshot(cfg, db, "nostroy", None) == 0          # по умолчанию последний
     assert db.snapshot_dates("nostroy") == []
+
+
+def test_check_api_sample_distribution_and_verdict_ok(cfg):
+    """Разные статусы и заполненные даты в выборке -> вердикт OK."""
+    cfg["registry"]["nostroy"]["probe_params"] = []
+    sample = [api_item_dated(f"10000000{i:02d}", "Исключен", "2026-03-20") for i in range(1, 4)]
+    sample += [api_item(f"10000001{i:02d}") for i in range(1, 8)]
+
+    def payload(body):
+        size = int(body["pageCount"])
+        return {"data": {"data": sample[:size], "total": 500}}
+
+    http = FakeHttp(payload)
+    tag, report = NostroyRegistry(cfg, db=None, http=http).check_api()
+    assert tag == "ok" and "OK: карта полей совпала, backfill применим" in report
+    assert "== Распределение статусов на выборке (10 записей):" in report
+    assert "x / Исключен" in report and "30.0%" in report
+    assert "'excluded': 3" in report and "'active': 7" in report
+    assert "с непустой status_date: 3 из 10" in report
+    assert [int(b["pageCount"]) for _, b in http.calls] == [3, 100]   # первая проба и выборка
+
+
+def test_check_api_warns_on_active_only_slice(cfg):
+    """Один статус на всю выборку -> ВНИМАНИЕ, доступен только дифф, код возврата 0."""
+    cfg["registry"]["nostroy"]["probe_params"] = []
+    payload = {"data": {"data": [api_item(f"10000000{i:02d}") for i in range(1, 6)], "total": 5}}
+    tag, report = NostroyRegistry(cfg, db=None, http=FakeHttp(payload)).check_api()
+    assert tag == "warn"
+    assert "ВНИМАНИЕ: карта полей совпала, но API отдаёт только действующих, доступен только дифф" in report
+    assert "OK:" not in report
+
+
+def test_check_api_probe_params_find_working_filter(cfg):
+    """Проба параметров: если с ним total меняется, параметр рекомендуется."""
+    cfg["registry"]["nostroy"]["probe_params"] = [
+        {"name": "статус=2", "params": {"filters": {"member_status": 2}}},
+        {"name": "статус=нет", "params": {"filters": {"nope": 1}}},
+    ]
+    base_items = [api_item(f"10000000{i:02d}") for i in range(1, 6)]
+
+    def payload(body):
+        if body.get("filters", {}).get("member_status") == 2:
+            return {"data": {"data": [api_item("1000000099", "Исключен")], "total": 777}}
+        return {"data": {"data": base_items[: int(body["pageCount"])], "total": 5}}
+
+    http = FakeHttp(payload)
+    tag, report = NostroyRegistry(cfg, db=None, http=http).check_api()
+    assert "статус=2: total 777 (базовый 5) — ИЗМЕНИЛСЯ" in report
+    assert "статус=нет: total 5 (базовый 5) — без изменений" in report
+    assert "РЕКОМЕНДАЦИЯ: рабочий параметр фильтра: статус=2 -> total 777" in report
+    assert tag == "warn" and "добавьте параметр в registry.nostroy.request_body" in report
+    # базовые filters из request_body не затираются, а дополняются
+    probe_bodies = [b for _, b in http.calls if "member_status" in str(b)]
+    assert probe_bodies[0]["filters"] == {"member_status": 2}

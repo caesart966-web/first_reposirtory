@@ -73,6 +73,16 @@ registry:
       status_date: [member_status_date, status_date, exclusion_date, removal_date, suspension_date,
                     member_status.date, date_status, termination_date]
       reg_date: [registry_registration_date, registration_date, member_registration_date, reg_date]
+    # Кандидаты параметров, которыми --check-api пробует выпросить у API исключённых.
+    # Каждый элемент: {name: подпись, params: {что добавить в тело запроса}}.
+    # Если с каким-то из них total меняется — параметр рабочий, команда это покажет.
+    probe_params:
+      - name: "filters.member_status = 2 (прекращено)"
+        params: {filters: {member_status: 2}}
+      - name: "filters.status = excluded"
+        params: {filters: {status: "excluded"}}
+      - name: "filters.is_active = false"
+        params: {filters: {is_active: false}}
     member_url: "https://reestr.nostroy.ru/reestr/clients/{sro_id}/members/{member_id}"
 
   nopriz:
@@ -102,6 +112,16 @@ registry:
       status_date: [member_status_date, status_date, exclusion_date, removal_date, suspension_date,
                     member_status.date, date_status, termination_date]
       reg_date: [registry_registration_date, registration_date, member_registration_date, reg_date]
+    # Кандидаты параметров, которыми --check-api пробует выпросить у API исключённых.
+    # Каждый элемент: {name: подпись, params: {что добавить в тело запроса}}.
+    # Если с каким-то из них total меняется — параметр рабочий, команда это покажет.
+    probe_params:
+      - name: "filters.member_status = 2 (прекращено)"
+        params: {filters: {member_status: 2}}
+      - name: "filters.status = excluded"
+        params: {filters: {status: "excluded"}}
+      - name: "filters.is_active = false"
+        params: {filters: {is_active: false}}
     member_url: "https://reestr.nopriz.ru/reestr/clients/{sro_id}/members/{member_id}"
 
 # ---------------------------------------------------------------------------

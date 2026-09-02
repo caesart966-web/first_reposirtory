@@ -105,9 +105,9 @@ def check_api(cfg: dict, source: str) -> int:
               + ", ".join(sorted(c.source for c in discover().values() if issubclass(c, RegistryCollector))))
         return 2
     collector = cls(cfg, db=None, http=HttpClient(cfg.get("http", {})))  # type: ignore[arg-type]
-    ok, report = collector.check_api()
+    tag, report = collector.check_api()
     print(report)
-    return 0 if ok else 1
+    return 1 if tag == "error" else 0   # warn — это предупреждение, а не отказ
 
 
 def prune(cfg: dict, db: Database) -> None:

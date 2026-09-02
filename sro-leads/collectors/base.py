@@ -5,7 +5,7 @@ import gzip
 import json
 import logging
 import time
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Any, Optional
@@ -163,20 +163,27 @@ class RegistryCollector(Collector):
         return cfg
 
     # --------------------------------------------------------------- запрос
-    def _page_body(self, page: int, page_size: Optional[int] = None) -> dict[str, Any]:
+    def _page_body(self, page: int, page_size: Optional[int] = None,
+                   extra: Optional[dict[str, Any]] = None) -> dict[str, Any]:
         body = json.loads(json.dumps(self.scfg.get("request_body") or {}))
         size = int(page_size or self.scfg.get("page_size", 500))
         body["page"] = page
         body["pageCount"] = str(size) if self.scfg.get("page_count_as_string", True) else size
+        for key, value in (extra or {}).items():
+            if isinstance(value, dict) and isinstance(body.get(key), dict):
+                body[key] = {**body[key], **value}   # filters дополняются, а не затираются
+            else:
+                body[key] = value
         return body
 
-    def _http_call(self, endpoint: str, page: int, page_size: Optional[int] = None) -> Any:
+    def _http_call(self, endpoint: str, page: int, page_size: Optional[int] = None,
+                   extra: Optional[dict[str, Any]] = None) -> Any:
         url = self.scfg["base_url"].rstrip("/") + endpoint
         method = (self.scfg.get("method") or "POST").upper()
         headers = {"Accept": "application/json", "Content-Type": "application/json"}
         if method == "GET":
-            return self.http.get(url, params=self._page_body(page, page_size), headers=headers)
-        return self.http.post(url, json=self._page_body(page, page_size), headers=headers)
+            return self.http.get(url, params=self._page_body(page, page_size, extra), headers=headers)
+        return self.http.post(url, json=self._page_body(page, page_size, extra), headers=headers)
 
     def _request(self, endpoint: str, page: int) -> Any:
         url = self.scfg["base_url"].rstrip("/") + endpoint
@@ -189,36 +196,41 @@ class RegistryCollector(Collector):
             raise CollectorError(f"{self.source}: не JSON в ответе {url}: {e}") from e
 
     # ------------------------------------------------------------ check-api
-    def check_api(self, page_size: int = 3) -> tuple[bool, str]:
-        """Один запрос минимальной страницей и отчёт: статус, ключи, первые записи,
-        сверка registry.<source>.fields с реальным ответом. В БД ничего не пишет.
-        Возвращает (карта полей сошлась?, текст отчёта)."""
+    def check_api(self, page_size: int = 3, sample_size: int = 100) -> tuple[str, str]:
+        """Диагностика живого коннектора. В БД ничего не пишет.
+
+        Возвращает (вердикт, текст отчёта), где вердикт: "ok" — карта полей совпала и
+        backfill применим, "warn" — карта совпала, но API отдаёт только действующих,
+        "error" — обязательные поля не найдены.
+        """
         fields = self.scfg.get("fields", {})
         lines: list[str] = []
-        ok = True
+        missing: list[str] = []
+        fatal = False
 
-        def probe(endpoint: str, title: str) -> Optional[Any]:
-            nonlocal ok
+        def probe(endpoint: str, title: str, size: int = page_size,
+                  extra: Optional[dict[str, Any]] = None) -> Optional[Any]:
+            nonlocal fatal
             url = self.scfg["base_url"].rstrip("/") + endpoint
             lines.append(f"== {title}: {(self.scfg.get('method') or 'POST').upper()} {url}")
-            lines.append(f"   тело запроса: {json.dumps(self._page_body(1, page_size), ensure_ascii=False)}")
+            lines.append(f"   тело запроса: {json.dumps(self._page_body(1, size, extra), ensure_ascii=False)}")
             started = time.monotonic()
             try:
-                resp = self._http_call(endpoint, 1, page_size)
+                resp = self._http_call(endpoint, 1, size, extra)
             except Exception as e:
-                ok = False
+                fatal = True
                 lines.append(f"   ОШИБКА сети: {type(e).__name__}: {e}")
                 return None
             elapsed = (time.monotonic() - started) * 1000
             lines.append(f"   HTTP {resp.status_code}, {elapsed:.0f} мс, {len(resp.content)} байт")
             if resp.status_code != 200:
-                ok = False
+                fatal = True
                 lines.append(f"   тело ответа: {resp.text[:500]!r}")
                 return None
             try:
                 data = resp.json()
             except ValueError:
-                ok = False
+                fatal = True
                 lines.append(f"   ответ не JSON: {resp.text[:500]!r}")
                 return None
             lines.append(f"   ключи верхнего уровня: {list(data.keys()) if isinstance(data, dict) else type(data).__name__}")
@@ -235,35 +247,43 @@ class RegistryCollector(Collector):
             t = json.dumps(v, ensure_ascii=False, default=str)
             return t if len(t) <= 80 else t[:77] + "..."
 
+        def verdict(tag: str) -> tuple[str, str]:
+            return tag, "\n".join(lines)
+
         sro_list_ep = self.scfg.get("sro_list_endpoint")
         members_ep = self.scfg["members_endpoint"]
         if sro_list_ep:
             data = probe(sro_list_ep, "список СРО")
             sros = dig(data, fields.get("items"), default=[]) if data else []
             if not isinstance(sros, list) or not sros:
-                ok = False
-                lines.append("   список СРО пуст или не найден по fields.items — проверьте registry.fields")
-                return ok, "\n".join(lines)
+                lines.append("")
+                lines.append(f"ОШИБКА: список СРО пуст или не найден по fields.items, "
+                             f"правьте registry.{self.source}.fields")
+                return verdict("error")
             sro_id = dig(sros[0], ["id", "sro_id"])
             lines.append(f"   первая СРО: id={sro_id}, {short(sros[0])}")
             members_ep = members_ep.replace("{sro_id}", str(sro_id))
 
         data = probe(members_ep, "реестр членов")
         if data is None:
-            return False, "\n".join(lines)
+            lines.append("")
+            lines.append(f"ОШИБКА: запрос не выполнен, проверьте registry.{self.source}.base_url и доступность API")
+            return verdict("error")
 
         items_path, items = which(data, fields.get("items"))
-        total_path, total = which(data, fields.get("total"))
+        total_path, base_total = which(data, fields.get("total"))
         lines.append("")
         lines.append("== Сверка registry.%s.fields с ответом (по первой записи):" % self.source)
         lines.append(f"   {'поле':<12} {'путь в ответе':<32} значение")
         lines.append(f"   {'items':<12} {items_path or 'НЕ НАЙДЕНО':<32} "
                      f"{'список из %d записей' % len(items) if isinstance(items, list) else 'не список: ' + short(items)}")
-        lines.append(f"   {'total':<12} {total_path or 'НЕ НАЙДЕНО':<32} {short(total)}")
+        lines.append(f"   {'total':<12} {total_path or 'НЕ НАЙДЕНО':<32} {short(base_total)}")
         if not isinstance(items, list) or not items:
-            ok = False
+            missing.append("items")
             lines.append("   ЗАПИСЕЙ НЕТ: проверьте fields.items, тело запроса (pageCount строкой?) и эндпоинт")
-            return ok, "\n".join(lines)
+            lines.append("")
+            lines.append(f"ОШИБКА: поля items не найдены в ответе, правьте registry.{self.source}.fields")
+            return verdict("error")
 
         first = items[0]
         lines.append("")
@@ -282,18 +302,85 @@ class RegistryCollector(Collector):
             if path is None:
                 mark = "  <-- НЕ НАЙДЕНО" + (" (обязательное)" if name in required else "")
                 if name in required:
-                    ok = False
+                    missing.append(name)
             lines.append(f"   {name:<12} {path or '-':<32} {short(value) if path else '-'}{mark}")
         if not fields.get("status_date"):
             lines.append("   status_date  не задано в config.yaml — backfill работать не будет")
         inn_norm = normalize_inn(dig(first, fields.get("inn")))
         lines.append("")
         lines.append(f"   ИНН первой записи после нормализации: {inn_norm or 'НЕ РАСПОЗНАН'}")
-        lines.append(f"   статус первой записи -> класс: {classify_status(clean_str(dig(first, fields.get('status'))), self.rcfg.get('status_classes', {}))}")
+        lines.append(f"   статус первой записи -> класс: "
+                     f"{classify_status(clean_str(dig(first, fields.get('status'))), self.rcfg.get('status_classes', {}))}")
+        lines.append(f"   записей заявлено: {base_total if base_total is not None else 'неизвестно (fields.total не найден)'}")
+        if missing:
+            lines.append("")
+            lines.append(f"ОШИБКА: поля {', '.join(missing)} не найдены в ответе, "
+                         f"правьте registry.{self.source}.fields")
+            return verdict("error")
+
+        # -------- выборка на sample_size записей: какие статусы вообще отдаёт API
+        sample = probe(members_ep, f"выборка {sample_size} записей", sample_size)
+        sample_items = dig(sample, fields.get("items"), default=[]) if sample else []
+        dated = 0
+        codes: Counter = Counter()
+        classes_seen: Counter = Counter()
+        for it in sample_items if isinstance(sample_items, list) else []:
+            code = clean_str(dig(it, fields.get("status_code"))) or "—"
+            text = clean_str(dig(it, fields.get("status")))
+            codes[f"{code} / {text or '—'}"] += 1
+            classes_seen[classify_status(text, self.rcfg.get("status_classes", {}))] += 1
+            if parse_date(dig(it, fields.get("status_date"))):
+                dated += 1
         lines.append("")
-        lines.append(f"== Итог: записей заявлено {total if total is not None else 'неизвестно (fields.total не найден)'}; "
-                     f"карта полей {'сошлась' if ok else 'НЕ СОШЛАСЬ — правьте registry.%s в config.yaml' % self.source}")
-        return ok, "\n".join(lines)
+        lines.append(f"== Распределение статусов на выборке ({len(sample_items)} записей):")
+        if not sample_items:
+            lines.append("   выборка пуста — API вернул 0 записей на странице в %d" % sample_size)
+        for key, cnt in codes.most_common():
+            lines.append(f"   {key:<58} {cnt:>5} {cnt / len(sample_items):>6.1%}")
+        lines.append(f"   классы: {dict(classes_seen)}")
+        lines.append(f"   с непустой status_date: {dated} из {len(sample_items)}")
+
+        # -------- пробы параметров фильтра: можно ли выпросить исключённых
+        probes = self.scfg.get("probe_params") or []
+        working: list[str] = []
+        lines.append("")
+        lines.append("== Пробы параметров фильтра по статусу (registry.%s.probe_params):" % self.source)
+        if not probes:
+            lines.append("   не заданы — если API умеет отдавать исключённых по параметру, "
+                         "впишите кандидатов в config.yaml")
+        for cand in probes:
+            body = cand.get("params") if isinstance(cand, dict) and "params" in cand else cand
+            label = cand.get("name") if isinstance(cand, dict) and "name" in cand else json.dumps(body, ensure_ascii=False)
+            try:
+                resp = self._http_call(members_ep, 1, page_size, body)
+                data2 = resp.json() if resp.status_code == 200 else None
+            except Exception as e:
+                lines.append(f"   {label}: ОШИБКА {type(e).__name__}: {e}")
+                continue
+            if data2 is None:
+                lines.append(f"   {label}: HTTP {resp.status_code}")
+                continue
+            _, total2 = which(data2, fields.get("total"))
+            changed = total2 is not None and base_total is not None and str(total2) != str(base_total)
+            lines.append(f"   {label}: total {total2} (базовый {base_total}) — "
+                         f"{'ИЗМЕНИЛСЯ' if changed else 'без изменений'}")
+            if changed:
+                working.append(f"{label} -> total {total2}")
+        for w in working:
+            lines.append(f"   РЕКОМЕНДАЦИЯ: рабочий параметр фильтра: {w}")
+
+        # -------- вердикт
+        varied = len(classes_seen) > 1 or len({k.split(" / ")[0] for k in codes}) > 1
+        lines.append("")
+        if not varied or dated == 0:
+            why = "API отдаёт только действующих" if not varied else "status_date пуста у всех записей выборки"
+            lines.append(f"ВНИМАНИЕ: карта полей совпала, но {why}, доступен только дифф")
+            if working:
+                lines.append("   Но пробы параметров сработали (см. РЕКОМЕНДАЦИЯ выше): "
+                             "добавьте параметр в registry.%s.request_body и повторите проверку" % self.source)
+            return verdict("warn")
+        lines.append("OK: карта полей совпала, backfill применим")
+        return verdict("ok")
 
     def _fetch_pages(self, endpoint: str, label: str) -> list[dict[str, Any]]:
         """Постраничный обход. Обрыв на середине не теряет уже полученное: страница,
