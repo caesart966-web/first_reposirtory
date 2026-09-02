@@ -1,6 +1,6 @@
 import run
 from core.models import RegistryRow, SnapshotMeta
-from core.report import snapshot_report
+from core.report import inspect_orgs, snapshot_report, top_inns
 
 
 def row(inn, status, code=None, status_date=None, reg_date=None, sro="СРО А"):
@@ -81,3 +81,78 @@ def test_report_without_snapshot(cfg, db):
     db.commit()
     ok, rep = snapshot_report(db, cfg, "nostroy", "2026-01-01")
     assert not ok and "Есть даты: 2026-05-01" in rep
+
+
+# ------------------------------------------------------- ручная сверка лидов
+def seed_inspect(db, cfg):
+    from core.models import EXCLUDED_FROM_SRO, JOINED_SRO, TENDER_NO_SRO_DESIGN, Org, Signal
+    from core.scoring import rescore_all
+    db.add_signals([
+        Signal("7802961682", EXCLUDED_FROM_SRO, "2026-04-20", "nostroy", "http://reestr/members/7",
+               {"name": 'ООО "ГАЛЕОН"', "sro_name": "СРО А", "reg_number": "R-77", "status": "Исключен",
+                "event_date": "2026-04-20"}, detected_by="backfill"),
+        Signal("7802961682", TENDER_NO_SRO_DESIGN, "2026-04-25", "tenderguru", "http://zakupki/1",
+               {"name": 'ООО "ГАЛЕОН"', "sum": 3000000.0, "okpd": "71.12"}, detected_by="file"),
+        Signal("7800000002", EXCLUDED_FROM_SRO, "2026-04-10", "nostroy", None, {"event_date": "2026-04-10"}),
+        Signal("7800000002", JOINED_SRO, "2026-04-15", "nostroy", None, {"event_date": None}),
+    ])
+    db.write_snapshot("nostroy", "2026-05-01", [
+        RegistryRow("7802961682", "СРО А", reg_number="R-77", status="Исключен", status_code="3",
+                    status_date="2026-04-20", reg_date="2019-03-01", name='ООО "ГАЛЕОН"',
+                    url="http://reestr/members/7")])
+    db.upsert_org(Org(inn="7802961682", name='ООО "ГАЛЕОН"', region="г Санкт-Петербург", okved="41.20",
+                      site="https://galeon.ru/", site_verified="unverified", phone_unverified="+7 (812) 648-02-63",
+                      director="Мухтаров Дмитрий Владимирович", enriched_at="2026-05-01 10:00:00"))
+    rescore_all(db, cfg, "2026-05-01")
+    db.commit()
+
+
+def test_inspect_prints_everything_for_manual_check(cfg, db):
+    seed_inspect(db, cfg)
+    rep = inspect_orgs(db, cfg, ["7802961682"], "2026-05-01")
+    assert '7802961682  ООО "ГАЛЕОН"' in rep
+    assert "регион: г Санкт-Петербург" in rep and "ОКВЭД: 41.20" in rep
+    assert "приоритет: 1" in rep and "обзвон: new" in rep
+    # сигналы: тип, дата, источник, detected_by
+    assert "[excluded_from_sro] 2026-04-20  источник nostroy  обнаружен backfill" in rep
+    assert "[tender_no_sro_design] 2026-04-25  источник tenderguru  обнаружен file" in rep
+    assert "ссылка из сигнала: http://zakupki/1" in rep
+    assert '"okpd": "71.12"' in rep                       # raw_json в читаемом виде
+    # запись снапшота и ссылки
+    assert "nostroy за 2026-05-01: СРО А, рег.№ R-77" in rep
+    assert "дата статуса 2026-04-20, дата регистрации 2019-03-01" in rep
+    assert "карточка члена: http://reestr/members/7" in rep
+    assert "nostroy: https://reestr.nostroy.ru/reestr?searchString=7802961682" in rep
+    # контакты
+    assert "сайт: https://galeon.ru/  (проверка: unverified)" in rep
+    assert "с неподтверждённого сайта — телефон: +7 (812) 648-02-63" in rep
+    assert "руководитель: Мухтаров Дмитрий Владимирович" in rep
+
+
+def test_inspect_shows_date_conflict_and_missing(cfg, db):
+    seed_inspect(db, cfg)
+    rep = inspect_orgs(db, cfg, ["7800000002", "7800000009"], "2026-05-01")
+    assert "ФЛАГ date_conflict" in rep
+    assert "организация в снапшотах не найдена" in rep
+    assert "7800000009: в базе нет ни организации, ни сигналов" in rep
+
+
+def test_inspect_top_uses_export_filters(cfg, db):
+    seed_inspect(db, cfg)
+    assert top_inns(db, cfg, 10, "2026-05-01") == ["7802961682", "7800000002"]
+    db.set_outreach("7802961682", "called")
+    db.commit()
+    assert top_inns(db, cfg, 10, "2026-05-01") == ["7800000002"]   # обзвонённые не берутся
+    assert top_inns(db, cfg, 1, "2026-05-01") == ["7800000002"]
+
+
+def test_inspect_writes_file(cfg, db, tmp_path, capsys):
+    seed_inspect(db, cfg)
+    out = tmp_path / "inspect.txt"
+    assert run.inspect(cfg, db, ["7802961682"], None, str(out)) == 0
+    assert 'ООО "ГАЛЕОН"' in out.read_text(encoding="utf-8")
+    assert "Сохранено" in capsys.readouterr().out
+    before = db.stats()
+    assert run.inspect(cfg, db, [], 5, None) == 0
+    assert db.stats() == before                                    # БД не меняется
+    assert "7802961682" in capsys.readouterr().out

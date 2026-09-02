@@ -84,6 +84,9 @@ registry:
       - name: "filters.is_active = false"
         params: {filters: {is_active: false}}
     member_url: "https://reestr.nostroy.ru/reestr/clients/{sro_id}/members/{member_id}"
+    # Ссылка на карточку для ручной сверки (--inspect). Плейсхолдеры: {inn}, {reg_number}.
+    # Точный вид адреса поиска проверьте на первом живом прогоне и поправьте здесь.
+    card_url_template: "https://reestr.nostroy.ru/reestr?searchString={inn}"
 
   nopriz:
     base_url: https://reestr.nopriz.ru
@@ -123,6 +126,7 @@ registry:
       - name: "filters.is_active = false"
         params: {filters: {is_active: false}}
     member_url: "https://reestr.nopriz.ru/reestr/clients/{sro_id}/members/{member_id}"
+    card_url_template: "https://reestr.nopriz.ru/reestr?searchString={inn}"
 
 # ---------------------------------------------------------------------------
 # TenderGuru: выгрузки mail_*_contracts.xlsx из data/tenderguru/

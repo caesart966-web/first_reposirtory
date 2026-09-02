@@ -9,6 +9,8 @@
   python run.py --mark 7814858513 called "перезвонить в четверг"   # статус обзвона
   python run.py --check-api nostroy       # один запрос к API и сверка карты полей, в БД не пишет
   python run.py --snapshot-report nostroy  # что за статусы и даты в снапшоте, применим ли backfill
+  python run.py --inspect 7814858513      # карточка организации для сверки с реестром глазами
+  python run.py --inspect-top 10 --out inspect.txt   # то же по десятке самых горячих, в файл
   python run.py --drop-snapshot nostroy --date 2026-09-02   # удалить снапшот за дату, чтобы снять заново
 """
 from __future__ import annotations
@@ -25,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from core.db import Database  # noqa: E402
 from core.enrich import Enricher  # noqa: E402
 from core.export import build_export
-from core.report import snapshot_report  # noqa: E402
+from core.report import inspect_orgs, snapshot_report, top_inns  # noqa: E402
 from core.models import OUTREACH_STATUSES  # noqa: E402
 from core.scoring import rescore_all  # noqa: E402
 from core.utils import HttpClient, load_config, resolve_path, setup_logging  # noqa: E402
@@ -95,6 +97,27 @@ def print_snapshot_report(cfg: dict, db: Database, source: str, date: Optional[s
     return 0 if ok else 1
 
 
+def inspect(cfg: dict, db: Database, inns: list[str], top: Optional[int], out: Optional[str]) -> int:
+    """Карточки организаций для ручной сверки с реестром. Только чтение БД."""
+    if top:
+        inns = top_inns(db, cfg, top)
+        if not inns:
+            print("Лидов, подходящих под фильтры экспорта, в базе нет.")
+            return 1
+    report = inspect_orgs(db, cfg, inns)
+    if out:
+        path = Path(out)
+        if not path.is_absolute():
+            path = Path(cfg.get("_root", ".")) / out
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(report + "\n", encoding="utf-8")
+        log.info("Сверка по %d организациям сохранена: %s", len(inns), path)
+        print(f"Сохранено: {path} ({len(inns)} организаций)")
+    else:
+        print(report)
+    return 0
+
+
 def check_api(cfg: dict, source: str) -> int:
     """Диагностика живого коннектора: печатает отчёт в консоль, БД не трогает."""
     from collectors.base import RegistryCollector
@@ -134,6 +157,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--date", metavar="YYYY-MM-DD", help="дата снапшота для --drop-snapshot и --snapshot-report")
     parser.add_argument("--snapshot-report", metavar="SOURCE", help="отчёт по снятому снапшоту источника "
                         "(nostroy | nopriz) за --date (по умолчанию последний): статусы, даты, применим ли backfill")
+    parser.add_argument("--inspect", nargs="+", metavar="INN", help="карточки организаций по ИНН "
+                        "для ручной сверки с реестром: сигналы, записи снапшота, ссылки, контакты")
+    parser.add_argument("--inspect-top", type=int, metavar="N", help="то же для N организаций с верха "
+                        "листа «Горячие» (те же фильтры, что и экспорт)")
+    parser.add_argument("--out", metavar="FILE", help="сохранить вывод --inspect в файл")
     parser.add_argument("--check-api", metavar="SOURCE", help="один запрос к API реестра (nostroy | nopriz) "
                         "и сверка карты полей; в БД ничего не пишет")
     parser.add_argument("--config", help="путь к config.yaml")
@@ -146,6 +174,9 @@ def main(argv: list[str] | None = None) -> int:
     db = Database(resolve_path(cfg, "db", "data/sro_leads.db"))
     started = time.monotonic()
     try:
+        if args.inspect or args.inspect_top:
+            return inspect(cfg, db, args.inspect or [], args.inspect_top, args.out)
+
         if args.snapshot_report:
             return print_snapshot_report(cfg, db, args.snapshot_report, args.date)
 

@@ -81,7 +81,10 @@ def _short_details(raw_json: Optional[str]) -> str:
     return "; ".join(parts)[:500]
 
 
-def build_export(db: Database, cfg: dict[str, Any], date: Optional[str] = None) -> Path:
+def select_leads(db: Database, cfg: dict[str, Any],
+                 date: Optional[str] = None) -> tuple[list[dict[str, Any]], dict[str, int]]:
+    """Лиды по фильтрам экспорта, отсортированные по скору вниз, и счётчик отсеянных.
+    Общая точка для экспорта и для --inspect-top: фильтры считаются один раз и одинаково."""
     xcfg = cfg.get("export", {})
     scfg = cfg.get("scoring", {})
     date = date or today_str()
@@ -149,6 +152,16 @@ def build_export(db: Database, cfg: dict[str, Any], date: Optional[str] = None) 
         })
 
     leads.sort(key=lambda x: (-x["score"], x["inn"]))
+
+    return leads, skipped
+
+
+def build_export(db: Database, cfg: dict[str, Any], date: Optional[str] = None) -> Path:
+    xcfg = cfg.get("export", {})
+    date = date or today_str()
+    max_rows = int(xcfg.get("max_rows", 300) or 0)
+    leads, skipped = select_leads(db, cfg, date)
+    signals_by_inn = db.signals_by_inn()
 
     def to_row(l: dict[str, Any]) -> list[Any]:
         return [l["priority"], l["score"], l["inn"], l["name"], l["region"], l["okved"], l["signals"], l["last"],

@@ -208,6 +208,16 @@ class Database:
         ).fetchall()
         return [RegistryRow(**dict(r)) for r in rows]
 
+    def snapshot_rows_for_inn(self, inn: str, limit_dates: int = 2) -> list[sqlite3.Row]:
+        """Записи всех реестров по одному ИНН за последние даты снапшотов — для ручной сверки."""
+        rows: list[sqlite3.Row] = []
+        for source in ("nostroy", "nopriz"):
+            for d in self.snapshot_dates(source)[:limit_dates]:
+                rows += self.conn.execute(
+                    "SELECT * FROM registry_snapshots WHERE source = ? AND snapshot_date = ? AND inn = ?",
+                    (source, d, inn)).fetchall()
+        return rows
+
     def snapshot_size(self, source: str, snapshot_date: str) -> int:
         row = self.conn.execute(
             "SELECT COUNT(*) AS n FROM registry_snapshots WHERE source = ? AND snapshot_date = ?",
