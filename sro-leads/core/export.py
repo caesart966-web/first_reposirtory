@@ -28,13 +28,13 @@ HEADER_FILL = PatternFill("solid", fgColor="D9D9D9")
 
 LEAD_COLUMNS = [
     "Приоритет", "Скор", "ИНН", "Название", "Регион", "ОКВЭД", "Сигналы", "Дата последнего сигнала",
-    "Сайт", "Телефон", "Почта", "Руководитель", "Ссылка на источник", "Статус обзвона", "Комментарий",
+    "Сайт", "Телефон", "Почта", "Руководитель", "Ссылка на источник", "Конфликт дат", "Статус обзвона", "Комментарий",
 ]
 SIGNAL_COLUMNS = ["ИНН", "Название", "Тип сигнала", "Описание", "Дата", "Источник", "Ссылка", "Детали"]
 TEXT_COLUMNS = {"ИНН", "Телефон"}
 WIDTHS = {"Приоритет": 10, "Скор": 8, "ИНН": 14, "Название": 40, "Регион": 24, "ОКВЭД": 10, "Сигналы": 34,
           "Дата последнего сигнала": 14, "Сайт": 28, "Телефон": 24, "Почта": 30, "Руководитель": 28,
-          "Ссылка на источник": 40, "Статус обзвона": 14, "Комментарий": 30, "Тип сигнала": 26,
+          "Ссылка на источник": 40, "Конфликт дат": 12, "Статус обзвона": 14, "Комментарий": 30, "Тип сигнала": 26,
           "Описание": 34, "Дата": 12, "Источник": 12, "Ссылка": 40, "Детали": 60}
 
 
@@ -129,6 +129,7 @@ def build_export(db: Database, cfg: dict[str, Any], date: Optional[str] = None) 
             "email": org["email"],
             "director": org["director"],
             "url": url,
+            "date_conflict": "да" if res.date_conflict else None,
             "status": o_status,
             "note": o["note"] if o else None,
         })
@@ -137,7 +138,7 @@ def build_export(db: Database, cfg: dict[str, Any], date: Optional[str] = None) 
 
     def to_row(l: dict[str, Any]) -> list[Any]:
         return [l["priority"], l["score"], l["inn"], l["name"], l["region"], l["okved"], l["signals"], l["last"],
-                l["site"], l["phone"], l["email"], l["director"], l["url"], l["status"], l["note"]]
+                l["site"], l["phone"], l["email"], l["director"], l["url"], l["date_conflict"], l["status"], l["note"]]
 
     wb = Workbook()
     ws_hot = wb.active

@@ -1,6 +1,7 @@
 """Скоринг: веса и модификаторы из config.yaml, сумма по сигналам организации."""
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Optional
 
@@ -30,6 +31,7 @@ class ScoreResult:
     types: list[str] = field(default_factory=list)   # типы засчитанных сигналов
     last_signal_date: Optional[str] = None
     suppressed: list[str] = field(default_factory=list)  # типы, отсечённые из-за joined_sro
+    date_conflict: bool = False  # есть joined_sro по тому же реестру, но даты сравнить нельзя — проверить вручную
 
 
 def _get(sig: Any, key: str) -> Any:
@@ -39,6 +41,22 @@ def _get(sig: Any, key: str) -> Any:
         return sig[key]  # sqlite3.Row
     except (TypeError, IndexError, KeyError):
         return getattr(sig, key, None)
+
+
+def event_date(sig: Any) -> Optional[str]:
+    """Дата события сигнала. Для сигналов реестра — из raw.event_date (может отсутствовать),
+    для остальных (тендеры, старые записи) — signal_date."""
+    raw = _get(sig, "raw")
+    if raw is None:
+        raw_json = _get(sig, "raw_json")
+        if raw_json:
+            try:
+                raw = json.loads(raw_json)
+            except ValueError:
+                raw = None
+    if isinstance(raw, dict) and "event_date" in raw:
+        return raw.get("event_date") or None
+    return _get(sig, "signal_date") or None
 
 
 def signal_points(signal_type: str, signal_date: str, scfg: dict[str, Any], today: Optional[str] = None) -> float:
@@ -68,18 +86,17 @@ def priority_of(score: float, scfg: dict[str, Any]) -> int:
 def score_org(inn: str, signals: list[Any], scfg: dict[str, Any], today: Optional[str] = None) -> ScoreResult:
     """Скор организации = сумма баллов по сигналам после модификаторов.
 
-    joined_sro новее лидового сигнала по тому же реестру означает, что компания уже
-    вступила куда-то ещё: такой сигнал отсекается (suppress_if_joined_later).
+    Правило joined_sro: лидовый сигнал (исключение, приостановка, тендер без СРО) гасится
+    только если по тому же реестру есть вступление с датой СТРОГО позже даты события лида.
+    Компания, вступившая в январе и исключённая в марте, остаётся лидом. Если у одной из
+    записей даты события нет, гасить нельзя: лид остаётся с флагом date_conflict.
     """
     today = today or today_str()
     res = ScoreResult(inn=inn)
-    joined_by_source: dict[str, str] = {}  # source -> последняя дата joined_sro
+    joined: dict[str, list[Optional[str]]] = {}  # source -> даты вступлений (None = даты нет)
     for s in signals:
         if _get(s, "signal_type") == JOINED_SRO:
-            src = _get(s, "source") or ""
-            d = _get(s, "signal_date") or ""
-            if d > joined_by_source.get(src, ""):
-                joined_by_source[src] = d
+            joined.setdefault(_get(s, "source") or "", []).append(event_date(s))
     suppress = bool(scfg.get("suppress_if_joined_later", True))
 
     total = 0.0
@@ -90,9 +107,14 @@ def score_org(inn: str, signals: list[Any], scfg: dict[str, Any], today: Optiona
         if t == JOINED_SRO:
             continue
         need = NEED_SOURCE.get(t) if t in NEED_SOURCE else (_get(s, "source") or "")
-        if suppress and need in joined_by_source and joined_by_source[need] >= d:
-            res.suppressed.append(t)
-            continue
+        if suppress and joined.get(need):
+            lead_date = event_date(s)
+            dated = [j for j in joined[need] if j]
+            if lead_date and dated and max(dated) > lead_date:
+                res.suppressed.append(t)
+                continue
+            if not lead_date or len(dated) < len(joined[need]):
+                res.date_conflict = True
         pts = signal_points(t, d, scfg, today)
         if pts <= 0:
             continue

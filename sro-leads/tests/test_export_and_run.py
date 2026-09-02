@@ -17,6 +17,8 @@ def seed(db):
         Signal("1000000004", EXCLUDED_FROM_SRO, "2026-02-01", "nostroy"),   # ликвидирован
         Signal("1000000005", EXCLUDED_FROM_SRO, "2026-02-01", "nostroy"),   # уже обзвонен
         Signal("1000000006", JOINED_SRO, "2026-02-01", "nostroy"),          # не лид
+        Signal("1000000007", SUSPENDED, "2026-02-20", "nostroy", None, {"name": "ООО Спор", "event_date": "2026-02-20"}),
+        Signal("1000000007", JOINED_SRO, "2026-02-25", "nostroy", None, {"event_date": None}),  # конфликт дат
     ])
     db.upsert_org(Org(inn="1000000004", name="ООО Труп", status="LIQUIDATED"))
     db.upsert_org(Org(inn="0105012345", region="г Санкт-Петербург", phone="+7 (812) 000-00-00"))
@@ -35,7 +37,9 @@ def test_export_sheets_and_formats(cfg, db):
     header = [c.value for c in ws[1]]
     assert header[:3] == ["Приоритет", "Скор", "ИНН"] and header[-2:] == ["Статус обзвона", "Комментарий"]
     inns = [ws.cell(row=r, column=3).value for r in range(2, ws.max_row + 1)]
-    assert inns == ["0105012345", "1000000003", "1000000002"]     # по скору вниз (130, 90, 70); ликвидированный и called отсеяны
+    assert inns == ["0105012345", "1000000003", "1000000002", "1000000007"]  # по скору вниз (130, 90, 70, 70 — при равенстве по ИНН)
+    conflict_col = header.index("Конфликт дат") + 1
+    assert ws.cell(row=5, column=conflict_col).value == "да" and ws.cell(row=2, column=conflict_col).value is None
     c = ws.cell(row=2, column=3)
     assert c.number_format == "@" and isinstance(c.value, str)   # ИНН текстом, ведущий ноль на месте
     assert ws.cell(row=2, column=1).fill.fgColor.rgb.endswith("FFC7CE")  # приоритет 1 — красный
@@ -45,7 +49,7 @@ def test_export_sheets_and_formats(cfg, db):
     hot = wb["Горячие"]
     assert [hot.cell(row=r, column=3).value for r in range(2, hot.max_row + 1)] == ["0105012345"]
     hist = wb["История сигналов"]
-    assert hist.max_row == 4 and "sro_name=СРО А" in hist.cell(row=2, column=8).value
+    assert hist.max_row == 6 and "sro_name=СРО А" in hist.cell(row=2, column=8).value
 
 
 def test_export_region_filter(cfg, db):
