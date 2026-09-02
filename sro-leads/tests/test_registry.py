@@ -5,6 +5,7 @@ import re
 import pytest
 
 import collectors.base as base
+import run
 from collectors.base import CollectorError, RegistryCollector, classify_status, diff_snapshots
 from collectors.nostroy_registry import NostroyRegistry
 from core.models import EXCLUDED_FROM_SRO, JOINED_SRO, SUSPENDED, RegistryRow
@@ -83,6 +84,7 @@ def run_day(cfg, db, day, pages, monkeypatch):
     signals = c.collect()
     if c.snapshot:
         db.write_snapshot(c.snapshot.source, c.snapshot.snapshot_date, c.snapshot.rows)
+        db.write_snapshot_meta(c.snapshot.source, c.snapshot.snapshot_date, c.snapshot.meta)
     db.add_signals(signals)
     db.commit()
     return c, signals
@@ -332,3 +334,100 @@ def test_check_api_per_sro_mode(cfg):
     cfg["registry"]["nostroy"]["members_endpoint"] = "/api/sro/{sro_id}/member/list"
     ok, report = NostroyRegistry(cfg, db=None, http=Http(None)).check_api()
     assert ok and "первая СРО: id=5" in report
+
+
+# --------------------------------------------------- полнота снапшота (meta)
+class BreakingCollector(NostroyRegistry):
+    """Мок реестра, который на заданной странице отдаёт ошибку."""
+
+    pages: list[list[dict]] = []
+    total: int = 0
+    break_page: int = 0
+
+    def _request(self, endpoint, page):
+        if page == self.break_page:
+            raise CollectorError("nostroy: HTTP 502 (мок)")
+        items = self.pages[page - 1] if page - 1 < len(self.pages) else []
+        return {"data": {"data": items, "total": self.total}}
+
+
+def run_breaking(cfg, db, day, monkeypatch, pages, total, break_page=0):
+    monkeypatch.setattr(base, "today_str", lambda: day)
+    BreakingCollector.pages, BreakingCollector.total, BreakingCollector.break_page = pages, total, break_page
+    c = BreakingCollector(cfg, db)
+    signals = c.collect()
+    if c.snapshot:
+        db.write_snapshot(c.snapshot.source, c.snapshot.snapshot_date, c.snapshot.rows)
+        db.write_snapshot_meta(c.snapshot.source, c.snapshot.snapshot_date, c.snapshot.meta)
+    db.add_signals(signals)
+    db.commit()
+    return c, signals
+
+
+def pages_of(inns, per_page=2, status="Является членом"):
+    items = [api_item(i, status) for i in inns]
+    return [items[i:i + per_page] for i in range(0, len(items), per_page)]
+
+
+def test_partial_snapshot_blocks_next_diff(cfg, db, monkeypatch, caplog):
+    """Обрыв на третьей странице: снапшот частичный, следующий дифф пропускается."""
+    cfg["registry"]["nostroy"]["page_size"] = 2
+    inns = [f"10000000{i:02d}" for i in range(1, 11)]      # 10 записей, 5 страниц
+    c, _ = run_breaking(cfg, db, "2026-05-01", monkeypatch, pages_of(inns), total=10, break_page=3)
+    meta = db.snapshot_meta("nostroy", "2026-05-01")
+    assert meta.is_partial and meta.pages_done == 2 and meta.fetched_rows == 4 and meta.declared_total == 10
+    assert db.is_snapshot_partial("nostroy", "2026-05-01")
+    assert db.snapshot_size("nostroy", "2026-05-01") == 4   # снапшот записан, но неполный
+
+    # Следующий день: полный снапшот, но baseline частичный — дифф пропущен, сигналов нет
+    with caplog.at_level("ERROR"):
+        c2, signals = run_breaking(cfg, db, "2026-05-02", monkeypatch, pages_of(inns[:8]), total=8)
+    assert signals == []
+    assert not db.snapshot_meta("nostroy", "2026-05-02").is_partial
+    assert "baseline за 2026-05-01 частичный, дифф пропущен" in caplog.text
+    assert "--drop-snapshot nostroy --date 2026-05-01" in caplog.text
+
+    # На третий день baseline полный — дифф работает как обычно
+    _, signals3 = run_breaking(cfg, db, "2026-05-03", monkeypatch, pages_of(inns[:6]), total=6)
+    assert {s.inn for s in signals3} == {"1000000007", "1000000008"}   # пропали из реестра
+
+
+def test_partial_by_declared_total_mismatch(cfg, db, monkeypatch):
+    """Расхождение с заявленным больше 1 % — снапшот частичный даже без обрыва."""
+    cfg["registry"]["nostroy"]["page_size"] = 100
+    inns = [f"10000000{i:02d}" for i in range(1, 11)]
+    c, _ = run_breaking(cfg, db, "2026-05-01", monkeypatch, [[api_item(i) for i in inns]], total=1000)
+    assert db.snapshot_meta("nostroy", "2026-05-01").is_partial
+    # Расхождение в пределах 1 % частичным не считается
+    c2, _ = run_breaking(cfg, db, "2026-05-02", monkeypatch, [[api_item(i) for i in inns]], total=10)
+    assert not db.snapshot_meta("nostroy", "2026-05-02").is_partial
+
+
+def test_backfill_runs_on_partial_with_warning(cfg, db, monkeypatch, caplog):
+    """Backfill от baseline не зависит: на частичном снапшоте работает, но предупреждает."""
+    cfg["registry"]["nostroy"]["page_size"] = 2
+    pages = [[api_item_dated("1000000001", "Исключен", "2026-04-25"), api_item("1000000002")],
+             [api_item_dated("1000000003", "Исключен", "2026-04-26"), api_item("1000000004")]]
+    monkeypatch.setattr(base, "today_str", lambda: "2026-05-01")
+    BreakingCollector.pages, BreakingCollector.total, BreakingCollector.break_page = pages, 10, 3
+    c = BreakingCollector(cfg, db)
+    c.backfill_days = 90
+    with caplog.at_level("WARNING"):
+        signals = c.collect()
+    assert {s.inn for s in signals} == {"1000000001", "1000000003"}
+    assert c.snapshot.meta.is_partial and "backfill идёт по частичному снапшоту" in caplog.text
+
+
+def test_drop_snapshot_command(cfg, db, monkeypatch, capsys):
+    cfg["registry"]["nostroy"]["page_size"] = 2
+    inns = [f"10000000{i:02d}" for i in range(1, 5)]
+    run_breaking(cfg, db, "2026-05-01", monkeypatch, pages_of(inns), total=4)
+    assert db.snapshot_dates("nostroy") == ["2026-05-01"]
+    assert run.drop_snapshot(cfg, db, "nostroy", "2026-05-01") == 0
+    assert db.snapshot_dates("nostroy") == [] and db.snapshot_meta("nostroy", "2026-05-01") is None
+    assert "удалён" in capsys.readouterr().out
+    assert run.drop_snapshot(cfg, db, "nostroy", None) == 2          # снапшотов больше нет
+    run_breaking(cfg, db, "2026-05-02", monkeypatch, pages_of(inns), total=4)
+    assert run.drop_snapshot(cfg, db, "nostroy", "2026-01-01") == 2  # даты нет
+    assert run.drop_snapshot(cfg, db, "nostroy", None) == 0          # по умолчанию последний
+    assert db.snapshot_dates("nostroy") == []

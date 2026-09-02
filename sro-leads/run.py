@@ -8,6 +8,7 @@
   python run.py --export-only             # только пересобрать Excel из БД
   python run.py --mark 7814858513 called "перезвонить в четверг"   # статус обзвона
   python run.py --check-api nostroy       # один запрос к API и сверка карты полей, в БД не пишет
+  python run.py --drop-snapshot nostroy --date 2026-09-02   # удалить снапшот за дату, чтобы снять заново
 """
 from __future__ import annotations
 
@@ -16,6 +17,7 @@ import logging
 import sys
 import time
 from pathlib import Path
+from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -47,9 +49,10 @@ def run_collectors(cfg: dict, db: Database, names: list[str], backfill_days: int
         try:
             signals = collector.collect()
             if collector.snapshot is not None:
-                n = db.write_snapshot(collector.snapshot.source, collector.snapshot.snapshot_date,
-                                      collector.snapshot.rows)
-                log.info("%s: снапшот %s записан, строк %d", name, collector.snapshot.snapshot_date, n)
+                snap = collector.snapshot
+                n = db.write_snapshot(snap.source, snap.snapshot_date, snap.rows)
+                db.write_snapshot_meta(snap.source, snap.snapshot_date, snap.meta)
+                log.info("%s: снапшот %s записан, строк %d (%s)", name, snap.snapshot_date, n, snap.meta.describe())
             added = db.add_signals(signals)
             db.commit()
             collector.finalize()
@@ -61,6 +64,26 @@ def run_collectors(cfg: dict, db: Database, names: list[str], backfill_days: int
             results[name] = -1
             log.exception("=== %s: ОШИБКА, коллектор пропущен, остальные продолжают ===", name)
     return results
+
+
+def drop_snapshot(cfg: dict, db: Database, source: str, date: Optional[str]) -> int:
+    """Удалить снапшот за дату, чтобы снять его заново без ручного SQL."""
+    dates = db.snapshot_dates(source)
+    if not dates:
+        print(f"Снапшотов источника «{source}» в базе нет.")
+        return 2
+    date = date or dates[0]
+    if date not in dates:
+        print(f"Снапшота {source} за {date} нет. Есть: {', '.join(dates[:10])}")
+        return 2
+    meta = db.snapshot_meta(source, date)
+    removed = db.drop_snapshot(source, date)
+    db.commit()
+    log.info("Снапшот %s за %s удалён, строк %d%s", source, date, removed,
+             f" ({meta.describe()})" if meta else "")
+    print(f"Снапшот {source} за {date} удалён: строк {removed}. Снимите заново: "
+          f"python run.py --only {source}_registry")
+    return 0
 
 
 def check_api(cfg: dict, source: str) -> int:
@@ -97,6 +120,9 @@ def main(argv: list[str] | None = None) -> int:
                         help="реестры: сигналы из самих записей за последние N дней (по умолчанию 90) вместо диффа")
     parser.add_argument("--mark", nargs="+", metavar=("INN", "STATUS"),
                         help=f"статус обзвона: INN STATUS [комментарий]; статусы: {', '.join(OUTREACH_STATUSES)}")
+    parser.add_argument("--drop-snapshot", metavar="SOURCE", help="удалить снапшот источника (nostroy | nopriz) "
+                        "за дату --date (по умолчанию последний), чтобы снять его заново")
+    parser.add_argument("--date", metavar="YYYY-MM-DD", help="дата снапшота для --drop-snapshot")
     parser.add_argument("--check-api", metavar="SOURCE", help="один запрос к API реестра (nostroy | nopriz) "
                         "и сверка карты полей; в БД ничего не пишет")
     parser.add_argument("--config", help="путь к config.yaml")
@@ -109,6 +135,9 @@ def main(argv: list[str] | None = None) -> int:
     db = Database(resolve_path(cfg, "db", "data/sro_leads.db"))
     started = time.monotonic()
     try:
+        if args.drop_snapshot:
+            return drop_snapshot(cfg, db, args.drop_snapshot, args.date)
+
         if args.mark:
             if len(args.mark) < 2 or args.mark[1] not in OUTREACH_STATUSES:
                 parser.error(f"--mark INN STATUS [комментарий]; статусы: {', '.join(OUTREACH_STATUSES)}")

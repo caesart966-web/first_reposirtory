@@ -76,6 +76,17 @@ python run.py --full                                  # далее ежедне�
 не создаёт. Снапшот меньше 50 % вчерашнего считается сбоем API: дифф не строится,
 ошибка в логе, сырой ответ сохраняется как `*.failed.json.gz`.
 
+Полнота каждого снапшота пишется в таблицу `snapshot_meta`: сколько записей заявил API,
+сколько получено, сколько страниц пройдено и на какой оборвалось. Обрыв пагинации или
+расхождение с заявленным больше 1 % (`registry.partial_tolerance`) помечают снапшот
+частичным. Частичный снапшот не становится baseline: следующий дифф пропускается с
+записью в лог. На `--backfill` частичность не влияет, но в лог идёт предупреждение.
+Снять снапшот заново без ручного SQL:
+
+```bat
+python run.py --drop-snapshot nostroy --date 2026-09-02
+```
+
 Планировщик задач Windows: ежедневно в 08:00 запускать `run.bat` (рабочая папка —
 папка проекта). После прогона откроется папка `output`.
 
@@ -89,6 +100,7 @@ python run.py --full                                  # далее ежедне�
 --full                      всё подряд (то же, что без флагов)
 --mark ИНН статус [комментарий]   статус обзвона: new | called | in_progress | won | dead
 --check-api nostroy|nopriz  один запрос к API реестра и сверка карты полей, в БД не пишет
+--drop-snapshot ИСТОЧНИК [--date YYYY-MM-DD]   удалить снапшот за дату (по умолчанию последний)
 ```
 
 Статусы обзвона живут в таблице `outreach`: экспорт по умолчанию берёт только `new`,
@@ -142,7 +154,7 @@ TenderGuru, веса скоринга, пороги обогащения, фил
 run.py                оркестратор: collect -> score -> enrich -> export
 run.bat               запуск под Планировщик задач
 config.yaml           источники, эндпоинты, веса, пути
-core/db.py            схема SQLite (orgs, signals, registry_snapshots, outreach)
+core/db.py            схема SQLite (orgs, signals, registry_snapshots, snapshot_meta, outreach)
 core/models.py        Signal, Org, RegistryRow, Snapshot
 core/scoring.py       скоринг
 core/enrich.py        обогащение

@@ -18,6 +18,7 @@ from core.models import (
     RegistryRow,
     Signal,
     Snapshot,
+    SnapshotMeta,
 )
 from core.utils import HttpClient, clean_str, dig, normalize_inn, parse_date, resolve_path, today_str
 
@@ -44,6 +45,7 @@ class Collector:
         self.http = http or HttpClient(config.get("http", {}))
         self.snapshot: Optional[Snapshot] = None
         self.backfill_days: Optional[int] = None  # --backfill N: задаёт оркестратор
+        self.meta = SnapshotMeta()                # полнота последней выгрузки
 
     def collect(self) -> list[Signal]:
         raise NotImplementedError
@@ -294,37 +296,57 @@ class RegistryCollector(Collector):
         return ok, "\n".join(lines)
 
     def _fetch_pages(self, endpoint: str, label: str) -> list[dict[str, Any]]:
+        """Постраничный обход. Обрыв на середине не теряет уже полученное: страница,
+        на которой упали, запоминается в self.meta, снапшот помечается частичным."""
         fields = self.scfg.get("fields", {})
         items: list[dict[str, Any]] = []
         total: Optional[int] = None
         max_pages = int(self.rcfg.get("max_pages", 5000))
         delay = float(self.rcfg.get("page_delay", 0))
         for page in range(1, max_pages + 1):
-            data = self._request(endpoint, page)
+            try:
+                data = self._request(endpoint, page)
+            except Exception as e:
+                self.meta.broke_at_page = page
+                log.error("%s %s: обрыв на странице %d (%s: %s) — получено %d записей, "
+                          "снапшот будет помечен частичным", self.source, label, page, type(e).__name__, e, len(items))
+                break
             chunk = dig(data, fields.get("items"), default=[])
             if not isinstance(chunk, list):
-                raise CollectorError(f"{self.source}: поле items не список (страница {page})")
+                self.meta.broke_at_page = page
+                log.error("%s %s: на странице %d поле items не список — обрыв, получено %d записей",
+                          self.source, label, page, len(items))
+                break
             if total is None:
                 t = dig(data, fields.get("total"))
                 total = int(t) if isinstance(t, (int, float, str)) and str(t).isdigit() else None
+                if total is not None:
+                    self.meta.declared_total = (self.meta.declared_total or 0) + total
             if not chunk:
                 break
             items.extend(chunk)
+            self.meta.pages_done += 1
             log.info("%s %s: страница %d, записей %d%s", self.source, label, page, len(items),
                      f" из {total}" if total else "")
             if total is not None and len(items) >= total:
                 break
             if delay:
                 time.sleep(delay)
+        else:
+            self.meta.broke_at_page = max_pages
+            log.error("%s %s: достигнут потолок registry.max_pages=%d — снапшот неполный",
+                      self.source, label, max_pages)
         return items
 
     def fetch_all(self) -> list[dict[str, Any]]:
         """Полная выгрузка реестра: одним эндпоинтом или обходом по СРО."""
+        self.meta = SnapshotMeta()
         sro_list_ep = self.scfg.get("sro_list_endpoint")
         members_ep = self.scfg["members_endpoint"]
         if not sro_list_ep:
             return self._fetch_pages(members_ep, "реестр")
         sros = self._fetch_pages(sro_list_ep, "список СРО")
+        self.meta = SnapshotMeta(broke_at_page=self.meta.broke_at_page)  # счётчики считаем по членам, не по списку СРО
         all_items: list[dict[str, Any]] = []
         for i, sro in enumerate(sros, 1):
             sro_id = dig(sro, ["id", "sro_id"])
@@ -432,12 +454,33 @@ class RegistryCollector(Collector):
         return signals
 
     # -------------------------------------------------------------- collect
+    def finish_meta(self, fetched_items: int, written_rows: int) -> SnapshotMeta:
+        """Полнота снапшота: обрыв пагинации или расхождение с заявленным больше 1 %."""
+        meta = self.meta
+        meta.fetched_rows = written_rows
+        tolerance = float(self.rcfg.get("partial_tolerance", 0.01))
+        gap = None
+        if meta.declared_total:
+            gap = abs(meta.declared_total - fetched_items) / meta.declared_total
+        meta.is_partial = bool(meta.broke_at_page) or bool(gap is not None and gap > tolerance)
+        log.info("%s: снапшот — %s%s", self.source, meta.describe(),
+                 f", расхождение с заявленным {gap:.1%} (порог {tolerance:.0%})" if gap else "")
+        if meta.is_partial:
+            log.error("%s: снапшот ЧАСТИЧНЫЙ — baseline'ом для диффа не станет. "
+                      "Снимите заново: python run.py --drop-snapshot %s --date <дата>, затем повторите прогон",
+                      self.source, self.source)
+        return meta
+
     def collect(self) -> list[Signal]:
         today = today_str()
         if self.db.has_snapshot(self.source, today):
             if self.backfill_days:
                 log.info("%s: снапшот за %s уже есть — backfill по нему из БД, реестр не перекачиваем",
                          self.source, today)
+                if self.db.is_snapshot_partial(self.source, today):
+                    log.warning("%s: снапшот за %s частичный — backfill от baseline не зависит и будет выполнен, "
+                                "но часть записей в него не попала, сигналов может быть меньше реального",
+                                self.source, today)
                 return self.backfill_signals(self.db.snapshot_rows(self.source, today), today)
             log.info("%s: снапшот за %s уже есть, повторно не собираем (ложных диффов не будет)",
                      self.source, today)
@@ -460,13 +503,22 @@ class RegistryCollector(Collector):
 
         path = self.save_raw(items, today)
         log.info("%s: сырой снапшот сохранён: %s", self.source, path)
-        self.snapshot = Snapshot(self.source, today, rows)
+        meta = self.finish_meta(len(items), len(rows))
+        self.snapshot = Snapshot(self.source, today, rows, meta)
 
         if self.backfill_days:
+            if meta.is_partial:
+                log.warning("%s: backfill идёт по частичному снапшоту — он от baseline не зависит, "
+                            "но часть записей не получена, сигналов может быть меньше реального", self.source)
             return self.backfill_signals(rows, today)
 
         if not prev_rows:
             log.info("%s: предыдущего снапшота нет — первый день, сигналов не будет", self.source)
+            return []
+
+        if self.db.is_snapshot_partial(self.source, prev_date):
+            log.error("%s: baseline за %s частичный, дифф пропущен, снимите снапшот заново "
+                      "(python run.py --drop-snapshot %s --date %s)", self.source, prev_date, self.source, prev_date)
             return []
 
         classes = self.rcfg.get("status_classes", {})

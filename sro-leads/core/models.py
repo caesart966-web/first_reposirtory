@@ -82,9 +82,33 @@ class RegistryRow:
 
 
 @dataclass
+class SnapshotMeta:
+    """Полнота снапшота: заявлено API против реально полученного.
+
+    Частичный снапшот (обрыв пагинации или расхождение больше 1 %) нельзя использовать
+    как baseline для диффа: иначе один сбой сети превратится в тысячи ложных «исключений».
+    """
+
+    declared_total: Optional[int] = None   # сколько записей заявил API
+    fetched_rows: int = 0                  # сколько реально записали
+    pages_done: int = 0
+    broke_at_page: Optional[int] = None    # на какой странице оборвалось, если оборвалось
+    is_partial: bool = False
+
+    def describe(self) -> str:
+        parts = [f"заявлено {self.declared_total if self.declared_total is not None else '?'}",
+                 f"получено {self.fetched_rows}", f"страниц {self.pages_done}"]
+        if self.broke_at_page:
+            parts.append(f"ОБРЫВ на странице {self.broke_at_page}")
+        parts.append("ЧАСТИЧНЫЙ" if self.is_partial else "полный")
+        return ", ".join(parts)
+
+
+@dataclass
 class Snapshot:
     """Снапшот реестра за дату, который оркестратор записывает в БД."""
 
     source: str
     snapshot_date: str
     rows: list[RegistryRow]
+    meta: SnapshotMeta = field(default_factory=SnapshotMeta)

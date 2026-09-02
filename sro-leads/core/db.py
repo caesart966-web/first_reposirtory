@@ -6,7 +6,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any, Iterable, Optional
 
-from .models import Org, RegistryRow, Signal
+from .models import Org, RegistryRow, Signal, SnapshotMeta
 from .utils import now_str
 
 SCHEMA = """
@@ -60,6 +60,17 @@ CREATE TABLE IF NOT EXISTS registry_snapshots (
     PRIMARY KEY (snapshot_date, source, inn, sro_name)
 );
 CREATE INDEX IF NOT EXISTS idx_snap_src_date ON registry_snapshots(source, snapshot_date);
+
+CREATE TABLE IF NOT EXISTS snapshot_meta (
+    snapshot_date TEXT NOT NULL,
+    source TEXT NOT NULL,
+    declared_total INTEGER,
+    fetched_rows INTEGER,
+    pages_done INTEGER,
+    is_partial INTEGER DEFAULT 0,
+    created_at TEXT,
+    PRIMARY KEY (snapshot_date, source)
+);
 
 CREATE TABLE IF NOT EXISTS outreach (
     inn TEXT PRIMARY KEY,
@@ -217,6 +228,42 @@ class Database:
             n += 1
         return n
 
+    def write_snapshot_meta(self, source: str, snapshot_date: str, meta: SnapshotMeta) -> None:
+        self.conn.execute(
+            "INSERT OR REPLACE INTO snapshot_meta"
+            "(snapshot_date, source, declared_total, fetched_rows, pages_done, is_partial, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (snapshot_date, source, meta.declared_total, meta.fetched_rows, meta.pages_done,
+             1 if meta.is_partial else 0, now_str()),
+        )
+
+    def snapshot_meta(self, source: str, snapshot_date: str) -> Optional[SnapshotMeta]:
+        row = self.conn.execute(
+            "SELECT * FROM snapshot_meta WHERE source = ? AND snapshot_date = ?", (source, snapshot_date)
+        ).fetchone()
+        if not row:
+            return None
+        return SnapshotMeta(declared_total=row["declared_total"], fetched_rows=row["fetched_rows"] or 0,
+                            pages_done=row["pages_done"] or 0, is_partial=bool(row["is_partial"]))
+
+    def is_snapshot_partial(self, source: str, snapshot_date: str) -> bool:
+        meta = self.snapshot_meta(source, snapshot_date)
+        return bool(meta and meta.is_partial)
+
+    def drop_snapshot(self, source: str, snapshot_date: str) -> int:
+        """Удаляет снапшот за дату (строки и метаданные), чтобы снять его заново."""
+        n = self.conn.execute(
+            "DELETE FROM registry_snapshots WHERE source = ? AND snapshot_date = ?", (source, snapshot_date)
+        ).rowcount
+        self.conn.execute(
+            "DELETE FROM snapshot_meta WHERE source = ? AND snapshot_date = ?", (source, snapshot_date))
+        return n
+
+    def snapshot_dates(self, source: str) -> list[str]:
+        return [r["snapshot_date"] for r in self.conn.execute(
+            "SELECT DISTINCT snapshot_date FROM registry_snapshots WHERE source = ? ORDER BY snapshot_date DESC",
+            (source,)).fetchall()]
+
     def prune_snapshots(self, source: str, keep_dates: int) -> int:
         """Оставляет последние keep_dates дат по источнику, остальные удаляет."""
         dates = [
@@ -229,10 +276,7 @@ class Database:
         old = dates[keep_dates:]
         removed = 0
         for d in old:
-            cur = self.conn.execute(
-                "DELETE FROM registry_snapshots WHERE source = ? AND snapshot_date = ?", (source, d)
-            )
-            removed += cur.rowcount
+            removed += self.drop_snapshot(source, d)
         return removed
 
     # -------------------------------------------------------------- outreach
