@@ -55,6 +55,9 @@ class Org:
     email: Optional[str] = None
     director: Optional[str] = None
     status: Optional[str] = None      # ACTIVE | LIQUIDATING | LIQUIDATED | BANKRUPT | REORGANIZING | None
+    site_verified: Optional[str] = None     # inn | name | unverified | dadata | directory — как подтверждён сайт
+    phone_unverified: Optional[str] = None  # контакты с сайта, который не удалось подтвердить
+    email_unverified: Optional[str] = None
     enriched_at: Optional[str] = None
     score: Optional[float] = None     # считается в scoring.py, хранится для экспорта и отбора на обогащение
     priority: Optional[int] = None

@@ -8,6 +8,7 @@ from __future__ import annotations
 import logging
 import os
 import re
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional
 from urllib.parse import parse_qs, quote_plus, unquote, urljoin, urlparse
@@ -22,6 +23,21 @@ from .utils import HttpClient, clean_str, days_ago, domain_of, normalize_inn, no
 log = logging.getLogger("sro_leads")
 
 LIQUIDATED_STATUSES = {"LIQUIDATED", "LIQUIDATING", "BANKRUPT"}
+
+# Значения orgs.site_verified
+VERIFIED_INN = "inn"                # на сайте найден ИНН — максимальная уверенность
+VERIFIED_NAME = "name"              # совпало ядро названия, ИНН не найден
+VERIFIED_NONE = "unverified"        # сайт взят из поисковой выдачи как есть
+VERIFIED_DADATA = "dadata"          # сайт пришёл из Dadata, проверка не требуется
+VERIFIED_DIRECTORY = "directory"    # сайт из локального справочника компаний
+TRUSTED = {VERIFIED_INN, VERIFIED_NAME, VERIFIED_DADATA, VERIFIED_DIRECTORY}
+
+
+@dataclass
+class SiteContacts:
+    emails: list[str] = field(default_factory=list)
+    phones: list[str] = field(default_factory=list)
+    verified: Optional[str] = None  # inn | name | None
 
 EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 PHONE_RE = re.compile(r"(?:\+7|8)[\s\-(]*(\d{3})[\s\-)]*(\d{3})[\s\-]*(\d{2})[\s\-]*(\d{2})")
@@ -151,6 +167,7 @@ class Enricher:
             status=clean_str((d.get("state") or {}).get("status")),
             email=", ".join(e for e in emails if e) or None,
             phone=", ".join(p for p in phones if p) or None,
+            site=clean_str(d.get("site") or d.get("website")),
         )
 
     # --------------------------------------------------- локальный справочник
@@ -234,15 +251,13 @@ class Enricher:
             return f"{urlparse(href).scheme}://{urlparse(href).netloc}/"
         return None
 
-    def parse_site(self, site: str, inn: str, name: Optional[str]) -> tuple[Optional[str], Optional[str], bool]:
-        """(email, phone, confirmed): confirmed = на сайте нашлись ИНН или ядро названия."""
+    def parse_site(self, site: str, inn: str, name: Optional[str]) -> SiteContacts:
+        """Контакты со страниц сайта и уровень подтверждения: inn, name или None."""
         pcfg = self.ecfg.get("site_parse", {})
+        out = SiteContacts()
         if not pcfg.get("enabled", True):
-            return None, None, False
+            return out
         base = site if site.startswith("http") else "http://" + site
-        emails: list[str] = []
-        phones: list[str] = []
-        confirmed = False
         core = name_core(name)
         for page in pcfg.get("pages", ["/", "/contacts", "/kontakty", "/about"]):
             url = urljoin(base, page)
@@ -255,13 +270,15 @@ class Enricher:
             except Exception as e:
                 log.debug("Сайт %s: %s", url, e)
                 continue
-            low = html.lower()
-            if inn in html or (core and core in low):
-                confirmed = True
+            if inn in html:
+                out.verified = VERIFIED_INN
+            elif out.verified is None and core and core in html.lower():
+                out.verified = VERIFIED_NAME
             e, p = extract_contacts(html)
-            emails += [x for x in e if x not in emails]
-            phones += [x for x in p if x not in phones]
-        return (", ".join(emails[:3]) or None, ", ".join(phones[:3]) or None, confirmed)
+            out.emails += [x for x in e if x not in out.emails]
+            out.phones += [x for x in p if x not in out.phones]
+        out.emails, out.phones = out.emails[:3], out.phones[:3]
+        return out
 
     # ------------------------------------------------------------- пайплайн
     def candidates(self, limit: int) -> list[str]:
@@ -281,12 +298,16 @@ class Enricher:
         sug = self.dadata_lookup(inn)
         if sug:
             org = self.parse_dadata(inn, sug)
+            if org.site:
+                org.site_verified = VERIFIED_DADATA
 
         local = self.local_directory().get(inn)
         if local:
-            for k in ("name", "ogrn", "address", "okved", "director", "phone", "email", "site"):
+            for k in ("name", "ogrn", "address", "okved", "director", "phone", "email"):
                 if not getattr(org, k) and local.get(k):
                     setattr(org, k, local[k])
+            if not org.site and local.get("site"):
+                org.site, org.site_verified = local["site"], VERIFIED_DIRECTORY
 
         if org.status in LIQUIDATED_STATUSES:
             org.enriched_at = now_str()
@@ -294,19 +315,27 @@ class Enricher:
             return org
 
         name = org.name or current.name
-        site = org.site or current.site
-        if not site:
-            site = self.find_site(name, inn)
-        if site and (not org.phone or not org.email):
-            email, phone, confirmed = self.parse_site(site, inn, name)
-            if confirmed or org.site or current.site:
-                org.site = site
+        if not org.site and current.site:
+            org.site, org.site_verified = current.site, current.site_verified
+        if not org.site:
+            found = self.find_site(name, inn)
+            if found:
+                org.site, org.site_verified = found, VERIFIED_NONE
+
+        if org.site and (not org.phone or not org.email):
+            contacts = self.parse_site(org.site, inn, name)
+            if contacts.verified and org.site_verified in (None, VERIFIED_NONE, VERIFIED_NAME):
+                org.site_verified = contacts.verified  # inn сильнее name сильнее unverified
+            email, phone = ", ".join(contacts.emails) or None, ", ".join(contacts.phones) or None
+            if org.site_verified in TRUSTED:
                 org.email = org.email or email
                 org.phone = org.phone or phone
             else:
-                log.info("%s: сайт %s не подтверждён (нет ИНН/названия на страницах), отброшен", inn, site)
-        elif site:
-            org.site = site
+                # Сайт не подтверждён: контакты пишем отдельно, решение принимает менеджер
+                org.email_unverified = email
+                org.phone_unverified = phone
+                log.info("%s: сайт %s не подтверждён (нет ИНН/названия на страницах), контакты помечены", inn, org.site)
+        org.site_verified = org.site_verified or (VERIFIED_NONE if org.site else None)
         org.enriched_at = now_str()
         return org
 

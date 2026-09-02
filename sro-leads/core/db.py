@@ -22,6 +22,9 @@ CREATE TABLE IF NOT EXISTS orgs (
     email TEXT,
     director TEXT,
     status TEXT,
+    site_verified TEXT,
+    phone_unverified TEXT,
+    email_unverified TEXT,
     enriched_at TEXT,
     score REAL,
     priority INTEGER,
@@ -84,6 +87,9 @@ class Database:
         ("registry_snapshots", "status_date", "TEXT"),
         ("registry_snapshots", "reg_date", "TEXT"),
         ("signals", "detected_by", "TEXT"),
+        ("orgs", "site_verified", "TEXT"),
+        ("orgs", "phone_unverified", "TEXT"),
+        ("orgs", "email_unverified", "TEXT"),
     )
 
     def _migrate(self) -> None:

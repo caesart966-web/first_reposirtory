@@ -68,3 +68,93 @@ def test_upsert_org_does_not_erase_fields(db):
     db.upsert_org(Org(inn="1000000001", email="x@y"))
     o = db.get_org("1000000001")
     assert o.name == "A" and o.phone == "1" and o.email == "x@y"
+
+
+class FakeResp:
+    def __init__(self, html, status=200):
+        self.status_code = status
+        self.headers = {"Content-Type": "text/html; charset=utf-8"}
+        self.encoding = "utf-8"
+        self._data = html.encode("utf-8")
+        self.text = html
+
+    class _Raw:
+        def __init__(self, data):
+            self.data = data
+
+        def read(self, n, decode_content=True):
+            return self.data[:n]
+
+    @property
+    def raw(self):
+        return self._Raw(self._data)
+
+
+class FakeHttp:
+    """Сайты по домену: pages[домен][путь] -> html; поисковая выдача — search_html."""
+
+    def __init__(self, pages, search_html=""):
+        self.pages = pages
+        self.search_html = search_html
+
+    def get(self, url, **kw):
+        if "duckduckgo" in url:
+            return FakeResp(self.search_html)
+        from urllib.parse import urlparse
+        u = urlparse(url)
+        html = self.pages.get(u.netloc, {}).get(u.path or "/")
+        return FakeResp(html) if html is not None else FakeResp("", 404)
+
+
+def enricher_with_site(cfg, db, pages, search_html=""):
+    cfg["enrich"]["site_search"]["enabled"] = True
+    cfg["enrich"]["site_parse"]["enabled"] = True
+    return Enricher(cfg, db, http=FakeHttp(pages, search_html))
+
+
+SEARCH = '<a class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Frusprofile.ru%2Fid%2F1&rut=x">агрегатор</a>' \
+         '<a class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fmalyi-podryad.ru%2F&rut=y">сайт</a>'
+
+
+def test_site_verified_by_inn(cfg, db):
+    e = enricher_with_site(cfg, db, {"malyi-podryad.ru": {
+        "/": "<html>ООО Ромашка. ИНН 7800000001. <a href='tel:+78121112233'>звоните</a></html>",
+        "/contacts": "<html>Почта: <a href='mailto:office@malyi-podryad.ru'>x</a></html>"}}, SEARCH)
+    org = e.enrich_one("7800000001")
+    assert org.site == "https://malyi-podryad.ru/" and org.site_verified == "inn"
+    assert org.phone == "+7 (812) 111-22-33" and org.email == "office@malyi-podryad.ru"
+    assert org.phone_unverified is None and org.email_unverified is None
+
+
+def test_site_verified_by_name(cfg, db):
+    db.upsert_org(Org(inn="7800000001", name='ООО "МАЛЫЙ ПОДРЯД"'))
+    db.commit()
+    e = enricher_with_site(cfg, db, {"malyi-podryad.ru": {"/": "<html>Малый подряд — строим. 8 (812) 222-33-44</html>"}}, SEARCH)
+    org = e.enrich_one("7800000001")
+    assert org.site_verified == "name" and org.phone == "+7 (812) 222-33-44"
+
+
+def test_unverified_site_keeps_contacts_separately(cfg, db):
+    e = enricher_with_site(cfg, db, {"malyi-podryad.ru": {"/": "<html>Просто сайт. 8 (812) 333-44-55, info@malyi-podryad.ru</html>"}}, SEARCH)
+    org = e.enrich_one("7800000001")
+    assert org.site == "https://malyi-podryad.ru/" and org.site_verified == "unverified"   # сайт не отброшен
+    assert org.phone is None and org.email is None
+    assert org.phone_unverified == "+7 (812) 333-44-55" and org.email_unverified == "info@malyi-podryad.ru"
+    db.upsert_org(org)
+    db.commit()
+    assert db.get_org("7800000001").site_verified == "unverified"
+
+
+def test_directory_site_is_trusted(cfg, db):
+    from openpyxl import Workbook
+    wb = Workbook(); ws = wb.active
+    ws.append(["Название", "ИНН", "Сайт"]); ws.append(["ООО Из справочника", "7800000001", "malyi-podryad.ru"])
+    wb.save(resolve_path(cfg, "companies_dir") / "d.xlsx")
+    e = enricher_with_site(cfg, db, {"malyi-podryad.ru": {"/": "<html>Ничего общего. 8 (812) 444-55-66</html>"}})
+    org = e.enrich_one("7800000001")
+    assert org.site_verified == "directory" and org.phone == "+7 (812) 444-55-66"
+
+
+def test_dadata_site_is_trusted():
+    org = Enricher.parse_dadata("7800000001", {"value": "X", "data": {"site": "x.ru", "state": {"status": "ACTIVE"}}})
+    assert org.site == "x.ru"

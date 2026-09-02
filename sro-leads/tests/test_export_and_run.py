@@ -21,7 +21,8 @@ def seed(db):
         Signal("1000000007", JOINED_SRO, "2026-02-25", "nostroy", None, {"event_date": None}),  # конфликт дат
     ])
     db.upsert_org(Org(inn="1000000004", name="ООО Труп", status="LIQUIDATED"))
-    db.upsert_org(Org(inn="0105012345", region="г Санкт-Петербург", phone="+7 (812) 000-00-00"))
+    db.upsert_org(Org(inn="0105012345", region="г Санкт-Петербург", phone="+7 (812) 000-00-00",
+                      site="https://nol.ru/", site_verified="unverified", phone_unverified="+7 (812) 999-99-99"))
     rescore_all(db, {"scoring": yaml.safe_load(open("config.yaml", encoding="utf-8"))["scoring"]}, TODAY)
     db.set_outreach("1000000005", "called", "не берут трубку")
     db.commit()
@@ -46,6 +47,11 @@ def test_export_sheets_and_formats(cfg, db):
     assert ws.cell(row=3, column=1).fill.fgColor.rgb.endswith("FFEB9C")  # приоритет 2 — жёлтый
     assert ws.cell(row=2, column=4).value == "ООО Ноль"            # имя подтянулось из сигнала
     assert ws.cell(row=2, column=7).value == "Исключён из СРО"
+    col = {h: i + 1 for i, h in enumerate(header)}
+    assert ws.cell(row=2, column=col["Сайт проверен"]).value == "unverified"
+    assert ws.cell(row=2, column=col["Телефон"]).value == "+7 (812) 000-00-00"
+    assert ws.cell(row=2, column=col["Телефон (не подтверждён)"]).value == "+7 (812) 999-99-99"
+    assert ws.cell(row=2, column=col["Телефон (не подтверждён)"]).number_format == "@"
     hot = wb["Горячие"]
     assert [hot.cell(row=r, column=3).value for r in range(2, hot.max_row + 1)] == ["0105012345"]
     hist = wb["История сигналов"]
