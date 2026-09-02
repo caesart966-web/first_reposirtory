@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS signals (
     url TEXT,
     raw_json TEXT,
     created_at TEXT,
+    detected_by TEXT,
     UNIQUE(inn, signal_type, signal_date)
 );
 CREATE INDEX IF NOT EXISTS idx_signals_inn ON signals(inn);
@@ -82,6 +83,7 @@ class Database:
         ("registry_snapshots", "status_code", "TEXT"),
         ("registry_snapshots", "status_date", "TEXT"),
         ("registry_snapshots", "reg_date", "TEXT"),
+        ("signals", "detected_by", "TEXT"),
     )
 
     def _migrate(self) -> None:
@@ -130,9 +132,9 @@ class Database:
         added = 0
         for s in signals:
             cur = self.conn.execute(
-                "INSERT OR IGNORE INTO signals(inn, signal_type, signal_date, source, url, raw_json, created_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (s.inn, s.signal_type, s.signal_date, s.source, s.url, s.raw_json(), now_str()),
+                "INSERT OR IGNORE INTO signals(inn, signal_type, signal_date, source, url, raw_json, created_at, detected_by) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (s.inn, s.signal_type, s.signal_date, s.source, s.url, s.raw_json(), now_str(), s.detected_by),
             )
             if cur.rowcount:
                 added += 1

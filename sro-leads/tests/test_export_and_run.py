@@ -49,7 +49,7 @@ def test_export_sheets_and_formats(cfg, db):
     hot = wb["Горячие"]
     assert [hot.cell(row=r, column=3).value for r in range(2, hot.max_row + 1)] == ["0105012345"]
     hist = wb["История сигналов"]
-    assert hist.max_row == 6 and "sro_name=СРО А" in hist.cell(row=2, column=8).value
+    assert hist.max_row == 6 and "sro_name=СРО А" in hist.cell(row=2, column=9).value
 
 
 def test_export_region_filter(cfg, db):

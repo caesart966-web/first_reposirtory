@@ -200,6 +200,7 @@ class TenderMatch(Collector):
                         signal_date=sig_date,
                         source="tenderguru",
                         url=url,
+                        detected_by="file",
                         raw={
                             "name": clean_str(cell(row, f"{role}_name")),
                             "role": role,

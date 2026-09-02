@@ -93,49 +93,52 @@ def diff_snapshots(
     new_rows: list[RegistryRow],
     classes: dict[str, list[str]],
     source: str,
-    signal_date: str,
+    snapshot_date: str,
 ) -> list[Signal]:
-    """Сигналы по разнице двух снапшотов одного источника."""
+    """Сигналы по разнице двух снапшотов одного источника.
+
+    signal_date — дата события из записи реестра (status_date для исключения/приостановки,
+    reg_date для вступления); если в записи даты нет — дата снапшота, в котором событие
+    обнаружено. Поэтому один и тот же лид из backfill и из диффа склеивается по UNIQUE.
+    """
     prev = org_states(prev_rows, classes)
     new = org_states(new_rows, classes)
     signals: list[Signal] = []
 
-    def raw_of(row: RegistryRow, prev_cls: Optional[str], new_cls: Optional[str]) -> dict[str, Any]:
-        return {
-            "name": row.name,
-            "sro_name": row.sro_name,
-            "reg_number": row.reg_number,
-            "status": row.status,
-            "prev_state": prev_cls,
-            "new_state": new_cls,
-        }
+    def make(inn: str, sig_type: str, row: RegistryRow, prev_cls: Optional[str], new_cls: Optional[str]) -> Signal:
+        ev = row.reg_date if sig_type == JOINED_SRO else row.status_date
+        return Signal(inn, sig_type, ev or snapshot_date, source, row.url, {
+            "name": row.name, "sro_name": row.sro_name, "reg_number": row.reg_number,
+            "status": row.status, "status_code": row.status_code, "event_date": ev,
+            "prev_state": prev_cls, "new_state": new_cls, "snapshot_date": snapshot_date, "mode": "diff",
+        }, detected_by="diff")
 
     for inn, (p_cls, p_row) in prev.items():
         if p_cls == EXCLUDED_CLS:
             continue  # уже был исключён — ничего нового
         n = new.get(inn)
         if n is None:
-            signals.append(Signal(inn, EXCLUDED_FROM_SRO, signal_date, source, p_row.url, raw_of(p_row, p_cls, None)))
+            signals.append(make(inn, EXCLUDED_FROM_SRO, p_row, p_cls, None))
             continue
         n_cls, n_row = n
         if n_cls == EXCLUDED_CLS:
-            signals.append(Signal(inn, EXCLUDED_FROM_SRO, signal_date, source, n_row.url, raw_of(n_row, p_cls, n_cls)))
+            signals.append(make(inn, EXCLUDED_FROM_SRO, n_row, p_cls, n_cls))
         elif n_cls == SUSPENDED_CLS and p_cls != SUSPENDED_CLS:
-            signals.append(Signal(inn, SUSPENDED, signal_date, source, n_row.url, raw_of(n_row, p_cls, n_cls)))
+            signals.append(make(inn, SUSPENDED, n_row, p_cls, n_cls))
 
     for inn, (n_cls, n_row) in new.items():
         if inn in prev:
             p_cls = prev[inn][0]
             # Восстановился после приостановки/исключения — считаем, что вступил (лид закрыт)
             if p_cls in (SUSPENDED_CLS, EXCLUDED_CLS) and n_cls == ACTIVE:
-                signals.append(Signal(inn, JOINED_SRO, signal_date, source, n_row.url, raw_of(n_row, p_cls, n_cls)))
+                signals.append(make(inn, JOINED_SRO, n_row, p_cls, n_cls))
             continue
         if n_cls in (ACTIVE, UNKNOWN):
-            signals.append(Signal(inn, JOINED_SRO, signal_date, source, n_row.url, raw_of(n_row, None, n_cls)))
+            signals.append(make(inn, JOINED_SRO, n_row, None, n_cls))
         elif n_cls == SUSPENDED_CLS:
-            signals.append(Signal(inn, SUSPENDED, signal_date, source, n_row.url, raw_of(n_row, None, n_cls)))
+            signals.append(make(inn, SUSPENDED, n_row, None, n_cls))
         elif n_cls == EXCLUDED_CLS:
-            signals.append(Signal(inn, EXCLUDED_FROM_SRO, signal_date, source, n_row.url, raw_of(n_row, None, n_cls)))
+            signals.append(make(inn, EXCLUDED_FROM_SRO, n_row, None, n_cls))
     return signals
 
 
@@ -312,8 +315,8 @@ class RegistryCollector(Collector):
             signals.append(Signal(inn, sig_type, row.status_date, self.source, row.url, {
                 "name": row.name, "sro_name": row.sro_name, "reg_number": row.reg_number,
                 "status": row.status, "status_code": row.status_code, "event_date": row.status_date,
-                "prev_state": None, "new_state": cls, "mode": "backfill",
-            }))
+                "prev_state": None, "new_state": cls, "snapshot_date": today, "mode": "backfill",
+            }, detected_by="backfill"))
         log.info("%s: backfill за %d дней (с %s): сигналов %d, старше окна %d, без даты %d",
                  self.source, days, window_start, stats["in_window"], stats["older"], stats["no_date"])
         return signals

@@ -30,12 +30,12 @@ LEAD_COLUMNS = [
     "Приоритет", "Скор", "ИНН", "Название", "Регион", "ОКВЭД", "Сигналы", "Дата последнего сигнала",
     "Сайт", "Телефон", "Почта", "Руководитель", "Ссылка на источник", "Конфликт дат", "Статус обзвона", "Комментарий",
 ]
-SIGNAL_COLUMNS = ["ИНН", "Название", "Тип сигнала", "Описание", "Дата", "Источник", "Ссылка", "Детали"]
+SIGNAL_COLUMNS = ["ИНН", "Название", "Тип сигнала", "Описание", "Дата события", "Источник", "Обнаружен", "Ссылка", "Детали"]
 TEXT_COLUMNS = {"ИНН", "Телефон"}
 WIDTHS = {"Приоритет": 10, "Скор": 8, "ИНН": 14, "Название": 40, "Регион": 24, "ОКВЭД": 10, "Сигналы": 34,
           "Дата последнего сигнала": 14, "Сайт": 28, "Телефон": 24, "Почта": 30, "Руководитель": 28,
           "Ссылка на источник": 40, "Конфликт дат": 12, "Статус обзвона": 14, "Комментарий": 30, "Тип сигнала": 26,
-          "Описание": 34, "Дата": 12, "Источник": 12, "Ссылка": 40, "Детали": 60}
+          "Описание": 34, "Дата события": 12, "Источник": 12, "Обнаружен": 10, "Ссылка": 40, "Детали": 60}
 
 
 def _write_sheet(ws: Worksheet, columns: list[str], rows: list[list[Any]], fills: Optional[list[int]] = None) -> None:
@@ -155,7 +155,7 @@ def build_export(db: Database, cfg: dict[str, Any], date: Optional[str] = None) 
     for inn, name in exported.items():
         for s in signals_by_inn.get(inn, []):
             sig_rows.append([inn, name, s["signal_type"], SIGNAL_TITLES.get(s["signal_type"], s["signal_type"]),
-                             s["signal_date"], s["source"], s["url"], _short_details(s["raw_json"])])
+                             s["signal_date"], s["source"], s["detected_by"], s["url"], _short_details(s["raw_json"])])
     _write_sheet(ws_sig, SIGNAL_COLUMNS, sig_rows)
 
     out_dir = resolve_path(cfg, "output_dir", "output")

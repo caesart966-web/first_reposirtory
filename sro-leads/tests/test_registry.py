@@ -34,7 +34,21 @@ def test_diff_generates_expected_signals():
     sigs = diff_snapshots(prev, new, CLASSES, "nostroy", "2026-01-02")
     got = {(s.inn, s.signal_type) for s in sigs}
     assert got == {("1", EXCLUDED_FROM_SRO), ("2", EXCLUDED_FROM_SRO), ("3", SUSPENDED), ("6", JOINED_SRO)}
-    assert all(s.signal_date == "2026-01-02" and s.source == "nostroy" for s in sigs)
+    # даты события в записях нет — берётся дата снапшота, event_date пустой, detected_by=diff
+    assert all(s.signal_date == "2026-01-02" and s.source == "nostroy" and s.detected_by == "diff"
+               and s.raw["event_date"] is None for s in sigs)
+
+
+def test_diff_uses_event_dates_from_records():
+    prev = [row("1"), row("2")]
+    new = [RegistryRow("1", "СРО А", status="Исключен", status_date="2026-01-20"),
+           RegistryRow("2", "СРО А", status="Право приостановлено", status_date="2026-01-21"),
+           RegistryRow("3", "СРО А", status="Является членом", reg_date="2026-01-15")]
+    sigs = {(s.inn, s.signal_type): s for s in diff_snapshots(prev, new, CLASSES, "nostroy", "2026-02-01")}
+    assert sigs[("1", EXCLUDED_FROM_SRO)].signal_date == "2026-01-20"
+    assert sigs[("2", SUSPENDED)].signal_date == "2026-01-21"
+    assert sigs[("3", JOINED_SRO)].signal_date == "2026-01-15"
+    assert sigs[("1", EXCLUDED_FROM_SRO)].raw["event_date"] == "2026-01-20"
 
 
 def test_diff_restored_member_counts_as_joined():
@@ -220,3 +234,33 @@ def test_snapshot_keeps_status_date_and_migrates(cfg, db, monkeypatch):
     db._migrate()
     cols = {row["name"] for row in db.conn.execute("PRAGMA table_info(registry_snapshots)").fetchall()}
     assert {"status_code", "status_date", "reg_date"} <= cols
+
+
+def test_backfill_then_diff_gives_one_signal_row(cfg, db, monkeypatch):
+    """Один и тот же лид виден и backfill'ом, и диффом: в signals ровно одна строка."""
+    # День 1: компания действующая
+    run_day(cfg, db, "2026-03-01", [[api_item("1000000001"), api_item("1000000002")]], monkeypatch)
+    # День 2: исключена с датой события 2026-03-02; сначала backfill, затем обычный дифф
+    day2 = [[api_item_dated("1000000001", "Исключен", "2026-03-02"), api_item("1000000002")]]
+    monkeypatch.setattr(base, "today_str", lambda: "2026-03-03")
+    FakeCollector.pages = day2
+    c = FakeCollector(cfg, db)
+    c.backfill_days = 30
+    bf = c.collect()
+    assert [(s.inn, s.signal_date, s.detected_by) for s in bf] == [("1000000001", "2026-03-02", "backfill")]
+    db.write_snapshot(c.snapshot.source, c.snapshot.snapshot_date, c.snapshot.rows)
+    assert db.add_signals(bf) == 1
+    db.commit()
+    # Дифф на тех же данных (снапшот за 03-03 уже есть — эмулируем прогон диффа следующим днём с тем же реестром)
+    _, diff = run_day(cfg, db, "2026-03-04", day2, monkeypatch)
+    assert diff == []                      # исключение уже было в снапшоте 03-03 — дифф не повторяет
+    # А если дифф увидел исключение первым, а backfill пришёл потом — тоже одна строка
+    run_day(cfg, db, "2026-03-05", [[api_item("1000000003"), api_item("1000000002")]], monkeypatch)
+    day6 = [[api_item_dated("1000000003", "Исключен", "2026-03-06"), api_item("1000000002")]]
+    _, diff6 = run_day(cfg, db, "2026-03-06", day6, monkeypatch)
+    assert [(s.inn, s.signal_date, s.detected_by) for s in diff6] == [("1000000003", "2026-03-06", "diff")]
+    c = FakeCollector(cfg, db)
+    c.backfill_days = 30
+    assert db.add_signals(c.collect()) == 0   # backfill по снапшоту из БД: те же (inn, type, date) — дубля нет
+    rows = db.conn.execute("SELECT inn, signal_date, detected_by FROM signals WHERE signal_type != 'joined_sro' ORDER BY inn").fetchall()
+    assert [tuple(r) for r in rows] == [("1000000001", "2026-03-02", "backfill"), ("1000000003", "2026-03-06", "diff")]

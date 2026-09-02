@@ -32,10 +32,11 @@ class Signal:
 
     inn: str
     signal_type: str
-    signal_date: str  # YYYY-MM-DD
+    signal_date: str  # YYYY-MM-DD — дата САМОГО СОБЫТИЯ (исключения, вступления, контракта), не дата обнаружения
     source: str       # nostroy | nopriz | tenderguru | ...
     url: Optional[str] = None
     raw: dict[str, Any] = field(default_factory=dict)
+    detected_by: Optional[str] = None  # backfill | diff | file — откуда пришёл сигнал; на дедуп и скоринг не влияет
 
     def raw_json(self) -> str:
         return json.dumps(self.raw, ensure_ascii=False, default=str)
