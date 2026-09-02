@@ -50,6 +50,9 @@ CREATE TABLE IF NOT EXISTS registry_snapshots (
     status TEXT,
     name TEXT,
     url TEXT,
+    status_code TEXT,
+    status_date TEXT,
+    reg_date TEXT,
     PRIMARY KEY (snapshot_date, source, inn, sro_name)
 );
 CREATE INDEX IF NOT EXISTS idx_snap_src_date ON registry_snapshots(source, snapshot_date);
@@ -71,7 +74,21 @@ class Database:
         self.conn.execute("PRAGMA journal_mode=WAL")
         self.conn.execute("PRAGMA foreign_keys=ON")
         self.conn.executescript(SCHEMA)
+        self._migrate()
         self.conn.commit()
+
+    # Колонки, добавленные после первой версии схемы: базы, созданные раньше, дополняются на ходу.
+    MIGRATIONS = (
+        ("registry_snapshots", "status_code", "TEXT"),
+        ("registry_snapshots", "status_date", "TEXT"),
+        ("registry_snapshots", "reg_date", "TEXT"),
+    )
+
+    def _migrate(self) -> None:
+        for table, column, ctype in self.MIGRATIONS:
+            cols = {r["name"] for r in self.conn.execute(f"PRAGMA table_info({table})").fetchall()}
+            if column not in cols:
+                self.conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {ctype}")
 
     def close(self) -> None:
         self.conn.close()
@@ -166,8 +183,8 @@ class Database:
 
     def snapshot_rows(self, source: str, snapshot_date: str) -> list[RegistryRow]:
         rows = self.conn.execute(
-            "SELECT inn, sro_name, reg_number, status, name, url FROM registry_snapshots "
-            "WHERE source = ? AND snapshot_date = ?",
+            "SELECT inn, sro_name, reg_number, status, name, url, status_code, status_date, reg_date "
+            "FROM registry_snapshots WHERE source = ? AND snapshot_date = ?",
             (source, snapshot_date),
         ).fetchall()
         return [RegistryRow(**dict(r)) for r in rows]
@@ -184,9 +201,10 @@ class Database:
         for r in rows:
             self.conn.execute(
                 "INSERT OR REPLACE INTO registry_snapshots"
-                "(snapshot_date, source, inn, sro_name, reg_number, status, name, url) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                (snapshot_date, source, r.inn, r.sro_name, r.reg_number, r.status, r.name, r.url),
+                "(snapshot_date, source, inn, sro_name, reg_number, status, name, url, status_code, status_date, reg_date) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (snapshot_date, source, r.inn, r.sro_name, r.reg_number, r.status, r.name, r.url,
+                 r.status_code, r.status_date, r.reg_date),
             )
             n += 1
         return n

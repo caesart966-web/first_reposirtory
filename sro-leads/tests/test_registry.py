@@ -140,3 +140,83 @@ def test_per_sro_mode(cfg, db, monkeypatch):
     assert {r.inn for r in c.snapshot.rows} == {"1000000001", "1000000002"}
     assert {r.sro_name for r in c.snapshot.rows} == {"СРО-1", "СРО-2"}
     assert "/api/sro/1/member/list" in calls
+
+
+# ------------------------------------------------------------------ backfill
+def days_ago(n, today="2026-04-01"):
+    from datetime import date, timedelta
+    return (date.fromisoformat(today) - timedelta(days=n)).isoformat()
+
+
+def api_item_dated(inn, status, status_date, **kw):
+    it = api_item(inn, status, **kw)
+    it["member_status_date"] = status_date
+    return it
+
+
+def test_backfill_window(cfg, db, monkeypatch):
+    today = "2026-04-01"
+    monkeypatch.setattr(base, "today_str", lambda: today)
+    FakeCollector.pages = [[
+        api_item_dated("1000000001", "Исключен", days_ago(10)),                      # в окне
+        api_item_dated("1000000002", "Исключен", days_ago(200)),                     # старше 90 дней
+        api_item_dated("1000000003", "Право приостановлено", days_ago(30) + "T00:00:00+03:00"),  # в окне, ISO с временем
+        api_item_dated("1000000004", "Является членом", days_ago(5)),                # действующий — не лид
+        api_item_dated("1000000005", "Исключен", None),                              # без даты — пропуск
+        api_item_dated("1000000006", "Исключен", days_ago(90)),                      # ровно на границе — в окне
+        api_item_dated("1000000007", "Исключен", days_ago(3), sro_id=1, sro="СРО А"),
+        api_item_dated("1000000007", "Является членом", None, sro_id=2, sro="СРО Б"),  # переехал — не лид
+    ]]
+    c = FakeCollector(cfg, db)
+    c.backfill_days = 90
+    signals = c.collect()
+    assert c.snapshot is not None and len(c.snapshot.rows) == 8          # снапшот пишется в любом режиме
+    got = {(s.inn, s.signal_type, s.signal_date) for s in signals}
+    assert got == {
+        ("1000000001", EXCLUDED_FROM_SRO, days_ago(10)),
+        ("1000000003", SUSPENDED, days_ago(30)),
+        ("1000000006", EXCLUDED_FROM_SRO, days_ago(90)),
+    }
+    assert all(s.raw["mode"] == "backfill" and s.raw["event_date"] == s.signal_date for s in signals)
+
+    # снапшот за сегодня уже есть: backfill идёт по строкам из БД, реестр не перекачивается
+    db.write_snapshot(c.snapshot.source, c.snapshot.snapshot_date, c.snapshot.rows)
+    db.commit()
+    FakeCollector.pages = [[]]
+    c2 = FakeCollector(cfg, db)
+    c2.backfill_days = 20
+    got2 = {(s.inn, s.signal_date) for s in c2.collect()}
+    assert got2 == {("1000000001", days_ago(10))} and c2.snapshot is None
+
+
+def test_backfill_fails_loudly_without_status_date(cfg, db, monkeypatch):
+    monkeypatch.setattr(base, "today_str", lambda: "2026-04-01")
+    FakeCollector.pages = [[api_item("1000000001", "Исключен"), api_item("1000000002")]]
+    c = FakeCollector(cfg, db)
+    c.backfill_days = 90
+    with pytest.raises(CollectorError, match="backfill невозможен.*member_status_date.*registry.nostroy.fields"):
+        c.collect()
+    cfg["registry"]["nostroy"]["fields"].pop("status_date")
+    c = FakeCollector(cfg, db)
+    c.backfill_days = 90
+    with pytest.raises(CollectorError, match="fields.status_date"):
+        c.collect()
+
+
+def test_snapshot_keeps_status_date_and_migrates(cfg, db, monkeypatch):
+    monkeypatch.setattr(base, "today_str", lambda: "2026-04-01")
+    it = api_item_dated("1000000001", "Исключен", "2026-03-20")
+    it["registry_registration_date"] = "2020-05-01"
+    FakeCollector.pages = [[it]]
+    c = FakeCollector(cfg, db)
+    c.collect()
+    db.write_snapshot("nostroy", "2026-04-01", c.snapshot.rows)
+    r = db.snapshot_rows("nostroy", "2026-04-01")[0]
+    assert r.status_date == "2026-03-20" and r.reg_date == "2020-05-01" and r.status_code == "x"
+    # миграция старой БД без новых колонок
+    db.conn.execute("CREATE TABLE old(snapshot_date TEXT, source TEXT, inn TEXT, sro_name TEXT, reg_number TEXT, status TEXT, name TEXT, url TEXT)")
+    db.conn.execute("DROP TABLE registry_snapshots")
+    db.conn.execute("ALTER TABLE old RENAME TO registry_snapshots")
+    db._migrate()
+    cols = {row["name"] for row in db.conn.execute("PRAGMA table_info(registry_snapshots)").fetchall()}
+    assert {"status_code", "status_date", "reg_date"} <= cols

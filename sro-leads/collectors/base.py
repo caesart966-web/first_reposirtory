@@ -6,6 +6,7 @@ import json
 import logging
 import time
 from collections import defaultdict
+from datetime import date, timedelta
 from pathlib import Path
 from typing import Any, Optional
 
@@ -18,7 +19,7 @@ from core.models import (
     Signal,
     Snapshot,
 )
-from core.utils import HttpClient, clean_str, dig, normalize_inn, resolve_path, today_str
+from core.utils import HttpClient, clean_str, dig, normalize_inn, parse_date, resolve_path, today_str
 
 log = logging.getLogger("sro_leads")
 
@@ -42,6 +43,7 @@ class Collector:
         self.db = db
         self.http = http or HttpClient(config.get("http", {}))
         self.snapshot: Optional[Snapshot] = None
+        self.backfill_days: Optional[int] = None  # --backfill N: задаёт оркестратор
 
     def collect(self) -> list[Signal]:
         raise NotImplementedError
@@ -79,7 +81,9 @@ def org_states(rows: list[RegistryRow], classes: dict[str, list[str]]) -> dict[s
     for r in rows:
         cls = classify_status(r.status, classes)
         cur = best.get(r.inn)
-        if cur is None or _RANK[cls] > _RANK[cur[0]]:
+        if cur is None or _RANK[cls] > _RANK[cur[0]] or (
+            _RANK[cls] == _RANK[cur[0]] and (r.status_date or "") > (cur[1].status_date or "")
+        ):
             best[r.inn] = (cls, r)
     return best
 
@@ -254,6 +258,9 @@ class RegistryCollector(Collector):
                     status=clean_str(dig(it, fields.get("status"))),
                     name=clean_str(dig(it, fields.get("name"))),
                     url=url,
+                    status_code=clean_str(dig(it, fields.get("status_code"))),
+                    status_date=parse_date(dig(it, fields.get("status_date"))),
+                    reg_date=parse_date(dig(it, fields.get("reg_date"))),
                 )
             )
         if bad:
@@ -275,9 +282,50 @@ class RegistryCollector(Collector):
         return path
 
     # -------------------------------------------------------------- collect
+    # ------------------------------------------------------------- backfill
+    def backfill_signals(self, rows: list[RegistryRow], today: str) -> list[Signal]:
+        """Сигналы из самих записей: прекращённые/приостановленные с датой события в окне N дней."""
+        days = int(self.backfill_days or 0)
+        field = self.scfg.get("fields", {}).get("status_date")
+        if not field:
+            raise CollectorError(
+                f"{self.source}: backfill невозможен, в config.yaml нет registry.{self.source}.fields.status_date")
+        if not any(r.status_date for r in rows):
+            raise CollectorError(
+                f"{self.source}: backfill невозможен, в ответе нет поля {field} (пусто у всех записей), "
+                f"проверьте registry.{self.source}.fields в config.yaml")
+        window_start = (date.fromisoformat(today) - timedelta(days=days)).isoformat()
+        classes = self.rcfg.get("status_classes", {})
+        signals: list[Signal] = []
+        stats = {"in_window": 0, "older": 0, "no_date": 0}
+        for inn, (cls, row) in org_states(rows, classes).items():
+            if cls not in (EXCLUDED_CLS, SUSPENDED_CLS):
+                continue
+            if not row.status_date:
+                stats["no_date"] += 1
+                continue
+            if row.status_date < window_start or row.status_date > today:
+                stats["older"] += 1
+                continue
+            stats["in_window"] += 1
+            sig_type = EXCLUDED_FROM_SRO if cls == EXCLUDED_CLS else SUSPENDED
+            signals.append(Signal(inn, sig_type, row.status_date, self.source, row.url, {
+                "name": row.name, "sro_name": row.sro_name, "reg_number": row.reg_number,
+                "status": row.status, "status_code": row.status_code, "event_date": row.status_date,
+                "prev_state": None, "new_state": cls, "mode": "backfill",
+            }))
+        log.info("%s: backfill за %d дней (с %s): сигналов %d, старше окна %d, без даты %d",
+                 self.source, days, window_start, stats["in_window"], stats["older"], stats["no_date"])
+        return signals
+
+    # -------------------------------------------------------------- collect
     def collect(self) -> list[Signal]:
         today = today_str()
         if self.db.has_snapshot(self.source, today):
+            if self.backfill_days:
+                log.info("%s: снапшот за %s уже есть — backfill по нему из БД, реестр не перекачиваем",
+                         self.source, today)
+                return self.backfill_signals(self.db.snapshot_rows(self.source, today), today)
             log.info("%s: снапшот за %s уже есть, повторно не собираем (ложных диффов не будет)",
                      self.source, today)
             return []
@@ -300,6 +348,9 @@ class RegistryCollector(Collector):
         path = self.save_raw(items, today)
         log.info("%s: сырой снапшот сохранён: %s", self.source, path)
         self.snapshot = Snapshot(self.source, today, rows)
+
+        if self.backfill_days:
+            return self.backfill_signals(rows, today)
 
         if not prev_rows:
             log.info("%s: предыдущего снапшота нет — первый день, сигналов не будет", self.source)

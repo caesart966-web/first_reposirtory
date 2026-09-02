@@ -3,6 +3,7 @@
 
   python run.py --full                    # всё подряд (то же, что без флагов)
   python run.py --only nostroy_registry   # прогнать один коллектор (+ скоринг и экспорт)
+  python run.py --only nostroy_registry --backfill 90   # исторические исключения за 90 дней из самих записей
   python run.py --no-enrich               # собрать без обогащения
   python run.py --export-only             # только пересобрать Excel из БД
   python run.py --mark 7814858513 called "перезвонить в четверг"   # статус обзвона
@@ -28,7 +29,7 @@ from collectors import discover  # noqa: E402
 log = logging.getLogger("sro_leads")
 
 
-def run_collectors(cfg: dict, db: Database, names: list[str]) -> dict[str, int]:
+def run_collectors(cfg: dict, db: Database, names: list[str], backfill_days: int | None = None) -> dict[str, int]:
     available = discover()
     http = HttpClient(cfg.get("http", {}))
     results: dict[str, int] = {}
@@ -41,6 +42,7 @@ def run_collectors(cfg: dict, db: Database, names: list[str]) -> dict[str, int]:
         started = time.monotonic()
         log.info("=== %s: старт ===", name)
         collector = cls(cfg, db, http)
+        collector.backfill_days = backfill_days
         try:
             signals = collector.collect()
             if collector.snapshot is not None:
@@ -75,6 +77,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--no-enrich", action="store_true", help="собрать без обогащения")
     parser.add_argument("--export-only", action="store_true", help="только пересобрать Excel из БД")
     parser.add_argument("--full", action="store_true", help="всё подряд (по умолчанию)")
+    parser.add_argument("--backfill", nargs="?", const=90, type=int, metavar="N",
+                        help="реестры: сигналы из самих записей за последние N дней (по умолчанию 90) вместо диффа")
     parser.add_argument("--mark", nargs="+", metavar=("INN", "STATUS"),
                         help=f"статус обзвона: INN STATUS [комментарий]; статусы: {', '.join(OUTREACH_STATUSES)}")
     parser.add_argument("--config", help="путь к config.yaml")
@@ -98,7 +102,7 @@ def main(argv: list[str] | None = None) -> int:
         if not args.export_only:
             names = [n.strip() for n in args.only.split(",")] if args.only else list(
                 cfg.get("collectors", {}).get("enabled", []))
-            results = run_collectors(cfg, db, names)
+            results = run_collectors(cfg, db, names, args.backfill)
             prune(cfg, db)
             scores = rescore_all(cfg=cfg, db=db)
             log.info("Скоринг: организаций %d, приоритет 1: %d, приоритет 2: %d",

@@ -72,6 +72,9 @@ class RegistryRow:
     status: Optional[str] = None
     name: Optional[str] = None
     url: Optional[str] = None
+    status_code: Optional[str] = None   # код статуса членства из API (registry.<src>.fields.status_code)
+    status_date: Optional[str] = None   # дата прекращения/приостановки, YYYY-MM-DD (fields.status_date)
+    reg_date: Optional[str] = None      # дата регистрации в реестре (fields.reg_date)
 
 
 @dataclass

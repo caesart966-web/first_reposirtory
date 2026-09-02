@@ -64,6 +64,11 @@ registry:
       status: [member_status.title, member_status.code, status.title, status]
       member_id: [id, member_id]
       region: [region.title, region]
+      # Для backfill и единой даты сигнала: код статуса, дата прекращения/приостановки, дата регистрации.
+      status_code: [member_status.code, status.code, status_code]
+      status_date: [member_status_date, status_date, exclusion_date, removal_date, suspension_date,
+                    member_status.date, date_status, termination_date]
+      reg_date: [registry_registration_date, registration_date, member_registration_date, reg_date]
     member_url: "https://reestr.nostroy.ru/reestr/clients/{sro_id}/members/{member_id}"
 
   nopriz:
@@ -89,6 +94,10 @@ registry:
       status: [member_status.title, member_status.code, status.title, status]
       member_id: [id, member_id]
       region: [region.title, region]
+      status_code: [member_status.code, status.code, status_code]
+      status_date: [member_status_date, status_date, exclusion_date, removal_date, suspension_date,
+                    member_status.date, date_status, termination_date]
+      reg_date: [registry_registration_date, registration_date, member_registration_date, reg_date]
     member_url: "https://reestr.nopriz.ru/reestr/clients/{sro_id}/members/{member_id}"
 
 # ---------------------------------------------------------------------------
