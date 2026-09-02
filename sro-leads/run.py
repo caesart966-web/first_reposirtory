@@ -7,6 +7,7 @@
   python run.py --no-enrich               # собрать без обогащения
   python run.py --export-only             # только пересобрать Excel из БД
   python run.py --mark 7814858513 called "перезвонить в четверг"   # статус обзвона
+  python run.py --check-api nostroy       # один запрос к API и сверка карты полей, в БД не пишет
 """
 from __future__ import annotations
 
@@ -62,6 +63,21 @@ def run_collectors(cfg: dict, db: Database, names: list[str], backfill_days: int
     return results
 
 
+def check_api(cfg: dict, source: str) -> int:
+    """Диагностика живого коннектора: печатает отчёт в консоль, БД не трогает."""
+    from collectors.base import RegistryCollector
+
+    cls = next((c for c in discover().values() if issubclass(c, RegistryCollector) and c.source == source), None)
+    if cls is None:
+        print(f"Нет реестрового коллектора для источника «{source}». Доступны: "
+              + ", ".join(sorted(c.source for c in discover().values() if issubclass(c, RegistryCollector))))
+        return 2
+    collector = cls(cfg, db=None, http=HttpClient(cfg.get("http", {})))  # type: ignore[arg-type]
+    ok, report = collector.check_api()
+    print(report)
+    return 0 if ok else 1
+
+
 def prune(cfg: dict, db: Database) -> None:
     keep = int(cfg.get("registry", {}).get("keep_days", 14))
     for source in ("nostroy", "nopriz"):
@@ -81,11 +97,15 @@ def main(argv: list[str] | None = None) -> int:
                         help="реестры: сигналы из самих записей за последние N дней (по умолчанию 90) вместо диффа")
     parser.add_argument("--mark", nargs="+", metavar=("INN", "STATUS"),
                         help=f"статус обзвона: INN STATUS [комментарий]; статусы: {', '.join(OUTREACH_STATUSES)}")
+    parser.add_argument("--check-api", metavar="SOURCE", help="один запрос к API реестра (nostroy | nopriz) "
+                        "и сверка карты полей; в БД ничего не пишет")
     parser.add_argument("--config", help="путь к config.yaml")
     args = parser.parse_args(argv)
 
     cfg = load_config(args.config)
     setup_logging(resolve_path(cfg, "logs_dir", "logs"))
+    if args.check_api:
+        return check_api(cfg, args.check_api)
     db = Database(resolve_path(cfg, "db", "data/sro_leads.db"))
     started = time.monotonic()
     try:

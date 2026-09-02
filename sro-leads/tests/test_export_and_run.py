@@ -78,3 +78,16 @@ def test_run_main_export_only_and_mark(tmp_path):
     assert list((tmp_path / "logs").glob("*.log"))
     # неизвестный коллектор не роняет прогон
     assert run.main(["--only", "nope", "--no-enrich", "--config", str(cfg_path)]) == 0
+
+
+def test_run_check_api_writes_nothing(tmp_path, monkeypatch):
+    import collectors.nostroy_registry as nr
+    cfg = yaml.safe_load(open("config.yaml", encoding="utf-8"))
+    for k in cfg["paths"]:
+        cfg["paths"][k] = str(tmp_path / cfg["paths"][k])
+    cfg_path = tmp_path / "config.yaml"
+    cfg_path.write_text(yaml.safe_dump(cfg, allow_unicode=True), encoding="utf-8")
+    monkeypatch.setattr(nr.NostroyRegistry, "check_api", lambda self, page_size=3: (True, "ОТЧЁТ"))
+    assert run.main(["--check-api", "nostroy", "--config", str(cfg_path)]) == 0
+    assert not (tmp_path / "data" / "sro_leads.db").exists()          # БД не создаётся и не пишется
+    assert run.main(["--check-api", "nope", "--config", str(cfg_path)]) == 2

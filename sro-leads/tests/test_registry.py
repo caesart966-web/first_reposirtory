@@ -1,5 +1,6 @@
 import gzip
 import json
+import re
 
 import pytest
 
@@ -264,3 +265,70 @@ def test_backfill_then_diff_gives_one_signal_row(cfg, db, monkeypatch):
     assert db.add_signals(c.collect()) == 0   # backfill по снапшоту из БД: те же (inn, type, date) — дубля нет
     rows = db.conn.execute("SELECT inn, signal_date, detected_by FROM signals WHERE signal_type != 'joined_sro' ORDER BY inn").fetchall()
     assert [tuple(r) for r in rows] == [("1000000001", "2026-03-02", "backfill"), ("1000000003", "2026-03-06", "diff")]
+
+
+# ------------------------------------------------------------------ check-api
+class FakeResp:
+    def __init__(self, payload, status=200):
+        self.status_code = status
+        self._payload = payload
+        self.text = json.dumps(payload, ensure_ascii=False) if not isinstance(payload, str) else payload
+        self.content = self.text.encode("utf-8")
+
+    def json(self):
+        if isinstance(self._payload, str):
+            raise ValueError("not json")
+        return self._payload
+
+
+class FakeHttp:
+    def __init__(self, payload, status=200):
+        self.payload, self.status, self.calls = payload, status, []
+
+    def post(self, url, **kw):
+        self.calls.append((url, kw.get("json")))
+        return FakeResp(self.payload, self.status)
+
+    def get(self, url, **kw):
+        return self.post(url, **kw)
+
+
+def test_check_api_reports_field_mapping(cfg):
+    payload = {"success": True, "data": {"data": [api_item_dated("1000000001", "Исключен", "2026-03-20"),
+                                                  api_item("1000000002")], "total": 12345}}
+    http = FakeHttp(payload)
+    ok, report = NostroyRegistry(cfg, db=None, http=http).check_api()
+    assert ok
+    assert http.calls[0][1]["pageCount"] == "3"                        # минимальная страница, строкой
+    assert "HTTP 200" in report and "['success', 'data']" in report
+    assert "data.data" in report and "12345" in report
+    assert "member_status_date" in report and "2026-03-20" in report   # status_date нашёлся
+    assert re.search(r"reg_date\s+-\s+-\s+<-- НЕ НАЙДЕНО", report)      # reg_date в ответе нет — помечено явно
+    assert "1000000001" in report and "карта полей сошлась" in report
+    assert report.count("--- запись") == 2
+
+
+def test_check_api_detects_mismatch_and_errors(cfg):
+    ok, report = NostroyRegistry(cfg, db=None, http=FakeHttp({"result": {"rows": [{"tax_id": "1"}]}})).check_api()
+    assert not ok and "ЗАПИСЕЙ НЕТ" in report and re.search(r"items\s+НЕ НАЙДЕНО", report)
+    ok, report = NostroyRegistry(cfg, db=None, http=FakeHttp({"data": {"data": [{"foo": 1}]}})).check_api()
+    assert not ok and re.search(r"inn\s+-\s+-\s+<-- НЕ НАЙДЕНО \(обязательное\)", report) and "НЕ СОШЛАСЬ" in report
+    ok, report = NostroyRegistry(cfg, db=None, http=FakeHttp("<html>403</html>", 403)).check_api()
+    assert not ok and "HTTP 403" in report
+    ok, report = NostroyRegistry(cfg, db=None, http=FakeHttp("<html>", 200)).check_api()
+    assert not ok and "не JSON" in report
+
+
+def test_check_api_per_sro_mode(cfg):
+    class Http(FakeHttp):
+        def post(self, url, **kw):
+            self.calls.append((url, kw.get("json")))
+            if url.endswith("/api/sro/list"):
+                return FakeResp({"data": {"data": [{"id": 5, "short_description": "СРО-5"}], "total": 1}})
+            assert url.endswith("/api/sro/5/member/list")
+            return FakeResp({"data": {"data": [api_item("1000000001")], "total": 1}})
+
+    cfg["registry"]["nostroy"]["sro_list_endpoint"] = "/api/sro/list"
+    cfg["registry"]["nostroy"]["members_endpoint"] = "/api/sro/{sro_id}/member/list"
+    ok, report = NostroyRegistry(cfg, db=None, http=Http(None)).check_api()
+    assert ok and "первая СРО: id=5" in report
