@@ -91,3 +91,27 @@ def test_run_check_api_writes_nothing(tmp_path, monkeypatch):
     assert run.main(["--check-api", "nostroy", "--config", str(cfg_path)]) == 0
     assert not (tmp_path / "data" / "sro_leads.db").exists()          # БД не создаётся и не пишется
     assert run.main(["--check-api", "nope", "--config", str(cfg_path)]) == 2
+
+
+def test_export_filters_max_rows_min_score_age(cfg, db):
+    seed(db)
+    # 6 горячих: по одному свежему исключению; свежие сигналы -> 130 баллов, приоритет 1
+    for i in range(10, 16):
+        db.add_signals([Signal(f"20000000{i}", EXCLUDED_FROM_SRO, "2026-02-28", "nostroy")])
+    db.add_signals([Signal("3000000001", EXCLUDED_FROM_SRO, "2025-06-01", "nostroy")])   # свежайший сигнал старше 180 дней
+    db.commit()
+    cfg["export"]["max_rows"] = 3
+    wb = load_workbook(build_export(db, cfg, TODAY))
+    hot, allv = wb["Горячие"], wb["Все лиды"]
+    assert hot.max_row - 1 == 3                                          # потолок только на «Горячие»
+    all_inns = [allv.cell(row=r, column=3).value for r in range(2, allv.max_row + 1)]
+    assert len(all_inns) == 4 + 6                                        # «Все лиды» без потолка (4 из сида + 6)
+    assert "3000000001" not in all_inns                                  # устаревший отсеян
+    assert "1000000006" not in all_inns                                  # только joined_sro — не лид
+    cfg["export"]["signal_max_age_days"] = None
+    cfg["export"]["min_score"] = 100
+    wb = load_workbook(build_export(db, cfg, TODAY))
+    allv = wb["Все лиды"]
+    all_inns = [allv.cell(row=r, column=3).value for r in range(2, allv.max_row + 1)]
+    assert "3000000001" not in all_inns and "1000000002" not in all_inns  # 50 и 70 баллов — ниже отсечки
+    assert "0105012345" in all_inns and len(all_inns) == 1 + 6

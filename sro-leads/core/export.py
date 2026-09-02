@@ -15,7 +15,7 @@ from .db import Database
 from .enrich import LIQUIDATED_STATUSES
 from .models import SIGNAL_TITLES
 from .scoring import score_org
-from .utils import resolve_path, today_str
+from .utils import days_between, resolve_path, today_str
 
 log = logging.getLogger("sro_leads")
 
@@ -87,19 +87,28 @@ def build_export(db: Database, cfg: dict[str, Any], date: Optional[str] = None) 
     date = date or today_str()
     regions = [r.lower() for r in xcfg.get("regions", []) or []]
     allowed_status = set(xcfg.get("outreach_statuses", ["new"]) or [])
-    min_score = float(xcfg.get("min_score", 1))
+    min_score = float(xcfg.get("min_score", 0) or 0)
+    max_rows = int(xcfg.get("max_rows", 300) or 0)
+    max_age = xcfg.get("signal_max_age_days", 180)
+    max_age = int(max_age) if max_age not in (None, "", 0) else None
     exclude_liq = bool(xcfg.get("exclude_liquidated", True))
 
     outreach = db.outreach_map()
     signals_by_inn = db.signals_by_inn()
     leads: list[dict[str, Any]] = []
-    skipped = {"score": 0, "liquidated": 0, "outreach": 0, "region": 0}
+    skipped = {"no_lead_signals": 0, "score": 0, "stale": 0, "liquidated": 0, "outreach": 0, "region": 0}
 
     for org in db.orgs_rows():
         inn = org["inn"]
         res = score_org(inn, signals_by_inn.get(inn, []), scfg, date)
+        if not res.types:  # только joined_sro или всё погашено — это не лид
+            skipped["no_lead_signals"] += 1
+            continue
         if res.score < min_score:
             skipped["score"] += 1
+            continue
+        if max_age is not None and res.last_signal_date and days_between(res.last_signal_date, date) > max_age:
+            skipped["stale"] += 1
             continue
         if exclude_liq and (org["status"] or "") in LIQUIDATED_STATUSES:
             skipped["liquidated"] += 1
@@ -150,6 +159,9 @@ def build_export(db: Database, cfg: dict[str, Any], date: Optional[str] = None) 
     ws_hot = wb.active
     ws_hot.title = "Горячие"
     hot = [l for l in leads if l["priority"] == 1 and l["status"] == "new"]
+    hot_total = len(hot)
+    if max_rows > 0:
+        hot = hot[:max_rows]
     _write_sheet(ws_hot, LEAD_COLUMNS, [to_row(l) for l in hot], [l["priority"] for l in hot])
 
     ws_all = wb.create_sheet("Все лиды")
@@ -167,6 +179,7 @@ def build_export(db: Database, cfg: dict[str, Any], date: Optional[str] = None) 
     out_dir = resolve_path(cfg, "output_dir", "output")
     path = out_dir / xcfg.get("filename", "Лиды_{date}.xlsx").format(date=date)
     wb.save(path)
-    log.info("Экспорт: %s — горячих %d, всего лидов %d, сигналов %d; отсеяно %s",
-             path, len(hot), len(leads), len(sig_rows), skipped)
+    log.info("Экспорт: %s — горячих %d%s, всего лидов %d, сигналов %d; отсеяно %s",
+             path, len(hot), f" (из {hot_total}, потолок {max_rows})" if hot_total > len(hot) else "",
+             len(leads), len(sig_rows), skipped)
     return path
