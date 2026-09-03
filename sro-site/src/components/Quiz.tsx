@@ -29,8 +29,14 @@ import { Section, SectionHeading } from './ui/Section'
 //
 // Предметы разнесены по краям холста намеренно: по центру секции лежит белая
 // карточка квиза, и всё, что окажется под ней, пропадёт.
-const QUIZ_BG = './img/desk.webp'
-const QUIZ_BG_AVIF = './img/desk.avif'
+// Архивная синька (та же, что в карточке «СРО проектировщиков», но там она
+// маленькая и в полную силу, здесь — во всю секцию и приглушена под плёнкой).
+// Раньше фоном стоял кадр стола, но он ушёл на первый экран, и заказчик
+// справедливо заметил повтор: одна и та же сцена открывала и закрывала
+// страницу. Чертёж под заявкой уместнее: «расскажите о задаче» — и под
+// текстом проект. Мотив чертёжной сетки в герое он же и продолжает.
+const QUIZ_BG = './img/quiz-bg.webp'
+const QUIZ_BG_AVIF = './img/quiz-bg.avif'
 
 const inputClasses =
   'mt-1.5 w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-neutral-900 placeholder:text-neutral-500 focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/30'
