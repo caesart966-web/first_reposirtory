@@ -40,7 +40,10 @@ export function AboutExpert() {
       <div
         className={
           HAS_REQUISITES
-            ? 'mx-auto grid max-w-5xl items-start gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:gap-16'
+            ? // Карточка по центру колонки, а не по верху: левая колонка вдвое
+              // выше карточки, и прижатая к верху она оставляла под собой пустоту
+              // в половину секции. По центру композиция читается уравновешенной.
+              'mx-auto grid max-w-5xl items-start gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-center lg:gap-16'
             : 'mx-auto max-w-3xl'
         }
       >
