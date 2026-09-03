@@ -7,6 +7,7 @@ import { href, SITE } from '../../config/site'
 
 const sro = byGroup('sro')
 const people = byGroup('people')
+const safety = byGroup('safety')
 const marketing = byGroup('marketing')
 ---
 
@@ -63,6 +64,27 @@ const marketing = byGroup('marketing')
         </div>
         <div class="grid-3">
           {people.map((s) => (
+            <a class="card srv" href={href(`/uslugi/${s.slug}/`)}>
+              <span class="ic"><Icon name={s.icon} size={20} /></span>
+              <h3>{s.title}</h3>
+              <p>{s.excerpt}</p>
+              <span class="go">Подробнее <Icon name="arrow" size={15} /></span>
+            </a>
+          ))}
+        </div>
+      </div>
+
+      <div class="group rv">
+        <div class="g-head">
+          <h2>Безопасность, охрана труда <em>и право</em></h2>
+          <p>
+            Требования, которые не отменяются вместе с вступлением в СРО и проверяются
+            отдельно: аттестация в Ростехнадзоре, обучение по охране труда, договорная
+            и претензионная работа.
+          </p>
+        </div>
+        <div class="grid-3">
+          {safety.map((s) => (
             <a class="card srv" href={href(`/uslugi/${s.slug}/`)}>
               <span class="ic"><Icon name={s.icon} size={20} /></span>
               <h3>{s.title}</h3>

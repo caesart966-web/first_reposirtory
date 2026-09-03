@@ -1,0 +1,158 @@
+---
+import LeadForm from './LeadForm.astro'
+import LogoMark from './LogoMark.astro'
+import Icon from './Icon.astro'
+import { SITE, href } from '../config/site'
+
+// Блок бесплатной консультации на странице контактов.
+//
+// Раскладка выбрана заказчиком по образцу: слева — что он получит, справа —
+// карточка с человеком и формой. Смысл приёма в том, что форма перестаёт быть
+// безличной: рядом с ней видно, кому именно уходит заявка.
+//
+// Три пункта слева — намеренно проверяемые обещания, а не «индивидуальный
+// подход» и «лучшие условия». Каждый из них заказчик может выполнить, и
+// каждый посетитель может потом проверить, выполнен ли он.
+//
+// Фотография берётся из SITE.photo. Пока её нет, показывается фирменный знак:
+// ставить стоковое лицо в блок, который обещает работу лично, нельзя — это
+// была бы первая же неправда на сайте, построенном на проверяемости.
+
+const PERKS = [
+  {
+    t: 'Скажу, нужна ли вам СРО вообще',
+    d: 'Со ссылкой на норму закона и до того, как вы что-то оплатите. Половине обратившихся членство не требуется — субподрядчику от генподрядчика оно не нужно ни при какой сумме договора.',
+  },
+  {
+    t: 'Проверю ваших специалистов по реестру',
+    d: 'Посмотрю, кто из сотрудников подходит для национального реестра по образованию и стажу и чего не хватает. Бесплатно и до начала работы.',
+  },
+  {
+    t: 'Назову все взносы, включая те, о которых молчат',
+    d: 'Компенсационные фонды по закону и взносы конкретной СРО — отдельными строками. Отдельно скажу про фонд договорных обязательств, если вы идёте на торги.',
+  },
+]
+---
+
+<section class="section consult" id="konsultaciya" data-anchor>
+  <div class="wrap">
+    <div class="cbox rv">
+      <div class="cleft">
+        <span class="ctag">Бесплатная консультация</span>
+        <h2>Разберу вашу ситуацию <em>до того, как вы заплатите</em></h2>
+        <p class="clead">
+          Оставьте заявку — отвечу лично, обычно в течение рабочего дня.
+          Навязчивых звонков не будет: одна попытка связаться и ответ по делу.
+        </p>
+
+        <ul class="perks">
+          {PERKS.map((p) => (
+            <li>
+              <span class="pk"><Icon name="check" size={15} /></span>
+              <span><b>{p.t}</b><small>{p.d}</small></span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div class="cright">
+        <div class="who">
+          {SITE.photo ? (
+            <img class="who-photo" src={href(`/${SITE.photo}`)} width="72" height="72" alt={SITE.shortName} loading="lazy" />
+          ) : (
+            <span class="who-mark"><LogoMark size={34} /></span>
+          )}
+          <div>
+            <b>{SITE.shortName}</b>
+            <span>Вступление в СРО, НРС, НОК и лицензии</span>
+          </div>
+        </div>
+
+        <LeadForm
+          title="Куда отправить ответ"
+          subtitle="Достаточно имени и телефона. Остальное — если хотите, чтобы я ответил сразу по делу."
+        />
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .consult { background: var(--card); border-top: 1px solid var(--line); }
+
+  .cbox { display: grid; gap: 28px; align-items: start; }
+  @media (min-width: 1000px) {
+    .cbox { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 52px; }
+  }
+
+  .ctag {
+    display: inline-flex;
+    background: var(--acc-soft);
+    color: var(--acc-deep);
+    border-radius: 999px;
+    padding: 7px 15px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .cleft h2 { margin: 16px 0 0; }
+  .clead { color: var(--muted); font-size: 16.5px; line-height: 1.65; margin: 14px 0 0; max-width: 52ch; }
+
+  .perks { list-style: none; margin: 26px 0 0; padding: 0; display: grid; gap: 18px; }
+  .perks li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 13px; align-items: start; }
+  .pk {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--acc-btn);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    flex: none;
+    margin-top: 1px;
+  }
+  .perks b { display: block; font-size: 16px; line-height: 1.35; }
+  .perks small { display: block; color: var(--muted); font-size: 14.5px; line-height: 1.55; margin-top: 4px; }
+
+  /* Правая колонка: человек и форма читаются как одна карточка. */
+  .cright {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--r-l);
+    padding: 22px;
+    display: grid;
+    gap: 18px;
+    box-shadow: var(--shadow);
+  }
+
+  .who {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 14px;
+    align-items: center;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+  }
+  .who-photo { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; display: block; }
+  .who-mark {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: var(--navy);
+    color: #fff;
+    display: grid;
+    place-items: center;
+  }
+  .who b { display: block; font-size: 17.5px; }
+  .who span { display: block; color: var(--muted); font-size: 14px; line-height: 1.45; margin-top: 3px; }
+
+  /* Форма внутри карточки уже обрамлена ею — своя рамка была бы рамкой в рамке. */
+  .cright :global(.lead-form) {
+    background: none;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+</style>
