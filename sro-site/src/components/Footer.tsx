@@ -1,5 +1,6 @@
 import { Mail, Phone } from 'lucide-react'
 import { CONFIGURED, CONTACTS, LINKS } from '../content/contacts'
+import { REQUISITES } from '../content/facts'
 import { SECTIONS } from '../content/nav'
 import { ScalesMark } from './illustrations'
 import { useLegalDocs } from './LegalDocs'
@@ -22,7 +23,7 @@ export function Footer() {
             <div className="flex items-center gap-2.5">
               <ScalesMark className="h-[22px] w-auto shrink-0 text-accent-600" />
               <span className="flex flex-col leading-tight">
-                <span className="font-bold text-neutral-950">{CONTACTS.fullName}</span>
+                <span className="font-bold text-neutral-950">{CONTACTS.brand}</span>
                 {/* neutral-600, а не neutral-500 как в шапке: там подпись лежит
                     на белом, а здесь под ней ещё и фоновая гравюра Фемиды. Над
                     самой тёмной её точкой контраст neutral-500 падает до
@@ -155,7 +156,9 @@ export function Footer() {
 
         <div className="mt-10 flex flex-col gap-2 border-t border-neutral-200 pt-6 text-sm text-neutral-600 sm:flex-row sm:items-center sm:justify-between">
           <p>
-            © {new Date().getFullYear()} {CONTACTS.fullName} · {CONTACTS.role}
+            {/* В копирайте — юридическое имя, а не бренд: это единственное место
+                на странице, где компания названа так, как в реестре. */}
+            © {new Date().getFullYear()} {REQUISITES.legalName}
           </p>
           {/* Цен на странице нет, сроков тоже — оговорка про оферту это
               фиксирует, а не прикрывает. */}

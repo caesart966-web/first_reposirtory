@@ -1,5 +1,4 @@
 import { Check, FileCheck, Globe } from 'lucide-react'
-import { CONTACTS } from '../content/contacts'
 import { FACTS, REQUISITES, isPlaceholder } from '../content/facts'
 import { ButtonLink } from './ui/Button'
 import { Reveal } from './ui/Reveal'
@@ -18,9 +17,11 @@ const ADVANTAGES = [
 // Строки с незаполненными реквизитами не показываем: квадратные скобки на
 // сайте читаются как «сломано». Появятся данные — строки вернутся сами.
 const REQUISITE_ROWS = [
-  { label: 'Статус', value: REQUISITES.legalStatus },
+  { label: 'Организация', value: REQUISITES.legalName },
   { label: 'ИНН', value: REQUISITES.inn },
-  { label: 'ОГРНИП', value: REQUISITES.ogrnip },
+  { label: 'КПП', value: REQUISITES.kpp },
+  { label: 'ОГРН', value: REQUISITES.ogrn },
+  { label: 'Адрес', value: REQUISITES.address },
 ].filter((row) => !isPlaceholder(row.value))
 
 // Пока цифр практики нет, во вводном абзаце их не упоминаем вовсе —
@@ -53,13 +54,13 @@ export function AboutExpert() {
           <p className="mt-5 text-lg text-neutral-600">
             {FACTS_READY ? (
               <>
-                Меня зовут {CONTACTS.name}. Занимаюсь вопросами СРО {FACTS.yearsOfPractice} лет,
-                за это время сопровождал {FACTS.companies} компаний из {FACTS.regions} регионов.
+                Занимаюсь вопросами СРО {FACTS.yearsOfPractice} лет, за это время сопровождал{' '}
+                {FACTS.companies} компаний из {FACTS.regions} регионов.
               </>
             ) : (
               <>
-                Меня зовут {CONTACTS.name}. Помогаю строительным, проектным и изыскательским
-                компаниям вступать в СРО и решать связанные с этим задачи.
+                Помогаю строительным, проектным и изыскательским компаниям вступать в СРО
+                и решать связанные с этим задачи.
               </>
             )}
           </p>
@@ -114,7 +115,10 @@ export function AboutExpert() {
                 <Globe className="h-4 w-4 shrink-0 text-accent-600" aria-hidden="true" />
                 Все регионы России, дистанционно
               </p>
-              <p className="mt-3 text-sm text-neutral-600">Работаю по договору.</p>
+              <p className="mt-3 flex items-center gap-2 text-sm text-neutral-700">
+                <FileCheck className="h-4 w-4 shrink-0 text-accent-600" aria-hidden="true" />
+                Работаю по договору
+              </p>
             </div>
           </Reveal>
         )}
