@@ -16,7 +16,10 @@ export function Footer() {
     // способы связи, поэтому якорь указывает сюда, а не в никуда.
     <footer id="contacts" className="border-t border-neutral-200 bg-neutral-50/55">
       <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.9fr)] lg:gap-16">
+        {/* Правой части отдано больше ширины, чем раньше (2.4 против 1.9):
+            ряду из трёх плашек мессенджеров нужно ~330px, иначе он ломается
+            на две строки и «WhatsApp» висит один. */}
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,2.4fr)] lg:gap-16">
           <div>
             {/* Тот же знак, что в шапке: подвал — вторая точка, где страница
                 называет себя, и называть себя дважды по-разному незачем. */}
@@ -47,14 +50,19 @@ export function Footer() {
             </p>
           </div>
 
-          <div className="grid gap-8 sm:grid-cols-3 sm:gap-10">
+          {/* Заголовки колонок — той же капителью с разрядкой, что подзаголовки
+              групп в «Услугах»: подвал перестаёт быть тремя случайными списками
+              и читается частью той же системы. */}
+          <div className="grid gap-9 sm:grid-cols-[minmax(0,0.7fr)_minmax(0,1.6fr)_minmax(0,1fr)] sm:gap-10">
             <div>
-              <p className="text-sm font-semibold text-neutral-900">Разделы</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-neutral-600">
+                Разделы
+              </p>
               {/* «Контакты» из списка выкинуты: якорь ведёт на сам подвал, и
                   внутри подвала это ссылка в никуда — щелчок ничего не
                   меняет. В шапке и в мобильном меню пункт остаётся: оттуда
                   он честно прокручивает страницу сюда. */}
-              <ul className="mt-3 space-y-2 text-sm text-neutral-600">
+              <ul className="mt-4 space-y-2.5 text-sm text-neutral-600">
                 {SECTIONS.filter((section) => section.href !== '#contacts').map((section) => (
                   <li key={section.href}>
                     <a href={section.href} className="transition hover:text-accent-700">
@@ -70,67 +78,77 @@ export function Footer() {
                 связаться (шапка, квиз, мобильная панель, она) и растаскивала
                 внимание с квиза, который и есть точка конверсии.
 
-                Порядок сверху вниз — от самого прямого канала к самому
-                отложенному: звонок, почта, мессенджеры. Колонка целиком
-                условная: заголовок над пустотой — та же ошибка, что была в
-                «Контактах», и лечится так же. */}
+                Три яруса сверху вниз — от самого прямого канала к самому
+                отложенному: звонок, почта, мессенджеры. Мессенджеры — рядом
+                плашек, а не списком: три одинаковых строки под почтой
+                выглядели продолжением списка, а это выбор из равных.
+                Подпись у каждой обязательна: значок без подписи опознаётся
+                по силуэту, а MAX знаком далеко не всем.
+
+                Всё внутри одного <ul>: у проверок это единый список каналов.
+                Колонка целиком условная: заголовок над пустотой — та же
+                ошибка, что была в «Контактах», и лечится так же. */}
             {(CONFIGURED.phone || CONFIGURED.email || MESSENGERS.length > 0) && (
-            <div>
-              <p className="text-sm font-semibold text-neutral-900">Связаться</p>
-              <ul className="mt-3 space-y-2.5 text-sm text-neutral-600">
-                {CONFIGURED.phone && (
-                  <li>
-                    <a
-                      href={LINKS.tel}
-                      className="inline-flex items-center gap-2 transition hover:text-accent-700"
-                    >
-                      <Phone className="h-4 w-4 shrink-0 text-accent-600" aria-hidden="true" />
-                      {/* Телефон крупнее и плотнее остальных строк: из всех
-                          каналов он самый быстрый, и глаз должен находить его
-                          первым, не читая колонку целиком. */}
-                      <span className="text-base font-semibold text-neutral-950">
-                        {CONTACTS.phone}
-                      </span>
-                    </a>
-                  </li>
-                )}
-                {CONFIGURED.email && (
-                  <li>
-                    <a
-                      href={LINKS.mail}
-                      className="inline-flex items-start gap-2 transition hover:text-accent-700"
-                    >
-                      <Mail
-                        className="mt-0.5 h-4 w-4 shrink-0 text-accent-600"
-                        aria-hidden="true"
-                      />
-                      <span className="min-w-0 break-all">{CONTACTS.email}</span>
-                    </a>
-                  </li>
-                )}
-                {/* Мессенджеры — такими же строками, а не рядом голых иконок:
-                    иконка без подписи опознаётся только по силуэту, а MAX ещё
-                    мало кому знаком. Подпись снимает вопрос. */}
-                {MESSENGERS.map((channel) => (
-                  <li key={channel.label}>
-                    <a
-                      href={channel.href}
-                      data-channel={channel.label}
-                      className="inline-flex items-center gap-2 transition hover:text-accent-700"
-                    >
-                      <channel.icon className="h-4 w-4 shrink-0 text-accent-600" />
-                      {channel.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-neutral-600">
+                  Связаться
+                </p>
+                <ul className="mt-4 space-y-3 text-sm text-neutral-600">
+                  {CONFIGURED.phone && (
+                    <li>
+                      <a
+                        href={LINKS.tel}
+                        className="inline-flex items-center gap-2.5 transition hover:text-accent-700"
+                      >
+                        <Phone className="h-4 w-4 shrink-0 text-accent-600" aria-hidden="true" />
+                        {/* Телефон крупнее и плотнее остальных строк: из всех
+                            каналов он самый быстрый, и глаз должен находить его
+                            первым, не читая колонку целиком. */}
+                        <span className="text-lg font-semibold tracking-tight text-neutral-950">
+                          {CONTACTS.phone}
+                        </span>
+                      </a>
+                    </li>
+                  )}
+                  {CONFIGURED.email && (
+                    <li>
+                      <a
+                        href={LINKS.mail}
+                        className="inline-flex items-start gap-2.5 transition hover:text-accent-700"
+                      >
+                        <Mail
+                          className="mt-0.5 h-4 w-4 shrink-0 text-accent-600"
+                          aria-hidden="true"
+                        />
+                        <span className="min-w-0 break-all">{CONTACTS.email}</span>
+                      </a>
+                    </li>
+                  )}
+                  {MESSENGERS.length > 0 && (
+                    <li className="flex flex-wrap gap-1.5 pt-1">
+                      {MESSENGERS.map((channel) => (
+                        <a
+                          key={channel.label}
+                          href={channel.href}
+                          data-channel={channel.label}
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-2.5 py-2 text-sm font-medium text-neutral-700 transition hover:border-accent-400 hover:text-accent-700"
+                        >
+                          <channel.icon className="h-4 w-4 shrink-0 text-accent-600" />
+                          {channel.label}
+                        </a>
+                      ))}
+                    </li>
+                  )}
+                </ul>
+              </div>
             )}
 
             <div>
-              <p className="text-sm font-semibold text-neutral-900">Документы</p>
-              <ul className="mt-3 space-y-2 text-sm text-neutral-600">
-                {/* Открывают шаблонные тексты; замените их финальными редакциями */}
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-neutral-600">
+                Документы
+              </p>
+              <ul className="mt-4 space-y-2.5 text-sm text-neutral-600">
+                {/* Открывают типовые тексты под 152-ФЗ; оператор назван реквизитами */}
                 <li>
                   <button
                     type="button"
@@ -156,9 +174,11 @@ export function Footer() {
 
         <div className="mt-10 flex flex-col gap-2 border-t border-neutral-200 pt-6 text-sm text-neutral-600 sm:flex-row sm:items-center sm:justify-between">
           <p>
-            {/* В копирайте — юридическое имя, а не бренд: это единственное место
-                на странице, где компания названа так, как в реестре. */}
-            © {new Date().getFullYear()} {REQUISITES.legalName}
+            {/* В копирайте — юридическое имя и ИНН, а не бренд: это то место
+                на странице, где компания названа так, как в реестре. По ИНН
+                её можно проверить в открытом реестре — для подвала это
+                дешёвый и честный знак «мы настоящие». */}
+            © {new Date().getFullYear()} {REQUISITES.legalName} · ИНН {REQUISITES.inn}
           </p>
           {/* Цен на странице нет, сроков тоже — оговорка про оферту это
               фиксирует, а не прикрывает. */}
