@@ -31,7 +31,7 @@ export function Header() {
           <ScalesMark className="h-[22px] w-auto shrink-0 text-accent-600" />
           <span className="flex flex-col leading-tight">
             <span className="text-[15px] font-bold tracking-tight text-neutral-950">
-              {CONTACTS.fullName}
+              {CONTACTS.brand}
             </span>
             {/* neutral-600, а не 500: тёплая нейтральная шкала темнее прежней серой
                 по цвету, но светлее по контрасту, и на 500 подпись давала
