@@ -3691,6 +3691,26 @@ html[data-theme="dark"] .chip:hover {
   color: var(--sg-muted);
 }
 
+/* Пройденный шаг — ссылка назад. Внутри .step она сама становится
+   flex-строкой, иначе цифра и подпись разъезжаются по двум строкам
+   и шаг перестаёт выглядеть шагом. */
+.step a {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: inherit;
+}
+
+.step a:hover {
+  color: var(--sg-blue);
+  text-decoration: none;
+}
+
+.step a:hover .step__num {
+  background: var(--sg-blue-tint);
+  color: var(--sg-blue);
+}
+
 .step__num {
   width: 26px;
   height: 26px;
@@ -4866,6 +4886,227 @@ html[data-theme='dark'] {
     color: #444;
   }
 }
+
+/* ==========================================================================
+   Оформление заказа
+   ========================================================================== */
+
+/* Слева поля, справа итог — как в корзине, чтобы человек не терял
+   ориентацию при переходе с предыдущего шага. */
+.checkout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+.checkout-block + .checkout-block {
+  margin-top: var(--sp-6);
+  padding-top: var(--sp-5);
+  border-top: 1px solid var(--sg-line);
+}
+
+.checkout__side {
+  /* .cart-total уже липкий; здесь только ширина колонки */
+  min-width: 0;
+}
+
+/* Без этого колонка не может стать уже своего содержимого, а самое
+   широкое в ней — выпадающий список магазинов: его минимальная ширина
+   равна самому длинному варианту («ул. Чубарова, 16, корп. 40 —
+   Петропавловск-Камчатский»). На экране 360 px страница уезжала вбок
+   на 116 пикселей. */
+.checkout__main {
+  min-width: 0;
+}
+
+.checkout .select {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Выбор способа получения: вся карточка — цель нажатия, а не кружок
+   в 20 пикселей. На телефоне это разница между «попал» и «не попал». */
+.pickup {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.pickup__option {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: flex-start;
+  padding: var(--sp-4);
+  border: 1.5px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  background: var(--sg-white);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.pickup__option:hover {
+  border-color: var(--sg-blue);
+}
+
+.pickup__option:has(input:checked) {
+  border-color: var(--sg-blue);
+  background: var(--sg-blue-tint);
+}
+
+.pickup__option input {
+  width: auto;
+  height: auto;
+  margin-top: 3px;
+  flex: none;
+  accent-color: var(--sg-blue);
+}
+
+.pickup__body {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.pickup__body strong {
+  font-weight: 700;
+}
+
+.cart-total__title {
+  margin: 0 0 var(--sp-4);
+  font-size: 20px;
+  font-weight: 800;
+}
+
+/* Галочка на зелёном экране «заказ принят» — тот же кегль, что у 404,
+   но цвет не тревожный. */
+.error-page__code--ok {
+  color: #1a7f4b;
+}
+
+/* ==========================================================================
+   Избранное, сравнение, вход, документы
+   ========================================================================== */
+
+.empty-state {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: var(--sp-8) var(--sp-5);
+  text-align: center;
+}
+
+.empty-state__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  margin-bottom: var(--sp-4);
+  border-radius: 50%;
+  background: var(--sg-blue-tint);
+  color: var(--sg-blue);
+}
+
+.empty-state .row-actions {
+  justify-content: center;
+}
+
+.empty-state .note-measure {
+  margin: 0 auto;
+}
+
+/* Таблица сравнения шире экрана телефона всегда: прокручивается
+   внутри своей рамки, а не распирает страницу вбок. */
+.table-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-lg);
+}
+
+.compare-table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.compare-table th,
+.compare-table td {
+  padding: var(--sp-3) var(--sp-4);
+  text-align: left;
+  border-bottom: 1px solid var(--sg-line);
+  vertical-align: top;
+}
+
+.compare-table thead th {
+  background: var(--sg-bg-soft);
+  font-weight: 700;
+}
+
+.compare-table tbody th {
+  width: 200px;
+  font-weight: 600;
+  color: var(--sg-muted);
+}
+
+.compare-table tr:last-child th,
+.compare-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.auth {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+.auth__side {
+  padding: var(--sp-5);
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  background: var(--sg-bg-soft);
+}
+
+/* Список с галочками: маркер рисуется псевдоэлементом, картинки нет */
+.checklist {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.checklist li {
+  position: relative;
+  padding-left: var(--sp-6);
+  line-height: 1.5;
+}
+
+.checklist li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.45em;
+  width: 12px;
+  height: 7px;
+  border-left: 2px solid var(--sg-blue);
+  border-bottom: 2px solid var(--sg-blue);
+  transform: rotate(-45deg);
+}
+
+.prose {
+  max-width: 76ch;
+}
+
+.prose p {
+  margin-bottom: var(--sp-4);
+}
+
+@media (max-width: 900px) {
+  .checkout,
+  .auth {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .checkout__side {
+    position: static;
+  }
+}
 /* Панель переключения страниц — только для этого файла-просмотра */
 .preview-bar{position:sticky;top:0;z-index:60;display:flex;flex-wrap:wrap;align-items:center;
   gap:8px;padding:10px 16px;background:var(--sg-ink);color:#fff;font-size:14px}
@@ -4885,7 +5126,7 @@ html[data-theme='dark'] {
 
 <div class="preview-bar">
   <span class="preview-bar__label">Макет сайта:</span>
-  <a class="preview-tab" href="#p-index" data-tab-link="p-index">Главная</a><a class="preview-tab" href="#p-catalog" data-tab-link="p-catalog">Каталог</a><a class="preview-tab" href="#p-product" data-tab-link="p-product">Карточка товара</a><a class="preview-tab" href="#p-cart" data-tab-link="p-cart">Корзина</a><a class="preview-tab" href="#p-calculator" data-tab-link="p-calculator">Калькулятор</a><a class="preview-tab" href="#p-delivery" data-tab-link="p-delivery">Доставка</a><a class="preview-tab" href="#p-contacts" data-tab-link="p-contacts">Контакты</a><a class="preview-tab" href="#p-404" data-tab-link="p-404">404</a>
+  <a class="preview-tab" href="#p-index" data-tab-link="p-index">Главная</a><a class="preview-tab" href="#p-catalog" data-tab-link="p-catalog">Каталог</a><a class="preview-tab" href="#p-product" data-tab-link="p-product">Карточка товара</a><a class="preview-tab" href="#p-cart" data-tab-link="p-cart">Корзина</a><a class="preview-tab" href="#p-calculator" data-tab-link="p-calculator">Калькулятор</a><a class="preview-tab" href="#p-delivery" data-tab-link="p-delivery">Доставка</a><a class="preview-tab" href="#p-contacts" data-tab-link="p-contacts">Контакты</a><a class="preview-tab" href="#p-checkout" data-tab-link="p-checkout">Оформление</a><a class="preview-tab" href="#p-order-done" data-tab-link="p-order-done">Заказ принят</a><a class="preview-tab" href="#p-favourites" data-tab-link="p-favourites">Избранное</a><a class="preview-tab" href="#p-compare" data-tab-link="p-compare">Сравнение</a><a class="preview-tab" href="#p-login" data-tab-link="p-login">Вход</a><a class="preview-tab" href="#p-policy" data-tab-link="p-policy">Политика</a><a class="preview-tab" href="#p-404" data-tab-link="p-404">404</a>
   <span class="preview-hint">Один файл — папка assets не нужна</span>
 </div>
 
@@ -4954,7 +5195,7 @@ html[data-theme='dark'] {
       </form>
 
       <div class="header-actions">
-        <a class="header-action" href="#" data-demo="избранное"><span class="header-action__icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20s-7-4.4-7-9.4A3.9 3.9 0 0 1 12 7.2 3.9 3.9 0 0 1 19 10.6c0 5-7 9.4-7 9.4Z"/></svg><span class="header-action__count" data-count="fav" data-hide-empty hidden>0</span></span><span class="header-action__label">Избранное</span></a><a class="header-action" href="#" data-demo="сравнение товаров"><span class="header-action__icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 20V11M12 20V4M18 20v-6"/></svg><span class="header-action__count" data-count="compare" data-hide-empty hidden>0</span></span><span class="header-action__label">Сравнение</span></a><a class="header-action" href="#p-cart"><span class="header-action__icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9.5" cy="19.5" r="1.6"/><circle cx="17" cy="19.5" r="1.6"/><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L20 8H6"/></svg><span class="header-action__count" data-count="cart">0</span></span><span class="header-action__label">Корзина</span></a><a class="header-action" href="#" data-demo="вход в личный кабинет"><span class="header-action__icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg></span><span class="header-action__label">Войти</span></a>
+        <a class="header-action" href="#p-favourites"><span class="header-action__icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20s-7-4.4-7-9.4A3.9 3.9 0 0 1 12 7.2 3.9 3.9 0 0 1 19 10.6c0 5-7 9.4-7 9.4Z"/></svg><span class="header-action__count" data-count="fav" data-hide-empty hidden>0</span></span><span class="header-action__label">Избранное</span></a><a class="header-action" href="#p-compare"><span class="header-action__icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 20V11M12 20V4M18 20v-6"/></svg><span class="header-action__count" data-count="compare" data-hide-empty hidden>0</span></span><span class="header-action__label">Сравнение</span></a><a class="header-action" href="#p-cart"><span class="header-action__icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9.5" cy="19.5" r="1.6"/><circle cx="17" cy="19.5" r="1.6"/><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L20 8H6"/></svg><span class="header-action__count" data-count="cart">0</span></span><span class="header-action__label">Корзина</span></a><a class="header-action" href="#p-login"><span class="header-action__icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg></span><span class="header-action__label">Войти</span></a>
         <button class="header-burger" type="button" data-burger aria-expanded="false" aria-controls="mobile-nav" aria-label="Меню сайта"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
       </div>
     </div>
@@ -6269,7 +6510,7 @@ html[data-theme='dark'] {
           <button class="btn btn--outline" type="button" data-demo="проверка промокода">ОК</button>
         </div>
 
-        <button class="btn btn--action btn--block btn--lg" type="button" data-modal-open="modal-callback">Оформить заказ</button>
+        <a class="btn btn--action btn--block btn--lg" href="#p-checkout">Оформить заказ</a>
         <button class="btn btn--outline btn--block gap-ms" type="button" data-print-cart><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 9V4h10v5"/><rect x="4" y="9" width="16" height="7" rx="2"/><path d="M7 14h10v6H7z"/></svg>Распечатать список</button>
         <p class="calc__hint">В макете оформление не работает: открывается окно заявки, чтобы показать сценарий. Список печатается по-настоящему — с ним можно ехать в магазин.</p>
       </aside>
@@ -6622,6 +6863,284 @@ html[data-theme='dark'] {
     </section>
 
   </div>
+</section><section class="preview-page" id="p-checkout" data-page>
+  <div class="container">
+
+    <nav class="breadcrumbs" aria-label="Хлебные крошки">
+      <ol><li><a href="#p-index">Главная</a></li><li><a href="#p-cart">Корзина</a></li><li aria-current="page">Оформление</li></ol>
+    </nav>
+
+    <div class="page-head">
+      <h1>Оформление заказа</h1>
+      <p>Заполните контакты и выберите, как забрать заказ. Менеджер перезвонит и подтвердит наличие.</p>
+    </div>
+
+    <div class="steps">
+      <span class="step"><a href="#p-cart"><span class="step__num">1</span> Корзина</a></span>
+      <span class="step is-current"><span class="step__num">2</span> Контакты</span>
+      <span class="step is-current"><span class="step__num">3</span> Получение</span>
+      <span class="step"><span class="step__num">4</span> Готово</span>
+    </div>
+
+    <div class="data-notice">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 11.5v5M12 8h.01"/></svg>
+      <p><strong>Так выглядит оформление.</strong> Заказ из макета никуда не уходит — принимать его пока некому.</p>
+    </div>
+
+    <form class="form form--bare checkout" data-validate novalidate>
+      <div class="checkout__main">
+
+        <section class="checkout-block">
+          <h2 class="subhead">Контакты</h2>
+          <div class="form__row">
+            <label for="co-name">Как вас зовут</label>
+            <input id="co-name" name="name" type="text" placeholder="Имя" required>
+            <p class="form__error">Впишите имя</p>
+          </div>
+          <div class="form__row">
+            <label for="co-phone">Телефон</label>
+            <input id="co-phone" name="phone" type="tel" placeholder="+7 (___) ___-__-__" data-phone-mask required>
+            <p class="form__error">Впишите номер телефона</p>
+          </div>
+          <div class="form__row">
+            <label for="co-comment">Комментарий к заказу</label>
+            <textarea id="co-comment" name="comment" rows="3" placeholder="Например: нужен длинномер, привезти до обеда"></textarea>
+          </div>
+        </section>
+
+        <section class="checkout-block">
+          <h2 class="subhead">Как забрать</h2>
+          <div class="pickup">
+            <label class="pickup__option">
+              <input type="radio" name="pickup" value="self" checked>
+              <span class="pickup__body">
+                <strong>Самовывоз из магазина</strong>
+                <span class="note">Три точки: Чубарова 16 к.40, 50 лет Октября 17А, Елизово, Магистральная 2/2</span>
+              </span>
+            </label>
+            <label class="pickup__option">
+              <input type="radio" name="pickup" value="delivery">
+              <span class="pickup__body">
+                <strong>Доставка</strong>
+                <span class="ph ph--inline">зоны, сроки и стоимость — от заказчика</span>
+              </span>
+            </label>
+          </div>
+
+          <div class="form__row gap-md">
+            <label for="co-shop">Магазин для самовывоза</label>
+            <select id="co-shop" class="select" name="shop">
+              <option>ул. Чубарова, 16, корп. 40 — Петропавловск-Камчатский</option>
+              <option>просп. 50 лет Октября, 17А — Петропавловск-Камчатский</option>
+              <option>Магистральная ул., 2/2 — Елизово</option>
+            </select>
+          </div>
+        </section>
+
+        <section class="checkout-block">
+          <h2 class="subhead">Оплата</h2>
+          <p class="ph">Способы оплаты, работа с юрлицами и порядок расчёта — нужны от заказчика.</p>
+        </section>
+
+      </div>
+
+      <aside class="cart-total checkout__side">
+        <h2 class="cart-total__title">Ваш заказ</h2>
+        <div class="cart-total__row"><span>Товары</span> <span class="ph ph--inline">сумма</span></div>
+        <div class="cart-total__row"><span>Доставка</span> <span class="ph ph--inline">нужны условия</span></div>
+        <div class="cart-total__row cart-total__row--sum"><span>К оплате</span> <span class="ph ph--inline">сумма</span></div>
+
+        <label class="consent gap-md">
+          <input type="checkbox" required>
+          <span>Согласен на обработку персональных данных и с <a href="#p-policy">политикой конфиденциальности</a></span>
+          <p class="form__error">Без согласия отправить нельзя</p>
+        </label>
+
+        <button class="btn btn--action btn--block btn--lg gap-ms" type="submit">Подтвердить заказ</button>
+        <p class="calc__hint">Проверка полей работает по-настоящему: попробуйте отправить пустую форму.</p>
+      </aside>
+    </form>
+
+  </div>
+</section><section class="preview-page" id="p-order-done" data-page>
+  <div class="container">
+
+    <nav class="breadcrumbs" aria-label="Хлебные крошки">
+      <ol><li><a href="#p-index">Главная</a></li><li><a href="#p-cart">Корзина</a></li><li aria-current="page">Заказ принят</li></ol>
+    </nav>
+
+    <div class="steps">
+      <span class="step"><a href="#p-cart"><span class="step__num">1</span> Корзина</a></span>
+      <span class="step"><span class="step__num">2</span> Контакты</span>
+      <span class="step"><span class="step__num">3</span> Получение</span>
+      <span class="step is-current"><span class="step__num">4</span> Готово</span>
+    </div>
+
+    <div class="error-page">
+      <p class="error-page__code error-page__code--ok">✓</p>
+      <h1>Заказ принят</h1>
+      <p class="error-page__text">Номер заказа <span class="ph ph--inline">из учётной системы</span>. Менеджер перезвонит, подтвердит наличие и назовёт время.</p>
+
+      <div class="error-page__actions row-actions">
+        <a class="btn btn--action btn--lg" href="#p-catalog">Продолжить покупки</a>
+        <a class="btn btn--outline btn--lg" href="tel:+79638300999">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg>
+          8-963-830-09-99
+        </a>
+      </div>
+
+      <div class="data-notice gap-xl">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 11.5v5M12 8h.01"/></svg>
+        <p><strong>Так выглядит последний шаг.</strong> Номер заказа и письмо на почту появятся, когда сайт подключат к учётной системе.</p>
+      </div>
+    </div>
+
+  </div>
+</section><section class="preview-page" id="p-favourites" data-page>
+  <div class="container">
+
+    <nav class="breadcrumbs" aria-label="Хлебные крошки">
+      <ol><li><a href="#p-index">Главная</a></li><li aria-current="page">Избранное</li></ol>
+    </nav>
+
+    <div class="page-head">
+      <h1>Избранное</h1>
+      <p>Отложенные товары. Список хранится в этом браузере и не пропадёт при переходе между страницами.</p>
+    </div>
+
+    <div class="empty-state">
+      <span class="empty-state__icon">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20s-7-4.35-7-9.5A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 7 3.5c0 5.15-7 9.5-7 9.5Z"/></svg>
+      </span>
+      <h2 class="block-title">Пока пусто</h2>
+      <p class="note-measure">Нажмите на сердечко в карточке товара — он появится здесь. В макете счётчик избранного растёт, но сами карточки сюда не переносятся: переносить пока нечего, прайса нет.</p>
+      <div class="row-actions">
+        <a class="btn btn--action" href="#p-catalog">Перейти в каталог</a>
+      </div>
+    </div>
+
+  </div>
+</section><section class="preview-page" id="p-compare" data-page>
+  <div class="container">
+
+    <nav class="breadcrumbs" aria-label="Хлебные крошки">
+      <ol><li><a href="#p-index">Главная</a></li><li aria-current="page">Сравнение</li></ol>
+    </nav>
+
+    <div class="page-head">
+      <h1>Сравнение</h1>
+      <p>Характеристики выбранных товаров рядом, столбец к столбцу.</p>
+    </div>
+
+    <div class="data-notice">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 11.5v5M12 8h.01"/></svg>
+      <p><strong>Так выглядит сравнение.</strong> Строки таблицы — характеристики из прайса: их состав задаёт заказчик.</p>
+    </div>
+
+    <div class="table-scroll">
+      <table class="compare-table">
+        <caption class="visually-hidden">Сравнение выбранных товаров</caption>
+        <thead>
+          <tr>
+            <th scope="col">Характеристика</th>
+            <th scope="col"><span class="ph ph--inline">товар 1</span></th>
+            <th scope="col"><span class="ph ph--inline">товар 2</span></th>
+            <th scope="col"><span class="ph ph--inline">товар 3</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">Цена</th><td><span class="ph ph--inline">цена, ₽</span></td><td><span class="ph ph--inline">цена, ₽</span></td><td><span class="ph ph--inline">цена, ₽</span></td></tr>
+          <tr><th scope="row">Артикул</th><td><span class="ph ph--inline">из прайса</span></td><td><span class="ph ph--inline">из прайса</span></td><td><span class="ph ph--inline">из прайса</span></td></tr>
+          <tr><th scope="row">Бренд</th><td><span class="ph ph--inline">из прайса</span></td><td><span class="ph ph--inline">из прайса</span></td><td><span class="ph ph--inline">из прайса</span></td></tr>
+          <tr><th scope="row">Фасовка</th><td><span class="ph ph--inline">из прайса</span></td><td><span class="ph ph--inline">из прайса</span></td><td><span class="ph ph--inline">из прайса</span></td></tr>
+          <tr><th scope="row">Остаток</th><td><span class="ph ph--inline">из учётной системы</span></td><td><span class="ph ph--inline">из учётной системы</span></td><td><span class="ph ph--inline">из учётной системы</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="row-actions">
+      <a class="btn btn--outline" href="#p-catalog">Добавить ещё товар</a>
+    </div>
+
+  </div>
+</section><section class="preview-page" id="p-login" data-page>
+  <div class="container">
+
+    <nav class="breadcrumbs" aria-label="Хлебные крошки">
+      <ol><li><a href="#p-index">Главная</a></li><li aria-current="page">Вход</li></ol>
+    </nav>
+
+    <div class="page-head">
+      <h1>Вход</h1>
+      <p>Личный кабинет нужен, чтобы видеть свои заказы и повторять их одним нажатием.</p>
+    </div>
+
+    <div class="auth">
+      <form class="form auth__form" data-validate novalidate>
+        <h2 class="subhead">Войти по телефону</h2>
+        <div class="form__row">
+          <label for="li-phone">Телефон</label>
+          <input id="li-phone" name="phone" type="tel" placeholder="+7 (___) ___-__-__" data-phone-mask required>
+          <p class="form__error">Впишите номер телефона</p>
+        </div>
+        <button class="btn btn--action btn--block btn--lg" type="submit">Получить код</button>
+        <p class="calc__hint">В макете код не приходит: отправлять его пока нечем.</p>
+      </form>
+
+      <aside class="auth__side">
+        <h2 class="subhead">Зачем кабинет</h2>
+        <ul class="checklist">
+          <li>История заказов и повтор в одно нажатие</li>
+          <li>Сохранённые адреса доставки</li>
+          <li><span class="ph ph--inline">условия для юрлиц — от заказчика</span></li>
+          <li><span class="ph ph--inline">накопительная скидка — от заказчика</span></li>
+        </ul>
+        <p class="note gap-md">Нет аккаунта? Он заведётся сам при первом заказе — отдельная регистрация не нужна.</p>
+      </aside>
+    </div>
+
+  </div>
+</section><section class="preview-page" id="p-policy" data-page>
+  <div class="container">
+
+    <nav class="breadcrumbs" aria-label="Хлебные крошки">
+      <ol><li><a href="#p-index">Главная</a></li><li aria-current="page">Политика</li></ol>
+    </nav>
+
+    <div class="page-head">
+      <h1>Политика обработки персональных данных</h1>
+      <p>Страница обязательна: на сайте есть формы, значит он собирает персональные данные.</p>
+    </div>
+
+    <div class="data-notice">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 11.5v5M12 8h.01"/></svg>
+      <p><strong>Текст нужен от заказчика.</strong> Юридический документ мы не сочиняем — его готовит юрист под конкретное юрлицо и состав собираемых данных.</p>
+    </div>
+
+    <div class="prose">
+      <h2 class="subhead">Что должно быть в документе</h2>
+      <ul class="checklist">
+        <li>Кто оператор: полное название, ИНН, ОГРН, адрес</li>
+        <li>Какие данные собираются: имя, телефон, почта из форм заявки и заказа</li>
+        <li>Зачем: обработка заказа, обратный звонок, доставка</li>
+        <li>Сколько хранятся и как удаляются</li>
+        <li>Кому передаются: служба доставки, платёжный сервис</li>
+        <li>Как отозвать согласие и куда написать</li>
+      </ul>
+
+      <h2 class="subhead gap-xl">Куда этот текст встанет</h2>
+      <p class="ph">Здесь — полный текст политики от заказчика. Сюда же ведут ссылки из форм, плашки cookie и подвала.</p>
+
+      <h2 class="subhead gap-xl">Что ещё нужно, кроме этой страницы</h2>
+      <ul class="checklist">
+        <li>Уведомление в Роскомнадзор о том, что вы оператор персональных данных</li>
+        <li>Галочка согласия в каждой форме — в макете она уже стоит</li>
+        <li>Хостинг на территории России</li>
+      </ul>
+      <p class="note">Сроки и суммы штрафов уточняйте у юриста: правила по персональным данным меняются часто.</p>
+    </div>
+
+  </div>
 </section><section class="preview-page" id="p-404" data-page>
   <div class="container">
     <div class="error-page">
@@ -6682,8 +7201,8 @@ html[data-theme='dark'] {
         <div class="footer-group">
           <p class="footer-group__label">Юридическая информация</p>
           <ul>
-            <li><a href="#" data-demo="политика конфиденциальности">Политика конфиденциальности</a></li>
-            <li><a href="#" data-demo="согласие на обработку данных">Согласие на обработку данных</a></li>
+            <li><a href="#p-policy">Политика конфиденциальности</a></li>
+            <li><a href="#p-policy">Согласие на обработку данных</a></li>
             <li><a href="#" data-demo="пользовательское соглашение">Пользовательское соглашение</a></li>
           </ul>
           <p class="footer-group__hint ph ph--inline">тексты документов — от заказчика</p>
@@ -6719,7 +7238,7 @@ html[data-theme='dark'] {
 
 <div class="cookie" data-cookie hidden>
   <p>Сайт использует cookie, чтобы запоминать город, тему и содержимое корзины.
-  Подробности — в <a href="#" data-demo="политика конфиденциальности">политике</a>.</p>
+  Подробности — в <a href="#p-policy">политике</a>.</p>
   <button class="btn btn--primary" type="button" data-cookie-ok>Хорошо</button>
 </div>
 
@@ -6746,7 +7265,7 @@ html[data-theme='dark'] {
       </div>
       <label class="consent">
         <input type="checkbox" required>
-        <span>Согласен на обработку персональных данных и с <a href="#" data-demo="политика конфиденциальности">политикой конфиденциальности</a>.
+        <span>Согласен на обработку персональных данных и с <a href="#p-policy">политикой конфиденциальности</a>.
         <span class="ph ph--inline">текст политики — от заказчика</span></span>
         <p class="form__error">Без согласия отправить нельзя</p>
       </label>

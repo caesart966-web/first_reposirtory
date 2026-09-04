@@ -19,7 +19,8 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
-const PAGES = ['index', 'catalog', 'product', 'cart', 'calculator', 'delivery', 'contacts', '404'];
+const PAGES = ['index', 'catalog', 'product', 'cart', 'calculator', 'delivery', 'contacts',
+  'checkout', 'order-done', 'favourites', 'compare', 'login', 'policy', '404'];
 const WIDTHS = [360, 390, 768, 1024, 1280, 1440, 1920];
 const THEMES = ['light', 'dark'];
 
