@@ -66,6 +66,12 @@
     Arial, "Noto Sans", sans-serif;
   --container: 1280px;
   --header-h: 92px;
+
+  /* Тема сайта не зависит от темы системы: человек мог включить светлую
+     тему сайта при тёмной системе. Без этой строки браузер в такой паре
+     рисует свои контролы и полосы прокрутки тёмными посреди светлой
+     страницы. В тёмной теме сайта стоит парная строка color-scheme: dark. */
+  color-scheme: light;
 }
 
 @media (min-width: 1600px) {
@@ -852,14 +858,32 @@ ul {
   background: var(--sg-bg-soft);
 }
 
+/* Значок плитки: фирменная подложка вместо белой. На светло-серой
+   карточке белый квадрат почти не читался, и значок висел в пустоте. */
 .tile__icon {
   width: 44px;
   height: 44px;
   display: grid;
   place-items: center;
   border-radius: var(--r-lg);
-  background: var(--sg-white);
+  background: var(--sg-blue-tint);
+  border: 1px solid var(--sg-line);
   color: var(--sg-blue);
+  transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+
+.tile {
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.tile:hover {
+  border-color: var(--sg-blue);
+  box-shadow: var(--sh-sm);
+}
+
+.tile:hover .tile__icon {
+  background: var(--sg-white);
+  border-color: var(--sg-blue);
 }
 
 .tile__title {
@@ -1183,12 +1207,26 @@ ul {
   border: 1px solid var(--sg-line);
   border-radius: var(--r-lg);
   background: var(--sg-white);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
 }
 
+/* Карточка чуть приподнимается под курсором. Полтора десятка карточек
+   в сетке отличаются друг от друга только тенью, и подъём — самый
+   дешёвый способ показать, какая из них сейчас под рукой. */
 .product-card:hover {
   border-color: var(--sg-blue);
   box-shadow: var(--sh-md);
+  transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .product-card {
+    transition: none;
+  }
+
+  .product-card:hover {
+    transform: none;
+  }
 }
 
 .product-card__media {
@@ -4110,5 +4148,114 @@ html[data-theme="dark"] .step.is-current .step__num {
 
   .category-card {
     padding: var(--sp-3);
+  }
+}
+
+/* ==========================================================================
+   Переход между страницами
+   ========================================================================== */
+
+/* Кросс-документные переходы: при клике по ссылке браузер плавно
+   перерисовывает страницу вместо белой вспышки. Работает в Chromium,
+   остальные браузеры правило игнорируют и переходят как раньше —
+   ничего не ломается и запасной вёрстки не нужно.
+   На file:// не действует: нужен настоящий сервер. */
+@view-transition {
+  navigation: auto;
+}
+
+/* Шапка и подвал одинаковы на всех страницах, поэтому не участвуют
+   в анимации, а остаются на месте — переход выглядит как смена
+   содержимого, а не как подмена всей страницы. */
+.site-header {
+  view-transition-name: sg-header;
+}
+
+.site-footer {
+  view-transition-name: sg-footer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/* ==========================================================================
+   Отрисовка длинных страниц
+   ========================================================================== */
+
+/* Главная — почти восемь тысяч пикселей на телефоне. Браузеру незачем
+   считать раскладку блоков, до которых человек ещё не долистал.
+   contain-intrinsic-size: auto — браузер запоминает настоящую высоту
+   после первой отрисовки, поэтому полоса прокрутки не прыгает.
+   Первый экран (.mainscreen) сюда не попадает намеренно. */
+.section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 600px;
+}
+
+/* ==========================================================================
+   Печать
+   ========================================================================== */
+
+/* Печатают со стройки обычно две вещи: адреса магазинов и условия
+   доставки. Всё, что на бумаге бесполезно, убираем, а адреса ссылок
+   дописываем текстом — по экранной ссылке с листа не перейдёшь. */
+@media print {
+  .header-util,
+  .header-quick,
+  .catalog-menu,
+  .mobile-nav,
+  .mobile-bar,
+  .search-form,
+  .header-actions,
+  .to-top,
+  .cookie,
+  .breadcrumbs,
+  .filters,
+  .selection__nav,
+  .demo-note,
+  dialog {
+    display: none !important;
+  }
+
+  html,
+  body {
+    background: #fff;
+    color: #000;
+    padding-bottom: 0;
+  }
+
+  .site-header {
+    position: static;
+    border-bottom: 1px solid #999;
+  }
+
+  .container {
+    max-width: none;
+    padding: 0;
+  }
+
+  .section {
+    /* Скрытое содержимое иначе не попадёт на бумагу */
+    content-visibility: visible;
+    break-inside: avoid;
+  }
+
+  a[href^="http"]::after,
+  a[href^="tel:"]::after {
+    content: ' (' attr(href) ')';
+    font-size: 11px;
+    color: #444;
+  }
+
+  .product-card,
+  .shop-card,
+  .tile {
+    break-inside: avoid;
+    box-shadow: none;
   }
 }

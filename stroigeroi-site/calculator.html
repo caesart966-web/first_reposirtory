@@ -21,8 +21,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="assets/logo.png" type="image/png">
 <link rel="apple-touch-icon" href="assets/logo.png">
-<link rel="preload" href="assets/style.css?v=d7df67b2" as="style">
-<link rel="stylesheet" href="assets/style.css?v=d7df67b2">
+<link rel="preload" href="assets/style.css?v=8c83712e" as="style">
+<link rel="stylesheet" href="assets/style.css?v=8c83712e">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Store", "name": "Строй-Герой", "slogan": "Наши материалы — ваша уверенность", "url": "https://stroigeroi.ru/", "telephone": "+7-963-830-09-99", "email": "stroigeroi41@mail.ru", "areaServed": "Камчатский край", "department": [{"@type": "Store", "name": "Строй-Герой — ул. Чубарова, 16, корп. 40", "telephone": "+7-963-830-09-99", "address": {"@type": "PostalAddress", "streetAddress": "ул. Чубарова, 16, корп. 40", "addressLocality": "Петропавловск-Камчатский", "addressRegion": "Камчатский край", "addressCountry": "RU"}}, {"@type": "Store", "name": "Строй-Герой — просп. 50 лет Октября, 17А", "telephone": "+7-963-830-09-99", "address": {"@type": "PostalAddress", "streetAddress": "просп. 50 лет Октября, 17А", "addressLocality": "Петропавловск-Камчатский", "addressRegion": "Камчатский край", "addressCountry": "RU"}}, {"@type": "Store", "name": "Строй-Герой — Магистральная ул., 2/2", "telephone": "+7-963-830-09-99", "address": {"@type": "PostalAddress", "streetAddress": "Магистральная ул., 2/2", "addressLocality": "Елизово", "addressRegion": "Камчатский край", "addressCountry": "RU"}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Главная", "item": "https://stroigeroi.ru/index.html"}, {"@type": "ListItem", "position": 2, "name": "Калькулятор материалов", "item": "https://stroigeroi.ru/calculator.html"}]}</script>
 <script>
@@ -374,5 +374,11 @@
 
 
 <script src="assets/app.js?v=1cfc34a8"></script>
+<script type="speculationrules">
+{
+  "prefetch": [{"source": "document", "where": {"selector_matches": "a[href$='.html']"}, "eagerness": "moderate"}],
+  "prerender": [{"source": "document", "where": {"selector_matches": "a[href$='.html']"}, "eagerness": "conservative"}]
+}
+</script>
 </body>
 </html>

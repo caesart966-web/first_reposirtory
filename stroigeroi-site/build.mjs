@@ -117,6 +117,9 @@ function section(html, tag) {
    существуют в одном экземпляре, вокруг переключаемых секций. */
 const header = section(indexHtml, 'header');
 const tail = indexHtml.slice(indexHtml.indexOf('</main>') + '</main>'.length)
+  /* Правила предзагрузки соседних страниц в превью не нужны: отдельных
+     файлов рядом с ним нет, и браузер ходил бы за ними впустую. */
+  .replace(/\s*<script type="speculationrules">[\s\S]*?<\/script>/g, '')
   .replace(/\s*<script src="assets\/app\.js[^"]*"><\/script>\s*<\/body>\s*<\/html>\s*$/, '');
 
 const previewCss = `
