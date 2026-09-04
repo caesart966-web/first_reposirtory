@@ -4582,6 +4582,35 @@ html[data-theme='dark'] {
     row-gap: var(--sp-1);
   }
 }
+
+/* ==========================================================================
+   Вес пустых мест по важности
+   ==========================================================================
+
+   Плейсхолдеров на главной больше сотни, и все они выглядели одинаково —
+   пунктирной коробкой. В карточке товара таких коробок четыре подряд:
+   артикул, фасовка, остаток, цена. Карточка на три четверти состояла
+   из разметки «данных нет», и товар в ней терялся.
+
+   Теперь вес разный. Цена, суммы и условия остаются коробкой: это то,
+   без чего страница не работает, и заказчик должен видеть их сразу.
+   Мелкие подписи — артикул, фасовка, остаток, число товаров — становятся
+   текстом с пунктирным подчёркиванием: «здесь будут данные» читается
+   так же ясно, а страница перестаёт быть расчерченной тетрадью.
+   Ничего не прячется, меняется только громкость. */
+.product-card__art .ph,
+.product-card__meta .ph,
+.category-card__count,
+.cat-list__link .ph,
+.catalog-toolbar__count,
+.header-quick .ph {
+  padding: 0 1px;
+  border: 0;
+  border-bottom: 1px dashed var(--ph-line);
+  border-radius: 0;
+  background: none;
+  color: var(--sg-muted);
+}
 /* Панель переключения страниц — только для этого файла-просмотра */
 .preview-bar{position:sticky;top:0;z-index:60;display:flex;flex-wrap:wrap;align-items:center;
   gap:8px;padding:10px 16px;background:var(--sg-ink);color:#fff;font-size:14px}
@@ -5370,7 +5399,7 @@ html[data-theme='dark'] {
 
     <div class="data-notice">
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 11.5v5M12 8h.01"/></svg>
-  <p><strong>Здесь встанут 18 позиций из прайса.</strong> Файл прайса к заданию не приложен, поэтому названия, цены, бренды и фасовки оставлены пустыми местами — выдуманные товары в макет не ставим. Пришлите прайс, и карточки заполнятся реальными данными.</p>
+  <p><strong>Здесь встанут 18 позиций из прайса.</strong> Названия, цены и фасовки — пустые места: выдуманных товаров в макете нет. Пришлите прайс, и карточки заполнятся.</p>
 </div>
 
     <div class="catalog-layout">
@@ -5719,7 +5748,7 @@ html[data-theme='dark'] {
 
     <div class="data-notice">
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 11.5v5M12 8h.01"/></svg>
-  <p><strong>Здесь встанут 18 позиций из прайса.</strong> Файл прайса к заданию не приложен, поэтому названия, цены, бренды и фасовки оставлены пустыми местами — выдуманные товары в макет не ставим. Пришлите прайс, и карточки заполнятся реальными данными.</p>
+  <p><strong>Так выглядит карточка товара.</strong> Название, цена, фасовка и фото придут из прайса — выдумывать их мы не стали.</p>
 </div>
 
     <div class="product-layout">
@@ -5907,7 +5936,7 @@ html[data-theme='dark'] {
 
     <div class="data-notice">
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 11.5v5M12 8h.01"/></svg>
-  <p><strong>Здесь встанут 18 позиций из прайса.</strong> Файл прайса к заданию не приложен, поэтому названия, цены, бренды и фасовки оставлены пустыми местами — выдуманные товары в макет не ставим. Пришлите прайс, и карточки заполнятся реальными данными.</p>
+  <p><strong>Так выглядит корзина.</strong> Названия, цены и суммы придут из прайса — считать пока нечего.</p>
 </div>
 
     <div class="cart-layout">
