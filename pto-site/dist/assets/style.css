@@ -110,7 +110,9 @@
 
   --ink:         #0d1c30;   /* основной текст */
   --ink-muted:   #55677e;   /* вторичный текст */
-  --ink-soft:    #7286a0;
+  /* Тускло-серый для мелких подписей. Раньше был #7286a0 — на белом это
+     3,7:1, ниже нормы читаемости для текста в 11px. Затемнён до 5,1:1. */
+  --ink-soft:    #5f7288;
   --ink-inverse: #ffffff;
   --ink-inverse-muted: #b9c7d9;
 
@@ -1444,8 +1446,12 @@ body.is-locked { overflow: hidden; }
   padding-right: 4.5rem;
   border-top: 1px solid var(--line);
 }
-/* Крупный «водяной» номер группы справа — как нумерация раздела в альбоме чертежей */
-.group__index {
+/* Крупный «водяной» номер группы — как нумерация раздела в альбоме чертежей.
+   Рисуется оформлением, а не текстом: он дублирует соседнюю подпись
+   «ГРУППА 01 / 04», читать его дважды незачем, а инструменты проверки
+   доступности справедливо ругались на контраст бледной цифры. */
+.group__head::after {
+  content: attr(data-index);
   position: absolute;
   right: 0;
   top: var(--s-3);
@@ -1459,13 +1465,15 @@ body.is-locked { overflow: hidden; }
   pointer-events: none;
   user-select: none;
 }
-.section--dark .group__index { color: #fff; opacity: 0.09; }
+.section--dark .group__head::after { color: #fff; opacity: 0.09; }
 .section--dark .group__head { border-top-color: rgba(255, 255, 255, 0.14); }
 .group__num {
   font-family: var(--font-mono);
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--accent);
+  /* Не --accent: синий кнопок на светло-сером фоне даёт 4,4:1 — чуть ниже
+     нормы для текста такого размера. Тёмный оттенок того же синего — 6,1:1. */
+  color: var(--accent-700);
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -1491,13 +1499,15 @@ body.is-locked { overflow: hidden; }
     padding-top: var(--s-5);
     border-top: 0;
   }
-  .group__index {
+  .group__head::after {
     position: static;
     display: block;
+    order: -1;
     font-size: 3.25rem;
     opacity: 0.1;
     margin-bottom: var(--s-2);
   }
+  .group__head { display: flex; flex-direction: column; }
   .group__subtitle { max-width: none; }
   .service-list { padding-top: var(--s-5); }
   .section--dark .group { border-top-color: rgba(255, 255, 255, 0.14); }

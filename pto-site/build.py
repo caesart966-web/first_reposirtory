@@ -275,9 +275,14 @@ def block_recommendations(site: Site, cfg: dict) -> str:
   </section>'''
 
 
-def block_objects(site: Site, items, limit: int = 0) -> str:
+def block_objects(site: Site, items, limit: int = 0, level: str = "h3") -> str:
     """Карточки объектов. Фотография необязательна: без неё выводится
-    фирменная заставка с чертёжной сеткой, вёрстка не ломается."""
+    фирменная заставка с чертёжной сеткой, вёрстка не ломается.
+
+    level — уровень заголовка карточки. На главной блок стоит под своим h2,
+    поэтому карточки идут h3. На странице «Объекты» промежуточного h2 нет,
+    и карточки должны быть h2: иначе уровни перескакивают через один, а это
+    сбивает и экранные дикторы, и поисковых роботов."""
     if not items:
         return ""
     shown = items[:limit] if limit else items
@@ -333,7 +338,7 @@ def block_objects(site: Site, items, limit: int = 0) -> str:
           {media}
           <div class="object__body">
             <span class="object__num">{n:02d}</span>
-            <h3 class="object__name">{esc(o["name"])}</h3>
+            <{level} class="object__name">{esc(o["name"])}</{level}>
             <span class="object__city">{esc(o["city"])}</span>
             {scope}
             <div class="spec">
@@ -360,8 +365,11 @@ def li_list(items, css="ticks") -> str:
     return f'<ul class="{css}">\n{body}\n    </ul>'
 
 
-def block_services_by_group(site: Site) -> str:
-    """Четыре группы услуг со ссылками — используется на главной и в /uslugi/."""
+def block_services_by_group(site: Site, level: str = "h3") -> str:
+    """Четыре группы услуг со ссылками — используется на главной и в /uslugi/.
+
+    level — уровень заголовка группы: под общим h2 (главная) это h3,
+    а на странице «Услуги», где промежуточного h2 нет, — h2."""
     parts = []
     for n, group in enumerate(site.groups, start=1):
         items = []
@@ -374,10 +382,9 @@ def block_services_by_group(site: Site) -> str:
             )
         total = len(site.groups)
         parts.append(f'''    <div class="group">
-      <div class="group__head">
-        <span class="group__index" aria-hidden="true">{n:02d}</span>
+      <div class="group__head" data-index="{n:02d}">
         <span class="group__num">Группа {n:02d} / {total:02d}</span>
-        <h3 class="group__title">{esc(group["title"])}</h3>
+        <{level} class="group__title">{esc(group["title"])}</{level}>
         <p class="group__subtitle">{esc(group["subtitle"])}</p>
       </div>
       <div class="service-list">
@@ -939,7 +946,7 @@ def page_services_index(r: Renderer) -> None:
 
   <section class="section">
     <div class="container">
-{block_services_by_group(site)}
+{block_services_by_group(site, level='h2')}
     </div>
   </section>
 
@@ -1077,7 +1084,7 @@ def page_objects(r: Renderer) -> None:
 
   <section class="section">
     <div class="container">
-{block_objects(site, cfg["items"])}
+{block_objects(site, cfg["items"], level="h2")}
     </div>
   </section>
 
@@ -1116,7 +1123,7 @@ def page_about(r: Renderer) -> None:
     why = site.raw["why"]
 
     blocks = "\n".join(f'''        <div class="card">
-          <h3>{esc(b["title"])}</h3>
+          <h2>{esc(b["title"])}</h2>
           <p>{esc(b["text"])}</p>
         </div>''' for b in cfg["blocks"])
 
@@ -1201,7 +1208,7 @@ def page_contacts(r: Renderer) -> None:
           <p class="lead lead--tight">{esc(c["work_hours"])}. {esc(c["geo"])}. Договор, счёт и закрывающие документы — в электронном виде, при необходимости отправляем оригиналы почтой.</p>
         </div>
         <aside class="panel panel--accent">
-          <h3>{esc(chk["title"])}</h3>
+          <h2>{esc(chk["title"])}</h2>
           <p style="color:var(--ink-muted);font-size:0.9375rem">{esc(chk["text"])}</p>
           {li_list(chk["items"], "ticks")}
         </aside>
@@ -1242,7 +1249,7 @@ def page_404(r: Renderer) -> None:
 
   <section class="section">
     <div class="container">
-{block_services_by_group(site)}
+{block_services_by_group(site, level='h2')}
     </div>
   </section>'''
     r.render(path="/404.html", title="Страница не найдена — " + site.company["name"],
