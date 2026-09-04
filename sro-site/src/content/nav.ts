@@ -8,6 +8,7 @@
 export const SECTIONS = [
   { href: '#types', label: 'Виды СРО', inHeader: false },
   { href: '#services', label: 'Услуги', inHeader: true },
+  { href: '#nrs', label: 'Специалисты НРС', inHeader: false },
   { href: '#pricing', label: 'Стоимость', inHeader: true },
   { href: '#about', label: 'О специалисте', inHeader: true },
   { href: '#faq', label: 'FAQ', inHeader: true },

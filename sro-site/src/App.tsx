@@ -13,6 +13,7 @@ import { Quiz } from './components/Quiz'
 import { Regions } from './components/Regions'
 import { QuizProvider } from './components/QuizContext'
 import { Services } from './components/Services'
+import { Specialists } from './components/Specialists'
 import { SroTypes } from './components/SroTypes'
 import { Trust } from './components/Trust'
 import { ThemisBackdrop } from './components/ui/ThemisBackdrop'
@@ -44,6 +45,11 @@ export default function App() {
               <Services />
               <Process />
               <Documents />
+              {/* Специалисты НРС — сразу за документами: там о них впервые
+                  заходит речь, и там же у человека возникает «а у меня их
+                  нет». Ответ должен стоять рядом с вопросом, а не в FAQ
+                  внизу страницы. */}
+              <Specialists />
               <Pricing />
               <AboutExpert />
               {/* Отдельной секции контактов нет намеренно. Она была четвёртым
