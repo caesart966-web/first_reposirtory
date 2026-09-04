@@ -2,6 +2,7 @@ import { Menu, Phone, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { CONFIGURED, CONTACTS, LINKS } from "../content/contacts";
 import { HEADER_NAV as NAV, SECTIONS } from "../content/nav";
+import { anchor, home } from "../lib/site";
 import { ScalesMark } from "./illustrations";
 import { ButtonLink } from "./ui/Button";
 
@@ -27,7 +28,7 @@ export function Header() {
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Знак aria-hidden: имя рядом уже озвучено, второй раз объяснять
             картинку скринридеру нечем. */}
-        <a href="#top" className="flex items-center gap-2.5">
+        <a href={home()} className="flex items-center gap-2.5">
           <ScalesMark className="h-[22px] w-auto shrink-0 text-accent-600" />
           <span className="flex flex-col leading-tight">
             <span className="text-[15px] font-bold tracking-tight text-neutral-950">
@@ -47,7 +48,7 @@ export function Header() {
           {NAV.map((item) => (
             <a
               key={item.href}
-              href={item.href}
+              href={anchor(item.href)}
               className="text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-950"
             >
               {item.label}
@@ -71,7 +72,7 @@ export function Header() {
               <span className="hidden xl:inline">{CONTACTS.phone}</span>
             </a>
           )}
-          <ButtonLink href="#quiz">Оставить заявку</ButtonLink>
+          <ButtonLink href={anchor('#quiz')}>Оставить заявку</ButtonLink>
         </div>
 
         <div className="flex items-center gap-2 lg:hidden">
@@ -112,7 +113,7 @@ export function Header() {
             {SECTIONS.map((item) => (
               <a
                 key={item.href}
-                href={item.href}
+                href={anchor(item.href)}
                 onClick={() => setOpen(false)}
                 className="rounded-xl px-2 py-3 text-base font-medium text-neutral-700 transition hover:bg-neutral-50 hover:text-neutral-950"
               >
@@ -120,7 +121,7 @@ export function Header() {
               </a>
             ))}
             <ButtonLink
-              href="#quiz"
+              href={anchor('#quiz')}
               onClick={() => setOpen(false)}
               className="mt-2 w-full"
             >

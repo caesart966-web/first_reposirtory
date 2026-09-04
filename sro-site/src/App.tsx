@@ -15,8 +15,12 @@ import { Services } from './components/Services'
 import { SroTypes } from './components/SroTypes'
 import { Trust } from './components/Trust'
 import { ThemisBackdrop } from './components/ui/ThemisBackdrop'
+import { useHashScroll } from './lib/useHashScroll'
 
 export default function App() {
+  // Якорь в адресе должен сработать после того, как разметка отрисована.
+  useHashScroll()
+
   return (
     <QuizProvider>
       <LegalProvider>

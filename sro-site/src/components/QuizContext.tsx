@@ -88,9 +88,37 @@ type QuizContextValue = {
 
 const QuizContext = createContext<QuizContextValue | null>(null)
 
+// Вид СРО, выбранный на отдельной странице, приезжает в адресе: '?sro=design'.
+// Со страницы вида человек уже сказал, куда вступает, — спрашивать его об этом
+// ещё раз значит не услышать первый ответ.
+//
+// Ключи те же, что и в data-sro у страниц (content/sroDetails.ts, поле slug),
+// поэтому карта одна и живёт рядом с самими вариантами.
+const SRO_BY_SLUG: Record<string, string> = {
+  construction: SRO_TYPES.construction,
+  design: SRO_TYPES.design,
+  survey: SRO_TYPES.survey,
+}
+
+// Читаем один раз при старте. Неизвестный ключ игнорируем молча: подставлять
+// вместо него «пока не знаю» было бы ответом за посетителя.
+function answerFromUrl(): Record<string, string> {
+  if (typeof window === 'undefined') return {}
+  const slug = new URLSearchParams(window.location.search).get('sro')
+  const answer = slug ? SRO_BY_SLUG[slug] : undefined
+  return answer ? { [QUESTION_IDS.type]: answer } : {}
+}
+
+// Считано один раз на загрузку модуля: адрес за время жизни страницы
+// не меняется, а вызов на каждый рендер провайдера — лишняя работа.
+const URL_ANSWERS = answerFromUrl()
+
 export function QuizProvider({ children }: { children: ReactNode }) {
-  const [step, setStep] = useState(0)
-  const [answers, setAnswers] = useState<Record<string, string>>({})
+  const [step, setStep] = useState(() => {
+    const first = QUESTIONS.findIndex((q) => !URL_ANSWERS[q.id])
+    return first === -1 ? QUESTIONS.length : first
+  })
+  const [answers, setAnswers] = useState<Record<string, string>>(URL_ANSWERS)
   const [status, setStatus] = useState<QuizStatus>('idle')
 
   const value = useMemo(
