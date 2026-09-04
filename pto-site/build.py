@@ -27,6 +27,7 @@ import html
 import json
 import re
 import shutil
+import struct
 from datetime import date
 from pathlib import Path
 
@@ -122,6 +123,71 @@ def resolve_media(configured: str, fallbacks: list) -> str:
     return configured or fallbacks[-1]
 
 
+def image_size(rel: str):
+    """Ширина и высота картинки, прочитанные из заголовка файла.
+
+    Без сторонних библиотек: у png, webp и jpeg размеры лежат в первых
+    байтах. Нужны, чтобы браузер знал пропорции до загрузки и не дёргал
+    вёрстку, и чтобы правильно описать варианты в srcset.
+    Не смог прочитать — вернём None, страница соберётся и без размеров."""
+    path = ASSETS_DIR / rel.lstrip("/").removeprefix("assets/")
+    try:
+        data = path.read_bytes()
+    except OSError:
+        return None
+    if data[:8] == b"\x89PNG\r\n\x1a\n":
+        return struct.unpack(">II", data[16:24])
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        kind = data[12:16]
+        if kind == b"VP8X":
+            return (int.from_bytes(data[24:27], "little") + 1,
+                    int.from_bytes(data[27:30], "little") + 1)
+        if kind == b"VP8 ":
+            return (int.from_bytes(data[26:28], "little") & 0x3FFF,
+                    int.from_bytes(data[28:30], "little") & 0x3FFF)
+        if kind == b"VP8L":
+            bits = int.from_bytes(data[21:25], "little")
+            return ((bits & 0x3FFF) + 1, ((bits >> 14) & 0x3FFF) + 1)
+    if data[:2] == b"\xff\xd8":                      # jpeg: идём по сегментам
+        i = 2
+        while i + 9 < len(data):
+            if data[i] != 0xFF:
+                break
+            marker, length = data[i + 1], int.from_bytes(data[i + 2:i + 4], "big")
+            if 0xC0 <= marker <= 0xCF and marker not in (0xC4, 0xC8, 0xCC):
+                return (int.from_bytes(data[i + 7:i + 9], "big"),
+                        int.from_bytes(data[i + 5:i + 7], "big"))
+            i += 2 + length
+    return None
+
+
+# Ширины уменьшенных копий, которые делает tools/make-thumbs.py
+THUMB_WIDTHS = (480, 960)
+
+
+def photo_img(site: Site, rel: str, alt: str, sizes: str, css: str = "") -> str:
+    """Фотография с уменьшенными копиями и отложенной загрузкой.
+
+    Браузер сам берёт вариант под ширину экрана: телефону уходит копия
+    на 480 точек вместо снимка на 1600. Копий нет — отдаём оригинал,
+    вёрстка от этого не зависит."""
+    base, _, ext = rel.rpartition(".")
+    variants = [(w, f"{base}-{w}.webp") for w in THUMB_WIDTHS
+                if asset_exists(f"{base}-{w}.webp")]
+    size = image_size(rel)
+    if size and (not variants or size[0] > variants[-1][0]):
+        variants.append((size[0], rel))          # оригинал — самый крупный вариант
+    src = site.url(variants[-1][1] if variants else rel)
+    srcset = ""
+    if len(variants) > 1:
+        pairs = ", ".join(f"{site.url(p)} {w}w" for w, p in variants)
+        srcset = f' srcset="{pairs}" sizes="{sizes}"'
+    dims = f' width="{size[0]}" height="{size[1]}"' if size else ""
+    cls = f' class="{css}"' if css else ""
+    return (f'<img{cls} src="{src}"{srcset}{dims} alt="{esc(alt)}"'
+            f' loading="lazy" decoding="async">')
+
+
 def block_media(site: Site, cfg: dict) -> str:
     """Широкая видео-полоса. Ведёт себя как первый экран: постер виден сразу,
     видео подключается скриптом после загрузки страницы. Если файлов видео нет,
@@ -130,8 +196,10 @@ def block_media(site: Site, cfg: dict) -> str:
         return ""
     poster = site.url(resolve_media(cfg.get("poster"), []))
     sources = "|".join(site.url(cfg[k]) for k in ("webm", "mp4") if asset_exists(cfg.get(k)))
+    mobile = "/assets/media/about-mobile.mp4"
+    mob_attr = f' data-src-mobile="{site.url(mobile)}"' if asset_exists(mobile) else ""
     video = (f'''<video class="media-band__video js-video" autoplay muted loop playsinline
-             preload="none" poster="{poster}" data-src="{sources}"
+             preload="none" poster="{poster}" data-src="{sources}"{mob_attr}
              aria-hidden="true" tabindex="-1"></video>''' if sources else "")
     caption = (f'<figcaption class="media-band__caption">{esc(cfg["caption"])}</figcaption>'
                if cfg.get("caption") else "")
@@ -218,18 +286,25 @@ def block_objects(site: Site, items, limit: int = 0) -> str:
                         photos.append(candidate)
                         break
 
+        # Ширина карточки: во всю ширину экрана на телефоне, половина на
+        # планшете, треть на компьютере. По ней браузер выбирает копию.
+        sizes = "(max-width: 720px) calc(100vw - 2.5rem), (max-width: 1020px) 46vw, 31vw"
+        alt = f'{o["name"]}, {o["city"]}'
         if not photos:
             media = '<div class="object__media object__media--empty"></div>'
         elif len(photos) == 1:
-            media = f'<div class="object__media" style="background-image:url({site.url(photos[0])})"></div>'
+            media = ('<div class="object__media">'
+                     + photo_img(site, photos[0], alt, sizes, "object__img")
+                     + '</div>')
         else:
-            # Несколько фотографий — media становится кнопкой, открывающей галерею
+            # Несколько фотографий — плитка становится кнопкой, открывающей галерею.
+            # Полные снимки грузятся только при открытии, в карточке — уменьшенная копия.
             gallery = json.dumps([site.url(x) for x in photos], ensure_ascii=False)
             media = (f'<button class="object__media object__media--more" type="button"'
-                     f' style="background-image:url({site.url(photos[0])})"'
                      f' data-gallery="{esc(gallery)}"'
                      f' data-caption="{esc(o["name"])} · {esc(o["city"])}">'
-                     f'<span class="object__count">{len(photos)} фото</span></button>')
+                     + photo_img(site, photos[0], alt, sizes, "object__img")
+                     + f'<span class="object__count">{len(photos)} фото</span></button>')
         scope = f'<p class="object__scope">{esc(o["scope"])}</p>' if o.get("scope") else ""
         cards.append(f'''        <article class="object">
           {media}
@@ -375,7 +450,11 @@ def block_form(site: Site, preselect: str = "") -> str:
 
         <form class="form" data-form="lead" novalidate
               data-success="{esc(form_cfg["success"])}"
-              data-error="{esc(form_cfg["error"])}">
+              data-error="{esc(form_cfg["error"])}"
+              data-mail="{esc(site.contacts["email"])}"
+              data-tel="{esc(site.contacts["phone_href"])}"
+              data-tel-display="{esc(site.contacts["phone_display"])}"
+              data-tg="{esc(site.contacts["telegram_url"])}">
           <div class="field">
             <label for="f-name">Как к вам обращаться <span class="req">*</span></label>
             <input id="f-name" name="name" type="text" autocomplete="name" required>
@@ -684,8 +763,13 @@ def page_home(r: Renderer) -> None:
     # остаётся постер. Положите hero.mp4 в assets/media/, и видео появится само.
     sources = "|".join(site.url(h[k]) for k in ("video_webm", "video_mp4")
                        if asset_exists(h.get(k)))
+    # Отдельный лёгкий файл для телефонов: тот же ролик, но 720 точек в ширину
+    # и 400 КБ вместо 1,2 МБ. Кладётся рядом как hero-mobile.mp4 — если файла
+    # нет, телефон получит обычный, ничего не сломается.
+    mobile = "/assets/media/hero-mobile.mp4"
+    mob_attr = f' data-src-mobile="{site.url(mobile)}"' if asset_exists(mobile) else ""
     video_tag = (f'''<video class="hero__video js-video" autoplay muted loop playsinline preload="none"
-           poster="{poster}" data-src="{sources}" aria-hidden="true" tabindex="-1"></video>'''
+           poster="{poster}" data-src="{sources}"{mob_attr} aria-hidden="true" tabindex="-1"></video>'''
                  if sources else "")
 
     # Анонс объектов на главной: три штуки и ссылка на полный список
@@ -785,7 +869,11 @@ def page_home(r: Renderer) -> None:
 
 {block_form(site)}'''
 
+    # Кадр первого экрана — самая крупная картинка страницы. Просим браузер
+    # начать качать её сразу, не дожидаясь разбора стилей: экран появляется
+    # заметно раньше.
     head = "\n".join([
+        f'<link rel="preload" as="image" href="{poster}" fetchpriority="high">',
         jsonld(schema_organization(site)),
         jsonld({
             "@context": "https://schema.org",

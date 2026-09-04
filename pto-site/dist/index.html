@@ -37,6 +37,7 @@
 <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/assets/img/favicon.svg">
 <link rel="stylesheet" href="/assets/style.css">
+<link rel="preload" as="image" href="/assets/media/hero-poster.webp" fetchpriority="high">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","@id":"https://example.com/#organization","name":"X-PTO","legalName":"ИП Яковлев Андрей Эдуардович","description":"Готовим и защищаем документацию за строительные компании: проектирование, исполнительная документация, геодезия, объёмы, сдача объектов.","url":"https://example.com/","logo":"https://example.com/assets/img/logo.svg","image":"https://example.com/assets/img/og-default.png","email":"lopezr2@yandex.ru","telephone":"+79206851377","taxID":"695014483664","areaServed":{"@type":"Country","name":"Россия"},"contactPoint":[{"@type":"ContactPoint","telephone":"+79206851377","email":"lopezr2@yandex.ru","contactType":"sales","areaServed":"RU","availableLanguage":"Russian"}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"X-PTO","url":"https://example.com/"}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Мы в другом регионе, вы работаете с нами?","acceptedAnswer":{"@type":"Answer","text":"Да. Вся работа с документами ведётся удалённо, поэтому регион объекта роли не играет — мы одинаково работаем и по Москве, и по Дальнему Востоку. Выезд нужен только для геодезии и фактических обмеров, он согласуется отдельно."}},{"@type":"Question","name":"Сдача через две недели, документации нет. Возьмётесь?","acceptedAnswer":{"@type":"Answer","text":"Это наш обычный сценарий. В таких случаях мы сначала за один-два дня проводим аудит: смотрим, что есть по факту, и говорим прямо, какой объём реально собрать к вашей дате, а что придётся закрывать позже. Под срочные задачи подключаем нескольких инженеров параллельно."}},{"@type":"Question","name":"Документацию уже завернули. Вы её доделаете или всё заново?","acceptedAnswer":{"@type":"Answer","text":"Разбираемся с тем, что есть. Часто комплект переделывается не полностью: восстанавливаем недостающие акты, приводим формы к требованиям, снимаем замечания. Если исходные материалы непригодны, скажем об этом сразу и не будем брать деньги за реанимацию."}},{"@type":"Question","name":"Как считается стоимость?","acceptedAnswer":{"@type":"Answer","text":"От состава и объёма: количество разделов, площадь и назначение объекта, срочность, требования конкретного заказчика. После аудита исходных данных даём фиксированную стоимость по этапам, а не «вилку»."}},{"@type":"Question","name":"Вы подписываете NDA?","acceptedAnswer":{"@type":"Answer","text":"Да. Работаем по соглашению о конфиденциальности, в том числе по объектам со специальными требованиями. Материалы заказчика не используются в портфолио без письменного разрешения."}},{"@type":"Question","name":"Можно работать под нашим брендом?","acceptedAnswer":{"@type":"Answer","text":"Да, это формат White Label: документация выпускается в ваших штампах и под вашим брендом, наше участие остаётся внутри. Так работают проектные и генподрядные организации, которым нужно закрыть пиковую нагрузку."}}]}</script>
@@ -92,7 +93,7 @@
   <section class="hero">
     <div class="hero__media" style="background-image:url(/assets/media/hero-poster.webp)"></div>
     <video class="hero__video js-video" autoplay muted loop playsinline preload="none"
-           poster="/assets/media/hero-poster.webp" data-src="/assets/media/hero.webm|/assets/media/hero.mp4" aria-hidden="true" tabindex="-1"></video>
+           poster="/assets/media/hero-poster.webp" data-src="/assets/media/hero.webm|/assets/media/hero.mp4" data-src-mobile="/assets/media/hero-mobile.mp4" aria-hidden="true" tabindex="-1"></video>
     <div class="container">
       <div class="hero__inner">
         <span class="eyebrow">Проектная, исполнительная и сдаточная документация</span>
@@ -283,7 +284,7 @@
       </div>
       <div class="object-grid">
         <article class="object">
-          <div class="object__media" style="background-image:url(/assets/img/objects/detskaya-bolnica-tver.webp)"></div>
+          <div class="object__media"><img class="object__img" src="/assets/img/objects/detskaya-bolnica-tver.webp" srcset="/assets/img/objects/detskaya-bolnica-tver-480.webp 480w, /assets/img/objects/detskaya-bolnica-tver.webp 640w" sizes="(max-width: 720px) calc(100vw - 2.5rem), (max-width: 1020px) 46vw, 31vw" width="640" height="425" alt="Детская областная клиническая больница, Тверь" loading="lazy" decoding="async"></div>
           <div class="object__body">
             <span class="object__num">01</span>
             <h3 class="object__name">Детская областная клиническая больница</h3>
@@ -296,7 +297,7 @@
           </div>
         </article>
         <article class="object">
-          <button class="object__media object__media--more" type="button" style="background-image:url(/assets/img/objects/bauman-kampus-moskva.webp)" data-gallery="[&quot;/assets/img/objects/bauman-kampus-moskva.webp&quot;, &quot;/assets/img/objects/bauman-kampus-moskva-2.webp&quot;, &quot;/assets/img/objects/bauman-kampus-moskva-3.webp&quot;]" data-caption="Новый кампус МГТУ им. Н. Э. Баумана · Москва"><span class="object__count">3 фото</span></button>
+          <button class="object__media object__media--more" type="button" data-gallery="[&quot;/assets/img/objects/bauman-kampus-moskva.webp&quot;, &quot;/assets/img/objects/bauman-kampus-moskva-2.webp&quot;, &quot;/assets/img/objects/bauman-kampus-moskva-3.webp&quot;]" data-caption="Новый кампус МГТУ им. Н. Э. Баумана · Москва"><img class="object__img" src="/assets/img/objects/bauman-kampus-moskva.webp" srcset="/assets/img/objects/bauman-kampus-moskva-480.webp 480w, /assets/img/objects/bauman-kampus-moskva-960.webp 960w, /assets/img/objects/bauman-kampus-moskva.webp 1600w" sizes="(max-width: 720px) calc(100vw - 2.5rem), (max-width: 1020px) 46vw, 31vw" width="1600" height="900" alt="Новый кампус МГТУ им. Н. Э. Баумана, Москва" loading="lazy" decoding="async"><span class="object__count">3 фото</span></button>
           <div class="object__body">
             <span class="object__num">02</span>
             <h3 class="object__name">Новый кампус МГТУ им. Н. Э. Баумана</h3>
@@ -309,7 +310,7 @@
           </div>
         </article>
         <article class="object">
-          <div class="object__media" style="background-image:url(/assets/img/objects/wildberries-tver.webp)"></div>
+          <div class="object__media"><img class="object__img" src="/assets/img/objects/wildberries-tver.webp" srcset="/assets/img/objects/wildberries-tver-480.webp 480w, /assets/img/objects/wildberries-tver-960.webp 960w, /assets/img/objects/wildberries-tver.webp 1024w" sizes="(max-width: 720px) calc(100vw - 2.5rem), (max-width: 1020px) 46vw, 31vw" width="1024" height="559" alt="Распределительный центр Wildberries, Тверь" loading="lazy" decoding="async"></div>
           <div class="object__body">
             <span class="object__num">03</span>
             <h3 class="object__name">Распределительный центр Wildberries</h3>
@@ -448,7 +449,11 @@
 
         <form class="form" data-form="lead" novalidate
               data-success="Заявка отправлена. Мы свяжемся с вами в рабочее время."
-              data-error="Не удалось отправить. Позвоните нам или напишите в Telegram — ответим быстрее.">
+              data-error="Не удалось отправить. Позвоните нам или напишите в Telegram — ответим быстрее."
+              data-mail="lopezr2@yandex.ru"
+              data-tel="+79206851377"
+              data-tel-display="+7 (920) 685-13-77"
+              data-tg="https://t.me/ptotver">
           <div class="field">
             <label for="f-name">Как к вам обращаться <span class="req">*</span></label>
             <input id="f-name" name="name" type="text" autocomplete="name" required>
@@ -497,6 +502,13 @@
     </div>
   </section>
 </main>
+
+<!-- Видно только при печати. Шапка и подвал в печать не идут, и на бумаге
+     не оставалось бы ни одного контакта — а распечатку несут руководителю. -->
+<p class="print-only">
+  X-PTO — Документальное сопровождение строительства. Телефон +7 (920) 685-13-77, почта lopezr2@yandex.ru.
+  Работаем удалённо по всей России. Заявки с сайта — круглосуточно, телефон и почта — с 8:00 до 21:00 без выходных.
+</p>
 
 <footer class="footer">
   <div class="container">

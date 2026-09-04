@@ -287,7 +287,11 @@
 
         <form class="form" data-form="lead" novalidate
               data-success="Заявка отправлена. Мы свяжемся с вами в рабочее время."
-              data-error="Не удалось отправить. Позвоните нам или напишите в Telegram — ответим быстрее.">
+              data-error="Не удалось отправить. Позвоните нам или напишите в Telegram — ответим быстрее."
+              data-mail="lopezr2@yandex.ru"
+              data-tel="+79206851377"
+              data-tel-display="+7 (920) 685-13-77"
+              data-tg="https://t.me/ptotver">
           <div class="field">
             <label for="f-name">Как к вам обращаться <span class="req">*</span></label>
             <input id="f-name" name="name" type="text" autocomplete="name" required>
@@ -336,6 +340,13 @@
     </div>
   </section>
 </main>
+
+<!-- Видно только при печати. Шапка и подвал в печать не идут, и на бумаге
+     не оставалось бы ни одного контакта — а распечатку несут руководителю. -->
+<p class="print-only">
+  X-PTO — Документальное сопровождение строительства. Телефон +7 (920) 685-13-77, почта lopezr2@yandex.ru.
+  Работаем удалённо по всей России. Заявки с сайта — круглосуточно, телефон и почта — с 8:00 до 21:00 без выходных.
+</p>
 
 <footer class="footer">
   <div class="container">

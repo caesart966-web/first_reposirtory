@@ -122,7 +122,12 @@
       if (calm || saveData) { video.remove(); return; }
 
       var start = function () {
-        (video.getAttribute('data-src') || '').split('|').forEach(function (src) {
+        // На узких экранах берём облегчённый файл, если он подготовлен:
+        // 400 КБ вместо 1,2 МБ на мобильном интернете заметны сразу.
+        var narrow = window.matchMedia('(max-width: 700px)').matches;
+        var list = (narrow && video.getAttribute('data-src-mobile')) ||
+                   video.getAttribute('data-src') || '';
+        list.split('|').forEach(function (src) {
           if (!src) return;
           var s = document.createElement('source');
           s.src = src;
@@ -300,6 +305,45 @@
     box.textContent = text;
   }
 
+  /* Отправка не прошла — заявка не должна пропасть.
+     Показываем три запасных пути, и в письме уже подставлено всё, что человек
+     написал: ему остаётся нажать «отправить» в своей почте. Причины бывают
+     разные — не настроен приём заявок, нет связи, заблокирован запрос. */
+  function showRescue(form) {
+    var box = form.querySelector('.form__status');
+    if (!box) return;
+    var mail = form.getAttribute('data-mail');
+    var tel = form.getAttribute('data-tel');
+    var telText = form.getAttribute('data-tel-display') || tel;
+    var tg = form.getAttribute('data-tg');
+    var row = document.createElement('div');
+    row.className = 'form__rescue';
+
+    if (tel) {
+      row.appendChild(link('tel:' + tel, 'Позвонить ' + telText, 'btn--primary'));
+    }
+    if (mail) {
+      var href = 'mailto:' + mail +
+        '?subject=' + encodeURIComponent('Заявка с сайта') +
+        '&body=' + encodeURIComponent(buildMessage(form));
+      row.appendChild(link(href, 'Отправить письмом', 'btn--ghost'));
+    }
+    if (tg) {
+      var a = link(tg, 'Написать в Telegram', 'btn--ghost');
+      a.rel = 'nofollow noopener';
+      row.appendChild(a);
+    }
+    box.appendChild(row);
+
+    function link(href, text, kind) {
+      var a = document.createElement('a');
+      a.className = 'btn ' + kind + ' btn--sm';
+      a.href = href;
+      a.textContent = text;
+      return a;
+    }
+  }
+
   function send(form) {
     var text = buildMessage(form);
 
@@ -364,6 +408,7 @@
         })
         .catch(function (err) {
           showStatus(form, 'err', form.getAttribute('data-error') || 'Не удалось отправить.');
+          showRescue(form);   // заявку не теряем: даём готовые пути связи
           if (window.console) console.warn('[форма]', err.message);
         })
         .then(function () {
