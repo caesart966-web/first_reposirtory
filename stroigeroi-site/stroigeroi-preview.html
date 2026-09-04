@@ -4611,6 +4611,117 @@ html[data-theme='dark'] {
   background: none;
   color: var(--sg-muted);
 }
+
+/* ==========================================================================
+   Служебные классы вместо инлайновых стилей
+   ==========================================================================
+
+   В разметке было 63 атрибута style= с отступами и мелкой типографикой.
+   Визуально они не мешали, но при переносе в OpenCart размножились бы
+   по twig-шаблонам, и правку одного отступа пришлось бы повторять
+   в каждом файле. Здесь они собраны в одном месте.
+
+   Имена по смыслу там, где смысл есть, и по шкале отступов там,
+   где это просто расстояние между блоками. Значения взяты из
+   переменных --sp-*, а не из голых пикселей. */
+
+.gap-xs {
+  margin-top: 6px;
+}
+
+.gap-sm {
+  margin-top: var(--sp-2);
+}
+
+.gap-ms {
+  margin-top: var(--sp-3);
+}
+
+.gap-md {
+  margin-top: var(--sp-4);
+}
+
+.gap-lg {
+  margin-top: var(--sp-5);
+}
+
+.gap-xl {
+  margin-top: var(--sp-6);
+}
+
+.gap-sm-below {
+  margin-bottom: var(--sp-2);
+}
+
+.gap-md-below {
+  margin-bottom: var(--sp-4);
+}
+
+.gap-lg-below {
+  margin-bottom: var(--sp-5);
+}
+
+.flush-top {
+  padding-top: 0;
+}
+
+/* Ряд кнопок под текстом: на узком экране переносится, а не сжимается */
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+/* Форма внутри модального окна: рамка и фон у окна, у формы своих нет */
+.form--bare {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.block-title {
+  margin: var(--sp-2) 0 var(--sp-3);
+}
+
+.subhead {
+  font-size: 19px;
+  margin-bottom: var(--sp-3);
+}
+
+/* Надзаголовок капсом над крупным блоком */
+.eyebrow {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--sg-muted);
+}
+
+.note {
+  color: var(--sg-muted);
+  font-size: 15px;
+}
+
+/* Пояснение под заголовком. Ширина в ch, а не в пикселях: строка
+   должна держать примерно 52 знака при любом размере шрифта. */
+.note-measure {
+  max-width: 52ch;
+  color: var(--sg-muted);
+}
+
+.error-page__text {
+  max-width: 46ch;
+  margin: var(--sp-3) auto 0;
+  color: var(--sg-muted);
+}
+
+/* Итог калькулятора в общем потоке, а не липким блоком сбоку */
+.calc__result--inline {
+  position: static;
+  margin-top: var(--sp-5);
+}
 /* Панель переключения страниц — только для этого файла-просмотра */
 .preview-bar{position:sticky;top:0;z-index:60;display:flex;flex-wrap:wrap;align-items:center;
   gap:8px;padding:10px 16px;background:var(--sg-ink);color:#fff;font-size:14px}
@@ -5377,8 +5488,8 @@ html[data-theme='dark'] {
     <div class="container">
       <div class="calc-cta reveal">
         <div>
-          <h2 style="margin-bottom:8px">Не знаете, сколько брать?</h2>
-          <p style="color:var(--sg-muted);max-width:52ch">Калькулятор прикинет листы гипсокартона и мешки смеси по вашей площади. Считает по вашим числам — расход берите с упаковки.</p>
+          <h2 class="gap-sm-below">Не знаете, сколько брать?</h2>
+          <p class="note-measure">Калькулятор прикинет листы гипсокартона и мешки смеси по вашей площади. Считает по вашим числам — расход берите с упаковки.</p>
         </div>
         <a class="btn btn--action btn--lg" href="#p-calculator"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01"/></svg> Открыть калькулятор</a>
       </div>
@@ -5435,7 +5546,7 @@ html[data-theme='dark'] {
               <label class="visually-hidden" for="range-to">Верхняя граница цены</label>
               <input id="range-to" type="range" min="0" max="10000" step="100" value="10000" data-range-to>
             </div>
-            <p class="ph" style="margin-top:12px">Границы диапазона подставятся из прайса — сейчас шкала условная.</p>
+            <p class="ph gap-ms">Границы диапазона подставятся из прайса — сейчас шкала условная.</p>
           </div>
 
           <div class="filter-group">
@@ -5769,7 +5880,7 @@ html[data-theme='dark'] {
         <div class="product-buy">
           <div>
             <span class="price ph ph--inline">цена, ₽</span>
-            <div class="price__unit ph ph--inline" style="margin-top:6px">единица измерения: лист / мешок / шт.</div>
+            <div class="price__unit ph ph--inline gap-xs">единица измерения: лист / мешок / шт.</div>
           </div>
           <div class="qty" data-qty>
             <button type="button" data-qty-step="-1" aria-label="Уменьшить количество">−</button>
@@ -5994,7 +6105,7 @@ html[data-theme='dark'] {
     </div></div>
 
       <aside class="cart-total">
-        <h2 style="font-size:19px;margin-bottom:12px">Итого</h2>
+        <h2 class="subhead">Итого</h2>
         <div class="cart-total__row"><span>Товары</span><span class="ph ph--inline">сумма</span></div>
         <div class="cart-total__row"><span>Скидка</span><span class="ph ph--inline">из прайса</span></div>
         <div class="cart-total__row"><span>Доставка</span><span class="ph ph--inline">нужны условия</span></div>
@@ -6113,7 +6224,7 @@ html[data-theme='dark'] {
     <div class="calc" data-calc>
       <div class="calc__form">
 
-        <div class="tabs__list" role="tablist" style="margin-bottom:24px">
+        <div class="tabs__list gap-lg-below" role="tablist">
           <button class="tabs__btn" type="button" role="tab" data-calc-mode="gkl" aria-selected="true">Гипсокартон</button>
           <button class="tabs__btn" type="button" role="tab" data-calc-mode="mix" aria-selected="false">Шпатлёвка и штукатурка</button>
         </div>
@@ -6177,12 +6288,12 @@ html[data-theme='dark'] {
       </div>
 
       <aside class="calc__result">
-        <p style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--sg-muted);margin:0">Нужно купить</p>
+        <p class="eyebrow">Нужно купить</p>
         <p class="calc__answer" data-calc-answer>—</p>
         <ul class="calc__breakdown" data-calc-rows></ul>
-        <p class="calc__hint" data-calc-note style="margin-top:16px"></p>
-        <a class="btn btn--action btn--block" href="#p-catalog" style="margin-top:16px">Подобрать в каталоге</a>
-        <button class="btn btn--outline btn--block" type="button" data-modal-open="modal-callback" style="margin-top:8px">Уточнить у менеджера</button>
+        <p class="calc__hint gap-md" data-calc-note></p>
+        <a class="btn btn--action btn--block gap-md" href="#p-catalog">Подобрать в каталоге</a>
+        <button class="btn btn--outline btn--block gap-sm" type="button" data-modal-open="modal-callback">Уточнить у менеджера</button>
       </aside>
     </div>
 
@@ -6234,7 +6345,7 @@ html[data-theme='dark'] {
       </div>
 
       <div>
-        <h2 class="section__title" id="faq" style="margin-bottom:16px">Частые вопросы</h2>
+        <h2 class="section__title gap-md-below" id="faq">Частые вопросы</h2>
         <div class="faq">
           <details open>
             <summary>Можно забрать сегодня?</summary>
@@ -6254,11 +6365,11 @@ html[data-theme='dark'] {
           </details>
         </div>
 
-        <div class="calc__result" style="margin-top:24px;position:static">
-          <h3 style="margin-bottom:8px">Проще спросить</h3>
-          <p style="color:var(--sg-muted);font-size:15px">Один телефон на все три магазина — ответим и посчитаем.</p>
-          <a class="btn btn--action btn--block" href="tel:+79638300999" style="margin-top:12px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg> 8-963-830-09-99</a>
-          <button class="btn btn--outline btn--block" type="button" data-modal-open="modal-callback" style="margin-top:8px">Заказать звонок</button>
+        <div class="calc__result calc__result--inline">
+          <h3 class="gap-sm-below">Проще спросить</h3>
+          <p class="note">Один телефон на все три магазина — ответим и посчитаем.</p>
+          <a class="btn btn--action btn--block gap-ms" href="tel:+79638300999"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg> 8-963-830-09-99</a>
+          <button class="btn btn--outline btn--block gap-sm" type="button" data-modal-open="modal-callback">Заказать звонок</button>
         </div>
       </div>
     </div>
@@ -6276,8 +6387,8 @@ html[data-theme='dark'] {
       <p>Три магазина: два в Петропавловске-Камчатском и один в Елизово. Телефон общий — звоните в любой.</p>
     </div>
 
-    <section class="section section--tight" style="padding-top:0">
-      <h2 class="section__title" style="margin-bottom:16px">Наши магазины</h2>
+    <section class="section section--tight flush-top">
+      <h2 class="section__title gap-md-below">Наши магазины</h2>
       <div class="shop-grid"><article class="shop-card reveal">
   <div class="shop-card__top" aria-hidden="true"></div>
   <div class="shop-card__body">
@@ -6312,7 +6423,7 @@ html[data-theme='dark'] {
       <div class="contacts-grid">
 
         <div>
-          <h2 class="section__title" style="margin-bottom:16px">Общие контакты</h2>
+          <h2 class="section__title gap-md-below">Общие контакты</h2>
           <ul class="info-list">
             <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><span><strong>Телефон</strong><a href="tel:+79638300999">8-963-830-09-99</a></span></li>
             <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/></svg><span><strong>Почта</strong><a href="mailto:stroigeroi41@mail.ru">stroigeroi41@mail.ru</a></span></li>
@@ -6321,13 +6432,13 @@ html[data-theme='dark'] {
             <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3 7 3v5.5c0 4.4-3 8-7 9.5-4-1.5-7-5.1-7-9.5V6z"/><path d="m9 12 2 2 4-4"/></svg><span><strong>Документы</strong><span class="ph ph--inline">политика обработки персональных данных — от заказчика</span></span></li>
           </ul>
 
-          <div class="ph ph--map" style="margin-top:24px">
+          <div class="ph ph--map gap-lg">
             <span><strong>Общая карта</strong>Одна карта с тремя точками магазинов.<br>Встанет виджет Яндекс.Карт.</span>
           </div>
         </div>
 
         <form class="form" data-validate novalidate>
-          <h2 style="margin-bottom:16px">Задать вопрос</h2>
+          <h2 class="gap-md-below">Задать вопрос</h2>
           <div class="form__row">
             <label for="name">Как вас зовут</label>
             <input id="name" name="name" type="text" placeholder="Имя" required>
@@ -6363,12 +6474,12 @@ html[data-theme='dark'] {
     <div class="error-page">
       <p class="error-page__code">404</p>
       <h1>Такой страницы нет</h1>
-      <p style="color:var(--sg-muted);max-width:46ch;margin:12px auto 0">Может, товар убрали из каталога или в адресе опечатка. Попробуйте начать с каталога или позвоните — подскажем.</p>
+      <p class="error-page__text">Может, товар убрали из каталога или в адресе опечатка. Попробуйте начать с каталога или позвоните — подскажем.</p>
       <div class="error-page__links">
         <a class="btn btn--action btn--lg" href="#p-catalog">В каталог</a>
         <a class="btn btn--outline btn--lg" href="tel:+79638300999"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg> 8-963-830-09-99</a>
       </div>
-      <div class="error-page__links" style="margin-top:32px"><a class="btn btn--outline" href="#p-catalog">Отделочные и стройматериалы</a><a class="btn btn--outline" href="#p-catalog">Инструменты</a><a class="btn btn--outline" href="#p-catalog">Сантехника и инженерные системы</a><a class="btn btn--outline" href="#p-catalog">Электрика и свет</a><a class="btn btn--outline" href="#p-catalog">Крепёж и фурнитура</a><a class="btn btn--outline" href="#p-catalog">Климат, отопление и вентиляция</a><a class="btn btn--outline" href="#p-catalog">Всё для сада</a><a class="btn btn--outline" href="#p-catalog">Расходка, спецодежда и СИЗ</a></div>
+      <div class="error-page__links gap-xl"><a class="btn btn--outline" href="#p-catalog">Отделочные и стройматериалы</a><a class="btn btn--outline" href="#p-catalog">Инструменты</a><a class="btn btn--outline" href="#p-catalog">Сантехника и инженерные системы</a><a class="btn btn--outline" href="#p-catalog">Электрика и свет</a><a class="btn btn--outline" href="#p-catalog">Крепёж и фурнитура</a><a class="btn btn--outline" href="#p-catalog">Климат, отопление и вентиляция</a><a class="btn btn--outline" href="#p-catalog">Всё для сада</a><a class="btn btn--outline" href="#p-catalog">Расходка, спецодежда и СИЗ</a></div>
     </div>
   </div>
 </section>
@@ -6469,7 +6580,7 @@ html[data-theme='dark'] {
   </div>
   <div class="modal__body">
     <p>Оставьте телефон — перезвоним и поможем подобрать материал или посчитать объём.</p>
-    <form class="form" data-validate novalidate style="padding:0;border:0;background:none">
+    <form class="form form--bare" data-validate novalidate>
       <div class="form__row">
         <label for="cb-name">Как вас зовут</label>
         <input id="cb-name" name="name" type="text" placeholder="Имя" required>
@@ -6502,14 +6613,14 @@ html[data-theme='dark'] {
       <div class="quick-view__media"><span class="ph--photo"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.4"/><path d="m5 17.5 4.5-4.5 3 3L16 12l3 3"/></svg><br>фото из прайса</span></div>
       <div>
         <p class="product-card__brand ph ph--inline">бренд</p>
-        <h3 style="margin:8px 0 12px">Название товара из прайса заказчика</h3>
+        <h3 class="block-title">Название товара из прайса заказчика</h3>
         <p class="ph ph--inline">фасовка / единица измерения</p>
-        <p style="margin-top:16px"><span class="price ph ph--inline">цена, ₽</span></p>
-        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px">
+        <p class="gap-md"><span class="price ph ph--inline">цена, ₽</span></p>
+        <div class="row-actions">
           <button class="btn btn--action" type="button" data-add="cart">В корзину</button>
           <a class="btn btn--outline" href="#p-product">Вся карточка</a>
         </div>
-        <p class="calc__hint" style="margin-top:16px">Окно показывает, как выглядит быстрый просмотр. Данные подставятся из прайса.</p>
+        <p class="calc__hint gap-md">Окно показывает, как выглядит быстрый просмотр. Данные подставятся из прайса.</p>
       </div>
     </div>
   </div>

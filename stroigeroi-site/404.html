@@ -21,8 +21,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="assets/logo.png" type="image/png">
 <link rel="apple-touch-icon" href="assets/logo.png">
-<link rel="preload" href="assets/style.css?v=6f10269f" as="style">
-<link rel="stylesheet" href="assets/style.css?v=6f10269f">
+<link rel="preload" href="assets/style.css?v=aa3725bc" as="style">
+<link rel="stylesheet" href="assets/style.css?v=aa3725bc">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Store", "name": "Строй-Герой", "slogan": "Наши материалы — ваша уверенность", "url": "https://stroigeroi.ru/", "telephone": "+7-963-830-09-99", "email": "stroigeroi41@mail.ru", "areaServed": "Камчатский край", "department": [{"@type": "Store", "name": "Строй-Герой — ул. Чубарова, 16, корп. 40", "telephone": "+7-963-830-09-99", "address": {"@type": "PostalAddress", "streetAddress": "ул. Чубарова, 16, корп. 40", "addressLocality": "Петропавловск-Камчатский", "addressRegion": "Камчатский край", "addressCountry": "RU"}}, {"@type": "Store", "name": "Строй-Герой — просп. 50 лет Октября, 17А", "telephone": "+7-963-830-09-99", "address": {"@type": "PostalAddress", "streetAddress": "просп. 50 лет Октября, 17А", "addressLocality": "Петропавловск-Камчатский", "addressRegion": "Камчатский край", "addressCountry": "RU"}}, {"@type": "Store", "name": "Строй-Герой — Магистральная ул., 2/2", "telephone": "+7-963-830-09-99", "address": {"@type": "PostalAddress", "streetAddress": "Магистральная ул., 2/2", "addressLocality": "Елизово", "addressRegion": "Камчатский край", "addressCountry": "RU"}}]}</script>
 <script>
 /* Тема применяется до отрисовки, иначе при тёмной теме страница мигает белым */
@@ -137,12 +137,12 @@
     <div class="error-page">
       <p class="error-page__code">404</p>
       <h1>Такой страницы нет</h1>
-      <p style="color:var(--sg-muted);max-width:46ch;margin:12px auto 0">Может, товар убрали из каталога или в адресе опечатка. Попробуйте начать с каталога или позвоните — подскажем.</p>
+      <p class="error-page__text">Может, товар убрали из каталога или в адресе опечатка. Попробуйте начать с каталога или позвоните — подскажем.</p>
       <div class="error-page__links">
         <a class="btn btn--action btn--lg" href="catalog.html">В каталог</a>
         <a class="btn btn--outline btn--lg" href="tel:+79638300999"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg> 8-963-830-09-99</a>
       </div>
-      <div class="error-page__links" style="margin-top:32px"><a class="btn btn--outline" href="catalog.html">Отделочные и стройматериалы</a><a class="btn btn--outline" href="catalog.html">Инструменты</a><a class="btn btn--outline" href="catalog.html">Сантехника и инженерные системы</a><a class="btn btn--outline" href="catalog.html">Электрика и свет</a><a class="btn btn--outline" href="catalog.html">Крепёж и фурнитура</a><a class="btn btn--outline" href="catalog.html">Климат, отопление и вентиляция</a><a class="btn btn--outline" href="catalog.html">Всё для сада</a><a class="btn btn--outline" href="catalog.html">Расходка, спецодежда и СИЗ</a></div>
+      <div class="error-page__links gap-xl"><a class="btn btn--outline" href="catalog.html">Отделочные и стройматериалы</a><a class="btn btn--outline" href="catalog.html">Инструменты</a><a class="btn btn--outline" href="catalog.html">Сантехника и инженерные системы</a><a class="btn btn--outline" href="catalog.html">Электрика и свет</a><a class="btn btn--outline" href="catalog.html">Крепёж и фурнитура</a><a class="btn btn--outline" href="catalog.html">Климат, отопление и вентиляция</a><a class="btn btn--outline" href="catalog.html">Всё для сада</a><a class="btn btn--outline" href="catalog.html">Расходка, спецодежда и СИЗ</a></div>
     </div>
   </div>
 </main>
@@ -241,7 +241,7 @@
   </div>
   <div class="modal__body">
     <p>Оставьте телефон — перезвоним и поможем подобрать материал или посчитать объём.</p>
-    <form class="form" data-validate novalidate style="padding:0;border:0;background:none">
+    <form class="form form--bare" data-validate novalidate>
       <div class="form__row">
         <label for="cb-name">Как вас зовут</label>
         <input id="cb-name" name="name" type="text" placeholder="Имя" required>
@@ -274,14 +274,14 @@
       <div class="quick-view__media"><span class="ph--photo"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.4"/><path d="m5 17.5 4.5-4.5 3 3L16 12l3 3"/></svg><br>фото из прайса</span></div>
       <div>
         <p class="product-card__brand ph ph--inline">бренд</p>
-        <h3 style="margin:8px 0 12px">Название товара из прайса заказчика</h3>
+        <h3 class="block-title">Название товара из прайса заказчика</h3>
         <p class="ph ph--inline">фасовка / единица измерения</p>
-        <p style="margin-top:16px"><span class="price ph ph--inline">цена, ₽</span></p>
-        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px">
+        <p class="gap-md"><span class="price ph ph--inline">цена, ₽</span></p>
+        <div class="row-actions">
           <button class="btn btn--action" type="button" data-add="cart">В корзину</button>
           <a class="btn btn--outline" href="product.html">Вся карточка</a>
         </div>
-        <p class="calc__hint" style="margin-top:16px">Окно показывает, как выглядит быстрый просмотр. Данные подставятся из прайса.</p>
+        <p class="calc__hint gap-md">Окно показывает, как выглядит быстрый просмотр. Данные подставятся из прайса.</p>
       </div>
     </div>
   </div>

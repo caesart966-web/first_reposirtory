@@ -15,6 +15,7 @@
 
 import { chromium } from 'playwright';
 import path from 'node:path';
+import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -22,8 +23,19 @@ const PAGES = ['index', 'catalog', 'product', 'cart', 'calculator', 'delivery', 
 const WIDTHS = [360, 390, 768, 1024, 1280, 1440, 1920];
 const THEMES = ['light', 'dark'];
 
-/* Chromium из образа: свой playwright его не скачивает. */
-const EXECUTABLE = process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
+/* Где взять Chromium. По порядку: переменная CHROMIUM_PATH, затем браузер
+   из образа (если проверки гоняют в контейнере, где playwright свой
+   не скачивает), иначе — тот, что playwright поставил себе сам.
+   Существование пути проверяем: на GitHub Actions пути из образа нет,
+   и с жёстко зашитым значением проверки падали бы, не начавшись. */
+function findChromium() {
+  const candidates = [process.env.CHROMIUM_PATH, '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'];
+  for (const c of candidates) {
+    if (c && existsSync(c)) return c;
+  }
+  return undefined; // playwright возьмёт свой
+}
+const EXECUTABLE = findChromium();
 
 const fails = [];
 const fail = (msg) => fails.push(msg);

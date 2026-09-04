@@ -4601,3 +4601,114 @@ html[data-theme='dark'] {
   background: none;
   color: var(--sg-muted);
 }
+
+/* ==========================================================================
+   Служебные классы вместо инлайновых стилей
+   ==========================================================================
+
+   В разметке было 63 атрибута style= с отступами и мелкой типографикой.
+   Визуально они не мешали, но при переносе в OpenCart размножились бы
+   по twig-шаблонам, и правку одного отступа пришлось бы повторять
+   в каждом файле. Здесь они собраны в одном месте.
+
+   Имена по смыслу там, где смысл есть, и по шкале отступов там,
+   где это просто расстояние между блоками. Значения взяты из
+   переменных --sp-*, а не из голых пикселей. */
+
+.gap-xs {
+  margin-top: 6px;
+}
+
+.gap-sm {
+  margin-top: var(--sp-2);
+}
+
+.gap-ms {
+  margin-top: var(--sp-3);
+}
+
+.gap-md {
+  margin-top: var(--sp-4);
+}
+
+.gap-lg {
+  margin-top: var(--sp-5);
+}
+
+.gap-xl {
+  margin-top: var(--sp-6);
+}
+
+.gap-sm-below {
+  margin-bottom: var(--sp-2);
+}
+
+.gap-md-below {
+  margin-bottom: var(--sp-4);
+}
+
+.gap-lg-below {
+  margin-bottom: var(--sp-5);
+}
+
+.flush-top {
+  padding-top: 0;
+}
+
+/* Ряд кнопок под текстом: на узком экране переносится, а не сжимается */
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+/* Форма внутри модального окна: рамка и фон у окна, у формы своих нет */
+.form--bare {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.block-title {
+  margin: var(--sp-2) 0 var(--sp-3);
+}
+
+.subhead {
+  font-size: 19px;
+  margin-bottom: var(--sp-3);
+}
+
+/* Надзаголовок капсом над крупным блоком */
+.eyebrow {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--sg-muted);
+}
+
+.note {
+  color: var(--sg-muted);
+  font-size: 15px;
+}
+
+/* Пояснение под заголовком. Ширина в ch, а не в пикселях: строка
+   должна держать примерно 52 знака при любом размере шрифта. */
+.note-measure {
+  max-width: 52ch;
+  color: var(--sg-muted);
+}
+
+.error-page__text {
+  max-width: 46ch;
+  margin: var(--sp-3) auto 0;
+  color: var(--sg-muted);
+}
+
+/* Итог калькулятора в общем потоке, а не липким блоком сбоку */
+.calc__result--inline {
+  position: static;
+  margin-top: var(--sp-5);
+}

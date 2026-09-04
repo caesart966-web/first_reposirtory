@@ -1,0 +1,51 @@
+# Проверки макета «Строй-Герой». Запускаются на каждую правку в stroigeroi-site/.
+#
+# Зачем: build.mjs и test.mjs лежали в репозитории, но не запускались нигде,
+# кроме как руками у разработчика. Публикация при этом просто копирует папку
+# на GitHub Pages без единой проверки — сломанная вёрстка уехала бы заказчику,
+# и узнали бы об этом от него. Теперь сборка краснеет раньше выкладки.
+name: Проверки макета «Строй-Герой»
+
+on:
+  push:
+    paths:
+      - 'stroigeroi-site/**'
+      - '.github/workflows/check-stroigeroi.yml'
+  pull_request:
+    paths:
+      - 'stroigeroi-site/**'
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: Сборка и проверки
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: stroigeroi-site
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Сборщик ничего не пишет, только сверяет: совпадают ли отпечатки
+      # style.css и app.js со ссылками в страницах и не разъехалось ли
+      # превью с обычными страницами. Заодно ловит ссылки в никуда,
+      # пропавшие файлы, картинки без alt и повторяющиеся id.
+      - name: Сборка не устарела, ссылки и файлы на месте
+        run: node build.mjs --check
+
+      - name: Поставить браузер
+        run: |
+          npm install playwright@1.49.1 --no-save --silent
+          npx playwright install --with-deps chromium
+
+      # Восемь страниц на семи ширинах в обеих темах: ошибки консоли,
+      # горизонтальная прокрутка, контраст по WCAG, цели нажатия,
+      # видимость пунктира пустых мест, счёт калькулятора и его формат
+      # чисел, раскладка карточки по ширине контейнера.
+      - name: Проверки в браузере
+        run: node test.mjs
