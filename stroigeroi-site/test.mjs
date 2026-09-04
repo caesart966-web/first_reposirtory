@@ -155,9 +155,7 @@ for (const name of PAGES) {
        читается по рамке. Один раз цвет пунктира был зашит под светлую
        тему, в тёмной давал контраст 1.03, и плейсхолдер выглядел
        обычным залитым чипом — тесты при этом были зелёные. */
-    const ph = await page.evaluate(() => {
-      const el = document.querySelector('.ph, .data-notice');
-      if (!el) return null;
+    const phs = await page.evaluate(() => {
       const parse = (s) => (s.match(/[\d.]+/g) || []).map(Number);
       const lum = (c) => {
         const [r, g, b] = c.map((v) => {
@@ -166,17 +164,46 @@ for (const name of PAGES) {
         });
         return 0.2126 * r + 0.7152 * g + 0.0722 * b;
       };
-      const cs = getComputedStyle(el);
-      const border = parse(cs.borderTopColor);
-      const bg = parse(cs.backgroundColor);
-      if (border.length < 3 || bg.length < 3) return null;
-      const a = border[3] === undefined ? 1 : border[3];
-      const mixed = [0, 1, 2].map((i) => border[i] * a + bg[i] * (1 - a));
-      const [hi, lo] = [lum(mixed), lum(bg.slice(0, 3))].sort((x, y) => y - x);
-      return { ratio: +((hi + 0.05) / (lo + 0.05)).toFixed(2), color: cs.borderTopColor };
+      /* Плейсхолдеры бывают двух видов: громкие в коробке и тихие
+         с подчёркиванием. У вторых рамка только снизу, поэтому смотрим
+         не на верхнюю сторону, а на первую, которая вообще нарисована. */
+      const measure = (el) => {
+        if (!el) return null;
+        const cs = getComputedStyle(el);
+        const side = ['Top', 'Bottom', 'Left', 'Right'].find(
+          (s) => parseFloat(cs['border' + s + 'Width']) > 0 && cs['border' + s + 'Style'] !== 'none',
+        );
+        if (!side) return null;
+        const border = parse(cs['border' + side + 'Color']);
+        /* Фон под рамкой: у тихого плейсхолдера своего фона нет,
+           поэтому поднимаемся до ближайшего непрозрачного предка. */
+        let bg = [255, 255, 255];
+        for (let n = el; n; n = n.parentElement) {
+          const c = parse(getComputedStyle(n).backgroundColor);
+          if (c.length >= 3 && (c[3] === undefined || c[3] > 0.5)) {
+            bg = c.slice(0, 3);
+            break;
+          }
+        }
+        if (border.length < 3) return null;
+        const a = border[3] === undefined ? 1 : border[3];
+        const mixed = [0, 1, 2].map((i) => border[i] * a + bg[i] * (1 - a));
+        const [hi, lo] = [lum(mixed), lum(bg)].sort((x, y) => y - x);
+        return {
+          ratio: +((hi + 0.05) / (lo + 0.05)).toFixed(2),
+          color: cs['border' + side + 'Color'],
+          side,
+        };
+      };
+      return {
+        громкий: measure(document.querySelector('.data-notice')),
+        тихий: measure(document.querySelector('.product-card__meta .ph, .category-card__count, .cat-list__link .ph')),
+      };
     });
-    if (ph && ph.ratio < 1.6) {
-      fail(`${name} (${theme}): пунктир пустых мест сливается с фоном — контраст ${ph.ratio}, цвет ${ph.color}`);
+    for (const [kind, ph] of Object.entries(phs)) {
+      if (ph && ph.ratio < 1.6) {
+        fail(`${name} (${theme}): ${kind} пунктир пустых мест сливается с фоном — контраст ${ph.ratio}, ${ph.side.toLowerCase()}, ${ph.color}`);
+      }
     }
 
     await ctx.close();
