@@ -227,6 +227,12 @@ h4 { font-size: 1.0625rem; }
    Мелочь, но заголовки и абзацы выглядят аккуратнее. */
 p, li { text-wrap: pretty; }
 
+/* Длинные слова («ЭЛЕКТРОСТРОЙИНЖИНИРИНГ», «документации») переносятся,
+   а не вылезают за край блока. Особенно заметно на телефонах с увеличенным
+   системным шрифтом: там колонки узкие, а слова те же. break-word рвёт слово
+   только когда оно иначе не помещается — обычный текст не трогает. */
+body { overflow-wrap: break-word; }
+
 p { margin: 0 0 var(--s-4); }
 p:last-child { margin-bottom: 0; }
 
@@ -784,6 +790,13 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   border-top: 1px solid rgba(255, 255, 255, 0.16);
   max-width: 46rem;
 }
+/* На узких экранах три колонки цифр становятся такими тесными, что подписи
+   не помещаются. Раскладываем их по одной в строку — читаются полностью. */
+@media (max-width: 560px) {
+  .hero__spec { grid-template-columns: minmax(0, 1fr); gap: var(--s-4); }
+  .hero__spec-label { max-width: 26rem; }
+}
+
 .hero__spec-item { position: relative; padding-left: var(--s-4); }
 .hero__spec-item::before {
   content: "";
@@ -1155,6 +1168,45 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 
 /* Рекомендательные письма */
 .rec { gap: 0; }
+/* Карточка с документом: слева превьюшка самого письма, справа текст.
+   Человек видит печать и подпись, ещё не открыв документ, — это убеждает
+   сильнее любой кнопки. Превьюшка кликабельна, как и ссылка под текстом. */
+.rec--doc {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  gap: var(--s-5);
+  align-items: start;
+}
+.rec__thumb {
+  appearance: none;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  overflow: hidden;
+  display: block;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--t-mid), box-shadow var(--t-mid), border-color var(--t-mid);
+}
+.rec__thumb-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1400 / 1980;
+  object-fit: cover;
+  object-position: center top;
+}
+.rec__thumb:hover {
+  transform: translateY(-2px) rotate(-0.6deg);
+  box-shadow: var(--shadow-md);
+  border-color: var(--accent);
+}
+.rec__body { min-width: 0; }
+
+@media (max-width: 720px) {
+  .rec--doc { grid-template-columns: 96px minmax(0, 1fr); gap: var(--s-4); }
+}
 .rec__head { margin-bottom: var(--s-4); }
 .rec__head h3 { margin-bottom: var(--s-2); }
 .rec__meta {
@@ -1593,7 +1645,14 @@ body.is-locked { overflow: hidden; }
   padding-top: var(--s-5);
   border-top: 1px dashed var(--line-strong);
 }
-.spec__row { display: flex; align-items: baseline; gap: var(--s-2); }
+/* Строка «подпись — точки — значение». Если значение длинное, строка
+   переносится целиком: подпись сверху, значение под ней во всю ширину. */
+.spec__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-2);
+}
 .spec__key {
   font-family: var(--font-mono);
   font-size: 0.6875rem;
@@ -1610,11 +1669,14 @@ body.is-locked { overflow: hidden; }
   border-bottom: 1px dotted var(--line-strong);
 }
 .spec__val {
+  flex: 1 1 auto;
+  min-width: 0;
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--navy);
   text-align: right;
 }
+.spec__key { flex: 0 0 auto; }
 
 /* ---------- 9. Этапы ----------------------------------------------------- */
 /* Между шагами нет горизонтального зазора — так их верхние линии смыкаются

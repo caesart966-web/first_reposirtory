@@ -227,14 +227,25 @@ def block_recommendations(site: Site, cfg: dict) -> str:
         # Письмо открывается картинкой во всплывающем окне. Ссылка на исходный
         # PDF остаётся внутри окна — для тех, кому нужен сам документ.
         link = ""
+        thumb = ""
         if r.get("image") and asset_exists(r["image"]):
             pdf = (f' data-pdf="{site.url(r["file"])}"'
                    if r.get("file") and asset_exists(r["file"]) else "")
-            link = (f'<button class="rec__link" type="button"'
-                    f' data-lightbox="{site.url(r["image"])}"'
-                    f' data-caption="{esc(r["company"])} · {esc(r["city"])}, {esc(r["date"])}"'
-                    f'{pdf}>{esc(r.get("link_label", "Посмотреть письмо"))}</button>')
-        cards.append(f'''        <article class="card rec">
+            opens = (f' data-lightbox="{site.url(r["image"])}"'
+                     f' data-caption="{esc(r["company"])} · {esc(r["city"])}, {esc(r["date"])}"'
+                     f'{pdf}')
+            link = (f'<button class="rec__link" type="button"{opens}>'
+                    f'{esc(r.get("link_label", "Посмотреть письмо"))}</button>')
+            # Превьюшка самого документа: видно, что это настоящее письмо
+            # с печатью и подписью, ещё до того как его открыли.
+            thumb = (f'<button class="rec__thumb" type="button"{opens}'
+                     f' aria-label="Открыть документ: {esc(r["company"])}">'
+                     + photo_img(site, r["image"], f'Документ: {r["company"]}',
+                                 "(max-width: 720px) 96px, 132px", "rec__thumb-img")
+                     + '</button>')
+        cards.append(f'''        <article class="card rec{" rec--doc" if thumb else ""}">
+          {thumb}
+          <div class="rec__body">
           <div class="rec__head">
             <h3>{esc(r["company"])}</h3>
             <span class="rec__meta">{esc(r["city"])} · {esc(r["date"])}</span>
@@ -248,6 +259,7 @@ def block_recommendations(site: Site, cfg: dict) -> str:
           </div>
           <p class="rec__scope">{esc(r["scope"])}</p>
           {link}
+          </div>
         </article>''')
 
     head = f'<h2>{esc(cfg["title"])}</h2>'
