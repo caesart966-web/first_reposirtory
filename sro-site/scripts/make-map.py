@@ -42,9 +42,26 @@ CRIMEA = [(36.65,45.35),(35.5,45.5),(34.4,46.0),(33.5,46.1),(32.6,45.35),
           (33.4,44.55),(34.5,44.45),(35.5,44.75),(36.2,45.0)]
 KALININGRAD = [(19.7,54.4),(22.8,54.4),(22.6,55.3),(20.0,55.3)]
 
-def path(points):
-    d = 'M' + ' L'.join(f'{P(*p)[0]} {P(*p)[1]}' for p in points) + ' Z'
-    return d
+def path(points, tension=0.22):
+    """Замкнутый контур кубическими кривыми (Catmull-Rom -> Безье).
+
+    Ломаной берег читался многоугольником: острые углы там, где в природе
+    плавная линия. Натяжение маленькое (0.22) намеренно — на большем контур
+    начинает петлять в узких местах вроде Камчатки и Крыма."""
+    pts = [P(*q) for q in points]
+    n = len(pts)
+    out = [f'M{pts[0][0]} {pts[0][1]}']
+    for i in range(n):
+        p0 = pts[(i - 1) % n]
+        p1 = pts[i]
+        p2 = pts[(i + 1) % n]
+        p3 = pts[(i + 2) % n]
+        c1 = (round(p1[0] + (p2[0] - p0[0]) * tension, 1),
+              round(p1[1] + (p2[1] - p0[1]) * tension, 1))
+        c2 = (round(p2[0] - (p3[0] - p1[0]) * tension, 1),
+              round(p2[1] - (p3[1] - p1[1]) * tension, 1))
+        out.append(f'C{c1[0]} {c1[1]} {c2[0]} {c2[1]} {p2[0]} {p2[1]}')
+    return ' '.join(out) + ' Z' 
 
 open('paths.txt','w').write(
     'MAIN\n' + path(MAIN) + '\n\nCRIMEA\n' + path(CRIMEA) + '\n\nKGD\n' + path(KALININGRAD) + '\n')
