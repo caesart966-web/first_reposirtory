@@ -111,32 +111,46 @@ function DocGroup({
 
 function FundTable({
   caption,
+  hint,
+  // Шапка колонки задаётся снаружи, а не зашита: у фонда возмещения вреда
+  // уровень считают по ОДНОМУ договору, у фонда договорных обязательств —
+  // по СОВОКУПНОМУ размеру обязательств. Общая шапка «по одному договору»
+  // делала вторую таблицу неверной.
+  basis,
   rows,
   law,
 }: {
   caption: string
+  hint: string
+  basis: string
   rows: { limit: string; amount: string }[]
   law: string
 }) {
   return (
-    <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-card sm:p-6">
+    <div className="flex h-full flex-col rounded-2xl border border-neutral-200 bg-white p-5 shadow-card sm:p-6">
       <h3 className="font-semibold text-neutral-950">{caption}</h3>
-      <Law>{law}</Law>
+      <p className="mt-1.5 text-sm text-neutral-600">{hint}</p>
       {/* Таблица прокручивается внутри себя, а не тянет за собой страницу:
-          две колонки с суммами на 360px в строку не помещаются. */}
-      <div className="mt-4 overflow-x-auto">
-        <table className="w-full min-w-[280px] border-collapse text-sm">
+          три колонки с суммами на 360px в строку не помещаются. */}
+      <div className="mt-5 -mx-1 overflow-x-auto px-1">
+        <table className="w-full min-w-[300px] border-collapse text-sm">
           <thead>
             <tr className="border-b border-neutral-200 text-left align-bottom">
-              <th className="pb-2 pr-4 font-medium text-neutral-600">
-                Обязательства по одному договору
-              </th>
+              <th className="w-10 pb-2 font-medium text-neutral-500">Ур.</th>
+              <th className="pb-2 pr-4 font-medium text-neutral-600">{basis}</th>
               <th className="pb-2 text-right font-medium text-neutral-600">Взнос</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
+            {rows.map((row, index) => (
               <tr key={row.limit} className="border-b border-neutral-100 last:border-0">
+                {/* Номер уровня ответственности — не украшение: в разговоре
+                    с СРО оперируют именно им, и человек должен знать свой. */}
+                <td className="py-2.5">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-md bg-accent-50 text-xs font-bold text-accent-700">
+                    {index + 1}
+                  </span>
+                </td>
                 <td className="py-2.5 pr-4 text-neutral-700">{row.limit}</td>
                 <td className="py-2.5 text-right font-semibold tabular-nums text-neutral-950">
                   {row.amount}
@@ -145,6 +159,9 @@ function FundTable({
             ))}
           </tbody>
         </table>
+      </div>
+      <div className="mt-auto pt-4">
+        <Law>{law}</Law>
       </div>
     </div>
   )
@@ -359,35 +376,40 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
                   </div>
                 </Reveal>
               </div>
-              <Reveal className="mt-6 rounded-2xl border border-neutral-200 bg-neutral-50 p-5 text-sm leading-relaxed text-neutral-700 sm:p-6">
-                <strong className="font-semibold text-neutral-950">
-                  Точные суммы назову под вашу ситуацию, а не таблицей.
-                </strong>{' '}
-                Минимальные размеры взносов установлены законом и зависят от уровня
-                ответственности; сверх них у каждой организации есть свои вступительный
-                и членские взносы. Уплата в рассрочку и уплата третьими лицами не допускаются,
-                освободить от взноса в компенсационный фонд СРО тоже не вправе — если такое
-                предлагают, это повод насторожиться.
-                <Law>{LAW.funds}</Law>
-              </Reveal>
               {FUNDS_CONFIRMED && (
                 <div className="mt-8 grid gap-5 lg:grid-cols-2">
                   <Reveal className="h-full">
                     <FundTable
-                      caption="Компенсационный фонд возмещения вреда"
+                      caption="Фонд возмещения вреда — сколько"
+                      hint="Уровень зависит от суммы обязательств по одному договору."
+                      basis="Обязательства по одному договору"
                       rows={detail.funds.harm.rows}
                       law={detail.funds.harm.law}
                     />
                   </Reveal>
                   <Reveal delay={70} className="h-full">
                     <FundTable
-                      caption="Компенсационный фонд обеспечения договорных обязательств"
+                      caption="Фонд договорных обязательств — сколько"
+                      hint="Уровень зависит от совокупного размера обязательств по конкурентным договорам."
+                      basis="Совокупный размер обязательств"
                       rows={detail.funds.contract.rows}
                       law={detail.funds.contract.law}
                     />
                   </Reveal>
                 </div>
               )}
+              <Reveal className="mt-6 rounded-2xl border border-neutral-200 bg-neutral-50 p-5 text-sm leading-relaxed text-neutral-700 sm:p-6">
+                <strong className="font-semibold text-neutral-950">
+                  В таблицах — установленные законом минимумы.
+                </strong>{' '}
+                Меньше СРО брать не вправе, но своими внутренними документами может установить
+                больше. Сверх взносов в фонды у каждой организации есть свои вступительный
+                и членские взносы — их размер она определяет сама, и точную сумму по конкретной
+                СРО я назову до того, как вы что-то оплатите. Уплата в рассрочку и уплата
+                третьими лицами не допускаются, освободить от взноса в компенсационный фонд
+                СРО тоже не вправе — если такое предлагают, это повод насторожиться.
+                <Law>{LAW.funds}</Law>
+              </Reveal>
             </Section>
 
             {/* Требования к специалистам и срок — общие для всех трёх видов. */}
