@@ -92,6 +92,21 @@
     });
   }
 
+  /* ---------- 0г. Подсветка карточки за курсором -------------------------
+     Скрипт только сообщает CSS координаты указателя внутри карточки,
+     рисует всё стилями. На тач-экранах не включается: там наведения нет,
+     и лишние обработчики ни к чему. */
+  if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    var spotCards = document.querySelectorAll('.service-item, .section--dark .card');
+    Array.prototype.forEach.call(spotCards, function (card) {
+      card.addEventListener('pointermove', function (e) {
+        var r = card.getBoundingClientRect();
+        card.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+        card.style.setProperty('--my', (e.clientY - r.top) + 'px');
+      });
+    });
+  }
+
   /* ---------- 1. Мобильное меню ----------------------------------------- */
   var burger = document.querySelector('.burger');
   var nav = document.getElementById('nav');

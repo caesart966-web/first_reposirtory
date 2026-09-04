@@ -47,6 +47,26 @@
   src: url("fonts/inter-latin.woff2") format("woff2");
   unicode-range: U+0000-00FF, U+2013-2014, U+2018-201D, U+2026, U+2212;
 }
+/* Geologica — шрифт заголовков. Узкая техническая гротеска с острой гранью:
+   длинные русские заголовки помещаются в строку, и вид у них инженерный,
+   а не «как у всех». Ось «острота» зафиксирована на максимуме, лишние оси
+   и символы вырезаны — вместо 80 КБ файл весит 14. Лицензия SIL OFL. */
+@font-face {
+  font-family: "DisplayVar";
+  font-style: normal;
+  font-weight: 500 800;
+  font-display: swap;
+  src: url("fonts/geologica-cyrillic.woff2") format("woff2");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: "DisplayVar";
+  font-style: normal;
+  font-weight: 500 800;
+  font-display: swap;
+  src: url("fonts/geologica-latin.woff2") format("woff2");
+  unicode-range: U+0020-007E, U+00A0, U+2013-2014, U+2018-201D, U+2026, U+2212;
+}
 @font-face {
   font-family: "MonoVar";
   font-style: normal;
@@ -102,6 +122,10 @@
           "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
   --font-mono: "MonoVar", ui-monospace, "SF Mono", "Cascadia Mono",
                "Roboto Mono", "Consolas", monospace;
+  /* Заголовки — отдельным шрифтом. Если он не загрузился, подставится
+     основной: вёрстка от этого не разъезжается, только вид спокойнее. */
+  --font-display: "DisplayVar", "InterVar", "Inter", -apple-system,
+                  BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
 
   --fs-base: 1.0625rem;   /* 17px — основной текст, не мельче 16px */
   --lh-base: 1.65;
@@ -188,10 +212,20 @@ h1, h2, h3, h4 {
   color: var(--navy);
   text-wrap: balance;
 }
-h1 { font-size: clamp(2rem, 1.3rem + 2.7vw, 3.4rem); letter-spacing: -0.032em; }
-h2 { font-size: clamp(1.6rem, 1.2rem + 1.7vw, 2.4rem); letter-spacing: -0.026em; }
+/* Крупные заголовки — техническим шрифтом. Мелкие (h3, h4) остаются
+   основным: на 17px характерная гротеска мешает читать, а не помогает. */
+h1, h2 {
+  font-family: var(--font-display);
+  font-weight: 750;
+}
+h1 { font-size: clamp(1.95rem, 1.25rem + 2.6vw, 3.2rem); letter-spacing: -0.028em; line-height: 1.08; }
+h2 { font-size: clamp(1.6rem, 1.2rem + 1.8vw, 2.5rem); letter-spacing: -0.022em; line-height: 1.1; }
 h3 { font-size: clamp(1.15rem, 1.03rem + 0.5vw, 1.4rem); letter-spacing: -0.015em; }
 h4 { font-size: 1.0625rem; }
+
+/* Переносы: браузер сам не оставляет одно слово на последней строке.
+   Мелочь, но заголовки и абзацы выглядят аккуратнее. */
+p, li { text-wrap: pretty; }
 
 p { margin: 0 0 var(--s-4); }
 p:last-child { margin-bottom: 0; }
@@ -247,22 +281,68 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   color: var(--ink-inverse);
   overflow: hidden;
 }
+/* Два слоя разметки, как на миллиметровке: частая мелкая клетка и поверх
+   неё крупная. Раньше была одна еле заметная сетка, и тёмные блоки читались
+   просто как заливка. */
 .section--dark::before {
   content: "";
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.032) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.032) 1px, transparent 1px);
-  background-size: var(--grid-size) var(--grid-size);
-  mask-image: radial-gradient(120% 90% at 50% 0%, #000 30%, transparent 100%);
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
+  background-size:
+    var(--grid-size) var(--grid-size),
+    var(--grid-size) var(--grid-size),
+    calc(var(--grid-size) / 4) calc(var(--grid-size) / 4),
+    calc(var(--grid-size) / 4) calc(var(--grid-size) / 4);
+  mask-image: radial-gradient(120% 90% at 50% 0%, #000 25%, transparent 100%);
   pointer-events: none;
 }
+/* Холодное свечение из-под содержимого: даёт глубину без единого нового цвета */
+.section--dark::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -20%;
+  width: 120%;
+  height: 90%;
+  transform: translateX(-50%);
+  background: radial-gradient(closest-side, rgba(31, 111, 235, 0.16), transparent 70%);
+  pointer-events: none;
+}
+.section--dark > .container { position: relative; z-index: 1; }
 .section--dark h2,
 .section--dark h3 { color: var(--ink-inverse); }
 .section--dark p { color: var(--ink-inverse-muted); }
 
-.section__head { max-width: 48rem; margin-bottom: var(--s-7); }
+/* Над каждым заголовком — та же мерная шкала с засечками, что и под цифрами
+   первого экрана. Одна деталь, повторённая по всему сайту, и страница
+   читается как лист с разметкой, а не как набор блоков. */
+.section__head {
+  position: relative;
+  max-width: 48rem;
+  margin-bottom: var(--s-7);
+  padding-top: var(--s-5);
+}
+.section__head::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  max-width: 22rem;
+  height: 6px;
+  background-image: repeating-linear-gradient(90deg,
+    var(--line-strong) 0 1px, transparent 1px 14px);
+  mask-image: linear-gradient(90deg, #000 0%, #000 55%, transparent 100%);
+}
+.section--dark .section__head::before {
+  background-image: repeating-linear-gradient(90deg,
+    rgba(255, 255, 255, 0.3) 0 1px, transparent 1px 14px);
+}
 .section__head p { color: var(--ink-muted); font-size: 1.0625rem; }
 .section--dark .section__head p { color: var(--ink-inverse-muted); }
 
@@ -319,6 +399,25 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
               color var(--t-fast), box-shadow var(--t-fast), transform var(--t-fast);
 }
 .btn:active { transform: translateY(1px); }
+
+/* Блик по главной кнопке: свет проходит слева направо один раз за наведение.
+   Ничего не двигает и не мешает нажать — только даёт отклик. */
+.btn--primary { position: relative; overflow: hidden; isolation: isolate; }
+.btn--primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(105deg, transparent 35%,
+              rgba(255, 255, 255, 0.28) 50%, transparent 65%);
+  transform: translateX(-120%);
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .btn--primary:hover::after { animation: sheen 620ms var(--ease); }
+}
+@keyframes sheen {
+  to { transform: translateX(120%); }
+}
 
 .btn--primary {
   background: var(--accent);
@@ -563,7 +662,51 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   pointer-events: none;
 }
 
-.hero__inner { padding: var(--s-9) 0; max-width: 48rem; }
+/* Рамка чертёжного листа: угловые засечки по краям первого экрана.
+   Приём из альбома чертежей — он и задаёт «инженерность», ради которой
+   не нужно ни одной картинки. Рисуется двумя углами на всю ширину. */
+.hero__frame {
+  position: absolute;
+  left: var(--s-5);
+  right: var(--s-5);
+  top: var(--s-5);
+  bottom: var(--s-5);
+  pointer-events: none;
+  z-index: 0;
+}
+.hero__frame::before,
+.hero__frame::after {
+  content: "";
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+}
+.hero__frame::before { left: 0; top: 0; border-right: 0; border-bottom: 0; }
+.hero__frame::after { right: 0; bottom: 0; border-left: 0; border-top: 0; }
+/* Медленный световой проход по первому экрану — как строка развёртки
+   прибора. Идёт 9 секунд, почти незаметен и полностью выключается
+   системной настройкой «уменьшить движение». */
+@media (prefers-reduced-motion: no-preference) {
+  .hero__scan {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: linear-gradient(180deg, transparent 0%,
+                rgba(127, 176, 255, 0.055) 48%, rgba(127, 176, 255, 0.1) 50%,
+                rgba(127, 176, 255, 0.055) 52%, transparent 100%);
+    background-size: 100% 220px;
+    background-repeat: no-repeat;
+    animation: scan 9s linear infinite;
+  }
+}
+@keyframes scan {
+  from { background-position: 0 -220px; }
+  to   { background-position: 0 calc(100% + 220px); }
+}
+
+.hero__inner { position: relative; z-index: 1; padding: var(--s-9) 0; max-width: 53rem; }
 .hero h1 { color: #fff; margin-bottom: var(--s-5); }
 .hero__lead {
   font-size: clamp(1.0625rem, 1rem + 0.35vw, 1.25rem);
@@ -608,7 +751,21 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 
 /* Спецификационная полоса под первым экраном: ключевые цифры так,
    как их подают в технической документации — значение и подпись капсом. */
+/* Над строкой цифр — мерная шкала с засечками, как на линейке.
+   Делается фоном, без единого лишнего тега. */
+.hero__spec::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -1px;
+  height: 7px;
+  background-image: repeating-linear-gradient(90deg,
+    rgba(255, 255, 255, 0.34) 0 1px, transparent 1px 16px);
+  mask-image: linear-gradient(90deg, #000 0%, #000 62%, transparent 100%);
+}
 .hero__spec {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--s-5);
@@ -675,6 +832,39 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   .hero__video { display: none; }
+}
+
+/* ---------- 6б. Подсветка за курсором -----------------------------------
+   Карточка чуть светится там, где сейчас указатель. Приём даёт ощущение
+   «живой панели приборов» и стоит дёшево: координаты подставляет скрипт
+   в две переменные, всё остальное делает CSS. На тач-экранах не включается
+   вовсе — там нет наведения. */
+@property --spot {
+  syntax: "<number>";
+  initial-value: 0;
+  inherits: false;
+}
+.service-item,
+.section--dark .card,
+.object {
+  --mx: 50%;
+  --my: 0%;
+  --spot: 0;
+}
+@media (hover: hover) and (pointer: fine) {
+  .service-item,
+  .section--dark .card {
+    background-image: radial-gradient(220px circle at var(--mx) var(--my),
+      rgba(31, 111, 235, calc(var(--spot) * 0.13)), transparent 72%);
+    transition: border-color var(--t-mid), box-shadow var(--t-mid),
+                transform var(--t-mid), --spot 300ms var(--ease);
+  }
+  .section--dark .card {
+    background-image: radial-gradient(220px circle at var(--mx) var(--my),
+      rgba(127, 176, 255, calc(var(--spot) * 0.2)), transparent 72%);
+  }
+  .service-item:hover,
+  .section--dark .card:hover { --spot: 1; }
 }
 
 /* ---------- 7. Карточки, цифры, списки ---------------------------------- */

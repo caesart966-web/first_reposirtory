@@ -793,6 +793,8 @@ def page_home(r: Renderer) -> None:
     hero = f'''  <section class="hero">
     <div class="hero__media" style="background-image:url({poster})"></div>
     {video_tag}
+    <div class="hero__scan" aria-hidden="true"></div>
+    <div class="hero__frame" aria-hidden="true"></div>
     <div class="container">
       <div class="hero__inner">
         <span class="eyebrow">{esc(h["eyebrow"])}</span>
