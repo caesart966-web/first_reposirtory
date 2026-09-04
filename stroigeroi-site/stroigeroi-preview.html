@@ -4391,8 +4391,39 @@ html[data-theme="dark"] .step.is-current .step__num {
     break-inside: avoid;
   }
 
-  a[href^="http"]::after,
-  a[href^="tel:"]::after {
+  /* Подвал на бумаге. Целиком прятать нельзя — на распечатанной странице
+     доставки или контактов это единственное место с телефоном и адресами.
+     Но заливка фирменным синим на всю страницу — это загубленный картридж,
+     поэтому краску снимаем, а колонки ссылок (по бумаге не кликнешь)
+     убираем совсем. Остаются название, контакты и магазины. */
+  .site-footer {
+    margin-top: var(--sp-5);
+    padding-top: var(--sp-3);
+    border-top: 1px solid #999;
+    background: none !important;
+    color: #000;
+  }
+
+  .site-footer a {
+    color: #000;
+  }
+
+  .footer-links,
+  .footer-brand__note,
+  .site-footer__disclaimer,
+  .site-footer .stripe-band {
+    display: none !important;
+  }
+
+  .site-footer__grid {
+    display: block;
+    padding: 0;
+  }
+
+  /* Адрес ссылки дописываем только внешним: по экранной ссылке с листа
+     не перейдёшь, а адрес перепечатать можно. Телефон сюда не входит —
+     номер и так напечатан словами, а «(tel:+7963…)» рядом с ним мусор. */
+  a[href^="http"]::after {
     content: ' (' attr(href) ')';
     font-size: 11px;
     color: #444;
@@ -4721,6 +4752,119 @@ html[data-theme='dark'] {
 .calc__result--inline {
   position: static;
   margin-top: var(--sp-5);
+}
+
+/* Подсказки поиска: подсветка совпадения и честный ответ, когда раздела нет */
+.search-suggest__item mark {
+  background: var(--sg-blue-tint);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 1px;
+  font-weight: 700;
+}
+
+.search-suggest__empty {
+  margin: 0;
+  padding: var(--sp-2) 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--sg-muted);
+}
+
+/* ==========================================================================
+   Печать списка покупок
+   ==========================================================================
+
+   Ходовой сценарий для стройматериалов: собрал корзину, распечатал,
+   поехал в магазин. На бумаге нужен список и телефон, а не интерфейс. */
+
+/* Шапка для бумаги: на экране её нет, там те же данные и так на виду */
+.print-head {
+  display: none;
+}
+
+@media print {
+  .print-head {
+    display: block;
+    margin-bottom: var(--sp-4);
+    padding-bottom: var(--sp-3);
+    border-bottom: 2px solid #000;
+  }
+
+  .print-head__brand {
+    margin: 0 0 var(--sp-2);
+    font-size: 18px;
+    font-weight: 800;
+  }
+
+  .print-head__line {
+    margin: 0;
+    font-size: 12px;
+    color: #333;
+  }
+
+  /* Всё, что на бумаге не работает: кнопки, промокод, шаги оформления,
+     подборка «часто берут вместе» и боковая колонка с итогом. Итог
+     без цен всё равно пустой, а место занимает целую страницу. */
+  .cart-layout > aside,
+  .steps,
+  .promo-field,
+  .cart-row__remove,
+  .qty button,
+  .print-head + .page-head p,
+  .breadcrumbs,
+  /* Шапка сайта целиком: логотип, поиск и красная кнопка «Каталог» —
+     это интерфейс, на бумаге он только тратит краску. Название магазина
+     и телефон печатает .print-head. */
+  .site-header,
+  .data-notice,
+  /* Всё, что идёт после списка: «часто берут вместе» — это витрина,
+     а не список покупок. Целая страница карточек впустую. */
+  .cart-layout ~ .section {
+    display: none !important;
+  }
+
+  .cart-layout {
+    display: block;
+  }
+
+  /* Строка списка: картинка не нужна, количество печатаем числом */
+  .cart-row {
+    grid-template-columns: 1fr auto auto;
+    gap: var(--sp-3);
+    padding: var(--sp-2) 0;
+    border-bottom: 1px solid #bbb;
+    break-inside: avoid;
+  }
+
+  .cart-row__media {
+    display: none;
+  }
+
+  .cart-row .qty {
+    border: 0;
+    padding: 0;
+    font-weight: 700;
+  }
+
+  .cart-row .qty input {
+    border: 0;
+    background: none;
+    width: auto;
+    font-weight: 700;
+    text-align: right;
+  }
+
+  /* Место для отметок кладовщика: без него лист бесполезен на складе */
+  .cart-list::after {
+    content: 'Отпущено ________________   Сумма ________________   Подпись ________________';
+    display: block;
+    margin-top: var(--sp-6);
+    padding-top: var(--sp-4);
+    border-top: 1px dashed #999;
+    font-size: 12px;
+    color: #444;
+  }
 }
 /* Панель переключения страниц — только для этого файла-просмотра */
 .preview-bar{position:sticky;top:0;z-index:60;display:flex;flex-wrap:wrap;align-items:center;
@@ -6033,6 +6177,14 @@ html[data-theme='dark'] {
       <ol><li><a href="#p-index">Главная</a></li><li aria-current="page">Корзина</li></ol>
     </nav>
 
+    <!-- Виден только на бумаге: с экрана эти данные и так на странице -->
+    <div class="print-head" aria-hidden="true">
+      <p class="print-head__brand">Строй-Герой — строительные материалы</p>
+      <p class="print-head__line">Список покупок от <span data-print-date>—</span></p>
+      <p class="print-head__line">Телефон магазинов: 8-963-830-09-99</p>
+      <p class="print-head__line">ул. Чубарова, 16, корп. 40 · просп. 50 лет Октября, 17А · Магистральная ул., 2/2</p>
+    </div>
+
     <div class="page-head">
       <h1>Корзина</h1>
       <p>Соберите заказ и заберите его в удобном магазине. Менеджер перезвонит и подтвердит наличие.</p>
@@ -6118,7 +6270,8 @@ html[data-theme='dark'] {
         </div>
 
         <button class="btn btn--action btn--block btn--lg" type="button" data-modal-open="modal-callback">Оформить заказ</button>
-        <p class="calc__hint">В макете оформление не работает: открывается окно заявки, чтобы показать сценарий.</p>
+        <button class="btn btn--outline btn--block gap-ms" type="button" data-print-cart><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 9V4h10v5"/><rect x="4" y="9" width="16" height="7" rx="2"/><path d="M7 14h10v6H7z"/></svg>Распечатать список</button>
+        <p class="calc__hint">В макете оформление не работает: открывается окно заявки, чтобы показать сценарий. Список печатается по-настоящему — с ним можно ехать в магазин.</p>
       </aside>
     </div>
 
@@ -6639,6 +6792,27 @@ html[data-theme='dark'] {
   var $$ = function (sel, root) {
     return Array.prototype.slice.call((root || document).querySelectorAll(sel));
   };
+  /* Строка от человека уходит в innerHTML, поэтому экранируем. В макете
+     подставить туда нечего, но привычка стоит дёшево, а в теме OpenCart
+     этот же код будет получать настоящие поисковые запросы. */
+  function escapeHtml(text) {
+    return String(text).replace(/[&<>"']/g, function (ch) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+    });
+  }
+
+  /* Подсвечиваем в названии раздела ту часть, которую человек набрал.
+     Ищем по нормализованной копии (нижний регистр, «ё» как «е»),
+     а вырезаем из оригинала — иначе подсветка съела бы заглавные буквы. */
+  function highlight(name, query) {
+    var flat = name.toLowerCase().replace(/\u0451/g, '\u0435');
+    var at = flat.indexOf(query);
+    if (at < 0) return escapeHtml(name);
+    return escapeHtml(name.slice(0, at)) +
+      '<mark>' + escapeHtml(name.slice(at, at + query.length)) + '</mark>' +
+      escapeHtml(name.slice(at + query.length));
+  }
+
   var store = {
     get: function (key, fallback) {
       try {
@@ -6723,7 +6897,8 @@ html[data-theme='dark'] {
     var note = document.createElement('p');
     note.className = 'search-result__note';
     note.textContent =
-      'Поиск заработает вместе с прайсом: сейчас искать не по чему. Ниже — раздел «' +
+      'По разделам каталога поиск уже работает — подсказки появляются прямо в строке. ' +
+      'По товарам он заработает вместе с прайсом: сейчас искать не по чему. Ниже — раздел «' +
       (head.querySelector('h1') ? head.querySelector('h1').textContent : 'каталог') +
       '» целиком.';
 
@@ -6853,9 +7028,67 @@ html[data-theme='dark'] {
   }
 
   if (searchInput && suggest) {
+    var suggestTitle = $('.search-suggest__title', suggest);
+    var suggestList = $('.search-suggest__list', suggest);
+    /* Разделы берём из меню каталога, а не переписываем сюда списком:
+       иначе он однажды разойдётся с настоящим меню, и поиск начнёт
+       предлагать разделы, которых на сайте уже нет. */
+    var sections = $$('.catalog-menu__link').map(function (link) {
+      return {
+        name: link.textContent.trim(),
+        href: link.getAttribute('href'),
+        path: link.getAttribute('data-oc-path') || '',
+        route: link.getAttribute('data-oc-route') || ''
+      };
+    });
+    var defaultList = suggestList ? suggestList.innerHTML : '';
+    var defaultTitle = suggestTitle ? suggestTitle.textContent : '';
+
+    /* Ищем по началу слова, а не по любому месту строки: «сад» должно
+       находить «Всё для сада», но не «Расходка». Регистр и «ё» не важны. */
+    var norm = function (s) { return s.toLowerCase().replace(/ё/g, 'е'); };
+    var matches = function (name, query) {
+      var words = norm(name).split(/[^a-zа-я0-9]+/);
+      return words.some(function (w) { return w.indexOf(query) === 0; });
+    };
+
+    var renderSuggest = function () {
+      if (!suggestList) return;
+      var query = norm(searchInput.value.trim());
+      if (!query) {
+        suggestList.innerHTML = defaultList;
+        if (suggestTitle) suggestTitle.textContent = defaultTitle;
+        return;
+      }
+      var found = sections.filter(function (s) { return matches(s.name, query); });
+      if (!found.length) {
+        if (suggestTitle) suggestTitle.textContent = 'Ничего не нашлось';
+        suggestList.innerHTML =
+          '<p class="search-suggest__empty">По запросу «' + escapeHtml(searchInput.value.trim()) +
+          '» раздела нет. Товары в макет ещё не загружены — позвоните ' +
+          '<a class="tel-inline" href="tel:+79638300999">8-963-830-09-99</a>, подскажем, есть ли в магазине.</p>';
+        return;
+      }
+      if (suggestTitle) {
+        suggestTitle.textContent = found.length === 1 ? 'Нашёлся раздел' : 'Разделы: ' + found.length;
+      }
+      suggestList.innerHTML = found.map(function (s) {
+        return '<a class="search-suggest__item" href="' + s.href + '?search=' +
+          encodeURIComponent(searchInput.value.trim()) + '"' +
+          (s.path ? ' data-oc-path="' + s.path + '"' : '') +
+          (s.route ? ' data-oc-route="' + s.route + '"' : '') +
+          '>' + highlight(s.name, query) + '</a>';
+      }).join('');
+    };
+
     searchInput.addEventListener('focus', function () {
       closeAllDropdowns();
       closeCatalog();
+      renderSuggest();
+      suggest.hidden = false;
+    });
+    searchInput.addEventListener('input', function () {
+      renderSuggest();
       suggest.hidden = false;
     });
     searchInput.addEventListener('click', function (e) { e.stopPropagation(); });
@@ -7111,6 +7344,25 @@ html[data-theme='dark'] {
   } else {
     revealables.forEach(function (el) { el.classList.add('is-in'); });
   }
+
+  /* ======================================================================
+     Печать списка покупок
+     Ходовой сценарий для стройматериалов: собрал корзину, распечатал,
+     поехал в магазин. Печатает браузер, ничего никуда не отправляется.
+     ====================================================================== */
+  $$('[data-print-cart]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      /* Дату ставим в момент печати, а не в разметку: лист без даты
+         через неделю невозможно отличить от вчерашнего. */
+      var stamp = $('[data-print-date]');
+      if (stamp) {
+        stamp.textContent = new Date().toLocaleDateString('ru-RU', {
+          day: 'numeric', month: 'long', year: 'numeric'
+        });
+      }
+      window.print();
+    });
+  });
 
   /* ======================================================================
      Плашка про cookie

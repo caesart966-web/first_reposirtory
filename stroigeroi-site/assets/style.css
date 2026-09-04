@@ -4381,8 +4381,39 @@ html[data-theme="dark"] .step.is-current .step__num {
     break-inside: avoid;
   }
 
-  a[href^="http"]::after,
-  a[href^="tel:"]::after {
+  /* Подвал на бумаге. Целиком прятать нельзя — на распечатанной странице
+     доставки или контактов это единственное место с телефоном и адресами.
+     Но заливка фирменным синим на всю страницу — это загубленный картридж,
+     поэтому краску снимаем, а колонки ссылок (по бумаге не кликнешь)
+     убираем совсем. Остаются название, контакты и магазины. */
+  .site-footer {
+    margin-top: var(--sp-5);
+    padding-top: var(--sp-3);
+    border-top: 1px solid #999;
+    background: none !important;
+    color: #000;
+  }
+
+  .site-footer a {
+    color: #000;
+  }
+
+  .footer-links,
+  .footer-brand__note,
+  .site-footer__disclaimer,
+  .site-footer .stripe-band {
+    display: none !important;
+  }
+
+  .site-footer__grid {
+    display: block;
+    padding: 0;
+  }
+
+  /* Адрес ссылки дописываем только внешним: по экранной ссылке с листа
+     не перейдёшь, а адрес перепечатать можно. Телефон сюда не входит —
+     номер и так напечатан словами, а «(tel:+7963…)» рядом с ним мусор. */
+  a[href^="http"]::after {
     content: ' (' attr(href) ')';
     font-size: 11px;
     color: #444;
@@ -4711,4 +4742,117 @@ html[data-theme='dark'] {
 .calc__result--inline {
   position: static;
   margin-top: var(--sp-5);
+}
+
+/* Подсказки поиска: подсветка совпадения и честный ответ, когда раздела нет */
+.search-suggest__item mark {
+  background: var(--sg-blue-tint);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 1px;
+  font-weight: 700;
+}
+
+.search-suggest__empty {
+  margin: 0;
+  padding: var(--sp-2) 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--sg-muted);
+}
+
+/* ==========================================================================
+   Печать списка покупок
+   ==========================================================================
+
+   Ходовой сценарий для стройматериалов: собрал корзину, распечатал,
+   поехал в магазин. На бумаге нужен список и телефон, а не интерфейс. */
+
+/* Шапка для бумаги: на экране её нет, там те же данные и так на виду */
+.print-head {
+  display: none;
+}
+
+@media print {
+  .print-head {
+    display: block;
+    margin-bottom: var(--sp-4);
+    padding-bottom: var(--sp-3);
+    border-bottom: 2px solid #000;
+  }
+
+  .print-head__brand {
+    margin: 0 0 var(--sp-2);
+    font-size: 18px;
+    font-weight: 800;
+  }
+
+  .print-head__line {
+    margin: 0;
+    font-size: 12px;
+    color: #333;
+  }
+
+  /* Всё, что на бумаге не работает: кнопки, промокод, шаги оформления,
+     подборка «часто берут вместе» и боковая колонка с итогом. Итог
+     без цен всё равно пустой, а место занимает целую страницу. */
+  .cart-layout > aside,
+  .steps,
+  .promo-field,
+  .cart-row__remove,
+  .qty button,
+  .print-head + .page-head p,
+  .breadcrumbs,
+  /* Шапка сайта целиком: логотип, поиск и красная кнопка «Каталог» —
+     это интерфейс, на бумаге он только тратит краску. Название магазина
+     и телефон печатает .print-head. */
+  .site-header,
+  .data-notice,
+  /* Всё, что идёт после списка: «часто берут вместе» — это витрина,
+     а не список покупок. Целая страница карточек впустую. */
+  .cart-layout ~ .section {
+    display: none !important;
+  }
+
+  .cart-layout {
+    display: block;
+  }
+
+  /* Строка списка: картинка не нужна, количество печатаем числом */
+  .cart-row {
+    grid-template-columns: 1fr auto auto;
+    gap: var(--sp-3);
+    padding: var(--sp-2) 0;
+    border-bottom: 1px solid #bbb;
+    break-inside: avoid;
+  }
+
+  .cart-row__media {
+    display: none;
+  }
+
+  .cart-row .qty {
+    border: 0;
+    padding: 0;
+    font-weight: 700;
+  }
+
+  .cart-row .qty input {
+    border: 0;
+    background: none;
+    width: auto;
+    font-weight: 700;
+    text-align: right;
+  }
+
+  /* Место для отметок кладовщика: без него лист бесполезен на складе */
+  .cart-list::after {
+    content: 'Отпущено ________________   Сумма ________________   Подпись ________________';
+    display: block;
+    margin-top: var(--sp-6);
+    padding-top: var(--sp-4);
+    border-top: 1px dashed #999;
+    font-size: 12px;
+    color: #444;
+  }
 }

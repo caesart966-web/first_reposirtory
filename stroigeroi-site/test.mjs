@@ -277,6 +277,63 @@ for (const name of PAGES) {
 }
 
 /* ==========================================================================
+   Поиск по разделам каталога
+   ========================================================================== */
+
+{
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await ctx.newPage();
+  await page.goto('file://' + path.join(DIR, 'index.html'), { waitUntil: 'load' });
+  await page.waitForTimeout(300);
+  await page.click('[data-search-input]');
+
+  const ask = async (query) => {
+    await page.fill('[data-search-input]', query);
+    await page.waitForTimeout(150);
+    /* Пробелы приводим к обычным: сборщик связывает предлоги неразрывным
+       пробелом, и «Всё для сада» в разметке содержит U+00A0. Сравнивать
+       с ним напрямую — значит проверять типографику вместо поиска. */
+    return page.evaluate(() => {
+      const flat = (s) => s.replace(/ /g, ' ').trim();
+      return {
+        items: [...document.querySelectorAll('.search-suggest__item')].map((a) => flat(a.textContent)),
+        href: document.querySelector('.search-suggest__item')?.getAttribute('href') || '',
+        empty: document.querySelector('.search-suggest__empty')?.innerHTML || '',
+      };
+    });
+  };
+
+  /* Ищем по началу слова: «сад» находит «Всё для сада» и не находит
+     «Расходка», где «сад» стоит в середине другого слова. */
+  const garden = await ask('сад');
+  if (!garden.items.some((t) => /Всё для сада/.test(t))) {
+    fail(`поиск: «сад» должен находить «Всё для сада», получено ${JSON.stringify(garden.items)}`);
+  }
+  if (garden.items.some((t) => /Расходка/.test(t))) {
+    fail('поиск: «сад» не должен находить «Расходка» — совпадение не с начала слова');
+  }
+  /* Ссылка ведёт в каталог с запросом и сохраняет номер категории OpenCart */
+  if (!/catalog\.html\?search=/.test(garden.href)) {
+    fail(`поиск: подсказка должна вести в каталог с запросом, получено «${garden.href}»`);
+  }
+
+  /* «ё» и регистр не должны мешать */
+  const fastener = await ask('КРЕПЕЖ');
+  if (!fastener.items.some((t) => /Крепёж/.test(t))) {
+    fail(`поиск: «КРЕПЕЖ» должен находить «Крепёж и фурнитура», получено ${JSON.stringify(fastener.items)}`);
+  }
+
+  /* Чего нет — про то честный ответ с телефоном, а не пустота */
+  const nothing = await ask('<b>гвозди</b>');
+  if (!nothing.empty) fail('поиск: на запрос без совпадений нужен ответ, а не пустой список');
+  if (!/tel:/.test(nothing.empty)) fail('поиск: в ответе «ничего не нашлось» должен быть телефон');
+  /* Запрос уходит в innerHTML — теги обязаны быть экранированы */
+  if (/<b>/.test(nothing.empty)) fail('поиск: запрос подставляется в разметку без экранирования');
+
+  await ctx.close();
+}
+
+/* ==========================================================================
    Карточка товара подстраивается под свою ширину
    ========================================================================== */
 

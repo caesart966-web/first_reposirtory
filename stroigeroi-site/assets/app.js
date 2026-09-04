@@ -11,6 +11,27 @@
   var $$ = function (sel, root) {
     return Array.prototype.slice.call((root || document).querySelectorAll(sel));
   };
+  /* Строка от человека уходит в innerHTML, поэтому экранируем. В макете
+     подставить туда нечего, но привычка стоит дёшево, а в теме OpenCart
+     этот же код будет получать настоящие поисковые запросы. */
+  function escapeHtml(text) {
+    return String(text).replace(/[&<>"']/g, function (ch) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+    });
+  }
+
+  /* Подсвечиваем в названии раздела ту часть, которую человек набрал.
+     Ищем по нормализованной копии (нижний регистр, «ё» как «е»),
+     а вырезаем из оригинала — иначе подсветка съела бы заглавные буквы. */
+  function highlight(name, query) {
+    var flat = name.toLowerCase().replace(/\u0451/g, '\u0435');
+    var at = flat.indexOf(query);
+    if (at < 0) return escapeHtml(name);
+    return escapeHtml(name.slice(0, at)) +
+      '<mark>' + escapeHtml(name.slice(at, at + query.length)) + '</mark>' +
+      escapeHtml(name.slice(at + query.length));
+  }
+
   var store = {
     get: function (key, fallback) {
       try {
@@ -95,7 +116,8 @@
     var note = document.createElement('p');
     note.className = 'search-result__note';
     note.textContent =
-      'Поиск заработает вместе с прайсом: сейчас искать не по чему. Ниже — раздел «' +
+      'По разделам каталога поиск уже работает — подсказки появляются прямо в строке. ' +
+      'По товарам он заработает вместе с прайсом: сейчас искать не по чему. Ниже — раздел «' +
       (head.querySelector('h1') ? head.querySelector('h1').textContent : 'каталог') +
       '» целиком.';
 
@@ -225,9 +247,67 @@
   }
 
   if (searchInput && suggest) {
+    var suggestTitle = $('.search-suggest__title', suggest);
+    var suggestList = $('.search-suggest__list', suggest);
+    /* Разделы берём из меню каталога, а не переписываем сюда списком:
+       иначе он однажды разойдётся с настоящим меню, и поиск начнёт
+       предлагать разделы, которых на сайте уже нет. */
+    var sections = $$('.catalog-menu__link').map(function (link) {
+      return {
+        name: link.textContent.trim(),
+        href: link.getAttribute('href'),
+        path: link.getAttribute('data-oc-path') || '',
+        route: link.getAttribute('data-oc-route') || ''
+      };
+    });
+    var defaultList = suggestList ? suggestList.innerHTML : '';
+    var defaultTitle = suggestTitle ? suggestTitle.textContent : '';
+
+    /* Ищем по началу слова, а не по любому месту строки: «сад» должно
+       находить «Всё для сада», но не «Расходка». Регистр и «ё» не важны. */
+    var norm = function (s) { return s.toLowerCase().replace(/ё/g, 'е'); };
+    var matches = function (name, query) {
+      var words = norm(name).split(/[^a-zа-я0-9]+/);
+      return words.some(function (w) { return w.indexOf(query) === 0; });
+    };
+
+    var renderSuggest = function () {
+      if (!suggestList) return;
+      var query = norm(searchInput.value.trim());
+      if (!query) {
+        suggestList.innerHTML = defaultList;
+        if (suggestTitle) suggestTitle.textContent = defaultTitle;
+        return;
+      }
+      var found = sections.filter(function (s) { return matches(s.name, query); });
+      if (!found.length) {
+        if (suggestTitle) suggestTitle.textContent = 'Ничего не нашлось';
+        suggestList.innerHTML =
+          '<p class="search-suggest__empty">По запросу «' + escapeHtml(searchInput.value.trim()) +
+          '» раздела нет. Товары в макет ещё не загружены — позвоните ' +
+          '<a class="tel-inline" href="tel:+79638300999">8-963-830-09-99</a>, подскажем, есть ли в магазине.</p>';
+        return;
+      }
+      if (suggestTitle) {
+        suggestTitle.textContent = found.length === 1 ? 'Нашёлся раздел' : 'Разделы: ' + found.length;
+      }
+      suggestList.innerHTML = found.map(function (s) {
+        return '<a class="search-suggest__item" href="' + s.href + '?search=' +
+          encodeURIComponent(searchInput.value.trim()) + '"' +
+          (s.path ? ' data-oc-path="' + s.path + '"' : '') +
+          (s.route ? ' data-oc-route="' + s.route + '"' : '') +
+          '>' + highlight(s.name, query) + '</a>';
+      }).join('');
+    };
+
     searchInput.addEventListener('focus', function () {
       closeAllDropdowns();
       closeCatalog();
+      renderSuggest();
+      suggest.hidden = false;
+    });
+    searchInput.addEventListener('input', function () {
+      renderSuggest();
       suggest.hidden = false;
     });
     searchInput.addEventListener('click', function (e) { e.stopPropagation(); });
@@ -483,6 +563,25 @@
   } else {
     revealables.forEach(function (el) { el.classList.add('is-in'); });
   }
+
+  /* ======================================================================
+     Печать списка покупок
+     Ходовой сценарий для стройматериалов: собрал корзину, распечатал,
+     поехал в магазин. Печатает браузер, ничего никуда не отправляется.
+     ====================================================================== */
+  $$('[data-print-cart]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      /* Дату ставим в момент печати, а не в разметку: лист без даты
+         через неделю невозможно отличить от вчерашнего. */
+      var stamp = $('[data-print-date]');
+      if (stamp) {
+        stamp.textContent = new Date().toLocaleDateString('ru-RU', {
+          day: 'numeric', month: 'long', year: 'numeric'
+        });
+      }
+      window.print();
+    });
+  });
 
   /* ======================================================================
      Плашка про cookie

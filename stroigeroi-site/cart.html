@@ -21,8 +21,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="assets/logo.png" type="image/png">
 <link rel="apple-touch-icon" href="assets/logo.png">
-<link rel="preload" href="assets/style.css?v=aa3725bc" as="style">
-<link rel="stylesheet" href="assets/style.css?v=aa3725bc">
+<link rel="preload" href="assets/style.css?v=e7b00233" as="style">
+<link rel="stylesheet" href="assets/style.css?v=e7b00233">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Store", "name": "Строй-Герой", "slogan": "Наши материалы — ваша уверенность", "url": "https://stroigeroi.ru/", "telephone": "+7-963-830-09-99", "email": "stroigeroi41@mail.ru", "areaServed": "Камчатский край", "department": [{"@type": "Store", "name": "Строй-Герой — ул. Чубарова, 16, корп. 40", "telephone": "+7-963-830-09-99", "address": {"@type": "PostalAddress", "streetAddress": "ул. Чубарова, 16, корп. 40", "addressLocality": "Петропавловск-Камчатский", "addressRegion": "Камчатский край", "addressCountry": "RU"}}, {"@type": "Store", "name": "Строй-Герой — просп. 50 лет Октября, 17А", "telephone": "+7-963-830-09-99", "address": {"@type": "PostalAddress", "streetAddress": "просп. 50 лет Октября, 17А", "addressLocality": "Петропавловск-Камчатский", "addressRegion": "Камчатский край", "addressCountry": "RU"}}, {"@type": "Store", "name": "Строй-Герой — Магистральная ул., 2/2", "telephone": "+7-963-830-09-99", "address": {"@type": "PostalAddress", "streetAddress": "Магистральная ул., 2/2", "addressLocality": "Елизово", "addressRegion": "Камчатский край", "addressCountry": "RU"}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Главная", "item": "https://stroigeroi.ru/index.html"}, {"@type": "ListItem", "position": 2, "name": "Корзина", "item": "https://stroigeroi.ru/cart.html"}]}</script>
 <script>
@@ -140,6 +140,14 @@
       <ol><li><a href="index.html">Главная</a></li><li aria-current="page">Корзина</li></ol>
     </nav>
 
+    <!-- Виден только на бумаге: с экрана эти данные и так на странице -->
+    <div class="print-head" aria-hidden="true">
+      <p class="print-head__brand">Строй-Герой — строительные материалы</p>
+      <p class="print-head__line">Список покупок от <span data-print-date>—</span></p>
+      <p class="print-head__line">Телефон магазинов: 8-963-830-09-99</p>
+      <p class="print-head__line">ул. Чубарова, 16, корп. 40 · просп. 50 лет Октября, 17А · Магистральная ул., 2/2</p>
+    </div>
+
     <div class="page-head">
       <h1>Корзина</h1>
       <p>Соберите заказ и заберите его в удобном магазине. Менеджер перезвонит и подтвердит наличие.</p>
@@ -225,7 +233,8 @@
         </div>
 
         <button class="btn btn--action btn--block btn--lg" type="button" data-modal-open="modal-callback">Оформить заказ</button>
-        <p class="calc__hint">В макете оформление не работает: открывается окно заявки, чтобы показать сценарий.</p>
+        <button class="btn btn--outline btn--block gap-ms" type="button" data-print-cart><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 9V4h10v5"/><rect x="4" y="9" width="16" height="7" rx="2"/><path d="M7 14h10v6H7z"/></svg>Распечатать список</button>
+        <p class="calc__hint">В макете оформление не работает: открывается окно заявки, чтобы показать сценарий. Список печатается по-настоящему — с ним можно ехать в магазин.</p>
       </aside>
     </div>
 
@@ -459,7 +468,7 @@
 </dialog>
 
 
-<script src="assets/app.js?v=572c58d8"></script>
+<script src="assets/app.js?v=ead8a1f9"></script>
 <script type="speculationrules">
 {
   "prefetch": [{"source": "document", "where": {"selector_matches": "a[href$='.html']"}, "eagerness": "moderate"}],
