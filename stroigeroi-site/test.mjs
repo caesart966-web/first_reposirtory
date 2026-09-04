@@ -149,6 +149,36 @@ for (const name of PAGES) {
     for (const item of low.slice(0, 6)) {
       fail(`${name} (${theme}): контраст ${item.got} вместо ${item.need} — ${item.sel} ${item.size}px «${item.text}»`);
     }
+
+    /* Пунктир вокруг пустых мест должен быть виден. Проверка контраста
+       текста этого не ловит: она смотрит на буквы, а «здесь ничего нет»
+       читается по рамке. Один раз цвет пунктира был зашит под светлую
+       тему, в тёмной давал контраст 1.03, и плейсхолдер выглядел
+       обычным залитым чипом — тесты при этом были зелёные. */
+    const ph = await page.evaluate(() => {
+      const el = document.querySelector('.ph, .data-notice');
+      if (!el) return null;
+      const parse = (s) => (s.match(/[\d.]+/g) || []).map(Number);
+      const lum = (c) => {
+        const [r, g, b] = c.map((v) => {
+          const s = v / 255;
+          return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+        });
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      };
+      const cs = getComputedStyle(el);
+      const border = parse(cs.borderTopColor);
+      const bg = parse(cs.backgroundColor);
+      if (border.length < 3 || bg.length < 3) return null;
+      const a = border[3] === undefined ? 1 : border[3];
+      const mixed = [0, 1, 2].map((i) => border[i] * a + bg[i] * (1 - a));
+      const [hi, lo] = [lum(mixed), lum(bg.slice(0, 3))].sort((x, y) => y - x);
+      return { ratio: +((hi + 0.05) / (lo + 0.05)).toFixed(2), color: cs.borderTopColor };
+    });
+    if (ph && ph.ratio < 1.6) {
+      fail(`${name} (${theme}): пунктир пустых мест сливается с фоном — контраст ${ph.ratio}, цвет ${ph.color}`);
+    }
+
     await ctx.close();
   }
 }
