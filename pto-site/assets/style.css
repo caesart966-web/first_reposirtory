@@ -526,7 +526,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 /* На ноутбуках (примерно 1000–1300px) в строку шапки перестаёт помещаться
    всё сразу, и кнопка вылезает за правый край. Подпись под названием —
    украшение, её и убираем, остальное поджимаем. */
-@media (min-width: 981px) and (max-width: 1320px) {
+@media (min-width: 61.3125em) and (max-width: 82.4375em) {
   .header .logo__sub { display: none; }
   .header__inner { gap: var(--s-4); }
   .header .nav__link { padding: 0 var(--s-2); }
@@ -794,7 +794,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 }
 /* На узких экранах три колонки цифр становятся такими тесными, что подписи
    не помещаются. Раскладываем их по одной в строку — читаются полностью. */
-@media (max-width: 560px) {
+@media (max-width: 34.9375em) {
   .hero__spec { grid-template-columns: minmax(0, 1fr); gap: var(--s-4); }
   .hero__spec-label { max-width: 26rem; }
 }
@@ -852,7 +852,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 
 /* Видео играет и на телефонах — решение заказчика. Файл лёгкий (~1,3 МБ),
    а при включённой экономии трафика и отключённых анимациях остаётся кадр. */
-@media (max-width: 980px) {
+@media (max-width: 61.1875em) {
   .hero { min-height: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -992,7 +992,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   color: #e7eef6;
   background: linear-gradient(180deg, rgba(7,17,30,0) 0%, rgba(7,17,30,0.75) 100%);
 }
-@media (max-width: 720px) {
+@media (max-width: 44.9375em) {
   .media-band { aspect-ratio: 4 / 3; }
   .media-band__caption { font-size: 0.6875rem; padding: var(--s-6) var(--s-4) var(--s-3); }
 }
@@ -1150,7 +1150,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 .object--wide .object__scope { font-size: 1.0625rem; max-width: 34rem; }
 .object--wide .spec { margin-top: var(--s-5); }
 
-@media (max-width: 780px) {
+@media (max-width: 48.6875em) {
   .object--wide { grid-template-columns: minmax(0, 1fr); }
   .object--wide .object__media {
     aspect-ratio: 16 / 10;
@@ -1161,10 +1161,10 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   .object--wide .object__body { padding: var(--s-5); }
 }
 
-@media (max-width: 1020px) {
+@media (max-width: 63.6875em) {
   .object-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-@media (max-width: 720px) {
+@media (max-width: 44.9375em) {
   .object-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
@@ -1206,8 +1206,15 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 }
 .rec__body { min-width: 0; }
 
-@media (max-width: 720px) {
+@media (max-width: 44.9375em) {
   .rec--doc { grid-template-columns: 96px minmax(0, 1fr); gap: var(--s-4); }
+}
+/* Совсем узкий экран (или крупный шрифт в браузере): превьюшка встаёт над
+   текстом. В две колонки текстовому столбцу остаётся меньше 200 точек,
+   и ссылка «Посмотреть письмо» перестаёт помещаться. */
+@media (max-width: 26em) {
+  .rec--doc { grid-template-columns: minmax(0, 1fr); }
+  .rec__thumb { width: 108px; }
 }
 .rec__head { margin-bottom: var(--s-4); }
 .rec__head h3 { margin-bottom: var(--s-2); }
@@ -1342,7 +1349,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 }
 .lightbox__img { display: block; width: 100%; height: auto; }
 
-@media (max-width: 720px) {
+@media (max-width: 44.9375em) {
   .lightbox { padding: var(--s-3); }
   .lightbox__caption { display: none; }
   .lightbox__bar { justify-content: flex-end; }
@@ -1371,7 +1378,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 .lightbox__nav svg { width: 18px; height: 18px; }
 .lightbox__inner { position: relative; }
 
-@media (max-width: 1080px) {
+@media (max-width: 67.4375em) {
   .lightbox__nav--prev { left: 6px; }
   .lightbox__nav--next { right: 6px; }
 }
@@ -1483,7 +1490,7 @@ body.is-locked { overflow: hidden; }
 /* На больших экранах группа читается как разворот альбома: слева описание
    раздела, справа его состав. Заголовок «прилипает» и остаётся перед
    глазами, пока листаешь длинный список услуг. */
-@media (min-width: 1100px) {
+@media (min-width: 68.75em) {
   .group {
     display: grid;
     grid-template-columns: 18rem minmax(0, 1fr);
@@ -2055,10 +2062,10 @@ body.is-locked { overflow: hidden; }
 .contact-card--phone .contact-card__value { font-size: 1.25rem; }
 .contact-card__note { font-size: 0.875rem; color: var(--ink-muted); margin: 0; }
 
-@media (max-width: 900px) {
+@media (max-width: 56.1875em) {
   .contact-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-@media (max-width: 520px) {
+@media (max-width: 32.4375em) {
   .contact-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
@@ -2119,12 +2126,12 @@ html {
 .mt-6 { margin-top: var(--s-7); }
 .mb-0 { margin-bottom: 0; }
 
-@media (max-width: 1120px) {
+@media (max-width: 69.9375em) {
   /* Шапка тесная: телефон уступает место меню и кнопке */
   .header__phone { display: none; }
 }
 
-@media (max-width: 1020px) {
+@media (max-width: 63.6875em) {
   .offer-grid { grid-template-columns: minmax(0, 1fr); gap: var(--s-6); }
   .split { grid-template-columns: minmax(0, 1fr); gap: var(--s-6); }
   .sticky-box { position: static; }
@@ -2133,7 +2140,7 @@ html {
   .footer__top { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-6); }
 }
 
-@media (max-width: 980px) {
+@media (max-width: 61.1875em) {
   .nav { display: none; }
   .nav.is-open {
     display: block;
@@ -2162,7 +2169,7 @@ html {
   body { padding-bottom: 66px; }   /* место под панель звонка */
 }
 
-@media (max-width: 720px) {
+@media (max-width: 44.9375em) {
   :root { --s-8: 3.25rem; --s-9: 4rem; --grid-size: 40px; }
   .container { padding: 0 var(--s-4); }
   .grid--2, .grid--3, .grid--4 { grid-template-columns: minmax(0, 1fr); }
@@ -2177,7 +2184,7 @@ html {
   .section__head { margin-bottom: var(--s-6); }
 }
 
-@media (max-width: 380px) {
+@media (max-width: 23.6875em) {
   .container { padding: 0 var(--s-3); }
   .logo__name { font-size: 0.9375rem; }
   .card, .panel { padding: var(--s-4); }

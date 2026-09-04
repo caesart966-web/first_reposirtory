@@ -139,7 +139,7 @@
       var start = function () {
         // На узких экранах берём облегчённый файл, если он подготовлен:
         // 400 КБ вместо 1,2 МБ на мобильном интернете заметны сразу.
-        var narrow = window.matchMedia('(max-width: 700px)').matches;
+        var narrow = window.matchMedia('(max-width: 43.6875em)').matches;
         var list = (narrow && video.getAttribute('data-src-mobile')) ||
                    video.getAttribute('data-src') || '';
         list.split('|').forEach(function (src) {

@@ -169,23 +169,34 @@ def photo_img(site: Site, rel: str, alt: str, sizes: str, css: str = "") -> str:
     """Фотография с уменьшенными копиями и отложенной загрузкой.
 
     Браузер сам берёт вариант под ширину экрана: телефону уходит копия
-    на 480 точек вместо снимка на 1600. Копий нет — отдаём оригинал,
-    вёрстка от этого не зависит."""
+    на 480 точек вместо снимка на 1600. Форматов два: сначала предлагается
+    AVIF (легче примерно на четверть), а кто его не понимает — берёт webp.
+    Копий нет — отдаём оригинал, вёрстка от этого не зависит."""
     base, _, ext = rel.rpartition(".")
-    variants = [(w, f"{base}-{w}.webp") for w in THUMB_WIDTHS
-                if asset_exists(f"{base}-{w}.webp")]
     size = image_size(rel)
-    if size and (not variants or size[0] > variants[-1][0]):
-        variants.append((size[0], rel))          # оригинал — самый крупный вариант
-    src = site.url(variants[-1][1] if variants else rel)
-    srcset = ""
-    if len(variants) > 1:
-        pairs = ", ".join(f"{site.url(p)} {w}w" for w, p in variants)
-        srcset = f' srcset="{pairs}" sizes="{sizes}"'
+
+    def row(fmt: str):
+        """Строка вариантов одного формата: «файл 480w, файл 960w»."""
+        got = [(w, f"{base}-{w}.{fmt}") for w in THUMB_WIDTHS
+               if asset_exists(f"{base}-{w}.{fmt}")]
+        if fmt == "webp" and size and (not got or size[0] > got[-1][0]):
+            got.append((size[0], rel))      # оригинал — самый крупный вариант
+        return got
+
+    webp = row("webp")
+    avif = row("avif")
+    src = site.url(webp[-1][1] if webp else rel)
     dims = f' width="{size[0]}" height="{size[1]}"' if size else ""
     cls = f' class="{css}"' if css else ""
-    return (f'<img{cls} src="{src}"{srcset}{dims} alt="{esc(alt)}"'
-            f' loading="lazy" decoding="async">')
+    pairs = lambda got: ", ".join(f"{site.url(p)} {w}w" for w, p in got)
+    srcset = f' srcset="{pairs(webp)}" sizes="{sizes}"' if len(webp) > 1 else ""
+    img = (f'<img{cls} src="{src}"{srcset}{dims} alt="{esc(alt)}"'
+           f' loading="lazy" decoding="async">')
+    if len(avif) > 1:
+        return ('<picture>'
+                f'<source type="image/avif" srcset="{pairs(avif)}" sizes="{sizes}">'
+                f'{img}</picture>')
+    return img
 
 
 def block_media(site: Site, cfg: dict) -> str:
@@ -604,7 +615,11 @@ def schema_organization(site: Site) -> dict:
         "description": site.company["about_short"],
         "url": site.abs_url("/"),
         "logo": site.abs_url("/assets/img/logo.svg"),
-        "image": site.abs_url("/assets/img/og-default.png"),
+        "image": site.abs_url(site.raw.get("og_image", "/assets/img/og-default.jpg")),
+        # sameAs — официальные страницы компании в других сервисах. По ним
+        # поисковик связывает сайт, канал в Telegram и канал в MAX в одну
+        # карточку организации.
+        "sameAs": [u for u in (c.get("telegram_url"), c.get("max_url")) if u],
         "email": c["email"],
         "telephone": c["phone_href"],
         "taxID": site.company.get("inn", ""),
@@ -1275,6 +1290,28 @@ def write_sitemap(site: Site, pages) -> None:
     (DIST_DIR / "sitemap.xml").write_text(xml, encoding="utf-8")
 
 
+def write_manifest(site: Site) -> None:
+    """Файл для «добавить на домашний экран»: название, иконки и цвета.
+    Без него телефон подписывает ярлык адресом сайта."""
+    data = {
+        "name": site.company["name"] + " — " + site.company["tagline"],
+        "short_name": site.company["name"],
+        "start_url": site.url("/"),
+        "display": "standalone",
+        "background_color": "#0a1420",
+        "theme_color": "#0a1420",
+        "lang": "ru",
+        "icons": [
+            {"src": site.url("/assets/img/apple-touch-icon.png"),
+             "sizes": "180x180", "type": "image/png"},
+            {"src": site.url("/assets/img/favicon.svg"),
+             "sizes": "any", "type": "image/svg+xml"},
+        ],
+    }
+    (DIST_DIR / "site.webmanifest").write_text(
+        json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
 def write_robots(site: Site, noindex: bool = False) -> None:
     if noindex:
         # Превью для показа заказчику: в поиск попадать не должно
@@ -1285,6 +1322,92 @@ def write_robots(site: Site, noindex: bool = False) -> None:
                 "Disallow: /assets/config.js\n\n"
                 f"Sitemap: {site.abs_url('/sitemap.xml')}\n")
     (DIST_DIR / "robots.txt").write_text(text, encoding="utf-8")
+
+
+def minify_css(text: str) -> str:
+    """Убирает из стилей комментарии и лишние пробелы.
+
+    Исходник assets/style.css остаётся как есть — с комментариями, по нему
+    сайт и правят. Сжимается только копия в dist/, которую качает браузер."""
+    text = re.sub(r"/\*.*?\*/", "", text, flags=re.S)          # комментарии
+    text = re.sub(r"\s+", " ", text)                            # переносы строк
+    text = re.sub(r"\s*([{}:;,>~])\s*", r"\1", text)            # пробелы у знаков
+    text = re.sub(r";}", "}", text)                             # лишняя точка с запятой
+    return text.strip()
+
+
+def minify_js(text: str) -> str:
+    """Осторожное сжатие скрипта: убираются только строки-комментарии
+    и отступы в начале строк.
+
+    Настоящие минификаторы разбирают код целиком; здесь это лишнее и рискованно:
+    выражение вроде 'https://' внутри строки регулярка легко примет за начало
+    комментария и сломает сайт. Поэтому трогаем только то, что заведомо
+    безопасно — от этого файл худеет примерно на треть."""
+    out = []
+    in_block = False
+    for line in text.split("\n"):
+        stripped = line.strip()
+        if in_block:
+            if "*/" in stripped:
+                in_block = False
+                tail = stripped.split("*/", 1)[1].strip()
+                if tail:
+                    out.append(tail)
+            continue
+        if stripped.startswith("/*"):
+            if "*/" not in stripped:
+                in_block = True
+            continue
+        if stripped.startswith("//"):
+            continue
+        if stripped:
+            out.append(stripped)
+    return "\n".join(out)
+
+
+def minify_html(text: str) -> str:
+    """Убирает html-комментарии и отступы между тегами.
+
+    Содержимое тегов не трогаем: внутри может быть текст, где пробелы важны."""
+    text = re.sub(r"<!--(?!\[if).*?-->", "", text, flags=re.S)
+    text = re.sub(r"^[ \t]+", "", text, flags=re.M)
+    text = re.sub(r"\n{2,}", "\n", text)
+    return text
+
+
+def shrink_dist() -> None:
+    """Сжимает то, что уезжает к посетителю: стили, скрипт и страницы.
+
+    Работает только с папкой dist/. Исходники не меняются — их читают люди."""
+    before = after = 0
+    for path in list(DIST_DIR.rglob("*.css")) + list(DIST_DIR.rglob("*.js")) \
+            + list(DIST_DIR.rglob("*.html")):
+        if path.name == "config.js":        # настройки заказчика не трогаем
+            continue
+        text = path.read_text(encoding="utf-8")
+        before += len(text.encode())
+        if path.suffix == ".css":
+            text = minify_css(text)
+        elif path.suffix == ".js":
+            text = minify_js(text)
+        else:
+            text = minify_html(text)
+        path.write_text(text, encoding="utf-8")
+        after += len(text.encode())
+    if before:
+        print(f"Сжатие: {before // 1024} КБ -> {after // 1024} КБ "
+              f"(минус {round((1 - after / before) * 100)}%)")
+
+
+def copy_server_config() -> None:
+    """Кладёт настройки веб-сервера в корень сайта (server/.htaccess).
+
+    Это кеширование, сжатие и заголовки безопасности для обычного хостинга.
+    На GitHub Pages файл не действует и не мешает."""
+    src = ROOT / "server" / ".htaccess"
+    if src.exists():
+        shutil.copy2(src, DIST_DIR / ".htaccess")
 
 
 def copy_assets() -> None:
@@ -1346,9 +1469,14 @@ def build(regen_media: bool = False, base_path: str = None,
     copy_assets()
     write_sitemap(site, r.pages)
     write_robots(site, noindex=noindex)
+    write_manifest(site)
+    copy_server_config()
 
     # Проверка, что заголовки нигде не повторяются
     check_unique(r)
+
+    # Последним шагом сжимаем то, что уедет к посетителю
+    shrink_dist()
 
     print(f"\nГотово. Собрано страниц: {len(r.pages) + 1} (включая 404).")
     print(f"Сайт лежит в: {DIST_DIR}")

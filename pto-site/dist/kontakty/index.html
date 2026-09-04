@@ -1,9 +1,4 @@
 <!doctype html>
-<!--
-  Общий каркас всех страниц сайта.
-  Шапка и подвал описаны ЗДЕСЬ и только здесь: поправите — изменится на всех страницах.
-  Всё, что в двойных фигурных скобках, подставляет генератор build.py.
--->
 <html lang="ru">
 <head>
 <meta charset="utf-8">
@@ -12,12 +7,9 @@
 <meta name="description" content="Телефон, почта и Telegram. Работаем удалённо по всей России, отвечаем в течение рабочего дня. Опишите объект — оценим объём и сроки.">
 <link rel="canonical" href="https://example.com/kontakty/">
 <meta name="robots" content="index, follow">
-<!-- Сайт умеет и светлую, и тёмную тему. Без этого Chrome на Android
-     перекрашивает страницу сам, и выглядит это грубо. -->
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0a1420" media="(prefers-color-scheme: dark)">
-
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="X-PTO">
 <meta property="og:locale" content="ru_RU">
@@ -28,303 +20,272 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-
-<!-- Шрифты грузятся заранее: так подмена системного на фирменный происходит
-     до первой отрисовки и текст не «прыгает». Файлы лежат на своём сервере. -->
 <link rel="preload" href="/assets/fonts/geologica-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/inter-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-
 <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="/assets/img/favicon.svg">
+<link rel="icon" href="/assets/img/favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/img/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<script type="speculationrules">
+{"prefetch":[{"where":{"href_matches":"/*"},"eagerness":"moderate"}]}
+</script>
 <link rel="stylesheet" href="/assets/style.css">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","@id":"https://example.com/#organization","name":"X-PTO","legalName":"ИП Яковлев Андрей Эдуардович","description":"Готовим и защищаем документацию за строительные компании: проектирование, исполнительная документация, геодезия, объёмы, сдача объектов.","url":"https://example.com/","logo":"https://example.com/assets/img/logo.svg","image":"https://example.com/assets/img/og-default.png","email":"lopezr2@yandex.ru","telephone":"+79206851377","taxID":"695014483664","areaServed":{"@type":"Country","name":"Россия"},"contactPoint":[{"@type":"ContactPoint","telephone":"+79206851377","email":"lopezr2@yandex.ru","contactType":"sales","areaServed":"RU","availableLanguage":"Russian"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","@id":"https://example.com/#organization","name":"X-PTO","legalName":"ИП Яковлев Андрей Эдуардович","description":"Готовим и защищаем документацию за строительные компании: проектирование, исполнительная документация, геодезия, объёмы, сдача объектов.","url":"https://example.com/","logo":"https://example.com/assets/img/logo.svg","image":"https://example.com/assets/img/og-default.jpg","sameAs":["https://t.me/ptotver","https://max.ru/join/767tQxLCZEngUD6C-zVrLSQrGCyglhaHOgaYCQDe4zA"],"email":"lopezr2@yandex.ru","telephone":"+79206851377","taxID":"695014483664","areaServed":{"@type":"Country","name":"Россия"},"contactPoint":[{"@type":"ContactPoint","telephone":"+79206851377","email":"lopezr2@yandex.ru","contactType":"sales","areaServed":"RU","availableLanguage":"Russian"}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Главная","item":"https://example.com/"},{"@type":"ListItem","position":2,"name":"Контакты","item":"https://example.com/kontakty/"}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"ContactPage","url":"https://example.com/kontakty/","about":{"@id":"https://example.com/#organization"}}</script>
 </head>
 <body>
 <a class="skip-link" href="#main">Перейти к содержанию</a>
-
 <header class="header">
-  <div class="container header__inner">
-    <a class="logo" href="/" aria-label="X-PTO — на главную">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="X-PTO">
-  
-
-  
-  <path fill="#1f6feb" fill-rule="evenodd"
-        d="M27 32 H37 L16 56 H6 Z M30 32 H34 L17.375 51 H13.375 Z"/>
-
-  
-  <path fill="currentColor" fill-rule="evenodd"
-        d="M48 8 H58 L37 32 H27 Z M46.625 13 H50.625 L34 32 H30 Z"/>
-
-  
-  <path fill="currentColor" fill-rule="evenodd"
-        d="M6 8 H16 L58 56 H48 Z M13.375 13 H17.375 L50.625 51 H46.625 Z"/>
+<div class="container header__inner">
+<a class="logo" href="/" aria-label="X-PTO — на главную">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="X-PTO">
+<path fill="#1f6feb" fill-rule="evenodd"
+d="M27 32 H37 L16 56 H6 Z M30 32 H34 L17.375 51 H13.375 Z"/>
+<path fill="currentColor" fill-rule="evenodd"
+d="M48 8 H58 L37 32 H27 Z M46.625 13 H50.625 L34 32 H30 Z"/>
+<path fill="currentColor" fill-rule="evenodd"
+d="M6 8 H16 L58 56 H48 Z M13.375 13 H17.375 L50.625 51 H46.625 Z"/>
 </svg>
-      <span class="logo__text">
-        <span class="logo__name">X-PTO</span>
-        <span class="logo__sub">Документальное сопровождение строительства</span>
-      </span>
-    </a>
-
-    <button class="burger" type="button" aria-label="Меню" aria-expanded="false" aria-controls="nav">
-      <span></span><span></span><span></span>
-    </button>
-
-    <nav class="nav" id="nav" aria-label="Основное меню">
-      <ul class="nav__list">
-                <li><a class="nav__link" href="/uslugi/">Услуги</a></li>
-        <li><a class="nav__link" href="/obekty/">Объекты</a></li>
-        <li><a class="nav__link" href="/o-kompanii/">О компании</a></li>
-        <li><a class="nav__link" href="/kontakty/" aria-current="page">Контакты</a></li>
-      </ul>
-    </nav>
-
-    <div class="header__contacts">
-      <a class="header__phone" href="tel:+79206851377">+7 (920) 685-13-77</a>
-      <a class="btn btn--primary" href="#zayavka">Оставить заявку</a>
-    </div>
-  </div>
-</header>
-
-<main id="main">
-  <section class="page-head">
-    <div class="container">
-      <ul class="breadcrumbs">
-        <li><a href="/">Главная</a></li>
-        <li>Контакты</li>
-      </ul>
-      <h1>Контакты</h1>
-      <p class="lead">Опишите объект и задачу — ответим в течение рабочего дня и скажем, что реально успеть к вашей дате сдачи. Если сдача горит, звоните: разберём по телефону.</p>
-    </div>
-  </section>
-
-  <section class="section section--surface">
-    <div class="container">
-      <div class="contact-grid">
-        <a class="contact-card contact-card--phone" href="tel:+79206851377">
-          <span class="contact-card__icon"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 3h3l1.6 4-2 1.4a12 12 0 0 0 5 5L13 11.4 17 13v3a1.6 1.6 0 0 1-1.8 1.6A14.4 14.4 0 0 1 2.4 4.8 1.6 1.6 0 0 1 4 3z"/></svg></span>
-          <span class="contact-card__label">Телефон</span>
-          <span class="contact-card__value">+7 (920) 685-13-77</span>
-          <span class="contact-card__note">Звоните с 8:00 до 21:00 без выходных</span>
-        </a>
-        <a class="contact-card" href="mailto:lopezr2@yandex.ru">
-          <span class="contact-card__icon"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.2" y="4.2" width="15.6" height="11.6" rx="1.6"/><path d="m2.8 5.4 7.2 5.2 7.2-5.2"/></svg></span>
-          <span class="contact-card__label">Почта</span>
-          <span class="contact-card__value">lopezr2@yandex.ru</span>
-          <span class="contact-card__note">Сюда удобно прислать чертежи и смету</span>
-        </a>
-        <a class="contact-card" href="https://t.me/ptotver" rel="nofollow noopener" target="_blank">
-          <span class="contact-card__icon"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 11.2A3.8 3.8 0 0 1 13.2 15H7l-4 2.6V5.2A3.8 3.8 0 0 1 6.8 1.4h6.4A3.8 3.8 0 0 1 17 5.2z" transform="translate(0 1)"/></svg></span>
-          <span class="contact-card__label">Telegram</span>
-          <span class="contact-card__value">@ptotver</span>
-          <span class="contact-card__note">Отвечаем быстрее всего</span>
-        </a>
-        <a class="contact-card" href="https://max.ru/join/767tQxLCZEngUD6C-zVrLSQrGCyglhaHOgaYCQDe4zA" rel="nofollow noopener" target="_blank">
-          <span class="contact-card__icon"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.4 11.6a3.4 3.4 0 0 0 5 .3l2.4-2.4a3.4 3.4 0 0 0-4.8-4.8l-1.3 1.3"/><path d="M11.6 8.4a3.4 3.4 0 0 0-5-.3L4.2 10.5a3.4 3.4 0 0 0 4.8 4.8l1.3-1.3"/></svg></span>
-          <span class="contact-card__label">MAX</span>
-          <span class="contact-card__value">Канал X-PTO</span>
-          <span class="contact-card__note">Канал компании в MAX</span>
-        </a>
-      </div>
-      <div class="offer-grid mt-6">
-        <div>
-          <p class="lead lead--tight">Заявки с сайта — круглосуточно, телефон и почта — с 8:00 до 21:00 без выходных. Работаем удалённо по всей России. Договор, счёт и закрывающие документы — в электронном виде, при необходимости отправляем оригиналы почтой.</p>
-        </div>
-        <aside class="panel panel--accent">
-          <h2>Что прислать, чтобы оценка была точной</h2>
-          <p style="color:var(--ink-muted);font-size:0.9375rem">Ничего из этого не обязательно для первого разговора — но если материалы есть, ответ будет с конкретной суммой и сроком, а не «от и до».</p>
-          <ul class="ticks">
-      <li>Название и адрес объекта, стадия строительства</li>
-      <li>Проект или рабочая документация — хотя бы разделы, по которым нужны документы</li>
-      <li>Смета, ведомость объёмов или КС-2, если объёмы уже считали</li>
-      <li>Требования заказчика: регламент, шаблоны, ИСУП или Exon</li>
-      <li>Дата сдачи и что уже сделано предыдущим подрядчиком</li>
-    </ul>
-        </aside>
-      </div>
-    </div>
-  </section>
-
-  <section class="section form-block" id="zayavka">
-    <div class="container">
-      <div class="form-grid">
-        <div class="section__head" style="max-width:none;margin-bottom:0">
-          <h2>Оставить заявку</h2>
-          <p class="lead">Опишите объект и задачу. Перезвоним в течение рабочего дня, при срочной сдаче — быстрее.</p>
-          <div class="contact-lines">
-            <div class="contact-line">
-              <span class="contact-line__label">Телефон</span>
-              <a class="contact-line__value" href="tel:+79206851377">+7 (920) 685-13-77</a>
-            </div>
-            <div class="contact-line">
-              <span class="contact-line__label">Почта</span>
-              <a class="contact-line__value" href="mailto:lopezr2@yandex.ru">lopezr2@yandex.ru</a>
-            </div>
-            <div class="contact-line">
-              <span class="contact-line__label">Telegram</span>
-              <a class="contact-line__value" href="https://t.me/ptotver" rel="nofollow noopener" target="_blank">@ptotver</a>
-            </div>
-            <div class="contact-line">
-              <span class="contact-line__label">MAX</span>
-              <a class="contact-line__value" href="https://max.ru/join/767tQxLCZEngUD6C-zVrLSQrGCyglhaHOgaYCQDe4zA" rel="nofollow noopener" target="_blank">Канал X-PTO</a>
-            </div>
-            <div class="contact-line">
-              <span class="contact-line__label">Режим работы</span>
-              <span class="contact-line__value" style="font-size:1rem;font-weight:500">Заявки с сайта — круглосуточно, телефон и почта — с 8:00 до 21:00 без выходных</span>
-            </div>
-          </div>
-        </div>
-
-        <form class="form" data-form="lead" novalidate
-              data-success="Заявка отправлена. Мы свяжемся с вами в рабочее время."
-              data-error="Не удалось отправить. Позвоните нам или напишите в Telegram — ответим быстрее."
-              data-mail="lopezr2@yandex.ru"
-              data-tel="+79206851377"
-              data-tel-display="+7 (920) 685-13-77"
-              data-tg="https://t.me/ptotver">
-          <div class="field">
-            <label for="f-name">Как к вам обращаться <span class="req">*</span></label>
-            <input id="f-name" name="name" type="text" autocomplete="name" required>
-            <span class="field__error"></span>
-          </div>
-          <div class="field">
-            <label for="f-phone">Телефон <span class="req">*</span></label>
-            <input id="f-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required
-                   placeholder="+7 ___ ___-__-__">
-            <span class="field__error"></span>
-          </div>
-          <div class="field">
-            <label for="f-service">Услуга или тип объекта</label>
-            <select id="f-service" name="service">
-              <option value="">— не важно / несколько услуг —</option>
-              <option value="Проектирование объектов (стадия «П»)">Проектирование объектов (стадия «П»)</option>
-              <option value="Проектирование в формате White Label">Проектирование в формате White Label</option>
-              <option value="Актуализация проектов после СМР и легализация изменений">Актуализация проектов после СМР и легализация изменений</option>
-              <option value="Сопровождение в Госэкспертизе">Сопровождение в Госэкспертизе</option>
-              <option value="Исполнительная документация под ключ (Минстрой, ГОСТ)">Исполнительная документация под ключ (Минстрой, ГОСТ)</option>
-              <option value="Исполнительная документация под регламенты операторов связи">Исполнительная документация под регламенты операторов связи</option>
-              <option value="Цифровая исполнительная документация в ИСУП Exon">Цифровая исполнительная документация в ИСУП Exon</option>
-              <option value="Сметная документация">Сметная документация</option>
-              <option value="ППР и технологические карты">ППР и технологические карты</option>
-              <option value="Геодезия и аудит объёмов">Геодезия и аудит объёмов</option>
-              <option value="Защита выполненных объёмов (КС-2, КС-3)">Защита выполненных объёмов (КС-2, КС-3)</option>
-              <option value="Электротехнические испытания">Электротехнические испытания</option>
-              <option value="Прохождение Ростехнадзора и подключение сетей">Прохождение Ростехнадзора и подключение сетей</option>
-              <option value="Сдача объекта и получение ЗОС">Сдача объекта и получение ЗОС</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="f-comment">Коротко о задаче</label>
-            <textarea id="f-comment" name="comment" rows="3"
-                      placeholder="Объект, что нужно сделать, к какой дате"></textarea>
-          </div>
-          <div class="hp" aria-hidden="true">
-            <label for="f-company">Не заполняйте это поле</label>
-            <input id="f-company" name="company" type="text" tabindex="-1" autocomplete="off">
-          </div>
-          <div class="form__status" role="status"></div>
-          <button class="btn btn--primary btn--block" type="submit">Отправить заявку</button>
-          <p class="form__note">Нажимая кнопку, вы соглашаетесь на обработку персональных данных.</p>
-        </form>
-      </div>
-    </div>
-  </section>
-</main>
-
-<!-- Видно только при печати. Шапка и подвал в печать не идут, и на бумаге
-     не оставалось бы ни одного контакта — а распечатку несут руководителю. -->
-<p class="print-only">
-  X-PTO — Документальное сопровождение строительства. Телефон +7 (920) 685-13-77, почта lopezr2@yandex.ru.
-  Работаем удалённо по всей России. Заявки с сайта — круглосуточно, телефон и почта — с 8:00 до 21:00 без выходных.
-</p>
-
-<footer class="footer">
-  <div class="container">
-    <div class="footer__top">
-      <div>
-        <div class="logo footer__logo">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="X-PTO">
-  
-
-  
-  <path fill="#1f6feb" fill-rule="evenodd"
-        d="M27 32 H37 L16 56 H6 Z M30 32 H34 L17.375 51 H13.375 Z"/>
-
-  
-  <path fill="currentColor" fill-rule="evenodd"
-        d="M48 8 H58 L37 32 H27 Z M46.625 13 H50.625 L34 32 H30 Z"/>
-
-  
-  <path fill="currentColor" fill-rule="evenodd"
-        d="M6 8 H16 L58 56 H48 Z M13.375 13 H17.375 L50.625 51 H46.625 Z"/>
-</svg>
-          <span class="logo__text">
-            <span class="logo__name">X-PTO</span>
-            <span class="logo__sub">Документальное сопровождение строительства</span>
-          </span>
-        </div>
-        <p>Готовим и защищаем документацию за строительные компании: проектирование, исполнительная документация, геодезия, объёмы, сдача объектов.</p>
-        <p>Работаем удалённо по всей России</p>
-      </div>
-
-      <div>
-        <div class="footer__title">Услуги</div>
-        <ul class="footer__list">
-                    <li><a href="/uslugi/proektirovanie/">Проектирование объектов (стадия «П»)</a></li>
-          <li><a href="/uslugi/proektirovanie-white-label/">Проектирование в формате White Label</a></li>
-          <li><a href="/uslugi/aktualizatsiya-proektov/">Актуализация проектов после СМР и легализация изменений</a></li>
-          <li><a href="/uslugi/gosekspertiza/">Сопровождение в Госэкспертизе</a></li>
-          <li><a href="/uslugi/ispolnitelnaya-dokumentatsiya/">Исполнительная документация под ключ (Минстрой, ГОСТ)</a></li>
-          <li><a href="/uslugi/ispolnitelnaya-dokumentatsiya-operatory-svyazi/">Исполнительная документация под регламенты операторов связи</a></li>
-          <li><a href="/uslugi/isup-exon/">Цифровая исполнительная документация в ИСУП Exon</a></li>
-        </ul>
-      </div>
-
-      <div>
-        <div class="footer__title">&nbsp;</div>
-        <ul class="footer__list">
-                    <li><a href="/uslugi/smetnaya-dokumentatsiya/">Сметная документация</a></li>
-          <li><a href="/uslugi/ppr-i-tehkarty/">ППР и технологические карты</a></li>
-          <li><a href="/uslugi/geodeziya/">Геодезия и аудит объёмов</a></li>
-          <li><a href="/uslugi/zashchita-obemov-ks2-ks3/">Защита выполненных объёмов (КС-2, КС-3)</a></li>
-          <li><a href="/uslugi/elektrotehnicheskie-ispytaniya/">Электротехнические испытания</a></li>
-          <li><a href="/uslugi/rostehnadzor/">Прохождение Ростехнадзора и подключение сетей</a></li>
-          <li><a href="/uslugi/zos/">Сдача объекта и получение ЗОС</a></li>
-        </ul>
-      </div>
-
-      <div>
-        <div class="footer__title">Контакты</div>
-        <a class="footer__phone" href="tel:+79206851377">+7 (920) 685-13-77</a>
-        <ul class="footer__list">
-          <li><a href="mailto:lopezr2@yandex.ru">lopezr2@yandex.ru</a></li>
-          <li><a href="https://t.me/ptotver" rel="nofollow noopener" target="_blank">Telegram: @ptotver</a></li>
-          <li><a href="https://max.ru/join/767tQxLCZEngUD6C-zVrLSQrGCyglhaHOgaYCQDe4zA" rel="nofollow noopener" target="_blank">MAX: Канал X-PTO</a></li>
-          <li>Заявки с сайта — круглосуточно, телефон и почта — с 8:00 до 21:00 без выходных</li>
-        </ul>
-        <ul class="footer__list" style="margin-top:1rem">
-          <li><a href="/o-kompanii/">О компании</a></li>
-          <li><a href="/kontakty/">Контакты</a></li>
-          <li><a href="/uslugi/">Все услуги</a></li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="footer__bottom">
-      <span>© 2026 X-PTO · ИП Яковлев Андрей Эдуардович · ОГРНИП 324690000060065 · ИНН 695014483664</span>
-      <span>Сайт носит информационный характер и не является публичной офертой.</span>
-    </div>
-  </div>
-</footer>
-
-<div class="call-bar">
-  <a class="btn btn--primary" href="tel:+79206851377">Позвонить</a>
-  <a class="btn btn--ghost" href="#zayavka">Заявка</a>
+<span class="logo__text">
+<span class="logo__name">X-PTO</span>
+<span class="logo__sub">Документальное сопровождение строительства</span>
+</span>
+</a>
+<button class="burger" type="button" aria-label="Меню" aria-expanded="false" aria-controls="nav">
+<span></span><span></span><span></span>
+</button>
+<nav class="nav" id="nav" aria-label="Основное меню">
+<ul class="nav__list">
+<li><a class="nav__link" href="/uslugi/">Услуги</a></li>
+<li><a class="nav__link" href="/obekty/">Объекты</a></li>
+<li><a class="nav__link" href="/o-kompanii/">О компании</a></li>
+<li><a class="nav__link" href="/kontakty/" aria-current="page">Контакты</a></li>
+</ul>
+</nav>
+<div class="header__contacts">
+<a class="header__phone" href="tel:+79206851377">+7 (920) 685-13-77</a>
+<a class="btn btn--primary" href="#zayavka">Оставить заявку</a>
 </div>
-
+</div>
+</header>
+<main id="main">
+<section class="page-head">
+<div class="container">
+<ul class="breadcrumbs">
+<li><a href="/">Главная</a></li>
+<li>Контакты</li>
+</ul>
+<h1>Контакты</h1>
+<p class="lead">Опишите объект и задачу — ответим в течение рабочего дня и скажем, что реально успеть к вашей дате сдачи. Если сдача горит, звоните: разберём по телефону.</p>
+</div>
+</section>
+<section class="section section--surface">
+<div class="container">
+<div class="contact-grid">
+<a class="contact-card contact-card--phone" href="tel:+79206851377">
+<span class="contact-card__icon"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 3h3l1.6 4-2 1.4a12 12 0 0 0 5 5L13 11.4 17 13v3a1.6 1.6 0 0 1-1.8 1.6A14.4 14.4 0 0 1 2.4 4.8 1.6 1.6 0 0 1 4 3z"/></svg></span>
+<span class="contact-card__label">Телефон</span>
+<span class="contact-card__value">+7 (920) 685-13-77</span>
+<span class="contact-card__note">Звоните с 8:00 до 21:00 без выходных</span>
+</a>
+<a class="contact-card" href="mailto:lopezr2@yandex.ru">
+<span class="contact-card__icon"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.2" y="4.2" width="15.6" height="11.6" rx="1.6"/><path d="m2.8 5.4 7.2 5.2 7.2-5.2"/></svg></span>
+<span class="contact-card__label">Почта</span>
+<span class="contact-card__value">lopezr2@yandex.ru</span>
+<span class="contact-card__note">Сюда удобно прислать чертежи и смету</span>
+</a>
+<a class="contact-card" href="https://t.me/ptotver" rel="nofollow noopener" target="_blank">
+<span class="contact-card__icon"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 11.2A3.8 3.8 0 0 1 13.2 15H7l-4 2.6V5.2A3.8 3.8 0 0 1 6.8 1.4h6.4A3.8 3.8 0 0 1 17 5.2z" transform="translate(0 1)"/></svg></span>
+<span class="contact-card__label">Telegram</span>
+<span class="contact-card__value">@ptotver</span>
+<span class="contact-card__note">Отвечаем быстрее всего</span>
+</a>
+<a class="contact-card" href="https://max.ru/join/767tQxLCZEngUD6C-zVrLSQrGCyglhaHOgaYCQDe4zA" rel="nofollow noopener" target="_blank">
+<span class="contact-card__icon"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.4 11.6a3.4 3.4 0 0 0 5 .3l2.4-2.4a3.4 3.4 0 0 0-4.8-4.8l-1.3 1.3"/><path d="M11.6 8.4a3.4 3.4 0 0 0-5-.3L4.2 10.5a3.4 3.4 0 0 0 4.8 4.8l1.3-1.3"/></svg></span>
+<span class="contact-card__label">MAX</span>
+<span class="contact-card__value">Канал X-PTO</span>
+<span class="contact-card__note">Канал компании в MAX</span>
+</a>
+</div>
+<div class="offer-grid mt-6">
+<div>
+<p class="lead lead--tight">Заявки с сайта — круглосуточно, телефон и почта — с 8:00 до 21:00 без выходных. Работаем удалённо по всей России. Договор, счёт и закрывающие документы — в электронном виде, при необходимости отправляем оригиналы почтой.</p>
+</div>
+<aside class="panel panel--accent">
+<h2>Что прислать, чтобы оценка была точной</h2>
+<p style="color:var(--ink-muted);font-size:0.9375rem">Ничего из этого не обязательно для первого разговора — но если материалы есть, ответ будет с конкретной суммой и сроком, а не «от и до».</p>
+<ul class="ticks">
+<li>Название и адрес объекта, стадия строительства</li>
+<li>Проект или рабочая документация — хотя бы разделы, по которым нужны документы</li>
+<li>Смета, ведомость объёмов или КС-2, если объёмы уже считали</li>
+<li>Требования заказчика: регламент, шаблоны, ИСУП или Exon</li>
+<li>Дата сдачи и что уже сделано предыдущим подрядчиком</li>
+</ul>
+</aside>
+</div>
+</div>
+</section>
+<section class="section form-block" id="zayavka">
+<div class="container">
+<div class="form-grid">
+<div class="section__head" style="max-width:none;margin-bottom:0">
+<h2>Оставить заявку</h2>
+<p class="lead">Опишите объект и задачу. Перезвоним в течение рабочего дня, при срочной сдаче — быстрее.</p>
+<div class="contact-lines">
+<div class="contact-line">
+<span class="contact-line__label">Телефон</span>
+<a class="contact-line__value" href="tel:+79206851377">+7 (920) 685-13-77</a>
+</div>
+<div class="contact-line">
+<span class="contact-line__label">Почта</span>
+<a class="contact-line__value" href="mailto:lopezr2@yandex.ru">lopezr2@yandex.ru</a>
+</div>
+<div class="contact-line">
+<span class="contact-line__label">Telegram</span>
+<a class="contact-line__value" href="https://t.me/ptotver" rel="nofollow noopener" target="_blank">@ptotver</a>
+</div>
+<div class="contact-line">
+<span class="contact-line__label">MAX</span>
+<a class="contact-line__value" href="https://max.ru/join/767tQxLCZEngUD6C-zVrLSQrGCyglhaHOgaYCQDe4zA" rel="nofollow noopener" target="_blank">Канал X-PTO</a>
+</div>
+<div class="contact-line">
+<span class="contact-line__label">Режим работы</span>
+<span class="contact-line__value" style="font-size:1rem;font-weight:500">Заявки с сайта — круглосуточно, телефон и почта — с 8:00 до 21:00 без выходных</span>
+</div>
+</div>
+</div>
+<form class="form" data-form="lead" novalidate
+data-success="Заявка отправлена. Мы свяжемся с вами в рабочее время."
+data-error="Не удалось отправить. Позвоните нам или напишите в Telegram — ответим быстрее."
+data-mail="lopezr2@yandex.ru"
+data-tel="+79206851377"
+data-tel-display="+7 (920) 685-13-77"
+data-tg="https://t.me/ptotver">
+<div class="field">
+<label for="f-name">Как к вам обращаться <span class="req">*</span></label>
+<input id="f-name" name="name" type="text" autocomplete="name" required>
+<span class="field__error"></span>
+</div>
+<div class="field">
+<label for="f-phone">Телефон <span class="req">*</span></label>
+<input id="f-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required
+placeholder="+7 ___ ___-__-__">
+<span class="field__error"></span>
+</div>
+<div class="field">
+<label for="f-service">Услуга или тип объекта</label>
+<select id="f-service" name="service">
+<option value="">— не важно / несколько услуг —</option>
+<option value="Проектирование объектов (стадия «П»)">Проектирование объектов (стадия «П»)</option>
+<option value="Проектирование в формате White Label">Проектирование в формате White Label</option>
+<option value="Актуализация проектов после СМР и легализация изменений">Актуализация проектов после СМР и легализация изменений</option>
+<option value="Сопровождение в Госэкспертизе">Сопровождение в Госэкспертизе</option>
+<option value="Исполнительная документация под ключ (Минстрой, ГОСТ)">Исполнительная документация под ключ (Минстрой, ГОСТ)</option>
+<option value="Исполнительная документация под регламенты операторов связи">Исполнительная документация под регламенты операторов связи</option>
+<option value="Цифровая исполнительная документация в ИСУП Exon">Цифровая исполнительная документация в ИСУП Exon</option>
+<option value="Сметная документация">Сметная документация</option>
+<option value="ППР и технологические карты">ППР и технологические карты</option>
+<option value="Геодезия и аудит объёмов">Геодезия и аудит объёмов</option>
+<option value="Защита выполненных объёмов (КС-2, КС-3)">Защита выполненных объёмов (КС-2, КС-3)</option>
+<option value="Электротехнические испытания">Электротехнические испытания</option>
+<option value="Прохождение Ростехнадзора и подключение сетей">Прохождение Ростехнадзора и подключение сетей</option>
+<option value="Сдача объекта и получение ЗОС">Сдача объекта и получение ЗОС</option>
+</select>
+</div>
+<div class="field">
+<label for="f-comment">Коротко о задаче</label>
+<textarea id="f-comment" name="comment" rows="3"
+placeholder="Объект, что нужно сделать, к какой дате"></textarea>
+</div>
+<div class="hp" aria-hidden="true">
+<label for="f-company">Не заполняйте это поле</label>
+<input id="f-company" name="company" type="text" tabindex="-1" autocomplete="off">
+</div>
+<div class="form__status" role="status"></div>
+<button class="btn btn--primary btn--block" type="submit">Отправить заявку</button>
+<p class="form__note">Нажимая кнопку, вы соглашаетесь на обработку персональных данных.</p>
+</form>
+</div>
+</div>
+</section>
+</main>
+<p class="print-only">
+X-PTO — Документальное сопровождение строительства. Телефон +7 (920) 685-13-77, почта lopezr2@yandex.ru.
+Работаем удалённо по всей России. Заявки с сайта — круглосуточно, телефон и почта — с 8:00 до 21:00 без выходных.
+</p>
+<footer class="footer">
+<div class="container">
+<div class="footer__top">
+<div>
+<div class="logo footer__logo">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="X-PTO">
+<path fill="#1f6feb" fill-rule="evenodd"
+d="M27 32 H37 L16 56 H6 Z M30 32 H34 L17.375 51 H13.375 Z"/>
+<path fill="currentColor" fill-rule="evenodd"
+d="M48 8 H58 L37 32 H27 Z M46.625 13 H50.625 L34 32 H30 Z"/>
+<path fill="currentColor" fill-rule="evenodd"
+d="M6 8 H16 L58 56 H48 Z M13.375 13 H17.375 L50.625 51 H46.625 Z"/>
+</svg>
+<span class="logo__text">
+<span class="logo__name">X-PTO</span>
+<span class="logo__sub">Документальное сопровождение строительства</span>
+</span>
+</div>
+<p>Готовим и защищаем документацию за строительные компании: проектирование, исполнительная документация, геодезия, объёмы, сдача объектов.</p>
+<p>Работаем удалённо по всей России</p>
+</div>
+<div>
+<div class="footer__title">Услуги</div>
+<ul class="footer__list">
+<li><a href="/uslugi/proektirovanie/">Проектирование объектов (стадия «П»)</a></li>
+<li><a href="/uslugi/proektirovanie-white-label/">Проектирование в формате White Label</a></li>
+<li><a href="/uslugi/aktualizatsiya-proektov/">Актуализация проектов после СМР и легализация изменений</a></li>
+<li><a href="/uslugi/gosekspertiza/">Сопровождение в Госэкспертизе</a></li>
+<li><a href="/uslugi/ispolnitelnaya-dokumentatsiya/">Исполнительная документация под ключ (Минстрой, ГОСТ)</a></li>
+<li><a href="/uslugi/ispolnitelnaya-dokumentatsiya-operatory-svyazi/">Исполнительная документация под регламенты операторов связи</a></li>
+<li><a href="/uslugi/isup-exon/">Цифровая исполнительная документация в ИСУП Exon</a></li>
+</ul>
+</div>
+<div>
+<div class="footer__title">&nbsp;</div>
+<ul class="footer__list">
+<li><a href="/uslugi/smetnaya-dokumentatsiya/">Сметная документация</a></li>
+<li><a href="/uslugi/ppr-i-tehkarty/">ППР и технологические карты</a></li>
+<li><a href="/uslugi/geodeziya/">Геодезия и аудит объёмов</a></li>
+<li><a href="/uslugi/zashchita-obemov-ks2-ks3/">Защита выполненных объёмов (КС-2, КС-3)</a></li>
+<li><a href="/uslugi/elektrotehnicheskie-ispytaniya/">Электротехнические испытания</a></li>
+<li><a href="/uslugi/rostehnadzor/">Прохождение Ростехнадзора и подключение сетей</a></li>
+<li><a href="/uslugi/zos/">Сдача объекта и получение ЗОС</a></li>
+</ul>
+</div>
+<div>
+<div class="footer__title">Контакты</div>
+<a class="footer__phone" href="tel:+79206851377">+7 (920) 685-13-77</a>
+<ul class="footer__list">
+<li><a href="mailto:lopezr2@yandex.ru">lopezr2@yandex.ru</a></li>
+<li><a href="https://t.me/ptotver" rel="nofollow noopener" target="_blank">Telegram: @ptotver</a></li>
+<li><a href="https://max.ru/join/767tQxLCZEngUD6C-zVrLSQrGCyglhaHOgaYCQDe4zA" rel="nofollow noopener" target="_blank">MAX: Канал X-PTO</a></li>
+<li>Заявки с сайта — круглосуточно, телефон и почта — с 8:00 до 21:00 без выходных</li>
+</ul>
+<ul class="footer__list" style="margin-top:1rem">
+<li><a href="/o-kompanii/">О компании</a></li>
+<li><a href="/kontakty/">Контакты</a></li>
+<li><a href="/uslugi/">Все услуги</a></li>
+</ul>
+</div>
+</div>
+<div class="footer__bottom">
+<span>© 2026 X-PTO · ИП Яковлев Андрей Эдуардович · ОГРНИП 324690000060065 · ИНН 695014483664</span>
+<span>Сайт носит информационный характер и не является публичной офертой.</span>
+</div>
+</div>
+</footer>
+<div class="call-bar">
+<a class="btn btn--primary" href="tel:+79206851377">Позвонить</a>
+<a class="btn btn--ghost" href="#zayavka">Заявка</a>
+</div>
 <script src="/assets/config.js"></script>
 <script src="/assets/app.js" defer></script>
 </body>

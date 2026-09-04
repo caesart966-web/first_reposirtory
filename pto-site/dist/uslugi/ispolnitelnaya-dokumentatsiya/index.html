@@ -1,9 +1,4 @@
 <!doctype html>
-<!--
-  Общий каркас всех страниц сайта.
-  Шапка и подвал описаны ЗДЕСЬ и только здесь: поправите — изменится на всех страницах.
-  Всё, что в двойных фигурных скобках, подставляет генератор build.py.
--->
 <html lang="ru">
 <head>
 <meta charset="utf-8">
@@ -12,12 +7,9 @@
 <meta name="description" content="Оформляем исполнительную документацию по действующим требованиям законодательства РФ: акты скрытых работ, журналы, реестры, комплект под сдачу. Без возвратов и замечаний.">
 <link rel="canonical" href="https://example.com/uslugi/ispolnitelnaya-dokumentatsiya/">
 <meta name="robots" content="index, follow">
-<!-- Сайт умеет и светлую, и тёмную тему. Без этого Chrome на Android
-     перекрашивает страницу сам, и выглядит это грубо. -->
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0a1420" media="(prefers-color-scheme: dark)">
-
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="X-PTO">
 <meta property="og:locale" content="ru_RU">
@@ -28,411 +20,374 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-
-<!-- Шрифты грузятся заранее: так подмена системного на фирменный происходит
-     до первой отрисовки и текст не «прыгает». Файлы лежат на своём сервере. -->
 <link rel="preload" href="/assets/fonts/geologica-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/inter-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
-
 <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="/assets/img/favicon.svg">
+<link rel="icon" href="/assets/img/favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/img/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<script type="speculationrules">
+{"prefetch":[{"where":{"href_matches":"/*"},"eagerness":"moderate"}]}
+</script>
 <link rel="stylesheet" href="/assets/style.css">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","@id":"https://example.com/#organization","name":"X-PTO","legalName":"ИП Яковлев Андрей Эдуардович","description":"Готовим и защищаем документацию за строительные компании: проектирование, исполнительная документация, геодезия, объёмы, сдача объектов.","url":"https://example.com/","logo":"https://example.com/assets/img/logo.svg","image":"https://example.com/assets/img/og-default.png","email":"lopezr2@yandex.ru","telephone":"+79206851377","taxID":"695014483664","areaServed":{"@type":"Country","name":"Россия"},"contactPoint":[{"@type":"ContactPoint","telephone":"+79206851377","email":"lopezr2@yandex.ru","contactType":"sales","areaServed":"RU","availableLanguage":"Russian"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","@id":"https://example.com/#organization","name":"X-PTO","legalName":"ИП Яковлев Андрей Эдуардович","description":"Готовим и защищаем документацию за строительные компании: проектирование, исполнительная документация, геодезия, объёмы, сдача объектов.","url":"https://example.com/","logo":"https://example.com/assets/img/logo.svg","image":"https://example.com/assets/img/og-default.jpg","sameAs":["https://t.me/ptotver","https://max.ru/join/767tQxLCZEngUD6C-zVrLSQrGCyglhaHOgaYCQDe4zA"],"email":"lopezr2@yandex.ru","telephone":"+79206851377","taxID":"695014483664","areaServed":{"@type":"Country","name":"Россия"},"contactPoint":[{"@type":"ContactPoint","telephone":"+79206851377","email":"lopezr2@yandex.ru","contactType":"sales","areaServed":"RU","availableLanguage":"Russian"}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Service","name":"Исполнительная документация под ключ","description":"Оформляем исполнительную документацию по действующим требованиям законодательства РФ: акты скрытых работ, журналы, реестры, комплект под сдачу. Без возвратов и замечаний.","serviceType":"Исполнительная документация под ключ (Минстрой, ГОСТ)","url":"https://example.com/uslugi/ispolnitelnaya-dokumentatsiya/","provider":{"@id":"https://example.com/#organization"},"areaServed":{"@type":"Country","name":"Россия"},"hasOfferCatalog":{"@type":"OfferCatalog","name":"Что входит в работу","itemListElement":[{"@type":"Offer","itemOffered":{"@type":"Service","name":"Акты освидетельствования скрытых работ, ответственных конструкций, участков сетей"}},{"@type":"Offer","itemOffered":{"@type":"Service","name":"Общий и специальные журналы работ, журналы входного контроля, сварочных и бетонных работ"}},{"@type":"Offer","itemOffered":{"@type":"Service","name":"Исполнительные схемы и чертежи по выполненным работам"}},{"@type":"Offer","itemOffered":{"@type":"Service","name":"Комплектование документов о качестве: сертификаты, паспорта, декларации, протоколы испытаний"}},{"@type":"Offer","itemOffered":{"@type":"Service","name":"Реестры и описи, сшивка и оформление комплекта по разделам"}},{"@type":"Offer","itemOffered":{"@type":"Service","name":"Ведомости объёмов, увязка документации с формами КС-2"}},{"@type":"Offer","itemOffered":{"@type":"Service","name":"Отработка замечаний технического заказчика и надзорных органов до снятия"}}]}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Мы не вели документацию весь год. Восстановите?","acceptedAnswer":{"@type":"Answer","text":"Да, это регулярная задача. Восстановление ведётся от того, что есть: договор, сметы, КС-2, журналы поставок, фото с объекта, показания исполнителей. Чем больше сохранилось, тем быстрее и дешевле. Полностью «с нуля» без единого следа работ документация не восстанавливается — об этом скажем честно на аудите."}},{"@type":"Question","name":"Сколько занимает комплект по объекту?","acceptedAnswer":{"@type":"Answer","text":"От объёма и состояния исходных данных. Небольшой объект с собранными сертификатами — одна-две недели. Крупный объект с восстановлением — от месяца. Под срочную сдачу ставим на объект нескольких инженеров."}},{"@type":"Question","name":"Вы работаете с бумагой или электронно?","acceptedAnswer":{"@type":"Answer","text":"И так, и так. Готовим комплект в PDF с электронными подписями, ведём в цифровых средах заказчика, при необходимости печатаем, сшиваем и отправляем оригиналы."}},{"@type":"Question","name":"Что если заказчик вернёт комплект с замечаниями?","acceptedAnswer":{"@type":"Answer","text":"Отработка замечаний в рамках сданного нами объёма входит в стоимость. Мы считаем работу законченной не когда комплект передан, а когда он принят."}},{"@type":"Question","name":"Вы работаете с субподрядчиками напрямую?","acceptedAnswer":{"@type":"Answer","text":"Да, если вы дадите контакты и полномочия. Обычно это ускоряет сбор: мы запрашиваем документы сами, а не через вашего прораба."}}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Главная","item":"https://example.com/"},{"@type":"ListItem","position":2,"name":"Услуги","item":"https://example.com/uslugi/"},{"@type":"ListItem","position":3,"name":"Исполнительная документация под ключ (Минстрой, ГОСТ)","item":"https://example.com/uslugi/ispolnitelnaya-dokumentatsiya/"}]}</script>
 </head>
 <body>
 <a class="skip-link" href="#main">Перейти к содержанию</a>
-
 <header class="header">
-  <div class="container header__inner">
-    <a class="logo" href="/" aria-label="X-PTO — на главную">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="X-PTO">
-  
-
-  
-  <path fill="#1f6feb" fill-rule="evenodd"
-        d="M27 32 H37 L16 56 H6 Z M30 32 H34 L17.375 51 H13.375 Z"/>
-
-  
-  <path fill="currentColor" fill-rule="evenodd"
-        d="M48 8 H58 L37 32 H27 Z M46.625 13 H50.625 L34 32 H30 Z"/>
-
-  
-  <path fill="currentColor" fill-rule="evenodd"
-        d="M6 8 H16 L58 56 H48 Z M13.375 13 H17.375 L50.625 51 H46.625 Z"/>
+<div class="container header__inner">
+<a class="logo" href="/" aria-label="X-PTO — на главную">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="X-PTO">
+<path fill="#1f6feb" fill-rule="evenodd"
+d="M27 32 H37 L16 56 H6 Z M30 32 H34 L17.375 51 H13.375 Z"/>
+<path fill="currentColor" fill-rule="evenodd"
+d="M48 8 H58 L37 32 H27 Z M46.625 13 H50.625 L34 32 H30 Z"/>
+<path fill="currentColor" fill-rule="evenodd"
+d="M6 8 H16 L58 56 H48 Z M13.375 13 H17.375 L50.625 51 H46.625 Z"/>
 </svg>
-      <span class="logo__text">
-        <span class="logo__name">X-PTO</span>
-        <span class="logo__sub">Документальное сопровождение строительства</span>
-      </span>
-    </a>
-
-    <button class="burger" type="button" aria-label="Меню" aria-expanded="false" aria-controls="nav">
-      <span></span><span></span><span></span>
-    </button>
-
-    <nav class="nav" id="nav" aria-label="Основное меню">
-      <ul class="nav__list">
-                <li><a class="nav__link" href="/uslugi/" aria-current="page">Услуги</a></li>
-        <li><a class="nav__link" href="/obekty/">Объекты</a></li>
-        <li><a class="nav__link" href="/o-kompanii/">О компании</a></li>
-        <li><a class="nav__link" href="/kontakty/">Контакты</a></li>
-      </ul>
-    </nav>
-
-    <div class="header__contacts">
-      <a class="header__phone" href="tel:+79206851377">+7 (920) 685-13-77</a>
-      <a class="btn btn--primary" href="#zayavka">Оставить заявку</a>
-    </div>
-  </div>
-</header>
-
-<main id="main">
-  <section class="page-head">
-    <div class="container">
-      <ul class="breadcrumbs">
-        <li><a href="/">Главная</a></li>
-        <li><a href="/uslugi/">Услуги</a></li>
-        <li>Исполнительная документация под ключ (Минстрой, ГОСТ)</li>
-      </ul>
-      <span class="eyebrow">Исполнительная документация</span>
-      <h1>Исполнительная документация под ключ</h1>
-      <p class="lead">Собираем и оформляем исполнительную документацию по объекту целиком — по действующим требованиям Минстроя и ГОСТ. От актов освидетельствования скрытых работ до итогового комплекта, который принимает технический заказчик и надзор. Цель одна: сдать без возвратов.</p>
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="container split">
-      <div>
-        <h2>Когда нужна эта услуга</h2>
-        <ul class="dashes">
-      <li>Сдача объекта на носу, а документации нет или она собрана частично</li>
-      <li>Комплект вернули с замечаниями и нужно привести его в порядок</li>
-      <li>Работы велись давно и документацию нужно восстанавливать</li>
-      <li>Своего инженера ПТО нет либо он не тянет объём</li>
-    </ul>
-
-        <h2 style="margin-top:2.5rem">Что входит в работу</h2>
-        <ul class="ticks">
-      <li>Акты освидетельствования скрытых работ, ответственных конструкций, участков сетей</li>
-      <li>Общий и специальные журналы работ, журналы входного контроля, сварочных и бетонных работ</li>
-      <li>Исполнительные схемы и чертежи по выполненным работам</li>
-      <li>Комплектование документов о качестве: сертификаты, паспорта, декларации, протоколы испытаний</li>
-      <li>Реестры и описи, сшивка и оформление комплекта по разделам</li>
-      <li>Ведомости объёмов, увязка документации с формами КС-2</li>
-      <li>Отработка замечаний технического заказчика и надзорных органов до снятия</li>
-    </ul>
-
-        <h2 style="margin-top:2.5rem">Для кого</h2>
-        <ul class="dashes">
-      <li>Подрядчикам и субподрядчикам, сдающим работы заказчику</li>
-      <li>Генподрядчикам, собирающим комплект по всем субподрядчикам</li>
-      <li>Техническим заказчикам, принимающим объект</li>
-      <li>Компаниям без собственного ПТО или с перегруженным отделом</li>
-    </ul>
-      </div>
-
-      <aside>
-        <div class="sticky-box">
-          <div class="panel panel--accent">
-            <h3>Оценим объём и сроки</h3>
-            <p style="color:var(--ink-muted)">Опишите объект — скажем, что реально успеть к вашей дате сдачи. Ответ в течение рабочего дня.</p>
-            <div class="btn-row" style="margin-top:1.25rem">
-              <a class="btn btn--primary btn--block" href="#zayavka">Оставить заявку</a>
-              <a class="btn btn--ghost btn--block" href="tel:+79206851377">+7 (920) 685-13-77</a>
-            </div>
-            <div class="spec">
-              <div class="spec__row">
-                <span class="spec__key">География</span>
-                <span class="spec__dots"></span>
-                <span class="spec__val">Вся Россия</span>
-              </div>
-              <div class="spec__row">
-                <span class="spec__key">Ответ</span>
-                <span class="spec__dots"></span>
-                <span class="spec__val">В течение рабочего дня</span>
-              </div>
-              <div class="spec__row">
-                <span class="spec__key">Форматы</span>
-                <span class="spec__dots"></span>
-                <span class="spec__val">Бумага, PDF с ЭЦП, ИСУП</span>
-              </div>
-              <div class="spec__row">
-                <span class="spec__key">Договор</span>
-                <span class="spec__dots"></span>
-                <span class="spec__val">С фиксированной ценой</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </aside>
-    </div>
-  </section>
-
-  <section class="section section--dark">
-    <div class="container">
-      <div class="section__head"><h2>Как проходит работа</h2></div>
-      <div class="steps steps--3">
-        <div class="step">
-          <h3>Аудит</h3>
-          <p>Смотрим договор, проект, сметы, что уже собрано. Формируем перечень недостающих документов по каждому разделу.</p>
-        </div>
-        <div class="step">
-          <h3>План сбора</h3>
-          <p>Определяем, что берём с вас, что запрашиваем у поставщиков и субподрядчиков, что оформляем сами. Фиксируем сроки.</p>
-        </div>
-        <div class="step">
-          <h3>Сбор данных</h3>
-          <p>Собираем сертификаты, паспорта, протоколы, исполнительные схемы. Дёргаем вас точечно, а не каждый день.</p>
-        </div>
-        <div class="step">
-          <h3>Оформление</h3>
-          <p>Заполняем акты и журналы по действующим формам, увязываем даты, объёмы и подписи между собой.</p>
-        </div>
-        <div class="step">
-          <h3>Комплектование</h3>
-          <p>Собираем комплект, делаем реестры и описи, готовим к передаче в бумаге или в PDF с подписями.</p>
-        </div>
-        <div class="step">
-          <h3>Защита</h3>
-          <p>Отрабатываем замечания заказчика и надзора до полного снятия.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="section section--alt">
-    <div class="container">
-      <div class="section__head"><h2>Частые вопросы</h2></div>
-      <div class="faq">
-      <details class="faq__item">
-        <summary class="faq__q">Мы не вели документацию весь год. Восстановите?</summary>
-        <div class="faq__a"><p>Да, это регулярная задача. Восстановление ведётся от того, что есть: договор, сметы, КС-2, журналы поставок, фото с объекта, показания исполнителей. Чем больше сохранилось, тем быстрее и дешевле. Полностью «с нуля» без единого следа работ документация не восстанавливается — об этом скажем честно на аудите.</p></div>
-      </details>
-      <details class="faq__item">
-        <summary class="faq__q">Сколько занимает комплект по объекту?</summary>
-        <div class="faq__a"><p>От объёма и состояния исходных данных. Небольшой объект с собранными сертификатами — одна-две недели. Крупный объект с восстановлением — от месяца. Под срочную сдачу ставим на объект нескольких инженеров.</p></div>
-      </details>
-      <details class="faq__item">
-        <summary class="faq__q">Вы работаете с бумагой или электронно?</summary>
-        <div class="faq__a"><p>И так, и так. Готовим комплект в PDF с электронными подписями, ведём в цифровых средах заказчика, при необходимости печатаем, сшиваем и отправляем оригиналы.</p></div>
-      </details>
-      <details class="faq__item">
-        <summary class="faq__q">Что если заказчик вернёт комплект с замечаниями?</summary>
-        <div class="faq__a"><p>Отработка замечаний в рамках сданного нами объёма входит в стоимость. Мы считаем работу законченной не когда комплект передан, а когда он принят.</p></div>
-      </details>
-      <details class="faq__item">
-        <summary class="faq__q">Вы работаете с субподрядчиками напрямую?</summary>
-        <div class="faq__a"><p>Да, если вы дадите контакты и полномочия. Обычно это ускоряет сбор: мы запрашиваем документы сами, а не через вашего прораба.</p></div>
-      </details>
-      </div>
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="container">
-      <div class="section__head"><h2>Смежные услуги</h2></div>
-      <div class="grid grid--4">
-        <a class="card card--link card--compact" href="/uslugi/ispolnitelnaya-dokumentatsiya-operatory-svyazi/">
-          <h3>Исполнительная документация под регламенты операторов связи</h3>
-          <p>Адаптация под внутренние регламенты Ростелеком, Т2, реставрация, спецведомства.</p>
-        </a>
-        <a class="card card--link card--compact" href="/uslugi/isup-exon/">
-          <h3>Цифровая исполнительная документация в ИСУП Exon</h3>
-          <p>Ведение исполнительной документации в цифровой среде Exon под ключ.</p>
-        </a>
-        <a class="card card--link card--compact" href="/uslugi/zashchita-obemov-ks2-ks3/">
-          <h3>Защита выполненных объёмов (КС-2, КС-3)</h3>
-          <p>Аргументируем и защищаем каждый объём перед техническим заказчиком.</p>
-        </a>
-        <a class="card card--link card--compact" href="/uslugi/zos/">
-          <h3>Сдача объекта и получение ЗОС</h3>
-          <p>Доводим объект до Заключения о соответствии и передачи госкомиссии.</p>
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <section class="section form-block" id="zayavka">
-    <div class="container">
-      <div class="form-grid">
-        <div class="section__head" style="max-width:none;margin-bottom:0">
-          <h2>Оставить заявку</h2>
-          <p class="lead">Опишите объект и задачу. Перезвоним в течение рабочего дня, при срочной сдаче — быстрее.</p>
-          <div class="contact-lines">
-            <div class="contact-line">
-              <span class="contact-line__label">Телефон</span>
-              <a class="contact-line__value" href="tel:+79206851377">+7 (920) 685-13-77</a>
-            </div>
-            <div class="contact-line">
-              <span class="contact-line__label">Почта</span>
-              <a class="contact-line__value" href="mailto:lopezr2@yandex.ru">lopezr2@yandex.ru</a>
-            </div>
-            <div class="contact-line">
-              <span class="contact-line__label">Telegram</span>
-              <a class="contact-line__value" href="https://t.me/ptotver" rel="nofollow noopener" target="_blank">@ptotver</a>
-            </div>
-            <div class="contact-line">
-              <span class="contact-line__label">MAX</span>
-              <a class="contact-line__value" href="https://max.ru/join/767tQxLCZEngUD6C-zVrLSQrGCyglhaHOgaYCQDe4zA" rel="nofollow noopener" target="_blank">Канал X-PTO</a>
-            </div>
-            <div class="contact-line">
-              <span class="contact-line__label">Режим работы</span>
-              <span class="contact-line__value" style="font-size:1rem;font-weight:500">Заявки с сайта — круглосуточно, телефон и почта — с 8:00 до 21:00 без выходных</span>
-            </div>
-          </div>
-        </div>
-
-        <form class="form" data-form="lead" novalidate
-              data-success="Заявка отправлена. Мы свяжемся с вами в рабочее время."
-              data-error="Не удалось отправить. Позвоните нам или напишите в Telegram — ответим быстрее."
-              data-mail="lopezr2@yandex.ru"
-              data-tel="+79206851377"
-              data-tel-display="+7 (920) 685-13-77"
-              data-tg="https://t.me/ptotver">
-          <div class="field">
-            <label for="f-name">Как к вам обращаться <span class="req">*</span></label>
-            <input id="f-name" name="name" type="text" autocomplete="name" required>
-            <span class="field__error"></span>
-          </div>
-          <div class="field">
-            <label for="f-phone">Телефон <span class="req">*</span></label>
-            <input id="f-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required
-                   placeholder="+7 ___ ___-__-__">
-            <span class="field__error"></span>
-          </div>
-          <div class="field">
-            <label for="f-service">Услуга или тип объекта</label>
-            <select id="f-service" name="service">
-              <option value="">— не важно / несколько услуг —</option>
-              <option value="Проектирование объектов (стадия «П»)">Проектирование объектов (стадия «П»)</option>
-              <option value="Проектирование в формате White Label">Проектирование в формате White Label</option>
-              <option value="Актуализация проектов после СМР и легализация изменений">Актуализация проектов после СМР и легализация изменений</option>
-              <option value="Сопровождение в Госэкспертизе">Сопровождение в Госэкспертизе</option>
-              <option value="Исполнительная документация под ключ (Минстрой, ГОСТ)" selected>Исполнительная документация под ключ (Минстрой, ГОСТ)</option>
-              <option value="Исполнительная документация под регламенты операторов связи">Исполнительная документация под регламенты операторов связи</option>
-              <option value="Цифровая исполнительная документация в ИСУП Exon">Цифровая исполнительная документация в ИСУП Exon</option>
-              <option value="Сметная документация">Сметная документация</option>
-              <option value="ППР и технологические карты">ППР и технологические карты</option>
-              <option value="Геодезия и аудит объёмов">Геодезия и аудит объёмов</option>
-              <option value="Защита выполненных объёмов (КС-2, КС-3)">Защита выполненных объёмов (КС-2, КС-3)</option>
-              <option value="Электротехнические испытания">Электротехнические испытания</option>
-              <option value="Прохождение Ростехнадзора и подключение сетей">Прохождение Ростехнадзора и подключение сетей</option>
-              <option value="Сдача объекта и получение ЗОС">Сдача объекта и получение ЗОС</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="f-comment">Коротко о задаче</label>
-            <textarea id="f-comment" name="comment" rows="3"
-                      placeholder="Объект, что нужно сделать, к какой дате"></textarea>
-          </div>
-          <div class="hp" aria-hidden="true">
-            <label for="f-company">Не заполняйте это поле</label>
-            <input id="f-company" name="company" type="text" tabindex="-1" autocomplete="off">
-          </div>
-          <div class="form__status" role="status"></div>
-          <button class="btn btn--primary btn--block" type="submit">Отправить заявку</button>
-          <p class="form__note">Нажимая кнопку, вы соглашаетесь на обработку персональных данных.</p>
-        </form>
-      </div>
-    </div>
-  </section>
-</main>
-
-<!-- Видно только при печати. Шапка и подвал в печать не идут, и на бумаге
-     не оставалось бы ни одного контакта — а распечатку несут руководителю. -->
-<p class="print-only">
-  X-PTO — Документальное сопровождение строительства. Телефон +7 (920) 685-13-77, почта lopezr2@yandex.ru.
-  Работаем удалённо по всей России. Заявки с сайта — круглосуточно, телефон и почта — с 8:00 до 21:00 без выходных.
-</p>
-
-<footer class="footer">
-  <div class="container">
-    <div class="footer__top">
-      <div>
-        <div class="logo footer__logo">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="X-PTO">
-  
-
-  
-  <path fill="#1f6feb" fill-rule="evenodd"
-        d="M27 32 H37 L16 56 H6 Z M30 32 H34 L17.375 51 H13.375 Z"/>
-
-  
-  <path fill="currentColor" fill-rule="evenodd"
-        d="M48 8 H58 L37 32 H27 Z M46.625 13 H50.625 L34 32 H30 Z"/>
-
-  
-  <path fill="currentColor" fill-rule="evenodd"
-        d="M6 8 H16 L58 56 H48 Z M13.375 13 H17.375 L50.625 51 H46.625 Z"/>
-</svg>
-          <span class="logo__text">
-            <span class="logo__name">X-PTO</span>
-            <span class="logo__sub">Документальное сопровождение строительства</span>
-          </span>
-        </div>
-        <p>Готовим и защищаем документацию за строительные компании: проектирование, исполнительная документация, геодезия, объёмы, сдача объектов.</p>
-        <p>Работаем удалённо по всей России</p>
-      </div>
-
-      <div>
-        <div class="footer__title">Услуги</div>
-        <ul class="footer__list">
-                    <li><a href="/uslugi/proektirovanie/">Проектирование объектов (стадия «П»)</a></li>
-          <li><a href="/uslugi/proektirovanie-white-label/">Проектирование в формате White Label</a></li>
-          <li><a href="/uslugi/aktualizatsiya-proektov/">Актуализация проектов после СМР и легализация изменений</a></li>
-          <li><a href="/uslugi/gosekspertiza/">Сопровождение в Госэкспертизе</a></li>
-          <li><a href="/uslugi/ispolnitelnaya-dokumentatsiya/">Исполнительная документация под ключ (Минстрой, ГОСТ)</a></li>
-          <li><a href="/uslugi/ispolnitelnaya-dokumentatsiya-operatory-svyazi/">Исполнительная документация под регламенты операторов связи</a></li>
-          <li><a href="/uslugi/isup-exon/">Цифровая исполнительная документация в ИСУП Exon</a></li>
-        </ul>
-      </div>
-
-      <div>
-        <div class="footer__title">&nbsp;</div>
-        <ul class="footer__list">
-                    <li><a href="/uslugi/smetnaya-dokumentatsiya/">Сметная документация</a></li>
-          <li><a href="/uslugi/ppr-i-tehkarty/">ППР и технологические карты</a></li>
-          <li><a href="/uslugi/geodeziya/">Геодезия и аудит объёмов</a></li>
-          <li><a href="/uslugi/zashchita-obemov-ks2-ks3/">Защита выполненных объёмов (КС-2, КС-3)</a></li>
-          <li><a href="/uslugi/elektrotehnicheskie-ispytaniya/">Электротехнические испытания</a></li>
-          <li><a href="/uslugi/rostehnadzor/">Прохождение Ростехнадзора и подключение сетей</a></li>
-          <li><a href="/uslugi/zos/">Сдача объекта и получение ЗОС</a></li>
-        </ul>
-      </div>
-
-      <div>
-        <div class="footer__title">Контакты</div>
-        <a class="footer__phone" href="tel:+79206851377">+7 (920) 685-13-77</a>
-        <ul class="footer__list">
-          <li><a href="mailto:lopezr2@yandex.ru">lopezr2@yandex.ru</a></li>
-          <li><a href="https://t.me/ptotver" rel="nofollow noopener" target="_blank">Telegram: @ptotver</a></li>
-          <li><a href="https://max.ru/join/767tQxLCZEngUD6C-zVrLSQrGCyglhaHOgaYCQDe4zA" rel="nofollow noopener" target="_blank">MAX: Канал X-PTO</a></li>
-          <li>Заявки с сайта — круглосуточно, телефон и почта — с 8:00 до 21:00 без выходных</li>
-        </ul>
-        <ul class="footer__list" style="margin-top:1rem">
-          <li><a href="/o-kompanii/">О компании</a></li>
-          <li><a href="/kontakty/">Контакты</a></li>
-          <li><a href="/uslugi/">Все услуги</a></li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="footer__bottom">
-      <span>© 2026 X-PTO · ИП Яковлев Андрей Эдуардович · ОГРНИП 324690000060065 · ИНН 695014483664</span>
-      <span>Сайт носит информационный характер и не является публичной офертой.</span>
-    </div>
-  </div>
-</footer>
-
-<div class="call-bar">
-  <a class="btn btn--primary" href="tel:+79206851377">Позвонить</a>
-  <a class="btn btn--ghost" href="#zayavka">Заявка</a>
+<span class="logo__text">
+<span class="logo__name">X-PTO</span>
+<span class="logo__sub">Документальное сопровождение строительства</span>
+</span>
+</a>
+<button class="burger" type="button" aria-label="Меню" aria-expanded="false" aria-controls="nav">
+<span></span><span></span><span></span>
+</button>
+<nav class="nav" id="nav" aria-label="Основное меню">
+<ul class="nav__list">
+<li><a class="nav__link" href="/uslugi/" aria-current="page">Услуги</a></li>
+<li><a class="nav__link" href="/obekty/">Объекты</a></li>
+<li><a class="nav__link" href="/o-kompanii/">О компании</a></li>
+<li><a class="nav__link" href="/kontakty/">Контакты</a></li>
+</ul>
+</nav>
+<div class="header__contacts">
+<a class="header__phone" href="tel:+79206851377">+7 (920) 685-13-77</a>
+<a class="btn btn--primary" href="#zayavka">Оставить заявку</a>
 </div>
-
+</div>
+</header>
+<main id="main">
+<section class="page-head">
+<div class="container">
+<ul class="breadcrumbs">
+<li><a href="/">Главная</a></li>
+<li><a href="/uslugi/">Услуги</a></li>
+<li>Исполнительная документация под ключ (Минстрой, ГОСТ)</li>
+</ul>
+<span class="eyebrow">Исполнительная документация</span>
+<h1>Исполнительная документация под ключ</h1>
+<p class="lead">Собираем и оформляем исполнительную документацию по объекту целиком — по действующим требованиям Минстроя и ГОСТ. От актов освидетельствования скрытых работ до итогового комплекта, который принимает технический заказчик и надзор. Цель одна: сдать без возвратов.</p>
+</div>
+</section>
+<section class="section">
+<div class="container split">
+<div>
+<h2>Когда нужна эта услуга</h2>
+<ul class="dashes">
+<li>Сдача объекта на носу, а документации нет или она собрана частично</li>
+<li>Комплект вернули с замечаниями и нужно привести его в порядок</li>
+<li>Работы велись давно и документацию нужно восстанавливать</li>
+<li>Своего инженера ПТО нет либо он не тянет объём</li>
+</ul>
+<h2 style="margin-top:2.5rem">Что входит в работу</h2>
+<ul class="ticks">
+<li>Акты освидетельствования скрытых работ, ответственных конструкций, участков сетей</li>
+<li>Общий и специальные журналы работ, журналы входного контроля, сварочных и бетонных работ</li>
+<li>Исполнительные схемы и чертежи по выполненным работам</li>
+<li>Комплектование документов о качестве: сертификаты, паспорта, декларации, протоколы испытаний</li>
+<li>Реестры и описи, сшивка и оформление комплекта по разделам</li>
+<li>Ведомости объёмов, увязка документации с формами КС-2</li>
+<li>Отработка замечаний технического заказчика и надзорных органов до снятия</li>
+</ul>
+<h2 style="margin-top:2.5rem">Для кого</h2>
+<ul class="dashes">
+<li>Подрядчикам и субподрядчикам, сдающим работы заказчику</li>
+<li>Генподрядчикам, собирающим комплект по всем субподрядчикам</li>
+<li>Техническим заказчикам, принимающим объект</li>
+<li>Компаниям без собственного ПТО или с перегруженным отделом</li>
+</ul>
+</div>
+<aside>
+<div class="sticky-box">
+<div class="panel panel--accent">
+<h3>Оценим объём и сроки</h3>
+<p style="color:var(--ink-muted)">Опишите объект — скажем, что реально успеть к вашей дате сдачи. Ответ в течение рабочего дня.</p>
+<div class="btn-row" style="margin-top:1.25rem">
+<a class="btn btn--primary btn--block" href="#zayavka">Оставить заявку</a>
+<a class="btn btn--ghost btn--block" href="tel:+79206851377">+7 (920) 685-13-77</a>
+</div>
+<div class="spec">
+<div class="spec__row">
+<span class="spec__key">География</span>
+<span class="spec__dots"></span>
+<span class="spec__val">Вся Россия</span>
+</div>
+<div class="spec__row">
+<span class="spec__key">Ответ</span>
+<span class="spec__dots"></span>
+<span class="spec__val">В течение рабочего дня</span>
+</div>
+<div class="spec__row">
+<span class="spec__key">Форматы</span>
+<span class="spec__dots"></span>
+<span class="spec__val">Бумага, PDF с ЭЦП, ИСУП</span>
+</div>
+<div class="spec__row">
+<span class="spec__key">Договор</span>
+<span class="spec__dots"></span>
+<span class="spec__val">С фиксированной ценой</span>
+</div>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</section>
+<section class="section section--dark">
+<div class="container">
+<div class="section__head"><h2>Как проходит работа</h2></div>
+<div class="steps steps--3">
+<div class="step">
+<h3>Аудит</h3>
+<p>Смотрим договор, проект, сметы, что уже собрано. Формируем перечень недостающих документов по каждому разделу.</p>
+</div>
+<div class="step">
+<h3>План сбора</h3>
+<p>Определяем, что берём с вас, что запрашиваем у поставщиков и субподрядчиков, что оформляем сами. Фиксируем сроки.</p>
+</div>
+<div class="step">
+<h3>Сбор данных</h3>
+<p>Собираем сертификаты, паспорта, протоколы, исполнительные схемы. Дёргаем вас точечно, а не каждый день.</p>
+</div>
+<div class="step">
+<h3>Оформление</h3>
+<p>Заполняем акты и журналы по действующим формам, увязываем даты, объёмы и подписи между собой.</p>
+</div>
+<div class="step">
+<h3>Комплектование</h3>
+<p>Собираем комплект, делаем реестры и описи, готовим к передаче в бумаге или в PDF с подписями.</p>
+</div>
+<div class="step">
+<h3>Защита</h3>
+<p>Отрабатываем замечания заказчика и надзора до полного снятия.</p>
+</div>
+</div>
+</div>
+</section>
+<section class="section section--alt">
+<div class="container">
+<div class="section__head"><h2>Частые вопросы</h2></div>
+<div class="faq">
+<details class="faq__item">
+<summary class="faq__q">Мы не вели документацию весь год. Восстановите?</summary>
+<div class="faq__a"><p>Да, это регулярная задача. Восстановление ведётся от того, что есть: договор, сметы, КС-2, журналы поставок, фото с объекта, показания исполнителей. Чем больше сохранилось, тем быстрее и дешевле. Полностью «с нуля» без единого следа работ документация не восстанавливается — об этом скажем честно на аудите.</p></div>
+</details>
+<details class="faq__item">
+<summary class="faq__q">Сколько занимает комплект по объекту?</summary>
+<div class="faq__a"><p>От объёма и состояния исходных данных. Небольшой объект с собранными сертификатами — одна-две недели. Крупный объект с восстановлением — от месяца. Под срочную сдачу ставим на объект нескольких инженеров.</p></div>
+</details>
+<details class="faq__item">
+<summary class="faq__q">Вы работаете с бумагой или электронно?</summary>
+<div class="faq__a"><p>И так, и так. Готовим комплект в PDF с электронными подписями, ведём в цифровых средах заказчика, при необходимости печатаем, сшиваем и отправляем оригиналы.</p></div>
+</details>
+<details class="faq__item">
+<summary class="faq__q">Что если заказчик вернёт комплект с замечаниями?</summary>
+<div class="faq__a"><p>Отработка замечаний в рамках сданного нами объёма входит в стоимость. Мы считаем работу законченной не когда комплект передан, а когда он принят.</p></div>
+</details>
+<details class="faq__item">
+<summary class="faq__q">Вы работаете с субподрядчиками напрямую?</summary>
+<div class="faq__a"><p>Да, если вы дадите контакты и полномочия. Обычно это ускоряет сбор: мы запрашиваем документы сами, а не через вашего прораба.</p></div>
+</details>
+</div>
+</div>
+</section>
+<section class="section">
+<div class="container">
+<div class="section__head"><h2>Смежные услуги</h2></div>
+<div class="grid grid--4">
+<a class="card card--link card--compact" href="/uslugi/ispolnitelnaya-dokumentatsiya-operatory-svyazi/">
+<h3>Исполнительная документация под регламенты операторов связи</h3>
+<p>Адаптация под внутренние регламенты Ростелеком, Т2, реставрация, спецведомства.</p>
+</a>
+<a class="card card--link card--compact" href="/uslugi/isup-exon/">
+<h3>Цифровая исполнительная документация в ИСУП Exon</h3>
+<p>Ведение исполнительной документации в цифровой среде Exon под ключ.</p>
+</a>
+<a class="card card--link card--compact" href="/uslugi/zashchita-obemov-ks2-ks3/">
+<h3>Защита выполненных объёмов (КС-2, КС-3)</h3>
+<p>Аргументируем и защищаем каждый объём перед техническим заказчиком.</p>
+</a>
+<a class="card card--link card--compact" href="/uslugi/zos/">
+<h3>Сдача объекта и получение ЗОС</h3>
+<p>Доводим объект до Заключения о соответствии и передачи госкомиссии.</p>
+</a>
+</div>
+</div>
+</section>
+<section class="section form-block" id="zayavka">
+<div class="container">
+<div class="form-grid">
+<div class="section__head" style="max-width:none;margin-bottom:0">
+<h2>Оставить заявку</h2>
+<p class="lead">Опишите объект и задачу. Перезвоним в течение рабочего дня, при срочной сдаче — быстрее.</p>
+<div class="contact-lines">
+<div class="contact-line">
+<span class="contact-line__label">Телефон</span>
+<a class="contact-line__value" href="tel:+79206851377">+7 (920) 685-13-77</a>
+</div>
+<div class="contact-line">
+<span class="contact-line__label">Почта</span>
+<a class="contact-line__value" href="mailto:lopezr2@yandex.ru">lopezr2@yandex.ru</a>
+</div>
+<div class="contact-line">
+<span class="contact-line__label">Telegram</span>
+<a class="contact-line__value" href="https://t.me/ptotver" rel="nofollow noopener" target="_blank">@ptotver</a>
+</div>
+<div class="contact-line">
+<span class="contact-line__label">MAX</span>
+<a class="contact-line__value" href="https://max.ru/join/767tQxLCZEngUD6C-zVrLSQrGCyglhaHOgaYCQDe4zA" rel="nofollow noopener" target="_blank">Канал X-PTO</a>
+</div>
+<div class="contact-line">
+<span class="contact-line__label">Режим работы</span>
+<span class="contact-line__value" style="font-size:1rem;font-weight:500">Заявки с сайта — круглосуточно, телефон и почта — с 8:00 до 21:00 без выходных</span>
+</div>
+</div>
+</div>
+<form class="form" data-form="lead" novalidate
+data-success="Заявка отправлена. Мы свяжемся с вами в рабочее время."
+data-error="Не удалось отправить. Позвоните нам или напишите в Telegram — ответим быстрее."
+data-mail="lopezr2@yandex.ru"
+data-tel="+79206851377"
+data-tel-display="+7 (920) 685-13-77"
+data-tg="https://t.me/ptotver">
+<div class="field">
+<label for="f-name">Как к вам обращаться <span class="req">*</span></label>
+<input id="f-name" name="name" type="text" autocomplete="name" required>
+<span class="field__error"></span>
+</div>
+<div class="field">
+<label for="f-phone">Телефон <span class="req">*</span></label>
+<input id="f-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required
+placeholder="+7 ___ ___-__-__">
+<span class="field__error"></span>
+</div>
+<div class="field">
+<label for="f-service">Услуга или тип объекта</label>
+<select id="f-service" name="service">
+<option value="">— не важно / несколько услуг —</option>
+<option value="Проектирование объектов (стадия «П»)">Проектирование объектов (стадия «П»)</option>
+<option value="Проектирование в формате White Label">Проектирование в формате White Label</option>
+<option value="Актуализация проектов после СМР и легализация изменений">Актуализация проектов после СМР и легализация изменений</option>
+<option value="Сопровождение в Госэкспертизе">Сопровождение в Госэкспертизе</option>
+<option value="Исполнительная документация под ключ (Минстрой, ГОСТ)" selected>Исполнительная документация под ключ (Минстрой, ГОСТ)</option>
+<option value="Исполнительная документация под регламенты операторов связи">Исполнительная документация под регламенты операторов связи</option>
+<option value="Цифровая исполнительная документация в ИСУП Exon">Цифровая исполнительная документация в ИСУП Exon</option>
+<option value="Сметная документация">Сметная документация</option>
+<option value="ППР и технологические карты">ППР и технологические карты</option>
+<option value="Геодезия и аудит объёмов">Геодезия и аудит объёмов</option>
+<option value="Защита выполненных объёмов (КС-2, КС-3)">Защита выполненных объёмов (КС-2, КС-3)</option>
+<option value="Электротехнические испытания">Электротехнические испытания</option>
+<option value="Прохождение Ростехнадзора и подключение сетей">Прохождение Ростехнадзора и подключение сетей</option>
+<option value="Сдача объекта и получение ЗОС">Сдача объекта и получение ЗОС</option>
+</select>
+</div>
+<div class="field">
+<label for="f-comment">Коротко о задаче</label>
+<textarea id="f-comment" name="comment" rows="3"
+placeholder="Объект, что нужно сделать, к какой дате"></textarea>
+</div>
+<div class="hp" aria-hidden="true">
+<label for="f-company">Не заполняйте это поле</label>
+<input id="f-company" name="company" type="text" tabindex="-1" autocomplete="off">
+</div>
+<div class="form__status" role="status"></div>
+<button class="btn btn--primary btn--block" type="submit">Отправить заявку</button>
+<p class="form__note">Нажимая кнопку, вы соглашаетесь на обработку персональных данных.</p>
+</form>
+</div>
+</div>
+</section>
+</main>
+<p class="print-only">
+X-PTO — Документальное сопровождение строительства. Телефон +7 (920) 685-13-77, почта lopezr2@yandex.ru.
+Работаем удалённо по всей России. Заявки с сайта — круглосуточно, телефон и почта — с 8:00 до 21:00 без выходных.
+</p>
+<footer class="footer">
+<div class="container">
+<div class="footer__top">
+<div>
+<div class="logo footer__logo">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="X-PTO">
+<path fill="#1f6feb" fill-rule="evenodd"
+d="M27 32 H37 L16 56 H6 Z M30 32 H34 L17.375 51 H13.375 Z"/>
+<path fill="currentColor" fill-rule="evenodd"
+d="M48 8 H58 L37 32 H27 Z M46.625 13 H50.625 L34 32 H30 Z"/>
+<path fill="currentColor" fill-rule="evenodd"
+d="M6 8 H16 L58 56 H48 Z M13.375 13 H17.375 L50.625 51 H46.625 Z"/>
+</svg>
+<span class="logo__text">
+<span class="logo__name">X-PTO</span>
+<span class="logo__sub">Документальное сопровождение строительства</span>
+</span>
+</div>
+<p>Готовим и защищаем документацию за строительные компании: проектирование, исполнительная документация, геодезия, объёмы, сдача объектов.</p>
+<p>Работаем удалённо по всей России</p>
+</div>
+<div>
+<div class="footer__title">Услуги</div>
+<ul class="footer__list">
+<li><a href="/uslugi/proektirovanie/">Проектирование объектов (стадия «П»)</a></li>
+<li><a href="/uslugi/proektirovanie-white-label/">Проектирование в формате White Label</a></li>
+<li><a href="/uslugi/aktualizatsiya-proektov/">Актуализация проектов после СМР и легализация изменений</a></li>
+<li><a href="/uslugi/gosekspertiza/">Сопровождение в Госэкспертизе</a></li>
+<li><a href="/uslugi/ispolnitelnaya-dokumentatsiya/">Исполнительная документация под ключ (Минстрой, ГОСТ)</a></li>
+<li><a href="/uslugi/ispolnitelnaya-dokumentatsiya-operatory-svyazi/">Исполнительная документация под регламенты операторов связи</a></li>
+<li><a href="/uslugi/isup-exon/">Цифровая исполнительная документация в ИСУП Exon</a></li>
+</ul>
+</div>
+<div>
+<div class="footer__title">&nbsp;</div>
+<ul class="footer__list">
+<li><a href="/uslugi/smetnaya-dokumentatsiya/">Сметная документация</a></li>
+<li><a href="/uslugi/ppr-i-tehkarty/">ППР и технологические карты</a></li>
+<li><a href="/uslugi/geodeziya/">Геодезия и аудит объёмов</a></li>
+<li><a href="/uslugi/zashchita-obemov-ks2-ks3/">Защита выполненных объёмов (КС-2, КС-3)</a></li>
+<li><a href="/uslugi/elektrotehnicheskie-ispytaniya/">Электротехнические испытания</a></li>
+<li><a href="/uslugi/rostehnadzor/">Прохождение Ростехнадзора и подключение сетей</a></li>
+<li><a href="/uslugi/zos/">Сдача объекта и получение ЗОС</a></li>
+</ul>
+</div>
+<div>
+<div class="footer__title">Контакты</div>
+<a class="footer__phone" href="tel:+79206851377">+7 (920) 685-13-77</a>
+<ul class="footer__list">
+<li><a href="mailto:lopezr2@yandex.ru">lopezr2@yandex.ru</a></li>
+<li><a href="https://t.me/ptotver" rel="nofollow noopener" target="_blank">Telegram: @ptotver</a></li>
+<li><a href="https://max.ru/join/767tQxLCZEngUD6C-zVrLSQrGCyglhaHOgaYCQDe4zA" rel="nofollow noopener" target="_blank">MAX: Канал X-PTO</a></li>
+<li>Заявки с сайта — круглосуточно, телефон и почта — с 8:00 до 21:00 без выходных</li>
+</ul>
+<ul class="footer__list" style="margin-top:1rem">
+<li><a href="/o-kompanii/">О компании</a></li>
+<li><a href="/kontakty/">Контакты</a></li>
+<li><a href="/uslugi/">Все услуги</a></li>
+</ul>
+</div>
+</div>
+<div class="footer__bottom">
+<span>© 2026 X-PTO · ИП Яковлев Андрей Эдуардович · ОГРНИП 324690000060065 · ИНН 695014483664</span>
+<span>Сайт носит информационный характер и не является публичной офертой.</span>
+</div>
+</div>
+</footer>
+<div class="call-bar">
+<a class="btn btn--primary" href="tel:+79206851377">Позвонить</a>
+<a class="btn btn--ghost" href="#zayavka">Заявка</a>
+</div>
 <script src="/assets/config.js"></script>
 <script src="/assets/app.js" defer></script>
 </body>

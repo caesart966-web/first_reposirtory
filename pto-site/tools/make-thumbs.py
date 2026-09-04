@@ -7,7 +7,8 @@
 весит полтора мегабайта, и на стройке по мобильному интернету это заметно.
 
 Что делает: рядом с каждым файлом кладёт копии шириной 480 и 960 точек
-(<имя>-480.webp и <имя>-960.webp). Генератор сайта подхватывает их сам:
+в двух форматах: <имя>-480.webp и <имя>-480.avif. AVIF новее и легче
+примерно на четверть; браузеры, которые его не знают, берут webp. Генератор сайта подхватывает их сам:
 браузер выбирает подходящую по размеру экрана, оригинал остаётся для
 просмотра фотографии в полный экран.
 
@@ -32,13 +33,12 @@ ROOT = Path(__file__).resolve().parent.parent
 DIRS = [ROOT / "assets" / "img" / "objects", ROOT / "assets" / "docs"]
 WIDTHS = (480, 960)
 SRC_EXT = {".webp", ".jpg", ".jpeg", ".png"}
-# Файлы, которые сами являются уменьшенной копией: <имя>-480.webp
-DERIVED = re.compile(r"-(?:%s)\.webp$" % "|".join(str(w) for w in WIDTHS))
+# Файлы, которые сами являются уменьшенной копией: <имя>-480.webp, -960.avif
+DERIVED = re.compile(r"-(?:%s)\.(?:webp|avif)$" % "|".join(str(w) for w in WIDTHS))
 
 
 def main() -> None:
     made = skipped = 0
-    saved = 0
     for d in DIRS:
         if not d.exists():
             continue
@@ -50,15 +50,26 @@ def main() -> None:
                 for w in WIDTHS:
                     if im.width <= w:
                         continue          # копия шире оригинала не нужна
-                    dst = src.with_name(f"{src.stem}-{w}.webp")
-                    if dst.exists() and dst.stat().st_mtime >= src.stat().st_mtime:
-                        skipped += 1
-                        continue
-                    h = round(im.height * w / im.width)
-                    im.resize((w, h), Image.LANCZOS).save(dst, quality=82, method=6)
-                    made += 1
-                    saved += src.stat().st_size - dst.stat().st_size
-                    print(f"  {dst.name}  {dst.stat().st_size // 1024} КБ")
+                    small = None
+                    for ext, opts in ((".webp", {"quality": 82, "method": 6}),
+                                      (".avif", {"quality": 58})):
+                        dst = src.with_name(f"{src.stem}-{w}{ext}")
+                        if dst.exists() and dst.stat().st_mtime >= src.stat().st_mtime:
+                            skipped += 1
+                            continue
+                        if small is None:
+                            h = round(im.height * w / im.width)
+                            small = im.resize((w, h), Image.LANCZOS)
+                        try:
+                            small.save(dst, **opts)
+                        except Exception as err:
+                            # Нет поддержки формата — не беда: генератор
+                            # перечислит только те копии, которые есть.
+                            print(f"  пропущен {dst.name}: {err}")
+                            continue
+                        made += 1
+                        print(f"  {dst.name}  {dst.stat().st_size // 1024} КБ")
+
     print(f"Сделано копий: {made}, пропущено готовых: {skipped}")
 
 
