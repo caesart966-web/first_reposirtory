@@ -269,6 +269,14 @@ def block_objects(site: Site, items, limit: int = 0) -> str:
     if not items:
         return ""
     shown = items[:limit] if limit else items
+    # Ритм страницы: первая карточка — во всю ширину, с фотографией слева.
+    # Если после неё в последнем ряду остаётся одна штука, широкой делается
+    # и она: ряд из одной узкой карточки выглядит обрывком.
+    wide = set()
+    if not limit and len(shown) >= 4:
+        wide.add(0)
+        if (len(shown) - 1) % 3 == 1:
+            wide.add(len(shown) - 1)
     cards = []
     for n, o in enumerate(shown, start=1):
         # Фотографии ищутся по имени: <slug>.webp — главная, <slug>-2.webp,
@@ -288,7 +296,9 @@ def block_objects(site: Site, items, limit: int = 0) -> str:
 
         # Ширина карточки: во всю ширину экрана на телефоне, половина на
         # планшете, треть на компьютере. По ней браузер выбирает копию.
-        sizes = "(max-width: 720px) calc(100vw - 2.5rem), (max-width: 1020px) 46vw, 31vw"
+        sizes = ("(max-width: 720px) calc(100vw - 2.5rem), (max-width: 1020px) 46vw, 31vw"
+                 if (n - 1) not in wide else
+                 "(max-width: 720px) calc(100vw - 2.5rem), 56vw")
         alt = f'{o["name"]}, {o["city"]}'
         if not photos:
             media = '<div class="object__media object__media--empty"></div>'
@@ -306,7 +316,8 @@ def block_objects(site: Site, items, limit: int = 0) -> str:
                      + photo_img(site, photos[0], alt, sizes, "object__img")
                      + f'<span class="object__count">{len(photos)} фото</span></button>')
         scope = f'<p class="object__scope">{esc(o["scope"])}</p>' if o.get("scope") else ""
-        cards.append(f'''        <article class="object">
+        css = "object object--wide" if (n - 1) in wide else "object"
+        cards.append(f'''        <article class="{css}">
           {media}
           <div class="object__body">
             <span class="object__num">{n:02d}</span>
@@ -424,7 +435,7 @@ def block_form(site: Site, preselect: str = "") -> str:
     return f'''  <section class="section form-block" id="zayavka">
     <div class="container">
       <div class="form-grid">
-        <div>
+        <div class="section__head" style="max-width:none;margin-bottom:0">
           <h2>{esc(form_cfg["title"])}</h2>
           <p class="lead">{esc(form_cfg["text"])}</p>
           <div class="contact-lines">

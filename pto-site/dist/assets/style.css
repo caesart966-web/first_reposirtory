@@ -621,6 +621,16 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   display: flex;
   align-items: center;
 }
+/* Кадр первого экрана чуть отъезжает при загрузке — движение на полторы
+   секунды, которое задаёт «включение прибора». Один раз, без повторов. */
+@media (prefers-reduced-motion: no-preference) {
+  .hero__media, .hero__video { animation: heroIn 1600ms var(--ease) both; }
+}
+@keyframes heroIn {
+  from { transform: scale(1.06); opacity: 0.4; }
+  to   { transform: none; opacity: 1; }
+}
+
 .hero__media {
   position: absolute;
   inset: 0;
@@ -1104,6 +1114,37 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 }
 .object .spec { margin-top: auto; padding-top: var(--s-4); }
 .object .spec__val { font-size: 0.8125rem; }
+
+/* Широкая карточка: фотография слева, текст справа. Ею открывается список
+   объектов — страница перестаёт быть ровной сеткой одинаковых плиток. */
+.object--wide {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  align-items: stretch;
+}
+.object--wide .object__media {
+  aspect-ratio: auto;
+  height: 100%;
+  min-height: 320px;
+  border-bottom: 0;
+  border-right: 1px solid var(--line);
+}
+.object--wide .object__body { padding: var(--s-7); justify-content: center; }
+.object--wide .object__name { font-size: clamp(1.3rem, 1.1rem + 0.8vw, 1.75rem); }
+.object--wide .object__scope { font-size: 1.0625rem; max-width: 34rem; }
+.object--wide .spec { margin-top: var(--s-5); }
+
+@media (max-width: 780px) {
+  .object--wide { grid-template-columns: minmax(0, 1fr); }
+  .object--wide .object__media {
+    aspect-ratio: 16 / 10;
+    min-height: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .object--wide .object__body { padding: var(--s-5); }
+}
 
 @media (max-width: 1020px) {
   .object-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1794,11 +1835,33 @@ body.is-locked { overflow: hidden; }
 
 /* ---------- 12. Подвал --------------------------------------------------- */
 .footer {
+  position: relative;
+  overflow: hidden;
   background: var(--panel-900);
   color: var(--ink-inverse-muted);
   padding: var(--s-8) 0 var(--s-5);
   font-size: 0.9375rem;
 }
+/* Та же разметка, что и в тёмных блоках: страница заканчивается тем же
+   листом, которым началась, а не глухой заливкой. */
+.footer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size:
+    var(--grid-size) var(--grid-size),
+    var(--grid-size) var(--grid-size),
+    calc(var(--grid-size) / 4) calc(var(--grid-size) / 4),
+    calc(var(--grid-size) / 4) calc(var(--grid-size) / 4);
+  mask-image: radial-gradient(100% 80% at 20% 0%, #000 20%, transparent 90%);
+  pointer-events: none;
+}
+.footer > .container { position: relative; z-index: 1; }
 .footer a {
   color: var(--ink-inverse-muted);
   text-decoration: none;
@@ -1843,6 +1906,7 @@ body.is-locked { overflow: hidden; }
   color: #7e93ad;
 }
 .footer__logo { color: #fff; margin-bottom: var(--s-4); }
+.footer__logo .logo__sub { font-size: 0.625rem; letter-spacing: 0.06em; }
 .footer__logo .logo__sub { color: var(--ink-inverse-muted); }
 
 /* Плавающая панель звонка на мобильных */
@@ -1945,6 +2009,28 @@ body.is-locked { overflow: hidden; }
   opacity: 1;
   transform: none;
   transition: opacity 520ms var(--ease), transform 520ms var(--ease);
+}
+
+/* Полоса прокрутки в цветах сайта: мелочь, но с ней окно выглядит собранным,
+   а в тёмной теме не светит белым. */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 999px;
+  border: 2px solid var(--bg);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--ink-soft); }
+
+/* Обводка при переходе с клавиатуры — заметная и в цвете сайта */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 
 /* ---------- 14. Утилиты и адаптив --------------------------------------- */
