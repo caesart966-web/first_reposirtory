@@ -57,9 +57,13 @@
   --r-pill: 999px;
 
   /* Тени */
-  --sh-sm: 0 1px 2px rgba(1, 11, 135, 0.06);
-  --sh-md: 0 4px 16px rgba(1, 11, 135, 0.09);
-  --sh-lg: 0 12px 32px rgba(1, 11, 135, 0.12);
+  /* Тень в два слоя: короткий «контактный» у самой кромки и длинный
+     рассеянный. Одним слоем предмет выглядит наклейкой — либо жёсткая
+     кромка без рассеивания, либо мутное пятно без опоры. Оттенок
+     фирменный синий, а не серый: на белом он читается теплее. */
+  --sh-sm: 0 1px 1px rgba(1, 11, 135, 0.05), 0 2px 4px rgba(1, 11, 135, 0.04);
+  --sh-md: 0 2px 4px rgba(1, 11, 135, 0.05), 0 8px 20px rgba(1, 11, 135, 0.08);
+  --sh-lg: 0 4px 10px rgba(1, 11, 135, 0.06), 0 20px 44px rgba(1, 11, 135, 0.12);
 
   /* Типографика и сетка */
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
@@ -136,26 +140,54 @@ h3,
 h4 {
   margin: 0;
   line-height: 1.2;
-  letter-spacing: -0.01em;
+  /* Заголовок разбивается на строки поровну, а не «шесть слов и одно».
+     Браузеры без text-wrap просто переносят как раньше. */
+  text-wrap: balance;
 }
 
+/* Трекинг зависит от кегля: чем крупнее буквы, тем заметнее просветы
+   между ними и тем сильнее их надо стягивать. Раньше на все размеры
+   стояло одно значение -0.01em, и заголовок в 42 px выглядел рыхлым. */
 h1 {
   font-size: 34px;
   font-weight: 800;
+  letter-spacing: -0.025em;
 }
 
 h2 {
   font-size: 26px;
   font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 h3 {
   font-size: 18px;
   font-weight: 700;
+  letter-spacing: -0.012em;
 }
 
 p {
   margin: 0 0 var(--sp-3);
+  /* Не оставляет одно слово на последней строке абзаца */
+  text-wrap: pretty;
+}
+
+/* Цифры одной ширины: цены, остатки и счётчики встают в столбик,
+   а не пляшут от того, что «1» уже «8». В интернет-магазине это
+   первое, что выдаёт небрежную вёрстку. */
+.price,
+.price__unit,
+.calc__result,
+.cart-total__row,
+.filter-price,
+.catalog-toolbar__count,
+.category-card__count,
+.header-action__count,
+.mobile-bar__count,
+.tel-inline,
+.header-util__phone {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
 }
 
 ul {
@@ -2684,9 +2716,12 @@ html[data-theme="dark"] {
   --sg-red-tint: #2b1a1f;
   --sg-overlay: rgba(0, 0, 0, 0.65);
 
-  --sh-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --sh-md: 0 4px 16px rgba(0, 0, 0, 0.45);
-  --sh-lg: 0 12px 32px rgba(0, 0, 0, 0.55);
+  /* В тёмной теме тень не «падает» — на тёмном фоне её не видно.
+     Работает верхняя светлая кромка: она отделяет поверхность от фона
+     так же, как тень отделяет её на белом. */
+  --sh-sm: 0 1px 1px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --sh-md: 0 4px 16px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --sh-lg: 0 12px 34px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 
   /* В полосках белый заменяется цветом фона, иначе они «горят» */
   --sg-stripes: repeating-linear-gradient(
@@ -4258,4 +4293,54 @@ html[data-theme="dark"] .step.is-current .step__num {
     break-inside: avoid;
     box-shadow: none;
   }
+}
+
+/* ==========================================================================
+   Отделка
+   ========================================================================== */
+
+/* Нажатие должно чувствоваться. Кнопка уходит на пиксель вниз и теряет
+   тень — то же самое делает настоящая клавиша под пальцем. Без этого
+   между наведением и нажатием нет никакой разницы, и на медленной
+   связи человек жмёт второй раз, не поняв, сработало ли. */
+.btn--primary,
+.btn--action,
+.search-form__submit {
+  box-shadow: var(--sh-sm);
+  transition: background-color 0.15s ease, color 0.15s ease,
+    border-color 0.15s ease, box-shadow 0.15s ease, transform 0.08s ease;
+}
+
+.btn--primary:active,
+.btn--action:active,
+.search-form__submit:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn--primary,
+  .btn--action,
+  .search-form__submit {
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .btn--primary:active,
+  .btn--action:active,
+  .search-form__submit:active {
+    transform: none;
+  }
+}
+
+/* Выделенный текст — фирменным синим, а не системным. Мелочь, но её
+   видят все, кто копирует артикул или адрес магазина. */
+::selection {
+  background: var(--sg-blue);
+  color: #fff;
+}
+
+/* Полоса прокрутки в тёмной теме: по умолчанию браузер рисует её
+   светлой, и справа получается яркая полоса вдоль тёмной страницы. */
+html[data-theme='dark'] {
+  scrollbar-color: #3a4152 var(--sg-page);
 }
