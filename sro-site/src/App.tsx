@@ -10,6 +10,7 @@ import { Pricing } from './components/Pricing'
 import { Problems } from './components/Problems'
 import { Process } from './components/Process'
 import { Quiz } from './components/Quiz'
+import { Regions } from './components/Regions'
 import { QuizProvider } from './components/QuizContext'
 import { Services } from './components/Services'
 import { SroTypes } from './components/SroTypes'
@@ -52,6 +53,11 @@ export default function App() {
                   #contacts из меню. */}
               <FAQ />
               <Quiz />
+              {/* География — последним блоком перед подвалом, как просил
+                  заказчик. Квиз остаётся закрывающим призывом, поэтому у
+                  карты своя ссылка в него: страница всё равно заканчивается
+                  предложением написать. */}
+              <Regions />
             </main>
             <Footer />
             {/* Отступ под фиксированную мобильную панель быстрых контактов (с учётом safe-area) */}
