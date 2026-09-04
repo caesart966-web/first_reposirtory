@@ -4445,3 +4445,130 @@ html[data-theme="dark"] .step.is-current .step__num {
 html[data-theme='dark'] {
   scrollbar-color: #3a4152 var(--sg-page);
 }
+
+/* ==========================================================================
+   Появление всплывающих панелей
+   ========================================================================== */
+
+/* Выпадашки, меню каталога, мобильное меню и подсказки поиска
+   переключаются атрибутом hidden, то есть display: none. Такое
+   не анимируется само: панель возникает рывком, и глаз не успевает
+   понять, откуда она взялась и что закрыла собой.
+
+   transition-behavior: allow-discrete разрешает браузеру анимировать
+   переход к display: none, а @starting-style задаёт, из какого
+   состояния панель выезжает при появлении. Браузер, который этих
+   правил не знает, просто показывает и прячет панель как раньше —
+   запасной вёрстки не нужно. */
+.dropdown__panel,
+.catalog-menu,
+.mobile-nav,
+.search-suggest {
+  opacity: 1;
+  translate: 0 0;
+  transition:
+    opacity 0.16s ease,
+    translate 0.16s ease,
+    display 0.16s allow-discrete;
+}
+
+.dropdown__panel[hidden],
+.catalog-menu[hidden],
+.mobile-nav[hidden],
+.search-suggest[hidden] {
+  opacity: 0;
+  translate: 0 -6px;
+}
+
+@starting-style {
+  .dropdown__panel:not([hidden]),
+  .catalog-menu:not([hidden]),
+  .mobile-nav:not([hidden]),
+  .search-suggest:not([hidden]) {
+    opacity: 0;
+    translate: 0 -6px;
+  }
+}
+
+/* Модальное окно и его затемнение — так же, но через [open] */
+.modal,
+.modal::backdrop {
+  transition:
+    opacity 0.18s ease,
+    translate 0.18s ease,
+    display 0.18s allow-discrete,
+    overlay 0.18s allow-discrete;
+}
+
+.modal {
+  opacity: 1;
+  translate: 0 0;
+}
+
+.modal:not([open]),
+.modal:not([open])::backdrop {
+  opacity: 0;
+}
+
+.modal:not([open]) {
+  translate: 0 8px;
+}
+
+@starting-style {
+  .modal[open] {
+    opacity: 0;
+    translate: 0 8px;
+  }
+
+  .modal[open]::backdrop {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dropdown__panel,
+  .catalog-menu,
+  .mobile-nav,
+  .search-suggest,
+  .modal,
+  .modal::backdrop {
+    transition: none;
+    translate: none;
+  }
+}
+
+/* ==========================================================================
+   Карточка товара подстраивается под свою ширину, а не под ширину экрана
+   ========================================================================== */
+
+/* Одна и та же карточка стоит в трёх местах разной ширины: в подборке
+   на главной, в каталоге рядом с фильтрами, а на широком экране —
+   в четыре колонки. Обычные медиазапросы тут врут: карточка в сетке
+   4×1680 уже, чем в сетке 2×900, а экран при этом вдвое шире.
+   Контейнерный запрос спрашивает про саму карточку.
+
+   Браузер без поддержки просто оставляет цену и кнопку в одну строку,
+   как было, — flex-wrap их и так перенесёт, если не влезут. */
+.product-card {
+  container-type: inline-size;
+  container-name: card;
+}
+
+@container card (max-width: 260px) {
+  /* Тесно: цена уходит на свою строку, кнопка занимает всю ширину —
+     так по ней проще попасть и цена не жмётся к краю. */
+  .product-card__bottom {
+    align-items: stretch;
+    flex-direction: column;
+    gap: var(--sp-2);
+  }
+
+  .product-card__buy {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .product-card__meta {
+    row-gap: var(--sp-1);
+  }
+}
