@@ -4,6 +4,7 @@ import { IMAGES } from '../content/images'
 import { BlueprintGrid } from './illustrations'
 import { ButtonLink } from './ui/Button'
 import { Figure } from './ui/Figure'
+import { anchor } from '../lib/site'
 import { Reveal } from './ui/Reveal'
 
 // Первый экран без карточки квиза.
@@ -55,7 +56,7 @@ export function Hero() {
                 карточка с тем же вопросом стояла сразу под ней. Карточки больше
                 нет, и прятать нечего. */}
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-              <ButtonLink href="#types" size="lg">
+              <ButtonLink href={anchor('#types')} size="lg">
                 Подобрать СРО за 1 минуту
                 <ChevronRight className="h-4 w-4" aria-hidden="true" />
               </ButtonLink>

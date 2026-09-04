@@ -1,21 +1,15 @@
 import {
   Building2,
   FileText,
-  Gavel,
   GraduationCap,
   Handshake,
-  Landmark,
   ListPlus,
-  Medal,
-  ScrollText,
   Search,
   ShieldCheck,
   UserCheck,
   type LucideIcon,
 } from 'lucide-react'
-import { IMAGES } from '../content/images'
 import { cardHoverStatic } from './ui/card'
-import { Figure } from './ui/Figure'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
 
@@ -82,37 +76,6 @@ const GROUPS: ServiceGroup[] = [
   },
 ]
 
-// Смежные юридические задачи с визитки. Услуга вторичная, но «вторичная» —
-// это про размер и место, а не про небрежность: раньше иконки стояли голыми
-// и бледно-серыми и читались как неудавшаяся картинка. Теперь у них та же
-// оправа, что у карточек услуг выше, только подложка нейтральная вместо
-// акцентной — иерархия держится цветом, а не отсутствием оформления.
-//
-// Глифы подобраны по смыслу, а не «что-нибудь юридическое»: здание с колоннами
-// — регистрирующий орган, свиток — устав, молоток — суд, медаль — аттестация.
-const LEGAL = [
-  {
-    icon: Landmark,
-    title: 'Регистрация и ликвидация',
-    text: 'Юридических лиц и предпринимателей — от подачи до внесения записи.',
-  },
-  {
-    icon: ScrollText,
-    title: 'Изменения в учредительных документах',
-    text: 'Подготовлю пакет и сопровожу внесение изменений в ЕГРЮЛ.',
-  },
-  {
-    icon: Gavel,
-    title: 'Представление интересов в судах',
-    text: 'Досудебная работа и защита позиции компании в судебных спорах.',
-  },
-  {
-    icon: Medal,
-    title: 'Повышение квалификации и аттестации',
-    text: 'Помогу организовать обучение и аттестацию специалистов для СРО и НРС.',
-  },
-]
-
 export function Services() {
   return (
     <Section id="services" className="bg-neutral-50/55">
@@ -158,48 +121,6 @@ export function Services() {
           </div>
         ))}
       </div>
-
-      <Reveal className="mt-12 border-t border-neutral-200 pt-8">
-        <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-neutral-600">
-          Смежные юридические задачи
-        </h3>
-        {/* Список слева, весы справа, без рамки — на серой плашке вырезанный
-            объект читался как незагрузившаяся картинка.
-
-            Пробовали заменить весы рисованной стопкой кодексов: мотив весов
-            работает ещё знаком в шапке и гравюрой Фемиды фоном, и трёхкратный
-            повтор смущал. Заказчик посмотрел и вернул весы — по характеру
-            линии гравюра сильнее любого построения, а повтор здесь читается
-            фирменной константой, а не нехваткой картинок.
-
-            Рисунок и генератор оставлены: assets-src/lawbooks.svg,
-            scripts/make-lawbooks.py. */}
-        <div className="mt-5 grid gap-8 lg:grid-cols-[minmax(0,8fr)_minmax(0,4fr)] lg:items-center">
-          <div className="grid gap-x-10 gap-y-4 sm:grid-cols-2">
-            {LEGAL.map((service) => (
-              <div key={service.title} className="flex items-start gap-4">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-neutral-200 bg-neutral-100 text-accent-600">
-                  <service.icon className="h-[18px] w-[18px]" aria-hidden="true" />
-                </span>
-                {/* Заголовок отдельной строкой, а не в подбор с описанием:
-                    в подбор он терялся, и четыре пункта читались сплошным
-                    текстом с тире посередине. */}
-                <p className="min-w-0 text-sm">
-                  <span className="block font-semibold text-neutral-950">{service.title}</span>
-                  <span className="mt-0.5 block leading-relaxed text-neutral-600">
-                    {service.text}
-                  </span>
-                </p>
-              </div>
-            ))}
-          </div>
-          <Figure
-            {...IMAGES.legal}
-            frame={false}
-            className="max-w-[170px] justify-self-center sm:max-w-[220px] lg:max-w-[260px]"
-          />
-        </div>
-      </Reveal>
     </Section>
   )
 }

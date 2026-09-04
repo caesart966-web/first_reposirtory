@@ -1,5 +1,6 @@
 import { ArrowRight } from 'lucide-react'
-import { IMAGES, type PageImage } from '../content/images'
+import { SRO_DETAILS } from '../content/sroDetails'
+import { page } from '../lib/site'
 import { QUESTIONS, QUESTION_IDS, SRO_TYPES, useStartQuiz } from './QuizContext'
 import { cardHover } from './ui/card'
 import { Figure } from './ui/Figure'
@@ -12,38 +13,14 @@ import { Section, SectionHeading } from './ui/Section'
 // карточка и вариант квиза physically одна и та же строка.
 const TYPE_QUESTION = QUESTIONS.find((q) => q.id === QUESTION_IDS.type)
 
-// Три карточки — три варианта ответа. Порядок и состав заданы здесь, а не
-// выводятся из options фильтрацией: раньше карточка, чей вариант переименовали,
-// просто исчезала из сетки, и никто бы этого не заметил.
+// Карточки берутся из данных страниц видов СРО (content/sroDetails.ts):
+// заголовок, описание и кадр карточки — те же строки, что и на самой
+// странице. Раньше состав жил здесь отдельным массивом, и после появления
+// страниц он стал бы вторым источником правды: переименовали вид на странице
+// — на главной он остался старым, и никто бы не заметил.
 //
-// Формулировки состава работ — из градостроительного законодательства (виды
-// СРО и области их деятельности), а не наши: придумывать их нельзя. Область
-// строителей и проектировщиков — по ГрК РФ (ст. 55.8), пять видов изысканий —
-// по постановлению Правительства РФ № 402. Перечень изысканий полный: четыре
-// пункта без геотехнических читались бы как исчерпывающий список, которым
-// они не являются.
-type TypeCard = { answer: string; title: string; text: string; image: PageImage }
-
-const TYPES: TypeCard[] = [
-  {
-    answer: SRO_TYPES.construction,
-    title: 'СРО строителей',
-    text: 'Строительство, реконструкция, капитальный ремонт и снос объектов капитального строительства.',
-    image: IMAGES.construction,
-  },
-  {
-    answer: SRO_TYPES.design,
-    title: 'СРО проектировщиков',
-    text: 'Подготовка проектной документации — архитектурно-строительное проектирование объектов капитального строительства.',
-    image: IMAGES.design,
-  },
-  {
-    answer: SRO_TYPES.survey,
-    title: 'СРО изыскателей',
-    text: 'Инженерные изыскания: геодезические, геологические, гидрометеорологические, экологические, геотехнические.',
-    image: IMAGES.survey,
-  },
-]
+// Формулировки состава работ — из градостроительного законодательства
+// (виды СРО и области их деятельности), а не наши: придумывать их нельзя.
 
 export function SroTypes() {
   const startQuiz = useStartQuiz()
@@ -61,11 +38,8 @@ export function SroTypes() {
         subtitle="Работаю со всеми тремя видами саморегулируемых организаций. Выберите свой — уточню детали и назову порядок действий."
       />
       <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {TYPES.map((type, index) => (
-          <Reveal key={type.answer} delay={index * 80} className="h-full">
-            {/* Карточка кликается целиком: псевдоэлемент кнопки растянут по
-                article. Доступное имя при этом остаётся у одной кнопки, а не
-                размазывается по картинке и заголовку. */}
+        {SRO_DETAILS.map((type, index) => (
+          <Reveal key={type.slug} delay={index * 80} className="h-full">
             <article
               className={`group relative flex h-full flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-card ${cardHover}`}
             >
@@ -74,26 +48,37 @@ export function SroTypes() {
                   scale-[1.03] — предел, за которым видно потерю резкости. */}
               <div className="overflow-hidden">
                 <div className="transition-transform duration-300 group-hover:scale-[1.03]">
-                  <Figure {...type.image} frame={false} />
+                  <Figure {...type.card.image} frame={false} />
                 </div>
               </div>
               <div className="flex flex-1 flex-col p-6">
-                <h3 className="text-lg font-semibold text-neutral-950">{type.title}</h3>
-                <p className="mt-2 flex-1 text-sm leading-relaxed text-neutral-600">{type.text}</p>
-                {/* Видимая подпись стоит в начале доступного имени, а не в
+                <h3 className="text-lg font-semibold text-neutral-950 transition-colors group-hover:text-accent-700">
+                  {type.card.title}
+                </h3>
+                <p className="mt-2 flex-1 text-sm leading-relaxed text-neutral-600">
+                  {type.card.text}
+                </p>
+                {/* Ссылка растянута псевдоэлементом на всю карточку: кликается
+                    она целиком, но доступное имя остаётся у одной ссылки, а не
+                    размазывается по картинке и заголовку.
+
+                    Видимая подпись стоит в начале доступного имени, а не в
                     конце: WCAG 2.5.3 требует, чтобы имя начиналось с того, что
                     написано на кнопке, — иначе голосовое управление на команду
-                    «нажми Подобрать СРО» кнопку не найдёт. Хвост с названием
-                    вида нужен, чтобы три одинаковые кнопки различались на слух. */}
-                <button
-                  type="button"
-                  onClick={() => startQuiz(TYPE_QUESTION.id, type.answer)}
-                  aria-label={`Подобрать СРО: ${type.title}`}
-                  className="mt-5 inline-flex items-center gap-2 self-start rounded-xl text-sm font-semibold text-accent-700 transition hover:text-accent-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 after:absolute after:inset-0 after:rounded-2xl"
+                    «нажми Подробнее» ссылку не найдёт. Хвост с названием вида
+                    нужен, чтобы три одинаковые ссылки различались на слух.
+
+                    Плашка, а не голая строка: на макете, который прислал
+                    заказчик, «Подробнее» — именно кнопка, и в ряду из трёх
+                    карточек она сразу говорит, что карточка ведёт дальше. */}
+                <a
+                  href={page(type.path)}
+                  aria-label={`Подробнее: ${type.card.title}`}
+                  className="mt-5 inline-flex items-center gap-2 self-start rounded-xl border border-accent-200 bg-accent-50 px-4 py-2 text-sm font-semibold text-accent-700 transition-colors group-hover:border-accent-600 group-hover:bg-accent-600 group-hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 after:absolute after:inset-0 after:rounded-2xl"
                 >
-                  Подобрать СРО
+                  Подробнее
                   <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
-                </button>
+                </a>
               </div>
             </article>
           </Reveal>
