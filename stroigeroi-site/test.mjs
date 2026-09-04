@@ -238,6 +238,40 @@ for (const name of PAGES) {
 }
 
 /* ==========================================================================
+   Карточка товара подстраивается под свою ширину
+   ========================================================================== */
+
+/* Случай, который медиазапросами не выразить: на 1680 px каталог идёт
+   в четыре колонки, и карточка там УЖЕ, чем на 1280 в три колонки.
+   Ширина экрана про это ничего не говорит. */
+{
+  const seen = [];
+  for (const width of [1280, 1680]) {
+    const ctx = await browser.newContext({ viewport: { width, height: 900 } });
+    const page = await ctx.newPage();
+    await page.goto('file://' + path.join(DIR, 'catalog.html'), { waitUntil: 'load' });
+    await page.waitForTimeout(300);
+    seen.push(
+      await page.evaluate(() => {
+        const card = document.querySelector('.product-card');
+        const bottom = card.querySelector('.product-card__bottom');
+        return {
+          card: Math.round(card.getBoundingClientRect().width),
+          dir: getComputedStyle(bottom).flexDirection,
+        };
+      }),
+    );
+    await ctx.close();
+  }
+  const [wide, narrow] = seen;
+  if (!(narrow.card < wide.card)) {
+    fail(`карточка: на 1680 px она должна быть уже, чем на 1280 (четыре колонки против трёх), получено ${narrow.card} и ${wide.card}`);
+  }
+  if (wide.dir !== 'row') fail(`карточка ${wide.card}px: цена и кнопка должны стоять в строку, получено ${wide.dir}`);
+  if (narrow.dir !== 'column') fail(`карточка ${narrow.card}px: цена и кнопка должны встать в столбик, получено ${narrow.dir}`);
+}
+
+/* ==========================================================================
    Калькулятор: счёт и русский формат чисел
    ========================================================================== */
 
