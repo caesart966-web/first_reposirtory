@@ -1,4 +1,4 @@
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Check } from 'lucide-react'
 import { SRO_DETAILS } from '../content/sroDetails'
 import { page } from '../lib/site'
 import { QUESTIONS, QUESTION_IDS, SRO_TYPES, useStartQuiz } from './QuizContext'
@@ -55,9 +55,26 @@ export function SroTypes() {
                 <h3 className="text-lg font-semibold text-neutral-950 transition-colors group-hover:text-accent-700">
                   {type.card.title}
                 </h3>
-                <p className="mt-2 flex-1 text-sm leading-relaxed text-neutral-600">
-                  {type.card.text}
-                </p>
+                {/* Состав работ списком, а не абзацем. Абзац в карточке читался
+                    сплошной строкой, и три карточки в ряду выглядели тремя
+                    одинаковыми серыми пятнами: чтобы понять разницу между
+                    видами, приходилось вчитываться. Список сканируется взглядом,
+                    и разница видна сразу — в этом весь смысл ряда из трёх.
+
+                    Строки те же, что в разделе «Что входит в область
+                    деятельности» на самой странице вида: один источник, и
+                    карточка не может разойтись со страницей, куда ведёт. */}
+                <ul className="mt-4 flex-1 space-y-2">
+                  {type.scope.map((item) => (
+                    <li key={item} className="flex gap-2.5 text-sm leading-snug text-neutral-700">
+                      <Check
+                        className="mt-0.5 h-4 w-4 shrink-0 text-accent-600"
+                        aria-hidden="true"
+                      />
+                      <span className="min-w-0">{item}</span>
+                    </li>
+                  ))}
+                </ul>
                 {/* Ссылка растянута псевдоэлементом на всю карточку: кликается
                     она целиком, но доступное имя остаётся у одной ссылки, а не
                     размазывается по картинке и заголовку.
@@ -74,7 +91,7 @@ export function SroTypes() {
                 <a
                   href={page(type.path)}
                   aria-label={`Подробнее: ${type.card.title}`}
-                  className="mt-5 inline-flex items-center gap-2 self-start rounded-xl border border-accent-200 bg-accent-50 px-4 py-2 text-sm font-semibold text-accent-700 transition-colors group-hover:border-accent-600 group-hover:bg-accent-600 group-hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 after:absolute after:inset-0 after:rounded-2xl"
+                  className="mt-6 inline-flex items-center gap-2 self-start rounded-xl border border-accent-200 bg-accent-50 px-4 py-2 text-sm font-semibold text-accent-700 transition-colors group-hover:border-accent-600 group-hover:bg-accent-600 group-hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 after:absolute after:inset-0 after:rounded-2xl"
                 >
                   Подробнее
                   <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
