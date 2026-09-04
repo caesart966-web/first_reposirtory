@@ -195,18 +195,30 @@ const tail = indexHtml.slice(indexHtml.indexOf('</main>') + '</main>'.length)
   .replace(/\s*<script src="assets\/app\.js[^"]*"><\/script>\s*<\/body>\s*<\/html>\s*$/, '');
 
 const previewCss = `
-/* Панель переключения страниц — только для этого файла-просмотра */
-.preview-bar{position:sticky;top:0;z-index:60;display:flex;flex-wrap:wrap;align-items:center;
-  gap:8px;padding:10px 16px;background:var(--sg-ink);color:#fff;font-size:14px}
-.preview-bar__label{font-weight:700;margin-right:8px}
+/* Панель переключения страниц — только для этого файла-просмотра.
+
+   Страниц стало четырнадцать, и переносом по строкам панель съедала
+   на телефоне больше половины экрана: человек открывал ссылку и видел
+   не сайт, а список вкладок. Поэтому она в одну строку с прокруткой
+   вбок — высота фиксированная независимо от числа страниц. */
+.preview-bar{position:sticky;top:0;z-index:60;display:flex;align-items:center;
+  gap:8px;padding:10px 16px;background:var(--sg-ink);color:#fff;font-size:14px;
+  flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;
+  scrollbar-width:none}
+.preview-bar::-webkit-scrollbar{display:none}
+.preview-bar__label{font-weight:700;margin-right:4px;flex:none}
 .preview-tab{display:inline-block;padding:8px 14px;border-radius:6px;background:rgba(255,255,255,.12);
-  color:#fff;font-weight:600;text-decoration:none}
+  color:#fff;font-weight:600;text-decoration:none;white-space:nowrap;flex:none}
 .preview-tab:hover{background:rgba(255,255,255,.22);text-decoration:none}
 .preview-tab[aria-current="true"]{background:var(--sg-red)}
-.preview-hint{margin-left:auto;color:#c9c9d4;font-size:13px}
+.preview-hint{margin-left:auto;padding-left:16px;color:#c9c9d4;font-size:13px;white-space:nowrap;flex:none}
 .preview-page{display:none}
 .preview-page.is-active{display:block}
-@media (max-width:640px){.preview-hint{display:none}}
+/* Подсказка про один файл на телефоне не помещается и не нужна:
+   человек и так уже открыл этот файл. */
+@media (max-width:900px){.preview-hint{display:none}
+  .preview-bar{padding:8px 12px;gap:6px;font-size:13px}
+  .preview-tab{padding:7px 11px}}
 `;
 
 const previewNavScript = `
@@ -223,7 +235,11 @@ const previewNavScript = `
     });
     if (!found && pages.length) pages[0].classList.add('is-active');
     links.forEach(function(l){
-      l.setAttribute('aria-current', l.getAttribute('data-tab-link') === id ? 'true' : 'false');
+      var on = l.getAttribute('data-tab-link') === id;
+      l.setAttribute('aria-current', on ? 'true' : 'false');
+      // Панель прокручивается вбок: подтягиваем открытую вкладку в видимую
+      // часть, иначе на телефоне она остаётся за правым краем.
+      if (on && l.scrollIntoView) l.scrollIntoView({block: 'nearest', inline: 'center'});
     });
     window.scrollTo(0, 0);
   }
