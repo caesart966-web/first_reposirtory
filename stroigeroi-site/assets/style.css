@@ -57,15 +57,25 @@
   --r-pill: 999px;
 
   /* Тени */
-  --sh-sm: 0 1px 2px rgba(1, 11, 135, 0.06);
-  --sh-md: 0 4px 16px rgba(1, 11, 135, 0.09);
-  --sh-lg: 0 12px 32px rgba(1, 11, 135, 0.12);
+  /* Тень в два слоя: короткий «контактный» у самой кромки и длинный
+     рассеянный. Одним слоем предмет выглядит наклейкой — либо жёсткая
+     кромка без рассеивания, либо мутное пятно без опоры. Оттенок
+     фирменный синий, а не серый: на белом он читается теплее. */
+  --sh-sm: 0 1px 1px rgba(1, 11, 135, 0.05), 0 2px 4px rgba(1, 11, 135, 0.04);
+  --sh-md: 0 2px 4px rgba(1, 11, 135, 0.05), 0 8px 20px rgba(1, 11, 135, 0.08);
+  --sh-lg: 0 4px 10px rgba(1, 11, 135, 0.06), 0 20px 44px rgba(1, 11, 135, 0.12);
 
   /* Типографика и сетка */
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
     Arial, "Noto Sans", sans-serif;
   --container: 1280px;
   --header-h: 92px;
+
+  /* Тема сайта не зависит от темы системы: человек мог включить светлую
+     тему сайта при тёмной системе. Без этой строки браузер в такой паре
+     рисует свои контролы и полосы прокрутки тёмными посреди светлой
+     страницы. В тёмной теме сайта стоит парная строка color-scheme: dark. */
+  color-scheme: light;
 }
 
 @media (min-width: 1600px) {
@@ -112,6 +122,14 @@ a:hover {
   text-decoration: underline;
 }
 
+/* Телефон внутри обычного текста. Номер — главный канал заказов, поэтому
+   он везде кликабельный, а не просто набор цифр. nowrap обязателен:
+   без него строка рвётся посреди номера («8-963-830-09-» / «99»). */
+.tel-inline {
+  white-space: nowrap;
+  font-weight: 600;
+}
+
 button {
   font-family: inherit;
 }
@@ -122,26 +140,54 @@ h3,
 h4 {
   margin: 0;
   line-height: 1.2;
-  letter-spacing: -0.01em;
+  /* Заголовок разбивается на строки поровну, а не «шесть слов и одно».
+     Браузеры без text-wrap просто переносят как раньше. */
+  text-wrap: balance;
 }
 
+/* Трекинг зависит от кегля: чем крупнее буквы, тем заметнее просветы
+   между ними и тем сильнее их надо стягивать. Раньше на все размеры
+   стояло одно значение -0.01em, и заголовок в 42 px выглядел рыхлым. */
 h1 {
   font-size: 34px;
   font-weight: 800;
+  letter-spacing: -0.025em;
 }
 
 h2 {
   font-size: 26px;
   font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 h3 {
   font-size: 18px;
   font-weight: 700;
+  letter-spacing: -0.012em;
 }
 
 p {
   margin: 0 0 var(--sp-3);
+  /* Не оставляет одно слово на последней строке абзаца */
+  text-wrap: pretty;
+}
+
+/* Цифры одной ширины: цены, остатки и счётчики встают в столбик,
+   а не пляшут от того, что «1» уже «8». В интернет-магазине это
+   первое, что выдаёт небрежную вёрстку. */
+.price,
+.price__unit,
+.calc__result,
+.cart-total__row,
+.filter-price,
+.catalog-toolbar__count,
+.category-card__count,
+.header-action__count,
+.mobile-bar__count,
+.tel-inline,
+.header-util__phone {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
 }
 
 ul {
@@ -844,14 +890,32 @@ ul {
   background: var(--sg-bg-soft);
 }
 
+/* Значок плитки: фирменная подложка вместо белой. На светло-серой
+   карточке белый квадрат почти не читался, и значок висел в пустоте. */
 .tile__icon {
   width: 44px;
   height: 44px;
   display: grid;
   place-items: center;
   border-radius: var(--r-lg);
-  background: var(--sg-white);
+  background: var(--sg-blue-tint);
+  border: 1px solid var(--sg-line);
   color: var(--sg-blue);
+  transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+
+.tile {
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.tile:hover {
+  border-color: var(--sg-blue);
+  box-shadow: var(--sh-sm);
+}
+
+.tile:hover .tile__icon {
+  background: var(--sg-white);
+  border-color: var(--sg-blue);
 }
 
 .tile__title {
@@ -1175,12 +1239,26 @@ ul {
   border: 1px solid var(--sg-line);
   border-radius: var(--r-lg);
   background: var(--sg-white);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
 }
 
+/* Карточка чуть приподнимается под курсором. Полтора десятка карточек
+   в сетке отличаются друг от друга только тенью, и подъём — самый
+   дешёвый способ показать, какая из них сейчас под рукой. */
 .product-card:hover {
   border-color: var(--sg-blue);
   box-shadow: var(--sh-md);
+  transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .product-card {
+    transition: none;
+  }
+
+  .product-card:hover {
+    transform: none;
+  }
 }
 
 .product-card__media {
@@ -1255,9 +1333,14 @@ ul {
 }
 
 .product-card__title {
+  /* Главная ссылка карточки. В одну строку она получалась 20 px высотой —
+     пальцем на телефоне промахиваешься. min-height добирает до 24 px,
+     не сдвигая вёрстку у названий в две строки. */
+  display: block;
+  min-height: 24px;
   font-size: 15px;
   font-weight: 600;
-  line-height: 1.35;
+  line-height: 1.4;
   color: var(--sg-ink);
 }
 
@@ -1512,6 +1595,15 @@ ul {
   gap: var(--sp-3);
   font-size: 15px;
   color: var(--sg-ink);
+}
+
+/* Позвонить из карточки магазина — главное действие с телефона,
+   а ссылка была 23 px высотой. Ровно на пиксель ниже нормы. */
+.shop-card__row a[href^='tel:'] {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  font-weight: 600;
 }
 
 .shop-card__row svg {
@@ -2212,6 +2304,15 @@ html[data-theme="dark"] .site-footer {
   }
 }
 
+/* На широком экране контейнер вырастает до 1440 px, и в три колонки
+   карточки расплываются до 350 px при фотографии 250. Четвёртая колонка
+   поднимает второй ряд товаров выше сгиба. */
+@media (min-width: 1600px) {
+  .catalog-layout .product-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
 @media (max-width: 1279px) {
   .product-grid {
     grid-template-columns: repeat(3, 1fr);
@@ -2615,9 +2716,12 @@ html[data-theme="dark"] {
   --sg-red-tint: #2b1a1f;
   --sg-overlay: rgba(0, 0, 0, 0.65);
 
-  --sh-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --sh-md: 0 4px 16px rgba(0, 0, 0, 0.45);
-  --sh-lg: 0 12px 32px rgba(0, 0, 0, 0.55);
+  /* В тёмной теме тень не «падает» — на тёмном фоне её не видно.
+     Работает верхняя светлая кромка: она отделяет поверхность от фона
+     так же, как тень отделяет её на белом. */
+  --sh-sm: 0 1px 1px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --sh-md: 0 4px 16px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --sh-lg: 0 12px 34px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 
   /* В полосках белый заменяется цветом фона, иначе они «горят» */
   --sg-stripes: repeating-linear-gradient(
@@ -3045,23 +3149,32 @@ html[data-theme="dark"] .theme-toggle .icon-moon {
    Плашка про cookie
    ========================================================================== */
 
+/* Плашка — узкая полоса по низу экрана, а не карточка поверх текста.
+   Раньше она висела на 720 px по центру и закрывала кнопки первого
+   экрана и верхний ряд товаров. Теперь страница на её высоту
+   подрастает снизу (--cookie-h ставит скрипт), поэтому под ней
+   не остаётся ничего, до чего нельзя дотянуться. */
 .cookie {
   position: fixed;
-  left: var(--sp-4);
-  right: var(--sp-4);
-  bottom: var(--sp-4);
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 80;
-  max-width: 720px;
-  margin: 0 auto;
   display: flex;
   align-items: center;
-  gap: var(--sp-4);
-  padding: var(--sp-4);
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--sp-3) var(--sp-4);
+  padding: var(--sp-3) var(--sp-5);
   background: var(--sg-white);
-  border: 1px solid var(--sg-line);
-  border-radius: var(--r-lg);
+  border-top: 1px solid var(--sg-line);
   box-shadow: var(--sh-lg);
-  font-size: 14px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+body.has-cookie {
+  padding-bottom: var(--cookie-h, 0px);
 }
 
 .cookie[hidden] {
@@ -3070,14 +3183,24 @@ html[data-theme="dark"] .theme-toggle .icon-moon {
 
 .cookie p {
   margin: 0;
+  color: var(--sg-muted);
+}
+
+.cookie .btn {
+  flex: none;
 }
 
 @media (max-width: 900px) {
   .cookie {
-    bottom: calc(62px + var(--sp-3));
-    flex-direction: column;
-    align-items: stretch;
+    /* Выше нижней панели действий, иначе кнопка «Хорошо» попадает под неё */
+    bottom: 62px;
     text-align: center;
+  }
+
+  /* Плашка стоит НАД нижней панелью, значит место нужно под обе:
+     иначе более сильный селектор .has-cookie съедает отступ под панель. */
+  body.has-cookie {
+    padding-bottom: calc(62px + var(--cookie-h, 0px));
   }
 }
 
@@ -4061,4 +4184,163 @@ html[data-theme="dark"] .step.is-current .step__num {
   .category-card {
     padding: var(--sp-3);
   }
+}
+
+/* ==========================================================================
+   Переход между страницами
+   ========================================================================== */
+
+/* Кросс-документные переходы: при клике по ссылке браузер плавно
+   перерисовывает страницу вместо белой вспышки. Работает в Chromium,
+   остальные браузеры правило игнорируют и переходят как раньше —
+   ничего не ломается и запасной вёрстки не нужно.
+   На file:// не действует: нужен настоящий сервер. */
+@view-transition {
+  navigation: auto;
+}
+
+/* Шапка и подвал одинаковы на всех страницах, поэтому не участвуют
+   в анимации, а остаются на месте — переход выглядит как смена
+   содержимого, а не как подмена всей страницы. */
+.site-header {
+  view-transition-name: sg-header;
+}
+
+.site-footer {
+  view-transition-name: sg-footer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/* ==========================================================================
+   Отрисовка длинных страниц
+   ========================================================================== */
+
+/* Главная — почти восемь тысяч пикселей на телефоне. Браузеру незачем
+   считать раскладку блоков, до которых человек ещё не долистал.
+   contain-intrinsic-size: auto — браузер запоминает настоящую высоту
+   после первой отрисовки, поэтому полоса прокрутки не прыгает.
+   Первый экран (.mainscreen) сюда не попадает намеренно. */
+.section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 600px;
+}
+
+/* ==========================================================================
+   Печать
+   ========================================================================== */
+
+/* Печатают со стройки обычно две вещи: адреса магазинов и условия
+   доставки. Всё, что на бумаге бесполезно, убираем, а адреса ссылок
+   дописываем текстом — по экранной ссылке с листа не перейдёшь. */
+@media print {
+  .header-util,
+  .header-quick,
+  .catalog-menu,
+  .mobile-nav,
+  .mobile-bar,
+  .search-form,
+  .header-actions,
+  .to-top,
+  .cookie,
+  .breadcrumbs,
+  .filters,
+  .selection__nav,
+  .demo-note,
+  dialog {
+    display: none !important;
+  }
+
+  html,
+  body {
+    background: #fff;
+    color: #000;
+    padding-bottom: 0;
+  }
+
+  .site-header {
+    position: static;
+    border-bottom: 1px solid #999;
+  }
+
+  .container {
+    max-width: none;
+    padding: 0;
+  }
+
+  .section {
+    /* Скрытое содержимое иначе не попадёт на бумагу */
+    content-visibility: visible;
+    break-inside: avoid;
+  }
+
+  a[href^="http"]::after,
+  a[href^="tel:"]::after {
+    content: ' (' attr(href) ')';
+    font-size: 11px;
+    color: #444;
+  }
+
+  .product-card,
+  .shop-card,
+  .tile {
+    break-inside: avoid;
+    box-shadow: none;
+  }
+}
+
+/* ==========================================================================
+   Отделка
+   ========================================================================== */
+
+/* Нажатие должно чувствоваться. Кнопка уходит на пиксель вниз и теряет
+   тень — то же самое делает настоящая клавиша под пальцем. Без этого
+   между наведением и нажатием нет никакой разницы, и на медленной
+   связи человек жмёт второй раз, не поняв, сработало ли. */
+.btn--primary,
+.btn--action,
+.search-form__submit {
+  box-shadow: var(--sh-sm);
+  transition: background-color 0.15s ease, color 0.15s ease,
+    border-color 0.15s ease, box-shadow 0.15s ease, transform 0.08s ease;
+}
+
+.btn--primary:active,
+.btn--action:active,
+.search-form__submit:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn--primary,
+  .btn--action,
+  .search-form__submit {
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .btn--primary:active,
+  .btn--action:active,
+  .search-form__submit:active {
+    transform: none;
+  }
+}
+
+/* Выделенный текст — фирменным синим, а не системным. Мелочь, но её
+   видят все, кто копирует артикул или адрес магазина. */
+::selection {
+  background: var(--sg-blue);
+  color: #fff;
+}
+
+/* Полоса прокрутки в тёмной теме: по умолчанию браузер рисует её
+   светлой, и справа получается яркая полоса вдоль тёмной страницы. */
+html[data-theme='dark'] {
+  scrollbar-color: #3a4152 var(--sg-page);
 }

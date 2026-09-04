@@ -489,12 +489,26 @@
      ====================================================================== */
   var cookie = $('[data-cookie]');
   if (cookie) {
-    if (!store.get('cookie-ok', false)) cookie.hidden = false;
+    /* Пока плашка висит, странице добавляется отступ снизу ровно на её
+       высоту. Иначе она закрывает то, что оказалось внизу экрана:
+       на главной — заголовок и кнопки, в каталоге — первый ряд товаров.
+       Отступ снимается вместе с плашкой, следов не остаётся. */
+    var fitCookie = function () {
+      document.body.style.setProperty('--cookie-h', cookie.offsetHeight + 'px');
+    };
+    if (!store.get('cookie-ok', false)) {
+      cookie.hidden = false;
+      document.body.classList.add('has-cookie');
+      fitCookie();
+      window.addEventListener('resize', fitCookie);
+    }
     var okBtn = $('[data-cookie-ok]', cookie);
     if (okBtn) {
       okBtn.addEventListener('click', function () {
         store.set('cookie-ok', true);
         cookie.hidden = true;
+        document.body.classList.remove('has-cookie');
+        window.removeEventListener('resize', fitCookie);
       });
     }
   }
