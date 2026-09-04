@@ -112,6 +112,14 @@ a:hover {
   text-decoration: underline;
 }
 
+/* Телефон внутри обычного текста. Номер — главный канал заказов, поэтому
+   он везде кликабельный, а не просто набор цифр. nowrap обязателен:
+   без него строка рвётся посреди номера («8-963-830-09-» / «99»). */
+.tel-inline {
+  white-space: nowrap;
+  font-weight: 600;
+}
+
 button {
   font-family: inherit;
 }
@@ -1255,9 +1263,14 @@ ul {
 }
 
 .product-card__title {
+  /* Главная ссылка карточки. В одну строку она получалась 20 px высотой —
+     пальцем на телефоне промахиваешься. min-height добирает до 24 px,
+     не сдвигая вёрстку у названий в две строки. */
+  display: block;
+  min-height: 24px;
   font-size: 15px;
   font-weight: 600;
-  line-height: 1.35;
+  line-height: 1.4;
   color: var(--sg-ink);
 }
 
@@ -1512,6 +1525,15 @@ ul {
   gap: var(--sp-3);
   font-size: 15px;
   color: var(--sg-ink);
+}
+
+/* Позвонить из карточки магазина — главное действие с телефона,
+   а ссылка была 23 px высотой. Ровно на пиксель ниже нормы. */
+.shop-card__row a[href^='tel:'] {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  font-weight: 600;
 }
 
 .shop-card__row svg {
@@ -2209,6 +2231,15 @@ html[data-theme="dark"] .site-footer {
 @media (min-width: 1024px) {
   .catalog-layout .product-grid {
     grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* На широком экране контейнер вырастает до 1440 px, и в три колонки
+   карточки расплываются до 350 px при фотографии 250. Четвёртая колонка
+   поднимает второй ряд товаров выше сгиба. */
+@media (min-width: 1600px) {
+  .catalog-layout .product-grid {
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 
@@ -3045,23 +3076,32 @@ html[data-theme="dark"] .theme-toggle .icon-moon {
    Плашка про cookie
    ========================================================================== */
 
+/* Плашка — узкая полоса по низу экрана, а не карточка поверх текста.
+   Раньше она висела на 720 px по центру и закрывала кнопки первого
+   экрана и верхний ряд товаров. Теперь страница на её высоту
+   подрастает снизу (--cookie-h ставит скрипт), поэтому под ней
+   не остаётся ничего, до чего нельзя дотянуться. */
 .cookie {
   position: fixed;
-  left: var(--sp-4);
-  right: var(--sp-4);
-  bottom: var(--sp-4);
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 80;
-  max-width: 720px;
-  margin: 0 auto;
   display: flex;
   align-items: center;
-  gap: var(--sp-4);
-  padding: var(--sp-4);
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--sp-3) var(--sp-4);
+  padding: var(--sp-3) var(--sp-5);
   background: var(--sg-white);
-  border: 1px solid var(--sg-line);
-  border-radius: var(--r-lg);
+  border-top: 1px solid var(--sg-line);
   box-shadow: var(--sh-lg);
-  font-size: 14px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+body.has-cookie {
+  padding-bottom: var(--cookie-h, 0px);
 }
 
 .cookie[hidden] {
@@ -3070,14 +3110,24 @@ html[data-theme="dark"] .theme-toggle .icon-moon {
 
 .cookie p {
   margin: 0;
+  color: var(--sg-muted);
+}
+
+.cookie .btn {
+  flex: none;
 }
 
 @media (max-width: 900px) {
   .cookie {
-    bottom: calc(62px + var(--sp-3));
-    flex-direction: column;
-    align-items: stretch;
+    /* Выше нижней панели действий, иначе кнопка «Хорошо» попадает под неё */
+    bottom: 62px;
     text-align: center;
+  }
+
+  /* Плашка стоит НАД нижней панелью, значит место нужно под обе:
+     иначе более сильный селектор .has-cookie съедает отступ под панель. */
+  body.has-cookie {
+    padding-bottom: calc(62px + var(--cookie-h, 0px));
   }
 }
 
