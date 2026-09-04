@@ -3,7 +3,8 @@ import type { SroDetail } from '../content/sroDetails'
 import {
   DOCS_LAW,
   DOCS_SPECIALISTS,
-  DOCS_SRO,
+  DOCS_IP,
+  DOCS_OOO,
   FUNDS_CONFIRMED,
   LAW,
   STEPS,
@@ -40,25 +41,23 @@ function Step({
   index: number
   step: { title: string; detail: string; law?: string; who: 'кандидат' | 'СРО' | 'мы' }
 }) {
-  // Сам <li> живёт в разметке ленты, а не здесь: вложенный <li> внутри <li>
-  // — недопустимая вложенность, React ругается предупреждением в консоль,
-  // и проверка «страница без ошибок» это ловит.
   return (
     <>
-      {/* Вертикаль между номерами: без неё восемь шагов читаются восемью
-          отдельными карточками, а это одна последовательность. Последний
-          шаг линию не тянет — тянуть её некуда. */}
+      {/* Вертикаль между номерами: без неё шаги читаются отдельными
+          карточками, а это одна последовательность. Последний линию не тянет. */}
       <span
         aria-hidden="true"
-        className="absolute left-[19px] top-11 h-[calc(100%-2.75rem)] w-px bg-neutral-200 group-last:hidden"
+        className="absolute left-[19px] top-11 h-[calc(100%-2.75rem)] w-px bg-neutral-200 transition-colors duration-200 group-hover:bg-accent-200 group-last:hidden"
       />
-      <span className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-accent-100 bg-accent-50 text-sm font-bold text-accent-700">
+      <span className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-accent-100 bg-accent-50 text-sm font-bold text-accent-700 transition-colors duration-200 group-hover:border-accent-600 group-hover:bg-accent-600 group-hover:text-white">
         {index + 1}
       </span>
       <div className="min-w-0 pt-1.5">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <h3 className="font-semibold text-neutral-950">{step.title}</h3>
-          <span className="rounded-md bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600">
+          <h3 className="font-semibold text-neutral-950 transition-colors duration-200 group-hover:text-accent-700">
+            {step.title}
+          </h3>
+          <span className="rounded-md bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600 transition-colors duration-200 group-hover:bg-accent-50 group-hover:text-accent-700">
             {step.who === 'мы' ? 'делаю я' : step.who === 'СРО' ? 'делает СРО' : 'от вас'}
           </span>
         </div>
@@ -69,9 +68,6 @@ function Step({
   )
 }
 
-// Группа документов. Разделение на «требует закон» и «просит СРО» — не
-// украшение: у посредников эти списки слиты в один, и человек считает, что
-// договор аренды офиса требует кодекс. Он его не требует.
 function DocGroup({
   title,
   hint,
@@ -85,16 +81,27 @@ function DocGroup({
 }) {
   return (
     <div
-      className={`h-full rounded-2xl border p-5 sm:p-6 ${
-        tone === 'law' ? 'border-accent-100 bg-accent-50/40' : 'border-neutral-200 bg-white shadow-card'
+      className={`h-full rounded-2xl border p-5 transition-colors duration-200 sm:p-6 ${
+        tone === 'law'
+          ? 'border-accent-100 bg-accent-50/40 hover:border-accent-300'
+          : 'border-neutral-200 bg-white shadow-card hover:border-accent-300'
       }`}
     >
       <h3 className="font-semibold text-neutral-950">{title}</h3>
-      <p className="mt-1.5 text-sm text-neutral-600">{hint}</p>
-      <ul className="mt-4 space-y-3">
+      <p className="mt-1.5 text-sm leading-relaxed text-neutral-600">{hint}</p>
+      <ul className="mt-4 -mx-2 space-y-0.5">
         {items.map((item) => (
-          <li key={item.title} className="flex gap-3">
-            <FileText className="mt-0.5 h-4 w-4 shrink-0 text-accent-600" aria-hidden="true" />
+          /* Подсветка строки, а не подъём: список читается, а не кликается,
+             и подъём обещал бы клик, которого нет (см. ui/card.ts). Отклик
+             всё равно нужен — иначе на длинном перечне взгляд теряет строку. */
+          <li
+            key={item.title}
+            className="group/doc flex gap-3 rounded-xl px-2 py-1.5 transition-colors duration-150 hover:bg-white/70"
+          >
+            <FileText
+              className="mt-[3px] h-4 w-4 shrink-0 text-accent-600/70 transition-colors duration-150 group-hover/doc:text-accent-600"
+              aria-hidden="true"
+            />
             <div className="min-w-0 text-sm">
               <span className="font-medium text-neutral-900">{item.title}</span>
               {item.detail && (
@@ -286,7 +293,7 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
                   {STEPS.map((step, index) => (
                     <li
                       key={step.title}
-                      className="group relative flex list-none gap-5 pb-8 last:pb-0"
+                      className="group relative -mx-3 flex list-none gap-5 rounded-2xl px-3 pb-8 pt-1 transition-colors duration-200 hover:bg-accent-50/50 last:pb-1"
                     >
                       <Step index={index} step={step} />
                     </li>
@@ -325,12 +332,20 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
                     items={DOCS_SPECIALISTS}
                   />
                 </Reveal>
-                <Reveal delay={140} className="h-full lg:col-span-2">
+                <Reveal delay={140} className="h-full">
                   <DocGroup
                     tone="sro"
-                    title="Что обычно просит сама СРО"
-                    hint="Это НЕ требования кодекса, а внутренние документы конкретной организации: у разных СРО список разный. Точный — в её положении о членстве, и я сверяю его до подачи."
-                    items={DOCS_SRO}
+                    title="Если у вас ООО"
+                    hint="Обычный запрос организации сверх того, что требует кодекс."
+                    items={DOCS_OOO}
+                  />
+                </Reveal>
+                <Reveal delay={210} className="h-full">
+                  <DocGroup
+                    tone="sro"
+                    title="Если вы ИП"
+                    hint="Обычный запрос организации сверх того, что требует кодекс."
+                    items={DOCS_IP}
                   />
                 </Reveal>
               </div>
