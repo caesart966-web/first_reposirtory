@@ -566,6 +566,17 @@
   if (calc) {
     var mode = 'gkl';
 
+    /* По-русски дробная часть отделяется запятой, а тысячи — пробелом.
+       Запятую на входе num() понимал и раньше, а на выходе везде печаталась
+       точка: «20.0 м²», «3.00 м²». Для покупателя на Камчатке это выглядит
+       как чужой формат, а в смете с такими числами легко ошибиться. */
+    var ru = function (value, digits) {
+      return Number(value).toLocaleString('ru-RU', {
+        minimumFractionDigits: digits || 0,
+        maximumFractionDigits: digits === undefined ? 2 : digits
+      });
+    };
+
     var num = function (sel) {
       var el = $(sel, calc);
       if (!el) return NaN;
@@ -588,7 +599,7 @@
       var out = $('[data-calc-answer]', calc);
       var list = $('[data-calc-rows]', calc);
       var note = $('[data-calc-note]', calc);
-      if (out) out.textContent = answer === null ? '—' : answer + ' ' + unit;
+      if (out) out.textContent = answer === null ? '—' : ru(answer) + ' ' + unit;
       if (list) {
         list.innerHTML = rows.map(function (r) {
           return '<li><span>' + r[0] + '</span><b>' + r[1] + '</b></li>';
@@ -612,9 +623,9 @@
         var need = area * (layers || 1) * (1 + reserve / 100);
         var sheets = Math.ceil(need / sheet);
         render(sheets, sheets === 1 ? 'лист' : (sheets < 5 ? 'листа' : 'листов'), [
-          ['Площадь обшивки', (area * (layers || 1)).toFixed(1) + ' м²'],
-          ['Запас', reserve + ' %'],
-          ['Площадь одного листа', sheet.toFixed(2) + ' м²']
+          ['Площадь обшивки', ru(area * (layers || 1), 1) + ' м²'],
+          ['Запас', ru(reserve) + ' %'],
+          ['Площадь одного листа', ru(sheet, 2) + ' м²']
         ], 'Оценка по площади. Проёмы, подрезка и раскладка листов могут изменить число — уточните в магазине.');
         return;
       }
@@ -631,17 +642,17 @@
       }
       if (isNaN(usage) || usage <= 0 || isNaN(bag) || bag <= 0) {
         render(null, '', [
-          ['Площадь', sArea + ' м²'],
-          ['Слой', thick + ' мм']
+          ['Площадь', ru(sArea) + ' м²'],
+          ['Слой', ru(thick) + ' мм']
         ], 'Осталось вписать расход и вес мешка — оба числа указаны на упаковке смеси. Свои цифры мы не придумываем: у разных смесей расход отличается в разы.');
         return;
       }
       var kg = sArea * thick * usage * (1 + reserve / 100);
       var bags = Math.ceil(kg / bag);
       render(bags, bags === 1 ? 'мешок' : (bags < 5 ? 'мешка' : 'мешков'), [
-        ['Нужно смеси', Math.round(kg) + ' кг'],
-        ['Запас', reserve + ' %'],
-        ['Вес мешка', bag + ' кг']
+        ['Нужно смеси', ru(Math.round(kg)) + ' кг'],
+        ['Запас', ru(reserve) + ' %'],
+        ['Вес мешка', ru(bag) + ' кг']
       ], 'Расход взят из вашей строки — сверьтесь с упаковкой конкретной смеси.');
     };
 

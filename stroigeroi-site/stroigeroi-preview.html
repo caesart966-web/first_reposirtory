@@ -3540,13 +3540,66 @@ html[data-theme="dark"] .chip:hover {
   overflow: hidden;
 }
 
+/* Пять колонок, а не четыре: между названием и счётчиком добавлено
+   место под цену за единицу и сумму строки. Раньше их не было вовсе —
+   ни чисел, ни пустого места под них, — и по макету нельзя было понять,
+   куда они встанут. Корзина без цены в строке не корзина. */
 .cart-row {
   display: grid;
-  grid-template-columns: 88px 1fr auto auto;
+  grid-template-columns: 88px minmax(0, 1fr) auto auto auto;
   gap: var(--sp-4);
   align-items: center;
   padding: var(--sp-4);
   border-bottom: 1px solid var(--sg-line);
+}
+
+.cart-row__meta {
+  margin-top: 6px;
+}
+
+.cart-row__money {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--sp-2);
+  text-align: right;
+}
+
+/* На телефоне пять колонок в строку не встают. Позиции заданы явно:
+   если положиться на поток, деньги занимают всю ширину и выталкивают
+   счётчик и корзину каждый на свою строку — получается лесенка
+   из четырёх этажей на один товар. */
+@media (max-width: 720px) {
+  .cart-row {
+    grid-template-columns: 64px minmax(0, 1fr) auto;
+    row-gap: var(--sp-3);
+    align-items: start;
+  }
+
+  .cart-row__media {
+    grid-area: 1 / 1 / 2 / 2;
+  }
+
+  .cart-row__text {
+    grid-area: 1 / 2 / 2 / 3;
+  }
+
+  .cart-row__remove {
+    grid-area: 1 / 3 / 2 / 4;
+  }
+
+  .cart-row__money {
+    grid-area: 2 / 2 / 3 / 4;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .cart-row .qty {
+    grid-area: 3 / 2 / 4 / 4;
+    justify-self: start;
+  }
 }
 
 .cart-row:last-child {
@@ -5733,9 +5786,13 @@ html[data-theme='dark'] {
     <div class="cart-layout">
       <div class="cart-list"><div class="cart-row">
       <div class="cart-row__media"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.4"/><path d="m5 17.5 4.5-4.5 3 3L16 12l3 3"/></svg></div>
-      <div>
+      <div class="cart-row__text">
         <a class="product-card__title" href="#p-product">Название товара из прайса заказчика</a>
-        <p class="product-card__meta ph ph--inline" style="margin-top:6px">фасовка / единица измерения</p>
+        <p class="product-card__meta ph ph--inline cart-row__meta">фасовка / единица измерения</p>
+      </div>
+      <div class="cart-row__money">
+        <span class="ph ph--inline">цена, ₽</span>
+        <span class="ph ph--inline">сумма, ₽</span>
       </div>
       <div class="qty" data-qty>
         <button type="button" data-qty-step="-1" aria-label="Уменьшить">−</button>
@@ -5746,9 +5803,13 @@ html[data-theme='dark'] {
       <button class="cart-row__remove" type="button" data-demo="удаление из корзины" aria-label="Удалить"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></svg></button>
     </div><div class="cart-row">
       <div class="cart-row__media"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.4"/><path d="m5 17.5 4.5-4.5 3 3L16 12l3 3"/></svg></div>
-      <div>
+      <div class="cart-row__text">
         <a class="product-card__title" href="#p-product">Название товара из прайса заказчика</a>
-        <p class="product-card__meta ph ph--inline" style="margin-top:6px">фасовка / единица измерения</p>
+        <p class="product-card__meta ph ph--inline cart-row__meta">фасовка / единица измерения</p>
+      </div>
+      <div class="cart-row__money">
+        <span class="ph ph--inline">цена, ₽</span>
+        <span class="ph ph--inline">сумма, ₽</span>
       </div>
       <div class="qty" data-qty>
         <button type="button" data-qty-step="-1" aria-label="Уменьшить">−</button>
@@ -5759,9 +5820,13 @@ html[data-theme='dark'] {
       <button class="cart-row__remove" type="button" data-demo="удаление из корзины" aria-label="Удалить"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></svg></button>
     </div><div class="cart-row">
       <div class="cart-row__media"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.4"/><path d="m5 17.5 4.5-4.5 3 3L16 12l3 3"/></svg></div>
-      <div>
+      <div class="cart-row__text">
         <a class="product-card__title" href="#p-product">Название товара из прайса заказчика</a>
-        <p class="product-card__meta ph ph--inline" style="margin-top:6px">фасовка / единица измерения</p>
+        <p class="product-card__meta ph ph--inline cart-row__meta">фасовка / единица измерения</p>
+      </div>
+      <div class="cart-row__money">
+        <span class="ph ph--inline">цена, ₽</span>
+        <span class="ph ph--inline">сумма, ₽</span>
       </div>
       <div class="qty" data-qty>
         <button type="button" data-qty-step="-1" aria-label="Уменьшить">−</button>
@@ -6862,6 +6927,17 @@ html[data-theme='dark'] {
   if (calc) {
     var mode = 'gkl';
 
+    /* По-русски дробная часть отделяется запятой, а тысячи — пробелом.
+       Запятую на входе num() понимал и раньше, а на выходе везде печаталась
+       точка: «20.0 м²», «3.00 м²». Для покупателя на Камчатке это выглядит
+       как чужой формат, а в смете с такими числами легко ошибиться. */
+    var ru = function (value, digits) {
+      return Number(value).toLocaleString('ru-RU', {
+        minimumFractionDigits: digits || 0,
+        maximumFractionDigits: digits === undefined ? 2 : digits
+      });
+    };
+
     var num = function (sel) {
       var el = $(sel, calc);
       if (!el) return NaN;
@@ -6884,7 +6960,7 @@ html[data-theme='dark'] {
       var out = $('[data-calc-answer]', calc);
       var list = $('[data-calc-rows]', calc);
       var note = $('[data-calc-note]', calc);
-      if (out) out.textContent = answer === null ? '—' : answer + ' ' + unit;
+      if (out) out.textContent = answer === null ? '—' : ru(answer) + ' ' + unit;
       if (list) {
         list.innerHTML = rows.map(function (r) {
           return '<li><span>' + r[0] + '</span><b>' + r[1] + '</b></li>';
@@ -6908,9 +6984,9 @@ html[data-theme='dark'] {
         var need = area * (layers || 1) * (1 + reserve / 100);
         var sheets = Math.ceil(need / sheet);
         render(sheets, sheets === 1 ? 'лист' : (sheets < 5 ? 'листа' : 'листов'), [
-          ['Площадь обшивки', (area * (layers || 1)).toFixed(1) + ' м²'],
-          ['Запас', reserve + ' %'],
-          ['Площадь одного листа', sheet.toFixed(2) + ' м²']
+          ['Площадь обшивки', ru(area * (layers || 1), 1) + ' м²'],
+          ['Запас', ru(reserve) + ' %'],
+          ['Площадь одного листа', ru(sheet, 2) + ' м²']
         ], 'Оценка по площади. Проёмы, подрезка и раскладка листов могут изменить число — уточните в магазине.');
         return;
       }
@@ -6927,17 +7003,17 @@ html[data-theme='dark'] {
       }
       if (isNaN(usage) || usage <= 0 || isNaN(bag) || bag <= 0) {
         render(null, '', [
-          ['Площадь', sArea + ' м²'],
-          ['Слой', thick + ' мм']
+          ['Площадь', ru(sArea) + ' м²'],
+          ['Слой', ru(thick) + ' мм']
         ], 'Осталось вписать расход и вес мешка — оба числа указаны на упаковке смеси. Свои цифры мы не придумываем: у разных смесей расход отличается в разы.');
         return;
       }
       var kg = sArea * thick * usage * (1 + reserve / 100);
       var bags = Math.ceil(kg / bag);
       render(bags, bags === 1 ? 'мешок' : (bags < 5 ? 'мешка' : 'мешков'), [
-        ['Нужно смеси', Math.round(kg) + ' кг'],
-        ['Запас', reserve + ' %'],
-        ['Вес мешка', bag + ' кг']
+        ['Нужно смеси', ru(Math.round(kg)) + ' кг'],
+        ['Запас', ru(reserve) + ' %'],
+        ['Вес мешка', ru(bag) + ' кг']
       ], 'Расход взят из вашей строки — сверьтесь с упаковкой конкретной смеси.');
     };
 

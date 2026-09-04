@@ -237,6 +237,53 @@ for (const name of PAGES) {
   await ctx.close();
 }
 
+/* ==========================================================================
+   Калькулятор: счёт и русский формат чисел
+   ========================================================================== */
+
+{
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await ctx.newPage();
+  await page.goto('file://' + path.join(DIR, 'calculator.html'), { waitUntil: 'load' });
+  await page.waitForTimeout(300);
+
+  const read = () =>
+    page.evaluate(() => ({
+      answer: document.querySelector('[data-calc-answer]').textContent.trim(),
+      rows: [...document.querySelectorAll('[data-calc-rows] li')].map((l) => l.textContent.trim()),
+    }));
+
+  /* 20 м² в один слой, запас 10 %, лист 3 м²: 22 / 3 = 7.33 → 8 листов */
+  const gkl = await read();
+  if (!/^8\s/.test(gkl.answer)) fail(`калькулятор: 20 м² должны дать 8 листов, получено «${gkl.answer}»`);
+
+  /* Запятую на входе понимать обязан: по-русски дробное пишут через неё */
+  await page.fill('[data-gkl-area]', '18,5');
+  await page.waitForTimeout(200);
+  const comma = await read();
+  if (!/^7\s/.test(comma.answer)) fail(`калькулятор: 18,5 м² должны дать 7 листов, получено «${comma.answer}»`);
+
+  /* И на выходе тоже запятая, а не точка */
+  for (const row of comma.rows) {
+    if (/\d\.\d/.test(row)) fail(`калькулятор: точка вместо запятой в дробном числе — «${row}»`);
+  }
+
+  await page.click('[data-calc-mode="mix"]');
+  await page.waitForTimeout(200);
+  for (const [sel, v] of [['[data-mix-area]', '120'], ['[data-mix-thick]', '8'], ['[data-mix-usage]', '1,4'], ['[data-mix-bag]', '30']]) {
+    await page.fill(sel, v);
+  }
+  await page.waitForTimeout(250);
+  const mix = await read();
+  /* 120 × 8 × 1,4 × 1,1 = 1478,4 кг ÷ 30 = 49,28 → 50 мешков */
+  if (!/^50\s/.test(mix.answer)) fail(`калькулятор: смеси должны дать 50 мешков, получено «${mix.answer}»`);
+  for (const row of mix.rows) {
+    if (/\d\.\d/.test(row)) fail(`калькулятор: точка вместо запятой — «${row}»`);
+  }
+
+  await ctx.close();
+}
+
 await browser.close();
 
 /* ==========================================================================
