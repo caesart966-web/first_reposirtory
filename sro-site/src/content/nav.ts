@@ -7,6 +7,7 @@
 // главной её нет. Разница важна для helpers из lib/site.ts: с вложенной
 // страницы якорь надо предварять '../', а адрес страницы — собирать целиком.
 import { anchor, page } from '../lib/site'
+import { REGIONS } from './regions'
 import { SRO_DETAILS } from './sroDetails'
 
 export type NavLink = {
@@ -74,10 +75,11 @@ export const SERVICES_GROUP: NavGroup = {
       hint: 'Что войдёт в пакет для конкретной СРО',
     },
     {
-      label: 'Регионы',
+      label: 'География работы',
       href: '#regions',
       kind: 'anchor',
-      hint: 'Карта: где помогаю вступить',
+      // Число — из списка заказчика, крайние точки — из него же.
+      hint: `${REGIONS.length} регионов, от Санкт-Петербурга до Якутска`,
     },
   ],
 }

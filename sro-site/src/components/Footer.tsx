@@ -1,10 +1,19 @@
 import { Mail, Phone } from 'lucide-react'
 import { CONFIGURED, CONTACTS, LINKS } from '../content/contacts'
-import { REQUISITES } from '../content/facts'
+import { REQUISITES, isPlaceholder } from '../content/facts'
 import { SECTIONS, navHref } from '../content/nav'
 import { ScalesMark } from './illustrations'
 import { useLegalDocs } from './LegalDocs'
 import { MESSENGERS } from './messengers'
+
+// Строки реквизитов; плейсхолдеры отфильтрованы, появятся сами с данными.
+const REQUISITE_ROWS = [
+  { label: 'Наименование', value: REQUISITES.legalName },
+  { label: 'ИНН', value: REQUISITES.inn },
+  { label: 'КПП', value: REQUISITES.kpp },
+  { label: 'ОГРН', value: REQUISITES.ogrn },
+  { label: 'Адрес', value: REQUISITES.address },
+].filter((row) => !isPlaceholder(row.value))
 
 export function Footer() {
   const openLegal = useLegalDocs()
@@ -37,8 +46,8 @@ export function Footer() {
               </span>
             </div>
             <p className="mt-4 text-sm text-neutral-600">
-              Вступление в СРО во всех регионах России: строительство, проектирование, инженерные
-              изыскания.
+              Вступление в СРО строителей, проектировщиков и изыскателей. Подготовка документов,
+              специалисты НРС, сопровождение.
             </p>
             {/* Формулировка «и первая, и все следующие» переехала сюда из
                 убранной секции «Контакты». Она нигде больше на странице не
@@ -48,6 +57,23 @@ export function Footer() {
             <p className="mt-3 text-sm font-medium text-accent-700">
               Консультация бесплатная — и первая, и все следующие
             </p>
+            {/* Реквизиты — здесь, а не в карточке «О нас»: в подвале их ищут
+                по привычке, и здесь они стоят рядом с юридическим именем
+                в копирайте. Незаполненные строки (ОГРН) не показываются —
+                квадратные скобки на сайте читаются как «сломано». */}
+            <p className="mt-6 text-xs font-semibold uppercase tracking-[0.16em] text-neutral-600">
+              Реквизиты
+            </p>
+            <dl className="mt-3 space-y-1.5 text-sm text-neutral-600">
+              {REQUISITE_ROWS.map((row) => (
+                <div key={row.label} className="flex gap-2">
+                  {/* neutral-600, не 500: под подвалом фоновая гравюра, и на 500 контраст
+                      подписи падал до 4.2:1 при норме 4.5 — замерено проверкой T26. */}
+                  <dt className="shrink-0 text-neutral-600">{row.label}</dt>
+                  <dd className="text-neutral-800">{row.value}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
 
           {/* Заголовки колонок — той же капителью с разрядкой, что подзаголовки
