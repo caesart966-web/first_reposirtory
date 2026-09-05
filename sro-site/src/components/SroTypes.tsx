@@ -35,7 +35,7 @@ export function SroTypes() {
       <SectionHeading
         eyebrow="Виды СРО"
         title="Строительство, проектирование, изыскания"
-        subtitle="Работаю со всеми тремя видами саморегулируемых организаций. Выберите свой — уточню детали и назову порядок действий."
+        subtitle="На странице каждого вида: кому обязательно членство, взносы в компенсационные фонды и порядок вступления."
       />
       <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {SRO_DETAILS.map((type, index) => (
@@ -102,7 +102,7 @@ export function SroTypes() {
         ))}
       </div>
       <Reveal className="mt-7 text-center text-sm text-neutral-600">
-        Не нашли свою область?{' '}
+        Не уверены, какой вид СРО нужен?{' '}
         <button
           type="button"
           onClick={() => startQuiz(TYPE_QUESTION.id, SRO_TYPES.unsure)}
