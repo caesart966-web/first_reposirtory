@@ -40,7 +40,22 @@ PAGES = ["/", "/uslugi/", "/uslugi/geodeziya/", "/obekty/", "/o-kompanii/",
          "/kontakty/", "/404.html"]
 WIDTHS = (320, 360, 390, 768, 1024, 1280, 1440, 1600)
 # Браузер можно указать вручную, если он лежит не там, где ждёт playwright
-CHROME = os.environ.get("CHROME_PATH")
+def _find_chrome() -> str | None:
+    """Путь к браузеру: сначала переменная CHROME_PATH, потом то,
+    что уже установлено в системе (в облачной среде это /opt/pw-browsers)."""
+    env = os.environ.get("CHROME_PATH")
+    if env and pathlib.Path(env).exists():
+        return env
+    for pattern in ("chromium-*/chrome-linux/chrome",
+                    "chromium_headless_shell-*/chrome-headless-shell-linux64/"
+                    "chrome-headless-shell"):
+        found = sorted(pathlib.Path("/opt/pw-browsers").glob(pattern))
+        if found:
+            return str(found[-1])
+    return None
+
+
+CHROME = _find_chrome()
 
 problems: list[str] = []
 

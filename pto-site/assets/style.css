@@ -45,7 +45,8 @@
   font-weight: 100 900;
   font-display: swap;
   src: url("fonts/inter-latin.woff2") format("woff2");
-  unicode-range: U+0000-00FF, U+2013-2014, U+2018-201D, U+2026, U+2212;
+  unicode-range: U+0020-007E, U+00A0, U+00A9, U+00AB, U+00B0, U+00B7,
+    U+00BB, U+00D7, U+2013-2014, U+2018-201D, U+2026, U+2116, U+2192, U+2212;
 }
 /* Geologica — шрифт заголовков. Узкая техническая гротеска с острой гранью:
    длинные русские заголовки помещаются в строку, и вид у них инженерный,
@@ -65,7 +66,8 @@
   font-weight: 500 800;
   font-display: swap;
   src: url("fonts/geologica-latin.woff2") format("woff2");
-  unicode-range: U+0020-007E, U+00A0, U+2013-2014, U+2018-201D, U+2026, U+2212;
+  unicode-range: U+0020-007E, U+00A0, U+00A9, U+00AB, U+00B0, U+00B7,
+    U+00BB, U+00D7, U+2013-2014, U+2018-201D, U+2026, U+2116, U+2192, U+2212;
 }
 @font-face {
   font-family: "MonoVar";
@@ -73,7 +75,7 @@
   font-weight: 100 800;
   font-display: swap;
   src: url("fonts/mono-cyrillic.woff2") format("woff2");
-  unicode-range: U+0400-045F, U+0490-0491;
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
 }
 @font-face {
   font-family: "MonoVar";
@@ -81,7 +83,8 @@
   font-weight: 100 800;
   font-display: swap;
   src: url("fonts/mono-latin.woff2") format("woff2");
-  unicode-range: U+0020-007E, U+00A0, U+2013-2014, U+2018-201D, U+2026;
+  unicode-range: U+0020-007E, U+00A0, U+00A9, U+00AB, U+00B0, U+00B7,
+    U+00BB, U+00D7, U+2013-2014, U+2018-201D, U+2026, U+2116, U+2192, U+2212;
 }
 
 /* ---------- 1. Токены ---------------------------------------------------- */
@@ -644,9 +647,18 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   inset: 0;
   z-index: -3;
   background-color: var(--panel);
+  /* Заливка видна, пока кадр не загрузился, и по краям, если он не покрывает */
   background-image: linear-gradient(115deg, #091524 0%, #12263f 45%, #1b3a5e 100%);
-  background-size: cover;
-  background-position: center;
+  overflow: hidden;
+}
+/* Кадр вставлен картинкой, а не фоном: так браузер сам выбирает формат
+   (avif или webp) и качает только один файл. */
+.hero__media-img,
+.media-band__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .hero__video {
   position: absolute;
@@ -971,9 +983,10 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
-  background: var(--panel) center / cover no-repeat;
+  background: var(--panel);
   box-shadow: var(--shadow-md);
 }
+.media-band__img { position: absolute; inset: 0; }
 .media-band__video {
   position: absolute;
   inset: 0;
@@ -2288,6 +2301,10 @@ html {
   .field select {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%23a2b4c9' stroke-width='1.6' d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
   }
+
+  /* Номер объекта — мелкий текст акцентным синим. На тёмной карточке это
+     3,6:1, ниже нормы; светлый оттенок того же синего даёт 7:1. */
+  .object__num { color: var(--accent-300); }
 
   /* Значок контакта: на тёмной подложке нужен светлый оттенок акцента */
   .contact-card__icon { color: var(--accent-300); }

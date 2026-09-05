@@ -199,24 +199,40 @@ def photo_img(site: Site, rel: str, alt: str, sizes: str, css: str = "") -> str:
     return img
 
 
+def poster_img(site: Site, rel: str, css: str) -> str:
+    """Кадр под видео — тегом picture, а не фоном в стилях.
+
+    Так браузер скачивает ровно один файл: понимает avif — берёт его
+    (он вдвое легче), не понимает — берёт webp. С фоном в стилях
+    приходилось писать两 строки, и Chrome качал обе картинки."""
+    avif = rel.rsplit(".", 1)[0] + ".avif"
+    source = (f'<source type="image/avif" srcset="{site.url(avif)}">'
+              if asset_exists(avif) else "")
+    size = image_size(rel)
+    dims = f' width="{size[0]}" height="{size[1]}"' if size else ""
+    return (f'<picture>{source}<img class="{css}" src="{site.url(rel)}"{dims}'
+            f' alt="" fetchpriority="high" decoding="async"></picture>')
+
+
 def block_media(site: Site, cfg: dict) -> str:
     """Широкая видео-полоса. Ведёт себя как первый экран: постер виден сразу,
     видео подключается скриптом после загрузки страницы. Если файлов видео нет,
     остаётся постер — блок не ломается."""
     if not cfg:
         return ""
-    poster = site.url(resolve_media(cfg.get("poster"), []))
+    poster_rel = resolve_media(cfg.get("poster"), [])
+    poster = site.url(poster_rel)
     sources = "|".join(site.url(cfg[k]) for k in ("webm", "mp4") if asset_exists(cfg.get(k)))
     mobile = "/assets/media/about-mobile.mp4"
     mob_attr = f' data-src-mobile="{site.url(mobile)}"' if asset_exists(mobile) else ""
     video = (f'''<video class="media-band__video js-video" autoplay muted loop playsinline
-             preload="none" poster="{poster}" data-src="{sources}"{mob_attr}
+             preload="none" data-src="{sources}"{mob_attr}
              aria-hidden="true" tabindex="-1"></video>''' if sources else "")
     caption = (f'<figcaption class="media-band__caption">{esc(cfg["caption"])}</figcaption>'
                if cfg.get("caption") else "")
     return f'''  <section class="section section--tight">
     <div class="container">
-      <figure class="media-band" style="background-image:url({poster})">
+      <figure class="media-band">{poster_img(site, poster_rel, "media-band__img")}
         {video}
         {caption}
       </figure>
@@ -797,12 +813,13 @@ def page_home(r: Renderer) -> None:
 
     # Постер — статичный кадр. Он показывается сразу, пока грузится видео,
     # и остаётся вместо видео на телефонах. Видео подключает app.js.
-    poster = site.url(resolve_media(h.get("poster"), [
+    poster_rel = resolve_media(h.get("poster"), [
         "/assets/media/hero-poster.webp",
         "/assets/media/hero-poster.jpg",
         "/assets/media/hero-poster.png",
         "/assets/media/hero-poster-placeholder.png",
-    ]))
+    ])
+    poster = site.url(poster_rel)
     # Тег видео вставляем, только если файл действительно лежит в assets/.
     # Иначе браузер зря дёргал бы несуществующий файл — а на экране всё равно
     # остаётся постер. Положите hero.mp4 в assets/media/, и видео появится само.
@@ -814,7 +831,7 @@ def page_home(r: Renderer) -> None:
     mobile = "/assets/media/hero-mobile.mp4"
     mob_attr = f' data-src-mobile="{site.url(mobile)}"' if asset_exists(mobile) else ""
     video_tag = (f'''<video class="hero__video js-video" autoplay muted loop playsinline preload="none"
-           poster="{poster}" data-src="{sources}"{mob_attr} aria-hidden="true" tabindex="-1"></video>'''
+           data-src="{sources}"{mob_attr} aria-hidden="true" tabindex="-1"></video>'''
                  if sources else "")
 
     # Анонс объектов на главной: три штуки и ссылка на полный список
@@ -836,7 +853,7 @@ def page_home(r: Renderer) -> None:
   </section>'''
 
     hero = f'''  <section class="hero">
-    <div class="hero__media" style="background-image:url({poster})"></div>
+    <div class="hero__media" aria-hidden="true">{poster_img(site, poster_rel, "hero__media-img")}</div>
     {video_tag}
     <div class="hero__scan" aria-hidden="true"></div>
     <div class="hero__frame" aria-hidden="true"></div>
@@ -920,7 +937,10 @@ def page_home(r: Renderer) -> None:
     # начать качать её сразу, не дожидаясь разбора стилей: экран появляется
     # заметно раньше.
     head = "\n".join([
-        f'<link rel="preload" as="image" href="{poster}" fetchpriority="high">',
+        (f'<link rel="preload" as="image" type="image/avif" fetchpriority="high"'
+         f' href="{site.url(poster_rel.rsplit(".", 1)[0] + ".avif")}">'
+         if asset_exists(poster_rel.rsplit(".", 1)[0] + ".avif") else
+         f'<link rel="preload" as="image" href="{poster}" fetchpriority="high">'),
         jsonld(schema_organization(site)),
         jsonld({
             "@context": "https://schema.org",
