@@ -5107,6 +5107,82 @@ html[data-theme='dark'] {
     position: static;
   }
 }
+
+/* Шапка списка избранного и сравнения: сколько отложено и кнопка очистки */
+.stack-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-4);
+  min-height: 40px;
+}
+
+.stack-head .note {
+  margin: 0;
+}
+
+.btn--sm {
+  min-height: 36px;
+  padding: var(--sp-2) var(--sp-4);
+  font-size: 14px;
+}
+
+/* «Убрать» в карточке избранного: не кнопка покупки, поэтому спокойная */
+.card-remove {
+  margin-top: var(--sp-3);
+  padding: var(--sp-2) 0;
+  border: 0;
+  background: none;
+  color: var(--sg-muted);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.card-remove:hover {
+  color: var(--sg-red);
+}
+
+/* ==========================================================================
+   Ссылки внутри текста подчёркиваются
+   ==========================================================================
+
+   По WCAG ссылку в абзаце нельзя отличать одним цветом: человек
+   с дальтонизмом читает «посчитайте в калькуляторе» и не видит,
+   что «калькуляторе» — ссылка. Обойтись без подчёркивания можно,
+   только если ссылка контрастнее окружающего текста втрое, а у нас
+   синий #010b87 и почти чёрный #1b1b1f — оба тёмные.
+
+   Подчёркиваем только ссылки в тексте: в абзацах и в списках-перечнях.
+   Меню, подвал и карточки не трогаем — там ссылка опознаётся положением
+   и это не текстовый блок. */
+p a:not(.btn),
+.checklist a,
+.consent a,
+.prose li a,
+/* Строки с текстом вокруг ссылки: «8-963-830-09-99 — один телефон
+   на все магазины» в подвале и перечень доверия в карточке товара.
+   Это тоже текстовые блоки, хотя и внутри списка. Пункты меню
+   и подвальные колонки ссылок сюда не попадают — там не текст. */
+.footer-contacts a,
+.trust-list a {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+p a:not(.btn):hover,
+.checklist a:hover,
+.consent a:hover,
+.prose li a:hover,
+.footer-contacts a:hover,
+.trust-list a:hover {
+  text-decoration-thickness: 2px;
+}
 /* Панель переключения страниц — только для этого файла-просмотра.
 
    Страниц стало четырнадцать, и переносом по строкам панель съедала
@@ -5138,7 +5214,7 @@ html[data-theme='dark'] {
 
 <div class="preview-bar">
   <span class="preview-bar__label">Макет сайта:</span>
-  <a class="preview-tab" href="#p-index" data-tab-link="p-index">Главная</a><a class="preview-tab" href="#p-catalog" data-tab-link="p-catalog">Каталог</a><a class="preview-tab" href="#p-product" data-tab-link="p-product">Карточка товара</a><a class="preview-tab" href="#p-cart" data-tab-link="p-cart">Корзина</a><a class="preview-tab" href="#p-calculator" data-tab-link="p-calculator">Калькулятор</a><a class="preview-tab" href="#p-delivery" data-tab-link="p-delivery">Доставка</a><a class="preview-tab" href="#p-contacts" data-tab-link="p-contacts">Контакты</a><a class="preview-tab" href="#p-checkout" data-tab-link="p-checkout">Оформление</a><a class="preview-tab" href="#p-order-done" data-tab-link="p-order-done">Заказ принят</a><a class="preview-tab" href="#p-favourites" data-tab-link="p-favourites">Избранное</a><a class="preview-tab" href="#p-compare" data-tab-link="p-compare">Сравнение</a><a class="preview-tab" href="#p-login" data-tab-link="p-login">Вход</a><a class="preview-tab" href="#p-policy" data-tab-link="p-policy">Политика</a><a class="preview-tab" href="#p-404" data-tab-link="p-404">404</a>
+  <a class="preview-tab" href="#p-index" data-tab-link="p-index">Главная</a><a class="preview-tab" href="#p-catalog" data-tab-link="p-catalog">Каталог</a><a class="preview-tab" href="#p-product" data-tab-link="p-product">Карточка товара</a><a class="preview-tab" href="#p-cart" data-tab-link="p-cart">Корзина</a><a class="preview-tab" href="#p-calculator" data-tab-link="p-calculator">Калькулятор</a><a class="preview-tab" href="#p-delivery" data-tab-link="p-delivery">Доставка</a><a class="preview-tab" href="#p-contacts" data-tab-link="p-contacts">Контакты</a><a class="preview-tab" href="#p-checkout" data-tab-link="p-checkout">Оформление</a><a class="preview-tab" href="#p-order-done" data-tab-link="p-order-done">Заказ принят</a><a class="preview-tab" href="#p-favourites" data-tab-link="p-favourites">Избранное</a><a class="preview-tab" href="#p-compare" data-tab-link="p-compare">Сравнение</a><a class="preview-tab" href="#p-login" data-tab-link="p-login">Вход</a><a class="preview-tab" href="#p-policy" data-tab-link="p-policy">Политика</a><a class="preview-tab" href="#p-terms" data-tab-link="p-terms">Соглашение</a><a class="preview-tab" href="#p-404" data-tab-link="p-404">404</a>
   <span class="preview-hint">Один файл — папка assets не нужна</span>
 </div>
 
@@ -7020,7 +7096,33 @@ html[data-theme='dark'] {
       <p>Отложенные товары. Список хранится в этом браузере и не пропадёт при переходе между страницами.</p>
     </div>
 
-    <div class="empty-state">
+    <div class="stack-head">
+      <p class="note" data-fav-summary></p>
+      <button class="btn btn--outline btn--sm" type="button" data-clear="fav" hidden>Очистить список</button>
+    </div>
+
+    <div class="product-grid" data-fav-list hidden></div>
+
+    <template data-card-template>
+<article class="product-card">
+  <div class="product-card__media">
+    
+    <span class="ph--photo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.4"/><path d="m5 17.5 4.5-4.5 3 3L16 12l3 3"/></svg><br>фото из прайса</span>
+    </div>
+  <div class="product-card__body">
+    <p class="product-card__art"><span class="ph ph--inline">артикул</span></p>
+    <a class="product-card__title" href="#p-product">Название товара из прайса заказчика</a>
+    <p class="product-card__meta"><span class="ph ph--inline">фасовка</span> <span class="ph ph--inline">остаток</span></p>
+  </div>
+  <div class="product-card__bottom">
+    <span class="price ph ph--inline">цена, ₽</span>
+    <button class="btn btn--action product-card__buy" type="button" data-add="cart" aria-label="В корзину"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9.5" cy="19.5" r="1.6"/><circle cx="17" cy="19.5" r="1.6"/><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L20 8H6"/></svg><span>В корзину</span></button>
+  </div>
+  <button class="card-remove" type="button" data-remove="fav">Убрать из избранного</button>
+</article>
+</template>
+
+<div class="empty-state" data-fav-empty>
       <span class="empty-state__icon">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20s-7-4.35-7-9.5A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 7 3.5c0 5.15-7 9.5-7 9.5Z"/></svg>
       </span>
@@ -7049,29 +7151,38 @@ html[data-theme='dark'] {
       <p><strong>Так выглядит сравнение.</strong> Строки таблицы — характеристики из прайса: их состав задаёт заказчик.</p>
     </div>
 
-    <div class="table-scroll">
+    <div class="stack-head">
+      <p class="note" data-compare-summary></p>
+      <button class="btn btn--outline btn--sm" type="button" data-clear="compare" hidden>Очистить сравнение</button>
+    </div>
+
+    <div class="table-scroll" data-compare-box hidden>
       <table class="compare-table">
         <caption class="visually-hidden">Сравнение выбранных товаров</caption>
-        <thead>
-          <tr>
-            <th scope="col">Характеристика</th>
-            <th scope="col"><span class="ph ph--inline">товар 1</span></th>
-            <th scope="col"><span class="ph ph--inline">товар 2</span></th>
-            <th scope="col"><span class="ph ph--inline">товар 3</span></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><th scope="row">Цена</th><td><span class="ph ph--inline">цена, ₽</span></td><td><span class="ph ph--inline">цена, ₽</span></td><td><span class="ph ph--inline">цена, ₽</span></td></tr>
-          <tr><th scope="row">Артикул</th><td><span class="ph ph--inline">из прайса</span></td><td><span class="ph ph--inline">из прайса</span></td><td><span class="ph ph--inline">из прайса</span></td></tr>
-          <tr><th scope="row">Бренд</th><td><span class="ph ph--inline">из прайса</span></td><td><span class="ph ph--inline">из прайса</span></td><td><span class="ph ph--inline">из прайса</span></td></tr>
-          <tr><th scope="row">Фасовка</th><td><span class="ph ph--inline">из прайса</span></td><td><span class="ph ph--inline">из прайса</span></td><td><span class="ph ph--inline">из прайса</span></td></tr>
-          <tr><th scope="row">Остаток</th><td><span class="ph ph--inline">из учётной системы</span></td><td><span class="ph ph--inline">из учётной системы</span></td><td><span class="ph ph--inline">из учётной системы</span></td></tr>
+        <thead><tr data-compare-head><th scope="col">Характеристика</th></tr></thead>
+        <tbody data-compare-body>
+          <tr data-row="Цена"><th scope="row">Цена</th></tr>
+          <tr data-row="Артикул"><th scope="row">Артикул</th></tr>
+          <tr data-row="Бренд"><th scope="row">Бренд</th></tr>
+          <tr data-row="Фасовка"><th scope="row">Фасовка</th></tr>
+          <tr data-row="Остаток"><th scope="row">Остаток</th></tr>
         </tbody>
       </table>
     </div>
 
+    <div class="empty-state" data-compare-empty>
+      <span class="empty-state__icon">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 20V9M12 20V4M19 20v-7"/></svg>
+      </span>
+      <h2 class="block-title">Сравнивать пока нечего</h2>
+      <p class="note-measure">Нажмите на значок сравнения в карточке товара — он появится здесь столбцом. Сравнивать можно до четырёх товаров.</p>
+      <div class="row-actions">
+        <a class="btn btn--action" href="#p-catalog">Перейти в каталог</a>
+      </div>
+    </div>
+
     <div class="row-actions">
-      <a class="btn btn--outline" href="#p-catalog">Добавить ещё товар</a>
+      <a class="btn btn--outline" href="#p-catalog" data-compare-more hidden>Добавить ещё товар</a>
     </div>
 
   </div>
@@ -7153,6 +7264,44 @@ html[data-theme='dark'] {
     </div>
 
   </div>
+</section><section class="preview-page" id="p-terms" data-page>
+  <div class="container">
+
+    <nav class="breadcrumbs" aria-label="Хлебные крошки">
+      <ol><li><a href="#p-index">Главная</a></li><li aria-current="page">Соглашение</li></ol>
+    </nav>
+
+    <div class="page-head">
+      <h1>Пользовательское соглашение</h1>
+      <p>Правила, на которых магазин и покупатель пользуются сайтом.</p>
+    </div>
+
+    <div class="data-notice">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 11.5v5M12 8h.01"/></svg>
+      <p><strong>Текст нужен от заказчика.</strong> Как и политику, это готовит юрист под конкретное юрлицо и порядок работы магазина — сочинять такое мы не беремся.</p>
+    </div>
+
+    <div class="prose">
+      <h2 class="subhead">Что должно быть в документе</h2>
+      <ul class="checklist">
+        <li>Кто владелец сайта: полное название, ИНН, ОГРН, адрес</li>
+        <li>Что считается заказом и в какой момент он принят</li>
+        <li>Цены на сайте: справочные или публичная оферта</li>
+        <li>Что делать, если товара не оказалось в наличии</li>
+        <li>Сроки и порядок отмены заказа покупателем</li>
+        <li>Кто отвечает за ошибки в описаниях и фотографиях</li>
+        <li>Как решаются споры и в каком суде</li>
+      </ul>
+
+      <h2 class="subhead gap-xl">Куда этот текст встанет</h2>
+      <p class="ph">Здесь — полный текст соглашения от заказчика. Сюда же ведёт ссылка из подвала и из формы оформления заказа.</p>
+
+      <h2 class="subhead gap-xl">Чем отличается от политики</h2>
+      <p>Политика обработки данных отвечает на вопрос «что вы делаете с моим телефоном» и обязательна по закону. Соглашение отвечает на вопрос «по каким правилам мы торгуем» и защищает магазин в спорных ситуациях. Документы разные, нужны оба.</p>
+      <p class="note">Оба текста берутся у юриста. Мы размечаем страницы и ставим ссылки, чтобы ничего не потерялось.</p>
+    </div>
+
+  </div>
 </section><section class="preview-page" id="p-404" data-page>
   <div class="container">
     <div class="error-page">
@@ -7215,7 +7364,7 @@ html[data-theme='dark'] {
           <ul>
             <li><a href="#p-policy">Политика конфиденциальности</a></li>
             <li><a href="#p-policy">Согласие на обработку данных</a></li>
-            <li><a href="#" data-demo="пользовательское соглашение">Пользовательское соглашение</a></li>
+            <li><a href="#p-terms">Пользовательское соглашение</a></li>
           </ul>
           <p class="footer-group__hint ph ph--inline">тексты документов — от заказчика</p>
         </div>
@@ -7248,7 +7397,7 @@ html[data-theme='dark'] {
 
 <button class="to-top" type="button" data-to-top aria-label="Наверх"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 14 6-6 6 6"/></svg></button>
 
-<div class="cookie" data-cookie hidden>
+<div class="cookie" data-cookie hidden role="region" aria-label="Использование cookie">
   <p>Сайт использует cookie, чтобы запоминать город, тему и содержимое корзины.
   Подробности — в <a href="#p-policy">политике</a>.</p>
   <button class="btn btn--primary" type="button" data-cookie-ok>Хорошо</button>
@@ -7705,6 +7854,114 @@ html[data-theme='dark'] {
       var onC = btn.classList.toggle('is-on');
       bump('compare', onC ? 1 : -1);
       toast(onC ? 'Добавлено к сравнению' : 'Убрано из сравнения');
+    }
+  });
+
+  /* ======================================================================
+     Избранное и сравнение: показываем то, что человек отложил
+
+     Товары в макете безымянные — прайса нет, все карточки одинаковые.
+     Поэтому запоминается не «какой именно товар», а сколько их отложено,
+     и страница разворачивает столько же карточек из шаблона. Для показа
+     сценария этого достаточно: человек нажал три раза — видит три
+     карточки и может убрать любую. С настоящим прайсом сюда встанут
+     номера товаров, а разметка и поведение останутся теми же.
+     ====================================================================== */
+  var COMPARE_MAX = 4;
+
+  function renderFavourites() {
+    var list = $('[data-fav-list]');
+    if (!list) return;
+    var empty = $('[data-fav-empty]');
+    var summary = $('[data-fav-summary]');
+    var clear = $('[data-clear="fav"]');
+    var tpl = $('[data-card-template]');
+    var count = Math.max(0, counters.fav);
+
+    list.innerHTML = '';
+    for (var i = 0; i < count; i++) {
+      list.appendChild(tpl.content.cloneNode(true));
+    }
+    list.hidden = count === 0;
+    if (empty) empty.hidden = count > 0;
+    if (clear) clear.hidden = count === 0;
+    if (summary) {
+      summary.textContent = count
+        ? 'Отложено: ' + count + ' ' + plural(count, 'товар', 'товара', 'товаров')
+        : '';
+    }
+  }
+
+  function renderCompare() {
+    var head = $('[data-compare-head]');
+    if (!head) return;
+    var box = $('[data-compare-box]');
+    var empty = $('[data-compare-empty]');
+    var summary = $('[data-compare-summary]');
+    var clear = $('[data-clear="compare"]');
+    var more = $('[data-compare-more]');
+    var count = Math.min(COMPARE_MAX, Math.max(0, counters.compare));
+
+    /* Убираем прежние столбцы, оставляя первый — с названиями строк */
+    while (head.children.length > 1) head.removeChild(head.lastChild);
+    $$('[data-compare-body] tr').forEach(function (row) {
+      while (row.children.length > 1) row.removeChild(row.lastChild);
+    });
+
+    for (var i = 1; i <= count; i++) {
+      var th = document.createElement('th');
+      th.setAttribute('scope', 'col');
+      th.innerHTML = '<span class="ph ph--inline">товар ' + i + '</span>';
+      head.appendChild(th);
+
+      $$('[data-compare-body] tr').forEach(function (row) {
+        var td = document.createElement('td');
+        var label = row.getAttribute('data-row') === 'Остаток' ? 'из учётной системы'
+          : row.getAttribute('data-row') === 'Цена' ? 'цена, ₽' : 'из прайса';
+        td.innerHTML = '<span class="ph ph--inline">' + label + '</span>';
+        row.appendChild(td);
+      });
+    }
+
+    if (box) box.hidden = count === 0;
+    if (empty) empty.hidden = count > 0;
+    if (clear) clear.hidden = count === 0;
+    if (more) more.hidden = count === 0;
+    if (summary) {
+      summary.textContent = count
+        ? 'В сравнении: ' + count + ' из ' + COMPARE_MAX
+        : '';
+    }
+  }
+
+  function plural(n, one, few, many) {
+    var mod10 = n % 10, mod100 = n % 100;
+    if (mod10 === 1 && mod100 !== 11) return one;
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
+    return many;
+  }
+
+  renderFavourites();
+  renderCompare();
+
+  /* Убрать одну карточку и очистить список целиком */
+  document.addEventListener('click', function (e) {
+    var remove = e.target.closest ? e.target.closest('[data-remove]') : null;
+    if (remove) {
+      bump(remove.getAttribute('data-remove'), -1);
+      renderFavourites();
+      toast('Убрано из избранного');
+      return;
+    }
+    var clear = e.target.closest ? e.target.closest('[data-clear]') : null;
+    if (clear) {
+      var what = clear.getAttribute('data-clear');
+      /* Через bump, а не записью в хранилище напрямую: счётчик живёт
+         ещё и в памяти страницы, и прямая запись их рассинхронизирует. */
+      bump(what, -counters[what]);
+      renderFavourites();
+      renderCompare();
+      toast(what === 'fav' ? 'Избранное очищено' : 'Сравнение очищено');
     }
   });
 

@@ -5097,3 +5097,79 @@ html[data-theme='dark'] {
     position: static;
   }
 }
+
+/* Шапка списка избранного и сравнения: сколько отложено и кнопка очистки */
+.stack-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-4);
+  min-height: 40px;
+}
+
+.stack-head .note {
+  margin: 0;
+}
+
+.btn--sm {
+  min-height: 36px;
+  padding: var(--sp-2) var(--sp-4);
+  font-size: 14px;
+}
+
+/* «Убрать» в карточке избранного: не кнопка покупки, поэтому спокойная */
+.card-remove {
+  margin-top: var(--sp-3);
+  padding: var(--sp-2) 0;
+  border: 0;
+  background: none;
+  color: var(--sg-muted);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.card-remove:hover {
+  color: var(--sg-red);
+}
+
+/* ==========================================================================
+   Ссылки внутри текста подчёркиваются
+   ==========================================================================
+
+   По WCAG ссылку в абзаце нельзя отличать одним цветом: человек
+   с дальтонизмом читает «посчитайте в калькуляторе» и не видит,
+   что «калькуляторе» — ссылка. Обойтись без подчёркивания можно,
+   только если ссылка контрастнее окружающего текста втрое, а у нас
+   синий #010b87 и почти чёрный #1b1b1f — оба тёмные.
+
+   Подчёркиваем только ссылки в тексте: в абзацах и в списках-перечнях.
+   Меню, подвал и карточки не трогаем — там ссылка опознаётся положением
+   и это не текстовый блок. */
+p a:not(.btn),
+.checklist a,
+.consent a,
+.prose li a,
+/* Строки с текстом вокруг ссылки: «8-963-830-09-99 — один телефон
+   на все магазины» в подвале и перечень доверия в карточке товара.
+   Это тоже текстовые блоки, хотя и внутри списка. Пункты меню
+   и подвальные колонки ссылок сюда не попадают — там не текст. */
+.footer-contacts a,
+.trust-list a {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+p a:not(.btn):hover,
+.checklist a:hover,
+.consent a:hover,
+.prose li a:hover,
+.footer-contacts a:hover,
+.trust-list a:hover {
+  text-decoration-thickness: 2px;
+}
