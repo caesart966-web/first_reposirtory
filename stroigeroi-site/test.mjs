@@ -278,6 +278,74 @@ for (const name of PAGES) {
 }
 
 /* ==========================================================================
+   Сквозной проход покупки: кликами, от главной до «заказ принят»
+   ========================================================================== */
+
+/* Макет показывают заказчику ради сценария, поэтому сценарий должен
+   проходиться кликами, а не подстановкой адресов в строку браузера.
+   Один раз это уже подвело: страница «Заказ принят» существовала,
+   но дойти до неё было нельзя — форма молча сбрасывалась. */
+{
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 1000 } });
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  const here = () => page.url().split('/').pop().split('?')[0];
+
+  const walk = async (label, action, expect) => {
+    try {
+      await action();
+      await page.waitForTimeout(450);
+    } catch (e) {
+      fail(`сценарий, шаг «${label}»: не удалось — ${String(e).slice(0, 90)}`);
+      return false;
+    }
+    if (here() !== expect) {
+      fail(`сценарий, шаг «${label}»: ожидали ${expect}, оказались на ${here()}`);
+      return false;
+    }
+    return true;
+  };
+
+  await page.goto('file://' + path.join(DIR, 'index.html'), { waitUntil: 'load' });
+  await page.waitForTimeout(400);
+  await page.evaluate(() => {
+    const c = document.querySelector('[data-cookie]');
+    if (c) { c.hidden = true; document.body.classList.remove('has-cookie'); }
+  });
+
+  const chain =
+    (await walk('главная → каталог', () => page.click('.header-quick__link[href="catalog.html"]'), 'catalog.html')) &&
+    (await walk('каталог → карточка', () => page.click('.product-card__title'), 'product.html')) &&
+    (await walk('карточка → корзина', async () => {
+      await page.click('[data-add="cart"]');
+      await page.waitForTimeout(200);
+      await page.click('a[href="cart.html"]');
+    }, 'cart.html')) &&
+    (await walk('корзина → оформление', () => page.click('a[href="checkout.html"]'), 'checkout.html')) &&
+    (await walk('оформление → заказ принят', async () => {
+      await page.fill('#co-name', 'Иван');
+      await page.fill('#co-phone', '9638300999');
+      await page.check('.consent input[type=checkbox]');
+      await page.click('.checkout button[type=submit]');
+    }, 'order-done.html'));
+
+  if (chain) {
+    /* Обратная сторона: незаполненная форма дальше пускать не должна */
+    await page.goto('file://' + path.join(DIR, 'checkout.html'), { waitUntil: 'load' });
+    await page.waitForTimeout(350);
+    await page.click('.checkout button[type=submit]');
+    await page.waitForTimeout(400);
+    if (here() === 'order-done.html') {
+      fail('сценарий: пустая форма оформления пропускает дальше — проверка полей не работает');
+    }
+  }
+
+  for (const e of errors) fail(`сценарий: ошибка в консоли — ${e.slice(0, 110)}`);
+  await ctx.close();
+}
+
+/* ==========================================================================
    Превью одним файлом: панель вкладок не должна съедать экран
    ========================================================================== */
 

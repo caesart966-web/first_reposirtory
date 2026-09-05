@@ -648,6 +648,16 @@
         return;
       }
 
+      /* Форма оформления ведёт на следующий шаг сценария. Без этого
+         страница «Заказ принят» существовала, но кликом до неё было
+         не дойти: форма молча сбрасывалась и показывала уведомление —
+         тупик ровно там, где заказчик смотрит путь до конца. */
+      var next = form.getAttribute('data-success-url');
+      if (next) {
+        window.location.href = next;
+        return;
+      }
+
       var success = $('.form__success', form);
       if (success) success.classList.add('is-shown');
       form.reset();

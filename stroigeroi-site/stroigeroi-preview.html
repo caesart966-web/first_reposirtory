@@ -6899,7 +6899,7 @@ html[data-theme='dark'] {
       <p><strong>Так выглядит оформление.</strong> Заказ из макета никуда не уходит — принимать его пока некому.</p>
     </div>
 
-    <form class="form form--bare checkout" data-validate novalidate>
+    <form class="form form--bare checkout" data-validate data-success-url="order-done.html" novalidate>
       <div class="checkout__main">
 
         <section class="checkout-block">
@@ -7957,6 +7957,16 @@ html[data-theme='dark'] {
 
       if (!ok) {
         toast('Проверьте отмеченные поля');
+        return;
+      }
+
+      /* Форма оформления ведёт на следующий шаг сценария. Без этого
+         страница «Заказ принят» существовала, но кликом до неё было
+         не дойти: форма молча сбрасывалась и показывала уведомление —
+         тупик ровно там, где заказчик смотрит путь до конца. */
+      var next = form.getAttribute('data-success-url');
+      if (next) {
+        window.location.href = next;
         return;
       }
 
