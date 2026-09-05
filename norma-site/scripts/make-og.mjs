@@ -26,14 +26,14 @@ const MARK = markFile.slice(markFile.indexOf('<svg'), markFile.lastIndexOf('</sv
 
 const html = `<!doctype html>
 <html><head><meta charset="utf-8">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@500;800&family=JetBrains+Mono:wght@400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:wght@600;700&family=Golos+Text:wght@400;500;600&display=swap">
 <style>
   * { box-sizing: border-box; margin: 0; }
   body {
     width: 1200px; height: 630px;
-    background: #0B1D33;
+    background: #171310;
     color: #fff;
-    font-family: 'Onest', sans-serif;
+    font-family: 'Golos Text', sans-serif;
     padding: 72px 80px;
     display: flex; flex-direction: column; justify-content: space-between;
     background-image:
@@ -42,18 +42,18 @@ const html = `<!doctype html>
     background-size: 60px 60px;
     position: relative; overflow: hidden;
   }
-  .glow { position: absolute; inset: 0; background: radial-gradient(700px 400px at 82% 8%, rgba(53,214,204,.22), transparent 70%); }
+  .glow { position: absolute; inset: 0; background: radial-gradient(760px 440px at 84% 10%, rgba(176,32,43,.22), transparent 70%); }
   .row { position: relative; display: flex; align-items: center; gap: 16px; }
-  .mark { display: grid; place-items: center; color: #35D6CC; }
+  .mark { display: grid; place-items: center; color: #E8635E; }
   .brand b { font-size: 26px; font-weight: 800; letter-spacing: .07em; display: block; line-height: 1.1; }
-  .brand span { font-size: 15px; color: #9FB1C7; }
-  h1 { position: relative; font-size: 62px; font-weight: 800; line-height: 1.1; letter-spacing: -.02em; max-width: 17ch; }
-  h1 em { font-style: normal; color: #35D6CC; }
+  .brand span { font-size: 15px; color: #B3A99C; }
+  h1 { position: relative; font-family: 'Literata', Georgia, serif; font-size: 60px; font-weight: 700; line-height: 1.1; letter-spacing: -.02em; max-width: 17ch; }
+  h1 em { font-style: normal; color: #E8635E; }
   .foot { position: relative; display: flex; align-items: flex-end; justify-content: space-between; gap: 40px; }
   .facts { display: flex; gap: 40px; }
   .fact b { display: block; font-size: 30px; font-weight: 800; color: #fff; line-height: 1.1; }
-  .fact span { font-size: 15px; color: #9FB1C7; }
-  .phone { font-family: 'JetBrains Mono', monospace; font-size: 26px; color: #35D6CC; white-space: nowrap; }
+  .fact span { font-size: 15px; color: #B3A99C; }
+  .phone { font-family: 'Golos Text', sans-serif; font-size: 26px; color: #E8635E; white-space: nowrap; }
 </style></head>
 <body>
   <div class="glow"></div>
@@ -64,7 +64,7 @@ const html = `<!doctype html>
   <h1>Вступление в СРО <em>без устаревших норм</em></h1>
   <div class="foot">
     <div class="facts">
-      <div class="fact"><b>24 часа</b><span>выписка из реестра</span></div>
+      <div class="fact"><b>2–3 дня</b><span>выписка из реестра</span></div>
       <div class="fact"><b>0 ₽</b><span>подготовка документов</span></div>
       <div class="fact"><b>10 млн ₽</b><span>актуальный порог</span></div>
     </div>

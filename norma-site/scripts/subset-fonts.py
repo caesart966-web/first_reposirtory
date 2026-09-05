@@ -33,24 +33,25 @@ CYRILLIC = "".join(chr(c) for c in range(0x410, 0x450)) + "ЁёЄєІіЇїҐґ�
 
 # Какие файлы урезаем: (пакет npm, исходный файл, итоговое имя, набор знаков).
 #
-# Шрифтов на сайте два, и роли у них разные.
+# Шрифтов два, и роли у них разные.
 #
-# Onest — заголовки, кнопки, подписи и цифры. Взят вот почему: его кириллицу
-# рисовали как основную, а не пристраивали к готовой латинице. Разница видна
-# на «д», «з», «у» и на прописных «Д» и «Л» — в заголовке капсом это заметно
-# сразу. Курсива у него нет, и он не нужен: заголовки курсивом не набирают.
+# Literata — заголовки и текст статей. Это антиква, нарисованная для чтения
+# с экрана, с полновесной кириллицей. Выбрана не за красоту вообще, а по делу:
+# сайт говорит о законе, нормах и документах, и антиква говорит об этом же —
+# рубленый шрифт в такой роли звучит как интерфейс банковского приложения.
+# У неё же берётся курсив: у Golos Text его не существует, а в статьях
+# курсив нужен.
 #
-# Inter — сплошной текст: абзацы, таблицы, статьи. У него спокойный рисунок,
-# который не мешает читать длинную страницу, и он же стоит на соседнем сайте
-# заказчика. Курсив лежит отдельным файлом и заранее не грузится: он нужен
-# только в статьях, и браузер возьмёт его сам, если курсив на странице есть.
+# Golos Text — всё остальное: кнопки, подписи, таблицы, цифры, формы.
+# Русский шрифт, нарисованный от кириллицы; спокойный рисунок, который
+# не спорит с антиквой в заголовках и хорошо держится в мелком кегле.
 JOBS = [
-    ("@fontsource-variable/onest", "onest-cyrillic-wght-normal.woff2", "onest-cyrillic.woff2", CYRILLIC),
-    ("@fontsource-variable/onest", "onest-latin-wght-normal.woff2", "onest-latin.woff2", LATIN),
-    ("@fontsource-variable/inter", "inter-cyrillic-wght-normal.woff2", "inter-cyrillic.woff2", CYRILLIC),
-    ("@fontsource-variable/inter", "inter-latin-wght-normal.woff2", "inter-latin.woff2", LATIN),
-    ("@fontsource-variable/inter", "inter-cyrillic-wght-italic.woff2", "inter-cyrillic-italic.woff2", CYRILLIC),
-    ("@fontsource-variable/inter", "inter-latin-wght-italic.woff2", "inter-latin-italic.woff2", LATIN),
+    ("@fontsource-variable/literata", "literata-cyrillic-wght-normal.woff2", "literata-cyrillic.woff2", CYRILLIC),
+    ("@fontsource-variable/literata", "literata-latin-wght-normal.woff2", "literata-latin.woff2", LATIN),
+    ("@fontsource-variable/literata", "literata-cyrillic-wght-italic.woff2", "literata-cyrillic-italic.woff2", CYRILLIC),
+    ("@fontsource-variable/literata", "literata-latin-wght-italic.woff2", "literata-latin-italic.woff2", LATIN),
+    ("@fontsource-variable/golos-text", "golos-text-cyrillic-wght-normal.woff2", "golos-cyrillic.woff2", CYRILLIC),
+    ("@fontsource-variable/golos-text", "golos-text-latin-wght-normal.woff2", "golos-latin.woff2", LATIN),
 ]
 
 

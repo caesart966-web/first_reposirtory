@@ -19,7 +19,7 @@ const fmt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 
     { label: 'База знаний' },
   ]}
 >
-  <section class="section hero-page">
+  <section class="section page-head">
     <div class="wrap">
       <span class="eyebrow">База знаний</span>
       <h1>Разборы норм — с датами, а не «вообще»</h1>
@@ -76,11 +76,16 @@ const fmt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 
 </Base>
 
 <style>
-  .hero-page { background: var(--navy); color: var(--on-navy); padding-bottom: 44px; }
-  .hero-page .eyebrow { color: var(--acc-bright); }
-  .hero-page h1 { color: #fff; margin: 12px 0 16px; max-width: 20ch; }
-  .hero-page .lead { color: var(--on-navy-muted); }
-  .hero-page .lead b { color: #fff; }
+  /* Класс общий для всех тёмных шапок сайта — не переименовывайте его
+     по вкусу отдельной страницы. Общие правила (штамп «Проверено»,
+     отмена размерной линии под шапкой) написаны на .page-head, и стоит
+     завести здесь своё имя, как страница молча теряет их. Один раз так
+     уже вышло: штамп на этой странице читался 2.9:1 при норме 4.5. */
+  .page-head { background: var(--dark); color: var(--on-dark); padding-bottom: 44px; }
+  .page-head .eyebrow { color: var(--acc-bright); }
+  .page-head h1 { color: #fff; margin: 12px 0 16px; max-width: 20ch; }
+  .page-head .lead { color: var(--on-dark-muted); }
+  .page-head .lead b { color: #fff; }
   .stamp-row { margin-top: 22px; }
 
   .list { display: grid; }

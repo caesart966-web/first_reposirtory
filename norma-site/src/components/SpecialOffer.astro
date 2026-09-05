@@ -57,17 +57,28 @@ import Icon from './Icon.astro'
 </section>
 
 <style>
-  /* Ярче всего на странице — намеренно. Ниже по странице встречается
-     второй цветной блок (предложение про сайт); он мягче, чтобы порядок
-     важности читался с первого взгляда. */
+  /* Ярче всего на странице — намеренно: это главное предложение.
+     Здесь один цвет вместо прежнего градиента. Градиент из двух оттенков
+     красного смотрелся бы дешёвой заливкой; ровный сургуч читается как
+     красное поле бланка, а нужный объём даёт не цвет, а тонкая светлая
+     линейка сверху и глубокая тень. */
   .obox {
-    background: linear-gradient(150deg, var(--acc-btn) 0%, var(--acc-deep) 52%, #12327E 100%);
+    position: relative;
+    background: var(--acc);
     color: #fff;
-    border-radius: var(--r-l);
+    border-radius: var(--r-m);
     padding: 34px;
     display: grid;
     gap: 24px;
-    box-shadow: 0 30px 70px -34px rgba(20, 58, 140, 0.75);
+    box-shadow: 0 30px 70px -34px color-mix(in srgb, var(--acc) 70%, #000);
+  }
+  .obox::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    border-top: 3px solid rgba(255, 255, 255, 0.5);
+    pointer-events: none;
   }
   @media (min-width: 900px) {
     .obox { padding: 42px 46px; }
@@ -87,8 +98,8 @@ import Icon from './Icon.astro'
     text-transform: uppercase;
   }
   .obox h2 { color: #fff; margin: 4px 0 0; }
-  /* Выделенное слово в заголовке: на синем акцентный синий не читается,
-     поэтому здесь белый с подчёркиванием, а не цветом. */
+  /* Выделенное слово в заголовке: на красном акцентный красный не
+     читается, поэтому здесь белый с подчёркиванием, а не цветом. */
   .obox h2 :global(em) {
     color: #fff;
     font-style: normal;

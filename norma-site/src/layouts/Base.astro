@@ -79,13 +79,13 @@ const graph = {
          так они успевают к первой отрисовке и вёрстка не дёргается.
          Латиница нужна не ради латинских слов, а ради цифр: «2–3 дня», «10 млн ₽».
          Курсив заранее не грузим: он встречается только в статьях. -->
-    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/onest-cyrillic.woff2')} crossorigin />
-    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/onest-latin.woff2')} crossorigin />
-    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/inter-cyrillic.woff2')} crossorigin />
-    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/inter-latin.woff2')} crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/literata-cyrillic.woff2')} crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/literata-latin.woff2')} crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/golos-cyrillic.woff2')} crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/golos-latin.woff2')} crossorigin />
 
     <link rel="icon" type="image/svg+xml" href={href('/favicon.svg')} />
-    <meta name="theme-color" content="#0B1D33" />
+    <meta name="theme-color" content="#171310" />
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content={SITE.brand} />
@@ -172,7 +172,7 @@ const graph = {
         text-decoration: none;
         font-weight: 600;
         font-size: 15px;
-        box-shadow: 0 14px 34px -12px rgba(37, 99, 235, 0.65);
+        box-shadow: 0 14px 34px -12px color-mix(in srgb, var(--acc) 65%, transparent);
         transition: background-color 0.2s ease, box-shadow 0.2s ease;
         white-space: nowrap;
       }
@@ -209,11 +209,26 @@ const graph = {
     <script>
       // Плавное появление блоков при прокрутке.
       const reveal = () => {
-        const items = document.querySelectorAll('.rv')
+        const items = Array.from(document.querySelectorAll<HTMLElement>('.rv'))
         if (!('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
           items.forEach((el) => el.classList.add('in'))
           return
         }
+
+        // Ступенчатая задержка: соседи в одном ряду выходят один за другим,
+        // а не разом. Номер считается среди соседей с тем же классом, чтобы
+        // отсчёт начинался заново в каждой новой сетке карточек.
+        // Потолок в шесть шагов не случаен: на списке из двадцати пунктов
+        // последний иначе появился бы почти через две секунды после первого,
+        // и это читалось бы не как анимация, а как подвисание.
+        for (const el of items) {
+          const parent = el.parentElement
+          if (!parent) continue
+          const twins = Array.from(parent.children).filter((n) => n.classList.contains('rv'))
+          if (twins.length < 2) continue
+          el.style.setProperty('--rv-i', String(Math.min(twins.indexOf(el), 6)))
+        }
+
         const io = new IntersectionObserver(
           (entries) => {
             entries.forEach((entry) => {

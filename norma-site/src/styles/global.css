@@ -1,69 +1,88 @@
 /* ────────────────────────────────────────────────────────────────
-   Дизайн-система сайта «НОРМА».
+   Дизайн-система сайта «НОРМА» — «печать и бумага».
 
-   Палитра — синяя, но синий здесь не экранный, а «чернильный»: тот, каким
-   печатают бланки и рисуют карты. Прежний #2563EB — стандартный синий
-   интерфейсов, он стоит на каждом втором сайте и ничего не сообщает.
-   Нынешний #1F4E9C темнее и спокойнее, и рядом с ним бумага сделана не
-   голубоватой, а нейтральной, слегка тёплой: тогда синий читается как
-   чернила на бумаге, а не как ещё один цветной блок на экране.
+   Откуда взялось. Сайт про вступление в СРО: про документы, статьи закона,
+   выписки из реестра и проверки. Весь рынок вокруг оформлен одинаково —
+   синий градиент, рубленый шрифт, стоковые каски. Мы идём от того, чем
+   работа является на самом деле: это бумага. Белый лист, тонкая тёплая
+   линейка, антиква — и одно-единственное яркое пятно: красная печать.
 
-   Тёмно-синий секций подобран под ролик с картой России на первом экране:
-   у него такой же цвет океана, поэтому граница видео на странице не видна.
+   Синего на сайте нет ни одного. Красный взят не пожарный, а сургучный
+   (#B0202B) — цвет печати на документе; он же перекликается с русским
+   флагом, но не кричит им. Бумага белая, тёплого оттенка, чтобы страница
+   не отдавала экраном.
+
+   Строительная тема идёт линиями, а не картинками: размерные линии
+   с засечками между секциями, лёгкая сетка миллиметровки на первом
+   экране, чертёжные обводки у карточек. Ни одной стоковой фотографии
+   на сайте нет и быть не должно — как только появится каска в кадре,
+   сайт станет неотличим от соседних.
    ──────────────────────────────────────────────────────────────── */
 
 :root {
-  /* Цвета */
-  --paper: #F2F3EF;        /* бумага: нейтральная, чуть тёплая */
-  --card: #FFFFFF;         /* карточки */
-  --ink: #12181F;          /* основной текст */
-  --muted: #56626F;        /* вторичный текст */
-  --line: #DFE0DA;         /* границы, в тон бумаге */
-  --navy: #0E1B2C;         /* тёмно-синие секции, шапка, подвал */
-  --navy-2: #16283F;
-  --navy-line: rgba(255, 255, 255, 0.10);
-  --on-navy: #E8EEF6;
-  --on-navy-muted: #9BAAC0;
+  /* Бумага и чернила */
+  --paper: #FFFFFF;        /* основной фон */
+  --paper-2: #F6F3EC;      /* тёплый лист: чередование секций */
+  --card: #FFFFFF;
+  --ink: #16130F;          /* тёплый почти-чёрный */
+  --muted: #6B6459;        /* вторичный текст */
+  --line: #E5E0D5;         /* линейки и рамки, в тон бумаге */
 
-  /* Акцентный цвет. Меняется в одном месте: впишите сюда другие значения,
-     и весь сайт перекрасится — кнопки, ссылки, чипы норм, знак в шапке,
-     иконки. Прежний синий интерфейсов: #2563EB / #1D4FD0 / #1A4FBF /
-     #E7EFFE / #6BA3FF. */
-  --acc: #2B5FB8;          /* декоративные элементы на светлом */
-  --acc-btn: #1F4E9C;      /* фон кнопок */
-  --acc-btn-hover: #173D7D;
-  --acc-deep: #1B4A96;     /* синий текст на белом */
-  --acc-soft: #E6ECF7;     /* синие подложки */
-  --acc-bright: #7FB0FF;   /* синий на тёмно-синем — в тон огням городов
-                              на карте в ролике первого экрана */
+  /* Тёмные секции — тёплый графит, а не синий */
+  --dark: #171310;
+  --dark-2: #221C17;
+  --dark-line: rgba(255, 255, 255, 0.12);
+  --on-dark: #F5F1EA;
+  --on-dark-muted: #B3A99C;
+
+  /* Акцент — сургучный красный. Меняется в одном месте: впишите сюда
+     другие значения, и весь сайт перекрасится — кнопки, ссылки, печати,
+     чипы норм, знак в шапке, иконки. */
+  --acc: #B0202B;          /* печати, декоративные элементы */
+  --acc-btn: #B0202B;      /* фон кнопок */
+  --acc-btn-hover: #8E1A23;
+  --acc-deep: #8E1A23;     /* красный текст на белом */
+  --acc-soft: #FBEDEB;     /* красные подложки */
+  --acc-bright: #E8635E;   /* красный на тёмном: тёмный не читается */
 
   /* Зелёный «всё в порядке»: вердикт «СРО не нужна», штампы проверки.
-     Тёмный оттенок выбран не случайно — светлее он не проходит по контрасту
-     для мелкого текста на бледно-зелёной подложке. */
-  --good: #15734A;
-  --good-bg: #E9F6EF;
+     Приглушённый и тёплый — рядом с сургучом чистый зелёный выглядит
+     светофором. */
+  --good: #2C6B41;
+  --good-bg: #ECF3EC;
   --warn: #8A5D00;         /* вердикт «нужна при условии» */
   --warn-bg: #FBF3DE;
 
-  /* Радиусы: кнопки/поля → карточки → крупные контейнеры */
-  --r-s: 10px;
-  --r-m: 14px;
-  --r-l: 20px;
+  /* Радиусы. Мельче прежних: бумага и печатные бланки не бывают
+     с закруглением в двадцать пикселей. */
+  --r-s: 6px;
+  --r-m: 8px;
+  --r-l: 12px;
 
-  --shadow: 0 20px 50px -28px rgba(14, 27, 44, 0.35);
+  --shadow: 0 18px 44px -30px rgba(22, 19, 15, 0.4);
 
-  /* Шрифтов два, роли разные — почему именно так, написано в fonts.css.
-     Запасные шрифты («… Fallback») подогнаны там же по размеру: благодаря
-     этому подмена шрифта не сдвигает вёрстку.
-     --font-head — заголовки и кнопки, --font-body — сплошной текст,
-     --font-mono — подписи, чипы норм и цифры (тот же Onest: у него ровные
-     цифры одной ширины, отдельный моноширинный шрифт не нужен). */
-  --font-head: 'Onest Variable', 'Onest Fallback', 'Segoe UI', system-ui, sans-serif;
-  --font-body: 'Inter Variable', 'Inter Fallback', 'Segoe UI', system-ui, sans-serif;
-  --font-mono: 'Onest Variable', 'Onest Fallback', 'Segoe UI', system-ui, sans-serif;
+  /* Плавность. Все переходы на сайте берут длительность и кривую отсюда:
+     так движение всюду одинаковое, а не «где как получилось». */
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --t-fast: 0.18s;
+  --t-mid: 0.34s;
+  --t-slow: 0.62s;
+
+  /* Шрифты: почему именно эти — в fonts.css.
+     --font-head — заголовки и текст статей (антиква),
+     --font-body — интерфейс: кнопки, подписи, таблицы, формы,
+     --font-mono — подписи капсом, чипы норм и цифры. */
+  --font-head: 'Literata Variable', 'Literata Fallback', Georgia, 'Times New Roman', serif;
+  --font-body: 'Golos Text Variable', 'Golos Fallback', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'Golos Text Variable', 'Golos Fallback', 'Segoe UI', system-ui, sans-serif;
 }
 
 * { box-sizing: border-box; }
+
+/* Разрешает браузеру анимировать переход к height: auto. Нужен раскрывающимся
+   ответам в разделе вопросов: без него высота содержимого меняется рывком —
+   так было всегда, пока это свойство не появилось. */
+:root { interpolate-size: allow-keywords; }
 
 /* Скрытое должно быть скрытым. Собственные display: grid и display: flex
    в компонентах сильнее браузерного правила для атрибута hidden — без этой
@@ -104,17 +123,22 @@ body {
    в любом месте: иначе они распирают страницу вбок. */
 a[href^='mailto:'], .mono, code, .ident-rows dd { overflow-wrap: anywhere; }
 
+/* Заголовки — антиква обычным регистром. Прежде они шли капсом:
+   у рубленого шрифта капс читается как вывеска, у антиквы — как
+   надгробие. Сентенц-кейс возвращает Literata то, ради чего она
+   и взята: спокойный книжный голос. */
 h1, h2, h3, h4 {
   font-family: var(--font-head);
-  line-height: 1.15;
+  line-height: 1.12;
   text-wrap: balance;
   margin: 0;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
+  font-weight: 700;
 }
 
-h1 { font-size: clamp(30px, 4.6vw, 46px); font-weight: 800; }
-h2 { font-size: clamp(25px, 3.4vw, 34px); font-weight: 800; }
-h3 { font-size: 20px; font-weight: 700; }
+h1 { font-size: clamp(32px, 5vw, 52px); }
+h2 { font-size: clamp(26px, 3.4vw, 38px); }
+h3 { font-family: var(--font-body); font-size: 19px; font-weight: 600; letter-spacing: -0.005em; }
 
 p { margin: 0; }
 
@@ -157,15 +181,48 @@ section[id], [data-anchor] { scroll-margin-top: 84px; }
 
 /* ── Секции ── */
 
-.section { padding: 56px 0; }
-.section--tight { padding: 40px 0; }
-.section--dark { background: var(--navy); color: var(--on-navy); }
+.section { padding: 76px 0; position: relative; }
+.section--tight { padding: 48px 0; }
+.section--paper { background: var(--paper-2); }
+.section--dark { background: var(--dark); color: var(--on-dark); }
 .section--dark .eyebrow { color: var(--acc-bright); }
-.section--dark h2 { color: #fff; }
-.section--dark .lead { color: var(--on-navy-muted); }
-.section--dark .lead b, .section--dark .lead strong { color: var(--on-navy); }
+/* Только h2. Раньше сюда был вписан и h3 — и заголовки внутри белых
+   карточек, стоящих в тёмной секции, стали белыми на белом. */
+.section--dark h2 { color: var(--on-dark); }
+.section--dark .lead { color: var(--on-dark-muted); }
+.section--dark .lead b, .section--dark .lead strong { color: var(--on-dark); }
 
-.s-head { max-width: 76ch; display: grid; gap: 10px; margin-bottom: 28px; }
+/* Размерная линия — разделитель между двумя секциями одного цвета.
+   Не декоративная полоска, а цитата из чертежа: горизонталь с засечками
+   на концах, как на строительном плане проставляют размер. Там, где
+   секции разного цвета, разделитель не нужен — границу и так видно,
+   поэтому правило требует совпадения фона у соседей. Шапки страниц
+   (.page-head) исключены отдельно: они тёмные, но красятся собственным
+   правилом на своей странице, а не общим классом. */
+.section:not(.section--dark):not(.section--paper):not(.page-head) + .section:not(.section--dark):not(.section--paper)::before,
+.section--paper + .section--paper::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 20px;
+  right: 20px;
+  height: 9px;
+  background:
+    linear-gradient(var(--line), var(--line)) left center / 100% 1px no-repeat,
+    linear-gradient(var(--line), var(--line)) left center / 1px 9px no-repeat,
+    linear-gradient(var(--line), var(--line)) right center / 1px 9px no-repeat;
+  opacity: 0.9;
+  pointer-events: none;
+}
+@media (min-width: 1160px) {
+  .section:not(.section--dark):not(.section--paper):not(.page-head) + .section:not(.section--dark):not(.section--paper)::before,
+  .section--paper + .section--paper::before {
+    left: calc(50% - 560px);
+    right: calc(50% - 560px);
+  }
+}
+
+.s-head { max-width: 76ch; display: grid; gap: 12px; margin-bottom: 34px; }
 
 /* ── Секция-разворот ──
    Раскладка для разделов, где заголовок короткий, а содержимое длинное:
@@ -198,35 +255,28 @@ section[id], [data-anchor] { scroll-margin-top: 84px; }
     margin-bottom: 0;
     max-width: none;
   }
-  /* Заголовок в рейке набирается мельче: в колонке 292 px крупный капс
+  /* Заголовок в рейке набирается мельче: в колонке 292 px крупный кегль
      рвётся на слоги, а рядом с ним нет текста, от которого он должен
      отличаться размером. */
   .section--split > .wrap > .s-head h2 { font-size: clamp(24px, 2.2vw, 29px); }
   .section--split > .wrap > .s-head p { font-size: 15px; }
 }
 
-/* Заголовки секций — в верхнем регистре, как на образце: одно слово
-   выделяется акцентом через <em>. Капс задаётся здесь, а не в тексте,
-   чтобы в разметке остались нормальные буквы: программы чтения с экрана
-   произносят «НОРМА» капсом как отдельные буквы, а не как слово. */
-.s-head h2, .page-title {
-  text-transform: uppercase;
-  /* Крупный капс рубленым шрифтом наоборот поджимают: при большом кегле
-     буквы кажутся расставленными шире, чем есть. */
-  letter-spacing: -0.01em;
-  line-height: 1.08;
-}
+/* Одно слово в заголовке выделяется акцентом через <em>. Курсив при этом
+   отключён: у антиквы курсив — самостоятельное начертание с другим
+   рисунком букв, и вместе с цветом это было бы выделение поверх
+   выделения. Цвета достаточно. */
+.s-head h2, .page-title { line-height: 1.08; }
 .s-head h2 em, .page-title em { font-style: normal; color: var(--acc-deep); }
 /* Светлый оттенок акцента — на любом тёмном фоне, не только в .section--dark:
-   тёмно-синий текст на тёмно-синем фоне даёт 2.35:1 вместо нужных 4.5. */
+   тёмный сургуч на тёмном графите даёт 2.4:1 вместо нужных 4.5. */
 .section--dark .s-head h2 em,
 .section--dark .page-title em,
 #calc .s-head h2 em,
-.hero .page-title em,
 .page-head h1 em { color: var(--acc-bright); }
 
 .s-head p { color: var(--muted); max-width: 64ch; }
-.section--dark .s-head p { color: var(--on-navy-muted); }
+.section--dark .s-head p { color: var(--on-dark-muted); }
 
 /* ── Кнопки ── */
 
@@ -245,38 +295,53 @@ section[id], [data-anchor] { scroll-margin-top: 84px; }
   cursor: pointer;
   text-decoration: none;
   min-height: 46px;
-  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+  transition:
+    background-color var(--t-fast) var(--ease),
+    border-color var(--t-fast) var(--ease),
+    color var(--t-fast) var(--ease),
+    transform var(--t-fast) var(--ease),
+    box-shadow var(--t-mid) var(--ease);
 }
+.btn:active { transform: translateY(1px); }
 
 .btn--acc { background: var(--acc-btn); color: #fff; }
-.btn--acc:hover { background: var(--acc-btn-hover); color: #fff; }
+.btn--acc:hover {
+  background: var(--acc-btn-hover);
+  color: #fff;
+  box-shadow: 0 10px 26px -14px var(--acc);
+}
 
 .btn--ghost { background: transparent; color: var(--ink); border-color: var(--line); }
-.btn--ghost:hover { border-color: var(--acc-btn); color: var(--acc-deep); }
+.btn--ghost:hover { border-color: var(--acc-btn); color: var(--acc-deep); background: var(--acc-soft); }
 
 .btn--ghost-dark { background: transparent; color: #fff; border-color: rgba(255, 255, 255, 0.35); }
 .btn--ghost-dark:hover { border-color: var(--acc-bright); color: var(--acc-bright); }
-/* Белая кнопка — для синего блока с предложением: акцентная синяя на синем
-   фоне не читалась бы как главное действие. */
+/* Белая кнопка — для тёмных и акцентных блоков, где красная кнопка
+   на красном фоне не читалась бы как главное действие. */
 .btn--white { background: #fff; color: var(--acc-deep); }
-.btn--white:hover { background: #EAF1FF; color: var(--acc-deep); }
+.btn--white:hover { background: var(--acc-soft); color: var(--acc-deep); }
 
 .btn--sm { padding: 9px 16px; font-size: 14px; min-height: 40px; }
 
 /* ── Чип нормы закона и штамп проверки ── */
 
+/* Чип с номером статьи. Прямоугольный, без заливки, с тонкой красной
+   рамкой — как оттиск штампа на полях документа, а не как ярлык
+   в интерфейсе. Скруглять его нельзя: округлая пилюля читается как тег
+   в блоге, а не как ссылка на норму. */
 .law {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   font-family: var(--font-mono);
   font-size: 11.5px;
+  font-weight: 500;
   letter-spacing: 0.02em;
   color: var(--acc-deep);
-  background: var(--acc-soft);
-  border: 1px solid color-mix(in srgb, var(--acc) 35%, transparent);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--acc) 42%, transparent);
   padding: 3px 9px;
-  border-radius: 6px;
+  border-radius: 2px;
   white-space: nowrap;
   vertical-align: middle;
 }
@@ -289,21 +354,38 @@ section[id], [data-anchor] { scroll-margin-top: 84px; }
   border-color: color-mix(in srgb, var(--acc-bright) 40%, transparent);
 }
 
+/* Штамп «Проверено». Двойная рамка, лёгкий наклон, разрядка — так
+   выглядит оттиск, а не бейдж. Двойную рамку даёт box-shadow: внешняя
+   линия тоньше и светлее внутренней, как у настоящей печати, где
+   краска на краю ложится слабее. */
 .stamp {
   display: inline-flex;
   align-items: center;
   gap: 7px;
   font-family: var(--font-mono);
   font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
   color: var(--good);
   border: 1.5px solid var(--good);
-  border-radius: 6px;
-  padding: 3px 10px;
-  background: var(--good-bg);
-  transform: rotate(-1.2deg);
+  box-shadow: 0 0 0 3px var(--paper), 0 0 0 4px color-mix(in srgb, var(--good) 40%, transparent);
+  border-radius: 2px;
+  padding: 4px 11px;
+  background: transparent;
+  transform: rotate(-1.4deg);
   white-space: nowrap;
 }
 .stamp::before { content: '✓'; font-weight: 700; }
+/* Печать на тёмном фоне. Шапки страниц перечислены отдельно: они тёмные,
+   но красятся собственным правилом на своей странице, а не общим классом,
+   и без этой строки штамп оставался тёмно-зелёным на тёмном — 2.9:1
+   при норме 4.5. Поймано scripts/test-contrast.mjs. */
+.section--dark .stamp,
+.page-head .stamp {
+  color: #7FC08F;
+  border-color: #7FC08F;
+  box-shadow: 0 0 0 3px var(--dark), 0 0 0 4px rgba(127, 192, 143, 0.4);
+}
 
 /* ── Карточки и сетки ── */
 
@@ -313,22 +395,34 @@ section[id], [data-anchor] { scroll-margin-top: 84px; }
 .card {
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: var(--r-l);
+  border-radius: var(--r-m);
   padding: 26px;
 }
 .card h3 { margin-bottom: 10px; }
 .card p { color: var(--muted); font-size: 15px; }
 .card p + p { margin-top: 10px; }
 
-a.card { text-decoration: none; color: inherit; display: block; transition: border-color 0.18s ease, transform 0.18s ease; }
-a.card:hover { border-color: var(--acc-btn); transform: translateY(-2px); }
+a.card {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition:
+    border-color var(--t-mid) var(--ease),
+    transform var(--t-mid) var(--ease),
+    box-shadow var(--t-mid) var(--ease);
+}
+a.card:hover {
+  border-color: color-mix(in srgb, var(--acc) 45%, var(--line));
+  transform: translateY(-3px);
+  box-shadow: var(--shadow);
+}
 
 /* ── Таблицы ── */
 
 .tbl-wrap {
   overflow-x: auto;
   border: 1px solid var(--line);
-  border-radius: var(--r-l);
+  border-radius: var(--r-m);
   background: var(--card);
 }
 
@@ -343,7 +437,7 @@ table.data th {
   color: var(--muted);
   padding: 14px 20px;
   border-bottom: 1px solid var(--line);
-  background: var(--paper);
+  background: var(--paper-2);
 }
 table.data td {
   padding: 13px 20px;
@@ -366,13 +460,30 @@ table.data td.strong { font-weight: 600; }
    встроенным скриптом в <head>. Иначе при любой осечке JavaScript посетитель
    увидел бы пустую страницу — а это худшее, что может случиться с сайтом. */
 
-.js .rv { opacity: 0; transform: translateY(14px); transition: opacity 0.5s ease, transform 0.5s ease; }
+.js .rv {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity var(--t-slow) var(--ease),
+    transform var(--t-slow) var(--ease);
+}
 .js .rv.in { opacity: 1; transform: none; }
+
+/* Ступенчатая задержка внутри одного блока: карточки в ряду выходят
+   не разом, а одна за другой. Задержку ставит скрипт в Base.astro —
+   он считает соседей и пишет --rv-i. Потолок в 6 шагов не случаен:
+   на списке из двадцати пунктов последний иначе появился бы через
+   две секунды после первого, и это читалось бы как подвисание. */
+.js .rv { transition-delay: calc(var(--rv-i, 0) * 70ms); }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .js .rv { opacity: 1; transform: none; transition: none; }
-  .btn, a.card { transition: none; }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }
 
 /* ── Формы ── */
@@ -398,8 +509,8 @@ table.data td.strong { font-weight: 600; }
   border-color: var(--acc-btn);
 }
 .field .hint { font-size: 12.5px; color: var(--muted); }
-.field--error input { border-color: #B4231F; }
-.field .error { font-size: 13px; color: #B4231F; display: none; }
+.field--error input { border-color: var(--acc); }
+.field .error { font-size: 13px; color: var(--acc-deep); display: none; }
 .field--error .error { display: block; }
 
 /* Ловушка для ботов: поле спрятано от людей, но не через type=hidden */
@@ -420,8 +531,8 @@ table.data td.strong { font-weight: 600; }
   display: none;
   grid-template-columns: repeat(3, 1fr);
   gap: 1px;
-  background: var(--navy-line);
-  border-top: 1px solid var(--navy-line);
+  background: var(--dark-line);
+  border-top: 1px solid var(--dark-line);
   transform: translateY(100%);
   transition: transform 0.25s ease;
   padding-bottom: env(safe-area-inset-bottom, 0);
@@ -431,8 +542,8 @@ table.data td.strong { font-weight: 600; }
   display: grid;
   justify-items: center;
   gap: 2px;
-  background: var(--navy);
-  color: var(--on-navy);
+  background: var(--dark);
+  color: var(--on-dark);
   text-decoration: none;
   font-size: 11.5px;
   padding: 9px 4px 10px;
