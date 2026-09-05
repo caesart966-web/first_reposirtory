@@ -28,8 +28,8 @@ const result = await page.evaluate(async () => {
   }
 
   const pairs = [
-    ['Onest Variable', 'Arial'],
-    ['Inter Variable', 'Arial'],
+    ['Literata Variable', 'Georgia'],
+    ['Golos Text Variable', 'Arial'],
   ]
 
   return pairs.map(([real, fallback]) => {

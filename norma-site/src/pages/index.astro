@@ -101,7 +101,7 @@ const howToSchema = {
   <SpecialOffer />
 
   <!-- Кому нужна / кому нет -->
-  <section class="section section--split" id="komu" data-anchor>
+  <section class="section section--paper section--split" id="komu" data-anchor>
     <div class="wrap">
       <div class="s-head rv">
         <span class="eyebrow">Без умолчаний</span>
@@ -218,7 +218,7 @@ const howToSchema = {
   <ServicesGrid compact title="Что я делаю" />
 
   <!-- FAQ -->
-  <section class="section section--split" id="faq" data-anchor>
+  <section class="section section--paper section--split" id="faq" data-anchor>
     <div class="wrap">
       <div class="s-head rv">
         <span class="eyebrow">Вопросы</span>
@@ -330,15 +330,15 @@ const howToSchema = {
   }
   .pnote { font-size: 13.5px; color: var(--muted); line-height: 1.55; }
   .pcard .btn { justify-self: stretch; margin-top: 4px; }
-  .pcard--warn { background: var(--navy-2); color: var(--on-navy); }
+  .pcard--warn { background: var(--dark-2); color: var(--on-dark); }
   .pcard--warn h3 { color: #fff; }
-  .pcard--warn .psub, .pcard--warn li small, .pcard--warn .pnote { color: var(--on-navy-muted); }
+  .pcard--warn .psub, .pcard--warn li small, .pcard--warn .pnote { color: var(--on-dark-muted); }
   .pcard--warn li > b { color: #fff; }
 
   .cost-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
   .cost-card {
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--navy-line);
+    border: 1px solid var(--dark-line);
     border-radius: var(--r-l);
     padding: 22px;
     display: grid;
@@ -354,11 +354,11 @@ const howToSchema = {
     display: grid; place-items: center;
   }
   .cost-card h3 { color: #fff; font-size: 16.5px; }
-  .cost-card p { color: var(--on-navy-muted); font-size: 14.5px; }
+  .cost-card p { color: var(--on-dark-muted); font-size: 14.5px; }
   .cost-card p b { color: #fff; }
   .cost-card .law { justify-self: start; }
   .cost-cta { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 22px; }
-  .cost-cta span { color: var(--on-navy-muted); font-size: 14px; }
+  .cost-cta span { color: var(--on-dark-muted); font-size: 14px; }
 
   /* Шаги */
   .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
@@ -405,14 +405,23 @@ const howToSchema = {
   /* Статьи */
   .go { display: inline-flex; align-items: center; gap: 6px; font-size: 14.5px; font-weight: 600; color: var(--acc-deep); }
 
-  /* FAQ */
+  /* FAQ.
+     Раскрывается плавно, без JavaScript: interpolate-size разрешает браузеру
+     анимировать переход к height: auto, который раньше был неанимируемым.
+     Там, где браузер этого не умеет (пока это Safari), ответ просто
+     появляется сразу — как и было. Ключевое слово allow-discrete нужно,
+     чтобы вместе с высотой доехала и прозрачность: без него содержимое
+     мигает в первом же кадре. */
   .faq { display: grid; gap: 10px; max-width: 900px; }
   .faq details {
     background: var(--card);
     border: 1px solid var(--line);
     border-radius: var(--r-m);
     overflow: hidden;
+    transition: border-color var(--t-mid) var(--ease);
   }
+  .faq details:hover { border-color: color-mix(in srgb, var(--acc) 35%, var(--line)); }
+  .faq details[open] { border-color: color-mix(in srgb, var(--acc) 45%, var(--line)); }
   .faq summary {
     padding: 18px 22px;
     font-weight: 600;
@@ -423,16 +432,50 @@ const howToSchema = {
     justify-content: space-between;
     gap: 14px;
     align-items: center;
+    transition: color var(--t-fast) var(--ease);
   }
+  .faq summary:hover { color: var(--acc-deep); }
   .faq summary::-webkit-details-marker { display: none; }
+  /* Знак «плюс» из двух линеек. При раскрытии вертикальная линейка
+     схлопывается по высоте, а знак доворачивается на пол-оборота —
+     получается настоящий переход «плюс → минус», а не подмена одного
+     символа другим рывком. Схлопывание делается анимацией background-size:
+     у фоновых слоёв размер анимируется независимо. */
   .faq summary::after {
-    content: '+';
-    font-family: var(--font-mono);
-    font-size: 20px;
-    color: var(--acc-deep);
+    content: '';
+    width: 14px;
+    height: 14px;
     flex: none;
+    background-image:
+      linear-gradient(var(--acc-deep), var(--acc-deep)),
+      linear-gradient(var(--acc-deep), var(--acc-deep));
+    background-position: center, center;
+    background-repeat: no-repeat;
+    background-size: 14px 1.5px, 1.5px 14px;
+    transition:
+      background-size var(--t-mid) var(--ease),
+      transform var(--t-mid) var(--ease);
   }
-  .faq details[open] summary::after { content: '−'; }
+  .faq details[open] summary::after {
+    background-size: 14px 1.5px, 1.5px 0;
+    transform: rotate(180deg);
+  }
+
+  /* Ответ выезжает плавно и без единой строки JavaScript.
+     ::details-content — это само содержимое <details>, к которому раньше
+     нельзя было обратиться из стилей; вместе с interpolate-size (задан
+     в global.css на :root) браузер умеет анимировать переход к height: auto,
+     который десятилетиями был неанимируемым. Где этого ещё нет (Safari),
+     ответ просто раскрывается сразу — как и раньше. */
+  .faq details::details-content {
+    height: 0;
+    overflow: hidden;
+    transition:
+      height var(--t-mid) var(--ease),
+      content-visibility var(--t-mid) allow-discrete;
+  }
+  .faq details[open]::details-content { height: auto; }
+
   .faq .fa { padding: 0 22px 20px; }
   .faq .fa p { color: var(--muted); font-size: 15.5px; max-width: 76ch; }
 

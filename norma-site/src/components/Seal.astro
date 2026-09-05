@@ -1,0 +1,121 @@
+---
+import { SITE } from '../config/site'
+
+interface Props {
+  /** Размер печати в пикселях. */
+  size?: number
+  /** Приглушённый вариант для тёмных секций. */
+  dark?: boolean
+  class?: string
+}
+const { size = 128, dark = false, class: cls = '' } = Astro.props
+
+// Круглая печать «сверено» — фирменный знак сайта.
+//
+// Это не украшение. Весь сайт держится на одном обещании: каждая цифра
+// сверена с действующей редакцией Градостроительного кодекса, и у каждой
+// стоит статья. Печать — это обещание, ставшее картинкой: круглый оттиск
+// с датой сверки, какой ставят на документе.
+//
+// Почему круглая печать, а не галочка в кружке. Галочка есть у всех и
+// не значит ничего. Круглый оттиск читается однозначно: документ, проверка,
+// ответственность. Это же единственное красное пятно на белой странице —
+// поэтому и работает.
+//
+// Дата берётся из SITE.checkedDate: одна на весь сайт, меняется в одном
+// месте. Соврать ею нельзя — она же стоит в штампах «Проверено» внизу
+// каждой страницы.
+//
+// Текст по кругу набирается двумя дугами, как на настоящей печати:
+// верхняя половина названия идёт поверху, нижняя — понизу, и обе читаются
+// слева направо. Одной дугой на весь круг обойтись нельзя: вторая половина
+// строки встала бы вверх ногами.
+//
+// Тонкость с радиусами. Буквы всегда растут «вверх» от линии пути, а верх
+// у SVG-текста — это сторона, противоположная направлению обхода. У верхней
+// дуги он наружу, у нижней внутрь, поэтому у верхней путь ведём по меньшему
+// радиусу, а у нижней по большему: иначе буквы вылезают за рамку печати.
+
+const uid = Math.random().toString(36).slice(2, 8)
+const topId = `seal-t-${uid}`
+const botId = `seal-b-${uid}`
+const r = 50
+const rTop = 43.5
+const rBot = 49
+---
+
+<span class:list={['seal', dark && 'seal--dark', cls]} style={`--seal-size:${size}px`} aria-hidden="true">
+  <svg viewBox="0 0 120 120" width={size} height={size} role="presentation" focusable="false">
+    <defs>
+      <path id={topId} d={`M ${60 - rTop} 60 A ${rTop} ${rTop} 0 0 1 ${60 + rTop} 60`} />
+      <path id={botId} d={`M ${60 - rBot} 60 A ${rBot} ${rBot} 0 0 0 ${60 + rBot} 60`} />
+    </defs>
+
+    <circle class="s-ring" cx="60" cy="60" r={r} />
+    <circle class="s-ring s-ring--in" cx="60" cy="60" r={r - 8} />
+
+    <text class="s-round">
+      <textPath href={`#${topId}`} startOffset="50%" text-anchor="middle">ГРАДОСТРОИТЕЛЬНЫЙ КОДЕКС</textPath>
+    </text>
+    <text class="s-round">
+      <textPath href={`#${botId}`} startOffset="50%" text-anchor="middle">РОССИЙСКОЙ ФЕДЕРАЦИИ</textPath>
+    </text>
+
+    <line class="s-rule" x1="38" y1="49" x2="82" y2="49" />
+    <text class="s-main" x="60" y="63" text-anchor="middle">СВЕРЕНО</text>
+    <line class="s-rule" x1="38" y1="68" x2="82" y2="68" />
+    <text class="s-date" x="60" y="78" text-anchor="middle">{SITE.checkedDate}</text>
+  </svg>
+</span>
+
+<style>
+  .seal {
+    display: inline-block;
+    width: var(--seal-size);
+    height: var(--seal-size);
+    color: var(--acc);
+    /* Наклон и лёгкая прозрачность: печать ставят рукой, и краска
+       на бумаге никогда не ложится сплошным цветом. */
+    transform: rotate(-9deg);
+    opacity: 0.92;
+    flex: none;
+  }
+  .seal--dark { color: var(--acc-bright); opacity: 0.9; }
+
+  .seal svg { display: block; overflow: visible; }
+
+  .s-ring { fill: none; stroke: currentColor; stroke-width: 2.4; }
+  .s-ring--in { stroke-width: 1; opacity: 0.75; }
+  .s-rule { stroke: currentColor; stroke-width: 1; opacity: 0.6; }
+
+  .s-round,
+  .s-main,
+  .s-date {
+    fill: currentColor;
+    font-family: var(--font-body);
+  }
+  .s-round { font-size: 6.6px; font-weight: 600; letter-spacing: 0.03em; }
+  .s-main { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; }
+  .s-date { font-size: 6.8px; font-weight: 500; letter-spacing: 0.03em; opacity: 0.85; }
+
+  /* Печать ставится: приходит крупнее и вбок, потом «прикладывается».
+     Пружинистая кривая в конце — это и есть тот самый удар; без неё
+     движение читается как обычное всплытие карточки.
+     Запускается по классу .in — его вешает общий наблюдатель прокрутки. */
+  :global(.js) .seal {
+    opacity: 0;
+    transform: rotate(-24deg) scale(1.5);
+  }
+  :global(.js) .seal.in {
+    opacity: 0.92;
+    transform: rotate(-9deg) scale(1);
+    transition:
+      opacity 0.3s ease-out,
+      transform 0.55s cubic-bezier(0.2, 1.5, 0.4, 1);
+  }
+  :global(.js) .seal--dark.in { opacity: 0.9; }
+
+  @media (prefers-reduced-motion: reduce) {
+    :global(.js) .seal { opacity: 0.92; transform: rotate(-9deg); }
+  }
+</style>

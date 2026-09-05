@@ -112,10 +112,10 @@ import { href, SITE, REGISTRIES } from '../config/site'
 </Base>
 
 <style>
-  .page-head { background: var(--navy); color: var(--on-navy); padding-bottom: 40px; }
+  .page-head { background: var(--dark); color: var(--on-dark); padding-bottom: 40px; }
   .page-head .eyebrow { color: var(--acc-bright); }
   .page-head h1 { color: #fff; margin: 12px 0 16px; }
-  .page-head .lead { color: var(--on-navy-muted); }
+  .page-head .lead { color: var(--on-dark-muted); }
 
   /* Контактные данные без формы: она переехала в блок консультации ниже.
      Три-четыре карточки в ряд читаются лучше, чем узкая колонка сбоку. */
@@ -149,7 +149,10 @@ import { href, SITE, REGISTRIES } from '../config/site'
   }
   .big-phone {
     font-family: var(--font-mono);
-    font-size: clamp(23px, 3.4vw, 30px);
+    /* Номер не переносится: разорванный по строкам телефон читается
+       как две разные цифры, а на узкой карточке он рвался после «86-». */
+    white-space: nowrap;
+    font-size: clamp(20px, 2.4vw, 26px);
     font-weight: 500;
     color: var(--ink);
     text-decoration: none;

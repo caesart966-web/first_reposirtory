@@ -2,34 +2,30 @@
 import { SITE, href } from '../config/site'
 import { LAW, TERMS } from '../config/facts'
 import Icon from './Icon.astro'
-import MapPlate from './MapPlate.astro'
+import Seal from './Seal.astro'
 import { OFFER } from '../config/offer'
 
-// Первый экран.
+// Первый экран — лист бумаги, а не заставка.
 //
-// Карта России идёт фоном — под текстом, а не полосой рядом с ним. Ролик
-// вписывается в экран целиком (object-fit: contain, см. MapPlate.astro),
-// поэтому страна видна вся и на компьютере, и на телефоне: там карта
-// поднята к заголовку и лежит ровно за ним.
+// Здесь стояло фоновое видео; заказчик попросил его убрать и пересобрать
+// сайт в белом. Заменять видео другой картинкой не стали: на сайте про
+// документы уместнее чертёж, чем съёмка. Поэтому фон — не изображение,
+// а рисунок в разметке:
 //
-// Читаемость белого текста на движущейся картинке держат две вещи, и обе
-// нужны. Пелена поверх кадра гасит его равномерно, а собственная тень
-// у каждой буквы затемняет ровно то место, куда попала буква, и не трогает
-// остальной кадр. Одной пеленой обойтись нельзя: чтобы вытянуть контраст
-// только ею, гасить пришлось бы так сильно, что карты стало бы не видно.
+//   1. Сетка миллиметровки. Очень светлая, две частоты линий, как на
+//      бумаге для чертежей. Даёт странице фактуру листа, а не пустоту.
+//   2. Контур дома с краном, вычерченный тонкой линией. Рисуется при
+//      загрузке — линии проявляются по очереди, как под рейсшиной.
+//      Это вся «строительная» тема первого экрана; стоковой фотографии
+//      с каской на сайте нет и быть не должно.
+//   3. Красная печать «сверено» — единственное яркое пятно на белом.
 //
-// Плотность подобрана не на глаз: scripts/test-video-contrast.mjs снимает
-// настоящие пиксели под каждой строкой на шести секундах ролика, берёт
-// худший кадр и требует 4.5:1 по стандарту. Меняете пелену или цвет
-// текста — перезапустите проверку.
+// Всё это весит несколько килобайт разметки вместо восьмисот килобайт
+// видео и рисуется мгновенно.
 //
-// Числа внизу экрана работают подписью к карте: полоса цифр под картинкой
-// читается как легенда под схемой в документе. У двух чисел стоит чип
-// со статьёй закона — с первого же экрана видно, что цифры не с потолка.
-//
-// Чего здесь больше нет: списка из трёх обещаний под заголовком. Одно из
-// них слово в слово повторяло число из полосы ниже, два других страница
-// доказывает сама — калькулятором и чипами норм.
+// Числа внизу набраны как строка сметы: подпись капсом, значение крупно,
+// у двух — чип со статьёй закона. С первого экрана видно, что цифры
+// на сайте не с потолка.
 
 const stats = [
   { v: TERMS.extract, d: `от подачи документов до выписки из реестра, ${TERMS.extractTypical}` },
@@ -40,193 +36,288 @@ const stats = [
 ---
 
 <section class="hero">
-  <MapPlate name="hero" />
-  <div class="veil"></div>
+  <div class="grid-bg" aria-hidden="true"></div>
 
-  {/* Короткий вариант, а не полный: под чипом идёт карта, и «по всей
-      России» она говорит убедительнее любой строки. На телефоне длинная
-      фраза занимала две строки и отодвигала заголовок под сгиб. */}
-  <span class="geo"><i></i>{SITE.geoShort}</span>
+  <!-- Чертёж: дом в лесах и башенный кран. Линии рисуются по очереди
+       при загрузке страницы — см. .draft path в стилях ниже. -->
+  <svg class="draft" viewBox="0 0 520 420" fill="none" aria-hidden="true" focusable="false">
+    <g stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+      <path class="d1" d="M60 400h420" />
+      <path class="d2" d="M120 400V190l120-64 120 64v210" />
+      <path class="d3" d="M120 190h240M120 244h240M120 298h240M120 352h240" />
+      <path class="d4" d="M180 244v108M240 190v210M300 244v108" />
+      <path class="d5" d="M240 126 120 190M240 126l120 64" />
+      <path class="d6" d="M410 400V96h-14v304M396 96h96M492 96v34M492 96 396 76M410 96v-14" />
+      <path class="d7" d="M470 96v52m-10-52 10 52h-20l10-52" />
+      <path class="d8" d="M396 130l14-34M396 164l14-34M396 198l14-34" />
+    </g>
+  </svg>
 
-  <h1 class="page-title">
-    Вступить в <em>СРО</em><br />без устаревших норм
-  </h1>
-  <p class="tagline">Точно. Честно. За 2–3 дня.</p>
+  <div class="wrap hero-in">
+    <div class="hero-text">
+      <span class="geo"><i></i>{SITE.geoShort}</span>
 
-  <div class="cta">
-    <a class="btn btn--acc btn--lg" href="#calc">Проверить, нужна ли СРО</a>
-    <a class="btn btn--ghost-dark btn--lg" href={href('/stoimost/')}>Узнать стоимость</a>
+      <h1 class="page-title">
+        Вступление в <em>СРО</em> без устаревших норм
+      </h1>
+
+      <p class="hero-lead">
+        Строителям, проектировщикам и изыскателям — по всей России.
+        Скажу сразу, нужно ли вам членство, и покажу норму, на которой
+        это основано. Если не нужно — так и скажу, до оплаты.
+      </p>
+
+      <div class="cta">
+        <a class="btn btn--acc btn--lg" href="#calc">Проверить, нужна ли СРО</a>
+        <a class="btn btn--ghost btn--lg" href={href('/stoimost/')}>Узнать стоимость</a>
+      </div>
+      <p class="note">2 минуты · 4 вопроса · ответ со ссылкой на закон</p>
+
+      {/* Печать стоит здесь, а не на карточке предложения, и это важно.
+          Она говорит «сверено с Градостроительным кодексом» — а условия
+          вступления в карточке не нормы закона, а условия конкретных СРО.
+          Печать рядом с ними означала бы, что закон эти льготы
+          гарантирует; он их не гарантирует. */}
+      <div class="verify rv">
+        <span class="v-seal"><Seal size={104} /></span>
+        <p>
+          Все цифры на сайте сверены с действующей редакцией
+          Градостроительного кодекса, и рядом с каждой стоит статья.
+          Дату сверки видно на печати — врать ею нельзя.
+        </p>
+      </div>
+    </div>
+
+    {/* Главное предложение сайта. Оформлено как бланк: тонкая рамка,
+        подпись капсом сверху, печать в углу. На компьютере занимает
+        правую колонку, на телефоне встаёт под кнопками. */}
+    <aside class="hero-offer rv">
+      <span class="ho-tag">Условия, которых нет больше нигде</span>
+      <p class="ho-title">Вступление <b>без стартовых расходов</b></p>
+      <ul class="ho-list">
+        {OFFER.map((p) => (
+          <li><Icon name="check" size={15} /> {p.short}</li>
+        ))}
+      </ul>
+      <a class="ho-go" href={href('/#predlozhenie')}>
+        Все пять условий <Icon name="arrow" size={15} />
+      </a>
+    </aside>
   </div>
-  <p class="note">2 минуты · 4 вопроса · ответ со ссылкой на закон</p>
 
-  {/* Главное предложение сайта. На компьютере занимает правую колонку,
-      на телефоне встаёт сразу под картой — то есть в обоих случаях
-      попадает на первый экран, а не уезжает под сгиб. */}
-  <aside class="hero-offer">
-    <span class="ho-tag"><Icon name="star" size={15} /> Только через меня</span>
-    <p class="ho-title">Вступление <b>без стартовых расходов</b></p>
-    <ul class="ho-list">
-      {OFFER.map((p) => (
-        <li><Icon name="check" size={15} /> {p.short}</li>
+  <div class="wrap">
+    <ul class="stats">
+      {stats.map((s) => (
+        <li class="stat rv">
+          {/* Пробел ставится явно: Astro съедает пробел перед строчным тегом,
+              и число слипалось с единицей — «10млн ₽». Отступом в стилях это
+              не лечится: при копировании текста и в программе чтения с экрана
+              пробела всё равно бы не было. */}
+          <span class="v">{s.unit ? <>{s.v}{' '}<em>{s.unit}</em></> : s.v}</span>
+          <span class="d">{s.d}</span>
+          {s.law && <span class="law">{s.law}</span>}
+        </li>
       ))}
     </ul>
-    <a class="ho-go" href={href('/#predlozhenie')}>
-      Все пять условий <Icon name="arrow" size={15} />
-    </a>
-  </aside>
-
-  <ul class="stats">
-    {stats.map((s) => (
-      <li class="stat">
-        {/* Пробел ставится явно: Astro съедает пробел перед строчным тегом,
-            и число слипалось с единицей — «10млн ₽». Отступом в стилях это
-            не лечится: при копировании текста и в программе чтения с экрана
-            пробела всё равно бы не было. */}
-        <span class="v">{s.unit ? <>{s.v}{' '}<em>{s.unit}</em></> : s.v}</span>
-        <span class="d">{s.d}</span>
-        {s.law && <span class="law law--dark">{s.law}</span>}
-      </li>
-    ))}
-  </ul>
+  </div>
 </section>
 
 <style>
-  /* Первый экран — одна сетка на всё содержимое, без вложенных обёрток:
-     так порядок блоков можно менять на телефоне, не трогая разметку
-     (заголовок остаётся первым по смыслу и для поисковиков).
-
-     Карта и пелена лежат отдельными слоями под сеткой: они растянуты
-     на всю секцию (position: absolute), поэтому в раскладке не участвуют. */
   .hero {
     position: relative;
     isolation: isolate;
-    background: var(--navy);
-    color: var(--on-navy);
-    padding: 34px 0 0;
-    display: grid;
-    grid-template-columns:
-      [full-start] minmax(20px, 1fr)
-      [main-start] minmax(0, 1120px) [main-end]
-      minmax(20px, 1fr) [full-end];
-    grid-template-areas:
-      '. geo   .'
-      '. title .'
-      '. tag   .'
-      '. offer .'
-      '. cta   .'
-      '. note  .'
-      '. stats .';
+    background: var(--paper);
+    color: var(--ink);
+    padding: 46px 0 0;
+    overflow: hidden;
   }
 
-  /* Пелена поверх кадра. Ровная, во всю ширину: тёмное пятно только под
-     текстом гасило бы левую половину экрана, и карту было бы видно лишь
-     справа. Плотнее у нижнего края — там лежит строка с цифрами, а карта
-     в этом месте самая светлая.
-
-     Числа подобраны замером по настоящим кадрам: scripts/test-video-contrast.mjs. */
-  .veil {
+  /* ── Фактура листа ──
+     Две частоты линий, как на миллиметровке: частая сетка по 22 px и
+     редкая по 110. Обе едва различимы — их задача не рисоваться,
+     а убрать ощущение пустого белого экрана. Книзу сетка растворяется,
+     чтобы не спорить со строкой цифр. */
+  .grid-bg {
     position: absolute;
     inset: 0;
-    z-index: 0;
-    background: linear-gradient(
-      180deg,
-      rgba(7, 17, 31, 0.46) 0%,
-      rgba(7, 17, 31, 0.4) 44%,
-      rgba(10, 22, 38, 0.8) 100%
-    );
+    z-index: -2;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px),
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 110px 110px, 110px 110px, 22px 22px, 22px 22px;
+    opacity: 0.55;
+    mask-image: linear-gradient(180deg, #000 0%, #000 52%, transparent 92%);
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 52%, transparent 92%);
     pointer-events: none;
   }
 
-  /* Всё содержимое — над слоями. */
-  .hero > *:not(.plate):not(.veil) { position: relative; z-index: 1; }
-
-  /* Тень под текстом первого экрана. Не украшение: она заменяет собой
-     тёмную подложку и позволяет показывать карту во всю ширину. Два слоя —
-     широкий мягкий ореол и узкий плотный контур: первый отделяет текст от
-     светлых мест кадра, второй держит края букв. */
-  .geo,
-  .page-title,
-  .tagline,
-  .note,
-  .stats {
-    text-shadow:
-      0 1px 2px rgba(4, 12, 24, 0.9),
-      0 2px 26px rgba(4, 12, 24, 0.85);
-  }
-
-  .geo { grid-area: geo; }
-  .page-title { grid-area: title; }
-  .tagline { grid-area: tag; }
-  .hero-offer { grid-area: offer; }
-  .cta { grid-area: cta; }
-  .note { grid-area: note; }
-  .stats { grid-area: stats; }
-
-  /* Компьютер. Текст слева, предложение справа отдельной колонкой,
-     числа — подписью под ними. Высота задана так, чтобы карта поместилась
-     в кадр целиком: пропорция ролика 1264 × 604, отсюда деление на 2.09.
-     Ниже этого первый экран не станет, даже если текста в нём мало. */
-  @media (min-width: 1024px) {
-    .hero {
-      padding-top: 46px;
-      min-height: min(calc(100vw / 2.09), 720px);
-      align-content: start;
-      grid-template-columns:
-        [full-start] minmax(20px, 1fr)
-        [main-start] minmax(0, 728px) 392px [main-end]
-        minmax(20px, 1fr) [full-end];
-      grid-template-areas:
-        '. geo   offer .'
-        '. title offer .'
-        '. tag   offer .'
-        '. cta   offer .'
-        '. note  offer .'
-        '. stats stats .';
-    }
-    /* Просвет между колонками отдан карточке: он должен уйти вместе с ней,
-       когда на узком экране колонок не станет. */
-    .hero-offer { margin-left: 52px; align-self: start; }
-  }
-
-  /* ── Предложение ── */
-
-  .hero-offer {
-    margin: 28px 0 0;
-    background: #fff;
+  /* ── Чертёж ──
+     Стоит справа и намеренно уходит за край экрана: рисунок должен
+     читаться как фрагмент большого листа, а не как иконка в рамке. */
+  .draft {
+    position: absolute;
+    z-index: -1;
+    right: -60px;
+    bottom: 96px;
+    width: min(600px, 54vw);
     color: var(--ink);
-    border-radius: var(--r-l);
-    padding: 24px 22px 20px;
-    display: grid;
-    gap: 12px;
-    align-content: start;
-    /* Светлое кольцо по краю: без него белая карточка на тёмно-синем
-       выглядит вырезанной ножницами. */
-    box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.5),
-      0 0 0 7px color-mix(in srgb, var(--acc) 20%, transparent),
-      0 28px 60px -22px rgba(2, 8, 18, 0.8);
+    opacity: 0.16;
+    pointer-events: none;
   }
-  .ho-tag {
-    justify-self: start;
+
+  /* Линии рисуются по очереди. Приём: длина штриха равна длине самой
+     линии, и она сдвинута на всю длину — линия не видна; анимация
+     сводит сдвиг к нулю, и линия «выезжает» из точки.
+     Значения 1200 хватает на самый длинный путь; для коротких линий
+     запас невиден, потому что за пределами пути штрих не рисуется. */
+  .draft path {
+    stroke-dasharray: 1200;
+    stroke-dashoffset: 1200;
+    animation: draw 1.5s var(--ease) forwards;
+  }
+  .d1 { animation-delay: 0.15s; }
+  .d2 { animation-delay: 0.35s; }
+  .d3 { animation-delay: 0.6s; }
+  .d4 { animation-delay: 0.75s; }
+  .d5 { animation-delay: 0.5s; }
+  .d6 { animation-delay: 0.9s; }
+  .d7 { animation-delay: 1.15s; }
+  .d8 { animation-delay: 1.25s; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .draft path { animation: none; stroke-dashoffset: 0; }
+  }
+  @media (max-width: 767px) {
+    /* На телефоне чертёж уходит в верхний правый угол и становится
+       фоном заголовка: места под него сбоку нет. */
+    .draft { right: -110px; bottom: auto; top: 8px; width: 300px; opacity: 0.11; }
+  }
+
+  /* ── Раскладка ── */
+
+  .hero-in {
+    padding-bottom: 42px;
+    display: grid;
+    gap: 34px;
+    align-items: start;
+  }
+  @media (min-width: 1024px) {
+    .hero { padding-top: 66px; }
+    .hero-in { grid-template-columns: minmax(0, 1fr) 384px; gap: 60px; padding-bottom: 56px; }
+  }
+
+  .geo {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
-    background: var(--acc-btn);
-    color: #fff;
-    font-family: var(--font-head);
-    font-size: 12.5px;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    padding: 6px 12px;
+    gap: 9px;
+    justify-self: start;
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    color: var(--muted);
+    border: 1px solid var(--line);
+    background: var(--paper);
+    padding: 5px 13px;
     border-radius: 999px;
+    margin-bottom: 22px;
   }
-  .ho-title { font-family: var(--font-head); font-size: 25px; line-height: 1.18; font-weight: 800; margin: 0; }
-  .ho-title b { color: var(--acc-deep); }
-  .ho-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+  .geo i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--acc);
+    flex: none;
+    /* Точка дышит: единственное движение на первом экране, которое
+       не заканчивается. Медленно и почти незаметно — иначе она
+       превращается в мигающий индикатор ошибки. */
+    animation: pulse 3.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.45; transform: scale(0.8); }
+  }
+
+  .page-title {
+    font-size: clamp(36px, 5.6vw, 62px);
+    font-weight: 700;
+    max-width: 15ch;
+    letter-spacing: -0.025em;
+  }
+
+  .hero-lead {
+    font-size: clamp(16.5px, 1.6vw, 19px);
+    line-height: 1.62;
+    color: var(--muted);
+    max-width: 54ch;
+    margin-top: 22px;
+  }
+  .cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 30px; }
+  .btn--lg { padding: 16px 28px; font-size: 16px; min-height: 54px; }
+  .note { font-size: 13px; color: var(--muted); margin-top: 15px; }
+
+  /* Строка о сверке: печать и объяснение рядом. Печать вынесена
+     в отдельную обёртку — стили компонента живут в Seal.astro, а класс,
+     переданный компоненту снаружи, до его корня не доходит. */
+  .verify {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 18px;
+    align-items: center;
+    margin-top: 40px;
+    padding-top: 26px;
+    border-top: 1px solid var(--line);
+    max-width: 54ch;
+  }
+  .v-seal { display: block; flex: none; }
+  /* На телефоне печать мельче: при её обычном размере на текст рядом
+     остаётся колонка шириной в двадцать восемь знаков. */
+  @media (max-width: 560px) {
+    .verify { gap: 14px; }
+    .v-seal :global(.seal) { --seal-size: 82px; }
+  }
+  .verify p { font-size: 14px; line-height: 1.6; color: var(--muted); }
+
+  /* ── Предложение как бланк ── */
+
+  .hero-offer {
+    position: relative;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--r-m);
+    padding: 26px 24px 22px;
+    display: grid;
+    gap: 13px;
+    align-content: start;
+    box-shadow: var(--shadow);
+  }
+  /* Красная линейка сверху — как поле бланка. */
+  .hero-offer::before {
+    content: '';
+    position: absolute;
+    left: -1px;
+    right: -1px;
+    top: -1px;
+    height: 3px;
+    background: var(--acc);
+    border-radius: var(--r-m) var(--r-m) 0 0;
+  }
+  .ho-tag {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--acc-deep);
+  }
+  .ho-title { font-family: var(--font-head); font-size: 27px; line-height: 1.14; font-weight: 700; margin: 0; letter-spacing: -0.02em; }
+  .ho-title b { color: var(--acc-deep); font-weight: 700; }
+  .ho-list { list-style: none; margin: 2px 0 0; padding: 0; display: grid; gap: 9px; }
   .ho-list li {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
-    gap: 9px;
+    gap: 10px;
     align-items: start;
     font-size: 15px;
     color: var(--ink);
@@ -238,96 +329,53 @@ const stats = [
     gap: 7px;
     justify-self: start;
     color: var(--acc-deep);
-    font-family: var(--font-head);
-    font-weight: 700;
+    font-weight: 600;
     font-size: 14.5px;
     text-decoration: none;
-    padding: 6px 0 2px;
+    padding: 8px 0 2px;
+    transition: gap var(--t-fast) var(--ease);
   }
-  .ho-go:hover { text-decoration: underline; }
+  .ho-go:hover { gap: 12px; text-decoration: underline; }
 
-  /* ── Слово ── */
-
-  .geo {
-    display: inline-flex;
-    align-items: center;
-    gap: 9px;
-    font-family: var(--font-body);
-    font-size: 14px;
-    color: var(--on-navy);
-    border: 1px solid var(--navy-line);
-    padding: 5px 12px;
-    border-radius: 999px;
-    justify-self: start;
-    margin-bottom: 22px;
-  }
-  .geo i { width: 6px; height: 6px; border-radius: 50%; background: var(--acc-bright); flex: none; }
-
-  .page-title {
-    color: #fff;
-    font-size: clamp(34px, 6.6vw, 68px);
-    font-weight: 800;
-    max-width: 16ch;
-  }
-
-  .tagline {
-    /* Чисто белый, а не светло-синий: строка идёт по самому светлому месту
-       кадра, и на приглушённом оттенке запас по контрасту падал до 4.7:1
-       при норме 4.5 — то есть держался на волоске. */
-    color: #fff;
-    font-family: var(--font-head);
-    font-size: clamp(16px, 2.2vw, 21px);
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    margin-top: 16px;
-    font-weight: 500;
-  }
-
-  .cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 26px; }
-  .btn--lg { padding: 16px 28px; font-size: 16px; min-height: 54px; }
-  /* Светлый, а не приглушённый серый. Приглушённый здесь давал 3.38:1
-     при норме 4.5: строка попадает ровно на скопление огней вокруг Москвы —
-     самое светлое место карты. Замер — scripts/test-video-contrast.mjs. */
-  .note { font-size: 13px; color: var(--on-navy); margin: 14px 0 26px; }
-
-  /* ── Числа под картой ──
-     Тонкие разделители и подписи в разрядку: полоса должна читаться как
-     легенда под схемой, а не как ещё одна секция с карточками. */
+  /* ── Строка чисел ── */
 
   .stats {
     list-style: none;
     margin: 0;
-    padding: 0 0 6px;
+    padding: 0;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
+    border-top: 1px solid var(--line);
   }
   .stat {
-    padding: 22px 20px 28px;
-    border-left: 1px solid var(--navy-line);
+    padding: 24px 22px 30px;
+    border-left: 1px solid var(--line);
     display: grid;
-    gap: 5px;
+    gap: 6px;
     align-content: start;
   }
   .stat:first-child { border-left: 0; padding-left: 0; }
   .v {
     font-family: var(--font-head);
-    font-size: 28px;
-    font-weight: 800;
-    color: #fff;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--ink);
     font-variant-numeric: lining-nums tabular-nums;
-    line-height: 1.1;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
   }
-  .v em { font-style: normal; color: var(--acc-bright); font-size: 20px; }
-  .d { font-size: 13px; color: var(--on-navy-muted); line-height: 1.45; }
-  .stat .law { justify-self: start; margin-top: 6px; }
+  .v em { font-style: normal; color: var(--acc-deep); font-size: 21px; }
+  .d { font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+  .stat .law { justify-self: start; margin-top: 7px; }
 
   @media (max-width: 900px) {
     .stats { grid-template-columns: repeat(2, 1fr); }
     .stat { border-left: 0; padding: 20px 14px 20px 0; }
+    .stat:nth-child(n + 3) { border-top: 1px solid var(--line); }
   }
 
   @media (max-width: 560px) {
     .cta .btn { width: 100%; }
-    .v { font-size: 23px; }
+    .v { font-size: 26px; }
   }
 </style>

@@ -228,8 +228,8 @@ const tableOf = (dir: string) => (dir === 'build' ? 'build' : 'design')
   }
   .out-sum,
   .out-rest {
-    background: linear-gradient(160deg, var(--navy-2), #0A1B30);
-    border: 1px solid var(--navy-line);
+    background: linear-gradient(160deg, var(--dark-2), var(--dark));
+    border: 1px solid var(--dark-line);
     border-radius: var(--r-l);
     padding: 18px;
     display: grid;
@@ -256,8 +256,8 @@ const tableOf = (dir: string) => (dir === 'build' ? 'build' : 'design')
       padding: 0;
     }
     .cost-out {
-      background: linear-gradient(160deg, var(--navy-2), #0A1B30);
-      border: 1px solid var(--navy-line);
+      background: linear-gradient(160deg, var(--dark-2), var(--dark));
+      border: 1px solid var(--dark-line);
       border-radius: var(--r-l);
       padding: 22px;
     }
@@ -387,7 +387,7 @@ const tableOf = (dir: string) => (dir === 'build' ? 'build' : 'design')
 
   .out-rows { display: grid; gap: 10px; margin: 0; }
   .out-rows > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: baseline; }
-  .out-rows dt { color: var(--on-navy-muted); font-size: 14px; line-height: 1.4; }
+  .out-rows dt { color: var(--on-dark-muted); font-size: 14px; line-height: 1.4; }
   .out-rows dd { margin: 0; color: #fff; font-size: 15px; font-weight: 700; white-space: nowrap; }
 
   .out-total {
@@ -396,7 +396,7 @@ const tableOf = (dir: string) => (dir === 'build' ? 'build' : 'design')
     justify-content: space-between;
     gap: 14px;
     padding-top: 14px;
-    border-top: 1px solid var(--navy-line);
+    border-top: 1px solid var(--dark-line);
     color: #fff;
   }
   .out-total span { font-size: 15px; }
@@ -410,29 +410,29 @@ const tableOf = (dir: string) => (dir === 'build' ? 'build' : 'design')
     gap: 9px;
     align-items: start;
     margin: 0;
-    color: var(--on-navy-muted);
+    color: var(--on-dark-muted);
     font-size: 13.5px;
     line-height: 1.5;
   }
   .out-once b { color: #fff; }
 
   .out-more {
-    border-top: 1px solid var(--navy-line);
+    border-top: 1px solid var(--dark-line);
     padding-top: 14px;
     display: grid;
     gap: 8px;
   }
   .out-more b { color: #fff; font-size: 14.5px; }
   .out-more ul { margin: 0; padding-left: 18px; display: grid; gap: 5px; }
-  .out-more li { color: var(--on-navy-muted); font-size: 13.5px; line-height: 1.45; }
-  .out-more p { color: var(--on-navy-muted); font-size: 13.5px; line-height: 1.55; margin: 4px 0 0; }
+  .out-more li { color: var(--on-dark-muted); font-size: 13.5px; line-height: 1.45; }
+  .out-more p { color: var(--on-dark-muted); font-size: 13.5px; line-height: 1.55; margin: 4px 0 0; }
 
   .out-cta { width: 100%; }
   .out-law { justify-self: start; }
 
   .cost-note {
     margin-top: 20px;
-    color: var(--on-navy-muted);
+    color: var(--on-dark-muted);
     font-size: 14.5px;
     line-height: 1.6;
     max-width: 88ch;
