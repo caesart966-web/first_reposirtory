@@ -33,10 +33,20 @@ CYRILLIC = "".join(chr(c) for c in range(0x410, 0x450)) + "ЁёЄєІіЇїҐґ�
 
 # Какие файлы урезаем: (пакет npm, исходный файл, итоговое имя, набор знаков).
 #
-# Inter — переменный шрифт: один файл обслуживает все начертания от светлого
-# до жирного. Курсив лежит отдельным файлом и заранее не грузится: он нужен
+# Шрифтов на сайте два, и роли у них разные.
+#
+# Onest — заголовки, кнопки, подписи и цифры. Взят вот почему: его кириллицу
+# рисовали как основную, а не пристраивали к готовой латинице. Разница видна
+# на «д», «з», «у» и на прописных «Д» и «Л» — в заголовке капсом это заметно
+# сразу. Курсива у него нет, и он не нужен: заголовки курсивом не набирают.
+#
+# Inter — сплошной текст: абзацы, таблицы, статьи. У него спокойный рисунок,
+# который не мешает читать длинную страницу, и он же стоит на соседнем сайте
+# заказчика. Курсив лежит отдельным файлом и заранее не грузится: он нужен
 # только в статьях, и браузер возьмёт его сам, если курсив на странице есть.
 JOBS = [
+    ("@fontsource-variable/onest", "onest-cyrillic-wght-normal.woff2", "onest-cyrillic.woff2", CYRILLIC),
+    ("@fontsource-variable/onest", "onest-latin-wght-normal.woff2", "onest-latin.woff2", LATIN),
     ("@fontsource-variable/inter", "inter-cyrillic-wght-normal.woff2", "inter-cyrillic.woff2", CYRILLIC),
     ("@fontsource-variable/inter", "inter-latin-wght-normal.woff2", "inter-latin.woff2", LATIN),
     ("@fontsource-variable/inter", "inter-cyrillic-wght-italic.woff2", "inter-cyrillic-italic.woff2", CYRILLIC),

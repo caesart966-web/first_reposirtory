@@ -2,206 +2,158 @@
 import { SITE, href } from '../config/site'
 import { LAW, TERMS } from '../config/facts'
 import Icon from './Icon.astro'
-import BgVideo from './BgVideo.astro'
+import MapPlate from './MapPlate.astro'
 import { OFFER } from '../config/offer'
 
-// Три коротких обещания под заголовком — как на образце, но каждое
-// правдиво и раскрыто ниже по странице, а не просто лозунг.
-const PROMISES = [
-  { icon: 'clock', text: `От подачи до выписки — ${TERMS.extract}` },
-  { icon: 'doc', text: 'У каждого факта — статья закона' },
-  { icon: 'scales', text: 'Скажу, если СРО не нужна' },
+// Первый экран.
+//
+// Устроен в три яруса, и это не украшение, а решение двух задач сразу.
+//
+//   Ярус 1 — слово и предложение. Тёмно-синий фон, никакого видео под
+//   текстом. Раньше текст лежал поверх ролика, и держать его читаемым
+//   приходилось пеленой поверх кадра и тенью у каждой буквы: две подпорки,
+//   которые к тому же гасили сам ролик. Теперь текст на сплошном цвете —
+//   контраст 15:1 без единой уловки, и подпорки убраны.
+//
+//   Ярус 2 — карта. Отдельная полоса, на которой не написано ничего,
+//   поэтому ролик виден целиком и в полную силу. Почему именно так —
+//   в MapPlate.astro.
+//
+//   Ярус 3 — четыре числа. Они же служат подписью к карте: полоса цифр
+//   под картинкой читается как легенда под схемой в документе, а не как
+//   ещё один блок. У двух чисел стоит чип со статьёй закона — с первого
+//   же экрана видно, что цифры здесь не с потолка.
+//
+// Чего здесь больше нет: списка из трёх обещаний под заголовком. Одно из
+// них слово в слово повторяло число из третьего яруса, два других страница
+// доказывает ниже — калькулятором и чипами норм. Заказчик просил убрать
+// с сайта лишнее; это было лишним первым.
+
+const stats = [
+  { v: TERMS.extract, d: `от подачи документов до выписки из реестра, ${TERMS.extractTypical}` },
+  { v: '0 ₽', d: 'подготовка документов и сопровождение — мои услуги' },
+  { v: '10', unit: 'млн ₽', d: 'порог, с которого строителю нужно членство', law: LAW.build },
+  { v: '≤ 2', unit: 'мес.', d: 'срок рассмотрения по закону; с готовыми документами — дни', law: LAW.term },
 ]
 ---
 
 <section class="hero">
-  <BgVideo name="hero" band />
-  <div class="veil"></div>
+  {/* Короткий вариант, а не полный: под чипом идёт карта, и «по всей
+      России» она говорит убедительнее любой строки. На телефоне длинная
+      фраза занимала две строки и отодвигала заголовок под сгиб. */}
+  <span class="geo"><i></i>{SITE.geoShort}</span>
 
-  <div class="wrap hero-in">
-    <div class="hero-text">
-      <span class="geo"><i></i>{SITE.geo}</span>
+  <h1 class="page-title">
+    Вступить в <em>СРО</em><br />без устаревших норм
+  </h1>
+  <p class="tagline">Точно. Честно. За 2–3 дня.</p>
 
-      <h1 class="page-title">
-        Вступить в <em>СРО</em><br />без устаревших норм
-      </h1>
-      <p class="tagline">Точно. Честно. За 2–3 дня.</p>
-
-      <ul class="promises">
-        {PROMISES.map((p) => (
-          <li>
-            <span class="pic"><Icon name={p.icon} size={20} /></span>
-            {p.text}
-          </li>
-        ))}
-      </ul>
-
-      <div class="cta">
-        <a class="btn btn--acc btn--lg" href="#calc">Проверить, нужна ли СРО</a>
-        <a class="btn btn--ghost-dark btn--lg" href={href('/stoimost/')}>Узнать стоимость</a>
-      </div>
-      <p class="note">2 минуты · 4 вопроса · ответ со ссылкой на закон</p>
-    </div>
-
-    <!-- Предложение вынесено на первый экран: на компьютере оно занимает
-         правую половину, где раньше было только видео, на телефоне встаёт
-         под кнопками. Карточка белая — на тёмном фоне поверх видео это
-         единственное светлое пятно, мимо него не пройти. -->
-    <aside class="hero-offer">
-      <span class="ho-tag"><Icon name="star" size={15} /> Только через меня</span>
-      <p class="ho-title">Вступление <b>без стартовых расходов</b></p>
-      <ul class="ho-list">
-        {OFFER.map((p) => (
-          <li><Icon name="check" size={15} /> {p.short}</li>
-        ))}
-      </ul>
-      <a class="ho-go" href={href('/#predlozhenie')}>
-        Все пять условий <Icon name="arrow" size={15} />
-      </a>
-    </aside>
+  <div class="cta">
+    <a class="btn btn--acc btn--lg" href="#calc">Проверить, нужна ли СРО</a>
+    <a class="btn btn--ghost-dark btn--lg" href={href('/stoimost/')}>Узнать стоимость</a>
   </div>
+  <p class="note">2 минуты · 4 вопроса · ответ со ссылкой на закон</p>
 
-  <div class="wrap">
-    <div class="stats">
-      <div class="stat">
-        <div class="v">{TERMS.extract}</div>
-        <div class="d">от подачи документов до выписки из реестра, {TERMS.extractTypical}</div>
-      </div>
-      <div class="stat">
-        <div class="v">0 ₽</div>
-        <div class="d">подготовка документов и сопровождение — мои услуги</div>
-      </div>
-      <div class="stat">
-        <div class="v">10 <em>млн ₽</em></div>
-        <div class="d">порог, с которого строителю нужно членство</div>
-        <span class="law law--dark">{LAW.build}</span>
-      </div>
-      <div class="stat">
-        <div class="v">≤ 2 <em>мес.</em></div>
-        <div class="d">срок рассмотрения по закону; с готовыми документами — дни</div>
-        <span class="law law--dark">{LAW.term}</span>
-      </div>
-    </div>
-  </div>
+  {/* Главное предложение сайта. На компьютере занимает правую колонку,
+      на телефоне встаёт сразу под картой — то есть в обоих случаях
+      попадает на первый экран, а не уезжает под сгиб. */}
+  <aside class="hero-offer">
+    <span class="ho-tag"><Icon name="star" size={15} /> Только через меня</span>
+    <p class="ho-title">Вступление <b>без стартовых расходов</b></p>
+    <ul class="ho-list">
+      {OFFER.map((p) => (
+        <li><Icon name="check" size={15} /> {p.short}</li>
+      ))}
+    </ul>
+    <a class="ho-go" href={href('/#predlozhenie')}>
+      Все пять условий <Icon name="arrow" size={15} />
+    </a>
+  </aside>
+
+  <MapPlate name="hero" />
+
+  <ul class="stats">
+    {stats.map((s) => (
+      <li class="stat">
+        {/* Пробел ставится явно: Astro съедает пробел перед строчным тегом,
+            и число слипалось с единицей — «10млн ₽». Отступом в стилях это
+            не лечится: при копировании текста и в программе чтения с экрана
+            пробела всё равно бы не было. */}
+        <span class="v">{s.unit ? <>{s.v}{' '}<em>{s.unit}</em></> : s.v}</span>
+        <span class="d">{s.d}</span>
+        {s.law && <span class="law law--dark">{s.law}</span>}
+      </li>
+    ))}
+  </ul>
 </section>
 
 <style>
+  /* Первый экран — одна сетка на все ярусы, без вложенных обёрток.
+     Так сделано ради телефона: карта должна встать между подзаголовком
+     и карточкой предложения, а лежи они в разных блоках, переставить их
+     местами было бы нечем. В общей сетке порядок задаётся раскладкой,
+     а разметка остаётся в том порядке, в каком её читают поисковики
+     и программы чтения с экрана.
+
+     Крайние колонки сетки — поля страницы. Карта занимает все колонки
+     разом и потому идёт во всю ширину экрана, а текст держится в тех же
+     1120 px, что и на остальных страницах. */
   .hero {
-    position: relative;
     background: var(--navy);
     color: var(--on-navy);
-    overflow: hidden;
-    padding: 64px 0 0;
-    isolation: isolate;
-  }
-
-  /* Затемнение поверх видео — ровное, во всю ширину кадра.
-     Тёмного пятна под текстом здесь больше нет: оно гасило левую половину,
-     и ролик было видно только справа.
-
-     Раз пелена ровная и лёгкая, читаемость держит не она, а собственная
-     тень у каждой буквы (правило .hero-in ниже). Тень идёт по контуру
-     глифа: она затемняет ровно то место, куда попадает буква, и не трогает
-     остальной кадр. Плотнее только у нижнего края — там строка с цифрами
-     лежит на самой светлой части ролика.
-
-     Плотность подобрана замером: scripts/test-video-contrast.mjs снимает
-     настоящие пиксели на пяти секундах ролика и берёт худший кадр. */
-  .veil {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      180deg,
-      rgba(9, 24, 43, 0.68) 0%,
-      rgba(9, 24, 43, 0.64) 46%,
-      rgba(11, 29, 51, 0.9) 100%
-    );
-    pointer-events: none;
-  }
-
-  /* Тень под текстом первого экрана. Не украшение: она заменяет собой
-     тёмную подложку и позволяет показывать ролик во всю ширину.
-     Два слоя — широкий мягкий ореол и узкий плотный контур: первый
-     отделяет текст от светлого неба, второй держит края букв. */
-  .hero-in .geo,
-  .hero-in .page-title,
-  .hero-in .tagline,
-  .hero-in .promises,
-  .hero-in .note,
-  .hero .stats {
-    text-shadow:
-      0 1px 2px rgba(5, 15, 28, 0.9),
-      0 2px 26px rgba(5, 15, 28, 0.85);
-  }
-
-  /* Чисто белый, а не обычный светло-синий #EAF1FA.
-     Разницы на глаз нет — а по стандарту есть: #EAF1FA требует фона
-     на 15% темнее, и на телефоне эти две строки не дотягивали до нормы
-     (4.22:1 и 4.35:1 при требуемых 4.5). Поднять белизну текста дешевле,
-     чем гасить ролик: заказчик просил его поярче, а не потемнее.
-     Замер — scripts/test-video-contrast.mjs. */
-  .hero-in .geo,
-  .hero-in .tagline {
-    color: #fff;
-  }
-
-  /* На телефоне ролик идёт полосой в верхней части экрана и внизу уходит
-     в сплошной синий (см. BgVideo.astro). Светлого кадра под текстом
-     остаётся меньше, поэтому пелена здесь чуть легче — иначе верх первого
-     экрана становится почти чёрным и ролика опять не видно.
-     Числа подобраны замером: scripts/test-video-contrast.mjs. */
-  @media (max-width: 767px) {
-    .veil {
-      background: linear-gradient(
-        180deg,
-        rgba(9, 24, 43, 0.62) 0%,
-        rgba(9, 24, 43, 0.58) 52%,
-        rgba(11, 29, 51, 0.88) 100%
-      );
-    }
-  }
-
-  .hero-in, .hero .wrap { position: relative; z-index: 1; }
-  .hero-in {
-    padding-bottom: 44px;
+    padding: 34px 0 0;
     display: grid;
-    gap: 30px;
-    align-items: start;
+    grid-template-columns:
+      [full-start] minmax(20px, 1fr)
+      [main-start] minmax(0, 1120px) [main-end]
+      minmax(20px, 1fr) [full-end];
+    grid-template-areas:
+      '. geo   .'
+      '. title .'
+      '. tag   .'
+      'map map map'
+      '. offer .'
+      '. cta   .'
+      '. note  .'
+      '. stats .';
   }
 
-  /* Телефон. Карточка с предложением должна попасть на первый экран,
-     а под кнопками она оказывалась ниже сгиба — то есть большинство
-     посетителей её не видело вовсе.
-     Приём: .hero-text перестаёт быть блоком (display: contents), его
-     содержимое становится прямым содержимым сетки первого экрана, и
-     карточку можно поставить сразу после подзаголовка. Порядок в разметке
-     при этом не меняется: заголовок страницы остаётся первым по смыслу
-     и для поисковиков, переставлено только отображение. */
-  @media (max-width: 1023px) {
-    .hero-in { gap: 22px; }
-    .hero-text { display: contents; }
-    .hero-in .geo { order: 1; }
-    .hero-in .page-title { order: 2; }
-    .hero-in .tagline { order: 3; }
-    .hero-in .hero-offer { order: 4; }
-    .hero-in .promises { order: 5; }
-    .hero-in .cta { order: 6; }
-    .hero-in .note { order: 7; }
-    /* Отступы, которые раньше давал внутренний блок. */
-    .hero-in .tagline { margin-bottom: 2px; }
-    .hero-in .promises { margin-top: 0; }
-  }
-  /* На широком экране справа пустует видео — туда и уходит предложение.
-     Ниже 1024 px карточка встаёт под кнопками: на узком экране две колонки
-     сжали бы заголовок до нечитаемого. */
+  .geo { grid-area: geo; }
+  .page-title { grid-area: title; }
+  .tagline { grid-area: tag; }
+  .hero-offer { grid-area: offer; }
+  .cta { grid-area: cta; }
+  .note { grid-area: note; }
+  .hero :global(.plate) { grid-area: map; }
+  .stats { grid-area: stats; }
+
+  /* Компьютер. Текст слева, предложение справа отдельной колонкой,
+     карта под ними во всю ширину, числа — подписью под картой. */
   @media (min-width: 1024px) {
-    .hero-in { grid-template-columns: minmax(0, 1fr) 340px; gap: 52px; }
+    .hero {
+      padding-top: 46px;
+      grid-template-columns:
+        [full-start] minmax(20px, 1fr)
+        [main-start] minmax(0, 728px) 392px [main-end]
+        minmax(20px, 1fr) [full-end];
+      grid-template-areas:
+        '. geo   offer .'
+        '. title offer .'
+        '. tag   offer .'
+        '. cta   offer .'
+        '. note  offer .'
+        'map map map map'
+        '. stats stats .';
+    }
+    /* Просвет между колонками отдан карточке: он должен уйти вместе с ней,
+       когда на узком экране колонок не станет. */
+    .hero-offer { margin-left: 52px; align-self: start; }
   }
 
-  /* Главное предложение сайта, и его должно быть видно первым. Поэтому
-     светлое кольцо по краю: белая карточка на светлом кадре видео местами
-     сливалась с ним, а кольцо отделяет её при любом кадре. */
+  /* ── Предложение ── */
+
   .hero-offer {
+    margin: 28px 0 0;
     background: #fff;
     color: var(--ink);
     border-radius: var(--r-l);
@@ -209,10 +161,12 @@ const PROMISES = [
     display: grid;
     gap: 12px;
     align-content: start;
+    /* Светлое кольцо по краю: без него белая карточка на тёмно-синем
+       выглядит вырезанной ножницами. */
     box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.55),
-      0 0 0 7px rgba(37, 99, 235, 0.18),
-      0 28px 60px -22px rgba(4, 16, 34, 0.8);
+      0 0 0 1px rgba(255, 255, 255, 0.5),
+      0 0 0 7px color-mix(in srgb, var(--acc) 20%, transparent),
+      0 28px 60px -22px rgba(2, 8, 18, 0.8);
   }
   .ho-tag {
     justify-self: start;
@@ -221,15 +175,15 @@ const PROMISES = [
     gap: 7px;
     background: var(--acc-btn);
     color: #fff;
+    font-family: var(--font-head);
     font-size: 12.5px;
     font-weight: 700;
     letter-spacing: 0.02em;
     padding: 6px 12px;
     border-radius: 999px;
   }
-  .ho-title { font-size: 25px; line-height: 1.18; font-weight: 800; margin: 0; }
+  .ho-title { font-family: var(--font-head); font-size: 25px; line-height: 1.18; font-weight: 800; margin: 0; }
   .ho-title b { color: var(--acc-deep); }
-  .ho-text { font-size: 14.5px; color: var(--muted); line-height: 1.55; margin: 0; }
   .ho-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
   .ho-list li {
     display: grid;
@@ -246,6 +200,7 @@ const PROMISES = [
     gap: 7px;
     justify-self: start;
     color: var(--acc-deep);
+    font-family: var(--font-head);
     font-weight: 700;
     font-size: 14.5px;
     text-decoration: none;
@@ -253,20 +208,20 @@ const PROMISES = [
   }
   .ho-go:hover { text-decoration: underline; }
 
+  /* ── Слово ── */
+
   .geo {
     display: inline-flex;
     align-items: center;
     gap: 9px;
-    /* Не моноширинный: это обычная фраза, а не номер и не статья закона.
-       Моноширинный с разрядкой читался здесь как строка из терминала. */
     font-family: var(--font-body);
     font-size: 14px;
-    letter-spacing: 0.01em;
     color: var(--on-navy);
     border: 1px solid var(--navy-line);
     padding: 5px 12px;
     border-radius: 999px;
-    margin-bottom: 24px;
+    justify-self: start;
+    margin-bottom: 22px;
   }
   .geo i { width: 6px; height: 6px; border-radius: 50%; background: var(--acc-bright); flex: none; }
 
@@ -279,6 +234,7 @@ const PROMISES = [
 
   .tagline {
     color: var(--on-navy);
+    font-family: var(--font-head);
     font-size: clamp(16px, 2.2vw, 21px);
     letter-spacing: 0.14em;
     text-transform: uppercase;
@@ -286,44 +242,28 @@ const PROMISES = [
     font-weight: 500;
   }
 
-  .promises {
-    list-style: none;
-    margin: 30px 0 0;
-    padding: 0;
-    display: grid;
-    gap: 14px;
-    justify-items: start;
-  }
-  .promises li {
-    display: grid;
-    grid-template-columns: 44px 1fr;
-    gap: 14px;
-    align-items: center;
-    font-size: clamp(16px, 2vw, 19px);
-    font-weight: 600;
-    color: #fff;
-  }
-  .pic {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    background: var(--acc-btn);
-    color: #fff;
-    display: grid;
-    place-items: center;
-    flex: none;
-  }
-
-  .cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 34px; }
+  .cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 26px; }
   .btn--lg { padding: 16px 28px; font-size: 16px; min-height: 54px; }
-  .note { font-size: 13px; color: var(--on-navy-muted); margin-top: 14px; }
+  .note { font-size: 13px; color: var(--on-navy-muted); margin: 14px 0 26px; }
+
+  /* ── Числа под картой ──
+     Тонкие разделители и подписи в разрядку: полоса должна читаться как
+     легенда под схемой, а не как ещё одна секция с карточками. */
 
   .stats {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 6px;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    border-top: 1px solid var(--navy-line);
   }
-  .stat { padding: 22px 20px 26px; border-left: 1px solid var(--navy-line); display: grid; gap: 4px; align-content: start; }
+  .stat {
+    padding: 22px 20px 28px;
+    border-left: 1px solid var(--navy-line);
+    display: grid;
+    gap: 5px;
+    align-content: start;
+  }
   .stat:first-child { border-left: 0; padding-left: 0; }
   .v {
     font-family: var(--font-head);
@@ -339,11 +279,10 @@ const PROMISES = [
 
   @media (max-width: 900px) {
     .stats { grid-template-columns: repeat(2, 1fr); }
-    .stat { border-left: 0; padding-left: 0; padding-right: 14px; }
+    .stat { border-left: 0; padding: 20px 14px 20px 0; }
   }
 
   @media (max-width: 560px) {
-    .hero { padding-top: 40px; }
     .cta .btn { width: 100%; }
     .v { font-size: 23px; }
   }

@@ -26,11 +26,14 @@ const groups = (['sro', 'people', 'safety', 'marketing'] as Service['group'][])
   .filter((x) => x.items.length > 0)
 ---
 
-<section class="section" id="uslugi" data-anchor>
+<section class:list={['section', compact && 'section--split']} id="uslugi" data-anchor>
   <div class="wrap">
     <div class="s-head rv">
       <span class="eyebrow">Направления</span>
-      <h2 set:html={title.replace(/(\S+)$/, "<em>$1</em>")} />
+      {/* Акцентом выделяется последнее слово заголовка — но только если
+          слов больше одного: в заголовке из одного слова выделять нечего,
+          и он целиком становился синим. */}
+      <h2 set:html={/\s/.test(title.trim()) ? title.replace(/(\S+)$/, '<em>$1</em>') : title} />
       <p>
         У каждой услуги — отдельная страница с нормами, сроками и составом документов.
         Ничего не выдумываю: если по вашей задаче членство не требуется, я скажу об этом
@@ -39,7 +42,7 @@ const groups = (['sro', 'people', 'safety', 'marketing'] as Service['group'][])
     </div>
 
     {compact ? (
-      <>
+      <div class="sbody">
         <div class="sgroups rv">
           {groups.map((gr) => (
             <div class="sgroup">
@@ -60,7 +63,7 @@ const groups = (['sro', 'people', 'safety', 'marketing'] as Service['group'][])
         <a class="sall rv" href={href('/uslugi/')}>
           Все направления с нормами и сроками <Icon name="arrow" size={16} />
         </a>
-      </>
+      </div>
     ) : (
       <div class="grid-3">
         {list.map((s) => (
@@ -78,9 +81,13 @@ const groups = (['sro', 'people', 'safety', 'marketing'] as Service['group'][])
 
 <style>
   /* ── Компактный вид: оглавление, а не десять абзацев ── */
-  .sgroups { display: grid; gap: 22px; }
+  /* Две колонки, а не четыре. Раньше их было четыре, но с тех пор
+     заголовок раздела ушёл в левую рейку, и списку досталось не всё окно,
+     а около 770 px. В четырёх колонках названия вроде «СРО проектировщиков»
+     и «Юридические услуги» рвались на две строки, а группы переставали
+     выравниваться между собой. */
+  .sgroups { display: grid; gap: 24px 44px; }
   @media (min-width: 700px) { .sgroups { grid-template-columns: 1fr 1fr; } }
-  @media (min-width: 1060px) { .sgroups { grid-template-columns: repeat(4, 1fr); gap: 26px; } }
 
   .sgroup h3 {
     font-family: var(--font-mono);

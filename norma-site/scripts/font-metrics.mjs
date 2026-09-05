@@ -27,7 +27,10 @@ const result = await page.evaluate(async () => {
     }
   }
 
-  const pairs = [['Inter Variable', 'Arial']]
+  const pairs = [
+    ['Onest Variable', 'Arial'],
+    ['Inter Variable', 'Arial'],
+  ]
 
   return pairs.map(([real, fallback]) => {
     const r = measure(`"${real}"`)
