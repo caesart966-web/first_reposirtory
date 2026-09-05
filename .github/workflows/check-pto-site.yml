@@ -35,7 +35,7 @@ jobs:
 
       - name: Проверка шрифтов (все ли символы есть в наборе)
         run: |
-          pip install fonttools
+          pip install 'fonttools[woff]' brotli
           python3 tests/check_fonts.py
 
       - name: Поставить браузер и библиотеку доступности

@@ -6,7 +6,8 @@
 браузер молча подставит системный шрифт. Буква будет другой формы, и на
 глаз это замечают не сразу. Проверка ловит такое сразу.
 
-Запуск (нужен fonttools: pip install fonttools):
+Запуск (нужны fonttools и brotli:
+    pip install 'fonttools[woff]' brotli):
     python3 build.py && python3 tests/check_fonts.py
 """
 import pathlib
@@ -28,9 +29,12 @@ SKIP = ("assets/promo/",)
 IGNORE = set(" \t\n\r ﻿&;#")
 
 try:
+    # brotli нужен отдельно: без него fontTools не умеет открывать woff2
+    import brotli  # noqa: F401
     from fontTools.ttLib import TTFont
 except ImportError:
-    print("Проверка пропущена: нет fonttools (pip install fonttools)")
+    print("Проверка пропущена: нет библиотек "
+          "(pip install 'fonttools[woff]' brotli)")
     sys.exit(0)
 
 
