@@ -101,7 +101,7 @@ const howToSchema = {
   <SpecialOffer />
 
   <!-- Кому нужна / кому нет -->
-  <section class="section" id="komu" data-anchor>
+  <section class="section section--split" id="komu" data-anchor>
     <div class="wrap">
       <div class="s-head rv">
         <span class="eyebrow">Без умолчаний</span>
@@ -111,10 +111,12 @@ const howToSchema = {
           на нём не заработать, но именно он экономит компаниям сотни тысяч рублей.
         </p>
       </div>
-      <div class="rv"><ComparisonTable compact /></div>
-      <p class="more rv">
-        <a href={href('/komu-nuzhna-sro/')}>Полный разбор всех случаев со ссылками на нормы →</a>
-      </p>
+      <div class="sbody">
+        <div class="rv"><ComparisonTable compact /></div>
+        <p class="more rv">
+          <a href={href('/komu-nuzhna-sro/')}>Полный разбор всех случаев со ссылками на нормы →</a>
+        </p>
+      </div>
     </div>
   </section>
 
@@ -183,7 +185,7 @@ const howToSchema = {
   </section>
 
   <!-- Как проходит вступление -->
-  <section class="section" id="process" data-anchor>
+  <section class="section section--split" id="process" data-anchor>
     <div class="wrap">
       <div class="s-head rv">
         <span class="eyebrow">Порядок работы</span>
@@ -191,7 +193,7 @@ const howToSchema = {
         <p>Сроки реальные, а не рекламные: там, где закон даёт два месяца, я так и пишу.</p>
       </div>
 
-      <ol class="steps">
+      <ol class="steps sbody">
         {steps.map((s, i) => (
           <li class="rv">
             <span class="sn">{i + 1}</span>
@@ -213,16 +215,20 @@ const howToSchema = {
 
   <WhyMe />
 
-  <ServicesGrid compact />
+  <ServicesGrid compact title="Что я делаю" />
 
   <!-- FAQ -->
-  <section class="section" id="faq" data-anchor>
+  <section class="section section--split" id="faq" data-anchor>
     <div class="wrap">
       <div class="s-head rv">
         <span class="eyebrow">Вопросы</span>
         <h2>Частые <em>вопросы</em></h2>
+        <p>
+          Семь вопросов, которые задают чаще всего. На четыре из них
+          половина сайтов по теме до сих пор отвечает неверно.
+        </p>
       </div>
-      <div class="faq rv">
+      <div class="faq rv sbody">
         {faq.map((f, i) => (
           <details name="faq" open={i === 0}>
             <summary>{f.q}</summary>
@@ -258,7 +264,7 @@ const howToSchema = {
             )}
           </div>
           <p class="side-note">
-            {SITE.geo}. Работаю дистанционно: личная встреча для вступления в СРО не нужна,
+            {SITE.geo}. Личная встреча для вступления в СРО не нужна:
             документы подписываются электронно или пересылаются.
           </p>
           <div class="checked">
