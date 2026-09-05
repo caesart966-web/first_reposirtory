@@ -21,8 +21,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="assets/logo.png" type="image/png">
 <link rel="apple-touch-icon" href="assets/logo.png">
-<link rel="preload" href="assets/style.css?v=449302cd" as="style">
-<link rel="stylesheet" href="assets/style.css?v=449302cd">
+<link rel="preload" href="assets/style.css?v=cd9e633b" as="style">
+<link rel="stylesheet" href="assets/style.css?v=cd9e633b">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Store", "name": "Строй-Герой", "slogan": "Наши материалы — ваша уверенность", "url": "https://stroigeroi.ru/", "telephone": "+7-963-830-09-99", "email": "stroigeroi41@mail.ru", "areaServed": "Камчатский край", "department": [{"@type": "Store", "name": "Строй-Герой — ул. Чубарова, 16, корп. 40", "telephone": "+7-963-830-09-99", "address": {"@type": "PostalAddress", "streetAddress": "ул. Чубарова, 16, корп. 40", "addressLocality": "Петропавловск-Камчатский", "addressRegion": "Камчатский край", "addressCountry": "RU"}}, {"@type": "Store", "name": "Строй-Герой — просп. 50 лет Октября, 17А", "telephone": "+7-963-830-09-99", "address": {"@type": "PostalAddress", "streetAddress": "просп. 50 лет Октября, 17А", "addressLocality": "Петропавловск-Камчатский", "addressRegion": "Камчатский край", "addressCountry": "RU"}}, {"@type": "Store", "name": "Строй-Герой — Магистральная ул., 2/2", "telephone": "+7-963-830-09-99", "address": {"@type": "PostalAddress", "streetAddress": "Магистральная ул., 2/2", "addressLocality": "Елизово", "addressRegion": "Камчатский край", "addressCountry": "RU"}}]}</script>
 <script>
 /* Тема применяется до отрисовки, иначе при тёмной теме страница мигает белым */
@@ -144,7 +144,33 @@
       <p>Отложенные товары. Список хранится в этом браузере и не пропадёт при переходе между страницами.</p>
     </div>
 
-    <div class="empty-state">
+    <div class="stack-head">
+      <p class="note" data-fav-summary></p>
+      <button class="btn btn--outline btn--sm" type="button" data-clear="fav" hidden>Очистить список</button>
+    </div>
+
+    <div class="product-grid" data-fav-list hidden></div>
+
+    <template data-card-template>
+<article class="product-card">
+  <div class="product-card__media">
+    
+    <span class="ph--photo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.4"/><path d="m5 17.5 4.5-4.5 3 3L16 12l3 3"/></svg><br>фото из прайса</span>
+    </div>
+  <div class="product-card__body">
+    <p class="product-card__art"><span class="ph ph--inline">артикул</span></p>
+    <a class="product-card__title" href="product.html">Название товара из прайса заказчика</a>
+    <p class="product-card__meta"><span class="ph ph--inline">фасовка</span> <span class="ph ph--inline">остаток</span></p>
+  </div>
+  <div class="product-card__bottom">
+    <span class="price ph ph--inline">цена, ₽</span>
+    <button class="btn btn--action product-card__buy" type="button" data-add="cart" aria-label="В корзину"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9.5" cy="19.5" r="1.6"/><circle cx="17" cy="19.5" r="1.6"/><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L20 8H6"/></svg><span>В корзину</span></button>
+  </div>
+  <button class="card-remove" type="button" data-remove="fav">Убрать из избранного</button>
+</article>
+</template>
+
+<div class="empty-state" data-fav-empty>
       <span class="empty-state__icon">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20s-7-4.35-7-9.5A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 7 3.5c0 5.15-7 9.5-7 9.5Z"/></svg>
       </span>
@@ -203,7 +229,7 @@
           <ul>
             <li><a href="policy.html">Политика конфиденциальности</a></li>
             <li><a href="policy.html">Согласие на обработку данных</a></li>
-            <li><a href="#" data-demo="пользовательское соглашение">Пользовательское соглашение</a></li>
+            <li><a href="terms.html">Пользовательское соглашение</a></li>
           </ul>
           <p class="footer-group__hint ph ph--inline">тексты документов — от заказчика</p>
         </div>
@@ -236,7 +262,7 @@
 
 <button class="to-top" type="button" data-to-top aria-label="Наверх"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 14 6-6 6 6"/></svg></button>
 
-<div class="cookie" data-cookie hidden>
+<div class="cookie" data-cookie hidden role="region" aria-label="Использование cookie">
   <p>Сайт использует cookie, чтобы запоминать город, тему и содержимое корзины.
   Подробности — в <a href="policy.html">политике</a>.</p>
   <button class="btn btn--primary" type="button" data-cookie-ok>Хорошо</button>
@@ -299,7 +325,7 @@
 </dialog>
 
 
-<script src="assets/app.js?v=19748abe"></script>
+<script src="assets/app.js?v=f3fb9cc6"></script>
 <script type="speculationrules">
 {
   "prefetch": [{"source": "document", "where": {"selector_matches": "a[href$='.html']"}, "eagerness": "moderate"}],

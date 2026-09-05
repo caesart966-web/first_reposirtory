@@ -21,8 +21,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="assets/logo.png" type="image/png">
 <link rel="apple-touch-icon" href="assets/logo.png">
-<link rel="preload" href="assets/style.css?v=449302cd" as="style">
-<link rel="stylesheet" href="assets/style.css?v=449302cd">
+<link rel="preload" href="assets/style.css?v=cd9e633b" as="style">
+<link rel="stylesheet" href="assets/style.css?v=cd9e633b">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Store", "name": "Строй-Герой", "slogan": "Наши материалы — ваша уверенность", "url": "https://stroigeroi.ru/", "telephone": "+7-963-830-09-99", "email": "stroigeroi41@mail.ru", "areaServed": "Камчатский край", "department": [{"@type": "Store", "name": "Строй-Герой — ул. Чубарова, 16, корп. 40", "telephone": "+7-963-830-09-99", "address": {"@type": "PostalAddress", "streetAddress": "ул. Чубарова, 16, корп. 40", "addressLocality": "Петропавловск-Камчатский", "addressRegion": "Камчатский край", "addressCountry": "RU"}}, {"@type": "Store", "name": "Строй-Герой — просп. 50 лет Октября, 17А", "telephone": "+7-963-830-09-99", "address": {"@type": "PostalAddress", "streetAddress": "просп. 50 лет Октября, 17А", "addressLocality": "Петропавловск-Камчатский", "addressRegion": "Камчатский край", "addressCountry": "RU"}}, {"@type": "Store", "name": "Строй-Герой — Магистральная ул., 2/2", "telephone": "+7-963-830-09-99", "address": {"@type": "PostalAddress", "streetAddress": "Магистральная ул., 2/2", "addressLocality": "Елизово", "addressRegion": "Камчатский край", "addressCountry": "RU"}}]}</script>
 <script>
 /* Тема применяется до отрисовки, иначе при тёмной теме страница мигает белым */
@@ -149,29 +149,38 @@
       <p><strong>Так выглядит сравнение.</strong> Строки таблицы — характеристики из прайса: их состав задаёт заказчик.</p>
     </div>
 
-    <div class="table-scroll">
+    <div class="stack-head">
+      <p class="note" data-compare-summary></p>
+      <button class="btn btn--outline btn--sm" type="button" data-clear="compare" hidden>Очистить сравнение</button>
+    </div>
+
+    <div class="table-scroll" data-compare-box hidden>
       <table class="compare-table">
         <caption class="visually-hidden">Сравнение выбранных товаров</caption>
-        <thead>
-          <tr>
-            <th scope="col">Характеристика</th>
-            <th scope="col"><span class="ph ph--inline">товар 1</span></th>
-            <th scope="col"><span class="ph ph--inline">товар 2</span></th>
-            <th scope="col"><span class="ph ph--inline">товар 3</span></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><th scope="row">Цена</th><td><span class="ph ph--inline">цена, ₽</span></td><td><span class="ph ph--inline">цена, ₽</span></td><td><span class="ph ph--inline">цена, ₽</span></td></tr>
-          <tr><th scope="row">Артикул</th><td><span class="ph ph--inline">из прайса</span></td><td><span class="ph ph--inline">из прайса</span></td><td><span class="ph ph--inline">из прайса</span></td></tr>
-          <tr><th scope="row">Бренд</th><td><span class="ph ph--inline">из прайса</span></td><td><span class="ph ph--inline">из прайса</span></td><td><span class="ph ph--inline">из прайса</span></td></tr>
-          <tr><th scope="row">Фасовка</th><td><span class="ph ph--inline">из прайса</span></td><td><span class="ph ph--inline">из прайса</span></td><td><span class="ph ph--inline">из прайса</span></td></tr>
-          <tr><th scope="row">Остаток</th><td><span class="ph ph--inline">из учётной системы</span></td><td><span class="ph ph--inline">из учётной системы</span></td><td><span class="ph ph--inline">из учётной системы</span></td></tr>
+        <thead><tr data-compare-head><th scope="col">Характеристика</th></tr></thead>
+        <tbody data-compare-body>
+          <tr data-row="Цена"><th scope="row">Цена</th></tr>
+          <tr data-row="Артикул"><th scope="row">Артикул</th></tr>
+          <tr data-row="Бренд"><th scope="row">Бренд</th></tr>
+          <tr data-row="Фасовка"><th scope="row">Фасовка</th></tr>
+          <tr data-row="Остаток"><th scope="row">Остаток</th></tr>
         </tbody>
       </table>
     </div>
 
+    <div class="empty-state" data-compare-empty>
+      <span class="empty-state__icon">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 20V9M12 20V4M19 20v-7"/></svg>
+      </span>
+      <h2 class="block-title">Сравнивать пока нечего</h2>
+      <p class="note-measure">Нажмите на значок сравнения в карточке товара — он появится здесь столбцом. Сравнивать можно до четырёх товаров.</p>
+      <div class="row-actions">
+        <a class="btn btn--action" href="catalog.html">Перейти в каталог</a>
+      </div>
+    </div>
+
     <div class="row-actions">
-      <a class="btn btn--outline" href="catalog.html">Добавить ещё товар</a>
+      <a class="btn btn--outline" href="catalog.html" data-compare-more hidden>Добавить ещё товар</a>
     </div>
 
   </div>
@@ -222,7 +231,7 @@
           <ul>
             <li><a href="policy.html">Политика конфиденциальности</a></li>
             <li><a href="policy.html">Согласие на обработку данных</a></li>
-            <li><a href="#" data-demo="пользовательское соглашение">Пользовательское соглашение</a></li>
+            <li><a href="terms.html">Пользовательское соглашение</a></li>
           </ul>
           <p class="footer-group__hint ph ph--inline">тексты документов — от заказчика</p>
         </div>
@@ -255,7 +264,7 @@
 
 <button class="to-top" type="button" data-to-top aria-label="Наверх"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 14 6-6 6 6"/></svg></button>
 
-<div class="cookie" data-cookie hidden>
+<div class="cookie" data-cookie hidden role="region" aria-label="Использование cookie">
   <p>Сайт использует cookie, чтобы запоминать город, тему и содержимое корзины.
   Подробности — в <a href="policy.html">политике</a>.</p>
   <button class="btn btn--primary" type="button" data-cookie-ok>Хорошо</button>
@@ -318,7 +327,7 @@
 </dialog>
 
 
-<script src="assets/app.js?v=19748abe"></script>
+<script src="assets/app.js?v=f3fb9cc6"></script>
 <script type="speculationrules">
 {
   "prefetch": [{"source": "document", "where": {"selector_matches": "a[href$='.html']"}, "eagerness": "moderate"}],

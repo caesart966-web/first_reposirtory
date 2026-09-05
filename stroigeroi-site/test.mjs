@@ -15,12 +15,12 @@
 
 import { chromium } from 'playwright';
 import path from 'node:path';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const PAGES = ['index', 'catalog', 'product', 'cart', 'calculator', 'delivery', 'contacts',
-  'checkout', 'order-done', 'favourites', 'compare', 'login', 'policy', '404'];
+  'checkout', 'order-done', 'favourites', 'compare', 'login', 'policy', 'terms', '404'];
 const WIDTHS = [360, 390, 768, 1024, 1280, 1440, 1920];
 const THEMES = ['light', 'dark'];
 
@@ -92,6 +92,22 @@ const CONTRAST_PROBE = `(() => {
   }
   return out;
 })()`;
+
+/* Готовый набор проверок доступности. Он ловит больше, чем написанное
+   вручную: ориентиры страницы, ссылки, отличимые одним цветом, подписи
+   полей. Молча пропускать его нельзя — тогда CI зеленел бы, ничего
+   не проверив, поэтому отсутствие файла это ошибка, а не повод пропустить. */
+function loadAxe() {
+  for (const c of [
+    path.join(DIR, 'node_modules/axe-core/axe.min.js'),
+    path.join(DIR, '..', 'node_modules/axe-core/axe.min.js'),
+  ]) {
+    if (existsSync(c)) return readFileSync(c, 'utf8');
+  }
+  console.error('Не найден axe-core. Поставьте его: npm install axe-core --no-save');
+  process.exit(2);
+}
+const AXE_SOURCE = loadAxe();
 
 const browser = await chromium.launch({ executablePath: EXECUTABLE });
 
@@ -217,6 +233,17 @@ for (const name of PAGES) {
       if (ph && ph.ratio < 1.6) {
         fail(`${name} (${theme}): ${kind} пунктир пустых мест сливается с фоном — контраст ${ph.ratio}, ${ph.side.toLowerCase()}, ${ph.color}`);
       }
+    }
+
+    /* Готовые проверки доступности на этой же странице и в этой же теме */
+    await page.addScriptTag({ content: AXE_SOURCE });
+    const axeReport = await page.evaluate(async () =>
+      await window.axe.run(document, {
+        runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice'] },
+      }));
+    for (const v of axeReport.violations) {
+      const sample = v.nodes[0] ? v.nodes[0].html.slice(0, 70) : '';
+      fail(`${name} (${theme}): axe ${v.id} [${v.impact}] — ${v.help}${sample ? ' — ' + sample : ''}`);
     }
 
     await ctx.close();

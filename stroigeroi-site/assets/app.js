@@ -397,6 +397,114 @@
   });
 
   /* ======================================================================
+     Избранное и сравнение: показываем то, что человек отложил
+
+     Товары в макете безымянные — прайса нет, все карточки одинаковые.
+     Поэтому запоминается не «какой именно товар», а сколько их отложено,
+     и страница разворачивает столько же карточек из шаблона. Для показа
+     сценария этого достаточно: человек нажал три раза — видит три
+     карточки и может убрать любую. С настоящим прайсом сюда встанут
+     номера товаров, а разметка и поведение останутся теми же.
+     ====================================================================== */
+  var COMPARE_MAX = 4;
+
+  function renderFavourites() {
+    var list = $('[data-fav-list]');
+    if (!list) return;
+    var empty = $('[data-fav-empty]');
+    var summary = $('[data-fav-summary]');
+    var clear = $('[data-clear="fav"]');
+    var tpl = $('[data-card-template]');
+    var count = Math.max(0, counters.fav);
+
+    list.innerHTML = '';
+    for (var i = 0; i < count; i++) {
+      list.appendChild(tpl.content.cloneNode(true));
+    }
+    list.hidden = count === 0;
+    if (empty) empty.hidden = count > 0;
+    if (clear) clear.hidden = count === 0;
+    if (summary) {
+      summary.textContent = count
+        ? 'Отложено: ' + count + ' ' + plural(count, 'товар', 'товара', 'товаров')
+        : '';
+    }
+  }
+
+  function renderCompare() {
+    var head = $('[data-compare-head]');
+    if (!head) return;
+    var box = $('[data-compare-box]');
+    var empty = $('[data-compare-empty]');
+    var summary = $('[data-compare-summary]');
+    var clear = $('[data-clear="compare"]');
+    var more = $('[data-compare-more]');
+    var count = Math.min(COMPARE_MAX, Math.max(0, counters.compare));
+
+    /* Убираем прежние столбцы, оставляя первый — с названиями строк */
+    while (head.children.length > 1) head.removeChild(head.lastChild);
+    $$('[data-compare-body] tr').forEach(function (row) {
+      while (row.children.length > 1) row.removeChild(row.lastChild);
+    });
+
+    for (var i = 1; i <= count; i++) {
+      var th = document.createElement('th');
+      th.setAttribute('scope', 'col');
+      th.innerHTML = '<span class="ph ph--inline">товар ' + i + '</span>';
+      head.appendChild(th);
+
+      $$('[data-compare-body] tr').forEach(function (row) {
+        var td = document.createElement('td');
+        var label = row.getAttribute('data-row') === 'Остаток' ? 'из учётной системы'
+          : row.getAttribute('data-row') === 'Цена' ? 'цена, ₽' : 'из прайса';
+        td.innerHTML = '<span class="ph ph--inline">' + label + '</span>';
+        row.appendChild(td);
+      });
+    }
+
+    if (box) box.hidden = count === 0;
+    if (empty) empty.hidden = count > 0;
+    if (clear) clear.hidden = count === 0;
+    if (more) more.hidden = count === 0;
+    if (summary) {
+      summary.textContent = count
+        ? 'В сравнении: ' + count + ' из ' + COMPARE_MAX
+        : '';
+    }
+  }
+
+  function plural(n, one, few, many) {
+    var mod10 = n % 10, mod100 = n % 100;
+    if (mod10 === 1 && mod100 !== 11) return one;
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
+    return many;
+  }
+
+  renderFavourites();
+  renderCompare();
+
+  /* Убрать одну карточку и очистить список целиком */
+  document.addEventListener('click', function (e) {
+    var remove = e.target.closest ? e.target.closest('[data-remove]') : null;
+    if (remove) {
+      bump(remove.getAttribute('data-remove'), -1);
+      renderFavourites();
+      toast('Убрано из избранного');
+      return;
+    }
+    var clear = e.target.closest ? e.target.closest('[data-clear]') : null;
+    if (clear) {
+      var what = clear.getAttribute('data-clear');
+      /* Через bump, а не записью в хранилище напрямую: счётчик живёт
+         ещё и в памяти страницы, и прямая запись их рассинхронизирует. */
+      bump(what, -counters[what]);
+      renderFavourites();
+      renderCompare();
+      toast(what === 'fav' ? 'Избранное очищено' : 'Сравнение очищено');
+    }
+  });
+
+  /* ======================================================================
      Модальные окна на <dialog>: фокус и Esc обрабатывает сам браузер
      ====================================================================== */
   document.addEventListener('click', function (e) {
