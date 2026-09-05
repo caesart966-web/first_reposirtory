@@ -1,8 +1,7 @@
 import { Mail, Phone } from 'lucide-react'
 import { CONFIGURED, CONTACTS, LINKS } from '../content/contacts'
 import { REQUISITES } from '../content/facts'
-import { SECTIONS } from '../content/nav'
-import { anchor } from '../lib/site'
+import { SECTIONS, navHref } from '../content/nav'
 import { ScalesMark } from './illustrations'
 import { useLegalDocs } from './LegalDocs'
 import { MESSENGERS } from './messengers'
@@ -66,7 +65,7 @@ export function Footer() {
               <ul className="mt-4 space-y-2.5 text-sm text-neutral-600">
                 {SECTIONS.filter((section) => section.href !== '#contacts').map((section) => (
                   <li key={section.href}>
-                    <a href={anchor(section.href)} className="transition hover:text-accent-700">
+                    <a href={navHref(section)} className="transition hover:text-accent-700">
                       {section.label}
                     </a>
                   </li>
