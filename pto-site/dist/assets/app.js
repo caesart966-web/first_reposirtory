@@ -174,6 +174,23 @@ lightbox.hidden = false;
 document.body.classList.add('is-locked');
 lightbox.querySelector('[data-close]').focus();
 }
+function trapFocus(e) {
+if (e.key !== 'Tab' || !lightbox || lightbox.hidden) return;
+var able = lightbox.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+var list = Array.prototype.filter.call(able, function (el) {
+return !el.hasAttribute('hidden') && el.offsetParent !== null;
+});
+if (!list.length) return;
+var first = list[0];
+var last = list[list.length - 1];
+if (e.shiftKey && document.activeElement === first) {
+e.preventDefault(); last.focus();
+} else if (!e.shiftKey && document.activeElement === last) {
+e.preventDefault(); first.focus();
+} else if (!lightbox.contains(document.activeElement)) {
+e.preventDefault(); first.focus();
+}
+}
 function closeLightbox() {
 if (!lightbox || lightbox.hidden) return;
 lightbox.hidden = true;
@@ -192,6 +209,7 @@ if (!lightbox || lightbox.hidden) return;
 if (e.key === 'Escape') closeLightbox();
 if (e.key === 'ArrowLeft') show(current - 1);
 if (e.key === 'ArrowRight') show(current + 1);
+trapFocus(e);
 });
 var forms = document.querySelectorAll('form[data-form="lead"]');
 function digits(s) { return (s || '').replace(/\D/g, ''); }

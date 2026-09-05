@@ -33,6 +33,11 @@ jobs:
       - name: Быстрые проверки (ссылки, заголовки, разметка)
         run: python3 tests/check_static.py
 
+      - name: Проверка шрифтов (все ли символы есть в наборе)
+        run: |
+          pip install fonttools
+          python3 tests/check_fonts.py
+
       - name: Поставить браузер и библиотеку доступности
         run: |
           pip install playwright
