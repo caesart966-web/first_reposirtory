@@ -1,5 +1,5 @@
 ---
-import { SERVICES } from '../config/services'
+import { SERVICES, GROUP_LABELS, type Service } from '../config/services'
 import { href } from '../config/site'
 import Icon from './Icon.astro'
 
@@ -7,9 +7,23 @@ interface Props {
   /** Какую услугу не показывать (на её собственной странице) */
   exclude?: string
   title?: string
+  /**
+   * Компактный вид: только названия, сгруппированные по направлениям.
+   *
+   * Зачем он нужен. На главной десять карточек с описаниями занимали
+   * полторы тысячи пикселей — полтора экрана ноутбука на то, что по сути
+   * является оглавлением. Причём каждое описание слово в слово повторяется
+   * на странице «Услуги», куда карточка и ведёт. В компактном виде тот же
+   * набор читается одним взглядом и занимает вчетверо меньше.
+   */
+  compact?: boolean
 }
-const { exclude, title = 'Услуги' } = Astro.props
+const { exclude, title = 'Услуги', compact = false } = Astro.props
 const list = SERVICES.filter((s) => s.slug !== exclude)
+
+const groups = (['sro', 'people', 'safety', 'marketing'] as Service['group'][])
+  .map((g) => ({ g, label: GROUP_LABELS[g], items: list.filter((s) => s.group === g) }))
+  .filter((x) => x.items.length > 0)
 ---
 
 <section class="section" id="uslugi" data-anchor>
@@ -24,20 +38,96 @@ const list = SERVICES.filter((s) => s.slug !== exclude)
       </p>
     </div>
 
-    <div class="grid-3">
-      {list.map((s) => (
-        <a class="card srv rv" href={href(`/uslugi/${s.slug}/`)}>
-          <span class="ic"><Icon name={s.icon} size={20} /></span>
-          <h3>{s.title}</h3>
-          <p>{s.excerpt}</p>
-          <span class="go">Подробнее <Icon name="arrow" size={15} /></span>
+    {compact ? (
+      <>
+        <div class="sgroups rv">
+          {groups.map((gr) => (
+            <div class="sgroup">
+              <h3>{gr.label}</h3>
+              <ul>
+                {gr.items.map((s) => (
+                  <li>
+                    <a href={href(`/uslugi/${s.slug}/`)}>
+                      <Icon name={s.icon} size={17} />
+                      <span>{s.short}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <a class="sall rv" href={href('/uslugi/')}>
+          Все направления с нормами и сроками <Icon name="arrow" size={16} />
         </a>
-      ))}
-    </div>
+      </>
+    ) : (
+      <div class="grid-3">
+        {list.map((s) => (
+          <a class="card srv rv" href={href(`/uslugi/${s.slug}/`)}>
+            <span class="ic"><Icon name={s.icon} size={20} /></span>
+            <h3>{s.title}</h3>
+            <p>{s.excerpt}</p>
+            <span class="go">Подробнее <Icon name="arrow" size={15} /></span>
+          </a>
+        ))}
+      </div>
+    )}
   </div>
 </section>
 
 <style>
+  /* ── Компактный вид: оглавление, а не десять абзацев ── */
+  .sgroups { display: grid; gap: 22px; }
+  @media (min-width: 700px) { .sgroups { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 1060px) { .sgroups { grid-template-columns: repeat(4, 1fr); gap: 26px; } }
+
+  .sgroup h3 {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line);
+    /* Запас на случай, если название группы когда-нибудь перенесётся
+       на вторую строку: иначе списки в соседних колонках начнутся
+       на разной высоте. Считается вместе с отступом снизу. */
+    min-height: 3.4em;
+    display: flex;
+    align-items: flex-end;
+  }
+  .sgroup ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  .sgroup a {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+    padding: 8px 0;
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 15.5px;
+    font-weight: 600;
+  }
+  .sgroup a :global(svg) { color: var(--acc-btn); }
+  .sgroup a:hover { color: var(--acc-deep); }
+  .sgroup a:hover :global(svg) { color: var(--acc-deep); }
+
+  .sall {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 26px;
+    color: var(--acc-deep);
+    font-weight: 700;
+    font-size: 15.5px;
+    text-decoration: none;
+    padding: 6px 0;
+  }
+  .sall:hover { text-decoration: underline; }
+
+  /* ── Полный вид: карточки с описаниями (страницы услуг) ── */
   .srv { display: grid; gap: 10px; align-content: start; }
   .srv h3 { font-size: 18px; margin: 0; }
   .ic {
