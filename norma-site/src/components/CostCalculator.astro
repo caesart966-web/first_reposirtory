@@ -40,7 +40,7 @@ const TABLES = [
 const tableOf = (dir: string) => (dir === 'build' ? 'build' : 'design')
 ---
 
-<section class="section cost" id="kalkulyator" data-anchor>
+<section class="section section--dark cost" id="kalkulyator" data-anchor>
   <div class="wrap">
     <div class="s-head rv">
       <span class="eyebrow">Расчёт</span>
@@ -198,10 +198,11 @@ const tableOf = (dir: string) => (dir === 'build' ? 'build' : 'design')
 </section>
 
 <style>
-  .cost { background: var(--navy); color: var(--on-navy); }
-  .cost .eyebrow { color: var(--acc-bright); }
-  .cost h2 { color: #fff; }
-  .cost .s-head p { color: var(--on-navy-muted); }
+  /* Оформление тёмной секции берётся из общего класса section--dark,
+     а не переписывается здесь. Своя копия уже стоила ошибки: выделенное
+     слово в заголовке осталось тёмно-синим на тёмно-синем и давало
+     контраст 3.3:1 при норме 4.5 — правило, которое красит его в светлый
+     оттенок, перечисляет селекторы поимённо и эту секцию не знало. */
 
   /* На узком экране колонка одна, и порядок в ней меняется: сводка
      с суммой уходит наверх и прилипает под шапкой, а форма листается под

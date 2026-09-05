@@ -2,11 +2,9 @@
 import Base from '../layouts/Base.astro'
 import Hero from '../components/Hero.astro'
 import Calculator from '../components/Calculator.astro'
-import TenderRejects from '../components/TenderRejects.astro'
 import ComparisonTable from '../components/ComparisonTable.astro'
 import RegistryCheck from '../components/RegistryCheck.astro'
 import SpecialOffer from '../components/SpecialOffer.astro'
-import BonusOffer from '../components/BonusOffer.astro'
 import WhyMe from '../components/WhyMe.astro'
 import ServicesGrid from '../components/ServicesGrid.astro'
 import LeadForm from '../components/LeadForm.astro'
@@ -101,10 +99,6 @@ const howToSchema = {
   <Calculator />
 
   <SpecialOffer />
-
-  <BonusOffer />
-
-  <TenderRejects />
 
   <!-- Кому нужна / кому нет -->
   <section class="section" id="komu" data-anchor>
@@ -219,7 +213,7 @@ const howToSchema = {
 
   <WhyMe />
 
-  <ServicesGrid />
+  <ServicesGrid compact />
 
   <!-- FAQ -->
   <section class="section" id="faq" data-anchor>
