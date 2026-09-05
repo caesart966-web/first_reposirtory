@@ -7,7 +7,7 @@
 // главной её нет. Разница важна для helpers из lib/site.ts: с вложенной
 // страницы якорь надо предварять '../', а адрес страницы — собирать целиком.
 import { anchor, page } from '../lib/site'
-import { REGIONS } from './regions'
+import { SERVICE_PAGES } from './services'
 import { SRO_DETAILS } from './sroDetails'
 
 export type NavLink = {
@@ -15,6 +15,8 @@ export type NavLink = {
   /** Якорь секции главной либо папка страницы — см. kind. */
   href: string
   kind: 'anchor' | 'page'
+  /** Не показывать в шапке: место там ограничено, а раздел второстепенный. */
+  footerOnly?: boolean
   /** Строка под названием в выпадающем меню. Только факты, уже проверенные
    *  на странице вида: сюда ничего не пишется руками. */
   hint?: string
@@ -52,36 +54,15 @@ export const TYPES_GROUP: NavGroup = {
   })),
 }
 
-/** Что делаем — секции главной, где об этом рассказано. */
+/** Что делаем — семь страниц услуг под /uslugi/. */
 export const SERVICES_GROUP: NavGroup = {
   label: 'Услуги',
-  items: [
-    {
-      label: 'Вступление и сопровождение',
-      href: '#services',
-      kind: 'anchor',
-      hint: 'Подбор СРО, документы, проверка, расширение видов работ',
-    },
-    {
-      label: 'Специалисты НРС',
-      href: '#nrs',
-      kind: 'anchor',
-      hint: 'Что требует закон и что делать, если специалистов нет',
-    },
-    {
-      label: 'Документы',
-      href: '#documents',
-      kind: 'anchor',
-      hint: 'Что войдёт в пакет для конкретной СРО',
-    },
-    {
-      label: 'География работы',
-      href: '#regions',
-      kind: 'anchor',
-      // Число — из списка заказчика, крайние точки — из него же.
-      hint: `${REGIONS.length} регионов, от Санкт-Петербурга до Якутска`,
-    },
-  ],
+  items: SERVICE_PAGES.map((service) => ({
+    label: service.short,
+    href: service.path,
+    kind: 'page',
+    hint: service.hint,
+  })),
 }
 
 // Порядок — как разделы идут на странице. В шапке на 1024-1279px места
@@ -93,12 +74,15 @@ export const MENU: NavItem[] = [
   { label: 'Стоимость', href: '#pricing', kind: 'anchor' },
   { label: 'О нас', href: '#about', kind: 'anchor' },
   { label: 'FAQ', href: '#faq', kind: 'anchor' },
+  // География — в подвале и мобильном меню; в шапке для неё нет места,
+  // а из «Услуг» она ушла, когда там появились страницы услуг.
+  { label: 'География работы', href: '#regions', kind: 'anchor', footerOnly: true },
   // Ведёт в подвал: отдельной секции контактов нет, все каналы собраны там.
   // В шапке не показывается — там телефон и кнопка заявки и так стоят рядом.
   { label: 'Контакты', href: '#contacts', kind: 'anchor' },
 ]
 
-export const HEADER_NAV = MENU.filter((item) => isGroup(item) || item.href !== '#contacts')
+export const HEADER_NAV = MENU.filter((item) => isGroup(item) || (item.href !== '#contacts' && !item.footerOnly))
 
 /** Плоский список для подвала: группы раскрыты, страницы видов идут
  *  первыми, как и на самой странице. */

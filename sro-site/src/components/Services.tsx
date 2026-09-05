@@ -10,7 +10,8 @@ import {
   UserCheck,
   type LucideIcon,
 } from 'lucide-react'
-import { anchor } from '../lib/site'
+import { serviceBySlug } from '../content/services'
+import { page } from '../lib/site'
 import { cardHover } from './ui/card'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
@@ -18,17 +19,14 @@ import { Section, SectionHeading } from './ui/Section'
 // Восемь равнозначных карточек читались как каша, поэтому услуги разбиты
 // на две понятные группы: что делаем с самой СРО и что — со специалистами.
 //
-// Каждая карточка — ссылка на раздел, где об этой услуге рассказано
-// подробно: страницы видов, документы, специалисты НРС, ответ в FAQ.
-// Заказчик попросил, чтобы с карточки можно было попасть к нужной
-// информации, а не только прочитать три строки. Поэтому карточки и
-// приподнимаются при наведении: по правилу из ui/card.ts подъём — это
-// обещание клика, и здесь оно честное. Подпись ссылки называет, куда
-// ведёт, — «Подробнее» без адресата ничего не обещает.
-type ServiceGroup = {
-  title: string
-  items: { icon: LucideIcon; title: string; text: string; href: string; link: string }[]
-}
+// Каждая карточка ведёт на отдельную страницу услуги (/uslugi/…): заказчик
+// попросил, чтобы посетитель, кликнув по карточке, попадал на страницу
+// с полным описанием, а не прыгал по главной. Страниц семь, карточек восемь:
+// «Подбор СРО» и «Проверка СРО» — одна тема и одна страница. Поэтому
+// карточки и приподнимаются при наведении: по правилу из ui/card.ts подъём —
+// обещание клика, и здесь оно честное.
+type ServiceItem = { icon: LucideIcon; title: string; text: string; slug: string }
+type ServiceGroup = { title: string; items: ServiceItem[] }
 
 const GROUPS: ServiceGroup[] = [
   {
@@ -38,29 +36,25 @@ const GROUPS: ServiceGroup[] = [
         icon: Building2,
         title: 'Вступление в СРО',
         text: 'Организую процесс от выбора СРО до внесения компании в реестр членов.',
-        href: '#types',
-        link: 'Виды СРО и порядок вступления',
+        slug: 'vstuplenie',
       },
       {
         icon: Search,
         title: 'Подбор СРО',
         text: 'Сравню требования, размеры взносов и условия нескольких организаций и предложу подходящие варианты.',
-        href: '#process',
-        link: 'Как проходит работа',
+        slug: 'podbor',
       },
       {
         icon: FileText,
         title: 'Подготовка документов',
         text: 'Соберу полный пакет и выверю каждый документ перед подачей.',
-        href: '#documents',
-        link: 'Что войдёт в пакет',
+        slug: 'dokumenty',
       },
       {
         icon: ShieldCheck,
         title: 'Проверка СРО',
         text: 'Проверю статус организации по открытым реестрам до оплаты взносов.',
-        href: '#faq-check',
-        link: 'Как проходит проверка',
+        slug: 'podbor',
       },
     ],
   },
@@ -71,33 +65,37 @@ const GROUPS: ServiceGroup[] = [
         icon: UserCheck,
         title: 'НРС',
         text: 'Проверю соответствие сотрудников требованиям и подготовлю документы для включения в национальный реестр специалистов.',
-        href: '#nrs',
-        link: 'Требования и варианты решения',
+        slug: 'nrs',
       },
       {
         icon: GraduationCap,
         title: 'НОК',
         text: 'Расскажу, как проходит независимая оценка квалификации, и помогу подготовиться к профессиональному экзамену.',
-        href: '#nrs-nok',
-        link: 'Что нужно для включения в реестр',
+        slug: 'nok',
       },
       {
         icon: ListPlus,
         title: 'Расширение видов работ',
         text: 'Оформлю изменение уровня ответственности или состава видов работ.',
-        href: '#types',
-        link: 'Уровни ответственности и взносы',
+        slug: 'uroven',
       },
       {
         icon: Handshake,
         title: 'Сопровождение проверок',
         text: 'Подготовлю к проверке СРО и помогу корректно ответить на запросы.',
-        href: '#pricing',
-        link: 'Формат сопровождения',
+        slug: 'proverki',
       },
     ],
   },
 ]
+
+// Адрес страницы по ключу; неизвестный ключ — ошибка сборки данных, а не
+// молчаливая ссылка в никуда.
+const pathOf = (slug: string) => {
+  const service = serviceBySlug(slug)
+  if (!service) throw new Error(`Нет страницы услуги: ${slug}`)
+  return page(service.path)
+}
 
 export function Services() {
   return (
@@ -128,7 +126,7 @@ export function Services() {
                       строке уже две и высота не в дефиците — там прежний
                       столбик, он читается спокойнее. */}
                   <a
-                    href={anchor(service.href)}
+                    href={pathOf(service.slug)}
                     className={`group/card flex h-full flex-col rounded-2xl border border-neutral-200 bg-white p-5 shadow-card sm:p-6 ${cardHover}`}
                   >
                     <div className="flex items-center gap-3.5 sm:block">
@@ -141,7 +139,7 @@ export function Services() {
                     {/* Подпись прижата к низу карточки, чтобы стрелки в ряду
                         стояли на одной линии при разной длине текста. */}
                     <span className="mt-auto inline-flex items-center gap-1.5 pt-4 text-sm font-semibold text-accent-700">
-                      {service.link}
+                      Подробнее об услуге
                       <ArrowRight
                         className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover/card:translate-x-1"
                         aria-hidden="true"
