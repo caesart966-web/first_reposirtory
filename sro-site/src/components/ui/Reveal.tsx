@@ -6,10 +6,13 @@ export function Reveal({
   children,
   delay = 0,
   className = '',
+  id,
 }: {
   children: ReactNode
   delay?: number
   className?: string
+  /** Адрес для ссылок на конкретную карточку (например, #nrs-nok). */
+  id?: string
 }) {
   const ref = useRef<HTMLDivElement | null>(null)
 
@@ -38,7 +41,7 @@ export function Reveal({
   const style: CSSProperties | undefined = delay ? { transitionDelay: `${delay}ms` } : undefined
 
   return (
-    <div ref={ref} className={`reveal ${className}`} style={style}>
+    <div ref={ref} id={id} className={`reveal ${className}`} style={style}>
       {children}
     </div>
   )
