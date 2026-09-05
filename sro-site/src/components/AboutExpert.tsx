@@ -1,6 +1,11 @@
-import { Check, FileCheck, Globe } from 'lucide-react'
+import { Check, FileCheck, Globe, type LucideIcon } from 'lucide-react'
 import { FACTS, REQUISITES, isPlaceholder } from '../content/facts'
+import { REGIONS } from '../content/regions'
+import { SRO_DETAILS } from '../content/sroDetails'
+import { anchor } from '../lib/site'
+import { ScalesMark } from './illustrations'
 import { ButtonLink } from './ui/Button'
+import { cardHover } from './ui/card'
 import { Reveal } from './ui/Reveal'
 import { Section } from './ui/Section'
 
@@ -17,7 +22,6 @@ const ADVANTAGES = [
 // Строки с незаполненными реквизитами не показываем: квадратные скобки на
 // сайте читаются как «сломано». Появятся данные — строки вернутся сами.
 const REQUISITE_ROWS = [
-  { label: 'Организация', value: REQUISITES.legalName },
   { label: 'ИНН', value: REQUISITES.inn },
   { label: 'КПП', value: REQUISITES.kpp },
   { label: 'ОГРН', value: REQUISITES.ogrn },
@@ -28,29 +32,52 @@ const REQUISITE_ROWS = [
 // плейсхолдеры в прозе выглядят ещё хуже, чем в полосе фактов.
 const FACTS_READY = !isPlaceholder(FACTS.yearsOfPractice) && !isPlaceholder(FACTS.companies)
 
-// Пока реквизитов нет, правая карточка держала две строки на 40% ширины
-// секции — читалось как недогрузившаяся страница. До появления данных
-// раскладка одноколоночная, а обе строки живут чипами под буллетами;
-// с реквизитами двухколонник вернётся сам.
-const HAS_REQUISITES = REQUISITE_ROWS.length > 0
+// Полоса цифр. У конкурентов здесь «15 лет», «1 день», «100%» — цифры
+// продавца, проверить их нельзя. Здесь только то, что на сайте уже есть и
+// что посетитель может пересчитать сам: страницы видов, список регионов,
+// обещание одного исполнителя и бесплатного разбора из «Стоимости».
+// Поэтому две цифры считаются из данных, а не набраны руками.
+//
+// Годы практики и число компаний сюда не входят: заказчик их не назвал,
+// а придумать цифру — то же самое, что придумать закон.
+const NUMBERS: { value: string; label: string; href: string }[] = [
+  {
+    value: String(SRO_DETAILS.length),
+    label: 'вида СРО: строители, проектировщики, изыскатели',
+    href: '#types',
+  },
+  {
+    value: String(REGIONS.length),
+    label: 'регионов, где помогаю вступить — дистанционно',
+    href: '#regions',
+  },
+  {
+    value: '1',
+    label: 'исполнитель на всю задачу: от первого звонка до выписки из реестра',
+    href: '#faq',
+  },
+  {
+    value: '0 ₽',
+    label: 'за разбор задачи и консультацию — платите только за работу',
+    href: '#pricing',
+  },
+]
+
+function Chip({ icon: Icon, children }: { icon: LucideIcon; children: string }) {
+  return (
+    <span className="inline-flex items-center gap-2 text-sm text-neutral-700">
+      <Icon className="h-4 w-4 shrink-0 text-accent-600" aria-hidden="true" />
+      {children}
+    </span>
+  )
+}
 
 export function AboutExpert() {
   return (
     <Section id="about" className="bg-neutral-50/55">
-      <div
-        className={
-          HAS_REQUISITES
-            ? // Карточка по центру колонки, а не по верху: левая колонка вдвое
-              // выше карточки, и прижатая к верху она оставляла под собой пустоту
-              // в половину секции. По центру композиция читается уравновешенной.
-              'mx-auto grid max-w-5xl items-start gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-center lg:gap-16'
-            : 'mx-auto max-w-3xl'
-        }
-      >
+      <div className="grid items-center gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:gap-16">
         <Reveal>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent-600">
-            О специалисте
-          </p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent-600">О нас</p>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-neutral-950 sm:text-4xl">
             Вы работаете непосредственно со специалистом, а не с отделом продаж
           </h2>
@@ -62,15 +89,15 @@ export function AboutExpert() {
               </>
             ) : (
               <>
-                Помогаю строительным, проектным и изыскательским компаниям вступать в СРО
-                и решать связанные с этим задачи.
+                Помогаю строительным, проектным и изыскательским компаниям вступать в СРО и решать
+                связанные с этим задачи.
               </>
             )}
           </p>
           <p className="mt-4 text-neutral-600">
-            Каждый проект веду самостоятельно: отвечаю на вопросы, готовлю документы и общаюсь
-            с СРО — лично, без менеджеров и посредников. Вы всегда знаете, кто занимается вашей
-            задачей и на каком она этапе.
+            Каждый проект веду самостоятельно: отвечаю на вопросы, готовлю документы и общаюсь с СРО
+            — лично, без менеджеров и посредников. Вы всегда знаете, кто занимается вашей задачей и
+            на каком она этапе.
           </p>
           <ul className="mt-7 space-y-3">
             {ADVANTAGES.map((advantage) => (
@@ -80,52 +107,74 @@ export function AboutExpert() {
               </li>
             ))}
           </ul>
-          {/* Без контейнеров: обведённый rounded-full пилюлей в системе нет,
-              и рядом с настоящей кнопкой «Обсудить задачу» такие чипы читались
-              как ещё две кнопки. Та же форма, что у этих строк в карточке. */}
-          {!HAS_REQUISITES && (
-            <div className="mt-7 flex flex-wrap items-center gap-x-7 gap-y-2.5">
-              <span className="inline-flex items-center gap-2 text-sm text-neutral-700">
-                <Globe className="h-4 w-4 shrink-0 text-accent-600" aria-hidden="true" />
-                Все регионы России, дистанционно
-              </span>
-              <span className="inline-flex items-center gap-2 text-sm text-neutral-700">
-                <FileCheck className="h-4 w-4 shrink-0 text-accent-600" aria-hidden="true" />
-                Работаю по договору
-              </span>
-            </div>
-          )}
-          <ButtonLink href="#quiz" variant="secondary" size="lg" className="mt-8">
+          <ButtonLink href={anchor('#quiz')} variant="secondary" size="lg" className="mt-8">
             Обсудить задачу
           </ButtonLink>
         </Reveal>
 
-        {HAS_REQUISITES && (
-          <Reveal delay={100}>
-            <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-card">
-              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-neutral-600">
-                Реквизиты
-              </p>
-              <dl className="mt-4 space-y-3 text-sm">
-                {REQUISITE_ROWS.map((row) => (
-                  <div key={row.label} className="flex justify-between gap-4 border-b border-neutral-200 pb-3 last:border-0 last:pb-0">
-                    <dt className="text-neutral-600">{row.label}</dt>
-                    <dd className="text-right font-medium text-neutral-900">{row.value}</dd>
-                  </div>
-                ))}
-              </dl>
-              <p className="mt-5 flex items-center gap-2 text-sm text-neutral-700">
-                <Globe className="h-4 w-4 shrink-0 text-accent-600" aria-hidden="true" />
-                Все регионы России, дистанционно
-              </p>
-              <p className="mt-3 flex items-center gap-2 text-sm text-neutral-700">
-                <FileCheck className="h-4 w-4 shrink-0 text-accent-600" aria-hidden="true" />
-                Работаю по договору
-              </p>
+        {/* Карточка компании — на месте фотографии у конкурентов. Фотографии
+            нет и не будет: сайт представляет компанию, а не лицо. Вместо неё
+            знак, юридическое имя и реквизиты — то, что действительно
+            подтверждает, с кем вы имеете дело. */}
+        <Reveal delay={100}>
+          <div className="relative overflow-hidden rounded-3xl border border-neutral-200 bg-white p-6 shadow-card sm:p-8">
+            {/* Крупный знак в углу, полупрозрачный: узнаваемость шапки, а не
+                логотип на всю карточку. Уходит за край намеренно. */}
+            <ScalesMark
+              className="pointer-events-none absolute -right-8 -top-6 h-40 w-auto text-accent-100"
+              aria-hidden="true"
+            />
+            <div className="relative">
+              <div className="flex items-center gap-3">
+                <ScalesMark className="h-7 w-auto shrink-0 text-accent-600" aria-hidden="true" />
+                <div className="leading-tight">
+                  <p className="font-bold tracking-tight text-neutral-950">{REQUISITES.legalName}</p>
+                  <p className="text-sm text-neutral-600">Вступление в СРО</p>
+                </div>
+              </div>
+              {REQUISITE_ROWS.length > 0 && (
+                <dl className="mt-6 space-y-3 text-sm">
+                  {REQUISITE_ROWS.map((row) => (
+                    <div
+                      key={row.label}
+                      className="flex justify-between gap-4 border-b border-neutral-200 pb-3 last:border-0 last:pb-0"
+                    >
+                      <dt className="shrink-0 text-neutral-600">{row.label}</dt>
+                      <dd className="text-right font-medium text-neutral-900">{row.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+              <div className="mt-6 flex flex-col gap-2.5">
+                <Chip icon={Globe}>Дистанционно, приезжать не нужно</Chip>
+                <Chip icon={FileCheck}>Работаю по договору</Chip>
+              </div>
             </div>
-          </Reveal>
-        )}
+          </div>
+        </Reveal>
       </div>
+
+      {/* Полоса цифр под текстом, во всю ширину. Каждая плитка ведёт туда,
+          где цифру можно проверить: к страницам видов, к карте, к ответу
+          про одного исполнителя, к разделу о стоимости. Поэтому плитки и
+          приподнимаются при наведении — это обещание клика, и оно честное. */}
+      <Reveal delay={140} className="mt-12">
+        <ul className="grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-5">
+          {NUMBERS.map((item) => (
+            <li key={item.href}>
+              <a
+                href={anchor(item.href)}
+                className={`flex h-full flex-col rounded-2xl border border-neutral-200 bg-white p-5 shadow-card sm:p-6 ${cardHover}`}
+              >
+                <span className="text-4xl font-bold tabular-nums tracking-tight text-accent-700 sm:text-5xl">
+                  {item.value}
+                </span>
+                <span className="mt-3 text-sm leading-snug text-neutral-600">{item.label}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </Reveal>
     </Section>
   )
 }

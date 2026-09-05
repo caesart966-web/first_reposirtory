@@ -1,19 +1,107 @@
-// Разделы страницы в одном месте: их перечисляют и шапка, и подвал, и
-// расходиться эти списки не должны — переименованный раздел иначе живёт
-// под двумя названиями, а удалённый оставляет ссылку в никуда.
+// Навигация сайта в одном месте: её перечисляют шапка, мобильное меню и
+// подвал, и расходиться эти списки не должны — переименованный раздел иначе
+// живёт под двумя названиями, а удалённый оставляет ссылку в никуда.
 //
-// inHeader — не «важность», а вопрос ширины: на 1024-1279px в шапке помещается
-// ровно четыре пункта плюс телефон и кнопка (запас на 1440px — около 125px,
-// меньше цены пятого пункта). В подвале ограничения нет, там показаны все.
-export const SECTIONS = [
-  { href: '#types', label: 'Виды СРО', inHeader: false },
-  { href: '#services', label: 'Услуги', inHeader: true },
-  { href: '#nrs', label: 'Специалисты НРС', inHeader: false },
-  { href: '#pricing', label: 'Стоимость', inHeader: true },
-  { href: '#about', label: 'О специалисте', inHeader: true },
-  { href: '#faq', label: 'FAQ', inHeader: true },
-  // Ведёт в подвал: отдельной секции контактов нет, все каналы собраны там.
-  { href: '#contacts', label: 'Контакты', inHeader: false },
-] as const
+// Два вида ссылок. anchor — секция главной страницы ('#services'); page —
+// отдельная страница вида СРО ('sro-stroiteley'), у неё свой адрес и на
+// главной её нет. Разница важна для helpers из lib/site.ts: с вложенной
+// страницы якорь надо предварять '../', а адрес страницы — собирать целиком.
+import { anchor, page } from '../lib/site'
+import { SRO_DETAILS } from './sroDetails'
 
-export const HEADER_NAV = SECTIONS.filter((section) => section.inHeader)
+export type NavLink = {
+  label: string
+  /** Якорь секции главной либо папка страницы — см. kind. */
+  href: string
+  kind: 'anchor' | 'page'
+  /** Строка под названием в выпадающем меню. Только факты, уже проверенные
+   *  на странице вида: сюда ничего не пишется руками. */
+  hint?: string
+}
+
+export type NavGroup = {
+  label: string
+  items: NavLink[]
+}
+
+export type NavItem = NavLink | NavGroup
+
+export const isGroup = (item: NavItem): item is NavGroup => 'items' in item
+
+// Строка-подсказка под видом СРО в меню. Слова — из области деятельности
+// на странице вида (scope), но не сам список: у изыскателей пять пунктов,
+// каждый начинается с «инженерно-» и кончается на «изыскания», и целиком
+// они занимали четыре строки в меню. Набор regions.mjs/header.mjs сверяет,
+// что каждое слово подсказки есть на странице вида — подсказка не может
+// уйти от того, что там написано.
+const HINTS: Record<string, string> = {
+  construction: 'Строительство, реконструкция, капитальный ремонт, снос',
+  design: 'Архитектурно-строительное проектирование, проектная документация',
+  survey: 'Инженерные изыскания: геодезические, геологические, экологические и другие',
+}
+
+/** Три страницы видов СРО — одно выпадающее меню. */
+export const TYPES_GROUP: NavGroup = {
+  label: 'Виды СРО',
+  items: SRO_DETAILS.map((detail) => ({
+    label: detail.card.title,
+    href: detail.path,
+    kind: 'page',
+    hint: HINTS[detail.slug] ?? detail.scope.slice(0, 3).join(', '),
+  })),
+}
+
+/** Что делаем — секции главной, где об этом рассказано. */
+export const SERVICES_GROUP: NavGroup = {
+  label: 'Услуги',
+  items: [
+    {
+      label: 'Вступление и сопровождение',
+      href: '#services',
+      kind: 'anchor',
+      hint: 'Подбор СРО, документы, проверка, расширение видов работ',
+    },
+    {
+      label: 'Специалисты НРС',
+      href: '#nrs',
+      kind: 'anchor',
+      hint: 'Что требует закон и что делать, если специалистов нет',
+    },
+    {
+      label: 'Документы',
+      href: '#documents',
+      kind: 'anchor',
+      hint: 'Что войдёт в пакет для конкретной СРО',
+    },
+    {
+      label: 'Регионы',
+      href: '#regions',
+      kind: 'anchor',
+      hint: 'Карта: где помогаю вступить',
+    },
+  ],
+}
+
+// Порядок — как разделы идут на странице. В шапке на 1024-1279px места
+// ровно на эти пункты плюс телефон и кнопка; в мобильном меню и в подвале
+// ограничения нет, там раскрыты и группы.
+export const MENU: NavItem[] = [
+  TYPES_GROUP,
+  SERVICES_GROUP,
+  { label: 'Стоимость', href: '#pricing', kind: 'anchor' },
+  { label: 'О нас', href: '#about', kind: 'anchor' },
+  { label: 'FAQ', href: '#faq', kind: 'anchor' },
+  // Ведёт в подвал: отдельной секции контактов нет, все каналы собраны там.
+  // В шапке не показывается — там телефон и кнопка заявки и так стоят рядом.
+  { label: 'Контакты', href: '#contacts', kind: 'anchor' },
+]
+
+export const HEADER_NAV = MENU.filter((item) => isGroup(item) || item.href !== '#contacts')
+
+/** Плоский список для подвала: группы раскрыты, страницы видов идут
+ *  первыми, как и на самой странице. */
+export const SECTIONS: NavLink[] = MENU.flatMap((item) => (isGroup(item) ? item.items : [item]))
+
+/** Адрес ссылки с учётом её вида: якорь главной или страница вида СРО.
+ *  Вынесено сюда, а не в lib/site.ts: там нет знания о форме навигации. */
+export const navHref = (link: NavLink) => (link.kind === 'page' ? page(link.href) : anchor(link.href))
