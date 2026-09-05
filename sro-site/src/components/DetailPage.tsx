@@ -22,7 +22,7 @@ import { ThemisBackdrop } from './ui/ThemisBackdrop'
 
 // Ссылка на норму. Не украшение: на странице есть суммы и пороги, и каждый
 // из них посетитель должен уметь проверить сам, не веря нам на слово.
-function Law({ children }: { children: string }) {
+export function Law({ children }: { children: string }) {
   return (
     <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-md bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600">
       <Scale className="h-3 w-3 shrink-0" aria-hidden="true" />
@@ -34,7 +34,7 @@ function Law({ children }: { children: string }) {
 // Шаг порядка вступления. Номер крупный и приглушённый, чтобы лента шагов
 // читалась лентой, а не списком; исполнитель помечен отдельно — половину шагов
 // делает не кандидат, и это стоит видеть сразу.
-function Step({
+export function Step({
   index,
   step,
 }: {
@@ -68,7 +68,7 @@ function Step({
   )
 }
 
-function DocGroup({
+export function DocGroup({
   title,
   hint,
   items,

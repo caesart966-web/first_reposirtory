@@ -34,3 +34,6 @@ export const page = (dir: string) => `${root}${dir}/`
 
 /** Адрес главной с уже выбранным видом СРО: home + '?sro=construction#quiz'. */
 export const quizWithType = (slug: string) => `${root}?sro=${slug}#quiz`
+
+/** Адрес главной с уже выбранной услугой: home + '?help=nrs#quiz'. */
+export const quizWithHelp = (slug: string) => `${root}?help=${slug}#quiz`

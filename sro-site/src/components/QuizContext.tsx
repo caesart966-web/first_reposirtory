@@ -7,6 +7,8 @@ import {
   type ReactNode,
   type SetStateAction,
 } from 'react'
+import { serviceBySlug } from '../content/services'
+import { SRO_TYPES } from '../content/sroTypes'
 
 export type Question = {
   id: string
@@ -14,17 +16,10 @@ export type Question = {
   options: string[]
 }
 
-// Варианты ответа о виде СРО: на них ссылается секция «Виды СРО», где у
-// каждого своя карточка с фотографией. Пока это были две совпадающие строки
-// в разных файлах, переименование варианта здесь молча роняло карточку из
-// сетки — и заодно перевешивало ссылку «Помогу определить» на упавший вариант,
-// потому что она искала «вариант, у которого нет карточки».
-export const SRO_TYPES = {
-  construction: 'Строительство',
-  design: 'Проектирование',
-  survey: 'Инженерные изыскания',
-  unsure: 'Пока не знаю — нужна помощь с выбором',
-} as const
+// SRO_TYPES живут в content/sroTypes.ts: их импортируют и данные страниц
+// видов, а те нужны здесь — без отдельного файла получался круг импортов.
+// Реэкспорт оставлен, чтобы секции продолжали брать варианты из квиза.
+export { SRO_TYPES } from '../content/sroTypes'
 
 // Идентификаторы вопросов вынесены отдельно, потому что на них ссылаются
 // три секции. Раньше они брали вопрос по номеру в массиве (QUESTIONS[0]),
@@ -104,9 +99,17 @@ const SRO_BY_SLUG: Record<string, string> = {
 // вместо него «пока не знаю» было бы ответом за посетителя.
 function answerFromUrl(): Record<string, string> {
   if (typeof window === 'undefined') return {}
-  const slug = new URLSearchParams(window.location.search).get('sro')
+  const params = new URLSearchParams(window.location.search)
+  const preset: Record<string, string> = {}
+  const slug = params.get('sro')
   const answer = slug ? SRO_BY_SLUG[slug] : undefined
-  return answer ? { [QUESTION_IDS.type]: answer } : {}
+  if (answer) preset[QUESTION_IDS.type] = answer
+  // Услуга со страницы /uslugi/…: '?help=nrs'. Тот же принцип — человек уже
+  // сказал, какая помощь нужна, кликнув по карточке; второй раз не спрашиваем.
+  const help = params.get('help')
+  const helpAnswer = help ? serviceBySlug(help)?.help : undefined
+  if (helpAnswer) preset[QUESTION_IDS.help] = helpAnswer
+  return preset
 }
 
 // Считано один раз на загрузку модуля: адрес за время жизни страницы
