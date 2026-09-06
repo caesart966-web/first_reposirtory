@@ -7,9 +7,10 @@
 import { LAW, THRESHOLD_BUILD } from '../config/facts'
 import { href } from '../config/site'
 import Icon from './Icon.astro'
+import { FEES } from '../config/fees'
 ---
 
-<section class="calc section" id="calc" data-anchor>
+<section class="calc section" id="calc" data-anchor data-fees={JSON.stringify(FEES)}>
   <div class="wrap">
     <div class="s-head rv">
       <span class="eyebrow">Калькулятор</span>
@@ -203,6 +204,12 @@ import Icon from './Icon.astro'
   const stepLabel = document.getElementById('calc-step-label')
   const backBtn = document.getElementById('calc-back') as HTMLButtonElement | null
   const base = document.body.dataset.base || '/'
+
+  // Суммы взносов СРО приходят из разметки: скрипт отдельный, доступа
+  // к конфигу у него нет, а дублировать числа в двух местах нельзя —
+  // разойдутся при первой же правке.
+  const feesRaw = document.getElementById('calc')?.dataset.fees
+  const FEES = feesRaw ? JSON.parse(feesRaw) : null
 
   const link = (p: string) => base.replace(/\/$/, '') + p
 
@@ -509,6 +516,20 @@ import Icon from './Icon.astro'
       })
       .join('')
 
+    // Строки про взносы СРО. Считаются по тому, что человек ответил:
+    // у строителей и у проектировщиков суммы разные, и подставлять «по
+    // тарифам» больше нельзя — на странице стоимости стоят точные числа,
+    // и расхождение между ними поймали бы сразу.
+    const kind = answers.work === 'build' || answers.work === 'demolition' ? 'build' : 'design'
+    const fee = FEES?.[kind]
+    const rub = (n: number) => `${n.toLocaleString('ru-RU').replace(/\s/g, ' ')} ₽`
+    const feeRows = fee
+      ? `<li><span>Вступительный взнос СРО</span><b>${rub(fee.entry)}</b></li>
+         <li><span>Членский взнос за первый год</span><b>${rub(fee.memberFirstYear)}</b></li>
+         <li><span>Целевой взнос в ${fee.union}</span><b>${rub(fee.target)}</b></li>
+         <li><span>Страхование ответственности — в первый год не требуется</span><b>${rub(0)}</b></li>`
+      : `<li><span>Вступительный, членский и целевой взносы, страхование</span><b>условия СРО</b></li>`
+
     const costs = v.costs
       ? `<div class="v-costs">
            <h4>Из чего сложатся расходы</h4>
@@ -519,9 +540,7 @@ import Icon from './Icon.astro'
                  ? '<li><span>Взнос в компенсационный фонд обеспечения договорных обязательств — только для торгов</span><b>по закону</b></li>'
                  : ''
              }
-             <li><span>Вступительный и членские взносы СРО</span><b>по тарифам СРО</b></li>
-             <li><span>Целевой взнос в национальное объединение</span><b>по тарифам</b></li>
-             <li><span>Страхование гражданской ответственности</span><b>по тарифам</b></li>
+             ${feeRows}
              <li><span>Независимая оценка квалификации для специалистов НРС</span><b>при необходимости</b></li>
              <li class="total"><span><b>Подготовка документов и сопровождение — мои услуги</b></span><b>0 ₽</b></li>
            </ul>

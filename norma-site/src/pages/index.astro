@@ -10,7 +10,8 @@ import ServicesGrid from '../components/ServicesGrid.astro'
 import LeadForm from '../components/LeadForm.astro'
 import Icon from '../components/Icon.astro'
 import { SITE, href } from '../config/site'
-import { LAW, TERMS } from '../config/facts'
+import { LAW, TERMS, FUNDS } from '../config/facts'
+import { FEES, FEES_NOTE, money } from '../config/fees'
 
 const steps = [
   {
@@ -133,41 +134,54 @@ const howToSchema = {
       </div>
 
       <div class="price-cards">
-        <div class="pcard rv">
-          <span class="ptag">Строителям</span>
-          <h3>Первый уровень ответственности</h3>
-          <p class="psub">Договоры до 90 млн ₽</p>
-          <ul>
-            <li><span>Компенсационный фонд возмещения вреда<small>однократно, по закону</small></span><b>100 000 ₽</b></li>
-            <li><span>Вступительный взнос<small>устанавливает СРО</small></span><b class="muted-v">по тарифам</b></li>
-            <li><span>Членские взносы<small>ежегодно, и со второго года тоже</small></span><b class="warn-v">по тарифам</b></li>
-            <li><span>Подготовка документов и сопровождение<small>моя работа</small></span><b class="free-v">0 ₽</b></li>
-            <li class="ptotal"><span>Установлено законом</span><b>100 000 ₽</b></li>
-          </ul>
-          <a class="btn btn--acc" href={href('/stoimost/#kalkulyator')}>Посчитать свой уровень</a>
-        </div>
-
-        <div class="pcard rv">
-          <span class="ptag">Проектировщикам и изыскателям</span>
-          <h3>Первый уровень ответственности</h3>
-          <p class="psub">Договоры до 25 млн ₽</p>
-          <ul>
-            <li><span>Компенсационный фонд возмещения вреда<small>однократно, по закону</small></span><b>50 000 ₽</b></li>
-            <li><span>Вступительный взнос<small>устанавливает СРО</small></span><b class="muted-v">по тарифам</b></li>
-            <li><span>Членские взносы<small>ежегодно, и со второго года тоже</small></span><b class="warn-v">по тарифам</b></li>
-            <li><span>Подготовка документов и сопровождение<small>моя работа</small></span><b class="free-v">0 ₽</b></li>
-            <li class="ptotal"><span>Установлено законом</span><b>50 000 ₽</b></li>
-          </ul>
-          <a class="btn btn--acc" href={href('/stoimost/#kalkulyator')}>Посчитать свой уровень</a>
-        </div>
+        {(['build', 'design'] as const).map((kind) => {
+          const fee = FEES[kind]
+          const fund = kind === 'build' ? FUNDS.buildHarm[0] : FUNDS.designHarm[0]
+          const total = fund.amountNum + fee.entry + fee.memberFirstYear + fee.target
+          return (
+            <div class="pcard rv">
+              <span class="ptag">{kind === 'build' ? 'Строителям' : 'Проектировщикам и изыскателям'}</span>
+              <h3>Первый уровень ответственности</h3>
+              <p class="psub">Договоры {fund.limit.replace('до ', 'до ')}</p>
+              <ul>
+                <li>
+                  <span>Компенсационный фонд возмещения вреда<small>однократно, размер установлен законом</small></span>
+                  <b>{fund.amount}</b>
+                </li>
+                <li>
+                  <span>Вступительный взнос<small>разовый, устанавливает СРО</small></span>
+                  <b class={fee.entry === 0 ? 'free-v' : ''}>{money(fee.entry)}</b>
+                </li>
+                <li>
+                  <span>Членский взнос за первый год<small>со второго года платится тоже</small></span>
+                  <b>{money(fee.memberFirstYear)}</b>
+                </li>
+                <li>
+                  <span>Целевой взнос в {fee.union}<small>устанавливает СРО</small></span>
+                  <b>{money(fee.target)}</b>
+                </li>
+                <li>
+                  <span>Страхование ответственности<small>в первый год не требуется</small></span>
+                  <b class="free-v">{money(0)}</b>
+                </li>
+                <li>
+                  <span>Подготовка документов и сопровождение<small>моя работа</small></span>
+                  <b class="free-v">{money(0)}</b>
+                </li>
+                <li class="ptotal"><span>Всего за первый год</span><b>{money(total)}</b></li>
+              </ul>
+              <a class="btn btn--acc" href={href('/stoimost/#kalkulyator')}>Посчитать свой уровень</a>
+            </div>
+          )
+        })}
 
         <div class="pcard pcard--warn rv">
           <span class="ptag ptag--warn">Идёте на торги</span>
           <h3>Нужен второй взнос — КФ ОДО</h3>
           <p class="psub">Компенсационный фонд обеспечения договорных обязательств</p>
           <ul>
-            <li><span>Строителям, первый уровень<small>сверх взноса выше, не вместо</small></span><b>200 000 ₽</b></li>
-            <li><span>Проектировщикам и изыскателям<small>первый уровень</small></span><b>150 000 ₽</b></li>
+            <li><span>Строителям, первый уровень<small>сверх взноса выше, не вместо</small></span><b>{FUNDS.buildContract[0].amount}</b></li>
+            <li><span>Проектировщикам и изыскателям<small>первый уровень</small></span><b>{FUNDS.designContract[0].amount}</b></li>
           </ul>
           <p class="pnote">
             Без этого взноса заявку на конкурентных закупках отклонят. Именно о нём
@@ -176,6 +190,8 @@ const howToSchema = {
           <a class="btn btn--ghost-dark" href="#torgi">Три причины отказа на торгах</a>
         </div>
       </div>
+
+      <p class="fees-note rv">{FEES_NOTE}</p>
 
       <div class="cost-cta rv">
         <a class="btn btn--acc" href={href('/stoimost/')}>Полная разбивка с суммами по уровням</a>
@@ -404,6 +420,15 @@ const howToSchema = {
 
   /* Статьи */
   .go { display: inline-flex; align-items: center; gap: 6px; font-size: 14.5px; font-weight: 600; color: var(--acc-deep); }
+
+  /* Оговорка под ценами: обязательна везде, где показаны суммы СРО. */
+  .fees-note {
+    margin-top: 26px;
+    max-width: 82ch;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--on-dark-muted);
+  }
 
   /* FAQ.
      Раскрывается плавно, без JavaScript: interpolate-size разрешает браузеру
