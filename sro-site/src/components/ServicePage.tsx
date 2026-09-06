@@ -163,7 +163,7 @@ function Blocks({ block }: { block: ServiceBlock }) {
           <Reveal delay={70} className="h-full">
             <DocGroup
               title="Запрашивает СРО: ИП"
-              hint="Тот же список для индивидуального предпринимателя."
+              hint="Список той же организации для индивидуального предпринимателя."
               items={DOCS_IP}
               tone="sro"
             />
