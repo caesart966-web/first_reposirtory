@@ -133,18 +133,19 @@ export function Services() {
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 sm:h-11 sm:w-11">
                         <service.icon className="h-5 w-5" aria-hidden="true" />
                       </div>
-                      <h4 className="font-semibold text-neutral-950 sm:mt-5">{service.title}</h4>
+                      {/* Стрелка стоит в строке заголовка, а не подписью внизу:
+                          восемь одинаковых «Подробнее об услуге» читались шумом,
+                          а карточка и так кликается целиком. Стрелка остаётся —
+                          без неё ничто не говорит, что здесь есть переход. */}
+                      <h4 className="flex min-w-0 flex-1 items-start gap-2 font-semibold text-neutral-950 sm:mt-5">
+                        <span className="min-w-0">{service.title}</span>
+                        <ArrowRight
+                          className="ml-auto mt-0.5 h-4 w-4 shrink-0 text-neutral-400 transition-all duration-200 group-hover/card:translate-x-0.5 group-hover/card:text-accent-600"
+                          aria-hidden="true"
+                        />
+                      </h4>
                     </div>
                     <p className="mt-2.5 text-sm leading-relaxed text-neutral-600 sm:mt-2">{service.text}</p>
-                    {/* Подпись прижата к низу карточки, чтобы стрелки в ряду
-                        стояли на одной линии при разной длине текста. */}
-                    <span className="mt-auto inline-flex items-center gap-1.5 pt-4 text-sm font-semibold text-accent-700">
-                      Подробнее об услуге
-                      <ArrowRight
-                        className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover/card:translate-x-1"
-                        aria-hidden="true"
-                      />
-                    </span>
                   </a>
                 </Reveal>
               ))}
