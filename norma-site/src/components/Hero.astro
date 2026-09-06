@@ -171,28 +171,33 @@ const stats = [
 
   /* ── Фотография ──
      Появляется, только если она задана в src/config/site.ts (heroPhoto).
-     Обработка обязательна и не отключается: сайт белый, а любая фотография
-     стройки — тёмная и пёстрая. Поэтому кадр обесцвечивается, слегка
-     уводится в тёплый тон под сургучный акцент и растворяется в бумаге
-     сверху, снизу и слева. Смысл в том, чтобы фотография читалась как
-     фактура листа, а не как заставка: текст остаётся на белом и не требует
-     ни пелены, ни тени под буквами.
 
-     Слева она гаснет сильнее — там колонка с заголовком. */
+     Обработка обязательна и не отключается. Сайт белый, и снимок должен
+     читаться как фактура листа, а не как заставка: тогда текст остаётся
+     на бумаге и не требует ни пелены поверх кадра, ни тени под буквами.
+     Отсюда три вещи:
+
+     • Цвет приглушается, но не до серого. Полная обесцветка убила бы
+       бронзу, а она попадает в тот же тёплый ряд, что и сургучный акцент,
+       и работает на оформление.
+     • Кадр гаснет слева — там колонка с заголовком, и текст должен лежать
+       на чистой бумаге, а не на фотографии.
+     • Сверху и снизу кадр растворяется в белом, чтобы у фотографии
+       не было видимого края. */
   .photo {
     position: absolute;
     inset: 0;
     z-index: -1;
     background-size: cover;
-    background-position: 72% center;
-    filter: grayscale(1) contrast(1.05) sepia(0.22);
-    opacity: 0.5;
+    background-position: 76% center;
+    filter: saturate(0.62) contrast(1.04) brightness(1.03);
+    opacity: 0.42;
     mask-image:
-      linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.35) 34%, #000 72%),
-      linear-gradient(180deg, transparent 0%, #000 22%, #000 62%, transparent 96%);
+      linear-gradient(90deg, transparent 0%, transparent 36%, rgba(0, 0, 0, 0.4) 62%, #000 86%),
+      linear-gradient(180deg, transparent 0%, #000 12%, #000 76%, transparent 99%);
     -webkit-mask-image:
-      linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.35) 34%, #000 72%),
-      linear-gradient(180deg, transparent 0%, #000 22%, #000 62%, transparent 96%);
+      linear-gradient(90deg, transparent 0%, transparent 36%, rgba(0, 0, 0, 0.4) 62%, #000 86%),
+      linear-gradient(180deg, transparent 0%, #000 12%, #000 76%, transparent 99%);
     mask-composite: intersect;
     -webkit-mask-composite: source-in;
     pointer-events: none;
@@ -200,12 +205,30 @@ const stats = [
   /* Когда фотография есть, чертёж уходит: два рисунка на одном фоне
      спорят друг с другом. */
   .photo ~ .draft { display: none; }
-  @media (max-width: 767px) {
+  /* Порог 1023 px, а не 767: раскладка первого экрана становится
+     одноколоночной именно здесь, и фотография должна переключаться вместе
+     с ней. На планшете с прежним порогом текст шёл во всю ширину прямо
+     по бронзе — 2.3:1 при норме 4.5. */
+  @media (max-width: 1023px) {
+    /* В одну колонку фотография не может стоять за всем текстом: бронза
+       приходится ровно на абзац, и он перестаёт читаться.
+       Поэтому слой ограничен верхней полосой в 520 px — это чип с
+       географией и заголовок, набранный крупно и почти чёрным, — а книзу
+       гаснет задолго до абзаца.
+
+       Высота задана числом, а не долей от секции: доля зависела бы
+       от количества текста, и фотография уезжала бы при каждой правке. */
     .photo {
-      background-position: 60% center;
-      opacity: 0.4;
-      mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 46%, transparent 76%);
-      -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 46%, transparent 76%);
+      bottom: auto;
+      height: 400px;
+      background-position: 84% 26%;
+      opacity: 0.46;
+      mask-image:
+        linear-gradient(90deg, transparent 0%, transparent 22%, rgba(0, 0, 0, 0.4) 52%, #000 82%),
+        linear-gradient(180deg, transparent 0%, #000 10%, #000 40%, transparent 74%);
+      -webkit-mask-image:
+        linear-gradient(90deg, transparent 0%, transparent 22%, rgba(0, 0, 0, 0.4) 52%, #000 82%),
+        linear-gradient(180deg, transparent 0%, #000 10%, #000 40%, transparent 74%);
     }
   }
 
