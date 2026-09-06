@@ -25,7 +25,7 @@ export const REQUISITES = {
   kpp: '616401001',
   ogrn: '[ОГРН]',
   // Индекс не указан — не выдумываем.
-  address: 'Ростовская область, г. Ростов-на-Дону, ул. Социалистическая, зд. 74, каб. 19',
+  address: 'Ростовская область, г. Ростов-на-Дону, ул. Социалистическая, зд. 74, офис 406/19',
 } as const
 
 export const isPlaceholder = (value: string) => value.startsWith('[') && value.endsWith(']')
