@@ -101,6 +101,9 @@ SECTIONS = [
 
 MIN_VOCAB = 40
 
+#: Her paragrafın dört sorusunda bu tiplerin her birinden en az biri bulunmalı.
+PARAGRAPH_QTYPES = ("according_to", "it_is_clear", "inference", "main_idea")
+
 # Görsel dil: ÖSYM kitapçığı — lacivert metin, ince çerçeveler, beyaz kâğıt.
 NAVY = RGBColor(0x1B, 0x33, 0x5F)
 INK = RGBColor(0x14, 0x1C, 0x2B)
@@ -195,6 +198,16 @@ def validate(kit: dict) -> list[str]:
     if paragraph_qs - covered:
         errors.append(f"Parçası olmayan paragraf soruları: {sorted(paragraph_qs - covered)}")
 
+    for p in kit.get("passages", []):
+        first, last = p.get("first"), p.get("last")
+        types = {by_no[n].get("qtype") for n in range(first, last + 1) if n in by_no}
+        missing = [t for t in PARAGRAPH_QTYPES if t not in types]
+        if missing:
+            errors.append(
+                f"Parça {first}-{last}: her paragrafta bulunması gereken soru tipleri "
+                f"eksik: {', '.join(missing)}."
+            )
+
     vocab = kit.get("vocabulary", [])
     if len(vocab) < MIN_VOCAB:
         errors.append(f"Kelime Röntgeni en az {MIN_VOCAB} madde ister, {len(vocab)} bulundu.")
@@ -205,7 +218,10 @@ def validate(kit: dict) -> list[str]:
     blob = _kit_text(kit).lower()
     for en, _tr in vocab:
         head = re.sub(r"\s*\(.*?\)", "", en).strip().lower()
-        if head and head not in blob:
+        # Parantez içi çoğu kez sözcüğün testteki çekimli hâlini taşır
+        # ("sweep through (swept through)"), o yüzden o da aranır.
+        forms = [head] + [f.strip().lower() for f in re.findall(r"\((.*?)\)", en)]
+        if head and not any(f and f in blob for f in forms):
             stem = head.split()[0]
             if not re.search(r"\b" + re.escape(stem[: max(4, len(stem) - 3)]), blob):
                 warnings.append(f"Kelime Röntgeni: '{en}' testte bulunamadı.")
@@ -222,7 +238,8 @@ def _kit_text(kit: dict) -> str:
     for q in kit.get("questions", []):
         parts.append(q.get("stem", ""))
         parts.extend(q.get("sentences", []) or [])
-        parts.extend(line for _who, line in (q.get("dialogue") or []))
+        for who, line in (q.get("dialogue") or []):
+            parts.extend((who, line))  # konuşan kişinin adı da kitapçıkta basılır
         parts.extend((q.get("options") or {}).values())
     return "\n".join(parts)
 
@@ -380,16 +397,10 @@ def _table_style(table, *, pct=100, border=RULE, sz=6, kinds=("top", "left", "bo
     table.autofit = False
 
 
-def box(doc, *, pct=100, border=RULE, sz=6, fill=None, margins=(50, 100, 60, 100),
-        cant_split=True):
+def box(doc, *, pct=100, border=RULE, sz=6, fill=None, margins=(50, 100, 60, 100)):
     """Tek hücreli çerçeveli kutu döndürür; içine paragraf eklenir."""
     table = doc.add_table(rows=1, cols=1)
     _table_style(table, pct=pct, border=border, sz=sz, margins=margins)
-    if cant_split:
-        # Bir soru kutusu sütunun sonunda ikiye bölünmemeli: bölünen kutu
-        # ÖSYM düzenindeki "her soru bir çerçevede" kuralını bozar.
-        tr_pr = table.rows[0]._tr.get_or_add_trPr()
-        tr_pr.append(OxmlElement("w:cantSplit"))
     cell = table.cell(0, 0)
     cell.paragraphs[0]._p.getparent().remove(cell.paragraphs[0]._p)
     if fill:
@@ -397,8 +408,17 @@ def box(doc, *, pct=100, border=RULE, sz=6, fill=None, margins=(50, 100, 60, 100
     return cell
 
 
-def spacer(doc, pt=6):
-    para(doc, "", size=1, after=pt)
+def hold_together(cell):
+    """Kutunun içeriğini bir arada tutar: soru sütun sonunda ikiye bölünmesin."""
+    paragraphs = cell.paragraphs
+    for paragraph in paragraphs[:-1]:
+        paragraph.paragraph_format.keep_with_next = True
+    if paragraphs:
+        paragraphs[-1].paragraph_format.keep_with_next = False
+
+
+def spacer(doc, pt=6, keep_next=False):
+    para(doc, "", size=1, after=pt, keep_next=keep_next)
 
 
 def add_field(paragraph, instr, placeholder="1", size=8, bold=False, color=NAVY):
@@ -590,6 +610,7 @@ def render_question(doc, q):
         p.paragraph_format.space_after = Pt(6)
         _options(cell, q)
 
+    hold_together(cell)
     spacer(doc, 5)
 
 
@@ -798,10 +819,11 @@ def render_body(doc, layout, kit):
             continue
 
         # Diyaloglar tam sayfa genişliğinde basılır; diğer bölümler iki sütun.
+        # Yönerge kutusu sütunun içine girer, böylece ilk sorudan kopmaz.
         columns = 1 if sec["group"] == "dialogue" else 2
-        instruction_box(doc, sec["first"], sec["last"], sec["instr"],
-                        pct=100 if columns == 1 else 62)
         layout.need(columns)
+        instruction_box(doc, sec["first"], sec["last"], sec["instr"],
+                        pct=100 if columns == 1 else 96)
         for n in range(sec["first"], sec["last"] + 1):
             render_question(doc, by_no[n])
 

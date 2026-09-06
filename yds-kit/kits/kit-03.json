@@ -1,0 +1,939 @@
+{
+  "kit": 3,
+  "topic": "Genel Deneme",
+  "date": "2026",
+  "passages": [
+    {
+      "first": 43,
+      "last": 46,
+      "text": "On a hot afternoon a street lined with trees can be eight degrees cooler than a street of the same width without them. Part of the difference is shade, but not all of it: a tree also pumps water from the soil into the air through its leaves, and evaporation takes heat with it. City councils have begun to treat trees as a piece of equipment rather than as decoration, and some now count the cooling they provide in the same accounts as air conditioning. The catch is that a young tree does very little. A newly planted sapling gives almost no shade, and it may be twenty years before it earns its place. Cities that cut down old trees and plant twice as many small ones therefore grow hotter first."
+    },
+    {
+      "first": 47,
+      "last": 50,
+      "text": "Snow that falls on Antarctica never melts. It is buried by the snow of the following year and pressed into ice, and the tiny bubbles trapped inside it keep a sample of the air from the day it fell. Drilling teams pull out cylinders of this ice, some of them from three kilometres down, and read the layers as one reads the rings of a tree. The deepest ice recovered so far is about eight hundred thousand years old. From the bubbles, scientists can measure directly how much carbon dioxide the air held long before anyone was there to record it, and the measurements show that the level today is higher than at any point in that whole period. The ice, in other words, is not a model of the past but a piece of it."
+    },
+    {
+      "first": 51,
+      "last": 54,
+      "text": "For years, publishers treated the audiobook as a small extra, produced for people who could not read print. It is now the fastest-growing part of the business, and in some countries it earns more than hardbacks do. Listeners are not, on the whole, people who have stopped reading; surveys find that they read as many printed books as anyone else and simply add listening to the hours they spend driving, cooking or walking. Whether listening counts as reading is a question that will not go away. Tests of comprehension find little difference for straightforward narrative, but readers of a difficult argument do better on paper, where they can stop, go back and see the shape of the page. Publishers have drawn their own conclusion: the two formats are now planned together, and many authors record their own books."
+    },
+    {
+      "first": 55,
+      "last": 58,
+      "text": "Modern concrete begins to crumble after fifty or sixty years in sea water. Roman harbour walls have stood in the Mediterranean for two thousand. For a long time the difference was put down to the volcanic ash that the Romans mixed into their concrete, and that is part of the answer. Recent work points to something the Romans may not have intended at all: small white lumps of lime left unmixed in the material. When a crack opens and water reaches one of these lumps, the lime dissolves and then sets again, filling the crack. What looked to earlier engineers like careless work now looks like the reason the walls are still there. Laboratories are already making concrete with lumps deliberately left in it."
+    },
+    {
+      "first": 59,
+      "last": 62,
+      "text": "Two thirds of the people in Europe cannot see the Milky Way from their homes. The glow that hides it comes mostly from lamps that send their light upwards, where nobody needs it. This is one of the few kinds of pollution that stops the moment the source is switched off, and a handful of towns have proved it. In them, street lamps have been fitted with shades, aimed downwards and dimmed after midnight; the stars came back within a single night, and the electricity bill fell. The argument that finally persuaded most councils, however, was not the sky at all. It was the growing evidence that bright light at night disturbs the sleep of the people living beneath it and confuses the insects and birds that navigate by the moon."
+    }
+  ],
+  "questions": [
+    {
+      "no": 27, "group": "sentence_completion", "level": "B2",
+      "stem": "Because the bridge is closed for repairs until October, ----.",
+      "options": {
+        "o1": "lorries have to make a detour of almost fifty kilometres",
+        "o2": "the river below it is one of the deepest in the country",
+        "o3": "the structure was completed in the year the factory opened",
+        "o4": "the engineers who designed it came from three different firms",
+        "o5": "many drivers still remember the traffic jams of the 1990s"
+      },
+      "order": ["o2", "o3", "o4", "o1", "o5"],
+      "answer": "o1", "trap": "o5",
+      "why": "Because bir sonuç ister; köprünün kapalı olmasının doğrudan sonucu, kamyonların uzun bir sapak yapmak zorunda kalmasıdır.",
+      "trap_note": "Trafikten söz ettiği için konu birliği kurar, ama bugünkü kapanışın sonucu değil, geçmişe ait bir anıdır."
+    },
+    {
+      "no": 28, "group": "sentence_completion", "level": "B2",
+      "stem": "Although the recipe calls for six eggs, ----.",
+      "options": {
+        "o1": "the cake turns out just as well with four",
+        "o2": "the oven has to be heated for twenty minutes beforehand",
+        "o3": "it has been in the family for at least three generations",
+        "o4": "most bakers add a little lemon peel to the mixture",
+        "o5": "the ingredients are all easy to find at any market"
+      },
+      "order": ["o2", "o1", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o4",
+      "why": "Although karşıtlık ister: tarif altı yumurta istemesine rağmen kekin dört yumurtayla da olması bu karşıtlığı kurar.",
+      "trap_note": "Tarife yapılan bir ekleme anlatır; ekleme ilişkisi, Although'un istediği karşıtlığın yerini tutmaz."
+    },
+    {
+      "no": 29, "group": "sentence_completion", "level": "B2",
+      "stem": "The instructions that came with the machine were so badly translated ----.",
+      "options": {
+        "o1": "that the technician had to telephone the manufacturer twice",
+        "o2": "because the company had used an automatic translation tool",
+        "o3": "although a printed English version was available online",
+        "o4": "so the shop offered to install the machine free of charge",
+        "o5": "which the customers complained about in their reviews"
+      },
+      "order": ["o2", "o4", "o1", "o3", "o5"],
+      "answer": "o1", "trap": "o4",
+      "why": "so + zarf/sıfat kalıbı yalnızca that ile tamamlanır ve kötü çevirinin sonucunu bildirir.",
+      "trap_note": "Makul bir sonuç verdiği için çekicidir, ancak so ... so biçiminde aynı bağlacı tekrarlayarak yapıyı bozar."
+    },
+    {
+      "no": 30, "group": "sentence_completion", "level": "B2",
+      "stem": "It was such a quiet village ----.",
+      "options": {
+        "o1": "that the sound of a single car could be heard from any house",
+        "o2": "because the main road had been moved to the other valley",
+        "o3": "so the writer decided to spend the whole winter there",
+        "o4": "while the town on the coast was crowded all summer",
+        "o5": "which appears on maps drawn four hundred years ago"
+      },
+      "order": ["o1", "o2", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "such a + sıfat + isim kalıbının karşılığı that yan cümlesidir; sessizliğin sonucu tek bir arabanın her evden duyulmasıdır.",
+      "trap_note": "Köyün neden sessiz olduğunu açıklar; oysa such ... that yapısı sebep değil sonuç ister."
+    },
+    {
+      "no": 31, "group": "sentence_completion", "level": "C1",
+      "stem": "Having been repaired three times in the same winter, ----.",
+      "options": {
+        "o1": "the roof was finally replaced in the spring",
+        "o2": "the owner decided to sell the house instead",
+        "o3": "the builders refused to come back a fourth time",
+        "o4": "it was clear that something had to change",
+        "o5": "the neighbours began to complain about the noise"
+      },
+      "order": ["o2", "o3", "o5", "o1", "o4"],
+      "answer": "o1", "trap": "o2",
+      "why": "Having been repaired edilgen ortaç öbeğidir; üç kez onarılan şey ana cümlenin öznesi olmalıdır, bu da yalnızca çatı olabilir.",
+      "trap_note": "Onarımdan etkilenen kişiyi özne yapar; onarılan ev sahibi değil çatı olduğu için sarkık ortaç hatası doğar."
+    },
+    {
+      "no": 32, "group": "sentence_completion", "level": "B2",
+      "stem": "Nobody in the office can remember a week ----.",
+      "options": {
+        "o1": "when so many people were away at the same time",
+        "o2": "which so many people were away at the same time",
+        "o3": "where so many people were away at the same time",
+        "o4": "whose so many people were away at the same time",
+        "o5": "that so many people were away at the same time in it"
+      },
+      "order": ["o2", "o3", "o4", "o5", "o1"],
+      "answer": "o1", "trap": "o3",
+      "why": "week zaman bildiren bir addır; ardından gelen tam cümle in which anlamındaki when ile bağlanır.",
+      "trap_note": "Yer bildiren where'i seçer; oysa ilgi cümlesinin bağlandığı ad bir yer değil, bir zaman dilimidir."
+    },
+    {
+      "no": 33, "group": "sentence_completion", "level": "B2",
+      "stem": "By the end of next month, the team ----.",
+      "options": {
+        "o1": "will have tested every bridge on the northern line",
+        "o2": "has tested every bridge on the northern line",
+        "o3": "tested every bridge on the northern line",
+        "o4": "had tested every bridge on the northern line",
+        "o5": "is testing every bridge on the northern line"
+      },
+      "order": ["o2", "o1", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "By the end of next month gelecekte bir bitiş noktası verir; o ana kadar tamamlanacak eylem future perfect ister.",
+      "trap_note": "Tamamlanmışlığı doğru okur ama bitiş noktasını bugüne çeker; gelecekteki sınır, şimdiki zamana taşınır."
+    },
+    {
+      "no": 34, "group": "sentence_completion", "level": "B2",
+      "stem": "The new law does not only apply to restaurants; ----.",
+      "options": {
+        "o1": "it also covers cafés, bakeries and market stalls",
+        "o2": "restaurants must display it near the entrance",
+        "o3": "it was passed by a large majority in parliament",
+        "o4": "cafés and bakeries were consulted before it was written",
+        "o5": "the fine for breaking it has not yet been decided"
+      },
+      "order": ["o2", "o4", "o1", "o3", "o5"],
+      "answer": "o1", "trap": "o4",
+      "why": "not only ... also kalıbı bir ekleme ister: yasanın kapsamına giren ikinci grup sayılmalıdır.",
+      "trap_note": "Aynı işletmelerden söz ettiği için doğru görünür, ama kapsamı değil hazırlık sürecini anlatır; ekleme ilişkisi kurulmaz."
+    },
+    {
+      "no": 35, "group": "sentence_completion", "level": "B2",
+      "stem": "If you leave the paint in the sun for more than an hour, ----.",
+      "options": {
+        "o1": "it will be too thick to spread properly",
+        "o2": "it would be too thick to spread properly",
+        "o3": "it would have been too thick to spread properly",
+        "o4": "it had been too thick to spread properly",
+        "o5": "it was too thick to spread properly"
+      },
+      "order": ["o1", "o2", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "If + present simple yapısı birinci tip koşul cümlesidir; gerçekleşmesi mümkün bir durumu anlatır ve ana cümlede will ister.",
+      "trap_note": "would kullanarak ikinci tip koşula kayar; olabilir bir durum, gerçek dışı bir varsayıma dönüşür."
+    },
+    {
+      "no": 36, "group": "sentence_completion", "level": "B2",
+      "stem": "Even though the app was designed for farmers, ----.",
+      "options": {
+        "o1": "most of the people who use it now live in cities",
+        "o2": "it shows the weather forecast for the next ten days",
+        "o3": "it was developed by a small team at a rural university",
+        "o4": "the number of farmers using it grows every season",
+        "o5": "it can be downloaded in twelve different languages"
+      },
+      "order": ["o4", "o2", "o3", "o5", "o1"],
+      "answer": "o1", "trap": "o4",
+      "why": "Even though beklenmedik bir sonuç ister: çiftçiler için tasarlanan uygulamayı çoğunlukla şehirlilerin kullanması bu beklentiyi kırar.",
+      "trap_note": "Çiftçi sayısının artması, çiftçiler için tasarlanmış bir uygulamanın beklenen sonucudur; karşıtlık kurmaz."
+    },
+    {
+      "no": 37, "group": "translation", "level": "C1", "direction": "en_tr",
+      "stem": "Seldom is a decision of this importance taken without consulting the regional offices.",
+      "options": {
+        "o1": "Bu önemde bir karar, bölge müdürlüklerine danışılmadan nadiren alınır.",
+        "o2": "Bu önemde bir karar, bölge müdürlüklerine danışılmadan sıkça alınır.",
+        "o3": "Bölge müdürlükleri, bu önemde bir kararı nadiren kendileri alır.",
+        "o4": "Bölge müdürlükleri, önemli kararların alınmasına nadiren katılır.",
+        "o5": "Bölge müdürlüklerine danışılması, bu önemde kararların alınmasını geciktirir."
+      },
+      "order": ["o2", "o1", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Seldom cümle başına gelince yardımcı fiil öne alınır; devrik yapı yalnızca vurgu içindir, olumsuz sıklık anlamı korunur.",
+      "trap_note": "Devrik yapıyı olumlu bir vurgu sanıp 'sıkça' der; olumsuz sıklık zarfı tersine çevrilince cümle karşıt bir anlam kazanır."
+    },
+    {
+      "no": 38, "group": "translation", "level": "C1", "direction": "en_tr",
+      "stem": "Not only did the storm damage the roof, but it also flooded the ground floor of the school.",
+      "options": {
+        "o1": "Fırtına yalnızca çatıya zarar vermekle kalmadı, okulun zemin katını da su bastı.",
+        "o2": "Fırtına çatıya zarar verdi ama okulun zemin katını su basmadı.",
+        "o3": "Fırtına çatıya zarar vermedi, yalnızca okulun zemin katını su bastı.",
+        "o4": "Çatıya zarar veren fırtına, okulun zemin katını su basmadan önce dinmişti.",
+        "o5": "Okulun zemin katını su bastığı için fırtına çatıya da zarar verdi."
+      },
+      "order": ["o2", "o3", "o5", "o1", "o4"],
+      "answer": "o1", "trap": "o2",
+      "why": "Not only ... but also iki olumsuzluk değil iki olumlu bilgi ekler: hem çatı zarar görmüş hem de zemin katı su basmıştır.",
+      "trap_note": "Devrik yapıdaki not'u ikinci yarıya taşıyıp su baskınını olumsuzlar; eklenen ikinci bilgi ortadan kalkar."
+    },
+    {
+      "no": 39, "group": "translation", "level": "B2", "direction": "en_tr",
+      "stem": "Few of the changes that were promised last year have actually been made.",
+      "options": {
+        "o1": "Geçen yıl söz verilen değişikliklerin çok azı gerçekten yapıldı.",
+        "o2": "Geçen yıl söz verilen değişikliklerin çoğu gerçekten yapıldı.",
+        "o3": "Geçen yıl söz verilen değişikliklerin hiçbiri yapılmadı.",
+        "o4": "Bu yıl yapılan değişikliklerin çok azına geçen yıl söz verilmişti.",
+        "o5": "Geçen yıl az sayıda değişiklik yapılacağı söylenmişti."
+      },
+      "order": ["o1", "o2", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o3",
+      "why": "Few olumsuz bir niceleyicidir ve 'çok azı yapıldı' anlamını verir; bir bölümünün yapıldığı bilgisi korunmalıdır.",
+      "trap_note": "Azlığı yokluğa çevirir; 'çok azı' ile 'hiçbiri' arasındaki fark, yapılmış değişikliklerin tümüyle silinmesine yol açar."
+    },
+    {
+      "no": 40, "group": "translation", "level": "B2", "direction": "tr_en",
+      "stem": "Projesi jüriden tam not alan öğrenci, yaz boyunca bir mimarlık ofisinde çalışacak.",
+      "options": {
+        "o1": "The student whose project received full marks from the jury will work in an architect's office all summer.",
+        "o2": "The student who his project received full marks from the jury will work in an architect's office all summer.",
+        "o3": "The student, which project received full marks from the jury, will work in an architect's office all summer.",
+        "o4": "The project of the student, who received full marks from the jury, will be used in an architect's office all summer.",
+        "o5": "The student whose project received full marks from the jury worked in an architect's office all summer."
+      },
+      "order": ["o2", "o3", "o1", "o4", "o5"],
+      "answer": "o1", "trap": "o5",
+      "why": "'Projesi ... olan öğrenci' iyelik ilişkisi kurar; bu ilişki whose ile verilir ve eylem gelecek zamandadır.",
+      "trap_note": "İlgi cümlesini doğru kurar ama yüklemi geçmişe çeker; gelecekte yapılacak iş, olmuş bitmiş bir işe dönüşür."
+    },
+    {
+      "no": 41, "group": "translation", "level": "B2", "direction": "tr_en",
+      "stem": "Eski tren istasyonu, yıkılmak yerine kütüphaneye dönüştürülmeye değerdi.",
+      "options": {
+        "o1": "The old railway station was worth turning into a library rather than pulling down.",
+        "o2": "The old railway station was worth to turn into a library rather than pulling it down.",
+        "o3": "The old railway station turned a library into something worth keeping rather than pulling down.",
+        "o4": "It was worth pulling down the old railway station rather than turning it into a library.",
+        "o5": "The old railway station was pulled down because it was not worth turning into a library."
+      },
+      "order": ["o2", "o4", "o3", "o5", "o1"],
+      "answer": "o1", "trap": "o4",
+      "why": "worth kalıbından sonra -ing gelir ve rather than ile karşılaştırılan iki eylemin yönü korunur: dönüştürmek değerli, yıkmak değil.",
+      "trap_note": "rather than'in iki yanını yer değiştirir; değerli bulunan eylem yıkım, vazgeçilen eylem dönüşüm olur."
+    },
+    {
+      "no": 42, "group": "translation", "level": "B2", "direction": "tr_en",
+      "stem": "Sınav sonuçlarına yapılan itirazlar, üç kişilik bir komisyon tarafından on gün içinde değerlendiriliyor.",
+      "options": {
+        "o1": "The objections made to the exam results are assessed within ten days by a committee of three.",
+        "o2": "The objections made to the exam results is assessed within ten days by a committee of three.",
+        "o3": "A committee of three assesses the exam results within ten days of the objections.",
+        "o4": "The committee of three that assesses the objections is given ten days to take the exam.",
+        "o5": "Objections to the exam results may be made within ten days to a committee of three."
+      },
+      "order": ["o2", "o1", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o5",
+      "why": "Değerlendirilen şey itirazlardır; özne çoğul olduğu için edilgen yapı are assessed biçiminde kurulur.",
+      "trap_note": "On günlük süreyi itiraz etme süresine kaydırır; değerlendirmenin süresi, başvurunun süresine dönüşür."
+    },
+    {
+      "no": 43, "group": "paragraph", "level": "B2", "qtype": "according_to",
+      "stem": "According to the passage, ----.",
+      "options": {
+        "o1": "shade explains only part of the difference in temperature",
+        "o2": "trees make a street cooler mainly by blocking the wind",
+        "o3": "wide streets are always cooler than narrow ones",
+        "o4": "air conditioning costs less than the planting of trees",
+        "o5": "the leaves of a tree store the heat during the day"
+      },
+      "order": ["o2", "o3", "o1", "o4", "o5"],
+      "answer": "o1", "trap": "o5",
+      "why": "Parça farkın bir bölümünün gölgeden geldiğini, ama tamamının gölgeyle açıklanamayacağını söyler; ağaç aynı zamanda su pompalar ve buharlaşma ısıyı alıp götürür.",
+      "trap_note": "Yaprakların rolünü tersine çevirir: yapraklar ısıyı depolamaz, buharlaşma yoluyla ısının uzaklaşmasını sağlar."
+    },
+    {
+      "no": 44, "group": "paragraph", "level": "B2", "qtype": "it_is_clear",
+      "stem": "It is clear from the passage that a newly planted tree ----.",
+      "options": {
+        "o1": "takes many years to give the benefit that an old tree gives",
+        "o2": "needs more water than a tree that is fully grown",
+        "o3": "is planted mainly for the way that it looks",
+        "o4": "begins to cool the street as soon as its leaves appear",
+        "o5": "is cheaper to look after than an older tree"
+      },
+      "order": ["o2", "o3", "o4", "o5", "o1"],
+      "answer": "o1", "trap": "o4",
+      "why": "Parça yeni dikilen fidanın neredeyse hiç gölge vermediğini ve yerini hak etmesinin yirmi yıl alabileceğini söyler.",
+      "trap_note": "Yaprakların çıkmasını serinletmenin başlangıcı sayar; oysa parçaya göre belirleyici olan yaprak değil, ağacın büyüklüğü ve yaşıdır."
+    },
+    {
+      "no": 45, "group": "paragraph", "level": "B2", "qtype": "inference",
+      "stem": "It can be inferred from the passage that replacing old trees with young ones ----.",
+      "options": {
+        "o1": "makes a city warmer for a period of years",
+        "o2": "is the cheapest way of cooling a city centre",
+        "o3": "is no longer permitted in most European cities",
+        "o4": "doubles the amount of shade almost at once",
+        "o5": "has no effect at all on the temperature of a street"
+      },
+      "order": ["o2", "o3", "o4", "o1", "o5"],
+      "answer": "o1", "trap": "o4",
+      "why": "Yaşlı ağaçları kesip iki katı fidan diken şehirlerin önce ısınması, kaybın yıllarca telafi edilemediği anlamına gelir.",
+      "trap_note": "Sayının iki katına çıkmasını gölgenin de iki katına çıkması sanır; oysa gölgeyi veren sayı değil, ağacın boyudur."
+    },
+    {
+      "no": 46, "group": "paragraph", "level": "B2", "qtype": "main_idea",
+      "stem": "The passage is mainly about ----.",
+      "options": {
+        "o1": "why city trees cool the streets and why young ones cannot replace old ones quickly",
+        "o2": "the equipment that city councils use in order to measure temperature",
+        "o3": "the cost of running air conditioning in modern office buildings",
+        "o4": "the best species of tree to plant along a narrow street",
+        "o5": "the amount of water that a large tree needs every day"
+      },
+      "order": ["o1", "o2", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o3",
+      "why": "Parçanın ilk yarısı ağaçların nasıl serinlettiğini, ikinci yarısı genç ağaçların bu işi neden hemen üstlenemediğini anlatır.",
+      "trap_note": "Klima parçada yalnızca bir karşılaştırma ölçüsü olarak geçer; yan bir ayrıntı ana konu sanılır."
+    },
+    {
+      "no": 47, "group": "paragraph", "level": "B2", "qtype": "main_idea",
+      "stem": "The passage is mainly concerned with ----.",
+      "options": {
+        "o1": "the way that ancient air trapped in Antarctic ice is used to read the climate of the past",
+        "o2": "the technical problems of drilling three kilometres down into ice",
+        "o3": "the reasons why the snow in Antarctica does not melt in summer",
+        "o4": "the differences between the rings of a tree and the layers of ice",
+        "o5": "the amount of carbon dioxide that human beings produce today"
+      },
+      "order": ["o2", "o1", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o5",
+      "why": "Parça buzun içindeki kabarcıkların geçmişteki havayı nasıl sakladığını ve bundan hangi ölçümlerin yapıldığını anlatır.",
+      "trap_note": "Bugünkü karbondioksit düzeyi parçada yalnızca bir karşılaştırma noktasıdır; ölçüm yöntemi değil, sonuçlardan biridir."
+    },
+    {
+      "no": 48, "group": "paragraph", "level": "B2", "qtype": "according_to",
+      "stem": "According to the passage, the bubbles in the ice are valuable because they ----.",
+      "options": {
+        "o1": "hold a real sample of the air from the year in which the snow fell",
+        "o2": "show how deep each layer of snow was when it fell",
+        "o3": "make the ice easier to cut into cylinders",
+        "o4": "contain water that has never been frozen before",
+        "o5": "record the temperature of the ice as it was drilled"
+      },
+      "order": ["o2", "o5", "o1", "o3", "o4"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parçanın ikinci cümlesi kabarcıkların değerini doğrudan verir: düştüğü günün havasından bir örnek saklarlar.",
+      "trap_note": "Katmanların okunmasıyla kabarcıkların işlevini karıştırır; katmanlar zamanı, kabarcıklar havayı verir."
+    },
+    {
+      "no": 49, "group": "paragraph", "level": "B2", "qtype": "it_is_clear",
+      "stem": "It is clear from the passage that the carbon dioxide level of today ----.",
+      "options": {
+        "o1": "has no equal anywhere in the eight-hundred-thousand-year record",
+        "o2": "was reached once before, about eight hundred thousand years ago",
+        "o3": "cannot be measured in ice that is more than a century old",
+        "o4": "is falling more slowly than scientists had expected",
+        "o5": "is the same in Antarctica as it is in Europe"
+      },
+      "order": ["o1", "o2", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça bugünkü düzeyin, kaydın kapsadığı tüm dönemdeki her noktadan yüksek olduğunu söyler.",
+      "trap_note": "Kaydın en eski ucunu bir zirve sanır; parçada o tarih kaydın sınırıdır, benzer bir düzeyin görüldüğü an değil."
+    },
+    {
+      "no": 50, "group": "paragraph", "level": "B2", "qtype": "inference",
+      "stem": "It can be inferred from the passage that the writer regards the ice as ----.",
+      "options": {
+        "o1": "direct evidence rather than a calculation about the past",
+        "o2": "the only source of information about ancient climates",
+        "o3": "too fragile to be carried away from Antarctica",
+        "o4": "more useful to geologists than to climate scientists",
+        "o5": "a record that becomes less reliable with depth"
+      },
+      "order": ["o2", "o3", "o4", "o5", "o1"],
+      "answer": "o1", "trap": "o2",
+      "why": "Son cümledeki 'geçmişin bir modeli değil, bir parçası' ifadesi buzun hesaplanmış değil, doğrudan bir kanıt sayıldığını gösterir.",
+      "trap_note": "Buzun değerini tekelciliğe çevirir; parça buzu başka kaynaklarla karşılaştırmaz, yalnızca niteliğini belirtir."
+    },
+    {
+      "no": 51, "group": "paragraph", "level": "B2", "qtype": "it_is_clear",
+      "stem": "It is clear from the passage that people who listen to audiobooks ----.",
+      "options": {
+        "o1": "generally read printed books as well",
+        "o2": "have usually given up reading in print",
+        "o3": "prefer difficult arguments to simple stories",
+        "o4": "listen mainly because they are unable to read print",
+        "o5": "buy fewer hardbacks than they used to buy"
+      },
+      "order": ["o2", "o3", "o4", "o1", "o5"],
+      "answer": "o1", "trap": "o4",
+      "why": "Anketler dinleyicilerin herkes kadar basılı kitap okuduğunu ve dinlemeyi buna eklediğini gösterir.",
+      "trap_note": "Sesli kitabın ilk çıkış amacını bugünkü dinleyicinin gerekçesi sanır; parça bu ikisini açıkça ayırır."
+    },
+    {
+      "no": 52, "group": "paragraph", "level": "B2", "qtype": "according_to",
+      "stem": "According to the passage, tests of comprehension show that ----.",
+      "options": {
+        "o1": "the format matters more for a difficult argument than for a simple story",
+        "o2": "listeners understand every kind of text less well than readers do",
+        "o3": "printed books are harder to follow than recordings are",
+        "o4": "authors who read their own books are easier to understand",
+        "o5": "the difference between the two formats has never been measured"
+      },
+      "order": ["o2", "o1", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Testler düz anlatıda küçük bir fark bulur, zor bir savda ise kâğıdın üstünlüğünü gösterir; belirleyici olan metnin türüdür.",
+      "trap_note": "Sınırlı bir farkı her metin türüne yayar; parçadaki 'düz anlatıda küçük fark' kaydı görmezden gelinir."
+    },
+    {
+      "no": 53, "group": "paragraph", "level": "B2", "qtype": "inference",
+      "stem": "It can be inferred from the passage that publishers now ----.",
+      "options": {
+        "o1": "treat the recording as part of a book's plan from the beginning",
+        "o2": "expect the printed book to disappear within a few years",
+        "o3": "publish only the titles that sell well as recordings",
+        "o4": "pay authors less for a recording than for a hardback",
+        "o5": "have stopped producing hardbacks in some countries"
+      },
+      "order": ["o2", "o5", "o1", "o3", "o4"],
+      "answer": "o1", "trap": "o5",
+      "why": "'İki biçim artık birlikte planlanıyor' ifadesi, kaydın sonradan eklenen bir ek olmaktan çıktığını gösterir.",
+      "trap_note": "Sesli kitabın bazı ülkelerde daha çok kazandığı bilgisini basılı kitabın kaldırılması sanır; satış karşılaştırması bir vazgeçişe dönüştürülür."
+    },
+    {
+      "no": 54, "group": "paragraph", "level": "B2", "qtype": "main_idea",
+      "stem": "Which of the following would be the best title for the passage?",
+      "options": {
+        "o1": "From Extra to Mainstream: The Rise of the Audiobook",
+        "o2": "How to Record a Book in Your Own Voice",
+        "o3": "Why Printed Books Will Always Be Better",
+        "o4": "The Reading Habits of Drivers and Walkers",
+        "o5": "The End of the Hardback"
+      },
+      "order": ["o1", "o2", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o5",
+      "why": "Parça sesli kitabın küçük bir ekten sektörün en hızlı büyüyen bölümüne geçişini anlatır.",
+      "trap_note": "Satış karşılaştırmasını basılı kitabın sonu gibi okur; parça iki biçimin birlikte planlandığını söyleyerek bunun tersini belirtir."
+    },
+    {
+      "no": 55, "group": "paragraph", "level": "B2", "qtype": "according_to",
+      "stem": "According to the passage, the volcanic ash in Roman concrete ----.",
+      "options": {
+        "o1": "explains part but not all of the material's long life",
+        "o2": "was added in order to make the concrete cheaper",
+        "o3": "is the only reason why the harbour walls have survived",
+        "o4": "has never been found in any Roman building",
+        "o5": "was mixed in after the concrete had set"
+      },
+      "order": ["o3", "o2", "o4", "o5", "o1"],
+      "answer": "o1", "trap": "o3",
+      "why": "Parça külün 'cevabın bir parçası' olduğunu söyler ve ardından ikinci bir etkeni, kireç topaklarını anlatır.",
+      "trap_note": "'Bir parçası' ifadesini 'tek neden' diye okur; kısmi bir açıklama, tam bir açıklamaya dönüştürülür."
+    },
+    {
+      "no": 56, "group": "paragraph", "level": "B2", "qtype": "it_is_clear",
+      "stem": "It is clear from the passage that the small white lumps of lime ----.",
+      "options": {
+        "o1": "allow the material to repair its own cracks",
+        "o2": "were added in carefully measured quantities",
+        "o3": "make the concrete weaker in fresh water",
+        "o4": "are found only in walls built after the harbours",
+        "o5": "have to be removed before the concrete is used"
+      },
+      "order": ["o2", "o1", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Çatlak açılıp su topağa ulaştığında kireç çözünüp yeniden katılaşır ve çatlağı doldurur; bu, kendini onaran bir davranıştır.",
+      "trap_note": "Parçada Romalıların bunu hiç amaçlamamış olabileceği söylenir; kasıtsız bir kalıntı, ölçülü bir katkıya dönüştürülür."
+    },
+    {
+      "no": 57, "group": "paragraph", "level": "B2", "qtype": "inference",
+      "stem": "It can be inferred from the passage that earlier engineers ----.",
+      "options": {
+        "o1": "mistook a strength of the Roman method for a mistake",
+        "o2": "had never examined Roman concrete closely",
+        "o3": "were unable to produce concrete of any kind",
+        "o4": "already knew that the lumps repaired the cracks",
+        "o5": "copied the Roman recipe exactly as it was written"
+      },
+      "order": ["o1", "o2", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "'Daha önceki mühendislere özensizlik gibi görünen şey' ifadesi, bir üstünlüğün kusur sanıldığını doğrudan söyler.",
+      "trap_note": "Yanlış bir yorumu hiç incelememiş olmakla karıştırır; parçaya göre mühendisler malzemeyi görmüş ama yanlış okumuştur."
+    },
+    {
+      "no": 58, "group": "paragraph", "level": "B2", "qtype": "main_idea",
+      "stem": "The passage is mainly about ----.",
+      "options": {
+        "o1": "why Roman concrete outlasts the modern kind and what has been learned from it",
+        "o2": "the history of harbour building around the Mediterranean",
+        "o3": "the volcanic ash deposits that lie near the Bay of Naples",
+        "o4": "the reasons why modern concrete is cheaper to produce",
+        "o5": "the laboratories in which building materials are tested today"
+      },
+      "order": ["o2", "o3", "o4", "o1", "o5"],
+      "answer": "o1", "trap": "o5",
+      "why": "Parça Roma betonunun neden daha uzun dayandığını açıklar ve bu bilginin bugün nasıl kullanıldığıyla kapanır.",
+      "trap_note": "Son cümledeki laboratuvarları konu sanır; oysa orası, açıklanan bulgunun sonucudur."
+    },
+    {
+      "no": 59, "group": "paragraph", "level": "B2", "qtype": "inference",
+      "stem": "It can be inferred from the passage that light pollution differs from most other kinds because it ----.",
+      "options": {
+        "o1": "can be undone immediately once its cause is removed",
+        "o2": "affects only the people who live in large cities",
+        "o3": "has been measured accurately for over a century",
+        "o4": "cannot be reduced without switching off all the lamps",
+        "o5": "costs nothing at all to produce in the first place"
+      },
+      "order": ["o2", "o4", "o1", "o3", "o5"],
+      "answer": "o1", "trap": "o4",
+      "why": "Parça bu kirliliğin kaynağı kapatıldığı anda sona erdiğini söyler; yıldızların tek gecede geri gelmesi bunu doğrular.",
+      "trap_note": "Çözümü tümüyle karanlığa çevirir; parçada lambalar söndürülmemiş, siperlik takılıp aşağı yöneltilmiştir."
+    },
+    {
+      "no": 60, "group": "paragraph", "level": "B2", "qtype": "according_to",
+      "stem": "According to the passage, the towns that changed their lighting ----.",
+      "options": {
+        "o1": "saw the stars return at once and paid less for electricity",
+        "o2": "had to switch off their street lamps completely",
+        "o3": "were the first places in Europe to use electric light",
+        "o4": "found that the change cost more than they had expected",
+        "o5": "made the change in order to protect birds and insects"
+      },
+      "order": ["o2", "o3", "o4", "o5", "o1"],
+      "answer": "o1", "trap": "o5",
+      "why": "Parça sonucu iki maddede verir: yıldızlar tek gecede geri gelmiş ve elektrik faturası düşmüştür.",
+      "trap_note": "Kasabaların sonucunu belediyelerin gerekçesiyle karıştırır; hayvanlara ilişkin kanıt, kararı sonradan etkileyen argümandır."
+    },
+    {
+      "no": 61, "group": "paragraph", "level": "B2", "qtype": "it_is_clear",
+      "stem": "It is clear from the passage that most councils were finally persuaded by ----.",
+      "options": {
+        "o1": "the effect of night light on people and on wildlife",
+        "o2": "the wish to make the Milky Way visible again",
+        "o3": "the pressure of astronomers living in the towns",
+        "o4": "the cost of replacing the old street lamps",
+        "o5": "a law that obliged them to fit shades to the lamps"
+      },
+      "order": ["o2", "o1", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça belediyeleri ikna eden argümanın gökyüzü olmadığını açıkça söyler: uyku, kuşlar ve böcekler üzerindeki etkidir.",
+      "trap_note": "Parçanın açıkça dışladığı gerekçeyi seçer; 'gökyüzü hiç değildi' cümlesi göz ardı edilir."
+    },
+    {
+      "no": 62, "group": "paragraph", "level": "B2", "qtype": "main_idea",
+      "stem": "Which of the following best expresses the main idea of the passage?",
+      "options": {
+        "o1": "Light pollution is easy to reverse, and health and wildlife proved the strongest arguments for doing so.",
+        "o2": "The Milky Way has become invisible to almost everyone in Europe.",
+        "o3": "Street lighting has become far too expensive for small towns.",
+        "o4": "Insects and birds are disappearing from towns across the continent.",
+        "o5": "Astronomers have been asking for darker skies for many years."
+      },
+      "order": ["o1", "o2", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça hem sorunun kolayca geri döndürülebilirliğini hem de belediyeleri ikna eden asıl gerekçeyi birlikte anlatır.",
+      "trap_note": "Açılış cümlesindeki istatistiği ana fikir sanır; o cümle sorunun boyutunu gösteren bir girişten ibarettir."
+    },
+    {
+      "no": 63, "group": "dialogue", "level": "B2",
+      "dialogue": [
+        ["Teacher", "Your class has started keeping a weather diary. Whose idea was that?"],
+        ["Pupil", "Ours. We wanted to know whether it really rains more here than it does in the next valley."],
+        ["Teacher", "----"],
+        ["Pupil", "Not yet. We have only been measuring since March, so we cannot say anything for certain."]
+      ],
+      "options": {
+        "o1": "And have you found out anything so far?",
+        "o2": "Where exactly do you keep the rain gauge?",
+        "o3": "How many of you take part in the measuring?",
+        "o4": "Did anyone in the next valley agree to help you?",
+        "o5": "Have you shown the diary to the other classes?"
+      },
+      "order": ["o2", "o3", "o4", "o1", "o5"],
+      "answer": "o1", "trap": "o4",
+      "why": "'Henüz değil. Mart'tan beri ölçüyoruz, kesin bir şey söyleyemeyiz' yanıtı, ancak bir sonuç elde edilip edilmediğini soran bir cümleyi karşılar.",
+      "trap_note": "Komşu vadiden söz ettiği için konuyla ilgilidir, ama 'henüz değil' yanıtının dayandığı ölçüm süresi açıklamasıyla bağ kurmaz."
+    },
+    {
+      "no": 64, "group": "dialogue", "level": "B2",
+      "dialogue": [
+        ["Customer", "I would like to return this jacket. There is a hole in the lining."],
+        ["Assistant", "I am sorry about that. Do you have the receipt with you?"],
+        ["Customer", "----"],
+        ["Assistant", "That is not a problem. If you paid by card, we can find the purchase in the system."]
+      ],
+      "options": {
+        "o1": "I am afraid I threw it away, but I paid with my card.",
+        "o2": "Yes, here it is, together with the guarantee card.",
+        "o3": "I bought the jacket as a present for my brother.",
+        "o4": "Could I exchange it for the same one in blue?",
+        "o5": "The hole was already there when I opened the package."
+      },
+      "order": ["o2", "o5", "o1", "o3", "o4"],
+      "answer": "o1", "trap": "o2",
+      "why": "'Sorun değil. Kartla ödediyseniz alışverişi sistemde bulabiliriz' yanıtı, ancak fişin bulunmadığı ama kartla ödendiği bilgisinden sonra anlamlıdır.",
+      "trap_note": "Sorulan soruyu doğrudan yanıtlar ama olumlu yanıt verir; fiş elde olduğunda 'sorun değil' demenin ve sistemde arama yapmanın bir gerekçesi kalmaz."
+    },
+    {
+      "no": 65, "group": "dialogue", "level": "B2",
+      "dialogue": [
+        ["Editor", "You have translated the same novel twice, thirty years apart. Why go back to it?"],
+        ["Translator", "Because the language I used in 1990 now sounds like 1990 rather than like the book."],
+        ["Editor", "----"],
+        ["Translator", "No, the original has not changed at all. What has changed is the Turkish that a reader expects to find on the page."]
+      ],
+      "options": {
+        "o1": "Do you mean that a new edition of the original had appeared in the meantime?",
+        "o2": "How long did the second translation take you to finish?",
+        "o3": "Which of the two versions do you prefer yourself?",
+        "o4": "Did you work from the same dictionary on both occasions?",
+        "o5": "Have other translators criticised your first version?"
+      },
+      "order": ["o2", "o3", "o4", "o5", "o1"],
+      "answer": "o1", "trap": "o3",
+      "why": "'Hayır, özgün metin hiç değişmedi' yanıtı, ancak özgün metnin değişip değişmediğini soran bir cümleyi karşılayabilir.",
+      "trap_note": "Konuyla ilgili doğal bir sorudur ama 'hayır' ile yanıtlanamaz; çevirmenin verdiği yanıt bir tercih değil, bir düzeltmedir."
+    },
+    {
+      "no": 66, "group": "dialogue", "level": "B2",
+      "dialogue": [
+        ["Guide", "The wall you are looking at was built without mortar, and it has stood for four hundred years."],
+        ["Visitor", "----"],
+        ["Guide", "Exactly. Each stone was shaped until it fitted the ones around it, and the weight does the rest."]
+      ],
+      "options": {
+        "o1": "So the stones are held in place by their own shape and weight?",
+        "o2": "Was the wall built by the villagers themselves?",
+        "o3": "How high was the wall when it was first finished?",
+        "o4": "Does anybody still build walls in this way today?",
+        "o5": "Has the wall ever been repaired since it was built?"
+      },
+      "order": ["o2", "o1", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o4",
+      "why": "Rehberin 'Aynen öyle' diyerek taşların biçimlendirilmesini ve ağırlığın işi tamamlamasını anlatması, ancak bunu tahmin eden bir cümleden sonra gelebilir.",
+      "trap_note": "Duvar örme tekniğiyle ilgilidir ama bir tahmin içermez; 'Aynen öyle' onayını karşılayacak bir önerme sunmaz."
+    },
+    {
+      "no": 67, "group": "dialogue", "level": "B2",
+      "dialogue": [
+        ["Patient", "I have been taking the tablets for ten days and the cough is no better."],
+        ["Doctor", "----"],
+        ["Patient", "Twice a day, with breakfast and with dinner, exactly as it says on the box."]
+      ],
+      "options": {
+        "o1": "How often have you been taking them, and at what times?",
+        "o2": "Have you ever had a cough like this one before?",
+        "o3": "Are you taking any other medicine at the same time?",
+        "o4": "Does the cough get worse during the night?",
+        "o5": "Did the pharmacist explain the side effects to you?"
+      },
+      "order": ["o1", "o2", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o3",
+      "why": "'Günde iki kez, kahvaltıda ve akşam yemeğinde' yanıtı, yalnızca ilacın ne sıklıkta ve ne zaman alındığını soran bir cümleyi karşılar.",
+      "trap_note": "İlaçla ilgili makul bir sorudur, ancak yanıt başka bir ilacı değil, aynı ilacın alınma düzenini anlatır."
+    },
+    {
+      "no": 68, "group": "restatement", "level": "B2",
+      "stem": "It is not the noise that keeps me awake but the light from the street.",
+      "options": {
+        "o1": "What stops me from sleeping is the street light rather than the noise.",
+        "o2": "Neither the noise nor the light from the street keeps me awake.",
+        "o3": "The noise keeps me awake more than the light from the street does.",
+        "o4": "I would sleep better if there were no noise in the street.",
+        "o5": "The light from the street is just as disturbing as the noise."
+      },
+      "order": ["o2", "o3", "o4", "o5", "o1"],
+      "answer": "o1", "trap": "o5",
+      "why": "It is not X but Y kalıbı iki etken arasında seçim yapar: uyutmayan gürültü değil, sokak lambasının ışığıdır.",
+      "trap_note": "Seçimi eşitliğe çevirir; biri elenirken diğeri öne çıkarılmışken, iki etken aynı düzeye getirilir."
+    },
+    {
+      "no": 69, "group": "restatement", "level": "B2",
+      "stem": "The library will stay open during the holiday, though with shorter hours.",
+      "options": {
+        "o1": "The library is not closing for the holiday, but it will be open for fewer hours than usual.",
+        "o2": "The library will close during the holiday and reopen later with shorter hours.",
+        "o3": "The library keeps the same hours whether it is a holiday or not.",
+        "o4": "The library has to shorten its hours in order to stay open at all.",
+        "o5": "During the holiday the library will be open for longer than usual."
+      },
+      "order": ["o2", "o3", "o4", "o1", "o5"],
+      "answer": "o1", "trap": "o4",
+      "why": "Cümlenin iki yarısı korunmalıdır: kütüphane tatilde açıktır, ancak çalışma saatleri kısalmıştır.",
+      "trap_note": "İki bilgiyi bir koşul ilişkisine sokar; 'saatler kısa olsa da açık' ifadesi, 'açık kalabilmesi için kısaltmak zorunda' anlamına çevrilir."
+    },
+    {
+      "no": 70, "group": "restatement", "level": "C1",
+      "stem": "Little did the organisers know that half the audience would arrive an hour early.",
+      "options": {
+        "o1": "The organisers had no idea that half the audience would turn up an hour before time.",
+        "o2": "The organisers knew a little about the audience arriving an hour early.",
+        "o3": "The organisers told half the audience to arrive an hour early.",
+        "o4": "Half the audience knew that the organisers would be an hour late.",
+        "o5": "The organisers expected only half the audience to arrive on time."
+      },
+      "order": ["o2", "o5", "o1", "o3", "o4"],
+      "answer": "o1", "trap": "o2",
+      "why": "Little did ... know devrik kalıbı 'hiç bilmiyorlardı' anlamı taşır; buradaki little olumsuzdur.",
+      "trap_note": "little'ı 'biraz' diye okur; olumsuz bir niceleyici, kısmi bir bilgiye dönüşünce cümlenin anlamı tersine döner."
+    },
+    {
+      "no": 71, "group": "restatement", "level": "B2",
+      "stem": "Whatever the weather, the market is held in the square every Tuesday.",
+      "options": {
+        "o1": "The market takes place in the square on Tuesdays regardless of the weather.",
+        "o2": "The market is held in the square on Tuesdays only when the weather is good.",
+        "o3": "Bad weather may force the market to move out of the square on a Tuesday.",
+        "o4": "Whenever the weather is bad, the Tuesday market is cancelled.",
+        "o5": "The square is used for the market on any day when the weather allows it."
+      },
+      "order": ["o2", "o1", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o5",
+      "why": "Whatever the weather kalıbı havanın hiçbir etkisi olmadığını bildirir; pazar her salı aynı yerde kurulur.",
+      "trap_note": "Havayı bir koşula dönüştürür; koşulsuz bir düzen, havanın izin verdiği günlere bağlanmış olur."
+    },
+    {
+      "no": 72, "group": "paragraph_completion", "level": "B2",
+      "stem": "---- A dog can be trained to lie down when it smells one particular chemical, and researchers have used this to test breath, urine and even worn clothing. Results in the laboratory have been remarkable; results in hospitals have been mixed, because a dog that works for eight hours grows bored long before a machine would.",
+      "options": {
+        "o1": "The nose of a dog is being tried out as a medical instrument.",
+        "o2": "Dogs have lived alongside human beings for many thousands of years.",
+        "o3": "Hospitals are among the most expensive buildings to run.",
+        "o4": "Machines are now able to detect almost any chemical in the air.",
+        "o5": "Training a dog takes patience and a great deal of time."
+      },
+      "order": ["o1", "o2", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o5",
+      "why": "Boşluk paragrafın ilk cümlesidir ve hem konuyu hem de sonraki cümledeki köpek eğitiminin amacını tanıtmak zorundadır.",
+      "trap_note": "Köpek eğitiminden söz ettiği için doğru görünür, ama paragrafın konusu eğitimin zorluğu değil, koku alma duyusunun tıpta kullanılmasıdır."
+    },
+    {
+      "no": 73, "group": "paragraph_completion", "level": "B2",
+      "stem": "The Sahara has not always been a desert. Cave paintings deep inside it show swimmers, cattle and rivers full of fish. ---- The change was not caused by anything that people did; it came from a slow wobble in the tilt of the earth, which moved the rain belt south. The same wobble will one day bring the rain back.",
+      "options": {
+        "o1": "Six thousand years ago the region was green, and it dried out within a few centuries.",
+        "o2": "Similarly, the Arabian peninsula was once covered by forest.",
+        "o3": "These paintings were first photographed in the 1930s.",
+        "o4": "Cattle are still kept along the southern edge of the desert.",
+        "o5": "Therefore, the desert is likely to grow larger every year."
+      },
+      "order": ["o3", "o2", "o4", "o1", "o5"],
+      "answer": "o1", "trap": "o3",
+      "why": "Boşluktan sonraki cümle 'the change' diyerek bir değişime gönderme yapar; bu değişimin ne zaman ve nasıl olduğu boşlukta verilmelidir.",
+      "trap_note": "Bir önceki cümlede geçen paintings sözcüğüne tutunur, ama sonraki cümledeki 'the change' ifadesine karşılık gelecek bir değişim tanıtmaz."
+    },
+    {
+      "no": 74, "group": "paragraph_completion", "level": "B2",
+      "stem": "A lock on a canal looks like a simple thing: two gates and a chamber between them. ---- Each time a boat goes through, a chamber full of water runs downhill and is lost to the river below. On a busy canal that can be millions of litres a day, which is why many locks now have side ponds that catch part of the water and give it back to the next boat.",
+      "options": {
+        "o1": "The cost of using one, however, is measured in water.",
+        "o2": "Therefore, canals are cheaper to build than railways are.",
+        "o3": "Moreover, the gates are usually opened by hand.",
+        "o4": "These boats are rarely longer than twenty metres.",
+        "o5": "This chamber was invented in China more than a thousand years ago."
+      },
+      "order": ["o2", "o3", "o4", "o5", "o1"],
+      "answer": "o1", "trap": "o5",
+      "why": "Paragraf basitlik izleniminden gizli bir maliyete geçer; boşluk bu dönüşü kuran however cümlesidir.",
+      "trap_note": "Bir önceki cümlede geçen chamber sözcüğüne gönderme yapar, ama paragrafı su kaybı konusuna değil tarihe çevirir."
+    },
+    {
+      "no": 75, "group": "paragraph_completion", "level": "B2",
+      "stem": "For two hundred years the recipe for Prussian blue was a trade secret, and painters paid for it accordingly. Then a chemist published it in a journal, and within five years the price had fallen by nine tenths. ---- It appears in the sky of half the paintings of the period, in printed wallpaper and, eventually, on the paper used for engineering drawings. A secret had become a background.",
+      "options": {
+        "o1": "That collapse in price changed what the colour was used for.",
+        "o2": "Such journals were read by very few people at the time.",
+        "o3": "The chemist himself never received any payment for it.",
+        "o4": "Painters, however, went on mixing their own colours.",
+        "o5": "This wallpaper was printed in only three colours."
+      },
+      "order": ["o2", "o3", "o1", "o4", "o5"],
+      "answer": "o1", "trap": "o3",
+      "why": "Boşluktan sonra rengin nerelerde kullanıldığı sıralanır; boşluk, fiyat düşüşünü bu yayılmaya bağlayan cümledir.",
+      "trap_note": "Bir önceki cümledeki kimyacıya gönderme yapar, ama sonraki cümledeki kullanım listesini hazırlayacak bir bağ kurmaz."
+    },
+    {
+      "no": 76, "group": "odd_one_out", "level": "B2",
+      "sentences": [
+        "The Dutch city of Utrecht has built a car park for twelve thousand bicycles under its main station.",
+        "The Netherlands exports more flowers than any other country in the world.",
+        "A screen at the entrance shows which rows still have space, so that nobody rides up and down looking for a place.",
+        "The first twenty-four hours are free, which keeps the racks moving instead of letting them fill up with abandoned bikes.",
+        "Three quarters of the people who arrive by bicycle leave the station on foot or by train."
+      ],
+      "answer": "II", "trap": "V",
+      "why": "II. cümle çiçek ihracatına ilişkin genel bir bilgidir; paragrafın anlattığı bisiklet otoparkıyla hiçbir bağı yoktur.",
+      "trap_note": "V. cümle otoparkın kendisinden söz etmediği için kopuk sanılır; oysa otoparkın istasyonla nasıl birlikte çalıştığını göstererek paragrafı tamamlar."
+    },
+    {
+      "no": 77, "group": "odd_one_out", "level": "B2",
+      "sentences": [
+        "Garum, a sauce made from fermented fish, flavoured almost every dish on a Roman table.",
+        "It was produced in coastal factories, where fish and salt were left in stone tanks for months.",
+        "Amphorae stamped with the name of the maker have been dug up from Britain to the Black Sea.",
+        "Roman roads were built in straight lines wherever the ground allowed it.",
+        "Cooks today describe the taste as close to the fish sauces that are still made in Southeast Asia."
+      ],
+      "answer": "IV", "trap": "V",
+      "why": "IV. cümle yol yapımına geçer; paragrafın konusu olan balık sosunun üretimi ve yayılımıyla ilgisi yoktur.",
+      "trap_note": "V. cümle bugüne atladığı için dışarıdan eklenmiş gibi durur; oysa sosun tadını tarif ederek paragrafı bitirir."
+    },
+    {
+      "no": 78, "group": "odd_one_out", "level": "B2",
+      "sentences": [
+        "The tuatara of New Zealand looks like a lizard but belongs to an order of reptiles that is otherwise extinct.",
+        "Its ancestors were already old when the first dinosaurs appeared.",
+        "New Zealand is made up of two large islands and a great many smaller ones.",
+        "It grows so slowly that it may not breed until it is twenty years old, and it can live past a hundred.",
+        "Rats brought by ships wiped it out on the mainland, and it survives on islands where the rats have been removed."
+      ],
+      "answer": "III", "trap": "II",
+      "why": "III. cümle ülkenin coğrafyasını anlatır; paragrafın konusu olan hayvanın özellikleri ve durumuyla bağ kurmaz.",
+      "trap_note": "II. cümle çok uzak bir geçmişe gittiği için kopuk sanılır; oysa türün ne kadar eski olduğunu göstererek ilk cümleyi destekler."
+    },
+    {
+      "no": 79, "group": "odd_one_out", "level": "B2",
+      "sentences": [
+        "Before refrigeration, ice was cut from frozen lakes in winter and sold in summer.",
+        "Traders packed the blocks in sawdust, which kept them frozen for months.",
+        "Ships carried ice from New England as far as Calcutta, and about two thirds of each cargo arrived.",
+        "Calcutta is built on the delta of the Ganges.",
+        "The trade collapsed within a generation, once machines could make ice anywhere."
+      ],
+      "answer": "IV", "trap": "III",
+      "why": "IV. cümle bir şehrin coğrafi konumunu verir; buz ticaretinin nasıl yürüdüğünü anlatan akışa hiçbir şey katmaz.",
+      "trap_note": "III. cümledeki kayıp oranı konudan sapıyormuş gibi görünür; oysa ticaretin ne kadar zor koşullarda yürüdüğünü gösterir."
+    },
+    {
+      "no": 80, "group": "odd_one_out", "level": "B2",
+      "sentences": [
+        "A hummingbird has to eat almost its own weight in nectar every day.",
+        "To survive the night, it lowers its body temperature and slows its heart until it is almost cold.",
+        "In this state, which is called torpor, it uses a fraction of the energy it would otherwise need.",
+        "Warming up again in the morning can take twenty minutes, and the bird cannot fly until it has finished.",
+        "Nectar is produced by flowers in order to attract insects as well as birds."
+      ],
+      "answer": "V", "trap": "IV",
+      "why": "V. cümle çiçeklerin nektar üretme amacına geçer; paragrafın anlattığı gece hayatta kalma düzeneğini ilerletmez.",
+      "trap_note": "IV. cümle sabaha geçtiği için konudan kopuk sanılır; oysa torpor durumunun bedelini anlatarak paragrafı tamamlar."
+    }
+  ],
+  "vocabulary": [
+    ["abandoned (abandoned bikes)", "terk edilmiş (sahipsiz bisikletler)"],
+    ["accordingly", "buna göre, ona uygun olarak"],
+    ["amphora (amphorae)", "amfora (kulplu toprak testi)"],
+    ["ancestor", "ata, ecdat"],
+    ["assess (are assessed)", "değerlendirmek (değerlendiriliyor)"],
+    ["breed (may not breed)", "üremek (üremeyebilir)"],
+    ["cargo", "yük, kargo"],
+    ["cattle", "sığır, büyükbaş hayvan"],
+    ["chamber", "hazne, oda"],
+    ["collapse", "çökmek, çöküş"],
+    ["comprehension", "okuduğunu anlama"],
+    ["consult (without consulting)", "danışmak (danışmadan)"],
+    ["crack", "çatlak"],
+    ["crumble", "ufalanmak, dökülmek"],
+    ["cylinder", "silindir, karot"],
+    ["delta", "delta, ırmak ağzı"],
+    ["detect", "saptamak, tespit etmek"],
+    ["detour", "sapak, dolambaçlı yol"],
+    ["dim (dimmed after midnight)", "kısmak (gece yarısından sonra kısılmış)"],
+    ["dissolve", "çözünmek"],
+    ["drill (drilling teams)", "sondaj yapmak (sondaj ekipleri)"],
+    ["evaporation", "buharlaşma"],
+    ["exchange (exchange it for)", "değiştirmek (-le değiştirmek)"],
+    ["extinct", "soyu tükenmiş"],
+    ["ferment (fermented fish)", "mayalanmak (mayalanmış balık)"],
+    ["fine (the fine for breaking it)", "para cezası"],
+    ["flood (flooded the ground floor)", "su basmak (zemin katını su bastı)"],
+    ["forecast", "tahmin, hava tahmini"],
+    ["gauge (rain gauge)", "ölçer (yağmur ölçer)"],
+    ["glow", "parıltı, ışık hâlesi"],
+    ["guarantee card", "garanti belgesi"],
+    ["hardback", "ciltli kitap"],
+    ["harbour wall", "liman duvarı, mendirek"],
+    ["hummingbird", "sinek kuşu"],
+    ["ingredient", "malzeme, içindekiler"],
+    ["jury", "jüri, seçici kurul"],
+    ["lime (lumps of lime)", "kireç (kireç topakları)"],
+    ["lining", "astar"],
+    ["lock (a lock on a canal)", "kanal havuzu, su bendi"],
+    ["lorry", "kamyon"],
+    ["lump", "topak, yumru"],
+    ["majority (a large majority)", "çoğunluk (büyük bir çoğunluk)"],
+    ["market stall", "pazar tezgâhı"],
+    ["Milky Way", "Samanyolu"],
+    ["mixed (results have been mixed)", "karışık (sonuçlar karışık)"],
+    ["mixture", "karışım, hamur"],
+    ["mortar", "harç"],
+    ["narrative", "anlatı, düz anlatım"],
+    ["navigate (navigate by the moon)", "yön bulmak (aya bakarak yön bulmak)"],
+    ["nectar", "nektar, çiçek özü"],
+    ["objection", "itiraz"],
+    ["original (the original)", "özgün metin, aslı"],
+    ["peel (lemon peel)", "kabuk (limon kabuğu)"],
+    ["persuade", "ikna etmek"],
+    ["publisher", "yayınevi, yayıncı"],
+    ["pull down", "yıkmak"],
+    ["rack (the racks)", "raf, bisiklet askısı"],
+    ["receipt", "fiş, makbuz"],
+    ["refrigeration", "soğutma, soğuk hava tekniği"],
+    ["regardless of", "-e bakılmaksızın"],
+    ["reptile", "sürüngen"],
+    ["reverse (easy to reverse)", "geri döndürmek (geri döndürmesi kolay)"],
+    ["sapling", "fidan"],
+    ["sawdust", "talaş"],
+    ["set (the lime sets again)", "katılaşmak, donmak"],
+    ["shade", "gölge; lamba siperliği"],
+    ["side effect", "yan etki"],
+    ["straightforward", "düz, dolambaçsız"],
+    ["survey (surveys find)", "anket, saha araştırması"],
+    ["switch off", "kapatmak, söndürmek"],
+    ["tablet (the tablets)", "hap, tablet"],
+    ["tilt (the tilt of the earth)", "eğim (dünyanın eksen eğimi)"],
+    ["torpor", "uyuşukluk hâli, kış uykusuna benzer durum"],
+    ["trade secret", "ticari sır"],
+    ["undo (can be undone)", "geri almak (geri alınabilir)"],
+    ["urine", "idrar"],
+    ["volcanic ash", "volkanik kül"],
+    ["wipe out (wiped it out)", "yok etmek, kökünü kurutmak"],
+    ["wobble", "yalpalama, salınım"],
+    ["worn (worn clothing)", "giyilmiş (giyilmiş kıyafet)"]
+  ]
+}
