@@ -105,7 +105,7 @@ export function AboutExpert() {
                 href={anchor('#contacts')}
                 className="mt-6 inline-block text-sm font-medium text-accent-700 underline underline-offset-2 transition hover:text-accent-800"
               >
-                Реквизиты и контакты
+                Контакты
               </a>
             </div>
           </div>
