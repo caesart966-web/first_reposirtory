@@ -228,10 +228,10 @@ const faqSchema = {
               <tbody>
                 {FUNDS.buildHarm.map((row, i) => (
                   <tr>
-                    <td class="strong">{row.level}</td>
-                    <td>{row.limit}</td>
-                    <td class="strong">{row.amount}</td>
-                    <td class="odo">{FUNDS.buildContract[i].amount}</td>
+                    <td class="strong" data-label="Уровень">{row.level}</td>
+                    <td data-label="Предельный размер обязательств">{row.limit}</td>
+                    <td class="strong" data-label="КФ возмещения вреда">{row.amount}</td>
+                    <td class="odo" data-label="КФ договорных обязательств">{FUNDS.buildContract[i].amount}</td>
                   </tr>
                 ))}
               </tbody>
@@ -258,10 +258,10 @@ const faqSchema = {
               <tbody>
                 {FUNDS.designHarm.map((row, i) => (
                   <tr>
-                    <td class="strong">{row.level}</td>
-                    <td>{row.limit}</td>
-                    <td class="strong">{row.amount}</td>
-                    <td class="odo">{FUNDS.designContract[i].amount}</td>
+                    <td class="strong" data-label="Уровень">{row.level}</td>
+                    <td data-label="Предельный размер обязательств">{row.limit}</td>
+                    <td class="strong" data-label="КФ возмещения вреда">{row.amount}</td>
+                    <td class="odo" data-label="КФ договорных обязательств">{FUNDS.designContract[i].amount}</td>
                   </tr>
                 ))}
               </tbody>
@@ -441,6 +441,12 @@ const faqSchema = {
   .tbl-wrap.dark :global(table.data td) { color: var(--on-dark); border-color: var(--dark-line); }
   .tbl-wrap.dark :global(table.data td.strong) { color: #fff; }
   .tbl-wrap.dark :global(table.data td.odo) { color: var(--acc-bright); font-weight: 500; }
+  /* Подписи ячеек появляются только на телефоне, когда таблица
+     разворачивается в карточки. На тёмной подложке они должны быть
+     светлыми, иначе тёмно-серое на тёмном не читается. */
+  .tbl-wrap.dark :global(table.data td::before) { color: var(--on-dark-muted); }
+  .tbl-wrap.dark :global(table.data tbody td:first-child) { color: #fff; }
+  .tbl-wrap.dark :global(table.data tr) { border-color: var(--dark-line); }
   .tbl-note { font-size: 13.5px; color: var(--on-dark-muted); margin-top: 12px; max-width: 74ch; }
 
   .odo-callout {

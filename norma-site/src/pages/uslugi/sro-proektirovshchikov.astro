@@ -108,7 +108,7 @@ const faq = [
       </thead>
       <tbody>
         {FUNDS.designHarm.map((r) => (
-          <tr><td class="strong">{r.level}</td><td>{r.limit}</td><td class="strong">{r.amount}</td></tr>
+          <tr><td class="strong" data-label="Уровень">{r.level}</td><td data-label="Стоимость договора">{r.limit}</td><td class="strong" data-label="Взнос в КФ возмещения вреда">{r.amount}</td></tr>
         ))}
       </tbody>
     </table>
