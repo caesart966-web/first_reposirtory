@@ -79,10 +79,16 @@ const graph = {
          так они успевают к первой отрисовке и вёрстка не дёргается.
          Латиница нужна не ради латинских слов, а ради цифр: «2–3 дня», «10 млн ₽».
          Курсив заранее не грузим: он встречается только в статьях. -->
+    <!-- Предзагружается только кириллица. Латиница на сайте встречается
+         в десятке слов («WhatsApp», «Telegram», адреса реестров), но весит
+         60 КБ из 98 — вдвое больше кириллицы. На критическом пути она
+         отнимала канал у тех начертаний, которыми набрана вся страница,
+         а при font-display: optional это решает судьбу всего показа:
+         не успел шрифт к первой отрисовке — посетитель весь визит читает
+         запасным. Латиница грузится обычным порядком, по unicode-range,
+         когда встретится. -->
     <link rel="preload" as="font" type="font/woff2" href={href('/fonts/literata-cyrillic.woff2')} crossorigin />
-    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/literata-latin.woff2')} crossorigin />
     <link rel="preload" as="font" type="font/woff2" href={href('/fonts/golos-cyrillic.woff2')} crossorigin />
-    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/golos-latin.woff2')} crossorigin />
 
     <link rel="icon" type="image/svg+xml" href={href('/favicon.svg')} />
     <meta name="theme-color" content="#171310" />
@@ -238,7 +244,14 @@ const graph = {
               }
             })
           },
-          { rootMargin: '0px 0px -8% 0px' },
+          // Запускаем ДО того, как блок войдёт в кадр, а не после.
+          // Раньше стояло -8%: появление начиналось, когда блок уже
+          // на восьмую часть влез снизу, и при быстрой прокрутке пальцем
+          // содержимое доезжало проявляться уже после того, как человек
+          // остановился — три блока из четырёх в кадре ещё были полупрозрачны.
+          // Плюс 12% дают анимации фору примерно в сотню пикселей, и к моменту,
+          // когда блок виден целиком, он уже на месте.
+          { rootMargin: '0px 0px 12% 0px' },
         )
         items.forEach((el) => io.observe(el))
 
