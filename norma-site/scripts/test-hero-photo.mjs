@@ -25,7 +25,26 @@ const BASE = process.argv[2] || 'http://127.0.0.1:4321'
 const MIN = 4.5
 const MIN_BIG = 3 // крупный текст: от 24px, либо от 18.66px полужирным
 
-const TEXTS = ['.geo', '.page-title', '.hero-lead', '.note', '.verify p', '.stat .v', '.stat .d']
+// Что проверяем. Фотография лежит за текстом в двух местах, и обработка
+// у них разная: на главной кадр растворяется в белой бумаге, в шапке
+// раздела — в тёмном графите. Поэтому оба адреса проверяются отдельно.
+const TARGETS = [
+  {
+    url: '/',
+    root: '.hero',
+    photo: '.hero .photo',
+    // Что прячем, чтобы не мешало замеру: собственные подложки и рисунки.
+    hide: '.hero .hero-offer, .hero .cta, .hero svg, .hero .law',
+    texts: ['.geo', '.page-title', '.hero-lead', '.note', '.verify p', '.stat .v', '.stat .d'],
+  },
+  {
+    url: '/uslugi/',
+    root: '.page-head',
+    photo: '.page-head .head-photo',
+    hide: '.page-head svg',
+    texts: ['.eyebrow', 'h1', '.lead', '.stamp'],
+  },
+]
 
 const SCREENS = [
   [1280, 1400, 'компьютер'],
@@ -47,19 +66,21 @@ let failed = 0
 let checked = 0
 let hasPhoto = true
 
-for (const [width, height, screen] of SCREENS) {
+for (const target of TARGETS) {
+ for (const [width, height, screen] of SCREENS) {
   const ctx = await browser.newContext({ viewport: { width, height } })
   const page = await ctx.newPage()
-  await page.goto(BASE + '/', { waitUntil: 'networkidle' })
+  await page.goto(BASE + target.url, { waitUntil: 'networkidle' })
 
-  if (!(await page.$('.hero .photo'))) {
-    hasPhoto = false
+  if (!(await page.$(target.photo))) {
+    console.log(`· ${target.url} — фотографии нет, проверять нечего`)
     await ctx.close()
     break
   }
+  hasPhoto = true
 
   // Где лежит текст, какого он цвета и насколько крупный.
-  const areas = await page.evaluate((sels) => {
+  const areas = await page.evaluate(([root, sels]) => {
     const toL = (css) => {
       const [r, g, b] = css.match(/\d+(\.\d+)?/g).map(Number)
       const f = (v) => {
@@ -70,30 +91,39 @@ for (const [width, height, screen] of SCREENS) {
     }
     const out = []
     for (const sel of sels) {
-      const el = document.querySelector(`.hero ${sel}`)
+      const el = document.querySelector(`${root} ${sel}`)
       if (!el) continue
       const r = el.getBoundingClientRect()
       const cs = getComputedStyle(el)
       const size = parseFloat(cs.fontSize)
       const bold = parseInt(cs.fontWeight, 10) >= 700
+      // Замеряем только поле, в котором лежат буквы: без рамки и без
+      // внутренних отступов. Иначе в выборку попадает сама рамка чипа —
+      // у штампа «Сверено» она того же зелёного цвета, что и текст,
+      // и даёт контраст 1:1, хотя под буквами ровный тёмный фон.
+      const px = (v) => parseFloat(v) || 0
+      const l = px(cs.borderLeftWidth) + px(cs.paddingLeft)
+      const t = px(cs.borderTopWidth) + px(cs.paddingTop)
+      const rr = px(cs.borderRightWidth) + px(cs.paddingRight)
+      const bb = px(cs.borderBottomWidth) + px(cs.paddingBottom)
       out.push({
         sel,
-        x: Math.round(r.x),
-        y: Math.round(r.y),
-        w: Math.round(r.width),
-        h: Math.round(r.height),
+        x: Math.round(r.x + l),
+        y: Math.round(r.y + t),
+        w: Math.round(r.width - l - rr),
+        h: Math.round(r.height - t - bb),
         textL: toL(cs.color),
         big: size >= 24 || (bold && size >= 18.66),
       })
     }
     return out
-  }, TEXTS)
+  }, [target.root, target.texts])
 
   // Буквы делаем прозрачными, но не прячем: если под текстом появится тень,
   // она рисуется по контуру глифа и должна попасть в замер.
   await page.addStyleTag({
-    content: `.hero, .hero * { color: transparent !important; -webkit-text-fill-color: transparent !important; }
-              .hero .hero-offer, .hero .cta, .hero svg, .hero .law { visibility: hidden !important }`,
+    content: `${target.root}, ${target.root} * { color: transparent !important; -webkit-text-fill-color: transparent !important; }
+              ${target.hide} { visibility: hidden !important }`,
   })
 
   for (const a of areas) {
@@ -101,11 +131,9 @@ for (const [width, height, screen] of SCREENS) {
       console.log(`· ${`${screen}`.padEnd(11)} ${a.sel.padEnd(13)} не замерен: не попал в окно`)
       continue
     }
-    // Рамку и скруглённые углы в замер не берём: у чипа с географией
-    // собственная непрозрачная подложка, а по краям его прямоугольника
-    // видна фотография — из-за неё честный замер показывал провал там,
-    // где текст на самом деле лежит на белом.
-    const inset = 3
+    // Ещё пиксель внутрь: скруглённые углы поля иначе цепляют то,
+    // что лежит снаружи чипа.
+    const inset = 1
     const clip = {
       x: a.x + inset,
       y: a.y + inset,
@@ -128,10 +156,13 @@ for (const [width, height, screen] of SCREENS) {
     const ok = c >= need
     if (!ok) failed++
     checked++
-    console.log(`${ok ? '✓' : '✗'} ${screen.padEnd(11)} ${a.sel.padEnd(13)} ${c.toFixed(2)}:1 при норме ${need}`)
+    console.log(
+      `${ok ? '✓' : '✗'} ${target.url.padEnd(9)} ${screen.padEnd(11)} ${a.sel.padEnd(13)} ${c.toFixed(2)}:1 при норме ${need}`,
+    )
   }
 
   await ctx.close()
+ }
 }
 
 await browser.close()

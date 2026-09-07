@@ -162,6 +162,52 @@ img { max-width: 100%; height: auto; }
 .page-head :focus-visible,
 .menu :focus-visible { outline-color: var(--acc-bright); }
 
+/* ── Фотография в шапке раздела ──
+   Кадр лежит за текстом и работает фактурой тёмного листа, а не заставкой.
+   Обработка обязательна: шапка тёмная, текст на ней светлый, и светлое
+   пятно фотографии под строкой мгновенно съедает контраст. Поэтому кадр
+   приглушается и притемняется, гаснет слева под колонкой с заголовком
+   и растворяется сверху и снизу, чтобы у него не было видимого края.
+
+   Слой ставится компонентом HeadPhoto.astro первым элементом секции.
+   Контраст поверх фотографии проверяется по настоящим пикселям:
+   scripts/test-hero-photo.mjs. */
+.page-head { overflow: hidden; }
+.page-head > .wrap { position: relative; z-index: 1; }
+.head-photo {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  filter: saturate(0.45) brightness(0.6) contrast(1.05);
+  opacity: 0.5;
+  mask-image:
+    linear-gradient(90deg, transparent 0%, transparent 34%, rgba(0, 0, 0, 0.45) 62%, #000 88%),
+    linear-gradient(180deg, transparent 0%, #000 16%, #000 72%, transparent 100%);
+  -webkit-mask-image:
+    linear-gradient(90deg, transparent 0%, transparent 34%, rgba(0, 0, 0, 0.45) 62%, #000 88%),
+    linear-gradient(180deg, transparent 0%, #000 16%, #000 72%, transparent 100%);
+  mask-composite: intersect;
+  -webkit-mask-composite: source-in;
+  pointer-events: none;
+}
+/* Порог тот же, что у сетки первого экрана на главной. В одну колонку
+   текст идёт во всю ширину, и кадр за ним держать нельзя: слой уходит
+   в верхнюю полосу и гаснет задолго до абзаца. */
+@media (max-width: 1023px) {
+  .head-photo {
+    bottom: auto;
+    height: 300px;
+    opacity: 0.4;
+    mask-image:
+      linear-gradient(90deg, transparent 0%, transparent 20%, rgba(0, 0, 0, 0.4) 52%, #000 84%),
+      linear-gradient(180deg, transparent 0%, #000 12%, #000 44%, transparent 78%);
+    -webkit-mask-image:
+      linear-gradient(90deg, transparent 0%, transparent 20%, rgba(0, 0, 0, 0.4) 52%, #000 84%),
+      linear-gradient(180deg, transparent 0%, #000 12%, #000 44%, transparent 78%);
+  }
+}
+
 /* Якоря не прячутся под липкой шапкой */
 section[id], [data-anchor] { scroll-margin-top: 84px; }
 
