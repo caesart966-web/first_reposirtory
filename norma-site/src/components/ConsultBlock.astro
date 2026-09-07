@@ -97,6 +97,11 @@ const PERKS = [
     text-transform: uppercase;
   }
   .cleft h2 { margin: 16px 0 0; }
+  /* Выделенное слово — цветом, без курсива: так на всех остальных
+     заголовках сайта. Здесь оно оставалось курсивным и бесцветным,
+     потому что общее правило написано на .s-head, а этот заголовок
+     живёт вне её. */
+  .cleft h2 :global(em) { font-style: normal; color: var(--acc-deep); }
   .clead { color: var(--muted); font-size: 16.5px; line-height: 1.65; margin: 14px 0 0; max-width: 52ch; }
 
   .perks { list-style: none; margin: 26px 0 0; padding: 0; display: grid; gap: 18px; }

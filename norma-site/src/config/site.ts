@@ -30,7 +30,7 @@ export const SITE = {
   // MAX не умеет ссылку по номеру телефона. Личная ссылка вида https://max.ru/u/…
   // берётся в приложении MAX («Поделиться» / QR-код). Впишите её — кнопка MAX
   // сама появится в контактах и подвале.
-  maxLink: '',
+  maxLink: 'https://max.ru/u/f9LHodD0cOIew4NCbh1RQfZrPkUgB7MfWbADwjC6bMlFEQKryZyEfRUZgIc',
 
   // География. Работа дистанционная, поэтому упор на охват, а не на города:
   // клиенту из Иркутска название чужого города ничего не даёт, а «по всей
@@ -63,6 +63,8 @@ export const SITE = {
 export const REGISTRIES = {
   nostroy: 'https://reestr.nostroy.ru',
   nopriz: 'https://nopriz.ru',
+  /** Проверка статуса ИП по ИНН — сервис ФНС «Прозрачный бизнес» / ЕГРИП. */
+  egrip: 'https://egrul.nalog.ru/',
 } as const
 
 // Ссылка внутри сайта с учётом подпапки (на GitHub Pages сайт живёт

@@ -1,93 +1,284 @@
 ---
 import Base from '../layouts/Base.astro'
 import ConsultBlock from '../components/ConsultBlock.astro'
+import Seal from '../components/Seal.astro'
 import Icon from '../components/Icon.astro'
 import { href, SITE, REGISTRIES } from '../config/site'
+
+// Страница контактов — карточка контрагента, а не футер с кружочками
+// мессенджеров.
+//
+// От чего пляшет оформление. Человек, который дошёл до этой страницы,
+// делает ровно одну вещь: проверяет, с кем он имеет дело. Поэтому здесь
+// не «блок контактов», а заверенный документ: номер как главный объект,
+// назначение у каждого канала, реквизиты с кнопкой «копировать» и
+// ссылками на государственные реестры, печать «Сверено».
+//
+// Правила, которые нельзя нарушать при правках:
+//
+// • Никаких карточек с тенями и круглых иконок соцсетей. Разделители —
+//   линейки в 1 px, как в бланке.
+// • Каждый канал объясняет, ЗАЧЕМ он нужен. Пиктограмма с подписью
+//   «WhatsApp» не сообщает ничего: её видели все. «Если не дозвонились
+//   или говорить неудобно» — сообщает.
+// • Карты нет и не будет: офиса нет, показывать нечего. Карта-заглушка
+//   с точкой посреди города была бы враньём в дизайне.
+// • Логику формы (валидация, ловушка для ботов, сохранение заявки при
+//   сбое, «скопировать текст заявки») не трогать. Здесь только внешний
+//   вид, и правки скоуплены под страницу, чтобы форма на других
+//   страницах осталась прежней.
+//
+// Все стили ниже Astro привязывает к этой странице автоматически; там,
+// где нужно дотянуться до чужого компонента, стоит :global() внутри
+// селектора страницы — за её пределы такие правила не выходят.
+
+const CHANNELS = [
+  {
+    icon: 'phone',
+    name: 'Телефон',
+    value: SITE.phone,
+    url: SITE.phoneHref,
+    goal: 'click_phone',
+    why: 'Разобрать ситуацию голосом. Пятнадцать минут разговора обычно заменяют день переписки: я спрашиваю про вид работ, договор и сумму — и по ответам уже видно, нужно вам членство или нет.',
+    when: 'Круглосуточно',
+    external: false,
+  },
+  {
+    icon: 'whatsapp',
+    name: 'WhatsApp',
+    value: 'на тот же номер',
+    url: SITE.whatsapp,
+    goal: 'click_whatsapp',
+    why: 'Если не дозвонились или говорить неудобно. Сюда же удобно прислать фотографии документов — устава, выписки, дипломов специалистов.',
+    when: 'Отвечу текстом',
+    external: true,
+  },
+  {
+    icon: 'telegram',
+    name: 'Telegram',
+    value: 'на тот же номер',
+    url: SITE.telegram,
+    goal: 'click_telegram',
+    why: 'То же самое, что WhatsApp. Пишите туда, чем пользуетесь сами, — разницы для меня нет.',
+    when: 'Отвечу текстом',
+    external: true,
+  },
+  {
+    icon: 'chat',
+    name: 'MAX',
+    value: 'российский мессенджер',
+    url: SITE.maxLink,
+    goal: null,
+    why: 'Если вам привычнее российский мессенджер или в компании ограничен доступ к остальным.',
+    when: 'Отвечу текстом',
+    external: true,
+  },
+  {
+    icon: 'mail',
+    name: 'Почта',
+    value: SITE.email,
+    url: 'mailto:' + SITE.email,
+    goal: null,
+    why: 'Для документов и письменных расчётов — того, что должно остаться в переписке: разбивка взносов, перечень документов, ответ со ссылками на нормы.',
+    when: 'Для документов',
+    external: false,
+  },
+].filter((c) => c.url)
+
+// Те же каналы без телефона — для полосы в первом экране на телефоне.
+// Номер там стоит отдельно и крупно, дублировать его строкой незачем.
+const WRITE_CHANNELS = CHANNELS.filter((c) => c.icon !== 'phone')
+
+// Строки реквизитной карты. copy: true — рядом появится кнопка «копировать».
+const IDENT = [
+  { dt: 'Полное наименование', dd: SITE.legalName, mono: false, copy: false },
+  { dt: 'ИНН', dd: SITE.inn, mono: true, copy: true },
+  ...(SITE.ogrnip ? [{ dt: 'ОГРНИП', dd: SITE.ogrnip, mono: true, copy: true }] : []),
+  { dt: 'Телефон', dd: SITE.phone, mono: true, copy: true },
+  { dt: 'Статус', dd: 'Индивидуальный предприниматель', mono: false, copy: false },
+]
 ---
 
 <Base
   title="Контакты — Алихан Багишев, помощь по СРО, НРС, НОК | НОРМА"
-  description="Телефон, WhatsApp, Telegram и почта для связи. ИП Багишев Алихан Ахадович. Работаем по всей России дистанционно, от подачи до выписки из реестра 2–3 дня."
+  description="Телефон, WhatsApp, Telegram, MAX и почта для связи. ИП Багишев Алихан Ахадович, ИНН 470418675847. Работаю по всей России дистанционно."
   breadcrumbs={[{ label: 'Главная', url: href('/') }, { label: 'Контакты' }]}
 >
-  <section class="section page-head">
-    <div class="wrap">
-      <span class="eyebrow">Контакты</span>
-      <h1>Свяжитесь напрямую</h1>
-      <p class="lead">
-        Отвечаю лично — не отдел продаж и не колл-центр. Опишите задачу, и я скажу прямо,
-        нужна ли вам СРО, во что это обойдётся и сколько займёт.
-      </p>
-    </div>
-  </section>
+  <section class="section page-head k-hero">
+    <div class="wrap k-hero-in">
+      <div class="k-main">
+        <span class="eyebrow">Контакты</span>
+        <h1>Свяжитесь <em>напрямую</em></h1>
+        <p class="lead">
+          Отвечаю лично — не отдел продаж и не колл-центр. Опишите задачу, и я скажу прямо,
+          нужна ли вам СРО, во что это обойдётся и сколько займёт.
+        </p>
 
-  <section class="section">
-    <div class="wrap">
-      <div class="details">
-        <aside class="side rv">
-          <div class="side-block">
-            <span class="sb-label">Телефон</span>
-            <a class="big-phone" href={SITE.phoneHref} data-goal="click_phone">{SITE.phone}</a>
-            <p class="sb-note">
-              Тот же номер в WhatsApp, Telegram и MAX. Если не отвечаю — значит, на встрече;
-              напишите в мессенджер, отвечу текстом.
-            </p>
-          </div>
+        <address class="k-address">
+          <a class="k-phone" href={SITE.phoneHref} data-goal="click_phone">{SITE.phone}</a>
+        </address>
 
-          <div class="side-block">
-            <span class="sb-label">Мессенджеры</span>
-            <div class="msgs">
-              <a href={SITE.whatsapp} target="_blank" rel="noopener noreferrer" data-goal="click_whatsapp">
-                <Icon name="whatsapp" size={19} /> WhatsApp
-              </a>
-              <a href={SITE.telegram} target="_blank" rel="noopener noreferrer" data-goal="click_telegram">
-                <Icon name="telegram" size={19} /> Telegram
-              </a>
-              {SITE.maxLink ? (
-                <a href={SITE.maxLink} target="_blank" rel="noopener noreferrer">
-                  <Icon name="phone" size={19} /> MAX
+        <p class="k-status" id="k-status" hidden>
+          <span class="k-dot" aria-hidden="true"></span>
+          <span class="k-status-text"></span>
+        </p>
+
+        <nav class="k-quick" aria-label="Написать в мессенджер или на почту">
+          <span class="k-quick-label">Написать</span>
+          <ul>
+            {WRITE_CHANNELS.map((c) => (
+              <li>
+                <a
+                  href={c.url}
+                  data-goal={c.goal}
+                  target={c.external ? '_blank' : undefined}
+                  rel={c.external ? 'noopener noreferrer' : undefined}
+                >
+                  <Icon name={c.icon} size={16} />
+                  <span>{c.name}</span>
                 </a>
-              ) : (
-                <a href={SITE.phoneHref} data-goal="click_phone">
-                  <Icon name="phone" size={19} /> MAX — по номеру {SITE.phone}
-                </a>
-              )}
-            </div>
-          </div>
-
-          <div class="side-block">
-            <span class="sb-label">Почта</span>
-            <a class="mail" href={`mailto:${SITE.email}`}>{SITE.email}</a>
-            <p class="sb-note">Для документов и письменных расчётов.</p>
-          </div>
-
-          <div class="side-block">
-            <span class="sb-label">География</span>
-            <p class="geo">{SITE.geo}</p>
-            <p class="sb-note">
-              Всё дистанционно. Для вступления в СРО личная встреча не требуется:
-              документы подписываются электронной подписью либо пересылаются.
-            </p>
-          </div>
-
-          <div class="side-block side-block--legal">
-            <span class="sb-label">Реквизиты для проверки</span>
-            <p class="req">{SITE.legalName}</p>
-            <p class="req mono">ИНН {SITE.inn}</p>
-            {SITE.ogrnip && <p class="req mono">ОГРНИП {SITE.ogrnip}</p>}
-            <p class="sb-note">
-              Проверить статус ИП можно на сайте ФНС по ИНН. Членство любой компании и статус
-              любой СРО — в реестрах{' '}
-              <a href={REGISTRIES.nostroy} target="_blank" rel="noopener noreferrer">НОСТРОЙ</a> и{' '}
-              <a href={REGISTRIES.nopriz} target="_blank" rel="noopener noreferrer">НОПРИЗ</a>.
-            </p>
-          </div>
-        </aside>
+              </li>
+            ))}
+          </ul>
+        </nav>
       </div>
+
+      <dl class="k-when">
+        <div>
+          <dt>Режим</dt>
+          <dd>Круглосуточно, без выходных</dd>
+        </div>
+        <div>
+          <dt>Отвечает</dt>
+          <dd>{SITE.shortName}, лично</dd>
+        </div>
+        <div>
+          <dt>Откуда работаю</dt>
+          <dd>Дистанционно, по всей России</dd>
+        </div>
+      </dl>
     </div>
   </section>
 
-  <ConsultBlock />
+  <section class="section k-body">
+    <div class="wrap k-grid">
+      <div class="k-col">
+        <h2 class="k-h">Каналы связи</h2>
+        <p class="k-sub">
+          У каждого канала своё назначение. Выбирайте не по значку, а по тому,
+          что вам нужно сделать.
+        </p>
+
+        <ul class="k-channels">
+          {CHANNELS.map((c) => (
+            <li class="k-ch">
+              <a
+                class="k-ch-link"
+                href={c.url}
+                data-goal={c.goal}
+                target={c.external ? '_blank' : undefined}
+                rel={c.external ? 'noopener noreferrer' : undefined}
+              >
+                <span class="k-ch-ic"><Icon name={c.icon} size={18} /></span>
+                <span class="k-ch-name">{c.name}</span>
+                <span class="k-ch-value">{c.value}</span>
+              </a>
+              <span class="k-ch-when">{c.when}</span>
+              <p class="k-ch-why">{c.why}</p>
+            </li>
+          ))}
+        </ul>
+
+        <h2 class="k-h k-h--geo">География</h2>
+        <div class="k-geo">
+          <p class="k-geo-lead">Работаю по всей России, целиком дистанционно.</p>
+          <ul class="k-geo-list">
+            <li>
+              <b>Личная встреча не нужна.</b> Для вступления в СРО она не требуется ни на одном
+              этапе: документы подписываются электронной подписью либо пересылаются.
+            </li>
+            <li>
+              <b>Регион имеет значение только для строителей.</b> СРО должна быть
+              зарегистрирована в том же субъекте РФ, что и компания. Для проектировщиков
+              и изыскателей такой привязки нет вовсе — и это одна из самых частых ошибок
+              на сайтах по теме.
+            </li>
+            <li>
+              <b>Офиса нет, и адреса здесь тоже нет.</b> Показывать точку на карте, к которой
+              вам незачем ехать, я не стану.
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <aside class="k-side">
+        <div class="k-ident">
+          <div class="k-ident-top">
+            <span class="k-ident-label">Реквизиты для проверки</span>
+            <Seal size={78} />
+          </div>
+
+          <dl class="k-rows">
+            {IDENT.map((r) => (
+              <div class="k-row">
+                <dt>{r.dt}</dt>
+                <dd>
+                  <span class:list={['k-val', r.mono && 'k-val--mono']}>{r.dd}</span>
+                  {r.copy && (
+                    <button
+                      class="k-copy"
+                      type="button"
+                      data-copy={r.dd}
+                      aria-label={'Скопировать: ' + r.dt}
+                    >
+                      <span class="k-copy-idle">Копировать</span>
+                      <span class="k-copy-done" aria-hidden="true">Скопировано</span>
+                    </button>
+                  )}
+                </dd>
+              </div>
+            ))}
+          </dl>
+
+          <div class="k-check">
+            <span class="k-ident-label">Где проверить</span>
+            <ul>
+              <li>
+                <a href={REGISTRIES.egrip} target="_blank" rel="noopener noreferrer">
+                  ЕГРИП на сайте ФНС <Icon name="arrow" size={14} />
+                </a>
+                <small>Статус ИП по ИНН — бесплатно и за минуту</small>
+              </li>
+              <li>
+                <a href={REGISTRIES.nostroy} target="_blank" rel="noopener noreferrer">
+                  Реестр НОСТРОЙ <Icon name="arrow" size={14} />
+                </a>
+                <small>Членство строительных компаний и статус их СРО</small>
+              </li>
+              <li>
+                <a href={REGISTRIES.nopriz} target="_blank" rel="noopener noreferrer">
+                  Реестр НОПРИЗ <Icon name="arrow" size={14} />
+                </a>
+                <small>То же для проектировщиков и изыскателей</small>
+              </li>
+            </ul>
+          </div>
+
+          <p class="k-ident-note">
+            <b>Я не саморегулируемая организация.</b> Меня самого в этих реестрах нет и быть
+            не может: я не веду реестр, не принимаю взносы и не выдаю документы о членстве.
+            Решение принимает СРО, взносы вы переводите напрямую на её счёт.
+          </p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  {/* Обёртка нужна стилям: правки внешнего вида формы скоуплены под неё,
+      чтобы та же форма на других страницах осталась прежней. */}
+  <div class="k-page-form">
+    <ConsultBlock />
+  </div>
 
   <section class="section section--tight before-ask">
     <div class="wrap">
@@ -112,84 +303,446 @@ import { href, SITE, REGISTRIES } from '../config/site'
 </Base>
 
 <style>
-  .page-head { background: var(--dark); color: var(--on-dark); padding-bottom: 40px; }
+  /* ── Первый экран ──
+     Тёмная шапка, как на остальных страницах сайта. Раскладка
+     асимметричная: слева слово и номер, справа узкий бланк из трёх строк.
+     Выравнивание по нижнему краю — так номер и первая строка бланка
+     стоят на одной линии, будто оба напечатаны на одном листе. */
+  .page-head { background: var(--dark); color: var(--on-dark); padding-bottom: 46px; }
   .page-head .eyebrow { color: var(--acc-bright); }
   .page-head h1 { color: #fff; margin: 12px 0 16px; }
-  .page-head .lead { color: var(--on-dark-muted); }
+  .page-head h1 em { font-style: normal; color: var(--acc-bright); }
+  .page-head .lead { color: var(--on-dark-muted); max-width: 56ch; }
 
-  /* Контактные данные без формы: она переехала в блок консультации ниже.
-     Три-четыре карточки в ряд читаются лучше, чем узкая колонка сбоку. */
-  .side { display: grid; gap: 16px; }
-  @media (min-width: 760px) {
-    .side { grid-template-columns: 1fr 1fr; }
-  }
-  @media (min-width: 1100px) {
-    .side { grid-template-columns: repeat(4, 1fr); }
-    /* Реквизиты — пятая карточка при четырёх колонках, и в одиночку
-       на второй строке они смотрятся оборванными. Растягиваем на всю ширину:
-       содержание у них и правда другое — не способ связи, а проверка. */
-    .side-block--legal { grid-column: 1 / -1; }
+  .k-hero-in { display: grid; gap: 36px; }
+  @media (min-width: 900px) {
+    .k-hero-in { grid-template-columns: minmax(0, 1fr) 264px; gap: 56px; align-items: end; }
   }
 
-  .side-block {
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: var(--r-l);
-    padding: 22px 24px;
+  .k-address { font-style: normal; margin-top: 30px; }
+  /* Номер — главный объект страницы. Цифры одной ширины: у телефона это
+     не эстетика, а разборчивость — глаз читает его группами, а не словом. */
+  .k-phone {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: clamp(32px, 6.2vw, 66px);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.02;
+    white-space: nowrap;
+    font-variant-numeric: lining-nums tabular-nums;
+    color: #fff;
+    text-decoration: none;
+    transition: color var(--t-fast) var(--ease);
+  }
+  .k-phone:hover { color: var(--acc-bright); }
+  /* На телефоне строка номера высотой всего 33 px — меньше пальца.
+     Поле добавлено внутрь и тут же вычтено отступом: зона нажатия
+     вырастает до 45 px, а номер остаётся ровно там, где стоял. */
+  @media (max-width: 899px) { .k-phone { padding-block: 6px; margin-block: -6px; } }
+
+  .k-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 16px;
+    font-size: 15px;
+    color: var(--on-dark-muted);
+  }
+  .k-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--on-dark-muted); flex: none; }
+  /* Тот же зелёный, что у печати «Проверено» на тёмном фоне. Без пульсации:
+     мигающая точка — приём из служб поддержки, а не из документа. */
+  .k-status[data-state='on'] { color: var(--on-dark); }
+  .k-status[data-state='on'] .k-dot { background: #7FC08F; }
+
+  /* ── Полоса «Написать» ──
+     Живёт только на телефоне и занимает в первом экране то место,
+     которое на широком экране отдано бланку справа.
+     Зачем она нужна. Строки каналов ниже объясняют назначение каждого
+     и поэтому высокие: до первого мессенджера от номера было 460 px —
+     полтора экрана прокрутки. Ночью это прямое противоречие: строка
+     состояния советует «быстрее всего написать в мессенджер», а
+     мессенджера в этом экране нет.
+     Бланк на телефоне убран, и ничего при этом не теряется: режим стоит
+     подписью у телефона в списке каналов, «отвечаю лично» — во вводном
+     абзаце, «дистанционно по всей России» — в разделе «География».
+     Оформление то же, что у бланка: волосяные линейки и никаких
+     подложек. Кружков с логотипами мессенджеров здесь нет намеренно —
+     значок и название и так читаются, а кружки превратили бы документ
+     в футер. */
+  .k-quick { margin-top: 30px; }
+  .k-quick-label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--on-dark-muted);
+    margin-bottom: 10px;
+  }
+  /* Линейки нарисованы просветом сетки: gap в 1 px открывает фон списка,
+     ячейки закрашены цветом шапки. */
+  .k-quick ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
     display: grid;
-    gap: 8px;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--dark-line);
+    border-block: 1px solid var(--dark-line);
   }
-  .side-block--legal { background: var(--paper); }
-  .sb-label {
+  .k-quick li { background: var(--dark); }
+  .k-quick a {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-height: 48px;
+    padding: 0 4px;
+    color: var(--on-dark);
+    font-size: 15.5px;
+    text-decoration: none;
+    transition: color var(--t-fast) var(--ease);
+  }
+  /* :global — значок приходит из компонента Icon и не получает атрибут
+     области видимости этой страницы, поэтому обычный селектор по svg
+     здесь просто не сработал бы. Правило всё равно не выходит за
+     пределы страницы: снаружи оно закрыто классом .k-quick. */
+  .k-quick :global(svg) {
+    color: var(--on-dark-muted);
+    flex: none;
+    transition: color var(--t-fast) var(--ease);
+  }
+  .k-quick a:hover, .k-quick a:focus-visible { color: var(--acc-bright); }
+  .k-quick a:hover :global(svg), .k-quick a:focus-visible :global(svg) { color: var(--acc-bright); }
+
+  /* Бланк справа: только линейки, никаких подложек. */
+  .k-when { margin: 0; display: grid; border-top: 1px solid var(--dark-line); }
+  .k-when > div { display: grid; gap: 3px; padding: 13px 0; border-bottom: 1px solid var(--dark-line); }
+  /* Ниже 900 px раскладка первого экрана из двух колонок становится
+     одной, и в ней бланк уступает место полосе «Написать». Порог тот же,
+     что у самой сетки .k-hero-in, — иначе на планшете пропало бы и то,
+     и другое. */
+  @media (max-width: 899px) { .k-when { display: none; } }
+  @media (min-width: 900px) { .k-quick { display: none; } }
+  .k-when dt {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--on-dark-muted);
+  }
+  .k-when dd { margin: 0; font-size: 15px; color: var(--on-dark); }
+
+  /* ── Тело страницы ──
+     Слева широкая колонка со связью, справа узкая с проверкой. */
+  .k-grid { display: grid; gap: 46px; }
+  @media (min-width: 1000px) {
+    .k-grid { grid-template-columns: minmax(0, 1fr) 348px; gap: 64px; align-items: start; }
+    /* Реквизиты держатся на месте, пока читаешь каналы: проверить,
+       с кем имеешь дело, можно не прокручивая страницу обратно. */
+    .k-side { position: sticky; top: 92px; }
+  }
+
+  .k-h { font-size: clamp(24px, 2.6vw, 30px); }
+  .k-h--geo { margin-top: 56px; }
+  .k-sub { color: var(--muted); font-size: 16px; margin-top: 10px; max-width: 58ch; }
+
+  /* ── Каналы ──
+     Строка бланка, а не карточка: линейка сверху, три поля.
+     На широком экране название с адресом слева, назначение по центру,
+     подпись о скорости справа. */
+  .k-channels { list-style: none; margin: 26px 0 0; padding: 0; }
+  /* Две колонки, а не три. Скорость ответа стоит под названием канала,
+     в той же колонке: вынесенная третьей, она отъедала у объяснения
+     полтораста пикселей, и текст рвался на шесть строк при пустом поле
+     справа. */
+  .k-ch {
+    display: grid;
+    gap: 8px 30px;
+    padding: 20px 0;
+    border-top: 1px solid var(--line);
+  }
+  .k-ch:last-child { border-bottom: 1px solid var(--line); }
+  @media (min-width: 700px) {
+    .k-ch {
+      grid-template-columns: 218px minmax(0, 1fr);
+      grid-template-areas: 'link why' 'when why';
+      align-items: start;
+      row-gap: 6px;
+    }
+    .k-ch-link { grid-area: link; }
+    .k-ch-when { grid-area: when; }
+    .k-ch-why { grid-area: why; }
+  }
+
+  .k-ch-link {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas: 'ic name' 'ic value';
+    gap: 0 12px;
+    align-items: center;
+    text-decoration: none;
+    color: var(--ink);
+    /* Тап-зона: 44 px по стандарту, здесь выходит больше за счёт отступа. */
+    min-height: 44px;
+    padding: 2px 0;
+    transition: color var(--t-fast) var(--ease);
+  }
+  .k-ch-ic {
+    grid-area: ic;
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--line);
+    border-radius: var(--r-s);
+    color: var(--acc-deep);
+    flex: none;
+    transition: border-color var(--t-fast) var(--ease), background-color var(--t-fast) var(--ease);
+  }
+  .k-ch-name { grid-area: name; font-weight: 600; font-size: 16.5px; line-height: 1.25; }
+  .k-ch-value {
+    grid-area: value;
+    font-family: var(--font-mono);
+    font-size: 13.5px;
+    color: var(--muted);
+    overflow-wrap: anywhere;
+    line-height: 1.3;
+  }
+  .k-ch-link:hover { color: var(--acc-deep); }
+  .k-ch-link:hover .k-ch-ic { border-color: var(--acc-btn); background: var(--acc-soft); }
+
+  .k-ch-why { font-size: 15px; line-height: 1.62; color: var(--muted); max-width: 62ch; }
+  .k-ch-when {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--acc-deep);
+    white-space: nowrap;
+  }
+
+  /* ── География ── */
+  .k-geo { margin-top: 24px; }
+  .k-geo-lead { font-size: 17px; }
+  .k-geo-list { list-style: none; margin: 20px 0 0; padding: 0; }
+  .k-geo-list li {
+    padding: 16px 0;
+    border-top: 1px solid var(--line);
+    font-size: 14.5px;
+    line-height: 1.62;
+    color: var(--muted);
+    max-width: 68ch;
+  }
+  .k-geo-list li:last-child { border-bottom: 1px solid var(--line); }
+  .k-geo-list b { color: var(--ink); font-weight: 600; }
+
+  /* ── Реквизитная карта ──
+     Единственная рамка на странице: это документ, и у документа есть край.
+     Внутри — только линейки. */
+  .k-ident {
+    border: 1px solid var(--line);
+    border-radius: var(--r-m);
+    padding: 22px 22px 20px;
+    background: var(--card);
+  }
+  .k-ident-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .k-ident-label {
     font-family: var(--font-mono);
     font-size: 11px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--muted);
   }
-  .big-phone {
-    font-family: var(--font-mono);
-    /* Номер не переносится: разорванный по строкам телефон читается
-       как две разные цифры, а на узкой карточке он рвался после «86-». */
-    white-space: nowrap;
-    font-size: clamp(20px, 2.4vw, 26px);
-    font-weight: 500;
-    color: var(--ink);
-    text-decoration: none;
-    line-height: 1.15;
-  }
-  .big-phone:hover { color: var(--acc-deep); }
-  .sb-note { font-size: 13.5px; color: var(--muted); line-height: 1.55; }
-  .sb-note a { color: var(--acc-deep); }
 
-  .msgs { display: grid; gap: 8px; }
-  .msgs a {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    color: var(--ink);
-    text-decoration: none;
-    font-size: 15px;
-    padding: 11px 14px;
+  .k-rows { margin: 0; display: grid; border-top: 1px solid var(--line); }
+  .k-row { display: grid; gap: 4px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .k-row dt {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .k-row dd {
+    margin: 0;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .k-val { font-size: 15px; line-height: 1.35; }
+  .k-val--mono {
+    font-family: var(--font-mono);
+    font-variant-numeric: lining-nums tabular-nums;
+    letter-spacing: 0.01em;
+  }
+
+  /* Кнопка «копировать» показывается только при работающем скрипте:
+     без него она ничего не делает, а нерабочая кнопка хуже её отсутствия.
+     Класс .js ставит встроенный скрипт в <head>. */
+  .k-copy { display: none; position: relative; }
+  :global(html.js) .k-copy {
+    display: inline-grid;
+    place-items: center;
+    background: none;
     border: 1px solid var(--line);
     border-radius: var(--r-s);
-    min-height: 46px;
+    color: var(--muted);
+    font: inherit;
+    font-size: 12px;
+    padding: 5px 10px;
+    min-height: 30px;
+    cursor: pointer;
+    flex: none;
+    transition: border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
   }
-  .msgs a:hover { border-color: var(--acc-btn); color: var(--acc-deep); }
-  .msgs svg { color: var(--acc-deep); flex: none; }
+  .k-copy:hover { border-color: var(--acc-btn); color: var(--acc-deep); }
+  /* Кнопка в бланке нарочно мелкая: рамка в 44 px рядом со значением
+     читалась бы как кнопка формы. Поэтому на телефоне растёт не рамка,
+     а зона нажатия — прозрачным слоем поверх, до 46 px. */
+  @media (max-width: 899px) {
+    .k-copy::after { content: ''; position: absolute; inset: -7px -4px; }
+  }
+  /* Оба состояния лежат в одной ячейке сетки: ширина кнопки не прыгает
+     в момент подмены надписи. */
+  .k-copy-idle, .k-copy-done { grid-area: 1 / 1; white-space: nowrap; }
+  .k-copy-done { visibility: hidden; color: var(--good); }
+  .k-copy[data-done] { border-color: var(--good); }
+  .k-copy[data-done] .k-copy-idle { visibility: hidden; }
+  .k-copy[data-done] .k-copy-done { visibility: visible; }
 
-  .mail { font-size: 17px; color: var(--ink); text-decoration: none; overflow-wrap: anywhere; }
-  .mail:hover { color: var(--acc-deep); }
+  .k-check { margin-top: 20px; }
+  .k-check ul { list-style: none; margin: 10px 0 0; padding: 0; }
+  .k-check li { padding: 11px 0; border-top: 1px solid var(--line); }
+  .k-check a {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--acc-deep);
+    font-weight: 600;
+    font-size: 14.5px;
+    text-decoration: none;
+    min-height: 30px;
+    transition: gap var(--t-fast) var(--ease);
+  }
+  .k-check a:hover { gap: 11px; text-decoration: underline; }
+  .k-check small { display: block; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
 
-  .geo { font-size: 15.5px; }
-  .req { font-size: 14.5px; }
-  .req.mono { font-family: var(--font-mono); font-size: 13.5px; }
+  .k-ident-note {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+  .k-ident-note b { color: var(--ink); }
 
-  .before-ask { background: var(--card); border-top: 1px solid var(--line); }
+  /* ── Форма ──
+     Логику не трогаем: она в LeadForm.astro. Здесь только внешний вид,
+     и только на этой странице — :global внутри селектора страницы
+     за её пределы не выходит. Поля крупнее, ошибка спокойной строкой. */
+  .k-page-form :global(.lead-form) { border-radius: var(--r-m); }
+  .k-page-form :global(.field input),
+  .k-page-form :global(.field textarea) {
+    padding: 14px 15px;
+    border-radius: var(--r-s);
+    transition: border-color var(--t-fast) var(--ease);
+  }
+  .k-page-form :global(.field label) { font-size: 13px; letter-spacing: 0.01em; }
+  .k-page-form :global(.field .error) { color: var(--warn); font-weight: 500; }
+  .k-page-form :global(.field--error input),
+  .k-page-form :global(.field--error textarea) { border-color: var(--warn); }
+
+  .before-ask { background: var(--paper-2); border-top: 1px solid var(--line); }
   .ba { display: grid; gap: 10px; align-content: start; }
   .ba h3 { font-size: 17.5px; margin: 0; }
-  .ic { width: 40px; height: 40px; border-radius: var(--r-s); background: var(--acc-soft); color: var(--acc-deep); display: grid; place-items: center; }
+  .ic {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--r-s);
+    background: var(--acc-soft);
+    color: var(--acc-deep);
+    display: grid;
+    place-items: center;
+  }
 
-  @media (max-width: 900px) {
+  @media (prefers-reduced-motion: reduce) {
+    .k-phone, .k-ch-link, .k-ch-ic, .k-copy, .k-check a { transition: none; }
   }
 </style>
+
+<script>
+  // ── Живой статус доступности ──
+  //
+  // Режим круглосуточный, поэтому строка не сообщает «открыто/закрыто» —
+  // такой индикатор всегда горел бы зелёным и читался бы как наклейка
+  // «мы всегда онлайн», которой никто не верит. Вместо этого она
+  // сообщает то, что действительно меняется в течение суток: днём
+  // быстрее дозвониться, ночью быстрее написать.
+  //
+  // Время считается по Москве независимо от часового пояса посетителя:
+  // клиенту из Иркутска важно, который час у того, кому он звонит.
+  const box = document.getElementById('k-status')
+  if (box) {
+    const text = box.querySelector('.k-status-text')
+    const parts = Object.fromEntries(
+      new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Europe/Moscow',
+        weekday: 'short',
+        hour: 'numeric',
+        hour12: false,
+      })
+        .formatToParts(new Date())
+        .map((p) => [p.type, p.value]),
+    )
+    // hour12: false в полночь отдаёт «24» — приводим к нулю.
+    const hour = Number(parts.hour) % 24
+    const weekend = parts.weekday === 'Sat' || parts.weekday === 'Sun'
+
+    let state = 'on'
+    let phrase = 'Сейчас на связи, отвечу сразу'
+    if (hour < 8 || hour >= 22) {
+      state = 'night'
+      phrase = 'Ночь в Москве — быстрее всего написать в мессенджер'
+    } else if (weekend) {
+      state = 'on'
+      phrase = 'Выходной, но на связи — звоните или пишите'
+    }
+
+    if (text) text.textContent = phrase
+    box.dataset.state = state
+    box.hidden = false
+  }
+
+  // ── Копирование ИНН и телефона ──
+  //
+  // Без скрипта кнопок нет вовсе (правило .k-copy в стилях), поэтому
+  // деградировать нечему: значение всегда видно текстом и выделяется мышью.
+  const RESET = 2000
+  document.querySelectorAll<HTMLButtonElement>('.k-copy').forEach((btn) => {
+    let timer: number | undefined
+    btn.addEventListener('click', async () => {
+      const value = btn.dataset.copy || ''
+      try {
+        await navigator.clipboard.writeText(value)
+      } catch {
+        // Буфер обмена закрыт настройками браузера или страница открыта
+        // без защищённого соединения. Показывать ошибку незачем: значение
+        // рядом, его можно выделить руками. Просто ничего не подтверждаем.
+        return
+      }
+      btn.dataset.done = ''
+      window.clearTimeout(timer)
+      timer = window.setTimeout(() => delete btn.dataset.done, RESET)
+    })
+  })
+</script>
