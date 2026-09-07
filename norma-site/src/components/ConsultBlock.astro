@@ -14,9 +14,10 @@ import { SITE, href } from '../config/site'
 // подход» и «лучшие условия». Каждый из них заказчик может выполнить, и
 // каждый посетитель может потом проверить, выполнен ли он.
 //
-// Фотография берётся из SITE.photo. Пока её нет, показывается фирменный знак:
-// ставить стоковое лицо в блок, который обещает работу лично, нельзя — это
-// была бы первая же неправда на сайте, построенном на проверяемости.
+// Фотография берётся из SITE.photo (файл в public/img/). Если её убрать,
+// вернётся фирменный знак: ставить стоковое лицо в блок, который обещает
+// работу лично, нельзя — это была бы первая же неправда на сайте,
+// построенном на проверяемости.
 
 const PERKS = [
   {
@@ -58,7 +59,7 @@ const PERKS = [
       <div class="cright">
         <div class="who">
           {SITE.photo ? (
-            <img class="who-photo" src={href(`/${SITE.photo}`)} width="72" height="72" alt={SITE.shortName} loading="lazy" />
+            <img class="who-photo" src={href(`/img/${SITE.photo}`)} width="72" height="72" alt={SITE.shortName} loading="lazy" />
           ) : (
             <span class="who-mark"><LogoMark size={34} /></span>
           )}
