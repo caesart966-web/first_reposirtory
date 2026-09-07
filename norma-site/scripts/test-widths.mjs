@@ -13,7 +13,20 @@
 import { chromium } from 'playwright'
 
 const BASE = process.argv[2] || 'http://127.0.0.1:4321'
-const PAGES = ['/', '/stoimost/', '/komu-nuzhna-sro/', '/kontakty/', '/uslugi/sro-stroiteley/', '/dokumenty/', '/proverit-sro/']
+// Статья с таблицей в списке не случайно: таблицы в базе знаний приходят
+// из markdown, ширину им никто не задаёт, и одна длинная надпись в шапке
+// растягивает таблицу шире экрана. Так и было поймано — 399 px при экране
+// в 390.
+const PAGES = [
+  '/',
+  '/stoimost/',
+  '/komu-nuzhna-sro/',
+  '/kontakty/',
+  '/uslugi/sro-stroiteley/',
+  '/dokumenty/',
+  '/proverit-sro/',
+  '/baza-znaniy/regionalnyy-princip/',
+]
 
 // Ширины, на которых чаще всего ломается: край брейкпоинтов и режим «для ПК».
 const WIDTHS = [360, 390, 480, 640, 767, 768, 899, 900, 980, 1024, 1279, 1360]

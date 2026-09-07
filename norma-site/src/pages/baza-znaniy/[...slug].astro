@@ -152,6 +152,85 @@ const articleSchema = {
     background: var(--acc-soft);
     border-radius: 0 var(--r-s) var(--r-s) 0;
   }
+  /* ── Таблицы в статьях ──
+     Разметка статей — обычный markdown, и таблица приходит из него голым
+     <table>: без рамки, без шапки, без полосок между строками. На телефоне
+     это читалось не как таблица, а как текст, случайно разложенный
+     столбиками. Оформление повторяет table.data с остальных страниц сайта,
+     но без жёсткой минимальной ширины: в статьях таблицы узкие — две-три
+     колонки коротких значений, — и общий минимум в 560 px гнал бы их
+     в горизонтальную прокрутку на ровном месте.
+     Первая колонка — подпись строки, поэтому она набрана полужирным:
+     в сравнительной таблице глаз идёт по ней. */
+  .prose :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid var(--line);
+    border-radius: var(--r-m);
+    overflow: hidden;
+    background: var(--card);
+    margin: 0 0 24px;
+    font-size: 14.5px;
+    line-height: 1.5;
+  }
+  .prose :global(thead th) {
+    text-align: left;
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: var(--paper-2);
+    border-bottom: 1px solid var(--line);
+    padding: 11px 14px;
+    vertical-align: bottom;
+  }
+  /* Первый столбец шапки часто пустой — это угол сравнительной таблицы,
+     и подчёркивать его нечем. */
+  .prose :global(thead th:empty) { background: var(--paper-2); }
+  .prose :global(tbody td) {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+    color: var(--muted);
+  }
+  .prose :global(tbody tr:last-child td) { border-bottom: 0; }
+  .prose :global(tbody td:first-child) { font-weight: 600; color: var(--ink); }
+  /* На узком экране полей меньше: 14 px с каждой стороны на телефоне
+     съедали треть колонки.
+     table-layout: fixed — обязательно, а не для красоты. При обычной
+     раскладке ширину таблицы определяет самое длинное неразрывное
+     содержимое ячеек, и заголовок «Проектировщики и изыскатели» растягивал
+     её до 399 px на экране в 390: правый столбец обрезался, а страница
+     получала горизонтальную прокрутку. С фиксированной раскладкой колонки
+     делят ширину поровну, а текст переносится. */
+  @media (max-width: 599px) {
+    .prose :global(table) { font-size: 13.5px; table-layout: fixed; }
+    .prose :global(thead th), .prose :global(tbody td) {
+      padding: 9px 9px;
+      /* Два правила, и порядок здесь смысловой. Браузер сперва пробует
+         перенести по слогам, и в системе со словарём русских переносов
+         выйдет «зарегистриро-ванных» с дефисом. Если словаря нет —
+         а в части окружений его нет, — слово всё равно не должно вылезать
+         за колонку и наезжать на соседнюю, поэтому вторым идёт разрыв
+         по буквам. Он некрасив, но применяется только там, где иначе
+         текст налезал бы на текст. */
+      hyphens: auto;
+      -webkit-hyphens: auto;
+      overflow-wrap: break-word;
+    }
+    /* Капс в русском заметно шире строчных: «ПРОЕКТИРОВЩИКИ И ИЗЫСКАТЕЛИ»
+       в колонке шириной в треть экрана не помещается ни при каком кегле.
+       На телефоне шапка набирается обычным регистром — смысл тот же,
+       ширина меньше на четверть. */
+    .prose :global(thead th) {
+      text-transform: none;
+      letter-spacing: 0;
+      font-size: 12px;
+    }
+  }
+
   .prose :global(code) {
     font-family: var(--font-mono);
     font-size: 0.9em;
