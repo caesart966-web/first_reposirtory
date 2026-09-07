@@ -45,7 +45,7 @@ export const FEES: Record<'build' | 'design', FeeSet> = {
     union: 'НОСТРОЙ',
   },
   design: {
-    entry: 8000,
+    entry: 0,
     memberFirstYear: 5000,
     target: 10000,
     insuranceFirstYear: false,

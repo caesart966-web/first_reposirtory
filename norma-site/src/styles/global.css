@@ -495,7 +495,12 @@ table.data td.strong { font-weight: 600; }
 
 /* ── Формы ── */
 
-.field { display: grid; gap: 6px; }
+/* align-content: start — иначе поле «уезжает» вниз. Два поля стоят в одной
+   строке сетки и растягиваются по высоте более длинного; у сетки внутри
+   поля строки заданы автоматически, и лишняя высота распределяется между
+   ними: подпись остаётся сверху, а рамка сползает вниз и раздувается.
+   Так «Город и вид работ» разошёлся с E-mail, под которым есть пояснение. */
+.field { display: grid; gap: 6px; align-content: start; }
 .field label { font-size: 14px; font-weight: 600; }
 .field input[type='text'],
 .field input[type='tel'],
