@@ -3,6 +3,7 @@ import Base from '../../layouts/Base.astro'
 import Icon from '../../components/Icon.astro'
 import { getCollection } from 'astro:content'
 import { href, SITE } from '../../config/site'
+import HeadPhoto from '../../components/HeadPhoto.astro'
 
 const articles = (await getCollection('articles')).sort(
   (a, b) => (b.data.updated ?? b.data.published).getTime() - (a.data.updated ?? a.data.published).getTime(),
@@ -20,6 +21,7 @@ const fmt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 
   ]}
 >
   <section class="section page-head">
+    <HeadPhoto position="68% 62%" />
     <div class="wrap">
       <span class="eyebrow">База знаний</span>
       <h1>Разборы норм — с датами, а не «вообще»</h1>

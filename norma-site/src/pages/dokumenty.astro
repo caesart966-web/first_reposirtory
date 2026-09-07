@@ -4,6 +4,7 @@ import LeadForm from '../components/LeadForm.astro'
 import Icon from '../components/Icon.astro'
 import { LAW, TERMS } from '../config/facts'
 import { href, SITE } from '../config/site'
+import HeadPhoto from '../components/HeadPhoto.astro'
 
 // Страница «Какие документы нужны».
 //
@@ -101,6 +102,7 @@ const faqSchema = {
   breadcrumbs={[{ label: 'Главная', url: href('/') }, { label: 'Документы' }]}
 >
   <section class="section page-head">
+    <HeadPhoto position="58% 46%" />
     <div class="wrap">
       <span class="eyebrow">Что нужно от вас</span>
       <h1>Какие документы <em>собрать</em></h1>

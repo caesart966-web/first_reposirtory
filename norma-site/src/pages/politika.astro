@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro'
 import { href, SITE } from '../config/site'
+import HeadPhoto from '../components/HeadPhoto.astro'
 
 const updated = SITE.checkedDate
 ---
@@ -11,6 +12,7 @@ const updated = SITE.checkedDate
   breadcrumbs={[{ label: 'Главная', url: href('/') }, { label: 'Политика обработки данных' }]}
 >
   <section class="section page-head">
+    <HeadPhoto position="76% 48%" />
     <div class="wrap">
       <h1>Политика обработки персональных данных</h1>
       <p class="upd">Редакция от {updated}</p>

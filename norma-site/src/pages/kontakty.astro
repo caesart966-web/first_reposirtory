@@ -4,6 +4,7 @@ import ConsultBlock from '../components/ConsultBlock.astro'
 import Seal from '../components/Seal.astro'
 import Icon from '../components/Icon.astro'
 import { href, SITE, REGISTRIES } from '../config/site'
+import HeadPhoto from '../components/HeadPhoto.astro'
 
 // Страница контактов — карточка контрагента, а не футер с кружочками
 // мессенджеров.
@@ -105,6 +106,7 @@ const IDENT = [
   breadcrumbs={[{ label: 'Главная', url: href('/') }, { label: 'Контакты' }]}
 >
   <section class="section page-head k-hero">
+    <HeadPhoto position="82% 24%" soft />
     <div class="wrap k-hero-in">
       <div class="k-main">
         <span class="eyebrow">Контакты</span>
