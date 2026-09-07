@@ -170,8 +170,14 @@ const tableOf = (dir: string) => (dir === 'build' ? 'build' : 'design')
           <b>Чего в этой сумме нет</b>
           <ul>
             <li>
-              Вступительный взнос СРО — {money(FEES.build.entry)} строителям,
-              {' '}{money(FEES.design.entry)} проектировщикам и изыскателям
+              {FEES.build.entry === FEES.design.entry ? (
+                <>Вступительный взнос СРО — {money(FEES.build.entry)}</>
+              ) : (
+                <>
+                  Вступительный взнос СРО — {money(FEES.build.entry)} строителям,
+                  {' '}{money(FEES.design.entry)} проектировщикам и изыскателям
+                </>
+              )}
             </li>
             <li>Членский взнос — {money(FEES.build.memberFirstYear)} за первый год, дальше по обычной ставке СРО</li>
             <li>Целевой взнос: {money(FEES.build.target)} в НОСТРОЙ, {money(FEES.design.target)} в НОПРИЗ</li>

@@ -117,8 +117,17 @@ const faqSchema = {
             <p>
               Разовый платёж при приёме в члены. Устанавливается каждой СРО самостоятельно,
               поэтому суммы различаются. В СРО, с которыми я работаю, он такой:{' '}
-              <b>{money(FEES.build.entry)} строителям</b> и{' '}
-              <b>{money(FEES.design.entry)} проектировщикам и изыскателям</b>.
+              {FEES.build.entry === FEES.design.entry ? (
+                <>
+                  <b>{money(FEES.build.entry)}</b> — и строителям, и проектировщикам,
+                  и изыскателям.
+                </>
+              ) : (
+                <>
+                  <b>{money(FEES.build.entry)} строителям</b> и{' '}
+                  <b>{money(FEES.design.entry)} проектировщикам и изыскателям</b>.
+                </>
+              )}
             </p>
           </div>
           <div class="p-tag">разовый</div>

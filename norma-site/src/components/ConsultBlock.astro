@@ -59,7 +59,7 @@ const PERKS = [
       <div class="cright">
         <div class="who">
           {SITE.photo ? (
-            <img class="who-photo" src={href(`/img/${SITE.photo}`)} width="72" height="72" alt={SITE.shortName} loading="lazy" />
+            <img class="who-photo" src={href(`/img/${SITE.photo}`)} width="96" height="96" alt={SITE.shortName} loading="lazy" />
           ) : (
             <span class="who-mark"><LogoMark size={34} /></span>
           )}
@@ -140,7 +140,19 @@ const PERKS = [
     padding-bottom: 18px;
     border-bottom: 1px solid var(--line);
   }
-  .who-photo { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; display: block; }
+  /* Квадрат, а не круг: круг срезает углы, и часть кадра пропадает —
+     заказчик просил, чтобы фотография была видна целиком. Радиус тот же,
+     что у полей формы рядом. 96 px при исходнике в 200 точек — вдвое
+     больше, чем показывается, чтобы на экранах с двойной плотностью
+     портрет не мылился. */
+  .who-photo {
+    width: 96px;
+    height: 96px;
+    border-radius: var(--r-m);
+    object-fit: cover;
+    display: block;
+    border: 1px solid var(--line);
+  }
   .who-mark {
     width: 72px;
     height: 72px;
