@@ -511,6 +511,63 @@ table.data td {
 table.data tr:last-child td { border-bottom: 0; }
 table.data td.strong { font-weight: 600; }
 
+/* ── Таблица на телефоне ──
+   Четыре колонки с денежными суммами в 390 px не помещаются ни при каком
+   кегле, поэтому таблицы стояли в контейнере с горизонтальной прокруткой.
+   Формально всё работало, практически правую половину просто не видели:
+   ничто не сообщало, что таблицу надо листать вбок.
+   Ниже 600 px строка разворачивается в карточку — тот же бланк, что и на
+   контактах: сверху уровень, ниже значения с подписями. Подписи берутся
+   из data-label у ячеек, а шапка прячется: дублировать её незачем.
+   Прокрутка при этом больше не нужна и отключается. */
+@media (max-width: 599px) {
+  .tbl-wrap { overflow-x: visible; }
+  table.data { min-width: 0; display: block; font-size: 15px; }
+  /* Шапку убираем из виду, но оставляем в разметке: она нужна тем,
+     кто читает страницу голосом. */
+  table.data thead {
+    position: absolute;
+    width: 1px; height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  table.data tbody, table.data tr { display: block; }
+  table.data tr { border-bottom: 1px solid var(--line); padding: 4px 0 10px; }
+  table.data tr:last-child { border-bottom: 0; }
+  table.data td {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 14px;
+    border-bottom: 0;
+    padding: 5px 16px;
+  }
+  table.data td::before {
+    content: attr(data-label);
+    /* Подпись всегда одинаковая, независимо от того, как оформлено само
+       значение. Без явных color и font-weight подпись у ячейки с классом
+       strong наследовала её жирность и цвет, и колонка подписей выходила
+       разнобоем: одна строка серая обычная, соседняя — чёрная полужирная. */
+    color: var(--muted);
+    font-weight: 400;
+    font-size: 12.5px;
+    line-height: 1.4;
+  }
+  /* Первая ячейка — заголовок карточки, а не пара «подпись — значение». */
+  table.data tbody td:first-child {
+    display: block;
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--ink);
+    padding-top: 12px;
+    padding-bottom: 2px;
+  }
+  table.data tbody td:first-child::before { content: none; }
+  /* Ячейки с длинным текстом (не суммы) кладём под подпись, а не рядом. */
+  table.data td.wide { grid-template-columns: 1fr; gap: 2px; }
+}
+
 /* ── Списки с чекмарками ── */
 
 .checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
