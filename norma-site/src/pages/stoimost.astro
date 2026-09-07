@@ -7,6 +7,7 @@ import SpecialOffer from '../components/SpecialOffer.astro'
 import { FUNDS, LAW, TERMS } from '../config/facts'
 import { href, SITE } from '../config/site'
 import { FEES, FEES_NOTE, money } from '../config/fees'
+import HeadPhoto from '../components/HeadPhoto.astro'
 
 const faq = [
   {
@@ -44,6 +45,7 @@ const faqSchema = {
   breadcrumbs={[{ label: 'Главная', url: href('/') }, { label: 'Стоимость' }]}
 >
   <section class="section page-head">
+    <HeadPhoto position="64% 30%" />
     <div class="wrap">
       <span class="eyebrow">Стоимость</span>
       <h1>Сколько стоит вступление в СРО</h1>

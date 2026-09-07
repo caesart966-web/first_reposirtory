@@ -2,6 +2,7 @@
 import Base from './Base.astro'
 import LeadForm from '../components/LeadForm.astro'
 import Icon from '../components/Icon.astro'
+import HeadPhoto from '../components/HeadPhoto.astro'
 import { SERVICES } from '../config/services'
 import { href, SITE } from '../config/site'
 
@@ -13,12 +14,16 @@ interface Props {
   lead: string
   /** Ключевые факты в шапке: [{ v: '10 млн ₽', d: 'порог', law: 'ч. 2.1 ст. 52' }] */
   facts?: { v: string; d: string; law?: string }[]
+  /** Точка кадра фоновой фотографии в шапке. Своя у каждой страницы:
+      фотография одна на весь сайт, и без сдвига кадра шапки выглядели бы
+      одной картинкой, размноженной по разделам. */
+  photoPos?: string
   faq?: { q: string; a: string }[]
   formTitle?: string
   formSubtitle?: string
 }
 
-const { slug, title, metaTitle, description, lead, facts = [], faq = [], formTitle, formSubtitle } = Astro.props
+const { slug, title, metaTitle, description, lead, facts = [], faq = [], formTitle, formSubtitle, photoPos } = Astro.props
 
 const others = SERVICES.filter((s) => s.slug !== slug).slice(0, 3)
 
@@ -56,6 +61,7 @@ const serviceSchema = {
   ]}
 >
   <section class="section page-head">
+    <HeadPhoto position={photoPos} />
     <div class="wrap">
       <nav class="crumbs" aria-label="Хлебные крошки">
         <a href={href('/')}>Главная</a>

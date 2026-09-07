@@ -25,9 +25,42 @@ const BASE = process.argv[2] || 'http://127.0.0.1:4321'
 const MIN = 4.5
 const MIN_BIG = 3 // крупный текст: от 24px, либо от 18.66px полужирным
 
-// Что проверяем. Фотография лежит за текстом в двух местах, и обработка
-// у них разная: на главной кадр растворяется в белой бумаге, в шапке
-// раздела — в тёмном графите. Поэтому оба адреса проверяются отдельно.
+// Что проверяем. Фотография лежит за текстом в двух видах мест, и обработка
+// у них разная: на главной кадр растворяется в белой бумаге, в шапках
+// разделов — в тёмном графите.
+//
+// Шапки перечислены поимённо, а не найдены обходом сайта: проверка должна
+// падать, когда фотографию поставили на новую страницу и забыли её сюда
+// вписать. Обход бы такую страницу молча принял, и единственная гарантия
+// читаемости текста поверх кадра исчезла бы незаметно.
+const HEADS = [
+  '/uslugi/',
+  '/uslugi/sro-stroiteley/',
+  '/uslugi/sro-proektirovshchikov/',
+  '/uslugi/sro-izyskateley/',
+  '/uslugi/nrs/',
+  '/uslugi/licenzii/',
+  '/uslugi/ohrana-truda/',
+  '/uslugi/promyshlennaya-bezopasnost/',
+  '/uslugi/yuridicheskie-uslugi/',
+  '/uslugi/marketing/',
+  '/stoimost/',
+  '/komu-nuzhna-sro/',
+  '/dokumenty/',
+  '/proverit-sro/',
+  '/baza-znaniy/',
+  '/politika/',
+  '/kontakty/',
+]
+
+// Надписи, которые встречаются в шапках. Которых на странице нет —
+// пропускаются молча, поэтому один список годится на все.
+const HEAD_TEXTS = [
+  '.eyebrow', '.crumbs a', 'h1', '.lead', '.stamp',
+  '.fv', '.fd', '.k-phone', '.k-status', '.k-when dt', '.k-when dd',
+  '.k-quick-label', '.k-quick a',
+]
+
 const TARGETS = [
   {
     url: '/',
@@ -37,13 +70,13 @@ const TARGETS = [
     hide: '.hero .hero-offer, .hero .cta, .hero svg, .hero .law',
     texts: ['.geo', '.page-title', '.hero-lead', '.note', '.verify p', '.stat .v', '.stat .d'],
   },
-  {
-    url: '/uslugi/',
+  ...HEADS.map((url) => ({
+    url,
     root: '.page-head',
     photo: '.page-head .head-photo',
-    hide: '.page-head svg',
-    texts: ['.eyebrow', 'h1', '.lead', '.stamp'],
-  },
+    hide: '.page-head svg, .page-head .law',
+    texts: HEAD_TEXTS,
+  })),
 ]
 
 const SCREENS = [
@@ -168,7 +201,7 @@ for (const target of TARGETS) {
 await browser.close()
 
 if (!hasPhoto) {
-  console.log('· Фотографии на первом экране нет (site.ts → heroPhoto пустой) — проверять нечего.')
+  console.log('· Фотографий за текстом нет (site.ts → heroPhoto и headPhoto пустые) — проверять нечего.')
   process.exit(0)
 }
 if (failed) {

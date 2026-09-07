@@ -23,14 +23,16 @@ interface Props {
   src?: string
   /** Точка кадра, которая должна остаться в поле зрения. */
   position?: string
+  /** Приглушить кадр — для шапок, где в правой колонке стоит содержимое. */
+  soft?: boolean
 }
 
-const { src = SITE.headPhoto, position = '72% center' } = Astro.props
+const { src = SITE.headPhoto, position = '72% center', soft = false } = Astro.props
 ---
 
 {src && (
   <div
-    class="head-photo"
+    class:list={['head-photo', soft && 'head-photo--soft']}
     aria-hidden="true"
     style={`background-image: url(${href(`/img/${src}`)}); background-position: ${position}`}
   ></div>
