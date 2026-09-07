@@ -154,6 +154,13 @@ img { max-width: 100%; height: auto; }
   outline-offset: 2px;
   border-radius: 4px;
 }
+/* На тёмном фоне сургучный контур даёт 2.74:1 — ниже порога 3:1,
+   который WCAG требует от нетекстовых элементов, обводки фокуса
+   в том числе. В тёмных секциях берётся тот же светлый акцент, что
+   у ссылок и выделенных слов: 5.7:1. */
+.section--dark :focus-visible,
+.page-head :focus-visible,
+.menu :focus-visible { outline-color: var(--acc-bright); }
 
 /* Якоря не прячутся под липкой шапкой */
 section[id], [data-anchor] { scroll-margin-top: 84px; }

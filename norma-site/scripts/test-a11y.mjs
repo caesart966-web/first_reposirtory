@@ -18,7 +18,7 @@ const check = (ok, name, detail = '') => {
 {
   const ctx = await browser.newContext({ javaScriptEnabled: false })
   const page = await ctx.newPage()
-  for (const path of ['/', '/stoimost/', '/uslugi/sro-stroiteley/', '/dokumenty/', '/proverit-sro/']) {
+  for (const path of ['/', '/stoimost/', '/uslugi/sro-stroiteley/', '/dokumenty/', '/proverit-sro/', '/kontakty/']) {
     await page.goto(BASE + path, { waitUntil: 'domcontentloaded' })
     const text = (await page.locator('body').innerText()).trim()
     const visible = await page.evaluate(
