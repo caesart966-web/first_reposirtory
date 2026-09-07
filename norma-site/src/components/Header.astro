@@ -80,9 +80,19 @@ const nav = [
     gap: 20px;
     padding-top: 12px;
     padding-bottom: 12px;
-    transition: padding var(--t-mid) var(--ease);
+    /* Подбирается содержимое шапки, а не сама шапка. Раньше при прокрутке
+       уменьшались отступы, и это стоило дорого: высота шапки менялась
+       с 79 до 71 px, а шапка стоит в потоке (position: sticky) — значит
+       вся страница под ней прыгала на 8 px в момент, когда посетитель
+       только тронул колесо. Вдобавок padding пересчитывает раскладку
+       на каждом кадре перехода, и это те самые 340 мс, на которых
+       прокрутка ощущалась не гладкой.
+       Масштаб такой цены не имеет: он считается композитором, высота
+       шапки остаётся 79 px всегда, страница не двигается. */
+    transition: transform var(--t-mid) var(--ease);
+    transform-origin: 50% 50%;
   }
-  .site-header.stuck .hdr { padding-top: 8px; padding-bottom: 8px; }
+  .site-header.stuck .hdr { transform: scale(0.965); }
 
   .nav a,
   .logo,
