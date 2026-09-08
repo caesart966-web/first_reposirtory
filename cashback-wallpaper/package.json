@@ -1,0 +1,14 @@
+{
+  "name": "cashback-wallpaper",
+  "private": true,
+  "type": "module",
+  "description": "Обои для Android: категории кэшбэка нескольких банков одной таблицей на стекле",
+  "scripts": {
+    "build": "node render.mjs",
+    "all": "node render.mjs --preset midnight && node render.mjs --preset graphite && node render.mjs --preset indigo && node render.mjs --preset paper",
+    "check": "node scripts/test-contrast.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.56.1"
+  }
+}

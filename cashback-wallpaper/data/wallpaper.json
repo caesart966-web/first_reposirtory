@@ -1,0 +1,28 @@
+{
+  "size": { "width": 1080, "height": 2400 },
+  "background": "midnight",
+  "caption": "Кешбэк · сентябрь",
+  "card": { "width": 700, "offsetY": 0 },
+  "banks": [
+    {
+      "name": "Ozon Банк",
+      "brand": "#005BFF",
+      "categories": [
+        { "title": "Супермаркеты", "percent": 3 },
+        { "title": "Такси", "percent": 5 },
+        { "title": "Фастфуд", "percent": 5 },
+        { "title": "Аптеки", "percent": 7 }
+      ]
+    },
+    {
+      "name": "Т-Банк",
+      "brand": "#FFDD2D",
+      "categories": [
+        { "title": "Все покупки", "percent": 1 },
+        { "title": "Ремонт и мебель", "percent": 3 },
+        { "title": "Ж/д билеты", "percent": 5 },
+        { "title": "Местный транспорт", "percent": 5 }
+      ]
+    }
+  ]
+}
