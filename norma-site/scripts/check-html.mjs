@@ -120,7 +120,9 @@ for (const f of files) {
   // ── Косая в конце ──
   for (const m of html.matchAll(/href="(\/[^"#?]*)"/g)) {
     const href = m[1]
-    if (/\.[a-z0-9]{2,5}$/i.test(href)) continue
+    // Файл, а не страница: у файла косой в конце не бывает.
+    // Двенадцать знаков, а не пять: .webmanifest длиннее привычных .png и .xml.
+    if (/\.[a-z0-9]{2,12}$/i.test(href)) continue
     if (!href.endsWith('/')) p(`адрес без косой в конце → ${href}`)
   }
 

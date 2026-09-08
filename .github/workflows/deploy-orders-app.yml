@@ -30,7 +30,13 @@ jobs:
       run:
         working-directory: orders-app
     steps:
+      # fetch-depth: 0 — вся история, а не последний коммит.
+      # Карта сайта берёт дату изменения каждой страницы из истории git
+      # (см. astro.config.mjs). При мелкой копии истории нет, дат в карте
+      # сайта не будет вовсе — и это лучше, чем неправда, но хуже, чем правда.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:

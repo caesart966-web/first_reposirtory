@@ -3,19 +3,35 @@ import Base from '../../layouts/Base.astro'
 import Icon from '../../components/Icon.astro'
 import LeadForm from '../../components/LeadForm.astro'
 import HeadPhoto from '../../components/HeadPhoto.astro'
-import { byGroup } from '../../config/services'
+import { byGroup, SERVICES } from '../../config/services'
 import { href, SITE } from '../../config/site'
 
 const sro = byGroup('sro')
 const people = byGroup('people')
 const safety = byGroup('safety')
 const marketing = byGroup('marketing')
+
+// Состав раздела машинным списком. Поисковик по нему видит, из чего
+// состоит раздел, не разбирая карточки, и может показать услуги
+// дополнительными ссылками под сайтом в выдаче.
+const servicesList = {
+  '@type': 'ItemList',
+  name: 'Услуги',
+  itemListElement: SERVICES.map((s, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    name: s.title,
+    url: new URL(href(`/uslugi/${s.slug}/`), Astro.site).toString(),
+  })),
+}
 ---
 
 <Base
   title="Услуги — вступление в СРО, НРС, НОК, лицензии | НОРМА"
   description="Направления работы: вступление в СРО строителей, проектировщиков и изыскателей, внесение специалистов в НРС, НОК, получение лицензий. Подготовка документов бесплатно."
   breadcrumbs={[{ label: 'Главная', url: href('/') }, { label: 'Услуги' }]}
+  pageType="CollectionPage"
+  schema={[servicesList]}
 >
   <section class="section page-head">
     <HeadPhoto src="scales.webp" position="30% 52%" />
