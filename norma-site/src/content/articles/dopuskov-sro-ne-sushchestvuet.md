@@ -5,7 +5,8 @@ description: Свидетельства о допуске отменены с 1 
 published: 2026-03-04
 updated: 2026-08-29
 excerpt: Свидетельства о допуске отменены законом 372-ФЗ. Право на работы подтверждает членство и выписка из реестра — но «допуск» до сих пор продают.
-order: 2
+group: membership
+order: 1
 relatedService:
   label: Вступление в СРО строителей
   url: /uslugi/sro-stroiteley/

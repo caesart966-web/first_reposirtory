@@ -5,7 +5,8 @@ description: Застройщик, выполняющий строительст
 published: 2026-09-07
 updated: 2026-09-07
 excerpt: Обязанность членства связана не только с договором подряда. Застройщик, который строит сам, попадает под неё напрямую.
-order: 6
+group: need
+order: 4
 relatedService:
   label: Вступление в СРО строителей
   url: /uslugi/sro-stroiteley/

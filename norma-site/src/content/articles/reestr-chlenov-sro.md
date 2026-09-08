@@ -5,7 +5,8 @@ description: Сведения о члене СРО открыты и досту�
 published: 2026-09-07
 updated: 2026-09-07
 excerpt: Заказчик проверит вас в реестре, не спрашивая. Полезно заранее знать, что он там увидит — и не удивиться.
-order: 24
+group: check
+order: 3
 relatedService:
   label: Как проверить свою СРО
   url: /proverit-sro/

@@ -12,6 +12,30 @@ export async function getStaticPaths() {
 const { article } = Astro.props
 const { Content } = await render(article)
 
+// Ссылки внутри текста статьи чинятся здесь, а не в самих статьях.
+//
+// В чём была беда. Ссылки, поставленные компонентами, проходят через
+// href() и получают подпапку, в которой живёт сайт. Ссылки, написанные
+// в markdown, через href() не проходят: «/proverit-sro/» так и уходит
+// в разметку и на боевом адресе ведёт в корень домена, где ничего нет.
+// На локальном превью подпапки нет, поэтому проверка ссылок молчала,
+// а заказчик получил страницу «Site not found» от GitHub. Битых ссылок
+// набралось двадцать девять.
+//
+// Чинить в самих статьях нельзя: подпапка зависит от того, куда собирают,
+// и автор статьи её знать не обязан. Поэтому правим готовую разметку —
+// один раз на сборке, для всех статей сразу, включая те, что напишут
+// потом. Трогаем только ссылки от корня: внешние (со схемой), якорные
+// и относительные остаются как есть.
+const base = import.meta.env.BASE_URL.replace(/\/$/, '')
+const withBase = (html: string) =>
+  base ? html.replace(/(href|src)="\/(?!\/)/g, `$1="${base}/`) : html
+
+// Готовая разметка статьи лежит в самой записи коллекции. Если её вдруг
+// не окажется — рисуем обычным компонентом: лучше ссылки без подпапки,
+// чем пустая страница.
+const rendered = (article as { rendered?: { html?: string } }).rendered?.html
+
 const fmt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
 
 // Другие статьи — чтобы читатель не уходил после одной страницы.
@@ -68,7 +92,7 @@ const articleSchema = {
 
     <div class="wrap art-body">
       <div class="prose">
-        <Content />
+        {rendered ? <Fragment set:html={withBase(rendered)} /> : <Content />}
       </div>
 
       <aside class="art-side">

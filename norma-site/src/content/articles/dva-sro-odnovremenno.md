@@ -5,7 +5,8 @@ description: В двух СРО одного вида состоять нель�
 published: 2026-09-07
 updated: 2026-09-07
 excerpt: Вопрос звучит одинаково, а ответов два — противоположных. Всё зависит от того, одного вида организации или разного.
-order: 12
+group: membership
+order: 5
 relatedService:
   label: Услуги
   url: /uslugi/

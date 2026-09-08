@@ -5,7 +5,8 @@ description: У строителей членство в СРО нужно пр�
 published: 2026-09-07
 updated: 2026-09-07
 excerpt: "Порог 10 млн ₽ — норма для строителей. К проектированию и изысканиям она не относится: там членство нужно при любой сумме прямого договора."
-order: 17
+group: need
+order: 7
 relatedService:
   label: Вступление в СРО проектировщиков
   url: /uslugi/sro-proektirovshchikov/

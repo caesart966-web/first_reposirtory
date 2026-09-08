@@ -5,7 +5,8 @@ description: СРО строителей должна быть зарегист�
 published: 2026-09-07
 updated: 2026-09-07
 excerpt: Строителю нельзя вступить в СРО чужого региона. Проектировщику и изыскателю — можно в любую. Половина сайтов пишет об этом неверно.
-order: 10
+group: membership
+order: 2
 relatedService:
   label: Вступление в СРО строителей
   url: /uslugi/sro-stroiteley/
