@@ -85,9 +85,15 @@ for (const p of pages) {
   // по любому несуществующему адресу.
   if (p.is404 && !/noindex/.test(robotsMeta ?? '')) bad('/404.html: страница не закрыта от индексации')
 
+  // Страница, закрытая от поиска собственным решением (404, результаты
+  // внутреннего поиска), живёт по другим правилам: canonical ей указывать
+  // не на что, и в карте сайта её быть не должно. В черновой сборке
+  // закрыто всё разом — там это правило не работает.
+  p.selfNoindex = !draft && /noindex/.test(robotsMeta ?? '')
+
   const canonical = attr(html, /<link rel="canonical" href="([^"]*)"/)
-  if (p.is404) {
-    if (canonical) bad('/404.html: у страницы 404 не должно быть canonical')
+  if (p.selfNoindex) {
+    if (canonical) bad(`${url}: страница закрыта от индексации, canonical ей не нужен`)
   } else if (!canonical) {
     bad(`${url}: нет canonical`)
   }
@@ -165,7 +171,7 @@ for (const p of pages) {
 
   // Крошки: есть на каждой странице, кроме главной и 404.
   const isHome = url === '/'
-  if (!isHome && !p.is404 && !types.includes('BreadcrumbList')) {
+  if (!isHome && !p.selfNoindex && !types.includes('BreadcrumbList')) {
     bad(`${url}: нет хлебных крошек в микроразметке`)
   }
 
@@ -211,16 +217,22 @@ for (const m of maps) {
 if (entries.size > 0) {
   const paths = new Set([...entries.keys()].map((u) => new URL(u).pathname))
 
-  for (const p of indexable) {
+  const shouldBeInMap = indexable.filter((p) => !p.selfNoindex)
+  for (const p of shouldBeInMap) {
     // Адрес страницы в карте сайта записан с подпапкой сборки.
     const want = [...paths].some((x) => x.endsWith(p.url) || x === p.url)
     if (!want) bad(`карта сайта потеряла страницу ${p.url}`)
   }
-  if (paths.size !== indexable.length) {
-    const extra = paths.size - indexable.length
-    if (extra > 0) warn(`в карте сайта на ${extra} адрес(ов) больше, чем страниц в сборке`)
+  for (const p of pages.filter((x) => x.is404 || x.selfNoindex)) {
+    const path = p.is404 ? '/404' : p.url
+    if ([...paths].some((x) => x.endsWith(path))) {
+      bad(`страница ${path} закрыта от индексации, но попала в карту сайта`)
+    }
   }
-  if ([...entries.keys()].some((u) => u.includes('/404'))) bad('страница 404 попала в карту сайта')
+  if (paths.size !== shouldBeInMap.length) {
+    const extra = paths.size - shouldBeInMap.length
+    if (extra > 0) warn(`в карте сайта на ${extra} адрес(ов) больше, чем открытых страниц в сборке`)
+  }
 
   for (const [loc, e] of entries) {
     if (!loc.endsWith('/')) bad(`адрес в карте сайта без косой черты на конце: ${loc}`)
@@ -275,6 +287,57 @@ if (existsSync(manifestPath)) {
     }
   } catch (e) {
     bad(`site.webmanifest не разбирается как JSON (${e.message})`)
+  }
+}
+
+// ── Оглавление для ИИ-сервисов ────────────────────────────────────────────
+//
+// llms.txt и llms-full.txt собираются из тех же конфигов, что и сайт.
+// Проверка сторожит одно: чтобы в них не потерялась статья. Помощник,
+// у которого в оглавлении нет половины базы знаний, пересказывает
+// оставшуюся половину и выдаёт её за весь сайт.
+const articleUrls = indexable
+  .filter((p) => /^\/baza-znaniy\/.+\//.test(p.url))
+  .map((p) => p.url)
+
+for (const [file, what] of [['llms.txt', 'оглавление для ИИ-сервисов'], ['llms-full.txt', 'полные тексты статей']]) {
+  const path = join(root, file)
+  if (!existsSync(path)) {
+    bad(`нет ${file} — ${what}`)
+    continue
+  }
+  const txt = readFileSync(path, 'utf8')
+  if (!txt.startsWith('# ')) bad(`${file}: первой строкой должен идти заголовок «# …»`)
+  if (file === 'llms.txt') {
+    if (!/^> /m.test(txt)) bad('llms.txt: нет строки-описания «> …»')
+    for (const u of articleUrls) {
+      if (!txt.includes(u)) bad(`llms.txt: в оглавлении нет статьи ${u}`)
+    }
+  } else {
+    const missing = indexable
+      .filter((p) => articleUrls.includes(p.url))
+      .filter((p) => !txt.includes(p.url))
+    if (missing.length > 0) bad(`llms-full.txt: нет текста ${missing.length} статей`)
+  }
+}
+
+// ── Индекс поиска ─────────────────────────────────────────────────────────
+const indexPath = join(root, 'search-index.json')
+if (!existsSync(indexPath)) {
+  bad('нет search-index.json — поиск по сайту работать не будет (npm run build собирает его сам)')
+} else {
+  try {
+    const idx = JSON.parse(readFileSync(indexPath, 'utf8'))
+    const searchable = indexable.filter((p) => !p.selfNoindex)
+    if (idx.length !== searchable.length) {
+      bad(`в индексе поиска ${idx.length} страниц, а искать нужно по ${searchable.length}`)
+    }
+    const known = new Set(idx.map((d) => d.u))
+    for (const p of searchable) if (!known.has(p.url)) bad(`страница ${p.url} не попала в индекс поиска`)
+    const empty = idx.filter((d) => !d.t || !d.b)
+    if (empty.length > 0) bad(`в индексе поиска ${empty.length} страниц без заголовка или текста`)
+  } catch (e) {
+    bad(`search-index.json не разбирается как JSON (${e.message})`)
   }
 }
 

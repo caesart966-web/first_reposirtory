@@ -29,6 +29,8 @@ const BASE = process.argv[2] || 'http://127.0.0.1:4321'
 const sitemap = readFileSync('dist/sitemap-0.xml', 'utf8')
 const urls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => new URL(m[1]).pathname)
 urls.push('/404.html')
+// Страницы, закрытой от индексации, в карте сайта нет — а проверять её надо.
+urls.push('/poisk/')
 
 const browser = await chromium.launch()
 const problems = []

@@ -568,7 +568,17 @@ const tableOf = (dir: string) => (dir === 'build' ? 'build' : 'design')
       }
     }
 
-    box.addEventListener('change', recount)
+    // Цель для Метрики: посетитель воспользовался калькулятором.
+    // Один раз за визит на страницу, а не на каждое переключение —
+    // иначе цифра «достижений цели» будет считать не людей, а клики.
+    let reported = false
+    box.addEventListener('change', () => {
+      recount()
+      if (reported) return
+      reported = true
+      const w = window as unknown as { ym?: (...a: unknown[]) => void; __metrikaId?: string }
+      if (typeof w.ym === 'function' && w.__metrikaId) w.ym(w.__metrikaId, 'reachGoal', 'cost_calc')
+    })
     recount()
   }
 </script>

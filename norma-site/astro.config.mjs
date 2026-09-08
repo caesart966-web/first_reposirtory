@@ -109,6 +109,9 @@ export default defineConfig({
   // поисковики считают её признаком добросовестного сайта.
   integrations: [
     sitemap({
+      // Страница результатов внутреннего поиска в карте сайта не нужна:
+      // она закрыта от индексации, и звать на неё робота — противоречие.
+      filter: (page) => !new URL(page).pathname.endsWith('/poisk/'),
       serialize(item) {
         const path = new URL(item.url).pathname.replace(BASE_PATH.replace(/\/$/, ''), '') || '/'
         const rule = RULES.find(([re]) => re.test(path))
