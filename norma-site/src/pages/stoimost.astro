@@ -140,8 +140,10 @@ const faqSchema = {
           <div class="p-body">
             <h3>Членские взносы</h3>
             <p>
-              Регулярный платёж, обычно ежеквартальный или ежегодный. За первый год —
-              <b>{money(FEES.build.memberFirstYear)}</b> и строителям, и проектировщикам.
+              Регулярный платёж. В первый год — <b>{money(FEES.build.memberMonth)} в месяц</b>{' '}
+              и строителям, и проектировщикам, то есть <b>{money(FEES.build.memberMonth * 12)}</b>{' '}
+              за двенадцать месяцев. Платить можно за месяц, квартал, полгода или год —
+              сумма от этого не меняется, скидки за длинный период нет.
               Но <b>со второго года взнос платится по обычной ставке СРО</b> и не исчезает
               всё время, пока компания состоит в членах. Ставку второго года я называю
               до подачи документов: если вам обещают членство «без последующих платежей» —
@@ -317,8 +319,8 @@ const faqSchema = {
             <b class="free-b">{money(FEES.build.entry)}</b>
           </li>
           <li>
-            <span>Членский взнос за первый год</span>
-            <b>{money(FEES.build.memberFirstYear)}</b>
+            <span>Членские взносы за первый год — {money(FEES.build.memberMonth)} в месяц</span>
+            <b>{money(FEES.build.memberMonth * 12)}</b>
           </li>
           <li>
             <span>Целевой взнос в {FEES.build.union}</span>
@@ -334,7 +336,7 @@ const faqSchema = {
           </li>
           <li class="total">
             <span><b>Всего за первый год, платится напрямую в СРО</b></span>
-            <b>{money(FUNDS.buildHarm[0].amountNum + FUNDS.buildContract[0].amountNum + FEES.build.entry + FEES.build.memberFirstYear + FEES.build.target)}</b>
+            <b>{money(FUNDS.buildHarm[0].amountNum + FUNDS.buildContract[0].amountNum + FEES.build.entry + FEES.build.memberMonth * 12 + FEES.build.target)}</b>
           </li>
         </ul>
         <p class="ce-note">
@@ -342,7 +344,7 @@ const faqSchema = {
           Различаются только вступительный, членские и целевой взносы — здесь показаны те,
           что действуют в СРО, с которыми я работаю. Если бы компания не участвовала
           в торгах, вторая строка была бы не нужна и первый год обошёлся бы
-          в {money(FUNDS.buildHarm[0].amountNum + FEES.build.entry + FEES.build.memberFirstYear + FEES.build.target)}.
+          в {money(FUNDS.buildHarm[0].amountNum + FEES.build.entry + FEES.build.memberMonth * 12 + FEES.build.target)}.
           Со второго года остаётся членский взнос по обычной ставке СРО и страхование —
           я называю обе суммы до подачи документов.
         </p>

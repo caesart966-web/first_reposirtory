@@ -14,7 +14,8 @@
     "fonts": "python3 scripts/subset-fonts.py",
     "audit": "node scripts/audit.mjs",
     "facts": "node scripts/check-facts.mjs",
-    "check:base": "SITE_URL=https://example.github.io BASE_PATH=/proverka/podpapka/ PUBLIC_NOINDEX=1 astro build && BASE_PATH=/proverka/podpapka/ node scripts/check-base.mjs && npm run build"
+    "check:base": "SITE_URL=https://example.github.io BASE_PATH=/proverka/podpapka/ PUBLIC_NOINDEX=1 astro build && BASE_PATH=/proverka/podpapka/ node scripts/check-base.mjs && npm run build",
+    "watch:law": "node scripts/watch-law.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "3.7.3",

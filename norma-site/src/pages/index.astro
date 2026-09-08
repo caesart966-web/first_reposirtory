@@ -153,7 +153,10 @@ const howToSchema = {
         {(['build', 'design'] as const).map((kind) => {
           const fee = FEES[kind]
           const fund = kind === 'build' ? FUNDS.buildHarm[0] : FUNDS.designHarm[0]
-          const total = fund.amountNum + fee.entry + fee.memberFirstYear + fee.target
+          // Членский взнос помесячный, поэтому в «итого за первый год»
+          // он входит двенадцатью месяцами, а не одной суммой.
+          const memberYear = fee.memberMonth * 12
+          const total = fund.amountNum + fee.entry + memberYear + fee.target
           return (
             <div class="pcard rv">
               <span class="ptag">{kind === 'build' ? 'Строителям' : 'Проектировщикам и изыскателям'}</span>
@@ -169,8 +172,8 @@ const howToSchema = {
                   <b class={fee.entry === 0 ? 'free-v' : ''}>{money(fee.entry)}</b>
                 </li>
                 <li>
-                  <span>Членский взнос за первый год<small>со второго года платится тоже</small></span>
-                  <b>{money(fee.memberFirstYear)}</b>
+                  <span>Членские взносы за первый год<small>{money(fee.memberMonth)} в месяц, со второго года по ставке СРО</small></span>
+                  <b>{money(memberYear)}</b>
                 </li>
                 <li>
                   <span>Целевой взнос в {fee.union}<small>устанавливает СРО</small></span>

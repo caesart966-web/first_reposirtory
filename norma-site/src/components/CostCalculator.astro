@@ -2,7 +2,7 @@
 import { FUNDS, LAW } from '../config/facts'
 import { href } from '../config/site'
 import Icon from './Icon.astro'
-import { FEES, money } from '../config/fees'
+import { FEES, MEMBER_PERIODS, money } from '../config/fees'
 
 // Калькулятор взносов в компенсационные фонды.
 //
@@ -52,7 +52,7 @@ const tableOf = (dir: string) => (dir === 'build' ? 'build' : 'design')
       </p>
     </div>
 
-    <div class="cost-box rv" id="cost-box">
+    <div class="cost-box rv" id="cost-box" data-member-month={FEES.build.memberMonth}>
       <div class="cost-form">
         <!-- 1. Направление -->
         <fieldset class="fs">
@@ -135,6 +135,27 @@ const tableOf = (dir: string) => (dir === 'build' ? 'build' : 'design')
             </div>
           ))}
         </fieldset>
+        <!-- Период членских взносов. Намеренно без номера: шаги 1-4 считают
+             то, что установлено законом, а членский взнос назначает сама СРО.
+             Номер поставил бы его в тот же ряд и стёр бы это различие —
+             то самое, на котором стоит весь сайт. -->
+        <fieldset class="fs fs--aside">
+          <legend class="fs-t">Членские взносы — за какой период считать</legend>
+          <p class="fs-hint">
+            Это уже не закон, а условие конкретной СРО, поэтому сумма считается
+            отдельно от компенсационных фондов и в итог по закону не входит.
+            Скидки за длинный период нет: месяц стоит столько же, сколько
+            двенадцатая часть года.
+          </p>
+          <div class="segs segs--4" role="radiogroup" aria-label="Период членских взносов">
+            {MEMBER_PERIODS.map((pd, i) => (
+              <label class="seg">
+                <input type="radio" name="cost-months" value={pd.months} data-months={pd.months} checked={i === 0} />
+                <span class="seg-in"><b>{pd.label}</b><i>{money(FEES.build.memberMonth * pd.months)}</i></span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
       </div>
 
       <!-- Итог -->
@@ -159,7 +180,26 @@ const tableOf = (dir: string) => (dir === 'build' ? 'build' : 'design')
         </div>
         </div>
 
+
         <div class="out-rest">
+        {/* Членские взносы стоят отдельным блоком, а не строкой в итоге,
+            и это не оформление. Итог выше — суммы, установленные статьёй
+            55.16 ГрК РФ и одинаковые у всех СРО страны. Членский взнос
+            назначает сама СРО. Сложить их в одно число значило бы выдать
+            коммерческое условие за норму — ровно то, за что этот сайт
+            ругает конкурентов. */}
+        <div class="out-member" aria-live="polite">
+          <span class="out-cap out-cap--soft">Членские взносы — условие СРО, не закон</span>
+          <div class="out-total out-total--soft">
+            <span id="out-months-label">За 1 месяц</span>
+            <b class="mono" id="out-member">—</b>
+          </div>
+          <p class="out-member-note">
+            {money(FEES.build.memberMonth)} в месяц в первый год. Со второго года —
+            по обычной ставке СРО, её называю до подачи документов.
+          </p>
+        </div>
+
         <p class="out-once">
           <Icon name="alert" size={15} />
           <span>Вносится <b>единовременно</b>: рассрочка по компенсационным фондам
@@ -179,7 +219,7 @@ const tableOf = (dir: string) => (dir === 'build' ? 'build' : 'design')
                 </>
               )}
             </li>
-            <li>Членский взнос — {money(FEES.build.memberFirstYear)} за первый год, дальше по обычной ставке СРО</li>
+            <li>Членские взносы — {money(FEES.build.memberMonth)} в месяц в первый год, дальше по обычной ставке СРО</li>
             <li>Целевой взнос: {money(FEES.build.target)} в НОСТРОЙ, {money(FEES.design.target)} в НОПРИЗ</li>
             <li>Страхование ответственности — в первый год не требуется</li>
             <li>Независимая оценка квалификации специалистов для НРС</li>
@@ -401,6 +441,25 @@ const tableOf = (dir: string) => (dir === 'build' ? 'build' : 'design')
   .out-rows dt { color: var(--on-dark-muted); font-size: 14px; line-height: 1.4; }
   .out-rows dd { margin: 0; color: #fff; font-size: 15px; font-weight: 700; white-space: nowrap; }
 
+  /* Поле без номера отделено линейкой: оно не про закон. */
+  .fs--aside { border-top: 1px solid var(--line); padding-top: 20px; }
+  .fs--aside .fs-t { color: var(--muted); }
+
+  .out-member {
+    border-bottom: 1px solid var(--dark-line);
+    margin-bottom: 18px;
+    padding-bottom: 16px;
+  }
+  .out-cap--soft { color: var(--on-dark-muted); }
+  .out-total--soft b { font-size: 21px; }
+  .out-member-note {
+    margin-top: 8px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--on-dark-muted);
+  }
+  .segs--4 { grid-template-columns: repeat(auto-fit, minmax(min(120px, 100%), 1fr)); }
+
   .out-total {
     display: flex;
     align-items: baseline;
@@ -462,6 +521,11 @@ const tableOf = (dir: string) => (dir === 'build' ? 'build' : 'design')
     const outHarm = document.getElementById('out-harm')
     const outOdo = document.getElementById('out-odo')
     const outTotal = document.getElementById('out-total')
+    const outMember = document.getElementById('out-member')
+    const outMonths = document.getElementById('out-months-label')
+    // Месячная ставка приходит из разметки, а не вписана в скрипт:
+    // единственное место, где она задана, — src/config/fees.ts.
+    const memberMonth = Number(box.dataset.memberMonth || 0)
 
     // Неразрывные пробелы между разрядами: иначе «1 500 000 ₽» переносится
     // посреди числа, если в колонке становится тесно.
@@ -495,6 +559,13 @@ const tableOf = (dir: string) => (dir === 'build' ? 'build' : 'design')
       if (outHarm) outHarm.textContent = money(harm)
       if (outOdo) outOdo.textContent = money(odo)
       if (outTotal) outTotal.textContent = money(harm + odo)
+
+      const months = Number(picked('cost-months')?.dataset.months || 1)
+      if (outMember) outMember.textContent = money(memberMonth * months)
+      if (outMonths) {
+        const word = months === 1 ? 'месяц' : months < 5 ? 'месяца' : 'месяцев'
+        outMonths.textContent = `За ${months} ${word}`
+      }
     }
 
     box.addEventListener('change', recount)
