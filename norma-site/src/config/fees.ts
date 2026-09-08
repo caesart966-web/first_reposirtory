@@ -26,8 +26,17 @@
 export type FeeSet = {
   /** Вступительный взнос — разовый, при приёме в члены. */
   entry: number
-  /** Членский взнос за первый год. */
-  memberFirstYear: number
+  /**
+   * Членский взнос за ОДИН МЕСЯЦ.
+   *
+   * Раньше здесь лежало поле memberFirstYear — членский взнос за весь первый
+   * год, 5 000 ₽. Заказчик уточнил: 5 000 ₽ стоит месяц. Разница в двенадцать
+   * раз, и она была видна на первом экране, в итоге на главной и в разбивке
+   * на «Стоимости» — сайт называл цену в двенадцать раз меньше настоящей.
+   * Поэтому поле переименовано, а не просто переписано числом: старое имя
+   * само подсказывало неверный смысл тому, кто будет править суммы потом.
+   */
+  memberMonth: number
   /** Целевой взнос в национальное объединение (НОСТРОЙ или НОПРИЗ). */
   target: number
   /** Требуется ли страхование гражданской ответственности в первый год. */
@@ -39,14 +48,14 @@ export type FeeSet = {
 export const FEES: Record<'build' | 'design', FeeSet> = {
   build: {
     entry: 0,
-    memberFirstYear: 5000,
+    memberMonth: 5000,
     target: 10000,
     insuranceFirstYear: false,
     union: 'НОСТРОЙ',
   },
   design: {
     entry: 0,
-    memberFirstYear: 5000,
+    memberMonth: 5000,
     target: 10000,
     insuranceFirstYear: false,
     union: 'НОПРИЗ',
@@ -63,6 +72,25 @@ export const FEES: Record<'build' | 'design', FeeSet> = {
  * в таблицу по образцу FUNDS, а не подписывать «примерно».
  */
 export const FEES_VARY_BY_LEVEL = false
+
+/**
+ * Периоды оплаты членских взносов — для калькулятора на «Стоимости».
+ * Взнос помесячный, поэтому период умножается на месячную ставку;
+ * никаких скидок за длинный период нет, и придумывать их нельзя.
+ */
+export const MEMBER_PERIODS = [
+  { months: 1, label: '1 месяц' },
+  { months: 3, label: '3 месяца' },
+  { months: 6, label: '6 месяцев' },
+  { months: 12, label: '12 месяцев' },
+] as const
+
+/** Членские взносы за N месяцев. */
+export const memberFor = (kind: 'build' | 'design', months: number) =>
+  FEES[kind].memberMonth * months
+
+/** Членские взносы за год — то, что раньше ошибочно лежало в memberFirstYear. */
+export const memberYear = (kind: 'build' | 'design') => memberFor(kind, 12)
 
 /** Форматирование сумм: 100000 → «100 000 ₽», 0 → «0 ₽». Неразрывный пробел. */
 export const money = (n: number) => `${n.toLocaleString('ru-RU').replace(/\s/g, ' ')} ₽`

@@ -1,0 +1,119 @@
+# Робот-наблюдатель сайта «НОРМА»: раз в неделю смотрит, не изменился ли
+# закон, на котором стоит сайт, и не пора ли обновить дату на печати.
+#
+# ЧТО ОН ДЕЛАЕТ. Открывает страницы норм, снимает отпечаток текста
+# и сравнивает с прошлой неделей. Отдельно следит за датой действующей
+# редакции Градостроительного кодекса — именно она первой показывает,
+# что вышел закон, меняющий кодекс. Заодно прогоняет собственные проверки
+# сайта: сборку, ссылки и сверку сайта с самим собой.
+#
+# ЧЕГО ОН НЕ ДЕЛАЕТ. Не правит статьи, не двигает дату на печати, ничего
+# не публикует. Штамп «Сверено с законом» — обещание владельца сайта своим
+# клиентам; если его будет двигать скрипт, штамп перестанет означать сверку
+# и станет означать «скрипт отработал». Поэтому робот заводит задачу
+# и показывает пальцем, а решение принимает человек.
+#
+# ЕСЛИ ВСЁ ТИХО — задача не заводится и письма не приходит. Обновляется
+# только снимок в репозитории, чтобы на следующей неделе было с чем
+# сравнивать. Так робот не превращается в еженедельный спам, который
+# перестают читать.
+name: 'НОРМА: наблюдение за законом'
+
+on:
+  schedule:
+    # Понедельник, 06:00 UTC — 09:00 по Москве.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: watch-law-norma
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: norma-site/package-lock.json
+
+      - name: Ставим зависимости
+        working-directory: norma-site
+        run: npm ci --omit=dev
+
+      # Собственные проверки сайта. Ловят не изменения закона, а гниение:
+      # сайт, начавший противоречить сам себе, и битые ссылки.
+      - name: Проверяем сайт сам по себе
+        id: selfcheck
+        working-directory: norma-site
+        continue-on-error: true
+        env:
+          SITE_URL: https://example.ru
+        run: |
+          npm run build
+          npm run check
+          npm run facts
+
+      - name: Смотрим на закон
+        id: law
+        working-directory: norma-site
+        run: node scripts/watch-law.mjs --update
+
+      - name: Заводим задачу, если есть о чём
+        if: steps.law.outputs.alarm == '1' || steps.selfcheck.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs')
+            let body = fs.readFileSync('norma-site/law-report.md', 'utf8')
+            if ('${{ steps.selfcheck.outcome }}' === 'failure') {
+              body += '\n\n## Собственные проверки сайта не прошли\n'
+                + 'Сборка, ссылки или сверка сайта с самим собой дали ошибку — '
+                + 'подробности в логе этого запуска.'
+            }
+            const title = `Наблюдение за законом — ${new Date().toISOString().slice(0, 10)}`
+            const { data: open } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'наблюдение-за-законом',
+            })
+            if (open.length) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: open[0].number,
+                body,
+              })
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ['наблюдение-за-законом'],
+              })
+            }
+
+      # Снимок нужен в репозитории: без него следующая неделя не с чем
+      # сравнивать. Отчёт law-report.md не сохраняем — он одноразовый.
+      - name: Сохраняем снимок
+        run: |
+          rm -f norma-site/law-report.md
+          if git diff --quiet -- norma-site/scripts/law-snapshot.json; then
+            echo "снимок не изменился"
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add norma-site/scripts/law-snapshot.json
+          git commit -m 'Наблюдение за законом: снимок норм за неделю'
+          git push

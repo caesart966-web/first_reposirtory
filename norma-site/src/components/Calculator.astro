@@ -525,7 +525,7 @@ import { FEES } from '../config/fees'
     const rub = (n: number) => `${n.toLocaleString('ru-RU').replace(/\s/g, ' ')} ₽`
     const feeRows = fee
       ? `<li><span>Вступительный взнос СРО</span><b>${rub(fee.entry)}</b></li>
-         <li><span>Членский взнос за первый год</span><b>${rub(fee.memberFirstYear)}</b></li>
+         <li><span>Членские взносы за первый год<small>${rub(fee.memberMonth)} в месяц</small></span><b>${rub(fee.memberMonth * 12)}</b></li>
          <li><span>Целевой взнос в ${fee.union}</span><b>${rub(fee.target)}</b></li>
          <li><span>Страхование ответственности — в первый год не требуется</span><b>${rub(0)}</b></li>`
       : `<li><span>Вступительный, членский и целевой взносы, страхование</span><b>условия СРО</b></li>`
