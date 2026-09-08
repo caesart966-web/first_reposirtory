@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Страница не найдена — ООО «БИЗНЕС-ГРУПП»</title>
+    <!-- Страницы с ошибкой в поиске не нужны. -->
+    <meta name="robots" content="noindex, follow" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" content="#141A45" />
+    <!-- Обычная статическая страница, без React и без сборки: на неё уводит
+         сам хостинг, когда адреса не существует, и она обязана открыться,
+         даже если скрипты сайта почему-то не загрузились. Поэтому шрифт
+         системный, а стили внутри файла: ни одной внешней зависимости. -->
+    <style>
+      *{margin:0;padding:0;box-sizing:border-box}
+      body{min-height:100dvh;display:flex;align-items:center;justify-content:center;
+        padding:24px;background:#141A45;color:#D8D3CC;
+        font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+        -webkit-font-smoothing:antialiased;line-height:1.5}
+      .grid{position:fixed;inset:0;z-index:0;
+        background-image:linear-gradient(#A3B8FC14 1px,transparent 1px),
+                         linear-gradient(90deg,#A3B8FC14 1px,transparent 1px);
+        background-size:60px 60px}
+      main{position:relative;z-index:1;max-width:640px;width:100%}
+      .mark{width:88px;height:auto;color:#A3B8FC}
+      .code{margin-top:28px;font-size:15px;font-weight:600;letter-spacing:.16em;
+        text-transform:uppercase;color:#7490F7}
+      h1{margin-top:10px;font-size:clamp(28px,5vw,40px);font-weight:700;color:#fff;
+        letter-spacing:-.02em;line-height:1.15}
+      p{margin-top:16px;font-size:17px;color:#D8D3CC}
+      .links{margin-top:32px;display:flex;flex-wrap:wrap;gap:10px}
+      .links a{display:inline-flex;align-items:center;padding:12px 20px;border-radius:12px;
+        font-size:15px;font-weight:600;text-decoration:none;transition:background .2s,border-color .2s}
+      .primary{background:#2F4BDE;color:#fff}
+      .primary:hover{background:#4A66EF}
+      .ghost{border:1px solid rgba(255,255,255,.18);color:#fff}
+      .ghost:hover{border-color:#A3B8FC;background:rgba(255,255,255,.06)}
+      .contact{margin-top:36px;padding-top:24px;border-top:1px solid rgba(255,255,255,.1);
+        font-size:15px;color:#A9A29A}
+      .contact a{color:#fff;font-weight:600;text-decoration:none}
+      .contact a:hover{color:#A3B8FC}
+    </style>
+  </head>
+  <body>
+    <div class="grid"></div>
+    <main>
+      <!-- Тот же знак весов, что в шапке сайта. -->
+      <svg class="mark" viewBox="0 0 46 26" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M23 1.8V5" /><path d="M8.98 7 23 5l14.04 2" />
+        <path d="M8.98 7 1.99 21M8.98 7l6.99 14" /><path d="M1.99 21a8.9 8.9 0 0 0 13.98 0" />
+        <path d="M1.99 21h13.98" /><path d="M37.02 7 30.03 21M37.02 7l6.99 14" />
+        <path d="M30.03 21a8.9 8.9 0 0 0 13.98 0" /><path d="M30.03 21h13.98" />
+      </svg>
+      <p class="code">Ошибка 404</p>
+      <h1>Такой страницы нет</h1>
+      <p>Возможно, адрес набран с опечаткой или страница переехала. Ниже — разделы,
+        куда можно перейти.</p>
+      <div class="links">
+        <a class="primary" href="/">На главную</a>
+        <a class="ghost" href="/#types">Виды СРО</a>
+        <a class="ghost" href="/#services">Услуги</a>
+        <a class="ghost" href="/#quiz">Оставить заявку</a>
+      </div>
+      <p class="contact">
+        Или напишите сразу: <a href="tel:+79001330219">+7 900 133-02-19</a>,
+        <a href="mailto:9001330219@mail.ru">9001330219@mail.ru</a>
+      </p>
+    </main>
+  </body>
+</html>
