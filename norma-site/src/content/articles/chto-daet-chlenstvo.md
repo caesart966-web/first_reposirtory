@@ -5,7 +5,8 @@ description: Членство в СРО не выдаёт документов �
 published: 2026-09-07
 updated: 2026-09-07
 excerpt: Членство — не бумага, которую показывают. Это запись в реестре, которую заказчик проверяет сам, не спрашивая вас.
-order: 15
+group: check
+order: 2
 relatedService:
   label: Как проверить свою СРО
   url: /proverit-sro/

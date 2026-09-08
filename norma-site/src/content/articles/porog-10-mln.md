@@ -5,7 +5,8 @@ description: С 1 мая 2022 года порог, с которого стро�
 published: 2026-04-18
 updated: 2026-08-29
 excerpt: Порог поднят с 3 до 10 млн ₽ ещё в мае 2022 года, но старую цифру до сих пор пишет половина сайтов. Разбираем, как он считается.
-order: 3
+group: need
+order: 1
 relatedService:
   label: Вступление в СРО строителей
   url: /uslugi/sro-stroiteley/

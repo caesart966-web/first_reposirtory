@@ -5,7 +5,8 @@ description: Субподрядчику, работающему по догов�
 published: 2026-02-10
 updated: 2026-08-29
 excerpt: Самый частый вопрос и самая дорогая ошибка рынка. Требование о членстве привязано к тому, с кем заключён договор, а не к его сумме.
-order: 1
+group: need
+order: 2
 relatedService:
   label: Вступление в СРО строителей
   url: /uslugi/sro-stroiteley/

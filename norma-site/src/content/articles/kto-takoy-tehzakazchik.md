@@ -5,7 +5,8 @@ description: Функции технического заказчика впра
 published: 2026-09-07
 updated: 2026-09-07
 excerpt: Техзаказчик не строит сам, и из этого часто делают вывод, что членство ему не нужно. Кодекс говорит обратное.
-order: 18
+group: need
+order: 5
 relatedService:
   label: Кому нужна СРО, а кому нет
   url: /komu-nuzhna-sro/

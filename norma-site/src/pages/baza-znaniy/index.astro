@@ -5,9 +5,31 @@ import { getCollection } from 'astro:content'
 import { href, SITE } from '../../config/site'
 import HeadPhoto from '../../components/HeadPhoto.astro'
 
-const articles = (await getCollection('articles')).sort(
-  (a, b) => (b.data.updated ?? b.data.published).getTime() - (a.data.updated ?? a.data.published).getTime(),
-)
+// Список разложен по разделам, а не по дате.
+//
+// По дате он и был, и это сломалось ровно тогда, когда статей стало
+// двадцать четыре: написанные в один день встали в порядке имён файлов,
+// а четыре сильнейшие — про порог 10 млн, отменённые допуски, субподряд
+// и отказ на торгах — уехали в самый низ просто потому, что написаны
+// раньше. Человек, пришедший с вопросом «нужна ли мне СРО», видел первой
+// статью про исключение из СРО.
+//
+// Даты со страниц никуда не делись: они стоят у каждой статьи и работают
+// как знак свежести. Но порядок задаёт польза, а не хронология.
+const GROUPS = [
+  { id: 'need', t: 'Нужна ли вам СРО', d: 'С этого стоит начать: половине обратившихся членство не требуется.' },
+  { id: 'money', t: 'Деньги', d: 'Взносы, уровни ответственности и то, что нельзя вернуть.' },
+  { id: 'membership', t: 'Членство', d: 'Приём, отказ, выход, исключение — и что из этого следует.' },
+  { id: 'check', t: 'Проверяемость', d: 'Что видно в реестрах и как проверить себя и подрядчика.' },
+] as const
+
+const all = await getCollection('articles')
+const grouped = GROUPS.map((g) => ({
+  ...g,
+  items: all
+    .filter((a) => a.data.group === g.id)
+    .sort((a, b) => a.data.order - b.data.order),
+})).filter((g) => g.items.length > 0)
 
 const fmt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
 ---
@@ -39,8 +61,14 @@ const fmt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 
 
   <section class="section section--tight">
     <div class="wrap">
+      {grouped.map((g) => (
+      <div class="grp">
+        <div class="grp-head rv">
+          <h2>{g.t}</h2>
+          <p>{g.d}</p>
+        </div>
       <div class="list">
-        {articles.map((a) => (
+        {g.items.map((a) => (
           <article class="row rv">
             <div class="dates">
               <time datetime={a.data.published.toISOString().slice(0, 10)}>
@@ -52,7 +80,7 @@ const fmt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 
                 </time>
               )}
             </div>
-            <h2><a href={href(`/baza-znaniy/${a.id}/`)}>{a.data.title}</a></h2>
+            <h3><a href={href(`/baza-znaniy/${a.id}/`)}>{a.data.title}</a></h3>
             <p>{a.data.excerpt}</p>
             <div class="row-foot">
               <a class="go" href={href(`/baza-znaniy/${a.id}/`)}>Читать разбор <Icon name="arrow" size={15} /></a>
@@ -65,6 +93,8 @@ const fmt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 
           </article>
         ))}
       </div>
+      </div>
+      ))}
 
       <div class="ask rv">
         <div>
@@ -91,7 +121,18 @@ const fmt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 
   .stamp-row { margin-top: 22px; }
 
   .list { display: grid; }
+  /* Раздел списка. Заголовок стоит в собственной строке над своими
+     статьями: подписей в две строки на весь список хватает, чтобы глаз
+     находил границу темы. */
+  .grp + .grp { margin-top: 46px; }
+  .grp-head { padding-bottom: 6px; border-bottom: 2px solid var(--ink); }
+  .grp-head h2 { font-size: clamp(22px, 2.4vw, 27px); }
+  .grp-head p { color: var(--muted); font-size: 15px; margin-top: 6px; max-width: 62ch; }
+
   .row { padding: 28px 0; border-bottom: 1px solid var(--line); display: grid; gap: 8px; }
+  .row h3 { font-family: var(--font-head); font-size: clamp(19px, 2vw, 23px); font-weight: 700; letter-spacing: -0.015em; }
+  .row h3 a { color: var(--ink); text-decoration: none; }
+  .row h3 a:hover { color: var(--acc-deep); }
   .row:first-child { padding-top: 0; }
 
   .dates { display: flex; gap: 14px; flex-wrap: wrap; font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); }
