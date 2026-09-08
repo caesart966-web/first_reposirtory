@@ -63,7 +63,7 @@ const serviceSchema = {
   <section class="section page-head">
     <HeadPhoto src="scales.webp" position={photoPos} />
     <div class="wrap">
-      <nav class="crumbs" aria-label="Хлебные крошки">
+      <nav class="crumbs" aria-label="Хлебные крошки" data-nosearch>
         <a href={href('/')}>Главная</a>
         <span aria-hidden="true">/</span>
         <a href={href('/uslugi/')}>Услуги</a>
@@ -146,7 +146,7 @@ const serviceSchema = {
     </div>
   </section>
 
-  <section class="section section--tight others">
+  <section class="section section--tight others" data-nosearch>
     <div class="wrap">
       <h2>Другие услуги</h2>
       <div class="grid-3">

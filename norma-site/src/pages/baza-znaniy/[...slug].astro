@@ -121,7 +121,7 @@ const articleSchema = {
   <article class="art">
     <header class="art-head">
       <div class="wrap">
-        <nav class="crumbs" aria-label="Хлебные крошки">
+        <nav class="crumbs" aria-label="Хлебные крошки" data-nosearch>
           <a href={href('/')}>Главная</a>
           <span aria-hidden="true">/</span>
           <a href={href('/baza-znaniy/')}>База знаний</a>
@@ -146,7 +146,7 @@ const articleSchema = {
         {rendered ? <Fragment set:html={withLabels(withBase(rendered))} /> : <Content />}
       </div>
 
-      <aside class="art-side">
+      <aside class="art-side" data-nosearch>
         {article.data.relatedService && (
           <div class="side-card side-card--acc">
             <span class="sc-label">По этой теме</span>
@@ -176,7 +176,7 @@ const articleSchema = {
     </div>
 
     {others.length > 0 && (
-      <section class="section next">
+      <section class="section next" data-nosearch>
         <div class="wrap">
           <h2>Читайте дальше</h2>
           <div class="grid-2">

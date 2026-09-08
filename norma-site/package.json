@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "astro build && node scripts/make-search-index.mjs",
     "preview": "astro preview",
     "check": "node scripts/check-links.mjs dist && node scripts/check-html.mjs dist && node scripts/check-seo.mjs dist",
-    "test": "node scripts/test-calc.mjs && node scripts/test-form.mjs && node scripts/test-cost.mjs && node scripts/test-a11y.mjs && node scripts/test-contrast.mjs && node scripts/test-widths.mjs && node scripts/test-tables.mjs && node scripts/test-hero-photo.mjs && node scripts/test-pages.mjs",
+    "test": "node scripts/test-calc.mjs && node scripts/test-form.mjs && node scripts/test-cost.mjs && node scripts/test-a11y.mjs && node scripts/test-contrast.mjs && node scripts/test-widths.mjs && node scripts/test-tables.mjs && node scripts/test-hero-photo.mjs && node scripts/test-search.mjs && node scripts/test-pages.mjs",
     "og": "node scripts/make-og.mjs",
     "icons": "node scripts/make-icons.mjs",
     "shots": "node scripts/screenshots.mjs",

@@ -10,6 +10,13 @@ const nav = [
   { label: 'База знаний', url: href('/baza-znaniy/') },
   { label: 'Контакты', url: href('/kontakty/') },
 ]
+
+// Где посетитель сейчас. Раздел подсвечивается и на вложенных страницах:
+// со статьи о пороге 10 млн подсвечена «База знаний», со страницы услуги —
+// «Услуги». Без этого на двадцати страницах из двадцати меню выглядит
+// одинаково, и человек теряет, в каком разделе находится.
+const path = Astro.url.pathname
+const isCurrent = (url: string) => path === url || (url !== href('/') && path.startsWith(url))
 ---
 
 <header class="site-header">
@@ -23,10 +30,21 @@ const nav = [
     </a>
 
     <nav class="nav" aria-label="Основное меню">
-      {nav.map((item) => <a href={item.url}>{item.label}</a>)}
+      {nav.map((item) => (
+        <a href={item.url} aria-current={isCurrent(item.url) ? 'page' : undefined}>{item.label}</a>
+      ))}
     </nav>
 
     <div class="hdr-right">
+      <button
+        class="icon-search"
+        type="button"
+        aria-label="Поиск по сайту"
+        aria-expanded="false"
+        aria-controls="site-search"
+      >
+        <Icon name="search" size={19} />
+      </button>
       <a class="phone" href={SITE.phoneHref}>
         <Icon name="phone" size={16} />
         <span>
@@ -47,10 +65,54 @@ const nav = [
     </div>
   </div>
 
+  <!-- Строка поиска. Лежит внутри шапки, поэтому раскрывается ровно под ней
+       на любой странице. Индекс подгружается при первом обращении к поиску,
+       а не вместе со страницей: он весит больше, чем вся остальная страница,
+       и на скорость открытия сайта влиять не должен. -->
+  <div class="search-panel" id="site-search" hidden>
+    <div class="wrap">
+      <form class="sp-form" role="search" action={href('/poisk/')} method="get">
+        <span class="sp-ico" aria-hidden="true"><Icon name="search" size={18} /></span>
+        <input
+          class="sp-input"
+          type="search"
+          name="q"
+          placeholder="Найти на сайте: взносы, документы, НРС…"
+          autocomplete="off"
+          aria-label="Что искать"
+        />
+        <button class="sp-close" type="button" aria-label="Закрыть поиск">
+          <Icon name="x" size={18} />
+        </button>
+      </form>
+      <p class="sp-status" role="status"></p>
+      <div class="sp-out" hidden></div>
+    </div>
+  </div>
+
   <div class="mobile-menu" id="mobile-menu" hidden>
     <div class="wrap">
+      <!-- Поиск в меню. На узком телефоне кнопка поиска в шапке не помещается:
+           знак, поиск, телефон и меню — четыре элемента, и при 320 px ряд
+           вылезал за край. Здесь поле обычное, без живой подсказки: оно
+           уводит на страницу результатов, где список и так весь. -->
+      <form class="mm-search" role="search" action={href('/poisk/')} method="get">
+        <input
+          type="search"
+          name="q"
+          placeholder="Поиск по сайту"
+          aria-label="Поиск по сайту"
+          autocomplete="off"
+        />
+        <button type="submit" aria-label="Найти">
+          <Icon name="search" size={18} />
+        </button>
+      </form>
+
       <nav aria-label="Меню на мобильном">
-        {nav.map((item) => <a href={item.url}>{item.label}</a>)}
+        {nav.map((item) => (
+          <a href={item.url} aria-current={isCurrent(item.url) ? 'page' : undefined}>{item.label}</a>
+        ))}
       </nav>
       <a class="btn btn--acc mm-cta" href={href('/#calc')}>Проверить, нужна ли СРО</a>
       <a class="mm-phone" href={SITE.phoneHref}>{SITE.phone}</a>
@@ -116,6 +178,10 @@ const nav = [
   }
   .nav a:hover::after { transform: scaleX(1); }
 
+  /* Раздел, в котором посетитель находится: подчёркнут постоянно. */
+  .nav a[aria-current='page'] { color: #fff; }
+  .nav a[aria-current='page']::after { transform: scaleX(1); }
+
   .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #fff; flex: none; }
   /* Монограмма стоит без рамки: знак самодостаточный, рамка спорила бы
      с его собственной геометрией.
@@ -175,6 +241,136 @@ const nav = [
   }
   .icon-phone { color: var(--acc-bright); border-color: color-mix(in srgb, var(--acc-bright) 40%, transparent); }
 
+  /* Кнопка поиска — того же размера и вида, что телефон и меню:
+     в ряду одинаковых кнопок глаз не должен спотыкаться. */
+  .icon-search {
+    background: transparent;
+    border: 1px solid var(--dark-line);
+    border-radius: var(--r-s);
+    color: var(--on-dark);
+    box-sizing: border-box;
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    flex: none;
+    transition: color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
+  }
+  .icon-search:hover { color: var(--acc-bright); }
+  .icon-search[aria-expanded='true'] {
+    color: var(--acc-bright);
+    border-color: color-mix(in srgb, var(--acc-bright) 45%, transparent);
+  }
+
+  /* ── Строка поиска ────────────────────────────────────────────────────
+     Раскрывается под шапкой во всю ширину. Шапка липкая (position: sticky)
+     и потому сама служит точкой отсчёта для этой панели — отдельной
+     обёртки не нужно. */
+  .search-panel {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    background: var(--dark);
+    border-top: 1px solid var(--dark-line);
+    border-bottom: 1px solid var(--dark-line);
+    box-shadow: 0 24px 44px -28px rgba(0, 0, 0, 0.8);
+    padding: 14px 0 18px;
+    max-height: calc(100dvh - 100%);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .sp-form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--dark-line);
+  }
+  .sp-ico { color: var(--on-dark-muted); display: grid; place-items: center; flex: none; }
+  .sp-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    background: transparent;
+    border: 0;
+    color: var(--on-dark);
+    font-family: var(--font-body);
+    /* 16 px — не вкусовщина: при меньшем размере Safari на телефоне
+       приближает страницу, когда встаёшь в поле, и обратно уже не отдаёт. */
+    font-size: 16.5px;
+    padding: 12px 0;
+  }
+  .sp-input::placeholder { color: var(--on-dark-muted); }
+  .sp-input:focus { outline: none; }
+  .sp-form:focus-within { border-bottom-color: var(--acc-bright); }
+  /* Крестик очистки у type="search" в вебките рисуется тёмным
+     и на тёмной шапке пропадает. */
+  .sp-input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+
+  .sp-close {
+    background: transparent;
+    border: 0;
+    color: var(--on-dark-muted);
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    flex: none;
+    border-radius: var(--r-s);
+  }
+  .sp-close:hover { color: var(--on-dark); }
+
+  .sp-status { margin: 12px 0 0; font-size: 13.5px; color: var(--on-dark-muted); }
+  .sp-status:empty { display: none; }
+  .sp-out { display: grid; gap: 2px; margin-top: 8px; }
+
+  /* Найденное вставляет скрипт, а не разметка страницы. Астро помечает
+     своим признаком только то, что написано в шаблоне, — до вставленного
+     обычные правила не достают, и без :global() список остался бы
+     без единого стиля. Обёртка .sp-out в шаблоне есть, поэтому область
+     действия правил всё равно ограничена ею. */
+  .sp-out :global(.s-hit) {
+    display: grid;
+    gap: 3px;
+    padding: 11px 12px;
+    margin: 0 -12px;
+    border-radius: var(--r-s);
+    text-decoration: none;
+    color: var(--on-dark);
+  }
+  .sp-out :global(.s-hit:hover),
+  .sp-out :global(.s-hit:focus-visible) { background: var(--dark-2); color: var(--on-dark); }
+  .sp-out :global(.s-sec) {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--on-dark-muted);
+  }
+  .sp-out :global(.s-title) { font-family: var(--font-head); font-size: 16.5px; line-height: 1.3; color: #fff; }
+  .sp-out :global(.s-snip) { font-size: 13.5px; line-height: 1.55; color: var(--on-dark-muted); }
+  /* Подсветка найденного. Фон — разбавленный акцент: по нему белые буквы
+     дают 14:1, тогда как сам акцент под белым текстом дал бы 3,4:1. */
+  .sp-out :global(mark) {
+    background: color-mix(in srgb, var(--acc-bright) 22%, transparent);
+    color: #fff;
+    border-radius: 2px;
+    padding: 0 2px;
+  }
+
+  .sp-out :global(.sp-all) {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 14px;
+    color: var(--acc-bright);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .icon-search { transition: none; }
+  }
+
   .burger-close { display: none; }
   .burger[aria-expanded='true'] .burger-open { display: none; }
   .burger[aria-expanded='true'] .burger-close { display: block; }
@@ -190,6 +386,45 @@ const nav = [
     z-index: 49;
   }
   .mobile-menu .wrap { min-height: 100%; display: grid; align-content: center; gap: 4px; }
+  .mm-search {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 auto 18px;
+    width: 100%;
+    max-width: 420px;
+    border: 1px solid var(--dark-line);
+    border-radius: var(--r-s);
+    padding-left: 14px;
+  }
+  .mm-search:focus-within { border-color: var(--acc-bright); }
+  .mm-search input {
+    flex: 1 1 auto;
+    min-width: 0;
+    background: transparent;
+    border: 0;
+    color: var(--on-dark);
+    font-family: var(--font-body);
+    /* 16 px и больше: при меньшем Safari на телефоне приближает страницу,
+       когда встаёшь в поле, и обратно уже не отдаёт. */
+    font-size: 16.5px;
+    padding: 13px 0;
+  }
+  .mm-search input::placeholder { color: var(--on-dark-muted); }
+  .mm-search input:focus { outline: none; }
+  .mm-search input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+  .mm-search button {
+    background: transparent;
+    border: 0;
+    color: var(--acc-bright);
+    width: 46px;
+    height: 46px;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    flex: none;
+  }
+
   .mobile-menu nav { display: grid; justify-items: center; gap: 4px; }
   .mobile-menu nav a {
     color: var(--on-dark);
@@ -199,6 +434,7 @@ const nav = [
     text-align: center;
   }
   .mobile-menu nav a:hover { color: var(--acc-bright); }
+  .mobile-menu nav a[aria-current='page'] { color: var(--acc-bright); }
   .mm-cta { margin-top: 24px; width: 100%; }
   .mm-phone {
     display: block;
@@ -210,15 +446,30 @@ const nav = [
     text-decoration: none;
   }
 
+  /* На узком телефоне кнопки поиска в шапке нет: знак, поиск, телефон
+     и меню в один ряд при 320 px не помещаются — ряд вылезал за правый
+     край на 17 px. Там поиск живёт полем внутри меню (.mm-search).
+     Прячем здесь, а не в самом правиле: остальные кнопки шапки устроены
+     так же — видны по умолчанию, скрываются медиазапросом. */
+  @media (max-width: 559px) {
+    .icon-search { display: none; }
+  }
+
   @media (min-width: 768px) {
     .phone { display: flex; }
     .hdr-cta { display: inline-flex; }
-    .burger, .icon-phone { display: none; }
-    .mobile-menu { display: none !important; }
+    .icon-phone { display: none; }
   }
 
+  /* Гамбургер убирается ровно тогда, когда появляется меню, — не раньше.
+     Раньше он прятался с 768 px, а меню приходило с 1000: в полосе между
+     ними на сайте не было навигации вообще. Айпад в портрете (768),
+     Air (820) и небольшое окно на ноутбуке попадали именно в неё —
+     оттуда можно было уйти только по ссылкам в подвале. */
   @media (min-width: 1000px) {
     .nav { display: flex; }
+    .burger { display: none; }
+    .mobile-menu { display: none !important; }
   }
 
   /* Подпись под номером — деталь, а не главное в шапке. В полосе, где меню
@@ -237,11 +488,21 @@ const nav = [
   const burger = document.querySelector<HTMLButtonElement>('.burger')
   const menu = document.getElementById('mobile-menu')
 
+  // Меню и поиск занимают одно и то же место под шапкой и потому
+  // закрывают друг друга. Ссылки на закрытие объявлены здесь, чтобы
+  // оба блока могли до них дотянуться.
+  let closeMenu = () => {}
+  let closeSearch = () => {}
+
   if (burger && menu) {
     const setOpen = (open: boolean) => {
       menu.hidden = !open
       burger.setAttribute('aria-expanded', String(open))
       document.body.style.overflow = open ? 'hidden' : ''
+      if (open) closeSearch()
+    }
+    closeMenu = () => {
+      if (!menu.hidden) setOpen(false)
     }
 
     burger.addEventListener('click', () => setOpen(menu.hidden))
@@ -255,6 +516,157 @@ const nav = [
       if (!menu.hidden && !menu.contains(target) && !burger.contains(target)) setOpen(false)
     })
     menu.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => setOpen(false)))
+  }
+
+  // ── Поиск по сайту ─────────────────────────────────────────────────────
+  //
+  // Индекс и разбор слов подгружаются при первом обращении к поиску,
+  // а не вместе со страницей: вместе они весят больше, чем вся остальная
+  // страница, и на скорость открытия сайта влиять не должны.
+  const searchBtn = document.querySelector<HTMLButtonElement>('.icon-search')
+  const panel = document.getElementById('site-search')
+  const form = panel?.querySelector<HTMLFormElement>('.sp-form')
+  const input = panel?.querySelector<HTMLInputElement>('.sp-input')
+  const out = panel?.querySelector<HTMLElement>('.sp-out')
+  const status = panel?.querySelector<HTMLElement>('.sp-status')
+  const closeBtn = panel?.querySelector<HTMLButtonElement>('.sp-close')
+
+  if (searchBtn && panel && form && input && out && status && closeBtn) {
+    const base = document.body.dataset.base || '/'
+    const searchUrl = base.replace(/\/$/, '') + '/poisk/'
+
+    type Lib = typeof import('../lib/search')
+    let lib: Lib | null = null
+    let docs: ReturnType<Lib['prepare']> | null = null
+    let loading: Promise<void> | null = null
+
+    const load = () => {
+      if (!loading) {
+        loading = (async () => {
+          const [mod, raw] = await Promise.all([
+            import('../lib/search'),
+            fetch(base + 'search-index.json').then((r) => {
+              if (!r.ok) throw new Error(`индекс не загрузился: ${r.status}`)
+              return r.json()
+            }),
+          ])
+          lib = mod
+          docs = mod.prepare(raw)
+        })().catch((e) => {
+          // Следующая попытка должна начаться заново, а не ждать
+          // уже провалившееся обещание.
+          loading = null
+          throw e
+        })
+      }
+      return loading
+    }
+
+    const clear = () => {
+      out.hidden = true
+      out.innerHTML = ''
+      status.textContent = ''
+    }
+
+    const setOpen = (open: boolean) => {
+      panel.hidden = !open
+      searchBtn.setAttribute('aria-expanded', String(open))
+      if (open) {
+        closeMenu()
+        load().catch(() => {})
+        input.focus()
+      } else {
+        clear()
+      }
+    }
+    closeSearch = () => {
+      if (!panel.hidden) setOpen(false)
+    }
+
+    searchBtn.addEventListener('click', () => setOpen(panel.hidden))
+    closeBtn.addEventListener('click', () => {
+      setOpen(false)
+      searchBtn.focus()
+    })
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !panel.hidden) {
+        setOpen(false)
+        searchBtn.focus()
+      }
+    })
+    document.addEventListener('click', (e) => {
+      const target = e.target as Node
+      if (!panel.hidden && !panel.contains(target) && !searchBtn.contains(target)) setOpen(false)
+    })
+
+    // Стрелками — по найденному, как в поисковой строке браузера.
+    panel.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return
+      const links = [...out.querySelectorAll<HTMLAnchorElement>('.s-hit')]
+      if (links.length === 0) return
+      e.preventDefault()
+      const at = links.indexOf(document.activeElement as HTMLAnchorElement)
+      if (e.key === 'ArrowDown') links[at < 0 ? 0 : Math.min(at + 1, links.length - 1)].focus()
+      else if (at <= 0) input.focus()
+      else links[at - 1].focus()
+    })
+
+    const SHOWN = 6
+    let timer = 0
+
+    const render = async () => {
+      const q = input.value.trim()
+      if (q.length < 2) {
+        clear()
+        return
+      }
+      try {
+        await load()
+      } catch {
+        out.hidden = true
+        out.innerHTML = ''
+        status.textContent = 'Поиск сейчас недоступен. Обновите страницу или откройте базу знаний.'
+        return
+      }
+      if (!lib || !docs) return
+
+      // Сотня вместо предела по умолчанию: на сайте 44 страницы,
+      // и это значит «все» — иначе счётчик найденного врал бы.
+      const hits = lib.search(docs, q, 100)
+      if (hits.length === 0) {
+        out.hidden = true
+        out.innerHTML = ''
+        status.textContent = 'Ничего не нашлось. Попробуйте другое слово — например «взносы» или «документы».'
+        return
+      }
+
+      status.textContent = `Найдено: ${lib.foundLabel(hits.length)}`
+      let html = lib.hitsHtml(hits.slice(0, SHOWN), base)
+      if (hits.length > SHOWN) {
+        html += `<a class="sp-all" href="${searchUrl}?q=${encodeURIComponent(q)}">Показать все результаты →</a>`
+      }
+      out.innerHTML = html
+      out.hidden = false
+    }
+
+    input.addEventListener('input', () => {
+      window.clearTimeout(timer)
+      timer = window.setTimeout(render, 140)
+    })
+
+    // Enter уводит на страницу результатов: там весь список и есть куда
+    // вернуться по ссылке. Форма — обычная, поэтому работает и без скриптов.
+    form.setAttribute('action', searchUrl)
+    form.addEventListener('submit', () => {
+      const w = window as unknown as { ym?: (...a: unknown[]) => void; __metrikaId?: string }
+      if (typeof w.ym === 'function' && w.__metrikaId) w.ym(w.__metrikaId, 'reachGoal', 'site_search')
+    })
+    out.addEventListener('click', (e) => {
+      if (!(e.target as HTMLElement).closest('.s-hit')) return
+      const w = window as unknown as { ym?: (...a: unknown[]) => void; __metrikaId?: string }
+      if (typeof w.ym === 'function' && w.__metrikaId) w.ym(w.__metrikaId, 'reachGoal', 'search_click')
+    })
   }
 
   // Шапка «прилипла»: как только страница сдвинулась, она подбирается

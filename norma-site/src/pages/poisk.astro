@@ -1,0 +1,259 @@
+---
+import Base from '../layouts/Base.astro'
+import Icon from '../components/Icon.astro'
+import HeadPhoto from '../components/HeadPhoto.astro'
+import { href } from '../config/site'
+
+// Страница результатов поиска.
+//
+// Закрыта от индексации нарочно, и это не перестраховка: страницы
+// результатов внутреннего поиска поисковые системы считают мусорными
+// (у Google это прямо записано в рекомендациях). Одна такая страница
+// в выдаче ничего не даёт, а тысяча — размывает сайт. Поэтому noindex,
+// и в карте сайта её тоже нет.
+//
+// Поиск идёт в браузере: индекс собирается после сборки
+// (scripts/make-search-index.mjs), морфология — в src/lib/search.ts.
+---
+
+<Base
+  title="Поиск по сайту | НОРМА"
+  description="Поиск по страницам и статьям сайта НОРМА: вступление в СРО, взносы, документы, НРС и независимая оценка квалификации."
+  noindex
+  pageType="SearchResultsPage"
+  breadcrumbs={[{ label: 'Главная', url: href('/') }, { label: 'Поиск' }]}
+>
+  <section class="section page-head">
+    <HeadPhoto src="office.webp" position="46% 26%" soft />
+    <div class="wrap">
+      <span class="eyebrow">Поиск</span>
+      <h1>Поиск по сайту</h1>
+      <p class="lead">
+        Двадцать страниц и двадцать шесть статей. Введите слово — покажу, где о нём написано.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap ps-wrap">
+      <form class="ps-form" role="search" action={href('/poisk/')} method="get">
+        <span class="ps-ico" aria-hidden="true"><Icon name="search" size={20} /></span>
+        <input
+          class="ps-input"
+          id="ps-q"
+          type="search"
+          name="q"
+          placeholder="Например: взносы, документы, НРС"
+          autocomplete="off"
+          aria-label="Что искать"
+        />
+        <button class="btn btn--acc ps-go" type="submit">Найти</button>
+      </form>
+
+      <p class="ps-status" role="status"></p>
+
+      <!-- Без скриптов поиск не работает: он весь в браузере. Вместо пустого
+           места — путь дальше, а не извинение. -->
+      <noscript>
+        <p class="ps-note">
+          Поиск работает в браузере и требует включённых скриптов.
+          Разделы сайта собраны в <a href={href('/uslugi/')}>услугах</a> и <a href={href('/baza-znaniy/')}>базе знаний</a>.
+        </p>
+      </noscript>
+
+      <div class="ps-out"></div>
+
+      <div class="ps-hints">
+        <span>Чаще всего ищут:</span>
+        <button type="button" data-q="взносы">взносы</button>
+        <button type="button" data-q="документы">документы</button>
+        <button type="button" data-q="НРС">НРС</button>
+        <button type="button" data-q="уровень ответственности">уровень ответственности</button>
+        <button type="button" data-q="субподряд">субподряд</button>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .ps-wrap { max-width: 860px; }
+
+  .ps-form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-s);
+    background: var(--paper);
+    padding: 6px 6px 6px 14px;
+  }
+  .ps-form:focus-within { border-color: var(--acc); }
+  .ps-ico { color: var(--muted); display: grid; place-items: center; flex: none; }
+  .ps-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    font-family: var(--font-body);
+    /* 16 px и больше: при меньшем Safari на телефоне приближает страницу,
+       когда встаёшь в поле, и обратно уже не отдаёт. */
+    font-size: 17px;
+    color: var(--ink);
+    padding: 12px 0;
+  }
+  .ps-input:focus { outline: none; }
+  .ps-input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+  .ps-go { flex: none; }
+
+  .ps-status { margin: 18px 0 0; color: var(--muted); font-size: 15px; }
+  .ps-status:empty { display: none; }
+  .ps-note { margin-top: 18px; }
+
+  /* Список найденного вставляет скрипт — область действия правил задаёт
+     обёртка .ps-out, которая в разметке есть. */
+  .ps-out { display: grid; gap: 2px; margin-top: 10px; }
+  .ps-out :global(.s-hit) {
+    display: grid;
+    gap: 5px;
+    padding: 18px 16px;
+    margin: 0 -16px;
+    border-radius: var(--r-s);
+    border-bottom: 1px solid var(--line);
+    text-decoration: none;
+    color: var(--ink);
+  }
+  .ps-out :global(.s-hit:hover),
+  .ps-out :global(.s-hit:focus-visible) { background: var(--paper-2); }
+  .ps-out :global(.s-sec) {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--acc-deep);
+  }
+  .ps-out :global(.s-title) { font-family: var(--font-head); font-size: 20px; line-height: 1.25; }
+  .ps-out :global(.s-snip) { font-size: 15px; line-height: 1.6; color: var(--muted); }
+  .ps-out :global(mark) {
+    background: var(--acc-soft);
+    color: var(--ink);
+    border-radius: 2px;
+    padding: 0 2px;
+  }
+
+  .ps-hints {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 28px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .ps-hints button {
+    border: 1px solid var(--line);
+    background: var(--paper);
+    border-radius: 999px;
+    /* 24 px по высоте — норма попадания пальцем. */
+    padding: 7px 14px;
+    font: inherit;
+    font-size: 14px;
+    color: var(--acc-deep);
+    cursor: pointer;
+  }
+  .ps-hints button:hover { border-color: var(--acc); background: var(--acc-soft); }
+</style>
+
+<script>
+  import { prepare, search, hitsHtml, foundLabel } from '../lib/search'
+  import type { Doc } from '../lib/search'
+
+  const input = document.querySelector<HTMLInputElement>('.ps-input')
+  const out = document.querySelector<HTMLElement>('.ps-out')
+  const status = document.querySelector<HTMLElement>('.ps-status')
+  const form = document.querySelector<HTMLFormElement>('.ps-form')
+
+  if (input && out && status && form) {
+    const base = document.body.dataset.base || '/'
+    let docs: ReturnType<typeof prepare> | null = null
+    let loading: Promise<void> | null = null
+
+    const load = () => {
+      if (!loading) {
+        loading = fetch(base + 'search-index.json')
+          .then((r) => {
+            if (!r.ok) throw new Error(String(r.status))
+            return r.json() as Promise<Doc[]>
+          })
+          .then((raw) => {
+            docs = prepare(raw)
+          })
+          .catch((e) => {
+            loading = null
+            throw e
+          })
+      }
+      return loading
+    }
+
+    const run = async (q: string, pushUrl: boolean) => {
+      const query = q.trim()
+      if (pushUrl) {
+        const url = query ? `?q=${encodeURIComponent(query)}` : location.pathname
+        history.replaceState(null, '', url)
+      }
+      if (query.length < 2) {
+        out.innerHTML = ''
+        status.textContent = query ? 'Введите хотя бы два знака.' : ''
+        return
+      }
+
+      status.textContent = 'Ищу…'
+      try {
+        await load()
+      } catch {
+        out.innerHTML = ''
+        status.textContent = 'Не удалось загрузить поиск. Обновите страницу.'
+        return
+      }
+      if (!docs) return
+
+      const hits = search(docs, query, 100)
+      if (hits.length === 0) {
+        out.innerHTML = ''
+        status.textContent = `По запросу «${query}» ничего не нашлось. Попробуйте другое слово или загляните в базу знаний.`
+        return
+      }
+      status.textContent = `Найдено: ${foundLabel(hits.length)}`
+      out.innerHTML = hitsHtml(hits, base)
+    }
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault()
+      run(input.value, true)
+      const w = window as unknown as { ym?: (...a: unknown[]) => void; __metrikaId?: string }
+      if (typeof w.ym === 'function' && w.__metrikaId) w.ym(w.__metrikaId, 'reachGoal', 'site_search')
+    })
+
+    let timer = 0
+    input.addEventListener('input', () => {
+      window.clearTimeout(timer)
+      timer = window.setTimeout(() => run(input.value, true), 220)
+    })
+
+    document.querySelectorAll<HTMLButtonElement>('.ps-hints button').forEach((b) => {
+      b.addEventListener('click', () => {
+        input.value = b.dataset.q ?? ''
+        run(input.value, true)
+        input.focus()
+      })
+    })
+
+    // Запрос из адреса: сюда приходят из строки поиска в шапке.
+    const initial = new URLSearchParams(location.search).get('q') ?? ''
+    if (initial) {
+      input.value = initial
+      run(initial, false)
+    }
+    input.focus({ preventScroll: true })
+  }
+</script>
