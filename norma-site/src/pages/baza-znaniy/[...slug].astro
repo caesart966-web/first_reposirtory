@@ -71,10 +71,41 @@ const rendered = (article as { rendered?: { html?: string } }).rendered?.html
 const fmt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
 
 // Другие статьи — чтобы читатель не уходил после одной страницы.
-const others = (await getCollection('articles'))
-  .filter((a) => a.id !== article.id)
-  .sort((a, b) => (b.data.updated ?? b.data.published).getTime() - (a.data.updated ?? a.data.published).getTime())
-  .slice(0, 2)
+//
+// Берём СОСЕДЕЙ ПО РАЗДЕЛУ, идущих следом по порядку, и замыкаем список
+// в кольцо. Раньше здесь стояли две самые свежие статьи — одни и те же
+// на всех двадцати шести страницах. Стоило это дорого и сразу в двух местах.
+//
+// Читателю: со статьи про порог 10 млн предлагалось «Как СРО проверяет
+// своих членов» — тема из другого конца базы знаний. Соседи по разделу
+// продолжают тот же разговор.
+//
+// Поисковику: внутренние ссылки — сигнал важности страницы, и он весь
+// стекался в две статьи (по 26 входящих ссылок), пока двенадцать других
+// имели ровно одну — со страницы списка. Кольцо по разделу даёт каждой
+// статье по две входящих, и ни одна не остаётся тупиком.
+const all = await getCollection('articles')
+const others = (() => {
+  const ring = all
+    .filter((a) => a.data.group === article.data.group)
+    .sort((a, b) => a.data.order - b.data.order)
+  const at = ring.findIndex((a) => a.id === article.id)
+  const picked = []
+  if (at >= 0) {
+    for (let step = 1; step < ring.length && picked.length < 2; step++) {
+      picked.push(ring[(at + step) % ring.length])
+    }
+  }
+  // В разделе меньше трёх статей — добираем из остальных, по порядку,
+  // чтобы и здесь блок не оказался пустым.
+  if (picked.length < 2) {
+    const rest = all
+      .filter((a) => a.id !== article.id && !picked.some((p) => p.id === a.id))
+      .sort((a, b) => a.data.order - b.data.order)
+    picked.push(...rest.slice(0, 2 - picked.length))
+  }
+  return picked
+})()
 
 // Названия разделов базы знаний — теми же словами, что и на странице списка.
 // Уходят в разметку (articleSection) и в Open Graph.
