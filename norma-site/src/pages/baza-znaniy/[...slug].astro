@@ -31,6 +31,37 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '')
 const withBase = (html: string) =>
   base ? html.replace(/(href|src)="\/(?!\/)/g, `$1="${base}/`) : html
 
+// Подписи столбцов переносятся в сами ячейки — атрибутом data-label.
+//
+// Зачем. На телефоне таблица из статьи разворачивается в карточки (правила
+// внизу файла), и каждой ячейке нужна своя подпись: «ООО», «ИП», «Документ».
+// В markdown таких атрибутов не напишешь, а требовать их от автора статьи
+// нельзя — он пишет обычную таблицу в три палочки. Поэтому подписи
+// проставляются на сборке: столько же, сколько ячеек в строке, по порядку.
+//
+// Заодно это работает для статей, которые напишут потом: ничего
+// дописывать в них не придётся.
+const withLabels = (html: string) =>
+  html.replace(/<table(\s[^>]*)?>[\s\S]*?<\/table>/g, (table) => {
+    const head = table.match(/<thead>([\s\S]*?)<\/thead>/)
+    if (!head) return table
+    // Текст шапки уже экранирован разметкой, остаётся снять теги
+    // и закрыть кавычку — иначе она оборвала бы сам атрибут.
+    const heads = [...head[1].matchAll(/<th[^>]*>([\s\S]*?)<\/th>/g)].map((m) =>
+      m[1].replace(/<[^>]+>/g, '').trim().replace(/"/g, '&quot;'),
+    )
+    if (heads.length < 2) return table
+    return table.replace(/<tbody>[\s\S]*?<\/tbody>/, (tbody) =>
+      tbody.replace(/<tr>[\s\S]*?<\/tr>/g, (row) => {
+        let i = 0
+        return row.replace(/<td(\s[^>]*)?>/g, (td, attrs: string | undefined) => {
+          const label = heads[i++]
+          return label ? `<td${attrs ?? ''} data-label="${label}">` : td
+        })
+      }),
+    )
+  })
+
 // Готовая разметка статьи лежит в самой записи коллекции. Если её вдруг
 // не окажется — рисуем обычным компонентом: лучше ссылки без подпапки,
 // чем пустая страница.
@@ -92,7 +123,7 @@ const articleSchema = {
 
     <div class="wrap art-body">
       <div class="prose">
-        {rendered ? <Fragment set:html={withBase(rendered)} /> : <Content />}
+        {rendered ? <Fragment set:html={withLabels(withBase(rendered))} /> : <Content />}
       </div>
 
       <aside class="art-side">
@@ -229,30 +260,66 @@ const articleSchema = {
      её до 399 px на экране в 390: правый столбец обрезался, а страница
      получала горизонтальную прокрутку. С фиксированной раскладкой колонки
      делят ширину поровну, а текст переносится. */
+  /* На телефоне таблица разворачивается в карточки — тот же приём, что
+     у table.data на остальных страницах сайта.
+     Так вышло не сразу. Сначала колонки просто делили ширину поровну
+     (table-layout: fixed) и текст переносился по буквам, потому что
+     словаря русских переносов в браузере может не быть. На трёх колонках
+     в 390 px это давало «предпринима|теля», «компенсацио|нный»
+     и «рассмотрени|я» — сравнительную таблицу в таком виде не читают,
+     её разгадывают. Ширины взять неоткуда: колонке достаётся сотня
+     пикселей, а слова в русском длиннее.
+     Поэтому строка становится карточкой: первая ячейка — её заголовок,
+     остальные идут парами «подпись сверху, значение под ней». Подпись
+     берётся из data-label, который проставляется на сборке (см. верх
+     файла), а шапка прячется — дублировать её незачем. */
   @media (max-width: 599px) {
-    .prose :global(table) { font-size: 13.5px; table-layout: fixed; }
-    .prose :global(thead th), .prose :global(tbody td) {
-      padding: 9px 9px;
-      /* Два правила, и порядок здесь смысловой. Браузер сперва пробует
-         перенести по слогам, и в системе со словарём русских переносов
-         выйдет «зарегистриро-ванных» с дефисом. Если словаря нет —
-         а в части окружений его нет, — слово всё равно не должно вылезать
-         за колонку и наезжать на соседнюю, поэтому вторым идёт разрыв
-         по буквам. Он некрасив, но применяется только там, где иначе
-         текст налезал бы на текст. */
-      hyphens: auto;
-      -webkit-hyphens: auto;
+    .prose :global(table) { display: block; font-size: 15px; }
+    /* Шапку убираем из виду, но оставляем в разметке: она нужна тем,
+       кто читает страницу голосом. */
+    .prose :global(thead) {
+      position: absolute;
+      width: 1px; height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+    .prose :global(tbody), .prose :global(tbody tr) { display: block; }
+    .prose :global(tbody tr) { border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+    .prose :global(tbody tr:last-child) { border-bottom: 0; }
+    .prose :global(tbody td) {
+      display: block;
+      border-bottom: 0;
+      padding: 2px 14px 6px;
+      /* Страховка на случай длинной неразрывной строки: во всю ширину
+         карточки такое почти не встречается, но реестровый номер или
+         адрес разорвать всё равно лучше, чем вылезти за край. */
       overflow-wrap: break-word;
     }
-    /* Капс в русском заметно шире строчных: «ПРОЕКТИРОВЩИКИ И ИЗЫСКАТЕЛИ»
-       в колонке шириной в треть экрана не помещается ни при каком кегле.
-       На телефоне шапка набирается обычным регистром — смысл тот же,
-       ширина меньше на четверть. */
-    .prose :global(thead th) {
-      text-transform: none;
-      letter-spacing: 0;
-      font-size: 12px;
+    /* Подпись столбца над значением. Набор повторяет шапку на компьютере:
+       мелкий капс в разрядку — читатель узнаёт в ней ту же самую шапку. */
+    .prose :global(tbody td::before) {
+      content: attr(data-label);
+      display: block;
+      /* Шрифт интерфейса, а не антиква статьи: подпись — служебная надпись,
+         как в шапке таблицы на компьютере, и набрана она должна быть тем же. */
+      font-family: var(--font-body);
+      font-size: 11.5px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 1px;
     }
+    /* Первая ячейка — заголовок карточки, а не пара «подпись — значение». */
+    .prose :global(tbody td:first-child) {
+      font-weight: 600;
+      font-size: 16px;
+      color: var(--ink);
+      padding-top: 12px;
+      padding-bottom: 2px;
+    }
+    .prose :global(tbody td:first-child::before) { content: none; }
   }
 
   .prose :global(code) {
