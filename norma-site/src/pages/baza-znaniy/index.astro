@@ -32,6 +32,19 @@ const grouped = GROUPS.map((g) => ({
 })).filter((g) => g.items.length > 0)
 
 const fmt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
+
+// Состав базы знаний машинным списком — в том же порядке, что и на странице:
+// разметка не должна расходиться с тем, что видит человек.
+const articlesList = {
+  '@type': 'ItemList',
+  name: 'База знаний о СРО',
+  itemListElement: grouped.flatMap((g) => g.items).map((a, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    name: a.data.title,
+    url: new URL(href(`/baza-znaniy/${a.id}/`), Astro.site).toString(),
+  })),
+}
 ---
 
 <Base
@@ -41,6 +54,8 @@ const fmt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 
     { label: 'Главная', url: href('/') },
     { label: 'База знаний' },
   ]}
+  pageType="CollectionPage"
+  schema={[articlesList]}
 >
   <section class="section page-head">
     <HeadPhoto position="68% 62%" />

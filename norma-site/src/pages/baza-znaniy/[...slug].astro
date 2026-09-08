@@ -3,6 +3,7 @@ import Base from '../../layouts/Base.astro'
 import Icon from '../../components/Icon.astro'
 import { getCollection, render } from 'astro:content'
 import { href, SITE } from '../../config/site'
+import { SEO } from '../../config/seo'
 
 export async function getStaticPaths() {
   const articles = await getCollection('articles')
@@ -75,15 +76,33 @@ const others = (await getCollection('articles'))
   .sort((a, b) => (b.data.updated ?? b.data.published).getTime() - (a.data.updated ?? a.data.published).getTime())
   .slice(0, 2)
 
+// Названия разделов базы знаний — теми же словами, что и на странице списка.
+// Уходят в разметку (articleSection) и в Open Graph.
+const SECTIONS: Record<string, string> = {
+  need: 'Нужна ли вам СРО',
+  money: 'Деньги',
+  membership: 'Членство',
+  check: 'Проверяемость',
+}
+
+const published = article.data.published.toISOString()
+const modified = (article.data.updated ?? article.data.published).toISOString()
+const section = SECTIONS[article.data.group]
+const pageUrl = new URL(Astro.url.pathname, Astro.site).toString()
+
 const articleSchema = {
   '@type': 'Article',
+  '@id': `${pageUrl}#article`,
   headline: article.data.title,
   description: article.data.description,
-  datePublished: article.data.published.toISOString(),
-  dateModified: (article.data.updated ?? article.data.published).toISOString(),
+  datePublished: published,
+  dateModified: modified,
   author: { '@type': 'Person', name: 'Багишев Алихан Ахадович' },
   publisher: { '@id': new URL('/', Astro.site).toString() + '#org' },
-  mainEntityOfPage: new URL(Astro.url.pathname, Astro.site).toString(),
+  mainEntityOfPage: { '@id': `${pageUrl}#webpage` },
+  isPartOf: { '@id': `${pageUrl}#webpage` },
+  image: new URL(href(SEO.ogImage), Astro.site).toString(),
+  articleSection: section,
   inLanguage: 'ru-RU',
 }
 ---
@@ -92,6 +111,7 @@ const articleSchema = {
   title={`${article.data.metaTitle ?? article.data.title} | НОРМА`}
   description={article.data.description}
   schema={[articleSchema]}
+  article={{ published, modified, section }}
   breadcrumbs={[
     { label: 'Главная', url: href('/') },
     { label: 'База знаний', url: href('/baza-znaniy/') },

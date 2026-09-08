@@ -6,6 +6,7 @@ import Header from '../components/Header.astro'
 import Footer from '../components/Footer.astro'
 import Icon from '../components/Icon.astro'
 import { SITE, href } from '../config/site'
+import { SEO } from '../config/seo'
 
 interface Props {
   title: string
@@ -16,9 +17,29 @@ interface Props {
   breadcrumbs?: { label: string; url?: string }[]
   /** Закрыть страницу от поиска независимо от режима сборки (страница 404). */
   noindex?: boolean
+  /**
+   * Тип страницы в микроразметке: ContactPage у контактов, CollectionPage
+   * у списков, WebPage у всего остального. Поисковик по нему понимает,
+   * что это за страница, не разбирая её текст.
+   */
+  pageType?: string
+  /**
+   * Страница — статья. Тогда Open Graph получает тип article и даты:
+   * мессенджеры и агрегаторы показывают их в карточке ссылки, а Яндекс
+   * использует дату при сортировке по свежести.
+   */
+  article?: { published: string; modified: string; section?: string }
 }
 
-const { title, description, schema = [], breadcrumbs = [], noindex: noindexProp = false } = Astro.props
+const {
+  title,
+  description,
+  schema = [],
+  breadcrumbs = [],
+  noindex: noindexProp = false,
+  pageType = 'WebPage',
+  article,
+} = Astro.props
 
 // Полный адрес страницы: нужен для canonical, Open Graph и микроразметки.
 const canonical = new URL(Astro.url.pathname, Astro.site).toString()
@@ -32,6 +53,10 @@ const canonical = new URL(Astro.url.pathname, Astro.site).toString()
 // но layout его не читал — на боевой сборке (без PUBLIC_NOINDEX) страница
 // «Такой страницы нет» вышла бы в поиск с меткой index, follow.
 const noindex = import.meta.env.PUBLIC_NOINDEX === '1' || noindexProp
+
+const abs = (path: string) => new URL(href(path), Astro.site).toString()
+const home = new URL('/', Astro.site).toString()
+const ogImage = abs(SEO.ogImage)
 
 // Организация — базовый блок разметки, есть на каждой странице.
 const orgSchema = {
@@ -50,6 +75,39 @@ const orgSchema = {
   areaServed: { '@type': 'Country', name: 'Россия' },
   address: { '@type': 'PostalAddress', addressCountry: 'RU' },
   sameAs: [SITE.whatsapp, SITE.telegram, SITE.maxLink].filter(Boolean),
+  // Знак и картинка-превью. Без logo поисковик не покажет фирменный знак
+  // ни рядом с сайтом в выдаче, ни в карточке организации.
+  logo: { '@type': 'ImageObject', '@id': `${home}#logo`, url: abs('/logo-512.png'), width: 512, height: 512 },
+  image: { '@id': `${home}#logo` },
+}
+
+// Сайт целиком — узел, к которому привязываются все страницы. Через него
+// поисковик понимает, что двадцать адресов складываются в один ресурс
+// с одним владельцем, а не лежат сами по себе.
+const siteSchema = {
+  '@type': 'WebSite',
+  '@id': `${home}#website`,
+  url: home,
+  name: SITE.brand,
+  description: 'Вступление в СРО, НРС, НОК и лицензии — по всей России',
+  inLanguage: 'ru-RU',
+  publisher: { '@id': `${home}#org` },
+}
+
+// Сама страница. Тип уточняется пропом: ContactPage у контактов,
+// CollectionPage у списков.
+const pageSchema = {
+  '@type': pageType,
+  '@id': `${canonical}#webpage`,
+  url: canonical,
+  name: title,
+  description,
+  inLanguage: 'ru-RU',
+  isPartOf: { '@id': `${home}#website` },
+  about: { '@id': `${home}#org` },
+  primaryImageOfPage: { '@type': 'ImageObject', url: ogImage },
+  ...(breadcrumbs.length > 0 ? { breadcrumb: { '@id': `${canonical}#breadcrumb` } } : {}),
+  ...(article ? { datePublished: article.published, dateModified: article.modified } : {}),
 }
 
 const crumbSchema =
@@ -57,6 +115,7 @@ const crumbSchema =
     ? [
         {
           '@type': 'BreadcrumbList',
+          '@id': `${canonical}#breadcrumb`,
           itemListElement: breadcrumbs.map((c, i) => ({
             '@type': 'ListItem',
             position: i + 1,
@@ -69,7 +128,7 @@ const crumbSchema =
 
 const graph = {
   '@context': 'https://schema.org',
-  '@graph': [orgSchema, ...crumbSchema, ...schema],
+  '@graph': [orgSchema, siteSchema, pageSchema, ...crumbSchema, ...schema],
 }
 ---
 
@@ -101,19 +160,67 @@ const graph = {
     <link rel="preload" as="font" type="font/woff2" href={href('/fonts/literata-cyrillic.woff2')} crossorigin />
     <link rel="preload" as="font" type="font/woff2" href={href('/fonts/golos-cyrillic.woff2')} crossorigin />
 
+    <!-- Значок сайта. SVG понимают все современные браузеры, но Яндекс
+         в выдаче берёт растр, а телефоны — apple-touch-icon: значок сайта
+         виден в результатах поиска и на домашнем экране, и его отсутствие
+         заметнее, чем кажется. Манифест даёт Андроиду название и цвет. -->
     <link rel="icon" type="image/svg+xml" href={href('/favicon.svg')} />
+    <link rel="icon" type="image/png" sizes="32x32" href={href('/favicon-32.png')} />
+    <link rel="apple-touch-icon" sizes="180x180" href={href('/apple-touch-icon.png')} />
+    <link rel="manifest" href={href('/site.webmanifest')} />
     <meta name="theme-color" content="#171310" />
 
-    <meta property="og:type" content="website" />
+    <!-- Карта сайта и лента статей. Робот находит их и по robots.txt,
+         но ссылка со страницы — второй путь, а у ленты она единственный. -->
+    <link rel="sitemap" type="application/xml" href={href('/sitemap-index.xml')} />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title={`База знаний — ${SITE.brand}`}
+      href={href('/rss.xml')}
+    />
+
+    <!-- Подтверждение прав в Яндекс.Вебмастере и Google Search Console.
+         Коды вписываются в src/config/seo.ts. Пока их нет, тегов тоже нет:
+         пустой content Вебмастер считает неверным кодом. -->
+    {SEO.yandexVerification && <meta name="yandex-verification" content={SEO.yandexVerification} />}
+    {SEO.googleVerification && <meta name="google-site-verification" content={SEO.googleVerification} />}
+
+    <meta property="og:type" content={article ? 'article' : 'website'} />
     <meta property="og:site_name" content={SITE.brand} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:locale" content="ru_RU" />
-    <meta property="og:image" content={new URL(href('/og.png'), Astro.site).toString()} />
+    <meta property="og:image" content={ogImage} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={SEO.ogImageAlt} />
+
+    {article && (
+      <>
+        <meta property="article:published_time" content={article.published} />
+        <meta property="article:modified_time" content={article.modified} />
+        <meta property="article:author" content="Багишев Алихан Ахадович" />
+        {article.section && <meta property="article:section" content={article.section} />}
+      </>
+    )}
+
+    <!-- Twitter читает og:*, но остальные, кто разбирает карточку ссылки
+         по его правилам (в том числе часть мессенджеров), — только twitter:*.
+         Дублируем: это четыре строки против пустой карточки. -->
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:image:alt" content={SEO.ogImageAlt} />
+
+    {SITE.metrikaId && (
+      <>
+        <link rel="preconnect" href="https://mc.yandex.ru" crossorigin />
+        <link rel="dns-prefetch" href="https://mc.yandex.ru" />
+      </>
+    )}
 
     <script type="application/ld+json" set:html={JSON.stringify(graph)} />
 
