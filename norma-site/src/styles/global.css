@@ -98,6 +98,16 @@ html {
      и так адаптивные, подгонять их за нас не нужно. */
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  /* Украшение не имеет права двигать страницу вбок.
+     Печать «прикладывается»: приходит крупнее (scale 1.5) и вбок,
+     потом садится на место. Пока она ждёт своей очереди, её увеличенная
+     рамка считается содержимым страницы — и на узком телефоне контакты
+     ездили вбок на 11 px ещё до того, как посетитель до печати долистал.
+     clip, а не hidden: hidden завёл бы новый контейнер прокрутки
+     и сломал бы липкую шапку. Настоящие ошибки вёрстки это не прячет —
+     их ловит scripts/test-pages.mjs, он меряет каждый элемент отдельно,
+     а не общую ширину документа. */
+  overflow-x: clip;
 }
 
 body {
@@ -137,6 +147,16 @@ h1, h2, h3, h4 {
 }
 
 h1 { font-size: clamp(32px, 5vw, 52px); }
+/* Заголовки не должны тянуть страницу вбок. На 320 px кегль упирается
+   в нижнюю границу clamp, и слово «компенсационный» в заголовке статьи
+   выходило за колонку на 42 px — страница получала горизонтальную
+   прокрутку. Ниже 360 px кегль уменьшаем, а перенос по буквам оставляем
+   страховкой: он сработает только там, где слово не помещается ни при
+   каком кегле, и лучше некрасивый перенос, чем уехавшая вбок страница. */
+h1, h2, h3 { overflow-wrap: break-word; }
+@media (max-width: 359px) {
+  h1 { font-size: 27px; }
+}
 h2 { font-size: clamp(26px, 3.4vw, 38px); }
 h3 { font-family: var(--font-body); font-size: 19px; font-weight: 600; letter-spacing: -0.005em; }
 
@@ -452,8 +472,12 @@ section[id], [data-anchor] { scroll-margin-top: 84px; }
 
 /* ── Карточки и сетки ── */
 
-.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 16px; }
-.grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+/* min(…, 100%) обязателен, а не для красоты: голый minmax(290px, 1fr)
+   держит колонку в 290 px даже тогда, когда контейнер уже 280 — и сетка
+   вылезает за край. На 320 px это давало 10 px горизонтальной прокрутки
+   в блоке «читайте также» под каждой статьёй. */
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(290px, 100%), 1fr)); gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 16px; }
 
 .card {
   background: var(--card);
