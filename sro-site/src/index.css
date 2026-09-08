@@ -77,3 +77,26 @@
     display: none;
   }
 }
+
+/* Меню «веб-версия / приложение» у кнопок мессенджеров (MessengerLink):
+   короткое проявление, чтобы карточка не «выскакивала». Само смещение задаёт
+   Tailwind (-translate-x-1/2), поэтому анимируется только прозрачность —
+   иначе два transform спорили бы друг с другом. */
+@keyframes chooser-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-chooser {
+  animation: chooser-in 120ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-chooser {
+    animation: none;
+  }
+}

@@ -16,7 +16,8 @@ import { MaxIcon, TelegramIcon, WhatsAppIcon } from './icons'
 import { useLegalDocs } from './LegalDocs'
 import { plural } from '../lib/plural'
 import { QUESTIONS, TOTAL_STEPS, useQuiz } from './QuizContext'
-import { Button, ButtonLink } from './ui/Button'
+import { MessengerLink } from './MessengerLink'
+import { Button, ButtonLink, buttonClasses } from './ui/Button'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
 
@@ -182,13 +183,42 @@ export function Quiz() {
     email: form.email.trim(),
     answers,
   })
-  // WhatsApp умеет принимать текст сообщения в ссылке, Telegram — нет,
-  // поэтому там просто открывается диалог.
-  const whatsappSendHref = CONFIGURED.whatsapp
-    ? `${CONTACTS.whatsapp}${CONTACTS.whatsapp.includes('?') ? '&' : '?'}text=${encodeURIComponent(leadMessage)}`
-    : LINKS.whatsapp
-  const telegramSendHref = LINKS.telegram
-  const maxSendHref = LINKS.max
+  // Три мессенджера — одни и те же на экране успеха и на экране ошибки.
+  // На компьютере кнопка предлагает веб-версию или приложение, на телефоне
+  // открывает приложение сразу. Готовый текст заявки умеет принимать только
+  // WhatsApp; в Telegram и MAX просто открывается диалог. Меню раскрывается
+  // вверх: кнопки стоят у нижнего края карточки, и вниз оно вылезало бы на
+  // тёмный фон секции. У WhatsApp оно прижато к правому краю кнопки: на
+  // экране ошибки эта кнопка крайняя в ряду, и по центру меню выходило за
+  // край карточки.
+  const messengerButtons = (
+    <>
+      <MessengerLink
+        channel="whatsapp"
+        label="WhatsApp"
+        text={leadMessage}
+        direction="up"
+        align="end"
+        className={buttonClasses('secondary')}
+      >
+        <WhatsAppIcon className="h-4 w-4" />
+        WhatsApp
+      </MessengerLink>
+      <MessengerLink
+        channel="telegram"
+        label="Telegram"
+        direction="up"
+        className={buttonClasses('secondary')}
+      >
+        <TelegramIcon className="h-4 w-4" />
+        Telegram
+      </MessengerLink>
+      <MessengerLink channel="max" label="MAX" className={buttonClasses('secondary')}>
+        <MaxIcon className="h-4 w-4" />
+        MAX
+      </MessengerLink>
+    </>
+  )
   // Письмо посетитель отправляет из своей почты, текст уже подставлен. Этот
   // путь не зависит от сервиса приёма заявок: он работает и когда сервис
   // не отвечает, и когда он закрыт для посетителей из России.
@@ -270,26 +300,7 @@ export function Quiz() {
                 Если удобнее в мессенджере — напишите напрямую.
               </p>
               <div className="mt-3 flex flex-wrap justify-center gap-3">
-                <ButtonLink
-                  href={whatsappSendHref}
-                  variant="secondary"
-                  data-channel="WhatsApp"
-                >
-                  <WhatsAppIcon className="h-4 w-4" />
-                  WhatsApp
-                </ButtonLink>
-                <ButtonLink
-                  href={telegramSendHref}
-                  variant="secondary"
-                  data-channel="Telegram"
-                >
-                  <TelegramIcon className="h-4 w-4" />
-                  Telegram
-                </ButtonLink>
-                <ButtonLink href={maxSendHref} variant="secondary" data-channel="MAX">
-                  <MaxIcon className="h-4 w-4" />
-                  MAX
-                </ButtonLink>
+                {messengerButtons}
               </div>
             </div>
           ) : status === 'failed' ? (
@@ -328,26 +339,7 @@ export function Quiz() {
                   <Mail className="h-4 w-4" aria-hidden="true" />
                   Отправить письмом
                 </ButtonLink>
-                <ButtonLink
-                  href={whatsappSendHref}
-                  variant="secondary"
-                  data-channel="WhatsApp"
-                >
-                  <WhatsAppIcon className="h-4 w-4" />
-                  WhatsApp
-                </ButtonLink>
-                <ButtonLink
-                  href={telegramSendHref}
-                  variant="secondary"
-                  data-channel="Telegram"
-                >
-                  <TelegramIcon className="h-4 w-4" />
-                  Telegram
-                </ButtonLink>
-                <ButtonLink href={maxSendHref} variant="secondary" data-channel="MAX">
-                  <MaxIcon className="h-4 w-4" />
-                  MAX
-                </ButtonLink>
+                {messengerButtons}
                 <ButtonLink href={LINKS.tel} variant="secondary">
                   <Phone className="h-4 w-4" aria-hidden="true" />
                   Позвонить
