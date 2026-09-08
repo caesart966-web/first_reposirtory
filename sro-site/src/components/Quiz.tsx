@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   ChevronLeft,
   Loader2,
+  Mail,
   Pencil,
   Phone,
   RotateCcw,
@@ -11,7 +12,7 @@ import {
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { CONFIGURED, CONTACTS, LINKS } from '../content/contacts'
 import { buildLeadMessage, sendLead } from '../lib/lead'
-import { TelegramIcon, WhatsAppIcon } from './icons'
+import { MaxIcon, TelegramIcon, WhatsAppIcon } from './icons'
 import { useLegalDocs } from './LegalDocs'
 import { plural } from '../lib/plural'
 import { QUESTIONS, TOTAL_STEPS, useQuiz } from './QuizContext'
@@ -187,6 +188,15 @@ export function Quiz() {
     ? `${CONTACTS.whatsapp}${CONTACTS.whatsapp.includes('?') ? '&' : '?'}text=${encodeURIComponent(leadMessage)}`
     : LINKS.whatsapp
   const telegramSendHref = LINKS.telegram
+  const maxSendHref = LINKS.max
+  // Письмо посетитель отправляет из своей почты, текст уже подставлен. Этот
+  // путь не зависит от сервиса приёма заявок: он работает и когда сервис
+  // не отвечает, и когда он закрыт для посетителей из России.
+  const mailSendHref = CONFIGURED.email
+    ? `mailto:${CONTACTS.email}?subject=${encodeURIComponent(
+        'Заявка с сайта',
+      )}&body=${encodeURIComponent(leadMessage)}`
+    : LINKS.mail
 
   return (
     // Тёмная закрывающая секция: квиз поглотил отдельный финальный призыв,
@@ -276,6 +286,10 @@ export function Quiz() {
                   <TelegramIcon className="h-4 w-4" />
                   Telegram
                 </ButtonLink>
+                <ButtonLink href={maxSendHref} variant="secondary" data-channel="MAX">
+                  <MaxIcon className="h-4 w-4" />
+                  MAX
+                </ButtonLink>
               </div>
             </div>
           ) : status === 'failed' ? (
@@ -293,9 +307,13 @@ export function Quiz() {
                 Не удалось отправить заявку
               </h3>
               <p className="mt-3 text-neutral-600">
-                Ваши ответы сохранены — попробуйте отправить ещё раз или свяжитесь со мной
-                напрямую.
+                Ваши ответы сохранены — попробуйте ещё раз или отправьте заявку напрямую:
+                текст уже подставлен в письмо и в WhatsApp.
               </p>
+              {/* Письмо и мессенджеры стоят здесь не для красоты: если сервис
+                  приёма не отвечает, это единственный путь, которым заявка
+                  дойдёт. Письмо первым после повтора — оно уходит на ту же
+                  почту, куда шла бы заявка, и с тем же текстом. */}
               <div className="mt-6 flex flex-wrap justify-center gap-3">
                 <Button
                   onClick={() => {
@@ -306,9 +324,9 @@ export function Quiz() {
                   <RotateCcw className="h-4 w-4" aria-hidden="true" />
                   Попробовать снова
                 </Button>
-                <ButtonLink href={LINKS.tel} variant="secondary">
-                  <Phone className="h-4 w-4" aria-hidden="true" />
-                  Позвонить
+                <ButtonLink href={mailSendHref} variant="secondary" data-channel="Почта">
+                  <Mail className="h-4 w-4" aria-hidden="true" />
+                  Отправить письмом
                 </ButtonLink>
                 <ButtonLink
                   href={whatsappSendHref}
@@ -325,6 +343,14 @@ export function Quiz() {
                 >
                   <TelegramIcon className="h-4 w-4" />
                   Telegram
+                </ButtonLink>
+                <ButtonLink href={maxSendHref} variant="secondary" data-channel="MAX">
+                  <MaxIcon className="h-4 w-4" />
+                  MAX
+                </ButtonLink>
+                <ButtonLink href={LINKS.tel} variant="secondary">
+                  <Phone className="h-4 w-4" aria-hidden="true" />
+                  Позвонить
                 </ButtonLink>
               </div>
             </div>
