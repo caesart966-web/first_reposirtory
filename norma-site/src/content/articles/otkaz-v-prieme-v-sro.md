@@ -6,7 +6,7 @@ published: 2026-09-07
 updated: 2026-09-07
 excerpt: "Отказ — не каприз организации: основания перечислены в кодексе. Почти все они устраняются заранее, если знать, что проверять."
 group: membership
-order: 4
+order: 5
 relatedService:
   label: Какие документы нужны
   url: /dokumenty/
