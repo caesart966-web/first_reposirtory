@@ -6,7 +6,7 @@ published: 2026-09-07
 updated: 2026-09-07
 excerpt: Обещания «за один день» относятся не к вступлению, а к подготовке бумаг. Срок рассмотрения — право СРО, и обещать его за неё нельзя.
 group: membership
-order: 4
+order: 5
 relatedService:
   label: Какие документы нужны
   url: /dokumenty/

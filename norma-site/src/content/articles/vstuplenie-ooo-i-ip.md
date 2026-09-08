@@ -6,7 +6,7 @@ published: 2026-09-08
 updated: 2026-09-08
 excerpt: "Разница между ООО и ИП при вступлении меньше, чем принято думать: она вся в документах. Взносы, требования и сроки — одни и те же."
 group: membership
-order: 1
+order: 2
 relatedService:
   label: Какие документы нужны
   url: /dokumenty/

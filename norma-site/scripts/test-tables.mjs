@@ -38,9 +38,28 @@ for (const width of WIDTHS) {
     const found = await page.evaluate((vw) => {
       // Видимой считаем ячейку, которая действительно отдаётся в точке
       // своего центра: спрятанная шапка сохраняет размеры, но там её нет.
+      //
+      // Одной этой проверки не хватило. Шапка прячется приёмом «видно только
+      // голосом»: сама она сжата до 1×1 с clip и overflow, а ячейки внутри
+      // сохраняют настоящие размеры и торчат наружу. Если в точке центра
+      // такой ячейки сверху оказывается общий предок (сама таблица),
+      // то hit.contains(el) верно — и ячейка засчитывалась видимой.
+      // Ветка hit.contains(el) нужна для пустых ячеек, где в центре нет
+      // ни текста, ни фона, поэтому убирать её нельзя. Вместо этого
+      // отдельно отсекаем всё, что лежит внутри спрятанного контейнера.
+      const inClipped = (el) => {
+        for (let n = el.parentElement; n; n = n.parentElement) {
+          const cs = getComputedStyle(n)
+          if (cs.clip === 'rect(0px, 0px, 0px, 0px)') return true
+          const r = n.getBoundingClientRect()
+          if (cs.overflow === 'hidden' && r.width <= 1 && r.height <= 1) return true
+        }
+        return false
+      }
       const visible = (el) => {
         const r = el.getBoundingClientRect()
         if (r.width < 3 || r.height < 3) return false
+        if (inClipped(el)) return false
         const hit = document.elementFromPoint(r.left + r.width / 2, Math.min(r.top + r.height / 2, innerHeight - 1))
         return !!hit && (hit === el || el.contains(hit) || hit.contains(el))
       }

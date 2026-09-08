@@ -6,7 +6,7 @@ published: 2026-09-07
 updated: 2026-09-07
 excerpt: "Выйти можно в любой момент — сложность не в этом, а в том, что происходит дальше: со взносом, с правом работать и с переходом в другую организацию."
 group: membership
-order: 7
+order: 8
 relatedService:
   label: Услуги
   url: /uslugi/
