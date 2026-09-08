@@ -1,0 +1,43 @@
+# Проверки сайта X-PTO. Запускаются на каждую правку в pto-site/.
+# Если что-то сломано — сборка краснеет, и это видно до выкладки.
+name: Проверки сайта ПТО
+
+on:
+  push:
+    paths:
+      - 'pto-site/**'
+      - '.github/workflows/check-pto-site.yml'
+  pull_request:
+    paths:
+      - 'pto-site/**'
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: Сборка и проверки
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pto-site
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Собрать сайт
+        run: python3 build.py
+
+      - name: Быстрые проверки (ссылки, заголовки, разметка)
+        run: python3 tests/check_static.py
+
+      - name: Поставить браузер и библиотеку доступности
+        run: |
+          pip install playwright
+          playwright install --with-deps chromium
+          npm install axe-core --no-save --silent
+
+      - name: Проверки в браузере (вёрстка, доступность, кнопки)
+        run: python3 tests/check_browser.py

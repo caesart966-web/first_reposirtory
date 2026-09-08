@@ -1,10 +1,7 @@
 import {
-  Award,
-  Briefcase,
+  ArrowRight,
   Building2,
-  FilePen,
   FileText,
-  Gavel,
   GraduationCap,
   Handshake,
   ListPlus,
@@ -13,20 +10,23 @@ import {
   UserCheck,
   type LucideIcon,
 } from 'lucide-react'
-import { IMAGES, type PageImage } from '../content/images'
-import { Figure } from './ui/Figure'
+import { serviceBySlug } from '../content/services'
+import { page } from '../lib/site'
+import { cardHover } from './ui/card'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
 
 // Восемь равнозначных карточек читались как каша, поэтому услуги разбиты
 // на две понятные группы: что делаем с самой СРО и что — со специалистами.
-// Тип явный: без него TypeScript выводит из массива объединение, у одного
-// члена которого поля figure нет, и сузить его проверкой не получается.
-type ServiceGroup = {
-  title: string
-  figure?: PageImage
-  items: { icon: LucideIcon; title: string; text: string }[]
-}
+//
+// Каждая карточка ведёт на отдельную страницу услуги (/uslugi/…): заказчик
+// попросил, чтобы посетитель, кликнув по карточке, попадал на страницу
+// с полным описанием, а не прыгал по главной. Страниц семь, карточек восемь:
+// «Подбор СРО» и «Проверка СРО» — одна тема и одна страница. Поэтому
+// карточки и приподнимаются при наведении: по правилу из ui/card.ts подъём —
+// обещание клика, и здесь оно честное.
+type ServiceItem = { icon: LucideIcon; title: string; text: string; slug: string }
+type ServiceGroup = { title: string; items: ServiceItem[] }
 
 const GROUPS: ServiceGroup[] = [
   {
@@ -36,86 +36,74 @@ const GROUPS: ServiceGroup[] = [
         icon: Building2,
         title: 'Вступление в СРО',
         text: 'Организую процесс от выбора СРО до внесения компании в реестр членов.',
+        slug: 'vstuplenie',
       },
       {
         icon: Search,
         title: 'Подбор СРО',
-        text: 'Сравню требования, взносы и условия — предложу варианты под вашу задачу.',
+        text: 'Сравню требования, размеры взносов и условия нескольких организаций и предложу подходящие варианты.',
+        slug: 'podbor',
       },
       {
         icon: FileText,
         title: 'Подготовка документов',
         text: 'Соберу полный пакет и выверю каждый документ перед подачей.',
+        slug: 'dokumenty',
       },
       {
         icon: ShieldCheck,
         title: 'Проверка СРО',
         text: 'Проверю статус организации по открытым реестрам до оплаты взносов.',
+        slug: 'podbor',
       },
     ],
   },
   {
     title: 'Специалисты и реестры',
-    // Изыскания не показывает ни один конкурент — у всех только стройка,
-    // а это отдельная СРО и отдельный клиент.
-    figure: IMAGES.survey,
     items: [
       {
         icon: UserCheck,
         title: 'НРС',
-        text: 'Помогу с включением специалистов в национальный реестр: требования и документы.',
+        text: 'Проверю соответствие сотрудников требованиям и подготовлю документы для включения в национальный реестр специалистов.',
+        slug: 'nrs',
       },
       {
         icon: GraduationCap,
         title: 'НОК',
-        text: 'Объясню, как проходит независимая оценка квалификации, и помогу подготовиться.',
+        text: 'Расскажу, как проходит независимая оценка квалификации, и помогу подготовиться к профессиональному экзамену.',
+        slug: 'nok',
       },
       {
         icon: ListPlus,
         title: 'Расширение видов работ',
         text: 'Оформлю изменение уровня ответственности или состава видов работ.',
+        slug: 'uroven',
       },
       {
         icon: Handshake,
         title: 'Сопровождение проверок',
         text: 'Подготовлю к проверке СРО и помогу корректно ответить на запросы.',
+        slug: 'proverki',
       },
     ],
   },
 ]
 
-// Смежные юридические задачи с визитки: вторичная услуга, поэтому компактным
-// списком под основной сеткой и нейтральными иконками, а не акцентными.
-const LEGAL = [
-  {
-    icon: Briefcase,
-    title: 'Регистрация и ликвидация',
-    text: 'Юридических лиц и предпринимателей — от подачи до внесения записи.',
-  },
-  {
-    icon: FilePen,
-    title: 'Изменения в учредительных документах',
-    text: 'Подготовлю пакет и сопровожу внесение изменений в ЕГРЮЛ.',
-  },
-  {
-    icon: Gavel,
-    title: 'Представление интересов в судах',
-    text: 'Досудебная работа и защита позиции компании в судебных спорах.',
-  },
-  {
-    icon: Award,
-    title: 'Повышение квалификации и аттестации',
-    text: 'Помогу организовать обучение и аттестацию специалистов для СРО и НРС.',
-  },
-]
+// Адрес страницы по ключу; неизвестный ключ — ошибка сборки данных, а не
+// молчаливая ссылка в никуда.
+const pathOf = (slug: string) => {
+  const service = serviceBySlug(slug)
+  if (!service) throw new Error(`Нет страницы услуги: ${slug}`)
+  return page(service.path)
+}
 
 export function Services() {
   return (
     <Section id="services" className="bg-neutral-50/55">
       <SectionHeading
         eyebrow="Услуги"
-        title="С чем помогу"
-        subtitle="Разовые задачи и полное сопровождение — в зависимости от вашей ситуации."
+        title="Услуги по вступлению в СРО"
+        subtitle="Отдельные задачи или полное сопровождение: от подбора саморегулируемой организации до внесения сведений в реестр членов."
       />
 
       <div className="mt-10 space-y-10">
@@ -126,71 +114,45 @@ export function Services() {
                 {group.title}
               </h3>
             </Reveal>
-            {/* Группа с фото: снимок — колонка в общей сетке, а не сирота под
-                ней. Полупустой ряд с одинокой картинкой был главной «рыхлостью»
-                страницы. Карточки при этом встают 2×2 рядом с фото. */}
-            <div
-              className={`mt-5 grid gap-4 sm:gap-5 ${
-                group.figure
-                  ? 'sm:grid-cols-2 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]'
-                  : 'sm:grid-cols-2 lg:grid-cols-4'
-              }`}
-            >
-              {group.figure && (
-                <Reveal className="sm:col-span-2 lg:col-span-1 lg:row-span-1">
-                  <Figure {...group.figure} />
-                </Reveal>
-              )}
-              <div
-                className={
-                  group.figure
-                    ? 'grid gap-4 sm:col-span-2 sm:grid-cols-2 sm:gap-5 lg:col-span-1'
-                    : 'contents'
-                }
-              >
-                {group.items.map((service, index) => (
-                  <Reveal key={service.title} delay={(index % 4) * 70} className="h-full">
-                    <article className="h-full rounded-2xl border border-neutral-200 bg-white p-6 shadow-card transition-colors duration-200 hover:border-accent-300">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent-50 text-accent-600">
+            {/* Фотографий в сетке услуг нет: обе группы — про действия, а не
+                про области, и любой кадр здесь иллюстрировал бы соседнюю тему.
+                Области показаны выше, в «Видах СРО», каждая своим снимком. */}
+            <div className="mt-5 grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
+              {group.items.map((service, index) => (
+                <Reveal key={service.title} delay={(index % 4) * 70} className="h-full">
+                  {/* До sm иконка стоит в строке с заголовком, а не над ним:
+                      столбик «иконка / заголовок / текст» растягивал восемь
+                      услуг на четыре экрана прокрутки. С 640px карточек в
+                      строке уже две и высота не в дефиците — там прежний
+                      столбик, он читается спокойнее. */}
+                  <a
+                    href={pathOf(service.slug)}
+                    className={`group/card flex h-full flex-col rounded-2xl border border-neutral-200 bg-white p-5 shadow-card sm:p-6 ${cardHover}`}
+                  >
+                    <div className="flex items-center gap-3.5 sm:block">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 sm:h-11 sm:w-11">
                         <service.icon className="h-5 w-5" aria-hidden="true" />
                       </div>
-                      <h4 className="mt-5 font-semibold text-neutral-950">{service.title}</h4>
-                      <p className="mt-2 text-sm leading-relaxed text-neutral-600">{service.text}</p>
-                    </article>
-                  </Reveal>
-                ))}
-              </div>
+                      {/* Стрелка стоит в строке заголовка, а не подписью внизу:
+                          восемь одинаковых «Подробнее об услуге» читались шумом,
+                          а карточка и так кликается целиком. Стрелка остаётся —
+                          без неё ничто не говорит, что здесь есть переход. */}
+                      <h4 className="flex min-w-0 flex-1 items-start gap-2 font-semibold text-neutral-950 sm:mt-5">
+                        <span className="min-w-0">{service.title}</span>
+                        <ArrowRight
+                          className="ml-auto mt-0.5 h-4 w-4 shrink-0 text-neutral-400 transition-all duration-200 group-hover/card:translate-x-0.5 group-hover/card:text-accent-600"
+                          aria-hidden="true"
+                        />
+                      </h4>
+                    </div>
+                    <p className="mt-2.5 text-sm leading-relaxed text-neutral-600 sm:mt-2">{service.text}</p>
+                  </a>
+                </Reveal>
+              ))}
             </div>
           </div>
         ))}
       </div>
-
-      <Reveal className="mt-12 border-t border-neutral-200 pt-8">
-        <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-neutral-600">
-          Смежные юридические задачи
-        </h3>
-        {/* Список слева, весы справа: раньше вырезанный объект стоял сиротой
-            под списком на серой плашке — читалось как незагрузившаяся картинка.
-            Без рамки он работает как гравюра, в паре с фоновой Фемидой. */}
-        <div className="mt-5 grid gap-8 lg:grid-cols-[minmax(0,8fr)_minmax(0,4fr)] lg:items-center">
-          <div className="grid gap-x-10 gap-y-4 sm:grid-cols-2">
-            {LEGAL.map((service) => (
-              <div key={service.title} className="flex items-start gap-3">
-                <service.icon className="mt-0.5 h-5 w-5 shrink-0 text-neutral-400" aria-hidden="true" />
-                <p className="text-sm text-neutral-700">
-                  <span className="font-medium text-neutral-950">{service.title}</span>{' '}
-                  <span className="text-neutral-600">— {service.text}</span>
-                </p>
-              </div>
-            ))}
-          </div>
-          <Figure
-            {...IMAGES.legal}
-            frame={false}
-            className="max-w-[170px] justify-self-center sm:max-w-[220px] lg:max-w-[260px]"
-          />
-        </div>
-      </Reveal>
     </Section>
   )
 }

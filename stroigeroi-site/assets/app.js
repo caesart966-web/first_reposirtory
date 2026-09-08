@@ -11,6 +11,27 @@
   var $$ = function (sel, root) {
     return Array.prototype.slice.call((root || document).querySelectorAll(sel));
   };
+  /* Строка от человека уходит в innerHTML, поэтому экранируем. В макете
+     подставить туда нечего, но привычка стоит дёшево, а в теме OpenCart
+     этот же код будет получать настоящие поисковые запросы. */
+  function escapeHtml(text) {
+    return String(text).replace(/[&<>"']/g, function (ch) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+    });
+  }
+
+  /* Подсвечиваем в названии раздела ту часть, которую человек набрал.
+     Ищем по нормализованной копии (нижний регистр, «ё» как «е»),
+     а вырезаем из оригинала — иначе подсветка съела бы заглавные буквы. */
+  function highlight(name, query) {
+    var flat = name.toLowerCase().replace(/\u0451/g, '\u0435');
+    var at = flat.indexOf(query);
+    if (at < 0) return escapeHtml(name);
+    return escapeHtml(name.slice(0, at)) +
+      '<mark>' + escapeHtml(name.slice(at, at + query.length)) + '</mark>' +
+      escapeHtml(name.slice(at + query.length));
+  }
+
   var store = {
     get: function (key, fallback) {
       try {
@@ -95,7 +116,8 @@
     var note = document.createElement('p');
     note.className = 'search-result__note';
     note.textContent =
-      'Поиск заработает вместе с прайсом: сейчас искать не по чему. Ниже — раздел «' +
+      'По разделам каталога поиск уже работает — подсказки появляются прямо в строке. ' +
+      'По товарам он заработает вместе с прайсом: сейчас искать не по чему. Ниже — раздел «' +
       (head.querySelector('h1') ? head.querySelector('h1').textContent : 'каталог') +
       '» целиком.';
 
@@ -225,9 +247,67 @@
   }
 
   if (searchInput && suggest) {
+    var suggestTitle = $('.search-suggest__title', suggest);
+    var suggestList = $('.search-suggest__list', suggest);
+    /* Разделы берём из меню каталога, а не переписываем сюда списком:
+       иначе он однажды разойдётся с настоящим меню, и поиск начнёт
+       предлагать разделы, которых на сайте уже нет. */
+    var sections = $$('.catalog-menu__link').map(function (link) {
+      return {
+        name: link.textContent.trim(),
+        href: link.getAttribute('href'),
+        path: link.getAttribute('data-oc-path') || '',
+        route: link.getAttribute('data-oc-route') || ''
+      };
+    });
+    var defaultList = suggestList ? suggestList.innerHTML : '';
+    var defaultTitle = suggestTitle ? suggestTitle.textContent : '';
+
+    /* Ищем по началу слова, а не по любому месту строки: «сад» должно
+       находить «Всё для сада», но не «Расходка». Регистр и «ё» не важны. */
+    var norm = function (s) { return s.toLowerCase().replace(/ё/g, 'е'); };
+    var matches = function (name, query) {
+      var words = norm(name).split(/[^a-zа-я0-9]+/);
+      return words.some(function (w) { return w.indexOf(query) === 0; });
+    };
+
+    var renderSuggest = function () {
+      if (!suggestList) return;
+      var query = norm(searchInput.value.trim());
+      if (!query) {
+        suggestList.innerHTML = defaultList;
+        if (suggestTitle) suggestTitle.textContent = defaultTitle;
+        return;
+      }
+      var found = sections.filter(function (s) { return matches(s.name, query); });
+      if (!found.length) {
+        if (suggestTitle) suggestTitle.textContent = 'Ничего не нашлось';
+        suggestList.innerHTML =
+          '<p class="search-suggest__empty">По запросу «' + escapeHtml(searchInput.value.trim()) +
+          '» раздела нет. Товары в макет ещё не загружены — позвоните ' +
+          '<a class="tel-inline" href="tel:+79638300999">8-963-830-09-99</a>, подскажем, есть ли в магазине.</p>';
+        return;
+      }
+      if (suggestTitle) {
+        suggestTitle.textContent = found.length === 1 ? 'Нашёлся раздел' : 'Разделы: ' + found.length;
+      }
+      suggestList.innerHTML = found.map(function (s) {
+        return '<a class="search-suggest__item" href="' + s.href + '?search=' +
+          encodeURIComponent(searchInput.value.trim()) + '"' +
+          (s.path ? ' data-oc-path="' + s.path + '"' : '') +
+          (s.route ? ' data-oc-route="' + s.route + '"' : '') +
+          '>' + highlight(s.name, query) + '</a>';
+      }).join('');
+    };
+
     searchInput.addEventListener('focus', function () {
       closeAllDropdowns();
       closeCatalog();
+      renderSuggest();
+      suggest.hidden = false;
+    });
+    searchInput.addEventListener('input', function () {
+      renderSuggest();
       suggest.hidden = false;
     });
     searchInput.addEventListener('click', function (e) { e.stopPropagation(); });
@@ -313,6 +393,114 @@
       var onC = btn.classList.toggle('is-on');
       bump('compare', onC ? 1 : -1);
       toast(onC ? 'Добавлено к сравнению' : 'Убрано из сравнения');
+    }
+  });
+
+  /* ======================================================================
+     Избранное и сравнение: показываем то, что человек отложил
+
+     Товары в макете безымянные — прайса нет, все карточки одинаковые.
+     Поэтому запоминается не «какой именно товар», а сколько их отложено,
+     и страница разворачивает столько же карточек из шаблона. Для показа
+     сценария этого достаточно: человек нажал три раза — видит три
+     карточки и может убрать любую. С настоящим прайсом сюда встанут
+     номера товаров, а разметка и поведение останутся теми же.
+     ====================================================================== */
+  var COMPARE_MAX = 4;
+
+  function renderFavourites() {
+    var list = $('[data-fav-list]');
+    if (!list) return;
+    var empty = $('[data-fav-empty]');
+    var summary = $('[data-fav-summary]');
+    var clear = $('[data-clear="fav"]');
+    var tpl = $('[data-card-template]');
+    var count = Math.max(0, counters.fav);
+
+    list.innerHTML = '';
+    for (var i = 0; i < count; i++) {
+      list.appendChild(tpl.content.cloneNode(true));
+    }
+    list.hidden = count === 0;
+    if (empty) empty.hidden = count > 0;
+    if (clear) clear.hidden = count === 0;
+    if (summary) {
+      summary.textContent = count
+        ? 'Отложено: ' + count + ' ' + plural(count, 'товар', 'товара', 'товаров')
+        : '';
+    }
+  }
+
+  function renderCompare() {
+    var head = $('[data-compare-head]');
+    if (!head) return;
+    var box = $('[data-compare-box]');
+    var empty = $('[data-compare-empty]');
+    var summary = $('[data-compare-summary]');
+    var clear = $('[data-clear="compare"]');
+    var more = $('[data-compare-more]');
+    var count = Math.min(COMPARE_MAX, Math.max(0, counters.compare));
+
+    /* Убираем прежние столбцы, оставляя первый — с названиями строк */
+    while (head.children.length > 1) head.removeChild(head.lastChild);
+    $$('[data-compare-body] tr').forEach(function (row) {
+      while (row.children.length > 1) row.removeChild(row.lastChild);
+    });
+
+    for (var i = 1; i <= count; i++) {
+      var th = document.createElement('th');
+      th.setAttribute('scope', 'col');
+      th.innerHTML = '<span class="ph ph--inline">товар ' + i + '</span>';
+      head.appendChild(th);
+
+      $$('[data-compare-body] tr').forEach(function (row) {
+        var td = document.createElement('td');
+        var label = row.getAttribute('data-row') === 'Остаток' ? 'из учётной системы'
+          : row.getAttribute('data-row') === 'Цена' ? 'цена, ₽' : 'из прайса';
+        td.innerHTML = '<span class="ph ph--inline">' + label + '</span>';
+        row.appendChild(td);
+      });
+    }
+
+    if (box) box.hidden = count === 0;
+    if (empty) empty.hidden = count > 0;
+    if (clear) clear.hidden = count === 0;
+    if (more) more.hidden = count === 0;
+    if (summary) {
+      summary.textContent = count
+        ? 'В сравнении: ' + count + ' из ' + COMPARE_MAX
+        : '';
+    }
+  }
+
+  function plural(n, one, few, many) {
+    var mod10 = n % 10, mod100 = n % 100;
+    if (mod10 === 1 && mod100 !== 11) return one;
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
+    return many;
+  }
+
+  renderFavourites();
+  renderCompare();
+
+  /* Убрать одну карточку и очистить список целиком */
+  document.addEventListener('click', function (e) {
+    var remove = e.target.closest ? e.target.closest('[data-remove]') : null;
+    if (remove) {
+      bump(remove.getAttribute('data-remove'), -1);
+      renderFavourites();
+      toast('Убрано из избранного');
+      return;
+    }
+    var clear = e.target.closest ? e.target.closest('[data-clear]') : null;
+    if (clear) {
+      var what = clear.getAttribute('data-clear');
+      /* Через bump, а не записью в хранилище напрямую: счётчик живёт
+         ещё и в памяти страницы, и прямая запись их рассинхронизирует. */
+      bump(what, -counters[what]);
+      renderFavourites();
+      renderCompare();
+      toast(what === 'fav' ? 'Избранное очищено' : 'Сравнение очищено');
     }
   });
 
@@ -485,16 +673,49 @@
   }
 
   /* ======================================================================
+     Печать списка покупок
+     Ходовой сценарий для стройматериалов: собрал корзину, распечатал,
+     поехал в магазин. Печатает браузер, ничего никуда не отправляется.
+     ====================================================================== */
+  $$('[data-print-cart]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      /* Дату ставим в момент печати, а не в разметку: лист без даты
+         через неделю невозможно отличить от вчерашнего. */
+      var stamp = $('[data-print-date]');
+      if (stamp) {
+        stamp.textContent = new Date().toLocaleDateString('ru-RU', {
+          day: 'numeric', month: 'long', year: 'numeric'
+        });
+      }
+      window.print();
+    });
+  });
+
+  /* ======================================================================
      Плашка про cookie
      ====================================================================== */
   var cookie = $('[data-cookie]');
   if (cookie) {
-    if (!store.get('cookie-ok', false)) cookie.hidden = false;
+    /* Пока плашка висит, странице добавляется отступ снизу ровно на её
+       высоту. Иначе она закрывает то, что оказалось внизу экрана:
+       на главной — заголовок и кнопки, в каталоге — первый ряд товаров.
+       Отступ снимается вместе с плашкой, следов не остаётся. */
+    var fitCookie = function () {
+      document.body.style.setProperty('--cookie-h', cookie.offsetHeight + 'px');
+    };
+    if (!store.get('cookie-ok', false)) {
+      cookie.hidden = false;
+      document.body.classList.add('has-cookie');
+      fitCookie();
+      window.addEventListener('resize', fitCookie);
+    }
     var okBtn = $('[data-cookie-ok]', cookie);
     if (okBtn) {
       okBtn.addEventListener('click', function () {
         store.set('cookie-ok', true);
         cookie.hidden = true;
+        document.body.classList.remove('has-cookie');
+        window.removeEventListener('resize', fitCookie);
       });
     }
   }
@@ -535,6 +756,16 @@
         return;
       }
 
+      /* Форма оформления ведёт на следующий шаг сценария. Без этого
+         страница «Заказ принят» существовала, но кликом до неё было
+         не дойти: форма молча сбрасывалась и показывала уведомление —
+         тупик ровно там, где заказчик смотрит путь до конца. */
+      var next = form.getAttribute('data-success-url');
+      if (next) {
+        window.location.href = next;
+        return;
+      }
+
       var success = $('.form__success', form);
       if (success) success.classList.add('is-shown');
       form.reset();
@@ -551,6 +782,17 @@
   var calc = $('[data-calc]');
   if (calc) {
     var mode = 'gkl';
+
+    /* По-русски дробная часть отделяется запятой, а тысячи — пробелом.
+       Запятую на входе num() понимал и раньше, а на выходе везде печаталась
+       точка: «20.0 м²», «3.00 м²». Для покупателя на Камчатке это выглядит
+       как чужой формат, а в смете с такими числами легко ошибиться. */
+    var ru = function (value, digits) {
+      return Number(value).toLocaleString('ru-RU', {
+        minimumFractionDigits: digits || 0,
+        maximumFractionDigits: digits === undefined ? 2 : digits
+      });
+    };
 
     var num = function (sel) {
       var el = $(sel, calc);
@@ -574,7 +816,7 @@
       var out = $('[data-calc-answer]', calc);
       var list = $('[data-calc-rows]', calc);
       var note = $('[data-calc-note]', calc);
-      if (out) out.textContent = answer === null ? '—' : answer + ' ' + unit;
+      if (out) out.textContent = answer === null ? '—' : ru(answer) + ' ' + unit;
       if (list) {
         list.innerHTML = rows.map(function (r) {
           return '<li><span>' + r[0] + '</span><b>' + r[1] + '</b></li>';
@@ -598,9 +840,9 @@
         var need = area * (layers || 1) * (1 + reserve / 100);
         var sheets = Math.ceil(need / sheet);
         render(sheets, sheets === 1 ? 'лист' : (sheets < 5 ? 'листа' : 'листов'), [
-          ['Площадь обшивки', (area * (layers || 1)).toFixed(1) + ' м²'],
-          ['Запас', reserve + ' %'],
-          ['Площадь одного листа', sheet.toFixed(2) + ' м²']
+          ['Площадь обшивки', ru(area * (layers || 1), 1) + ' м²'],
+          ['Запас', ru(reserve) + ' %'],
+          ['Площадь одного листа', ru(sheet, 2) + ' м²']
         ], 'Оценка по площади. Проёмы, подрезка и раскладка листов могут изменить число — уточните в магазине.');
         return;
       }
@@ -617,17 +859,17 @@
       }
       if (isNaN(usage) || usage <= 0 || isNaN(bag) || bag <= 0) {
         render(null, '', [
-          ['Площадь', sArea + ' м²'],
-          ['Слой', thick + ' мм']
+          ['Площадь', ru(sArea) + ' м²'],
+          ['Слой', ru(thick) + ' мм']
         ], 'Осталось вписать расход и вес мешка — оба числа указаны на упаковке смеси. Свои цифры мы не придумываем: у разных смесей расход отличается в разы.');
         return;
       }
       var kg = sArea * thick * usage * (1 + reserve / 100);
       var bags = Math.ceil(kg / bag);
       render(bags, bags === 1 ? 'мешок' : (bags < 5 ? 'мешка' : 'мешков'), [
-        ['Нужно смеси', Math.round(kg) + ' кг'],
-        ['Запас', reserve + ' %'],
-        ['Вес мешка', bag + ' кг']
+        ['Нужно смеси', ru(Math.round(kg)) + ' кг'],
+        ['Запас', ru(reserve) + ' %'],
+        ['Вес мешка', ru(bag) + ' кг']
       ], 'Расход взят из вашей строки — сверьтесь с упаковкой конкретной смеси.');
     };
 

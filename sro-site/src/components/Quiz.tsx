@@ -9,18 +9,54 @@ import {
   RotateCcw,
 } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { CONFIGURED, CONTACTS, LINKS, externalLinkProps } from '../content/contacts'
+import { CONFIGURED, CONTACTS, LINKS } from '../content/contacts'
 import { buildLeadMessage, sendLead } from '../lib/lead'
 import { TelegramIcon, WhatsAppIcon } from './icons'
-import { CitySkyline } from './illustrations'
 import { useLegalDocs } from './LegalDocs'
+import { plural } from '../lib/plural'
 import { QUESTIONS, TOTAL_STEPS, useQuiz } from './QuizContext'
 import { Button, ButtonLink } from './ui/Button'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
 
+// Фон секции заявки — кадр заказчика (quiz-bg.*): каска с надписью «СРО»,
+// корешки «Градостроительный кодекс РФ», «Законодательство о СРО»,
+// «Строительные нормы и правила», чертежи и стройка с краном на горизонте.
+// До него здесь стояли кадр стола (ушёл на первый экран: одна сцена
+// открывала и закрывала страницу) и архивная синька (заказчик отклонил).
+//
+// Кадр выбран не по описанию, а по рендеру настоящей секции: предметы
+// расставлены по краям — каска слева внизу, книги справа, чертежи по низу, —
+// а центр пуст, и белая карточка квиза ложится на него, ничего не перекрывая.
+// Плотность взята обычная (гамма 1.6, средняя яркость 113), а не тёмная: на
+// ней «СРО» на каске и названия кодексов ещё читаются, а ради них кадр и
+// брался.
+//
+// Кадр обязан идти с плёнкой: opacity-50 плюс bg-accent-950/65. Обе величины
+// меряются вместе и по КАЖДОЙ надписи, а не только по белому заголовку —
+// самой слабой оказывается светло-синяя «ЗАЯВКА». См. README «Фон секции
+// заявки».
+const QUIZ_BG = './img/quiz-bg.webp'
+const QUIZ_BG_AVIF = './img/quiz-bg.avif'
+
 const inputClasses =
   'mt-1.5 w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-neutral-900 placeholder:text-neutral-500 focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/30'
+
+// Куда идти после ответа: к первому вопросу НИЖЕ текущего, на который ещё
+// не отвечали, а если таких нет — на экран контактов.
+//
+// Просто «шаг + 1» здесь не годится. Часть ответов приходит с самой страницы:
+// вид СРО выбирают карточкой в секции «Виды СРО», сценарий — строкой в
+// «Типовых ситуациях». Со сдвигом на единицу квиз показывал такой вопрос
+// второй раз, уже с подсвеченным ответом, — то есть заставлял отвечать на то,
+// на что человек только что ответил кликом по фотографии.
+//
+// Назад (goBack) при этом ходит ровно на шаг: там посетитель правит ответ
+// осознанно, и перепрыгивать через вопросы нельзя.
+function nextStep(from: number, answers: Record<string, string>): number {
+  const index = QUESTIONS.findIndex((q, i) => i > from && !answers[q.id])
+  return index === -1 ? Math.min(QUESTIONS.length, TOTAL_STEPS - 1) : index
+}
 
 // Маска телефона без библиотек (T15): из любого ввода — «+7 900 000-00-00».
 // Ведущие 7/8 считаем кодом страны и съедаем; всё, кроме цифр, отбрасываем.
@@ -71,13 +107,14 @@ export function Quiz() {
 
   function pickOption(questionId: string, option: string) {
     if (advanceTimer.current !== null) return
-    setAnswers((prev) => ({ ...prev, [questionId]: option }))
+    const next = { ...answers, [questionId]: option }
+    setAnswers(next)
     // 400 мс вместо 280 (T16): выбранный вариант успевает подсветиться,
     // и уход на следующий вопрос не ощущается рывком.
     advanceTimer.current = window.setTimeout(() => {
       advanceTimer.current = null
       focusPending.current = true
-      setStep((prev) => Math.min(prev + 1, TOTAL_STEPS - 1))
+      setStep(nextStep(step, next))
     }, 400)
   }
 
@@ -155,13 +192,38 @@ export function Quiz() {
     // Тёмная закрывающая секция: квиз поглотил отдельный финальный призыв,
     // чтобы на странице не было двух блоков «оставьте заявку» подряд.
     <Section id="quiz" size="key" className="relative overflow-hidden bg-accent-950">
-      <CitySkyline className="pointer-events-none absolute inset-x-0 bottom-0 h-20 w-full text-white/[0.09] sm:h-28" />
+      {/* Фон виден отчётливо, а не намёком. На 13% фотография перестаёт быть
+          изображением: она держится на полутонах, а их такая прозрачность
+          съедает первыми — проверено на странице.
+
+          Маска гасит края: без неё сцена обрывается ровной линией по кромке
+          секции и читается вставкой, а не фоном. */}
+      <picture>
+        <source srcSet={QUIZ_BG_AVIF} type="image/avif" />
+        <img
+          src={QUIZ_BG}
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+          decoding="async"
+          className="pointer-events-none absolute inset-0 h-full w-full select-none object-cover opacity-50 [mask-image:radial-gradient(125%_100%_at_50%_50%,#000_0%,#000_55%,transparent_100%)] [-webkit-mask-image:radial-gradient(125%_100%_at_50%_50%,#000_0%,#000_55%,transparent_100%)]"
+        />
+      </picture>
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-accent-950/65"
+      />
       <div className="relative">
         <SectionHeading
           dark
           eyebrow="Заявка"
           title="Расскажите, какая задача стоит перед вашей компанией"
-          subtitle="4 вопроса меньше чем за минуту — отвечу лично и предложу план действий."
+          subtitle={`${QUESTIONS.length} ${plural(
+            QUESTIONS.length,
+            'вопрос',
+            'вопроса',
+            'вопросов',
+          )} — меньше чем за минуту. Отвечу лично, консультация бесплатная.`}
         />
       </div>
       <Reveal className="relative mt-10">
@@ -201,7 +263,7 @@ export function Quiz() {
                 <ButtonLink
                   href={whatsappSendHref}
                   variant="secondary"
-                  {...externalLinkProps(CONFIGURED.whatsapp)}
+                  data-channel="WhatsApp"
                 >
                   <WhatsAppIcon className="h-4 w-4" />
                   WhatsApp
@@ -209,7 +271,7 @@ export function Quiz() {
                 <ButtonLink
                   href={telegramSendHref}
                   variant="secondary"
-                  {...externalLinkProps(CONFIGURED.telegram)}
+                  data-channel="Telegram"
                 >
                   <TelegramIcon className="h-4 w-4" />
                   Telegram
@@ -251,7 +313,7 @@ export function Quiz() {
                 <ButtonLink
                   href={whatsappSendHref}
                   variant="secondary"
-                  {...externalLinkProps(CONFIGURED.whatsapp)}
+                  data-channel="WhatsApp"
                 >
                   <WhatsAppIcon className="h-4 w-4" />
                   WhatsApp
@@ -259,7 +321,7 @@ export function Quiz() {
                 <ButtonLink
                   href={telegramSendHref}
                   variant="secondary"
-                  {...externalLinkProps(CONFIGURED.telegram)}
+                  data-channel="Telegram"
                 >
                   <TelegramIcon className="h-4 w-4" />
                   Telegram

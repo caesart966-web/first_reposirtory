@@ -1,3 +1,5 @@
+import { asset } from '../../lib/site'
+
 // Фирменный водяной знак: архивная гравюра «Themis» позади всего контента.
 // Зафиксирован во вьюпорте, контент проезжает поверх. Вне потока, не ловит
 // клики, скрыт от скринридеров.
@@ -25,7 +27,7 @@ export function ThemisBackdrop() {
       aria-hidden="true"
     >
       <img
-        src="./img/themis.webp"
+        src={asset('./img/themis.webp')}
         alt=""
         width={938}
         height={1600}

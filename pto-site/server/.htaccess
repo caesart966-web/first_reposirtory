@@ -1,0 +1,79 @@
+# Настройки для обычного хостинга (Apache, LiteSpeed — это почти все
+# российские хостинги). Файл кладётся в корень сайта рядом с index.html.
+# На GitHub Pages он не действует, но и не мешает.
+#
+# Всё, что здесь есть, влияет на скорость и безопасность, но не на вёрстку.
+# Если хостинг ругается на какую-то строку — закомментируйте её решёткой,
+# сайт продолжит работать.
+
+# ---------- Кодировка ------------------------------------------------------
+AddDefaultCharset UTF-8
+
+# ---------- Страница ошибки ------------------------------------------------
+ErrorDocument 404 /404.html
+
+# ---------- Переход на https и без www --------------------------------------
+# Включайте ПОСЛЕ того, как на домене заработает сертификат, иначе сайт
+# станет недоступен.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  # RewriteCond %{HTTPS} !=on
+  # RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+  # RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+  # RewriteRule ^(.*)$ https://%1/$1 [R=301,L]
+</IfModule>
+
+# ---------- Сжатие ----------------------------------------------------------
+# Текстовые файлы уезжают к посетителю в 3-4 раза меньше. Картинки и видео
+# уже сжаты, их трогать не нужно.
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml
+  AddOutputFilterByType DEFLATE application/javascript application/json
+  AddOutputFilterByType DEFLATE application/xml image/svg+xml
+</IfModule>
+
+# ---------- Кеширование -----------------------------------------------------
+# Картинки, шрифты и видео не меняются — их можно хранить у посетителя год.
+# Стили и скрипты меняются при правках сайта, поэтому неделя.
+# Сами страницы не кешируются: правка текста должна быть видна сразу.
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/webp                    "access plus 1 year"
+  ExpiresByType image/avif                    "access plus 1 year"
+  ExpiresByType image/jpeg                    "access plus 1 year"
+  ExpiresByType image/png                     "access plus 1 year"
+  ExpiresByType image/svg+xml                 "access plus 1 year"
+  ExpiresByType image/x-icon                  "access plus 1 year"
+  ExpiresByType font/woff2                    "access plus 1 year"
+  ExpiresByType video/mp4                     "access plus 1 year"
+  ExpiresByType video/webm                    "access plus 1 year"
+  ExpiresByType text/css                      "access plus 7 days"
+  ExpiresByType application/javascript        "access plus 7 days"
+  ExpiresByType text/html                     "access plus 0 seconds"
+</IfModule>
+
+<IfModule mod_headers.c>
+  <FilesMatch "\.(webp|avif|jpg|jpeg|png|svg|ico|woff2|mp4|webm)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+
+  # ---------- Безопасность --------------------------------------------------
+  # Браузер не угадывает тип файла, сайт нельзя встроить в чужую страницу
+  # рамкой, адрес страницы не утекает на чужие сайты целиком.
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(), interest-cohort=()"
+
+  # Откуда странице разрешено что-либо грузить. Всё своё, плюс адрес приёма
+  # заявок. Если поменяете обработчик формы — впишите его домен в connect-src,
+  # иначе браузер заблокирует отправку.
+  Header always set Content-Security-Policy "default-src 'self'; img-src 'self' data:; media-src 'self'; font-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://api.telegram.org https://*.workers.dev; form-action 'self'; frame-ancestors 'self'; base-uri 'self'"
+</IfModule>
+
+# ---------- Мелочи ----------------------------------------------------------
+# Не показывать список файлов, если в папке нет index.html
+Options -Indexes

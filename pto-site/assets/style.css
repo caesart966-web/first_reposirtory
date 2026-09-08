@@ -47,6 +47,26 @@
   src: url("fonts/inter-latin.woff2") format("woff2");
   unicode-range: U+0000-00FF, U+2013-2014, U+2018-201D, U+2026, U+2212;
 }
+/* Geologica — шрифт заголовков. Узкая техническая гротеска с острой гранью:
+   длинные русские заголовки помещаются в строку, и вид у них инженерный,
+   а не «как у всех». Ось «острота» зафиксирована на максимуме, лишние оси
+   и символы вырезаны — вместо 80 КБ файл весит 14. Лицензия SIL OFL. */
+@font-face {
+  font-family: "DisplayVar";
+  font-style: normal;
+  font-weight: 500 800;
+  font-display: swap;
+  src: url("fonts/geologica-cyrillic.woff2") format("woff2");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: "DisplayVar";
+  font-style: normal;
+  font-weight: 500 800;
+  font-display: swap;
+  src: url("fonts/geologica-latin.woff2") format("woff2");
+  unicode-range: U+0020-007E, U+00A0, U+2013-2014, U+2018-201D, U+2026, U+2212;
+}
 @font-face {
   font-family: "MonoVar";
   font-style: normal;
@@ -90,7 +110,9 @@
 
   --ink:         #0d1c30;   /* основной текст */
   --ink-muted:   #55677e;   /* вторичный текст */
-  --ink-soft:    #7286a0;
+  /* Тускло-серый для мелких подписей. Раньше был #7286a0 — на белом это
+     3,7:1, ниже нормы читаемости для текста в 11px. Затемнён до 5,1:1. */
+  --ink-soft:    #5f7288;
   --ink-inverse: #ffffff;
   --ink-inverse-muted: #b9c7d9;
 
@@ -102,6 +124,10 @@
           "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
   --font-mono: "MonoVar", ui-monospace, "SF Mono", "Cascadia Mono",
                "Roboto Mono", "Consolas", monospace;
+  /* Заголовки — отдельным шрифтом. Если он не загрузился, подставится
+     основной: вёрстка от этого не разъезжается, только вид спокойнее. */
+  --font-display: "DisplayVar", "InterVar", "Inter", -apple-system,
+                  BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
 
   --fs-base: 1.0625rem;   /* 17px — основной текст, не мельче 16px */
   --lh-base: 1.65;
@@ -188,10 +214,26 @@ h1, h2, h3, h4 {
   color: var(--navy);
   text-wrap: balance;
 }
-h1 { font-size: clamp(2rem, 1.3rem + 2.7vw, 3.4rem); letter-spacing: -0.032em; }
-h2 { font-size: clamp(1.6rem, 1.2rem + 1.7vw, 2.4rem); letter-spacing: -0.026em; }
+/* Крупные заголовки — техническим шрифтом. Мелкие (h3, h4) остаются
+   основным: на 17px характерная гротеска мешает читать, а не помогает. */
+h1, h2 {
+  font-family: var(--font-display);
+  font-weight: 750;
+}
+h1 { font-size: clamp(1.95rem, 1.25rem + 2.6vw, 3.2rem); letter-spacing: -0.028em; line-height: 1.08; }
+h2 { font-size: clamp(1.6rem, 1.2rem + 1.8vw, 2.5rem); letter-spacing: -0.022em; line-height: 1.1; }
 h3 { font-size: clamp(1.15rem, 1.03rem + 0.5vw, 1.4rem); letter-spacing: -0.015em; }
 h4 { font-size: 1.0625rem; }
+
+/* Переносы: браузер сам не оставляет одно слово на последней строке.
+   Мелочь, но заголовки и абзацы выглядят аккуратнее. */
+p, li { text-wrap: pretty; }
+
+/* Длинные слова («ЭЛЕКТРОСТРОЙИНЖИНИРИНГ», «документации») переносятся,
+   а не вылезают за край блока. Особенно заметно на телефонах с увеличенным
+   системным шрифтом: там колонки узкие, а слова те же. break-word рвёт слово
+   только когда оно иначе не помещается — обычный текст не трогает. */
+body { overflow-wrap: break-word; }
 
 p { margin: 0 0 var(--s-4); }
 p:last-child { margin-bottom: 0; }
@@ -247,22 +289,68 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   color: var(--ink-inverse);
   overflow: hidden;
 }
+/* Два слоя разметки, как на миллиметровке: частая мелкая клетка и поверх
+   неё крупная. Раньше была одна еле заметная сетка, и тёмные блоки читались
+   просто как заливка. */
 .section--dark::before {
   content: "";
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.032) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.032) 1px, transparent 1px);
-  background-size: var(--grid-size) var(--grid-size);
-  mask-image: radial-gradient(120% 90% at 50% 0%, #000 30%, transparent 100%);
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
+  background-size:
+    var(--grid-size) var(--grid-size),
+    var(--grid-size) var(--grid-size),
+    calc(var(--grid-size) / 4) calc(var(--grid-size) / 4),
+    calc(var(--grid-size) / 4) calc(var(--grid-size) / 4);
+  mask-image: radial-gradient(120% 90% at 50% 0%, #000 25%, transparent 100%);
   pointer-events: none;
 }
+/* Холодное свечение из-под содержимого: даёт глубину без единого нового цвета */
+.section--dark::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -20%;
+  width: 120%;
+  height: 90%;
+  transform: translateX(-50%);
+  background: radial-gradient(closest-side, rgba(31, 111, 235, 0.16), transparent 70%);
+  pointer-events: none;
+}
+.section--dark > .container { position: relative; z-index: 1; }
 .section--dark h2,
 .section--dark h3 { color: var(--ink-inverse); }
 .section--dark p { color: var(--ink-inverse-muted); }
 
-.section__head { max-width: 48rem; margin-bottom: var(--s-7); }
+/* Над каждым заголовком — та же мерная шкала с засечками, что и под цифрами
+   первого экрана. Одна деталь, повторённая по всему сайту, и страница
+   читается как лист с разметкой, а не как набор блоков. */
+.section__head {
+  position: relative;
+  max-width: 48rem;
+  margin-bottom: var(--s-7);
+  padding-top: var(--s-5);
+}
+.section__head::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  max-width: 22rem;
+  height: 6px;
+  background-image: repeating-linear-gradient(90deg,
+    var(--line-strong) 0 1px, transparent 1px 14px);
+  mask-image: linear-gradient(90deg, #000 0%, #000 55%, transparent 100%);
+}
+.section--dark .section__head::before {
+  background-image: repeating-linear-gradient(90deg,
+    rgba(255, 255, 255, 0.3) 0 1px, transparent 1px 14px);
+}
 .section__head p { color: var(--ink-muted); font-size: 1.0625rem; }
 .section--dark .section__head p { color: var(--ink-inverse-muted); }
 
@@ -319,6 +407,25 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
               color var(--t-fast), box-shadow var(--t-fast), transform var(--t-fast);
 }
 .btn:active { transform: translateY(1px); }
+
+/* Блик по главной кнопке: свет проходит слева направо один раз за наведение.
+   Ничего не двигает и не мешает нажать — только даёт отклик. */
+.btn--primary { position: relative; overflow: hidden; isolation: isolate; }
+.btn--primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(105deg, transparent 35%,
+              rgba(255, 255, 255, 0.28) 50%, transparent 65%);
+  transform: translateX(-120%);
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .btn--primary:hover::after { animation: sheen 620ms var(--ease); }
+}
+@keyframes sheen {
+  to { transform: translateX(120%); }
+}
 
 .btn--primary {
   background: var(--accent);
@@ -419,7 +526,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 /* На ноутбуках (примерно 1000–1300px) в строку шапки перестаёт помещаться
    всё сразу, и кнопка вылезает за правый край. Подпись под названием —
    украшение, её и убираем, остальное поджимаем. */
-@media (min-width: 981px) and (max-width: 1320px) {
+@media (min-width: 61.3125em) and (max-width: 82.4375em) {
   .header .logo__sub { display: none; }
   .header__inner { gap: var(--s-4); }
   .header .nav__link { padding: 0 var(--s-2); }
@@ -522,6 +629,16 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   display: flex;
   align-items: center;
 }
+/* Кадр первого экрана чуть отъезжает при загрузке — движение на полторы
+   секунды, которое задаёт «включение прибора». Один раз, без повторов. */
+@media (prefers-reduced-motion: no-preference) {
+  .hero__media, .hero__video { animation: heroIn 1600ms var(--ease) both; }
+}
+@keyframes heroIn {
+  from { transform: scale(1.06); opacity: 0.4; }
+  to   { transform: none; opacity: 1; }
+}
+
 .hero__media {
   position: absolute;
   inset: 0;
@@ -563,7 +680,51 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   pointer-events: none;
 }
 
-.hero__inner { padding: var(--s-9) 0; max-width: 48rem; }
+/* Рамка чертёжного листа: угловые засечки по краям первого экрана.
+   Приём из альбома чертежей — он и задаёт «инженерность», ради которой
+   не нужно ни одной картинки. Рисуется двумя углами на всю ширину. */
+.hero__frame {
+  position: absolute;
+  left: var(--s-5);
+  right: var(--s-5);
+  top: var(--s-5);
+  bottom: var(--s-5);
+  pointer-events: none;
+  z-index: 0;
+}
+.hero__frame::before,
+.hero__frame::after {
+  content: "";
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+}
+.hero__frame::before { left: 0; top: 0; border-right: 0; border-bottom: 0; }
+.hero__frame::after { right: 0; bottom: 0; border-left: 0; border-top: 0; }
+/* Медленный световой проход по первому экрану — как строка развёртки
+   прибора. Идёт 9 секунд, почти незаметен и полностью выключается
+   системной настройкой «уменьшить движение». */
+@media (prefers-reduced-motion: no-preference) {
+  .hero__scan {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: linear-gradient(180deg, transparent 0%,
+                rgba(127, 176, 255, 0.055) 48%, rgba(127, 176, 255, 0.1) 50%,
+                rgba(127, 176, 255, 0.055) 52%, transparent 100%);
+    background-size: 100% 220px;
+    background-repeat: no-repeat;
+    animation: scan 9s linear infinite;
+  }
+}
+@keyframes scan {
+  from { background-position: 0 -220px; }
+  to   { background-position: 0 calc(100% + 220px); }
+}
+
+.hero__inner { position: relative; z-index: 1; padding: var(--s-9) 0; max-width: 53rem; }
 .hero h1 { color: #fff; margin-bottom: var(--s-5); }
 .hero__lead {
   font-size: clamp(1.0625rem, 1rem + 0.35vw, 1.25rem);
@@ -608,7 +769,21 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 
 /* Спецификационная полоса под первым экраном: ключевые цифры так,
    как их подают в технической документации — значение и подпись капсом. */
+/* Над строкой цифр — мерная шкала с засечками, как на линейке.
+   Делается фоном, без единого лишнего тега. */
+.hero__spec::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -1px;
+  height: 7px;
+  background-image: repeating-linear-gradient(90deg,
+    rgba(255, 255, 255, 0.34) 0 1px, transparent 1px 16px);
+  mask-image: linear-gradient(90deg, #000 0%, #000 62%, transparent 100%);
+}
 .hero__spec {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--s-5);
@@ -617,6 +792,13 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   border-top: 1px solid rgba(255, 255, 255, 0.16);
   max-width: 46rem;
 }
+/* На узких экранах три колонки цифр становятся такими тесными, что подписи
+   не помещаются. Раскладываем их по одной в строку — читаются полностью. */
+@media (max-width: 34.9375em) {
+  .hero__spec { grid-template-columns: minmax(0, 1fr); gap: var(--s-4); }
+  .hero__spec-label { max-width: 26rem; }
+}
+
 .hero__spec-item { position: relative; padding-left: var(--s-4); }
 .hero__spec-item::before {
   content: "";
@@ -670,11 +852,44 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 
 /* Видео играет и на телефонах — решение заказчика. Файл лёгкий (~1,3 МБ),
    а при включённой экономии трафика и отключённых анимациях остаётся кадр. */
-@media (max-width: 980px) {
+@media (max-width: 61.1875em) {
   .hero { min-height: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   .hero__video { display: none; }
+}
+
+/* ---------- 6б. Подсветка за курсором -----------------------------------
+   Карточка чуть светится там, где сейчас указатель. Приём даёт ощущение
+   «живой панели приборов» и стоит дёшево: координаты подставляет скрипт
+   в две переменные, всё остальное делает CSS. На тач-экранах не включается
+   вовсе — там нет наведения. */
+@property --spot {
+  syntax: "<number>";
+  initial-value: 0;
+  inherits: false;
+}
+.service-item,
+.section--dark .card,
+.object {
+  --mx: 50%;
+  --my: 0%;
+  --spot: 0;
+}
+@media (hover: hover) and (pointer: fine) {
+  .service-item,
+  .section--dark .card {
+    background-image: radial-gradient(220px circle at var(--mx) var(--my),
+      rgba(31, 111, 235, calc(var(--spot) * 0.13)), transparent 72%);
+    transition: border-color var(--t-mid), box-shadow var(--t-mid),
+                transform var(--t-mid), --spot 300ms var(--ease);
+  }
+  .section--dark .card {
+    background-image: radial-gradient(220px circle at var(--mx) var(--my),
+      rgba(127, 176, 255, calc(var(--spot) * 0.2)), transparent 72%);
+  }
+  .service-item:hover,
+  .section--dark .card:hover { --spot: 1; }
 }
 
 /* ---------- 7. Карточки, цифры, списки ---------------------------------- */
@@ -777,7 +992,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   color: #e7eef6;
   background: linear-gradient(180deg, rgba(7,17,30,0) 0%, rgba(7,17,30,0.75) 100%);
 }
-@media (max-width: 720px) {
+@media (max-width: 44.9375em) {
   .media-band { aspect-ratio: 4 / 3; }
   .media-band__caption { font-size: 0.6875rem; padding: var(--s-6) var(--s-4) var(--s-3); }
 }
@@ -817,24 +1032,22 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 .object__media {
   position: relative;
   aspect-ratio: 16 / 10;
-  background: var(--panel) center / cover no-repeat;
+  background: var(--panel);
   border-bottom: 1px solid var(--line);
   overflow: hidden;
 }
-/* Приближение фотографии при наведении. Двигается не сама плитка, а её копия
-   внутри (background-image: inherit) — иначе вместе с картинкой уезжала бы
-   и нижняя граница карточки. */
-.object__media::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: inherit;
-  background-position: center;
-  background-size: cover;
-  background-repeat: no-repeat;
+/* Фотография вставлена тегом img, а не фоном: так браузер грузит её
+   отложенно, выбирает копию под размер экрана и показывает в поиске
+   по картинкам. Приближение при наведении двигает саму картинку —
+   рамка карточки остаётся на месте, потому что плитка её обрезает. */
+.object__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   transition: transform 620ms var(--ease);
 }
-.object:hover .object__media::before { transform: scale(1.06); }
+.object:hover .object__img { transform: scale(1.06); }
 /* Несколько фотографий: плитка становится кнопкой, открывающей галерею */
 .object__media--more {
   appearance: none;
@@ -917,15 +1130,92 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 .object .spec { margin-top: auto; padding-top: var(--s-4); }
 .object .spec__val { font-size: 0.8125rem; }
 
-@media (max-width: 1020px) {
+/* Широкая карточка: фотография слева, текст справа. Ею открывается список
+   объектов — страница перестаёт быть ровной сеткой одинаковых плиток. */
+.object--wide {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  align-items: stretch;
+}
+.object--wide .object__media {
+  aspect-ratio: auto;
+  height: 100%;
+  min-height: 320px;
+  border-bottom: 0;
+  border-right: 1px solid var(--line);
+}
+.object--wide .object__body { padding: var(--s-7); justify-content: center; }
+.object--wide .object__name { font-size: clamp(1.3rem, 1.1rem + 0.8vw, 1.75rem); }
+.object--wide .object__scope { font-size: 1.0625rem; max-width: 34rem; }
+.object--wide .spec { margin-top: var(--s-5); }
+
+@media (max-width: 48.6875em) {
+  .object--wide { grid-template-columns: minmax(0, 1fr); }
+  .object--wide .object__media {
+    aspect-ratio: 16 / 10;
+    min-height: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .object--wide .object__body { padding: var(--s-5); }
+}
+
+@media (max-width: 63.6875em) {
   .object-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-@media (max-width: 720px) {
+@media (max-width: 44.9375em) {
   .object-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* Рекомендательные письма */
 .rec { gap: 0; }
+/* Карточка с документом: слева превьюшка самого письма, справа текст.
+   Человек видит печать и подпись, ещё не открыв документ, — это убеждает
+   сильнее любой кнопки. Превьюшка кликабельна, как и ссылка под текстом. */
+.rec--doc {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  gap: var(--s-5);
+  align-items: start;
+}
+.rec__thumb {
+  appearance: none;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  overflow: hidden;
+  display: block;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--t-mid), box-shadow var(--t-mid), border-color var(--t-mid);
+}
+.rec__thumb-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1400 / 1980;
+  object-fit: cover;
+  object-position: center top;
+}
+.rec__thumb:hover {
+  transform: translateY(-2px) rotate(-0.6deg);
+  box-shadow: var(--shadow-md);
+  border-color: var(--accent);
+}
+.rec__body { min-width: 0; }
+
+@media (max-width: 44.9375em) {
+  .rec--doc { grid-template-columns: 96px minmax(0, 1fr); gap: var(--s-4); }
+}
+/* Совсем узкий экран (или крупный шрифт в браузере): превьюшка встаёт над
+   текстом. В две колонки текстовому столбцу остаётся меньше 200 точек,
+   и ссылка «Посмотреть письмо» перестаёт помещаться. */
+@media (max-width: 26em) {
+  .rec--doc { grid-template-columns: minmax(0, 1fr); }
+  .rec__thumb { width: 108px; }
+}
 .rec__head { margin-bottom: var(--s-4); }
 .rec__head h3 { margin-bottom: var(--s-2); }
 .rec__meta {
@@ -1059,7 +1349,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 }
 .lightbox__img { display: block; width: 100%; height: auto; }
 
-@media (max-width: 720px) {
+@media (max-width: 44.9375em) {
   .lightbox { padding: var(--s-3); }
   .lightbox__caption { display: none; }
   .lightbox__bar { justify-content: flex-end; }
@@ -1088,7 +1378,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 .lightbox__nav svg { width: 18px; height: 18px; }
 .lightbox__inner { position: relative; }
 
-@media (max-width: 1080px) {
+@media (max-width: 67.4375em) {
   .lightbox__nav--prev { left: 6px; }
   .lightbox__nav--next { right: 6px; }
 }
@@ -1163,8 +1453,12 @@ body.is-locked { overflow: hidden; }
   padding-right: 4.5rem;
   border-top: 1px solid var(--line);
 }
-/* Крупный «водяной» номер группы справа — как нумерация раздела в альбоме чертежей */
-.group__index {
+/* Крупный «водяной» номер группы — как нумерация раздела в альбоме чертежей.
+   Рисуется оформлением, а не текстом: он дублирует соседнюю подпись
+   «ГРУППА 01 / 04», читать его дважды незачем, а инструменты проверки
+   доступности справедливо ругались на контраст бледной цифры. */
+.group__head::after {
+  content: attr(data-index);
   position: absolute;
   right: 0;
   top: var(--s-3);
@@ -1178,13 +1472,15 @@ body.is-locked { overflow: hidden; }
   pointer-events: none;
   user-select: none;
 }
-.section--dark .group__index { color: #fff; opacity: 0.09; }
+.section--dark .group__head::after { color: #fff; opacity: 0.09; }
 .section--dark .group__head { border-top-color: rgba(255, 255, 255, 0.14); }
 .group__num {
   font-family: var(--font-mono);
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--accent);
+  /* Не --accent: синий кнопок на светло-сером фоне даёт 4,4:1 — чуть ниже
+     нормы для текста такого размера. Тёмный оттенок того же синего — 6,1:1. */
+  color: var(--accent-700);
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -1194,7 +1490,7 @@ body.is-locked { overflow: hidden; }
 /* На больших экранах группа читается как разворот альбома: слева описание
    раздела, справа его состав. Заголовок «прилипает» и остаётся перед
    глазами, пока листаешь длинный список услуг. */
-@media (min-width: 1100px) {
+@media (min-width: 68.75em) {
   .group {
     display: grid;
     grid-template-columns: 18rem minmax(0, 1fr);
@@ -1210,13 +1506,15 @@ body.is-locked { overflow: hidden; }
     padding-top: var(--s-5);
     border-top: 0;
   }
-  .group__index {
+  .group__head::after {
     position: static;
     display: block;
+    order: -1;
     font-size: 3.25rem;
     opacity: 0.1;
     margin-bottom: var(--s-2);
   }
+  .group__head { display: flex; flex-direction: column; }
   .group__subtitle { max-width: none; }
   .service-list { padding-top: var(--s-5); }
   .section--dark .group { border-top-color: rgba(255, 255, 255, 0.14); }
@@ -1364,7 +1662,14 @@ body.is-locked { overflow: hidden; }
   padding-top: var(--s-5);
   border-top: 1px dashed var(--line-strong);
 }
-.spec__row { display: flex; align-items: baseline; gap: var(--s-2); }
+/* Строка «подпись — точки — значение». Если значение длинное, строка
+   переносится целиком: подпись сверху, значение под ней во всю ширину. */
+.spec__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-2);
+}
 .spec__key {
   font-family: var(--font-mono);
   font-size: 0.6875rem;
@@ -1381,11 +1686,14 @@ body.is-locked { overflow: hidden; }
   border-bottom: 1px dotted var(--line-strong);
 }
 .spec__val {
+  flex: 1 1 auto;
+  min-width: 0;
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--navy);
   text-align: right;
 }
+.spec__key { flex: 0 0 auto; }
 
 /* ---------- 9. Этапы ----------------------------------------------------- */
 /* Между шагами нет горизонтального зазора — так их верхние линии смыкаются
@@ -1556,6 +1864,19 @@ body.is-locked { overflow: hidden; }
 .field__error { font-size: 0.875rem; color: #c0392b; }
 .field__error:empty { display: none; }
 
+/* Запасные кнопки под сообщением об ошибке отправки */
+.form__rescue {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-top: var(--s-3);
+}
+.btn--sm {
+  min-height: 40px;
+  padding: var(--s-2) var(--s-4);
+  font-size: 0.9375rem;
+}
+
 .form__note { font-size: 0.8125rem; color: var(--ink-soft); }
 .form__note a { color: var(--ink-muted); }
 .form__status {
@@ -1593,11 +1914,33 @@ body.is-locked { overflow: hidden; }
 
 /* ---------- 12. Подвал --------------------------------------------------- */
 .footer {
+  position: relative;
+  overflow: hidden;
   background: var(--panel-900);
   color: var(--ink-inverse-muted);
   padding: var(--s-8) 0 var(--s-5);
   font-size: 0.9375rem;
 }
+/* Та же разметка, что и в тёмных блоках: страница заканчивается тем же
+   листом, которым началась, а не глухой заливкой. */
+.footer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size:
+    var(--grid-size) var(--grid-size),
+    var(--grid-size) var(--grid-size),
+    calc(var(--grid-size) / 4) calc(var(--grid-size) / 4),
+    calc(var(--grid-size) / 4) calc(var(--grid-size) / 4);
+  mask-image: radial-gradient(100% 80% at 20% 0%, #000 20%, transparent 90%);
+  pointer-events: none;
+}
+.footer > .container { position: relative; z-index: 1; }
 .footer a {
   color: var(--ink-inverse-muted);
   text-decoration: none;
@@ -1642,6 +1985,7 @@ body.is-locked { overflow: hidden; }
   color: #7e93ad;
 }
 .footer__logo { color: #fff; margin-bottom: var(--s-4); }
+.footer__logo .logo__sub { font-size: 0.625rem; letter-spacing: 0.06em; }
 .footer__logo .logo__sub { color: var(--ink-inverse-muted); }
 
 /* Плавающая панель звонка на мобильных */
@@ -1718,10 +2062,10 @@ body.is-locked { overflow: hidden; }
 .contact-card--phone .contact-card__value { font-size: 1.25rem; }
 .contact-card__note { font-size: 0.875rem; color: var(--ink-muted); margin: 0; }
 
-@media (max-width: 900px) {
+@media (max-width: 56.1875em) {
   .contact-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-@media (max-width: 520px) {
+@media (max-width: 32.4375em) {
   .contact-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
@@ -1746,6 +2090,28 @@ body.is-locked { overflow: hidden; }
   transition: opacity 520ms var(--ease), transform 520ms var(--ease);
 }
 
+/* Полоса прокрутки в цветах сайта: мелочь, но с ней окно выглядит собранным,
+   а в тёмной теме не светит белым. */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 999px;
+  border: 2px solid var(--bg);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--ink-soft); }
+
+/* Обводка при переходе с клавиатуры — заметная и в цвете сайта */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
 /* ---------- 14. Утилиты и адаптив --------------------------------------- */
 .visually-hidden {
   position: absolute; width: 1px; height: 1px;
@@ -1760,12 +2126,12 @@ body.is-locked { overflow: hidden; }
 .mt-6 { margin-top: var(--s-7); }
 .mb-0 { margin-bottom: 0; }
 
-@media (max-width: 1120px) {
+@media (max-width: 69.9375em) {
   /* Шапка тесная: телефон уступает место меню и кнопке */
   .header__phone { display: none; }
 }
 
-@media (max-width: 1020px) {
+@media (max-width: 63.6875em) {
   .offer-grid { grid-template-columns: minmax(0, 1fr); gap: var(--s-6); }
   .split { grid-template-columns: minmax(0, 1fr); gap: var(--s-6); }
   .sticky-box { position: static; }
@@ -1774,7 +2140,7 @@ body.is-locked { overflow: hidden; }
   .footer__top { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-6); }
 }
 
-@media (max-width: 980px) {
+@media (max-width: 61.1875em) {
   .nav { display: none; }
   .nav.is-open {
     display: block;
@@ -1803,7 +2169,7 @@ body.is-locked { overflow: hidden; }
   body { padding-bottom: 66px; }   /* место под панель звонка */
 }
 
-@media (max-width: 720px) {
+@media (max-width: 44.9375em) {
   :root { --s-8: 3.25rem; --s-9: 4rem; --grid-size: 40px; }
   .container { padding: 0 var(--s-4); }
   .grid--2, .grid--3, .grid--4 { grid-template-columns: minmax(0, 1fr); }
@@ -1818,16 +2184,27 @@ body.is-locked { overflow: hidden; }
   .section__head { margin-bottom: var(--s-6); }
 }
 
-@media (max-width: 380px) {
+@media (max-width: 23.6875em) {
   .container { padding: 0 var(--s-3); }
   .logo__name { font-size: 0.9375rem; }
   .card, .panel { padding: var(--s-4); }
   .service-item { padding: var(--s-4) var(--s-6) var(--s-4) var(--s-4); }
 }
 
+.print-only { display: none; }
+
 @media print {
   .header, .footer, .call-bar, .form-block { display: none; }
   body { background: #fff; }
+  /* Контакты на бумаге: без них распечатка страницы бесполезна */
+  .print-only {
+    display: block;
+    margin: 1.5rem 0 0;
+    padding-top: 0.6rem;
+    border-top: 1px solid #999;
+    font-size: 11pt;
+    line-height: 1.5;
+  }
   .reveal { opacity: 1 !important; transform: none !important; }
   .hero__inner > * { animation: none !important; }
 }

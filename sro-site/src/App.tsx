@@ -1,5 +1,4 @@
 import { AboutExpert } from './components/AboutExpert'
-import { Contacts } from './components/Contacts'
 import { Documents } from './components/Documents'
 import { FAQ } from './components/FAQ'
 import { Footer } from './components/Footer'
@@ -11,12 +10,19 @@ import { Pricing } from './components/Pricing'
 import { Problems } from './components/Problems'
 import { Process } from './components/Process'
 import { Quiz } from './components/Quiz'
+import { Regions } from './components/Regions'
 import { QuizProvider } from './components/QuizContext'
 import { Services } from './components/Services'
+import { Specialists } from './components/Specialists'
+import { SroTypes } from './components/SroTypes'
 import { Trust } from './components/Trust'
 import { ThemisBackdrop } from './components/ui/ThemisBackdrop'
+import { useHashScroll } from './lib/useHashScroll'
 
 export default function App() {
+  // Якорь в адресе должен сработать после того, как разметка отрисована.
+  useHashScroll()
+
   return (
     <QuizProvider>
       <LegalProvider>
@@ -32,18 +38,32 @@ export default function App() {
                   его первый вопрос задаётся ещё на первом экране, в Hero. */}
               <Hero />
               <Trust />
+              {/* Сразу под первым экраном — три вида СРО: посетитель должен
+                  узнать свою область раньше, чем начнёт читать про услуги. */}
+              <SroTypes />
               <Problems />
               <Services />
               <Process />
               <Documents />
+              {/* Специалисты НРС — сразу за документами: там о них впервые
+                  заходит речь, и там же у человека возникает «а у меня их
+                  нет». Ответ должен стоять рядом с вопросом, а не в FAQ
+                  внизу страницы. */}
+              <Specialists />
               <Pricing />
               <AboutExpert />
-              {/* Контакты в середине: убеждение уже сработало (человек узнал
-                  про эксперта), а финалом страницы остаётся квиз — главная
-                  точка конверсии и положена последней. */}
-              <Contacts />
+              {/* Отдельной секции контактов нет намеренно. Она была четвёртым
+                  призывом связаться подряд (шапка, мобильная панель, квиз,
+                  она) и уводила от квиза — главной точки конверсии. Все
+                  способы связи собраны в подвале, туда же ведёт якорь
+                  #contacts из меню. */}
               <FAQ />
               <Quiz />
+              {/* География — последним блоком перед подвалом, как просил
+                  заказчик. Квиз остаётся закрывающим призывом, поэтому у
+                  карты своя ссылка в него: страница всё равно заканчивается
+                  предложением написать. */}
+              <Regions />
             </main>
             <Footer />
             {/* Отступ под фиксированную мобильную панель быстрых контактов (с учётом safe-area) */}

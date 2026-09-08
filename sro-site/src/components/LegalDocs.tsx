@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react'
 import { CONTACTS } from '../content/contacts'
+import { REQUISITES } from '../content/facts'
 
 export type LegalDocId = 'privacy' | 'consent'
 
@@ -23,14 +24,16 @@ const TITLES: Record<LegalDocId, string> = {
   consent: 'Согласие на обработку персональных данных',
 }
 
-// Шаблонные тексты: перед публикацией сайта их нужно заменить
-// финальными редакциями документов.
+// Оператор назван реквизитами компании из facts.ts. Сами тексты —
+// типовые редакции под 152-ФЗ; юрист их не вычитывал, это записано в README.
+const OPERATOR = `${REQUISITES.legalName} (ИНН ${REQUISITES.inn}, КПП ${REQUISITES.kpp}, адрес: ${REQUISITES.address})`
+
 function DocBody({ doc }: { doc: LegalDocId }) {
   if (doc === 'privacy') {
     return (
       <div className="space-y-4 text-sm leading-relaxed text-neutral-700">
         <p>
-          Настоящая политика описывает, как {CONTACTS.fullName} (далее — Оператор) обрабатывает
+          Настоящая политика описывает, как {OPERATOR} (далее — Оператор) обрабатывает
           персональные данные посетителей сайта.
         </p>
         <p>
@@ -69,7 +72,7 @@ function DocBody({ doc }: { doc: LegalDocId }) {
   return (
     <div className="space-y-4 text-sm leading-relaxed text-neutral-700">
       <p>
-        Отправляя форму на сайте, вы даёте согласие {CONTACTS.fullName} на обработку указанных вами
+        Отправляя форму на сайте, вы даёте согласие {OPERATOR} на обработку указанных вами
         персональных данных: имени, номера телефона и адреса электронной почты.
       </p>
       <p>
@@ -141,11 +144,6 @@ export function LegalProvider({ children }: { children: ReactNode }) {
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
-            <p className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              Это шаблон документа: в нём ещё нет реквизитов оператора персональных данных
-              (правовой статус, ИНН, ОГРНИП, адрес). Перед публикацией сайта на своём домене
-              его нужно заменить финальной редакцией.
-            </p>
             <div className="mt-5">
               <DocBody doc={doc} />
             </div>

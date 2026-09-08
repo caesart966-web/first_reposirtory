@@ -27,6 +27,7 @@ import html
 import json
 import re
 import shutil
+import struct
 from datetime import date
 from pathlib import Path
 
@@ -122,6 +123,82 @@ def resolve_media(configured: str, fallbacks: list) -> str:
     return configured or fallbacks[-1]
 
 
+def image_size(rel: str):
+    """Ширина и высота картинки, прочитанные из заголовка файла.
+
+    Без сторонних библиотек: у png, webp и jpeg размеры лежат в первых
+    байтах. Нужны, чтобы браузер знал пропорции до загрузки и не дёргал
+    вёрстку, и чтобы правильно описать варианты в srcset.
+    Не смог прочитать — вернём None, страница соберётся и без размеров."""
+    path = ASSETS_DIR / rel.lstrip("/").removeprefix("assets/")
+    try:
+        data = path.read_bytes()
+    except OSError:
+        return None
+    if data[:8] == b"\x89PNG\r\n\x1a\n":
+        return struct.unpack(">II", data[16:24])
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        kind = data[12:16]
+        if kind == b"VP8X":
+            return (int.from_bytes(data[24:27], "little") + 1,
+                    int.from_bytes(data[27:30], "little") + 1)
+        if kind == b"VP8 ":
+            return (int.from_bytes(data[26:28], "little") & 0x3FFF,
+                    int.from_bytes(data[28:30], "little") & 0x3FFF)
+        if kind == b"VP8L":
+            bits = int.from_bytes(data[21:25], "little")
+            return ((bits & 0x3FFF) + 1, ((bits >> 14) & 0x3FFF) + 1)
+    if data[:2] == b"\xff\xd8":                      # jpeg: идём по сегментам
+        i = 2
+        while i + 9 < len(data):
+            if data[i] != 0xFF:
+                break
+            marker, length = data[i + 1], int.from_bytes(data[i + 2:i + 4], "big")
+            if 0xC0 <= marker <= 0xCF and marker not in (0xC4, 0xC8, 0xCC):
+                return (int.from_bytes(data[i + 7:i + 9], "big"),
+                        int.from_bytes(data[i + 5:i + 7], "big"))
+            i += 2 + length
+    return None
+
+
+# Ширины уменьшенных копий, которые делает tools/make-thumbs.py
+THUMB_WIDTHS = (480, 960)
+
+
+def photo_img(site: Site, rel: str, alt: str, sizes: str, css: str = "") -> str:
+    """Фотография с уменьшенными копиями и отложенной загрузкой.
+
+    Браузер сам берёт вариант под ширину экрана: телефону уходит копия
+    на 480 точек вместо снимка на 1600. Форматов два: сначала предлагается
+    AVIF (легче примерно на четверть), а кто его не понимает — берёт webp.
+    Копий нет — отдаём оригинал, вёрстка от этого не зависит."""
+    base, _, ext = rel.rpartition(".")
+    size = image_size(rel)
+
+    def row(fmt: str):
+        """Строка вариантов одного формата: «файл 480w, файл 960w»."""
+        got = [(w, f"{base}-{w}.{fmt}") for w in THUMB_WIDTHS
+               if asset_exists(f"{base}-{w}.{fmt}")]
+        if fmt == "webp" and size and (not got or size[0] > got[-1][0]):
+            got.append((size[0], rel))      # оригинал — самый крупный вариант
+        return got
+
+    webp = row("webp")
+    avif = row("avif")
+    src = site.url(webp[-1][1] if webp else rel)
+    dims = f' width="{size[0]}" height="{size[1]}"' if size else ""
+    cls = f' class="{css}"' if css else ""
+    pairs = lambda got: ", ".join(f"{site.url(p)} {w}w" for w, p in got)
+    srcset = f' srcset="{pairs(webp)}" sizes="{sizes}"' if len(webp) > 1 else ""
+    img = (f'<img{cls} src="{src}"{srcset}{dims} alt="{esc(alt)}"'
+           f' loading="lazy" decoding="async">')
+    if len(avif) > 1:
+        return ('<picture>'
+                f'<source type="image/avif" srcset="{pairs(avif)}" sizes="{sizes}">'
+                f'{img}</picture>')
+    return img
+
+
 def block_media(site: Site, cfg: dict) -> str:
     """Широкая видео-полоса. Ведёт себя как первый экран: постер виден сразу,
     видео подключается скриптом после загрузки страницы. Если файлов видео нет,
@@ -130,8 +207,10 @@ def block_media(site: Site, cfg: dict) -> str:
         return ""
     poster = site.url(resolve_media(cfg.get("poster"), []))
     sources = "|".join(site.url(cfg[k]) for k in ("webm", "mp4") if asset_exists(cfg.get(k)))
+    mobile = "/assets/media/about-mobile.mp4"
+    mob_attr = f' data-src-mobile="{site.url(mobile)}"' if asset_exists(mobile) else ""
     video = (f'''<video class="media-band__video js-video" autoplay muted loop playsinline
-             preload="none" poster="{poster}" data-src="{sources}"
+             preload="none" poster="{poster}" data-src="{sources}"{mob_attr}
              aria-hidden="true" tabindex="-1"></video>''' if sources else "")
     caption = (f'<figcaption class="media-band__caption">{esc(cfg["caption"])}</figcaption>'
                if cfg.get("caption") else "")
@@ -159,14 +238,25 @@ def block_recommendations(site: Site, cfg: dict) -> str:
         # Письмо открывается картинкой во всплывающем окне. Ссылка на исходный
         # PDF остаётся внутри окна — для тех, кому нужен сам документ.
         link = ""
+        thumb = ""
         if r.get("image") and asset_exists(r["image"]):
             pdf = (f' data-pdf="{site.url(r["file"])}"'
                    if r.get("file") and asset_exists(r["file"]) else "")
-            link = (f'<button class="rec__link" type="button"'
-                    f' data-lightbox="{site.url(r["image"])}"'
-                    f' data-caption="{esc(r["company"])} · {esc(r["city"])}, {esc(r["date"])}"'
-                    f'{pdf}>{esc(r.get("link_label", "Посмотреть письмо"))}</button>')
-        cards.append(f'''        <article class="card rec">
+            opens = (f' data-lightbox="{site.url(r["image"])}"'
+                     f' data-caption="{esc(r["company"])} · {esc(r["city"])}, {esc(r["date"])}"'
+                     f'{pdf}')
+            link = (f'<button class="rec__link" type="button"{opens}>'
+                    f'{esc(r.get("link_label", "Посмотреть письмо"))}</button>')
+            # Превьюшка самого документа: видно, что это настоящее письмо
+            # с печатью и подписью, ещё до того как его открыли.
+            thumb = (f'<button class="rec__thumb" type="button"{opens}'
+                     f' aria-label="Открыть документ: {esc(r["company"])}">'
+                     + photo_img(site, r["image"], f'Документ: {r["company"]}',
+                                 "(max-width: 720px) 96px, 132px", "rec__thumb-img")
+                     + '</button>')
+        cards.append(f'''        <article class="card rec{" rec--doc" if thumb else ""}">
+          {thumb}
+          <div class="rec__body">
           <div class="rec__head">
             <h3>{esc(r["company"])}</h3>
             <span class="rec__meta">{esc(r["city"])} · {esc(r["date"])}</span>
@@ -180,6 +270,7 @@ def block_recommendations(site: Site, cfg: dict) -> str:
           </div>
           <p class="rec__scope">{esc(r["scope"])}</p>
           {link}
+          </div>
         </article>''')
 
     head = f'<h2>{esc(cfg["title"])}</h2>'
@@ -195,12 +286,25 @@ def block_recommendations(site: Site, cfg: dict) -> str:
   </section>'''
 
 
-def block_objects(site: Site, items, limit: int = 0) -> str:
+def block_objects(site: Site, items, limit: int = 0, level: str = "h3") -> str:
     """Карточки объектов. Фотография необязательна: без неё выводится
-    фирменная заставка с чертёжной сеткой, вёрстка не ломается."""
+    фирменная заставка с чертёжной сеткой, вёрстка не ломается.
+
+    level — уровень заголовка карточки. На главной блок стоит под своим h2,
+    поэтому карточки идут h3. На странице «Объекты» промежуточного h2 нет,
+    и карточки должны быть h2: иначе уровни перескакивают через один, а это
+    сбивает и экранные дикторы, и поисковых роботов."""
     if not items:
         return ""
     shown = items[:limit] if limit else items
+    # Ритм страницы: первая карточка — во всю ширину, с фотографией слева.
+    # Если после неё в последнем ряду остаётся одна штука, широкой делается
+    # и она: ряд из одной узкой карточки выглядит обрывком.
+    wide = set()
+    if not limit and len(shown) >= 4:
+        wide.add(0)
+        if (len(shown) - 1) % 3 == 1:
+            wide.add(len(shown) - 1)
     cards = []
     for n, o in enumerate(shown, start=1):
         # Фотографии ищутся по имени: <slug>.webp — главная, <slug>-2.webp,
@@ -218,24 +322,34 @@ def block_objects(site: Site, items, limit: int = 0) -> str:
                         photos.append(candidate)
                         break
 
+        # Ширина карточки: во всю ширину экрана на телефоне, половина на
+        # планшете, треть на компьютере. По ней браузер выбирает копию.
+        sizes = ("(max-width: 720px) calc(100vw - 2.5rem), (max-width: 1020px) 46vw, 31vw"
+                 if (n - 1) not in wide else
+                 "(max-width: 720px) calc(100vw - 2.5rem), 56vw")
+        alt = f'{o["name"]}, {o["city"]}'
         if not photos:
             media = '<div class="object__media object__media--empty"></div>'
         elif len(photos) == 1:
-            media = f'<div class="object__media" style="background-image:url({site.url(photos[0])})"></div>'
+            media = ('<div class="object__media">'
+                     + photo_img(site, photos[0], alt, sizes, "object__img")
+                     + '</div>')
         else:
-            # Несколько фотографий — media становится кнопкой, открывающей галерею
+            # Несколько фотографий — плитка становится кнопкой, открывающей галерею.
+            # Полные снимки грузятся только при открытии, в карточке — уменьшенная копия.
             gallery = json.dumps([site.url(x) for x in photos], ensure_ascii=False)
             media = (f'<button class="object__media object__media--more" type="button"'
-                     f' style="background-image:url({site.url(photos[0])})"'
                      f' data-gallery="{esc(gallery)}"'
                      f' data-caption="{esc(o["name"])} · {esc(o["city"])}">'
-                     f'<span class="object__count">{len(photos)} фото</span></button>')
+                     + photo_img(site, photos[0], alt, sizes, "object__img")
+                     + f'<span class="object__count">{len(photos)} фото</span></button>')
         scope = f'<p class="object__scope">{esc(o["scope"])}</p>' if o.get("scope") else ""
-        cards.append(f'''        <article class="object">
+        css = "object object--wide" if (n - 1) in wide else "object"
+        cards.append(f'''        <article class="{css}">
           {media}
           <div class="object__body">
             <span class="object__num">{n:02d}</span>
-            <h3 class="object__name">{esc(o["name"])}</h3>
+            <{level} class="object__name">{esc(o["name"])}</{level}>
             <span class="object__city">{esc(o["city"])}</span>
             {scope}
             <div class="spec">
@@ -262,8 +376,11 @@ def li_list(items, css="ticks") -> str:
     return f'<ul class="{css}">\n{body}\n    </ul>'
 
 
-def block_services_by_group(site: Site) -> str:
-    """Четыре группы услуг со ссылками — используется на главной и в /uslugi/."""
+def block_services_by_group(site: Site, level: str = "h3") -> str:
+    """Четыре группы услуг со ссылками — используется на главной и в /uslugi/.
+
+    level — уровень заголовка группы: под общим h2 (главная) это h3,
+    а на странице «Услуги», где промежуточного h2 нет, — h2."""
     parts = []
     for n, group in enumerate(site.groups, start=1):
         items = []
@@ -276,10 +393,9 @@ def block_services_by_group(site: Site) -> str:
             )
         total = len(site.groups)
         parts.append(f'''    <div class="group">
-      <div class="group__head">
-        <span class="group__index" aria-hidden="true">{n:02d}</span>
+      <div class="group__head" data-index="{n:02d}">
         <span class="group__num">Группа {n:02d} / {total:02d}</span>
-        <h3 class="group__title">{esc(group["title"])}</h3>
+        <{level} class="group__title">{esc(group["title"])}</{level}>
         <p class="group__subtitle">{esc(group["subtitle"])}</p>
       </div>
       <div class="service-list">
@@ -349,7 +465,7 @@ def block_form(site: Site, preselect: str = "") -> str:
     return f'''  <section class="section form-block" id="zayavka">
     <div class="container">
       <div class="form-grid">
-        <div>
+        <div class="section__head" style="max-width:none;margin-bottom:0">
           <h2>{esc(form_cfg["title"])}</h2>
           <p class="lead">{esc(form_cfg["text"])}</p>
           <div class="contact-lines">
@@ -375,7 +491,11 @@ def block_form(site: Site, preselect: str = "") -> str:
 
         <form class="form" data-form="lead" novalidate
               data-success="{esc(form_cfg["success"])}"
-              data-error="{esc(form_cfg["error"])}">
+              data-error="{esc(form_cfg["error"])}"
+              data-mail="{esc(site.contacts["email"])}"
+              data-tel="{esc(site.contacts["phone_href"])}"
+              data-tel-display="{esc(site.contacts["phone_display"])}"
+              data-tg="{esc(site.contacts["telegram_url"])}">
           <div class="field">
             <label for="f-name">Как к вам обращаться <span class="req">*</span></label>
             <input id="f-name" name="name" type="text" autocomplete="name" required>
@@ -495,7 +615,11 @@ def schema_organization(site: Site) -> dict:
         "description": site.company["about_short"],
         "url": site.abs_url("/"),
         "logo": site.abs_url("/assets/img/logo.svg"),
-        "image": site.abs_url("/assets/img/og-default.png"),
+        "image": site.abs_url(site.raw.get("og_image", "/assets/img/og-default.jpg")),
+        # sameAs — официальные страницы компании в других сервисах. По ним
+        # поисковик связывает сайт, канал в Telegram и канал в MAX в одну
+        # карточку организации.
+        "sameAs": [u for u in (c.get("telegram_url"), c.get("max_url")) if u],
         "email": c["email"],
         "telephone": c["phone_href"],
         "taxID": site.company.get("inn", ""),
@@ -684,8 +808,13 @@ def page_home(r: Renderer) -> None:
     # остаётся постер. Положите hero.mp4 в assets/media/, и видео появится само.
     sources = "|".join(site.url(h[k]) for k in ("video_webm", "video_mp4")
                        if asset_exists(h.get(k)))
+    # Отдельный лёгкий файл для телефонов: тот же ролик, но 720 точек в ширину
+    # и 400 КБ вместо 1,2 МБ. Кладётся рядом как hero-mobile.mp4 — если файла
+    # нет, телефон получит обычный, ничего не сломается.
+    mobile = "/assets/media/hero-mobile.mp4"
+    mob_attr = f' data-src-mobile="{site.url(mobile)}"' if asset_exists(mobile) else ""
     video_tag = (f'''<video class="hero__video js-video" autoplay muted loop playsinline preload="none"
-           poster="{poster}" data-src="{sources}" aria-hidden="true" tabindex="-1"></video>'''
+           poster="{poster}" data-src="{sources}"{mob_attr} aria-hidden="true" tabindex="-1"></video>'''
                  if sources else "")
 
     # Анонс объектов на главной: три штуки и ссылка на полный список
@@ -709,6 +838,8 @@ def page_home(r: Renderer) -> None:
     hero = f'''  <section class="hero">
     <div class="hero__media" style="background-image:url({poster})"></div>
     {video_tag}
+    <div class="hero__scan" aria-hidden="true"></div>
+    <div class="hero__frame" aria-hidden="true"></div>
     <div class="container">
       <div class="hero__inner">
         <span class="eyebrow">{esc(h["eyebrow"])}</span>
@@ -785,7 +916,11 @@ def page_home(r: Renderer) -> None:
 
 {block_form(site)}'''
 
+    # Кадр первого экрана — самая крупная картинка страницы. Просим браузер
+    # начать качать её сразу, не дожидаясь разбора стилей: экран появляется
+    # заметно раньше.
     head = "\n".join([
+        f'<link rel="preload" as="image" href="{poster}" fetchpriority="high">',
         jsonld(schema_organization(site)),
         jsonld({
             "@context": "https://schema.org",
@@ -826,7 +961,7 @@ def page_services_index(r: Renderer) -> None:
 
   <section class="section">
     <div class="container">
-{block_services_by_group(site)}
+{block_services_by_group(site, level='h2')}
     </div>
   </section>
 
@@ -964,7 +1099,7 @@ def page_objects(r: Renderer) -> None:
 
   <section class="section">
     <div class="container">
-{block_objects(site, cfg["items"])}
+{block_objects(site, cfg["items"], level="h2")}
     </div>
   </section>
 
@@ -1003,7 +1138,7 @@ def page_about(r: Renderer) -> None:
     why = site.raw["why"]
 
     blocks = "\n".join(f'''        <div class="card">
-          <h3>{esc(b["title"])}</h3>
+          <h2>{esc(b["title"])}</h2>
           <p>{esc(b["text"])}</p>
         </div>''' for b in cfg["blocks"])
 
@@ -1088,7 +1223,7 @@ def page_contacts(r: Renderer) -> None:
           <p class="lead lead--tight">{esc(c["work_hours"])}. {esc(c["geo"])}. Договор, счёт и закрывающие документы — в электронном виде, при необходимости отправляем оригиналы почтой.</p>
         </div>
         <aside class="panel panel--accent">
-          <h3>{esc(chk["title"])}</h3>
+          <h2>{esc(chk["title"])}</h2>
           <p style="color:var(--ink-muted);font-size:0.9375rem">{esc(chk["text"])}</p>
           {li_list(chk["items"], "ticks")}
         </aside>
@@ -1129,7 +1264,7 @@ def page_404(r: Renderer) -> None:
 
   <section class="section">
     <div class="container">
-{block_services_by_group(site)}
+{block_services_by_group(site, level='h2')}
     </div>
   </section>'''
     r.render(path="/404.html", title="Страница не найдена — " + site.company["name"],
@@ -1155,6 +1290,28 @@ def write_sitemap(site: Site, pages) -> None:
     (DIST_DIR / "sitemap.xml").write_text(xml, encoding="utf-8")
 
 
+def write_manifest(site: Site) -> None:
+    """Файл для «добавить на домашний экран»: название, иконки и цвета.
+    Без него телефон подписывает ярлык адресом сайта."""
+    data = {
+        "name": site.company["name"] + " — " + site.company["tagline"],
+        "short_name": site.company["name"],
+        "start_url": site.url("/"),
+        "display": "standalone",
+        "background_color": "#0a1420",
+        "theme_color": "#0a1420",
+        "lang": "ru",
+        "icons": [
+            {"src": site.url("/assets/img/apple-touch-icon.png"),
+             "sizes": "180x180", "type": "image/png"},
+            {"src": site.url("/assets/img/favicon.svg"),
+             "sizes": "any", "type": "image/svg+xml"},
+        ],
+    }
+    (DIST_DIR / "site.webmanifest").write_text(
+        json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
 def write_robots(site: Site, noindex: bool = False) -> None:
     if noindex:
         # Превью для показа заказчику: в поиск попадать не должно
@@ -1165,6 +1322,92 @@ def write_robots(site: Site, noindex: bool = False) -> None:
                 "Disallow: /assets/config.js\n\n"
                 f"Sitemap: {site.abs_url('/sitemap.xml')}\n")
     (DIST_DIR / "robots.txt").write_text(text, encoding="utf-8")
+
+
+def minify_css(text: str) -> str:
+    """Убирает из стилей комментарии и лишние пробелы.
+
+    Исходник assets/style.css остаётся как есть — с комментариями, по нему
+    сайт и правят. Сжимается только копия в dist/, которую качает браузер."""
+    text = re.sub(r"/\*.*?\*/", "", text, flags=re.S)          # комментарии
+    text = re.sub(r"\s+", " ", text)                            # переносы строк
+    text = re.sub(r"\s*([{}:;,>~])\s*", r"\1", text)            # пробелы у знаков
+    text = re.sub(r";}", "}", text)                             # лишняя точка с запятой
+    return text.strip()
+
+
+def minify_js(text: str) -> str:
+    """Осторожное сжатие скрипта: убираются только строки-комментарии
+    и отступы в начале строк.
+
+    Настоящие минификаторы разбирают код целиком; здесь это лишнее и рискованно:
+    выражение вроде 'https://' внутри строки регулярка легко примет за начало
+    комментария и сломает сайт. Поэтому трогаем только то, что заведомо
+    безопасно — от этого файл худеет примерно на треть."""
+    out = []
+    in_block = False
+    for line in text.split("\n"):
+        stripped = line.strip()
+        if in_block:
+            if "*/" in stripped:
+                in_block = False
+                tail = stripped.split("*/", 1)[1].strip()
+                if tail:
+                    out.append(tail)
+            continue
+        if stripped.startswith("/*"):
+            if "*/" not in stripped:
+                in_block = True
+            continue
+        if stripped.startswith("//"):
+            continue
+        if stripped:
+            out.append(stripped)
+    return "\n".join(out)
+
+
+def minify_html(text: str) -> str:
+    """Убирает html-комментарии и отступы между тегами.
+
+    Содержимое тегов не трогаем: внутри может быть текст, где пробелы важны."""
+    text = re.sub(r"<!--(?!\[if).*?-->", "", text, flags=re.S)
+    text = re.sub(r"^[ \t]+", "", text, flags=re.M)
+    text = re.sub(r"\n{2,}", "\n", text)
+    return text
+
+
+def shrink_dist() -> None:
+    """Сжимает то, что уезжает к посетителю: стили, скрипт и страницы.
+
+    Работает только с папкой dist/. Исходники не меняются — их читают люди."""
+    before = after = 0
+    for path in list(DIST_DIR.rglob("*.css")) + list(DIST_DIR.rglob("*.js")) \
+            + list(DIST_DIR.rglob("*.html")):
+        if path.name == "config.js":        # настройки заказчика не трогаем
+            continue
+        text = path.read_text(encoding="utf-8")
+        before += len(text.encode())
+        if path.suffix == ".css":
+            text = minify_css(text)
+        elif path.suffix == ".js":
+            text = minify_js(text)
+        else:
+            text = minify_html(text)
+        path.write_text(text, encoding="utf-8")
+        after += len(text.encode())
+    if before:
+        print(f"Сжатие: {before // 1024} КБ -> {after // 1024} КБ "
+              f"(минус {round((1 - after / before) * 100)}%)")
+
+
+def copy_server_config() -> None:
+    """Кладёт настройки веб-сервера в корень сайта (server/.htaccess).
+
+    Это кеширование, сжатие и заголовки безопасности для обычного хостинга.
+    На GitHub Pages файл не действует и не мешает."""
+    src = ROOT / "server" / ".htaccess"
+    if src.exists():
+        shutil.copy2(src, DIST_DIR / ".htaccess")
 
 
 def copy_assets() -> None:
@@ -1226,9 +1469,14 @@ def build(regen_media: bool = False, base_path: str = None,
     copy_assets()
     write_sitemap(site, r.pages)
     write_robots(site, noindex=noindex)
+    write_manifest(site)
+    copy_server_config()
 
     # Проверка, что заголовки нигде не повторяются
     check_unique(r)
+
+    # Последним шагом сжимаем то, что уедет к посетителю
+    shrink_dist()
 
     print(f"\nГотово. Собрано страниц: {len(r.pages) + 1} (включая 404).")
     print(f"Сайт лежит в: {DIST_DIR}")

@@ -1,0 +1,502 @@
+import { ArrowLeft, ArrowRight, Check, FileText, Scale } from 'lucide-react'
+import type { SroDetail } from '../content/sroDetails'
+import {
+  DOCS_LAW,
+  DOCS_SPECIALISTS,
+  DOCS_IP,
+  DOCS_OOO,
+  FUNDS_CONFIRMED,
+  LAW,
+  STEPS,
+} from '../content/sroDetails'
+import { anchor, home, quizWithType } from '../lib/site'
+import { Footer } from './Footer'
+import { Header } from './Header'
+import { LegalProvider } from './LegalDocs'
+import { MobileBar } from './MobileBar'
+import { ButtonLink } from './ui/Button'
+import { Figure } from './ui/Figure'
+import { Reveal } from './ui/Reveal'
+import { Section } from './ui/Section'
+import { ThemisBackdrop } from './ui/ThemisBackdrop'
+
+// Ссылка на норму. Не украшение: на странице есть суммы и пороги, и каждый
+// из них посетитель должен уметь проверить сам, не веря нам на слово.
+export function Law({ children }: { children: string }) {
+  return (
+    <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-md bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600">
+      <Scale className="h-3 w-3 shrink-0" aria-hidden="true" />
+      {children}
+    </span>
+  )
+}
+
+// Шаг порядка вступления. Номер крупный и приглушённый, чтобы лента шагов
+// читалась лентой, а не списком; исполнитель помечен отдельно — половину шагов
+// делает не кандидат, и это стоит видеть сразу.
+export function Step({
+  index,
+  step,
+}: {
+  index: number
+  step: { title: string; detail: string; law?: string; who: 'кандидат' | 'СРО' | 'мы' }
+}) {
+  return (
+    <>
+      {/* Вертикаль между номерами: без неё шаги читаются отдельными
+          карточками, а это одна последовательность. Последний линию не тянет. */}
+      <span
+        aria-hidden="true"
+        className="absolute left-[19px] top-11 h-[calc(100%-2.75rem)] w-px bg-neutral-200 transition-colors duration-200 group-hover:bg-accent-200 group-last:hidden"
+      />
+      <span className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-accent-100 bg-accent-50 text-sm font-bold text-accent-700 transition-colors duration-200 group-hover:border-accent-600 group-hover:bg-accent-600 group-hover:text-white">
+        {index + 1}
+      </span>
+      <div className="min-w-0 pt-1.5">
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 className="font-semibold text-neutral-950 transition-colors duration-200 group-hover:text-accent-700">
+            {step.title}
+          </h3>
+          <span className="rounded-md bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600 transition-colors duration-200 group-hover:bg-accent-50 group-hover:text-accent-700">
+            {step.who === 'мы' ? 'делаю я' : step.who === 'СРО' ? 'делает СРО' : 'от вас'}
+          </span>
+        </div>
+        <p className="mt-2 text-sm leading-relaxed text-neutral-600">{step.detail}</p>
+        {step.law && <Law>{step.law}</Law>}
+      </div>
+    </>
+  )
+}
+
+export function DocGroup({
+  title,
+  hint,
+  items,
+  tone,
+}: {
+  title: string
+  hint: string
+  items: { title: string; detail: string; law?: string }[]
+  tone: 'law' | 'sro'
+}) {
+  return (
+    <div
+      className={`h-full rounded-2xl border p-5 transition-colors duration-200 sm:p-6 ${
+        tone === 'law'
+          ? 'border-accent-100 bg-accent-50/40 hover:border-accent-300'
+          : 'border-neutral-200 bg-white shadow-card hover:border-accent-300'
+      }`}
+    >
+      <h3 className="font-semibold text-neutral-950">{title}</h3>
+      <p className="mt-1.5 text-sm leading-relaxed text-neutral-600">{hint}</p>
+      <ul className="mt-4 -mx-2 space-y-0.5">
+        {items.map((item) => (
+          /* Подсветка строки, а не подъём: список читается, а не кликается,
+             и подъём обещал бы клик, которого нет (см. ui/card.ts). Отклик
+             всё равно нужен — иначе на длинном перечне взгляд теряет строку. */
+          <li
+            key={item.title}
+            className="group/doc flex gap-3 rounded-xl px-2 py-1.5 transition-colors duration-150 hover:bg-white/70"
+          >
+            <FileText
+              className="mt-[3px] h-4 w-4 shrink-0 text-accent-600/70 transition-colors duration-150 group-hover/doc:text-accent-600"
+              aria-hidden="true"
+            />
+            <div className="min-w-0 text-sm">
+              <span className="font-medium text-neutral-900">{item.title}</span>
+              {item.detail && (
+                <span className="block leading-relaxed text-neutral-600">{item.detail}</span>
+              )}
+              {item.law && <Law>{item.law}</Law>}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+function FundTable({
+  caption,
+  hint,
+  // Шапка колонки задаётся снаружи, а не зашита: у фонда возмещения вреда
+  // уровень считают по ОДНОМУ договору, у фонда договорных обязательств —
+  // по СОВОКУПНОМУ размеру обязательств. Общая шапка «по одному договору»
+  // делала вторую таблицу неверной.
+  basis,
+  rows,
+  law,
+}: {
+  caption: string
+  hint: string
+  basis: string
+  rows: { limit: string; amount: string }[]
+  law: string
+}) {
+  return (
+    <div className="flex h-full flex-col rounded-2xl border border-neutral-200 bg-white p-5 shadow-card sm:p-6">
+      <h3 className="font-semibold text-neutral-950">{caption}</h3>
+      <p className="mt-1.5 text-sm text-neutral-600">{hint}</p>
+      {/* Таблица прокручивается внутри себя, а не тянет за собой страницу:
+          три колонки с суммами на 360px в строку не помещаются. */}
+      <div className="mt-5 -mx-1 overflow-x-auto px-1">
+        <table className="w-full min-w-[300px] border-collapse text-sm">
+          <thead>
+            <tr className="border-b border-neutral-200 text-left align-bottom">
+              <th className="w-10 pb-2 font-medium text-neutral-500">Ур.</th>
+              <th className="pb-2 pr-4 font-medium text-neutral-600">{basis}</th>
+              <th className="pb-2 text-right font-medium text-neutral-600">Взнос</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, index) => (
+              <tr key={row.limit} className="border-b border-neutral-100 last:border-0">
+                {/* Номер уровня ответственности — не украшение: в разговоре
+                    с СРО оперируют именно им, и человек должен знать свой. */}
+                <td className="py-2.5">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-md bg-accent-50 text-xs font-bold text-accent-700">
+                    {index + 1}
+                  </span>
+                </td>
+                <td className="py-2.5 pr-4 text-neutral-700">{row.limit}</td>
+                <td className="py-2.5 text-right font-semibold tabular-nums text-neutral-950">
+                  {row.amount}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="mt-auto pt-4">
+        <Law>{law}</Law>
+      </div>
+    </div>
+  )
+}
+
+export function DetailPage({ detail }: { detail: SroDetail }) {
+  return (
+    <LegalProvider>
+      <div id="top" className="relative">
+        <ThemisBackdrop />
+        <div className="relative z-10">
+          <Header />
+          <main>
+            {/* Первый экран страницы: заголовок, короткая строка и хлебная
+                крошка назад. Кадр — тот же, что на карточке главной: человек
+                пришёл с неё и должен узнать, куда попал. */}
+            <Section size="compact" className="bg-accent-50/60">
+              <Reveal>
+                <a
+                  href={anchor('#types')}
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-accent-700 transition hover:text-accent-800"
+                >
+                  <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  Все виды СРО
+                </a>
+              </Reveal>
+              <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-center lg:gap-14">
+                <Reveal>
+                  <h1 className="text-3xl font-bold tracking-tight text-neutral-950 sm:text-4xl lg:text-[2.6rem] lg:leading-[1.1]">
+                    {detail.title}
+                  </h1>
+                  <p className="mt-5 text-lg text-neutral-600">{detail.lead}</p>
+                  <div className="mt-7 flex flex-wrap gap-3">
+                    <ButtonLink href={quizWithType(detail.slug)} size="lg">
+                      Обсудить задачу
+                    </ButtonLink>
+                  </div>
+                </Reveal>
+                <Reveal delay={90}>
+                  <Figure {...detail.card.image} ratio="aspect-[16/9]" />
+                </Reveal>
+              </div>
+            </Section>
+
+            {/* Кому членство обязательно. Каждый пункт — с нормой: это ответ
+                на вопрос «а мне точно надо», и отвечать на него без ссылки
+                на закон значило бы продавать, а не объяснять. */}
+            <Section>
+              <Reveal>
+                <h2 className="text-2xl font-bold tracking-tight text-neutral-950 sm:text-3xl">
+                  Членство обязательно, если
+                </h2>
+              </Reveal>
+              <div className="mt-8 grid gap-4 sm:gap-5 lg:grid-cols-2">
+                {detail.who.map((item, index) => (
+                  <Reveal key={item.text} delay={(index % 2) * 70} className="h-full">
+                    <div className="h-full rounded-2xl border border-neutral-200 bg-white p-5 shadow-card sm:p-6">
+                      <div className="flex gap-3.5">
+                        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-accent-50 text-accent-600">
+                          <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-sm leading-relaxed text-neutral-700">{item.text}</p>
+                          <Law>{item.law}</Law>
+                        </div>
+                      </div>
+                    </div>
+                  </Reveal>
+                ))}
+              </div>
+              <Reveal className="mt-6 rounded-2xl border border-neutral-200 bg-neutral-50 p-5 text-sm leading-relaxed text-neutral-700 sm:p-6">
+                {/* Отдельной строкой и на каждой странице: «допуск СРО» до сих
+                    пор ищут в поиске, и человек, пришедший за ним, должен
+                    сразу понять, что искать нужно другое. */}
+                <strong className="font-semibold text-neutral-950">
+                  Свидетельств о допуске СРО не существует с 1 июля 2017 года.
+                </strong>{' '}
+                Их отменили: право выполнять работы подтверждается членством в
+                саморегулируемой организации и выпиской из реестра её членов. Предложения
+                «купить допуск» не соответствуют действующему законодательству.
+                <Law>{LAW.noAdmission}</Law>
+              </Reveal>
+            </Section>
+
+            {/* Область деятельности: что именно закрывает этот вид СРО. */}
+            <Section size="compact" className="bg-neutral-50/55">
+              <Reveal>
+                <h2 className="text-2xl font-bold tracking-tight text-neutral-950 sm:text-3xl">
+                  Что входит в область деятельности
+                </h2>
+                <p className="mt-3 max-w-2xl text-neutral-600">{detail.card.text}</p>
+              </Reveal>
+              <Reveal className="mt-7 flex flex-wrap gap-2.5">
+                {detail.scope.map((item) => (
+                  <span
+                    key={item}
+                    className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-800"
+                  >
+                    {item}
+                  </span>
+                ))}
+              </Reveal>
+            </Section>
+
+            {/* ШАГИ. Лента порядка вступления — то, ради чего человек и открыл
+                страницу: он хочет понять, что будет происходить и что от него
+                потребуется. У каждого шага помечен исполнитель: половину делает
+                не кандидат, и это стоит видеть сразу. */}
+            <Section>
+              <Reveal>
+                <h2 className="text-2xl font-bold tracking-tight text-neutral-950 sm:text-3xl">
+                  Как проходит вступление
+                </h2>
+                <p className="mt-3 max-w-3xl text-neutral-600">
+                  Порядок установлен законом и одинаков для всех трёх видов СРО. Ниже указаны
+                  только сроки, установленные законом; фактический срок рассмотрения определяет
+                  сама организация.
+                </p>
+              </Reveal>
+              <Reveal className="mt-8">
+                <ol className="mx-auto max-w-3xl">
+                  {STEPS.map((step, index) => (
+                    <li
+                      key={step.title}
+                      className="group relative -mx-3 flex list-none gap-5 rounded-2xl px-3 pb-8 pt-1 transition-colors duration-200 hover:bg-accent-50/50 last:pb-1"
+                    >
+                      <Step index={index} step={step} />
+                    </li>
+                  ))}
+                </ol>
+              </Reveal>
+            </Section>
+
+            {/* ДОКУМЕНТЫ. Два списка, а не один: у посредников они слиты, и
+                человек уверен, что договор аренды офиса требует кодекс. */}
+            <Section size="compact" className="bg-neutral-50/55">
+              <Reveal>
+                <h2 className="text-2xl font-bold tracking-tight text-neutral-950 sm:text-3xl">
+                  Какие документы понадобятся
+                </h2>
+                <p className="mt-3 max-w-3xl text-neutral-600">
+                  Перечень документов в законе содержит отсылку к внутренним требованиям
+                  саморегулируемой организации, поэтому фактический комплект всегда шире
+                  установленного кодексом. Ниже оба перечня: что требует закон и что
+                  запрашивает СРО.
+                </p>
+              </Reveal>
+              <div className="mt-8 grid gap-5 lg:grid-cols-2">
+                <Reveal className="h-full">
+                  <DocGroup
+                    tone="law"
+                    title="Требует закон"
+                    hint="Одинаково для любой СРО."
+                    items={DOCS_LAW}
+                  />
+                </Reveal>
+                <Reveal delay={70} className="h-full">
+                  <DocGroup
+                    tone="law"
+                    title={`Специалисты в реестре — ${detail.specialistsField}`}
+                    hint="Не менее двух, по основному месту работы."
+                    items={DOCS_SPECIALISTS}
+                  />
+                </Reveal>
+                <Reveal delay={140} className="h-full">
+                  <DocGroup
+                    tone="sro"
+                    title="Если у вас ООО"
+                    hint="Обычный запрос организации сверх того, что требует кодекс."
+                    items={DOCS_OOO}
+                  />
+                </Reveal>
+                <Reveal delay={210} className="h-full">
+                  <DocGroup
+                    tone="sro"
+                    title="Если вы ИП"
+                    hint="Обычный запрос организации сверх того, что требует кодекс."
+                    items={DOCS_IP}
+                  />
+                </Reveal>
+              </div>
+            </Section>
+
+            {/* ВЗНОСЫ. Таблицы сумм на странице нет намеренно — см. комментарий
+                у FUNDS_CONFIRMED в content/sroDetails.ts. Коротко: проверка
+                разошлась в первом уровне для строителей (60 или 90 млн ₽) и в
+                номерах частей ст. 55.16, а сверить с текстом закона из этой
+                среды нельзя — правовые источники закрыты сетевой политикой.
+                Цифра, по которой человек переводит деньги, не может стоять
+                «примерно». Объяснение устройства фондов при этом остаётся: оно
+                верно независимо от конкретных сумм. */}
+            <Section>
+              <Reveal>
+                <h2 className="text-2xl font-bold tracking-tight text-neutral-950 sm:text-3xl">
+                  Взносы в компенсационные фонды
+                </h2>
+              </Reveal>
+              <div className="mt-8 grid gap-5 lg:grid-cols-2">
+                <Reveal className="h-full">
+                  <div className="h-full rounded-2xl border border-neutral-200 bg-white p-5 shadow-card sm:p-6">
+                    <h3 className="font-semibold text-neutral-950">Фонд возмещения вреда</h3>
+                    <p className="mt-2.5 text-sm leading-relaxed text-neutral-600">
+                      Платят все члены СРО. Размер взноса зависит от заявленного уровня
+                      ответственности, то есть от суммы обязательств по одному договору: чем
+                      крупнее планируемые договоры, тем выше уровень и взнос.
+                    </p>
+                    <Law>{LAW.funds}</Law>
+                  </div>
+                </Reveal>
+                <Reveal delay={70} className="h-full">
+                  <div className="h-full rounded-2xl border border-neutral-200 bg-white p-5 shadow-card sm:p-6">
+                    <h3 className="font-semibold text-neutral-950">
+                      Фонд обеспечения договорных обязательств
+                    </h3>
+                    <p className="mt-2.5 text-sm leading-relaxed text-neutral-600">
+                      Платят только те, кто заявил о намерении заключать договоры с использованием
+                      конкурентных способов заключения договоров. Если участие в закупках не
+                      планируется, этот взнос не требуется.
+                    </p>
+                    <Law>{LAW.funds}</Law>
+                  </div>
+                </Reveal>
+              </div>
+              {FUNDS_CONFIRMED && (
+                <div className="mt-8 grid gap-5 lg:grid-cols-2">
+                  <Reveal className="h-full">
+                    <FundTable
+                      caption="Фонд возмещения вреда — сколько"
+                      hint="Уровень зависит от суммы обязательств по одному договору."
+                      basis="Обязательства по одному договору"
+                      rows={detail.funds.harm.rows}
+                      law={detail.funds.harm.law}
+                    />
+                  </Reveal>
+                  <Reveal delay={70} className="h-full">
+                    <FundTable
+                      caption="Фонд договорных обязательств — сколько"
+                      hint="Уровень зависит от совокупного размера обязательств по конкурентным договорам."
+                      basis="Совокупный размер обязательств"
+                      rows={detail.funds.contract.rows}
+                      law={detail.funds.contract.law}
+                    />
+                  </Reveal>
+                </div>
+              )}
+              <Reveal className="mt-6 rounded-2xl border border-neutral-200 bg-neutral-50 p-5 text-sm leading-relaxed text-neutral-700 sm:p-6">
+                <strong className="font-semibold text-neutral-950">
+                  В таблицах — установленные законом минимумы.
+                </strong>{' '}
+                Меньше СРО установить не вправе, но своими внутренними документами может
+                установить больше. Помимо взносов в компенсационные фонды каждая организация
+                устанавливает вступительный и членские взносы; их размер определяет сама СРО,
+                и точную сумму по конкретной организации назову до оплаты. Уплата взноса
+                в компенсационный фонд в рассрочку или третьими лицами, а также освобождение
+                от него законом не допускаются.
+                <Law>{LAW.funds}</Law>
+              </Reveal>
+            </Section>
+
+            {/* Требования к специалистам и срок — общие для всех трёх видов. */}
+            <Section size="compact" className="bg-neutral-50/55">
+              <div className="grid gap-5 lg:grid-cols-2">
+                <Reveal className="h-full">
+                  <div className="h-full rounded-2xl border border-neutral-200 bg-white p-5 shadow-card sm:p-6">
+                    <h3 className="font-semibold text-neutral-950">Срок рассмотрения заявления</h3>
+                    <p className="mt-2.5 text-sm leading-relaxed text-neutral-600">
+                      Закон отводит саморегулируемой организации не более двух месяцев на
+                      рассмотрение заявления о приёме. На практике решение обычно принимают
+                      быстрее, но конкретный срок определяет сама организация.
+                    </p>
+                    <Law>{LAW.term}</Law>
+                  </div>
+                </Reveal>
+                {detail.regional && (
+                  <Reveal delay={70} className="h-full">
+                    <div className="h-full rounded-2xl border border-neutral-200 bg-white p-5 shadow-card sm:p-6">
+                      <h3 className="font-semibold text-neutral-950">Региональный принцип</h3>
+                      <p className="mt-2.5 text-sm leading-relaxed text-neutral-600">
+                        Строительная компания или предприниматель вступает только в ту СРО,
+                        которая зарегистрирована в том же субъекте Российской Федерации, где
+                        зарегистрирована сама компания. На проектировщиков и изыскателей это
+                        правило не распространяется — они выбирают СРО в любом регионе.
+                      </p>
+                      <Law>{LAW.membership}</Law>
+                    </div>
+                  </Reveal>
+                )}
+              </div>
+            </Section>
+
+            {/* Закрывающий призыв: возвращает на главную, в квиз, с уже
+                выбранным видом СРО — человек не отвечает второй раз на то,
+                что выбрал кликом по карточке. */}
+            <Section size="key" className="bg-accent-950">
+              <Reveal className="mx-auto max-w-3xl text-center">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent-300">
+                  Заявка
+                </p>
+                <h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                  Обсудим вашу ситуацию
+                </h2>
+                <p className="mt-4 text-lg text-neutral-300">
+                  {/* Название вида подставляем как есть: toLowerCase() превращал
+                      аббревиатуру в «сро строителей». */}
+                  Отвечу на вопросы по {detail.card.title}, подберу организацию и назову
+                  порядок действий. Консультация бесплатная.
+                </p>
+                <div className="mt-8 flex flex-wrap justify-center gap-3">
+                  <ButtonLink href={quizWithType(detail.slug)} variant="inverse" size="lg">
+                    Оставить заявку
+                    <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  </ButtonLink>
+                  <ButtonLink href={home()} variant="outlineInverse" size="lg">
+                    На главную
+                  </ButtonLink>
+                </div>
+              </Reveal>
+            </Section>
+          </main>
+          <Footer />
+          <div
+            className="md:hidden"
+            style={{ height: 'calc(4rem + env(safe-area-inset-bottom))' }}
+            aria-hidden="true"
+          />
+          <MobileBar />
+        </div>
+      </div>
+    </LegalProvider>
+  )
+}

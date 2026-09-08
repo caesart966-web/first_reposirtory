@@ -1,18 +1,31 @@
 import { ChevronRight, Phone } from 'lucide-react'
 import { LINKS } from '../content/contacts'
+import { IMAGES } from '../content/images'
 import { BlueprintGrid } from './illustrations'
-import { QUESTIONS, useQuiz, useStartQuiz } from './QuizContext'
 import { ButtonLink } from './ui/Button'
+import { Figure } from './ui/Figure'
+import { anchor } from '../lib/site'
 import { Reveal } from './ui/Reveal'
 
-// Первый вопрос квиза стоит прямо на первом экране: точка конверсии
-// не должна быть в середине страницы.
-const FIRST_QUESTION = QUESTIONS[0]
-
+// Первый экран без карточки квиза.
+//
+// Она стояла здесь и показывала первый вопрос — ровно тот же, с которого
+// начинается сам квиз внизу страницы. Посетитель, доскроллив, видел один и тот
+// же вопрос второй раз. Точку входа это не усиливало: сразу под героем идут
+// «Виды СРО» — те же три карточки с фотографиями, которые тоже заводят квиз,
+// только узнаваемо, а не списком вариантов.
+//
+// Поэтому герой стал тем, чем должен быть: заголовок, суть, два действия.
+//
+// Затем заказчик попросил первый экран «красивее и профессиональнее», но без
+// портрета — публиковать лицо он не будет. Экран стал двухколонным: текст
+// слева, справа его же фотография рабочего стола в фирменном дуотоне. Кадр
+// уже стоит фоном под квизом; здесь он в полную силу, там — приглушён под
+// плёнкой. Страница им открывается и закрывается, в середине его нет.
+//
+// Заголовок в колонке уже, чем был по центру, поэтому на lg его кегль ниже
+// (2.9rem против 3.4rem): иначе он ломался на пять строк.
 export function Hero() {
-  const startQuiz = useStartQuiz()
-  const { answers } = useQuiz()
-
   return (
     <section className="relative overflow-hidden">
       <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
@@ -25,73 +38,52 @@ export function Hero() {
         <BlueprintGrid className="absolute inset-0 h-full w-full text-accent-400/25" />
       </div>
 
-      <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 pb-14 pt-12 sm:px-6 sm:pb-20 sm:pt-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:px-8">
-        <Reveal>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent-600">
-            СРО · НРС · НОК · Документы · Сопровождение
-          </p>
-          <h1 className="mt-5 text-4xl font-bold leading-[1.08] tracking-tight text-neutral-950 sm:text-5xl lg:text-[3.3rem]">
-            Помогу вступить в <span className="text-accent-600">СРО</span> без лишней переписки
-            и&nbsp;ошибок в&nbsp;документах
-          </h1>
-          <p className="mt-6 max-w-xl text-lg text-neutral-600">
-            Подберу СРО, проверю документы, подготовлю необходимые материалы и лично сопровожу
-            процесс.
-          </p>
-          <div className="mt-8 flex flex-wrap items-center gap-3">
-            {/* На телефоне кнопка спрятана: карточка с тем же первым вопросом
-                стоит сразу под ней, и кнопка лишь прокручивала мимо неё. */}
-            <ButtonLink href="#quiz" size="lg" className="hidden sm:inline-flex">
-              Подобрать СРО за 1 минуту
-            </ButtonLink>
-            <ButtonLink href={LINKS.tel} variant="secondary" size="lg">
-              <Phone className="h-4 w-4" aria-hidden="true" />
-              Позвонить
-            </ButtonLink>
-          </div>
-          <p className="mt-6 text-sm text-neutral-600">
-            Работаю по договору · Стоимость обсуждаем до начала работы · Конфиденциально
-          </p>
-        </Reveal>
-
-        <Reveal delay={120}>
-          <div className="relative lg:ml-auto lg:w-full lg:max-w-[480px]">
-            <div className="rounded-3xl border border-neutral-200/90 bg-white/95 p-5 shadow-card backdrop-blur sm:p-7">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent-600">
-                Вопрос 1 из {QUESTIONS.length}
-              </p>
-              <h2 className="mt-3 text-xl font-semibold text-neutral-950 sm:text-2xl">
-                {FIRST_QUESTION.question}
-              </h2>
-              <div className="mt-5 grid gap-2.5">
-                {FIRST_QUESTION.options.map((option) => {
-                  const selected = answers[FIRST_QUESTION.id] === option
-                  return (
-                    <button
-                      key={option}
-                      type="button"
-                      onClick={() => startQuiz(FIRST_QUESTION.id, option)}
-                      className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-3.5 text-left font-medium transition-all duration-150 sm:px-5 ${
-                        selected
-                          ? 'border-accent-600 bg-accent-50 text-accent-800'
-                          : 'border-neutral-200 bg-white text-neutral-800 hover:border-accent-300 hover:bg-accent-50/50'
-                      }`}
-                    >
-                      {option}
-                      <ChevronRight
-                        className="h-4 w-4 shrink-0 text-accent-500"
-                        aria-hidden="true"
-                      />
-                    </button>
-                  )
-                })}
-              </div>
-              <p className="mt-4 text-sm text-neutral-500">
-                1 минута, {QUESTIONS.length} вопроса. Отвечу лично.
-              </p>
+      <div className="mx-auto w-full max-w-6xl px-4 pb-12 pt-10 sm:px-6 sm:pb-16 sm:pt-14 lg:px-8">
+        <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14">
+          <Reveal className="text-center lg:text-left">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent-600">
+              СРО · НРС · НОК · Документы · Сопровождение
+            </p>
+            <h1 className="mt-5 text-4xl font-bold leading-[1.08] tracking-tight text-neutral-950 sm:text-5xl lg:text-[2.9rem]">
+              Вступление в <span className="text-accent-600">СРО</span> под&nbsp;ключ
+            </h1>
+            <p className="mx-auto mt-6 max-w-2xl text-lg text-neutral-600 lg:mx-0">
+              Для строительных, проектных и изыскательских организаций. Подберу подходящую СРО,
+              подготовлю документы и сопровожу до внесения в реестр членов.
+            </p>
+            {/* Кнопка подбора видна и на телефоне: раньше её прятали, потому что
+                карточка с тем же вопросом стояла сразу под ней. Карточки больше
+                нет, и прятать нечего. */}
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
+              <ButtonLink href={anchor('#types')} size="lg">
+                Подобрать СРО за 1 минуту
+                <ChevronRight className="h-4 w-4" aria-hidden="true" />
+              </ButtonLink>
+              <ButtonLink href={LINKS.tel} variant="secondary" size="lg">
+                <Phone className="h-4 w-4" aria-hidden="true" />
+                Позвонить
+              </ButtonLink>
             </div>
-          </div>
-        </Reveal>
+            {/* «Стоимость обсуждаем до начала работы» отсюда убрано: ровно это
+                написано в подзаголовке «Стоимости», а место в строке занял
+                главный довод — консультация ничего не стоит. */}
+            <p className="mt-6 text-sm text-neutral-600">
+              Консультация бесплатная · Работаю по договору · Конфиденциально
+            </p>
+          </Reveal>
+
+          {/* Подложка со сдвигом вниз-вправо даёт кадру глубину фирменным
+              цветом — вместо тени, которая на светлом фоне читалась бы грязью.
+              Кадр грузится сразу (priority): это самый большой элемент первого
+              экрана, и ленивый он ронял бы оценку скорости. */}
+          <Reveal delay={120} className="relative mx-auto w-full max-w-xl lg:max-w-none">
+            <div
+              className="absolute inset-0 translate-x-4 translate-y-4 rounded-2xl bg-accent-100/80"
+              aria-hidden="true"
+            />
+            <Figure {...IMAGES.hero} priority className="relative" />
+          </Reveal>
+        </div>
       </div>
     </section>
   )

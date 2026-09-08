@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { asset } from '../../lib/site'
 
 // Один компонент на все фотослоты страницы: иначе у четырёх картинок из четырёх
 // мест разъедутся скругления, рамки и отступы.
@@ -58,9 +59,9 @@ export function Figure({
         }
       >
         <picture>
-          {srcAvif && <source type="image/avif" srcSet={srcAvif} />}
+          {srcAvif && <source type="image/avif" srcSet={asset(srcAvif)} />}
           <img
-            src={src}
+            src={asset(src)}
             alt={alt}
             width={width}
             height={height}
