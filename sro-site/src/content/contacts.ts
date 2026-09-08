@@ -47,47 +47,18 @@ export const LINKS = {
 
 export type MessengerKey = 'whatsapp' | 'telegram' | 'max'
 
-export type MessengerTargets = {
-  /** Универсальная ссылка: на телефоне открывает приложение. */
-  universal: (text?: string) => string
-  /** Веб-версия для компьютера — в новую вкладку, минуя страницу-прокладку. */
-  web: ((text?: string) => string) | null
-  /** Приложение на компьютере — схема, которую перехватывает программа. */
-  app: ((text?: string) => string) | null
-}
-
-// Номер и имя пользователя берутся из ссылок выше, а не дублируются: одно
-// место правды на канал. Только WhatsApp принимает текст сообщения в ссылке.
-const WHATSAPP_PHONE = CONTACTS.whatsapp.replace(/^https:\/\/wa\.me\//, '')
-const TELEGRAM_USER = CONTACTS.telegram.replace(/^https:\/\/t\.me\//, '')
-const withText = (prefix: string, joiner: '?' | '&', text?: string) =>
-  text ? `${prefix}${joiner}text=${encodeURIComponent(text)}` : prefix
-
-// Адреса веб-версий и схемы приложений — официальные форматы самих
-// мессенджеров: web.whatsapp.com/send и whatsapp://send у WhatsApp,
-// web.telegram.org/k/#@имя и tg://resolve у Telegram. У MAX опубликованного
-// адреса веб-версии чата нет — на компьютере открывается ссылка профиля.
-export const MESSENGER_TARGETS: Record<MessengerKey, MessengerTargets | null> = {
-  whatsapp: CONFIGURED.whatsapp
-    ? {
-        universal: (text) => withText(CONTACTS.whatsapp, '?', text),
-        web: (text) => withText(`https://web.whatsapp.com/send?phone=${WHATSAPP_PHONE}`, '&', text),
-        app: (text) => withText(`whatsapp://send?phone=${WHATSAPP_PHONE}`, '&', text),
-      }
-    : null,
-  telegram: CONFIGURED.telegram
-    ? {
-        universal: () => CONTACTS.telegram,
-        web: () => `https://web.telegram.org/k/#@${TELEGRAM_USER}`,
-        app: () => `tg://resolve?domain=${TELEGRAM_USER}`,
-      }
-    : null,
-  max: CONFIGURED.max ? { universal: () => CONTACTS.max, web: null, app: null } : null,
+// Ссылка канала. Готовый текст сообщения умеет принимать только WhatsApp:
+// t.me и max.ru параметра text не знают, там просто открывается диалог.
+// Пока ссылка — плейсхолдер, ведёт к подвалу, как и LINKS.
+export function messengerHref(channel: MessengerKey, text?: string): string {
+  const href = LINKS[channel]
+  if (channel !== 'whatsapp' || !text || !CONFIGURED.whatsapp) return href
+  return `${href}${href.includes('?') ? '&' : '?'}text=${encodeURIComponent(text)}`
 }
 
 // Ссылки мессенджеров открываются В ТОЙ ЖЕ вкладке НА ТЕЛЕФОНЕ, и это не
-// упущение. На компьютере — см. components/MessengerLink.tsx: там кнопка
-// предлагает веб-версию (новая вкладка) или приложение.
+// упущение. На компьютере — в новой вкладке; и то и другое делает
+// components/MessengerLink.tsx, а не сами ссылки здесь.
 // Раньше на них стояли target="_blank" + rel="noopener noreferrer", и на
 // телефоне они не открывали приложение: ни iOS, ни Chrome на Android не
 // запускают universal link / app link, если переход идёт в новую вкладку —

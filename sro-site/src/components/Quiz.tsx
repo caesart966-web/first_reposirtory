@@ -184,32 +184,21 @@ export function Quiz() {
     answers,
   })
   // Три мессенджера — одни и те же на экране успеха и на экране ошибки.
-  // На компьютере кнопка предлагает веб-версию или приложение, на телефоне
-  // открывает приложение сразу. Готовый текст заявки умеет принимать только
-  // WhatsApp; в Telegram и MAX просто открывается диалог. Меню раскрывается
-  // вверх: кнопки стоят у нижнего края карточки, и вниз оно вылезало бы на
-  // тёмный фон секции. У WhatsApp оно прижато к правому краю кнопки: на
-  // экране ошибки эта кнопка крайняя в ряду, и по центру меню выходило за
-  // край карточки.
+  // На компьютере открываются в новой вкладке, на телефоне — сразу в
+  // приложении (см. MessengerLink). Готовый текст заявки умеет принимать
+  // только WhatsApp; в Telegram и MAX просто открывается диалог.
   const messengerButtons = (
     <>
       <MessengerLink
         channel="whatsapp"
         label="WhatsApp"
         text={leadMessage}
-        direction="up"
-        align="end"
         className={buttonClasses('secondary')}
       >
         <WhatsAppIcon className="h-4 w-4" />
         WhatsApp
       </MessengerLink>
-      <MessengerLink
-        channel="telegram"
-        label="Telegram"
-        direction="up"
-        className={buttonClasses('secondary')}
-      >
+      <MessengerLink channel="telegram" label="Telegram" className={buttonClasses('secondary')}>
         <TelegramIcon className="h-4 w-4" />
         Telegram
       </MessengerLink>
