@@ -9,6 +9,9 @@
     <!-- TODO: замените example.com на реальный домен сайта -->
     <link rel="canonical" href="https://example.com/uslugi/specialisty-nrs/" />
     <link rel="icon" type="image/svg+xml" href="../../favicon.svg" />
+    <!-- Safari не берёт SVG для ярлыка «на экран Домой»: без PNG
+         вместо знака компании там окажется скриншот страницы. -->
+    <link rel="apple-touch-icon" href="../../apple-touch-icon.png" />
     <meta name="theme-color" content="#ffffff" />
     <meta property="og:type" content="article" />
     <meta property="og:locale" content="ru_RU" />
@@ -34,6 +37,124 @@
         }
       </style>
     </noscript>
+    <!-- Микроразметка Schema.org, собрана scripts/build-jsonld.mjs -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://example.com/#organization",
+            "name": "ООО «БИЗНЕС-ГРУПП»",
+            "legalName": "ООО «БИЗНЕС-ГРУПП»",
+            "url": "https://example.com/",
+            "logo": "https://example.com/apple-touch-icon.png",
+            "image": "https://example.com/og.png",
+            "description": "Вступление в СРО строителей, проектировщиков и изыскателей: подбор саморегулируемой организации, подготовка документов, специалисты НРС и независимая оценка квалификации, сопровождение до внесения в реестр членов.",
+            "telephone": "+7 900 133-02-19",
+            "email": "9001330219@mail.ru",
+            "taxID": "6164132279",
+            "address": {
+              "@type": "PostalAddress",
+              "addressCountry": "RU",
+              "addressRegion": "Ростовская область",
+              "addressLocality": "Ростов-на-Дону",
+              "streetAddress": "ул. Социалистическая, зд. 74, офис 406/19"
+            },
+            "areaServed": [
+              {
+                "@type": "AdministrativeArea",
+                "name": "Санкт-Петербург"
+              },
+              {
+                "@type": "AdministrativeArea",
+                "name": "Ленинградская область"
+              },
+              {
+                "@type": "AdministrativeArea",
+                "name": "Москва"
+              },
+              {
+                "@type": "AdministrativeArea",
+                "name": "Московская область"
+              },
+              {
+                "@type": "AdministrativeArea",
+                "name": "Республика Татарстан, Казань"
+              },
+              {
+                "@type": "AdministrativeArea",
+                "name": "Нижний Новгород"
+              },
+              {
+                "@type": "AdministrativeArea",
+                "name": "Кострома"
+              },
+              {
+                "@type": "AdministrativeArea",
+                "name": "Уфа"
+              },
+              {
+                "@type": "AdministrativeArea",
+                "name": "Свердловская область, Екатеринбург"
+              },
+              {
+                "@type": "AdministrativeArea",
+                "name": "Краснодарский край"
+              },
+              {
+                "@type": "AdministrativeArea",
+                "name": "Ростов-на-Дону"
+              },
+              {
+                "@type": "AdministrativeArea",
+                "name": "Крым"
+              },
+              {
+                "@type": "AdministrativeArea",
+                "name": "Красноярск"
+              },
+              {
+                "@type": "AdministrativeArea",
+                "name": "Иркутск"
+              },
+              {
+                "@type": "AdministrativeArea",
+                "name": "Республика Саха, Якутск"
+              }
+            ],
+            "sameAs": [
+              "https://wa.me/79001330219",
+              "https://t.me/Igor_bgspb",
+              "https://max.ru/u/f9LHodD0cOJH-7DT2fACPZwYLPwbc7t7KpCPXfuGhpg987BNumzPfeB0RNk"
+            ]
+          },
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Главная",
+                "item": "https://example.com/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Услуги",
+                "item": "https://example.com/#services"
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Специалисты НРС",
+                "item": "https://example.com/uslugi/specialisty-nrs/"
+              }
+            ]
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <!-- data-service — какую услугу показывать, data-root — глубина страницы
