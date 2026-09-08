@@ -1,5 +1,5 @@
 ---
-import { OFFER, OFFER_DISCLAIMER } from '../config/offer'
+import { OFFER } from '../config/offer'
 import { href } from '../config/site'
 import Icon from './Icon.astro'
 
@@ -41,10 +41,6 @@ import Icon from './Icon.astro'
       </ol>
 
       <div class="ofoot">
-        <p class="odis">
-          <Icon name="alert" size={16} />
-          <span>{OFFER_DISCLAIMER}</span>
-        </p>
         <div class="oacts">
           <a class="btn btn--white btn--lg" href={href('/kontakty/#form')}>Узнать условия для моей компании</a>
           <a class="oplus" href={href('/uslugi/marketing/')}>
@@ -136,21 +132,6 @@ import Icon from './Icon.astro'
   .ob p { margin: 0; color: rgba(255, 255, 255, 0.82); font-size: 14.5px; line-height: 1.6; }
 
   .ofoot { display: grid; gap: 18px; }
-  .odis {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: 11px;
-    align-items: start;
-    margin: 0;
-    padding: 15px 17px;
-    background: rgba(255, 255, 255, 0.12);
-    border-radius: var(--r-m);
-    color: rgba(255, 255, 255, 0.92);
-    font-size: 14px;
-    line-height: 1.6;
-  }
-  .odis :global(svg) { margin-top: 2px; flex: none; }
-
   .oacts { display: grid; gap: 14px; justify-items: start; align-items: center; }
   @media (min-width: 760px) {
     .oacts { grid-template-columns: auto minmax(0, 1fr); gap: 22px; }
