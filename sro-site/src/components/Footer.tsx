@@ -127,15 +127,13 @@ export function Footer() {
                 )}
                 {MESSENGERS.length > 0 && (
                   <li className="flex flex-wrap gap-1.5 pt-1">
-                    {/* На компьютере кнопка предлагает «веб-версия /
-                        приложение», на телефоне открывает приложение сразу.
-                        Меню раскрывается вверх: подвал у нижней кромки. */}
+                    {/* На компьютере откроется в новой вкладке, на телефоне —
+                        сразу приложение; см. MessengerLink. */}
                     {MESSENGERS.map((channel) => (
                       <MessengerLink
                         key={channel.label}
                         channel={channel.id}
                         label={channel.label}
-                        direction="up"
                         className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 px-2.5 py-1.5 text-[13px] font-medium text-white transition hover:border-accent-300 hover:bg-white/10"
                       >
                         <channel.icon className="h-4 w-4 shrink-0 text-accent-300" />
