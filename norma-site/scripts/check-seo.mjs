@@ -272,7 +272,7 @@ if (!existsSync(rssPath)) {
 }
 
 // ── Значки, манифест и ключ IndexNow ──────────────────────────────────────
-for (const f of ['favicon.svg', 'favicon-32.png', 'favicon-192.png', 'apple-touch-icon.png', 'logo-512.png', 'og.png', 'site.webmanifest']) {
+for (const f of ['favicon.svg', 'favicon-32.png', 'favicon-192.png', 'apple-touch-icon.png', 'logo-512.png', 'og.jpg', 'site.webmanifest']) {
   if (!existsSync(join(root, f))) bad(`в сборке нет файла ${f}`)
 }
 
