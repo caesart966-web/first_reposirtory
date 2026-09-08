@@ -149,7 +149,12 @@ const fmt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 
 
   .row-foot { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
   .go { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 15px; color: var(--acc-deep); text-decoration: none; }
-  .rel { font-size: 13.5px; color: var(--muted); }
+  .rel {
+    font-size: 13.5px;
+    color: var(--muted);
+    padding-block: 6px;
+    margin-block: -6px;
+  }
 
   .ask {
     margin-top: 32px;

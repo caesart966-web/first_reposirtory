@@ -272,14 +272,22 @@ const stats = [
     inset: 0;
     z-index: -1;
     background-size: cover;
-    background-position: 76% center;
-    filter: saturate(0.62) contrast(1.04) brightness(1.03);
-    opacity: 0.42;
+    /* Точка кадра выбрана под раскладку: слева колонка заголовка,
+       и туда фотография не заходит вовсе, а в правой части остаются
+       весы и рука с документом. */
+    background-position: 78% 60%;
+    /* Кадр темнее прежнего (подпись документов снята в тёмном кабинете),
+       поэтому и приглушён сильнее, и уходит от текста дальше: при opacity
+       0.42 и старой маске подпись под кнопками давала 4.46:1 при норме 4.5.
+       Это поймала не глазомерная проверка, а замер настоящих пикселей —
+       scripts/test-hero-photo.mjs. */
+    filter: saturate(0.62) contrast(1.04) brightness(1.06);
+    opacity: 0.36;
     mask-image:
-      linear-gradient(90deg, transparent 0%, transparent 36%, rgba(0, 0, 0, 0.4) 62%, #000 86%),
+      linear-gradient(90deg, transparent 0%, transparent 42%, rgba(0, 0, 0, 0.4) 66%, #000 88%),
       linear-gradient(180deg, transparent 0%, #000 12%, #000 76%, transparent 99%);
     -webkit-mask-image:
-      linear-gradient(90deg, transparent 0%, transparent 36%, rgba(0, 0, 0, 0.4) 62%, #000 86%),
+      linear-gradient(90deg, transparent 0%, transparent 42%, rgba(0, 0, 0, 0.4) 66%, #000 88%),
       linear-gradient(180deg, transparent 0%, #000 12%, #000 76%, transparent 99%);
     mask-composite: intersect;
     -webkit-mask-composite: source-in;
@@ -551,8 +559,13 @@ const stats = [
   .d { font-size: 13.5px; color: var(--muted); line-height: 1.45; }
   .stat .law { justify-self: start; margin-top: 7px; }
 
+  /* minmax(0, 1fr), а не 1fr: у 1fr нижняя граница — min-content,
+     и чип со статьёй («ч. 2.1 ст. 52 ГрК РФ», он неразрывный) раздвигал
+     колонку до 163 px при 140 доступных. Строка цифр вылезала за экран
+     и обрезалась по краю первого экрана — последние два числа читались
+     наполовину. */
   @media (max-width: 900px) {
-    .stats { grid-template-columns: repeat(2, 1fr); }
+    .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .stat { border-left: 0; padding: 20px 14px 20px 0; }
     .stat:nth-child(n + 3) { border-top: 1px solid var(--line); }
   }
@@ -560,5 +573,14 @@ const stats = [
   @media (max-width: 560px) {
     .cta .btn { width: 100%; }
     .v { font-size: 26px; }
+  }
+
+  /* На самом узком телефоне два столбца не спасает и minmax: под чип
+     остаётся 140 px, а он неразрывный. Числа встают в один столбец —
+     их всего четыре, и по одному они читаются лучше, чем в обрез. */
+  @media (max-width: 400px) {
+    .stats { grid-template-columns: 1fr; }
+    .stat { padding: 18px 0; }
+    .stat:nth-child(n + 2) { border-top: 1px solid var(--line); }
   }
 </style>

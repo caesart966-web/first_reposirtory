@@ -14,16 +14,24 @@ interface Props {
   schema?: object[]
   /** Хлебные крошки: [{ label, url }] — последний элемент текущая страница */
   breadcrumbs?: { label: string; url?: string }[]
+  /** Закрыть страницу от поиска независимо от режима сборки (страница 404). */
+  noindex?: boolean
 }
 
-const { title, description, schema = [], breadcrumbs = [] } = Astro.props
+const { title, description, schema = [], breadcrumbs = [], noindex: noindexProp = false } = Astro.props
 
 // Полный адрес страницы: нужен для canonical, Open Graph и микроразметки.
 const canonical = new URL(Astro.url.pathname, Astro.site).toString()
 
 // Черновик на превью-ссылке не должен попадать в поиск. Боевая сборка на своём
 // домене делается без NOINDEX — тогда сайт открыт для индексации.
-const noindex = import.meta.env.PUBLIC_NOINDEX === '1'
+//
+// Плюс отдельные страницы могут закрываться сами, пропом noindex. Так делает
+// страница 404: она отдаётся по любому несуществующему адресу, и попасть
+// в выдачу ей нельзя ни в каком режиме сборки. Проп раньше передавался,
+// но layout его не читал — на боевой сборке (без PUBLIC_NOINDEX) страница
+// «Такой страницы нет» вышла бы в поиск с меткой index, follow.
+const noindex = import.meta.env.PUBLIC_NOINDEX === '1' || noindexProp
 
 // Организация — базовый блок разметки, есть на каждой странице.
 const orgSchema = {
@@ -72,7 +80,10 @@ const graph = {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    <link rel="canonical" href={canonical} />
+    {/* У страницы, закрытой от поиска, canonical только вредит: 404
+        отдаётся по любому несуществующему адресу, и указывать «настоящий»
+        адрес ей не на что. */}
+    {!noindexProp && <link rel="canonical" href={canonical} />}
     <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow'} />
 
     <!-- Шрифты грузим заранее и в режиме optional (см. styles/fonts.css):

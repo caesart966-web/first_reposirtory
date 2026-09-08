@@ -42,17 +42,17 @@ const year = new Date().getFullYear()
       </div>
 
       <div>
-        <h3>Услуги</h3>
+        <h2>Услуги</h2>
         <ul>{services.map((s) => <li><a href={s.url}>{s.label}</a></li>)}</ul>
       </div>
 
       <div>
-        <h3>Разделы</h3>
+        <h2>Разделы</h2>
         <ul>{pages.map((p) => <li><a href={p.url}>{p.label}</a></li>)}</ul>
       </div>
 
       <div>
-        <h3>Проверить СРО</h3>
+        <h2>Проверить СРО</h2>
         <ul>
           <li><a href={REGISTRIES.nostroy} target="_blank" rel="noopener noreferrer">reestr.nostroy.ru — строители</a></li>
           <li><a href={REGISTRIES.nopriz} target="_blank" rel="noopener noreferrer">nopriz.ru — проектировщики и изыскатели</a></li>
@@ -125,10 +125,18 @@ const year = new Date().getFullYear()
   .fmail:hover { color: var(--acc-bright); }
 
   .msgs { display: flex; gap: 14px; flex-wrap: wrap; }
-  .msgs a { color: var(--acc-bright); text-decoration: none; font-size: 14px; padding: 4px 0; }
+  /* 4 px давали высоту нажатия 23 px — меньше нормы в 24. Восемь дают 31,
+     а строка стоит там же: у .msgs есть свой gap, и вертикальный отступ
+     ссылок на раскладку подвала не влияет. */
+  .msgs a { color: var(--acc-bright); text-decoration: none; font-size: 14px; padding: 8px 0; }
   .msgs a:hover { text-decoration: underline; }
 
-  h3 { color: #fff; font-size: 15px; font-weight: 700; margin-bottom: 12px; }
+  /* Подписи колонок — h2, а не h3, и это не про размер шрифта.
+     На странице 404 в теле нет ни одного h2: там заголовок, карточки
+     ссылок и всё. Подвал с h3 давал последовательность h1 → h3 —
+     пропуск уровня, по которому ходят с экранным диктором. С h2 порядок
+     сходится и там, и на страницах с разделами. */
+  h2 { color: #fff; font-size: 15px; font-weight: 700; margin-bottom: 12px; }
   ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
   ul a { color: var(--on-dark-muted); text-decoration: none; display: inline-block; padding: 4px 0; }
   ul a:hover { color: var(--acc-bright); }
