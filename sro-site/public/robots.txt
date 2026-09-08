@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
 
-# После привязки реального домена добавьте карту сайта:
-# Sitemap: https://example.com/sitemap.xml
+# Карта сайта: список всех одиннадцати адресов для Яндекса и Google.
+# Домен подставляется вместе с остальными — scripts/set-domain.mjs.
+Sitemap: https://example.com/sitemap.xml
