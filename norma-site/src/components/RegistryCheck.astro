@@ -2,7 +2,7 @@
 // Блок проверяемости: прямые ссылки на официальные реестры.
 // Ни один конкурент этого не делает — а это самый простой способ показать,
 // что скрывать нечего.
-import { REGISTRIES, SITE, href } from '../config/site'
+import { REGISTRIES, href } from '../config/site'
 import Icon from './Icon.astro'
 ---
 
@@ -14,9 +14,7 @@ import Icon from './Icon.astro'
       <p>
         Не верьте на слово ни мне, ни кому-либо ещё на этом рынке: статус любой
         саморегулируемой организации и членство любой компании видны в реестрах
-        национальных объединений — бесплатно и за минуту.{' '}
-        <b>Меня в этих реестрах нет</b> — я не СРО, а специалист по вступлению в неё;
-        мои реквизиты для проверки ниже.
+        национальных объединений — бесплатно и за минуту.
       </p>
       <a class="s-more" href={href('/proverit-sro/')}>
         Пять проверок СРО до вступления <Icon name="arrow" size={15} />
@@ -53,55 +51,23 @@ import Icon from './Icon.astro'
       </a>
     </div>
 
-    <!-- Карточка реквизитов в стиле образца. Важное отличие: на образце
-         в такой карточке стоят атрибуты самой СРО — номер в госреестре,
-         число членов, сканы свидетельств. Здесь их быть не может: заказчик
-         не саморегулируемая организация, а специалист, который помогает
-         в неё вступить. Поэтому в карточке только его настоящие реквизиты. -->
-    <div class="ident rv">
-      <h3 class="ident-title">Кто я и как меня проверить</h3>
-
-      <dl class="ident-rows">
-        <div>
-          <dt>Полное наименование</dt>
-          <dd>{SITE.legalName}</dd>
-        </div>
-        <div>
-          <dt>Статус</dt>
-          <dd class="with-mark">
-            Индивидуальный предприниматель
-            <span class="verified"><Icon name="check" size={14} /> проверяется в ЕГРИП</span>
-          </dd>
-        </div>
-        <div>
-          <dt>ИНН</dt>
-          <dd class="mono">{SITE.inn}</dd>
-        </div>
-        {SITE.ogrnip && (
-          <div>
-            <dt>ОГРНИП</dt>
-            <dd class="mono">{SITE.ogrnip}</dd>
-          </div>
-        )}
-        <div>
-          <dt>География</dt>
-          <dd>{SITE.geo}</dd>
-        </div>
-        <div>
-          <dt>Телефон</dt>
-          <dd><a class="ident-phone" href={SITE.phoneHref} data-goal="click_phone">{SITE.phone}</a></dd>
-        </div>
-      </dl>
-
-      <p class="ident-note">
-        <b>Я не саморегулируемая организация.</b> Я не веду реестр, не принимаю взносы
-        и не выдаю документы о членстве: решение принимает СРО, взносы вы переводите
-        напрямую на её счёт. Моя работа — разобрать вашу ситуацию, подобрать СРО
-        и подготовить документы.
-      </p>
-    </div>
-
+    <!-- Карточка реквизитов отсюда убрана.
+         Она повторяла подвал этой же страницы (там наименование, ИНН
+         и ОГРНИП) и страницу контактов, где те же реквизиты лежат
+         с кнопкой «копировать» и ссылками в государственные реестры —
+         то есть в единственном месте, где ими действительно пользуются.
+         На телефоне карточка занимала 748 px, почти экран, и говорила
+         то же самое в третий раз. Оговорка «я не СРО» осталась: она
+         не про реквизиты, а про границу ответственности. -->
     <div class="reg-note rv">
+      <p>
+        <b>Меня в этих реестрах нет, и это правильно.</b> Я не саморегулируемая
+        организация: не веду реестр, не принимаю взносы и не выдаю документы
+        о членстве. Решение принимает СРО, взносы вы переводите напрямую
+        на её счёт. Моя работа — разобрать вашу ситуацию, подобрать СРО
+        и подготовить документы. Реквизиты для проверки —
+        <a href={href('/kontakty/')}>в контактах</a> и в подвале страницы.
+      </p>
       <p>
         <b>Не путайте объединения:</b> НОСТРОЙ — это строители, НОПРИЗ — проектировщики
         и изыскатели. Если на сайте вам предлагают «СРО НОСТРОЙ для проектирования» —
@@ -141,68 +107,10 @@ import Icon from './Icon.astro'
     margin-top: 4px;
   }
 
-  .ident {
-    margin-top: 18px;
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: var(--r-l);
-    padding: 26px 28px;
-  }
-  .ident-title { font-size: 19px; margin-bottom: 20px; }
-  .ident-rows { margin: 0; display: grid; gap: 18px; }
-  .ident-rows > div { display: grid; gap: 4px; }
-  .ident-rows dt {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-  .ident-rows dd { margin: 0; font-size: 16px; }
-  .ident-rows dd.mono { font-family: var(--font-mono); font-size: 15px; }
-  .with-mark { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-  /* Зелёная плашка с галочкой — приём с образца, но подтверждает она
-     проверяемый факт, а не рекламное утверждение. */
-  .verified {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: var(--font-mono);
-    font-size: 12px;
-    color: var(--good);
-    background: var(--good-bg);
-    border: 1px solid color-mix(in srgb, var(--good) 40%, transparent);
-    padding: 4px 11px;
-    border-radius: 999px;
-  }
-  /* Отступы сверху и снизу — чтобы в номер можно было попасть пальцем:
-     по стандарту доступности высота ссылки-кнопки от 24 px. */
-  .ident-phone {
-    font-family: var(--font-mono);
-    font-size: 19px;
-    color: var(--acc-deep);
-    text-decoration: none;
-    display: inline-block;
-    padding: 3px 0;
-  }
-  .ident-phone:hover { text-decoration: underline; }
-  .ident-note {
-    margin-top: 20px;
-    padding-top: 18px;
-    border-top: 1px solid var(--line);
-    font-size: 14px;
-    color: var(--muted);
-    line-height: 1.6;
-    max-width: 78ch;
-  }
-  .ident-note b { color: var(--ink); }
-
-  @media (min-width: 700px) {
-    .ident-rows { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 40px; }
-  }
-
   .reg-note {
     margin-top: 18px;
+    display: grid;
+    gap: 12px;
     background: var(--acc-soft);
     border: 1px solid color-mix(in srgb, var(--acc) 25%, transparent);
     border-radius: var(--r-m);

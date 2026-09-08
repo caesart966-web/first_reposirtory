@@ -1,5 +1,5 @@
 // Собирает картинку-превью (og-image) для мессенджеров и соцсетей.
-// Рисуется в браузере из HTML и сохраняется в public/og.png — 1200×630.
+// Рисуется в браузере из HTML и сохраняется в public/og.jpg — 1200×630.
 //
 // Запуск (после npm install):  node scripts/make-og.mjs
 // Повторять нужно, только если поменялись название, телефон или оформление.
@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 
 const here = dirname(fileURLToPath(import.meta.url))
-const out = resolve(here, '../public/og.png')
+const out = resolve(here, '../public/og.jpg')
 
 // Данные берём из того же конфига, что и сайт, — чтобы картинка не разошлась с текстом.
 const site = await import(resolve(here, '../src/config/site.ts')).catch(() => null)
@@ -36,13 +36,25 @@ const html = `<!doctype html>
     font-family: 'Golos Text', sans-serif;
     padding: 72px 80px;
     display: flex; flex-direction: column; justify-content: space-between;
-    background-image:
-      linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px);
-    background-size: 60px 60px;
     position: relative; overflow: hidden;
   }
-  .glow { position: absolute; inset: 0; background: radial-gradient(760px 440px at 84% 10%, rgba(176,32,43,.22), transparent 70%); }
+  /* Клетка отсюда убрана: заказчик просил убрать её с первого экрана сайта
+     («читается школьной тетрадью»), а на картинке-превью она оставалась —
+     то есть в мессенджерах сайт представлялся тем оформлением, от которого
+     на нём самом отказались. Вместо неё — тот же тёплый свет из угла,
+     что и на первом экране, и вторая, слабая подсветка снизу слева,
+     чтобы низ не был плоским.
+     Картинка сохраняется в JPEG, а не PNG. Проверено на этом же файле:
+     PNG с клеткой весил 144 КБ, PNG с гладкими градиентами — 165, то есть
+     стал хуже. Плавные переходы для PNG тяжелее тонких линий: он хранит
+     каждый оттенок, а их тут тысячи. JPEG для такой картинки — 47 КБ
+     при неотличимом качестве, и og:image его принимает наравне с PNG. */
+  .glow {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(760px 440px at 84% 10%, rgba(176,32,43,.22), transparent 70%),
+      radial-gradient(620px 380px at 6% 96%, rgba(232,99,94,.09), transparent 72%);
+  }
   .row { position: relative; display: flex; align-items: center; gap: 16px; }
   .mark { display: grid; place-items: center; color: #E8635E; }
   .brand b { font-size: 26px; font-weight: 800; letter-spacing: .07em; display: block; line-height: 1.1; }
@@ -76,7 +88,7 @@ const browser = await chromium.launch()
 const page = await browser.newPage({ viewport: { width: 1200, height: 630 } })
 await page.setContent(html, { waitUntil: 'networkidle' })
 await page.waitForTimeout(600) // дать шрифтам дорисоваться
-const buffer = await page.screenshot({ type: 'png' })
+const buffer = await page.screenshot({ type: 'jpeg', quality: 90 })
 await writeFile(out, buffer)
 await browser.close()
 
