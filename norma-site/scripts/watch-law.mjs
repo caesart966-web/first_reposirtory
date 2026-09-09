@@ -115,11 +115,30 @@ const now = { taken: new Date().toISOString().slice(0, 10), sources: {} }
 const changed = []
 const failed = []
 const same = []
+// Норма, снятая впервые ПО ЭТОМУ АДРЕСУ: сравнивать её не с чем.
+// Отдельно от same нарочно — см. пояснение ниже, у отчёта.
+const fresh = []
 
 for (const src of SOURCES) {
   let ok = false
   const tried = []
-  for (const url of src.urls) {
+
+  // Сначала пробуем тот адрес, по которому норму снимали в прошлый раз.
+  //
+  // Зачем. Отпечаток хранится по адресу: у зеркал разное обрамление
+  // страницы, и сравнивать их между собой нельзя. Но если порядок адресов
+  // фиксированный, а первое зеркало иногда не отвечает, робот перескакивает
+  // на запасное — и сравнивать оказывается не с чем. Так и вышло на втором
+  // же запуске: четыре нормы из десяти ушли на запасной источник.
+  // Проверка прошлого адреса первым делает совпадение адресов обычным
+  // случаем, а не удачей.
+  const lastUsed = Object.entries(prev.sources)
+    .filter(([k]) => k.startsWith(src.id + '@'))
+    .map(([, v]) => v.url)
+    .filter(Boolean)
+  const order = [...new Set([...lastUsed, ...src.urls])]
+
+  for (const url of order) {
     try {
       const text = meaningful(await fetchText(url))
       // Слишком короткая страница — заглушка или капча, а не норма.
@@ -135,7 +154,7 @@ for (const src of SOURCES) {
       now.sources[key] = value
 
       const was = prev.sources[key]
-      if (!was) same.push(`${src.what} — снимок по этому адресу сделан впервые`)
+      if (!was) fresh.push(`${src.what} — ${new URL(url).hostname}`)
       else if (src.edition && was.date !== value.date) {
         changed.push({ ...src, url, note: `дата редакции: было ${was.date || 'не найдено'}, стало ${value.date || 'не найдено'}` })
       } else if (!src.edition && was.fp !== value.fp) {
@@ -202,9 +221,28 @@ if (failed.length) {
   lines.push('')
 }
 
+if (fresh.length) {
+  lines.push('## СВЕРИТЬ НЕ С ЧЕМ')
+  for (const f of fresh) lines.push(`- ${f}`)
+  lines.push('')
+  lines.push('Эти нормы сняты впервые по такому адресу — прошлого отпечатка для')
+  lines.push('сравнения нет. Обычно так бывает, когда основной источник не ответил')
+  lines.push('и норму пришлось взять с запасного зеркала. Само по себе это не тревога,')
+  lines.push('но и не «проверено»: на этой неделе за эти нормы робот не ручается.')
+  lines.push('')
+}
+
 if (!changed.length && !failed.length) {
   lines.push('## Всё сошлось')
-  lines.push(`Ни одна из ${SOURCES.length} норм за неделю не менялась.`)
+  if (fresh.length) {
+    // Считаем вслух. Раньше здесь стояло «ни одна из 10 норм не менялась»
+    // независимо от того, сколько из них удалось сравнить, — и робот
+    // отчитывался за работу, которой не делал.
+    lines.push(`Сверено ${same.length} норм из ${SOURCES.length}, расхождений нет.`)
+    lines.push(`Ещё ${fresh.length} снято впервые по новому адресу — их сравнить не с чем.`)
+  } else {
+    lines.push(`Ни одна из ${SOURCES.length} норм за неделю не менялась.`)
+  }
   lines.push('')
 }
 
@@ -227,7 +265,7 @@ if (process.env.GITHUB_OUTPUT) {
   const alarm = changed.length || failed.length || sealNote ? 1 : 0
   writeFileSync(
     process.env.GITHUB_OUTPUT,
-    `changed=${changed.length}\nfailed=${failed.length}\nseal=${sealNote ? 1 : 0}\nalarm=${alarm}\n`,
+    `changed=${changed.length}\nfailed=${failed.length}\nfresh=${fresh.length}\nseal=${sealNote ? 1 : 0}\nalarm=${alarm}\n`,
     { flag: 'a' },
   )
 }
