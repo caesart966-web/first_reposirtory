@@ -130,15 +130,46 @@ function rate_limited(): bool
 function smtp_send(array $to, string $subject, string $body, array $headers, ?string &$error): bool
 {
     $transport = SMTP_PORT === 465 ? 'ssl://' : 'tcp://';
+    $target = $transport . SMTP_HOST . ':' . SMTP_PORT;
+
+    // Привязка к 0.0.0.0 заставляет систему идти по IPv4.
+    //
+    // Без неё на хостинге без IPv6 соединение падает с «Cannot assign
+    // requested address» (код 99) ещё до разговора с сервером: у smtp.mail.ru
+    // есть адрес AAAA, PHP выбирает его первым, а исходящего IPv6 у машины
+    // нет. Ошибка выглядит как «сервер недоступен», хотя недоступен он
+    // только по одному из двух протоколов.
+    $ipv4 = ['socket' => ['bindto' => '0.0.0.0:0']];
     $socket = @stream_socket_client(
-        $transport . SMTP_HOST . ':' . SMTP_PORT,
+        $target,
         $errno,
         $errstr,
         SMTP_TIMEOUT,
         STREAM_CLIENT_CONNECT,
+        stream_context_create($ipv4),
     );
+
+    // Запасной путь: соединяемся по явному адресу IPv4. Имя для проверки
+    // сертификата задаём отдельно — иначе TLS сверит его с цифрами адреса
+    // и откажет.
     if (!$socket) {
-        $error = "не удалось соединиться с " . SMTP_HOST . ':' . SMTP_PORT . " — $errstr ($errno)";
+        foreach (gethostbynamel(SMTP_HOST) ?: [] as $ip) {
+            $socket = @stream_socket_client(
+                $transport . $ip . ':' . SMTP_PORT,
+                $errno,
+                $errstr,
+                SMTP_TIMEOUT,
+                STREAM_CLIENT_CONNECT,
+                stream_context_create($ipv4 + ['ssl' => ['peer_name' => SMTP_HOST]]),
+            );
+            if ($socket) {
+                break;
+            }
+        }
+    }
+
+    if (!$socket) {
+        $error = 'не удалось соединиться с ' . SMTP_HOST . ':' . SMTP_PORT . " — $errstr ($errno)";
         return false;
     }
     stream_set_timeout($socket, SMTP_TIMEOUT);
@@ -314,7 +345,34 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'GET' && isset($_GET['selftest'])) {
     $way = SMTP_USER !== '' ? 'SMTP через ' . SMTP_HOST . ':' . SMTP_PORT : 'функция mail() хостинга';
     echo "Способ отправки: $way\n";
     echo 'Отправитель: ' . (sender() ?: '— не задан —') . "\n";
-    echo 'Получатель:  ' . implode(', ', recipients()) . "\n\n";
+    echo 'Получатель:  ' . implode(', ', recipients()) . "\n";
+    echo 'Пароль SMTP: ' . (SMTP_PASS === '' ? 'НЕ ЗАПОЛНЕН' : 'задан, ' . strlen(SMTP_PASS) . ' символов') . "\n\n";
+
+    // Диагностика соединения. Нужна, чтобы отличить две причины, которые
+    // выглядят одинаково — «сервер недоступен»: нет исходящего IPv6 или
+    // хостинг закрыл почтовые порты. В первом случае помогает привязка к
+    // IPv4, во втором — только обращение в поддержку хостинга.
+    if (SMTP_USER !== '') {
+        $v4 = gethostbynamel(SMTP_HOST) ?: [];
+        echo 'Адреса IPv4: ' . (implode(', ', $v4) ?: 'не разрешаются') . "\n";
+        foreach ([465, 587, 25] as $port) {
+            $probe = @stream_socket_client(
+                'tcp://' . SMTP_HOST . ':' . $port,
+                $pe,
+                $ps,
+                6,
+                STREAM_CLIENT_CONNECT,
+                stream_context_create(['socket' => ['bindto' => '0.0.0.0:0']]),
+            );
+            if ($probe) {
+                echo "Порт $port: открыт\n";
+                fclose($probe);
+            } else {
+                echo "Порт $port: закрыт — $ps ($pe)\n";
+            }
+        }
+        echo "\n";
+    }
 
     $error = null;
     $ok = deliver(
