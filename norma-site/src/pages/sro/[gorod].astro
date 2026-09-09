@@ -6,7 +6,14 @@ import { existsSync } from 'node:fs'
 import Icon from '../../components/Icon.astro'
 import { REGIONS } from '../../config/regions'
 import { LAW, TERMS, FUNDS } from '../../config/facts'
-import { FEES, money } from '../../config/fees'
+import { FEES, FEES_NOTE, money } from '../../config/fees'
+import {
+  partnersOf,
+  partnerFeeKind,
+  partnerKindWord,
+  regDate,
+  PARTNERS_NOTE,
+} from '../../config/partners'
 import { href, SITE } from '../../config/site'
 
 // Страница города: «Вступление в СРО в Москве».
@@ -36,6 +43,37 @@ export async function getStaticPaths() {
 }
 
 const { region: r } = Astro.props
+
+// СРО, с которыми работает заказчик и которые зарегистрированы в этом городе.
+// У большинства городов их нет — тогда раздел не выводится вовсе. Придумывать
+// партнёра под город нельзя: список проверяется по государственному реестру.
+const partners = partnersOf(r.slug)
+const partnersNote = PARTNERS_NOTE[r.slug]
+
+// Условия партнёра = общие условия из fees.ts плюс его собственные отличия.
+// Отличия хранятся отдельно (partner.fees) специально: страница не может
+// молча разойтись с предложением на первом экране — она обязана назвать
+// разницу вслух, и ниже стоит проверка, помечающая такие строки.
+const partnerTerms = partners.map((p) => {
+  const base = FEES[partnerFeeKind(p.reg)]
+  const entry = p.fees?.entry ?? base.entry
+  const member = p.fees?.memberMonth ?? base.memberMonth
+  return {
+    p,
+    kindWord: partnerKindWord(p.reg),
+    since: regDate(p.reg),
+    rows: [
+      { label: 'Вступительный взнос', value: money(entry), other: entry !== base.entry },
+      { label: 'Членский взнос', value: `${money(member)} в месяц`, other: member !== base.memberMonth },
+      { label: `Целевой взнос в ${base.union}`, value: money(base.target), other: false },
+      { label: 'Страхование', value: p.insurance ?? 'не требуется в первый год', other: !!p.insurance },
+    ],
+  }
+})
+
+// Есть ли среди них организация с условиями, отличными от предложения
+// на первом экране. Если есть — под карточками появляется объяснение.
+const hasOther = partnerTerms.some((t) => t.rows.some((row) => row.other))
 
 // Фотография показывается, только если файл действительно лежит в public/img/.
 // Иначе в разметку ушёл бы background-image на несуществующий файл: браузер
@@ -281,6 +319,69 @@ const others = REGIONS.filter((x) => x.slug !== r.slug)
     </div>
   </section>
 
+  <!-- С кем я работаю: СРО, зарегистрированные в этом городе.
+       Раздела нет у городов, где партнёров нет, — выдумывать организацию
+       под город нельзя, каждый номер сверяется по государственному реестру.
+       Стоит перед разделом «Проверяемость» намеренно: следом идёт инструкция,
+       как эти самые номера открыть в реестре и проверить. -->
+  {partners.length > 0 && (
+    <section class="section section--dark" id="partnery" data-anchor>
+      <div class="wrap">
+        <div class="s-head rv">
+          <span class="eyebrow">С кем я работаю</span>
+          <h2>СРО {r.ofCity}, куда <em>вступают мои клиенты</em></h2>
+          <p>
+            Не «подберём что-нибудь подходящее», а список с регистрационными номерами.
+            Каждый номер открывается в государственном реестре: там видно, действует ли
+            организация, какой у неё адрес и кто в ней состоит. Проверьте до того,
+            как что-то подписывать.
+          </p>
+        </div>
+
+        <div class={partners.length === 1 ? 'prt prt--one rv' : 'prt rv'}>
+          {partnerTerms.map((t) => (
+            <article class="pcard">
+              <header class="pc-top">
+                <span class="pc-kind">{t.kindWord} СРО</span>
+                <h3>{t.p.short}</h3>
+                <p class="pc-full">{t.p.name}</p>
+                <p class="pc-reg">{t.p.reg}</p>
+                <p class="pc-since">в реестре с {t.since}</p>
+              </header>
+              <p class="pc-note">{t.p.note}</p>
+              <dl class="pc-fees">
+                {t.rows.map((row) => (
+                  <div class={row.other ? 'pc-row pc-row--other' : 'pc-row'}>
+                    <dt>{row.label}{row.other && <span class="pc-star">*</span>}</dt>
+                    <dd>{row.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </article>
+          ))}
+        </div>
+
+        {hasOther && (
+          <p class="pc-diff rv">
+            Строки со звёздочкой отличаются от условий на первом экране сайта — и это
+            не оговорка мелким шрифтом, а суть дела: вступительный и членский взносы
+            назначает сама СРО своими документами, поэтому у разных организаций они
+            разные. Я показываю условия каждой, а не одну удобную цифру за всех.
+          </p>
+        )}
+
+        <p class="pc-note-city rv">{partnersNote}</p>
+
+        <p class="pc-law rv">
+          Компенсационный фонд в этот список не входит: его размеры установлены законом,
+          одинаковы у всех СРО страны и зависят только от уровня ответственности.
+          <span class="law law--dark">{LAW.funds}</span>
+        </p>
+        <p class="pc-fees-note rv">{FEES_NOTE}</p>
+      </div>
+    </section>
+  )}
+
   <!-- Проверка -->
   <section class="section section--paper">
     <div class="wrap">
@@ -438,6 +539,84 @@ const others = REGIONS.filter((x) => x.slug !== r.slug)
     line-height: 1.1;
   }
   .sum span { font-size: 14px; color: var(--muted); line-height: 1.5; }
+
+  /* Партнёры: карточки-выписки из реестра.
+     Тёмная секция, поэтому все цвета берутся из тёмного набора: на графите
+     обычные --ink и --muted дают чёрным по чёрному. Номер набран моноширинным
+     начертанием — его будут переносить в поиск по реестру глазами и руками,
+     и в моноширинном цифры не сливаются. */
+  .prt {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+    gap: 18px;
+    margin-top: 8px;
+  }
+  /* Одна карточка во всю ширину экрана выглядит растянутой: строки взносов
+     разъезжаются на 1100 px, подпись слева, сумма у правого края. */
+  .prt--one { max-width: 620px; }
+  .pcard {
+    border: 1px solid var(--dark-line);
+    border-radius: var(--r-m);
+    padding: 22px 20px;
+    display: grid;
+    /* Шапка — по содержимому, описание тянется, взносы прижаты к низу:
+       так строки взносов у соседних карточек стоят на одной высоте,
+       и колонку сумм можно читать поперёк, а не только внутри карточки. */
+    grid-template-rows: auto 1fr auto;
+    gap: 14px;
+  }
+  .pc-top { display: grid; gap: 6px; }
+  .pc-kind {
+    font-size: 11.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--acc-bright);
+  }
+  .pcard h3 { margin: 0; font-size: 22px; color: var(--on-dark); }
+  .pc-full { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--on-dark-muted); }
+  .pc-reg {
+    margin: 4px 0 0;
+    font-family: var(--font-mono);
+    font-size: 13.5px;
+    letter-spacing: 0.02em;
+    color: var(--on-dark);
+  }
+  .pc-since { margin: 0; font-size: 13px; color: var(--on-dark-muted); }
+  .pc-note { margin: 0; font-size: 15px; line-height: 1.6; color: var(--on-dark); }
+
+  .pc-fees { margin: 0; display: grid; gap: 0; }
+  .pc-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 4px 14px;
+    padding: 9px 0;
+    border-top: 1px solid var(--dark-line);
+  }
+  .pc-row dt { font-size: 14px; color: var(--on-dark-muted); }
+  .pc-row dd {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 15px;
+    color: var(--on-dark);
+    text-align: right;
+  }
+  .pc-star { color: var(--acc-bright); }
+  .pc-row--other dd { color: var(--acc-bright); }
+
+  .pc-diff,
+  .pc-note-city,
+  .pc-law,
+  .pc-fees-note {
+    max-width: 74ch;
+    line-height: 1.65;
+  }
+  .pc-diff { margin-top: 26px; font-size: 15.5px; color: var(--on-dark); }
+  .pc-note-city { margin-top: 18px; font-size: 15.5px; color: var(--on-dark); }
+  .pc-law { margin-top: 22px; font-size: 14.5px; color: var(--on-dark-muted); }
+  .pc-law .law { margin-left: 8px; vertical-align: middle; }
+  .pc-fees-note { margin-top: 10px; font-size: 14px; color: var(--on-dark-muted); }
 
   .steps-min {
     max-width: 74ch;

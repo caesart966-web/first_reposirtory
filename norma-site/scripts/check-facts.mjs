@@ -104,6 +104,53 @@ for (const c of CHECKS) {
 }
 if (problems === before) console.log('  ✓ значения из facts.ts на страницах совпадают')
 
+// ── 2а. Партнёрские СРО не расходятся с предложением ────────────────────
+// Самый вероятный способ соврать на этом сайте — показать в карточке СРО
+// условия, отличные от тех, что обещаны на первом экране, и не сказать
+// об этом. У двух партнёров из семи условия действительно другие:
+// у ЯРД вступительный взнос 5 000 ₽ вместо 0, у ОРС ещё и членский
+// 10 000 ₽ в месяц вместо 5 000. Это не ошибка — взносы назначает сама
+// СРО, — но промолчать об этом нельзя.
+//
+// Отличия лежат в partners.ts отдельным полем, страница помечает такие
+// строки звёздочкой сама. Проверка следит, что механизм жив: суммы
+// на странице те же, что в конфигурации, а страница с отличиями несёт
+// объяснение. Если кто-то впишет сумму руками мимо конфигурации —
+// расхождение всплывёт здесь, а не у посетителя.
+const before2a = problems
+console.log('\nПартнёрские СРО')
+const { PARTNERS, partnerFeeKind } = await import('../src/config/partners.ts')
+const { FEES, money } = await import('../src/config/fees.ts')
+for (const partner of PARTNERS) {
+  const url = `/sro/${partner.citySlug}/`
+  const page = pages.find((x) => x.url === url)
+  if (!page) { fail(`страница ${url} не найдена, а на ней должна быть СРО «${partner.short}»`); continue }
+  // Суммы из money() набраны неразрывными пробелами, а в тексте страницы
+  // они уже обычные: сводим и то и другое к обычному пробелу.
+  const flat = (x) => x.replace(/\s+/g, ' ')
+  const body = flat(page.body)
+
+  if (!body.includes(partner.reg)) {
+    fail(`${url} — нет регистрационного номера ${partner.reg} («${partner.short}»)`)
+  }
+
+  const base = FEES[partnerFeeKind(partner.reg)]
+  const entry = partner.fees?.entry ?? base.entry
+  const member = partner.fees?.memberMonth ?? base.memberMonth
+  for (const value of [money(entry), `${money(member)} в месяц`, money(base.target)]) {
+    if (!body.includes(flat(value))) {
+      fail(`${url} — у «${partner.short}» не показано «${value}» из конфигурации`)
+    }
+  }
+
+  if (partner.fees || partner.insurance) {
+    if (!body.includes('Строки со звёздочкой')) {
+      fail(`${url} — у «${partner.short}» условия отличаются от предложения, но объяснения на странице нет`)
+    }
+  }
+}
+if (problems === before2a) console.log(`  ✓ ${PARTNERS.length} СРО показаны с условиями из конфигурации`)
+
 // ── 3. Одна норма на одно утверждение ───────────────────────────────────
 // Если порог 10 млн ₽ на одной странице подкреплён ч. 2.1 ст. 52,
 // а на другой — другой статьёй, ошибка есть в одном из двух мест.
