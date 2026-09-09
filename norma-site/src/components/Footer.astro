@@ -1,6 +1,7 @@
 ---
 import { SITE, REGISTRIES, href } from '../config/site'
 import { SERVICES } from '../config/services'
+import { REGIONS } from '../config/regions'
 import LogoMark from './LogoMark.astro'
 
 // Список услуг берётся из config/services.ts, а не переписан здесь руками:
@@ -66,6 +67,23 @@ const year = new Date().getFullYear()
         </p>
       </div>
     </div>
+
+    <!-- Полоса городов.
+         Раздел «Города» лежал только строкой в колонке «Разделы» — это
+         слишком глубоко для страниц, которые отвечают на самые ходовые
+         запросы («вступить в СРО в Москве»). Шестым пунктом в меню он
+         не помещается: на ширине 1000 px шапка от него вылезает за край.
+         Полоса решает обе задачи разом: человек видит свой город на любой
+         странице, а каждая городская страница получает входящую ссылку
+         со всех остальных — для поисковика это сигнал, что раздел важный,
+         и без него города оставались бы на отшибе. -->
+    <nav class="cities" aria-label="Вступление в СРО по городам">
+      <span class="cities-label">Вступление в СРО:</span>
+      {REGIONS.map((r) => (
+        <a href={href(`/sro/${r.slug}/`)}>{r.city}</a>
+      ))}
+      <a class="cities-all" href={href('/sro/')}>все города →</a>
+    </nav>
 
     <div class="legal">
       <p>
@@ -149,4 +167,29 @@ const year = new Date().getFullYear()
   /* Не приглушаем сильнее: на тёмном фоне более бледный серый
      не проходит по контрасту для мелкого текста. */
   .copy { color: var(--on-dark-muted); }
+
+  /* Полоса городов над реквизитами. Мелкая, в одну-две строки:
+     это навигация, а не витрина. Разделители — точки, чтобы полоса
+     читалась строкой, а не списком кнопок. */
+  .cities {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px 14px;
+    margin-top: 40px;
+    padding-top: 26px;
+    border-top: 1px solid var(--dark-line);
+    font-size: 13.5px;
+  }
+  .cities-label { color: var(--on-dark-muted); }
+  .cities a {
+    color: var(--on-dark-muted);
+    text-decoration: none;
+    /* Поле промаха: строка мелкая, а попадать в неё нужно пальцем. */
+    padding-block: 6px;
+    margin-block: -6px;
+  }
+  .cities a:hover { color: var(--acc-bright); }
+  .cities-all { color: var(--acc-bright) !important; }
+
 </style>
