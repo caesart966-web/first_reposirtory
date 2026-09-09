@@ -26,10 +26,12 @@ const PAGES = [
   '/dokumenty/',
   '/proverit-sro/',
   '/baza-znaniy/regionalnyy-princip/',
+  '/sro/',
+  '/sro/moskva/',
 ]
 
 // Ширины, на которых чаще всего ломается: край брейкпоинтов и режим «для ПК».
-const WIDTHS = [360, 390, 480, 640, 767, 768, 899, 900, 980, 1024, 1279, 1360]
+const WIDTHS = [360, 390, 480, 640, 767, 768, 899, 900, 980, 1024, 1099, 1100, 1279, 1360]
 
 const browser = await chromium.launch()
 let failed = 0
