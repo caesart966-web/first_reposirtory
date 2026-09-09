@@ -710,6 +710,29 @@ table.data td.strong { font-weight: 600; }
   .mobile-bar { transition: none; }
 }
 
+/* Печать. Страницы «Документы» и «Стоимость» распечатывают и берут с собой —
+   значит, на бумагу должно попасть содержимое, а не обвязка сайта.
+   Форма заявки и блок консультации занимали в конце полстраницы:
+   на бумаге в них не написать, а лист уходит. */
 @media print {
-  .mobile-bar, .site-header, .site-footer { display: none !important; }
+  .mobile-bar,
+  .site-header,
+  .site-footer,
+  .lead-form,
+  .consult,
+  .crumbs { display: none !important; }
+  /* Тёмные шапки разделов на бумаге съедают тонер и делают текст серым.
+     Красим В ЧЁРНОЕ ВСЁ содержимое, а не перечисленные селекторы: перечислять
+     их — значит однажды пропустить. Уже пропустил: выделенная жирным фраза
+     внутри подзаголовка осталась белой и на белой бумаге исчезла, оставив
+     обрывок «, от вас нужны только сканы». Исключения — те немногие места,
+     где цвет несёт смысл: акцент в заголовке, печать «Сверено» и чип нормы. */
+  .page-head { background: #fff !important; }
+  .page-head, .page-head * { color: #000 !important; }
+  .page-head em { color: var(--acc-deep) !important; }
+  .page-head .stamp, .page-head .stamp * { color: var(--good) !important; }
+  .page-head .law, .page-head .law * { color: var(--acc-deep) !important; }
+  .head-photo { display: none !important; }
+  /* Адрес ссылки рядом с текстом: на бумаге ссылка без адреса бесполезна. */
+  .prose a[href^='http']::after { content: ' (' attr(href) ')'; font-size: 0.85em; }
 }
