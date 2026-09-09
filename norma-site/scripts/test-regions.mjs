@@ -66,11 +66,19 @@ for (const { r, html, text } of pages) {
   checks++
   if (!text.includes(r.trap.slice(0, 40))) bad(`${url}: нет разбора ошибки, который написан для этого города`)
 
+  // У Калининградской области соседних субъектов нет — тогда страница обязана
+  // объяснить это словами, а не молча остаться без раздела.
   checks++
-  for (const n of r.neighbours) {
-    if (!text.includes(n.name.split(' —')[0])) {
-      bad(`${url}: в списке соседних субъектов нет «${n.name}»`)
-      break
+  if (r.neighbours.length === 0) {
+    if (!text.includes('Соседних субъектов')) {
+      bad(`${url}: соседних субъектов нет, но и объяснения этому на странице нет`)
+    }
+  } else {
+    for (const n of r.neighbours) {
+      if (!text.includes(n.name.split(' —')[0])) {
+        bad(`${url}: в списке соседних субъектов нет «${n.name}»`)
+        break
+      }
     }
   }
 
@@ -161,7 +169,12 @@ const shares = sets.map((p) => {
 })
 const min = Math.min(...shares) * 100
 const max = Math.max(...shares) * 100
+const n = pages.length
+const tail = n % 10
+const ten = n % 100
+const gorodov =
+  ten >= 11 && ten <= 14 ? 'городов' : tail === 1 ? 'город' : tail >= 2 && tail <= 4 ? 'города' : 'городов'
 console.log(
-  `✓ Городские страницы в порядке: ${pages.length} городов, ${checks} проверок. ` +
+  `✓ Городские страницы в порядке: ${n} ${gorodov}, ${checks} проверок. ` +
     `Собственного текста на странице ${min.toFixed(0)}–${max.toFixed(0)}% при пороге ${MIN_UNIQUE_SHARE * 100}%.`,
 )

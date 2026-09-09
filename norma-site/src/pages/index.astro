@@ -10,6 +10,7 @@ import ServicesGrid from '../components/ServicesGrid.astro'
 import LeadForm from '../components/LeadForm.astro'
 import Icon from '../components/Icon.astro'
 import { SITE, href } from '../config/site'
+import { REGIONS } from '../config/regions'
 import { LAW, TERMS, FUNDS } from '../config/facts'
 import { FEES, FEES_NOTE, money } from '../config/fees'
 
@@ -25,6 +26,22 @@ import { FEES, FEES_NOTE, money } from '../config/fees'
 // Расхождения на самом деле нет: два-три дня — это последний отрезок,
 // от подачи до выписки. Но читателю это надо показать, а не объяснять
 // в примечании. Поэтому подпись «чьё время» и строка с итогом под лентой.
+// Города для блока «География» — по алфавиту и все до одного.
+// Порядок «по популярности» пришлось бы обосновывать цифрами, которых
+// у меня нет: любой другой список выдумывал бы рейтинг городов.
+const cities = [...REGIONS].sort((a, b) => a.city.localeCompare(b.city, 'ru'))
+const cityCount = REGIONS.length
+const cityTail = cityCount % 10
+const cityTen = cityCount % 100
+const gorodov =
+  cityTen >= 11 && cityTen <= 14
+    ? 'городов'
+    : cityTail === 1
+      ? 'город'
+      : cityTail >= 2 && cityTail <= 4
+        ? 'города'
+        : 'городов'
+
 const steps = [
   {
     t: 'Разбор ситуации',
@@ -259,6 +276,42 @@ const howToSchema = {
 
   <RegistryCheck />
 
+  <!-- География: раздел «Города».
+       Стоит на главной, а не только в подвале и в меню: городские страницы
+       отвечают на запросы вида «вступить в СРО в Москве», и без входящей
+       ссылки с самой сильной страницы сайта они остаются на отшибе.
+       Заодно это единственное место на главной, где сказано, что регион
+       вообще имеет значение — и только для строителей. -->
+  <section class="section section--split" id="goroda" data-anchor>
+    <div class="wrap">
+      <div class="s-head rv">
+        <span class="eyebrow">География</span>
+        <h2>Ваш город <em>и ваш регион</em></h2>
+        <p>
+          Работаю по всей России: документы электронные, приезжать никуда не нужно.
+          Но у строителей регион решает — саморегулируемая организация должна быть
+          зарегистрирована в том же субъекте РФ, что и компания.
+        </p>
+        <span class="law">{LAW.membership}</span>
+      </div>
+      <div class="sbody">
+        <p class="geo-lead rv">
+          У проектировщиков и изыскателей такой привязки нет вовсе: они выбирают
+          организацию в любом регионе страны. Разницу путают даже крупные площадки —
+          <a href={href('/baza-znaniy/regionalnyy-princip/')}>разбор нормы со ссылками</a>.
+        </p>
+        <ul class="geo-cities rv" data-nosearch>
+          {cities.map((r) => (
+            <li><a href={href(`/sro/${r.slug}/`)}>{r.city}</a></li>
+          ))}
+        </ul>
+        <p class="more rv">
+          <a href={href('/sro/')}>Все {cityCount} {gorodov}: субъект, код региона и что здесь путают →</a>
+        </p>
+      </div>
+    </div>
+  </section>
+
   <WhyMe />
 
   <ServicesGrid compact title="Что я делаю" />
@@ -327,6 +380,39 @@ const howToSchema = {
   /* Честный блок */
 
   .more { margin-top: 18px; font-size: 15px; font-weight: 600; }
+
+  /* География: города списком-реестром, а не облаком тегов.
+     Тонкие линейки между строками — та же графика, что у таблиц
+     на «Стоимости»: сайт про документы, и список городов выглядит
+     как перечень в документе. Поле промаха у ссылки — 40 px по высоте
+     при норме 24. */
+  .geo-lead { max-width: 68ch; color: var(--muted); }
+  .geo-cities {
+    list-style: none;
+    margin: 24px 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0 26px;
+    border-top: 1px solid var(--line);
+  }
+  .geo-cities li { border-bottom: 1px solid var(--line); }
+  .geo-cities a {
+    display: block;
+    padding: 10px 2px;
+    font-size: 15px;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .geo-cities a:hover { color: var(--acc-deep); }
+
+  /* На телефоне список встаёт в две колонки и получается семнадцать строк.
+     Поэтому строки здесь ниже: 38 px вместо 40 — всё ещё больше нормы
+     в 24 px для попадания пальцем, но блок короче почти на экран. */
+  @media (max-width: 599px) {
+    .geo-cities { gap: 0 18px; }
+    .geo-cities a { padding: 8px 2px; font-size: 14.5px; }
+  }
 
   /* Стоимость-тизер: карточки в стиле образца */
   .price-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
