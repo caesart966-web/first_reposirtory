@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro'
 import Icon from '../components/Icon.astro'
 import HeadPhoto from '../components/HeadPhoto.astro'
+import { getCollection } from 'astro:content'
 import { href } from '../config/site'
 
 // Страница результатов поиска.
@@ -14,6 +15,10 @@ import { href } from '../config/site'
 //
 // Поиск идёт в браузере: индекс собирается после сборки
 // (scripts/make-search-index.mjs), морфология — в src/lib/search.ts.
+//
+// Число статей считается, а не пишется словом: написанное руками, оно
+// однажды разойдётся с сайтом (на странице 404 уже разошлось).
+const articleCount = (await getCollection('articles')).length
 ---
 
 <Base
@@ -29,7 +34,8 @@ import { href } from '../config/site'
       <span class="eyebrow">Поиск</span>
       <h1>Поиск по сайту</h1>
       <p class="lead">
-        Двадцать страниц и двадцать шесть статей. Введите слово — покажу, где о нём написано.
+        Все страницы сайта и {articleCount} статей базы знаний. Введите слово — покажу,
+        где о нём написано.
       </p>
     </div>
   </section>

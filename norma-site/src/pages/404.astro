@@ -12,7 +12,24 @@
 import Base from '../layouts/Base.astro'
 import Icon from '../components/Icon.astro'
 import HeadPhoto from '../components/HeadPhoto.astro'
+import { getCollection } from 'astro:content'
 import { href, SITE } from '../config/site'
+
+// Число статей считается, а не пишется словом. Написанное словом
+// оно уже разошлось с сайтом: здесь стояло «двадцать четыре разбора»,
+// когда статей было двадцать шесть. Такую ошибку не ловит ни одна
+// проверка — она не противоречит ничему, кроме действительности.
+const articleCount = (await getCollection('articles')).length
+const WORDS: Record<number, string> = {
+  20: 'Двадцать', 21: 'Двадцать один', 22: 'Двадцать два', 23: 'Двадцать три',
+  24: 'Двадцать четыре', 25: 'Двадцать пять', 26: 'Двадцать шесть',
+  27: 'Двадцать семь', 28: 'Двадцать восемь', 29: 'Двадцать девять', 30: 'Тридцать',
+}
+const countWord = WORDS[articleCount] ?? String(articleCount)
+const tail = articleCount % 10
+const ten = articleCount % 100
+const razbor =
+  ten >= 11 && ten <= 14 ? 'разборов' : tail === 1 ? 'разбор' : tail >= 2 && tail <= 4 ? 'разбора' : 'разборов'
 
 const WAYS = [
   {
@@ -35,7 +52,7 @@ const WAYS = [
   },
   {
     t: 'База знаний',
-    d: 'Двадцать четыре разбора: пороги, взносы, отказы, проверки.',
+    d: `${countWord} ${razbor}: пороги, взносы, отказы, проверки.`,
     url: '/baza-znaniy/',
     icon: 'book',
   },
