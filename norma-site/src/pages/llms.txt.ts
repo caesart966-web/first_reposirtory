@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro'
 import { getCollection } from 'astro:content'
 import { SITE } from '../config/site'
 import { SERVICES } from '../config/services'
+import { REGIONS } from '../config/regions'
 import { LAW, THRESHOLD_BUILD, TERMS } from '../config/facts'
 import { FEES } from '../config/fees'
 
@@ -71,6 +72,13 @@ ${line('Контакты', '/kontakty/', 'Телефон, мессенджеры
 ## Услуги
 
 ${SERVICES.map((s) => line(s.title, `/uslugi/${s.slug}/`, s.excerpt)).join('\n')}
+
+## Города
+
+Региональный принцип действует только у строителей: СРО должна быть зарегистрирована в том же субъекте РФ, что и компания (адрес в ЕГРЮЛ или ЕГРИП, а не место работ). У проектировщиков и изыскателей такой привязки нет — они выбирают организацию любого субъекта. Размеры компенсационных фондов установлены законом и по стране одинаковы: город на них не влияет.
+
+${line('Вступление в СРО по городам', '/sro/', 'Оглавление: какой субъект РФ у вашего города и что это меняет.')}
+${REGIONS.map((r) => line(`Вступление в СРО ${r.inCity}`, `/sro/${r.slug}/`, `${r.subject}, код ${r.code}.`)).join('\n')}
 
 ## База знаний
 
