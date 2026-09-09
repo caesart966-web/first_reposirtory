@@ -82,6 +82,12 @@ const sourceOf = (path) => {
 const lastmodFor = (path) => {
   const article = path.match(/^\/baza-znaniy\/([^/]+)\/$/)
   if (article) return articleDates.get(article[1])
+  // Городские страницы собираются одним шаблоном из общего файла данных,
+  // поэтому дата у них общая: когда правился шаблон или сам список городов.
+  if (/^\/sro\/[^/]+\/$/.test(path)) {
+    const dates = ['src/pages/sro/[gorod].astro', 'src/config/regions.ts'].map(gitDate).filter(Boolean)
+    return dates.sort().pop()
+  }
   const src = sourceOf(path)
   return src ? gitDate(src) : undefined
 }
@@ -96,6 +102,10 @@ const RULES = [
   [/^\/$/, 1.0, 'weekly'],
   [/^\/uslugi\/([^/]+\/)?$/, 0.9, 'monthly'],
   [/^\/(stoimost|dokumenty|komu-nuzhna-sro|proverit-sro|kontakty)\/$/, 0.8, 'monthly'],
+  // Городские страницы отвечают на самые ходовые запросы («вступить в СРО
+  // в Москве»), поэтому обходить их стоит следом за услугами.
+  [/^\/sro\/$/, 0.8, 'monthly'],
+  [/^\/sro\/[^/]+\/$/, 0.8, 'monthly'],
   [/^\/baza-znaniy\/$/, 0.7, 'weekly'],
   [/^\/baza-znaniy\/[^/]+\/$/, 0.6, 'monthly'],
   [/^\/politika\/$/, 0.2, 'yearly'],

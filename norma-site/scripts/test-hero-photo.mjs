@@ -52,6 +52,17 @@ const HEADS = [
   '/politika/',
   '/kontakty/',
   '/poisk/',
+  // Города, для которых заказчик готовит свои фотографии. Пока файла нет,
+  // шапка ровно тёмная и замеры проходят по ней; появится файл — те же
+  // замеры пойдут по настоящим пикселям кадра, и проверка скажет,
+  // читается ли поверх него заголовок.
+  '/sro/moskva/',
+  '/sro/sankt-peterburg/',
+  '/sro/rostov-na-donu/',
+  // Страница «не найдено». В список не попадала с самого начала, хотя
+  // фотография в шапке у неё есть: нашлась только тогда, когда проверка
+  // научилась искать неучтённые кадры сама.
+  '/404.html',
 ]
 
 // Надписи, которые встречаются в шапках. Которых на странице нет —
@@ -79,6 +90,34 @@ const TARGETS = [
     texts: HEAD_TEXTS,
   })),
 ]
+
+// Фотография на странице, которой нет в списке выше.
+//
+// Список HEADS написан руками нарочно — чтобы проверка падала, когда кадр
+// поставили на новую страницу и забыли её вписать. Но раньше «падала» она
+// только в теории: не вписал — и никто не заметил, потому что искать было
+// некому. Теперь ищем: обходим собранный сайт и требуем, чтобы у каждой
+// страницы со слоем .head-photo был свой пункт в списке.
+{
+  const { readFileSync: read, readdirSync: dir } = await import('node:fs')
+  const { join, relative } = await import('node:path')
+  const walk = (d) =>
+    dir(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(join(d, e.name)) : join(d, e.name)))
+  const listed = new Set(HEADS)
+  const missed = []
+  for (const file of walk('dist').filter((f) => f.endsWith('.html'))) {
+    if (!read(file, 'utf8').includes('class="head-photo')) continue
+    const url = '/' + relative('dist', file).replace(/index\.html$/, '').replace(/\\/g, '/')
+    if (!listed.has(url) && url !== '/') missed.push(url)
+  }
+  if (missed.length > 0) {
+    console.log('✗ Фотография стоит на страницах, которых нет в списке HEADS этой проверки:')
+    missed.forEach((u) => console.log(`   ${u}`))
+    console.log('  Впишите их в scripts/test-hero-photo.mjs — иначе читаемость текста')
+    console.log('  поверх кадра на них никто не меряет.')
+    process.exit(1)
+  }
+}
 
 const SCREENS = [
   [1280, 1400, 'компьютер'],

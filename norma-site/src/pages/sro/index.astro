@@ -1,0 +1,117 @@
+---
+import Base from '../../layouts/Base.astro'
+import LeadForm from '../../components/LeadForm.astro'
+import { REGIONS } from '../../config/regions'
+import { LAW } from '../../config/facts'
+import { href, SITE } from '../../config/site'
+
+// Оглавление городских страниц.
+//
+// Нужно не только человеку, но и поисковику: без него семнадцать страниц
+// висели бы без единой входящей ссылки, а страница без ссылок для робота
+// почти не существует. Отсюда же на них ведёт подвал.
+//
+// Города отсортированы по алфавиту, а не по «важности»: любой другой порядок
+// пришлось бы обосновывать выдуманными цифрами.
+const list = [...REGIONS].sort((a, b) => a.city.localeCompare(b.city, 'ru'))
+
+const itemList = {
+  '@type': 'ItemList',
+  name: 'Вступление в СРО по городам',
+  itemListElement: list.map((r, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    name: `Вступление в СРО ${r.inCity}`,
+    url: new URL(href(`/sro/${r.slug}/`), Astro.site).toString(),
+  })),
+}
+---
+
+<Base
+  title="Вступление в СРО по городам — регион и выбор организации | НОРМА"
+  description="Какая СРО нужна компании из вашего города: субъект РФ, региональный принцип для строителей и его отсутствие у проектировщиков. Семнадцать городов, работа по всей России."
+  pageType="CollectionPage"
+  schema={[itemList]}
+  breadcrumbs={[{ label: 'Главная', url: href('/') }, { label: 'Города' }]}
+>
+  {/* Фотографии здесь нет — как и на самих городских страницах.
+      Пробовал поставить: штамп «Сверено» пришёлся ровно на светлое пятно
+      кадра и дал 2.13:1 при норме 4.5. Сдвигать кадр ради одной страницы
+      смысла нет — семейство «Города» и так живёт без фотографий. */}
+  <section class="section page-head">
+    <div class="wrap">
+      <span class="eyebrow">География</span>
+      <h1>Вступление в СРО <em>по городам</em></h1>
+      <p class="lead">
+        Работаю по всей России дистанционно. Но у строителей есть региональная привязка:
+        саморегулируемая организация должна быть зарегистрирована в том же субъекте РФ,
+        что и компания. <b>У проектировщиков и изыскателей такой привязки нет вовсе.</b>
+      </p>
+      <div class="head-tags">
+        <span class="stamp">Сверено с законом · {SITE.checkedDate}</span>
+        <span class="law law--dark">{LAW.membership}</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="s-head rv">
+        <span class="eyebrow">Выберите город</span>
+        <h2>Где зарегистрирована <em>ваша компания</em></h2>
+        <p>
+          Важен адрес в ЕГРЮЛ или ЕГРИП, а не место работ и не адрес офиса.
+          Компания может строить в любом конце страны — членство она берёт по своей регистрации.
+        </p>
+      </div>
+
+      <div class="grid-3">
+        {list.map((r) => (
+          <a class="card ccard rv" href={href(`/sro/${r.slug}/`)}>
+            <h3>{r.city}</h3>
+            <span class="csub">{r.subject}</span>
+            <span class="ccode">код {r.code}</span>
+          </a>
+        ))}
+      </div>
+
+      <p class="note rv">
+        Города́ здесь — самые частые, а не все. Работаю со всеми субъектами России:
+        если вашего в списке нет, напишите — разберу вашу ситуацию так же.
+      </p>
+    </div>
+  </section>
+
+  <section class="section" id="zayavka" data-anchor>
+    <div class="wrap narrow">
+      <LeadForm
+        title="Не нашли свой город — напишите"
+        subtitle="Скажите, где зарегистрирована компания и что за работы. Отвечу, нужно ли вам членство, какая организация подойдёт по региону и во что это обойдётся."
+      />
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* .head-tags описан на каждой странице отдельно, общего правила нет. */
+  .head-tags { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 22px; align-items: center; }
+
+  .ccard {
+    display: grid;
+    gap: 6px;
+    align-content: start;
+    text-decoration: none;
+    color: var(--ink);
+  }
+  .ccard h3 { margin: 0; font-size: 21px; }
+  .ccard:hover { border-color: var(--acc); }
+  .csub { font-size: 14.5px; color: var(--muted); line-height: 1.45; }
+  .ccode {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--acc-deep);
+  }
+  .note { margin-top: 28px; max-width: 72ch; color: var(--muted); }
+</style>

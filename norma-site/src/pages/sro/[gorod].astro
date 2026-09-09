@@ -1,0 +1,497 @@
+---
+import Base from '../../layouts/Base.astro'
+import LeadForm from '../../components/LeadForm.astro'
+import HeadPhoto from '../../components/HeadPhoto.astro'
+import { existsSync } from 'node:fs'
+import Icon from '../../components/Icon.astro'
+import { REGIONS } from '../../config/regions'
+import { LAW, TERMS, FUNDS } from '../../config/facts'
+import { FEES, money } from '../../config/fees'
+import { href, SITE } from '../../config/site'
+
+// Страница города: «Вступление в СРО в Москве».
+//
+// ЗАЧЕМ. Запрос с городом — другой запрос, и отвечать на него общей страницей
+// нечем. До этих страниц на сайте не было ни одного упоминания городов,
+// то есть по «вступить в СРО в Москве» ему было нечем ранжироваться вовсе.
+//
+// ЧЕМ ЭТО НЕ ЯВЛЯЕТСЯ. Не дорвеем. Дорвей — это когда двадцать страниц
+// отличаются только подставленным названием города; такое Яндекс и Google
+// распознают и наказывают сайт целиком. Здесь у каждого города свой разбор:
+// какой это субъект РФ, с каким соседним субъектом его путают и чем эта
+// путаница кончается для строителя. Тексты лежат в src/config/regions.ts,
+// а scripts/test-regions.mjs меряет, сколько текста на странице не встречается
+// ни на одной другой, и падает, если мало.
+//
+// ЧЕГО ЗДЕСЬ НЕТ. Обещаний «дешевле в вашем городе» и вымышленных цифр
+// по региону: сколько там СРО и почём. Размеры компенсационных фондов
+// установлены законом и одинаковы по всей стране — об этом на странице
+// сказано прямо, и это сильнее любого «спецпредложения для Москвы».
+//
+// Фотографии в шапке нет намеренно: одна и та же фотография ещё на
+// семнадцати страницах читалась бы размноженной картинкой.
+
+export async function getStaticPaths() {
+  return REGIONS.map((region) => ({ params: { gorod: region.slug }, props: { region } }))
+}
+
+const { region: r } = Astro.props
+
+// Фотография показывается, только если файл действительно лежит в public/img/.
+// Иначе в разметку ушёл бы background-image на несуществующий файл: браузер
+// такое не показывает и молчит, и заметить это можно только случайно.
+// Так заказчик кладёт файл — и снимок появляется сам, без правки кода.
+const photo = r.photo && existsSync(`public/img/${r.photo}`) ? r.photo : undefined
+
+const title = `Вступление в СРО ${r.inCity} — что нужно знать о регионе | НОРМА`
+const description =
+  `Компании ${r.ofCity} нужна СРО, зарегистрированная ${r.inSubject} — это ${r.subject}, код ${r.code}. ` +
+  `Проектировщикам и изыскателям региональной привязки нет вовсе. Взносы установлены законом и по стране одинаковы.`
+
+const pageUrl = new URL(Astro.url.pathname, Astro.site).toString()
+
+const serviceSchema = {
+  '@type': 'Service',
+  name: `Вступление в СРО ${r.inCity}`,
+  description,
+  serviceType: 'Вступление в саморегулируемую организацию',
+  provider: { '@id': new URL('/', Astro.site).toString() + '#org' },
+  areaServed: [
+    { '@type': 'City', name: r.city },
+    { '@type': 'AdministrativeArea', name: r.subject },
+  ],
+  url: pageUrl,
+}
+
+const faq = [
+  {
+    q: `Можно ли компании ${r.ofCity} вступить в СРО другого региона?`,
+    a:
+      `Строителю — нет: организация должна быть зарегистрирована ${r.inSubject}. ` +
+      `Проектировщику и изыскателю — да, любая в стране: региональной привязки у них нет. ` +
+      `Это не мнение, а разные нормы для разных видов работ.`,
+  },
+  {
+    q: `Вступление ${r.inCity} стоит дороже, чем в других городах?`,
+    a:
+      `Нет. Взносы в компенсационные фонды установлены статьёй 55.16 ГрК РФ и одинаковы для всей России: ` +
+      `у строителя первого уровня это ${FUNDS.buildHarm[0].amount}, у проектировщика — ${FUNDS.designHarm[0].amount}. ` +
+      `Разница между организациями бывает во вступительном и членском взносах — их назначает сама СРО, ` +
+      `и сравнивать их стоит внутри своего субъекта.`,
+  },
+  {
+    q: `Нужно ли куда-то ехать ${r.inCity}?`,
+    a:
+      `Нет. Работаю дистанционно по всей России: документы собираются в электронном виде, ` +
+      `подача идёт через СРО, готовая выписка из реестра приходит ${TERMS.extract} с подачи. ` +
+      `Ни ко мне, ни в офис организации приезжать не нужно.`,
+  },
+]
+
+const faqSchema = {
+  '@type': 'FAQPage',
+  mainEntity: faq.map((f) => ({
+    '@type': 'Question',
+    name: f.q,
+    acceptedAnswer: { '@type': 'Answer', text: f.a },
+  })),
+}
+
+// Соседние города списком — чтобы человек, попавший не на свой город,
+// ушёл на нужный, а не обратно в поиск.
+const others = REGIONS.filter((x) => x.slug !== r.slug)
+---
+
+<Base
+  title={title}
+  description={description}
+  schema={[serviceSchema, faqSchema]}
+  breadcrumbs={[
+    { label: 'Главная', url: href('/') },
+    { label: 'Города', url: href('/sro/') },
+    { label: r.city },
+  ]}
+>
+  <section class="section page-head">
+    {/* Фотография своя у города и только если заказчик её положил
+        (см. photo в src/config/regions.ts). Общей фотографии здесь нет
+        намеренно: одна и та же на семнадцати шапках читалась бы
+        размноженной картинкой. */}
+    {photo && <HeadPhoto src={photo} position={r.photoPos} />}
+    <div class="wrap">
+      <nav class="crumbs" aria-label="Хлебные крошки" data-nosearch>
+        <a href={href('/')}>Главная</a>
+        <span aria-hidden="true">/</span>
+        <a href={href('/sro/')}>Города</a>
+      </nav>
+      <span class="eyebrow">Регион</span>
+      <h1>Вступление в СРО <em>{r.inCity}</em></h1>
+      <p class="lead">
+        {r.city} — это <b>{r.subject}</b>, код {r.code} в реестрах. Строительной компании,
+        зарегистрированной здесь, нужна саморегулируемая организация того же субъекта.
+        Проектировщикам и изыскателям — любая в стране.
+      </p>
+      <div class="facts">
+        <div class="fact">
+          <div class="fv">{r.subject}</div>
+          <div class="fd">субъект РФ</div>
+        </div>
+        <div class="fact">
+          <div class="fv">{r.code}</div>
+          <div class="fd">код в реестрах</div>
+        </div>
+        <div class="fact">
+          <div class="fv">Только строителям</div>
+          <div class="fd">региональная привязка</div>
+          <span class="law law--dark">{LAW.membership}</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Что регион меняет, а что нет -->
+  <section class="section section--paper">
+    <div class="wrap">
+      <div class="s-head rv">
+        <span class="eyebrow">Главное про регион</span>
+        <h2>Что регион меняет, <em>а что нет</em></h2>
+        <p>
+          Регион определяется адресом в ЕГРЮЛ или ЕГРИП, а не тем, где стоит объект
+          и где сидит офис. Компания {r.ofCity} вправе работать по всей стране —
+          но членство берёт по месту своей регистрации.
+        </p>
+      </div>
+
+      <div class="grid-2">
+        <div class="card rcard rv">
+          <div class="rc-top"><Icon name="building" size={20} /><span class="host">строителям</span></div>
+          <h3>Привязка есть</h3>
+          <p>
+            СРО должна быть зарегистрирована {r.inSubject}. Организация соседнего субъекта
+            не подойдёт, даже если её условия лучше: требование выполнено не будет,
+            а взнос в компенсационный фонд не возвращается.
+          </p>
+          <a class="go" href={href('/uslugi/sro-stroiteley/')}>
+            Вступление в СРО строителей <Icon name="arrow" size={16} />
+          </a>
+        </div>
+
+        <div class="card rcard rv">
+          <div class="rc-top"><Icon name="ruler" size={20} /><span class="host">проектировщикам и изыскателям</span></div>
+          <h3>Привязки нет</h3>
+          <p>
+            Выбирать можно среди организаций всей России — {r.inCity} вы не ограничены
+            ничем, кроме собственных условий сравнения. Половина сайтов по теме
+            об этом умалчивает и называет одну «вашу» СРО как безальтернативную.
+          </p>
+          <a class="go" href={href('/uslugi/sro-proektirovshchikov/')}>
+            Вступление в СРО проектировщиков <Icon name="arrow" size={16} />
+          </a>
+        </div>
+      </div>
+
+      <p class="more rv">
+        <a href={href('/baza-znaniy/regionalnyy-princip/')}>Разбор регионального принципа со ссылками на нормы →</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- Частая ошибка: у каждого города своя -->
+  <section class="section section--dark">
+    <div class="wrap">
+      <div class="s-head rv">
+        <span class="eyebrow">Осторожно</span>
+        <h2>Ошибка, которую делают <em>именно здесь</em></h2>
+      </div>
+      <div class="trap rv">
+        <p class="trap-main">{r.trap}</p>
+        <p class="trap-more">{r.around}</p>
+      </div>
+
+      <div class="nb rv">
+        <h3>Это соседние субъекты — и это не ваш регион</h3>
+        <p>
+          Если компания зарегистрирована в одном из них, строителю нужна СРО оттуда,
+          а не {r.ofCity}. Проверяется по адресу в ЕГРЮЛ или ЕГРИП.
+        </p>
+        <ul>
+          {r.neighbours.map((n) => (
+            <li>
+              <span class="nb-name">{n.name}</span>
+              <span class="nb-code">{n.code}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Деньги -->
+  <section class="section">
+    <div class="wrap">
+      <div class="s-head rv">
+        <span class="eyebrow">Деньги</span>
+        <h2>{r.inCity} не дороже <em>и не дешевле</em></h2>
+        <p>
+          Размеры компенсационных фондов установлены статьёй 55.16 ГрК РФ и одинаковы
+          по всей стране. Город на них не влияет никак — и если вам обещают
+          «специальную цену для вашего региона», речь идёт не о фондах.
+        </p>
+      </div>
+
+      <div class="sums rv">
+        <div class="sum">
+          <b>{FUNDS.buildHarm[0].amount}</b>
+          <span>компенсационный фонд, строители, первый уровень</span>
+        </div>
+        <div class="sum">
+          <b>{FUNDS.designHarm[0].amount}</b>
+          <span>то же у проектировщиков и изыскателей</span>
+        </div>
+        <div class="sum">
+          <b>{money(FEES.build.entry)}</b>
+          <span>вступительный взнос по моему предложению</span>
+        </div>
+        <div class="sum">
+          <b>{money(0)}</b>
+          <span>мои услуги: подготовка документов и сопровождение</span>
+        </div>
+      </div>
+
+      <p class="more rv">
+        <a href={href('/stoimost/')}>Полная разбивка по уровням ответственности →</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- Проверка -->
+  <section class="section section--paper">
+    <div class="wrap">
+      <div class="s-head rv">
+        <span class="eyebrow">Проверяемость</span>
+        <h2>Как убедиться, что СРО <em>действительно вашего субъекта</em></h2>
+        <p>
+          Верить на слово не нужно никому, включая меня. Регион организации виден
+          в открытом реестре за минуту.
+        </p>
+      </div>
+      <ol class="steps-min rv">
+        <li>Откройте реестр НОСТРОЙ — для строителей, или НОПРИЗ — для проектировщиков и изыскателей.</li>
+        <li>Найдите организацию по названию или регистрационному номеру.</li>
+        <li>Посмотрите её юридический адрес: субъект должен совпадать с вашим — {r.subject}.</li>
+        <li>Там же видно, действует ли сама СРО и не исключена ли она из государственного реестра.</li>
+      </ol>
+      <p class="more rv">
+        <a href={href('/proverit-sro/')}>Пять проверок СРО до вступления →</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- Вопросы -->
+  <section class="section section--tight faq-sec">
+    <div class="wrap">
+      <div class="s-head rv">
+        <h2>Частые вопросы</h2>
+      </div>
+      <div class="faq rv">
+        {faq.map((f, i) => (
+          <details name="regfaq" open={i === 0}>
+            <summary>{f.q}</summary>
+            <div class="fa"><p>{f.a}</p></div>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="zayavka" data-anchor>
+    <div class="wrap narrow">
+      <LeadForm
+        title={`Разберу вашу ситуацию ${r.inCity} — бесплатно`}
+        subtitle={`Напишите вид работ и сумму договора. Скажу, нужно ли вам членство вообще, какая СРО подойдёт по региону и во что это обойдётся. До того, как вы что-то оплатите.`}
+      />
+    </div>
+  </section>
+
+  <!-- Другие города -->
+  <section class="section section--tight" data-nosearch>
+    <div class="wrap">
+      <div class="s-head rv">
+        <h2>Другие города</h2>
+        <p>Регион определяется регистрацией компании. Если ваш адрес в другом субъекте — вам сюда.</p>
+      </div>
+      <div class="cities rv">
+        {others.map((o) => (
+          <a href={href(`/sro/${o.slug}/`)}>{o.city}</a>
+        ))}
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* Блок фактов в шапке. Стили повторяют ServicePage не «для похожести»:
+     у .fact обязана быть НЕПРОЗРАЧНАЯ тёмная подложка. Без неё чип нормы
+     с полупрозрачным фоном ложится прямо на шапку и даёт 3.29:1
+     при норме 4.5 — проверка контраста это поймала. */
+  .facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+    gap: 1px;
+    background: var(--dark-line);
+    border: 1px solid var(--dark-line);
+    border-radius: var(--r-m);
+    overflow: hidden;
+    margin-top: 28px;
+  }
+  .fact { background: var(--dark); padding: 18px 20px; display: grid; gap: 4px; align-content: start; }
+  .fv {
+    font-family: var(--font-head);
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--acc-bright);
+    font-variant-numeric: lining-nums tabular-nums;
+    line-height: 1.2;
+  }
+  .fd { font-size: 13px; color: var(--on-dark-muted); line-height: 1.45; }
+  .fact .law { justify-self: start; margin-top: 4px; }
+
+  .trap {
+    display: grid;
+    gap: 16px;
+    max-width: 78ch;
+  }
+  .trap-main {
+    font-family: var(--font-head);
+    font-size: 20px;
+    line-height: 1.55;
+    color: var(--on-dark);
+    margin: 0;
+  }
+  .trap-more {
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--on-dark-muted);
+    margin: 0;
+  }
+
+  .nb {
+    margin-top: 34px;
+    padding-top: 26px;
+    border-top: 1px solid var(--dark-line);
+    max-width: 78ch;
+  }
+  .nb h3 { margin: 0 0 8px; color: var(--on-dark); font-size: 19px; }
+  .nb > p { margin: 0 0 16px; color: var(--on-dark-muted); line-height: 1.6; }
+  .nb ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  .nb li {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--dark-line);
+    color: var(--on-dark);
+  }
+  .nb li:last-child { border-bottom: 0; }
+  .nb-name { line-height: 1.45; }
+  .nb-code {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--acc-bright);
+    flex: none;
+  }
+
+  .sums {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+    gap: 18px;
+    margin-top: 8px;
+  }
+  .sum {
+    border-top: 2px solid var(--acc);
+    padding-top: 14px;
+    display: grid;
+    gap: 6px;
+  }
+  .sum b {
+    font-family: var(--font-mono);
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1.1;
+  }
+  .sum span { font-size: 14px; color: var(--muted); line-height: 1.5; }
+
+  .steps-min {
+    max-width: 74ch;
+    margin: 0;
+    padding-left: 24px;
+    display: grid;
+    gap: 12px;
+    font-size: 17px;
+    line-height: 1.6;
+  }
+  .steps-min li::marker { color: var(--acc-deep); font-family: var(--font-mono); font-size: 15px; }
+
+  .cities {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .cities a {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    /* Высота ссылки от 24 px — норма попадания пальцем. */
+    padding: 9px 16px;
+    font-size: 15px;
+    color: var(--acc-deep);
+    text-decoration: none;
+    background: var(--paper);
+  }
+  .cities a:hover { border-color: var(--acc); background: var(--acc-soft); }
+
+  .rcard { display: grid; gap: 10px; align-content: start; }
+  .rc-top { display: flex; align-items: center; gap: 10px; color: var(--acc-deep); }
+  .host {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+  }
+  .rcard h3 { margin: 0; }
+  .go {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--acc-deep);
+    text-decoration: none;
+    /* Отступы сверху и снизу, а не margin: по норме доступности высота
+       ссылки-кнопки от 24 px, а строка в 14.5 px давала ровно 23. */
+    padding: 5px 0;
+    margin-top: 2px;
+  }
+  .go:hover { text-decoration: underline; }
+
+  .more { margin-top: 24px; }
+  .more a { font-weight: 600; }
+
+  .faq details { background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-m); overflow: hidden; }
+  .faq { display: grid; gap: 10px; }
+  .faq summary {
+    cursor: pointer;
+    padding: 18px 22px;
+    font-weight: 600;
+    font-size: 17px;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: '+'; color: var(--acc-deep); font-size: 22px; line-height: 1; }
+  .faq details[open] summary::after { content: '−'; }
+  .fa { padding: 0 22px 20px; }
+  .fa p { margin: 0; color: var(--muted); line-height: 1.65; max-width: 78ch; }
+</style>
