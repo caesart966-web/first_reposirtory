@@ -17,7 +17,7 @@
 //   3. Одно утверждение подкреплено везде одной и той же нормой.
 //
 // Запуск: node scripts/check-facts.mjs
-import { readFileSync, readdirSync } from 'fs'
+import { readFileSync, readdirSync, existsSync } from 'fs'
 import { join } from 'path'
 
 const DIST = 'dist'
@@ -125,43 +125,75 @@ const { FEES, money } = await import('../src/config/fees.ts')
 // Организация без подтверждённого номера в реестре на сайт не выходит.
 // Это не ошибка сборки — это напоминание: запись лежит в конфигурации
 // и ждёт одной строки. Молча пропустить её нельзя, иначе о ней забудут.
+// Суммы из money() набраны неразрывными пробелами, а в разметке они уже
+// обычные: сводим и то и другое к обычному пробелу.
+const flat = (x) => x.replace(/\s+/g, ' ')
+
 for (const partner of partnersWaiting) {
   console.log(
     `  · «${partner.short}» (${partner.citySlug}) ждёт регистрационного номера — карточка не публикуется`,
   )
 }
 
+// Разбираем КАРТОЧКУ каждой организации, а не страницу целиком.
+// Первая версия искала сумму по всему тексту страницы — и пропустила
+// настоящую подмену: у АСО «МСК” целевой взнос 0 ₽, и когда шаблон
+// подставил вместо него общие 10 000 ₽, проверка всё равно нашла «0 ₽»
+// в строке вступительного взноса той же карточки и промолчала.
+// Теперь сверяется пара «подпись — значение» внутри своей карточки.
+const strip = (x) => flat(x.replace(/<[^>]+>/g, ' ')).trim()
+
 for (const partner of PARTNERS.filter((p) => p.reg)) {
   const url = `/sro/${partner.citySlug}/`
-  const page = pages.find((x) => x.url === url)
-  if (!page) { fail(`страница ${url} не найдена, а на ней должна быть СРО «${partner.short}»`); continue }
-  // Суммы из money() набраны неразрывными пробелами, а в тексте страницы
-  // они уже обычные: сводим и то и другое к обычному пробелу.
-  const flat = (x) => x.replace(/\s+/g, ' ')
-  const body = flat(page.body)
+  const file = join(DIST, 'sro', partner.citySlug, 'index.html')
+  if (!existsSync(file)) { fail(`страница ${url} не собрана, а на ней должна быть СРО «${partner.short}»`); continue }
+  const html = readFileSync(file, 'utf8')
 
-  if (!body.includes(partner.reg)) {
-    fail(`${url} — нет регистрационного номера ${partner.reg} («${partner.short}»)`)
-  }
+  const card = html.split('<article class="pcard"').slice(1).find((c) => c.includes(partner.reg))
+  if (!card) { fail(`${url} — нет карточки с номером ${partner.reg} («${partner.short}»)`); continue }
+
+  const rows = [...card.matchAll(/<div class="(pc-row[^"]*)"[^>]*>\s*<dt[^>]*>([\s\S]*?)<\/dt>\s*<dd[^>]*>([\s\S]*?)<\/dd>/g)]
+    // Пометка ищется по ЗВЁЗДОЧКЕ в подписи, а не по классу строки: класс
+    // задаёт только цвет, читателю он не виден. Проверка по классу пропускала
+    // подделку, в которой звёздочка со страницы исчезала, а класс оставался, —
+    // то есть отличие переставало быть названным, и никто не замечал.
+    .map((m) => ({ marked: m[2].includes('pc-star'), label: strip(m[2]).replace(/\s*\*$/, ''), value: strip(m[3]) }))
 
   const base = FEES[partnerFeeKind(partner.reg)]
   const entry = partner.fees?.entry ?? base.entry
   const member = partner.fees?.memberMonth ?? base.memberMonth
-  for (const value of [money(entry), `${money(member)} в месяц`, money(base.target)]) {
-    if (!body.includes(flat(value))) {
-      fail(`${url} — у «${partner.short}» не показано «${value}» из конфигурации`)
+  const target = partner.fees?.target ?? base.target
+  const expected = [
+    { label: 'Вступительный взнос', value: money(entry), other: entry !== base.entry },
+    { label: 'Членский взнос', value: `${money(member)} в месяц`, other: member !== base.memberMonth },
+    { label: `Целевой взнос в ${base.union}`, value: money(target), other: target !== base.target },
+    { label: 'Страхование', value: partner.insurance ?? 'не требуется в первый год', other: !!partner.insurance },
+  ]
+
+  for (const want of expected) {
+    const row = rows.find((r) => r.label === want.label)
+    if (!row) { fail(`${url} — у «${partner.short}» нет строки «${want.label}»`); continue }
+    if (row.value !== flat(want.value)) {
+      fail(`${url} — у «${partner.short}» в строке «${want.label}» стоит «${row.value}», а в конфигурации «${flat(want.value)}»`)
+    }
+    // Отличие от предложения на первом экране обязано быть НАЗВАНО.
+    // Это и есть главное, что здесь стережётся: показать чужие условия
+    // молча — то же самое, что подменить их.
+    if (want.other && !row.marked) {
+      fail(`${url} — у «${partner.short}» строка «${want.label}» отличается от предложения, но не помечена`)
+    }
+    if (!want.other && row.marked) {
+      fail(`${url} — у «${partner.short}» строка «${want.label}» помечена как отличие, хотя совпадает с предложением`)
     }
   }
 
-  if (partner.fees || partner.insurance) {
-    if (!body.includes('Строки со звёздочкой')) {
-      fail(`${url} — у «${partner.short}» условия отличаются от предложения, но объяснения на странице нет`)
-    }
+  if (expected.some((e) => e.other) && !flat(html).includes('Строки со звёздочкой')) {
+    fail(`${url} — у «${partner.short}» условия отличаются от предложения, но объяснения на странице нет`)
   }
 }
 if (problems === before2a) {
   const shown = PARTNERS.length - partnersWaiting.length
-  console.log(`  ✓ ${shown} СРО показаны с условиями из конфигурации`)
+  console.log(`  ✓ ${shown} СРО: суммы в карточках совпадают с конфигурацией, отличия названы`)
 }
 
 // ── 3. Одна норма на одно утверждение ───────────────────────────────────

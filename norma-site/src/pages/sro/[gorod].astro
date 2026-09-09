@@ -58,6 +58,7 @@ const partnerTerms = partners.map((p) => {
   const base = FEES[partnerFeeKind(p.reg)]
   const entry = p.fees?.entry ?? base.entry
   const member = p.fees?.memberMonth ?? base.memberMonth
+  const target = p.fees?.target ?? base.target
   return {
     p,
     kindWord: partnerKindWord(p.reg),
@@ -65,7 +66,7 @@ const partnerTerms = partners.map((p) => {
     rows: [
       { label: 'Вступительный взнос', value: money(entry), other: entry !== base.entry },
       { label: 'Членский взнос', value: `${money(member)} в месяц`, other: member !== base.memberMonth },
-      { label: `Целевой взнос в ${base.union}`, value: money(base.target), other: false },
+      { label: `Целевой взнос в ${base.union}`, value: money(target), other: target !== base.target },
       { label: 'Страхование', value: p.insurance ?? 'не требуется в первый год', other: !!p.insurance },
     ],
   }
@@ -364,9 +365,10 @@ const others = REGIONS.filter((x) => x.slug !== r.slug)
         {hasOther && (
           <p class="pc-diff rv">
             Строки со звёздочкой отличаются от условий на первом экране сайта — и это
-            не оговорка мелким шрифтом, а суть дела: вступительный и членский взносы
-            назначает сама СРО своими документами, поэтому у разных организаций они
-            разные. Я показываю условия каждой, а не одну удобную цифру за всех.
+            не оговорка мелким шрифтом, а суть дела: вступительный, членский и целевой
+            взносы назначает сама СРО своими документами, поэтому у разных организаций
+            они разные — где-то выше, где-то ниже, а где-то взноса нет вовсе.
+            Я показываю условия каждой, а не одну удобную цифру за всех.
           </p>
         )}
 
