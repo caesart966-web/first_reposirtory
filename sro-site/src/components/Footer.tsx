@@ -30,6 +30,24 @@ function Heading({ children, className = '' }: { children: string; className?: s
   )
 }
 
+// Подпись в нижней полосе. Та же капитель, что у заголовков колонок выше,
+// но тише цветом: полоса под чертой — служебная, она не должна спорить с
+// навигацией. Один стиль на метки реквизитов и на заголовок документов —
+// поэтому три реквизита и колонка документов читаются одним рядом, а не
+// двумя разными блоками, случайно оказавшимися рядом.
+//
+// Цвет neutral-400, а не более тихий neutral-500: на тёмном фоне подвала
+// пятисотый даёт 3.66:1 при норме 4.5:1, и набор t23-27 это ловит. Мелкая
+// капитель под исключение для крупного текста не подпадает — оно начинается
+// с 24px, а здесь 11px.
+function BarLabel({ children }: { children: string }) {
+  return (
+    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-400">
+      {children}
+    </p>
+  )
+}
+
 function LinkList({ items }: { items: NavLink[] }) {
   return (
     <ul className="mt-4 space-y-2.5 text-sm text-neutral-300">
@@ -151,38 +169,62 @@ export function Footer() {
           )}
         </div>
 
-        {/* Нижняя полоса: юридическое имя с ИНН и КПП, документы, копирайт,
-            оговорка про оферту. Слова «реквизиты» нет намеренно — заказчик
-            попросил его убрать; по содержанию строка читается сама. */}
-        <div className="mt-12 border-t border-white/10 pt-6">
-          <dl className="flex flex-wrap items-center gap-x-6 gap-y-1.5 text-sm text-neutral-300">
-            <div>
-              <dt className="sr-only">Организация</dt>
-              <dd className="font-medium text-white">{REQUISITES.legalName}</dd>
+        {/* Нижняя полоса. Реквизиты — подписанными парами, как в выписке:
+            метка капителью, значение под ней. Раньше они шли одной строкой
+            через пробелы, и три числа подряд читались сплошной лентой, в
+            которой не найти нужное.
+
+            Заголовка «Реквизиты» нет намеренно — заказчик попросил убрать
+            слово; подписи ИНН, КПП и ОГРН называют содержимое сами.
+
+            Имя компании здесь одно, в копирайте. Прежде оно стояло дважды —
+            и над реквизитами, и в копирайте строкой ниже, — из-за чего
+            полоса выглядела как два обрывка одного и того же. */}
+        <div className="mt-14 border-t border-white/10 pt-8">
+          <div className="flex flex-col gap-8 lg:flex-row lg:justify-between lg:gap-12">
+            <dl className="flex flex-wrap gap-x-8 gap-y-5 sm:gap-x-12">
+              {LEGAL_ROWS.map((row) => (
+                <div key={row.label}>
+                  <dt>
+                    <BarLabel>{row.label}</BarLabel>
+                  </dt>
+                  <dd className="mt-1.5 text-sm tabular-nums text-neutral-100">{row.value}</dd>
+                </div>
+              ))}
+            </dl>
+
+            {/* Открывают типовые тексты под 152-ФЗ; оператор назван реквизитами */}
+            <div className="lg:text-right">
+              <BarLabel>Документы</BarLabel>
+              <ul className="mt-1.5 space-y-1.5 text-sm text-neutral-300">
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => openLegal('privacy')}
+                    className="text-left underline-offset-4 transition hover:text-white hover:underline"
+                  >
+                    Политика конфиденциальности
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => openLegal('consent')}
+                    className="text-left underline-offset-4 transition hover:text-white hover:underline"
+                  >
+                    Согласие на обработку персональных данных
+                  </button>
+                </li>
+              </ul>
             </div>
-            {LEGAL_ROWS.map((row) => (
-              <div key={row.label} className="flex gap-1.5">
-                <dt className="text-neutral-400">{row.label}</dt>
-                <dd className="tabular-nums">{row.value}</dd>
-              </div>
-            ))}
-          </dl>
-          <div className="mt-5 flex flex-col gap-3 text-sm text-neutral-400 sm:flex-row sm:items-center sm:justify-between">
-            <p>© {new Date().getFullYear()} {REQUISITES.legalName}. Информация на сайте не является публичной офертой.</p>
-            <ul className="flex flex-wrap gap-x-5 gap-y-1.5">
-              {/* Открывают типовые тексты под 152-ФЗ; оператор назван реквизитами */}
-              <li>
-                <button type="button" onClick={() => openLegal('privacy')} className="text-left transition hover:text-white">
-                  Политика конфиденциальности
-                </button>
-              </li>
-              <li>
-                <button type="button" onClick={() => openLegal('consent')} className="text-left transition hover:text-white">
-                  Согласие на обработку персональных данных
-                </button>
-              </li>
-            </ul>
           </div>
+
+          {/* Копирайт с оговоркой про оферту — самая тихая строка страницы:
+              её читают, только когда ищут специально. */}
+          <p className="mt-8 border-t border-white/5 pt-6 text-xs text-neutral-400">
+            © {new Date().getFullYear()} {REQUISITES.legalName}. Информация на сайте не является
+            публичной офертой.
+          </p>
         </div>
       </div>
     </footer>
