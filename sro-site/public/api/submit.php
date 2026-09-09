@@ -425,6 +425,22 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'GET' && isset($_GET['selftest'])) {
                 echo "Порт $port: закрыт — $ps ($pe)\n";
             }
         }
+
+        // Обычный порт интернета. Если почтовые закрыты, а этот открыт —
+        // значит наружу хостинг пускает, режет именно почту, и уведомления
+        // о заявке можно слать не письмом, а в мессенджер.
+        $web = @stream_socket_client(
+            'tcp://api.telegram.org:443',
+            $we,
+            $ws,
+            6,
+            STREAM_CLIENT_CONNECT,
+            stream_context_create(['socket' => ['bindto' => '0.0.0.0:0']]),
+        );
+        echo 'Порт 443 (обычный интернет): ' . ($web ? "открыт\n" : "закрыт — $ws ($we)\n");
+        if ($web) {
+            fclose($web);
+        }
         echo "\n";
     }
 
