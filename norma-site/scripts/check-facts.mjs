@@ -119,9 +119,19 @@ if (problems === before) console.log('  ✓ значения из facts.ts на 
 // расхождение всплывёт здесь, а не у посетителя.
 const before2a = problems
 console.log('\nПартнёрские СРО')
-const { PARTNERS, partnerFeeKind } = await import('../src/config/partners.ts')
+const { PARTNERS, partnersWaiting, partnerFeeKind } = await import('../src/config/partners.ts')
 const { FEES, money } = await import('../src/config/fees.ts')
-for (const partner of PARTNERS) {
+
+// Организация без подтверждённого номера в реестре на сайт не выходит.
+// Это не ошибка сборки — это напоминание: запись лежит в конфигурации
+// и ждёт одной строки. Молча пропустить её нельзя, иначе о ней забудут.
+for (const partner of partnersWaiting) {
+  console.log(
+    `  · «${partner.short}» (${partner.citySlug}) ждёт регистрационного номера — карточка не публикуется`,
+  )
+}
+
+for (const partner of PARTNERS.filter((p) => p.reg)) {
   const url = `/sro/${partner.citySlug}/`
   const page = pages.find((x) => x.url === url)
   if (!page) { fail(`страница ${url} не найдена, а на ней должна быть СРО «${partner.short}»`); continue }
@@ -149,7 +159,10 @@ for (const partner of PARTNERS) {
     }
   }
 }
-if (problems === before2a) console.log(`  ✓ ${PARTNERS.length} СРО показаны с условиями из конфигурации`)
+if (problems === before2a) {
+  const shown = PARTNERS.length - partnersWaiting.length
+  console.log(`  ✓ ${shown} СРО показаны с условиями из конфигурации`)
+}
 
 // ── 3. Одна норма на одно утверждение ───────────────────────────────────
 // Если порог 10 млн ₽ на одной странице подкреплён ч. 2.1 ст. 52,
