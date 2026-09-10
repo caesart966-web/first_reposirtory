@@ -62,7 +62,7 @@ const FORM_TOKEN = 'sro-mn3gi1r1iambpw0ljb25fzcdqwm1';
 
 // Домен сайта. Запросы с других адресов не принимаем: так чужая страница
 // не сможет слать заявки от вашего имени. Пустая строка отключает проверку.
-const ALLOWED_HOST = '';
+const ALLOWED_HOST = 'biznesgrp.ru';
 
 // Не больше стольких заявок с одного адреса за час.
 const RATE_LIMIT = 10;
