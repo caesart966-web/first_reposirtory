@@ -62,7 +62,7 @@ const FORM_TOKEN = 'sro-mn3gi1r1iambpw0ljb25fzcdqwm1';
 
 // Домен сайта. Запросы с других адресов не принимаем: так чужая страница
 // не сможет слать заявки от вашего имени. Пустая строка отключает проверку.
-const ALLOWED_HOST = '';
+const ALLOWED_HOST = 'biznesgrp.ru';
 
 // Не больше стольких заявок с одного адреса за час.
 const RATE_LIMIT = 10;
@@ -105,6 +105,22 @@ function sender(): string
     return SMTP_USER !== '' ? SMTP_USER : MAIL_FROM;
 }
 
+/**
+ * Отправитель для mail(). Обязан быть на домене сайта: с чужого домена
+ * не сойдётся SPF, и почта получателя сочтёт письмо подделкой. Если
+ * MAIL_FROM не заполнен, берём домен из адреса, по которому пришёл запрос —
+ * так запасной путь работает и на техническом адресе хостинга, и на
+ * настоящем домене, без правки файла.
+ */
+function mail_sender(): string
+{
+    if (MAIL_FROM !== '') {
+        return MAIL_FROM;
+    }
+    $host = preg_replace('/:\d+$/', '', (string) ($_SERVER['HTTP_HOST'] ?? ''));
+    return $host !== '' ? 'zayavka@' . $host : '';
+}
+
 /** Простое ограничение частоты: счётчик на час в файле во временной папке. */
 function rate_limited(): bool
 {
@@ -127,20 +143,59 @@ function rate_limited(): bool
  * $error заполняется дословным ответом сервера — по нему сразу видно, что
  * не так: неверный пароль, закрытый порт, отказ принимать адрес.
  */
-function smtp_send(array $to, string $subject, string $body, array $headers, ?string &$error): bool
-{
+function smtp_send(
+    array $to,
+    string $subject,
+    string $body,
+    array $headers,
+    ?string &$error,
+    ?string &$stage = null,
+): bool {
+    $stage = 'connect';
     $transport = SMTP_PORT === 465 ? 'ssl://' : 'tcp://';
+    $target = $transport . SMTP_HOST . ':' . SMTP_PORT;
+
+    // Привязка к 0.0.0.0 заставляет систему идти по IPv4.
+    //
+    // Без неё на хостинге без IPv6 соединение падает с «Cannot assign
+    // requested address» (код 99) ещё до разговора с сервером: у smtp.mail.ru
+    // есть адрес AAAA, PHP выбирает его первым, а исходящего IPv6 у машины
+    // нет. Ошибка выглядит как «сервер недоступен», хотя недоступен он
+    // только по одному из двух протоколов.
+    $ipv4 = ['socket' => ['bindto' => '0.0.0.0:0']];
     $socket = @stream_socket_client(
-        $transport . SMTP_HOST . ':' . SMTP_PORT,
+        $target,
         $errno,
         $errstr,
         SMTP_TIMEOUT,
         STREAM_CLIENT_CONNECT,
+        stream_context_create($ipv4),
     );
+
+    // Запасной путь: соединяемся по явному адресу IPv4. Имя для проверки
+    // сертификата задаём отдельно — иначе TLS сверит его с цифрами адреса
+    // и откажет.
     if (!$socket) {
-        $error = "не удалось соединиться с " . SMTP_HOST . ':' . SMTP_PORT . " — $errstr ($errno)";
+        foreach (gethostbynamel(SMTP_HOST) ?: [] as $ip) {
+            $socket = @stream_socket_client(
+                $transport . $ip . ':' . SMTP_PORT,
+                $errno,
+                $errstr,
+                SMTP_TIMEOUT,
+                STREAM_CLIENT_CONNECT,
+                stream_context_create($ipv4 + ['ssl' => ['peer_name' => SMTP_HOST]]),
+            );
+            if ($socket) {
+                break;
+            }
+        }
+    }
+
+    if (!$socket) {
+        $error = 'не удалось соединиться с ' . SMTP_HOST . ':' . SMTP_PORT . " — $errstr ($errno)";
         return false;
     }
+    $stage = 'dialogue';
     stream_set_timeout($socket, SMTP_TIMEOUT);
 
     // Ответ сервера бывает в несколько строк: у всех, кроме последней,
@@ -237,27 +292,15 @@ function smtp_send(array $to, string $subject, string $body, array $headers, ?st
     }
 }
 
-/**
- * Отправка. В режиме проверки письмо не уходит, а пишется в файл — так можно
- * убедиться, что обработчик собирает письмо правильно, не рассылая почту.
- */
-function deliver(array $to, string $subject, string $body, array $headers, ?string &$error): bool
+/** Отправка функцией mail() самого хостинга. */
+function send_via_mail(array $to, string $subject, string $body, string $fromName, string $replyTo, ?string &$error): bool
 {
-    $dry = getenv('SRO_MAIL_DRY_RUN');
-    if ($dry) {
-        $dump = 'To: ' . implode(', ', $to) . "\n" . implode("\n", $headers) . "\nSubject: $subject\n\n$body\n";
-        return (bool) file_put_contents($dry, $dump);
-    }
-
-    if (SMTP_USER !== '') {
-        return smtp_send($to, $subject, $body, $headers, $error);
-    }
-
-    if (sender() === '') {
-        $error = 'не заполнен ни SMTP_USER, ни MAIL_FROM';
+    $from = mail_sender();
+    if ($from === '') {
+        $error = 'не удалось определить адрес отправителя для mail()';
         return false;
     }
-
+    $headers = letter_headers($from, $fromName, $replyTo);
     // Пятый параметр задаёт конверт отправителя — по нему принимающая сторона
     // проверяет SPF. Без него письма чаще уходят в спам.
     $sent = mail(
@@ -265,12 +308,54 @@ function deliver(array $to, string $subject, string $body, array $headers, ?stri
         $subject,
         $body,
         implode("\r\n", array_merge($headers, ['Content-Transfer-Encoding: 8bit'])),
-        '-f' . sender(),
+        '-f' . $from,
     );
     if (!$sent) {
         $error = 'функция mail() хостинга вернула отказ';
     }
     return $sent;
+}
+
+/**
+ * Отправка. В режиме проверки письмо не уходит, а пишется в файл — так можно
+ * убедиться, что обработчик собирает письмо правильно, не рассылая почту.
+ *
+ * Порядок: сначала SMTP, если он настроен. Когда соединение не удалось
+ * установить вовсе — переходим на mail() хостинга. Так обработчик работает
+ * и там, где провайдер режет исходящие почтовые порты (Timeweb режет), и
+ * сам переключится обратно на SMTP, если порт когда-нибудь откроют.
+ *
+ * Обрыв уже в разговоре с сервером — другое дело: это неверный пароль или
+ * отказ принять адрес, и подменять его тихой отправкой через хостинг
+ * нельзя, иначе настоящая причина никогда не всплывёт.
+ */
+function deliver(array $to, string $subject, string $body, string $fromName, string $replyTo, ?string &$error): bool
+{
+    $dry = getenv('SRO_MAIL_DRY_RUN');
+    if ($dry) {
+        $headers = letter_headers(sender() ?: mail_sender(), $fromName, $replyTo);
+        $dump = 'To: ' . implode(', ', $to) . "\n" . implode("\n", $headers) . "\nSubject: $subject\n\n$body\n";
+        return (bool) file_put_contents($dry, $dump);
+    }
+
+    if (SMTP_USER !== '') {
+        $stage = null;
+        if (smtp_send($to, $subject, $body, letter_headers(sender(), $fromName, $replyTo), $error, $stage)) {
+            return true;
+        }
+        if ($stage !== 'connect') {
+            return false;
+        }
+        $smtpError = $error;
+        if (send_via_mail($to, $subject, $body, $fromName, $replyTo, $error)) {
+            $error = "SMTP недоступен ($smtpError) — отправлено через mail() хостинга";
+            return true;
+        }
+        $error = "SMTP: $smtpError; mail(): $error";
+        return false;
+    }
+
+    return send_via_mail($to, $subject, $body, $fromName, $replyTo, $error);
 }
 
 /** Список получателей из MAIL_TO. */
@@ -280,10 +365,10 @@ function recipients(): array
     return array_values($list);
 }
 
-function letter_headers(string $fromName, string $replyTo): array
+function letter_headers(string $from, string $fromName, string $replyTo): array
 {
     $headers = [
-        'From: ' . encode_subject($fromName) . ' <' . sender() . '>',
+        'From: ' . encode_subject($fromName) . ' <' . $from . '>',
         'Content-Type: text/plain; charset=UTF-8',
         'MIME-Version: 1.0',
     ];
@@ -314,7 +399,50 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'GET' && isset($_GET['selftest'])) {
     $way = SMTP_USER !== '' ? 'SMTP через ' . SMTP_HOST . ':' . SMTP_PORT : 'функция mail() хостинга';
     echo "Способ отправки: $way\n";
     echo 'Отправитель: ' . (sender() ?: '— не задан —') . "\n";
-    echo 'Получатель:  ' . implode(', ', recipients()) . "\n\n";
+    echo 'Получатель:  ' . implode(', ', recipients()) . "\n";
+    echo 'Пароль SMTP: ' . (SMTP_PASS === '' ? 'НЕ ЗАПОЛНЕН' : 'задан, ' . strlen(SMTP_PASS) . ' символов') . "\n\n";
+
+    // Диагностика соединения. Нужна, чтобы отличить две причины, которые
+    // выглядят одинаково — «сервер недоступен»: нет исходящего IPv6 или
+    // хостинг закрыл почтовые порты. В первом случае помогает привязка к
+    // IPv4, во втором — только обращение в поддержку хостинга.
+    if (SMTP_USER !== '') {
+        $v4 = gethostbynamel(SMTP_HOST) ?: [];
+        echo 'Адреса IPv4: ' . (implode(', ', $v4) ?: 'не разрешаются') . "\n";
+        foreach ([465, 587, 25] as $port) {
+            $probe = @stream_socket_client(
+                'tcp://' . SMTP_HOST . ':' . $port,
+                $pe,
+                $ps,
+                6,
+                STREAM_CLIENT_CONNECT,
+                stream_context_create(['socket' => ['bindto' => '0.0.0.0:0']]),
+            );
+            if ($probe) {
+                echo "Порт $port: открыт\n";
+                fclose($probe);
+            } else {
+                echo "Порт $port: закрыт — $ps ($pe)\n";
+            }
+        }
+
+        // Обычный порт интернета. Если почтовые закрыты, а этот открыт —
+        // значит наружу хостинг пускает, режет именно почту, и уведомления
+        // о заявке можно слать не письмом, а в мессенджер.
+        $web = @stream_socket_client(
+            'tcp://api.telegram.org:443',
+            $we,
+            $ws,
+            6,
+            STREAM_CLIENT_CONNECT,
+            stream_context_create(['socket' => ['bindto' => '0.0.0.0:0']]),
+        );
+        echo 'Порт 443 (обычный интернет): ' . ($web ? "открыт\n" : "закрыт — $ws ($we)\n");
+        if ($web) {
+            fclose($web);
+        }
+        echo "\n";
+    }
 
     $error = null;
     $ok = deliver(
@@ -322,11 +450,17 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'GET' && isset($_GET['selftest'])) {
         encode_subject('Проверка формы сайта СРО'),
         "Это проверочное письмо с формы сайта.\nЕсли оно пришло — заявки будут приходить сюда же.\n\n"
             . 'Отправлено: ' . date('d.m.Y H:i:s') . "\n",
-        letter_headers('Проверка формы', ''),
+        'Проверка формы',
+        '',
         $error,
     );
     if ($ok) {
         echo "РЕЗУЛЬТАТ: письмо отправлено. Проверьте ящик, в том числе папку «Спам».\n";
+        // При успехе $error заполнен, только если сработал запасной путь.
+        if ($error !== null) {
+            echo "Примечание: $error\n";
+            echo 'Отправитель письма: ' . mail_sender() . "\n";
+        }
     } else {
         http_response_code(500);
         echo "РЕЗУЛЬТАТ: отправить не удалось.\n";
@@ -385,7 +519,7 @@ if (rate_limited()) {
 $body = $message . "\n\n---\nПолучено: " . date('d.m.Y H:i:s') . "\nIP: " . client_ip();
 
 $error = null;
-if (!deliver(recipients(), encode_subject($subject), $body, letter_headers($fromName, $replyTo), $error)) {
+if (!deliver(recipients(), encode_subject($subject), $body, $fromName, $replyTo, $error)) {
     // Молчаливого «успеха» быть не должно: посетитель увидит экран ошибки
     // с прямыми контактами и позвонит, вместо того чтобы ждать ответа.
     error_log('sro-site: заявка не отправлена — ' . (string) $error);
