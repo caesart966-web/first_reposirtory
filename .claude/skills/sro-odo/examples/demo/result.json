@@ -1,0 +1,736 @@
+{
+  "subject": {
+    "name": "ООО «Пример-Строй» (вымышленная компания)",
+    "inn": "0000000000",
+    "kpp": null,
+    "ogrn": null,
+    "sro": [
+      {
+        "kind": "build",
+        "name": "Ассоциация «Пример СРО строителей»",
+        "reg_number": "С-000-00000000",
+        "vv_level": 2,
+        "odo_level": 2,
+        "source": "выписка из реестра от 01.09.2026 (условно)"
+      },
+      {
+        "kind": "design",
+        "name": "Ассоциация «Пример СРО проектировщиков»",
+        "reg_number": "П-000-00000000",
+        "vv_level": 1,
+        "odo_level": 1,
+        "source": "выписка из реестра от 01.09.2026 (условно)"
+      }
+    ],
+    "notes": "Учебный пример: все названия, номера и суммы вымышлены."
+  },
+  "as_of": "2026-09-01",
+  "settings": {
+    "vat_basis": "with_vat",
+    "odo_basis": "цена договора − выполнено по актам (ч. 4 ст. 55.13 ГрК РФ)"
+  },
+  "method_notes": [
+    "Строка идёт в «СРО», если её вид работ есть в Перечне 624 без звёздочки, либо со звёздочкой на объекте ст. 48.1 ГрК РФ.",
+    "Строка идёт в «не СРО», если работ нет в Перечне 624 (отделка, благоустройство, уборка), либо это не работы (поставка, аренда, охрана, накладные, ФОТ), либо звёздочка на обычном объекте.",
+    "Договор входит в совокупный размер, если компания — подрядчик по договору подряда с застройщиком, техзаказчиком, эксплуатирующей организацией или региональным оператором. Субподряд не входит.",
+    "Выборка competitive_only — буква ч. 3 ст. 55.8 ГрК РФ (конкурентные способы); all_qualifying — все подходящие договоры. 309-ФЗ с 01.03.2026 расширил уведомления на все договоры; какая выборка применяется вашей СРО — уточняется по её положению о контроле."
+  ],
+  "contracts": [
+    {
+      "id": "ctr_1",
+      "number": "ГП-01/2026",
+      "date": "2026-02-10",
+      "subject": "Строительство жилого дома со встроенными помещениями (генеральный подряд)",
+      "kind": "construction",
+      "sro_kind": "build",
+      "role": "contractor",
+      "counterparty": {
+        "name": "ООО «СЗ Пример-Девелопмент»",
+        "inn": "0000000001",
+        "kind": "developer",
+        "kind_source": "разрешение на строительство № 00-000-2025 выдано контрагенту"
+      },
+      "procurement": "competitive",
+      "status": "active",
+      "object": "Жилой дом со встроенными помещениями, 12 этажей",
+      "object_category": "ordinary",
+      "counts_for_odo": true,
+      "reasons": [
+        "заказчик из перечня ч. 2.1 ст. 52 / ч. 4.1 ст. 48 / ч. 2.1 ст. 47 ГрК РФ — договор входит"
+      ],
+      "flags": [],
+      "price": 122000000.0,
+      "price_sro": 64660000.0,
+      "price_non_sro": 57340000.0,
+      "share_sro": 0.53,
+      "share_basis": "по смете",
+      "share_by_kind": {
+        "build": 0.53
+      },
+      "executed": {
+        "total": 42700000.0,
+        "sro": 36600000.0,
+        "non_sro": 6100000.0,
+        "unresolved": 0.0,
+        "by_kind": {
+          "build": 36600000.0
+        },
+        "lines": 3
+      },
+      "estimate": {
+        "total": 122000000.0,
+        "sro": 64660000.0,
+        "non_sro": 57340000.0,
+        "unresolved": 0.0,
+        "lines": 8
+      },
+      "remaining": 79300000.0,
+      "remaining_sro": 42029000.0,
+      "remaining_non_sro": 37271000.0,
+      "lines": [
+        {
+          "id": "li_k1_01",
+          "name": "Устройство монолитных железобетонных конструкций: фундаментная плита, стены и перекрытия 1–4 этажей",
+          "amount": 36600000.0,
+          "sro": true,
+          "sro_kind": "build",
+          "code": "III/6.3",
+          "reason": "Перечень 624, п. 6.3 раздела III: Устройство монолитных бетонных и железобетонных конструкций",
+          "review_status": "auto",
+          "confidence": 0.85,
+          "document_id": "doc_ks2_1",
+          "doc_number": "1",
+          "doc_kind": "ks2"
+        },
+        {
+          "id": "li_k1_02",
+          "name": "Кладка наружных стен из газобетонных блоков 1–2 этажей",
+          "amount": 4880000.0,
+          "sro": false,
+          "sro_kind": "build",
+          "code": "III/9.2",
+          "reason": "Перечень 624, п. 9.2 раздела III: Устройство конструкций из кирпича, в том числе с облицовкой — со звёздочкой: на обычном объекте (не ст. 48.1) допуска не требовало, в расчёт не идёт",
+          "review_status": "auto",
+          "confidence": 0.85,
+          "document_id": "doc_ks2_1",
+          "doc_number": "1",
+          "doc_kind": "ks2"
+        },
+        {
+          "id": "li_k1_03",
+          "name": "Устройство временных дорог из дорожных плит",
+          "amount": 1220000.0,
+          "sro": false,
+          "sro_kind": "build",
+          "code": "III/2.2",
+          "reason": "Перечень 624, п. 2.2 раздела III: Строительство временных: дорог; площадок; инженерных сетей и сооружений — со звёздочкой: на обычном объекте (не ст. 48.1) допуска не требовало, в расчёт не идёт",
+          "review_status": "auto",
+          "confidence": 0.85,
+          "document_id": "doc_ks2_1",
+          "doc_number": "1",
+          "doc_kind": "ks2"
+        },
+        {
+          "id": "li_e1_01",
+          "name": "Устройство монолитных железобетонных конструкций (фундаментная плита, стены, перекрытия)",
+          "amount": 54900000.0,
+          "sro": true,
+          "sro_kind": "build",
+          "code": "III/6.3",
+          "reason": "Перечень 624, п. 6.3 раздела III: Устройство монолитных бетонных и железобетонных конструкций",
+          "review_status": "auto",
+          "confidence": 0.85,
+          "document_id": "doc_est1",
+          "doc_number": "ЛС-1",
+          "doc_kind": "estimate"
+        },
+        {
+          "id": "li_e1_02",
+          "name": "Кладка наружных и внутренних стен из газобетонных блоков",
+          "amount": 14640000.0,
+          "sro": false,
+          "sro_kind": "build",
+          "code": "III/9.2",
+          "reason": "Перечень 624, п. 9.2 раздела III: Устройство конструкций из кирпича, в том числе с облицовкой — со звёздочкой: на обычном объекте (не ст. 48.1) допуска не требовало, в расчёт не идёт",
+          "review_status": "auto",
+          "confidence": 0.85,
+          "document_id": "doc_est1",
+          "doc_number": "ЛС-1",
+          "doc_kind": "estimate"
+        },
+        {
+          "id": "li_e1_03",
+          "name": "Устройство кровли из рулонных материалов",
+          "amount": 7320000.0,
+          "sro": false,
+          "sro_kind": "build",
+          "code": "III/13.2",
+          "reason": "Перечень 624, п. 13.2 раздела III: Устройство кровель из рулонных материалов — со звёздочкой: на обычном объекте (не ст. 48.1) допуска не требовало, в расчёт не идёт",
+          "review_status": "auto",
+          "confidence": 0.85,
+          "document_id": "doc_est1",
+          "doc_number": "ЛС-1",
+          "doc_kind": "estimate"
+        },
+        {
+          "id": "li_e1_04",
+          "name": "Отделочные работы: штукатурка, шпатлёвка, окраска стен и потолков",
+          "amount": 18300000.0,
+          "sro": false,
+          "sro_kind": null,
+          "code": null,
+          "reason": "Штукатурные работы: в Перечне 624 отсутствуют (кроме фасадных по группе 14)",
+          "review_status": "auto",
+          "confidence": 0.85,
+          "document_id": "doc_est1",
+          "doc_number": "ЛС-1",
+          "doc_kind": "estimate"
+        },
+        {
+          "id": "li_e1_05",
+          "name": "Поставка лифтового оборудования",
+          "amount": 10980000.0,
+          "sro": false,
+          "sro_kind": null,
+          "code": null,
+          "reason": "Поставка/покупка: не подрядные работы",
+          "review_status": "auto",
+          "confidence": 0.85,
+          "document_id": "doc_est1",
+          "doc_number": "ЛС-1",
+          "doc_kind": "estimate"
+        },
+        {
+          "id": "li_e1_06",
+          "name": "Монтаж лифтов",
+          "amount": 3660000.0,
+          "sro": true,
+          "sro_kind": "build",
+          "code": "III/23.2",
+          "reason": "Перечень 624, п. 23.2 раздела III: Монтаж лифтов",
+          "review_status": "auto",
+          "confidence": 0.85,
+          "document_id": "doc_est1",
+          "doc_number": "ЛС-1",
+          "doc_kind": "estimate"
+        },
+        {
+          "id": "li_e1_07",
+          "name": "Благоустройство территории: озеленение, малые архитектурные формы, детская площадка",
+          "amount": 6100000.0,
+          "sro": false,
+          "sro_kind": null,
+          "code": null,
+          "reason": "Благоустройство, озеленение, дорожки, МАФ, заборы: в Перечне 624 отсутствуют (кроме ограждений автодорог, п. 25.7)",
+          "review_status": "auto",
+          "confidence": 0.85,
+          "document_id": "doc_est1",
+          "doc_number": "ЛС-1",
+          "doc_kind": "estimate"
+        },
+        {
+          "id": "li_e1_08",
+          "name": "Устройство наружных сетей водопровода и канализации",
+          "amount": 6100000.0,
+          "sro": true,
+          "sro_kind": "build",
+          "code": "III/16.1",
+          "reason": "Перечень 624, п. 16.1 раздела III: Укладка трубопроводов водопроводных",
+          "review_status": "auto",
+          "confidence": 0.85,
+          "document_id": "doc_est1",
+          "doc_number": "ЛС-1",
+          "doc_kind": "estimate"
+        }
+      ]
+    },
+    {
+      "id": "ctr_2",
+      "number": "СП-07/2026",
+      "date": "2026-04-01",
+      "subject": "Монтаж внутренних инженерных систем (субподряд)",
+      "kind": "construction",
+      "sro_kind": "build",
+      "role": "contractor",
+      "counterparty": {
+        "name": "ООО «Генстрой-Пример»",
+        "inn": "0000000002",
+        "kind": "general_contractor",
+        "kind_source": "текст договора: заказчик — генеральный подрядчик застройщика"
+      },
+      "procurement": "direct",
+      "status": "active",
+      "object": "Жилой дом со встроенными помещениями, 12 этажей",
+      "object_category": "ordinary",
+      "counts_for_odo": false,
+      "reasons": [
+        "заказчик не застройщик/техзаказчик/эксплуатант/региональный оператор: субподряд, членство не требуется, в совокупный размер не входит (ч. 2.1 ст. 52 ГрК РФ; статья о 309-ФЗ)"
+      ],
+      "flags": [],
+      "price": 24400000.0,
+      "price_sro": 0.0,
+      "price_non_sro": 24400000.0,
+      "share_sro": 0.0,
+      "share_basis": "по актам (сметы нет: доля выполненного перенесена на остаток — приближение)",
+      "share_by_kind": {},
+      "executed": {
+        "total": 4880000.0,
+        "sro": 0.0,
+        "non_sro": 4880000.0,
+        "unresolved": 0.0,
+        "by_kind": {},
+        "lines": 2
+      },
+      "estimate": {
+        "total": 0.0,
+        "sro": 0.0,
+        "non_sro": 0.0,
+        "unresolved": 0.0,
+        "lines": 0
+      },
+      "remaining": 19520000.0,
+      "remaining_sro": 0.0,
+      "remaining_non_sro": 19520000.0,
+      "lines": [
+        {
+          "id": "li_k2_01",
+          "name": "Устройство внутренних систем водопровода и канализации",
+          "amount": 3050000.0,
+          "sro": false,
+          "sro_kind": "build",
+          "code": "III/15.1",
+          "reason": "Перечень 624, п. 15.1 раздела III: Устройство и демонтаж системы водопровода и канализации — со звёздочкой: на обычном объекте (не ст. 48.1) допуска не требовало, в расчёт не идёт",
+          "review_status": "auto",
+          "confidence": 0.85,
+          "document_id": "doc_ks2_2",
+          "doc_number": "1",
+          "doc_kind": "ks2"
+        },
+        {
+          "id": "li_k2_02",
+          "name": "Устройство системы отопления",
+          "amount": 1830000.0,
+          "sro": false,
+          "sro_kind": "build",
+          "code": "III/15.2",
+          "reason": "Перечень 624, п. 15.2 раздела III: Устройство и демонтаж системы отопления — со звёздочкой: на обычном объекте (не ст. 48.1) допуска не требовало, в расчёт не идёт",
+          "review_status": "auto",
+          "confidence": 0.85,
+          "document_id": "doc_ks2_2",
+          "doc_number": "1",
+          "doc_kind": "ks2"
+        }
+      ]
+    },
+    {
+      "id": "ctr_3",
+      "number": "ПД-03/2026",
+      "date": "2026-03-05",
+      "subject": "Разработка проектной и рабочей документации школы",
+      "kind": "design",
+      "sro_kind": "design",
+      "role": "contractor",
+      "counterparty": {
+        "name": "МКУ «Управление капитального строительства г. Пример»",
+        "inn": "0000000003",
+        "kind": "technical_customer",
+        "kind_source": "муниципальный контракт, заказчик выполняет функции техзаказчика"
+      },
+      "procurement": "competitive",
+      "status": "active",
+      "object": "Школа на 550 мест (капитальный ремонт)",
+      "object_category": "unknown",
+      "counts_for_odo": true,
+      "reasons": [
+        "заказчик из перечня ч. 2.1 ст. 52 / ч. 4.1 ст. 48 / ч. 2.1 ст. 47 ГрК РФ — договор входит"
+      ],
+      "flags": [],
+      "price": 6100000.0,
+      "price_sro": 4357142.86,
+      "price_non_sro": 1742857.14,
+      "share_sro": 0.7143,
+      "share_basis": "по смете (не решено 976 000 ₽ — доля считается по решённым строкам)",
+      "share_by_kind": {
+        "design": 0.7143
+      },
+      "executed": {
+        "total": 2440000.0,
+        "sro": 1830000.0,
+        "non_sro": 610000.0,
+        "unresolved": 0.0,
+        "by_kind": {
+          "design": 1830000.0
+        },
+        "lines": 2
+      },
+      "estimate": {
+        "total": 6100000.0,
+        "sro": 3660000.0,
+        "non_sro": 1464000.0,
+        "unresolved": 976000.0,
+        "lines": 5
+      },
+      "remaining": 3660000.0,
+      "remaining_sro": 2614285.71,
+      "remaining_non_sro": 1045714.29,
+      "lines": [
+        {
+          "id": "li_a3_01",
+          "name": "Раздел АР — архитектурные решения (передан заказчику)",
+          "amount": 1830000.0,
+          "sro": true,
+          "sro_kind": "design",
+          "code": "II/2",
+          "reason": "Перечень 624, п. 2 раздела II: Работы по подготовке архитектурных решений",
+          "review_status": "auto",
+          "confidence": 0.85,
+          "document_id": "doc_act3",
+          "doc_number": "1",
+          "doc_kind": "act"
+        },
+        {
+          "id": "li_a3_02",
+          "name": "Сметная документация (передана заказчику)",
+          "amount": 610000.0,
+          "sro": false,
+          "sro_kind": null,
+          "code": null,
+          "reason": "Сметная документация как самостоятельная услуга: в Перечне 624 отсутствует",
+          "review_status": "auto",
+          "confidence": 0.85,
+          "document_id": "doc_act3",
+          "doc_number": "1",
+          "doc_kind": "act"
+        },
+        {
+          "id": "li_e3_01",
+          "name": "Раздел АР — архитектурные решения",
+          "amount": 1830000.0,
+          "sro": true,
+          "sro_kind": "design",
+          "code": "II/2",
+          "reason": "Перечень 624, п. 2 раздела II: Работы по подготовке архитектурных решений",
+          "review_status": "auto",
+          "confidence": 0.85,
+          "document_id": "doc_est3",
+          "doc_number": "Калькуляция",
+          "doc_kind": "estimate"
+        },
+        {
+          "id": "li_e3_02",
+          "name": "Раздел КР — конструктивные решения",
+          "amount": 1830000.0,
+          "sro": true,
+          "sro_kind": "design",
+          "code": "II/3",
+          "reason": "Перечень 624, п. 3 раздела II: Работы по подготовке конструктивных решений",
+          "review_status": "auto",
+          "confidence": 0.85,
+          "document_id": "doc_est3",
+          "doc_number": "Калькуляция",
+          "doc_kind": "estimate"
+        },
+        {
+          "id": "li_e3_03",
+          "name": "Раздел ЭО — проект внутренних систем электроснабжения",
+          "amount": 976000.0,
+          "sro": null,
+          "sro_kind": "design",
+          "code": "II/4.3",
+          "reason": "Перечень 624, п. 4.3 раздела II: Работы по подготовке проектов внутренних систем электроснабжения — со звёздочкой: категория объекта не задана, решает человек",
+          "review_status": "pending",
+          "confidence": 0.5,
+          "document_id": "doc_est3",
+          "doc_number": "Калькуляция",
+          "doc_kind": "estimate"
+        },
+        {
+          "id": "li_e3_04",
+          "name": "Сметная документация",
+          "amount": 854000.0,
+          "sro": false,
+          "sro_kind": null,
+          "code": null,
+          "reason": "Сметная документация как самостоятельная услуга: в Перечне 624 отсутствует",
+          "review_status": "auto",
+          "confidence": 0.85,
+          "document_id": "doc_est3",
+          "doc_number": "Калькуляция",
+          "doc_kind": "estimate"
+        },
+        {
+          "id": "li_e3_05",
+          "name": "Дизайн-проект интерьеров актового зала",
+          "amount": 610000.0,
+          "sro": false,
+          "sro_kind": null,
+          "code": null,
+          "reason": "Дизайн-проекты и эскизы, не входящие в проектную документацию по ст. 48 ГрК РФ: в Перечне 624 отсутствуют",
+          "review_status": "auto",
+          "confidence": 0.85,
+          "document_id": "doc_est3",
+          "doc_number": "Калькуляция",
+          "doc_kind": "estimate"
+        }
+      ]
+    },
+    {
+      "id": "ctr_4",
+      "number": "ОХР-11/2026",
+      "date": "2026-02-20",
+      "subject": "Услуги по охране строительной площадки",
+      "kind": "services",
+      "sro_kind": null,
+      "role": "customer",
+      "counterparty": {
+        "name": "ООО ОП «Пример-Безопасность»",
+        "inn": "0000000004",
+        "kind": "other",
+        "kind_source": null
+      },
+      "procurement": "direct",
+      "status": "active",
+      "object": "Жилой дом со встроенными помещениями, 12 этажей",
+      "object_category": "ordinary",
+      "counts_for_odo": false,
+      "reasons": [
+        "проверяемая компания в этом договоре — заказчик; это обязательства её контрагента (субподряд), справочно",
+        "не договор подряда на изыскания/проектирование/строительство/снос (вид: services)"
+      ],
+      "flags": [],
+      "price": 2220000.0,
+      "price_sro": 0.0,
+      "price_non_sro": 2220000.0,
+      "share_sro": 0.0,
+      "share_basis": "по актам (сметы нет: доля выполненного перенесена на остаток — приближение)",
+      "share_by_kind": {},
+      "executed": {
+        "total": 185000.0,
+        "sro": 0.0,
+        "non_sro": 185000.0,
+        "unresolved": 0.0,
+        "by_kind": {},
+        "lines": 1
+      },
+      "estimate": {
+        "total": 0.0,
+        "sro": 0.0,
+        "non_sro": 0.0,
+        "unresolved": 0.0,
+        "lines": 0
+      },
+      "remaining": 2035000.0,
+      "remaining_sro": 0.0,
+      "remaining_non_sro": 2035000.0,
+      "lines": [
+        {
+          "id": "li_u4_01",
+          "name": "Услуги по организации и обеспечению охраны строительной площадки за июль 2026",
+          "amount": 185000.0,
+          "sro": false,
+          "sro_kind": null,
+          "code": null,
+          "reason": "Договор не подрядный (вид: services) — в совокупный размер обязательств не входит",
+          "review_status": "auto",
+          "confidence": 0.95,
+          "document_id": "doc_upd4",
+          "doc_number": "77",
+          "doc_kind": "upd"
+        }
+      ]
+    },
+    {
+      "id": "ctr_5",
+      "number": "КР-05/2026",
+      "date": "2026-05-12",
+      "subject": "Капитальный ремонт кровли школы",
+      "kind": "construction",
+      "sro_kind": "build",
+      "role": "contractor",
+      "counterparty": {
+        "name": "МКУ «Управление капитального строительства г. Пример»",
+        "inn": "0000000003",
+        "kind": "technical_customer",
+        "kind_source": null
+      },
+      "procurement": "competitive",
+      "status": "active",
+      "object": "Школа на 550 мест (капитальный ремонт)",
+      "object_category": "unknown",
+      "counts_for_odo": true,
+      "reasons": [
+        "заказчик из перечня ч. 2.1 ст. 52 / ч. 4.1 ст. 48 / ч. 2.1 ст. 47 ГрК РФ — договор входит",
+        "цена не выше порога 10 000 000 ₽ — членство по этому договору не требуется; в сумме показан  отдельно помечен"
+      ],
+      "flags": [
+        "below_threshold"
+      ],
+      "price": 8500000.0,
+      "price_sro": null,
+      "price_non_sro": null,
+      "share_sro": null,
+      "share_basis": "нет ни сметы, ни актов — цена показана без разделения",
+      "share_by_kind": {},
+      "executed": {
+        "total": 0.0,
+        "sro": 0.0,
+        "non_sro": 0.0,
+        "unresolved": 0.0,
+        "by_kind": {},
+        "lines": 0
+      },
+      "estimate": {
+        "total": 0.0,
+        "sro": 0.0,
+        "non_sro": 0.0,
+        "unresolved": 0.0,
+        "lines": 0
+      },
+      "remaining": 8500000.0,
+      "remaining_sro": null,
+      "remaining_non_sro": null,
+      "lines": []
+    }
+  ],
+  "totals": {
+    "all_qualifying": {
+      "build": {
+        "contracts": 2,
+        "price": 130500000.0,
+        "price_sro": 64660000.0,
+        "executed": 42700000.0,
+        "executed_sro": 36600000.0,
+        "remaining": 87800000.0,
+        "remaining_sro": 42029000.0,
+        "unresolved": 0.0,
+        "price_unsplit": 8500000.0,
+        "remaining_unsplit": 8500000.0
+      },
+      "design": {
+        "contracts": 1,
+        "price": 6100000.0,
+        "price_sro": 4357142.86,
+        "executed": 2440000.0,
+        "executed_sro": 1830000.0,
+        "remaining": 3660000.0,
+        "remaining_sro": 2614285.71,
+        "unresolved": 0.0,
+        "price_unsplit": 0.0,
+        "remaining_unsplit": 0.0
+      },
+      "survey": {
+        "contracts": 0,
+        "price": 0.0,
+        "price_sro": 0.0,
+        "executed": 0.0,
+        "executed_sro": 0.0,
+        "remaining": 0.0,
+        "remaining_sro": 0.0,
+        "unresolved": 0.0,
+        "price_unsplit": 0.0,
+        "remaining_unsplit": 0.0
+      }
+    },
+    "competitive_only": {
+      "build": {
+        "contracts": 2,
+        "price": 130500000.0,
+        "price_sro": 64660000.0,
+        "executed": 42700000.0,
+        "executed_sro": 36600000.0,
+        "remaining": 87800000.0,
+        "remaining_sro": 42029000.0,
+        "unresolved": 0.0,
+        "price_unsplit": 8500000.0,
+        "remaining_unsplit": 8500000.0
+      },
+      "design": {
+        "contracts": 1,
+        "price": 6100000.0,
+        "price_sro": 4357142.86,
+        "executed": 2440000.0,
+        "executed_sro": 1830000.0,
+        "remaining": 3660000.0,
+        "remaining_sro": 2614285.71,
+        "unresolved": 0.0,
+        "price_unsplit": 0.0,
+        "remaining_unsplit": 0.0
+      },
+      "survey": {
+        "contracts": 0,
+        "price": 0.0,
+        "price_sro": 0.0,
+        "executed": 0.0,
+        "executed_sro": 0.0,
+        "remaining": 0.0,
+        "remaining_sro": 0.0,
+        "unresolved": 0.0,
+        "price_unsplit": 0.0,
+        "remaining_unsplit": 0.0
+      }
+    }
+  },
+  "excluded": [
+    {
+      "id": "ctr_2",
+      "number": "СП-07/2026",
+      "counterparty": "ООО «Генстрой-Пример»",
+      "price": 24400000.0,
+      "reasons": [
+        "заказчик не застройщик/техзаказчик/эксплуатант/региональный оператор: субподряд, членство не требуется, в совокупный размер не входит (ч. 2.1 ст. 52 ГрК РФ; статья о 309-ФЗ)"
+      ]
+    },
+    {
+      "id": "ctr_4",
+      "number": "ОХР-11/2026",
+      "counterparty": "ООО ОП «Пример-Безопасность»",
+      "price": 2220000.0,
+      "reasons": [
+        "проверяемая компания в этом договоре — заказчик; это обязательства её контрагента (субподряд), справочно",
+        "не договор подряда на изыскания/проектирование/строительство/снос (вид: services)"
+      ]
+    }
+  ],
+  "levels_hint": {
+    "build": {
+      "law": "ч. 13 ст. 55.16 ГрК РФ",
+      "remaining_sro": 42029000.0,
+      "level_covering_remaining_sro": 1,
+      "level_covering_remaining_total": 1,
+      "level_covering_price_sro": 1,
+      "declared_level": 2,
+      "note": "Справочно: уровень, минимально покрывающий сумму по таблице ст. 55.16 ГрК РФ. Вердикт о соответствии выносит человек по данным реестра СРО."
+    },
+    "design": {
+      "law": "ч. 11 ст. 55.16 ГрК РФ",
+      "remaining_sro": 2614285.71,
+      "level_covering_remaining_sro": 1,
+      "level_covering_remaining_total": 1,
+      "level_covering_price_sro": 1,
+      "declared_level": 1,
+      "note": "Справочно: уровень, минимально покрывающий сумму по таблице ст. 55.16 ГрК РФ. Вердикт о соответствии выносит человек по данным реестра СРО."
+    }
+  },
+  "review_queue": [
+    {
+      "type": "line_item",
+      "ref": "li_e3_03",
+      "contract_id": "ctr_3",
+      "message": "«Раздел ЭО — проект внутренних систем электроснабжения»: Перечень 624, п. 4.3 раздела II: Работы по подготовке проектов внутренних систем электроснабжения — со звёздочкой: категория объекта не задана, решает человек",
+      "amount": 976000.0
+    },
+    {
+      "type": "object",
+      "ref": "obj_school",
+      "contract_id": "ctr_3",
+      "message": "Категория объекта «Школа на 550 мест (капитальный ремонт)» не задана (ст. 48.1 ГрК РФ): работы со звёздочкой не решены"
+    },
+    {
+      "type": "contract",
+      "ref": "ctr_5",
+      "contract_id": "ctr_5",
+      "message": "Договор КР-05/2026: нет решённых строк для разделения цены на СРО/не СРО — остаток показан без разделения"
+    }
+  ],
+  "warnings": []
+}

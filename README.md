@@ -1,9 +1,22 @@
-# Репозиторий: два проекта
+# Репозиторий: проекты
 
 1. **`orders-app/`** — приложение учёта заказов фрилансера (PWA, ставится на телефон,
    работает офлайн). Инструкция и описание — [`orders-app/README.md`](orders-app/README.md).
 2. **`.claude/skills/construction-control/`** — Claude Code skill «ИИ-ассистент
    строительного контроля» (описан ниже).
+3. **`.claude/skills/sro-odo/`** — Claude Code skill **`/sro-odo`** «Обязательства члена
+   СРО»: по договорам, сметам, КС-2/КС-3, УПД и уведомлениям в СРО раскладывает суммы
+   на работы, относящиеся к СРО (идут в расчёт КФ ОДО), и всё остальное — отдельно по
+   строительству, проектированию и изысканиям — и строит отчёт проверяющему.
+   Точка входа — [`SKILL.md`](.claude/skills/sro-odo/SKILL.md); быстрая проверка:
+
+   ```bash
+   cd .claude/skills/sro-odo
+   python3 scripts/test_rules.py
+   python3 scripts/classify.py examples/demo/register.json
+   python3 scripts/odo.py examples/demo/register.json -o /tmp/r.json --md /tmp/s.md
+   python3 scripts/report.py /tmp/r.json -o /tmp/report.html --register examples/demo/register.json
+   ```
 
 ---
 

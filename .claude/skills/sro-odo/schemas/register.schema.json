@@ -1,0 +1,202 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sro-odo/schemas/register.schema.json",
+  "title": "Register — реестр договоров, документов и строк для расчёта обязательств члена СРО",
+  "description": "Единственный вход и выход скилла. Claude заполняет его из документов (каждая сумма — со ссылкой на документ и страницу), classify.py размечает строки, odo.py считает. Ничего не додумывается: нет данных — null и пометка в notes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "subject", "as_of", "settings", "objects", "contracts", "documents", "line_items"],
+  "properties": {
+    "schema_version": { "const": "1" },
+    "subject": {
+      "type": "object",
+      "description": "Проверяемая компания (член СРО).",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string" },
+        "inn": { "type": ["string", "null"] },
+        "kpp": { "type": ["string", "null"] },
+        "ogrn": { "type": ["string", "null"] },
+        "sro": {
+          "type": "array",
+          "description": "Членство: по одной записи на вид СРО. Уровни — из реестра СРО, не из слов компании.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "name"],
+            "properties": {
+              "kind": { "enum": ["build", "design", "survey"] },
+              "name": { "type": "string" },
+              "reg_number": { "type": ["string", "null"] },
+              "vv_level": { "type": ["integer", "null"], "minimum": 1, "maximum": 5 },
+              "odo_level": { "type": ["integer", "null"], "minimum": 1, "maximum": 5 },
+              "source": { "type": ["string", "null"], "description": "Откуда взят уровень: выписка из реестра, дата." }
+            }
+          }
+        },
+        "notes": { "type": ["string", "null"] }
+      }
+    },
+    "as_of": { "type": "string", "format": "date", "description": "Дата, на которую считаются обязательства." },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "vat_basis": { "enum": ["with_vat", "without_vat"], "default": "with_vat", "description": "В каких суммах считать. Цена договора обычно с НДС — по умолчанию with_vat." },
+        "review_threshold": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.7, "description": "Ниже этой уверенности строка уходит на проверку человеку." },
+        "default_object_category": { "enum": ["ordinary", "hazardous_48_1", "unknown"], "default": "unknown" }
+      }
+    },
+    "objects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "category"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^obj_[A-Za-z0-9_-]+$" },
+          "name": { "type": "string" },
+          "address": { "type": ["string", "null"] },
+          "cadastral": { "type": ["string", "null"] },
+          "category": { "enum": ["ordinary", "hazardous_48_1", "unknown"], "description": "Особо опасный, технически сложный или уникальный объект по ст. 48.1 ГрК РФ — решает человек. От этого зависит судьба работ со звёздочкой в Перечне 624." },
+          "category_source": { "type": ["string", "null"], "description": "Чем подтверждена категория (проектная документация, заключение экспертизы, слова заказчика)." },
+          "notes": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "contracts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "number", "date", "subject", "kind", "role", "counterparty", "procurement", "price_rub", "status", "source"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^ctr_[A-Za-z0-9_-]+$" },
+          "number": { "type": "string" },
+          "date": { "type": ["string", "null"], "format": "date" },
+          "subject": { "type": "string", "description": "Предмет договора дословно или близко к тексту." },
+          "kind": { "enum": ["construction", "demolition", "design", "survey", "mixed", "supply", "services", "other"], "description": "Вид договора. mixed — смешанный (например, проектирование + строительство): строки делятся по разделам Перечня." },
+          "sro_kind": { "enum": ["build", "design", "survey", null], "description": "К какому виду СРО относится договор. Если null — выводится из kind." },
+          "role": { "enum": ["contractor", "customer"], "description": "Роль проверяемой компании в договоре. Обязательства члена СРО — только там, где она подрядчик; договоры, где она заказчик, — субподряд её контрагентов, справочно." },
+          "counterparty": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "kind"],
+            "properties": {
+              "name": { "type": "string" },
+              "inn": { "type": ["string", "null"] },
+              "kind": { "enum": ["developer", "technical_customer", "operator", "regional_operator", "general_contractor", "contractor", "other", "unknown"], "description": "developer — застройщик; technical_customer — технический заказчик; operator — лицо, ответственное за эксплуатацию; regional_operator — региональный оператор капремонта. Остальные — не из перечня ч. 2.1 ст. 52 ГрК РФ (субподряд)." },
+              "kind_source": { "type": ["string", "null"], "description": "Чем подтверждено: разрешение на строительство, реестр застройщиков, текст договора." }
+            }
+          },
+          "procurement": { "enum": ["competitive", "direct", "unknown"], "description": "Конкурентный способ заключения (торги, аукцион, конкурс, запрос предложений) или прямой договор." },
+          "price_rub": { "type": ["number", "null"], "description": "Цена договора с учётом всех ДС, с НДС (как в уведомлении в СРО)." },
+          "price_without_vat_rub": { "type": ["number", "null"] },
+          "status": { "enum": ["active", "completed", "terminated", "unknown"] },
+          "object_id": { "type": ["string", "null"] },
+          "period_from": { "type": ["string", "null"], "format": "date" },
+          "period_to": { "type": ["string", "null"], "format": "date" },
+          "addenda": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["number", "date"],
+              "properties": {
+                "number": { "type": "string" },
+                "date": { "type": ["string", "null"], "format": "date" },
+                "note": { "type": ["string", "null"] },
+                "price_rub": { "type": ["number", "null"], "description": "Новая цена договора после ДС, если менялась." }
+              }
+            }
+          },
+          "source": { "$ref": "#/$defs/SourceRef" },
+          "notes": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "documents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "contract_id", "kind", "number", "date", "file"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^doc_[A-Za-z0-9_-]+$" },
+          "contract_id": { "type": ["string", "null"] },
+          "kind": { "enum": ["contract", "addendum", "estimate", "ks2", "ks3", "upd", "invoice", "act", "notification", "other"] },
+          "calc_role": { "enum": ["executed", "price_split", "reference", null], "description": "Как документ участвует в расчёте: executed — строки считаются выполненным (КС-2, УПД, акт); price_split — строки делят цену договора (смета); reference — справочно (КС-3, счёт-фактура, договор). null — по умолчанию из kind." },
+          "number": { "type": "string" },
+          "date": { "type": ["string", "null"], "format": "date" },
+          "period_from": { "type": ["string", "null"], "format": "date" },
+          "period_to": { "type": ["string", "null"], "format": "date" },
+          "amount_without_vat_rub": { "type": ["number", "null"] },
+          "vat_rub": { "type": ["number", "null"] },
+          "vat_rate": { "type": ["string", "null"], "description": "«22%», «5%», «без НДС»." },
+          "amount_with_vat_rub": { "type": ["number", "null"] },
+          "file": { "type": "string", "description": "Имя файла, как загружен." },
+          "pages": { "type": ["integer", "null"] },
+          "extracted_by": { "enum": ["claude", "human", "ocr"], "default": "claude" },
+          "extraction_confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1, "description": "Уверенность в снятых числах: сканы без текстового слоя — не выше 0.8." },
+          "notes": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "line_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "document_id", "contract_id", "name", "amount_rub", "amount_with_vat_rub"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^li_[A-Za-z0-9_-]+$" },
+          "document_id": { "type": "string" },
+          "contract_id": { "type": ["string", "null"] },
+          "object_id": { "type": ["string", "null"] },
+          "position": { "type": ["string", "null"], "description": "Номер позиции в документе." },
+          "name": { "type": "string", "description": "Наименование работ дословно." },
+          "unit": { "type": ["string", "null"] },
+          "qty": { "type": ["number", "null"] },
+          "amount_rub": { "type": ["number", "null"], "description": "Стоимость без НДС." },
+          "amount_with_vat_rub": { "type": ["number", "null"], "description": "Стоимость с НДС. Если в документе только одна из сумм — вторая null, odo.py доведёт по ставке документа." },
+          "is_summary": { "type": "boolean", "default": false, "description": "Строка «итого/всего» — не суммируется, служит контролем." },
+          "source": { "$ref": "#/$defs/SourceRef" },
+          "classification": {
+            "type": ["object", "null"],
+            "additionalProperties": false,
+            "properties": {
+              "kind": { "enum": ["perechen", "not_in_list", "non_work", "review", "unclassified", "summary"] },
+              "sro": { "type": ["boolean", "null"], "description": "true — в расчёт обязательств; false — не в расчёт; null — не решено." },
+              "sro_kind": { "enum": ["build", "design", "survey", null] },
+              "perechen_code": { "type": ["string", "null"], "description": "Например «III/6.3»." },
+              "perechen_title": { "type": ["string", "null"] },
+              "asterisk": { "type": ["boolean", "null"] },
+              "category": { "enum": ["services", "supply", "rent", "overhead", null] },
+              "rule_id": { "type": ["string", "null"] },
+              "reason": { "type": "string" },
+              "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+              "note": { "type": ["string", "null"] },
+              "alternatives": { "type": "array", "items": { "type": "string" } },
+              "review_status": { "enum": ["pending", "auto", "confirmed", "corrected", "rejected"] },
+              "human_note": { "type": ["string", "null"] }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "SourceRef": {
+      "type": "object",
+      "description": "Откуда взято: документ, страница, цитата. Обязателен для всякой суммы и всякого факта о договоре.",
+      "additionalProperties": false,
+      "required": ["document_id"],
+      "properties": {
+        "document_id": { "type": ["string", "null"] },
+        "page": { "type": ["integer", "null"] },
+        "quote": { "type": ["string", "null"] }
+      }
+    }
+  }
+}
