@@ -1,30 +1,38 @@
 /* ===========================================================================
    Правки под разметку, которую рисует сам движок.
 
-   Часть блоков OpenCart отдаёт готовым HTML, и переписать его в шаблоне
-   нельзя: постраничную навигацию, сообщения об ошибках, содержимое
-   стандартных модулей. Разметка у них своя, бутстраповская, и под классы
-   нашего style.css она не подходит.
+   Часть страниц и блоков OpenCart отдаёт готовым HTML, и переписать его
+   в шаблоне нельзя: постраничную навигацию, сообщения об ошибках,
+   содержимое стандартных модулей. Шаблон оформления заказа мы не трогаем
+   намеренно - это самая хрупкая часть движка, и ломать её ради внешнего
+   вида нельзя. Личный кабинет тоже остаётся стандартным.
 
-   Эти правила живут отдельным файлом нарочно. style.css общий с макетом,
-   который заказчик смотрит по ссылке; дописывать в него куски, осмысленные
-   только внутри движка, значит связать две вещи, которые меняются
-   по разным поводам.
+   Разметка у всего этого бутстраповская. Здесь она приводится к виду
+   остального сайта: те же цвета, те же поля ввода, те же кнопки.
+   Раскладка остаётся простой, в одну колонку - переносить сюда сетку
+   Bootstrap незачем, на телефоне она всё равно складывается так же.
+
+   Файл отдельный нарочно. style.css общий с макетом, который заказчик
+   смотрит по ссылке; дописывать в него куски, осмысленные только внутри
+   движка, значит связать две вещи, которые меняются по разным поводам.
+
+   Все цвета и отступы берутся из переменных style.css - поэтому тёмная
+   тема работает и здесь, без единого отдельного правила.
 
    Подключается в header.twig ПОСЛЕ style.css.
    =========================================================================== */
 
 /* --- Постраничная навигация ------------------------------------------------
    Движок отдаёт <ul class="pagination"><li class="active"><span>1</span>...
-   Наш макет рисует её плоским рядом ссылок. Приводим к тому же виду.        */
+   Макет рисует её плоским рядом ссылок. Приводим к тому же виду.           */
 .pagination {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sp-2, 8px);
+  gap: var(--sp-2);
   align-items: center;
   list-style: none;
   padding: 0;
-  margin: var(--sp-6, 24px) 0 0;
+  margin: var(--sp-6) 0 0;
 }
 
 .pagination li { display: contents; }
@@ -36,81 +44,228 @@
   justify-content: center;
   min-width: 44px;
   min-height: 44px;
-  padding: 0 var(--sp-3, 12px);
-  border: 1px solid var(--line, #d8dbe0);
-  border-radius: var(--radius-sm, 8px);
-  color: inherit;
+  padding: 0 var(--sp-3);
+  border: 1.5px solid var(--sg-line);
+  border-radius: var(--r-md);
+  color: var(--sg-ink);
   text-decoration: none;
 }
 
-.pagination li.active > span,
-.pagination li.disabled > span {
-  border-color: transparent;
-}
+.pagination li > a:hover { border-color: var(--sg-blue); }
 
 .pagination li.active > span {
-  background: var(--accent, #d42027);
-  color: #fff;
+  background: var(--sg-red);
+  border-color: var(--sg-red);
+  color: var(--sg-white);
   font-weight: 600;
 }
 
-.pagination li.disabled > span { opacity: .45; }
-
-/* Строка «Показано 1 — 16 из 48» движок кладёт рядом с навигацией. */
-.pagination-results {
-  margin: var(--sp-3, 12px) 0 0;
-  color: var(--muted, #6b7280);
-  font-size: .92rem;
+.pagination li.disabled > span {
+  border-color: transparent;
+  opacity: .45;
 }
 
-/* --- Сообщения движка ------------------------------------------------------
-   Ошибки входа, предупреждения корзины и тому подобное приходят как
-   .alert с бутстраповскими классами.                                        */
+/* Строка «Показано 1 — 16 из 48» движок кладёт рядом с навигацией. */
+.pagination-results,
+.text-right { color: var(--sg-muted); font-size: .92rem; }
+
+/* --- Сообщения движка ------------------------------------------------------ */
 .alert {
-  padding: var(--sp-3, 12px) var(--sp-4, 16px);
-  border: 1px solid var(--line, #d8dbe0);
-  border-left-width: 3px;
-  border-radius: var(--radius-sm, 8px);
-  margin: 0 0 var(--sp-4, 16px);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1.5px solid var(--sg-line);
+  border-left-width: 4px;
+  border-radius: var(--r-md);
+  margin: 0 0 var(--sp-4);
+  background: var(--sg-white);
 }
 
 .alert-success { border-left-color: #1f8a4c; }
 .alert-danger,
-.alert-warning { border-left-color: var(--accent, #d42027); }
-
+.alert-warning { border-left-color: var(--sg-red); }
+.alert-info { border-left-color: var(--sg-blue); }
 .alert .close { display: none; }
 
-/* --- Поля с ошибкой --------------------------------------------------------
-   Движок подписывает поле блоком .text-danger под ним.                      */
+/* --- Поля с ошибкой -------------------------------------------------------- */
 .text-danger {
   display: block;
-  margin-top: var(--sp-1, 4px);
-  color: var(--accent, #d42027);
+  margin-top: var(--sp-1);
+  color: var(--sg-red);
   font-size: .9rem;
 }
 
-.has-error input,
-.has-error select,
-.has-error textarea { border-color: var(--accent, #d42027); }
+.has-error .form-control { border-color: var(--sg-red); }
 
-/* --- Стандартные модули в колонках ----------------------------------------
-   Их разметку мы не переопределяем: модулей у OpenCart много, и под каждый
-   писать свой шаблон незачем. Даём им общий вид карточки, чтобы они
-   не выглядели чужими рядом с нашими блоками.                               */
-.column-modules > div + div { margin-top: var(--sp-5, 20px); }
+/* --- Формы движка: оформление заказа, кабинет, восстановление пароля -------
+   Те же поля, что в наших формах: одна высота, один радиус, одна рамка.
+   Иначе на оформлении заказа человек попадает будто на другой сайт.       */
+.form-group { margin: 0 0 var(--sp-4); }
 
+.control-label,
+.form-group > label {
+  display: block;
+  margin-bottom: var(--sp-2);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.form-control {
+  width: 100%;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1.5px solid var(--sg-line);
+  border-radius: var(--r-md);
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--sg-ink);
+  background: var(--sg-white);
+}
+
+input.form-control,
+select.form-control { height: 48px; }
+
+textarea.form-control { min-height: 120px; resize: vertical; }
+
+.form-control:focus-visible { outline: 2px solid var(--sg-blue); outline-offset: 2px; }
+
+.required > .control-label::after,
+.required > label::after { content: ' *'; color: var(--sg-red); }
+
+.radio,
+.checkbox { margin: 0 0 var(--sp-2); }
+
+.radio label,
+.checkbox label {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: flex-start;
+  min-height: 24px;
+  cursor: pointer;
+}
+
+.input-group { display: flex; gap: var(--sp-2); }
+.input-group .form-control { flex: 1 1 auto; }
+
+/* --- Кнопки движка --------------------------------------------------------- */
+.btn-primary,
+.btn-default,
+.btn-danger,
+.btn-info,
+.btn-light {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: 48px;
+  padding: 0 var(--sp-5);
+  border: 1.5px solid transparent;
+  border-radius: var(--r-md);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn-primary { background: var(--sg-red); color: var(--sg-white); }
+.btn-primary:hover { background: var(--sg-red-dark); color: var(--sg-white); }
+
+.btn-default,
+.btn-light {
+  background: var(--sg-white);
+  border-color: var(--sg-line);
+  color: var(--sg-ink);
+}
+
+.btn-default:hover { border-color: var(--sg-blue); color: var(--sg-ink); }
+
+.btn-danger { background: var(--sg-red); color: var(--sg-white); }
+.btn-info { background: var(--sg-blue); color: var(--sg-white); }
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  align-items: center;
+  margin-top: var(--sp-5);
+}
+
+/* --- Панели оформления заказа ----------------------------------------------
+   Шаг оформления - это .panel с шапкой и телом. Даём им вид карточки
+   и убираем бутстраповские отступы, которых у нас нет.                    */
+.panel {
+  border: 1.5px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  background: var(--sg-white);
+  margin: 0 0 var(--sp-4);
+  overflow: hidden;
+}
+
+.panel-heading {
+  padding: var(--sp-4) var(--sp-5);
+  border-bottom: 1.5px solid var(--sg-line);
+  background: var(--sg-bg-soft);
+}
+
+.panel-title { margin: 0; font-size: 17px; font-weight: 700; }
+.panel-title a { color: inherit; text-decoration: none; }
+.panel-body { padding: var(--sp-5); }
+
+.well {
+  padding: var(--sp-4);
+  border: 1.5px solid var(--sg-line);
+  border-radius: var(--r-md);
+  background: var(--sg-bg-soft);
+}
+
+/* --- Таблицы движка --------------------------------------------------------
+   Итоги заказа, история заказов, возвраты. На телефоне уезжают в прокрутку:
+   в них колонки с суммами, и ломать их по ширине экрана нельзя.           */
+.table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 var(--sp-4);
+}
+
+.table th,
+.table td {
+  padding: var(--sp-3);
+  border-bottom: 1px solid var(--sg-line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.table thead th {
+  font-size: 13px;
+  color: var(--sg-muted);
+  font-weight: 600;
+}
+
+.table tfoot td { font-weight: 700; }
+
+/* --- Стандартные модули в колонках -----------------------------------------
+   Их разметку мы не переопределяем: модулей у движка много, и под каждый
+   писать свой шаблон незачем. Даём им общий вид, чтобы они не выглядели
+   чужими рядом с нашими блоками.                                          */
+.column-modules > div + div { margin-top: var(--sp-5); }
 .column-modules .list-group { list-style: none; padding: 0; margin: 0; }
 
 .column-modules .list-group-item {
   display: block;
-  padding: var(--sp-2, 8px) 0;
-  border-bottom: 1px solid var(--line, #d8dbe0);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--sg-line);
   color: inherit;
   text-decoration: none;
 }
 
 .column-modules .list-group-item:last-child { border-bottom: 0; }
+.column-modules .list-group-item:hover { color: var(--sg-blue); }
 
 /* --- Мелочи ---------------------------------------------------------------- */
-.buttons { display: flex; flex-wrap: wrap; gap: var(--sp-3, 12px); align-items: center; }
-.required > label::after { content: ' *'; color: var(--accent, #d42027); }
+#content > h1:first-child,
+#content > h2:first-child { margin-top: 0; }
+
+/* Значков Font Awesome наша шапка не подключает, поэтому элементы <i class="fa">
+   на стандартных страницах и так пустые - рисовать нечем, и пустых квадратов
+   не будет. Скрывать их правилом НЕЛЬЗЯ: у кнопки, где значок единственное
+   содержимое, схлопнулась бы ширина. А если какой-нибудь модуль подключит
+   шрифт сам, значки просто появятся. */
