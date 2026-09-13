@@ -1464,13 +1464,6 @@ ul {
   border-width: 1px;
 }
 
-.ph--map {
-  display: grid;
-  place-items: center;
-  min-height: 220px;
-  text-align: center;
-}
-
 .ph--photo {
   display: grid;
   place-items: center;
