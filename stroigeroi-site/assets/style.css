@@ -1642,6 +1642,164 @@ ul {
 }
 
 /* ==========================================================================
+   Юридические документы
+   ==========================================================================
+
+   Политика и соглашение — единственные страницы сайта со сплошным длинным
+   текстом. Строка ограничена по ширине: читать юридический документ
+   в строку на полторы тысячи пикселей невозможно, глаз теряет начало
+   следующей строки. 68 знаков — верх обычной нормы для сплошного текста. */
+.legal {
+  padding-bottom: var(--sp-8);
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+/* Ширину ограничивает не весь блок, а строки текста: иначе таблица
+   целей обработки — четыре колонки — оказывалась зажата в ту же
+   колонку и вытягивалась в четыре узких столбика по одному слову. */
+.legal > p,
+.legal > ul,
+.legal > h2 {
+  max-width: 68ch;
+}
+
+.legal h2 {
+  margin: var(--sp-7) 0 var(--sp-3);
+  font-size: 21px;
+  line-height: 1.25;
+  scroll-margin-top: calc(var(--header-now, 70px) + var(--sp-5));
+}
+
+.legal h2:first-child {
+  margin-top: var(--sp-5);
+}
+
+.legal p {
+  margin: 0 0 var(--sp-3);
+  text-wrap: pretty;
+}
+
+.legal ul {
+  margin: 0 0 var(--sp-4);
+  padding-left: var(--sp-5);
+}
+
+.legal li {
+  margin-bottom: var(--sp-2);
+}
+
+.legal__lead {
+  color: var(--sg-muted);
+}
+
+.legal__rule {
+  margin: var(--sp-8) 0 0;
+  border: 0;
+  border-top: 1px solid var(--sg-line);
+}
+
+/* Таблицы в документах: реквизиты оператора, цели обработки, ключи
+   в памяти браузера. Шире колонки текста — их есть куда растянуть. */
+.legal__table {
+  width: 100%;
+  max-width: 68ch;
+  margin: 0 0 var(--sp-5);
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.legal__table--wide {
+  max-width: 100%;
+}
+
+.legal__table th,
+.legal__table td {
+  padding: var(--sp-3);
+  border: 1px solid var(--sg-line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.legal__table thead th {
+  background: var(--sg-bg-soft);
+  font-size: 14px;
+}
+
+.legal__table tbody th {
+  width: 34%;
+  font-weight: 600;
+  color: var(--sg-muted);
+}
+
+/* Таблицы «подпись — значение» (реквизиты оператора, ключи в памяти
+   браузера) на узком экране тоже разворачиваются: подпись сверху,
+   значение снизу. При двух колонках на 320 px «Ответственный за обработку
+   персональных данных» в левой ячейке распирало таблицу до 322 px,
+   и страница ехала вбок. */
+@media (max-width: 560px) {
+  .legal__table tbody tr {
+    display: block;
+    margin-bottom: var(--sp-3);
+    border: 1px solid var(--sg-line);
+    border-radius: var(--r-md);
+    overflow: hidden;
+  }
+
+  .legal__table tbody th,
+  .legal__table tbody td {
+    display: block;
+    width: auto;
+    border: 0;
+  }
+
+  .legal__table tbody th {
+    padding-bottom: 0;
+    font-size: 13px;
+  }
+}
+
+/* Таблица целей — четыре колонки, на телефоне они не помещаются ни при
+   каком кегле. Ниже 700 px строка разворачивается в карточку: подпись
+   берётся из data-label у ячейки, шапка прячется. Каждой новой ячейке
+   нужен свой data-label, иначе в карточке она останется без подписи. */
+@media (max-width: 700px) {
+  .legal__table--wide thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .legal__table--wide tr {
+    display: block;
+    margin-bottom: var(--sp-4);
+    border: 1px solid var(--sg-line);
+    border-radius: var(--r-md);
+    overflow: hidden;
+  }
+
+  .legal__table--wide td {
+    display: block;
+    border: 0;
+    border-bottom: 1px solid var(--sg-line);
+  }
+
+  .legal__table--wide tr td:last-child {
+    border-bottom: 0;
+  }
+
+  .legal__table--wide td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 2px;
+    font-size: 13px;
+    color: var(--sg-muted);
+  }
+}
+
+/* ==========================================================================
    Режим работы
    ========================================================================== */
 
