@@ -1658,6 +1658,73 @@ ul {
   margin-top: 3px;
 }
 
+/* ==========================================================================
+   Карта магазина
+   ==========================================================================
+
+   Виджет Яндекс.Карт, ключ для него не нужен. Точку Яндекс ищет сам
+   по адресу из карточки — своих координат мы не придумываем.
+   loading="lazy": карты грузятся, только когда до них долистали, иначе
+   три карты тянули бы свои скрипты и плитки на каждое открытие страницы.
+
+   Под рамкой лежит запасная надпись: если карта не загрузилась — нет сети,
+   блокировщик, закрытый доступ — человек видит не пустой белый прямоугольник,
+   а ссылку на адрес. Загрузившаяся карта закрывает её собой. */
+.shop-card__map {
+  position: relative;
+  margin-top: var(--sp-3);
+  aspect-ratio: 4 / 3;
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--sg-bg-soft);
+}
+
+.shop-card__mapframe {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* Пока карта грузится, надпись лежит под кадром и её не видно.
+   Класс is-mapfail ставит app.js, когда стало ясно, что карта не придёт:
+   кадр убирается, остаётся адрес со ссылкой. */
+.shop-card__map.is-mapfail .shop-card__mapframe {
+  display: none;
+}
+
+/* Ссылка в запасной надписи — полноценная цель нажатия: 20 px высоты
+   пальцем не берутся, а показывается она как раз там, где карты нет
+   и ткнуть больше некуда. */
+.shop-card__mapfail a {
+  display: inline-block;
+  min-height: 24px;
+  padding-block: 2px;
+}
+
+.shop-card__mapfail {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  margin: 0;
+  display: grid;
+  place-content: center;
+  padding: var(--sp-4);
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--sg-muted);
+}
+
+/* На бумаге карта бесполезна: остаётся адрес, он напечатан выше текстом. */
+@media print {
+  .shop-card__map {
+    display: none !important;
+  }
+}
+
 /* Ссылка на карту у каждого магазина. Адреса настоящие, поэтому ссылка
    рабочая уже сейчас: поиск по адресу в Яндекс.Картах. Прямоугольник
    под встроенную карту остаётся пустым местом, как и был, — но человеку
@@ -6156,7 +6223,7 @@ p a:not(.btn):hover,
     <p class="shop-card__city">Петропавловск-Камчатский</p>
     <h3 class="shop-card__addr">ул. Чубарова, 16, корп. 40</h3>
     <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><a href="tel:+79638300999">8-963-830-09-99</a></p>
-    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="ph ph--inline">режим работы — нужен от заказчика</span></p><a class="shop-card__route" href="https://yandex.ru/maps/?text=%D0%9F%D0%B5%D1%82%D1%80%D0%BE%D0%BF%D0%B0%D0%B2%D0%BB%D0%BE%D0%B2%D1%81%D0%BA-%D0%9A%D0%B0%D0%BC%D1%87%D0%B0%D1%82%D1%81%D0%BA%D0%B8%D0%B9%2C%20%D1%83%D0%BB.%20%D0%A7%D1%83%D0%B1%D0%B0%D1%80%D0%BE%D0%B2%D0%B0%2C%2016%2C%20%D0%BA%D0%BE%D1%80%D0%BF.%2040" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Открыть на карте</span><span class="visually-hidden"> (в новой вкладке)</span></a>
+    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="ph ph--inline">режим работы — нужен от заказчика</span></p><a class="shop-card__route" href="https://yandex.ru/maps/?rtext=~%D0%9F%D0%B5%D1%82%D1%80%D0%BE%D0%BF%D0%B0%D0%B2%D0%BB%D0%BE%D0%B2%D1%81%D0%BA-%D0%9A%D0%B0%D0%BC%D1%87%D0%B0%D1%82%D1%81%D0%BA%D0%B8%D0%B9%2C%20%D1%83%D0%BB.%20%D0%A7%D1%83%D0%B1%D0%B0%D1%80%D0%BE%D0%B2%D0%B0%2C%2016%2C%20%D0%BA%D0%BE%D1%80%D0%BF.%2040&amp;rtt=auto" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Построить маршрут</span><span class="visually-hidden"> (в новой вкладке)</span></a>
     
   </div>
 </article><article class="shop-card reveal">
@@ -6165,7 +6232,7 @@ p a:not(.btn):hover,
     <p class="shop-card__city">Петропавловск-Камчатский</p>
     <h3 class="shop-card__addr">просп. 50 лет Октября, 17А</h3>
     <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><a href="tel:+79638300999">8-963-830-09-99</a></p>
-    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="ph ph--inline">режим работы — нужен от заказчика</span></p><a class="shop-card__route" href="https://yandex.ru/maps/?text=%D0%9F%D0%B5%D1%82%D1%80%D0%BE%D0%BF%D0%B0%D0%B2%D0%BB%D0%BE%D0%B2%D1%81%D0%BA-%D0%9A%D0%B0%D0%BC%D1%87%D0%B0%D1%82%D1%81%D0%BA%D0%B8%D0%B9%2C%20%D0%BF%D1%80%D0%BE%D1%81%D0%BF.%2050%20%D0%BB%D0%B5%D1%82%20%D0%9E%D0%BA%D1%82%D1%8F%D0%B1%D1%80%D1%8F%2C%2017%D0%90" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Открыть на карте</span><span class="visually-hidden"> (в новой вкладке)</span></a>
+    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="ph ph--inline">режим работы — нужен от заказчика</span></p><a class="shop-card__route" href="https://yandex.ru/maps/?rtext=~%D0%9F%D0%B5%D1%82%D1%80%D0%BE%D0%BF%D0%B0%D0%B2%D0%BB%D0%BE%D0%B2%D1%81%D0%BA-%D0%9A%D0%B0%D0%BC%D1%87%D0%B0%D1%82%D1%81%D0%BA%D0%B8%D0%B9%2C%20%D0%BF%D1%80%D0%BE%D1%81%D0%BF.%2050%20%D0%BB%D0%B5%D1%82%20%D0%9E%D0%BA%D1%82%D1%8F%D0%B1%D1%80%D1%8F%2C%2017%D0%90&amp;rtt=auto" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Построить маршрут</span><span class="visually-hidden"> (в новой вкладке)</span></a>
     
   </div>
 </article><article class="shop-card reveal">
@@ -6174,7 +6241,7 @@ p a:not(.btn):hover,
     <p class="shop-card__city">Елизово</p>
     <h3 class="shop-card__addr">Магистральная ул., 2/2</h3>
     <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><a href="tel:+79638300999">8-963-830-09-99</a></p>
-    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="ph ph--inline">режим работы — нужен от заказчика</span></p><a class="shop-card__route" href="https://yandex.ru/maps/?text=%D0%95%D0%BB%D0%B8%D0%B7%D0%BE%D0%B2%D0%BE%2C%20%D0%9C%D0%B0%D0%B3%D0%B8%D1%81%D1%82%D1%80%D0%B0%D0%BB%D1%8C%D0%BD%D0%B0%D1%8F%20%D1%83%D0%BB.%2C%202/2" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Открыть на карте</span><span class="visually-hidden"> (в новой вкладке)</span></a>
+    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="ph ph--inline">режим работы — нужен от заказчика</span></p><a class="shop-card__route" href="https://yandex.ru/maps/?rtext=~%D0%95%D0%BB%D0%B8%D0%B7%D0%BE%D0%B2%D0%BE%2C%20%D0%9C%D0%B0%D0%B3%D0%B8%D1%81%D1%82%D1%80%D0%B0%D0%BB%D1%8C%D0%BD%D0%B0%D1%8F%20%D1%83%D0%BB.%2C%202/2&amp;rtt=auto" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Построить маршрут</span><span class="visually-hidden"> (в новой вкладке)</span></a>
     
   </div>
 </article></div>
@@ -7102,7 +7169,7 @@ p a:not(.btn):hover,
     <h3 class="shop-card__addr">ул. Чубарова, 16, корп. 40</h3>
     <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><a href="tel:+79638300999">8-963-830-09-99</a></p>
     <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="ph ph--inline">режим работы — нужен от заказчика</span></p>
-    <div class="ph ph--map shop-card__map"><span><strong>Карта</strong>Здесь встанет Яндекс.Карта с точкой магазина</span></div><a class="shop-card__route" href="https://yandex.ru/maps/?text=%D0%9F%D0%B5%D1%82%D1%80%D0%BE%D0%BF%D0%B0%D0%B2%D0%BB%D0%BE%D0%B2%D1%81%D0%BA-%D0%9A%D0%B0%D0%BC%D1%87%D0%B0%D1%82%D1%81%D0%BA%D0%B8%D0%B9%2C%20%D1%83%D0%BB.%20%D0%A7%D1%83%D0%B1%D0%B0%D1%80%D0%BE%D0%B2%D0%B0%2C%2016%2C%20%D0%BA%D0%BE%D1%80%D0%BF.%2040" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Открыть на карте</span><span class="visually-hidden"> (в новой вкладке)</span></a>
+    <div class="shop-card__map"><p class="shop-card__mapfail">Карта не загрузилась. Адрес можно открыть <a href="https://yandex.ru/maps/?text=%D0%9F%D0%B5%D1%82%D1%80%D0%BE%D0%BF%D0%B0%D0%B2%D0%BB%D0%BE%D0%B2%D1%81%D0%BA-%D0%9A%D0%B0%D0%BC%D1%87%D0%B0%D1%82%D1%81%D0%BA%D0%B8%D0%B9%2C%20%D1%83%D0%BB.%20%D0%A7%D1%83%D0%B1%D0%B0%D1%80%D0%BE%D0%B2%D0%B0%2C%2016%2C%20%D0%BA%D0%BE%D1%80%D0%BF.%2040" target="_blank" rel="noopener">в Яндекс.Картах</a></p><iframe class="shop-card__mapframe" src="https://yandex.ru/map-widget/v1/?text=%D0%9F%D0%B5%D1%82%D1%80%D0%BE%D0%BF%D0%B0%D0%B2%D0%BB%D0%BE%D0%B2%D1%81%D0%BA-%D0%9A%D0%B0%D0%BC%D1%87%D0%B0%D1%82%D1%81%D0%BA%D0%B8%D0%B9%2C%20%D1%83%D0%BB.%20%D0%A7%D1%83%D0%B1%D0%B0%D1%80%D0%BE%D0%B2%D0%B0%2C%2016%2C%20%D0%BA%D0%BE%D1%80%D0%BF.%2040&z=17" title="Карта: Петропавловск-Камчатский, ул. Чубарова, 16, корп. 40" loading="lazy" allow="geolocation" allowfullscreen></iframe></div><a class="shop-card__route" href="https://yandex.ru/maps/?rtext=~%D0%9F%D0%B5%D1%82%D1%80%D0%BE%D0%BF%D0%B0%D0%B2%D0%BB%D0%BE%D0%B2%D1%81%D0%BA-%D0%9A%D0%B0%D0%BC%D1%87%D0%B0%D1%82%D1%81%D0%BA%D0%B8%D0%B9%2C%20%D1%83%D0%BB.%20%D0%A7%D1%83%D0%B1%D0%B0%D1%80%D0%BE%D0%B2%D0%B0%2C%2016%2C%20%D0%BA%D0%BE%D1%80%D0%BF.%2040&amp;rtt=auto" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Построить маршрут</span><span class="visually-hidden"> (в новой вкладке)</span></a>
   </div>
 </article><article class="shop-card reveal">
   <div class="shop-card__top" aria-hidden="true"></div>
@@ -7111,7 +7178,7 @@ p a:not(.btn):hover,
     <h3 class="shop-card__addr">просп. 50 лет Октября, 17А</h3>
     <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><a href="tel:+79638300999">8-963-830-09-99</a></p>
     <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="ph ph--inline">режим работы — нужен от заказчика</span></p>
-    <div class="ph ph--map shop-card__map"><span><strong>Карта</strong>Здесь встанет Яндекс.Карта с точкой магазина</span></div><a class="shop-card__route" href="https://yandex.ru/maps/?text=%D0%9F%D0%B5%D1%82%D1%80%D0%BE%D0%BF%D0%B0%D0%B2%D0%BB%D0%BE%D0%B2%D1%81%D0%BA-%D0%9A%D0%B0%D0%BC%D1%87%D0%B0%D1%82%D1%81%D0%BA%D0%B8%D0%B9%2C%20%D0%BF%D1%80%D0%BE%D1%81%D0%BF.%2050%20%D0%BB%D0%B5%D1%82%20%D0%9E%D0%BA%D1%82%D1%8F%D0%B1%D1%80%D1%8F%2C%2017%D0%90" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Открыть на карте</span><span class="visually-hidden"> (в новой вкладке)</span></a>
+    <div class="shop-card__map"><p class="shop-card__mapfail">Карта не загрузилась. Адрес можно открыть <a href="https://yandex.ru/maps/?text=%D0%9F%D0%B5%D1%82%D1%80%D0%BE%D0%BF%D0%B0%D0%B2%D0%BB%D0%BE%D0%B2%D1%81%D0%BA-%D0%9A%D0%B0%D0%BC%D1%87%D0%B0%D1%82%D1%81%D0%BA%D0%B8%D0%B9%2C%20%D0%BF%D1%80%D0%BE%D1%81%D0%BF.%2050%20%D0%BB%D0%B5%D1%82%20%D0%9E%D0%BA%D1%82%D1%8F%D0%B1%D1%80%D1%8F%2C%2017%D0%90" target="_blank" rel="noopener">в Яндекс.Картах</a></p><iframe class="shop-card__mapframe" src="https://yandex.ru/map-widget/v1/?text=%D0%9F%D0%B5%D1%82%D1%80%D0%BE%D0%BF%D0%B0%D0%B2%D0%BB%D0%BE%D0%B2%D1%81%D0%BA-%D0%9A%D0%B0%D0%BC%D1%87%D0%B0%D1%82%D1%81%D0%BA%D0%B8%D0%B9%2C%20%D0%BF%D1%80%D0%BE%D1%81%D0%BF.%2050%20%D0%BB%D0%B5%D1%82%20%D0%9E%D0%BA%D1%82%D1%8F%D0%B1%D1%80%D1%8F%2C%2017%D0%90&z=17" title="Карта: Петропавловск-Камчатский, просп. 50 лет Октября, 17А" loading="lazy" allow="geolocation" allowfullscreen></iframe></div><a class="shop-card__route" href="https://yandex.ru/maps/?rtext=~%D0%9F%D0%B5%D1%82%D1%80%D0%BE%D0%BF%D0%B0%D0%B2%D0%BB%D0%BE%D0%B2%D1%81%D0%BA-%D0%9A%D0%B0%D0%BC%D1%87%D0%B0%D1%82%D1%81%D0%BA%D0%B8%D0%B9%2C%20%D0%BF%D1%80%D0%BE%D1%81%D0%BF.%2050%20%D0%BB%D0%B5%D1%82%20%D0%9E%D0%BA%D1%82%D1%8F%D0%B1%D1%80%D1%8F%2C%2017%D0%90&amp;rtt=auto" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Построить маршрут</span><span class="visually-hidden"> (в новой вкладке)</span></a>
   </div>
 </article><article class="shop-card reveal">
   <div class="shop-card__top" aria-hidden="true"></div>
@@ -7120,7 +7187,7 @@ p a:not(.btn):hover,
     <h3 class="shop-card__addr">Магистральная ул., 2/2</h3>
     <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><a href="tel:+79638300999">8-963-830-09-99</a></p>
     <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="ph ph--inline">режим работы — нужен от заказчика</span></p>
-    <div class="ph ph--map shop-card__map"><span><strong>Карта</strong>Здесь встанет Яндекс.Карта с точкой магазина</span></div><a class="shop-card__route" href="https://yandex.ru/maps/?text=%D0%95%D0%BB%D0%B8%D0%B7%D0%BE%D0%B2%D0%BE%2C%20%D0%9C%D0%B0%D0%B3%D0%B8%D1%81%D1%82%D1%80%D0%B0%D0%BB%D1%8C%D0%BD%D0%B0%D1%8F%20%D1%83%D0%BB.%2C%202/2" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Открыть на карте</span><span class="visually-hidden"> (в новой вкладке)</span></a>
+    <div class="shop-card__map"><p class="shop-card__mapfail">Карта не загрузилась. Адрес можно открыть <a href="https://yandex.ru/maps/?text=%D0%95%D0%BB%D0%B8%D0%B7%D0%BE%D0%B2%D0%BE%2C%20%D0%9C%D0%B0%D0%B3%D0%B8%D1%81%D1%82%D1%80%D0%B0%D0%BB%D1%8C%D0%BD%D0%B0%D1%8F%20%D1%83%D0%BB.%2C%202/2" target="_blank" rel="noopener">в Яндекс.Картах</a></p><iframe class="shop-card__mapframe" src="https://yandex.ru/map-widget/v1/?text=%D0%95%D0%BB%D0%B8%D0%B7%D0%BE%D0%B2%D0%BE%2C%20%D0%9C%D0%B0%D0%B3%D0%B8%D1%81%D1%82%D1%80%D0%B0%D0%BB%D1%8C%D0%BD%D0%B0%D1%8F%20%D1%83%D0%BB.%2C%202/2&z=17" title="Карта: Елизово, Магистральная ул., 2/2" loading="lazy" allow="geolocation" allowfullscreen></iframe></div><a class="shop-card__route" href="https://yandex.ru/maps/?rtext=~%D0%95%D0%BB%D0%B8%D0%B7%D0%BE%D0%B2%D0%BE%2C%20%D0%9C%D0%B0%D0%B3%D0%B8%D1%81%D1%82%D1%80%D0%B0%D0%BB%D1%8C%D0%BD%D0%B0%D1%8F%20%D1%83%D0%BB.%2C%202/2&amp;rtt=auto" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Построить маршрут</span><span class="visually-hidden"> (в новой вкладке)</span></a>
   </div>
 </article></div>
     </section>
@@ -8409,6 +8476,46 @@ p a:not(.btn):hover,
     revealables.forEach(function (el) { io.observe(el); });
   } else {
     revealables.forEach(function (el) { el.classList.add('is-in'); });
+  }
+
+  /* ======================================================================
+     Карты магазинов: если виджет не загрузился — показать адрес
+     ======================================================================
+
+     Когда запрос к Яндексу не проходит (нет сети, блокировщик, закрытый
+     доступ), браузер рисует в кадре свой серый «битый документ» поверх
+     запасной надписи — выходит хуже, чем пустое место было раньше.
+
+     Отличить это изнутри страницы нельзя, я пробовал: событие load
+     приходит и для страницы ошибки (за 216 мс), а contentDocument в обоих
+     случаях null — свою страницу ошибки браузер тоже отдаёт как чужой
+     источник. Поэтому доступность Яндекса проверяется отдельным запросом:
+     при mode: 'no-cors' он отклоняется, только если запрос не прошёл.
+
+     Запрос уходит один на все три карты и только когда до карты долистали:
+     карты ленивые, до этого момента они и сами ничего не запрашивают. */
+  var mapBoxes = $$('.shop-card__map');
+  if (mapBoxes.length && window.fetch) {
+    var probe = null;
+    var checkMaps = function () {
+      if (probe) return;
+      probe = fetch('https://yandex.ru/favicon.ico', { mode: 'no-cors', cache: 'no-store' })
+        .catch(function () {
+          mapBoxes.forEach(function (box) { box.classList.add('is-mapfail'); });
+        });
+    };
+    if ('IntersectionObserver' in window) {
+      var mapIo = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          mapIo.unobserve(entry.target);
+          checkMaps();
+        });
+      }, { rootMargin: '200px' });
+      mapBoxes.forEach(function (box) { mapIo.observe(box); });
+    } else {
+      checkMaps();
+    }
   }
 
   /* ======================================================================

@@ -121,9 +121,29 @@ for (const name of PAGES) {
   for (const width of WIDTHS) {
     const ctx = await browser.newContext({ viewport: { width, height: 900 } });
     const page = await ctx.newPage();
+
+    /* Внешние адреса режем сами: на контактах стоят виджеты Яндекс.Карт,
+       и проверка не должна зависеть от того, дотянулась ли машина
+       до Яндекса. Всё, что ругается на наш собственный код, ловится
+       по-прежнему. */
+    const blockedHosts = ['yandex.ru'];
+
+    /* У сообщения консоли есть адрес источника — по нему и отличаем
+       свои ошибки от оборванных запросов к карте, не гадая по тексту. */
     const errors = [];
-    page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+    page.on('console', (m) => {
+      if (m.type() !== 'error') return;
+      const from = (m.location() && m.location().url) || '';
+      if (blockedHosts.some((h) => from.includes(h) || m.text().includes(h))) return;
+      errors.push(m.text());
+    });
     page.on('pageerror', (e) => errors.push(String(e)));
+
+    await page.route('**/*', (route) => {
+      const url = route.request().url();
+      if (blockedHosts.some((h) => url.includes(h))) return route.abort();
+      return route.continue();
+    });
 
     await page.goto('file://' + path.join(DIR, `${name}.html`), { waitUntil: 'load' });
     await page.waitForTimeout(250);
