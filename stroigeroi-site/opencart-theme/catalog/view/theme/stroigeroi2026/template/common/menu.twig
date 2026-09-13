@@ -1,0 +1,56 @@
+{#
+  Разделы каталога. В OpenCart они приходят только сюда (common/menu.twig),
+  в шапку их не передают - поэтому все три блока с разделами живут здесь,
+  а header.twig вставляет их одной строкой {{ menu }}.
+
+  Блоки идут ровно в том порядке, в каком стояли в макете:
+    1. header-quick   - полоса популярных разделов под шапкой
+    2. catalog-menu   - выпадающий список всех разделов
+    3. mobile-nav     - меню для телефона
+
+  Значков у разделов нет: их 18 штук, и нарисованные вручную к произвольным
+  разделам из базы не привязать. У категорий в базе заказчика свои картинки
+  (поле image), но стоковый контроллер меню их не отдаёт - это отдельная
+  доработка, описана в README темы.
+#}
+{#
+  --- Адреса текстовых страниц --------------------------------------------
+  Такой же блок есть в common/header.twig - правьте оба.
+  ------------------------------------------------------------------------
+#}
+{% set id_delivery = 0 %}
+{% set url_delivery = id_delivery ? 'index.php?route=information/information&information_id=' ~ id_delivery : '' %}
+{% set url_calculator = 'index.php?route=information/calculator' %}
+{% set url_special = 'index.php?route=product/special' %}
+
+  <div class="header-quick">
+    <div class="container header-quick__inner">
+      <nav class="header-quick__nav" aria-label="Популярные разделы">
+        <a class="header-quick__link header-quick__link--accent" href="{{ url_special }}">Товары со скидкой</a>
+        {% for category in categories|slice(0, 6) %}<a class="header-quick__link" href="{{ category.href }}">{{ category.name }}</a>{% endfor %}
+      </nav>
+      {% if categories|length > 6 %}
+      <button class="header-quick__more" type="button" data-catalog-toggle aria-expanded="false" aria-controls="catalog-menu">
+        Ещё разделы <span class="icon-chevron"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></span>
+      </button>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="catalog-menu" id="catalog-menu" data-catalog-menu hidden>
+    <div class="container">
+      <p class="catalog-menu__title">Все разделы каталога</p>
+      <div class="catalog-menu__grid">{% for category in categories %}<a class="catalog-menu__link" href="{{ category.href }}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg><span>{{ category.name }}</span></a>{% endfor %}<a class="catalog-menu__link catalog-menu__link--special" href="{{ url_special }}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 18 12-12"/><circle cx="7.5" cy="7.5" r="2"/><circle cx="16.5" cy="16.5" r="2"/></svg><span>Товары со скидкой</span></a></div>
+    </div>
+  </div>
+
+  <div class="container">
+    <nav class="mobile-nav" id="mobile-nav" data-mobile-nav hidden aria-label="Мобильное меню">
+      {% for category in categories %}<a class="mobile-nav__link" href="{{ category.href }}">{{ category.name }}</a>{% endfor %}
+      <a class="mobile-nav__link" href="{{ url_special }}">Товары со скидкой</a>
+      <a class="mobile-nav__link" href="{{ url_calculator }}">Калькулятор материалов</a>
+      {% if url_delivery %}<a class="mobile-nav__link" href="{{ url_delivery }}">Доставка и оплата</a>{% endif %}
+      <a class="mobile-nav__link" href="index.php?route=information/contact">Контакты и магазины</a>
+      <a class="mobile-nav__link" href="tel:+79638300999">8-963-830-09-99</a>
+    </nav>
+  </div>

@@ -1,0 +1,10 @@
+{#
+  Корзина в шапке. В макете это был обычный <a> со счётчиком, который считал
+  JS по localStorage. Здесь счётчик приходит с сервера: движок знает,
+  что в корзине, ещё до отрисовки страницы, и цифра не прыгает при загрузке.
+
+  Шаблон вставляется в header.twig через {{ cart }} и должен отдать ровно
+  ту же разметку, что была в макете, - стили рассчитаны на эти классы.
+#}
+{% set count = products|length + vouchers|length %}
+<a class="header-action" href="{{ cart }}"><span class="header-action__icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9.5" cy="19.5" r="1.6"/><circle cx="17" cy="19.5" r="1.6"/><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L20 8H6"/></svg><span class="header-action__count" data-count="cart">{{ count }}</span></span><span class="header-action__label">Корзина</span></a>

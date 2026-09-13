@@ -1,0 +1,5691 @@
+/* ==========================================================================
+   Строй-Герой — прототип сайта
+   Все цвета, отступы и радиусы вынесены в переменные :root,
+   чтобы потом подставить их в тему OpenCart.
+   ========================================================================== */
+
+:root {
+  /* Фирменные цвета (сняты с логотипа) */
+  --sg-blue: #010b87;
+  --sg-red: #d81921;
+  --sg-white: #ffffff;
+  --sg-on-dark: #ffffff; /* текст и знаки на фирменных тёмных поверхностях */
+  --sg-ink: #1b1b1f;
+  --sg-muted: #63636e;
+  --sg-line: #e6e6ec;
+
+  /* Производные оттенки — только осветления базовых, новых цветов не вводим */
+  --sg-blue-dark: #01075c;
+  --sg-blue-tint: #f2f3fb;
+  --sg-red-dark: #b3141b;
+  --sg-red-tint: #fdf1f2;
+  --sg-bg-soft: #f7f7fa;
+
+  /* Фирменные диагональные полоски — рисуются кодом, картинка не нужна */
+  --sg-stripes: repeating-linear-gradient(
+    -45deg,
+    #ffffff 0 18px,
+    var(--sg-blue) 18px 31px,
+    #ffffff 31px 49px,
+    var(--sg-red) 49px 62px
+  );
+
+  /* Та же раскладка полос, но крупнее — для больших плоскостей */
+  --sg-stripes-lg: repeating-linear-gradient(
+    -45deg,
+    #ffffff 0 34px,
+    var(--sg-blue) 34px 58px,
+    #ffffff 58px 92px,
+    var(--sg-red) 92px 116px
+  );
+
+  /* Отступы */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 64px;
+
+  /* Радиусы */
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 10px;
+  --r-xl: 16px;
+  --r-pill: 999px;
+
+  /* Тени */
+  /* Тень в два слоя: короткий «контактный» у самой кромки и длинный
+     рассеянный. Одним слоем предмет выглядит наклейкой — либо жёсткая
+     кромка без рассеивания, либо мутное пятно без опоры. Оттенок
+     фирменный синий, а не серый: на белом он читается теплее. */
+  --sh-sm: 0 1px 1px rgba(1, 11, 135, 0.05), 0 2px 4px rgba(1, 11, 135, 0.04);
+  --sh-md: 0 2px 4px rgba(1, 11, 135, 0.05), 0 8px 20px rgba(1, 11, 135, 0.08);
+  --sh-lg: 0 4px 10px rgba(1, 11, 135, 0.06), 0 20px 44px rgba(1, 11, 135, 0.12);
+
+  /* Типографика и сетка */
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, "Noto Sans", sans-serif;
+  --container: 1280px;
+  --header-h: 92px;
+
+  /* Тема сайта не зависит от темы системы: человек мог включить светлую
+     тему сайта при тёмной системе. Без этой строки браузер в такой паре
+     рисует свои контролы и полосы прокрутки тёмными посреди светлой
+     страницы. В тёмной теме сайта стоит парная строка color-scheme: dark. */
+  color-scheme: light;
+
+  /* Стрелка выпадающего списка. Своя, потому что системная — сплошной
+     треугольник, а весь знаковый ряд сайта нарисован линией в 1.75
+     с круглыми концами. Цвет зашит внутрь картинки, поэтому у тёмной
+     темы стоит парная строка со светлым штрихом. */
+  --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231b1b1f' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+
+  /* Цвет пунктира у пустых мест. Отдельной переменной, потому что
+     в тёмной теме синий светлеет: жёстко зашитый тёмно-синий там
+     сливается с фоном, и плейсхолдер перестаёт читаться пустым местом. */
+  --ph-line: rgba(1, 11, 135, 0.45);
+}
+
+@media (min-width: 1600px) {
+  :root {
+    --container: 1440px;
+  }
+}
+
+/* ==========================================================================
+   База
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--sg-white);
+  color: var(--sg-ink);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.55;
+  /* clip, а не hidden. hidden делает <body> контейнером прокрутки, и
+     position: sticky внутри перестаёт работать совсем: панель фильтров,
+     «Итого» в корзине и результат калькулятора были объявлены липкими,
+     но ни один не прилипал — на второй тысяче пикселей прокрутки панель
+     фильтров уходила на 1105 px выше экрана. clip обрезает так же,
+     но контейнера прокрутки не создаёт. */
+  overflow-x: clip;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  color: var(--sg-blue);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Телефон внутри обычного текста. Номер — главный канал заказов, поэтому
+   он везде кликабельный, а не просто набор цифр. nowrap обязателен:
+   без него строка рвётся посреди номера («8-963-830-09-» / «99»). */
+.tel-inline {
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+button {
+  font-family: inherit;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  line-height: 1.2;
+  /* Заголовок разбивается на строки поровну, а не «шесть слов и одно».
+     Браузеры без text-wrap просто переносят как раньше. */
+  text-wrap: balance;
+}
+
+/* Трекинг зависит от кегля: чем крупнее буквы, тем заметнее просветы
+   между ними и тем сильнее их надо стягивать. Раньше на все размеры
+   стояло одно значение -0.01em, и заголовок в 42 px выглядел рыхлым. */
+h1 {
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+h2 {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+h3 {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.012em;
+}
+
+p {
+  margin: 0 0 var(--sp-3);
+  /* Не оставляет одно слово на последней строке абзаца */
+  text-wrap: pretty;
+}
+
+/* Цифры одной ширины: цены, остатки и счётчики встают в столбик,
+   а не пляшут от того, что «1» уже «8». В интернет-магазине это
+   первое, что выдаёт небрежную вёрстку. */
+.price,
+.price__unit,
+.calc__result,
+.cart-total__row,
+.filter-price,
+.catalog-toolbar__count,
+.category-card__count,
+.header-action__count,
+.mobile-bar__count,
+.tel-inline,
+.header-util__phone {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Видимый фокус с клавиатуры — обязателен для доступности */
+:focus-visible {
+  outline: 3px solid var(--sg-red);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+.container {
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 var(--sp-5);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Ссылка «к содержимому» для клавиатуры */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  /* Фиксированный тёмно-синий, а не --sg-blue: в тёмной теме переменная
+     осветляется до #7b90ee, и белый текст на ней даёт контраст 2.97 —
+     ниже нормы. Здесь тема ни на что не влияет, ссылка служебная. */
+  background: #01075c;
+  color: #fff;
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: 0 0 var(--r-md) 0;
+  font-weight: 600;
+}
+
+.skip-link:focus {
+  left: 0;
+}
+
+/* Фирменные полоски. Используются лентами и подложками, не фоном всей страницы */
+.stripes {
+  background-image: var(--sg-stripes);
+}
+
+.stripe-band {
+  height: 10px;
+  background-image: var(--sg-stripes);
+}
+
+.stripe-band--thin {
+  height: 6px;
+}
+
+/* ==========================================================================
+   Кнопки
+   ========================================================================== */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: 44px;
+  padding: var(--sp-3) var(--sp-5);
+  border: 2px solid transparent;
+  border-radius: var(--r-md);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn:hover {
+  text-decoration: none;
+}
+
+.btn--primary {
+  background: var(--sg-blue);
+  color: var(--sg-white);
+}
+
+.btn--primary:hover {
+  background: var(--sg-blue-dark);
+}
+
+/* Красный — только для действий: поиск, покупка */
+.btn--action {
+  background: var(--sg-red);
+  color: var(--sg-white);
+}
+
+.btn--action:hover {
+  background: var(--sg-red-dark);
+}
+
+.btn--outline {
+  background: var(--sg-white);
+  color: var(--sg-blue);
+  border-color: var(--sg-line);
+}
+
+.btn--outline:hover {
+  border-color: var(--sg-blue);
+  background: var(--sg-blue-tint);
+}
+
+.btn--lg {
+  min-height: 54px;
+  padding: var(--sp-4) var(--sp-6);
+  font-size: 16px;
+}
+
+.btn--block {
+  width: 100%;
+}
+
+.btn--upper {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 14px;
+}
+
+/* ==========================================================================
+   Шапка — три этажа: информационная полоса, основная строка, быстрые разделы
+   ========================================================================== */
+
+.site-header {
+  position: relative;
+  z-index: 40;
+  background: var(--sg-white);
+  border-bottom: 1px solid var(--sg-line);
+}
+
+/* ── Первый этаж: тёмная информационная полоса ───────────────────────────── */
+.header-util {
+  background: var(--sg-blue);
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 13px;
+}
+
+.header-util__inner {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  min-height: 40px;
+}
+
+.header-util__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
+  min-width: 0;
+}
+
+.header-util__nav a {
+  color: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.header-util__nav a:hover {
+  color: var(--sg-on-dark);
+  text-decoration: none;
+}
+
+.header-util__side {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.header-util__phone {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--sg-on-dark);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.header-util__phone:hover {
+  text-decoration: none;
+  opacity: 0.85;
+}
+
+/* Выпадающие списки в информационной полосе */
+.dropdown {
+  position: relative;
+}
+
+.dropdown__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 var(--sp-2);
+  background: none;
+  border: 0;
+  color: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.header-util .dropdown__toggle:hover {
+  color: var(--sg-on-dark);
+}
+
+.dropdown__toggle .icon-chevron {
+  display: inline-flex;
+  transition: transform 0.15s ease;
+}
+
+.dropdown__toggle[aria-expanded="true"] .icon-chevron {
+  transform: rotate(180deg);
+}
+
+.dropdown__panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 50;
+  min-width: 290px;
+  padding: var(--sp-4);
+  background: var(--sg-on-dark);
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-md);
+  color: var(--sg-ink);
+  font-size: 14px;
+}
+
+.dropdown__panel[hidden] {
+  display: none;
+}
+
+.dropdown__item + .dropdown__item {
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--sg-line);
+}
+
+.dropdown__item strong {
+  display: block;
+  font-size: 15px;
+}
+
+.dropdown__item span {
+  display: block;
+  font-size: 13px;
+  color: var(--sg-muted);
+}
+
+/* ── Второй этаж: логотип, каталог, поиск, действия ──────────────────────── */
+.header-main {
+  background: var(--sg-white);
+}
+
+.header-main__inner {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding-top: var(--sp-3);
+  padding-bottom: var(--sp-3);
+}
+
+/* Логотип всегда на белом фоне */
+.site-logo {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  color: var(--sg-blue);
+}
+
+.site-logo:hover {
+  text-decoration: none;
+}
+
+.site-logo img {
+  width: 64px;
+  height: 64px;
+  transition: width 0.18s ease, height 0.18s ease;
+}
+
+.site-logo__word {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+/* Кнопка каталога — красная, как основное действие */
+.header-catalog {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 48px;
+  padding: 0 var(--sp-5);
+  border: 0;
+  border-radius: var(--r-lg);
+  background: var(--sg-red);
+  color: var(--sg-white);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.header-catalog:hover {
+  background: var(--sg-red-dark);
+}
+
+.header-catalog .icon-close {
+  display: none;
+}
+
+.header-catalog[aria-expanded="true"] .icon-open {
+  display: none;
+}
+
+.header-catalog[aria-expanded="true"] .icon-close {
+  display: block;
+}
+
+/* Поиск: поле и красная кнопка слиты в один блок */
+.search-form {
+  flex: 1 1 auto;
+  display: flex;
+  min-width: 0;
+}
+
+.search-form__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 48px;
+  padding: 0 var(--sp-4);
+  border: 1.5px solid var(--sg-line);
+  border-right: 0;
+  border-radius: var(--r-lg) 0 0 var(--r-lg);
+  font-size: 15px;
+  color: var(--sg-ink);
+  background: var(--sg-white);
+}
+
+.search-form__input::placeholder {
+  color: #8f8f9c;
+}
+
+.search-form__input:focus {
+  outline: none;
+  border-color: var(--sg-blue);
+}
+
+.search-form__submit {
+  flex: none;
+  width: 62px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 0 var(--r-lg) var(--r-lg) 0;
+  background: var(--sg-red);
+  color: var(--sg-white);
+  cursor: pointer;
+}
+
+.search-form__submit:hover {
+  background: var(--sg-red-dark);
+}
+
+/* Действия: иконка с подписью под ней */
+.header-actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+}
+
+.header-action {
+  min-width: 56px;
+  min-height: 48px;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  color: var(--sg-ink);
+  text-align: center;
+}
+
+.header-action:hover {
+  color: var(--sg-blue);
+  text-decoration: none;
+}
+
+.header-action__icon {
+  position: relative;
+  display: block;
+}
+
+.header-action__label {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.header-action__count {
+  position: absolute;
+  top: -6px;
+  right: -10px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  background: var(--sg-red);
+  color: var(--sg-white);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.header-burger {
+  display: none;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border: 1.5px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  background: var(--sg-white);
+  color: var(--sg-blue);
+  cursor: pointer;
+}
+
+/* ── Третий этаж: быстрые ссылки на разделы ──────────────────────────────── */
+.header-quick {
+  border-top: 1px solid var(--sg-line);
+}
+
+.header-quick__inner {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  min-height: 46px;
+}
+
+.header-quick__nav {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
+  min-width: 0;
+  overflow: hidden;
+  /* если разделы всё же не влезли, последний растворяется, а не режется */
+  mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent 100%);
+}
+
+.header-quick__link {
+  color: var(--sg-ink);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 46px;
+  white-space: nowrap;
+}
+
+.header-quick__link:hover {
+  color: var(--sg-blue);
+  text-decoration: none;
+}
+
+.header-quick__link--accent {
+  color: var(--sg-red);
+}
+
+.header-quick__link--accent:hover {
+  color: var(--sg-red-dark);
+}
+
+.header-quick__more {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 36px;
+  padding: 0 var(--sp-2);
+  background: none;
+  border: 0;
+  color: var(--sg-blue);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.header-quick__more:hover {
+  color: var(--sg-red);
+}
+
+/* Меню каталога */
+.catalog-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  z-index: 45;
+  background: var(--sg-white);
+  border-bottom: 1px solid var(--sg-line);
+  box-shadow: var(--sh-md);
+}
+
+.catalog-menu[hidden] {
+  display: none;
+}
+
+.catalog-menu__title {
+  padding: var(--sp-5) var(--sp-5) 0;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--sg-muted);
+}
+
+.catalog-menu__grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5) var(--sp-6);
+}
+
+.catalog-menu__link {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  color: var(--sg-ink);
+  font-weight: 600;
+}
+
+.catalog-menu__link:hover {
+  border-color: var(--sg-blue);
+  background: var(--sg-blue-tint);
+  text-decoration: none;
+}
+
+.catalog-menu__link svg {
+  color: var(--sg-blue);
+  flex: none;
+}
+
+/* Мобильное меню */
+.mobile-nav {
+  display: none;
+  padding: var(--sp-4) 0 var(--sp-5);
+  border-top: 1px solid var(--sg-line);
+}
+
+.mobile-nav[hidden] {
+  display: none;
+}
+
+.mobile-nav__link {
+  display: block;
+  padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--sg-line);
+  color: var(--sg-ink);
+  font-weight: 600;
+}
+/* ==========================================================================
+   Секции
+   ========================================================================== */
+
+.section {
+  padding: var(--sp-8) 0;
+}
+
+.section--tight {
+  padding: var(--sp-7) 0;
+}
+
+.section--soft {
+  background: var(--sg-bg-soft);
+}
+
+.section__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-5);
+}
+
+/* Заголовок с фирменной полосатой засечкой слева */
+.section__title {
+  position: relative;
+  padding-left: var(--sp-4);
+}
+
+.section__title::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 2px;
+  bottom: 2px;
+  width: 6px;
+  border-radius: var(--r-sm);
+  background-image: var(--sg-stripes);
+  background-size: 24px 24px;
+  /* Рамка съедала два пикселя из шести, и фирменные полоски внутри
+     превращались в грязное пятно. Метка держится на самих полосках. */
+  box-shadow: inset 0 0 0 1px rgba(1, 11, 135, 0.08);
+}
+
+.section__link {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.section__sub {
+  color: var(--sg-muted);
+  margin: calc(-1 * var(--sp-3)) 0 var(--sp-5);
+}
+
+/* ==========================================================================
+   Первый экран: крупный промо-блок и плитка 2×2 рядом с ним —
+   раскладка повторяет сайт-образец, присланный заказчиком
+   ========================================================================== */
+
+.mainscreen {
+  padding: var(--sp-5) 0 0;
+}
+
+.mainscreen__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.81fr) minmax(0, 1fr);
+  /* Баннер и плитки в одну строку, заголовок с кнопками — под ними.
+     На телефоне порядок меняется на «баннер → заголовок → плитки»,
+     иначе заголовок уезжает под четыре плитки и его не видно. */
+  grid-template-areas:
+    'hero tiles'
+    'intro intro';
+  gap: 10px;
+  row-gap: var(--sp-6);
+  /* Баннер стоит в своей высоте и не растягивается под соседа. Плитки,
+     наоборот, тянутся на всю строку — так колонки выглядят вровень. */
+  align-items: start;
+}
+
+.mainscreen__grid > .tiles {
+  align-self: stretch;
+}
+
+.mainscreen__grid > .hero {
+  grid-area: hero;
+}
+
+.mainscreen__grid > .tiles {
+  grid-area: tiles;
+}
+
+.mainscreen__grid > .intro {
+  grid-area: intro;
+}
+
+/* Четыре плитки преимуществ: два столбца, два ряда */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  min-width: 0;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+  padding: var(--sp-4);
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-xl);
+  background: var(--sg-bg-soft);
+}
+
+/* Значок плитки: фирменная подложка вместо белой. На светло-серой
+   карточке белый квадрат почти не читался, и значок висел в пустоте. */
+.tile__icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-lg);
+  background: var(--sg-blue-tint);
+  border: 1px solid var(--sg-line);
+  color: var(--sg-blue);
+  transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+
+.tile {
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.tile:hover {
+  border-color: var(--sg-blue);
+  box-shadow: var(--sh-sm);
+}
+
+.tile:hover .tile__icon {
+  background: var(--sg-white);
+  border-color: var(--sg-blue);
+}
+
+.tile__title {
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+.tile__text {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--sg-muted);
+}
+
+.tile__text.ph--inline {
+  align-self: flex-start;
+}
+
+/* Промо-блок — это готовый фирменный баннер заказчика, целиком.
+   Полоски, эмблема, маскот и стройка на фоне нарисованы в самой картинке,
+   поэтому здесь только рамка и скругление: ничего поверх не накладываем. */
+.hero {
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-xl);
+  background: var(--sg-white);
+  line-height: 0; /* убирает щель под картинкой от строчного бокса */
+}
+
+.hero__banner {
+  display: block;
+  width: 100%;
+  /* Высота только от пропорции: баннер — фирменная картинка заказчика,
+     обрезать или тянуть её нельзя ни при какой ширине колонки.
+     aspect-ratio держит место до загрузки, чтобы не дёргался макет. */
+  height: auto;
+  aspect-ratio: 1920 / 976;
+}
+
+.hero picture {
+  display: block;
+}
+
+/* Заголовок страницы и кнопки — отдельной полосой под первым экраном.
+   На баннере нет места под текст: слева эмблема, справа герой. */
+.intro {
+  display: flex;
+  flex-wrap: wrap;
+  /* Кнопки садятся на нижнюю строку текста, а не висят по центру:
+     иначе справа под ними остаётся заметная дыра. */
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-5) var(--sp-6);
+}
+
+.intro__copy {
+  flex: 1 1 460px;
+  min-width: 0;
+}
+
+.intro__eyebrow {
+  display: inline-block;
+  margin: 0 0 var(--sp-3);
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-pill);
+  background: var(--sg-blue-tint);
+  color: var(--sg-blue);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.intro__title {
+  font-size: clamp(26px, 2.6vw, 38px);
+  line-height: 1.12;
+  text-wrap: balance;
+  margin: 0 0 var(--sp-3);
+}
+
+.intro__title span {
+  color: var(--sg-blue);
+}
+
+.intro__text {
+  margin: 0;
+  font-size: 16px;
+  color: var(--sg-muted);
+  max-width: 52ch;
+}
+
+.intro__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
+/* ==========================================================================
+   Подборка товаров каруселью — как в образце: заголовок, стрелки, лента
+   ========================================================================== */
+
+.selection__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-4);
+}
+
+.selection__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.slider-btn {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid var(--sg-line);
+  border-radius: var(--r-pill);
+  background: var(--sg-white);
+  color: var(--sg-blue);
+  cursor: pointer;
+}
+
+.slider-btn:hover:not(:disabled) {
+  border-color: var(--sg-blue);
+  background: var(--sg-blue-tint);
+}
+
+.slider-btn:disabled {
+  color: var(--sg-line);
+  cursor: default;
+}
+
+.slider-btn .icon-prev {
+  transform: rotate(90deg);
+}
+
+.slider-btn .icon-next {
+  transform: rotate(-90deg);
+}
+
+.selection__line {
+  display: flex;
+  gap: var(--sp-4);
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  padding-bottom: var(--sp-2);
+}
+
+.selection__line::-webkit-scrollbar {
+  display: none;
+}
+
+.selection__line .product-card {
+  flex: 0 0 calc((100% - var(--sp-4) * 3) / 4);
+  scroll-snap-align: start;
+}
+
+/* ── Короткие баннеры: два в ряд ─────────────────────────────────────────── */
+.short-banners {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-4);
+}
+
+/* ── Баннеры рядом с промо-блоком и в ленте ─────────────────────────────── */
+.banner {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+  padding: var(--sp-5) var(--sp-5) var(--sp-5) calc(var(--sp-5) + var(--sp-4));
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-xl);
+  background: var(--sg-white);
+}
+
+.banner__stripe {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 10px;
+  background-image: var(--sg-stripes);
+}
+
+.banner__label {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--sg-red);
+}
+
+.banner__title {
+  font-size: 22px;
+  margin: 0;
+}
+
+.banner p {
+  margin: 0;
+  color: var(--sg-muted);
+}
+
+.banner__link {
+  margin-top: auto;
+  font-weight: 700;
+}
+
+/* ── Широкий баннер ─────────────────────────────────────────────────────── */
+.wide-banner {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
+  padding: var(--sp-5) var(--sp-6) var(--sp-5) calc(var(--sp-6) + var(--sp-4));
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-xl);
+  background: var(--sg-white);
+  color: var(--sg-ink);
+}
+
+.wide-banner:hover {
+  text-decoration: none;
+  border-color: var(--sg-blue);
+}
+
+.wide-banner__stripe {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 14px;
+  background-image: var(--sg-stripes);
+}
+
+.wide-banner__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--sg-muted);
+}
+
+.wide-banner__text strong {
+  display: block;
+  font-size: 24px;
+  color: var(--sg-ink);
+}
+
+/* ==========================================================================
+   Плитки категорий
+   ========================================================================== */
+
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--sp-4);
+}
+
+.category-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-5);
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  background: var(--sg-white);
+  color: var(--sg-ink);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.category-card:hover {
+  border-color: var(--sg-blue);
+  box-shadow: var(--sh-md);
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+
+.category-card__icon {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-md);
+  background: var(--sg-blue-tint);
+  color: var(--sg-blue);
+}
+
+.category-card__title {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.category-card__count {
+  font-size: 14px;
+  color: var(--sg-muted);
+  margin-top: auto;
+  /* Карточка — колоночный flex, и без этого чип с числом растягивался
+     во всю её ширину: девятнадцать пунктирных полос через всю сетку
+     вместо девятнадцати коротких значков. Число занимает три знака,
+     столько места ему и нужно. */
+  align-self: flex-start;
+}
+
+/* ==========================================================================
+   Карточка товара
+   ========================================================================== */
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--sp-4);
+}
+
+.product-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-4);
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  background: var(--sg-white);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+/* Карточка чуть приподнимается под курсором. Полтора десятка карточек
+   в сетке отличаются друг от друга только тенью, и подъём — самый
+   дешёвый способ показать, какая из них сейчас под рукой. */
+.product-card:hover {
+  border-color: var(--sg-blue);
+  box-shadow: var(--sh-md);
+  transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .product-card {
+    transition: none;
+  }
+
+  .product-card:hover {
+    transform: none;
+  }
+}
+
+.product-card__media {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  margin-bottom: var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--sg-bg-soft);
+  display: grid;
+  place-items: center;
+  color: #b4b4c2;
+  overflow: hidden;
+}
+
+.product-card__badges {
+  position: absolute;
+  top: var(--sp-3);
+  left: var(--sp-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  align-items: flex-start;
+  z-index: 2;
+}
+
+.badge {
+  padding: 3px 10px;
+  border-radius: var(--r-sm);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.badge--sale {
+  background: var(--sg-red);
+  color: var(--sg-white);
+}
+
+.badge--hit {
+  background: var(--sg-blue);
+  color: var(--sg-white);
+}
+
+.badge--stock {
+  background: var(--sg-blue-tint);
+  color: var(--sg-blue);
+}
+
+.badge--new {
+  background: var(--sg-blue-tint);
+  color: var(--sg-blue);
+}
+
+/* Порядок строк как в образце: артикул, название, фасовка и остаток, цена */
+.product-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+
+.product-card__art {
+  font-size: 12px;
+  color: var(--sg-muted);
+  margin: 0;
+}
+
+.product-card__brand {
+  font-size: 13px;
+  color: var(--sg-muted);
+  margin-bottom: var(--sp-1);
+}
+
+.product-card__title {
+  /* Главная ссылка карточки. В одну строку она получалась 20 px высотой —
+     пальцем на телефоне промахиваешься. min-height добирает до 24 px,
+     не сдвигая вёрстку у названий в две строки. */
+  display: block;
+  min-height: 24px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--sg-ink);
+}
+
+.product-card__title:hover {
+  color: var(--sg-blue);
+}
+
+.product-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  font-size: 13px;
+  color: var(--sg-muted);
+  margin: 0;
+}
+
+.product-card__bottom {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.product-card__buy {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* Цена — красным, это фирменный акцент */
+.price {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--sg-red);
+  white-space: nowrap;
+}
+
+.price__unit {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sg-muted);
+}
+
+.price--old {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--sg-muted);
+  text-decoration: line-through;
+}
+
+.product-card__buy {
+  margin-left: auto;
+}
+
+/* Внутри карточки товара пунктир приглушён — иначе четыре рамки на карточку
+   перебивают саму карточку. Крупное предупреждение стоит над сеткой. */
+.product-card .ph--inline,
+.quick-view .ph--inline {
+  border-width: 1px;
+  background: none;
+  padding: 0 4px;
+}
+
+/* ==========================================================================
+   Плейсхолдеры данных — заметные, чтобы заказчик не принял их за факт
+   ========================================================================== */
+
+/* Пустое место под данные заказчика. Их на главной больше сотни,
+   и при рамке в два пикселя страница выглядела расчерченной тетрадью:
+   плейсхолдеры спорили за внимание с товарами. Пунктир в один пиксель
+   виден так же ясно — «здесь ничего нет» читается с первого взгляда, —
+   но перестаёт быть самым громким элементом страницы. */
+.ph {
+  border: 1px dashed var(--ph-line);
+  border-radius: var(--r-md);
+  background: var(--sg-blue-tint);
+  color: var(--sg-blue);
+  padding: var(--sp-3) var(--sp-4);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.ph strong {
+  display: block;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 2px;
+}
+
+.ph--inline {
+  display: inline-block;
+  padding: 2px var(--sp-2);
+  font-size: 13px;
+  border-width: 1px;
+}
+
+.ph--photo {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  border: 0;
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--sg-bg-soft) 0 10px,
+    var(--sg-line) 10px 20px
+  );
+  color: var(--sg-muted);
+  font-size: 13px;
+}
+
+/* Отклик на поисковый запрос. Ставится скриптом только тогда, когда
+   в адресе есть ?search= — в исходной разметке блока нет. */
+.search-result {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2) var(--sp-4);
+  margin-bottom: var(--sp-5);
+  padding: var(--sp-4) var(--sp-5);
+  border-radius: var(--r-lg);
+  background: var(--sg-blue-tint);
+  border: 1px solid var(--sg-line);
+}
+
+.search-result__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--sg-blue);
+}
+
+.search-result__note {
+  flex: 1 1 320px;
+  min-width: 0;
+  margin: 0;
+  font-size: 14px;
+  color: var(--sg-muted);
+}
+
+.search-result__reset {
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Полоса-предупреждение о недостающих данных */
+/* Записка заказчику о том, чего не хватает. Она должна быть видна,
+   но не должна быть главным на странице: рамка в два пикселя пунктиром
+   во всю ширину перекрикивала и заголовок раздела, и первый ряд товаров,
+   а на карточке отодвигала сам товар под сгиб. Теперь это полоса с
+   цветной кромкой слева — заметная, но знающая своё место. */
+.data-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px dashed var(--ph-line);
+  border-left: 3px solid var(--sg-blue);
+  border-radius: 0 var(--r-md) var(--r-md) 0;
+  background: var(--sg-blue-tint);
+  color: var(--sg-ink);
+  margin-bottom: var(--sp-5);
+}
+
+.data-notice svg {
+  flex: none;
+  color: var(--sg-blue);
+  margin-top: 2px;
+}
+
+.data-notice p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.data-notice strong {
+  color: var(--sg-blue);
+}
+
+/* Подсказка «в макете не работает» */
+.demo-note {
+  position: fixed;
+  left: 50%;
+  bottom: var(--sp-5);
+  transform: translateX(-50%);
+  z-index: 90;
+  margin: 0;
+  max-width: min(520px, calc(100vw - 32px));
+  padding: var(--sp-3) var(--sp-5);
+  border-radius: var(--r-md);
+  background: var(--sg-blue);
+  color: var(--sg-white);
+  font-size: 14px;
+  text-align: center;
+  box-shadow: var(--sh-lg);
+}
+
+.demo-note[hidden] {
+  display: none;
+}
+
+/* ==========================================================================
+   Магазины
+   ========================================================================== */
+
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-4);
+}
+
+.shop-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  background: var(--sg-white);
+  overflow: hidden;
+}
+
+.shop-card__top {
+  height: 8px;
+  background-image: var(--sg-stripes);
+}
+
+.shop-card__body {
+  padding: var(--sp-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  flex: 1;
+}
+
+.shop-card__city {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--sg-muted);
+}
+
+.shop-card__addr {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.shop-card__row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  font-size: 15px;
+  color: var(--sg-ink);
+}
+
+/* Позвонить из карточки магазина — главное действие с телефона,
+   а ссылка была 23 px высотой. Ровно на пиксель ниже нормы. */
+.shop-card__row a[href^='tel:'] {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  font-weight: 600;
+}
+
+.shop-card__row svg {
+  flex: none;
+  color: var(--sg-blue);
+  margin-top: 3px;
+}
+
+/* ==========================================================================
+   Юридические документы
+   ==========================================================================
+
+   Политика и соглашение — единственные страницы сайта со сплошным длинным
+   текстом. Строка ограничена по ширине: читать юридический документ
+   в строку на полторы тысячи пикселей невозможно, глаз теряет начало
+   следующей строки. 68 знаков — верх обычной нормы для сплошного текста. */
+.legal {
+  padding-bottom: var(--sp-8);
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+/* Ширину ограничивает не весь блок, а строки текста: иначе таблица
+   целей обработки — четыре колонки — оказывалась зажата в ту же
+   колонку и вытягивалась в четыре узких столбика по одному слову. */
+.legal > p,
+.legal > ul,
+.legal > h2 {
+  max-width: 68ch;
+}
+
+.legal h2 {
+  margin: var(--sp-7) 0 var(--sp-3);
+  font-size: 21px;
+  line-height: 1.25;
+  scroll-margin-top: calc(var(--header-now, 70px) + var(--sp-5));
+}
+
+.legal h2:first-child {
+  margin-top: var(--sp-5);
+}
+
+.legal p {
+  margin: 0 0 var(--sp-3);
+  text-wrap: pretty;
+}
+
+.legal ul {
+  margin: 0 0 var(--sp-4);
+  padding-left: var(--sp-5);
+}
+
+.legal li {
+  margin-bottom: var(--sp-2);
+}
+
+.legal__lead {
+  color: var(--sg-muted);
+}
+
+.legal__rule {
+  margin: var(--sp-8) 0 0;
+  border: 0;
+  border-top: 1px solid var(--sg-line);
+}
+
+/* Таблицы в документах: реквизиты оператора, цели обработки, ключи
+   в памяти браузера. Шире колонки текста — их есть куда растянуть. */
+.legal__table {
+  width: 100%;
+  max-width: 68ch;
+  margin: 0 0 var(--sp-5);
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.legal__table--wide {
+  max-width: 100%;
+}
+
+.legal__table th,
+.legal__table td {
+  padding: var(--sp-3);
+  border: 1px solid var(--sg-line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.legal__table thead th {
+  background: var(--sg-bg-soft);
+  font-size: 14px;
+}
+
+.legal__table tbody th {
+  width: 34%;
+  font-weight: 600;
+  color: var(--sg-muted);
+}
+
+/* Таблицы «подпись — значение» (реквизиты оператора, ключи в памяти
+   браузера) на узком экране тоже разворачиваются: подпись сверху,
+   значение снизу. При двух колонках на 320 px «Ответственный за обработку
+   персональных данных» в левой ячейке распирало таблицу до 322 px,
+   и страница ехала вбок. */
+@media (max-width: 560px) {
+  .legal__table tbody tr {
+    display: block;
+    margin-bottom: var(--sp-3);
+    border: 1px solid var(--sg-line);
+    border-radius: var(--r-md);
+    overflow: hidden;
+  }
+
+  .legal__table tbody th,
+  .legal__table tbody td {
+    display: block;
+    width: auto;
+    border: 0;
+  }
+
+  .legal__table tbody th {
+    padding-bottom: 0;
+    font-size: 13px;
+  }
+}
+
+/* Таблица целей — четыре колонки, на телефоне они не помещаются ни при
+   каком кегле. Ниже 700 px строка разворачивается в карточку: подпись
+   берётся из data-label у ячейки, шапка прячется. Каждой новой ячейке
+   нужен свой data-label, иначе в карточке она останется без подписи. */
+@media (max-width: 700px) {
+  .legal__table--wide thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .legal__table--wide tr {
+    display: block;
+    margin-bottom: var(--sp-4);
+    border: 1px solid var(--sg-line);
+    border-radius: var(--r-md);
+    overflow: hidden;
+  }
+
+  .legal__table--wide td {
+    display: block;
+    border: 0;
+    border-bottom: 1px solid var(--sg-line);
+  }
+
+  .legal__table--wide tr td:last-child {
+    border-bottom: 0;
+  }
+
+  .legal__table--wide td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 2px;
+    font-size: 13px;
+    color: var(--sg-muted);
+  }
+}
+
+/* ==========================================================================
+   Режим работы
+   ========================================================================== */
+
+/* Часы в выпадашке шапки: две строки «дни — время», выровненные
+   по колонкам, чтобы время читалось столбиком, а не вперемешку. */
+.hours {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: var(--sp-1) var(--sp-4);
+  margin: 0;
+  font-size: 15px;
+}
+
+.hours dt {
+  color: var(--sg-muted);
+}
+
+.hours dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.hours__note,
+.contact-note {
+  margin: var(--sp-2) 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--sg-muted);
+}
+
+.contact-note {
+  display: inline-block;
+}
+
+/* Отметка «сейчас открыто / закрыто». Её ставит app.js по времени
+   Камчатки, а не по часам гостя: магазин на Камчатке, и посетитель
+   из Москвы иначе видел бы «открыто» глубокой ночью по местному. */
+.shop-card__now {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: var(--sp-2);
+  padding: 1px 9px;
+  border-radius: var(--r-pill);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.shop-card__now::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.shop-card__now--open {
+  background: #e8f5ec;
+  color: #1c6b36;
+}
+
+.shop-card__now--closed {
+  background: var(--sg-bg-soft);
+  color: var(--sg-muted);
+}
+
+html[data-theme="dark"] .shop-card__now--open {
+  background: #16301f;
+  color: #6ddd96;
+}
+
+.shop-card__hours {
+  flex-wrap: wrap;
+}
+
+/* ==========================================================================
+   Карта магазина
+   ==========================================================================
+
+   Виджет Яндекс.Карт, ключ для него не нужен. Точку Яндекс ищет сам
+   по адресу из карточки — своих координат мы не придумываем.
+   loading="lazy": карты грузятся, только когда до них долистали, иначе
+   три карты тянули бы свои скрипты и плитки на каждое открытие страницы.
+
+   Под рамкой лежит запасная надпись: если карта не загрузилась — нет сети,
+   блокировщик, закрытый доступ — человек видит не пустой белый прямоугольник,
+   а ссылку на адрес. Загрузившаяся карта закрывает её собой. */
+.shop-card__map {
+  position: relative;
+  margin-top: var(--sp-3);
+  aspect-ratio: 4 / 3;
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--sg-bg-soft);
+}
+
+.shop-card__mapframe {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* Пока карта грузится, надпись лежит под кадром и её не видно.
+   Класс is-mapfail ставит app.js, когда стало ясно, что карта не придёт:
+   кадр убирается, остаётся адрес со ссылкой. */
+.shop-card__map.is-mapfail .shop-card__mapframe {
+  display: none;
+}
+
+/* Ссылка в запасной надписи — полноценная цель нажатия: 20 px высоты
+   пальцем не берутся, а показывается она как раз там, где карты нет
+   и ткнуть больше некуда. */
+.shop-card__mapfail a {
+  display: inline-block;
+  min-height: 24px;
+  padding-block: 2px;
+}
+
+.shop-card__mapfail {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  margin: 0;
+  display: grid;
+  place-content: center;
+  padding: var(--sp-4);
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--sg-muted);
+}
+
+/* На бумаге карта бесполезна: остаётся адрес, он напечатан выше текстом. */
+@media print {
+  .shop-card__map {
+    display: none !important;
+  }
+}
+
+/* Ссылка на карту у каждого магазина. Адреса настоящие, поэтому ссылка
+   рабочая уже сейчас: поиск по адресу в Яндекс.Картах. Прямоугольник
+   под встроенную карту остаётся пустым местом, как и был, — но человеку
+   с телефона больше не нужно переписывать адрес руками, чтобы
+   построить маршрут. */
+.shop-card__route {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+  min-height: 24px;
+  color: var(--sg-blue);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.shop-card__route:hover {
+  color: var(--sg-red);
+}
+
+.shop-card__map {
+  margin-top: auto;
+}
+
+/* ==========================================================================
+   Преимущества
+   ========================================================================== */
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--sp-4);
+}
+
+.feature {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-5);
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  background: var(--sg-white);
+}
+
+.feature__icon {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-md);
+  background: var(--sg-red-tint);
+  color: var(--sg-red);
+}
+
+.feature h3 {
+  font-size: 17px;
+}
+
+.feature p {
+  margin: 0;
+  color: var(--sg-muted);
+  font-size: 15px;
+}
+
+/* ==========================================================================
+   Подвал — тёмный, как в образце: бренд слева, четыре колонки ссылок справа
+   ========================================================================== */
+
+.site-footer {
+  margin-top: var(--sp-8);
+  /* Ровная заливка на такой площади выглядит куском картона: глазу
+     не за что зацепиться, и подвал читается тяжелее, чем есть.
+     Едва заметное осветление сверху даёт ему объём. Новых цветов
+     не вводим — это тот же фирменный синий, только светлее. */
+  /* Сплошной цвет задан отдельно и намеренно: сокращённая запись
+     background с градиентом обнуляет background-color, и тогда
+     подвал «прозрачен» для всего, что смотрит на цвет фона, —
+     от проверки контраста до режима высокой контрастности. */
+  background-color: var(--sg-blue);
+  background-image: linear-gradient(180deg, #05128f 0%, var(--sg-blue) 42%);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 14px;
+}
+
+/* Ссылки подвала под курсором становятся белыми, а не просто
+   подчёркнутыми: на синем подчёркивание почти не видно. */
+.footer-group a,
+.footer-brand__word {
+  transition: color 0.15s ease;
+}
+
+.footer-group a:hover {
+  color: #fff;
+}
+
+.site-footer__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 2.15fr);
+  gap: var(--sp-6);
+  padding: var(--sp-7) 0 var(--sp-6);
+}
+
+.site-footer a {
+  color: var(--sg-on-dark);
+}
+
+.site-footer a:hover {
+  color: var(--sg-on-dark);
+  opacity: 0.75;
+  text-decoration: none;
+}
+
+/* Логотип на цветную подложку не ставим — в подвале только текстовый знак */
+.footer-brand__word {
+  display: inline-block;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--sg-on-dark);
+}
+
+.footer-brand__slogan {
+  margin: var(--sp-1) 0 var(--sp-4);
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.footer-brand__note {
+  margin: 0 0 var(--sp-4);
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.footer-brand__legal {
+  display: inline-block;
+}
+
+.footer-links {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-5);
+}
+
+.footer-group {
+  min-width: 0;
+}
+
+.footer-group__label {
+  margin: 0 0 var(--sp-3);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.footer-group ul,
+.footer-contacts ul,
+.footer-shops ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.footer-group li + li,
+.footer-contacts li + li,
+.footer-shops li + li {
+  margin-top: var(--sp-2);
+}
+
+.footer-group__hint {
+  display: inline-block;
+  margin-top: var(--sp-3);
+}
+
+.site-footer__contacts {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--sp-6);
+  padding: var(--sp-5) 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.footer-shops li span {
+  display: block;
+  color: var(--sg-on-dark);
+}
+
+.footer-shops li em {
+  font-style: normal;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.site-footer__bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  padding: var(--sp-4) 0 var(--sp-6);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-5);
+  align-items: baseline;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.site-footer__bottom p {
+  margin: 0;
+}
+
+.site-footer__disclaimer {
+  flex: 1 1 460px;
+  min-width: 0;
+  line-height: 1.5;
+}
+
+/* Плейсхолдеры в подвале читаются на тёмном фоне */
+.site-footer .ph {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* В тёмной теме фирменный синий осветляется, поэтому тёмные поверхности
+   шапки и подвала задаются отдельно — иначе они становятся светло-сиреневыми. */
+html[data-theme="dark"] .header-util,
+html[data-theme="dark"] .site-footer {
+  background: var(--sg-bg-soft);
+}
+
+html[data-theme="dark"] .site-footer {
+  border-top: 1px solid var(--sg-line);
+}
+
+/* ==========================================================================
+   Хлебные крошки и шапка страницы
+   ========================================================================== */
+
+.breadcrumbs {
+  padding: var(--sp-4) 0;
+  font-size: 14px;
+  color: var(--sg-muted);
+}
+
+.breadcrumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.breadcrumbs li::after {
+  content: "/";
+  margin-left: var(--sp-2);
+  color: var(--sg-line);
+}
+
+.breadcrumbs li:last-child::after {
+  content: "";
+}
+
+.page-head {
+  padding-bottom: var(--sp-5);
+}
+
+.page-head p {
+  color: var(--sg-muted);
+  max-width: 70ch;
+  margin: var(--sp-2) 0 0;
+}
+
+/* ==========================================================================
+   Каталог: фильтры, тулбар, пагинация
+   ========================================================================== */
+
+.catalog-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: var(--sp-6);
+  align-items: start;
+  padding-bottom: var(--sp-8);
+}
+
+.filters {
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  position: sticky;
+  /* Отсчёт от настоящей шапки, а не от края экрана. При top: 16px верхние
+     54 px панели — строка «Фильтры» и кнопка «Сбросить» — при прокрутке
+     навсегда уезжали под шапку, и сбросить фильтры было нечем. */
+  top: calc(var(--header-now, 70px) + var(--sp-4));
+}
+
+/* Панель фильтров выше экрана: 1311 px при 900 доступных. Пока она
+   не листалась внутри себя, объявленная липкость не давала ничего — низ
+   панели («Наличие», «Магазин») висел за краем экрана, а сама панель
+   на второй тысяче пикселей прокрутки уезжала на 1105 px вверх вместе
+   со страницей. Теперь панель стоит под шапкой, а фильтры листаются
+   внутри неё, и строка «Фильтры / Сбросить» остаётся на виду.
+   Ниже 1024 px панель не липкая (position: static), там ограничивать
+   нечего — она просто разворачивается по кнопке. */
+@media (min-width: 1024px) {
+  .filters__body {
+    max-height: calc(100vh - var(--header-now, 70px) - 92px);
+    max-height: calc(100dvh - var(--header-now, 70px) - 92px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  /* Своё окошко прокрутки списку разделов здесь больше не нужно: иначе
+     внутри прокручиваемой панели была бы вторая прокручиваемая область,
+     и человек попадал бы то в одну, то в другую. */
+  .cat-list {
+    max-height: none;
+    overflow-y: visible;
+  }
+}
+
+.filters__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-4);
+  border-bottom: 1px solid var(--sg-line);
+  background: var(--sg-bg-soft);
+}
+
+.filters__head h2 {
+  font-size: 17px;
+}
+
+.filters__reset {
+  background: none;
+  border: 0;
+  color: var(--sg-blue);
+  font-size: 14px;
+  cursor: pointer;
+  padding: var(--sp-1) var(--sp-2);
+}
+
+.filter-group {
+  padding: var(--sp-4);
+  border-bottom: 1px solid var(--sg-line);
+}
+
+.filter-group:last-child {
+  border-bottom: 0;
+}
+
+.filter-group h3 {
+  font-size: 15px;
+  margin-bottom: var(--sp-3);
+}
+
+.filter-price {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.filter-price input {
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  padding: 0 var(--sp-3);
+  border: 1.5px solid var(--sg-line);
+  border-radius: var(--r-md);
+  font-size: 15px;
+  font-family: inherit;
+}
+
+.filter-price input:focus {
+  outline: none;
+  border-color: var(--sg-blue);
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 40px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.check input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--sg-blue);
+  flex: none;
+}
+
+.check span {
+  color: var(--sg-muted);
+  font-size: 13px;
+  margin-left: auto;
+}
+
+.catalog-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-5);
+  padding-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--sg-line);
+}
+
+.catalog-toolbar__count {
+  color: var(--sg-muted);
+  font-size: 14px;
+}
+
+.catalog-toolbar__sort {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: 14px;
+}
+
+.select {
+  height: 44px;
+  padding: 0 38px 0 var(--sp-4);
+  border: 1.5px solid var(--sg-line);
+  border-radius: var(--r-md);
+  /* background-color, а не background: в фоне лежит ещё и стрелка,
+     и шорткат её стирал бы при каждом переопределении цвета. */
+  background-color: var(--sg-white);
+  background-image: var(--select-arrow);
+  background-repeat: no-repeat;
+  background-position: right 11px center;
+  background-size: 18px 18px;
+  appearance: none;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--sg-ink);
+  cursor: pointer;
+}
+
+/* В режиме высокой контрастности фоновые картинки не рисуются: своя
+   стрелка там просто исчезнет, и список станет неотличим от поля ввода.
+   Возвращаем системный вид — со своей отрисовкой и своим треугольником. */
+@media (forced-colors: active) {
+  .select {
+    appearance: auto;
+    padding-right: var(--sp-4);
+    background-image: none;
+  }
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--sg-blue);
+}
+
+.filters-toggle {
+  display: none;
+}
+
+.pagination {
+  display: flex;
+  gap: var(--sp-2);
+  justify-content: center;
+  margin-top: var(--sp-6);
+  flex-wrap: wrap;
+}
+
+.pagination a,
+.pagination span {
+  min-width: 44px;
+  height: 44px;
+  padding: 0 var(--sp-3);
+  display: grid;
+  place-items: center;
+  border: 1.5px solid var(--sg-line);
+  border-radius: var(--r-md);
+  color: var(--sg-ink);
+  font-weight: 600;
+}
+
+.pagination a:hover {
+  border-color: var(--sg-blue);
+  color: var(--sg-blue);
+  text-decoration: none;
+}
+
+.pagination .is-current {
+  background: var(--sg-blue);
+  border-color: var(--sg-blue);
+  color: var(--sg-white);
+}
+
+/* ==========================================================================
+   Карточка товара (страница)
+   ========================================================================== */
+
+.product-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-7);
+  align-items: start;
+  padding-bottom: var(--sp-7);
+}
+
+.gallery__main {
+  aspect-ratio: 4 / 3;
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--sg-bg-soft);
+  display: grid;
+  place-items: center;
+}
+
+.gallery__thumbs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+}
+
+.gallery__thumb {
+  aspect-ratio: 1 / 1;
+  border: 1.5px solid var(--sg-line);
+  border-radius: var(--r-md);
+  background: var(--sg-bg-soft);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  padding: 0;
+  overflow: hidden;
+  color: var(--sg-muted);
+  font-size: 12px;
+}
+
+.gallery__thumb[aria-current="true"] {
+  border-color: var(--sg-blue);
+}
+
+.product-info__brand {
+  color: var(--sg-muted);
+  font-size: 14px;
+  margin-bottom: var(--sp-2);
+}
+
+.product-info h1 {
+  font-size: 30px;
+  margin-bottom: var(--sp-3);
+}
+
+.product-info__stock {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-5);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--sg-blue);
+}
+
+.product-buy {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  padding: var(--sp-5);
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  background: var(--sg-bg-soft);
+  margin-bottom: var(--sp-5);
+}
+
+.product-buy .price {
+  font-size: 30px;
+}
+
+.qty {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid var(--sg-line);
+  border-radius: var(--r-md);
+  background: var(--sg-white);
+  overflow: hidden;
+}
+
+.qty button {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: none;
+  font-size: 20px;
+  color: var(--sg-blue);
+  cursor: pointer;
+}
+
+.qty input {
+  width: 56px;
+  height: 44px;
+  border: 0;
+  border-left: 1.5px solid var(--sg-line);
+  border-right: 1.5px solid var(--sg-line);
+  text-align: center;
+  font-size: 16px;
+  font-family: inherit;
+}
+
+.qty input:focus {
+  outline: none;
+}
+
+.product-note {
+  display: flex;
+  gap: var(--sp-3);
+  font-size: 14px;
+  color: var(--sg-muted);
+}
+
+.product-note svg {
+  flex: none;
+  color: var(--sg-blue);
+}
+
+/* Вкладки */
+.tabs {
+  border-top: 1px solid var(--sg-line);
+  padding-top: var(--sp-5);
+}
+
+.tabs__list {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-5);
+  border-bottom: 1px solid var(--sg-line);
+}
+
+.tabs__btn {
+  padding: var(--sp-3) var(--sp-4);
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: none;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--sg-muted);
+  cursor: pointer;
+}
+
+.tabs__btn[aria-selected="true"] {
+  color: var(--sg-blue);
+  border-bottom-color: var(--sg-red);
+}
+
+.tabs__panel[hidden] {
+  display: none;
+}
+
+.tabs__panel p {
+  max-width: 75ch;
+}
+
+.spec-table {
+  width: 100%;
+  border-collapse: collapse;
+  max-width: 720px;
+}
+
+.spec-table th,
+.spec-table td {
+  text-align: left;
+  padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--sg-line);
+  font-size: 15px;
+  vertical-align: top;
+}
+
+.spec-table th {
+  width: 45%;
+  font-weight: 600;
+  color: var(--sg-muted);
+}
+
+/* ==========================================================================
+   Контакты
+   ========================================================================== */
+
+.contacts-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: var(--sp-6);
+  align-items: start;
+}
+
+.info-list li {
+  display: flex;
+  gap: var(--sp-3);
+  padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--sg-line);
+}
+
+.info-list svg {
+  flex: none;
+  color: var(--sg-blue);
+  margin-top: 3px;
+}
+
+.info-list strong {
+  display: block;
+  font-size: 14px;
+  color: var(--sg-muted);
+  font-weight: 600;
+}
+
+.form {
+  padding: var(--sp-5);
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  background: var(--sg-white);
+}
+
+.form__row {
+  margin-bottom: var(--sp-4);
+}
+
+.form label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: var(--sp-2);
+}
+
+.form input,
+.form textarea {
+  width: 100%;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1.5px solid var(--sg-line);
+  border-radius: var(--r-md);
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--sg-ink);
+  background: var(--sg-white);
+}
+
+.form input {
+  height: 48px;
+}
+
+.form textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.form input:focus,
+.form textarea:focus {
+  outline: none;
+  border-color: var(--sg-blue);
+}
+
+.form__hint {
+  font-size: 13px;
+  color: var(--sg-muted);
+  margin: var(--sp-3) 0 0;
+}
+
+/* ==========================================================================
+   Адаптив
+   ========================================================================== */
+
+@media (min-width: 1024px) {
+  .catalog-layout .product-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* На широком экране контейнер вырастает до 1440 px, и в три колонки
+   карточки расплываются до 350 px при фотографии 250. Четвёртая колонка
+   поднимает второй ряд товаров выше сгиба. */
+@media (min-width: 1600px) {
+  .catalog-layout .product-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 1279px) {
+  .product-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .category-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .catalog-menu__grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .mainscreen__grid {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  }
+
+  .selection__line .product-card {
+    flex-basis: calc((100% - var(--sp-4) * 2) / 3);
+  }
+
+  .header-quick__nav {
+    gap: var(--sp-4);
+  }
+}
+
+/* Первый экран перестраивается раньше остальной сетки: в полосе
+   1024–1200 px плитки 2×2 в узкой колонке оказываются выше баннера,
+   и строка разъезжается. Поэтому только он — отдельной точкой. */
+@media (max-width: 1200px) {
+  .mainscreen__grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'hero'
+      'intro'
+      'tiles';
+    row-gap: var(--sp-5);
+  }
+
+  .tiles {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1023px) {
+  .selection__line .product-card {
+    flex-basis: calc((100% - var(--sp-4) * 2) / 3);
+  }
+
+  .site-footer__grid {
+    grid-template-columns: 1fr;
+    gap: var(--sp-5);
+  }
+
+  .footer-links {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .feature-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .catalog-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .filters {
+    position: static;
+  }
+
+  .filters-toggle {
+    display: inline-flex;
+  }
+
+  .filters[data-collapsed="true"] .filters__body {
+    display: none;
+  }
+
+  .product-layout {
+    grid-template-columns: 1fr;
+    gap: var(--sp-5);
+  }
+
+  .contacts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .intro {
+    gap: var(--sp-4);
+  }
+
+  .intro__actions {
+    flex: 1 1 100%;
+  }
+}
+
+@media (max-width: 900px) {
+  .section {
+    padding: var(--sp-7) 0;
+  }
+
+  .shop-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .product-grid,
+  .category-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* На планшете служебные ссылки и строка разделов прячутся —
+     всё это есть в мобильном меню и в подвале */
+  .header-util__nav,
+  .header-util .dropdown,
+  .util-callback,
+  .header-quick {
+    display: none;
+  }
+
+  .header-util__inner {
+    gap: var(--sp-3);
+    font-size: 13px;
+  }
+
+  .header-util__side {
+    margin-left: 0;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .header-burger {
+    display: grid;
+  }
+
+  .header-main__inner {
+    flex-wrap: wrap;
+    gap: var(--sp-3);
+  }
+
+  /* Первая строка — логотип и действия, вторая — «Каталог» и поиск.
+     Пустой элемент принудительно переносит строку. */
+  .header-main__inner::after {
+    content: "";
+    order: 2;
+    flex-basis: 100%;
+    height: 0;
+  }
+
+  .header-actions {
+    order: 1;
+    margin-left: auto;
+    gap: var(--sp-3);
+  }
+
+  .header-catalog {
+    order: 3;
+  }
+
+  .search-form {
+    order: 4;
+    flex: 1 1 200px;
+  }
+
+  .catalog-menu__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .mobile-nav {
+    display: block;
+  }
+}
+
+@media (max-width: 640px) {
+  h1 {
+    font-size: 26px;
+  }
+
+  h2 {
+    font-size: 21px;
+  }
+
+  .container {
+    padding: 0 var(--sp-4);
+  }
+
+  .tiles,
+  .short-banners {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .selection__line .product-card {
+    flex-basis: calc((100% - var(--sp-3)) / 2);
+  }
+
+  .selection__line {
+    gap: var(--sp-3);
+  }
+
+  .intro__actions .btn {
+    width: 100%;
+  }
+
+  /* Шапка на телефоне: логотип и действия одной строкой, поиск — второй.
+     Красную кнопку «Каталог» убираем: тот же каталог открывают бургер
+     и нижняя панель, три одинаковых значка подряд только путают. */
+  .site-logo img {
+    width: 44px;
+    height: 44px;
+  }
+
+  .site-logo__word {
+    display: none;
+  }
+
+  .header-main__inner {
+    gap: var(--sp-2);
+    padding-top: var(--sp-2);
+    padding-bottom: var(--sp-2);
+  }
+
+  .header-util__phone {
+    min-height: 44px;
+    font-size: 15px;
+  }
+
+  .header-util__inner {
+    min-height: 44px;
+  }
+
+  .header-action__label {
+    display: none;
+  }
+
+  .header-actions .header-action:nth-child(1),
+  .header-actions .header-action:nth-child(2) {
+    display: none;
+  }
+
+  .header-action {
+    min-width: 44px;
+  }
+
+  .header-catalog {
+    display: none;
+  }
+
+  .search-form {
+    flex-basis: 100%;
+  }
+
+  .search-form__input,
+  .search-form__submit {
+    height: 44px;
+  }
+
+  .search-form__submit {
+    width: 54px;
+  }
+
+  .header-burger {
+    width: 44px;
+    height: 44px;
+  }
+
+  .intro__title {
+    font-size: 24px;
+  }
+
+  .intro__text {
+    font-size: 15px;
+  }
+
+  /* Преимущества становятся списком коротких строк, а не высокими плитками */
+  .tiles {
+    grid-template-columns: 1fr;
+    gap: var(--sp-2);
+  }
+
+  .tile {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: var(--sp-2) var(--sp-3);
+    padding: var(--sp-3);
+  }
+
+  .tile__icon {
+    grid-row: span 2;
+    width: 40px;
+    height: 40px;
+  }
+
+  .tile__title {
+    align-self: end;
+  }
+
+  .tile__text {
+    align-self: start;
+  }
+
+  .catalog-menu__grid,
+  .feature-grid,
+  .footer-links,
+  .site-footer__contacts {
+    grid-template-columns: 1fr;
+  }
+
+  .product-grid,
+  .category-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--sp-3);
+  }
+
+  .product-card {
+    padding: var(--sp-3);
+  }
+
+  .product-card__buy {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .product-card__buy svg {
+    display: none;
+  }
+
+  .price {
+    font-size: 19px;
+  }
+
+  .wide-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-4);
+  }
+
+  .section__head,
+  .selection__head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-2);
+  }
+
+  .slider-btn {
+    display: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .product-grid,
+  .category-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .header-util__inner {
+    min-height: 42px;
+  }
+
+  .gallery__thumbs {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Печать: полоски и интерактив не нужны */
+@media print {
+  .site-header,
+  .site-footer {
+    background-image: none;
+  }
+}
+
+/* ==========================================================================
+   ЧАСТЬ 2. Расширение: тёмная тема, липкая шапка, модалки, новые страницы
+   ========================================================================== */
+
+/* ==========================================================================
+   Тёмная тема. Переключается кнопкой в шапке, выбор запоминается.
+   Меняются только переменные — ни один компонент не переписывается.
+   ========================================================================== */
+
+:root {
+  --sg-page: #ffffff; /* фон страницы, отдельно от фона карточек */
+  --sg-overlay: rgba(12, 14, 24, 0.55);
+}
+
+html[data-theme="dark"] {
+  --sg-page: #0e1117;
+  --sg-white: #161a23; /* поверхности карточек */
+  --sg-ink: #e9ebf2;
+  --sg-muted: #9aa2b4;
+  /* Пунктир пустых мест светлеет вместе с синим: тёмно-синий из светлой
+     темы на тёмном фоне даёт контраст 1.03 — плейсхолдер перестаёт
+     читаться пустым местом и выглядит просто залитым чипом. */
+  --ph-line: rgba(123, 144, 238, 0.6);
+  --sg-line: #272d3a;
+  --sg-bg-soft: #1b202b;
+  --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e9ebf2' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+
+  /* Акценты осветляем: тёмно-синий #010B87 на чёрном не читается */
+  --sg-blue: #7b90ee;
+  --sg-blue-dark: #94a5f2;
+  --sg-blue-tint: #1c2240;
+  --sg-red: #f0616b;
+  --sg-red-dark: #f4818a;
+  --sg-red-tint: #2b1a1f;
+  --sg-overlay: rgba(0, 0, 0, 0.65);
+
+  /* В тёмной теме тень не «падает» — на тёмном фоне её не видно.
+     Работает верхняя светлая кромка: она отделяет поверхность от фона
+     так же, как тень отделяет её на белом. */
+  --sh-sm: 0 1px 1px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --sh-md: 0 4px 16px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --sh-lg: 0 12px 34px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
+  /* В полосках белый заменяется цветом фона, иначе они «горят» */
+  --sg-stripes: repeating-linear-gradient(
+    -45deg,
+    #0e1117 0 18px,
+    var(--sg-blue) 18px 31px,
+    #0e1117 31px 49px,
+    var(--sg-red) 49px 62px
+  );
+  --sg-stripes-lg: repeating-linear-gradient(
+    -45deg,
+    #0e1117 0 34px,
+    var(--sg-blue) 34px 58px,
+    #0e1117 58px 92px,
+    var(--sg-red) 92px 116px
+  );
+
+  color-scheme: dark;
+}
+
+body {
+  background: var(--sg-page);
+}
+
+/* Кнопки на акцентном фоне в тёмной теме должны иметь тёмный текст */
+html[data-theme="dark"] .btn--primary,
+html[data-theme="dark"] .btn--action,
+html[data-theme="dark"] .search-form__submit,
+html[data-theme="dark"] .badge--sale,
+html[data-theme="dark"] .badge--hit,
+html[data-theme="dark"] .header-action__count,
+html[data-theme="dark"] .pagination .is-current {
+  color: #0e1117;
+}
+
+html[data-theme="dark"] .qty input,
+html[data-theme="dark"] .filter-price input,
+html[data-theme="dark"] .form input,
+html[data-theme="dark"] .form textarea,
+html[data-theme="dark"] .search-form__input {
+  background: var(--sg-bg-soft);
+  color: var(--sg-ink);
+}
+
+/* Список отдельной строкой: общий background выше — шорткат, и он
+   обнулил бы стрелку в фоне. Красим только цвет подложки. */
+html[data-theme="dark"] .select {
+  background-color: var(--sg-bg-soft);
+  color: var(--sg-ink);
+}
+
+/* Плавное переключение темы, но без мигания при первой загрузке.
+   Это запасной путь: там, где есть View Transition, тему переводит
+   он — целым кадром, а не по свойствам. */
+html.theme-ready body,
+html.theme-ready .site-header,
+html.theme-ready .card,
+html.theme-ready .product-card {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Класс висит только на время перехода: иначе поверх кросс-фейда идёт
+   вторая, своя анимация заливок, и смена темы выглядит мутной. */
+html.is-theme-vt body,
+html.is-theme-vt .site-header,
+html.is-theme-vt .card,
+html.is-theme-vt .product-card {
+  transition: none;
+}
+
+/* ==========================================================================
+   Плавная типографика: размер тянется за шириной экрана,
+   а не прыгает ступеньками на брейкпоинтах
+   ========================================================================== */
+
+h1 {
+  font-size: clamp(26px, 1.4rem + 1.6vw, 38px);
+}
+
+h2 {
+  font-size: clamp(21px, 1.15rem + 1vw, 28px);
+}
+
+.intro__title {
+  font-size: clamp(26px, 1.4rem + 2.2vw, 42px);
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Отступ для якорей: цель не должна уезжать под липкую шапку.
+     Тут стояло 96 px на все случаи, а шапка держится 130 px на телефоне
+     и 142 на планшете — заголовок, к которому перешли по ссылке
+     «Перейти к содержимому», оказывался на 34-46 px под шапкой.
+     Настоящую высоту меряет app.js и кладёт в --header-now; числа ниже —
+     запас на случай, когда JS не отработал: до 960 px шапка не ужимается
+     ниже 142, дальше садится до 70. */
+  scroll-padding-top: calc(var(--header-now, 142px) + 12px);
+}
+
+@media (min-width: 960px) {
+  html {
+    scroll-padding-top: calc(var(--header-now, 70px) + 12px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* ==========================================================================
+   Липкая шапка: при прокрутке ужимается, служебная полоса прячется
+   ========================================================================== */
+
+.site-header {
+  position: sticky;
+  top: 0;
+}
+
+.site-header .header-util,
+.site-header .stripe-band {
+  transition: height 0.2s ease, opacity 0.2s ease;
+}
+
+.site-header.is-compact .header-util {
+  height: 0;
+  overflow: hidden;
+  opacity: 0;
+  border-bottom: 0;
+}
+
+.site-header.is-compact .stripe-band {
+  height: 5px;
+}
+
+.site-header.is-compact .header-main__inner {
+  padding-top: var(--sp-2);
+  padding-bottom: var(--sp-2);
+}
+
+.site-header.is-compact .header-quick {
+  display: none;
+}
+
+.site-header.is-compact .site-logo img {
+  width: 48px;
+  height: 48px;
+  transition: width 0.2s ease, height 0.2s ease;
+}
+
+.site-logo img {
+  transition: width 0.2s ease, height 0.2s ease;
+}
+
+/* Переключатель темы */
+.theme-toggle {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.theme-toggle {
+  width: 36px;
+  height: 36px;
+}
+
+.theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--sg-on-dark);
+}
+
+.theme-toggle .icon-moon {
+  display: none;
+}
+
+html[data-theme="dark"] .theme-toggle .icon-sun {
+  display: none;
+}
+
+html[data-theme="dark"] .theme-toggle .icon-moon {
+  display: block;
+}
+
+/* Кнопка «Заказать звонок» в тёмной информационной полосе */
+.util-callback {
+  background: none;
+  border: 0;
+  padding: 0 var(--sp-2);
+  min-height: 36px;
+  color: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  border-bottom: 1px dashed currentColor;
+}
+
+.util-callback:hover {
+  color: var(--sg-on-dark);
+}
+
+/* ==========================================================================
+   Поиск: панель подсказок под полем
+   ========================================================================== */
+
+.search-form {
+  position: relative;
+}
+
+.search-suggest {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 55;
+  padding: var(--sp-4);
+  background: var(--sg-white);
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-md);
+}
+
+.search-suggest[hidden] {
+  display: none;
+}
+
+.search-suggest__title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--sg-muted);
+  margin-bottom: var(--sp-3);
+}
+
+.search-suggest__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.search-suggest__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-pill);
+  color: var(--sg-ink);
+  font-size: 14px;
+}
+
+.search-suggest__item:hover {
+  border-color: var(--sg-blue);
+  background: var(--sg-blue-tint);
+  color: var(--sg-blue);
+  text-decoration: none;
+}
+
+/* ==========================================================================
+   Мобильная нижняя панель действий
+   ========================================================================== */
+
+.mobile-bar {
+  display: none;
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 70;
+  background: var(--sg-white);
+  border-top: 1px solid var(--sg-line);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  box-shadow: 0 -2px 12px rgba(16, 24, 40, 0.08);
+}
+
+.mobile-bar__inner {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.mobile-bar__item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 58px;
+  color: var(--sg-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.mobile-bar__item:hover,
+.mobile-bar__item[aria-current="page"] {
+  color: var(--sg-blue);
+  text-decoration: none;
+}
+
+.mobile-bar__count {
+  position: absolute;
+  top: 6px;
+  right: 50%;
+  transform: translateX(20px);
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  background: var(--sg-red);
+  color: #fff;
+  font-size: 11px;
+  line-height: 1;
+}
+
+@media (max-width: 900px) {
+  .mobile-bar {
+    display: block;
+  }
+
+  body {
+    padding-bottom: 62px;
+  }
+}
+
+/* ==========================================================================
+   Кнопка «наверх»
+   ========================================================================== */
+
+.to-top {
+  position: fixed;
+  right: var(--sp-5);
+  bottom: var(--sp-5);
+  z-index: 65;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--sg-line);
+  border-radius: 50%;
+  background: var(--sg-white);
+  color: var(--sg-blue);
+  box-shadow: var(--sh-md);
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(12px);
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+}
+
+.to-top.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+@media (max-width: 900px) {
+  .to-top {
+    bottom: calc(62px + var(--sp-4));
+    right: var(--sp-4);
+  }
+}
+
+/* ==========================================================================
+   Модальные окна на <dialog> — фокус и Esc работают средствами браузера
+   ========================================================================== */
+
+.modal {
+  width: min(560px, calc(100vw - 32px));
+  padding: 0;
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-xl);
+  background: var(--sg-white);
+  color: var(--sg-ink);
+  box-shadow: var(--sh-lg);
+}
+
+.modal::backdrop {
+  background: var(--sg-overlay);
+  backdrop-filter: blur(2px);
+}
+
+.modal__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding: var(--sp-5) var(--sp-5) 0;
+}
+
+.modal__title {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.modal__close {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--r-md);
+  background: var(--sg-bg-soft);
+  color: var(--sg-muted);
+  cursor: pointer;
+  flex: none;
+}
+
+.modal__close:hover {
+  color: var(--sg-red);
+}
+
+.modal__body {
+  padding: var(--sp-4) var(--sp-5) var(--sp-5);
+}
+
+.modal__body > p:first-child {
+  margin-top: 0;
+}
+
+.modal--wide {
+  width: min(820px, calc(100vw - 32px));
+}
+
+.quick-view {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-5);
+}
+
+.quick-view__media {
+  aspect-ratio: 4 / 3;
+  border-radius: var(--r-lg);
+  background: var(--sg-bg-soft);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .quick-view {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================================================
+   Плашка про cookie
+   ========================================================================== */
+
+/* Плашка — узкая полоса по низу экрана, а не карточка поверх текста.
+   Раньше она висела на 720 px по центру и закрывала кнопки первого
+   экрана и верхний ряд товаров. Теперь страница на её высоту
+   подрастает снизу (--cookie-h ставит скрипт), поэтому под ней
+   не остаётся ничего, до чего нельзя дотянуться. */
+.cookie {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--sp-3) var(--sp-4);
+  padding: var(--sp-3) var(--sp-5);
+  background: var(--sg-white);
+  border-top: 1px solid var(--sg-line);
+  box-shadow: var(--sh-lg);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+body.has-cookie {
+  padding-bottom: var(--cookie-h, 0px);
+}
+
+.cookie[hidden] {
+  display: none;
+}
+
+.cookie p {
+  margin: 0;
+  color: var(--sg-muted);
+}
+
+.cookie .btn {
+  flex: none;
+}
+
+@media (max-width: 900px) {
+  .cookie {
+    /* Выше нижней панели действий, иначе кнопка «Хорошо» попадает под неё */
+    bottom: 62px;
+    text-align: center;
+  }
+
+  /* Плашка стоит НАД нижней панелью, значит место нужно под обе:
+     иначе более сильный селектор .has-cookie съедает отступ под панель. */
+  body.has-cookie {
+    padding-bottom: calc(62px + var(--cookie-h, 0px));
+  }
+}
+
+/* ==========================================================================
+   Появление блоков при прокрутке
+   ========================================================================== */
+
+/* Обычное состояние блока — видимый. Это не мелочь: раньше .reveal
+   начинался с opacity: 0 и полагался на то, что JS поставит ему класс.
+   При отключённом JS тридцать блоков главной — четыре плитки под
+   баннером, все девятнадцать разделов каталога, карточки магазинов,
+   оба баннера и призыв к калькулятору — не появлялись никогда.
+   Теперь блок прячется только там, где есть чему его вернуть.
+
+   Анимировать берём translate, а не transform: у карточек разделов
+   на наведении свой transform: translateY(-2px), и анимация с
+   fill: both перебила бы его насовсем — подъём под курсором пропал бы. */
+
+/* Путь 1 — браузер считает прокрутку сам. Появление привязано к тому,
+   насколько блок вошёл в экран; считает компоновщик, главный поток не
+   занят, и эффект не зависит от того, доехал ли app.js до браузера. */
+@supports (animation-timeline: view()) {
+  .reveal {
+    animation: sg-reveal linear both;
+    animation-timeline: view();
+    /* Появление заканчивается, когда блок вошёл на 40% своей высоты:
+       высокий блок иначе висел бы полупрозрачным до конца прокрутки. */
+    animation-range: entry 0% entry 40%;
+  }
+}
+
+@keyframes sg-reveal {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+  }
+
+  to {
+    opacity: 1;
+    translate: none;
+  }
+}
+
+/* Путь 2 — браузеры без scroll-анимаций: прежний IntersectionObserver.
+   Прячем только при классе js, который ставится в <head> до первой
+   отрисовки. */
+@supports not (animation-timeline: view()) {
+  html.js .reveal {
+    opacity: 0;
+    translate: 0 14px;
+    transition: opacity 0.45s ease, translate 0.45s ease;
+  }
+
+  /* После появления возвращаем блоку его собственные переходы: правило
+     выше перебивает transition у .category-card и .tile, и без этой
+     строки наведение на уже показанную карточку срабатывало бы рывком. */
+  html.js .reveal.is-in {
+    opacity: 1;
+    translate: none;
+    transition: opacity 0.45s ease, translate 0.45s ease,
+      border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html.js .reveal {
+      opacity: 1;
+      translate: none;
+      transition: none;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    animation: none;
+    opacity: 1;
+    translate: none;
+  }
+}
+
+/* На бумаге появлений нет: печатается всё и сразу. */
+@media print {
+  .reveal {
+    animation: none !important;
+    opacity: 1 !important;
+    translate: none !important;
+  }
+}
+
+/* Наведение только там, где есть мышь — на тач-экранах эффекты не залипают */
+@media (hover: none) {
+  .product-card:hover,
+  .category-card:hover {
+    box-shadow: var(--sh-sm);
+    transform: none;
+  }
+}
+
+
+/* ==========================================================================
+   Каталог: чипы фильтров, вид списком, ползунок цены
+   ========================================================================== */
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 6px var(--sp-3);
+  border: 1px solid var(--sg-blue);
+  border-radius: var(--r-pill);
+  background: var(--sg-blue-tint);
+  color: var(--sg-blue);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chip:hover {
+  background: var(--sg-blue);
+  color: #fff;
+}
+
+html[data-theme="dark"] .chip:hover {
+  color: #0e1117;
+}
+
+.view-toggle {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-md);
+}
+
+.view-toggle button {
+  width: 38px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--sg-muted);
+  cursor: pointer;
+}
+
+.view-toggle button[aria-pressed="true"] {
+  background: var(--sg-blue-tint);
+  color: var(--sg-blue);
+}
+
+/* Вид списком */
+.product-grid--list {
+  grid-template-columns: 1fr !important;
+}
+
+.product-grid--list .product-card {
+  display: grid;
+  grid-template-columns: 180px 1fr auto;
+  gap: var(--sp-4);
+  align-items: center;
+}
+
+.product-grid--list .product-card__media {
+  margin-bottom: 0;
+  aspect-ratio: 1 / 1;
+}
+
+.product-grid--list .product-card__bottom {
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--sp-3);
+}
+
+@media (max-width: 640px) {
+  .product-grid--list .product-card {
+    grid-template-columns: 96px 1fr;
+  }
+
+  .product-grid--list .product-card__bottom {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+/* Двойной ползунок цены */
+.range {
+  position: relative;
+  height: 34px;
+  margin-top: var(--sp-3);
+}
+
+.range__track {
+  position: absolute;
+  top: 15px;
+  left: 0;
+  right: 0;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--sg-line);
+}
+
+.range__fill {
+  position: absolute;
+  top: 15px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--sg-blue);
+}
+
+.range input[type="range"] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  margin: 0;
+  height: 34px;
+  background: none;
+  pointer-events: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.range input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  pointer-events: auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--sg-white);
+  border: 3px solid var(--sg-blue);
+  cursor: pointer;
+  box-shadow: var(--sh-sm);
+}
+
+.range input[type="range"]::-moz-range-thumb {
+  pointer-events: auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--sg-white);
+  border: 3px solid var(--sg-blue);
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   Карточка товара: липкая панель покупки на телефоне, зум галереи
+   ========================================================================== */
+
+.gallery__main {
+  position: relative;
+  cursor: zoom-in;
+}
+
+.gallery__zoom {
+  position: absolute;
+  right: var(--sp-3);
+  bottom: var(--sp-3);
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-md);
+  background: var(--sg-white);
+  color: var(--sg-blue);
+  cursor: zoom-in;
+}
+
+.product-actions {
+  display: flex;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-5);
+}
+
+.action-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-md);
+  background: var(--sg-white);
+  color: var(--sg-muted);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.action-link:hover,
+.action-link.is-on {
+  border-color: var(--sg-blue);
+  color: var(--sg-blue);
+  background: var(--sg-blue-tint);
+  text-decoration: none;
+}
+
+.trust-list {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  background: var(--sg-bg-soft);
+}
+
+.trust-list li {
+  display: flex;
+  gap: var(--sp-3);
+  font-size: 14px;
+}
+
+.trust-list svg {
+  flex: none;
+  color: var(--sg-blue);
+}
+
+/* ==========================================================================
+   Корзина
+   ========================================================================== */
+
+.cart-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: var(--sp-6);
+  align-items: start;
+  padding-bottom: var(--sp-8);
+}
+
+.cart-list {
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+/* Пять колонок, а не четыре: между названием и счётчиком добавлено
+   место под цену за единицу и сумму строки. Раньше их не было вовсе —
+   ни чисел, ни пустого места под них, — и по макету нельзя было понять,
+   куда они встанут. Корзина без цены в строке не корзина. */
+.cart-row {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr) auto auto auto;
+  gap: var(--sp-4);
+  align-items: center;
+  padding: var(--sp-4);
+  border-bottom: 1px solid var(--sg-line);
+}
+
+.cart-row__meta {
+  margin-top: 6px;
+}
+
+.cart-row__money {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--sp-2);
+  text-align: right;
+}
+
+/* На телефоне пять колонок в строку не встают. Позиции заданы явно:
+   если положиться на поток, деньги занимают всю ширину и выталкивают
+   счётчик и корзину каждый на свою строку — получается лесенка
+   из четырёх этажей на один товар. */
+@media (max-width: 720px) {
+  .cart-row {
+    grid-template-columns: 64px minmax(0, 1fr) auto;
+    row-gap: var(--sp-3);
+    align-items: start;
+  }
+
+  .cart-row__media {
+    grid-area: 1 / 1 / 2 / 2;
+  }
+
+  .cart-row__text {
+    grid-area: 1 / 2 / 2 / 3;
+  }
+
+  .cart-row__remove {
+    grid-area: 1 / 3 / 2 / 4;
+  }
+
+  .cart-row__money {
+    grid-area: 2 / 2 / 3 / 4;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .cart-row .qty {
+    grid-area: 3 / 2 / 4 / 4;
+    justify-self: start;
+  }
+}
+
+.cart-row:last-child {
+  border-bottom: 0;
+}
+
+.cart-row__media {
+  aspect-ratio: 1 / 1;
+  border-radius: var(--r-md);
+  background: var(--sg-bg-soft);
+  display: grid;
+  place-items: center;
+  color: var(--sg-muted);
+}
+
+.cart-row__remove {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--r-md);
+  background: none;
+  color: var(--sg-muted);
+  cursor: pointer;
+}
+
+.cart-row__remove:hover {
+  color: var(--sg-red);
+  background: var(--sg-red-tint);
+}
+
+.cart-total {
+  position: sticky;
+  /* То же правило, что у панели фильтров: отсчёт от настоящей шапки.
+     110 px было подобрано под широкий экран и держалось только там. */
+  top: calc(var(--header-now, 70px) + var(--sp-5));
+  padding: var(--sp-5);
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  background: var(--sg-bg-soft);
+}
+
+.cart-total__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0;
+  font-size: 15px;
+}
+
+.cart-total__row--sum {
+  border-top: 1px solid var(--sg-line);
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-4);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.promo-field {
+  display: flex;
+  gap: var(--sp-2);
+  margin: var(--sp-4) 0;
+}
+
+.promo-field input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  padding: 0 var(--sp-3);
+  border: 1.5px solid var(--sg-line);
+  border-radius: var(--r-md);
+  font-family: inherit;
+  font-size: 15px;
+  background: var(--sg-white);
+  color: var(--sg-ink);
+}
+
+.steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-5);
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: 14px;
+  color: var(--sg-muted);
+}
+
+/* Пройденный шаг — ссылка назад. Внутри .step она сама становится
+   flex-строкой, иначе цифра и подпись разъезжаются по двум строкам
+   и шаг перестаёт выглядеть шагом. */
+.step a {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: inherit;
+}
+
+.step a:hover {
+  color: var(--sg-blue);
+  text-decoration: none;
+}
+
+.step a:hover .step__num {
+  background: var(--sg-blue-tint);
+  color: var(--sg-blue);
+}
+
+.step__num {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--sg-line);
+  color: var(--sg-ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.step.is-current {
+  color: var(--sg-ink);
+  font-weight: 700;
+}
+
+.step.is-current .step__num {
+  background: var(--sg-blue);
+  color: #fff;
+}
+
+html[data-theme="dark"] .step.is-current .step__num {
+  color: #0e1117;
+}
+
+@media (max-width: 1023px) {
+  .cart-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .cart-total {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .cart-row {
+    grid-template-columns: 64px 1fr auto;
+    gap: var(--sp-3);
+  }
+
+  .cart-row .qty {
+    grid-column: 2 / -1;
+  }
+}
+
+/* ==========================================================================
+   Калькулятор материалов
+   ========================================================================== */
+
+.calc {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: var(--sp-6);
+  align-items: start;
+}
+
+.calc__form {
+  padding: var(--sp-5);
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  background: var(--sg-white);
+}
+
+.calc__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
+}
+
+.calc__field label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: var(--sp-2);
+}
+
+.calc__field input,
+.calc__field select {
+  width: 100%;
+  height: 48px;
+  padding: 0 var(--sp-3);
+  border: 1.5px solid var(--sg-line);
+  border-radius: var(--r-md);
+  font-family: inherit;
+  font-size: 16px;
+  background: var(--sg-white);
+  color: var(--sg-ink);
+}
+
+.calc__field input:focus,
+.calc__field select:focus {
+  outline: none;
+  border-color: var(--sg-blue);
+}
+
+.calc__hint {
+  font-size: 13px;
+  color: var(--sg-muted);
+  margin: var(--sp-2) 0 0;
+}
+
+.calc__result {
+  position: sticky;
+  /* То же правило, что у панели фильтров: отсчёт от настоящей шапки.
+     110 px было подобрано под широкий экран и держалось только там. */
+  top: calc(var(--header-now, 70px) + var(--sp-5));
+  padding: var(--sp-5);
+  border: 2px solid var(--sg-blue);
+  border-radius: var(--r-lg);
+  background: var(--sg-blue-tint);
+}
+
+.calc__answer {
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--sg-blue);
+  margin: var(--sp-3) 0 var(--sp-2);
+}
+
+.calc__breakdown {
+  font-size: 14px;
+  color: var(--sg-muted);
+  margin: 0;
+}
+
+.calc__breakdown li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: 4px 0;
+}
+
+@media (max-width: 1023px) {
+  .calc {
+    grid-template-columns: 1fr;
+  }
+
+  .calc__result {
+    position: static;
+  }
+}
+
+@media (max-width: 560px) {
+  .calc__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================================================
+   Текстовые страницы и 404
+   ========================================================================== */
+
+.prose {
+  max-width: 75ch;
+}
+
+.prose h2 {
+  margin: var(--sp-6) 0 var(--sp-3);
+}
+
+.prose h3 {
+  margin: var(--sp-5) 0 var(--sp-2);
+}
+
+.prose ul {
+  list-style: disc;
+  padding-left: 22px;
+  margin-bottom: var(--sp-4);
+  color: var(--sg-muted);
+}
+
+.prose li {
+  margin-bottom: var(--sp-2);
+}
+
+.faq {
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+.faq details {
+  border-bottom: 1px solid var(--sg-line);
+}
+
+.faq details:last-child {
+  border-bottom: 0;
+}
+
+.faq summary {
+  padding: var(--sp-4) var(--sp-5);
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  align-items: center;
+}
+
+.faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq summary::after {
+  content: "+";
+  color: var(--sg-blue);
+  font-size: 22px;
+  line-height: 1;
+}
+
+.faq details[open] summary::after {
+  content: "−";
+}
+
+.faq p {
+  padding: 0 var(--sp-5) var(--sp-4);
+  margin: 0;
+  color: var(--sg-muted);
+}
+
+.error-page {
+  text-align: center;
+  padding: var(--sp-8) 0;
+}
+
+.error-page__code {
+  font-size: clamp(64px, 12vw, 140px);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--sg-blue);
+  letter-spacing: -0.04em;
+}
+
+.error-page__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  justify-content: center;
+  margin-top: var(--sp-5);
+}
+
+/* ==========================================================================
+   Формы: состояния валидации
+   ========================================================================== */
+
+.form input[aria-invalid="true"],
+.form textarea[aria-invalid="true"] {
+  border-color: var(--sg-red);
+  background: var(--sg-red-tint);
+}
+
+.form__error {
+  display: none;
+  margin: var(--sp-2) 0 0;
+  font-size: 13px;
+  color: var(--sg-red);
+}
+
+.form__error.is-shown {
+  display: block;
+}
+
+.consent {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: flex-start;
+  font-size: 13px;
+  color: var(--sg-muted);
+  margin-bottom: var(--sp-4);
+}
+
+.consent input {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  margin-top: 2px;
+  accent-color: var(--sg-blue);
+}
+
+.form__success {
+  display: none;
+  gap: var(--sp-3);
+  align-items: center;
+  padding: var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--sg-blue-tint);
+  color: var(--sg-blue);
+  font-weight: 600;
+}
+
+.form__success.is-shown {
+  display: flex;
+}
+
+/* ==========================================================================
+   Мелочи
+   ========================================================================== */
+
+/* Счётчик в шапке коротко подпрыгивает при изменении */
+@keyframes count-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+
+.header-action__count.is-pop {
+  animation: count-pop 0.35s ease;
+}
+
+/* ==========================================================================
+   Кнопки поверх фото товара и призыв к калькулятору
+   ========================================================================== */
+
+.product-card__tools {
+  position: absolute;
+  top: var(--sp-2);
+  right: var(--sp-2);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  opacity: 0;
+  transform: translateX(6px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  z-index: 2;
+}
+
+.product-card:hover .product-card__tools,
+.product-card:focus-within .product-card__tools {
+  opacity: 1;
+  transform: none;
+}
+
+/* На тач-экранах наведения нет — показываем сразу */
+@media (hover: none) {
+  .product-card__tools {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* На телефоне карточка узкая: столбик из трёх кнопок закрывает фото.
+   Оставляем только избранное, остальное доступно в карточке товара.
+   Заодно кнопка дорастает до 44 px — минимального размера для пальца. */
+@media (max-width: 640px) {
+  .product-card__tools [data-add="compare"],
+  .product-card__tools [data-modal-open] {
+    display: none;
+  }
+
+  /* Селектор с двумя классами — иначе базовое правило .card-tool ниже
+     по файлу перебивает этот блок при одинаковой специфичности. */
+  .product-card__tools .card-tool,
+  .header-util .theme-toggle {
+    width: 44px;
+    height: 44px;
+  }
+
+  .action-link {
+    min-height: 44px;
+  }
+
+  /* Списки-ссылки, по которым реально тыкают пальцем */
+  .chip,
+  .view-toggle button,
+  .filters-toggle,
+  .cat-list__link,
+  .mobile-nav__link,
+  .footer-group li a,
+  .filters label {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+}
+
+.card-tool {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-md);
+  background: var(--sg-white);
+  color: var(--sg-muted);
+  cursor: pointer;
+}
+
+.card-tool:hover,
+.card-tool.is-on {
+  border-color: var(--sg-blue);
+  background: var(--sg-blue-tint);
+  color: var(--sg-blue);
+}
+
+.calc-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-5);
+  flex-wrap: wrap;
+  padding: var(--sp-6);
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-xl);
+  background: var(--sg-bg-soft);
+  position: relative;
+  overflow: hidden;
+}
+
+.calc-cta::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 10px;
+  background-image: var(--sg-stripes);
+}
+
+.calc-cta > * {
+  position: relative;
+}
+
+.calc-cta > div {
+  padding-left: var(--sp-4);
+}
+
+/* ==========================================================================
+   Защита от переполнения: колонки грид-раскладок не должны растягиваться
+   под содержимое — иначе на узком экране появляется прокрутка вбок
+   ========================================================================== */
+
+.catalog-layout > *,
+.cart-layout > *,
+.calc > *,
+.product-layout > *,
+.contacts-grid > *,
+.cart-row > * {
+  min-width: 0;
+}
+
+.catalog-toolbar__sort {
+  flex-wrap: wrap;
+}
+
+.catalog-toolbar__sort .select {
+  min-width: 0;
+  flex: 1 1 150px;
+}
+
+@media (max-width: 560px) {
+  .catalog-toolbar {
+    gap: var(--sp-3);
+  }
+
+  .catalog-toolbar__sort {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .cart-row {
+    grid-template-columns: 56px 1fr auto;
+  }
+
+  .cart-row .qty {
+    grid-column: 2 / -1;
+    justify-self: start;
+  }
+}
+
+/* ==========================================================================
+   Тёмная тема: логотип остаётся на белом — как требует фирменный стиль
+   ========================================================================== */
+
+
+
+/* Подпись на заглушке фото должна читаться поверх штриховки */
+.ph--photo {
+  gap: 4px;
+  text-shadow: 0 1px 0 var(--sg-white), 0 0 6px var(--sg-white);
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   Каталог из 18 разделов: компактные плитки, мега-меню, список в фильтрах
+   ========================================================================== */
+
+/* Плитки категорий подстраиваются под ширину — их много */
+.category-grid {
+  grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+}
+
+.category-card {
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+}
+
+.category-card__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-md);
+}
+
+.category-card__title {
+  font-size: 15px;
+  line-height: 1.3;
+}
+
+/* Раздел со скидками выделяем красным — это акция, а не обычная категория */
+.category-card--special {
+  border-color: var(--sg-red);
+}
+
+.category-card--special .category-card__icon {
+  background: var(--sg-red-tint);
+  color: var(--sg-red);
+}
+
+.category-card--special:hover {
+  border-color: var(--sg-red);
+}
+
+/* Меню каталога: колонки набираются автоматически */
+.catalog-menu__grid {
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  max-height: min(70vh, 560px);
+  overflow-y: auto;
+}
+
+.catalog-menu__link {
+  font-size: 15px;
+  line-height: 1.3;
+}
+
+.catalog-menu__link--special {
+  border-color: var(--sg-red);
+  color: var(--sg-red);
+}
+
+.catalog-menu__link--special svg {
+  color: var(--sg-red);
+}
+
+.catalog-menu__link--special:hover {
+  border-color: var(--sg-red);
+  background: var(--sg-red-tint);
+}
+
+/* Мобильное меню прокручивается, а не растягивает страницу */
+.mobile-nav {
+  max-height: 65vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Список разделов в фильтрах каталога */
+.cat-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.cat-list__link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-2);
+  border-radius: var(--r-sm);
+  color: var(--sg-ink);
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.cat-list__link:hover {
+  background: var(--sg-blue-tint);
+  color: var(--sg-blue);
+  text-decoration: none;
+}
+
+.cat-list__link.is-current {
+  background: var(--sg-blue-tint);
+  color: var(--sg-blue);
+  font-weight: 700;
+}
+
+.cat-list__link .ph--inline {
+  flex: none;
+}
+
+@media (max-width: 640px) {
+  .category-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+
+  .category-card {
+    padding: var(--sp-3);
+  }
+}
+
+/* ==========================================================================
+   Переход между страницами
+   ========================================================================== */
+
+/* Кросс-документные переходы: при клике по ссылке браузер плавно
+   перерисовывает страницу вместо белой вспышки. Работает в Chromium,
+   остальные браузеры правило игнорируют и переходят как раньше —
+   ничего не ломается и запасной вёрстки не нужно.
+   На file:// не действует: нужен настоящий сервер. */
+@view-transition {
+  navigation: auto;
+}
+
+/* Та же машинерия переводит и тему: app.js вызывает startViewTransition,
+   и браузер переводит целый кадр «до» в кадр «после». 0.25 с — столько
+   же, сколько у выпадающих панелей: переход должен читаться как часть
+   того же интерфейса, а не как отдельный эффект. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.25s;
+}
+
+/* Шапка и подвал одинаковы на всех страницах, поэтому не участвуют
+   в анимации, а остаются на месте — переход выглядит как смена
+   содержимого, а не как подмена всей страницы. */
+.site-header {
+  view-transition-name: sg-header;
+}
+
+.site-footer {
+  view-transition-name: sg-footer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/* ==========================================================================
+   Отрисовка длинных страниц
+   ========================================================================== */
+
+/* Главная — почти восемь тысяч пикселей на телефоне. Браузеру незачем
+   считать раскладку блоков, до которых человек ещё не долистал.
+   contain-intrinsic-size: auto — браузер запоминает настоящую высоту
+   после первой отрисовки, поэтому полоса прокрутки не прыгает.
+   Первый экран (.mainscreen) сюда не попадает намеренно. */
+.section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 600px;
+}
+
+/* ==========================================================================
+   Печать
+   ========================================================================== */
+
+/* Печатают со стройки обычно две вещи: адреса магазинов и условия
+   доставки. Всё, что на бумаге бесполезно, убираем, а адреса ссылок
+   дописываем текстом — по экранной ссылке с листа не перейдёшь. */
+@media print {
+  .header-util,
+  .header-quick,
+  .catalog-menu,
+  .mobile-nav,
+  .mobile-bar,
+  .search-form,
+  .header-actions,
+  .to-top,
+  .cookie,
+  .breadcrumbs,
+  .filters,
+  .selection__nav,
+  .demo-note,
+  dialog {
+    display: none !important;
+  }
+
+  html,
+  body {
+    background: #fff;
+    color: #000;
+    padding-bottom: 0;
+  }
+
+  .site-header {
+    position: static;
+    border-bottom: 1px solid #999;
+  }
+
+  .container {
+    max-width: none;
+    padding: 0;
+  }
+
+  .section {
+    /* Скрытое содержимое иначе не попадёт на бумагу */
+    content-visibility: visible;
+    break-inside: avoid;
+  }
+
+  /* Подвал на бумаге. Целиком прятать нельзя — на распечатанной странице
+     доставки или контактов это единственное место с телефоном и адресами.
+     Но заливка фирменным синим на всю страницу — это загубленный картридж,
+     поэтому краску снимаем, а колонки ссылок (по бумаге не кликнешь)
+     убираем совсем. Остаются название, контакты и магазины. */
+  .site-footer {
+    margin-top: var(--sp-5);
+    padding-top: var(--sp-3);
+    border-top: 1px solid #999;
+    background: none !important;
+    color: #000;
+  }
+
+  .site-footer a {
+    color: #000;
+  }
+
+  .footer-links,
+  .footer-brand__note,
+  .site-footer__disclaimer,
+  .site-footer .stripe-band {
+    display: none !important;
+  }
+
+  .site-footer__grid {
+    display: block;
+    padding: 0;
+  }
+
+  /* Адрес ссылки дописываем только внешним: по экранной ссылке с листа
+     не перейдёшь, а адрес перепечатать можно. Телефон сюда не входит —
+     номер и так напечатан словами, а «(tel:+7963…)» рядом с ним мусор. */
+  a[href^="http"]::after {
+    content: ' (' attr(href) ')';
+    font-size: 11px;
+    color: #444;
+  }
+
+  .product-card,
+  .shop-card,
+  .tile {
+    break-inside: avoid;
+    box-shadow: none;
+  }
+}
+
+/* ==========================================================================
+   Отделка
+   ========================================================================== */
+
+/* Нажатие должно чувствоваться. Кнопка уходит на пиксель вниз и теряет
+   тень — то же самое делает настоящая клавиша под пальцем. Без этого
+   между наведением и нажатием нет никакой разницы, и на медленной
+   связи человек жмёт второй раз, не поняв, сработало ли. */
+.btn--primary,
+.btn--action,
+.search-form__submit {
+  box-shadow: var(--sh-sm);
+  transition: background-color 0.15s ease, color 0.15s ease,
+    border-color 0.15s ease, box-shadow 0.15s ease, transform 0.08s ease;
+}
+
+.btn--primary:active,
+.btn--action:active,
+.search-form__submit:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn--primary,
+  .btn--action,
+  .search-form__submit {
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .btn--primary:active,
+  .btn--action:active,
+  .search-form__submit:active {
+    transform: none;
+  }
+}
+
+/* Выделенный текст — фирменным синим, а не системным. Мелочь, но её
+   видят все, кто копирует артикул или адрес магазина. */
+::selection {
+  background: var(--sg-blue);
+  color: #fff;
+}
+
+/* Полоса прокрутки в тёмной теме: по умолчанию браузер рисует её
+   светлой, и справа получается яркая полоса вдоль тёмной страницы. */
+html[data-theme='dark'] {
+  scrollbar-color: #3a4152 var(--sg-page);
+}
+
+/* ==========================================================================
+   Появление всплывающих панелей
+   ========================================================================== */
+
+/* Выпадашки, меню каталога, мобильное меню и подсказки поиска
+   переключаются атрибутом hidden, то есть display: none. Такое
+   не анимируется само: панель возникает рывком, и глаз не успевает
+   понять, откуда она взялась и что закрыла собой.
+
+   transition-behavior: allow-discrete разрешает браузеру анимировать
+   переход к display: none, а @starting-style задаёт, из какого
+   состояния панель выезжает при появлении. Браузер, который этих
+   правил не знает, просто показывает и прячет панель как раньше —
+   запасной вёрстки не нужно. */
+.dropdown__panel,
+.catalog-menu,
+.mobile-nav,
+.search-suggest {
+  opacity: 1;
+  translate: 0 0;
+  transition:
+    opacity 0.16s ease,
+    translate 0.16s ease,
+    display 0.16s allow-discrete;
+}
+
+.dropdown__panel[hidden],
+.catalog-menu[hidden],
+.mobile-nav[hidden],
+.search-suggest[hidden] {
+  opacity: 0;
+  translate: 0 -6px;
+}
+
+@starting-style {
+  .dropdown__panel:not([hidden]),
+  .catalog-menu:not([hidden]),
+  .mobile-nav:not([hidden]),
+  .search-suggest:not([hidden]) {
+    opacity: 0;
+    translate: 0 -6px;
+  }
+}
+
+/* Модальное окно и его затемнение — так же, но через [open] */
+.modal,
+.modal::backdrop {
+  transition:
+    opacity 0.18s ease,
+    translate 0.18s ease,
+    display 0.18s allow-discrete,
+    overlay 0.18s allow-discrete;
+}
+
+.modal {
+  opacity: 1;
+  translate: 0 0;
+}
+
+.modal:not([open]),
+.modal:not([open])::backdrop {
+  opacity: 0;
+}
+
+.modal:not([open]) {
+  translate: 0 8px;
+}
+
+@starting-style {
+  .modal[open] {
+    opacity: 0;
+    translate: 0 8px;
+  }
+
+  .modal[open]::backdrop {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dropdown__panel,
+  .catalog-menu,
+  .mobile-nav,
+  .search-suggest,
+  .modal,
+  .modal::backdrop {
+    transition: none;
+    translate: none;
+  }
+}
+
+/* ==========================================================================
+   Карточка товара подстраивается под свою ширину, а не под ширину экрана
+   ========================================================================== */
+
+/* Одна и та же карточка стоит в трёх местах разной ширины: в подборке
+   на главной, в каталоге рядом с фильтрами, а на широком экране —
+   в четыре колонки. Обычные медиазапросы тут врут: карточка в сетке
+   4×1680 уже, чем в сетке 2×900, а экран при этом вдвое шире.
+   Контейнерный запрос спрашивает про саму карточку.
+
+   Браузер без поддержки просто оставляет цену и кнопку в одну строку,
+   как было, — flex-wrap их и так перенесёт, если не влезут. */
+.product-card {
+  container-type: inline-size;
+  container-name: card;
+}
+
+@container card (max-width: 260px) {
+  /* Тесно: цена уходит на свою строку, кнопка занимает всю ширину —
+     так по ней проще попасть и цена не жмётся к краю. */
+  .product-card__bottom {
+    align-items: stretch;
+    flex-direction: column;
+    gap: var(--sp-2);
+  }
+
+  .product-card__buy {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .product-card__meta {
+    row-gap: var(--sp-1);
+  }
+}
+
+/* ==========================================================================
+   Вес пустых мест по важности
+   ==========================================================================
+
+   Плейсхолдеров на главной больше сотни, и все они выглядели одинаково —
+   пунктирной коробкой. В карточке товара таких коробок четыре подряд:
+   артикул, фасовка, остаток, цена. Карточка на три четверти состояла
+   из разметки «данных нет», и товар в ней терялся.
+
+   Теперь вес разный. Цена, суммы и условия остаются коробкой: это то,
+   без чего страница не работает, и заказчик должен видеть их сразу.
+   Мелкие подписи — артикул, фасовка, остаток, число товаров — становятся
+   текстом с пунктирным подчёркиванием: «здесь будут данные» читается
+   так же ясно, а страница перестаёт быть расчерченной тетрадью.
+   Ничего не прячется, меняется только громкость. */
+.product-card__art .ph,
+.product-card__meta .ph,
+.category-card__count,
+.cat-list__link .ph,
+.catalog-toolbar__count,
+.header-quick .ph {
+  padding: 0 1px;
+  border: 0;
+  border-bottom: 1px dashed var(--ph-line);
+  border-radius: 0;
+  background: none;
+  color: var(--sg-muted);
+}
+
+/* ==========================================================================
+   Служебные классы вместо инлайновых стилей
+   ==========================================================================
+
+   В разметке было 63 атрибута style= с отступами и мелкой типографикой.
+   Визуально они не мешали, но при переносе в OpenCart размножились бы
+   по twig-шаблонам, и правку одного отступа пришлось бы повторять
+   в каждом файле. Здесь они собраны в одном месте.
+
+   Имена по смыслу там, где смысл есть, и по шкале отступов там,
+   где это просто расстояние между блоками. Значения взяты из
+   переменных --sp-*, а не из голых пикселей. */
+
+.gap-xs {
+  margin-top: 6px;
+}
+
+.gap-sm {
+  margin-top: var(--sp-2);
+}
+
+.gap-ms {
+  margin-top: var(--sp-3);
+}
+
+.gap-md {
+  margin-top: var(--sp-4);
+}
+
+.gap-lg {
+  margin-top: var(--sp-5);
+}
+
+.gap-xl {
+  margin-top: var(--sp-6);
+}
+
+.gap-sm-below {
+  margin-bottom: var(--sp-2);
+}
+
+.gap-md-below {
+  margin-bottom: var(--sp-4);
+}
+
+.gap-lg-below {
+  margin-bottom: var(--sp-5);
+}
+
+.flush-top {
+  padding-top: 0;
+}
+
+/* Ряд кнопок под текстом: на узком экране переносится, а не сжимается */
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+/* Форма внутри модального окна: рамка и фон у окна, у формы своих нет */
+.form--bare {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.block-title {
+  margin: var(--sp-2) 0 var(--sp-3);
+}
+
+.subhead {
+  font-size: 19px;
+  margin-bottom: var(--sp-3);
+}
+
+/* Надзаголовок капсом над крупным блоком */
+.eyebrow {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--sg-muted);
+}
+
+.note {
+  color: var(--sg-muted);
+  font-size: 15px;
+}
+
+/* Пояснение под заголовком. Ширина в ch, а не в пикселях: строка
+   должна держать примерно 52 знака при любом размере шрифта. */
+.note-measure {
+  max-width: 52ch;
+  color: var(--sg-muted);
+}
+
+.error-page__text {
+  max-width: 46ch;
+  margin: var(--sp-3) auto 0;
+  color: var(--sg-muted);
+}
+
+/* Итог калькулятора в общем потоке, а не липким блоком сбоку */
+.calc__result--inline {
+  position: static;
+  margin-top: var(--sp-5);
+}
+
+/* Подсказки поиска: подсветка совпадения и честный ответ, когда раздела нет */
+.search-suggest__item mark {
+  background: var(--sg-blue-tint);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 1px;
+  font-weight: 700;
+}
+
+.search-suggest__empty {
+  margin: 0;
+  padding: var(--sp-2) 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--sg-muted);
+}
+
+/* ==========================================================================
+   Печать списка покупок
+   ==========================================================================
+
+   Ходовой сценарий для стройматериалов: собрал корзину, распечатал,
+   поехал в магазин. На бумаге нужен список и телефон, а не интерфейс. */
+
+/* Шапка для бумаги: на экране её нет, там те же данные и так на виду */
+.print-head {
+  display: none;
+}
+
+@media print {
+  .print-head {
+    display: block;
+    margin-bottom: var(--sp-4);
+    padding-bottom: var(--sp-3);
+    border-bottom: 2px solid #000;
+  }
+
+  .print-head__brand {
+    margin: 0 0 var(--sp-2);
+    font-size: 18px;
+    font-weight: 800;
+  }
+
+  .print-head__line {
+    margin: 0;
+    font-size: 12px;
+    color: #333;
+  }
+
+  /* Всё, что на бумаге не работает: кнопки, промокод, шаги оформления,
+     подборка «часто берут вместе» и боковая колонка с итогом. Итог
+     без цен всё равно пустой, а место занимает целую страницу. */
+  .cart-layout > aside,
+  .steps,
+  .promo-field,
+  .cart-row__remove,
+  .qty button,
+  .print-head + .page-head p,
+  .breadcrumbs,
+  /* Шапка сайта целиком: логотип, поиск и красная кнопка «Каталог» —
+     это интерфейс, на бумаге он только тратит краску. Название магазина
+     и телефон печатает .print-head. */
+  .site-header,
+  .data-notice,
+  /* Всё, что идёт после списка: «часто берут вместе» — это витрина,
+     а не список покупок. Целая страница карточек впустую. */
+  .cart-layout ~ .section {
+    display: none !important;
+  }
+
+  .cart-layout {
+    display: block;
+  }
+
+  /* Строка списка: картинка не нужна, количество печатаем числом */
+  .cart-row {
+    grid-template-columns: 1fr auto auto;
+    gap: var(--sp-3);
+    padding: var(--sp-2) 0;
+    border-bottom: 1px solid #bbb;
+    break-inside: avoid;
+  }
+
+  .cart-row__media {
+    display: none;
+  }
+
+  .cart-row .qty {
+    border: 0;
+    padding: 0;
+    font-weight: 700;
+  }
+
+  .cart-row .qty input {
+    border: 0;
+    background: none;
+    width: auto;
+    font-weight: 700;
+    text-align: right;
+  }
+
+  /* Место для отметок кладовщика: без него лист бесполезен на складе */
+  .cart-list::after {
+    content: 'Отпущено ________________   Сумма ________________   Подпись ________________';
+    display: block;
+    margin-top: var(--sp-6);
+    padding-top: var(--sp-4);
+    border-top: 1px dashed #999;
+    font-size: 12px;
+    color: #444;
+  }
+}
+
+/* ==========================================================================
+   Оформление заказа
+   ========================================================================== */
+
+/* Слева поля, справа итог — как в корзине, чтобы человек не терял
+   ориентацию при переходе с предыдущего шага. */
+.checkout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+.checkout-block + .checkout-block {
+  margin-top: var(--sp-6);
+  padding-top: var(--sp-5);
+  border-top: 1px solid var(--sg-line);
+}
+
+.checkout__side {
+  /* .cart-total уже липкий; здесь только ширина колонки */
+  min-width: 0;
+}
+
+/* Без этого колонка не может стать уже своего содержимого, а самое
+   широкое в ней — выпадающий список магазинов: его минимальная ширина
+   равна самому длинному варианту («ул. Чубарова, 16, корп. 40 —
+   Петропавловск-Камчатский»). На экране 360 px страница уезжала вбок
+   на 116 пикселей. */
+.checkout__main {
+  min-width: 0;
+}
+
+.checkout .select {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Выбор способа получения: вся карточка — цель нажатия, а не кружок
+   в 20 пикселей. На телефоне это разница между «попал» и «не попал». */
+.pickup {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.pickup__option {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: flex-start;
+  padding: var(--sp-4);
+  border: 1.5px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  background: var(--sg-white);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.pickup__option:hover {
+  border-color: var(--sg-blue);
+}
+
+.pickup__option:has(input:checked) {
+  border-color: var(--sg-blue);
+  background: var(--sg-blue-tint);
+}
+
+.pickup__option input {
+  width: auto;
+  height: auto;
+  margin-top: 3px;
+  flex: none;
+  accent-color: var(--sg-blue);
+}
+
+.pickup__body {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.pickup__body strong {
+  font-weight: 700;
+}
+
+.cart-total__title {
+  margin: 0 0 var(--sp-4);
+  font-size: 20px;
+  font-weight: 800;
+}
+
+/* Галочка на зелёном экране «заказ принят» — тот же кегль, что у 404,
+   но цвет не тревожный. */
+.error-page__code--ok {
+  color: #1a7f4b;
+}
+
+/* ==========================================================================
+   Избранное, сравнение, вход, документы
+   ========================================================================== */
+
+.empty-state {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: var(--sp-8) var(--sp-5);
+  text-align: center;
+}
+
+.empty-state__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  margin-bottom: var(--sp-4);
+  border-radius: 50%;
+  background: var(--sg-blue-tint);
+  color: var(--sg-blue);
+}
+
+.empty-state .row-actions {
+  justify-content: center;
+}
+
+.empty-state .note-measure {
+  margin: 0 auto;
+}
+
+/* Таблица сравнения шире экрана телефона всегда: прокручивается
+   внутри своей рамки, а не распирает страницу вбок. */
+.table-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-lg);
+}
+
+.compare-table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.compare-table th,
+.compare-table td {
+  padding: var(--sp-3) var(--sp-4);
+  text-align: left;
+  border-bottom: 1px solid var(--sg-line);
+  vertical-align: top;
+}
+
+.compare-table thead th {
+  background: var(--sg-bg-soft);
+  font-weight: 700;
+}
+
+.compare-table tbody th {
+  width: 200px;
+  font-weight: 600;
+  color: var(--sg-muted);
+}
+
+.compare-table tr:last-child th,
+.compare-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.auth {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+.auth__side {
+  padding: var(--sp-5);
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  background: var(--sg-bg-soft);
+}
+
+/* Список с галочками: маркер рисуется псевдоэлементом, картинки нет */
+.checklist {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.checklist li {
+  position: relative;
+  padding-left: var(--sp-6);
+  line-height: 1.5;
+}
+
+.checklist li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.45em;
+  width: 12px;
+  height: 7px;
+  border-left: 2px solid var(--sg-blue);
+  border-bottom: 2px solid var(--sg-blue);
+  transform: rotate(-45deg);
+}
+
+.prose {
+  max-width: 76ch;
+}
+
+.prose p {
+  margin-bottom: var(--sp-4);
+}
+
+@media (max-width: 900px) {
+  .checkout,
+  .auth {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .checkout__side {
+    position: static;
+  }
+}
+
+/* Шапка списка избранного и сравнения: сколько отложено и кнопка очистки */
+.stack-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-4);
+  min-height: 40px;
+}
+
+.stack-head .note {
+  margin: 0;
+}
+
+.btn--sm {
+  min-height: 36px;
+  padding: var(--sp-2) var(--sp-4);
+  font-size: 14px;
+}
+
+/* «Убрать» в карточке избранного: не кнопка покупки, поэтому спокойная */
+.card-remove {
+  margin-top: var(--sp-3);
+  padding: var(--sp-2) 0;
+  border: 0;
+  background: none;
+  color: var(--sg-muted);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.card-remove:hover {
+  color: var(--sg-red);
+}
+
+/* ==========================================================================
+   Ссылки внутри текста подчёркиваются
+   ==========================================================================
+
+   По WCAG ссылку в абзаце нельзя отличать одним цветом: человек
+   с дальтонизмом читает «посчитайте в калькуляторе» и не видит,
+   что «калькуляторе» — ссылка. Обойтись без подчёркивания можно,
+   только если ссылка контрастнее окружающего текста втрое, а у нас
+   синий #010b87 и почти чёрный #1b1b1f — оба тёмные.
+
+   Подчёркиваем только ссылки в тексте: в абзацах и в списках-перечнях.
+   Меню, подвал и карточки не трогаем — там ссылка опознаётся положением
+   и это не текстовый блок. */
+p a:not(.btn),
+.checklist a,
+.consent a,
+.prose li a,
+/* Строки с текстом вокруг ссылки: «8-963-830-09-99 — один телефон
+   на все магазины» в подвале и перечень доверия в карточке товара.
+   Это тоже текстовые блоки, хотя и внутри списка. Пункты меню
+   и подвальные колонки ссылок сюда не попадают — там не текст. */
+.footer-contacts a,
+.trust-list a {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+p a:not(.btn):hover,
+.checklist a:hover,
+.consent a:hover,
+.prose li a:hover,
+.footer-contacts a:hover,
+.trust-list a:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* Сообщение об ошибке под галочкой согласия. Внутри <label> может лежать
+   только строчное содержимое, поэтому там это <span>, а не <p> — валидатор
+   разметки справедливо на это ругался. Оформление остаётся прежним. */
+.consent .form__error {
+  display: block;
+  grid-column: 1 / -1;
+}
+
+/* ==========================================================================
+   Фокус на полях ввода
+   ==========================================================================
+
+   По всему сайту фокус — красное кольцо в три пикселя. У полей ввода
+   его нарочно отключали и заменяли сменой цвета границы: при щелчке
+   мышью кольцо вокруг поля выглядит грубо, и это правильное решение.
+
+   Но человек, идущий по странице с клавиатуры, из-за этого терял
+   ориентир: по ссылкам и кнопкам кольцо есть, дошёл до поля — пропало,
+   осталась только смена цвета рамки на полтора пикселя.
+
+   Кольцо вернули, но синее и в два пикселя, а не красное в три. Причина:
+   для текстового поля браузер считает :focus-visible выполненным и при
+   щелчке мышью — печатать ведь собираются в любом случае. С красным
+   кольцом каждый клик по строке поиска выглядел бы тревогой. Синий
+   в два пикселя продолжает рамку поля: заметно с клавиатуры,
+   не кричит под мышью. Синий на белом даёт контраст 15:1 —
+   с запасом к требованию три к одному.
+
+   Правило идёт после отключающих, поэтому перекрывает их без !important. */
+.search-form__input:focus-visible,
+.filter-price input:focus-visible,
+.select:focus-visible,
+.qty input:focus-visible,
+.form input:focus-visible,
+.form textarea:focus-visible {
+  outline: 2px solid var(--sg-blue);
+  outline-offset: 1px;
+  border-color: var(--sg-blue);
+}
