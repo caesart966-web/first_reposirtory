@@ -725,6 +725,64 @@ for (const name of ['index', 'catalog', 'contacts']) {
 }
 
 /* ==========================================================================
+   Режим работы магазинов
+   ==========================================================================
+
+   Отметка «сейчас открыто» зависит от времени, то есть проверить её
+   вживую можно только дождавшись субботы. Поэтому логика вынесена
+   в отдельную функцию и прогоняется на заданных моментах — включая
+   границы открытия и закрытия и разницу Чубарова с остальными
+   (там выходные начинаются в 10:00, а не в 9:00). */
+
+{
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await ctx.newPage();
+  await page.goto('file://' + path.join(DIR, 'contacts.html'), { waitUntil: 'load' });
+  await page.waitForTimeout(300);
+
+  const WD = '09:00-19:00';
+  const WE = '09:00-18:00';
+  const WE_LATE = '10:00-18:00';
+
+  /* день недели (0 — воскресенье), минуты от полуночи, часы, ожидание */
+  const cases = [
+    [1, 8 * 60 + 59, WE, false, 'откроется в 9:00'],
+    [1, 9 * 60, WE, true, 'до 19:00'],
+    [1, 18 * 60 + 59, WE, true, 'до 19:00'],
+    [1, 19 * 60, WE, false, 'завтра с 9:00'],
+    [5, 19 * 60 + 30, WE_LATE, false, 'завтра с 10:00'],
+    [6, 9 * 60 + 30, WE, true, 'до 18:00'],
+    [6, 9 * 60 + 30, WE_LATE, false, 'откроется в 10:00'],
+    [6, 18 * 60, WE_LATE, false, 'завтра с 10:00'],
+    [0, 18 * 60 + 10, WE_LATE, false, 'завтра с 9:00'],
+  ];
+
+  for (const [day, minutes, weekend, shouldBeOpen, expect] of cases) {
+    const got = await page.evaluate(([wd, we, d, m]) =>
+      window.sgShopState(wd, we, { day: d, minutes: m }), [WD, weekend, day, minutes]);
+    const when = `день ${day}, ${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, '0')}`;
+    if (got.open !== shouldBeOpen) {
+      fail(`режим работы (${when}, выходные ${weekend}): «${got.text}», а должно быть ` +
+           (shouldBeOpen ? 'открыто' : 'закрыто'));
+    }
+    if (!got.text.includes(expect)) {
+      fail(`режим работы (${when}, выходные ${weekend}): «${got.text}», ожидалось «${expect}»`);
+    }
+  }
+
+  /* И сама разметка: часы должны стоять у каждой карточки, а старого
+     пустого места «режим работы — нужен от заказчика» остаться не должно. */
+  const marks = await page.evaluate(() => ({
+    карточек: document.querySelectorAll('[data-hours-weekday]').length,
+    пустыхМест: document.body.innerHTML.includes('режим работы'),
+  }));
+  if (marks.карточек !== 3) fail(`контакты: часы стоят у ${marks.карточек} магазинов из трёх`);
+  if (marks.пустыхМест) fail('контакты: осталось пустое место вместо режима работы');
+
+  await ctx.close();
+}
+
+/* ==========================================================================
    Ничего не прячется под липкой шапкой
    ==========================================================================
 

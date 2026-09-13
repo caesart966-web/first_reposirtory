@@ -1649,6 +1649,84 @@ ul {
 }
 
 /* ==========================================================================
+   Режим работы
+   ========================================================================== */
+
+/* Часы в выпадашке шапки: две строки «дни — время», выровненные
+   по колонкам, чтобы время читалось столбиком, а не вперемешку. */
+.hours {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: var(--sp-1) var(--sp-4);
+  margin: 0;
+  font-size: 15px;
+}
+
+.hours dt {
+  color: var(--sg-muted);
+}
+
+.hours dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.hours__note,
+.contact-note {
+  margin: var(--sp-2) 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--sg-muted);
+}
+
+.contact-note {
+  display: inline-block;
+}
+
+/* Отметка «сейчас открыто / закрыто». Её ставит app.js по времени
+   Камчатки, а не по часам гостя: магазин на Камчатке, и посетитель
+   из Москвы иначе видел бы «открыто» глубокой ночью по местному. */
+.shop-card__now {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: var(--sp-2);
+  padding: 1px 9px;
+  border-radius: var(--r-pill);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.shop-card__now::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.shop-card__now--open {
+  background: #e8f5ec;
+  color: #1c6b36;
+}
+
+.shop-card__now--closed {
+  background: var(--sg-bg-soft);
+  color: var(--sg-muted);
+}
+
+html[data-theme="dark"] .shop-card__now--open {
+  background: #16301f;
+  color: #6ddd96;
+}
+
+.shop-card__hours {
+  flex-wrap: wrap;
+}
+
+/* ==========================================================================
    Карта магазина
    ==========================================================================
 

@@ -1659,6 +1659,84 @@ ul {
 }
 
 /* ==========================================================================
+   Режим работы
+   ========================================================================== */
+
+/* Часы в выпадашке шапки: две строки «дни — время», выровненные
+   по колонкам, чтобы время читалось столбиком, а не вперемешку. */
+.hours {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: var(--sp-1) var(--sp-4);
+  margin: 0;
+  font-size: 15px;
+}
+
+.hours dt {
+  color: var(--sg-muted);
+}
+
+.hours dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.hours__note,
+.contact-note {
+  margin: var(--sp-2) 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--sg-muted);
+}
+
+.contact-note {
+  display: inline-block;
+}
+
+/* Отметка «сейчас открыто / закрыто». Её ставит app.js по времени
+   Камчатки, а не по часам гостя: магазин на Камчатке, и посетитель
+   из Москвы иначе видел бы «открыто» глубокой ночью по местному. */
+.shop-card__now {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: var(--sp-2);
+  padding: 1px 9px;
+  border-radius: var(--r-pill);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.shop-card__now::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.shop-card__now--open {
+  background: #e8f5ec;
+  color: #1c6b36;
+}
+
+.shop-card__now--closed {
+  background: var(--sg-bg-soft);
+  color: var(--sg-muted);
+}
+
+html[data-theme="dark"] .shop-card__now--open {
+  background: #16301f;
+  color: #6ddd96;
+}
+
+.shop-card__hours {
+  flex-wrap: wrap;
+}
+
+/* ==========================================================================
    Карта магазина
    ==========================================================================
 
@@ -5534,7 +5612,11 @@ p a:not(.btn):hover,
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> График <span class="icon-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></span>
           </button>
           <div class="dropdown__panel" id="util-hours" data-dropdown-panel hidden>
-            <p class="ph"><strong>Нужны данные</strong>Режим работы трёх магазинов заказчик ещё не прислал. Сюда подставляются реальные часы.</p>
+            <dl class="hours">
+              <dt>Пн–Пт</dt><dd>9:00–19:00</dd>
+              <dt>Сб–Вс</dt><dd>9:00–18:00</dd>
+            </dl>
+            <p class="hours__note">На Чубарова, 16 в выходные — с 10:00.</p>
           </div>
         </div>
 
@@ -6223,7 +6305,7 @@ p a:not(.btn):hover,
     <p class="shop-card__city">Петропавловск-Камчатский</p>
     <h3 class="shop-card__addr">ул. Чубарова, 16, корп. 40</h3>
     <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><a href="tel:+79638300999">8-963-830-09-99</a></p>
-    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="ph ph--inline">режим работы — нужен от заказчика</span></p><a class="shop-card__route" href="https://yandex.ru/maps/?rtext=~%D0%9F%D0%B5%D1%82%D1%80%D0%BE%D0%BF%D0%B0%D0%B2%D0%BB%D0%BE%D0%B2%D1%81%D0%BA-%D0%9A%D0%B0%D0%BC%D1%87%D0%B0%D1%82%D1%81%D0%BA%D0%B8%D0%B9%2C%20%D1%83%D0%BB.%20%D0%A7%D1%83%D0%B1%D0%B0%D1%80%D0%BE%D0%B2%D0%B0%2C%2016%2C%20%D0%BA%D0%BE%D1%80%D0%BF.%2040&amp;rtt=auto" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Построить маршрут</span><span class="visually-hidden"> (в новой вкладке)</span></a>
+    <p class="shop-card__row shop-card__hours" data-hours-weekday="09:00-19:00" data-hours-weekend="10:00-18:00"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Пн–Пт 9:00–19:00, Сб–Вс 10:00–18:00</span><span class="shop-card__now" data-hours-now hidden></span></p><a class="shop-card__route" href="https://yandex.ru/maps/?rtext=~%D0%9F%D0%B5%D1%82%D1%80%D0%BE%D0%BF%D0%B0%D0%B2%D0%BB%D0%BE%D0%B2%D1%81%D0%BA-%D0%9A%D0%B0%D0%BC%D1%87%D0%B0%D1%82%D1%81%D0%BA%D0%B8%D0%B9%2C%20%D1%83%D0%BB.%20%D0%A7%D1%83%D0%B1%D0%B0%D1%80%D0%BE%D0%B2%D0%B0%2C%2016%2C%20%D0%BA%D0%BE%D1%80%D0%BF.%2040&amp;rtt=auto" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Построить маршрут</span><span class="visually-hidden"> (в новой вкладке)</span></a>
     
   </div>
 </article><article class="shop-card reveal">
@@ -6232,7 +6314,7 @@ p a:not(.btn):hover,
     <p class="shop-card__city">Петропавловск-Камчатский</p>
     <h3 class="shop-card__addr">просп. 50 лет Октября, 17А</h3>
     <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><a href="tel:+79638300999">8-963-830-09-99</a></p>
-    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="ph ph--inline">режим работы — нужен от заказчика</span></p><a class="shop-card__route" href="https://yandex.ru/maps/?rtext=~%D0%9F%D0%B5%D1%82%D1%80%D0%BE%D0%BF%D0%B0%D0%B2%D0%BB%D0%BE%D0%B2%D1%81%D0%BA-%D0%9A%D0%B0%D0%BC%D1%87%D0%B0%D1%82%D1%81%D0%BA%D0%B8%D0%B9%2C%20%D0%BF%D1%80%D0%BE%D1%81%D0%BF.%2050%20%D0%BB%D0%B5%D1%82%20%D0%9E%D0%BA%D1%82%D1%8F%D0%B1%D1%80%D1%8F%2C%2017%D0%90&amp;rtt=auto" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Построить маршрут</span><span class="visually-hidden"> (в новой вкладке)</span></a>
+    <p class="shop-card__row shop-card__hours" data-hours-weekday="09:00-19:00" data-hours-weekend="09:00-18:00"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Пн–Пт 9:00–19:00, Сб–Вс 9:00–18:00</span><span class="shop-card__now" data-hours-now hidden></span></p><a class="shop-card__route" href="https://yandex.ru/maps/?rtext=~%D0%9F%D0%B5%D1%82%D1%80%D0%BE%D0%BF%D0%B0%D0%B2%D0%BB%D0%BE%D0%B2%D1%81%D0%BA-%D0%9A%D0%B0%D0%BC%D1%87%D0%B0%D1%82%D1%81%D0%BA%D0%B8%D0%B9%2C%20%D0%BF%D1%80%D0%BE%D1%81%D0%BF.%2050%20%D0%BB%D0%B5%D1%82%20%D0%9E%D0%BA%D1%82%D1%8F%D0%B1%D1%80%D1%8F%2C%2017%D0%90&amp;rtt=auto" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Построить маршрут</span><span class="visually-hidden"> (в новой вкладке)</span></a>
     
   </div>
 </article><article class="shop-card reveal">
@@ -6241,7 +6323,7 @@ p a:not(.btn):hover,
     <p class="shop-card__city">Елизово</p>
     <h3 class="shop-card__addr">Магистральная ул., 2/2</h3>
     <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><a href="tel:+79638300999">8-963-830-09-99</a></p>
-    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="ph ph--inline">режим работы — нужен от заказчика</span></p><a class="shop-card__route" href="https://yandex.ru/maps/?rtext=~%D0%95%D0%BB%D0%B8%D0%B7%D0%BE%D0%B2%D0%BE%2C%20%D0%9C%D0%B0%D0%B3%D0%B8%D1%81%D1%82%D1%80%D0%B0%D0%BB%D1%8C%D0%BD%D0%B0%D1%8F%20%D1%83%D0%BB.%2C%202/2&amp;rtt=auto" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Построить маршрут</span><span class="visually-hidden"> (в новой вкладке)</span></a>
+    <p class="shop-card__row shop-card__hours" data-hours-weekday="09:00-19:00" data-hours-weekend="09:00-18:00"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Пн–Пт 9:00–19:00, Сб–Вс 9:00–18:00</span><span class="shop-card__now" data-hours-now hidden></span></p><a class="shop-card__route" href="https://yandex.ru/maps/?rtext=~%D0%95%D0%BB%D0%B8%D0%B7%D0%BE%D0%B2%D0%BE%2C%20%D0%9C%D0%B0%D0%B3%D0%B8%D1%81%D1%82%D1%80%D0%B0%D0%BB%D1%8C%D0%BD%D0%B0%D1%8F%20%D1%83%D0%BB.%2C%202/2&amp;rtt=auto" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Построить маршрут</span><span class="visually-hidden"> (в новой вкладке)</span></a>
     
   </div>
 </article></div>
@@ -7168,7 +7250,7 @@ p a:not(.btn):hover,
     <p class="shop-card__city">Петропавловск-Камчатский</p>
     <h3 class="shop-card__addr">ул. Чубарова, 16, корп. 40</h3>
     <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><a href="tel:+79638300999">8-963-830-09-99</a></p>
-    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="ph ph--inline">режим работы — нужен от заказчика</span></p>
+    <p class="shop-card__row shop-card__hours" data-hours-weekday="09:00-19:00" data-hours-weekend="10:00-18:00"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Пн–Пт 9:00–19:00, Сб–Вс 10:00–18:00</span><span class="shop-card__now" data-hours-now hidden></span></p>
     <div class="shop-card__map"><p class="shop-card__mapfail">Карта не загрузилась. Адрес можно открыть <a href="https://yandex.ru/maps/?text=%D0%9F%D0%B5%D1%82%D1%80%D0%BE%D0%BF%D0%B0%D0%B2%D0%BB%D0%BE%D0%B2%D1%81%D0%BA-%D0%9A%D0%B0%D0%BC%D1%87%D0%B0%D1%82%D1%81%D0%BA%D0%B8%D0%B9%2C%20%D1%83%D0%BB.%20%D0%A7%D1%83%D0%B1%D0%B0%D1%80%D0%BE%D0%B2%D0%B0%2C%2016%2C%20%D0%BA%D0%BE%D1%80%D0%BF.%2040" target="_blank" rel="noopener">в Яндекс.Картах</a></p><iframe class="shop-card__mapframe" src="https://yandex.ru/map-widget/v1/?text=%D0%9F%D0%B5%D1%82%D1%80%D0%BE%D0%BF%D0%B0%D0%B2%D0%BB%D0%BE%D0%B2%D1%81%D0%BA-%D0%9A%D0%B0%D0%BC%D1%87%D0%B0%D1%82%D1%81%D0%BA%D0%B8%D0%B9%2C%20%D1%83%D0%BB.%20%D0%A7%D1%83%D0%B1%D0%B0%D1%80%D0%BE%D0%B2%D0%B0%2C%2016%2C%20%D0%BA%D0%BE%D1%80%D0%BF.%2040&z=17" title="Карта: Петропавловск-Камчатский, ул. Чубарова, 16, корп. 40" loading="lazy" allow="geolocation" allowfullscreen></iframe></div><a class="shop-card__route" href="https://yandex.ru/maps/?rtext=~%D0%9F%D0%B5%D1%82%D1%80%D0%BE%D0%BF%D0%B0%D0%B2%D0%BB%D0%BE%D0%B2%D1%81%D0%BA-%D0%9A%D0%B0%D0%BC%D1%87%D0%B0%D1%82%D1%81%D0%BA%D0%B8%D0%B9%2C%20%D1%83%D0%BB.%20%D0%A7%D1%83%D0%B1%D0%B0%D1%80%D0%BE%D0%B2%D0%B0%2C%2016%2C%20%D0%BA%D0%BE%D1%80%D0%BF.%2040&amp;rtt=auto" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Построить маршрут</span><span class="visually-hidden"> (в новой вкладке)</span></a>
   </div>
 </article><article class="shop-card reveal">
@@ -7177,7 +7259,7 @@ p a:not(.btn):hover,
     <p class="shop-card__city">Петропавловск-Камчатский</p>
     <h3 class="shop-card__addr">просп. 50 лет Октября, 17А</h3>
     <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><a href="tel:+79638300999">8-963-830-09-99</a></p>
-    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="ph ph--inline">режим работы — нужен от заказчика</span></p>
+    <p class="shop-card__row shop-card__hours" data-hours-weekday="09:00-19:00" data-hours-weekend="09:00-18:00"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Пн–Пт 9:00–19:00, Сб–Вс 9:00–18:00</span><span class="shop-card__now" data-hours-now hidden></span></p>
     <div class="shop-card__map"><p class="shop-card__mapfail">Карта не загрузилась. Адрес можно открыть <a href="https://yandex.ru/maps/?text=%D0%9F%D0%B5%D1%82%D1%80%D0%BE%D0%BF%D0%B0%D0%B2%D0%BB%D0%BE%D0%B2%D1%81%D0%BA-%D0%9A%D0%B0%D0%BC%D1%87%D0%B0%D1%82%D1%81%D0%BA%D0%B8%D0%B9%2C%20%D0%BF%D1%80%D0%BE%D1%81%D0%BF.%2050%20%D0%BB%D0%B5%D1%82%20%D0%9E%D0%BA%D1%82%D1%8F%D0%B1%D1%80%D1%8F%2C%2017%D0%90" target="_blank" rel="noopener">в Яндекс.Картах</a></p><iframe class="shop-card__mapframe" src="https://yandex.ru/map-widget/v1/?text=%D0%9F%D0%B5%D1%82%D1%80%D0%BE%D0%BF%D0%B0%D0%B2%D0%BB%D0%BE%D0%B2%D1%81%D0%BA-%D0%9A%D0%B0%D0%BC%D1%87%D0%B0%D1%82%D1%81%D0%BA%D0%B8%D0%B9%2C%20%D0%BF%D1%80%D0%BE%D1%81%D0%BF.%2050%20%D0%BB%D0%B5%D1%82%20%D0%9E%D0%BA%D1%82%D1%8F%D0%B1%D1%80%D1%8F%2C%2017%D0%90&z=17" title="Карта: Петропавловск-Камчатский, просп. 50 лет Октября, 17А" loading="lazy" allow="geolocation" allowfullscreen></iframe></div><a class="shop-card__route" href="https://yandex.ru/maps/?rtext=~%D0%9F%D0%B5%D1%82%D1%80%D0%BE%D0%BF%D0%B0%D0%B2%D0%BB%D0%BE%D0%B2%D1%81%D0%BA-%D0%9A%D0%B0%D0%BC%D1%87%D0%B0%D1%82%D1%81%D0%BA%D0%B8%D0%B9%2C%20%D0%BF%D1%80%D0%BE%D1%81%D0%BF.%2050%20%D0%BB%D0%B5%D1%82%20%D0%9E%D0%BA%D1%82%D1%8F%D0%B1%D1%80%D1%8F%2C%2017%D0%90&amp;rtt=auto" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Построить маршрут</span><span class="visually-hidden"> (в новой вкладке)</span></a>
   </div>
 </article><article class="shop-card reveal">
@@ -7186,7 +7268,7 @@ p a:not(.btn):hover,
     <p class="shop-card__city">Елизово</p>
     <h3 class="shop-card__addr">Магистральная ул., 2/2</h3>
     <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><a href="tel:+79638300999">8-963-830-09-99</a></p>
-    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="ph ph--inline">режим работы — нужен от заказчика</span></p>
+    <p class="shop-card__row shop-card__hours" data-hours-weekday="09:00-19:00" data-hours-weekend="09:00-18:00"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Пн–Пт 9:00–19:00, Сб–Вс 9:00–18:00</span><span class="shop-card__now" data-hours-now hidden></span></p>
     <div class="shop-card__map"><p class="shop-card__mapfail">Карта не загрузилась. Адрес можно открыть <a href="https://yandex.ru/maps/?text=%D0%95%D0%BB%D0%B8%D0%B7%D0%BE%D0%B2%D0%BE%2C%20%D0%9C%D0%B0%D0%B3%D0%B8%D1%81%D1%82%D1%80%D0%B0%D0%BB%D1%8C%D0%BD%D0%B0%D1%8F%20%D1%83%D0%BB.%2C%202/2" target="_blank" rel="noopener">в Яндекс.Картах</a></p><iframe class="shop-card__mapframe" src="https://yandex.ru/map-widget/v1/?text=%D0%95%D0%BB%D0%B8%D0%B7%D0%BE%D0%B2%D0%BE%2C%20%D0%9C%D0%B0%D0%B3%D0%B8%D1%81%D1%82%D1%80%D0%B0%D0%BB%D1%8C%D0%BD%D0%B0%D1%8F%20%D1%83%D0%BB.%2C%202/2&z=17" title="Карта: Елизово, Магистральная ул., 2/2" loading="lazy" allow="geolocation" allowfullscreen></iframe></div><a class="shop-card__route" href="https://yandex.ru/maps/?rtext=~%D0%95%D0%BB%D0%B8%D0%B7%D0%BE%D0%B2%D0%BE%2C%20%D0%9C%D0%B0%D0%B3%D0%B8%D1%81%D1%82%D1%80%D0%B0%D0%BB%D1%8C%D0%BD%D0%B0%D1%8F%20%D1%83%D0%BB.%2C%202/2&amp;rtt=auto" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Построить маршрут</span><span class="visually-hidden"> (в новой вкладке)</span></a>
   </div>
 </article></div>
@@ -7200,7 +7282,7 @@ p a:not(.btn):hover,
           <ul class="info-list">
             <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><span><strong>Телефон</strong><a href="tel:+79638300999">8-963-830-09-99</a></span></li>
             <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/></svg><span><strong>Почта</strong><a href="mailto:stroigeroi41@mail.ru">stroigeroi41@mail.ru</a></span></li>
-            <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span><strong>Режим работы</strong><span class="ph ph--inline">нужен от заказчика</span></span></li>
+            <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span><strong>Режим работы</strong><span>Пн–Пт 9:00–19:00, Сб–Вс 9:00–18:00<br><span class="contact-note">На Чубарова, 16 в выходные — с 10:00.</span></span></span></li>
             <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg><span><strong>Реквизиты</strong><span class="ph ph--inline">название юрлица, ИНН, ОГРН — от заказчика</span></span></li>
             <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3 7 3v5.5c0 4.4-3 8-7 9.5-4-1.5-7-5.1-7-9.5V6z"/><path d="m9 12 2 2 4-4"/></svg><span><strong>Документы</strong><span class="ph ph--inline">политика обработки персональных данных — от заказчика</span></span></li>
           </ul>
@@ -8477,6 +8559,79 @@ p a:not(.btn):hover,
   } else {
     revealables.forEach(function (el) { el.classList.add('is-in'); });
   }
+
+  /* ======================================================================
+     «Сейчас открыто» у карточек магазинов
+     ======================================================================
+
+     Считаем по времени Камчатки, а не по часам устройства: магазины
+     на Камчатке, и гость из Москвы иначе увидел бы «открыто» в час ночи
+     по местному. Часовой пояс берём у самого браузера через Intl —
+     сдвиг +12 руками не пишем, чтобы не разойтись с действительностью,
+     если его когда-нибудь поменяют.
+
+     Часы лежат в самой разметке (data-hours-*), там же они написаны
+     словами: без JS человек видит расписание, просто без отметки.
+     У Чубарова выходные начинаются позже, поэтому у каждой карточки
+     свои значения, а не одно общее на три. */
+  var KAMCHATKA = 'Asia/Kamchatka';
+
+  function kamchatkaNow(when) {
+    var f = new Intl.DateTimeFormat('en-GB', {
+      timeZone: KAMCHATKA, weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false
+    });
+    var got = {};
+    f.formatToParts(when || new Date()).forEach(function (p) { got[p.type] = p.value; });
+    var days = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 0 };
+    return { day: days[got.weekday], minutes: (+got.hour) * 60 + (+got.minute) };
+  }
+
+  function toMinutes(hhmm) {
+    var p = String(hhmm).split(':');
+    return (+p[0]) * 60 + (+p[1]);
+  }
+
+  function trimHour(hhmm) {
+    return String(hhmm).replace(/^0/, '');
+  }
+
+  /* Возвращает готовую подпись для карточки. Вынесено отдельно, чтобы
+     проверка могла прогнать её на заданном времени, а не ждать субботы. */
+  function shopState(weekday, weekend, now) {
+    var isWeekend = function (d) { return d === 0 || d === 6; };
+    var todays = (isWeekend(now.day) ? weekend : weekday).split('-');
+    var opens = toMinutes(todays[0]);
+    var closes = toMinutes(todays[1]);
+
+    if (now.minutes >= opens && now.minutes < closes) {
+      return { open: true, text: 'Сейчас открыто, до ' + trimHour(todays[1]) };
+    }
+    if (now.minutes < opens) {
+      return { open: false, text: 'Сейчас закрыто, откроется в ' + trimHour(todays[0]) };
+    }
+    var tomorrow = (now.day + 1) % 7;
+    var next = (isWeekend(tomorrow) ? weekend : weekday).split('-');
+    return { open: false, text: 'Сейчас закрыто, завтра с ' + trimHour(next[0]) };
+  }
+
+  $$('[data-hours-weekday]').forEach(function (row) {
+    var mark = row.querySelector('[data-hours-now]');
+    if (!mark || !window.Intl) return;
+    var show = function () {
+      var state = shopState(row.getAttribute('data-hours-weekday'),
+                            row.getAttribute('data-hours-weekend'), kamchatkaNow());
+      mark.textContent = state.text;
+      mark.className = 'shop-card__now shop-card__now--' + (state.open ? 'open' : 'closed');
+      mark.hidden = false;
+    };
+    show();
+    /* Страницу держат открытой подолгу; раз в минуту отметка обновляется,
+       иначе в 19:00 она так и будет уверять, что магазин работает. */
+    setInterval(show, 60000);
+  });
+
+  /* Наружу — для проверок */
+  window.sgShopState = shopState;
 
   /* ======================================================================
      Карты магазинов: если виджет не загрузился — показать адрес

@@ -727,6 +727,79 @@
   }
 
   /* ======================================================================
+     «Сейчас открыто» у карточек магазинов
+     ======================================================================
+
+     Считаем по времени Камчатки, а не по часам устройства: магазины
+     на Камчатке, и гость из Москвы иначе увидел бы «открыто» в час ночи
+     по местному. Часовой пояс берём у самого браузера через Intl —
+     сдвиг +12 руками не пишем, чтобы не разойтись с действительностью,
+     если его когда-нибудь поменяют.
+
+     Часы лежат в самой разметке (data-hours-*), там же они написаны
+     словами: без JS человек видит расписание, просто без отметки.
+     У Чубарова выходные начинаются позже, поэтому у каждой карточки
+     свои значения, а не одно общее на три. */
+  var KAMCHATKA = 'Asia/Kamchatka';
+
+  function kamchatkaNow(when) {
+    var f = new Intl.DateTimeFormat('en-GB', {
+      timeZone: KAMCHATKA, weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false
+    });
+    var got = {};
+    f.formatToParts(when || new Date()).forEach(function (p) { got[p.type] = p.value; });
+    var days = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 0 };
+    return { day: days[got.weekday], minutes: (+got.hour) * 60 + (+got.minute) };
+  }
+
+  function toMinutes(hhmm) {
+    var p = String(hhmm).split(':');
+    return (+p[0]) * 60 + (+p[1]);
+  }
+
+  function trimHour(hhmm) {
+    return String(hhmm).replace(/^0/, '');
+  }
+
+  /* Возвращает готовую подпись для карточки. Вынесено отдельно, чтобы
+     проверка могла прогнать её на заданном времени, а не ждать субботы. */
+  function shopState(weekday, weekend, now) {
+    var isWeekend = function (d) { return d === 0 || d === 6; };
+    var todays = (isWeekend(now.day) ? weekend : weekday).split('-');
+    var opens = toMinutes(todays[0]);
+    var closes = toMinutes(todays[1]);
+
+    if (now.minutes >= opens && now.minutes < closes) {
+      return { open: true, text: 'Сейчас открыто, до ' + trimHour(todays[1]) };
+    }
+    if (now.minutes < opens) {
+      return { open: false, text: 'Сейчас закрыто, откроется в ' + trimHour(todays[0]) };
+    }
+    var tomorrow = (now.day + 1) % 7;
+    var next = (isWeekend(tomorrow) ? weekend : weekday).split('-');
+    return { open: false, text: 'Сейчас закрыто, завтра с ' + trimHour(next[0]) };
+  }
+
+  $$('[data-hours-weekday]').forEach(function (row) {
+    var mark = row.querySelector('[data-hours-now]');
+    if (!mark || !window.Intl) return;
+    var show = function () {
+      var state = shopState(row.getAttribute('data-hours-weekday'),
+                            row.getAttribute('data-hours-weekend'), kamchatkaNow());
+      mark.textContent = state.text;
+      mark.className = 'shop-card__now shop-card__now--' + (state.open ? 'open' : 'closed');
+      mark.hidden = false;
+    };
+    show();
+    /* Страницу держат открытой подолгу; раз в минуту отметка обновляется,
+       иначе в 19:00 она так и будет уверять, что магазин работает. */
+    setInterval(show, 60000);
+  });
+
+  /* Наружу — для проверок */
+  window.sgShopState = shopState;
+
+  /* ======================================================================
      Карты магазинов: если виджет не загрузился — показать адрес
      ======================================================================
 
