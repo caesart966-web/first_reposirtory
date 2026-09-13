@@ -77,6 +77,12 @@
      страницы. В тёмной теме сайта стоит парная строка color-scheme: dark. */
   color-scheme: light;
 
+  /* Стрелка выпадающего списка. Своя, потому что системная — сплошной
+     треугольник, а весь знаковый ряд сайта нарисован линией в 1.75
+     с круглыми концами. Цвет зашит внутрь картинки, поэтому у тёмной
+     темы стоит парная строка со светлым штрихом. */
+  --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231b1b1f' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+
   /* Цвет пунктира у пустых мест. Отдельной переменной, потому что
      в тёмной теме синий светлеет: жёстко зашитый тёмно-синий там
      сливается с фоном, и плейсхолдер перестаёт читаться пустым местом. */
@@ -2015,14 +2021,32 @@ html[data-theme="dark"] .site-footer {
 
 .select {
   height: 44px;
-  padding: 0 var(--sp-4);
+  padding: 0 38px 0 var(--sp-4);
   border: 1.5px solid var(--sg-line);
   border-radius: var(--r-md);
-  background: var(--sg-white);
+  /* background-color, а не background: в фоне лежит ещё и стрелка,
+     и шорткат её стирал бы при каждом переопределении цвета. */
+  background-color: var(--sg-white);
+  background-image: var(--select-arrow);
+  background-repeat: no-repeat;
+  background-position: right 11px center;
+  background-size: 18px 18px;
+  appearance: none;
   font-size: 15px;
   font-family: inherit;
   color: var(--sg-ink);
   cursor: pointer;
+}
+
+/* В режиме высокой контрастности фоновые картинки не рисуются: своя
+   стрелка там просто исчезнет, и список станет неотличим от поля ввода.
+   Возвращаем системный вид — со своей отрисовкой и своим треугольником. */
+@media (forced-colors: active) {
+  .select {
+    appearance: auto;
+    padding-right: var(--sp-4);
+    background-image: none;
+  }
 }
 
 .select:focus {
@@ -2754,6 +2778,7 @@ html[data-theme="dark"] {
   --ph-line: rgba(123, 144, 238, 0.6);
   --sg-line: #272d3a;
   --sg-bg-soft: #1b202b;
+  --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e9ebf2' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 
   /* Акценты осветляем: тёмно-синий #010B87 на чёрном не читается */
   --sg-blue: #7b90ee;
@@ -2809,18 +2834,35 @@ html[data-theme="dark"] .qty input,
 html[data-theme="dark"] .filter-price input,
 html[data-theme="dark"] .form input,
 html[data-theme="dark"] .form textarea,
-html[data-theme="dark"] .select,
 html[data-theme="dark"] .search-form__input {
   background: var(--sg-bg-soft);
   color: var(--sg-ink);
 }
 
-/* Плавное переключение темы, но без мигания при первой загрузке */
+/* Список отдельной строкой: общий background выше — шорткат, и он
+   обнулил бы стрелку в фоне. Красим только цвет подложки. */
+html[data-theme="dark"] .select {
+  background-color: var(--sg-bg-soft);
+  color: var(--sg-ink);
+}
+
+/* Плавное переключение темы, но без мигания при первой загрузке.
+   Это запасной путь: там, где есть View Transition, тему переводит
+   он — целым кадром, а не по свойствам. */
 html.theme-ready body,
 html.theme-ready .site-header,
 html.theme-ready .card,
 html.theme-ready .product-card {
   transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Класс висит только на время перехода: иначе поверх кросс-фейда идёт
+   вторая, своя анимация заливок, и смена темы выглядит мутной. */
+html.is-theme-vt body,
+html.is-theme-vt .site-header,
+html.is-theme-vt .card,
+html.is-theme-vt .product-card {
+  transition: none;
 }
 
 /* ==========================================================================
@@ -3256,22 +3298,85 @@ body.has-cookie {
    Появление блоков при прокрутке
    ========================================================================== */
 
-.reveal {
-  opacity: 0;
-  transform: translateY(14px);
-  transition: opacity 0.45s ease, transform 0.45s ease;
+/* Обычное состояние блока — видимый. Это не мелочь: раньше .reveal
+   начинался с opacity: 0 и полагался на то, что JS поставит ему класс.
+   При отключённом JS тридцать блоков главной — четыре плитки под
+   баннером, все девятнадцать разделов каталога, карточки магазинов,
+   оба баннера и призыв к калькулятору — не появлялись никогда.
+   Теперь блок прячется только там, где есть чему его вернуть.
+
+   Анимировать берём translate, а не transform: у карточек разделов
+   на наведении свой transform: translateY(-2px), и анимация с
+   fill: both перебила бы его насовсем — подъём под курсором пропал бы. */
+
+/* Путь 1 — браузер считает прокрутку сам. Появление привязано к тому,
+   насколько блок вошёл в экран; считает компоновщик, главный поток не
+   занят, и эффект не зависит от того, доехал ли app.js до браузера. */
+@supports (animation-timeline: view()) {
+  .reveal {
+    animation: sg-reveal linear both;
+    animation-timeline: view();
+    /* Появление заканчивается, когда блок вошёл на 40% своей высоты:
+       высокий блок иначе висел бы полупрозрачным до конца прокрутки. */
+    animation-range: entry 0% entry 40%;
+  }
 }
 
-.reveal.is-in {
-  opacity: 1;
-  transform: none;
+@keyframes sg-reveal {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+  }
+
+  to {
+    opacity: 1;
+    translate: none;
+  }
+}
+
+/* Путь 2 — браузеры без scroll-анимаций: прежний IntersectionObserver.
+   Прячем только при классе js, который ставится в <head> до первой
+   отрисовки. */
+@supports not (animation-timeline: view()) {
+  html.js .reveal {
+    opacity: 0;
+    translate: 0 14px;
+    transition: opacity 0.45s ease, translate 0.45s ease;
+  }
+
+  /* После появления возвращаем блоку его собственные переходы: правило
+     выше перебивает transition у .category-card и .tile, и без этой
+     строки наведение на уже показанную карточку срабатывало бы рывком. */
+  html.js .reveal.is-in {
+    opacity: 1;
+    translate: none;
+    transition: opacity 0.45s ease, translate 0.45s ease,
+      border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html.js .reveal {
+      opacity: 1;
+      translate: none;
+      transition: none;
+    }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .reveal {
+    animation: none;
     opacity: 1;
-    transform: none;
-    transition: none;
+    translate: none;
+  }
+}
+
+/* На бумаге появлений нет: печатается всё и сразу. */
+@media print {
+  .reveal {
+    animation: none !important;
+    opacity: 1 !important;
+    translate: none !important;
   }
 }
 
@@ -4012,11 +4117,6 @@ html[data-theme="dark"] .step.is-current .step__num {
   animation: count-pop 0.35s ease;
 }
 
-/* Плавные переходы между страницами там, где браузер это умеет */
-@view-transition {
-  navigation: auto;
-}
-
 /* ==========================================================================
    Кнопки поверх фото товара и призыв к калькулятору
    ========================================================================== */
@@ -4318,6 +4418,15 @@ html[data-theme="dark"] .step.is-current .step__num {
    На file:// не действует: нужен настоящий сервер. */
 @view-transition {
   navigation: auto;
+}
+
+/* Та же машинерия переводит и тему: app.js вызывает startViewTransition,
+   и браузер переводит целый кадр «до» в кадр «после». 0.25 с — столько
+   же, сколько у выпадающих панелей: переход должен читаться как часть
+   того же интерфейса, а не как отдельный эффект. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.25s;
 }
 
 /* Шапка и подвал одинаковы на всех страницах, поэтому не участвуют

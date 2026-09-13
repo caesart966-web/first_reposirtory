@@ -71,11 +71,42 @@
     });
   }
 
+  /* Переключение темы. Плавным его делает не набор transition по
+     свойствам — так плавнеют только заливки, а текст, рамки, значки
+     и тени всё равно щёлкают, — а View Transition: браузер снимает
+     кадр «до», меняет тему и переводит один кадр в другой целиком.
+     Где этого API нет, тема просто меняется сразу, как раньше. */
+  var themeRun = 0;
+
+  function switchTheme(next) {
+    store.set('theme', next);
+    var smooth = typeof document.startViewTransition === 'function' &&
+      !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!smooth) {
+      applyTheme(next);
+      return;
+    }
+    var root = document.documentElement;
+    /* На время перехода снимаем собственные transition заливок:
+       иначе поверх кросс-фейда идёт вторая, своя анимация. */
+    root.classList.add('is-theme-vt');
+    /* Номер нужен на частые нажатия: новый переход отменяет прежний,
+       у отменённого срабатывает finished — и без этой сверки он снял бы
+       класс из-под уже идущего перехода. */
+    var mine = ++themeRun;
+    var done = function () { if (mine === themeRun) root.classList.remove('is-theme-vt'); };
+    try {
+      document.startViewTransition(function () { applyTheme(next); })
+        .finished.then(done, done);
+    } catch (e) {
+      applyTheme(next);
+      done();
+    }
+  }
+
   $$('[data-theme-toggle]').forEach(function (btn) {
     btn.addEventListener('click', function () {
-      var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-      store.set('theme', next);
-      applyTheme(next);
+      switchTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
     });
   });
   applyTheme(document.documentElement.getAttribute('data-theme') || 'light');
@@ -658,7 +689,11 @@
   /* ======================================================================
      Появление блоков при прокрутке
      ====================================================================== */
-  var revealables = $$('.reveal');
+  /* Если браузер умеет scroll-driven анимации, появление уже посчитано
+     в CSS — наблюдатель тут только мешал бы. Остальным собираем его
+     по-старому. */
+  var cssReveal = window.CSS && CSS.supports && CSS.supports('animation-timeline', 'view()');
+  var revealables = cssReveal ? [] : $$('.reveal');
   if (revealables.length && 'IntersectionObserver' in window) {
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {

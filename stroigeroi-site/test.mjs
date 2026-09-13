@@ -585,6 +585,125 @@ for (const name of ['index', 'catalog', 'checkout', 'contacts', 'login']) {
   await ctx.close();
 }
 
+/* ==========================================================================
+   Переключатель темы
+   ==========================================================================
+
+   Тему переводит View Transition, а на время перехода на <html> висит
+   класс is-theme-vt, снимающий собственные transition заливок. Если он
+   там застрянет — например, промах в обработке ошибки, — смена темы
+   навсегда останется рывком в браузерах без View Transition. Проверяем
+   и результат, и то, что класс убрался. */
+
+{
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto('file://' + path.join(DIR, 'index.html'), { waitUntil: 'load' });
+  await page.waitForTimeout(300);
+
+  await page.click('[data-theme-toggle]');
+  await page.waitForTimeout(600);
+  let state = await page.evaluate(() => ({
+    theme: document.documentElement.dataset.theme,
+    stuck: document.documentElement.classList.contains('is-theme-vt'),
+    meta: document.querySelector('meta[name="theme-color"]').content,
+    pressed: document.querySelector('[data-theme-toggle]').getAttribute('aria-pressed'),
+  }));
+  if (state.theme !== 'dark') fail(`тема: нажатие не включило тёмную, осталось «${state.theme}»`);
+  if (state.stuck) fail('тема: класс is-theme-vt остался на <html> после перехода');
+  if (state.meta !== '#0e1117') fail(`тема: meta theme-color не обновился — «${state.meta}»`);
+  if (state.pressed !== 'true') fail(`тема: aria-pressed у кнопки — «${state.pressed}», ожидалось true`);
+
+  /* Частые нажатия: браузер отменяет незавершённый переход, и обработка
+     отмены не должна оставлять класс или ронять страницу. */
+  for (let i = 0; i < 6; i++) await page.click('[data-theme-toggle]');
+  await page.waitForTimeout(900);
+  state = await page.evaluate(() => ({
+    theme: document.documentElement.dataset.theme,
+    stuck: document.documentElement.classList.contains('is-theme-vt'),
+  }));
+  if (state.stuck) fail('тема: после частых нажатий класс is-theme-vt завис');
+  if (!['light', 'dark'].includes(state.theme)) fail(`тема: после частых нажатий значение «${state.theme}»`);
+  if (errors.length) fail(`тема: ошибка на странице — ${errors[0]}`);
+
+  await ctx.close();
+}
+
+/* ==========================================================================
+   Содержимое видно без JavaScript
+   ==========================================================================
+
+   Блоки с классом reveal появляются при прокрутке. Пока их прятал только
+   CSS в расчёте на то, что класс вернёт JS, отключённый JavaScript
+   оставлял главную без четырёх плиток, всех девятнадцати разделов
+   каталога, карточек магазинов и обоих баннеров — тридцать блоков
+   с opacity: 0 навсегда. Проверка простая: грузим страницы вообще без
+   JS и смотрим, не оказался ли прозрачным хоть один блок на экране. */
+
+{
+  const ctx = await browser.newContext({
+    javaScriptEnabled: false,
+    viewport: { width: 1280, height: 900 },
+  });
+  const page = await ctx.newPage();
+
+  for (const name of PAGES) {
+    await page.goto('file://' + path.join(DIR, name + '.html'), { waitUntil: 'load' });
+    const hidden = await page.evaluate(() =>
+      [...document.querySelectorAll('.reveal')]
+        .filter((el) => {
+          const r = el.getBoundingClientRect();
+          return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < innerHeight;
+        })
+        .filter((el) => parseFloat(getComputedStyle(el).opacity) < 0.9)
+        .map((el) => el.className));
+    if (hidden.length) {
+      fail(`${name}: без JS на экране прозрачных блоков — ${hidden.length} (${hidden[0]})`);
+    }
+  }
+
+  await ctx.close();
+}
+
+/* ==========================================================================
+   Появление при прокрутке доводит блок до конца
+   ==========================================================================
+
+   Обратная сторона той же анимации: блок, полностью попавший в экран,
+   обязан быть непрозрачным. Если диапазон animation-range задан так,
+   что высокий блок не успевает дойти до конца, он останется висеть
+   полупрозрачным — и это заметно только при настоящей прокрутке. */
+
+for (const name of ['index', 'catalog', 'contacts']) {
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await ctx.newPage();
+  await page.goto('file://' + path.join(DIR, name + '.html'), { waitUntil: 'load' });
+  await page.addStyleTag({ content: '*{scroll-behavior:auto !important}' });
+  await page.waitForTimeout(200);
+
+  const height = await page.evaluate(() => document.body.scrollHeight);
+  for (let y = 0; y < height; y += 500) {
+    await page.evaluate((v) => window.scrollTo(0, v), y);
+    await page.waitForTimeout(120);
+    const stuck = await page.evaluate(() =>
+      [...document.querySelectorAll('.reveal')]
+        .filter((el) => {
+          const r = el.getBoundingClientRect();
+          return r.height > 0 && r.top >= 0 && r.bottom <= innerHeight;
+        })
+        .filter((el) => parseFloat(getComputedStyle(el).opacity) < 0.95)
+        .map((el) => el.className + ' — ' + getComputedStyle(el).opacity));
+    if (stuck.length) {
+      fail(`${name}: блок целиком на экране, но не проявился — ${stuck[0]}`);
+      break;
+    }
+  }
+
+  await ctx.close();
+}
+
 await browser.close();
 
 /* ==========================================================================
