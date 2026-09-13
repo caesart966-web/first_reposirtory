@@ -704,6 +704,100 @@ for (const name of ['index', 'catalog', 'contacts']) {
   await ctx.close();
 }
 
+/* ==========================================================================
+   Ничего не прячется под липкой шапкой
+   ==========================================================================
+
+   Два места, где числа были подобраны под широкий экран и держались
+   только там:
+
+   - scroll-padding-top стоял 96 px на все ширины, а шапка держится 130 px
+     на телефоне и 142 на планшете. Переход по ссылке «Перейти
+     к содержимому» — первое, чем пользуется человек с клавиатуры —
+     оставлял цель на 34-46 px под шапкой;
+   - панель фильтров прилипала на top: 16px при шапке в 70 px, то есть
+     строка «Фильтры / Сбросить» была закрыта всегда.
+
+   Обе проверки смотрят на настоящие пиксели: где кромка шапки и где
+   верх того, к чему перешли. */
+
+for (const width of [390, 768, 1280]) {
+  const ctx = await browser.newContext({ viewport: { width, height: 900 } });
+  const page = await ctx.newPage();
+
+  for (const name of PAGES) {
+    await page.goto('file://' + path.join(DIR, name + '.html'), { waitUntil: 'load' });
+    await page.addStyleTag({ content: '*{scroll-behavior:auto !important}' });
+    await page.waitForTimeout(150);
+
+    const hidden = await page.evaluate(() => {
+      location.hash = '#main';
+      return new Promise((done) => setTimeout(() => {
+        const main = document.querySelector('#main');
+        if (!main) return done(null);
+        const header = document.querySelector('.site-header');
+        done(Math.round(header.getBoundingClientRect().bottom - main.getBoundingClientRect().top));
+      }, 400));
+    });
+
+    if (hidden === null) fail(`${name}: нет цели #main для ссылки «Перейти к содержимому»`);
+    else if (hidden > 1) fail(`${name} (${width}px): после перехода к содержимому цель на ${hidden} px под шапкой`);
+  }
+
+  await ctx.close();
+}
+
+/* Панель фильтров: прилипает под шапкой, целиком помещается в экран
+   и не уносит кнопку «Сбросить» за его край. */
+for (const width of [1024, 1280, 1440, 1920]) {
+  const ctx = await browser.newContext({ viewport: { width, height: 900 } });
+  const page = await ctx.newPage();
+  await page.goto('file://' + path.join(DIR, 'catalog.html'), { waitUntil: 'load' });
+  await page.addStyleTag({ content: '*{scroll-behavior:auto !important}' });
+  await page.waitForTimeout(200);
+  /* Прокручиваем не на глазок: у липкого блока есть свой участок —
+     он кончается там, где кончается колонка. На 1920 px колонка ниже
+     (товары идут в больше колонок), и фиксированные 1000 px оказывались
+     уже за её концом, где панель открепляется совершенно законно.
+     Берём середину участка. */
+  const target = await page.evaluate(() => {
+    const layout = document.querySelector('.catalog-layout');
+    const panel = document.querySelector('.filters');
+    const top = layout.getBoundingClientRect().top + scrollY;
+    const range = layout.getBoundingClientRect().height - panel.getBoundingClientRect().height;
+    return range > 200 ? Math.round(top + range / 2) : null;
+  });
+
+  if (target === null) {
+    fail(`фильтры (${width}px): колонка короче панели — липкости негде работать`);
+    await ctx.close();
+    continue;
+  }
+
+  await page.evaluate((y) => window.scrollTo(0, y), target);
+  await page.waitForTimeout(600);
+
+  const r = await page.evaluate(() => {
+    const panel = document.querySelector('.filters');
+    const reset = document.querySelector('.filters__reset');
+    const header = document.querySelector('.site-header');
+    const p = panel.getBoundingClientRect();
+    const b = reset.getBoundingClientRect();
+    const h = header.getBoundingClientRect();
+    return {
+      подШапкой: Math.round(h.bottom - p.top),
+      вышеЭкрана: Math.round(p.height - innerHeight),
+      сбросВиден: b.top >= h.bottom - 1 && b.bottom <= innerHeight,
+    };
+  });
+
+  if (r.подШапкой > 1) fail(`фильтры (${width}px): панель заехала под шапку на ${r.подШапкой} px`);
+  if (r.вышеЭкрана > 0) fail(`фильтры (${width}px): панель на ${r.вышеЭкрана} px выше экрана — липкость ничего не даёт`);
+  if (!r.сбросВиден) fail(`фильтры (${width}px): кнопка «Сбросить» не видна при прокрутке`);
+
+  await ctx.close();
+}
+
 await browser.close();
 
 /* ==========================================================================

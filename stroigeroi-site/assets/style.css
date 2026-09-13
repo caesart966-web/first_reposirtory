@@ -116,7 +116,13 @@ body {
   font-family: var(--font);
   font-size: 16px;
   line-height: 1.55;
-  overflow-x: hidden;
+  /* clip, а не hidden. hidden делает <body> контейнером прокрутки, и
+     position: sticky внутри перестаёт работать совсем: панель фильтров,
+     «Итого» в корзине и результат калькулятора были объявлены липкими,
+     но ни один не прилипал — на второй тысяче пикселей прокрутки панель
+     фильтров уходила на 1105 px выше экрана. clip обрезает так же,
+     но контейнера прокрутки не создаёт. */
+  overflow-x: clip;
 }
 
 img {
@@ -1642,6 +1648,26 @@ ul {
   margin-top: 3px;
 }
 
+/* Ссылка на карту у каждого магазина. Адреса настоящие, поэтому ссылка
+   рабочая уже сейчас: поиск по адресу в Яндекс.Картах. Прямоугольник
+   под встроенную карту остаётся пустым местом, как и был, — но человеку
+   с телефона больше не нужно переписывать адрес руками, чтобы
+   построить маршрут. */
+.shop-card__route {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+  min-height: 24px;
+  color: var(--sg-blue);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.shop-card__route:hover {
+  color: var(--sg-red);
+}
+
 .shop-card__map {
   margin-top: auto;
 }
@@ -1913,7 +1939,35 @@ html[data-theme="dark"] .site-footer {
   border-radius: var(--r-lg);
   overflow: hidden;
   position: sticky;
-  top: var(--sp-4);
+  /* Отсчёт от настоящей шапки, а не от края экрана. При top: 16px верхние
+     54 px панели — строка «Фильтры» и кнопка «Сбросить» — при прокрутке
+     навсегда уезжали под шапку, и сбросить фильтры было нечем. */
+  top: calc(var(--header-now, 70px) + var(--sp-4));
+}
+
+/* Панель фильтров выше экрана: 1311 px при 900 доступных. Пока она
+   не листалась внутри себя, объявленная липкость не давала ничего — низ
+   панели («Наличие», «Магазин») висел за краем экрана, а сама панель
+   на второй тысяче пикселей прокрутки уезжала на 1105 px вверх вместе
+   со страницей. Теперь панель стоит под шапкой, а фильтры листаются
+   внутри неё, и строка «Фильтры / Сбросить» остаётся на виду.
+   Ниже 1024 px панель не липкая (position: static), там ограничивать
+   нечего — она просто разворачивается по кнопке. */
+@media (min-width: 1024px) {
+  .filters__body {
+    max-height: calc(100vh - var(--header-now, 70px) - 92px);
+    max-height: calc(100dvh - var(--header-now, 70px) - 92px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  /* Своё окошко прокрутки списку разделов здесь больше не нужно: иначе
+     внутри прокручиваемой панели была бы вторая прокручиваемая область,
+     и человек попадал бы то в одну, то в другую. */
+  .cat-list {
+    max-height: none;
+    overflow-y: visible;
+  }
 }
 
 .filters__head {
@@ -2884,7 +2938,20 @@ h2 {
 
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 96px; /* чтобы якорь не уезжал под липкую шапку */
+  /* Отступ для якорей: цель не должна уезжать под липкую шапку.
+     Тут стояло 96 px на все случаи, а шапка держится 130 px на телефоне
+     и 142 на планшете — заголовок, к которому перешли по ссылке
+     «Перейти к содержимому», оказывался на 34-46 px под шапкой.
+     Настоящую высоту меряет app.js и кладёт в --header-now; числа ниже —
+     запас на случай, когда JS не отработал: до 960 px шапка не ужимается
+     ниже 142, дальше садится до 70. */
+  scroll-padding-top: calc(var(--header-now, 142px) + 12px);
+}
+
+@media (min-width: 960px) {
+  html {
+    scroll-padding-top: calc(var(--header-now, 70px) + 12px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3729,7 +3796,9 @@ html[data-theme="dark"] .chip:hover {
 
 .cart-total {
   position: sticky;
-  top: 110px;
+  /* То же правило, что у панели фильтров: отсчёт от настоящей шапки.
+     110 px было подобрано под широкий экран и держалось только там. */
+  top: calc(var(--header-now, 70px) + var(--sp-5));
   padding: var(--sp-5);
   border: 1px solid var(--sg-line);
   border-radius: var(--r-lg);
@@ -3911,7 +3980,9 @@ html[data-theme="dark"] .step.is-current .step__num {
 
 .calc__result {
   position: sticky;
-  top: 110px;
+  /* То же правило, что у панели фильтров: отсчёт от настоящей шапки.
+     110 px было подобрано под широкий экран и держалось только там. */
+  top: calc(var(--header-now, 70px) + var(--sp-5));
   padding: var(--sp-5);
   border: 2px solid var(--sg-blue);
   border-radius: var(--r-lg);

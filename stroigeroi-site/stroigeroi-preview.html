@@ -126,7 +126,13 @@ body {
   font-family: var(--font);
   font-size: 16px;
   line-height: 1.55;
-  overflow-x: hidden;
+  /* clip, а не hidden. hidden делает <body> контейнером прокрутки, и
+     position: sticky внутри перестаёт работать совсем: панель фильтров,
+     «Итого» в корзине и результат калькулятора были объявлены липкими,
+     но ни один не прилипал — на второй тысяче пикселей прокрутки панель
+     фильтров уходила на 1105 px выше экрана. clip обрезает так же,
+     но контейнера прокрутки не создаёт. */
+  overflow-x: clip;
 }
 
 img {
@@ -1652,6 +1658,26 @@ ul {
   margin-top: 3px;
 }
 
+/* Ссылка на карту у каждого магазина. Адреса настоящие, поэтому ссылка
+   рабочая уже сейчас: поиск по адресу в Яндекс.Картах. Прямоугольник
+   под встроенную карту остаётся пустым местом, как и был, — но человеку
+   с телефона больше не нужно переписывать адрес руками, чтобы
+   построить маршрут. */
+.shop-card__route {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+  min-height: 24px;
+  color: var(--sg-blue);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.shop-card__route:hover {
+  color: var(--sg-red);
+}
+
 .shop-card__map {
   margin-top: auto;
 }
@@ -1923,7 +1949,35 @@ html[data-theme="dark"] .site-footer {
   border-radius: var(--r-lg);
   overflow: hidden;
   position: sticky;
-  top: var(--sp-4);
+  /* Отсчёт от настоящей шапки, а не от края экрана. При top: 16px верхние
+     54 px панели — строка «Фильтры» и кнопка «Сбросить» — при прокрутке
+     навсегда уезжали под шапку, и сбросить фильтры было нечем. */
+  top: calc(var(--header-now, 70px) + var(--sp-4));
+}
+
+/* Панель фильтров выше экрана: 1311 px при 900 доступных. Пока она
+   не листалась внутри себя, объявленная липкость не давала ничего — низ
+   панели («Наличие», «Магазин») висел за краем экрана, а сама панель
+   на второй тысяче пикселей прокрутки уезжала на 1105 px вверх вместе
+   со страницей. Теперь панель стоит под шапкой, а фильтры листаются
+   внутри неё, и строка «Фильтры / Сбросить» остаётся на виду.
+   Ниже 1024 px панель не липкая (position: static), там ограничивать
+   нечего — она просто разворачивается по кнопке. */
+@media (min-width: 1024px) {
+  .filters__body {
+    max-height: calc(100vh - var(--header-now, 70px) - 92px);
+    max-height: calc(100dvh - var(--header-now, 70px) - 92px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  /* Своё окошко прокрутки списку разделов здесь больше не нужно: иначе
+     внутри прокручиваемой панели была бы вторая прокручиваемая область,
+     и человек попадал бы то в одну, то в другую. */
+  .cat-list {
+    max-height: none;
+    overflow-y: visible;
+  }
 }
 
 .filters__head {
@@ -2894,7 +2948,20 @@ h2 {
 
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 96px; /* чтобы якорь не уезжал под липкую шапку */
+  /* Отступ для якорей: цель не должна уезжать под липкую шапку.
+     Тут стояло 96 px на все случаи, а шапка держится 130 px на телефоне
+     и 142 на планшете — заголовок, к которому перешли по ссылке
+     «Перейти к содержимому», оказывался на 34-46 px под шапкой.
+     Настоящую высоту меряет app.js и кладёт в --header-now; числа ниже —
+     запас на случай, когда JS не отработал: до 960 px шапка не ужимается
+     ниже 142, дальше садится до 70. */
+  scroll-padding-top: calc(var(--header-now, 142px) + 12px);
+}
+
+@media (min-width: 960px) {
+  html {
+    scroll-padding-top: calc(var(--header-now, 70px) + 12px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3739,7 +3806,9 @@ html[data-theme="dark"] .chip:hover {
 
 .cart-total {
   position: sticky;
-  top: 110px;
+  /* То же правило, что у панели фильтров: отсчёт от настоящей шапки.
+     110 px было подобрано под широкий экран и держалось только там. */
+  top: calc(var(--header-now, 70px) + var(--sp-5));
   padding: var(--sp-5);
   border: 1px solid var(--sg-line);
   border-radius: var(--r-lg);
@@ -3921,7 +3990,9 @@ html[data-theme="dark"] .step.is-current .step__num {
 
 .calc__result {
   position: sticky;
-  top: 110px;
+  /* То же правило, что у панели фильтров: отсчёт от настоящей шапки.
+     110 px было подобрано под широкий экран и держалось только там. */
+  top: calc(var(--header-now, 70px) + var(--sp-5));
   padding: var(--sp-5);
   border: 2px solid var(--sg-blue);
   border-radius: var(--r-lg);
@@ -5736,6 +5807,10 @@ p a:not(.btn):hover,
         <h2 class="section__title">Разделы каталога</h2>
         <a class="section__link" href="#p-catalog">Открыть каталог</a>
       </div>
+      <div class="data-notice">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 11.5v5M12 8h.01"/></svg>
+  <p><strong>Названия разделов взяты из вашей учётной системы как есть.</strong> Три из них покупателю ничего не говорят: <b>«Товар»</b>, <b>«Склад»</b> и <b>«А1&nbsp;САНТЕХНИКА»</b> — последнее похоже на поставщика и дублирует раздел «Сантехника и инженерные системы». Порядок тоже пришёл оттуда: «Отделочные и стройматериалы» — то, чем магазин занимается в первую очередь, — стоит десятым. И названия, и порядок меняются в админке OpenCart; напишите, как должно быть, и мы поправим.</p>
+</div>
       <div class="category-grid"><a class="category-card reveal" href="#p-catalog" data-oc-path="79">
       <span class="category-card__icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.5S18 10 18 13.5a6 6 0 0 1-12 0C6 10 12 3.5 12 3.5Z"/></svg></span>
       <span class="category-card__title">А1 САНТЕХНИКА</span>
@@ -6081,7 +6156,7 @@ p a:not(.btn):hover,
     <p class="shop-card__city">Петропавловск-Камчатский</p>
     <h3 class="shop-card__addr">ул. Чубарова, 16, корп. 40</h3>
     <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><a href="tel:+79638300999">8-963-830-09-99</a></p>
-    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="ph ph--inline">режим работы — нужен от заказчика</span></p>
+    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="ph ph--inline">режим работы — нужен от заказчика</span></p><a class="shop-card__route" href="https://yandex.ru/maps/?text=%D0%9F%D0%B5%D1%82%D1%80%D0%BE%D0%BF%D0%B0%D0%B2%D0%BB%D0%BE%D0%B2%D1%81%D0%BA-%D0%9A%D0%B0%D0%BC%D1%87%D0%B0%D1%82%D1%81%D0%BA%D0%B8%D0%B9%2C%20%D1%83%D0%BB.%20%D0%A7%D1%83%D0%B1%D0%B0%D1%80%D0%BE%D0%B2%D0%B0%2C%2016%2C%20%D0%BA%D0%BE%D1%80%D0%BF.%2040" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Открыть на карте</span><span class="visually-hidden"> (в новой вкладке)</span></a>
     
   </div>
 </article><article class="shop-card reveal">
@@ -6090,7 +6165,7 @@ p a:not(.btn):hover,
     <p class="shop-card__city">Петропавловск-Камчатский</p>
     <h3 class="shop-card__addr">просп. 50 лет Октября, 17А</h3>
     <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><a href="tel:+79638300999">8-963-830-09-99</a></p>
-    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="ph ph--inline">режим работы — нужен от заказчика</span></p>
+    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="ph ph--inline">режим работы — нужен от заказчика</span></p><a class="shop-card__route" href="https://yandex.ru/maps/?text=%D0%9F%D0%B5%D1%82%D1%80%D0%BE%D0%BF%D0%B0%D0%B2%D0%BB%D0%BE%D0%B2%D1%81%D0%BA-%D0%9A%D0%B0%D0%BC%D1%87%D0%B0%D1%82%D1%81%D0%BA%D0%B8%D0%B9%2C%20%D0%BF%D1%80%D0%BE%D1%81%D0%BF.%2050%20%D0%BB%D0%B5%D1%82%20%D0%9E%D0%BA%D1%82%D1%8F%D0%B1%D1%80%D1%8F%2C%2017%D0%90" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Открыть на карте</span><span class="visually-hidden"> (в новой вкладке)</span></a>
     
   </div>
 </article><article class="shop-card reveal">
@@ -6099,7 +6174,7 @@ p a:not(.btn):hover,
     <p class="shop-card__city">Елизово</p>
     <h3 class="shop-card__addr">Магистральная ул., 2/2</h3>
     <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><a href="tel:+79638300999">8-963-830-09-99</a></p>
-    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="ph ph--inline">режим работы — нужен от заказчика</span></p>
+    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="ph ph--inline">режим работы — нужен от заказчика</span></p><a class="shop-card__route" href="https://yandex.ru/maps/?text=%D0%95%D0%BB%D0%B8%D0%B7%D0%BE%D0%B2%D0%BE%2C%20%D0%9C%D0%B0%D0%B3%D0%B8%D1%81%D1%82%D1%80%D0%B0%D0%BB%D1%8C%D0%BD%D0%B0%D1%8F%20%D1%83%D0%BB.%2C%202/2" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Открыть на карте</span><span class="visually-hidden"> (в новой вкладке)</span></a>
     
   </div>
 </article></div>
@@ -6148,7 +6223,7 @@ p a:not(.btn):hover,
 
           <div class="filter-group">
             <h3>Разделы каталога</h3>
-            <ul class="cat-list"><li><a class="cat-list__link" href="#p-catalog" data-oc-path="79">А1 САНТЕХНИКА<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link" href="#p-catalog" data-oc-path="59">Инструменты<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link" href="#p-catalog" data-oc-path="78">Товар<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link" href="#p-catalog" data-oc-path="60">Электрика и свет<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link" href="#p-catalog" data-oc-path="61">Сантехника и инженерные системы<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link" href="#p-catalog" data-oc-path="62">Ручной инструмент<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link" href="#p-catalog" data-oc-path="63">Автотовары<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link" href="#p-catalog" data-oc-path="64">Всё для сада<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link" href="#p-catalog" data-oc-path="65">Крепёж и фурнитура<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link is-current" href="#p-catalog" data-oc-path="66">Отделочные и стройматериалы<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link" href="#p-catalog" data-oc-path="67">Офис и дом<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link" href="#p-catalog" data-oc-path="68">Спорт и туризм<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link" href="#p-catalog" data-oc-path="69">Станки и промкомпоненты<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link" href="#p-catalog" data-oc-path="70">Климат, отопление и вентиляция<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link" href="#p-catalog" data-oc-path="71">Склад<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link" href="#p-catalog" data-oc-path="72">Клининг и химия<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link" href="#p-catalog" data-oc-path="73">Строительное оборудование<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link" href="#p-catalog" data-oc-path="74">Расходка, спецодежда и СИЗ<span class="ph ph--inline">кол-во</span></a></li></ul>
+            <ul class="cat-list"><li><a class="cat-list__link" href="#p-catalog" data-oc-path="79">А1 САНТЕХНИКА<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link" href="#p-catalog" data-oc-path="59">Инструменты<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link" href="#p-catalog" data-oc-path="78">Товар<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link" href="#p-catalog" data-oc-path="60">Электрика и свет<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link" href="#p-catalog" data-oc-path="61">Сантехника и инженерные системы<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link" href="#p-catalog" data-oc-path="62">Ручной инструмент<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link" href="#p-catalog" data-oc-path="63">Автотовары<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link" href="#p-catalog" data-oc-path="64">Всё для сада<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link" href="#p-catalog" data-oc-path="65">Крепёж и фурнитура<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link is-current" aria-current="true" href="#p-catalog" data-oc-path="66">Отделочные и стройматериалы<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link" href="#p-catalog" data-oc-path="67">Офис и дом<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link" href="#p-catalog" data-oc-path="68">Спорт и туризм<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link" href="#p-catalog" data-oc-path="69">Станки и промкомпоненты<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link" href="#p-catalog" data-oc-path="70">Климат, отопление и вентиляция<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link" href="#p-catalog" data-oc-path="71">Склад<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link" href="#p-catalog" data-oc-path="72">Клининг и химия<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link" href="#p-catalog" data-oc-path="73">Строительное оборудование<span class="ph ph--inline">кол-во</span></a></li><li><a class="cat-list__link" href="#p-catalog" data-oc-path="74">Расходка, спецодежда и СИЗ<span class="ph ph--inline">кол-во</span></a></li></ul>
           </div>
 
           <div class="filter-group">
@@ -7027,7 +7102,7 @@ p a:not(.btn):hover,
     <h3 class="shop-card__addr">ул. Чубарова, 16, корп. 40</h3>
     <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><a href="tel:+79638300999">8-963-830-09-99</a></p>
     <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="ph ph--inline">режим работы — нужен от заказчика</span></p>
-    <div class="ph ph--map shop-card__map"><span><strong>Карта</strong>Здесь встанет Яндекс.Карта с точкой магазина</span></div>
+    <div class="ph ph--map shop-card__map"><span><strong>Карта</strong>Здесь встанет Яндекс.Карта с точкой магазина</span></div><a class="shop-card__route" href="https://yandex.ru/maps/?text=%D0%9F%D0%B5%D1%82%D1%80%D0%BE%D0%BF%D0%B0%D0%B2%D0%BB%D0%BE%D0%B2%D1%81%D0%BA-%D0%9A%D0%B0%D0%BC%D1%87%D0%B0%D1%82%D1%81%D0%BA%D0%B8%D0%B9%2C%20%D1%83%D0%BB.%20%D0%A7%D1%83%D0%B1%D0%B0%D1%80%D0%BE%D0%B2%D0%B0%2C%2016%2C%20%D0%BA%D0%BE%D1%80%D0%BF.%2040" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Открыть на карте</span><span class="visually-hidden"> (в новой вкладке)</span></a>
   </div>
 </article><article class="shop-card reveal">
   <div class="shop-card__top" aria-hidden="true"></div>
@@ -7036,7 +7111,7 @@ p a:not(.btn):hover,
     <h3 class="shop-card__addr">просп. 50 лет Октября, 17А</h3>
     <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><a href="tel:+79638300999">8-963-830-09-99</a></p>
     <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="ph ph--inline">режим работы — нужен от заказчика</span></p>
-    <div class="ph ph--map shop-card__map"><span><strong>Карта</strong>Здесь встанет Яндекс.Карта с точкой магазина</span></div>
+    <div class="ph ph--map shop-card__map"><span><strong>Карта</strong>Здесь встанет Яндекс.Карта с точкой магазина</span></div><a class="shop-card__route" href="https://yandex.ru/maps/?text=%D0%9F%D0%B5%D1%82%D1%80%D0%BE%D0%BF%D0%B0%D0%B2%D0%BB%D0%BE%D0%B2%D1%81%D0%BA-%D0%9A%D0%B0%D0%BC%D1%87%D0%B0%D1%82%D1%81%D0%BA%D0%B8%D0%B9%2C%20%D0%BF%D1%80%D0%BE%D1%81%D0%BF.%2050%20%D0%BB%D0%B5%D1%82%20%D0%9E%D0%BA%D1%82%D1%8F%D0%B1%D1%80%D1%8F%2C%2017%D0%90" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Открыть на карте</span><span class="visually-hidden"> (в новой вкладке)</span></a>
   </div>
 </article><article class="shop-card reveal">
   <div class="shop-card__top" aria-hidden="true"></div>
@@ -7045,7 +7120,7 @@ p a:not(.btn):hover,
     <h3 class="shop-card__addr">Магистральная ул., 2/2</h3>
     <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><a href="tel:+79638300999">8-963-830-09-99</a></p>
     <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="ph ph--inline">режим работы — нужен от заказчика</span></p>
-    <div class="ph ph--map shop-card__map"><span><strong>Карта</strong>Здесь встанет Яндекс.Карта с точкой магазина</span></div>
+    <div class="ph ph--map shop-card__map"><span><strong>Карта</strong>Здесь встанет Яндекс.Карта с точкой магазина</span></div><a class="shop-card__route" href="https://yandex.ru/maps/?text=%D0%95%D0%BB%D0%B8%D0%B7%D0%BE%D0%B2%D0%BE%2C%20%D0%9C%D0%B0%D0%B3%D0%B8%D1%81%D1%82%D1%80%D0%B0%D0%BB%D1%8C%D0%BD%D0%B0%D1%8F%20%D1%83%D0%BB.%2C%202/2" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Открыть на карте</span><span class="visually-hidden"> (в новой вкладке)</span></a>
   </div>
 </article></div>
     </section>
@@ -7818,6 +7893,25 @@ p a:not(.btn):hover,
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
+
+    /* Настоящая высота шапки — в переменную, из которой стили берут
+       отступ для якорей и верх липких панелей. Раньше эти числа стояли
+       в CSS вручную (96 px для якорей, 16 для фильтров) и подходили
+       только под широкий экран: на телефоне шапка держится 130 px,
+       на планшете 142, и всё, к чему переходили по ссылке, оказывалось
+       под ней. Шапка ещё и ужимается при прокрутке, поэтому высота
+       меряется наблюдателем, а не один раз при загрузке. */
+    var publishHeight = function () {
+      document.documentElement.style.setProperty(
+        '--header-now', Math.round(header.getBoundingClientRect().height) + 'px');
+    };
+    if ('ResizeObserver' in window) {
+      new ResizeObserver(publishHeight).observe(header);
+    } else {
+      window.addEventListener('resize', publishHeight);
+      window.addEventListener('scroll', publishHeight, { passive: true });
+    }
+    publishHeight();
   }
 
   /* ======================================================================

@@ -208,6 +208,25 @@
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
+
+    /* Настоящая высота шапки — в переменную, из которой стили берут
+       отступ для якорей и верх липких панелей. Раньше эти числа стояли
+       в CSS вручную (96 px для якорей, 16 для фильтров) и подходили
+       только под широкий экран: на телефоне шапка держится 130 px,
+       на планшете 142, и всё, к чему переходили по ссылке, оказывалось
+       под ней. Шапка ещё и ужимается при прокрутке, поэтому высота
+       меряется наблюдателем, а не один раз при загрузке. */
+    var publishHeight = function () {
+      document.documentElement.style.setProperty(
+        '--header-now', Math.round(header.getBoundingClientRect().height) + 'px');
+    };
+    if ('ResizeObserver' in window) {
+      new ResizeObserver(publishHeight).observe(header);
+    } else {
+      window.addEventListener('resize', publishHeight);
+      window.addEventListener('scroll', publishHeight, { passive: true });
+    }
+    publishHeight();
   }
 
   /* ======================================================================
