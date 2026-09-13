@@ -21,7 +21,9 @@ import { fileURLToPath } from 'node:url';
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const PAGES = ['index', 'catalog', 'product', 'cart', 'calculator', 'delivery', 'contacts',
   'checkout', 'order-done', 'favourites', 'compare', 'login', 'policy', 'terms', '404'];
-const WIDTHS = [360, 390, 768, 1024, 1280, 1440, 1920];
+/* 320 px не выдуманная ширина: это 400% увеличения на экране 1280,
+   и по WCAG 1.4.10 при нём не должно появляться прокрутки вбок. */
+const WIDTHS = [320, 360, 390, 768, 1024, 1280, 1440, 1920];
 const THEMES = ['light', 'dark'];
 
 /* Где взять Chromium. По порядку: переменная CHROMIUM_PATH, затем браузер
@@ -301,6 +303,46 @@ for (const name of PAGES) {
   });
   if (covered) fail(`${name} @390: плашка cookie закрывает ${covered}px низа страницы`);
 
+  await ctx.close();
+}
+
+/* ==========================================================================
+   Фокус виден на каждом элементе, до которого доводит Tab
+   ==========================================================================
+
+   По сайту фокус — красное кольцо, а у полей ввода его когда-то отключили
+   ради вида под мышью. Человек с клавиатуры терял ориентир: по ссылкам
+   кольцо есть, дошёл до поля — пропало. Теперь у полей своё, синее;
+   проверка следит, чтобы ни один элемент не остался вовсе без кольца. */
+
+for (const name of ['index', 'catalog', 'checkout', 'contacts', 'login']) {
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await ctx.newPage();
+  await page.goto('file://' + path.join(DIR, `${name}.html`), { waitUntil: 'load' });
+  await page.waitForTimeout(300);
+  await page.evaluate(() => {
+    const c = document.querySelector('[data-cookie]');
+    if (c) { c.hidden = true; document.body.classList.remove('has-cookie'); }
+  });
+
+  const blind = new Set();
+  for (let i = 0; i < 45; i++) {
+    await page.keyboard.press('Tab');
+    const spot = await page.evaluate(() => {
+      const a = document.activeElement;
+      if (!a || a === document.body) return null;
+      const cs = getComputedStyle(a);
+      const r = a.getBoundingClientRect();
+      if (!r.width || !r.height) return null;   /* скрытое не считаем */
+      const ring = cs.outlineStyle !== 'none' && parseFloat(cs.outlineWidth) > 0;
+      return ring ? null : a.tagName.toLowerCase() +
+        (a.className && typeof a.className === 'string' ? '.' + a.className.trim().split(/\s+/)[0] : '');
+    });
+    if (spot) blind.add(spot);
+  }
+  if (blind.size) {
+    fail(`${name}: фокус не виден на — ${[...blind].slice(0, 4).join(', ')}`);
+  }
   await ctx.close();
 }
 

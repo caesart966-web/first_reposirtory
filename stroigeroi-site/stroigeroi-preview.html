@@ -5183,6 +5183,46 @@ p a:not(.btn):hover,
 .trust-list a:hover {
   text-decoration-thickness: 2px;
 }
+
+/* Сообщение об ошибке под галочкой согласия. Внутри <label> может лежать
+   только строчное содержимое, поэтому там это <span>, а не <p> — валидатор
+   разметки справедливо на это ругался. Оформление остаётся прежним. */
+.consent .form__error {
+  display: block;
+  grid-column: 1 / -1;
+}
+
+/* ==========================================================================
+   Фокус на полях ввода
+   ==========================================================================
+
+   По всему сайту фокус — красное кольцо в три пикселя. У полей ввода
+   его нарочно отключали и заменяли сменой цвета границы: при щелчке
+   мышью кольцо вокруг поля выглядит грубо, и это правильное решение.
+
+   Но человек, идущий по странице с клавиатуры, из-за этого терял
+   ориентир: по ссылкам и кнопкам кольцо есть, дошёл до поля — пропало,
+   осталась только смена цвета рамки на полтора пикселя.
+
+   Кольцо вернули, но синее и в два пикселя, а не красное в три. Причина:
+   для текстового поля браузер считает :focus-visible выполненным и при
+   щелчке мышью — печатать ведь собираются в любом случае. С красным
+   кольцом каждый клик по строке поиска выглядел бы тревогой. Синий
+   в два пикселя продолжает рамку поля: заметно с клавиатуры,
+   не кричит под мышью. Синий на белом даёт контраст 15:1 —
+   с запасом к требованию три к одному.
+
+   Правило идёт после отключающих, поэтому перекрывает их без !important. */
+.search-form__input:focus-visible,
+.filter-price input:focus-visible,
+.select:focus-visible,
+.qty input:focus-visible,
+.form input:focus-visible,
+.form textarea:focus-visible {
+  outline: 2px solid var(--sg-blue);
+  outline-offset: 1px;
+  border-color: var(--sg-blue);
+}
 /* Панель переключения страниц — только для этого файла-просмотра.
 
    Страниц стало четырнадцать, и переносом по строкам панель съедала
@@ -6940,7 +6980,7 @@ p a:not(.btn):hover,
             <input type="checkbox" required>
             <span>Согласен на обработку персональных данных.
             <span class="ph ph--inline">ссылка на политику — от заказчика</span></span>
-            <p class="form__error">Без согласия отправить нельзя</p>
+            <span class="form__error">Без согласия отправить нельзя</span>
           </label>
           <button class="btn btn--action btn--block btn--lg" type="submit">Отправить</button>
           <p class="form__success"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m5 13 4 4 10-10"/></svg> Спасибо! В рабочей версии письмо уйдёт на stroigeroi41@mail.ru.</p>
@@ -7041,7 +7081,7 @@ p a:not(.btn):hover,
         <label class="consent gap-md">
           <input type="checkbox" required>
           <span>Согласен на обработку персональных данных и с <a href="#p-policy">политикой конфиденциальности</a></span>
-          <p class="form__error">Без согласия отправить нельзя</p>
+          <span class="form__error">Без согласия отправить нельзя</span>
         </label>
 
         <button class="btn btn--action btn--block btn--lg gap-ms" type="submit">Подтвердить заказ</button>
@@ -7397,11 +7437,11 @@ p a:not(.btn):hover,
 
 <button class="to-top" type="button" data-to-top aria-label="Наверх"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 14 6-6 6 6"/></svg></button>
 
-<div class="cookie" data-cookie hidden role="region" aria-label="Использование cookie">
+<section class="cookie" data-cookie hidden aria-label="Использование cookie">
   <p>Сайт использует cookie, чтобы запоминать город, тему и содержимое корзины.
   Подробности — в <a href="#p-policy">политике</a>.</p>
   <button class="btn btn--primary" type="button" data-cookie-ok>Хорошо</button>
-</div>
+</section>
 
 <p class="demo-note" data-demo-note hidden role="status" aria-live="polite"></p>
 
@@ -7428,7 +7468,7 @@ p a:not(.btn):hover,
         <input type="checkbox" required>
         <span>Согласен на обработку персональных данных и с <a href="#p-policy">политикой конфиденциальности</a>.
         <span class="ph ph--inline">текст политики — от заказчика</span></span>
-        <p class="form__error">Без согласия отправить нельзя</p>
+        <span class="form__error">Без согласия отправить нельзя</span>
       </label>
       <button class="btn btn--action btn--block btn--lg" type="submit">Жду звонка</button>
       <p class="form__success"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m5 13 4 4 10-10"/></svg> Заявка принята — в рабочей версии она уйдёт менеджеру.</p>
