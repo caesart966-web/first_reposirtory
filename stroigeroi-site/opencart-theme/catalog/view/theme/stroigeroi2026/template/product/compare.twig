@@ -1,0 +1,88 @@
+{#
+  Сравнение товаров.
+
+  Таблица сравнения на телефоне не помещается никогда: колонок столько,
+  сколько товаров. Поэтому она лежит в контейнере с горизонтальной
+  прокруткой, а не ломается по ширине экрана.
+
+  Отзывов в сравнении нет: у магазина их нет ни одного, и строка
+  «Рейтинг: —» у всех товаров не помогает выбрать.
+#}
+{{ header }}
+  <div class="container">
+
+    {% if breadcrumbs %}
+    <nav class="breadcrumbs" aria-label="Хлебные крошки">
+      <ol>
+        {% for breadcrumb in breadcrumbs %}
+        {% if loop.last %}<li aria-current="page">{{ breadcrumb.text }}</li>{% else %}<li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>{% endif %}
+        {% endfor %}
+      </ol>
+    </nav>
+    {% endif %}
+
+    {% if success %}<div class="alert alert-success">{{ success }}</div>{% endif %}
+
+    <div class="page-head">
+      <h1>Сравнение</h1>
+    </div>
+
+    {% if products %}
+    <div class="table-scroll">
+      <table class="data compare-table">
+        <thead>
+          <tr>
+            <th scope="row">Товар</th>
+            {% for product in products %}
+            <td>
+              <a href="{{ product.href }}"><img src="{{ product.thumb }}" alt="{{ product.name }}" loading="lazy"></a>
+              <a class="product-card__title" href="{{ product.href }}">{{ product.name }}</a>
+            </td>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Цена</th>
+            {% for product in products %}
+            <td data-label="Цена">{% if product.special %}<span class="price">{{ product.special }}</span><s class="price-old">{{ product.price }}</s>{% else %}<span class="price">{{ product.price }}</span>{% endif %}</td>
+            {% endfor %}
+          </tr>
+          <tr>
+            <th scope="row">Артикул</th>
+            {% for product in products %}<td data-label="Артикул">{{ product.model }}</td>{% endfor %}
+          </tr>
+          <tr>
+            <th scope="row">Наличие</th>
+            {% for product in products %}<td data-label="Наличие">{{ product.availability }}</td>{% endfor %}
+          </tr>
+          {% for attribute_group in attribute_groups %}
+          {% for attribute in attribute_group.attribute %}
+          <tr>
+            <th scope="row">{{ attribute.name }}</th>
+            {% for product in products %}<td data-label="{{ attribute.name }}">{{ attribute.product[product.product_id]|default('—') }}</td>{% endfor %}
+          </tr>
+          {% endfor %}
+          {% endfor %}
+          <tr>
+            <th scope="row"><span class="visually-hidden">Действия</span></th>
+            {% for product in products %}
+            <td>
+              <button class="btn btn--action" type="button" data-add="cart" data-product-id="{{ product.product_id }}">В корзину</button>
+              <a class="action-link" href="{{ product.remove }}">Убрать</a>
+            </td>
+            {% endfor %}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty">
+      <h2>Сравнивать пока нечего</h2>
+      <p>Нажмите значок сравнения у двух-трёх товаров — здесь появится таблица с их отличиями.</p>
+      <p class="row-actions"><a class="btn btn--action" href="{{ continue }}">В каталог</a></p>
+    </div>
+    {% endif %}
+
+  </div>
+{{ footer }}

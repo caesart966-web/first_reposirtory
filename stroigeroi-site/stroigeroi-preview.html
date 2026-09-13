@@ -8423,7 +8423,19 @@ p a:not(.btn):hover,
         route: link.getAttribute('data-oc-route') || ''
       };
     });
-    var defaultList = suggestList ? suggestList.innerHTML : '';
+    /* Список, который виден до ввода запроса. В макете он свёрстан
+       в разметке; в теме OpenCart разделы в шапку не приходят, и там
+       он пуст — тогда собираем его из тех же sections. Разметку берём
+       ту же, что у найденных разделов, иначе до и после ввода запроса
+       подсказки выглядели бы по-разному. */
+    var defaultList = suggestList ? suggestList.innerHTML.trim() : '';
+    if (suggestList && !defaultList && sections.length) {
+      defaultList = sections.slice(0, 8).map(function (s) {
+        return '<a class="search-suggest__item" href="' + s.href + '">' +
+          escapeHtml(s.name) + '</a>';
+      }).join('');
+      suggestList.innerHTML = defaultList;
+    }
     var defaultTitle = suggestTitle ? suggestTitle.textContent : '';
 
     /* Ищем по началу слова, а не по любому месту строки: «сад» должно
@@ -8455,7 +8467,11 @@ p a:not(.btn):hover,
         suggestTitle.textContent = found.length === 1 ? 'Нашёлся раздел' : 'Разделы: ' + found.length;
       }
       suggestList.innerHTML = found.map(function (s) {
-        return '<a class="search-suggest__item" href="' + s.href + '?search=' +
+        /* У адресов движка уже есть «?» (index.php?route=...), и второй
+           вопросительный знак сделал бы ссылку битой. В макете адреса
+           простые, и знак остаётся прежним. */
+        var join = s.href.indexOf('?') >= 0 ? '&' : '?';
+        return '<a class="search-suggest__item" href="' + s.href + join + 'search=' +
           encodeURIComponent(searchInput.value.trim()) + '"' +
           (s.path ? ' data-oc-path="' + s.path + '"' : '') +
           (s.route ? ' data-oc-route="' + s.route + '"' : '') +
@@ -8512,10 +8528,21 @@ p a:not(.btn):hover,
      Это макет: товары не настоящие, считаем только количество кликов,
      чтобы показать поведение интерфейса.
      ====================================================================== */
+  /* В теме OpenCart счётчик корзины приходит с сервера: движок знает
+     её настоящее содержимое ещё до отрисовки страницы, и число не прыгает
+     при загрузке. Такой счётчик помечен data-count-server. В макете
+     пометки нет, и значение берётся из памяти браузера, как и раньше. */
+  function startCount(key, fallback) {
+    var el = $('[data-count="' + key + '"][data-count-server]');
+    if (!el) return fallback;
+    var n = parseInt(el.textContent, 10);
+    return isNaN(n) ? fallback : n;
+  }
+
   var counters = {
-    cart: store.get('cart', 0),
-    fav: store.get('fav', 0),
-    compare: store.get('compare', 0)
+    cart: startCount('cart', store.get('cart', 0)),
+    fav: startCount('fav', store.get('fav', 0)),
+    compare: startCount('compare', store.get('compare', 0))
   };
 
   function renderCounters() {
@@ -8524,6 +8551,80 @@ p a:not(.btn):hover,
         el.textContent = counters[key];
         el.hidden = counters[key] === 0 && el.hasAttribute('data-hide-empty');
       });
+    });
+  }
+
+  /* Адреса движка для кнопок карточки. Разложены таблицей, а не
+     условиями по месту: добавится четвёртая кнопка — добавится строка. */
+  var SHOP_ROUTES = {
+    cart:    { url: 'index.php?route=checkout/cart/add',    body: function (id) { return 'product_id=' + id + '&quantity=1'; } },
+    fav:     { url: 'index.php?route=account/wishlist/add', body: function (id) { return 'product_id=' + id; } },
+    compare: { url: 'index.php?route=product/compare/add',  body: function (id) { return 'product_id=' + id; } }
+  };
+
+  /* Движок отвечает готовой разметкой со ссылками («Товар добавлен,
+     перейдите в корзину»). В строку внизу экрана она не годится —
+     оставляем только текст. */
+  function plainText(html) {
+    var box = document.createElement('div');
+    box.innerHTML = html;
+    return box.textContent.replace(/\s+/g, ' ').trim();
+  }
+
+  function refreshCartCount() {
+    fetch('index.php?route=common/cart/info', {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    }).then(function (response) {
+      return response.text();
+    }).then(function (html) {
+      var box = document.createElement('div');
+      box.innerHTML = html;
+      var fresh = box.querySelector('[data-count="cart"]');
+      if (!fresh) return;
+      var value = parseInt(fresh.textContent, 10);
+      if (isNaN(value)) return;
+      counters.cart = value;
+      store.set('cart', value);
+      renderCounters();
+    }).catch(function () {});
+  }
+
+  function shopAdd(kind, id, btn) {
+    var route = SHOP_ROUTES[kind];
+    if (!route) return;
+    btn.disabled = true;
+    fetch(route.url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: route.body(id)
+    }).then(function (response) {
+      return response.json();
+    }).then(function (result) {
+      /* Избранное требует входа в кабинет: движок отвечает адресом,
+         куда отправить человека. Молча ничего не делать нельзя —
+         он решит, что кнопка сломана. */
+      if (result && result.redirect) {
+        location.href = result.redirect;
+        return;
+      }
+      if (result && result.success) {
+        toast(plainText(result.success));
+        if (kind === 'cart') {
+          refreshCartCount();
+        } else {
+          btn.classList.add('is-on');
+        }
+        return;
+      }
+      var said = result && result.error;
+      toast(typeof said === 'string' && said ? plainText(said) : 'Не получилось добавить товар');
+    }).catch(function () {
+      toast('Не получилось добавить товар. Попробуйте ещё раз.');
+    }).then(function () {
+      btn.disabled = false;
     });
   }
 
@@ -8545,6 +8646,16 @@ p a:not(.btn):hover,
     if (!btn) return;
     e.preventDefault();
     var kind = btn.getAttribute('data-add');
+
+    /* В теме у кнопки есть номер товара — значит, работаем с настоящей
+       корзиной движка, а не с памятью браузера. В макете номеров нет
+       (товары безымянные, прайса ещё нет), и кнопка ведёт себя по-старому. */
+    var productId = btn.getAttribute('data-product-id');
+    if (productId) {
+      shopAdd(kind, productId, btn);
+      return;
+    }
+
     if (kind === 'cart') {
       bump('cart', 1);
       toast('Товар добавлен в корзину. В макете корзина демонстрационная.');
@@ -8722,16 +8833,69 @@ p a:not(.btn):hover,
       if (isNaN(value)) value = 1;
       value += parseInt(step, 10);
       input.value = value < 1 ? 1 : value;
+      cartEdit(input);
     });
+    input.addEventListener('change', function () { cartEdit(input); });
+  });
+
+  /* Изменение количества в корзине. В теме у поля есть номер строки
+     корзины, и новое количество надо отправить движку — иначе человек
+     поменяет цифру, увидит старую сумму и решит, что корзина врёт.
+     Страница после ответа перезагружается: пересчитать надо не только
+     строку, но и скидки, доставку и итог, а их считает сервер.
+     В макете номеров строк нет, и функция ничего не делает. */
+  var cartTimer;
+  function cartEdit(input) {
+    var key = input.getAttribute('data-cart-key');
+    if (!key) return;
+    var value = parseInt(input.value, 10);
+    if (isNaN(value) || value < 1) return;
+    clearTimeout(cartTimer);
+    cartTimer = setTimeout(function () {
+      fetch('index.php?route=checkout/cart/edit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: 'key=' + encodeURIComponent(key) + '&quantity=' + value
+      }).then(function () { location.reload(); })
+        .catch(function () { toast('Не получилось изменить количество'); });
+    }, 500);
+  }
+
+  document.addEventListener('click', function (e) {
+    var remove = e.target.closest ? e.target.closest('[data-cart-remove]') : null;
+    if (!remove) return;
+    e.preventDefault();
+    remove.disabled = true;
+    fetch('index.php?route=checkout/cart/remove', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: 'key=' + encodeURIComponent(remove.getAttribute('data-cart-remove'))
+    }).then(function () { location.reload(); })
+      .catch(function () {
+        remove.disabled = false;
+        toast('Не получилось удалить товар');
+      });
   });
 
   /* ======================================================================
      Галерея: миниатюра становится активной
      ====================================================================== */
   var thumbs = $$('[data-thumb]');
+  var mainPhoto = $('#product-photo');
   thumbs.forEach(function (t) {
     t.addEventListener('click', function () {
       thumbs.forEach(function (o) { o.setAttribute('aria-current', o === t ? 'true' : 'false'); });
+      /* В теме у миниатюры есть адрес крупного снимка, и главная
+         фотография меняется. В макете снимков нет — миниатюры только
+         подсвечиваются, как и раньше. */
+      var full = t.getAttribute('data-full');
+      if (full && mainPhoto) mainPhoto.src = full;
     });
   });
 
@@ -9036,6 +9200,56 @@ p a:not(.btn):hover,
         return;
       }
 
+      /* В теме OpenCart у формы есть адрес обработчика, и отправлять её
+         надо по-настоящему. В макете action нет ни у одной из форм,
+         поэтому сюда управление не заходит и поведение не меняется. */
+      var action = form.getAttribute('action');
+      if (action) {
+        var button = $('button[type="submit"]', form);
+        if (button) button.disabled = true;
+        fetch(action, {
+          method: 'POST',
+          body: new FormData(form),
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        }).then(function (response) {
+          return response.json();
+        }).then(function (result) {
+          if (result && result.redirect) {
+            location.href = result.redirect;
+            return;
+          }
+          if (result && result.success) {
+            /* Добавление в корзину - не «заявка принята»: показываем ответ
+               движка и обновляем счётчик, иначе цифра в шапке отстанет
+               от настоящего содержимого корзины. */
+            if (form.hasAttribute('data-product-form')) {
+              toast(plainText(result.success));
+              refreshCartCount();
+              return;
+            }
+            var done = $('.form__success', form);
+            if (done) done.classList.add('is-shown');
+            form.reset();
+            return;
+          }
+          /* Ответ обработчика показываем как есть: он объясняет, что
+             именно не так, а общее «ошибка» человеку ничего не даёт.
+             Движок на незаполненный обязательный параметр товара
+             отвечает не строкой, а набором сообщений по полям. */
+          var said = result && (result.error || result.error_name ||
+            result.error_phone || result.error_consent);
+          if (said && typeof said === 'object') {
+            said = Object.keys(said).map(function (key) { return said[key]; }).join(' ');
+          }
+          toast(said ? plainText(String(said)) : 'Не получилось отправить. Позвоните нам: 8-963-830-09-99.');
+        }).catch(function () {
+          toast('Не получилось отправить. Позвоните нам: 8-963-830-09-99.');
+        }).then(function () {
+          if (button) button.disabled = false;
+        });
+        return;
+      }
+
       /* Форма оформления ведёт на следующий шаг сценария. Без этого
          страница «Заказ принят» существовала, но кликом до неё было
          не дойти: форма молча сбрасывалась и показывала уведомление —
@@ -9052,6 +9266,82 @@ p a:not(.btn):hover,
       toast('В макете форма не отправляется — в рабочей версии письмо уйдёт на почту магазина.');
     });
   });
+
+  /* ======================================================================
+     Две вещи, нужные только в теме OpenCart. В макете обе ничего не делают:
+     первая ищет тег <base>, второй в макете нет; вторая заполняет списки,
+     которые в макете уже заполнены.
+     ====================================================================== */
+
+  /* В теме в <head> стоит <base href>. При нём ссылка «#main» указывает
+     не на текущую страницу, а на главную с этим якорем: человек жмёт
+     «Перейти к содержимому» и уезжает с раздела на главную. Переписываем
+     такие ссылки на полный адрес текущей страницы. */
+  if (document.querySelector('base')) {
+    var here = location.pathname + location.search;
+    $$('a[href^="#"]').forEach(function (link) {
+      var target = link.getAttribute('href');
+      if (target.length > 1) link.setAttribute('href', here + target);
+    });
+  }
+
+  /* Выпадающий список, который сам переводит на выбранный адрес.
+     В теме так работает сортировка каталога: движок отдаёт готовые адреса,
+     у каждого свой порядок. Встроенных onchange в разметке этого сайта нет
+     нигде, поэтому переход делается здесь, по пометке. В макете таких
+     списков нет, и код не делает ничего. */
+  $$('[data-go-on-change]').forEach(function (select) {
+    select.addEventListener('change', function () {
+      if (select.value) location.href = select.value;
+    });
+  });
+
+  /* Колонку «Каталог» в подвале заполняем из меню каталога — из разметки,
+     которая на странице уже есть. Второй список тех же разделов рано или
+     поздно разошёлся бы с первым. Подсказки под строкой поиска берут
+     разделы оттуда же, но это делает сам модуль поиска выше. */
+  var catalogLinks = $$('.catalog-menu__link').filter(function (link) {
+    return !link.classList.contains('catalog-menu__link--special');
+  });
+
+  if (catalogLinks.length) {
+    /* Сетка разделов на главной. Настоящие разделы приходят из меню
+       каталога; карточка «Все разделы», свёрстанная в шаблоне, остаётся
+       последней — без javascript она единственная, и сетка не пустует. */
+    $$('[data-fill-cards]').forEach(function (grid) {
+      var last = grid.lastElementChild;
+      catalogLinks.forEach(function (source) {
+        var card = document.createElement('a');
+        card.className = 'category-card reveal';
+        card.href = source.getAttribute('href');
+        var icon = $('svg', source);
+        if (icon) {
+          var box = document.createElement('span');
+          box.className = 'category-card__icon';
+          box.appendChild(icon.cloneNode(true));
+          card.appendChild(box);
+        }
+        var title = document.createElement('span');
+        title.className = 'category-card__title';
+        title.textContent = source.textContent.trim();
+        card.appendChild(title);
+        grid.insertBefore(card, last);
+      });
+    });
+
+    $$('[data-fill-categories]').forEach(function (list) {
+      var howMany = parseInt(list.getAttribute('data-fill-categories'), 10) || 4;
+      var before = list.firstElementChild;
+      catalogLinks.slice(0, howMany).forEach(function (source) {
+        var row = document.createElement('li');
+        var link = document.createElement('a');
+        link.href = source.getAttribute('href');
+        link.textContent = source.textContent.trim();
+        row.appendChild(link);
+        list.insertBefore(row, before);
+      });
+    });
+  }
 
   /* ======================================================================
      Калькулятор материалов.

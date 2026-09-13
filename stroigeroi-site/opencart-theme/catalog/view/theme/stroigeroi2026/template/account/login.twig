@@ -1,0 +1,63 @@
+{#
+  Вход в кабинет.
+
+  У этого магазина кабинет нужен немногим: большинство звонит или приезжает.
+  Поэтому колонка «впервые здесь» не уговаривает регистрироваться, а честно
+  говорит, что заказ можно оформить и без кабинета.
+
+  Восстановление пароля и регистрация - стандартные адреса движка. На старом
+  сайте обе формы девять месяцев использовались роботами как рассыльщик
+  (13 389 писем), поэтому перед запуском на них обязательно должна стоять
+  капча: Система -> Настройки -> вкладка «Опция» -> Капча.
+#}
+{{ header }}
+  <div class="container">
+
+    {% if breadcrumbs %}
+    <nav class="breadcrumbs" aria-label="Хлебные крошки">
+      <ol>
+        {% for breadcrumb in breadcrumbs %}
+        {% if loop.last %}<li aria-current="page">{{ breadcrumb.text }}</li>{% else %}<li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>{% endif %}
+        {% endfor %}
+      </ol>
+    </nav>
+    {% endif %}
+
+    <div class="page-head">
+      <h1>Вход в личный кабинет</h1>
+      <p>Здесь видно историю заказов и отложенные товары. Чтобы просто купить, кабинет не нужен.</p>
+    </div>
+
+    {% if success %}<div class="alert alert-success">{{ success }}</div>{% endif %}
+    {% if error_warning %}<div class="alert alert-danger">{{ error_warning }}</div>{% endif %}
+
+    <div class="contacts-grid">
+
+      <form class="form" action="{{ action }}" method="post">
+        <h2 class="gap-md-below">У меня есть кабинет</h2>
+        <div class="form__row">
+          <label for="input-email">Электронная почта</label>
+          <input id="input-email" name="email" type="email" value="{{ email }}" required autocomplete="email">
+        </div>
+        <div class="form__row">
+          <label for="input-password">Пароль</label>
+          <input id="input-password" name="password" type="password" value="{{ password }}" required autocomplete="current-password">
+        </div>
+        {% if redirect %}<input type="hidden" name="redirect" value="{{ redirect }}">{% endif %}
+        <button class="btn btn--action btn--block btn--lg" type="submit">Войти</button>
+        <p class="form__hint"><a href="{{ forgotten }}">Забыли пароль?</a></p>
+      </form>
+
+      <div>
+        <h2 class="gap-md-below">Впервые здесь</h2>
+        <p>Кабинет нужен, только если вы хотите видеть историю заказов. Оформить заказ можно и без него — в корзине.</p>
+        <p>А проще всего позвонить: <a class="tel-inline" href="tel:+79638300999">8-963-830-09-99</a>. Подскажем, есть ли товар, сколько стоит и когда забирать.</p>
+        <p class="row-actions">
+          <a class="btn btn--outline" href="{{ register }}">Завести кабинет</a>
+          <a class="btn btn--outline" href="index.php?route=checkout/cart">В корзину</a>
+        </p>
+      </div>
+
+    </div>
+  </div>
+{{ footer }}

@@ -1,0 +1,45 @@
+{#
+  Страница после оформления заказа.
+
+  Движок отдаёт сюда готовый текст (text_message) со ссылками на кабинет
+  и историю заказов. Он общий и сухой, поэтому рядом стоит то, что человеку
+  на Камчатке действительно нужно дальше: телефон магазина и адреса.
+
+  Номера заказа среди переменных нет - это шаблон общего «готово»,
+  его же движок показывает после других действий. Номер человек увидит
+  в письме и в истории заказов.
+#}
+{{ header }}
+  <div class="container">
+
+    {% if breadcrumbs %}
+    <nav class="breadcrumbs" aria-label="Хлебные крошки">
+      <ol>
+        {% for breadcrumb in breadcrumbs %}
+        {% if loop.last %}<li aria-current="page">{{ breadcrumb.text }}</li>{% else %}<li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>{% endif %}
+        {% endfor %}
+      </ol>
+    </nav>
+    {% endif %}
+
+    <div class="steps">
+      <span class="step is-done"><span class="step__num">1</span> Корзина</span>
+      <span class="step is-done"><span class="step__num">2</span> Контакты</span>
+      <span class="step is-done"><span class="step__num">3</span> Получение</span>
+      <span class="step is-current"><span class="step__num">4</span> Готово</span>
+    </div>
+
+    <div class="done">
+      <div class="done__icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.5 2.5L16 9.5"/></svg></div>
+      <h1>Заказ принят</h1>
+      {% if text_message %}{{ text_message|raw }}{% endif %}
+      <p>Менеджер перезвонит, подтвердит наличие и скажет, когда можно забрать. Если звонка долго нет — наберите сами: <a class="tel-inline" href="tel:+79638300999">8-963-830-09-99</a>.</p>
+      <p class="row-actions">
+        <a class="btn btn--action" href="{{ continue }}">Вернуться в каталог</a>
+        <a class="btn btn--outline" href="index.php?route=information/contact">Адреса магазинов</a>
+      </p>
+    </div>
+
+    {{ content_bottom }}
+  </div>
+{{ footer }}

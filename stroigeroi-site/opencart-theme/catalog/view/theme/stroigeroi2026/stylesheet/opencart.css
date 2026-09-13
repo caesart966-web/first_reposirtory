@@ -1,0 +1,116 @@
+/* ===========================================================================
+   Правки под разметку, которую рисует сам движок.
+
+   Часть блоков OpenCart отдаёт готовым HTML, и переписать его в шаблоне
+   нельзя: постраничную навигацию, сообщения об ошибках, содержимое
+   стандартных модулей. Разметка у них своя, бутстраповская, и под классы
+   нашего style.css она не подходит.
+
+   Эти правила живут отдельным файлом нарочно. style.css общий с макетом,
+   который заказчик смотрит по ссылке; дописывать в него куски, осмысленные
+   только внутри движка, значит связать две вещи, которые меняются
+   по разным поводам.
+
+   Подключается в header.twig ПОСЛЕ style.css.
+   =========================================================================== */
+
+/* --- Постраничная навигация ------------------------------------------------
+   Движок отдаёт <ul class="pagination"><li class="active"><span>1</span>...
+   Наш макет рисует её плоским рядом ссылок. Приводим к тому же виду.        */
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2, 8px);
+  align-items: center;
+  list-style: none;
+  padding: 0;
+  margin: var(--sp-6, 24px) 0 0;
+}
+
+.pagination li { display: contents; }
+
+.pagination li > a,
+.pagination li > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 var(--sp-3, 12px);
+  border: 1px solid var(--line, #d8dbe0);
+  border-radius: var(--radius-sm, 8px);
+  color: inherit;
+  text-decoration: none;
+}
+
+.pagination li.active > span,
+.pagination li.disabled > span {
+  border-color: transparent;
+}
+
+.pagination li.active > span {
+  background: var(--accent, #d42027);
+  color: #fff;
+  font-weight: 600;
+}
+
+.pagination li.disabled > span { opacity: .45; }
+
+/* Строка «Показано 1 — 16 из 48» движок кладёт рядом с навигацией. */
+.pagination-results {
+  margin: var(--sp-3, 12px) 0 0;
+  color: var(--muted, #6b7280);
+  font-size: .92rem;
+}
+
+/* --- Сообщения движка ------------------------------------------------------
+   Ошибки входа, предупреждения корзины и тому подобное приходят как
+   .alert с бутстраповскими классами.                                        */
+.alert {
+  padding: var(--sp-3, 12px) var(--sp-4, 16px);
+  border: 1px solid var(--line, #d8dbe0);
+  border-left-width: 3px;
+  border-radius: var(--radius-sm, 8px);
+  margin: 0 0 var(--sp-4, 16px);
+}
+
+.alert-success { border-left-color: #1f8a4c; }
+.alert-danger,
+.alert-warning { border-left-color: var(--accent, #d42027); }
+
+.alert .close { display: none; }
+
+/* --- Поля с ошибкой --------------------------------------------------------
+   Движок подписывает поле блоком .text-danger под ним.                      */
+.text-danger {
+  display: block;
+  margin-top: var(--sp-1, 4px);
+  color: var(--accent, #d42027);
+  font-size: .9rem;
+}
+
+.has-error input,
+.has-error select,
+.has-error textarea { border-color: var(--accent, #d42027); }
+
+/* --- Стандартные модули в колонках ----------------------------------------
+   Их разметку мы не переопределяем: модулей у OpenCart много, и под каждый
+   писать свой шаблон незачем. Даём им общий вид карточки, чтобы они
+   не выглядели чужими рядом с нашими блоками.                               */
+.column-modules > div + div { margin-top: var(--sp-5, 20px); }
+
+.column-modules .list-group { list-style: none; padding: 0; margin: 0; }
+
+.column-modules .list-group-item {
+  display: block;
+  padding: var(--sp-2, 8px) 0;
+  border-bottom: 1px solid var(--line, #d8dbe0);
+  color: inherit;
+  text-decoration: none;
+}
+
+.column-modules .list-group-item:last-child { border-bottom: 0; }
+
+/* --- Мелочи ---------------------------------------------------------------- */
+.buttons { display: flex; flex-wrap: wrap; gap: var(--sp-3, 12px); align-items: center; }
+.required > label::after { content: ' *'; color: var(--accent, #d42027); }

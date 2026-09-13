@@ -23,6 +23,12 @@ for f in sorted(pathlib.Path(sys.argv[1]).rglob('*.twig')):
                 print(f'{f}:{line}: {{% {tag} %}} закрывает {{% {stack[-1][0]} %}} со строки {stack[-1][1]}'); bad += 1; stack.pop()
             else:
                 stack.pop()
+    # Ссылки на страницы макета. В теме таких быть не может: страниц
+    # с именами вроде catalog.html на сайте нет, а браузер о битой ссылке
+    # молчит - человек просто попадает в никуда. Ловим здесь, а не глазами.
+    for href in set(re.findall(r'href="([^"]*\.html[^"]*)"', raw)):
+        print(f'{f}: ссылка на страницу макета — {href}'); bad += 1
+
     for m in re.finditer(r'<script>(.*?)</script>', raw, re.S):
         if '{{' in m.group(1) or '{%' in m.group(1):
             print(f'{f}: теги Twig внутри <script> - так делать нельзя'); bad += 1

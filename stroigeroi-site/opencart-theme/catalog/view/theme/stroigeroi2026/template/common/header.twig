@@ -51,6 +51,10 @@
 <link rel="apple-touch-icon" href="catalog/view/theme/stroigeroi2026/image/logo.png">
 <link rel="preload" href="catalog/view/theme/stroigeroi2026/stylesheet/style.css" as="style">
 <link rel="stylesheet" href="catalog/view/theme/stroigeroi2026/stylesheet/style.css">
+{# Правки под разметку, которую рисует сам движок: постраничная
+   навигация, сообщения об ошибках, стандартные модули. Отдельным
+   файлом, потому что style.css общий с макетом. Идёт ПОСЛЕ него. #}
+<link rel="stylesheet" href="catalog/view/theme/stroigeroi2026/stylesheet/opencart.css">
 {% for style in styles %}
 <link href="{{ style.href }}" type="text/css" rel="{{ style.rel }}" media="{{ style.media }}">
 {% endfor %}
@@ -131,7 +135,7 @@
 
         <div class="search-suggest" data-search-suggest hidden>
           <p class="search-suggest__title">Популярные разделы</p>
-          <div class="search-suggest__list" data-search-suggest-list></div>
+          <div class="search-suggest__list"></div>
         </div>
       </form>
 

@@ -1,0 +1,104 @@
+{{ header }}
+  <div class="container">
+
+    {% if breadcrumbs %}
+    <nav class="breadcrumbs" aria-label="Хлебные крошки">
+      <ol>
+        {% for breadcrumb in breadcrumbs %}
+        {% if loop.last %}<li aria-current="page">{{ breadcrumb.text }}</li>{% else %}<li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>{% endif %}
+        {% endfor %}
+      </ol>
+    </nav>
+    {% endif %}
+
+    <div class="page-head">
+      <h1>Калькулятор материалов</h1>
+      <p>Прикидка на месте: сколько листов гипсокартона и мешков смеси уйдёт на вашу площадь. Считает по тем числам, которые вы введёте, — чужой расход мы не подставляем, он у каждой смеси свой.</p>
+    </div>
+
+    <div class="calc" data-calc>
+      <div class="calc__form">
+
+        <div class="tabs__list gap-lg-below" role="tablist">
+          <button class="tabs__btn" type="button" role="tab" data-calc-mode="gkl" aria-selected="true">Гипсокартон</button>
+          <button class="tabs__btn" type="button" role="tab" data-calc-mode="mix" aria-selected="false">Шпатлёвка и штукатурка</button>
+        </div>
+
+        <div data-calc-panel="gkl">
+          <div class="calc__grid">
+            <div class="calc__field">
+              <label for="gkl-area">Площадь обшивки, м²</label>
+              <input id="gkl-area" type="text" inputmode="decimal" value="20" data-gkl-area>
+            </div>
+            <div class="calc__field">
+              <label for="gkl-sheet">Размер листа</label>
+              <select id="gkl-sheet" data-gkl-sheet>
+                <option value="3.0">1200 × 2500 мм — 3,00 м²</option>
+                <option value="2.4">1200 × 2000 мм — 2,40 м²</option>
+                <option value="3.24">1200 × 2700 мм — 3,24 м²</option>
+                <option value="3.6">1200 × 3000 мм — 3,60 м²</option>
+              </select>
+            </div>
+            <div class="calc__field">
+              <label for="gkl-layers">Слоёв обшивки</label>
+              <select id="gkl-layers" data-gkl-layers>
+                <option value="1">Один слой</option>
+                <option value="2">Два слоя</option>
+              </select>
+            </div>
+            <div class="calc__field">
+              <label for="gkl-reserve">Запас на подрезку, %</label>
+              <input id="gkl-reserve" type="text" inputmode="numeric" value="10" data-calc-reserve>
+            </div>
+          </div>
+          <p class="calc__hint">Площадь берите по стенам и потолку без вычета проёмов — подрезка всё равно съедает часть листа.</p>
+        </div>
+
+        <div data-calc-panel="mix" hidden>
+          <div class="calc__grid">
+            <div class="calc__field">
+              <label for="mix-area">Площадь, м²</label>
+              <input id="mix-area" type="text" inputmode="decimal" value="20" data-mix-area>
+            </div>
+            <div class="calc__field">
+              <label for="mix-thick">Толщина слоя, мм</label>
+              <input id="mix-thick" type="text" inputmode="decimal" value="2" data-mix-thick>
+            </div>
+            <div class="calc__field">
+              <label for="mix-usage">Расход, кг на м² при слое 1 мм</label>
+              <input id="mix-usage" type="text" inputmode="decimal" placeholder="смотрите на упаковке" data-mix-usage>
+            </div>
+            <div class="calc__field">
+              <label for="mix-bag">Вес мешка, кг</label>
+              <input id="mix-bag" type="text" inputmode="decimal" placeholder="например, 25" data-mix-bag>
+            </div>
+            <div class="calc__field">
+              <label for="mix-reserve">Запас, %</label>
+              <input id="mix-reserve" type="text" inputmode="numeric" value="10" data-calc-reserve>
+            </div>
+          </div>
+          <p class="calc__hint">Расход и вес мешка указаны на упаковке смеси. У штукатурки и финишной шпатлёвки они отличаются в разы, поэтому своих значений мы не подставляем.</p>
+        </div>
+
+      </div>
+
+      <aside class="calc__result">
+        <p class="eyebrow">Нужно купить</p>
+        <p class="calc__answer" data-calc-answer>—</p>
+        <ul class="calc__breakdown" data-calc-rows></ul>
+        <p class="calc__hint gap-md" data-calc-note></p>
+        <a class="btn btn--action btn--block gap-md" href="index.php?route=information/sitemap">Подобрать в каталоге</a>
+        <button class="btn btn--outline btn--block gap-sm" type="button" data-modal-open="modal-callback">Уточнить у менеджера</button>
+      </aside>
+    </div>
+
+    <section class="section">
+      <div class="section__head"><h2 class="section__title">Что калькулятор не считает</h2></div>
+      <div class="prose">
+        <p>Это быстрая прикидка, а не проектный расчёт. Она не учитывает раскладку листов, проёмы, кривизну стен, профиль, крепёж и грунтовку. На сложных объектах разница бывает заметной.</p>
+        <p>Если объём большой или геометрия нестандартная — позвоните <a class="tel-inline" href="tel:+79638300999">8-963-830-09-99</a>. Посчитаем вместе и подскажем, что докупить.</p>
+      </div>
+    </section>
+
+  </div>
+{{ footer }}

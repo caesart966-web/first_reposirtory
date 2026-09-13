@@ -1,0 +1,114 @@
+{#
+  Корзина.
+
+  Что отличается от макета:
+
+  КОЛИЧЕСТВО меняется сразу, без кнопки «пересчитать». У поля есть номер
+  строки корзины, app.js отправляет его движку и перезагружает страницу:
+  пересчитать надо не только строку, но и скидки с итогом, а считает их
+  сервер. Кнопка «обновить» рядом с каждым полем - лишний шаг, на котором
+  люди забывают нажать и уходят с неверной суммой.
+
+  ПРОМОКОД убран. У магазина промокодов нет; поле, которое на любой ввод
+  отвечает «не найден», раздражает и выглядит поломкой. Купоны у движка
+  есть - когда появятся, поле вернётся.
+
+  ДОСТАВКА в итогах не выдумана: строки итога приходят из движка (totals),
+  и пока доставка не настроена, строки просто не будет.
+
+  ПЕЧАТЬ списка покупок оставлена: в магазин на Камчатке приезжают
+  со списком на бумаге, и это оказалось нужнее, чем кажется.
+#}
+{{ header }}
+  <div class="container">
+
+    {% if breadcrumbs %}
+    <nav class="breadcrumbs" aria-label="Хлебные крошки">
+      <ol>
+        {% for breadcrumb in breadcrumbs %}
+        {% if loop.last %}<li aria-current="page">{{ breadcrumb.text }}</li>{% else %}<li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>{% endif %}
+        {% endfor %}
+      </ol>
+    </nav>
+    {% endif %}
+
+    {% if attention %}<div class="alert alert-warning">{{ attention }}</div>{% endif %}
+    {% if success %}<div class="alert alert-success">{{ success }}</div>{% endif %}
+    {% if error_warning %}<div class="alert alert-danger">{{ error_warning }}</div>{% endif %}
+
+    <!-- Виден только на бумаге: с экрана эти данные и так на странице -->
+    <div class="print-head" aria-hidden="true">
+      <p class="print-head__brand">Строй-Герой — строительные материалы</p>
+      <p class="print-head__line">Список покупок от <span data-print-date>—</span></p>
+      <p class="print-head__line">Телефон магазинов: 8-963-830-09-99</p>
+      <p class="print-head__line">ул. Чубарова, 16, корп. 40 · просп. 50 лет Октября, 17А · Магистральная ул., 2/2</p>
+    </div>
+
+    <div class="page-head">
+      <h1>Корзина</h1>
+      {% if products %}<p>Соберите заказ и заберите его в удобном магазине. Менеджер перезвонит и подтвердит наличие.</p>{% endif %}
+    </div>
+
+    {{ content_top }}
+
+    {% if products %}
+    <div class="steps">
+      <span class="step is-current"><span class="step__num">1</span> Корзина</span>
+      <span class="step"><span class="step__num">2</span> Контакты</span>
+      <span class="step"><span class="step__num">3</span> Получение</span>
+      <span class="step"><span class="step__num">4</span> Готово</span>
+    </div>
+
+    <div class="cart-layout">
+      <div class="cart-list">
+        {% for product in products %}
+        <div class="cart-row">
+          <div class="cart-row__media"><a href="{{ product.href }}"><img src="{{ product.thumb }}" alt="{{ product.name }}" loading="lazy"></a></div>
+          <div class="cart-row__text">
+            <a class="product-card__title" href="{{ product.href }}">{{ product.name }}</a>
+            {% if product.model %}<p class="product-card__meta cart-row__meta">Артикул: {{ product.model }}</p>{% endif %}
+            {% if product.option %}
+            <p class="product-card__meta cart-row__meta">{% for option in product.option %}{{ option.name }}: {{ option.value }}{% if not loop.last %}, {% endif %}{% endfor %}</p>
+            {% endif %}
+            {% if not product.stock %}<p class="cart-row__meta cart-row__meta--warn">Наличие уточняется — менеджер перезвонит</p>{% endif %}
+          </div>
+          <div class="cart-row__money">
+            <span>{{ product.price }}</span>
+            <span>{{ product.total }}</span>
+          </div>
+          <div class="qty" data-qty>
+            <button type="button" data-qty-step="-1" aria-label="Уменьшить">−</button>
+            <label class="visually-hidden" for="cart-qty-{{ loop.index }}">Количество</label>
+            <input id="cart-qty-{{ loop.index }}" type="text" inputmode="numeric" value="{{ product.quantity }}" data-cart-key="{{ product.cart_id }}" autocomplete="off">
+            <button type="button" data-qty-step="1" aria-label="Увеличить">+</button>
+          </div>
+          <button class="cart-row__remove" type="button" data-cart-remove="{{ product.cart_id }}" aria-label="Удалить {{ product.name }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></svg></button>
+        </div>
+        {% endfor %}
+      </div>
+
+      <aside class="cart-total">
+        <h2 class="subhead">Итого</h2>
+        {% for total in totals %}
+        <div class="cart-total__row{% if loop.last %} cart-total__row--sum{% endif %}"><span>{{ total.title }}</span><span>{{ total.text }}</span></div>
+        {% endfor %}
+
+        <a class="btn btn--action btn--block btn--lg" href="{{ checkout }}">Оформить заказ</a>
+        <button class="btn btn--outline btn--block gap-ms" type="button" data-print-cart><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 9V4h12v5M6 18H4v-6h16v6h-2M8 14h8v6H8z"/></svg> Распечатать список</button>
+        <p class="calc__hint">Список можно распечатать и приехать с ним в магазин.</p>
+      </aside>
+    </div>
+    {% else %}
+    <div class="empty">
+      <h2>Корзина пуста</h2>
+      <p>Выберите товары в каталоге — или позвоните <a class="tel-inline" href="tel:+79638300999">8-963-830-09-99</a>, и мы соберём заказ по телефону.</p>
+      <p class="row-actions">
+        <a class="btn btn--action" href="{{ continue }}">В каталог</a>
+        <a class="btn btn--outline" href="index.php?route=information/contact">Адреса магазинов</a>
+      </p>
+    </div>
+    {% endif %}
+
+    {{ content_bottom }}
+  </div>
+{{ footer }}

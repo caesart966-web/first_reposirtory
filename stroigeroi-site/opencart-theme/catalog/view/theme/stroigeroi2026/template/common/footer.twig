@@ -1,0 +1,178 @@
+{#
+  Подвал. Перенесён из макета; разметка и классы те же, стили рассчитаны
+  на них.
+
+  Колонки перестроены под то, что движок реально отдаёт подвалу. Список
+  разделов каталога сюда не приходит (как и в шапку), поэтому в колонке
+  "Каталог" вместо выдуманного перечня - настоящие адреса: скидки,
+  производители, карта сайта. Первые разделы в неё подставит app.js,
+  взяв их из меню каталога, которое уже есть на странице: один источник,
+  а не два расходящихся списка.
+
+  Колонка "Покупателям" - цикл по informations. Туда попадут ровно те
+  текстовые страницы, которые заказчик завёл в админке: доставка, оплата,
+  возврат, политика. Ничего вписывать руками не нужно, и ни одна ссылка
+  не сможет указать на несуществующую страницу.
+#}
+{#
+  Версия ассетов. Поднимайте на единицу каждый раз, когда заливаете
+  изменённые style.css или app.js, иначе у посетителей останутся старые
+  из кеша браузера - и вы будете смотреть на исправленный сайт, а они нет.
+#}
+{% set asset_v = '1' %}
+</main>
+<footer class="site-footer">
+  <div class="stripe-band stripe-band--thin" aria-hidden="true"></div>
+  <div class="container">
+    <div class="site-footer__grid">
+
+      <div class="footer-brand">
+        <a class="footer-brand__word" href="index.php?route=common/home">{{ name }}</a>
+        <p class="footer-brand__slogan">Наши материалы — ваша уверенность</p>
+        <p class="footer-brand__note">Магазины строительных материалов, инструмента и хозтоваров на Камчатке: две точки в Петропавловске-Камчатском и одна в Елизово.</p>
+        <p class="footer-brand__legal ph ph--inline">Реквизиты организации — нужны от заказчика</p>
+      </div>
+
+      <div class="footer-links">
+        <div class="footer-group">
+          <p class="footer-group__label">Каталог</p>
+          <ul data-fill-categories="4">
+            <li><a href="{{ special }}">Товары со скидкой</a></li>
+            <li><a href="{{ manufacturer }}">Производители</a></li>
+            <li><a href="{{ sitemap }}">Все разделы каталога</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-group">
+          <p class="footer-group__label">Покупателям</p>
+          <ul>
+            {% for information in informations %}
+            <li><a href="{{ information.href }}">{{ information.title }}</a></li>
+            {% endfor %}
+            <li><a href="{{ contact }}">Контакты и магазины</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-group">
+          <p class="footer-group__label">Сервисы</p>
+          <ul>
+            <li><a href="index.php?route=information/calculator">Калькулятор материалов</a></li>
+            <li><a href="index.php?route=checkout/cart">Корзина</a></li>
+            <li><a href="{{ wishlist }}">Избранное</a></li>
+            <li><button class="footer-group__button" type="button" data-modal-open="modal-callback">Заказать звонок</button></li>
+          </ul>
+        </div>
+
+        <div class="footer-group">
+          <p class="footer-group__label">Личный кабинет</p>
+          <ul>
+            <li><a href="{{ account }}">Мой кабинет</a></li>
+            <li><a href="{{ order }}">История заказов</a></li>
+            <li><a href="{{ return }}">Возврат товара</a></li>
+            <li><a href="{{ voucher }}">Подарочные сертификаты</a></li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="site-footer__contacts">
+      <div class="footer-contacts">
+        <p class="footer-group__label">Связаться с нами</p>
+        <ul>
+          <li><a href="tel:+79638300999">8-963-830-09-99</a> — один телефон на все магазины</li>
+          <li><a href="mailto:stroigeroi41@mail.ru">stroigeroi41@mail.ru</a> — почта для заявок</li>
+        </ul>
+      </div>
+      <div class="footer-shops">
+        <p class="footer-group__label">Магазины</p>
+        <ul><li><span>ул. Чубарова, 16, корп. 40</span><em>Петропавловск-Камчатский</em></li><li><span>просп. 50 лет Октября, 17А</span><em>Петропавловск-Камчатский</em></li><li><span>Магистральная ул., 2/2</span><em>Елизово</em></li></ul>
+      </div>
+    </div>
+
+    <div class="site-footer__bottom">
+      <p>© {{ name }} — строительные материалы на Камчатке</p>
+      <p class="site-footer__disclaimer">Вся информация на сайте носит справочный характер и не является публичной офертой. Цены и наличие уточняйте в магазине.</p>
+    </div>
+  </div>
+</footer>
+
+<nav class="mobile-bar" aria-label="Быстрые действия"><div class="mobile-bar__inner"><a class="mobile-bar__item" href="{{ sitemap }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/></svg><span>Каталог</span></a><a class="mobile-bar__item" href="index.php?route=information/calculator"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01"/></svg><span>Расчёт</span></a><a class="mobile-bar__item" href="index.php?route=checkout/cart"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9.5" cy="19.5" r="1.6"/><circle cx="17" cy="19.5" r="1.6"/><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L20 8H6"/></svg><span>Корзина</span><span class="mobile-bar__count" data-count="cart">0</span></a><a class="mobile-bar__item" href="tel:+79638300999"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><span>Позвонить</span></a></div></nav>
+
+<button class="to-top" type="button" data-to-top aria-label="Наверх"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 14 6-6 6 6"/></svg></button>
+
+<section class="cookie" data-cookie hidden aria-label="Использование cookie">
+  <p>Сайт сохраняет в памяти браузера тему оформления, вид списка и содержимое корзины. Эти данные остаются на вашем устройстве.
+  {% if informations %}Подробности — в <a href="{{ informations[0].href }}">политике</a>.{% endif %}</p>
+  <button class="btn btn--primary" type="button" data-cookie-ok>Хорошо</button>
+</section>
+
+<p class="demo-note" data-demo-note hidden role="status" aria-live="polite"></p>
+
+<dialog class="modal" id="modal-callback" aria-labelledby="callback-title">
+  <div class="modal__head">
+    <h2 class="modal__title" id="callback-title">Заказать звонок</h2>
+    <button class="modal__close" type="button" data-modal-close aria-label="Закрыть"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+  </div>
+  <div class="modal__body">
+    <p>Оставьте телефон — перезвоним и поможем подобрать материал или посчитать объём.</p>
+    <form class="form form--bare" data-validate data-callback-form action="index.php?route=information/callback/send" method="post" novalidate>
+      {#
+        Ловушка для роботов. Человек этого поля не видит и не может в него
+        попасть с клавиатуры; заполненным оно приходит только от программы.
+        Обработчик в таком случае молча отвечает «принято», не отправляя
+        письма: робот не должен догадаться, что его распознали.
+      #}
+      <div class="visually-hidden" aria-hidden="true">
+        <label for="cb-company">Организация</label>
+        <input id="cb-company" name="company" type="text" tabindex="-1" autocomplete="off">
+      </div>
+      <div class="form__row">
+        <label for="cb-name">Как вас зовут</label>
+        <input id="cb-name" name="name" type="text" placeholder="Имя" required autocomplete="name">
+        <p class="form__error">Впишите имя</p>
+      </div>
+      <div class="form__row">
+        <label for="cb-phone">Телефон</label>
+        <input id="cb-phone" name="phone" type="tel" placeholder="+7 (___) ___-__-__" data-phone-mask required autocomplete="tel">
+        <p class="form__error">Впишите номер телефона</p>
+      </div>
+      <label class="consent">
+        <input type="checkbox" name="consent" value="1" required>
+        <span>Согласен на <a href="{{ informations ? informations[0].href : '' }}#soglasie">обработку персональных данных</a> и с <a href="{{ informations ? informations[0].href : '' }}">политикой конфиденциальности</a>.</span>
+        <span class="form__error">Без согласия отправить нельзя</span>
+      </label>
+      <button class="btn btn--action btn--block btn--lg" type="submit">Жду звонка</button>
+      <p class="form__success"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m5 13 4 4 10-10"/></svg> Заявка принята — мы перезвоним.</p>
+    </form>
+  </div>
+</dialog>
+
+<dialog class="modal modal--wide" id="modal-quick" aria-labelledby="quick-title">
+  <div class="modal__head">
+    <h2 class="modal__title" id="quick-title">Быстрый просмотр</h2>
+    <button class="modal__close" type="button" data-modal-close aria-label="Закрыть"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+  </div>
+  <div class="modal__body" data-quick-body></div>
+</dialog>
+
+<script src="catalog/view/theme/stroigeroi2026/javascript/app.js?v={{ asset_v }}"></script>
+{% for script in scripts %}
+<script src="{{ script }}"></script>
+{% endfor %}
+{#
+  Предзагрузка страниц. В макете правило ловило все ссылки на .html;
+  здесь так делать НЕЛЬЗЯ: часть адресов движка меняет состояние, и
+  предзагрузка "route=account/logout" просто выкинула бы покупателя
+  из кабинета, ничего ему не сказав. Поэтому перечислены только классы
+  ссылок на разделы каталога - страницы, которые лишь показывают товар.
+  Предварительная отрисовка (prerender) убрана совсем: на динамических
+  страницах она заводит сессии и накручивает счётчики посещений.
+#}
+<script type="speculationrules">
+{
+  "prefetch": [{"source": "document", "where": {"selector_matches": ".catalog-menu__link, .header-quick__link, .mobile-nav__link, .site-logo"}, "eagerness": "moderate"}]
+}
+</script>
+</body>
+</html>

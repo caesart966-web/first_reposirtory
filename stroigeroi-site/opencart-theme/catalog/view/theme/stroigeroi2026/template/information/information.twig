@@ -1,0 +1,41 @@
+{#
+  Текстовая страница: доставка, оплата, возврат, политика, соглашение.
+
+  Содержимое приходит из админки как есть - движок отдаёт его в description.
+  Шаблон только даёт ему оформление: заголовок, крошки и колонку для чтения.
+  Класс legal тот же, что у юридических страниц макета: там уже настроены
+  межстрочный интервал, ширина строки и вид таблиц.
+
+  Тексты доставки, оплаты и возврата заказчик пока не дал. Пустую страницу
+  движок не отдаст - вместо неё встанет вот этот ответ с телефоном.
+#}
+{{ header }}
+  <div class="container">
+
+    {% if breadcrumbs %}
+    <nav class="breadcrumbs" aria-label="Хлебные крошки">
+      <ol>
+        {% for breadcrumb in breadcrumbs %}
+        {% if loop.last %}<li aria-current="page">{{ breadcrumb.text }}</li>{% else %}<li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>{% endif %}
+        {% endfor %}
+      </ol>
+    </nav>
+    {% endif %}
+
+    <div class="page-head">
+      <h1>{{ heading_title }}</h1>
+    </div>
+
+    {{ content_top }}
+
+    <div class="legal">
+      {% if description %}
+      {{ description|raw }}
+      {% else %}
+      <p>Эта страница ещё не заполнена. Позвоните <a class="tel-inline" href="tel:+79638300999">8-963-830-09-99</a> — ответим на любой вопрос о доставке, оплате и возврате.</p>
+      {% endif %}
+    </div>
+
+    {{ content_bottom }}
+  </div>
+{{ footer }}

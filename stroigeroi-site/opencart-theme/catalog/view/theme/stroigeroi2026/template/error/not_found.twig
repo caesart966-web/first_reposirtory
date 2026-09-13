@@ -1,0 +1,33 @@
+{#
+  Страница «не найдено».
+
+  Тупика здесь быть не должно: человек уже ошибся адресом, и единственное,
+  что ему нужно, - выход. Поэтому ссылки на каталог, контакты и телефон,
+  а не одно слово «Ошибка».
+#}
+{{ header }}
+  <div class="container">
+
+    {% if breadcrumbs %}
+    <nav class="breadcrumbs" aria-label="Хлебные крошки">
+      <ol>
+        {% for breadcrumb in breadcrumbs %}
+        {% if loop.last %}<li aria-current="page">{{ breadcrumb.text }}</li>{% else %}<li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>{% endif %}
+        {% endfor %}
+      </ol>
+    </nav>
+    {% endif %}
+
+    <div class="empty">
+      <h1>Такой страницы нет</h1>
+      <p>Возможно, товар убрали из продажи или в адресе опечатка.</p>
+      <p>Найдите нужное через поиск в шапке или загляните в каталог. А проще всего — позвоните: <a class="tel-inline" href="tel:+79638300999">8-963-830-09-99</a>, подскажем, есть ли товар в магазине.</p>
+      <p class="row-actions">
+        <a class="btn btn--action" href="{{ continue }}">На главную</a>
+        <a class="btn btn--outline" href="index.php?route=information/sitemap">Все разделы каталога</a>
+        <a class="btn btn--outline" href="index.php?route=information/contact">Адреса магазинов</a>
+      </p>
+    </div>
+
+  </div>
+{{ footer }}
