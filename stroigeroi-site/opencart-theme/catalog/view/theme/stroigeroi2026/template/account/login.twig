@@ -28,6 +28,8 @@
       <p>Здесь видно историю заказов и отложенные товары. Чтобы просто купить, кабинет не нужен.</p>
     </div>
 
+    {{ content_top }}
+
     {% if success %}<div class="alert alert-success">{{ success }}</div>{% endif %}
     {% if error_warning %}<div class="alert alert-danger">{{ error_warning }}</div>{% endif %}
 
@@ -59,5 +61,6 @@
       </div>
 
     </div>
+    {{ content_bottom }}
   </div>
 {{ footer }}

@@ -27,6 +27,8 @@
       <h1>Сравнение</h1>
     </div>
 
+    {{ content_top }}
+
     {% if products %}
     <div class="table-scroll">
       <table class="data compare-table">
@@ -84,5 +86,6 @@
     </div>
     {% endif %}
 
+    {{ content_bottom }}
   </div>
 {{ footer }}

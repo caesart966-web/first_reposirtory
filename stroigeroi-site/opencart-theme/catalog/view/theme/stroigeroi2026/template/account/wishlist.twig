@@ -25,6 +25,8 @@
       {% if products %}<p>Отложенные товары. Можно распечатать список и приехать с ним в магазин.</p>{% endif %}
     </div>
 
+    {{ content_top }}
+
     {% if products %}
     <div class="product-grid" data-product-grid>
       {% for product in products %}
@@ -61,5 +63,6 @@
     </div>
     {% endif %}
 
+    {{ content_bottom }}
   </div>
 {{ footer }}
