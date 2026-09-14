@@ -28,15 +28,22 @@ for f in sorted(pathlib.Path(sys.argv[1]).rglob('*.twig')):
     # в value="{{ search }}" приходит целая форма поиска, половина
     # разметки вываливается на страницу текстом, и ни Twig, ни движок
     # об этом не сообщают. Ровно на этом мы и обожглись на живом сайте.
-    RENDERED = ('header', 'footer', 'menu', 'cart', 'search', 'language',
-                'currency', 'column_left', 'column_right', 'content_top',
-                'content_bottom', 'pagination', 'captcha', 'modules')
-    # Исключение: в СОБСТВЕННОМ шаблоне модуля переменная означает данные,
-    # а не разметку. В common/cart.twig переменная cart - адрес корзины,
-    # в common/search.twig переменная search - текст запроса. Разметку
-    # они получают снаружи, в шапке, и опасно там, а не здесь.
+    #
+    # Списка два, и это важно. Одни и те же имена означают разное
+    # в разных местах: в шапке cart и search - отрисованные блоки,
+    # а в карте сайта и на страницах каталога это просто адреса ссылок.
+    # Один общий список давал ложные тревоги на наших же файлах.
+    RENDERED_ANYWHERE = ('header', 'footer', 'column_left', 'column_right',
+                         'content_top', 'content_bottom', 'pagination',
+                         'captcha', 'modules')
+    RENDERED_IN_HEADER = ('cart', 'search', 'menu', 'language', 'currency')
+
+    risky = RENDERED_ANYWHERE
+    if f.name == 'header.twig':
+        risky = RENDERED_ANYWHERE + RENDERED_IN_HEADER
+
     for m in re.finditer(r'[\w-]+="[^"]*\{\{\s*(\w+)[^}]*\}\}[^"]*"', raw):
-        if m.group(1) in RENDERED and m.group(1) != f.stem:
+        if m.group(1) in risky:
             line = raw.count('\n', 0, m.start()) + 1
             print(f'{f}:{line}: {{{{ {m.group(1)} }}}} внутри атрибута — '
                   f'там приходит разметка, а не строка'); bad += 1

@@ -269,3 +269,70 @@ textarea.form-control { min-height: 120px; resize: vertical; }
    не будет. Скрывать их правилом НЕЛЬЗЯ: у кнопки, где значок единственное
    содержимое, схлопнулась бы ширина. А если какой-нибудь модуль подключит
    шрифт сам, значки просто появятся. */
+
+/* ===========================================================================
+   Страницы, которых в макете не было
+
+   Карта сайта есть только у движка: в макете такой страницы нет, потому что
+   там все разделы помещались в меню. На живом сайте она оказалась нужна -
+   на неё ведут «Перейти в каталог» с первого экрана, «Все разделы каталога»
+   в подвале и нижняя панель на телефоне.
+
+   Стили здесь, а не в style.css: тот общий с макетом, а этой разметки
+   в макете нет и не будет.
+   =========================================================================== */
+
+.sitemap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--sp-5);
+  margin: var(--sp-6) 0;
+}
+
+.sitemap-group {
+  padding: var(--sp-4);
+  border: 1.5px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  background: var(--sg-white);
+}
+
+.sitemap-group__title {
+  margin: 0 0 var(--sp-3);
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+.sitemap-group__title a {
+  color: var(--sg-blue);
+  text-decoration: none;
+}
+
+.sitemap-group__title a:hover { text-decoration: underline; }
+
+.sitemap-group__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sitemap-group__list li + li { margin-top: var(--sp-2); }
+
+.sitemap-group__list a {
+  display: block;
+  padding: var(--sp-1) 0;
+  min-height: 24px;          /* палец берёт цель, а не промахивается */
+  color: var(--sg-muted);
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.sitemap-group__list a:hover { color: var(--sg-blue); }
+
+.sitemap-extra {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--sp-6);
+  margin: var(--sp-7) 0 var(--sp-6);
+  padding-top: var(--sp-6);
+  border-top: 1.5px solid var(--sg-line);
+}

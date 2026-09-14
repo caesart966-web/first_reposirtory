@@ -1,0 +1,74 @@
+{#
+  Карта сайта.
+
+  У нас это не служебный список ссылок, а «каталог целиком»: на неё ведут
+  кнопка «Перейти в каталог» с первого экрана, «Все разделы каталога»
+  в подвале и нижняя панель на телефоне. Поэтому разделы показаны сеткой,
+  как на главной, а подразделы - списком под каждым.
+
+  Служебные ссылки (кабинет, заказы, возвраты) вынесены вниз отдельным
+  блоком: человек приходит сюда за каталогом, а не за ними.
+#}
+{{ header }}
+  <div class="container">
+
+    {% if breadcrumbs %}
+    <nav class="breadcrumbs" aria-label="Хлебные крошки">
+      <ol>
+        {% for breadcrumb in breadcrumbs %}
+        {% if loop.last %}<li aria-current="page">{{ breadcrumb.text }}</li>{% else %}<li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>{% endif %}
+        {% endfor %}
+      </ol>
+    </nav>
+    {% endif %}
+
+    <div class="page-head">
+      <h1>Все разделы каталога</h1>
+      <p>Весь каталог одним списком. Не нашли нужного — позвоните <a class="tel-inline" href="tel:+79638300999">8-963-830-09-99</a>, на складе бывает больше, чем выгружено на сайт.</p>
+    </div>
+
+    {{ content_top }}
+
+    {% if categories %}
+    <div class="sitemap-grid">
+      {% for category in categories %}
+      <div class="sitemap-group">
+        <h2 class="sitemap-group__title"><a href="{{ category.href }}">{{ category.name }}</a></h2>
+        {% if category.children %}
+        <ul class="sitemap-group__list">
+          {% for child in category.children %}
+          <li><a href="{{ child.href }}">{{ child.name }}</a></li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="sitemap-extra">
+      <div class="footer-group">
+        <p class="footer-group__label">Покупателям</p>
+        <ul>
+          <li><a href="{{ special }}">Товары со скидкой</a></li>
+          <li><a href="{{ cart }}">Корзина</a></li>
+          <li><a href="{{ contact }}">Контакты и магазины</a></li>
+          {% for information in informations %}
+          <li><a href="{{ information.href }}">{{ information.title }}</a></li>
+          {% endfor %}
+        </ul>
+      </div>
+      <div class="footer-group">
+        <p class="footer-group__label">Личный кабинет</p>
+        <ul>
+          <li><a href="{{ account }}">Мой кабинет</a></li>
+          <li><a href="{{ history }}">История заказов</a></li>
+          <li><a href="{{ address }}">Адреса доставки</a></li>
+          <li><a href="{{ password }}">Смена пароля</a></li>
+        </ul>
+      </div>
+    </div>
+
+    {{ content_bottom }}
+  </div>
+{{ footer }}
