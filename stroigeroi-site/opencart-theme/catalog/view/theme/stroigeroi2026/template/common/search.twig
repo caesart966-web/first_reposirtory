@@ -1,0 +1,32 @@
+{#
+  Блок поиска.
+
+  Отдельным шаблоном не для красоты. В OpenCart 3 контроллер шапки делает
+  $data['search'] = $this->load->controller('common/search') - то есть
+  в шапку приходит УЖЕ ОТРИСОВАННЫЙ блок поиска, а не текст запроса.
+  Ровно так же устроены корзина и меню.
+
+  Сначала я этого не знал и подставил {{ search }} прямо в value поля ввода.
+  На живом сайте в это value пришла целая форма: тег разорвался, половина
+  разметки вывалилась на страницу текстом. Ошибка молчаливая - ни Twig,
+  ни движок о ней не сообщают.
+
+  Здесь переменная search - это действительно текст запроса: так её задаёт
+  контроллер common/search. Поэтому набранное человеком остаётся в поле,
+  когда он попадает на страницу результатов.
+
+  Подсказку берём свою, а не text_search из языкового файла: там записано
+  просто "Поиск", а нам нужно подсказать, что именно тут ищут.
+#}
+<form class="search-form" role="search" action="index.php" method="get">
+  <label class="visually-hidden" for="site-search">Поиск товара по названию</label>
+  <input class="search-form__input" id="site-search" name="search" type="search" value="{{ search }}" placeholder="Ищите инструмент, отделку, крепёж и всё для дома" autocomplete="off" data-search-input>
+  <input type="hidden" name="route" value="product/search">
+  <button class="search-form__submit" type="submit" aria-label="Найти"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg></button>
+
+  <div class="search-suggest" data-search-suggest hidden>
+    <p class="search-suggest__title">Популярные разделы</p>
+    <div class="search-suggest__list"></div>
+  </div>
+      </form>
+

@@ -127,17 +127,12 @@
         <svg class="icon-open" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16"/></svg><svg class="icon-close" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg><span>Каталог</span>
       </button>
 
-      <form class="search-form" role="search" action="index.php" method="get">
-        <label class="visually-hidden" for="site-search">Поиск товара по названию</label>
-        <input class="search-form__input" id="site-search" name="search" type="search" value="{{ search }}" placeholder="Ищите инструмент, отделку, крепёж и всё для дома" autocomplete="off" data-search-input>
-        <input type="hidden" name="route" value="product/search">
-        <button class="search-form__submit" type="submit" aria-label="Найти"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg></button>
-
-        <div class="search-suggest" data-search-suggest hidden>
-          <p class="search-suggest__title">Популярные разделы</p>
-          <div class="search-suggest__list"></div>
-        </div>
-      </form>
+      {#
+        Блок поиска приходит отрисованным из контроллера common/search.
+        Нашу разметку ему даёт common/search.twig - так же, как корзине
+        даёт common/cart.twig.
+      #}
+      {{ search }}
 
       <div class="header-actions">
         <a class="header-action" href="{{ wishlist }}"><span class="header-action__icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20s-7-4.4-7-9.4A3.9 3.9 0 0 1 12 7.2 3.9 3.9 0 0 1 19 10.6c0 5-7 9.4-7 9.4Z"/></svg><span class="header-action__count" data-count="fav" data-hide-empty hidden>0</span></span><span class="header-action__label">Избранное</span></a><a class="header-action" href="{{ url_compare }}"><span class="header-action__icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 20V11M12 20V4M18 20v-6"/></svg><span class="header-action__count" data-count="compare" data-hide-empty hidden>0</span></span><span class="header-action__label">Сравнение</span></a>{{ cart }}<a class="header-action" href="{% if logged %}{{ account }}{% else %}{{ login }}{% endif %}"><span class="header-action__icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg></span><span class="header-action__label">{% if logged %}Кабинет{% else %}Войти{% endif %}</span></a>
