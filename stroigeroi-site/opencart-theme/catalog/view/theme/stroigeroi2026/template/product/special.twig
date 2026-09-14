@@ -29,21 +29,31 @@
 
     {{ content_top }}
 
-    <div class="catalog-layout">
+    {#
+      Боковая колонка рисуется, только если ей есть что показать. Пустая
+      рамка с надписью «Каталог» не просто некрасива: она занимает 280 px
+      и отжимает товары вправо. На странице «Товары со скидкой» подразделов
+      нет по определению, а в разделе без подразделов и без фильтров
+      колонка тоже оказывалась пустой.
 
-      <aside class="filters" data-filters aria-label="Разделы">
+      Подпись и кнопка меняются по содержимому: «Разделы», когда внутри
+      подразделы, «Фильтры», когда только модули движка.
+    #}
+    <div class="catalog-layout{% if not column_left %} catalog-layout--wide{% endif %}">
+
+      {% if column_left %}
+      <aside class="filters" data-filters aria-label="Фильтры">
         <div class="filters__head">
-          <h2>Каталог</h2>
+          <h2>Фильтры</h2>
         </div>
-        <button class="btn btn--outline btn--block filters-toggle" type="button" data-filters-toggle aria-expanded="true" aria-controls="filters-body">Показать разделы</button>
+        <button class="btn btn--outline btn--block filters-toggle" type="button" data-filters-toggle aria-expanded="true" aria-controls="filters-body">Показать фильтры</button>
         <div class="filters__body" id="filters-body">
-          {% if column_left %}
           <div class="filter-group column-modules">
             {{ column_left }}
           </div>
-          {% endif %}
         </div>
       </aside>
+      {% endif %}
 
       <div>
         {% if products %}

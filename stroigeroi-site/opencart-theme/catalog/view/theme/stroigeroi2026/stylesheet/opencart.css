@@ -336,3 +336,9 @@ textarea.form-control { min-height: 120px; resize: vertical; }
   padding-top: var(--sp-6);
   border-top: 1.5px solid var(--sg-line);
 }
+
+/* Каталог без боковой колонки. В макете колонка была всегда, потому что
+   фильтры рисовались всегда. На живом сайте она бывает пустой: у раздела
+   нет подразделов, модулей в левую колонку не поставили. Сетка в 280px
+   и 1fr тогда загоняла товары в узкий левый столбец. */
+.catalog-layout--wide { grid-template-columns: 1fr; }
