@@ -342,3 +342,30 @@ textarea.form-control { min-height: 120px; resize: vertical; }
    нет подразделов, модулей в левую колонку не поставили. Сетка в 280px
    и 1fr тогда загоняла товары в узкий левый столбец. */
 .catalog-layout--wide { grid-template-columns: 1fr; }
+
+/* Баннеры из модулей движка. В макете на этих местах стояли свёрстанные
+   промо-блоки; на живом сайте сюда приходят картинки, загруженные
+   заказчиком в админке. Размер у них произвольный, поэтому картинка
+   вписывается в карточку, а не растягивает её. */
+.promo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--sp-4);
+}
+
+.promo-card {
+  display: block;
+  overflow: hidden;
+  border-radius: var(--r-lg);
+  background: var(--sg-bg-soft);
+  line-height: 0;              /* убирает щель под картинкой */
+}
+
+.promo-card img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+a.promo-card { transition: transform .15s ease; }
+a.promo-card:hover { transform: translateY(-2px); }

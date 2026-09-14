@@ -1,0 +1,40 @@
+{#
+  Баннеры (модуль carousel).
+
+  Движок отдаёт banners: у каждого title, link и image. Своего шаблона
+  у нас не было, и баннеры выводились разметкой стандартной темы -
+  без контейнера, во всю ширину окна, вылезая за поля страницы.
+
+  Картинка выводится, ТОЛЬКО если она есть. Это не перестраховка:
+  model_tool_image->resize() возвращает пустую строку, когда файла нет
+  на диске, и в разметку уходит <img src="">. Браузер показывает вместо
+  картинки её подпись - именно так на главной оказались висящие строчки
+  «Строй Герой радиаторы» и «Унитазы и смесители со скидкой 20%».
+  Пустой баннер лучше не показывать вовсе, а недостающие файлы залить
+  заново в админке.
+
+  Ссылка у баннера может быть не задана - тогда это просто картинка,
+  и оборачивать её в <a> нельзя: ссылка в никуда сбивает с толку
+  и мешает тем, кто ходит по сайту с клавиатуры.
+#}
+{% if banners %}
+<section class="section section--tight">
+  <div class="container">
+    <div class="promo-grid">
+      {% for banner in banners %}
+      {% if banner.image %}
+      {% if banner.link %}
+      <a class="promo-card" href="{{ banner.link }}">
+        <img src="{{ banner.image }}" alt="{{ banner.title }}" loading="lazy" decoding="async">
+      </a>
+      {% else %}
+      <div class="promo-card">
+        <img src="{{ banner.image }}" alt="{{ banner.title }}" loading="lazy" decoding="async">
+      </div>
+      {% endif %}
+      {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
