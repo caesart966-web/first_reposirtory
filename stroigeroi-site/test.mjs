@@ -343,7 +343,24 @@ for (const name of ['index', 'catalog', 'checkout', 'contacts', 'login']) {
   await page.evaluate(() => {
     const c = document.querySelector('[data-cookie]');
     if (c) { c.hidden = true; document.body.classList.remove('has-cookie'); }
+
+    /* Карты на странице контактов грузятся с чужого сервера, и попадёт ли
+       кадр под Tab, зависит от того, есть ли на машине интернет: без сети
+       кадр не загружается, браузер не считает его фокусируемым, и проверка
+       его не видит. Из-за этого она молчала о настоящей ошибке — у карты
+       не было видимого фокуса, — и сказала об этом только на сборочной
+       машине, где сеть есть.
+
+       Проверка, результат которой зависит от наличия интернета, бесполезна
+       в обе стороны. Поэтому кадрам подставляется своё содержимое: фокус
+       ведёт себя точно так же, а от сети больше ничего не зависит. */
+    document.querySelectorAll('.shop-card__map').forEach((box) => box.classList.remove('is-mapfail'));
+    document.querySelectorAll('.shop-card__mapframe').forEach((frame) => {
+      frame.removeAttribute('src');
+      frame.setAttribute('srcdoc', '<p>карта</p>');
+    });
   });
+  await page.waitForTimeout(200);
 
   const blind = new Set();
   for (let i = 0; i < 45; i++) {
