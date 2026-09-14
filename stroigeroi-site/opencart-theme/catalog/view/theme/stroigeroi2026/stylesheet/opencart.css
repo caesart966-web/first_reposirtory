@@ -369,3 +369,48 @@ textarea.form-control { min-height: 120px; resize: vertical; }
 
 a.promo-card { transition: transform .15s ease; }
 a.promo-card:hover { transform: translateY(-2px); }
+
+/* --- Кнопки, у которых всё содержимое — значок ------------------------------
+   На стандартных страницах движка (корзина, оформление заказа, кабинет)
+   часть кнопок состоит из одного значка Font Awesome: <button><i class="fa
+   fa-refresh"></i></button>. Наша шапка этот шрифт не подключает - в теме
+   везде свои SVG, - поэтому значок не рисуется, кнопка остаётся пустой,
+   а правила выше красят её в красный. В корзине это выглядело как три
+   красных квадрата без единой буквы.
+
+   Подключать ради них Font Awesome нельзя: 30 КБ стилей и 75 КБ шрифта
+   на КАЖДУЮ страницу сайта ради трёх кнопок на одной.
+
+   Подпись у таких кнопок есть - в атрибуте title, который движок ставит
+   для всплывающей подсказки. Выводим её текстом: кнопка перестаёт быть
+   загадкой и для мыши, и для чтения с экрана.                              */
+.btn-primary:has(> i:only-child) > i,
+.btn-danger:has(> i:only-child) > i,
+.btn-default:has(> i:only-child) > i,
+.btn-info:has(> i:only-child) > i,
+.btn-light:has(> i:only-child) > i { display: none; }
+
+.btn-primary:has(> i:only-child)[title]::after,
+.btn-danger:has(> i:only-child)[title]::after,
+.btn-default:has(> i:only-child)[title]::after,
+.btn-info:has(> i:only-child)[title]::after,
+.btn-light:has(> i:only-child)[title]::after {
+  content: attr(title);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Кнопка вообще без подписи - не оставляем ярко-красный прямоугольник:
+   он читается как призыв к действию, хотя сказать человеку нечего. */
+.btn-primary:has(> i:only-child):not([title]),
+.btn-danger:has(> i:only-child):not([title]),
+.btn-info:has(> i:only-child):not([title]) {
+  background: var(--sg-white);
+  border-color: var(--sg-line);
+  color: var(--sg-muted);
+}
+
+/* Строка количества в корзине движка: поле и кнопки в один ряд,
+   а не в три отдельных блока. */
+.input-group-btn { display: inline-flex; gap: var(--sp-2); }
