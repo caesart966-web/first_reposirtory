@@ -414,3 +414,98 @@ a.promo-card:hover { transform: translateY(-2px); }
 /* Строка количества в корзине движка: поле и кнопки в один ряд,
    а не в три отдельных блока. */
 .input-group-btn { display: inline-flex; gap: var(--sp-2); }
+
+/* ===========================================================================
+   Тёмная тема на страницах движка
+
+   Правила выше я писал, глядя на светлую тему, и задавал только фон.
+   В светлой это сходит с рук: текст остаётся чёрным по умолчанию.
+   В тёмной так нельзя - цвет текста, отделение поверхности от фона
+   и вид полей ввода перестают быть очевидными, и страница оформления
+   заказа превратилась в плоский чёрный лист с еле видимыми надписями.
+
+   Ни одного цвета здесь не записано числом: всё через переменные,
+   которые тёмная тема переопределяет у себя. Поэтому один и тот же
+   набор правил работает в обеих темах.
+   =========================================================================== */
+
+.panel,
+.well,
+.table,
+.form-group,
+.radio,
+.checkbox { color: var(--sg-ink); }
+
+/* Поверхность должна отделяться от фона. В светлой теме это делает тень,
+   в тёмной - светлая кромка сверху: обе лежат в одной переменной. */
+.panel,
+.well { box-shadow: var(--sh-sm); }
+
+.panel-heading {
+  color: var(--sg-ink);
+  font-weight: 700;
+}
+
+.panel-title,
+.panel-heading h1,
+.panel-heading h2,
+.panel-heading h3,
+.panel-heading h4,
+legend {
+  color: var(--sg-ink);
+  font-weight: 700;
+}
+
+legend {
+  padding: 0 0 var(--sp-3);
+  border: 0;
+  font-size: 17px;
+}
+
+/* Поле ввода в тёмной теме без явного цвета текста показывает почти
+   невидимую надпись: браузер берёт свой цвет, а фон уже наш. */
+.form-control {
+  color: var(--sg-ink);
+  background: var(--sg-white);
+}
+
+.form-control::placeholder { color: var(--sg-muted); opacity: 1; }
+
+/* Галочки и переключатели на страницах движка красим фирменным цветом -
+   у наших форм это уже сделано, у чужих нет. */
+.radio input,
+.checkbox input,
+.panel input[type="checkbox"],
+.panel input[type="radio"] { accent-color: var(--sg-blue); }
+
+.table thead th { color: var(--sg-muted); }
+.table th,
+.table td { border-bottom-color: var(--sg-line); }
+.table tfoot td,
+.table tfoot th { color: var(--sg-ink); }
+
+/* --- Крошки движка ---------------------------------------------------------
+   У нас класс breadcrumbs, у движка - breadcrumb, и его разметка это
+   список: без правил он встаёт в столбик. На странице оформления заказа
+   «Главная» и «Оформление заказа» шли двумя этажами.                       */
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  list-style: none;
+  margin: var(--sp-4) 0;
+  padding: 0;
+  font-size: 14px;
+  color: var(--sg-muted);
+}
+
+.breadcrumb li + li::before {
+  content: '/';
+  margin-right: var(--sp-2);
+  color: var(--sg-line);
+}
+
+.breadcrumb a { color: var(--sg-muted); text-decoration: none; }
+.breadcrumb a:hover { color: var(--sg-blue); text-decoration: underline; }
+.breadcrumb li:last-child { color: var(--sg-ink); }
