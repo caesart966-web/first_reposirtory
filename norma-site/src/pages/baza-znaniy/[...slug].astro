@@ -201,6 +201,9 @@ const articleSchema = {
           <div class="side-msgs">
             <a href={SITE.whatsapp} target="_blank" rel="noopener noreferrer" data-goal="click_whatsapp">WhatsApp</a>
             <a href={SITE.telegram} target="_blank" rel="noopener noreferrer" data-goal="click_telegram">Telegram</a>
+            {SITE.maxLink && (
+              <a href={SITE.maxLink} target="_blank" rel="noopener noreferrer" data-goal="click_max">MAX</a>
+            )}
           </div>
         </div>
       </aside>
