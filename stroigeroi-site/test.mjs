@@ -893,6 +893,87 @@ for (const width of [1024, 1280, 1440, 1920]) {
   await ctx.close();
 }
 
+/* Липкая шапка при прокрутке сжимается — и на этом однажды сломалась.
+
+   Сжимаясь, шапка теряет до 95 px высоты. Браузер честно возвращает
+   страницу на место: содержимое над экраном стало короче, и он вычитает
+   ту же величину из прокрутки, чтобы картинка под курсором не прыгнула.
+   С одним порогом получалась карусель — сжались, прокрутка сама упала
+   ниже порога, разжались, прокрутка вернулась, сжались, — десятки раз
+   в секунду. Выглядело как «страница лагает при прокрутке», и увидел
+   это заказчик, а не проверки.
+
+   Проверяем два следствия: шапка переключается один раз за проход,
+   и переключается мгновенно. Плавный переход высоты или ширины стоил бы
+   полного пересчёта раскладки на каждом кадре — под липкой шапкой это
+   пересчёт всей страницы. */
+for (const width of [390, 768, 1280]) {
+  const ctx = await browser.newContext({ viewport: { width, height: 800 } });
+  const page = await ctx.newPage();
+  await page.goto('file://' + path.join(DIR, 'index.html'), { waitUntil: 'load' });
+  await page.waitForTimeout(400);
+
+  await page.evaluate(() => {
+    window.__flips = 0;
+    const header = document.querySelector('[data-header]');
+    let was = header.classList.contains('is-compact');
+    const tick = () => {
+      const now = header.classList.contains('is-compact');
+      if (now !== was) { window.__flips++; was = now; }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+
+  /* Колесом, а не window.scrollTo: поправку прокрутки браузер вносит
+     только на настоящий ввод, и программной прокруткой эту ошибку
+     не увидеть — мы сами перетираем его поправку каждым кадром. */
+  await page.mouse.move(Math.round(width / 2), 400);
+  for (let i = 0; i < 16; i++) {
+    await page.mouse.wheel(0, 30);
+    await page.waitForTimeout(70);
+  }
+  await page.waitForTimeout(300);
+  const down = await page.evaluate(() => window.__flips);
+  if (down > 1) fail(`шапка (${width}px): при прокрутке вниз переключилась ${down} раз вместо одного`);
+
+  await page.evaluate(() => { window.__flips = 0; });
+  for (let i = 0; i < 16; i++) {
+    await page.mouse.wheel(0, -30);
+    await page.waitForTimeout(70);
+  }
+  await page.waitForTimeout(300);
+  const up = await page.evaluate(() => window.__flips);
+  if (up > 1) fail(`шапка (${width}px): при прокрутке вверх переключилась ${up} раз вместо одного`);
+
+  const slow = await page.evaluate(() => {
+    const parts = ['.site-header', '.header-util', '.stripe-band', '.header-main',
+      '.header-main__inner', '.header-quick', '.site-logo img'];
+    const heavy = /^(all|width|height|padding|margin|inset|top|left|right|bottom)/;
+    const found = [];
+    for (const sel of parts) {
+      const el = document.querySelector(sel);
+      if (!el) continue;
+      const css = getComputedStyle(el);
+      /* transition-property сам по себе ничего не значит: без перехода
+         он равен `all`, это его начальное значение. Смотреть надо пару
+         «свойство + длительность». */
+      const props = css.transitionProperty.split(',').map((x) => x.trim());
+      const times = css.transitionDuration.split(',').map((x) => parseFloat(x) || 0);
+      props.forEach((prop, i) => {
+        const time = times[i % times.length] || 0;
+        if (time > 0 && heavy.test(prop)) found.push(`${sel} → ${prop} ${time}s`);
+      });
+    }
+    return found;
+  });
+  for (const f of slow) {
+    fail(`шапка (${width}px): переход, пересчитывающий раскладку каждый кадр: ${f}`);
+  }
+
+  await ctx.close();
+}
+
 await browser.close();
 
 /* ==========================================================================

@@ -197,12 +197,36 @@
      ====================================================================== */
   var header = $('[data-header]');
   if (header) {
+    /* Два порога, а не один, и это главное в этом куске.
+
+       Шапка при сжатии теряет до 95 px высоты. Браузер честно возвращает
+       страницу на место: содержимое над экраном стало короче - он вычитает
+       ту же величину из прокрутки, чтобы картинка под курсором не прыгнула
+       (это называется scroll anchoring, и выключать его не надо). А дальше
+       с одним порогом получалась карусель: на 150 шапка сжимается,
+       прокрутка сама становится 55, 55 меньше порога - шапка разжимается,
+       прокрутка возвращается на 150, и так десятки раз в секунду.
+       Заказчик это увидел сразу: «прокручиваю - начинает быстро лагать».
+
+       Разница между порогами (140) заведомо больше самого большого сжатия
+       (95 px на широком экране, 48 на планшете, 44 на телефоне), поэтому
+       после каждого переключения прокрутка остаётся по ту же сторону
+       от второго порога. Стережёт test.mjs: он крутит колесо настоящей
+       мышью и считает переключения - должно быть ровно одно. */
+    var COMPACT_ON = 220;
+    var COMPACT_OFF = 80;
+    var compact = false;
     var ticking = false;
     var onScroll = function () {
       if (ticking) return;
       ticking = true;
       requestAnimationFrame(function () {
-        header.classList.toggle('is-compact', window.scrollY > 140);
+        var y = window.scrollY;
+        var want = compact ? y > COMPACT_OFF : y > COMPACT_ON;
+        if (want !== compact) {
+          compact = want;
+          header.classList.toggle('is-compact', compact);
+        }
         ticking = false;
       });
     };
@@ -216,9 +240,15 @@
        на планшете 142, и всё, к чему переходили по ссылке, оказывалось
        под ней. Шапка ещё и ужимается при прокрутке, поэтому высота
        меряется наблюдателем, а не один раз при загрузке. */
+    var lastHeight = -1;
     var publishHeight = function () {
-      document.documentElement.style.setProperty(
-        '--header-now', Math.round(header.getBoundingClientRect().height) + 'px');
+      var h = Math.round(header.getBoundingClientRect().height);
+      if (h === lastHeight) return;
+      /* Запись в переменную на <html> заставляет браузер пересчитать стили
+         всей страницы, поэтому пишем только когда высота действительно
+         изменилась, а не на каждый кадр перехода. */
+      lastHeight = h;
+      document.documentElement.style.setProperty('--header-now', h + 'px');
     };
     if ('ResizeObserver' in window) {
       new ResizeObserver(publishHeight).observe(header);

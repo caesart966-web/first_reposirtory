@@ -49,12 +49,21 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="catalog/view/theme/stroigeroi2026/image/logo.png" type="image/png">
 <link rel="apple-touch-icon" href="catalog/view/theme/stroigeroi2026/image/logo.png">
-<link rel="preload" href="catalog/view/theme/stroigeroi2026/stylesheet/style.css" as="style">
-<link rel="stylesheet" href="catalog/view/theme/stroigeroi2026/stylesheet/style.css">
+{#
+  Отпечаток содержимого стилей и скрипта. Проставляет build.mjs, руками
+  не правится. Без него браузер держит старый style.css сколько захочет:
+  после каждой правки оформления заказчику приходилось объяснять, что надо
+  нажать Ctrl+F5, - а на телефоне такой кнопки нет вовсе.
+  Число одно на все три файла: обновился любой - адрес меняется у всех,
+  зато нельзя забыть какой-то из них.
+#}
+{% set asset_v = '422bce3e' %}
+<link rel="preload" href="catalog/view/theme/stroigeroi2026/stylesheet/style.css?v={{ asset_v }}" as="style">
+<link rel="stylesheet" href="catalog/view/theme/stroigeroi2026/stylesheet/style.css?v={{ asset_v }}">
 {# Правки под разметку, которую рисует сам движок: постраничная
    навигация, сообщения об ошибках, стандартные модули. Отдельным
    файлом, потому что style.css общий с макетом. Идёт ПОСЛЕ него. #}
-<link rel="stylesheet" href="catalog/view/theme/stroigeroi2026/stylesheet/opencart.css">
+<link rel="stylesheet" href="catalog/view/theme/stroigeroi2026/stylesheet/opencart.css?v={{ asset_v }}">
 {% for style in styles %}
 <link href="{{ style.href }}" type="text/css" rel="{{ style.rel }}" media="{{ style.media }}">
 {% endfor %}

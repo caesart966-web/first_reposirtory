@@ -364,10 +364,54 @@ if (/(?:src|href)="assets\//.test(preview)) {
 }
 
 /* ==========================================================================
+   4. Тема OpenCart берёт те же стили и тот же скрипт
+   ========================================================================== */
+
+/* Тема живёт своей копией style.css и app.js: движок отдаёт их
+   из catalog/view/theme/…, а не из папки assets. Копии делались руками,
+   и это ровно та ошибка, которую здесь принято ловить заранее: правку
+   в макете видно сразу, а на живом сайте всё по-старому, и причину
+   искать негде - файлы называются одинаково.
+
+   Отпечаток подставляется тот же, что и в макете. Раньше в шаблоне
+   стояло `asset_v = '1'`, и после каждой правки стилей заказчику
+   приходилось объяснять, что надо нажать Ctrl+F5. */
+
+const THEME_DIR = 'opencart-theme/catalog/view/theme/stroigeroi2026';
+const COPIES = [
+  ['assets/style.css', `${THEME_DIR}/stylesheet/style.css`],
+  ['assets/app.js', `${THEME_DIR}/javascript/app.js`],
+];
+
+for (const [from, to] of COPIES) {
+  write(to, read(from));
+}
+
+/* Отпечаток один на все три файла темы: style.css, opencart.css и app.js.
+   Шапка и подвал рисуются движком по отдельности, своими вызовами, поэтому
+   `asset_v` объявляется в каждом шаблоне — значение одно и то же. */
+const assetV = md5(Buffer.concat([
+  readBin('assets/style.css'),
+  readBin(`${THEME_DIR}/stylesheet/opencart.css`),
+  readBin('assets/app.js'),
+]));
+
+for (const tpl of ['header', 'footer']) {
+  const file = `${THEME_DIR}/template/common/${tpl}.twig`;
+  const mark = /\{% set asset_v = '[^']*' %\}/;
+  if (!mark.test(read(file))) {
+    problems.push(`в ${tpl}.twig нет строки {% set asset_v = … %} — тема потеряет отпечаток стилей`);
+    continue;
+  }
+  write(file, read(file).replace(mark, `{% set asset_v = '${assetV}' %}`));
+}
+
+/* ==========================================================================
    Итог
    ========================================================================== */
 
 console.log(`Отпечатки: style.css ?v=${cssFingerprint}, app.js ?v=${jsFingerprint}`);
+console.log(`Тема OpenCart: asset_v = ${assetV}`);
 console.log(`Превью: ${(Buffer.byteLength(preview) / 1024 / 1024).toFixed(2)} МБ, ${PAGES.length} страниц`);
 
 if (changed.length) {

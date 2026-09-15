@@ -505,7 +505,9 @@ ul {
 .site-logo img {
   width: 64px;
   height: 64px;
-  transition: width 0.18s ease, height 0.18s ease;
+  /* Без перехода: ширина и высота пересчитывают раскладку каждый кадр,
+     а знак стоит в липкой шапке - вместе с ним пересчитывается страница.
+     Сжатие шапки происходит за один кадр, см. «Липкая шапка» ниже. */
 }
 
 .site-logo__word {
@@ -3280,10 +3282,11 @@ html {
   top: 0;
 }
 
-.site-header .header-util,
-.site-header .stripe-band {
-  transition: height 0.2s ease, opacity 0.2s ease;
-}
+/* Переходов здесь нарочно нет. Высота и ширина - те свойства, из-за
+   которых браузер пересчитывает раскладку заново на каждом кадре, а шапка
+   липкая: под ней пересчитывается вся страница. Двести миллисекунд плавного
+   сжатия стоили двенадцати полных пересчётов подряд. Сжатие происходит
+   мгновенно, за один кадр. */
 
 .site-header.is-compact .header-util {
   height: 0;
@@ -3308,11 +3311,6 @@ html {
 .site-header.is-compact .site-logo img {
   width: 48px;
   height: 48px;
-  transition: width 0.2s ease, height 0.2s ease;
-}
-
-.site-logo img {
-  transition: width 0.2s ease, height 0.2s ease;
 }
 
 /* Переключатель темы */
