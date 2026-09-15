@@ -67,4 +67,29 @@ for f in sorted(pathlib.Path(sys.argv[1]).rglob('*.twig')):
     if s.count('{#') != s.count('#}'):
         print(f'{f}: разное число {{# и #}}'); bad += 1
     print(f'  ok  {f.name}  ({len(raw.splitlines())} строк)')
+
+# --- Договор темы с движком -------------------------------------------------
+# Шапка обязана подключать библиотеки движка ДО петли со скриптами
+# расширений. Своей вёрстке они не нужны - весь наш javascript обходится
+# без библиотек, - но на них рассчитывает всё, что ставится расширениями.
+#
+# Мы на этом уже попались: jQuery в шапке не было, и simple.js,
+# simplecheckout.js, live_search.js и файлы OCFilter падали на первой
+# строке - молча, ещё до того как что-нибудь связать с кнопками.
+# На оформлении заказа не работали «+», «−», «Обновить» и «Подтвердить
+# заказ»: заказ с сайта было не оформить вообще. Из разметки этого
+# не видно, в журналах сервера тоже - ошибка живёт только в браузере.
+header = pathlib.Path(sys.argv[1], 'catalog/view/theme/stroigeroi2026/template/common/header.twig')
+if header.exists():
+    src = header.read_text(encoding='utf-8')
+    loop = src.find('{% for script in scripts %}')
+    for lib, why in (('jquery', 'на нём написаны все расширения'),
+                     ('common.js', 'в нём $.fn.autocomplete для живого поиска и объект cart')):
+        at = src.find(lib)
+        if at < 0:
+            print(f'header.twig: не подключён {lib} — {why}'); bad += 1
+        elif loop >= 0 and at > loop:
+            print(f'header.twig: {lib} подключается ПОСЛЕ скриптов расширений — '
+                  f'им он нужен раньше'); bad += 1
+
 sys.exit(1 if bad else 0)

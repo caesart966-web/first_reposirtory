@@ -1075,3 +1075,90 @@ legend {
   .simplecheckout-button-block { flex-direction: column; align-items: stretch; }
   .simplecheckout-button-block .btn { width: 100%; }
 }
+
+/* ===========================================================================
+   Окна расширений (Bootstrap)
+
+   Таблицу стилей Bootstrap тема не подключает - вся наша вёрстка своя,
+   и 150 КБ чужих правил на каждую страницу ради двух окон не нужны.
+   А вот скрипт Bootstrap подключён: без него падают расширения, которые
+   зовут .modal() и .tooltip(). Скрипт показывает окно, ставя ему
+   display: block, - и без стилей содержимое вываливалось бы прямо
+   в страницу, посреди текста.
+
+   Поэтому здесь минимум, которого хватает окну: подложка, положение
+   по центру, карточка. Селекторы начинаются с div нарочно: наши
+   собственные окна - это <dialog class="modal">, у них своё оформление
+   в style.css, и общее правило .modal сломало бы их.
+   =========================================================================== */
+
+div.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  display: none;
+  overflow: auto;
+  padding: var(--sp-4);
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1040;
+  background: rgba(1, 11, 135, 0.45);
+}
+
+body.modal-open { overflow: hidden; }
+
+div.modal .modal-dialog {
+  max-width: 520px;
+  margin: 6vh auto;
+}
+
+div.modal .modal-content {
+  overflow: hidden;
+  border: 1.5px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  background: var(--sg-white);
+  box-shadow: var(--sh-lg);
+}
+
+div.modal .modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5);
+  border-bottom: 1.5px solid var(--sg-line);
+  background: var(--sg-bg-soft);
+}
+
+div.modal .modal-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+div.modal .modal-body { padding: var(--sp-5); }
+
+div.modal .modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5);
+  border-top: 1.5px solid var(--sg-line);
+}
+
+div.modal .close {
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--sg-muted);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+div.modal .close:hover { color: var(--sg-red); }
