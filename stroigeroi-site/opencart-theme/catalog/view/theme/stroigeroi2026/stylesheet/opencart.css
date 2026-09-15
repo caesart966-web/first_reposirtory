@@ -569,3 +569,509 @@ legend {
 .breadcrumb a { color: var(--sg-muted); text-decoration: none; }
 .breadcrumb a:hover { color: var(--sg-blue); text-decoration: underline; }
 .breadcrumb li:last-child { color: var(--sg-ink); }
+
+/* ===========================================================================
+   Оформление заказа — модуль Simple (simplecheckout)
+
+   Это единственная страница сайта, которую рисует не движок и не мы,
+   а стороннее расширение: корзина, доставка, оплата и личные данные
+   на одном экране. Своей разметки у нас там нет и быть не может -
+   шаблон принадлежит модулю, и переписывать его нельзя: обновление
+   модуля снесёт правки, а оформление заказа - единственное место
+   на сайте, где поломка стоит денег.
+
+   Поэтому здесь только оформление, по классам самого модуля. Имена
+   взяты из его simple.css, а не придуманы.
+
+   ВАЖНО про порядок подключения: стили расширений в header.twig идут
+   ПЕРЕД нашими. Пока было наоборот, simple.css перебивал каждое правило
+   отсюда с той же силой, и страница оставалась ровно такой, какой её
+   задумал автор модуля.
+   =========================================================================== */
+
+/* --- Столкновение имён -----------------------------------------------------
+   Класс .price у нас - крупная красная цена в карточке товара. У модуля
+   .price - обычная ячейка таблицы. Без этого правила цены в корзине
+   выходили красными и в полтора раза крупнее названия товара. */
+.simplecheckout-cart th.price,
+.simplecheckout-cart th.total,
+.simplecheckout-cart td.price,
+.simplecheckout-cart td.total {
+  font-size: 15px;
+  color: var(--sg-ink);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.simplecheckout-cart td.total { font-weight: 700; }
+.simplecheckout-cart td.price { font-weight: 400; color: var(--sg-muted); }
+
+/* --- Блок: шапка и тело одной карточкой ----------------------------------- */
+.simplecheckout-block { margin-bottom: var(--sp-5); }
+
+.simple-content .checkout-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5);
+  border: 1.5px solid var(--sg-line);
+  border-bottom: 0;
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  background: var(--sg-bg-soft);
+  color: var(--sg-ink);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+/* Флоты модуля внутри flex-контейнера не действуют - и хорошо:
+   «Очистить корзину» встаёт в правый край сама, без обтекания.
+   А вот чистку после флотов убрать обязательно: ::after у модуля
+   становится третьим элементом строки и забирает правый край себе,
+   из-за чего «Очистить корзину» оказывалась посреди шапки. */
+.simple-content .checkout-heading::after { display: none; }
+.checkout-heading span { float: none; }
+.checkout-heading-button { float: none !important; }
+
+.checkout-heading-button a {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--sg-muted);
+}
+
+.checkout-heading-button a:hover { color: var(--sg-red); }
+
+.simple-content .simplecheckout-block-content {
+  padding: var(--sp-5);
+  border: 1.5px solid var(--sg-line);
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
+  background: var(--sg-white);
+}
+
+/* Комментарий к заказу модуль намеренно оставляет без рамки (!important
+   в его стилях), поэтому рамку возвращаем той же силой. */
+#simplecheckout_comment .simplecheckout-block-content {
+  padding: var(--sp-5) !important;
+  border: 1.5px solid var(--sg-line) !important;
+}
+
+#simplecheckout_comment textarea { min-height: 96px; }
+
+/* --- Таблица корзины ------------------------------------------------------- */
+.simplecheckout-cart {
+  border: 0;
+  margin: 0 0 var(--sp-5) !important;
+}
+
+.simplecheckout-cart th {
+  padding: 0 var(--sp-3) var(--sp-3);
+  border-bottom: 1.5px solid var(--sg-line);
+  background: none;
+  color: var(--sg-muted);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.simplecheckout-cart td {
+  padding: var(--sp-4) var(--sp-3);
+  border-bottom: 1px solid var(--sg-line);
+  vertical-align: middle;
+}
+
+.simplecheckout-cart tr:last-child td { border-bottom: 0; }
+
+/* Ширины колонок. У модуля они в процентах и рассчитаны на его же
+   вёрстку: фотография 5 %, модель и цена по 10 %. На широком экране
+   название товара получало половину строки, а количество - четверть. */
+.simplecheckout-cart col.image { width: 84px; }
+.simplecheckout-cart col.model { width: 1%; }
+.simplecheckout-cart col.quantity { width: 1%; }
+.simplecheckout-cart col.price { width: 1%; }
+.simplecheckout-cart col.total { width: 1%; }
+
+.simplecheckout-cart th.image,
+.simplecheckout-cart td.image { padding-left: 0; }
+
+.simplecheckout-cart td.image img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-md);
+  background: var(--sg-white);
+}
+
+/* Название товара модуль ставит по центру ячейки. В списке из нескольких
+   строк это читается хуже всего: начала названий не выстраиваются
+   в колонку, и глазу не за что зацепиться. */
+.simplecheckout-cart th.name,
+.simplecheckout-cart td.name {
+  text-align: left;
+  white-space: normal;
+}
+
+.simplecheckout-cart td.name a {
+  font-weight: 600;
+  color: var(--sg-ink);
+  line-height: 1.35;
+}
+
+.simplecheckout-cart td.name a:hover { color: var(--sg-blue); }
+
+.simplecheckout-cart th.model,
+.simplecheckout-cart td.model {
+  text-align: left;
+  color: var(--sg-muted);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.simplecheckout-cart th.price,
+.simplecheckout-cart th.total,
+.simplecheckout-cart th.quantity { text-align: right; }
+
+.simplecheckout-cart td.price,
+.simplecheckout-cart td.total { text-align: right; }
+
+/* --- Количество: минус, поле, плюс и «убрать» ------------------------------
+   Было четыре одинаковых прямоугольника в ряд, из которых поле занимало
+   всю ширину ячейки, а кнопки переносились на вторую строку и наезжали
+   на цену. Теперь это три части одного счётчика и отдельная кнопка
+   «убрать» - она не участвует в подсчёте и стоит поодаль. */
+.simplecheckout-cart td.quantity {
+  min-width: 0;
+  text-align: right;
+}
+
+.simplecheckout-cart td.quantity .input-group,
+.simplecheckout-cart td.quantity .quantity {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  width: auto;
+  margin: 0 !important;
+}
+
+.simplecheckout-cart td.quantity .input-group-btn {
+  display: inline-flex;
+  gap: var(--sp-1);
+}
+
+.simplecheckout-cart td.quantity .form-control {
+  width: 52px;
+  min-width: 52px;
+  height: 40px;
+  padding: 0;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.simplecheckout-cart td.quantity .btn {
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
+  border: 1.5px solid var(--sg-line);
+  border-radius: var(--r-md);
+  background: var(--sg-white);
+  color: var(--sg-ink);
+  font-size: 16px;
+}
+
+.simplecheckout-cart td.quantity .btn:hover {
+  border-color: var(--sg-blue);
+  color: var(--sg-blue);
+  background: var(--sg-white);
+}
+
+/* «Убрать строку» — не действие, за которым человек пришёл. Никакой
+   заливки, никакого красного: серый крестик, краснеющий под курсором. */
+.simplecheckout-cart td.quantity .btn[data-onclick="removeProduct"],
+.simplecheckout-cart td.remove .btn {
+  margin-left: var(--sp-3);
+  border-color: transparent;
+  color: var(--sg-muted);
+}
+
+.simplecheckout-cart td.quantity .btn[data-onclick="removeProduct"]:hover,
+.simplecheckout-cart td.remove .btn:hover {
+  border-color: var(--sg-red);
+  color: var(--sg-red);
+}
+
+/* --- Итоги ----------------------------------------------------------------
+   У модуля каждая строка итога - блок во всю ширину с прижатым вправо
+   текстом. При широкой таблице слева оставалось полстроки пустоты,
+   и «Итого» висело в воздухе. Собираем итоги в узкую колонку справа. */
+#simplecheckout_cart .simplecheckout-cart-total {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-4);
+  max-width: 420px;
+  margin-left: auto;
+  padding: var(--sp-3) var(--sp-4);
+  border: 0;
+  border-top: 1px solid var(--sg-line);
+  background: var(--sg-bg-soft);
+  text-align: right;
+}
+
+/* Итоги собраны в одну карточку, а не висят строками справа от пустоты:
+   под таблицей во всю ширину слева оставалось полэкрана белого поля,
+   и «Всего» читалось потерянным. Скругление берут крайние строки. */
+#simplecheckout_cart .simplecheckout-cart-total:first-of-type {
+  border-top: 0;
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+}
+
+#simplecheckout_cart .simplecheckout-cart-total:last-of-type {
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
+}
+
+.simplecheckout-cart-total-value {
+  min-width: 0;
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Общая сумма — то, ради чего человек смотрит на этот блок. */
+#total_total {
+  font-size: 18px;
+  border-top: 1.5px solid var(--sg-line) !important;
+}
+
+#total_total .simplecheckout-cart-total-value {
+  font-size: 22px;
+  color: var(--sg-red);
+}
+
+/* Купон и сертификат: поле в 100 px не вмещает даже короткого кода. */
+.simplecheckout-cart-total span.inputs { margin: 0 !important; }
+
+.simplecheckout-cart-total input[type="text"] {
+  max-width: 220px;
+  width: 220px;
+  height: 44px;
+  background: var(--sg-white);
+}
+
+#simplecheckout_cart .simplecheckout-cart-buttons {
+  grid-template-columns: 1fr;
+  justify-items: end;
+  padding-top: var(--sp-4);
+}
+
+#simplecheckout_cart .simplecheckout-cart-buttons .buttons { margin: 0; }
+
+/* «Обновить» пересчитывает корзину — это не то действие, ради которого
+   человек пришёл. Красная кнопка на странице должна быть одна:
+   «Подтвердить заказ». Две одинаково яркие заставляют выбирать. */
+#simplecheckout_cart .simplecheckout-cart-buttons .btn-primary {
+  background: var(--sg-white);
+  border-color: var(--sg-line);
+  color: var(--sg-ink);
+}
+
+#simplecheckout_cart .simplecheckout-cart-buttons .btn-primary:hover {
+  border-color: var(--sg-blue);
+  color: var(--sg-blue);
+  background: var(--sg-white);
+}
+
+/* Подписи в итогах выравниваются по левому краю своей колонки:
+   «Подарочный сертификат» в две строки прижимался к полю ввода
+   и выглядел его частью. */
+#simplecheckout_cart .simplecheckout-cart-total > span:first-child { text-align: left; }
+
+/* --- Доставка и оплата ----------------------------------------------------- */
+.simplecheckout-methods-table { border-collapse: collapse; }
+
+.simplecheckout-methods-table td {
+  padding: var(--sp-3) var(--sp-2);
+  border-bottom: 1px solid var(--sg-line);
+  vertical-align: middle;
+}
+
+.simplecheckout-methods-table tr:last-child td { border-bottom: 0; }
+
+.simplecheckout-methods-table td.code { width: 28px; }
+
+.simplecheckout-methods-table td.code input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--sg-blue);
+}
+
+.simplecheckout-methods-table td.title label {
+  min-height: 24px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.simplecheckout-methods-table td.quote {
+  text-align: right;
+  font-weight: 700;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Браузер рисует у fieldset свою рамку и отступы. Внутри карточки блока
+   получалась рамка в рамке: коробка вокруг «Самовывоз из магазина»
+   и вокруг полей личных данных. */
+.simplecheckout-block-content fieldset,
+.simpleregister-block-content fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.simplecheckout-block-content fieldset h3 {
+  margin: 0 0 var(--sp-2);
+  font-size: 15px;
+  color: var(--sg-muted);
+  font-weight: 600;
+}
+
+.simplecheckout-block-content fieldset + fieldset { margin-top: var(--sp-5); }
+
+/* --- Ошибки и предупреждения ---------------------------------------------- */
+.simplecheckout-error-text,
+.simplecheckout-rule {
+  display: block;
+  margin-top: var(--sp-1);
+  color: var(--sg-red);
+  font-size: 14px;
+}
+
+.simplecheckout-required { color: var(--sg-red); }
+
+.simplecheckout-warning-block,
+.simpleregister-warning-block {
+  padding: var(--sp-3) var(--sp-4);
+  border: 1.5px solid var(--sg-line);
+  border-left: 4px solid var(--sg-red);
+  border-radius: var(--r-md);
+  background: var(--sg-red-tint);
+  color: var(--sg-ink);
+}
+
+/* --- Кнопки внизу ---------------------------------------------------------- */
+.simplecheckout-button-block,
+.simpleregister-button-block {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding: 0;
+  margin-top: var(--sp-5);
+  background: none;
+}
+
+.simplecheckout-button-left,
+.simplecheckout-button-right,
+.simpleregister-button-left,
+.simpleregister-button-right { float: none; }
+
+#simplecheckout_button_confirm { min-height: 54px; padding: 0 var(--sp-6); font-size: 16px; }
+
+/* --- Две колонки ----------------------------------------------------------
+   Модуль расставляет их флотами с процентами. Флоты не выравнивают
+   колонки по высоте и требуют чистки после себя; сетка делает то же самое
+   без обоих недостатков. Правило работает, только когда колонки в вёрстке
+   есть: сейчас магазин собран в одну. */
+@media (min-width: 1025px) {
+  .simplecheckout:has(> .simplecheckout-left-column) {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: var(--sp-5);
+    align-items: start;
+  }
+
+  .simplecheckout > .simplecheckout-left-column,
+  .simplecheckout > .simplecheckout-right-column {
+    float: none;
+    width: auto;
+    max-width: none;
+    min-width: 0;
+    margin: 0;
+  }
+}
+
+/* --- Телефон --------------------------------------------------------------
+   Ниже 640 px модуль сам убирает фотографию, модель и цену за штуку,
+   оставляя название, количество и сумму, — и это разумно. Остаётся
+   развернуть строку в карточку: в 390 px три колонки со счётчиком
+   не помещаются ни при каком кегле. */
+@media (max-width: 640px) {
+  .simplecheckout-cart thead { display: none; }
+
+  .simplecheckout-cart,
+  .simplecheckout-cart tbody,
+  .simplecheckout-cart td { display: block; width: auto; }
+
+  /* Строка становится карточкой: название во всю ширину, под ним слева
+     счётчик, справа сумма. Раскладку держит сетка, а не отрицательные
+     отступы: с ними карточка рассыпается от любого второго названия
+     в три строки. */
+  .simplecheckout-cart tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-4) 0;
+    border-bottom: 1px solid var(--sg-line);
+  }
+
+  .simplecheckout-cart td {
+    padding: 0;
+    border: 0;
+  }
+
+  .simplecheckout-cart td.name {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sp-3);
+  }
+
+  .simplecheckout-cart td.name div.image { flex: none; }
+
+  .simplecheckout-cart td.name div.image img {
+    width: 56px;
+    height: 56px;
+    object-fit: contain;
+    border: 1px solid var(--sg-line);
+    border-radius: var(--r-md);
+  }
+
+  .simplecheckout-cart td.quantity { justify-self: start; text-align: left; }
+  .simplecheckout-cart td.total { justify-self: end; font-size: 17px; }
+
+  /* Плюс и минус модуль на телефоне прячет, оставляя ввод числа руками.
+     На телефоне всё наоборот: попасть пальцем в кнопку легко, а вызвать
+     клавиатуру, стереть цифру и напечатать новую - целое дело. */
+  .simplecheckout-cart td.quantity [data-onclick*="increase"],
+  .simplecheckout-cart td.quantity [data-onclick*="decrease"] {
+    display: inline-flex !important;
+  }
+
+  /* Итоги во всю ширину. Строки с полем ввода складываются в два этажа:
+     «Подарочный сертификат» и поле в 220 px рядом не помещаются в 390 px
+     ни при каком кегле - подпись обрезалась на середине слова. */
+  #simplecheckout_cart .simplecheckout-cart-total { max-width: none; }
+
+  #simplecheckout_cart .simplecheckout-cart-total:has(input[type="text"]) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-2);
+  }
+
+  .simplecheckout-cart-total input[type="text"] { width: 100%; max-width: none; }
+
+  .simplecheckout-button-block { flex-direction: column; align-items: stretch; }
+  .simplecheckout-button-block .btn { width: 100%; }
+}
