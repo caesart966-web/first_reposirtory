@@ -75,16 +75,65 @@ const check = (ok, name, detail = '') => {
   const menuHiddenAtStart = await page.locator('#mobile-menu').isHidden()
   check(menuHiddenAtStart, 'Мобильное меню закрыто при загрузке')
 
-  await page.locator('.burger').click()
+  // Открываем меню не с самого верха: ровно в этом положении и вылезали
+  // обе ошибки ниже.
+  await page.evaluate(() => window.scrollTo({ top: 1200, behavior: 'instant' }))
   await page.waitForTimeout(200)
+
+  await page.locator('.burger').click()
+  await page.waitForTimeout(300)
   check(await page.locator('#mobile-menu').isVisible(), 'Меню открывается по кнопке')
 
-  const scrollLocked = await page.evaluate(() => document.body.style.overflow === 'hidden')
-  check(scrollLocked, 'При открытом меню страница за ним не прокручивается')
+  // ПРОКРУТКА ФОНА. Раньше здесь стояло document.body.style.overflow === 'hidden',
+  // и проверка проходила всегда — потому что смотрела на записанное свойство,
+  // а не на то, едет ли страница. А страница ехала: на телефоне прокручивается
+  // <html>, и одного overflow на body не хватает. Теперь крутим по-настоящему.
+  const savedPx = await page.evaluate(() => document.body.style.top)
+  await page.mouse.wheel(0, 900)
+  await page.waitForTimeout(300)
+  const stillLocked = await page.evaluate(() => document.body.style.top)
+  check(
+    !!savedPx && savedPx === stillLocked,
+    'При открытом меню страница за ним не прокручивается',
+    `смещение было ${savedPx || '(не задано)'}, стало ${stillLocked || '(не задано)'}`,
+  )
+
+  // ЩЕЛЬ СВЕРХУ. Меню лежит внутри шапки и раньше начиналось с 68-й точки,
+  // рассчитывая, что верх закроет липкая шапка. Но фиксация прокрутки ломает
+  // position: sticky, шапка уезжала вместе с документом, и в щель было видно
+  // страницу. Смотрим, что нарисовано в самой верхней точке экрана.
+  const gap = await page.evaluate(() => {
+    const h = document.querySelector('.site-header').getBoundingClientRect()
+    const m = document.querySelector('.mobile-menu').getBoundingClientRect()
+    const el = document.elementFromPoint(Math.round(window.innerWidth / 2), 4)
+    return {
+      // Сколько пикселей между низом шапки и верхом панели ничем не закрыто.
+      px: Math.round(m.top - Math.min(h.bottom, m.top)),
+      band: Math.round(m.top - h.bottom),
+      onTop: el ? String(el.closest('.site-header, .mobile-menu')?.className ?? el.className) : '',
+    }
+  })
+  check(
+    gap.band <= 0 && /site-header|mobile-menu|hdr/.test(gap.onTop),
+    'Над меню нет щели, сквозь которую видно страницу',
+    `между шапкой и панелью ${gap.band} px, сверху нарисовано: ${gap.onTop || 'ничего'}`,
+  )
+
+  // Гамбургер не должен оказаться под самой панелью — иначе меню нечем закрыть.
+  check(await page.locator('.burger').isVisible(), 'Кнопка закрытия меню доступна поверх панели')
 
   await page.keyboard.press('Escape')
-  await page.waitForTimeout(200)
+  await page.waitForTimeout(300)
   check(await page.locator('#mobile-menu').isHidden(), 'Меню закрывается по Esc')
+
+  // Закрытие обязано вернуть на то же место: страница фиксируется на время
+  // открытия, и без возврата посетитель улетал бы в начало.
+  const backTo = await page.evaluate(() => window.scrollY)
+  check(
+    backTo === Math.abs(parseInt(savedPx || '0', 10)),
+    'После закрытия меню страница на том же месте',
+    `было ${Math.abs(parseInt(savedPx || '0', 10))}, стало ${backTo}`,
+  )
 
   // Телефон виден на первом экране, без прокрутки
   check(await page.locator('.icon-phone').isVisible(), 'Кнопка звонка видна на первом экране')
