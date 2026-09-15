@@ -387,13 +387,55 @@ const isCurrent = (url: string) => path === url || (url !== href('/') && path.st
 
   /* Меню на весь экран, как на образце: тёмная подложка, крупные ссылки
      по центру. Шапка остаётся видимой сверху, поэтому отступ под неё. */
+  /* Меню на телефоне — сплошная чёрная панель во весь экран.
+     Раньше здесь стояло inset: 68px 0 0: предполагалось, что верхние
+     68 px закроет липкая шапка. Не закрывала. Открытие меню ставило
+     body { overflow: hidden }, а это ломает position: sticky — шапка
+     уезжала вместе с документом (на замере с прокруткой 1123 px она
+     оказывалась на -1923 px), и сквозь щель в 68 px было видно страницу:
+     на скриншоте заказчика это красная полоса над меню.
+     Теперь панель кроет весь экран и щели не остаётся ни при какой
+     высоте шапки, а сама шапка прижата поверх панели правилом ниже.
+     Отступ снизу больше высоты нижней полосы связи (58 px), иначе
+     последний пункт прячется под ней. */
   .mobile-menu {
     position: fixed;
-    inset: 68px 0 0;
+    inset: 0;
     background: var(--dark);
-    padding: 28px 0 40px;
+    padding: calc(var(--hdr-h, 69px) + 28px) 0 98px;
     overflow-y: auto;
+    /* Прокрутка внутри меню не «пробивается» на страницу под ним. */
+    overscroll-behavior: contain;
     z-index: 49;
+  }
+
+  /* Фон под открытым меню не должен ехать.
+     body { overflow: hidden } на телефоне этого не держит: прокручивается
+     <html>, и страница продолжала листаться за меню. Поэтому body
+     фиксируется на месте; смещение запоминается в JS и возвращается
+     при закрытии, иначе страница прыгнет в начало. */
+  :global(html.menu-open) { overflow: hidden; }
+  :global(html.menu-open body) {
+    position: fixed;
+    left: 0;
+    right: 0;
+    width: 100%;
+    overflow: hidden;
+  }
+  /* Вместе с фиксацией body шапка перестаёт быть липкой — прижимаем её сами. */
+  :global(html.menu-open) .site-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+  }
+  /* Панель меню лежит ВНУТРИ шапки, и с inset: 0 она накрыла собой
+     гамбургер: позиционированный элемент рисуется поверх непозиционированных
+     соседей, и меню стало нечем закрыть. Поднимаем строку шапки над панелью.
+     Поймано проверкой: клик по гамбургеру перехватывало само меню. */
+  :global(html.menu-open) .hdr {
+    position: relative;
+    z-index: 50;
   }
   .mobile-menu .wrap { min-height: 100%; display: grid; align-content: center; gap: 4px; }
   .mm-search {
@@ -514,11 +556,33 @@ const isCurrent = (url: string) => path === url || (url !== href('/') && path.st
   let closeSearch = () => {}
 
   if (burger && menu) {
+    const root = document.documentElement
+    const header = document.querySelector<HTMLElement>('.site-header')
+    // Куда была прокручена страница в момент открытия: body фиксируется
+    // на месте, и без этого числа закрытие выбрасывало бы в начало.
+    let savedY = 0
+
     const setOpen = (open: boolean) => {
-      menu.hidden = !open
+      if (open) {
+        savedY = window.scrollY
+        // Высота шапки меряется, а не пишется числом: на телефоне она 69 px,
+        // в полосе до 1100 px бывает другой, а меню обязано начинаться
+        // ровно под ней.
+        if (header) root.style.setProperty('--hdr-h', `${Math.round(header.getBoundingClientRect().height)}px`)
+        menu.hidden = false
+        root.classList.add('menu-open')
+        document.body.style.top = `-${savedY}px`
+        closeSearch()
+      } else {
+        menu.hidden = true
+        root.classList.remove('menu-open')
+        document.body.style.top = ''
+        // Мгновенно, а не плавно: у html стоит scroll-behavior: smooth,
+        // и обычный scrollTo проматывал бы страницу назад на глазах —
+        // после закрытия меню это читается как «страница убегает».
+        window.scrollTo({ top: savedY, left: 0, behavior: 'instant' })
+      }
       burger.setAttribute('aria-expanded', String(open))
-      document.body.style.overflow = open ? 'hidden' : ''
-      if (open) closeSearch()
     }
     closeMenu = () => {
       if (!menu.hidden) setOpen(false)
@@ -535,6 +599,12 @@ const isCurrent = (url: string) => path === url || (url !== href('/') && path.st
       if (!menu.hidden && !menu.contains(target) && !burger.contains(target)) setOpen(false)
     })
     menu.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => setOpen(false)))
+
+    // Если экран вырос до ширины, где меню прячется, а гамбургера уже нет —
+    // закрыть его некому, и страница осталась бы навсегда зафиксированной.
+    window.addEventListener('resize', () => {
+      if (!menu.hidden && window.innerWidth >= 1100) setOpen(false)
+    })
   }
 
   // ── Поиск по сайту ─────────────────────────────────────────────────────
