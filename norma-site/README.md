@@ -347,6 +347,7 @@ checkedDateISO: '2026-08-29',
 | `click_phone` | Нажал на телефон |
 | `click_whatsapp` | Нажал на WhatsApp |
 | `click_telegram` | Нажал на Telegram |
+| `click_max` | Нажал на MAX |
 | `cost_calc` | Воспользовался калькулятором на странице «Стоимость» |
 | `site_search` | Искал по сайту |
 | `search_click` | Перешёл по найденной странице |
