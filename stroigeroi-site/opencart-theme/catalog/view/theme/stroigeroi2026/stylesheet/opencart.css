@@ -370,45 +370,105 @@ textarea.form-control { min-height: 120px; resize: vertical; }
 a.promo-card { transition: transform .15s ease; }
 a.promo-card:hover { transform: translateY(-2px); }
 
-/* --- Кнопки, у которых всё содержимое — значок ------------------------------
-   На стандартных страницах движка (корзина, оформление заказа, кабинет)
-   часть кнопок состоит из одного значка Font Awesome: <button><i class="fa
-   fa-refresh"></i></button>. Наша шапка этот шрифт не подключает - в теме
-   везде свои SVG, - поэтому значок не рисуется, кнопка остаётся пустой,
-   а правила выше красят её в красный. В корзине это выглядело как три
-   красных квадрата без единой буквы.
+/* --- Значки движка: рисуем их сами ------------------------------------------
+   На стандартных страницах (корзина, оформление заказа, кабинет) часть
+   кнопок состоит из одного значка Font Awesome и больше ни из чего:
+   <button><i class="fa fa-refresh"></i></button>. Наша шапка этот шрифт
+   не подключает - в теме везде свои SVG, - поэтому значок не рисовался,
+   и кнопка оставалась пустым прямоугольником. В корзине это выглядело
+   как три пустых квадрата подряд вокруг числа.
 
    Подключать ради них Font Awesome нельзя: 30 КБ стилей и 75 КБ шрифта
-   на КАЖДУЮ страницу сайта ради трёх кнопок на одной.
+   на КАЖДУЮ страницу сайта ради нескольких кнопок на двух.
 
-   Подпись у таких кнопок есть - в атрибуте title, который движок ставит
-   для всплывающей подсказки. Выводим её текстом: кнопка перестаёт быть
-   загадкой и для мыши, и для чтения с экрана.                              */
-.btn-primary:has(> i:only-child) > i,
-.btn-danger:has(> i:only-child) > i,
-.btn-default:has(> i:only-child) > i,
-.btn-info:has(> i:only-child) > i,
-.btn-light:has(> i:only-child) > i { display: none; }
+   Но класс значка говорит, что значок означает, - и этого достаточно.
+   Рисуем те же знаки обычными символами шрифта. Ничего не грузится,
+   а кнопка перестаёт быть загадкой. Символы выбраны из тех, что есть
+   в любом системном шрифте: редкий знак вышел бы пустым квадратом,
+   то есть ровно тем, от чего уходим.                                       */
+i.fa,
+span.fa {
+  font-style: normal;
+  font-weight: 600;
+  line-height: 1;
+}
 
-.btn-primary:has(> i:only-child)[title]::after,
-.btn-danger:has(> i:only-child)[title]::after,
-.btn-default:has(> i:only-child)[title]::after,
-.btn-info:has(> i:only-child)[title]::after,
-.btn-light:has(> i:only-child)[title]::after {
+.fa-refresh::before,
+.fa-repeat::before,
+.fa-rotate-right::before,
+.fa-sync::before { content: "\21BB"; }            /* ↻ обновить */
+
+.fa-times::before,
+.fa-times-circle::before,
+.fa-remove::before,
+.fa-close::before,
+.fa-trash::before,
+.fa-trash-o::before { content: "\00D7"; }         /* × убрать */
+
+.fa-plus::before,
+.fa-plus-circle::before,
+.fa-plus-square::before { content: "+"; }
+.fa-minus::before,
+.fa-minus-circle::before,
+.fa-minus-square::before { content: "\2212"; }    /* − настоящий минус, не дефис */
+
+.fa-check::before,
+.fa-check-circle::before,
+.fa-check-square::before { content: "\2713"; }    /* ✓ */
+
+.fa-heart::before,
+.fa-heart-o::before { content: "\2665"; }         /* ♥ избранное */
+.fa-exchange::before { content: "\21C4"; }        /* ⇄ сравнение */
+
+.fa-caret-down::before,
+.fa-chevron-down::before,
+.fa-angle-down::before { content: "\25BE"; }      /* ▾ */
+.fa-caret-up::before,
+.fa-chevron-up::before,
+.fa-angle-up::before { content: "\25B4"; }        /* ▴ */
+.fa-chevron-left::before,
+.fa-angle-left::before,
+.fa-arrow-left::before,
+.fa-long-arrow-left::before { content: "\2190"; } /* ← */
+.fa-chevron-right::before,
+.fa-angle-right::before,
+.fa-arrow-right::before,
+.fa-long-arrow-right::before { content: "\2192"; }/* → */
+
+/* Слово лучше знака, когда слово есть. Движок ставит кнопке title
+   для всплывающей подсказки - это готовое название действия, написанное
+   на языке магазина. Если title есть, показываем его, а знак прячем:
+   «Обновить» понятнее, чем ↻, и читается с экрана. Если title нет
+   (так делают некоторые модули), остаётся знак - он хотя бы не пустота. */
+.btn:has(> i:only-child)[title] > i { display: none; }
+
+.btn:has(> i:only-child)[title]::after {
   content: attr(title);
   font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
 }
 
-/* Кнопка вообще без подписи - не оставляем ярко-красный прямоугольник:
-   он читается как призыв к действию, хотя сказать человеку нечего. */
+/* Кнопка, от которой остался один знак, не должна кричать цветом:
+   ярко-красный прямоугольник читается как призыв к действию, а «убрать
+   строку» - не главное, ради чего человек пришёл. Делаем такие кнопки
+   спокойными: они стоят рядом с полем количества и должны выглядеть
+   его частью, а не спорить с кнопкой «Оформить заказ». */
 .btn-primary:has(> i:only-child):not([title]),
 .btn-danger:has(> i:only-child):not([title]),
 .btn-info:has(> i:only-child):not([title]) {
   background: var(--sg-white);
   border-color: var(--sg-line);
-  color: var(--sg-muted);
+  color: var(--sg-ink);
+  font-size: 15px;
+  min-width: 38px;
+}
+
+.btn-primary:has(> i:only-child):not([title]):hover,
+.btn-danger:has(> i:only-child):not([title]):hover,
+.btn-info:has(> i:only-child):not([title]):hover {
+  border-color: var(--sg-blue);
+  color: var(--sg-blue);
 }
 
 /* Строка количества в корзине движка: поле и кнопки в один ряд,
