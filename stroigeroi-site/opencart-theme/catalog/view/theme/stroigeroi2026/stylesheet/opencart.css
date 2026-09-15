@@ -440,9 +440,14 @@ span.fa {
    на языке магазина. Если title есть, показываем его, а знак прячем:
    «Обновить» понятнее, чем ↻, и читается с экрана. Если title нет
    (так делают некоторые модули), остаётся знак - он хотя бы не пустота. */
-.btn:has(> i:only-child)[title] > i { display: none; }
 
-.btn:has(> i:only-child)[title]::after {
+/* Пустой title - не подпись, и это не придирка: у кнопок счётчика
+   в корзине стоит title="", и правило подставляло на кнопку пустую
+   строку вместо знака. Кнопки считали товар, но выглядели пустыми
+   коробками, и заказчик увидел это раньше любой проверки. */
+.btn:has(> i:only-child)[title]:not([title=""]) > i { display: none; }
+
+.btn:has(> i:only-child)[title]:not([title=""])::after {
   content: attr(title);
   font-size: 13px;
   font-weight: 600;
@@ -783,6 +788,61 @@ legend {
   border-color: var(--sg-blue);
   color: var(--sg-blue);
   background: var(--sg-white);
+}
+
+/* Знак на кнопке счётчика рисуем ПО НАЗНАЧЕНИЮ КНОПКИ, а не по значку
+   внутри неё, и вот почему.
+
+   Пока на сайте не было jQuery, страницу показывал сервер как есть:
+   внутри кнопок стояли <i class="fa fa-plus">, и наши правила рисовали
+   им плюс и минус. Как только jQuery появился, модуль ожил и начал
+   перерисовывать корзину своим запросом - а в его разметке значки
+   оказались другими. Кнопки остались пустыми коробками: считать
+   научились, показать себя - нет.
+
+   Атрибут data-onclick, наоборот, известен точно: по нему модуль сам
+   находит эти кнопки (это видно в его simple.css), и без него счётчик
+   не работал бы вовсе. Что бы ни лежало внутри кнопки - значок,
+   картинка или ничего, - прячем и ставим свой знак. */
+.simplecheckout-cart td.quantity .btn[data-onclick*="crease"] > *,
+.simplecheckout-cart .btn[data-onclick*="removeProduct"] > *,
+.simplecheckout-cart td.remove [data-onclick] > * { display: none; }
+
+.simplecheckout-cart td.quantity .btn[data-onclick*="decrease"]::after { content: "\2212"; }
+.simplecheckout-cart td.quantity .btn[data-onclick*="increase"]::after { content: "+"; }
+.simplecheckout-cart .btn[data-onclick*="removeProduct"]::after,
+.simplecheckout-cart td.remove [data-onclick]::after { content: "\00D7"; }
+
+/* Колонка «убрать» у модуля шириной 7 px — при его собственной вёрстке
+   там стояла картинка в 30 px, которая эту колонку и раздвигала.
+   Кнопке нужна своя ширина, иначе её не видно и не нажать. */
+.simplecheckout-cart col.remove { width: 52px; }
+
+.simplecheckout-cart th.remove,
+.simplecheckout-cart td.remove {
+  width: 52px;
+  padding-right: 0;
+  text-align: right;
+  vertical-align: middle;
+}
+
+.simplecheckout-cart td.remove [data-onclick] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+  border: 1.5px solid transparent;
+  border-radius: var(--r-md);
+  background: none;
+  color: var(--sg-muted);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.simplecheckout-cart td.remove [data-onclick]:hover {
+  border-color: var(--sg-red);
+  color: var(--sg-red);
 }
 
 /* «Убрать строку» — не действие, за которым человек пришёл. Никакой
