@@ -381,9 +381,39 @@ def make_session() -> requests.Session:
     return session
 
 
+def _тело(page: int, page_size: int, search: str = "") -> dict:
+    """Тело запроса в том виде, в каком его шлёт сам сайт реестра.
+
+    Подсмотрено в браузере на НОПРИЗе: размер страницы называется pageCount
+    и передаётся строкой, поиск — searchString. Реестры сделаны на одной
+    платформе, поэтому формат общий. Прежний pageSize реестр молча
+    игнорировал и отдавал свои 20 записей на страницу.
+    """
+    return {"filters": {}, "page": page, "pageCount": str(page_size),
+            "searchString": search, "sortBy": {}}
+
+
+def fetch_by_inn(session: requests.Session, inn: str, page_size: int = 50,
+                 timeout: int = 60, attempts: int = 4) -> dict | None:
+    """Все членства одной компании по ИНН — тем же поиском, что на сайте."""
+    body = _тело(1, page_size, search=inn)
+    for attempt in range(1, attempts + 1):
+        try:
+            resp = session.post(MEMBER_LIST_URL, json=body, timeout=timeout)
+            if resp.status_code == 200:
+                return resp.json()
+            print(f"[нострой] ИНН {inn}: HTTP {resp.status_code} "
+                  f"(попытка {attempt}/{attempts})", flush=True)
+        except (requests.RequestException, ValueError) as exc:
+            print(f"[нострой] ИНН {inn}: {type(exc).__name__} "
+                  f"(попытка {attempt}/{attempts})", flush=True)
+        time.sleep(min(2 ** attempt, 20))
+    return None
+
+
 def fetch_page(session: requests.Session, page: int, page_size: int,
                timeout: int = 60, attempts: int = 5) -> dict | None:
-    body = {"page": page, "pageSize": page_size}
+    body = _тело(page, page_size)
     for attempt in range(1, attempts + 1):
         try:
             resp = session.post(MEMBER_LIST_URL, json=body, timeout=timeout)
@@ -1087,6 +1117,118 @@ def cmd_contacts(args) -> int:
     return 0
 
 
+def членства_строителя(payload, inn: str) -> tuple:
+    """Действующее строительное членство компании: (дата, СРО, номер СРО).
+
+    Поиск идёт по строке, поэтому в ответ попадают и чужие компании —
+    сверяем ИНН каждой записи. Берём самое раннее действующее членство.
+    """
+    лучшее = None
+    for record in records_of(payload):
+        if норм_инн(record.get("inn")) != inn:
+            continue
+        if is_former(record):
+            continue
+        started = _date_by_hints(record, _START_KEY_HINTS)
+        if started is None:
+            continue
+        if лучшее is None or started < лучшее[0]:
+            лучшее = (started, sro_name(record), sro_registration_number(record))
+    return лучшее
+
+
+def норм_инн(value) -> str:
+    """ИНН к сравнимому виду: только цифры и восстановленный ведущий ноль."""
+    digits = re.sub(r"\D", "", "" if value is None else str(value))
+    if len(digits) == 9:
+        return digits.zfill(10)
+    if len(digits) == 11:
+        return digits.zfill(12)
+    return digits
+
+
+def cmd_check(args) -> int:
+    """Проверка своих ИНН по реестру НОСТРОЙ — точечно, без общей выгрузки."""
+    file_path = Path(args.file)
+    if not file_path.exists():
+        print(f"Файл {file_path} не найден.", file=sys.stderr)
+        return 1
+    header, rows = read_rows(file_path)
+    if args.inn_column not in header:
+        print(f"В файле нет колонки «{args.inn_column}». Есть: {', '.join(header)}",
+              file=sys.stderr)
+        return 1
+
+    out_path = Path(args.out)
+    progress_path = out_path.with_suffix(out_path.suffix + ".progress.json")
+    готово: dict = {}
+    if args.resume and progress_path.exists():
+        готово = json.loads(progress_path.read_text(encoding="utf-8"))
+        print(f"[нострой] продолжаю, уже проверено {len(готово)}")
+
+    session = make_session()
+    инны = [норм_инн(r.get(args.inn_column)) for r in rows]
+    к_проверке = [i for i in dict.fromkeys(инны) if i and i not in готово]
+    print(f"[нострой] ИНН к проверке: {len(к_проверке)}")
+
+    осечки = 0
+    try:
+        for номер, инн in enumerate(к_проверке, 1):
+            payload = fetch_by_inn(session, инн)
+            if payload is None:
+                осечки += 1
+                print(f"[нострой] ИНН {инн} не проверился — пропускаю", file=sys.stderr)
+                continue
+            найдено = членства_строителя(payload, инн)
+            готово[инн] = {
+                "Строительное: дата вступления": найдено[0].strftime("%d.%m.%Y") if найдено else "",
+                "Строительное: СРО": найдено[1] if найдено else "",
+                "Строительное: номер СРО": найдено[2] if найдено else "",
+            }
+            if номер % 25 == 0:
+                print(f"[нострой] {номер}/{len(к_проверке)}", flush=True)
+                progress_path.write_text(json.dumps(готово, ensure_ascii=False),
+                                         encoding="utf-8")
+            time.sleep(args.delay)
+    except KeyboardInterrupt:
+        print("\n[нострой] прервано — прогресс сохранён "
+              "(продолжить: та же команда с --resume)")
+        progress_path.write_text(json.dumps(готово, ensure_ascii=False), encoding="utf-8")
+        return 1
+
+    новые = ["Строительное: дата вступления", "Строительное: СРО",
+             "Строительное: номер СРО", "В НОСТРОЙ"]
+    columns = header + [c for c in новые if c not in header]
+    состоят = нет = не_проверены = 0
+    for row, инн in zip(rows, инны):
+        найдено = готово.get(инн)
+        if not инн:
+            row["В НОСТРОЙ"] = "нет ИНН"
+            continue
+        if найдено is None:
+            row["В НОСТРОЙ"] = "не проверено"; не_проверены += 1
+            continue
+        row.update(найдено)
+        if найдено["Строительное: дата вступления"]:
+            row["В НОСТРОЙ"] = "состоит"; состоят += 1
+        else:
+            row["В НОСТРОЙ"] = "нет"; нет += 1
+
+    write_rows(out_path, columns, rows, "Проверка по НОСТРОЙ")
+    if осечки == 0 and progress_path.exists():
+        progress_path.unlink()
+    print(f"[нострой] компаний в файле: {len(rows)}")
+    print(f"[нострой]   состоят в строительной СРО: {состоят}")
+    print(f"[нострой]   не состоят:                 {нет}")
+    if не_проверены:
+        print(f"[нострой]   не проверено:               {не_проверены}")
+    if осечки:
+        print(f"[нострой] ВНИМАНИЕ: {осечки} ИНН реестр не отдал — повторите с --resume",
+              file=sys.stderr)
+    print(f"[нострой] готово: {out_path}")
+    return 0
+
+
 def cmd_sample(args) -> int:
     """Сырой ответ реестра — для сверки имён полей, если разбор не сработал."""
     session = make_session()
@@ -1182,6 +1324,15 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--file", required=True, help="файл, собранный командой «выгрузка»")
     p.add_argument("--delay", type=float, default=0.3, help="пауза между карточками, сек")
     p.set_defaults(func=cmd_contacts)
+
+    p = sub.add_parser("проверить",
+                       help="пробить свои ИНН по реестру НОСТРОЙ (без общей выгрузки)")
+    p.add_argument("--file", required=True, help="ваш файл с колонкой ИНН")
+    p.add_argument("--out", default="проверка_НОСТРОЙ.xlsx", help="куда сохранить")
+    p.add_argument("--inn-column", default="ИНН", help="имя колонки с ИНН")
+    p.add_argument("--delay", type=float, default=0.4, help="пауза между ИНН, сек")
+    p.add_argument("--resume", action="store_true", help="продолжить прерванную проверку")
+    p.set_defaults(func=cmd_check)
 
     p = sub.add_parser("образец", help="сырой ответ реестра для диагностики")
     p.add_argument("--member-id", default=None,
