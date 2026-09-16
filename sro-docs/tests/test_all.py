@@ -1207,7 +1207,14 @@ class TestMultipleSro(unittest.TestCase):
         self.assertEqual(counts.get("ЯРД"), 4)
         self.assertEqual(counts.get("СФЕРА ПРОЕКТИРОВЩИКОВ"), 4)
         self.assertEqual(counts.get("СФЕРА ИЗЫСКАТЕЛЕЙ"), 4)
+        # У ОРС в фонде возмещения вреда шестая строка — «Простой (снос)».
+        # Пары в фонде обеспечения договорных обязательств у неё нет.
+        self.assertEqual(counts.get("ОРС"), 6)
+        ors = [p for p in self.project.all_sro if p.key == "ОРС"][0]
+        self.assertEqual(len(ors.contract_levels), 5)
         for profile in self.project.all_sro:
+            if profile.key == "ОРС":
+                continue
             with self.subTest(sro=profile.key):
                 self.assertEqual(len(profile.harm_levels),
                                  len(profile.contract_levels))
@@ -1237,7 +1244,12 @@ class TestMultipleSro(unittest.TestCase):
 
 
 def _character_styles(archive) -> dict:
-    """Знаковые стили документа: styleId → его rPr."""
+    """Стили документа: styleId → его rPr. И знаковые, и абзацные.
+
+    Шрифт абзацному стилю задают так же, как фрагменту, — через rPr. Бланки
+    бывают набраны и так: у самих фрагментов настроек нет, а стиль абзаца
+    («Normal») прямо называет Times New Roman. Это тоже «шрифт задан явно».
+    """
     from lxml import etree
 
     from src.docx_engine import W
@@ -1245,7 +1257,7 @@ def _character_styles(archive) -> dict:
     root = etree.fromstring(archive.read("word/styles.xml"))
     found = {}
     for style in root.iter(W + "style"):
-        if style.get(W + "type") != "character":
+        if style.get(W + "type") not in ("character", "paragraph"):
             continue
         run_properties = style.find(W + "rPr")
         if run_properties is not None:
@@ -1263,13 +1275,22 @@ def _font_of(run, styles: dict) -> tuple[bool, bool]:
     """
     from src.docx_engine import W
 
+    sources = []
     run_properties = run.find(W + "rPr")
-    if run_properties is None:
-        return False, False
-    sources = [run_properties]
-    style_reference = run_properties.find(W + "rStyle")
-    if style_reference is not None:
-        from_style = styles.get(style_reference.get(W + "val"))
+    if run_properties is not None:
+        sources.append(run_properties)
+        style_reference = run_properties.find(W + "rStyle")
+        if style_reference is not None:
+            from_style = styles.get(style_reference.get(W + "val"))
+            if from_style is not None:
+                sources.append(from_style)
+    # Третий законный способ — стиль абзаца. Он называет шрифт для всего
+    # абзаца сразу, поэтому подставленный текст выйдет тем же шрифтом, что
+    # и напечатанный рядом, — а это и есть то, что проверяется.
+    paragraph = run.getparent()
+    paragraph_style = paragraph.find(W + "pPr/" + W + "pStyle")
+    if paragraph_style is not None:
+        from_style = styles.get(paragraph_style.get(W + "val"))
         if from_style is not None:
             sources.append(from_style)
     has_font = any(s.find(W + "rFonts") is not None for s in sources)
@@ -1602,9 +1623,16 @@ class TestProjectConfig(unittest.TestCase):
                         zipfile.ZipFile(target).read("word/document.xml"))
                     rows = {}
                     for row in root.iter(W + "tr"):
-                        text = "".join(n.text or "" for n in row.iter(W + "t"))
-                        if text in (company.inn, company.ogrn):
-                            rows[text] = row
+                        cells = ["".join(n.text or "" for n in cell.iter(W + "t"))
+                                 for cell in row.findall(W + "tc")]
+                        # В клетке ровно один знак. Всё, что длиннее, —
+                        # подпись строки: в одних бланках «ИНН» напечатан
+                        # слева от клеток, в других стоит первой ячейкой
+                        # той же строки. Считаем только сами клетки.
+                        boxes = [text for text in cells if len(text.strip()) <= 1]
+                        digits = "".join(text.strip() for text in boxes)
+                        if digits in (company.inn, company.ogrn):
+                            rows[digits] = len(boxes)
                 for value in (company.inn, company.ogrn):
                     with self.subTest(sro=profile.key, document=spec.title,
                                       value=value):
@@ -1613,7 +1641,7 @@ class TestProjectConfig(unittest.TestCase):
                             f"{profile.key}/{spec.template}: {value} не собрался "
                             f"из клеток — часть цифр потерялась")
                         self.assertGreaterEqual(
-                            len(rows[value].findall(W + "tc")), len(value),
+                            rows[value], len(value),
                             f"{profile.key}/{spec.template}: клеток меньше, "
                             f"чем знаков в {value}")
 
@@ -1859,6 +1887,153 @@ class TestFirstRunWindow(unittest.TestCase):
                             "к видимому родителю окно должно оставаться дочерним")
         finally:
             root.destroy()
+
+
+# ------------------------------------------------------------------ ОРС
+class TestOrs(unittest.TestCase):
+    """Бланки ростовской СРО: две строки под номер и три столбца подписи."""
+
+    #: Вымышленный предприниматель для проверок этой СРО.
+    IP = dict(
+        applicant_kind="entrepreneur",
+        full_name="Индивидуальный предприниматель Волков Виктор Викторович",
+        short_name="ИП Волков В.В.",
+        inn="781234567870", ogrn="304780123456781",
+        legal_address="г. Санкт-Петербург",
+        actual_address="г. Санкт-Петербург",
+        director_position="Индивидуальный предприниматель",
+        director_full_name="Волков Виктор Викторович",
+    )
+
+    def setUp(self):
+        self.project = Project(ROOT)
+        self.project.use_sro("ОРС", remember=False)
+
+    def _values(self, data):
+        return build_context(make_company(data), self.project.attorney(),
+                             sro=self.project.sro).values
+
+    def test_ogrn_and_ogrnip_are_different_rows(self):
+        """В бланке две строки клеток: ОГРН юрлица и ОГРНИП предпринимателя.
+
+        Заполняется только своя. Иначе у ООО окажется «ОГРНИП», а у ИП —
+        «ОГРН юридического лица», и заявление вернут.
+        """
+        company = self._values(ALPHA)
+        self.assertEqual("".join(company[f"ogrn_ul_d{i}"] for i in range(1, 14)),
+                         ALPHA["ogrn"])
+        self.assertEqual("".join(company[f"ogrnip_d{i}"] for i in range(1, 16)), "")
+
+        entrepreneur = self._values(self.IP)
+        self.assertEqual(
+            "".join(entrepreneur[f"ogrnip_d{i}"] for i in range(1, 16)),
+            self.IP["ogrn"])
+        self.assertEqual(
+            "".join(entrepreneur[f"ogrn_ul_d{i}"] for i in range(1, 14)), "")
+
+    def test_name_goes_to_its_own_line(self):
+        """Под наименование две линейки: верхняя юрлицу, нижняя — ФИО ИП."""
+        company = self._values(ALPHA)
+        self.assertIn("Ромашка", company["name_for_company"])
+        self.assertEqual(company["name_for_entrepreneur"], "")
+
+        entrepreneur = self._values(self.IP)
+        self.assertIn("Волков", entrepreneur["name_for_entrepreneur"])
+        self.assertEqual(entrepreneur["name_for_company"], "")
+        # У предпринимателя наименование без кавычек.
+        self.assertNotIn("«", entrepreneur["name_for_entrepreneur"])
+
+    def test_demolition_level_can_be_marked(self):
+        """У ОРС шестой уровень возмещения вреда — «Простой (снос)»."""
+        levels = self.project.sro.harm_levels
+        self.assertEqual(len(levels), 6)
+        self.assertIn("нос", levels[5].limit + levels[5].title)
+
+        company = make_company(ALPHA)
+        company.set("harm_fund_level", "6")
+        values = build_context(company, self.project.attorney(),
+                               sro=self.project.sro).values
+        self.assertTrue(values["mark_harm_level6"])
+        self.assertFalse(values["mark_harm_level1"])
+
+    def test_signature_is_split_between_columns(self):
+        """Должность и фамилия стоят над своими подписями бланка.
+
+        Под строкой подписи напечатаны три столбца: «(должность)»,
+        «(подпись)» и «(фамилия и инициалы)». Между должностью и фамилией
+        должна остаться табуляция — иначе фамилия попадёт на место росписи.
+        """
+        import zipfile
+
+        from lxml import etree
+
+        from src.docx_engine import W, _iter_paragraphs
+
+        spec = [s for s in self.project.sro.enabled_documents()
+                if "Заявление" in s.title][0]
+        root = etree.fromstring(
+            zipfile.ZipFile(self.project.template_path(spec))
+            .read("word/document.xml"))
+        for paragraph in _iter_paragraphs(root):
+            texts = [n.text or "" for n in paragraph.iter(W + "t")]
+            if "{{director_short_name}}" not in texts:
+                continue
+            self.assertIn("{{director_position}}", texts)
+            # Позиции табуляции бланка (385 и 6751) должны уцелеть:
+            # именно они разводят должность и фамилию по столбцам.
+            stops = paragraph.findall(W + "pPr/" + W + "tabs/" + W + "tab")
+            self.assertTrue(
+                stops,
+                "разметка стёрла позиции табуляции строки подписи")
+            self.assertEqual(len(paragraph.findall(".//" + W + "r/" + W + "tab")), 2,
+                             "между должностью и фамилией должно быть две табуляции")
+            return
+        self.fail("в заявлении ОРС не нашлась строка подписи")
+
+    def test_blank_keeps_its_tab_stops(self):
+        """Разметка не должна стирать позиции табуляции бланка.
+
+        Позиции табуляции лежат в настройках абзаца теми же тегами <w:tab/>,
+        что и символы табуляции в тексте. Когда помощники разметки путали
+        одно с другим, они молча удаляли разметку бланка, и дата с подписью
+        съезжали к случайным отступам.
+        """
+        import zipfile
+
+        from lxml import etree
+
+        from src.docx_engine import W, _iter_paragraphs
+
+        def count(path):
+            root = etree.fromstring(
+                zipfile.ZipFile(path).read("word/document.xml"))
+            return sum(len(p.findall(W + "pPr/" + W + "tabs/" + W + "tab"))
+                       for p in _iter_paragraphs(root))
+
+        project = Project(ROOT)
+        checked = 0
+        for profile in project.all_sro:
+            if not profile.is_ready:
+                continue
+            project.use_sro(profile, remember=False)
+            for spec in profile.enabled_documents():
+                prepared = project.template_path(spec)
+                originals = sorted(
+                    (prepared.parent / "_originals").glob("*.docx"))
+                # Оригинал того же бланка: имя начинается так же,
+                # как имя размеченного файла без номера в начале.
+                stem = prepared.stem.split("_", 1)[-1].split("_")[0]
+                original = next(
+                    (o for o in originals if o.stem.startswith(stem)), None)
+                if original is None or not count(original):
+                    continue
+                checked += 1
+                with self.subTest(sro=profile.key, document=spec.title):
+                    self.assertEqual(
+                        count(prepared), count(original),
+                        f"{spec.template}: разметка потеряла позиции "
+                        f"табуляции бланка")
+        self.assertTrue(checked, "не нашлось бланка с позициями табуляции")
 
 
 if __name__ == "__main__":

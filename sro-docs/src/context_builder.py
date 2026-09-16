@@ -162,6 +162,15 @@ def build_context(company: CompanyData, attorney: dict[str, str],
             else company.short_name
         )
 
+    # В бланке ОРС под наименование две линейки: верхняя для юридического
+    # лица (подпись под ней — «правовая форма…»), нижняя для предпринимателя
+    # («Фамилия, Имя, Отчество ИП»). Заполняется та, что подходит заявителю,
+    # вторая остаётся пустой — как если бы бланк заполняли от руки.
+    values["name_for_company"] = (
+        "" if company.is_entrepreneur else values["company_full_display"])
+    values["name_for_entrepreneur"] = (
+        values["company_full_display"] if company.is_entrepreneur else "")
+
     if company.full_name and not values["legal_form_full"]:
         result.notes.append(
             f"В полном наименовании «{company.full_name}» не распознана "
@@ -204,6 +213,16 @@ def build_context(company: CompanyData, attorney: dict[str, str],
         values[f"inn_d{index + 1}"] = inn[index] if index < len(inn) else ""
     for index in range(15):
         values[f"ogrn_d{index + 1}"] = ogrn[index] if index < len(ogrn) else ""
+    # В бланке ОРС под ОГРН юрлица и под ОГРНИП предпринимателя — ДВЕ разные
+    # строки клеток. Заполняем ту, что соответствует заявителю, а вторую
+    # оставляем пустой: у юрлица ОГРНИП не бывает, и наоборот.
+    ogrn_ul = "" if company.is_entrepreneur else ogrn
+    ogrnip = ogrn if company.is_entrepreneur else ""
+    for index in range(13):
+        values[f"ogrn_ul_d{index + 1}"] = (
+            ogrn_ul[index] if index < len(ogrn_ul) else "")
+    for index in range(15):
+        values[f"ogrnip_d{index + 1}"] = ogrnip[index] if index < len(ogrnip) else ""
 
     # ---------------------------------------------------------- адреса и связь
     values["legal_address"] = company.legal_address
@@ -294,7 +313,10 @@ def build_context(company: CompanyData, attorney: dict[str, str],
     # ---------------------------------------------------------- отметки «V»
     for kind in OBJECT_KINDS:
         values[f"mark_object_{kind}"] = MARK if company.object_kind == kind else ""
-    for level in "12345":
+    # Уровней пять почти везде, но у ОРС в фонде возмещения вреда есть
+    # шестой — «Простой (снос)». Лишние переменные безвредны: в бланках,
+    # где шестого уровня нет, они просто не встречаются.
+    for level in "123456":
         values[f"mark_harm_level{level}"] = (
             MARK_LEVEL if company.harm_fund_level == level else "")
         values[f"mark_contract_level{level}"] = (

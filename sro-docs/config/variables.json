@@ -48,6 +48,20 @@
       "where": "ОГРН по одной цифре в клетке (лишние клетки остаются пустыми)",
       "may_be_empty": true
     },
+    "ogrn_ul_d*": {
+      "field": "ogrn",
+      "required": true,
+      "where": "ОГРН юридического лица по клеткам; у предпринимателя эта строка бланка остаётся пустой",
+      "may_be_empty": true,
+      "only_for": "company"
+    },
+    "ogrnip_d*": {
+      "field": "ogrn",
+      "required": true,
+      "where": "ОГРНИП предпринимателя по клеткам; у юридического лица эта строка бланка остаётся пустой",
+      "may_be_empty": true,
+      "only_for": "entrepreneur"
+    },
     "ogrn": {
       "field": "ogrn",
       "required": true,
@@ -209,6 +223,18 @@
       "field": "short_name",
       "required": true,
       "where": "сокращённое наименование целиком"
+    },
+    "name_for_company": {
+      "field": "full_name",
+      "required": true,
+      "where": "наименование на линейке для юридического лица (бланк ОРС); у ИП пусто",
+      "may_be_empty": true
+    },
+    "name_for_entrepreneur": {
+      "field": "full_name",
+      "required": true,
+      "where": "ФИО на линейке для предпринимателя (бланк ОРС); у юрлица пусто",
+      "may_be_empty": true
     },
     "company_full_display": {
       "field": "full_name",
