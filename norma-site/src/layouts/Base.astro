@@ -5,6 +5,7 @@ import '../styles/global.css'
 import Header from '../components/Header.astro'
 import Footer from '../components/Footer.astro'
 import Icon from '../components/Icon.astro'
+import CookieBanner from '../components/CookieBanner.astro'
 import { SITE, href } from '../config/site'
 import { SEO } from '../config/seo'
 
@@ -215,12 +216,10 @@ const graph = {
     <meta name="twitter:image" content={ogImage} />
     <meta name="twitter:image:alt" content={SEO.ogImageAlt} />
 
-    {SITE.metrikaId && (
-      <>
-        <link rel="preconnect" href="https://mc.yandex.ru" crossorigin />
-        <link rel="dns-prefetch" href="https://mc.yandex.ru" />
-      </>
-    )}
+    {/* preconnect к mc.yandex.ru убран из головы страницы намеренно:
+        соединение к Яндексу открывалось бы ещё до того, как посетитель
+        что-либо выбрал. Выигрыш в скорости тут меньше, чем цена такого
+        соединения без согласия. */}
 
     <script type="application/ld+json" set:html={JSON.stringify(graph)} />
 
@@ -263,22 +262,16 @@ const graph = {
       </a>
     </nav>
 
-    <!-- ═══ МЕСТО ПОД СЧЁТЧИК ЯНДЕКС.МЕТРИКИ ═══
-         Номер счётчика вписывается в src/config/site.ts → metrikaId.
-         Пока он пустой, код счётчика на страницы не попадает. -->
-    {SITE.metrikaId && (
-      <script is:inline define:vars={{ id: SITE.metrikaId }}>
-        (function (m, e, t, r, i, k, a) {
-          m[i] = m[i] || function () { (m[i].a = m[i].a || []).push(arguments) }
-          m[i].l = 1 * new Date()
-          for (var j = 0; j < document.scripts.length; j++) { if (document.scripts[j].src === r) return }
-          k = e.createElement(t); a = e.getElementsByTagName(t)[0]
-          k.async = 1; k.src = r; a.parentNode.insertBefore(k, a)
-        })(window, document, 'script', 'https://mc.yandex.ru/metrika/tag.js', 'ym')
-        ym(id, 'init', { clickmap: true, trackLinks: true, accurateTrackBounce: true, webvisor: true })
-      </script>
-      <noscript><div><img src={`https://mc.yandex.ru/watch/${SITE.metrikaId}`} style="position:absolute;left:-9999px" alt="" /></div></noscript>
-    )}
+    {/* СЧЁТЧИК ЯНДЕКС.МЕТРИКИ. Номер вписывается в src/config/site.ts →
+        metrikaId. Сам счётчик подключается НЕ отсюда, а из CookieBanner.astro
+        и только после согласия посетителя: до нажатия кнопки к Яндексу
+        не уходит ни одного запроса. Пока metrikaId пустой, нет ни счётчика,
+        ни полосы про cookie — сообщать не о чем.
+        Картинки-пикселя в noscript здесь тоже больше нет: она срабатывала бы
+        до всякого согласия и мимо выбора посетителя.
+        Комментарий намеренно в фигурных скобках, а не в HTML: обычный
+        комментарий уехал бы в разметку всех 81 страницы. */}
+    <CookieBanner />
 
     <style>
       .skip {
@@ -360,10 +353,6 @@ const graph = {
       })
     </script>
 
-    {SITE.metrikaId && (
-      <script is:inline define:vars={{ id: SITE.metrikaId }}>
-        window.__metrikaId = id
-      </script>
-    )}
+
   </body>
 </html>

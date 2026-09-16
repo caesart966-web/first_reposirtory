@@ -10,7 +10,7 @@
 //
 // Запуск: node scripts/test-widths.mjs [адрес]
 
-import { chromium } from 'playwright'
+import { chromium } from './lib/browser.mjs'
 
 const BASE = process.argv[2] || 'http://127.0.0.1:4321'
 // Статья с таблицей в списке не случайно: таблицы в базе знаний приходят

@@ -12,7 +12,7 @@
 //
 // Запуск: node scripts/test-cost.mjs [адрес]
 
-import { chromium } from 'playwright'
+import { chromium } from './lib/browser.mjs'
 import { FUNDS } from '../src/config/facts.ts'
 
 const BASE = process.argv[2] || 'http://127.0.0.1:4321'

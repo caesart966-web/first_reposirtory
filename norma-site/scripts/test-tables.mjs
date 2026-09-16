@@ -18,7 +18,7 @@
 // первой строки, и без этой оговорки проверка ругалась бы всегда.
 //
 // Запуск: node scripts/test-tables.mjs [адрес]
-import { chromium } from 'playwright'
+import { chromium } from './lib/browser.mjs'
 import { readFileSync } from 'fs'
 
 const BASE = process.argv[2] || 'http://127.0.0.1:4321'
