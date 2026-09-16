@@ -99,6 +99,17 @@ _FIO_HEAD_RE = re.compile(
 #: компании — «Банк АО «ТБанк»», «ИНН банка …», «Юридический адрес банка …».
 BANK_LINE_RE = re.compile(r"(?:^|\s)(?:банк|бик)\b|банка\b", re.IGNORECASE)
 
+#: Слово разорвано переносом по дефису: «Строительно-» и «монтажное»
+#: в следующей строке. Склеиваем БЕЗ пробела — дефис — часть слова.
+_HYPHEN_TAIL_RE = re.compile(r"[А-Яа-яЁё]-$")
+_LOWER_HEAD_RE = re.compile(r"^[а-яё]")
+
+#: «Основной государственный регистрационный номер» — ОГРН, написанный
+#: словами. Подпись бывает разбита на строки, а число стоит ниже.
+OGRN_SPELLED_RE = re.compile(
+    r"Основн\w*\s+государственн\w*\s+регистрационн\w*\s+номер"
+    r"[^\d]{0,60}(\d[\d ]{11,18}\d)", re.IGNORECASE)
+
 
 @dataclass
 class ParseResult:
@@ -260,12 +271,16 @@ def join_wrapped_names(text: str) -> list[str]:
     index = 0
     while index < len(lines):
         current = lines[index].rstrip()
-        while index + 1 < len(lines) and (
-                (_FORM_TAIL_RE.search(current.strip())
-                 and _QUOTE_HEAD_RE.match(lines[index + 1].strip()))
-                or (_IP_TAIL_RE.search(current.strip())
-                    and _FIO_HEAD_RE.match(lines[index + 1].strip()))):
-            current = current.strip() + " " + lines[index + 1].strip()
+        while index + 1 < len(lines):
+            head = current.strip()
+            following = lines[index + 1].strip()
+            if _HYPHEN_TAIL_RE.search(head) and _LOWER_HEAD_RE.match(following):
+                current = head + following          # перенос по дефису
+            elif ((_FORM_TAIL_RE.search(head) and _QUOTE_HEAD_RE.match(following))
+                  or (_IP_TAIL_RE.search(head) and _FIO_HEAD_RE.match(following))):
+                current = head + " " + following
+            else:
+                break
             index += 1
         result.append(current)
         index += 1
@@ -506,9 +521,13 @@ def split_label_value(line: str) -> tuple[str | None, str]:
     if ":" in line or "|" in line:
         return None, ""          # «Подпись: значение» разбирает обычный проход
     words = (line or "").split()
+    # В нумерованных карточках строка начинается с номера: «5 Юридический
+    # адрес …». Номер отбрасываем, иначе подпись не опознаётся.
+    if words and re.fullmatch(r"\d{1,2}", words[0]):
+        words = words[1:]
     if len(words) < 2:
         return None, ""
-    for count in range(1, min(4, len(words) - 1) + 1):
+    for count in range(1, min(6, len(words) - 1) + 1):
         key = _field_for_label(" ".join(words[:count]))
         if not key:
             continue
@@ -516,7 +535,14 @@ def split_label_value(line: str) -> tuple[str | None, str]:
             return None, ""          # подпись знакомая, но значение брать нельзя
         if key != "bank_name" and BANK_LINE_RE.search(line):
             return None, ""          # реквизиты банка — не реквизиты компании
-        return key, " ".join(words[count:])
+        value = " ".join(words[count:])
+        # Подпись бывает перенесена на следующую строку: «3 Полное
+        # наименование на английском» — тогда «на английском» это ХВОСТ
+        # ПОДПИСИ, а не значение. Настоящее значение либо содержит цифры
+        # (индекс, номер дома), либо начинается с заглавной буквы.
+        if not re.search(r"\d", value) and not re.match(r"^[А-ЯЁA-Z«\"]", value):
+            return None, ""
+        return key, value
     return None, ""
 
 
@@ -668,6 +694,14 @@ def parse_card(content: CardContent) -> ParseResult:
             remember("kpp", match.group(1))
     if not raw_values.get("ogrn"):
         match = re.search(r"\bОГРН(?:ИП)?[^\d\n]{0,4}(\d[\d ]{11,18}\d)", text, flags=re.IGNORECASE)
+        if match:
+            remember("ogrn", match.group(1))
+    if not raw_values.get("ogrn"):
+        # В части карточек сокращения «ОГРН» нет вовсе — подпись написана
+        # словами и занимает несколько строк, а число стоит отдельной
+        # строкой ниже. Подпись длинная и ни с чем не путается, поэтому
+        # здесь позволяем пропуску дойти до числа через перенос строки.
+        match = OGRN_SPELLED_RE.search(text)
         if match:
             remember("ogrn", match.group(1))
     if not raw_values.get("email"):
