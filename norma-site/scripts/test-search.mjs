@@ -12,7 +12,7 @@ import { readFileSync } from 'node:fs'
 import { createServer } from 'node:http'
 import { readFile } from 'node:fs/promises'
 import { extname, join } from 'node:path'
-import { chromium } from 'playwright'
+import { chromium } from './lib/browser.mjs'
 import { stem, same, prepare, search, foundLabel } from '../src/lib/search.ts'
 
 const problems = []

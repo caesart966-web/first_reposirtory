@@ -18,7 +18,7 @@
 //
 // Запуск: node scripts/test-hero-photo.mjs [адрес]
 
-import { chromium } from 'playwright'
+import { chromium } from './lib/browser.mjs'
 import { PNG } from 'pngjs'
 
 const BASE = process.argv[2] || 'http://127.0.0.1:4321'

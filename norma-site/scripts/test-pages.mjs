@@ -22,7 +22,7 @@
 //     у того, чем пользуются с телефона на ходу.
 //
 // Запуск: node scripts/test-pages.mjs [адрес]
-import { chromium } from 'playwright'
+import { chromium } from './lib/browser.mjs'
 import { readFileSync } from 'fs'
 
 const BASE = process.argv[2] || 'http://127.0.0.1:4321'

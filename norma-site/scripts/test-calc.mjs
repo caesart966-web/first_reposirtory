@@ -3,7 +3,7 @@
 //
 // Запуск: node scripts/test-calc.mjs [адрес]
 
-import { chromium } from 'playwright'
+import { chromium } from './lib/browser.mjs'
 
 const BASE = process.argv[2] || 'http://127.0.0.1:4321'
 
