@@ -5,6 +5,7 @@ import { Footer } from './components/Footer'
 import { Header } from './components/Header'
 import { Hero } from './components/Hero'
 import { HeroDark } from './components/HeroDark'
+import { HeroPhoto } from './components/HeroPhoto'
 import { LegalProvider } from './components/LegalDocs'
 import { MobileBar } from './components/MobileBar'
 import { Pricing } from './components/Pricing'
@@ -39,7 +40,7 @@ export default function App() {
                   Квиз стоит в конце и работает закрывающим призывом —
                   его первый вопрос задаётся ещё на первом экране, в Hero. */}
               {/* Вариант первого экрана выбирается в content/design.ts */}
-              {HERO_VARIANT === 'dark' ? <HeroDark /> : <Hero />}
+              {HERO_VARIANT === 'photo' ? <HeroPhoto /> : HERO_VARIANT === 'dark' ? <HeroDark /> : <Hero />}
               <Trust />
               {/* Сразу под первым экраном — три вида СРО: посетитель должен
                   узнать свою область раньше, чем начнёт читать про услуги. */}
