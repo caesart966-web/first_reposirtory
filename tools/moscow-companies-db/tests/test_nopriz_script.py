@@ -3,6 +3,7 @@
 import importlib.util
 import tempfile
 import unittest
+from datetime import date
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -388,57 +389,108 @@ class TestТелоЗапроса(unittest.TestCase):
         self.assertEqual(тело["searchString"], "6150033422")
 
 
-def _member(inn, номер_сро, дата, статус="Является членом", имя="СРО"):
-    return {"inn": inn, "registry_registration_date": дата,
-            "member_status": {"title": статус},
-            "sro": {"registration_number": номер_сро, "short_description": имя}}
+def _member(inn, номер_сро, дата, статус="Является членом", имя="СРО", выход=None):
+    запись = {"inn": inn, "registry_registration_date": дата,
+              "member_status": {"title": статус},
+              "sro": {"registration_number": номер_сро, "short_description": имя}}
+    if выход:
+        запись["member_right_stop_date"] = выход
+    return запись
 
 
 class TestЧленства(unittest.TestCase):
     def _payload(self, records):
         return {"data": {"data": records, "count": len(records)}}
 
+    def _проверить(self, records, inn="6150033422"):
+        return нопориз.членства(self._payload(records), inn)
+
     def test_вид_по_номеру_сро(self):
-        payload = self._payload([
+        п, и, *_ = self._проверить([
             _member("6150033422", "СРО-П-152-30032010", "2026-07-28T00:00:00+03:00"),
             _member("6150033422", "СРО-И-025-28012010", "2024-02-01T00:00:00+03:00"),
         ])
-        п, и = нопориз.членства(payload, "6150033422")
         self.assertEqual(п[0].strftime("%d.%m.%Y"), "28.07.2026")
         self.assertEqual(и[0].strftime("%d.%m.%Y"), "01.02.2024")
 
     def test_чужие_записи_отброшены(self):
         # Поиск идёт по строке, в ответ может попасть посторонняя компания
-        payload = self._payload([
+        self.assertEqual(self._проверить([
             _member("7700000000", "СРО-П-152-30032010", "2020-01-01T00:00:00+03:00"),
-        ])
-        self.assertEqual(нопориз.членства(payload, "6150033422"), (None, None))
+        ]), (None, None, None, None))
 
-    def test_исключённые_не_считаются(self):
-        payload = self._payload([
+    def test_исключённое_не_считается_действующим(self):
+        п, и, *_ = self._проверить([
             _member("6150033422", "СРО-П-152-30032010", "2020-01-01T00:00:00+03:00",
                     статус="Исключен"),
         ])
-        self.assertEqual(нопориз.членства(payload, "6150033422"), (None, None))
+        self.assertIsNone(п)
+        self.assertIsNone(и)
+
+    def test_исключённое_видно_отдельно(self):
+        # «Нет в реестре» и «была, но выбыла» — разные вещи: первое значит,
+        # что данные могли потеряться, второе — что через год после выхода
+        # компании снова нужна СРО
+        _п, _и, бп, би = self._проверить([
+            _member("6150033422", "СРО-П-152-30032010", "2020-01-01T00:00:00+03:00",
+                    статус="Исключен", имя="СРО Проект",
+                    выход="2025-09-10T00:00:00+03:00"),
+        ])
+        self.assertEqual(бп[1], "СРО Проект")
+        self.assertEqual(бп[2].strftime("%d.%m.%Y"), "10.09.2025")
+        self.assertIsNone(би)
+
+    def test_у_прекращённого_берётся_последний_выход(self):
+        # От последнего выхода отсчитывается годичный запрет на вступление
+        _п, _и, бп, _би = self._проверить([
+            _member("6150033422", "СРО-П-152-30032010", "2012-01-01T00:00:00+03:00",
+                    статус="Исключен", имя="Старая", выход="2019-04-04T00:00:00+03:00"),
+            _member("6150033422", "СРО-П-153-30032010", "2019-06-06T00:00:00+03:00",
+                    статус="Исключен", имя="Новая", выход="2025-09-10T00:00:00+03:00"),
+        ])
+        self.assertEqual(бп[1], "Новая")
+
+    def test_прекращённое_без_даты_выхода(self):
+        # Дата выхода в реестре есть не всегда — членство всё равно
+        # должно найтись, иначе компания уйдёт в «нет в НОПРИЗ»
+        _п, _и, бп, _би = self._проверить([
+            _member("6150033422", "СРО-П-152-30032010", "2020-01-01T00:00:00+03:00",
+                    статус="Исключен"),
+        ])
+        self.assertIsNotNone(бп)
+        self.assertIsNone(бп[2])
 
     def test_берётся_самое_раннее_действующее(self):
-        payload = self._payload([
+        п, *_ = self._проверить([
             _member("6150033422", "СРО-П-152-30032010", "2022-05-05T00:00:00+03:00"),
             _member("6150033422", "СРО-П-153-30032010", "2019-03-03T00:00:00+03:00"),
         ])
-        п, _и = нопориз.членства(payload, "6150033422")
         self.assertEqual(п[0].strftime("%d.%m.%Y"), "03.03.2019")
 
     def test_ведущий_ноль_в_инн(self):
-        payload = self._payload([
+        _п, и, *_ = self._проверить([
             _member("0816034124", "СРО-И-025-28012010", "2023-09-09T00:00:00+03:00"),
-        ])
-        _п, и = нопориз.членства(payload, "0816034124")
+        ], inn="0816034124")
         self.assertIsNotNone(и)
 
     def test_пустой_ответ(self):
-        self.assertEqual(нопориз.членства(self._payload([]), "6150033422"),
-                         (None, None))
+        self.assertEqual(self._проверить([]), (None, None, None, None))
+
+
+class TestПрекращеноСтрокой(unittest.TestCase):
+    def test_с_датой(self):
+        self.assertEqual(
+            нопориз._прекращено((date(2020, 1, 1), "СРО Проект", date(2025, 9, 10))),
+            "СРО Проект — до 10.09.2025")
+
+    def test_без_даты(self):
+        self.assertEqual(
+            нопориз._прекращено((date(2020, 1, 1), "СРО Проект", None)),
+            "СРО Проект")
+
+    def test_ничего(self):
+        self.assertEqual(нопориз._прекращено(None), "")
+
 
 
 if __name__ == "__main__":
