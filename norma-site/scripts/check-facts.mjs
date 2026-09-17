@@ -242,6 +242,81 @@ console.log(`\n  Всего разных ссылок на нормы: ${laws.si
 const sorted = [...laws.entries()].sort((a, b) => b[1] - a[1])
 for (const [k, n] of sorted.slice(0, 12)) console.log(`      ${String(n).padStart(3)}× ${k}`)
 
+// ── 4. Персональные данные ──────────────────────────────────────────────
+//
+// Политика ПДн — единственный документ на сайте, где неправда стоит дороже,
+// чем на всех остальных страницах вместе: за расхождение здесь отвечают
+// не репутацией, а перед Роскомнадзором. Проверяется ровно то, что может
+// разойтись молча: реквизиты в site.ts против того, что напечатано
+// на странице, и состояние галочки согласия.
+const before4 = problems
+console.log('\nПерсональные данные')
+const { SITE: S } = await import('../src/config/site.ts')
+const policy = pages.find((p) => p.url === '/politika/')
+if (!policy) {
+  console.log('  ✗ страницы /politika/ нет в сборке')
+  problems++
+} else {
+  if (!policy.body.includes(S.pdnResponsible)) {
+    console.log(`  ✗ ответственный за обработку (${S.pdnResponsible}) не назван на странице политики`)
+    problems++
+  }
+  if (S.postalAddress && !policy.body.includes(S.postalAddress)) {
+    console.log('  ✗ почтовый адрес вписан в site.ts, но на страницу политики не попал')
+    problems++
+  }
+  if (!S.postalAddress) {
+    console.log('  · почтового адреса оператора нет (SITE.postalAddress пуст).')
+    console.log('      Он обязателен в уведомлении в Роскомнадзор, и по нему субъект')
+    console.log('      направляет письменный запрос. Пока пусто — строки на странице нет.')
+  }
+}
+
+// Согласие должно называть оператора: «согласен с политикой» согласием
+// информированным не считается — политику до отправки почти никто
+// не открывает.
+//
+// Разбирается САМ БЛОК согласия, а не страница целиком. Первая версия
+// искала имя оператора по всему тексту страницы и подделку пропустила:
+// «ИП Багишев Алихан Ахадович» стоит в реквизитах в подвале, и проверка
+// проходила, даже когда из согласия имя убрали. Ровно та же ошибка была
+// поймана на карточках партнёрских СРО.
+const rawForm = existsSync(join(DIST, 'index.html')) ? readFileSync(join(DIST, 'index.html'), 'utf8') : ''
+const agreeLabel = rawForm.match(/<label class="agree"[\s\S]*?<\/label>/)
+if (!agreeLabel) {
+  console.log('  ✗ на главной не нашёлся блок согласия в форме заявки')
+  problems++
+} else {
+  const label = agreeLabel[0].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+  if (!label.includes(S.legalName)) {
+    console.log(`  ✗ в согласии не назван оператор: «${label}»`)
+    problems++
+  }
+  if (!/политик/i.test(label)) {
+    console.log('  ✗ из согласия пропала ссылка на политику обработки данных')
+    problems++
+  }
+}
+
+// Предпроставленная галочка согласием не считается — стережём разметку.
+const agreeTag = rawForm.match(/<input[^>]*id="lf-agree"[^>]*>/)
+if (agreeTag && /\bchecked\b/.test(agreeTag[0])) {
+  console.log('  ✗ галочка согласия проставлена заранее — такое согласие недействительно')
+  problems++
+}
+if (agreeTag && !/\brequired\b/.test(agreeTag[0])) {
+  console.log('  ✗ галочка согласия перестала быть обязательной')
+  problems++
+}
+
+// Полоса про cookie появляется только вместе со счётчиком — иначе сайт
+// сообщал бы о файлах cookie, которых не ставит.
+if (!S.metrikaId) {
+  console.log('  · счётчик Метрики не подключён (SITE.metrikaId пуст): полосы про cookie нет,')
+  console.log('      и это правильно — без счётчика сайт не ставит ни одного файла cookie.')
+}
+if (problems === before4) console.log('  ✓ реквизиты в политике и согласие в форме сходятся с site.ts')
+
 console.log('\n' + '─'.repeat(64))
 if (problems) {
   console.log(`НАЙДЕНО РАСХОЖДЕНИЙ: ${problems}`)
