@@ -91,7 +91,12 @@ _START_KEY_HINTS = (
 )
 # Ключи, которые похожи на дату вступления, но ей не являются
 _STATE_REG_MARKERS = ("state_registration", "ogrn", "егрюл", "егрип")
-_STOP_KEY_HINTS = ("member_right_stop", "right_stop", "stop_date", "прекращ", "исключ")
+# «suspension_date» — так реестр называет дату выхода: у АО «МЦ СПБ»
+# (ИНН 7825496093) при статусе «Исключен» других дат в записи нет вовсе.
+# Слово переводится как «приостановление», но в этой платформе им
+# помечен именно конец членства — подсмотрено в сыром ответе реестра
+_STOP_KEY_HINTS = ("member_right_stop", "right_stop", "stop_date",
+                   "suspension_date", "прекращ", "исключ")
 _FORMER_MARKERS = ("исключ", "прекращ")
 
 _PHONE_KEY_HINTS = ("phone", "тел", "телефон", "contact")

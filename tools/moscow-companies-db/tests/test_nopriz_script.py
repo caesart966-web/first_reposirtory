@@ -493,5 +493,61 @@ class TestПрекращеноСтрокой(unittest.TestCase):
 
 
 
+
+class TestНастоящаяЗаписьРеестра(unittest.TestCase):
+    """Запись списана с ответа реестра по ИНН 7825496093 (АО «МЦ СПБ»).
+
+    Ради неё и заведён этот класс: выдуманные записи в остальных тестах
+    проходили, а на настоящей дата выхода не находилась — реестр держит
+    её в поле «suspension_date», которого не было ни в одной подсказке.
+    """
+
+    ЗАПИСЬ = {
+        "id": 19431608,
+        "member_type": {"id": 1, "code": "1", "title": "ЮЛ"},
+        "member_status": {"id": 2, "code": "2", "title": "Исключен"},
+        "inventory_number": "П-179-007825496093-0402",
+        "full_description": "АКЦИОНЕРНОЕ ОБЩЕСТВО «МОНИТОРИНГОВЫЙ ЦЕНТР»",
+        "short_description": "АО «МЦ СПБ»",
+        "registration_number": "280416/170",
+        "registry_registration_date": "2016-04-28T00:00:00+03:00",
+        "suspension_date": "2022-04-19T00:00:00+03:00",
+        "ogrnip": "1037843040905",
+        "inn": "7825496093",
+        "director": "Иванов Андрей Александрович",
+        "sro": {"id": 303,
+                "full_description": "Ассоциация «Объединение проектировщиков «УниверсалПроект»",
+                "registration_number": "СРО-П-179-12122012"},
+    }
+
+    def test_дата_выхода_находится(self):
+        self.assertEqual(нопориз.stop_date(self.ЗАПИСЬ), date(2022, 4, 19))
+
+    def test_запись_считается_бывшей(self):
+        self.assertTrue(нопориз.is_former(self.ЗАПИСЬ))
+
+    def test_вид_по_номеру_сро(self):
+        self.assertIn(нопориз.DESIGN, нопориз.activity_kind(self.ЗАПИСЬ))
+
+    def test_дата_егрюл_не_путается_с_выходом(self):
+        # Дата государственной регистрации СРО лежит в ветке «sro» и обязана
+        # быть пропущена: иначе выходом окажется 2012 год у всех её членов
+        запись = dict(self.ЗАПИСЬ,
+                      sro=dict(self.ЗАПИСЬ["sro"],
+                               state_registration_date="2012-12-12T00:00:00+03:00"))
+        self.assertEqual(нопориз.stop_date(запись), date(2022, 4, 19))
+
+    def test_в_членствах_уходит_в_прекращённые(self):
+        payload = {"data": {"data": [self.ЗАПИСЬ], "count": 1}}
+        п, и, бп, би = нопориз.членства(payload, "7825496093")
+        self.assertIsNone(п)
+        self.assertIsNone(и)
+        self.assertIsNone(би)
+        self.assertEqual(бп[2], date(2022, 4, 19))
+        self.assertEqual(нопориз._прекращено(бп),
+                         "Ассоциация «Объединение проектировщиков «УниверсалПроект» "
+                         "— до 19.04.2022")
+
+
 if __name__ == "__main__":
     unittest.main()
