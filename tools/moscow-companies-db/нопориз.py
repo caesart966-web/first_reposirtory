@@ -61,6 +61,41 @@ import requests
 BASE = "https://reestr.nopriz.ru"
 MEMBER_LIST_URL = f"{BASE}/api/sro/all/member/list"
 
+# Карточка члена — отдельный запрос по «id» из ответа поиска. В самом ответе
+# поиска телефона нет, а на карточке он есть: у реестра СФЕРЫ телефонов
+# не было вовсе, и Checko на 1892 компании — это 19 дней по 100 в сутки.
+# Адрес подсмотрен не был, поэтому перебираем те же четыре варианта, что
+# известны по НОСТРОЮ: платформа одна.
+_MEMBER_CARD_URLS = (
+    f"{BASE}/api/member/{{id}}",
+    f"{BASE}/api/sro/member/{{id}}",
+    f"{BASE}/api/member/view/{{id}}",
+    f"{BASE}/api/sro/all/member/{{id}}",
+)
+_card_url_template: str | None = None   # какой адрес сработал — запоминаем
+
+
+def fetch_member_card(session: requests.Session, member_id, timeout: int = 60):
+    """Карточка члена по её id. Возвращает разобранный ответ или None."""
+    global _card_url_template
+    templates = ([_card_url_template] if _card_url_template
+                 else list(_MEMBER_CARD_URLS))
+    for template in templates:
+        url = template.format(id=member_id)
+        try:
+            resp = session.get(url, timeout=timeout)
+        except requests.RequestException:
+            continue
+        if resp.status_code != 200:
+            continue
+        try:
+            payload = resp.json()
+        except ValueError:
+            continue
+        _card_url_template = template
+        return payload
+    return None
+
 
 # Дата вступления. Первым — точное имя поля, каким его отдаёт платформа
 # (проверено на НОСТРОЕ: registry_registration_date вида
@@ -998,6 +1033,18 @@ def cmd_sample(args) -> int:
 
     print("=== Первая запись целиком ===")
     print(json.dumps(records[0], ensure_ascii=False, indent=2)[:6000])
+
+    ид = records[0].get("id")
+    if ид:
+        print(f"\n=== Карточка члена id={ид} ===")
+        card = fetch_member_card(session, ид)
+        if card is None:
+            print("Карточка не открылась ни по одному из адресов:")
+            for t in _MEMBER_CARD_URLS:
+                print("   ", t.format(id=ид))
+        else:
+            print(f"Сработал адрес: {_card_url_template}")
+            print(json.dumps(card, ensure_ascii=False, indent=2)[:6000])
     return 0
 
 
