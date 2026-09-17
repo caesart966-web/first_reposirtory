@@ -4,6 +4,7 @@ import { FAQ } from './components/FAQ'
 import { Footer } from './components/Footer'
 import { Header } from './components/Header'
 import { Hero } from './components/Hero'
+import { HeroDark } from './components/HeroDark'
 import { LegalProvider } from './components/LegalDocs'
 import { MobileBar } from './components/MobileBar'
 import { Pricing } from './components/Pricing'
@@ -17,6 +18,7 @@ import { Specialists } from './components/Specialists'
 import { SroTypes } from './components/SroTypes'
 import { Trust } from './components/Trust'
 import { ThemisBackdrop } from './components/ui/ThemisBackdrop'
+import { HERO_VARIANT } from './content/design'
 import { useHashScroll } from './lib/useHashScroll'
 
 export default function App() {
@@ -36,7 +38,8 @@ export default function App() {
               {/* Порядок секций: от «кто вы и с чем пришли» к заявке.
                   Квиз стоит в конце и работает закрывающим призывом —
                   его первый вопрос задаётся ещё на первом экране, в Hero. */}
-              <Hero />
+              {/* Вариант первого экрана выбирается в content/design.ts */}
+              {HERO_VARIANT === 'dark' ? <HeroDark /> : <Hero />}
               <Trust />
               {/* Сразу под первым экраном — три вида СРО: посетитель должен
                   узнать свою область раньше, чем начнёт читать про услуги. */}
