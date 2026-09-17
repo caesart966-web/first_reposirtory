@@ -4,7 +4,8 @@ import { defineConfig } from 'vite'
 
 // base: './' — собранный сайт работает из любого подкаталога (хостинг, GitHub Pages).
 //
-// Точек входа одиннадцать: главная, три страницы видов СРО и семь страниц услуг. Каждая — обычный
+// Точек входа двенадцать: главная, три страницы видов СРО, семь страниц услуг и страница
+// с документами о персональных данных. Каждая — обычный
 // статический html со своим адресом: роутера в браузере нет, поэтому ссылки
 // работают и без JS, поисковик видит три отдельные страницы, а хостингу не
 // нужен фолбэк на index.html. Рукописные пути внутри компонентов (картинки
@@ -28,6 +29,9 @@ export default defineConfig({
         usluga_nok: resolve(__dirname, 'uslugi/nok/index.html'),
         usluga_uroven: resolve(__dirname, 'uslugi/uroven-otvetstvennosti/index.html'),
         usluga_proverki: resolve(__dirname, 'uslugi/soprovozhdenie-proverok/index.html'),
+        // Политика конфиденциальности и согласие: постоянный адрес, на который
+        // можно сослаться. Точка входа src/legal.tsx.
+        politika: resolve(__dirname, 'politika-konfidencialnosti/index.html'),
       },
     },
   },

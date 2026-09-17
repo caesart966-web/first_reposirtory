@@ -92,10 +92,13 @@ function pages(dir = root, prefix = '') {
 }
 
 // Раздел, в который вложена страница. Оба раздела — секции главной, своих
-// адресов у них нет, поэтому в крошках стоят якоря.
-const SECTION = {
-  'sro-': { name: 'Виды СРО', url: `${ORIGIN}/#types` },
-  uslugi: { name: 'Услуги', url: `${ORIGIN}/#services` },
+// адресов у них нет, поэтому в крошках стоят якоря. Страница с документами
+// о персональных данных не принадлежит ни одному разделу: её крошка — из
+// двух ступеней, «Главная → название».
+const section = (url) => {
+  if (url.startsWith('uslugi/')) return { name: 'Услуги', url: `${ORIGIN}/#services` }
+  if (url.startsWith('sro-')) return { name: 'Виды СРО', url: `${ORIGIN}/#types` }
+  return null
 }
 
 const MARK = '<!-- Микроразметка Schema.org, собрана scripts/build-jsonld.mjs -->'
@@ -111,15 +114,16 @@ for (const page of pages()) {
     // с тем, что видит человек во вкладке.
     const title = one(src, /<title>([^<]+)<\/title>/, `title в ${page.url}`)
     const short = title.replace(new RegExp(`\\s*—\\s*${legalName}$`), '').trim()
-    const section = SECTION[page.url.startsWith('uslugi/') ? 'uslugi' : 'sro-']
-    graph.push({
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Главная', item: `${ORIGIN}/` },
-        { '@type': 'ListItem', position: 2, name: section.name, item: section.url },
-        { '@type': 'ListItem', position: 3, name: short, item: `${ORIGIN}/${page.url}` },
-      ],
+    const parent = section(page.url)
+    const trail = [{ '@type': 'ListItem', position: 1, name: 'Главная', item: `${ORIGIN}/` }]
+    if (parent) trail.push({ '@type': 'ListItem', position: 2, name: parent.name, item: parent.url })
+    trail.push({
+      '@type': 'ListItem',
+      position: trail.length + 1,
+      name: short,
+      item: `${ORIGIN}/${page.url}`,
     })
+    graph.push({ '@type': 'BreadcrumbList', itemListElement: trail })
   }
 
   const json = JSON.stringify({ '@context': 'https://schema.org', '@graph': graph }, null, 2)
