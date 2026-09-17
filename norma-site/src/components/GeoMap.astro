@@ -1,0 +1,537 @@
+---
+// КАРТА РОССИИ В РАЗДЕЛЕ «ГЕОГРАФИЯ».
+//
+// ЗАЧЕМ ОНА ЗДЕСЬ. У этого сайта ровно один факт, у которого есть форма
+// карты: строительная компания вправе вступить только в СРО своего
+// субъекта РФ. Абзацем это объясняется, картой — показывается: субъектов
+// много, границы настоящие, и «рядом» не значит «тот же субъект».
+// Заодно карта — вход на 33 городские страницы, которые иначе видны
+// только списком.
+//
+// ЧТО НА НЕЙ ПРАВДА. Границы — настоящие границы субъектов (см. шапку
+// scripts/build-map.py), сетка — настоящие меридианы и параллели той же
+// проекции, метки городов — их настоящие координаты из regions.ts.
+// Закрашены субъекты 33 городов, у которых на сайте есть свой разбор,
+// и это ровно то, что написано в подписи. Кольцом отмечены три города,
+// где есть СРО-партнёры с номерами в государственном реестре.
+// Придуманного на карте нет ничего: ни «регионов присутствия», ни долей,
+// ни цифр по регионам — их у меня нет.
+//
+// ПОЧЕМУ КАРТА НЕ УПРАВЛЕНИЕ, А КАРТИНКА. Тридцать три метки на телефоне
+// стоят в семи пикселях друг от друга — пальцем в них не попасть, и
+// делать вид, что это кнопки, нечестно. Поэтому карта помечена
+// aria-hidden и не берёт фокус, а ходят по городам списком-реестром
+// под ней: там у каждого города настоящая ссылка высотой 38 px.
+// Ничего, что есть только на карте, на сайте нет: субъект, код и список
+// СРО целиком лежат на странице города.
+//
+// СИНЕГО ЗДЕСЬ НЕТ и быть не должно — как и на всём сайте. Карта набрана
+// тем же, чем набраны чертёжные линии между секциями: тёплая линейка
+// по бумаге и одно красное пятно.
+import { href } from '../config/site'
+import { REGIONS } from '../config/regions'
+import { partnersOf } from '../config/partners'
+import { VIEW_BOX, MAP_BASE, MAP_CITY, MAP_ANCHOR, MAP_GRID } from '../config/mapdata'
+
+// По алфавиту — тем же порядком, что список городов под картой.
+const cities = [...REGIONS].sort((a, b) => a.city.localeCompare(b.city, 'ru'))
+
+// Города с партнёрами: у них на карте кольцо, и по ним выводится список СРО.
+const withPartners = cities
+  .map((r) => ({ r, partners: partnersOf(r.slug) }))
+  .filter((x) => x.partners.length > 0)
+const partnerSlugs = new Set(withPartners.map((x) => x.r.slug))
+
+const [vx, vy, vw, vh] = VIEW_BOX.split(' ').map(Number)
+---
+
+<div class="gmap" data-gmap data-nosearch>
+  <div class="gmap-plate">
+    <svg class="gmap-svg" viewBox={VIEW_BOX} aria-hidden="true" focusable="false">
+      <defs>
+        <!-- Сетка видна только внутри страны: за её пределами линии
+             проекции превращаются в шум поперёк пустой бумаги. -->
+        <clipPath id="gmap-land">
+          <use href="#gmap-base" />
+          {cities.map((r) => <use href={`#gmap-r-${r.slug}`} />)}
+        </clipPath>
+      </defs>
+
+      <path id="gmap-base" class="gmap-base" d={MAP_BASE} />
+      {cities.map((r) => (
+        <path id={`gmap-r-${r.slug}`} class="gmap-reg" d={MAP_CITY[r.slug]} data-city={r.slug} />
+      ))}
+
+      <g class="gmap-grid" clip-path="url(#gmap-land)">
+        {MAP_GRID.map((d) => <path d={d} />)}
+      </g>
+
+      <!-- Перекрестье: две волосяные линии через всю пластину. Показывает,
+           где именно город, когда субъект крупный, — на Красноярском крае
+           закраска в полстраны, а точка одна. -->
+      <g class="gmap-cross">
+        <line x1={vx} x2={vx + vw} y1="0" y2="0" />
+        <line y1={vy} y2={vy + vh} x1="0" x2="0" />
+      </g>
+
+      {cities.map((r) => {
+        const a = MAP_ANCHOR[r.slug]
+        const ring = partnerSlugs.has(r.slug)
+        return (
+          <g
+            class:list={['gmap-pin', ring && 'gmap-pin--ring']}
+            data-city={r.slug}
+            data-name={r.city}
+            data-code={r.code}
+            data-subject={r.subject}
+            data-href={href(`/sro/${r.slug}/`)}
+          >
+            {ring && <circle class="gmap-ring" cx={a.x} cy={a.y} r="7.5" />}
+            <circle class="gmap-dot" cx={a.x} cy={a.y} r="3.4" />
+            <circle class="gmap-hit" cx={a.x} cy={a.y} r="8" />
+          </g>
+        )
+      })}
+    </svg>
+  </div>
+
+  <!-- ПОЛЕ ПОКАЗАНИЙ. Не всплывающее окошко у курсора, а строка под
+       пластиной — как шкала у прибора.
+
+       ВЫСОТА ПОСТОЯННА, И ЭТО СТРУКТУРА, А НЕ ПОДОБРАННОЕ ЧИСЛО.
+       Подпись и показания лежат в ОДНОЙ ячейке сетки, три списка СРО —
+       тоже в одной; переключаются видимостью, а не hidden. Поэтому
+       блок всегда высотой с самое высокое из содержимых (Петербург,
+       пять организаций), и наведение не двигает страницу под картой.
+       Записанное числом min-height разъезжалось бы при каждой правке
+       текста или новом партнёре. -->
+  <div class="gmap-read" data-read>
+    <!-- Покой — это легенда, а не заглушка. Место под показания занято
+         всегда (иначе страница дёргалась бы), и держать его пустым было бы
+         расточительством: здесь сказано, что означают метки. На телефоне,
+         где наводить нечем, видна только она. Ничего из вводного абзаца
+         раздела тут не повторяется — иначе одно и то же читалось бы
+         дважды подряд. -->
+    <div class="gmap-cap" data-idle>
+      <div class="gmap-col">
+        <p class="gmap-sro-h">Как читать карту</p>
+        <ul class="gmap-key">
+          <li>
+            <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3.4" /></svg>
+            33 города со своим разбором
+          </li>
+          <li>
+            <svg viewBox="0 0 16 16" aria-hidden="true"
+              ><circle cx="8" cy="8" r="3.4" /><circle class="o" cx="8" cy="8" r="6.6" /></svg
+            >
+            3 города с СРО-партнёрами
+          </li>
+          <li>
+            <svg viewBox="0 0 16 16" aria-hidden="true"
+              ><path class="o" d="M1 11h14M1 5h14" /></svg
+            >
+            границы субъектов и сетка
+          </li>
+        </ul>
+      </div>
+      <p class="gmap-hint">
+        <!-- Предложение про наведение живёт только там, где есть чем
+             наводить. На телефоне это был бы совет, который нельзя
+             выполнить, — а весь сайт построен на обратном. -->
+        <span class="gmap-hover-only"
+          >Наведите на регион — покажу субъект, его код в реестрах и СРО,
+          с которыми я работаю в этом городе. </span
+        >Границы здесь настоящие, и на них видно главное: соседний город вполне
+        может оказаться в другом субъекте, а для строителя это решает всё.
+      </p>
+    </div>
+
+    <div class="gmap-live" data-live>
+      <div class="gmap-col">
+        <p class="gmap-city">
+          <span data-f="city"></span><span class="gmap-code" data-f="code"></span>
+        </p>
+        <p class="gmap-subj" data-f="subject"></p>
+        <p class="gmap-go"><a data-f="href" href={href('/sro/')}>Разбор по городу →</a></p>
+      </div>
+      <!-- Вторая колонка есть у каждого города, а не только у трёх
+           с партнёрами: иначе показания у Барнаула были бы в три строки,
+           а у Петербурга в десять, и высота поля зависела бы от того,
+           куда навели. Городу без партнёров тут говорится ровно то,
+           что есть, — что их нет. -->
+      <div class="gmap-sros">
+        {withPartners.map(({ r, partners }) => (
+          <div class="gmap-sro" data-sro={r.slug}>
+            <p class="gmap-sro-h">СРО, с которыми я работаю в этом городе</p>
+            <ul>
+              {partners.map((p) => (
+                <li>
+                  <b>{p.short}</b>
+                  <span>{p.reg}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+        <div class="gmap-sro gmap-sro--none" data-sro-none>
+          <p class="gmap-sro-h">СРО-партнёров в этом городе у меня нет</p>
+          <p class="gmap-none">
+            Организацию в вашем субъекте подбираю отдельно. Строителю она обязана
+            быть зарегистрирована здесь же; проектировщику и изыскателю подойдёт
+            любая в стране — в том числе из списка по Петербургу.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Наведение работает только там, где есть чем наводить. На телефоне
+  // карта остаётся картинкой: метки там стоят в семи пикселях друг
+  // от друга, и «попробуйте нажать» было бы обещанием, которого
+  // интерфейс не выполняет.
+  const root = document.querySelector<HTMLElement>('[data-gmap]')
+  if (root && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    const read = root.querySelector<HTMLElement>('[data-read]')!
+    const cross = root.querySelector<SVGGElement>('.gmap-cross')!
+    const [hLine, vLine] = Array.from(cross.querySelectorAll('line'))
+    const field = (name: string) => root.querySelector<HTMLElement>(`[data-f="${name}"]`)!
+
+    let current = ''
+    const show = (slug: string) => {
+      if (slug === current) return
+      const pin = root.querySelector<SVGGElement>(`.gmap-pin[data-city="${slug}"]`)
+      if (!pin) return
+      current = slug
+      const d = pin.dataset
+
+      field('city').textContent = d.name || ''
+      field('code').textContent = d.code || ''
+      field('subject').textContent = d.subject || ''
+      const go = field('href') as HTMLAnchorElement
+      if (d.href) go.href = d.href
+      go.textContent = `Разбор по городу: ${d.name}\u00A0→`
+
+      // Город без партнёров получает запасной блок: пустое место справа
+      // читалось бы как «не догрузилось», а не как «партнёров нет».
+      let matched = false
+      root.querySelectorAll<HTMLElement>('[data-sro]').forEach((el) => {
+        const on = el.dataset.sro === slug
+        el.classList.toggle('is-on', on)
+        if (on) matched = true
+      })
+      root.querySelector('[data-sro-none]')?.classList.toggle('is-on', !matched)
+      root.querySelectorAll('.is-on[data-city]').forEach((el) => el.classList.remove('is-on'))
+      pin.classList.add('is-on')
+      root.querySelector(`.gmap-reg[data-city="${slug}"]`)?.classList.add('is-on')
+
+      // Перекрестье ведут к самой метке, а не к середине субъекта:
+      // у Красноярского края закраска в полстраны, а город один.
+      const dot = pin.querySelector('.gmap-dot')!
+      const cx = dot.getAttribute('cx')!
+      const cy = dot.getAttribute('cy')!
+      hLine.setAttribute('y1', cy)
+      hLine.setAttribute('y2', cy)
+      vLine.setAttribute('x1', cx)
+      vLine.setAttribute('x2', cx)
+
+      read.classList.add('is-live')
+      cross.classList.add('is-on')
+    }
+
+    const clear = () => {
+      current = ''
+      root.querySelectorAll('.is-on').forEach((el) => el.classList.remove('is-on'))
+      read.classList.remove('is-live')
+    }
+
+    // Слушаем на корне, а не на каждой из шестидесяти шести целей:
+    // меток и областей вместе больше, чем строк в этом файле.
+    root.addEventListener('pointerover', (e) => {
+      const el = (e.target as Element).closest<HTMLElement>('[data-city]')
+      if (el?.dataset.city) show(el.dataset.city)
+    })
+    root.addEventListener('pointerleave', clear)
+  }
+</script>
+
+<style>
+  /* ПЛАСТИНА. Карта лежит на листе с двойной рамкой и засечками по
+     серединам сторон — та же чертёжная графика, что у размерных линий
+     между секциями. Никаких теней и скруглений в двадцать пикселей:
+     сайт про документы, и карта на нём — лист, а не виджет. */
+  .gmap {
+    margin: 0 0 22px;
+    --gmap-line: #CFC5B0;
+  }
+  .gmap-plate {
+    position: relative;
+    background: #FCFAF6;
+    border: 1px solid var(--line);
+    border-radius: var(--r-s);
+    padding: 10px 12px;
+  }
+  .gmap-plate::before {
+    content: '';
+    position: absolute;
+    inset: 5px;
+    border: 1px solid color-mix(in srgb, var(--line) 55%, transparent);
+    border-radius: 3px;
+    pointer-events: none;
+  }
+  /* Засечки на серединах сторон — цитата из чертежа, тот же приём,
+     что в .section + .section::before. */
+  .gmap-plate::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(var(--line), var(--line)) 50% 0 / 1px 9px no-repeat,
+      linear-gradient(var(--line), var(--line)) 50% 100% / 1px 9px no-repeat,
+      linear-gradient(var(--line), var(--line)) 0 50% / 9px 1px no-repeat,
+      linear-gradient(var(--line), var(--line)) 100% 50% / 9px 1px no-repeat;
+  }
+  .gmap-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  /* Субъекты без своей страницы — фон. Обводка рисует границы всех
+     субъектов сразу: в контуре каждое кольцо отдельным подконтуром. */
+  .gmap-base {
+    fill: #F2EDE3;
+    stroke: var(--gmap-line);
+    stroke-width: 0.55;
+    stroke-linejoin: round;
+  }
+  /* Субъекты 33 городов. */
+  .gmap-reg {
+    fill: color-mix(in srgb, var(--acc) 13%, #FFFFFF);
+    stroke: color-mix(in srgb, var(--acc) 40%, transparent);
+    stroke-width: 0.7;
+    stroke-linejoin: round;
+    transition: fill var(--t-fast) var(--ease), stroke var(--t-fast) var(--ease);
+  }
+  .gmap-reg.is-on {
+    fill: color-mix(in srgb, var(--acc) 40%, #FFFFFF);
+    stroke: var(--acc);
+    stroke-width: 1.1;
+  }
+
+  /* Сетка — настоящие меридианы и параллели проекции. Она и объясняет,
+     почему страна выгнута дугой: это не стилизация, это коническая
+     проекция. Обрезана по суше, снаружи линии были бы шумом. */
+  .gmap-grid path {
+    fill: none;
+    stroke: var(--gmap-line);
+    stroke-width: 0.5;
+    opacity: 0.95;
+  }
+
+  .gmap-cross { opacity: 0; transition: opacity var(--t-fast) var(--ease); }
+  .gmap-cross.is-on { opacity: 1; }
+  .gmap-cross line {
+    stroke: color-mix(in srgb, var(--acc) 50%, transparent);
+    stroke-width: 0.5;
+    stroke-dasharray: 3 3;
+  }
+
+  .gmap-dot {
+    fill: var(--acc);
+    stroke: #FCFAF6;
+    stroke-width: 1.2;
+    transition: r var(--t-fast) var(--ease);
+  }
+  .gmap-ring {
+    fill: none;
+    stroke: var(--acc);
+    stroke-width: 0.8;
+    opacity: 0.45;
+    transition: opacity var(--t-fast) var(--ease), r var(--t-fast) var(--ease);
+  }
+  /* Прозрачный кружок побольше: наводить в точку радиусом 3 неудобно,
+     а рисовать её крупнее нельзя — на 33 метках карта станет гроздью. */
+  .gmap-hit { fill: transparent; }
+  .gmap-pin.is-on .gmap-dot { r: 4.4; }
+  .gmap-pin.is-on .gmap-ring { opacity: 0.9; r: 9.5; }
+
+  /* ПОЛЕ ПОКАЗАНИЙ. Не всплывающая подсказка у курсора, а строка под
+     пластиной: место под неё занято всегда, поэтому при наведении
+     ничего не съезжает. Высота задана и проверяется — см.
+     scripts/test-geomap.mjs. */
+  /* Подпись и показания — в одной ячейке сетки, переключаются
+     видимостью. Высота блока при этом равна самому высокому из них
+     и не зависит от того, на что навели. */
+  .gmap-read {
+    display: grid;
+    margin-top: 14px;
+    padding-top: 13px;
+    border-top: 1px solid var(--line);
+  }
+  .gmap-read > * { grid-area: 1 / 1; }
+  .gmap-live { visibility: hidden; }
+  .gmap-read.is-live .gmap-cap { visibility: hidden; }
+  .gmap-read.is-live .gmap-live { visibility: visible; }
+  /* Три списка СРО — тоже друг на друге: иначе блок был бы у Петербурга
+     на две строки выше, чем у Москвы, и страница дёргалась бы. */
+  .gmap-sros { display: grid; }
+  .gmap-sro { grid-area: 1 / 1; visibility: hidden; }
+  .gmap-read.is-live .gmap-sro.is-on { visibility: visible; }
+  /* Списки СРО и запасной блок «партнёров нет» лежат друг на друге,
+     поэтому в узкой колонке они должны быть одной ширины. */
+  .gmap-sros > * { min-width: 0; }
+  /* Пустая строка строки не занимает: в покое название города, код
+     и субъект пустые, и блок показаний был на 48 px ниже, чем при
+     наведении. Неразрывный ноль ширины даёт пустому полю настоящую
+     строку — вместе с отступами и рамкой у чипа с кодом, — и это точнее
+     записанной высоты: поменяется кегль, строка пересчитается сама.
+     Сейчас легенда всё равно выше показаний и держит высоту сама,
+     так что снаружи правило ничего не меняет; оно нужно на случай,
+     когда текст легенды станет короче. Что страница при наведении
+     не дёргается, гарантирует не оно, а scripts/test-geomap.mjs:
+     он меряет высоту раздела на всех 33 городах. */
+  .gmap-live [data-f]:empty::before { content: '\200B'; }
+  .gmap-city {
+    margin: 0;
+    font-family: var(--font-head);
+    font-size: 21px;
+    line-height: 1.1;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .gmap-code {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    font-variant-numeric: tabular-nums;
+    color: var(--acc-deep);
+    background: var(--acc-soft);
+    border: 1px solid color-mix(in srgb, var(--acc) 22%, transparent);
+    border-radius: 3px;
+    padding: 2px 7px;
+  }
+  .gmap-subj {
+    margin: 4px 0 0;
+    font-size: 13.5px;
+    color: var(--muted);
+  }
+  /* Показания в две колонки: слева город, справа СРО. В одну колонку
+     Петербург с пятью организациями был бы вдвое выше Барнаула,
+     и высота поля зависела бы от того, куда навели. */
+  .gmap-live {
+    display: grid;
+    grid-template-columns: minmax(180px, 265px) minmax(0, 1fr);
+    gap: 0 28px;
+    align-items: start;
+  }
+  .gmap-none {
+    margin: 6px 0 0;
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--muted);
+  }
+  .gmap-sro-h {
+    margin: 2px 0 0;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  /* Список в одну колонку. В две название «СФЕРА проектировщиков»
+     рвалось на две строки, а номер в реестре — он нарочно неразрывный,
+     по нему организацию находят, — вылезал за правый край. */
+  .gmap-sro ul {
+    list-style: none;
+    margin: 4px 0 0;
+    padding: 0;
+  }
+  .gmap-sro li {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 3px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 13.5px;
+    line-height: 1.45;
+  }
+  .gmap-sro li b { font-weight: 600; }
+  /* Номер в реестре — цифры в колонку, поэтому табличные. По нему
+     организацию находят в государственном реестре, и обрывать его
+     переносом нельзя. */
+  .gmap-sro li span {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .gmap-go { margin: 14px 0 0; font-size: 14px; font-weight: 600; }
+  .gmap-go a { color: var(--acc-deep); text-decoration: none; }
+  .gmap-go a:hover { text-decoration: underline; }
+
+  /* Легенда разложена той же сеткой, что показания: слева подпись
+     и знаки, справа текст. Тогда при наведении содержимое не прыгает
+     из колонки в колонку. */
+  .gmap-cap {
+    display: grid;
+    grid-template-columns: minmax(180px, 265px) minmax(0, 1fr);
+    gap: 0 28px;
+    align-items: start;
+    margin: 0;
+  }
+  .gmap-key {
+    list-style: none;
+    margin: 6px 0 0;
+    padding: 0;
+    display: grid;
+    gap: 5px;
+  }
+  .gmap-key li {
+    display: grid;
+    grid-template-columns: 16px 1fr;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--muted);
+  }
+  .gmap-key svg { width: 16px; height: 16px; overflow: visible; }
+  .gmap-key circle { fill: var(--acc); }
+  .gmap-key .o { fill: none; stroke: var(--acc); stroke-width: 1; opacity: 0.5; }
+  .gmap-key path.o { stroke: var(--gmap-line); opacity: 1; }
+  .gmap-hint {
+    margin: 0;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  /* Ниже 600 px обе сетки складываются в одну колонку: в 350 px
+     подпись слева и текст справа дают по три слова в строке. */
+  @media (max-width: 599px) {
+    .gmap-cap, .gmap-live { grid-template-columns: 1fr; gap: 10px; }
+  }
+
+  /* Поле показаний живёт только там, где есть чем наводить. Скрипт его
+     и не включает без мыши, но правило нужно и в стилях: без мыши
+     строка «наведите на регион» была бы советом, который нельзя
+     выполнить. */
+  /* Без мыши показания не показываются вовсе — наводить нечем, — и блок
+     сжимается до одной подписи. Скрипт там тоже не запускается. */
+  @media (hover: none), (pointer: coarse), (max-width: 999px) {
+    .gmap-live { display: none; }
+    .gmap-hover-only { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .gmap-reg, .gmap-dot, .gmap-ring, .gmap-cross { transition: none; }
+  }
+</style>
