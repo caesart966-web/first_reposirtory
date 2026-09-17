@@ -1,0 +1,974 @@
+{
+  "kit": 5,
+  "topic": "Fen Bilimleri Ağırlıklı Antrenman",
+  "date": "2026",
+  "passages": [
+    {
+      "first": 43,
+      "last": 46,
+      "text": "A catalyst changes the speed of a reaction without being consumed by it, which sounds like a violation of something and is not. The reaction was always going to happen; the catalyst merely lowers the barrier standing between the reactants and the products. Enzymes are the biological version, and they are extraordinarily good at it: reactions that would take centuries in a test tube are completed in milliseconds inside a cell. Their secret is not chemical force but shape. An enzyme holds the reacting molecules in exactly the orientation in which they are most likely to react, and it stabilises the awkward intermediate stage through which the reaction has to pass. Two consequences follow. The first is specificity: an enzyme shaped for one molecule will usually ignore anything else, which is why a cell can run thousands of reactions at once without their interfering with one another. The second is fragility. Heat, acid, or a single misplaced atom in the chain can distort the shape, and an enzyme that has lost its shape has lost everything."
+    },
+    {
+      "first": 47,
+      "last": 50,
+      "text": "Seismologists can say, with some confidence, how much shaking a given city should expect over the next fifty years. They cannot say when the next earthquake will occur, and after a century of effort most of them have stopped trying. The distinction is between forecasting and prediction. A forecast is statistical: it counts past events on a fault, estimates how quickly strain accumulates, and produces a probability for a period. A prediction names a place, a magnitude and a date, and it is the naming of the date that has defeated everyone. The difficulty appears to be fundamental rather than technical. Faults are not uniform, the stress on them cannot be measured at depth, and the same small slip can either stop after a metre or run for two hundred kilometres, depending on conditions that nobody can observe in advance. Most of the discipline's effort has therefore moved to the question that can be answered: not when a building will be shaken, but whether it will still be standing afterwards."
+    },
+    {
+      "first": 51,
+      "last": 54,
+      "text": "Some animals navigate by the Earth's magnetic field, and for decades nobody could say how, because no organ resembling a compass had ever been found. The field is weak, it passes through tissue without hindrance, and there is no obvious place for a sense organ to sit. Two mechanisms are now taken seriously. The first involves tiny crystals of magnetite, a magnetic mineral, which have been located in the tissues of several species and could in principle be pulled into alignment like a compass needle. The second is stranger: a light-sensitive protein in the eye may form pairs of molecules whose chemistry is altered by the direction of the field, so that the bird in effect sees the field as a pattern superimposed on its vision. Neither mechanism has been demonstrated beyond dispute, and the two are not mutually exclusive. What is certain is behavioural rather than anatomical: displaced birds correct their heading, and they stop doing so when a weak oscillating field is applied."
+    },
+    {
+      "first": 55,
+      "last": 58,
+      "text": "The ocean has absorbed roughly a quarter of the carbon dioxide released by human activity, and this is frequently described as a service it performs for us. The description is accurate and incomplete. Dissolved carbon dioxide forms a weak acid, and the surface ocean has become measurably less alkaline over the past two centuries — a change that sounds small on a logarithmic scale and is not small at all for the organisms concerned. The animals most affected are those that build shells from calcium carbonate, because the same chemistry that acidifies the water also reduces the supply of the carbonate ions from which shells are made. Corals, molluscs and certain plankton must therefore spend more energy to build the same structure, and in the most affected waters they build thinner ones. The consequence that worries biologists is not the disappearance of any single species. It is that several of these organisms sit near the base of food webs, where a small loss propagates upwards."
+    },
+    {
+      "first": 59,
+      "last": 62,
+      "text": "Every cell in a body carries the same genome, and yet a liver cell and a neuron behave nothing alike. The difference lies not in the sequence but in which parts of it are switched on, and that switching is managed by chemical marks attached to the DNA and to the proteins around which it is wound. These marks are copied when a cell divides, which is what keeps a liver cell producing liver cells rather than something else. The field became controversial when evidence appeared that some marks can survive the formation of eggs and sperm and thus be passed to the following generation. In plants this is well documented. In mammals the evidence is thinner and the mechanism is not clear, because most marks are stripped away and rewritten early in development. Popular accounts have often run ahead of the data, presenting an individual's experience as something directly inherited by their children. Researchers in the field are markedly more cautious, which is usually a sign that the question is still open."
+    }
+  ],
+  "questions": [
+    {
+      "no": 27, "group": "sentence_completion", "level": "B2",
+      "stem": "Because the sample had been stored above the recommended temperature for two days, ----.",
+      "options": {
+        "o1": "the laboratory declined to certify any of the results obtained from it",
+        "o2": "the container was designed to withstand considerable internal pressure",
+        "o3": "the shipment had travelled more than two thousand kilometres by road",
+        "o4": "material of this kind is normally kept in a refrigerated store",
+        "o5": "the courier company has handled the institute's deliveries for years"
+      },
+      "order": ["o2", "o1", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o4",
+      "why": "Because ile kurulan cümle bir sonuç ister; örneğin uygun olmayan sıcaklıkta bekletilmesinin doğrudan sonucu, sonuçların onaylanmamasıdır.",
+      "trap_note": "Saklama koşullarından söz ettiği için konu birliği kurar, ama olan bitenin sonucu değil, genel bir uygulamayı anlatır."
+    },
+    {
+      "no": 28, "group": "sentence_completion", "level": "B2",
+      "stem": "Although the two teams used identical instruments and the same raw data, ----.",
+      "options": {
+        "o1": "their published estimates differed by almost a factor of three",
+        "o2": "both groups acknowledged the funding body in their papers",
+        "o3": "the instruments had been calibrated at the same facility",
+        "o4": "the data set is freely available to any researcher who asks",
+        "o5": "the analysis was carried out over a period of eighteen months"
+      },
+      "order": ["o2", "o3", "o4", "o5", "o1"],
+      "answer": "o1", "trap": "o3",
+      "why": "Although karşıtlık ister: aynı cihaz ve aynı veriye rağmen tahminlerin üç kata yakın farklı çıkması tek zıt sonuçtur.",
+      "trap_note": "Benzerliği bir kez daha vurgular; ekleme ilişkisi, Although'un istediği karşıtlığın yerini tutmaz."
+    },
+    {
+      "no": 29, "group": "sentence_completion", "level": "B2",
+      "stem": "The crater was so deeply buried under later sediment ----.",
+      "options": {
+        "o1": "that it was found only when an oil company drilled through it by accident",
+        "o2": "because the impact had occurred more than sixty million years earlier",
+        "o3": "so geologists had to rely on magnetic surveys to trace its edge",
+        "o4": "although its diameter is greater than that of any crater on land",
+        "o5": "which the survey ship mapped over the following three seasons"
+      },
+      "order": ["o2", "o3", "o4", "o1", "o5"],
+      "answer": "o1", "trap": "o3",
+      "why": "so + zarf/sıfat kalıbı yalnızca that ile tamamlanır ve gömülü olmanın sonucunu bildirir.",
+      "trap_note": "Makul bir sonuç verir ama so bağlacıyla kurulur; so ... that yapısı yarım kalır."
+    },
+    {
+      "no": 30, "group": "sentence_completion", "level": "B2",
+      "stem": "It was such an unexpected result ----.",
+      "options": {
+        "o1": "that the group repeated the whole experiment twice before writing it up",
+        "o2": "because nothing in the earlier literature had suggested it",
+        "o3": "so the journal asked for an additional reviewer",
+        "o4": "while the parallel study in Kyoto reported the opposite",
+        "o5": "which three other laboratories have since confirmed"
+      },
+      "order": ["o2", "o3", "o1", "o4", "o5"],
+      "answer": "o1", "trap": "o5",
+      "why": "such a + sıfat + isim kalıbının karşılığı that yan cümlesidir; beklenmedikliğin sonucu deneyin iki kez yinelenmesidir.",
+      "trap_note": "Sonucun sonradan doğrulandığını söyleyip ilgi cümlesiyle bağlanır; such ... that kalıbı ilgi zamiriyle tamamlanmaz."
+    },
+    {
+      "no": 31, "group": "sentence_completion", "level": "C1",
+      "stem": "Having been kept in darkness for six weeks, ----.",
+      "options": {
+        "o1": "the seedlings had grown tall and pale and could not support their own weight",
+        "o2": "the researchers measured the stems before returning them to the light",
+        "o3": "it was obvious that the experiment would have to be repeated",
+        "o4": "growth of this kind is familiar to anyone who has stored potatoes",
+        "o5": "the greenhouse was fitted with blinds on every window"
+      },
+      "order": ["o2", "o1", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Having been kept edilgen ortaç öbeğidir; altı hafta karanlıkta tutulan şey ana cümlenin öznesi olmalıdır, bu da yalnızca fideler olabilir.",
+      "trap_note": "Anlamca akla yatkındır ama öznesi araştırmacılardır; karanlıkta tutulan onlar olmadığı için sarkık ortaç hatası doğar."
+    },
+    {
+      "no": 32, "group": "sentence_completion", "level": "B2",
+      "stem": "The museum has withdrawn the specimen ----.",
+      "options": {
+        "o1": "whose provenance the curators have been unable to establish",
+        "o2": "which provenance the curators have been unable to establish",
+        "o3": "that its provenance the curators have been unable to establish",
+        "o4": "where the curators have been unable to establish the provenance",
+        "o5": "when the curators have been unable to establish the provenance"
+      },
+      "order": ["o1", "o2", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o3",
+      "why": "Örnek ile geçmişi arasında iyelik ilişkisi vardır; bu ilişki ilgi cümlesinde whose ile kurulur.",
+      "trap_note": "that ile its'i birlikte kullanır; ilgi zamiri iyeliği zaten taşıdığı için ikinci bir iyelik sıfatı fazladır."
+    },
+    {
+      "no": 33, "group": "sentence_completion", "level": "C1",
+      "stem": "Rarely does a single measurement ----.",
+      "options": {
+        "o1": "settle a question that two decades of argument have left open",
+        "o2": "settles a question that two decades of argument have left open",
+        "o3": "to settle a question that two decades of argument have left open",
+        "o4": "settling a question that two decades of argument have left open",
+        "o5": "it settles a question that two decades of argument have left open"
+      },
+      "order": ["o2", "o3", "o4", "o1", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Rarely cümle başına gelince devrik yapı kurulur: yardımcı fiil does öne alınır ve asıl fiil yalın hâlde kalır.",
+      "trap_note": "Devrik yapının zaten taşıdığı çekimi bir kez daha fiile yükler; does settles biçimi çift çekim yaratır."
+    },
+    {
+      "no": 34, "group": "sentence_completion", "level": "C1",
+      "stem": "Not only is the material lighter than steel, ----.",
+      "options": {
+        "o1": "but it also keeps its strength at temperatures that would soften steel",
+        "o2": "and it keeps its strength at temperatures that would soften steel",
+        "o3": "it also keeps its strength at temperatures that would soften steel",
+        "o4": "so it keeps its strength at temperatures that would soften steel",
+        "o5": "although it keeps its strength at temperatures that would soften steel"
+      },
+      "order": ["o2", "o3", "o5", "o4", "o1"],
+      "answer": "o1", "trap": "o3",
+      "why": "Not only ile başlayan devrik yapının ikinci yarısı but also ile kurulur.",
+      "trap_note": "also kullandığı için tamamlanmış görünür; ancak but düştüğünde iki bağımsız cümle bağlaçsız kalır."
+    },
+    {
+      "no": 35, "group": "sentence_completion", "level": "C1",
+      "stem": "Were the reaction to proceed at the rate predicted by the model, ----.",
+      "options": {
+        "o1": "the vessel would reach its pressure limit within four minutes",
+        "o2": "the vessel will reach its pressure limit within four minutes",
+        "o3": "the vessel would have reached its pressure limit within four minutes",
+        "o4": "the vessel reached its pressure limit within four minutes",
+        "o5": "the vessel has reached its pressure limit within four minutes"
+      },
+      "order": ["o2", "o3", "o1", "o4", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Were + özne + to + fiil yapısı if'siz ikinci tip koşul cümlesidir ve ana cümlede would + V1 ister.",
+      "trap_note": "will kullanarak birinci tip koşula kayar; varsayımsal bir senaryo, gerçekleşmesi beklenen bir olaya dönüşür."
+    },
+    {
+      "no": 36, "group": "sentence_completion", "level": "B2",
+      "stem": "Even though the instrument was designed for use in orbit, ----.",
+      "options": {
+        "o1": "its most productive years have been spent on a mountaintop in Chile",
+        "o2": "it has operated continuously since it was launched in 2011",
+        "o3": "the engineering team worked on the optics for almost a decade",
+        "o4": "the mirror had to be polished to a tolerance of a few nanometres",
+        "o5": "its data are archived and released to researchers every six months"
+      },
+      "order": ["o1", "o2", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Even though beklenmedik bir sonuç ister: yörünge için tasarlanan cihazın en verimli yıllarını bir dağ tepesinde geçirmesi bu beklentiyi kırar.",
+      "trap_note": "Yörünge için tasarlanmış bir cihazın beklenen öyküsünü sürdürür; karşıtlık değil uyum kurar."
+    },
+    {
+      "no": 37, "group": "translation", "level": "C1", "direction": "en_tr",
+      "stem": "Seldom does a fossil preserve soft tissue, which is why the few specimens that do are studied for decades.",
+      "options": {
+        "o1": "Bir fosilin yumuşak dokuyu koruması nadiren görülür; koruyan birkaç örneğin onlarca yıl boyunca incelenmesinin nedeni de budur.",
+        "o2": "Bir fosilin yumuşak dokuyu koruması sıkça görülür; bu yüzden birkaç örnek onlarca yıl boyunca incelenir.",
+        "o3": "Yumuşak dokuyu koruyan fosiller, onlarca yıl incelendikleri için nadiren bulunur.",
+        "o4": "Fosillerin çoğu yumuşak dokuyu korur, ancak yalnızca birkaçı onlarca yıl incelenmiştir.",
+        "o5": "Yumuşak doku barındıran fosiller, onlarca yıl incelenmedikçe nadir sayılmaz."
+      },
+      "order": ["o2", "o3", "o1", "o4", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Seldom cümle başına gelince devrik yapı kurulur; devriklik yalnızca vurgu içindir, anlam 'nadiren korur' olarak kalır.",
+      "trap_note": "Devrik yapıyı olumlu bir vurgu sanıp 'sıkça' der; olumsuz sıklık zarfı tersine çevrilince cümle karşıt bir anlam kazanır."
+    },
+    {
+      "no": 38, "group": "translation", "level": "C1", "direction": "en_tr",
+      "stem": "Not until the ice core was analysed layer by layer did the researchers understand how abruptly the climate had changed.",
+      "options": {
+        "o1": "Araştırmacılar iklimin ne kadar ani değiştiğini ancak buz karotu katman katman incelendiğinde anladı.",
+        "o2": "Araştırmacılar, buz karotu katman katman incelendiğinde iklimin ani değişmediğini anladı.",
+        "o3": "Buz karotu katman katman incelenmeden önce araştırmacılar iklimin ani değişmiş olabileceğini düşünüyordu.",
+        "o4": "Araştırmacılar iklimin ani değiştiğini anladıkları için buz karotunu katman katman incelediler.",
+        "o5": "Buz karotunun katman katman incelenmesi, iklim değişiminin hızını ölçmeye yetmedi."
+      },
+      "order": ["o2", "o3", "o4", "o5", "o1"],
+      "answer": "o1", "trap": "o4",
+      "why": "Not until ... did kalıbı 'ancak o zaman' anlamı verir; anlama eylemi incelemeden sonra gerçekleşmiştir.",
+      "trap_note": "Neden ile sonucu yer değiştirir: inceleme anlamanın sonucu değil, önkoşuludur."
+    },
+    {
+      "no": 39, "group": "translation", "level": "B2", "direction": "en_tr",
+      "stem": "The committee neither approved the revised protocol nor gave any reason for delaying its decision.",
+      "options": {
+        "o1": "Kurul ne gözden geçirilmiş protokolü onayladı ne de kararını ertelemek için bir gerekçe gösterdi.",
+        "o2": "Kurul gözden geçirilmiş protokolü onaylamadı ama kararını ertelemek için bir gerekçe gösterdi.",
+        "o3": "Kurul gözden geçirilmiş protokolü onayladı; ancak kararını ertelemek için bir gerekçe göstermedi.",
+        "o4": "Kurul, kararını ertelediği için gözden geçirilmiş protokolü onaylamadı.",
+        "o5": "Kurulda ne gözden geçirilmiş protokol ne de erteleme kararı görüşüldü."
+      },
+      "order": ["o2", "o1", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "neither ... nor iki eylemi birden olumsuzlar: ne onay verilmiştir ne de gerekçe gösterilmiştir.",
+      "trap_note": "nor'u 'ama' gibi okuyup ikinci eylemi olumluya çevirir; iki olumsuzluktan biri kaybolur."
+    },
+    {
+      "no": 40, "group": "translation", "level": "B2", "direction": "tr_en",
+      "stem": "Kuzey yamaçta ölçülen sıcaklıklar, aynı yükseklikteki güney yamaçtan tutarlı biçimde daha düşük çıkıyor.",
+      "options": {
+        "o1": "The temperatures measured on the northern slope are consistently lower than those on the southern slope at the same altitude.",
+        "o2": "The temperatures measured on the northern slope is consistently lower than those on the southern slope at the same altitude.",
+        "o3": "The temperatures measured on the northern slope are consistently lower than the southern slope at the same altitude.",
+        "o4": "The northern slope, whose temperatures are measured at the same altitude, is consistently colder than the southern one.",
+        "o5": "Temperatures at the same altitude are measured consistently lower on the southern slope than on the northern slope."
+      },
+      "order": ["o2", "o3", "o4", "o1", "o5"],
+      "answer": "o1", "trap": "o5",
+      "why": "Özne çoğuldur (the temperatures) ve karşılaştırma iki yamacın sıcaklıkları arasındadır; those ile ikinci terim doğru biçimde karşılanır.",
+      "trap_note": "Karşılaştırmanın yönünü ters çevirir; düşük çıkan kuzey yamaç iken güney yamaç gösterilmiş olur."
+    },
+    {
+      "no": 41, "group": "translation", "level": "B2", "direction": "tr_en",
+      "stem": "Örneklem küçük olduğu sürece, bulgunun rastlantı olma ihtimali göz ardı edilemez.",
+      "options": {
+        "o1": "As long as the sample remains small, the possibility that the finding is a coincidence cannot be ruled out.",
+        "o2": "As long as the sample does not remain small, the possibility that the finding is a coincidence cannot be ruled out.",
+        "o3": "Unless the sample remains small, the possibility that the finding is a coincidence cannot be ruled out.",
+        "o4": "The sample remains small because the possibility that the finding is a coincidence cannot be ruled out.",
+        "o5": "As long as the sample remains small, the finding can safely be treated as a coincidence."
+      },
+      "order": ["o1", "o2", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o3",
+      "why": "'-diği sürece' koşulu As long as ile kurulur ve koşul olumlu kalır; ana cümledeki olumsuzluk ise 'göz ardı edilemez' ifadesine aittir.",
+      "trap_note": "Unless kendi içinde olumsuzluk taşıdığı için koşulu tersine çevirir: 'küçük olmadığı sürece' anlamı doğar."
+    },
+    {
+      "no": 42, "group": "translation", "level": "C1", "direction": "tr_en",
+      "stem": "Sonuçları üç ayrı yöntemle doğrulanan model, alandaki diğer önerilerin önüne geçti.",
+      "options": {
+        "o1": "The model whose results were confirmed by three separate methods has overtaken the other proposals in the field.",
+        "o2": "The model which its results were confirmed by three separate methods has overtaken the other proposals in the field.",
+        "o3": "The model, whose three separate methods confirmed the results, has overtaken the other proposals in the field.",
+        "o4": "The results of the model, which were confirmed by three separate methods, have overtaken the other proposals in the field.",
+        "o5": "The model whose results were confirmed by three separate methods will overtake the other proposals in the field."
+      },
+      "order": ["o2", "o3", "o4", "o5", "o1"],
+      "answer": "o1", "trap": "o4",
+      "why": "'Sonuçları ... doğrulanan model' iyelik ilişkisi kurar; diğer önerilerin önüne geçen de sonuçlar değil modelin kendisidir.",
+      "trap_note": "Öne geçen özneyi sonuçlara kaydırır; ilgi cümlesinin bağlandığı ad değişince cümlenin öznesi kayar."
+    },
+    {
+      "no": 43, "group": "paragraph", "level": "B2", "qtype": "it_is_clear",
+      "stem": "It is clear from the passage that a catalyst ----.",
+      "options": {
+        "o1": "makes a reaction faster without making it possible",
+        "o2": "supplies the energy that the reaction requires",
+        "o3": "is gradually used up as the reaction proceeds",
+        "o4": "changes the products that a reaction yields",
+        "o5": "works only at temperatures close to that of the body"
+      },
+      "order": ["o2", "o1", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça iki şeyi ayırır: tepkime zaten gerçekleşecekti, katalizör yalnızca önündeki engeli alçaltır.",
+      "trap_note": "Engeli alçaltmayı enerji vermekle karıştırır; katalizör tepkimeye enerji eklemez, gereken enerjiyi düşürür."
+    },
+    {
+      "no": 44, "group": "paragraph", "level": "B2", "qtype": "according_to",
+      "stem": "According to the passage, the effectiveness of an enzyme depends mainly on ----.",
+      "options": {
+        "o1": "the shape in which it holds the reacting molecules",
+        "o2": "the chemical force with which it attacks the reactants",
+        "o3": "the temperature at which the cell is operating",
+        "o4": "the number of reactions taking place around it",
+        "o5": "the length of the chain from which it is built"
+      },
+      "order": ["o2", "o3", "o4", "o1", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça doğrudan söyler: enzimin sırrı kimyasal kuvvet değil biçimdir; molekülleri tepkimeye en yatkın konumda tutar.",
+      "trap_note": "Parçanın açıkça dışladığı açıklamayı seçer: 'kimyasal kuvvet değil biçim' ifadesi bu seçeneği önceden reddeder."
+    },
+    {
+      "no": 45, "group": "paragraph", "level": "C1", "qtype": "inference",
+      "stem": "It can be inferred from the passage that a cell can run thousands of reactions at the same time because ----.",
+      "options": {
+        "o1": "each enzyme acts on its own molecule and leaves the others alone",
+        "o2": "reactions inside cells are far slower than those in a test tube",
+        "o3": "the products of one reaction start the next one",
+        "o4": "enzymes are replaced as soon as they have been used",
+        "o5": "the cell keeps every reaction in a separate compartment"
+      },
+      "order": ["o1", "o2", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o5",
+      "why": "Özgüllük, bir enzimin kendi molekülü dışındakileri görmezden gelmesi demektir; binlerce tepkimenin birbirine karışmadan yürümesi buradan çıkar.",
+      "trap_note": "Karışmamayı fiziksel ayrıma bağlar; oysa parçanın verdiği gerekçe bölmelenme değil, enzimin biçimsel özgüllüğüdür."
+    },
+    {
+      "no": 46, "group": "paragraph", "level": "B2", "qtype": "main_idea",
+      "stem": "The passage is mainly about ----.",
+      "options": {
+        "o1": "how catalysts and enzymes speed up reactions, and why enzymes are so easily damaged",
+        "o2": "the difference between reactions in a test tube and those in the open air",
+        "o3": "the reasons why heat destroys most biological molecules",
+        "o4": "the number of chemical reactions occurring in a living cell",
+        "o5": "the history of research into biological catalysis"
+      },
+      "order": ["o2", "o3", "o1", "o4", "o5"],
+      "answer": "o1", "trap": "o3",
+      "why": "Parçanın ilk yarısı katalizin nasıl işlediğini, ikinci yarısı özgüllük ve kırılganlık sonuçlarını anlatır.",
+      "trap_note": "Son cümledeki ısı örneğini konu sanır; ısı orada kırılganlığın üç nedeninden yalnızca biridir."
+    },
+    {
+      "no": 47, "group": "paragraph", "level": "B2", "qtype": "main_idea",
+      "stem": "The passage is mainly concerned with ----.",
+      "options": {
+        "o1": "why earthquakes can be forecast statistically but not predicted individually",
+        "o2": "the instruments used to measure the strain along a fault",
+        "o3": "the reasons why modern buildings collapse in earthquakes",
+        "o4": "a disagreement among seismologists about the length of faults",
+        "o5": "the history of failed earthquake predictions over the past century"
+      },
+      "order": ["o2", "o3", "o4", "o5", "o1"],
+      "answer": "o1", "trap": "o5",
+      "why": "Parça öngörü ile kestirim arasındaki ayrımı kurar, kestirimin neden başarısız olduğunu açıklar ve disiplinin nereye yöneldiğini söyler.",
+      "trap_note": "'Bir yüzyıllık çaba' ifadesini konu sanır; parça başarısız denemelerin tarihini değil, başarısızlığın nedenini anlatır."
+    },
+    {
+      "no": 48, "group": "paragraph", "level": "B2", "qtype": "according_to",
+      "stem": "According to the passage, a forecast differs from a prediction in that it ----.",
+      "options": {
+        "o1": "gives a probability for a period instead of naming a date",
+        "o2": "is produced by instruments rather than by calculation",
+        "o3": "applies to a single fault rather than to a whole region",
+        "o4": "is issued only after an earthquake has begun",
+        "o5": "concerns damage to buildings rather than the shaking itself"
+      },
+      "order": ["o2", "o1", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o5",
+      "why": "Parça tanımı açıkça verir: öngörü istatistikseldir ve bir döneme olasılık atar; kestirim ise yer, büyüklük ve tarih belirtir.",
+      "trap_note": "Son cümledeki 'ayakta kalacak mı' sorusunu tanımın içine taşır; oysa o, disiplinin yöneldiği ayrı bir sorudur."
+    },
+    {
+      "no": 49, "group": "paragraph", "level": "B2", "qtype": "it_is_clear",
+      "stem": "It is clear from the passage that the obstacle to predicting earthquakes ----.",
+      "options": {
+        "o1": "lies in the nature of faults rather than in the quality of the instruments",
+        "o2": "has been removed by recent advances in measurement",
+        "o3": "is the shortage of records of past earthquakes",
+        "o4": "applies only to faults longer than two hundred kilometres",
+        "o5": "was identified for the first time less than a decade ago"
+      },
+      "order": ["o2", "o3", "o4", "o1", "o5"],
+      "answer": "o1", "trap": "o3",
+      "why": "Parça güçlüğün teknik değil temel olduğunu söyler: faylar türdeş değildir, derinlikteki gerilme ölçülemez ve aynı kayma iki farklı biçimde ilerleyebilir.",
+      "trap_note": "Engeli veri eksikliğine bağlar; oysa parçaya göre geçmiş olaylar zaten sayılabiliyor, sorun onların sayısı değil."
+    },
+    {
+      "no": 50, "group": "paragraph", "level": "C1", "qtype": "inference",
+      "stem": "It can be inferred from the passage that seismologists now devote most of their effort to ----.",
+      "options": {
+        "o1": "reducing the damage that shaking causes rather than anticipating its timing",
+        "o2": "measuring the stress on faults at ever greater depths",
+        "o3": "persuading governments to evacuate cities in advance",
+        "o4": "producing predictions with a shorter time window",
+        "o5": "cataloguing every earthquake recorded in the past century"
+      },
+      "order": ["o1", "o2", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o4",
+      "why": "Son cümle yönelimi açıkça verir: sorulan soru binanın ne zaman sarsılacağı değil, sarsıldıktan sonra ayakta kalıp kalmayacağıdır.",
+      "trap_note": "Kestirimden vazgeçildiğini değil, süresinin kısaltıldığını sanır; parça tam olarak bu çabadan vazgeçildiğini söyler."
+    },
+    {
+      "no": 51, "group": "paragraph", "level": "B2", "qtype": "it_is_clear",
+      "stem": "It is clear from the passage that the difficulty in explaining magnetic navigation was that ----.",
+      "options": {
+        "o1": "no structure capable of acting as a sense organ had been identified",
+        "o2": "the birds refused to navigate under laboratory conditions",
+        "o3": "the Earth's field is too strong to be measured accurately",
+        "o4": "magnetite had never been found in any living tissue",
+        "o5": "the two proposed mechanisms contradict one another"
+      },
+      "order": ["o2", "o3", "o1", "o4", "o5"],
+      "answer": "o1", "trap": "o5",
+      "why": "Parça güçlüğü ilk cümlede verir: pusulaya benzeyen hiçbir organ bulunamamıştı ve duyu organının oturacağı bir yer de görünmüyordu.",
+      "trap_note": "Parçanın açıkça 'birbirini dışlamıyor' dediği iki mekanizmayı çelişkili sanır."
+    },
+    {
+      "no": 52, "group": "paragraph", "level": "B2", "qtype": "according_to",
+      "stem": "According to the passage, the second proposed mechanism works by ----.",
+      "options": {
+        "o1": "altering the chemistry of paired molecules in a light-sensitive protein",
+        "o2": "pulling crystals of magnetite into line with the field",
+        "o3": "detecting small changes in the temperature of the eye",
+        "o4": "comparing the field with the position of the sun",
+        "o5": "measuring the strength of the field at two points on the body"
+      },
+      "order": ["o2", "o3", "o4", "o5", "o1"],
+      "answer": "o1", "trap": "o2",
+      "why": "İkinci mekanizma gözdeki ışığa duyarlı bir proteinde, alanın yönüne göre kimyası değişen molekül çiftlerine dayanır.",
+      "trap_note": "İki mekanizmayı yer değiştirir; manyetit kristalleri birinci açıklamaya aittir."
+    },
+    {
+      "no": 53, "group": "paragraph", "level": "C1", "qtype": "inference",
+      "stem": "It can be inferred from the passage that the experiment with a weak oscillating field ----.",
+      "options": {
+        "o1": "supports the claim that the birds are genuinely using the magnetic field",
+        "o2": "proves that magnetite is responsible for the sense",
+        "o3": "shows that the birds navigate by sight alone",
+        "o4": "was the first evidence that birds migrate at all",
+        "o5": "demonstrated that the field passes through living tissue"
+      },
+      "order": ["o2", "o1", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Alan bozulduğunda kuşların yön düzeltmeyi bırakması, davranışın gerçekten manyetik alana bağlı olduğunu gösterir.",
+      "trap_note": "Davranışsal bir kanıttan anatomik bir sonuç çıkarır; deney hangi mekanizmanın işlediğini değil, alanın kullanıldığını gösterir."
+    },
+    {
+      "no": 54, "group": "paragraph", "level": "B2", "qtype": "main_idea",
+      "stem": "Which of the following best expresses the main idea of the passage?",
+      "options": {
+        "o1": "The magnetic sense is well established behaviourally while its physical basis remains uncertain.",
+        "o2": "Magnetite crystals have been shown to be the organ of magnetic navigation.",
+        "o3": "Birds rely on vision far more than on any magnetic sense.",
+        "o4": "The Earth's magnetic field is too weak to be of any use to animals.",
+        "o5": "Laboratory experiments have replaced field observation in this area."
+      },
+      "order": ["o2", "o3", "o4", "o1", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça iki mekanizmanın da kanıtlanmadığını, buna karşılık davranışsal bulgunun kesin olduğunu söyler; ana düşünce bu karşıtlıktır.",
+      "trap_note": "Birinci mekanizmayı kanıtlanmış sanır; parça 'hiçbiri tartışmasız gösterilmedi' diyerek bunu dışlar."
+    },
+    {
+      "no": 55, "group": "paragraph", "level": "B2", "qtype": "according_to",
+      "stem": "According to the passage, the ocean's absorption of carbon dioxide ----.",
+      "options": {
+        "o1": "benefits the atmosphere while altering the chemistry of the water",
+        "o2": "has ceased almost entirely over the past two centuries",
+        "o3": "increases the supply of carbonate ions available to shell-builders",
+        "o4": "affects deep water considerably more than the surface",
+        "o5": "is measured on a scale that exaggerates the size of the change"
+      },
+      "order": ["o1", "o2", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o5",
+      "why": "Parça 'doğru ama eksik' der: okyanus atmosferden karbon çeker, ama aynı süreç suyun kimyasını değiştirir.",
+      "trap_note": "Logaritmik ölçek uyarısını tersine çevirir; parça değişimin küçük göründüğünü, gerçekte küçük olmadığını söyler."
+    },
+    {
+      "no": 56, "group": "paragraph", "level": "B2", "qtype": "it_is_clear",
+      "stem": "It is clear from the passage that shell-building organisms are affected because ----.",
+      "options": {
+        "o1": "the chemistry that acidifies the water also reduces the material shells are made from",
+        "o2": "the acid dissolves their shells as soon as these are formed",
+        "o3": "they are unable to move to less affected waters",
+        "o4": "warmer water holds less oxygen than cold water does",
+        "o5": "they compete with plankton for the same resources"
+      },
+      "order": ["o2", "o3", "o1", "o4", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça iki etkiyi tek kimyaya bağlar: suyu asitleştiren süreç, kabuğun yapıldığı karbonat iyonlarının arzını da azaltır.",
+      "trap_note": "Etkiyi doğrudan çözünmeye bağlar; oysa parçada anlatılan, kabuğun erimesi değil yapım maliyetinin artmasıdır."
+    },
+    {
+      "no": 57, "group": "paragraph", "level": "C1", "qtype": "inference",
+      "stem": "It can be inferred from the passage that the biologists' principal concern is ----.",
+      "options": {
+        "o1": "the effect on species that many others depend on for food",
+        "o2": "the extinction of one particular species of coral",
+        "o3": "the rate at which the ocean absorbs carbon dioxide",
+        "o4": "the difficulty of measuring alkalinity accurately",
+        "o5": "the loss of income from commercial shellfish farming"
+      },
+      "order": ["o2", "o3", "o4", "o5", "o1"],
+      "answer": "o1", "trap": "o2",
+      "why": "Son cümle kaygıyı açıkça yerleştirir: sorun tek bir türün yok olması değil, besin ağının tabanındaki bir kaybın yukarı doğru yayılmasıdır.",
+      "trap_note": "Parçanın açıkça dışladığı kaygıyı seçer: 'herhangi bir türün yok olması değil' ifadesi bunu önceden reddeder."
+    },
+    {
+      "no": 58, "group": "paragraph", "level": "B2", "qtype": "main_idea",
+      "stem": "The passage is mainly concerned with ----.",
+      "options": {
+        "o1": "the chemical cost of the ocean's absorption of carbon dioxide",
+        "o2": "the amount of carbon dioxide produced by human activity",
+        "o3": "the methods used to measure the acidity of seawater",
+        "o4": "the structure of shells built from calcium carbonate",
+        "o5": "the reasons why coral reefs attract so much public attention"
+      },
+      "order": ["o2", "o1", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça, okyanusun sağladığı hizmetin bedelini anlatır: emilen karbon suyun kimyasını değiştirir ve kabuk yapan canlıları zorlar.",
+      "trap_note": "İlk cümledeki 'dörtte bir' oranını konu sanır; o oran, asıl konuyu açan bir girişten ibarettir."
+    },
+    {
+      "no": 59, "group": "paragraph", "level": "C1", "qtype": "inference",
+      "stem": "It can be inferred from the passage that a liver cell and a neuron differ because ----.",
+      "options": {
+        "o1": "different parts of the same genome are switched on in each of them",
+        "o2": "their genomes contain different sequences",
+        "o3": "one of them divides far more often than the other",
+        "o4": "the chemical marks have been removed from one of them",
+        "o5": "they are formed at different stages of development"
+      },
+      "order": ["o2", "o3", "o4", "o1", "o5"],
+      "answer": "o1", "trap": "o5",
+      "why": "Parça farkın dizide değil, dizinin hangi bölümlerinin açık olduğunda yattığını söyler.",
+      "trap_note": "Farkı gelişim zamanlamasına bağlar; parçada belirleyici olan ne zaman oluştukları değil, hangi bölümlerin etkin olduğudur."
+    },
+    {
+      "no": 60, "group": "paragraph", "level": "B2", "qtype": "according_to",
+      "stem": "According to the passage, the chemical marks are copied when a cell divides so that ----.",
+      "options": {
+        "o1": "the new cells go on behaving as the same kind of cell",
+        "o2": "the genome itself is protected from damage",
+        "o3": "the cell can divide more rapidly than it otherwise would",
+        "o4": "the marks can be passed on to the following generation",
+        "o5": "the DNA remains wound around its proteins"
+      },
+      "order": ["o1", "o2", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o4",
+      "why": "Parça işlevi doğrudan verir: işaretlerin kopyalanması, karaciğer hücresinin karaciğer hücresi üretmeyi sürdürmesini sağlar.",
+      "trap_note": "Hücre bölünmesindeki aktarımı kuşaklar arası aktarımla karıştırır; bunlar parçada ayrı ayrı ele alınan iki farklı sorudur."
+    },
+    {
+      "no": 61, "group": "paragraph", "level": "B2", "qtype": "it_is_clear",
+      "stem": "It is clear from the passage that the inheritance of these marks across generations ----.",
+      "options": {
+        "o1": "rests on much firmer evidence in plants than it does in mammals",
+        "o2": "has been demonstrated conclusively in human beings",
+        "o3": "occurs only when the marks are stripped away in development",
+        "o4": "is rejected by almost every researcher in the field",
+        "o5": "was the first discovery made in this area of study"
+      },
+      "order": ["o2", "o3", "o1", "o4", "o5"],
+      "answer": "o1", "trap": "o4",
+      "why": "Parça iki durumu ayırır: bitkilerde iyi belgelenmiştir, memelilerde kanıt daha zayıftır ve mekanizma belirsizdir.",
+      "trap_note": "Araştırmacıların temkinli oluşunu topyekûn bir reddediş sanır; parça bunu 'sorunun hâlâ açık olması' diye niteler."
+    },
+    {
+      "no": 62, "group": "paragraph", "level": "B2", "qtype": "main_idea",
+      "stem": "Which of the following best expresses the main idea of the passage?",
+      "options": {
+        "o1": "Chemical marks explain how identical genomes produce different cells, and their inheritance remains an open question.",
+        "o2": "Popular accounts of science are usually more accurate than researchers are willing to admit.",
+        "o3": "The sequence of the genome determines every feature of a cell.",
+        "o4": "Plants and mammals inherit acquired characteristics in exactly the same way.",
+        "o5": "Liver cells and neurons contain entirely different genetic material."
+      },
+      "order": ["o2", "o3", "o4", "o5", "o1"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parçanın ilk yarısı işaretlerin hücre kimliğini nasıl belirlediğini, ikinci yarısı kuşaklar arası aktarımın hâlâ tartışmalı olduğunu anlatır.",
+      "trap_note": "Popüler anlatımlarla ilgili uyarıyı tersine çevirir; parça onların veriden önde gittiğini söyler."
+    },
+    {
+      "no": 63, "group": "dialogue", "level": "B2",
+      "dialogue": [
+        ["Host", "You study volcanoes that have not erupted for thousands of years. Is that not archaeology rather than science?"],
+        ["Volcanologist", "It would be, if the mountain had finished. A gap of ten thousand years is long for a human being and short for a volcano."],
+        ["Host", "----"],
+        ["Volcanologist", "By what is underneath. We measure how much molten rock is stored and how fast it is being resupplied; the date of the last eruption tells us much less than either."]
+      ],
+      "options": {
+        "o1": "Then how do you judge whether a volcano is actually finished?",
+        "o2": "How many volcanoes of this kind are there in the country?",
+        "o3": "Is it safe for people to live on the slopes in the meantime?",
+        "o4": "When was the last eruption of the one you are studying?",
+        "o5": "Do you use the same instruments as you would for an active volcano?"
+      },
+      "order": ["o2", "o4", "o1", "o3", "o5"],
+      "answer": "o1", "trap": "o4",
+      "why": "'Altındakine bakarak' yanıtı ve ardından gelen ölçüm açıklaması, ancak bir yanardağın bittiğine nasıl karar verildiğini soran bir cümleyi karşılar.",
+      "trap_note": "Konuyla ilgilidir, ama yanıtın sonu son patlamanın tarihini açıkça değersizleştirir; o tarihi soran bir cümle bu yanıtla çelişir."
+    },
+    {
+      "no": 64, "group": "dialogue", "level": "B2",
+      "dialogue": [
+        ["Reviewer", "Your paper reports a correlation between the two variables and then calls it an effect. I would like you to change the wording."],
+        ["Author", "----"],
+        ["Reviewer", "That is exactly my point. The design cannot distinguish between the two directions, so the paper should not choose one."]
+      ],
+      "options": {
+        "o1": "We considered that, but the reverse direction seems to us far less plausible.",
+        "o2": "The correlation is significant at the one per cent level.",
+        "o3": "We can certainly add a reference to the earlier work in the field.",
+        "o4": "The sample was collected over three consecutive winters.",
+        "o5": "The wording was requested by the body that funded the study."
+      },
+      "order": ["o1", "o2", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "'İşte tam da bunu söylüyorum; tasarım iki yönü ayırt edemiyor' yanıtı, ancak yönlerden birini daha az olası bulan bir savunmayı izleyebilir.",
+      "trap_note": "İstatistiksel anlamlılığı öne sürer; oysa hakemin itirazı anlamlılığa değil, nedenselliğin yönüne ilişkindir."
+    },
+    {
+      "no": 65, "group": "dialogue", "level": "B2",
+      "dialogue": [
+        ["Technician", "The furnace has failed the calibration check three times this week."],
+        ["Engineer", "Three times with the same reading, or three different ones?"],
+        ["Technician", "----"],
+        ["Engineer", "Then it is not the furnace. A fault that repeats identically is almost always the probe, and a probe is a great deal cheaper to replace."]
+      ],
+      "options": {
+        "o1": "The same reading each time, to within a degree.",
+        "o2": "Three completely different readings, none of them close to the others.",
+        "o3": "I only checked it once, on Monday morning.",
+        "o4": "The readings drifted steadily upwards over the three days.",
+        "o5": "We used a different probe for each of the three checks."
+      },
+      "order": ["o2", "o3", "o4", "o1", "o5"],
+      "answer": "o1", "trap": "o4",
+      "why": "'Aynı biçimde tekrarlayan bir arıza neredeyse her zaman problandır' çıkarımı, yalnızca okumaların birbirinin aynısı olduğu bir yanıttan sonra kurulabilir.",
+      "trap_note": "Bir düzen bildirir ama aynılık değil kayma anlatır; kayan bir okuma 'aynı biçimde tekrarlayan arıza' tanımına girmez."
+    },
+    {
+      "no": 66, "group": "dialogue", "level": "B2",
+      "dialogue": [
+        ["Student", "I want to include the outlier. Removing it feels like hiding something."],
+        ["Supervisor", "It might be. It might also be honest. Do you know why that point is where it is?"],
+        ["Student", "----"],
+        ["Supervisor", "Then keep it, and say so. An outlier you cannot explain is data; an outlier you can explain is a story, and the reader is entitled to both."]
+      ],
+      "options": {
+        "o1": "No. Nothing in the log explains it, and the run looked normal at the time.",
+        "o2": "Yes. The thermostat had failed during that particular run.",
+        "o3": "It is the first point I recorded, before I had any real practice.",
+        "o4": "I would rather leave it out, to be honest about it.",
+        "o5": "There are two more like it in last year's data."
+      },
+      "order": ["o2", "o1", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Danışmanın 'açıklayamadığın aykırı değer veridir' sonucu, ancak öğrencinin nedeni bilmediğini söylemesinin ardından gelebilir.",
+      "trap_note": "Soruya doğrudan yanıt verir ama nedeni bildiğini söyler; bu durumda 'açıklayamadığın' koşulu ortadan kalkar ve öneri anlamsızlaşır."
+    },
+    {
+      "no": 67, "group": "dialogue", "level": "B2",
+      "dialogue": [
+        ["Journalist", "Your team announced the discovery and then, six months later, retracted it. What happened in between?"],
+        ["Physicist", "Other groups tried to reproduce it and could not. Eventually one of them found the source: a loose cable in our own timing system."],
+        ["Journalist", "----"],
+        ["Physicist", "Painful, certainly, but the alternative is worse. A result that nobody checks is not a result; it is a claim."]
+      ],
+      "options": {
+        "o1": "That must have been a humiliating way to learn it.",
+        "o2": "How long had the cable been loose before anyone noticed?",
+        "o3": "Which group was the first to attempt the experiment again?",
+        "o4": "Did you consider publishing a correction instead of a retraction?",
+        "o5": "Has the timing system been redesigned since then?"
+      },
+      "order": ["o2", "o3", "o4", "o5", "o1"],
+      "answer": "o1", "trap": "o4",
+      "why": "'Acı vericiydi, elbette, ama alternatifi daha kötü' yanıtı, ancak durumun kişisel olarak ne kadar zor olduğunu dile getiren bir cümleyi karşılar.",
+      "trap_note": "Geri çekme kararıyla ilgili teknik bir sorudur; 'acı vericiydi' diye başlayan duygusal bir yanıtı gerektirmez."
+    },
+    {
+      "no": 68, "group": "restatement", "level": "C1",
+      "stem": "Not once during the six-month trial did a single participant report the side effect described in the earlier study.",
+      "options": {
+        "o1": "Throughout the six-month trial, no participant at all reported the side effect mentioned in the earlier study.",
+        "o2": "Only one participant reported the side effect described in the earlier study during the six-month trial.",
+        "o3": "The side effect described in the earlier study was reported once during the six-month trial.",
+        "o4": "The earlier study did not describe the side effect that was reported during the six-month trial.",
+        "o5": "Participants were asked about the side effect only once in the six-month trial."
+      },
+      "order": ["o2", "o3", "o5", "o1", "o4"],
+      "answer": "o1", "trap": "o3",
+      "why": "Not once devrik yapısı mutlak bir olumsuzluk kurar: altı ay boyunca hiçbir katılımcı o yan etkiyi bildirmemiştir.",
+      "trap_note": "once sözcüğünü 'bir kez' diye okur; oysa not once kalıbında bu sözcük olumsuzluğu pekiştirir, sayı bildirmez."
+    },
+    {
+      "no": 69, "group": "restatement", "level": "B2",
+      "stem": "The reactor may be restarted only once every valve has been inspected.",
+      "options": {
+        "o1": "The reactor cannot be restarted until all of the valves have been inspected.",
+        "o2": "The reactor may be restarted while the valves are still being inspected.",
+        "o3": "Every valve must be inspected after the reactor has been restarted.",
+        "o4": "Only some of the valves need to be inspected before the reactor is restarted.",
+        "o5": "The valves are inspected each time the reactor is restarted."
+      },
+      "order": ["o2", "o1", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o5",
+      "why": "only once burada 'ancak ... -dikten sonra' anlamındadır; denetim yeniden çalıştırmanın önkoşuludur.",
+      "trap_note": "Koşulu bir rutine çevirir; cümlede denetim her çalıştırmada yapılan bir işlem değil, çalıştırmanın şartıdır."
+    },
+    {
+      "no": 70, "group": "restatement", "level": "C1",
+      "stem": "Had the results been published when they were obtained, the second trial would never have been funded.",
+      "options": {
+        "o1": "The second trial was funded because the results had not been published at the time they were obtained.",
+        "o2": "The results were published as soon as they were obtained, so the second trial was not funded.",
+        "o3": "The second trial was funded before the results had been obtained.",
+        "o4": "If the results are published now, the second trial will lose its funding.",
+        "o5": "Publishing the results would have made the second trial considerably more expensive."
+      },
+      "order": ["o1", "o2", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Had + V3 yapısı if'siz üçüncü tip koşuldur: sonuçlar yayımlanmadı, bu yüzden ikinci deneme fonlandı.",
+      "trap_note": "Gerçekleşmemiş varsayımı olmuş bir olay gibi okur; koşul cümlesi gerçeğe dönüştürülünce her iki yarı da tersine döner."
+    },
+    {
+      "no": 71, "group": "restatement", "level": "B2",
+      "stem": "Apart from a brief interruption during the pandemic, the survey has been carried out every autumn since 1994.",
+      "options": {
+        "o1": "The survey has taken place each autumn since 1994, with one short break during the pandemic.",
+        "o2": "The survey was carried out every autumn until the pandemic interrupted it permanently.",
+        "o3": "Since the pandemic, the survey has been carried out every autumn as it was before 1994.",
+        "o4": "The survey is carried out every autumn except when there is a pandemic.",
+        "o5": "The pandemic was the only autumn in which the survey produced no data at all."
+      },
+      "order": ["o2", "o3", "o1", "o4", "o5"],
+      "answer": "o1", "trap": "o4",
+      "why": "Apart from bir kerelik istisnayı bildirir: sayım 1994'ten beri her sonbahar yapılmış, yalnızca pandemide kısa süre kesintiye uğramıştır.",
+      "trap_note": "Tek seferlik kesintiyi her pandemide işleyen genel bir kurala çevirir; istisna, koşullu bir düzenlemeye dönüşür."
+    },
+    {
+      "no": 72, "group": "paragraph_completion", "level": "B2",
+      "stem": "A hospital thermometer and a weather station thermometer measure the same quantity, and neither would be much use in the other's place. ---- The clinical instrument is built to resolve a tenth of a degree over a range of five degrees; the meteorological one covers eighty degrees and does not pretend to that precision. Choosing an instrument is therefore not a matter of quality but of matching the range and the resolution to the question.",
+      "options": {
+        "o1": "The difference lies in what each of them is required to do.",
+        "o2": "Both, however, must be calibrated against the same standard.",
+        "o3": "Therefore, the clinical instrument is the more accurate of the two.",
+        "o4": "This range is set by international agreement.",
+        "o5": "Weather stations record several other quantities as well."
+      },
+      "order": ["o2", "o3", "o4", "o5", "o1"],
+      "answer": "o1", "trap": "o3",
+      "why": "Boşluktan sonra iki cihazın farklı aralık ve çözünürlükleri karşılaştırılır; boşluk, farkın nereden geldiğini bildiren cümledir.",
+      "trap_note": "'Bu nedenle' diyerek erken bir sonuç çıkarır; oysa paragraf tam da böyle bir üstünlük sıralamasını reddeder."
+    },
+    {
+      "no": 73, "group": "paragraph_completion", "level": "B2",
+      "stem": "---- It arrives as a thin rain of dust, most of it smaller than a grain of sand, and almost none of it is ever noticed. Only the rare fragment large enough to survive the atmosphere intact becomes a meteorite that somebody can pick up, and those are the ones from which nearly everything we know about the early solar system has been learned.",
+      "options": {
+        "o1": "Tens of thousands of tonnes of material fall onto the Earth from space every year.",
+        "o2": "Meteorites are usually named after the place where they are found.",
+        "o3": "The atmosphere protects the surface from most of the objects that reach it.",
+        "o4": "Dust of this kind is difficult to distinguish from ordinary soil.",
+        "o5": "The early solar system formed about four and a half billion years ago."
+      },
+      "order": ["o1", "o2", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o3",
+      "why": "Boşluk paragrafın ilk cümlesidir; sonraki cümledeki It zamirinin göndereni ile konuyu birlikte tanıtmak zorundadır.",
+      "trap_note": "Atmosferin koruyuculuğu sonraki cümlelerle ilgilidir, ama 'It' zamirine karşılık gelecek bir madde tanıtmaz."
+    },
+    {
+      "no": 74, "group": "paragraph_completion", "level": "B2",
+      "stem": "For most of the last century, ulcers were treated as a disease of stress and diet, and patients were told to change their habits. ---- Two Australian researchers proposed that the cause was a bacterium, and were largely ignored until one of them swallowed a culture and gave himself the condition. Treatment today is a course of antibiotics, and the older advice survives mainly in popular memory.",
+      "options": {
+        "o1": "The explanation turned out to be a good deal simpler, and far harder to accept.",
+        "o2": "Therefore, changes in diet remain the first line of treatment.",
+        "o3": "Moreover, stress is now known to worsen a wide range of conditions.",
+        "o4": "These habits were difficult for most patients to sustain for long.",
+        "o5": "Australia has produced a number of distinguished medical researchers."
+      },
+      "order": ["o2", "o1", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o4",
+      "why": "Paragraf eski açıklamadan yeni bulguya döner; boşluk, bu dönüşü hazırlayan ve direncin nedenini sezdiren cümledir.",
+      "trap_note": "Bir önceki cümledeki 'alışkanlıklar'a gönderme yapar; gönderme doğru görünse de bakteriye geçişi hazırlamaz."
+    },
+    {
+      "no": 75, "group": "paragraph_completion", "level": "C1",
+      "stem": "A lighthouse and a mobile telephone mast solve the same problem: how to make a signal reach a receiver that could be anywhere within a certain radius. ---- The lighthouse spends energy in every direction at once, and almost all of it is wasted on empty sea. The mast, knowing roughly where its receivers are, sends narrow beams and moves them as the receivers move. The difference in efficiency is a factor of thousands.",
+      "options": {
+        "o1": "Their answers, however, are opposites.",
+        "o2": "Such receivers were unknown when the first lighthouses were built.",
+        "o3": "This radius depends chiefly on the height of the structure.",
+        "o4": "Both were once maintained by state monopolies.",
+        "o5": "Energy of this kind is measured in watts."
+      },
+      "order": ["o2", "o3", "o4", "o1", "o5"],
+      "answer": "o1", "trap": "o3",
+      "why": "Boşluktan sonra iki çözüm karşıt biçimde anlatılır; boşluk, aynı sorunun zıt yanıtlar aldığını bildiren geçiş cümlesidir.",
+      "trap_note": "Bir önceki cümlede geçen radius sözcüğüne tutunur; gönderme doğru olsa da ardından gelen karşıtlığı hazırlamaz."
+    },
+    {
+      "no": 76, "group": "odd_one_out", "level": "B2",
+      "sentences": [
+        "A desert is defined as a region receiving less than 250 millimetres of precipitation a year, and by that definition much of Antarctica is desert.",
+        "The interior of the continent is drier than the Sahara, because the air above it is too cold to hold water vapour.",
+        "The first confirmed sighting of Antarctica was made in 1820.",
+        "What little snow does fall there never melts, so it accumulates for hundreds of thousands of years.",
+        "The result is a landscape built entirely out of precipitation that has never been removed."
+      ],
+      "answer": "III", "trap": "I",
+      "why": "III. cümle kıtanın keşif tarihine geçer; paragrafın kurduğu 'Antarktika neden çöldür' akışını ilerletmez.",
+      "trap_note": "I. cümle bir tanımla başladığı için konu dışı bir giriş sanılır; oysa paragrafın tüm savı o tanıma dayanır."
+    },
+    {
+      "no": 77, "group": "odd_one_out", "level": "B2",
+      "sentences": [
+        "Bamboo can grow almost a metre in a single day, faster than any other plant.",
+        "It manages this because the cells do not divide as it grows; they are already present, stacked and waiting, and simply elongate.",
+        "Water pressure does the rest, pushing the stored cells apart like a telescope being extended.",
+        "The cost of that strategy is that a bamboo stem never grows any thicker once it has reached its full height.",
+        "Pandas feed almost exclusively on bamboo and must eat for much of the day."
+      ],
+      "answer": "V", "trap": "IV",
+      "why": "V. cümle pandaların beslenmesine geçer; paragrafın anlattığı hızlı büyüme düzeneğiyle ilgisi yoktur.",
+      "trap_note": "IV. cümle bir olumsuzluk getirdiği için kopuk sanılır; oysa anlatılan düzeneğin bedelini söyleyerek açıklamayı tamamlar."
+    },
+    {
+      "no": 78, "group": "odd_one_out", "level": "B2",
+      "sentences": [
+        "Sound travels as a pressure wave, and its speed depends on the medium rather than on the loudness of the source.",
+        "Orchestras tune to a standard pitch that has risen slightly over the past two centuries.",
+        "In air the speed rises with temperature, which is why sound carries further across a cold lake at dawn.",
+        "The layer of cold air near the surface bends the wave downwards instead of letting it escape upwards.",
+        "The effect is strong enough that a conversation can be heard clearly from the far shore."
+      ],
+      "answer": "II", "trap": "V",
+      "why": "II. cümle orkestra akort standardına geçer; sesle ilgili olsa da paragrafın anlattığı yayılma fiziğiyle bağ kurmaz.",
+      "trap_note": "V. cümle gündelik bir gözlem gibi durduğu için dışarıdan eklenmiş sanılır; oysa anlatılan etkinin büyüklüğünü göstererek paragrafı bitirir."
+    },
+    {
+      "no": 79, "group": "odd_one_out", "level": "B2",
+      "sentences": [
+        "A vaccine against a virus that mutates quickly has to be reformulated almost every year.",
+        "Each season, laboratories forecast which variants will circulate and the vaccine is built to match them.",
+        "The forecast has to be made months in advance, because manufacturing cannot be compressed.",
+        "Viruses were first visualised in the 1930s with the electron microscope.",
+        "When the forecast turns out to be wrong, the vaccine is less effective, and this is a limitation of the timetable rather than of the science."
+      ],
+      "answer": "IV", "trap": "III",
+      "why": "IV. cümle virüslerin görüntülenme tarihine geçer; paragrafın anlattığı yıllık aşı tahmini sürecine hiçbir şey katmaz.",
+      "trap_note": "III. cümle üretim süresinden söz ettiği için konudan sapıyormuş gibi görünür; oysa tahminin neden erken yapılmak zorunda olduğunu açıklar."
+    },
+    {
+      "no": 80, "group": "odd_one_out", "level": "B2",
+      "sentences": [
+        "The metric system was designed so that its units could be reconstructed by anyone, anywhere, from measurements of nature.",
+        "The metre was originally defined as a fraction of the distance from the pole to the equator.",
+        "France also introduced a decimal calendar during the same period, and abandoned it within twelve years.",
+        "That definition proved impractical, and for a long time the metre was simply a platinum bar kept near Paris.",
+        "Today it is defined by the distance light travels in a fixed fraction of a second, which returns the unit to nature as originally intended."
+      ],
+      "answer": "III", "trap": "IV",
+      "why": "III. cümle ondalık takvime geçer; aynı dönemde yapılmış olsa da paragrafın izlediği metre tanımının öyküsüyle ilgisi yoktur.",
+      "trap_note": "IV. cümle tasarımın amacına ters düştüğü için kopuk sanılır; oysa tanımın tarihindeki ara adımı verip son cümleyi hazırlar."
+    }
+  ],
+  "vocabulary": [
+    ["claim", "iddia etmek"],
+    ["significant", "önemli, kritik"],
+    ["facility", "imkan, kolaylık"],
+    ["involve", "içermek"],
+    ["obvious", "açık, bariz"],
+    ["conclusively", "kesin olarak"],
+    ["release", "yaymak, açığa çıkarmak"],
+    ["cell", "hücre"],
+    ["tissue", "doku"],
+    ["source", "kaynak"],
+    ["rapidly", "hızlı bir şekilde"],
+    ["define", "tanımlamak"],
+    ["estimate", "tahmin etmek"],
+    ["the number of", "-nın sayısı"],
+    ["likely", "muhtemel, olası"],
+    ["attempt", "teşebbüs, deneme"],
+    ["be of", "sahip olmak"],
+    ["precise", "tam, kesin"],
+    ["further", "daha ileri, daha öte"],
+    ["alter", "değiştirmek"],
+    ["slightly", "hafifçe, biraz"],
+    ["remains", "kalıntı"],
+    ["decade", "on yıl"],
+    ["observe", "gözlemlemek"],
+    ["through", "ile, sayesinde"],
+    ["require", "gerektirmek"],
+    ["decline", "azalmak, düşmek"],
+    ["issue", "mesele, sorun"],
+    ["concern", "sorun"],
+    ["alike", "benzer, aynı şekilde"],
+    ["entire", "tüm, bütün"],
+    ["accurately", "doğru olarak"],
+    ["evidence", "kanıt"],
+    ["actually", "aslında, gerçekte"],
+    ["scale", "ölçek"],
+    ["mention", "bahsetmek"],
+    ["occur", "meydana gelmek"],
+    ["confidence", "öz güven"],
+    ["stage", "aşama, faz"],
+    ["measure", "önlem"],
+    ["rarely", "nadiren"],
+    ["commercial", "ticari"],
+    ["considerable", "önemli, büyük"],
+    ["resemble", "benzemek"],
+    ["infer", "çıkarım yapmak"],
+    ["brief", "kısa"],
+    ["income", "gelir"],
+    ["approve", "onaylamak"],
+    ["fundamental", "ana, esas, temel"],
+    ["treat", "tedavi etmek"],
+    ["maintain", "sürdürmek"],
+    ["contradict", "çelişmek"],
+    ["that is", "yani, bir başka deyişle"],
+    ["ignore", "yok saymak"],
+    ["internal", "dahili, iç"],
+    ["ease", "yatıştırmak, hafifletmek"],
+    ["beyond", "ötesinde"],
+    ["consume", "tüketmek"],
+    ["attention", "dikkat"],
+    ["rather than", "-den ziyade"],
+    ["continent", "kıta"],
+    ["entirely", "tamamen"],
+    ["acquire", "edinmek, elde etmek"],
+    ["rely on", "-e dayanmak, güvenmek"],
+    ["abruptly", "aniden, birdenbire"],
+    ["acidify", "asitleştirmek"],
+    ["alignment (pulled into alignment)", "hizalanma"],
+    ["alkaline", "bazik, alkali"],
+    ["bamboo", "bambu"],
+    ["calcium carbonate", "kalsiyum karbonat"],
+    ["calibration", "kalibrasyon, ayar"],
+    ["catalyst", "katalizör"],
+    ["compress (cannot be compressed)", "sıkıştırmak, kısaltmak"],
+    ["crater", "krater, çukur"],
+    ["distort", "biçimini bozmak"],
+    ["elongate", "uzamak"],
+    ["enzyme", "enzim"],
+    ["fault (geological)", "fay"],
+    ["forecast (to forecast)", "öngörmek, tahmin etmek"],
+    ["fragility", "kırılganlık"],
+    ["fragment", "parça, kırıntı"],
+    ["genome", "genom"],
+    ["hindrance (without hindrance)", "engel (engellenmeden)"],
+    ["logarithmic", "logaritmik"],
+    ["magnetite", "manyetit"],
+    ["magnitude", "büyüklük, şiddet"],
+    ["meteorite", "göktaşı"],
+    ["mollusc", "yumuşakça"],
+    ["mutate", "mutasyona uğramak"],
+    ["neuron", "sinir hücresi, nöron"],
+    ["orientation", "yönelim, konumlanma"],
+    ["oscillating", "salınan"],
+    ["outlier", "aykırı değer"],
+    ["plankton", "plankton"],
+    ["precipitation", "yağış"],
+    ["probe (measuring probe)", "prob, ölçüm ucu"],
+    ["propagate (a loss propagates)", "yayılmak"],
+    ["provenance", "geçmiş, kökenine dair kayıt"],
+    ["reactant", "tepkimeye giren madde"],
+    ["reformulate", "yeniden düzenlemek"],
+    ["resolution (of an instrument)", "çözünürlük"],
+    ["retract (a paper)", "geri çekmek"],
+    ["seedling", "fide"],
+    ["seismologist", "sismolog, deprem bilimci"],
+    ["sediment", "tortu, çökelti"],
+    ["specificity", "özgüllük"],
+    ["sperm", "sperm"],
+    ["strain (accumulating strain)", "gerilme, zorlanma"],
+    ["superimpose", "üst üste bindirmek"],
+    ["ulcer", "ülser"],
+    ["valve", "vana, valf"],
+    ["variant", "varyant, çeşitlenme"],
+    ["vapour (water vapour)", "buhar"],
+    ["volcanologist", "volkan bilimci"]
+  ]
+}
