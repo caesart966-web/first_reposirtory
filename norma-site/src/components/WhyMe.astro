@@ -71,11 +71,33 @@ const POINTS = [
         </article>
       ))}
     </div>
+    <!-- Вход на страницу «Обо мне». В главном меню её нет намеренно —
+         седьмой пункт ломает шапку, замер в Header.astro. Здесь ей самое
+         место: блок называется «Почему через меня», и человек, дочитавший
+         его до конца, спрашивает ровно то, на что отвечает та страница. -->
+    <p class="wmore rv">
+      <a href={href('/obo-mne/')}>
+        Обо мне: что я обязуюсь делать и чего не делаю <Icon name="arrow" size={14} />
+      </a>
+    </p>
     </div>
   </div>
 </section>
 
 <style>
+  .wmore { margin: 20px 0 0; font-size: 15px; font-weight: 600; }
+  .wmore a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--acc-bright);
+    text-decoration: none;
+    /* Поле промаха: строка 20 px, норма попадания пальцем — 24. */
+    padding-block: 7px;
+    margin-block: -7px;
+  }
+  .wmore a:hover { text-decoration: underline; }
+
   .wgrid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));

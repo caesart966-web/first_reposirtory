@@ -211,6 +211,13 @@ const IDENT = [
               вам незачем ехать, я не стану.
             </li>
           </ul>
+          <!-- Вход на «Обо мне». Человек, дошедший до контактов, уже решает,
+               звонить ли, — и это последний момент, когда ему полезно
+               прочитать, что я обязуюсь делать и чего не делаю.
+               В главном меню страницы нет намеренно: замер в Header.astro. -->
+          <p class="k-about">
+            <a href={href('/obo-mne/')}>Обо мне: что я обязуюсь делать и чего не делаю →</a>
+          </p>
         </div>
       </div>
 
@@ -540,6 +547,15 @@ const IDENT = [
   }
   .k-geo-list li:last-child { border-bottom: 1px solid var(--line); }
   .k-geo-list b { color: var(--ink); font-weight: 600; }
+  .k-about { margin-top: 20px; font-size: 15px; font-weight: 600; }
+  .k-about a {
+    display: inline-block;
+    color: var(--acc-deep);
+    text-decoration: none;
+    padding-block: 7px;
+    margin-block: -7px;
+  }
+  .k-about a:hover { text-decoration: underline; }
 
   /* ── Реквизитная карта ──
      Единственная рамка на странице: это документ, и у документа есть край.

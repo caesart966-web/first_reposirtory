@@ -1,0 +1,515 @@
+---
+import Base from '../layouts/Base.astro'
+import LeadForm from '../components/LeadForm.astro'
+import Icon from '../components/Icon.astro'
+import HeadPhoto from '../components/HeadPhoto.astro'
+import { href, REGISTRIES, SITE } from '../config/site'
+import { LAW, TERMS } from '../config/facts'
+import { OFFER } from '../config/offer'
+import { ABOUT } from '../config/about'
+import { PARTNERS } from '../config/partners'
+import { REGIONS } from '../config/regions'
+
+// СТРАНИЦА «ОБО МНЕ» — и она намеренно НЕ про биографию.
+//
+// ЗАЧЕМ ТАК. Обычная страница эксперта держится на том, чего посетитель
+// проверить не может: «десять лет опыта», «более 500 компаний», «эксперт
+// отрасли». Весь остальной сайт говорит ровно обратное — «не верьте мне
+// на слово, вот статья, вот реестр, проверьте сами», — и страница
+// с непроверяемыми регалиями посреди него читалась бы фальшивой громче,
+// чем на любом другом сайте.
+//
+// Поэтому здесь три вещи, и все три проверяемые: что я обязуюсь делать,
+// чего я не делаю и что посетитель может посмотреть сам, не спрашивая меня.
+// Обязательство — это не факт о прошлом, это обещание на будущее, и спросить
+// за него можно по ходу работы. В этом его сила.
+//
+// ЧЕГО ЗДЕСЬ БЫТЬ НЕ ДОЛЖНО:
+//   · лет опыта, числа проведённых компаний, регалий — ничего, что нельзя
+//     открыть по ссылке. Появятся настоящие и подтверждаемые — место
+//     для них найдётся, но выдумывать нельзя ни одной цифры;
+//   · обязательств, которых заказчик не давал. Каждый пункт ниже опирается
+//     либо на условия из offer.ts, либо на норму закона, либо на то, что
+//     сайт и так уже делает (калькулятор, реестры, разбивка стоимости).
+//     Придуманное обязательство ничем не лучше придуманного факта:
+//     за него придётся отвечать живому человеку;
+//   · повторов блока «Почему через меня» с главной. Тот блок — четыре
+//     причины одной строкой, эта страница — подробности и обратная
+//     сторона: чего я НЕ делаю. Пересказ в третий раз не убеждает.
+//
+// ЧЕГО ЗДЕСЬ ПОКА НЕТ. Нет ответа на вопрос «что будет, если СРО откажет»:
+// это обязательство, и дать его может только владелец сайта. Нет и ответа
+// на вопрос «если для меня бесплатно, то кто вам платит» — заказчик просил
+// про вознаграждения агентам не писать. Оба места готовы принять текст,
+// как только он появится.
+
+// Число СРО и города НЕ пишутся руками: они считаются из partners.ts.
+// Иначе «восемь организаций» осталось бы на странице и после того,
+// как список изменится, — а это ровно тот класс ошибок, от которого
+// защищён весь остальной сайт.
+const published = PARTNERS.filter((p) => p.reg)
+const partnerCities = [...new Set(published.map((p) => p.citySlug))]
+  .map((slug) => REGIONS.find((r) => r.slug === slug)?.city)
+  .filter(Boolean)
+const citiesText =
+  partnerCities.length > 1
+    ? partnerCities.slice(0, -1).join(', ') + ' и ' + partnerCities.at(-1)
+    : partnerCities[0]
+
+const FACTS = [
+  {
+    v: `${ABOUT.years}+`,
+    t: 'года занимаюсь СРО',
+    d: 'Вступление, продление, смена уровня ответственности, специалисты в НРС.',
+  },
+  {
+    v: `${ABOUT.companies}+`,
+    t: 'компаний провёл',
+    d: 'Строительных, проектных и изыскательских — за эти два с лишним года.',
+  },
+  {
+    v: String(published.length),
+    t: 'партнёрских СРО',
+    d: `${citiesText}. У каждой есть регистрационный номер, и каждая открывается в государственном реестре.`,
+    link: { label: 'Посмотреть список', url: href('/sro/sankt-peterburg/#partnery') },
+  },
+  {
+    v: ABOUT.city,
+    t: 'где я нахожусь',
+    d: 'Работа дистанционная по всей России: приезжать никуда не нужно, документы электронные.',
+    wide: true,
+  },
+]
+
+// Числа в заголовках берутся из самих массивов: приписанное словом
+// «пять» осталось бы на месте после правки списка и разошлось бы
+// с действительностью молча — такую ошибку не ловит ни одна проверка.
+const WORDS = ['Ноль', 'Одна', 'Две', 'Три', 'Четыре', 'Пять', 'Шесть', 'Семь', 'Восемь', 'Девять']
+const numWord = (n: number) => WORDS[n] ?? String(n)
+
+const title = 'Обо мне: как я работаю и чего не делаю | НОРМА'
+const description =
+  'Не биография, а обязательства: что я делаю по шагам, чего не берусь делать и что вы можете проверить про меня сами — в ЕГРИП и в реестрах СРО.'
+
+// ЧТО ОБЯЗУЮСЬ. Каждый пункт опирается на то, что на сайте уже есть.
+const DO = [
+  {
+    t: 'Сначала сказать, нужна ли вам СРО вообще',
+    d:
+      'Бывает, что не нужна: субподряд, индивидуальное жилищное строительство, сумма договоров ниже порога. ' +
+      'Если ваш случай такой — я скажу это и на этом остановлюсь. Проверить меня можно, не звоня: ' +
+      'калькулятор на главной отвечает на тот же вопрос и умеет отвечать «не нужна».',
+    law: LAW.build,
+    link: { label: 'Кому нужна СРО, а кому нет', url: href('/komu-nuzhna-sro/') },
+  },
+  {
+    t: 'Показать номер СРО в реестре до того, как вы что-то подпишете',
+    d:
+      'Строительной компании организация обязана быть из её субъекта РФ — проектировщикам и изыскателям регион не важен. ' +
+      'Подобранную СРО я называю по имени и с регистрационным номером: он открывается в государственном реестре, ' +
+      'и на проверку у вас уйдёт минута.',
+    law: LAW.membership,
+    link: { label: 'С кем я работаю', url: href('/sro/sankt-peterburg/#partnery') },
+  },
+  {
+    t: 'Назвать все платежи до подачи документов, а не после',
+    d:
+      'И те, что установил закон, — компенсационные фонды, — и те, что назначила сама СРО: вступительный, членский, ' +
+      'целевой взносы, страхование. Это разные вещи, и на странице «Стоимость» они разведены и разложены по строкам, ' +
+      'без округлений и без «от».',
+    law: LAW.funds,
+    link: { label: 'Разбивка и калькулятор', url: href('/stoimost/') },
+  },
+  {
+    t: 'Довести комплект до выписки из реестра',
+    d: OFFER[0].note,
+    link: { label: 'Все пять условий', url: href('/#predlozhenie') },
+  },
+  {
+    t: 'Гарантировать приём — или сказать «нет» заранее',
+    d:
+      'Решение принимает контрольная комиссия саморегулируемой организации. Поэтому я сначала смотрю компанию ' +
+      'и документы и берусь только за то, что доведу до конца: если вижу, что в приёме откажут, говорю это сразу, ' +
+      'а не после того, как вы заплатили взнос в компенсационный фонд.',
+  },
+  {
+    t: 'Остаться на связи после выписки',
+    d:
+      'На выписке работа не заканчивается: продление, смена уровня ответственности, сроки независимой оценки ' +
+      'квалификации у специалистов. С 1 марта 2026 года добавилось ещё одно — член СРО уведомляет её о каждом ' +
+      'договоре подряда в течение трёх рабочих дней. Об этом знают не все, и пропуск здесь стоит дорого.',
+    law: LAW.notify,
+    link: { label: 'Что изменилось с 309-ФЗ', url: href('/baza-znaniy/uvedomleniya-sro-309-fz/') },
+  },
+]
+
+// ЧЕГО НЕ ДЕЛАЮ. Самый полезный блок страницы: он единственный, который
+// конкуренты не напишут про себя, и по нему видно, где проходит граница.
+const DONT = [
+  {
+    t: 'Не обещаю «допуск СРО»',
+    d:
+      'Свидетельства о допуске к работам отменены с 1 июля 2017 года. Их не существует — ни купить, ни оформить, ' +
+      'ни продлить нельзя. Кто предлагает «допуск», предлагает документ, которого нет девятый год.',
+    law: LAW.noAdmission,
+    link: { label: 'Разбор', url: href('/baza-znaniy/dopuskov-sro-ne-sushchestvuet/') },
+  },
+  {
+    t: 'Не работаю с организациями, которых нет в государственном реестре',
+    d:
+      'Саморегулируемая организация существует ровно постольку, поскольку она есть в реестре национального ' +
+      'объединения. Каждую, которую я предлагаю, вы открываете по регистрационному номеру и смотрите статус, ' +
+      'дату регистрации, число членов и размер компенсационного фонда — до того, как что-то подпишете.',
+    link: { label: 'Как проверить СРО', url: href('/proverit-sro/') },
+  },
+  {
+    t: 'Не берусь за компанию, которой членство не нужно',
+    d:
+      'Продать вступление тому, кому оно не требуется, — самый простой способ заработать в этой отрасли ' +
+      'и самый быстрый способ потерять репутацию. Компенсационный фонд при выходе не возвращается, ' +
+      'и человек, заплативший его зря, это запомнит.',
+  },
+]
+
+// ЧТО МОЖНО ПРОВЕРИТЬ. Фирменный приём сайта: вместо «доверьтесь мне» —
+// список того, что посетитель смотрит сам и бесплатно.
+const CHECK = [
+  {
+    icon: 'search',
+    t: 'Меня — в ЕГРИП',
+    d: `ИНН ${SITE.inn} и ОГРНИП ${SITE.ogrnip} открыты в едином государственном реестре индивидуальных предпринимателей. Оба номера и кнопка «скопировать» — на странице контактов.`,
+    link: { label: 'Реквизиты', url: href('/kontakty/') },
+  },
+  {
+    icon: 'shield',
+    t: 'СРО, которую я предложу, — в реестре национального объединения',
+    d: 'Строительные организации в реестре НОСТРОЙ, проектные и изыскательские — в НОПРИЗ. Статус, дата регистрации, число членов, размер компенсационного фонда: всё открыто и бесплатно.',
+    link: { label: 'Как проверить СРО', url: href('/proverit-sro/') },
+  },
+  {
+    icon: 'doc',
+    t: 'Каждую норму на этом сайте — по статье рядом с ней',
+    d: 'У фактов здесь стоят чипы со статьями, у страниц и статей — дата сверки. Не для красоты: по ним меня можно поймать, если где-то написана устаревшая норма.',
+    link: { label: 'База знаний', url: href('/baza-znaniy/') },
+  },
+  {
+    icon: 'check',
+    t: 'Своё членство — там же, после вступления',
+    d: 'Ваша компания появится в том же реестре, и выписку оттуда вы получите сами, не спрашивая ни меня, ни СРО.',
+  },
+]
+---
+
+<Base
+  title={title}
+  description={description}
+  pageType="AboutPage"
+  breadcrumbs={[{ label: 'Главная', url: href('/') }, { label: 'Обо мне' }]}
+>
+  <section class="section page-head">
+    <HeadPhoto position="58% 44%" />
+    <div class="wrap">
+      <nav class="crumbs" aria-label="Хлебные крошки" data-nosearch>
+        <a href={href('/')}>Главная</a>
+        <span aria-hidden="true">/</span>
+        <span>Обо мне</span>
+      </nav>
+      <span class="eyebrow">Обо мне</span>
+      <h1>Как я <em>работаю</em></h1>
+      <p class="lead">
+        Меня зовут Алихан Багишев, я помогаю компаниям вступать в саморегулируемые
+        организации. Ниже — короткие цифры о себе, а за ними то, ради чего эта страница
+        и написана: <b>что я обязуюсь делать, чего не делаю и что вы можете проверить
+        про меня сами</b>, не спрашивая меня.
+      </p>
+    </div>
+  </section>
+
+  <!-- КОРОТКО О СЕБЕ. Цифры со слов заказчика — и прямо об этом сказано.
+       Ставить их без оговорки нельзя: страница дальше вся построена
+       на «проверьте сами», и четыре непроверяемых числа в начале
+       без пометки подрубили бы её на первом же экране. -->
+  <section class="section section--tight facts" aria-label="Коротко о себе">
+    <div class="wrap">
+      <ul class="fgrid rv">
+        {FACTS.map((f) => (
+          <li class:list={['fcard', f.wide && 'fcard--wide']}>
+            <span class="fv">{f.v}</span>
+            <span class="ft">{f.t}</span>
+            <p class="fd">{f.d}</p>
+            {f.link && <a class="rlink" href={f.link.url}>{f.link.label} →</a>}
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <!-- ОБЯЗУЮСЬ -->
+  <section class="section section--split" id="obyazuyus" data-anchor>
+    <div class="wrap">
+      <div class="s-head rv">
+        <span class="eyebrow">Обязуюсь</span>
+        <h2>{numWord(DO.length)} вещей, которые <em>я делаю всегда</em></h2>
+        <p>
+          Это не обещания «качества» и «индивидуального подхода». Каждый пункт — действие,
+          которое либо произошло, либо нет, и спросить за него можно по ходу работы.
+        </p>
+      </div>
+      <div class="sbody">
+        <ol class="rules rv">
+          {DO.map((p, i) => (
+            <li>
+              <span class="rn" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+              <div class="rb">
+                <h3>{p.t}</h3>
+                <p>{p.d}</p>
+                <p class="rmeta">
+                  {p.law && <span class="law">{p.law}</span>}
+                  {p.link && <a class="rlink" href={p.link.url}>{p.link.label} →</a>}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- НЕ ДЕЛАЮ -->
+  <section class="section section--dark section--split" id="ne-delayu" data-anchor>
+    <div class="wrap">
+      <div class="s-head rv">
+        <span class="eyebrow">Не делаю</span>
+        <h2>И {numWord(DONT.length).toLowerCase()}, которых <em>не делаю никогда</em></h2>
+        <p>
+          Этот список полезнее предыдущего. Обещать умеют все; граница видна по тому,
+          от чего человек отказывается.
+        </p>
+      </div>
+      <div class="sbody">
+        <ul class="nots rv">
+          {DONT.map((p) => (
+            <li>
+              <span class="nx" aria-hidden="true"><Icon name="x" size={16} /></span>
+              <div class="rb">
+                <h3>{p.t}</h3>
+                <p>{p.d}</p>
+                <p class="rmeta">
+                  {p.law && <span class="law">{p.law}</span>}
+                  {p.link && <a class="rlink" href={p.link.url}>{p.link.label} →</a>}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ПРОВЕРИТЬ -->
+  <section class="section section--paper section--split" id="proverit" data-anchor>
+    <div class="wrap">
+      <div class="s-head rv">
+        <span class="eyebrow">Проверяемость</span>
+        <h2>Что вы можете проверить <em>прямо сейчас</em></h2>
+        <p>
+          Всё бесплатно, всё в государственных реестрах и всё без моего участия.
+          Это и есть ответ на вопрос «а кто вы такой».
+        </p>
+      </div>
+      <div class="sbody">
+        <div class="cgrid rv">
+          {CHECK.map((c) => (
+            <article class="ccard">
+              <span class="ci" aria-hidden="true"><Icon name={c.icon} size={20} /></span>
+              <h3>{c.t}</h3>
+              <p>{c.d}</p>
+              {c.link && <a class="rlink" href={c.link.url}>{c.link.label} →</a>}
+            </article>
+          ))}
+        </div>
+        <p class="reg rv" data-nosearch>
+          Реестры: <a href={REGISTRIES.nostroy} target="_blank" rel="noopener noreferrer">НОСТРОЙ</a>{' '}
+          для строительных СРО, <a href={REGISTRIES.nopriz} target="_blank" rel="noopener noreferrer">НОПРИЗ</a>{' '}
+          для проектных и изыскательских.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <LeadForm
+    title="Расскажите про вашу компанию"
+    note="Посчитаю, нужна ли вам СРО, и скажу прямо, если не нужна."
+  />
+</Base>
+
+<style>
+  /* КОРОТКО О СЕБЕ. Цифры набраны антиквой и крупно — как в бланке,
+     а не как счётчики на лендинге: ни кружков, ни теней, ни анимации
+     подсчёта. Разделители — линейки в 1 px, тот же приём, что у списка
+     городов и у таблиц на «Стоимости». */
+  .facts { padding-top: 34px; }
+  .fgrid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .fcard {
+    padding: 22px 22px 22px 0;
+    border-right: 1px solid var(--line);
+    display: grid;
+    align-content: start;
+    gap: 4px;
+  }
+  .fcard:last-child { border-right: 0; }
+  .fv {
+    font-family: var(--font-head);
+    font-size: clamp(30px, 3.4vw, 40px);
+    line-height: 1;
+    color: var(--acc-deep);
+    font-variant-numeric: tabular-nums;
+  }
+  /* Город — не число, и тем же кеглем он рвётся на слоги. */
+  .fcard--wide .fv { font-size: clamp(21px, 2.1vw, 26px); line-height: 1.15; }
+  .ft {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .fd { margin: 6px 0 0; font-size: 14px; line-height: 1.55; color: var(--muted); }
+  .fcard .rlink { margin-top: 8px; font-size: 13.5px; }
+  .fnote {
+    margin: 18px 0 0;
+    max-width: 78ch;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--muted);
+  }
+  .fnote b { color: var(--ink); }
+
+  @media (max-width: 719px) {
+    /* В одну-две колонки правая линейка превращается в висящую черту
+       посреди блока — убираем её и разделяем строки горизонтально. */
+    .fcard { border-right: 0; border-bottom: 1px solid var(--line); padding: 18px 0; }
+    .fcard:last-child { border-bottom: 0; }
+  }
+
+  /* Лента обязательств: номер в рейке слева, текст справа — тот же приём,
+     что у шагов вступления на главной. Тонкая линейка между пунктами
+     вместо карточек с тенями: сайт про документы, и перечень выглядит
+     перечнем в документе. */
+  .rules {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0;
+  }
+  .rules li {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr);
+    gap: 0 16px;
+    padding: 22px 0;
+    border-top: 1px solid var(--line);
+  }
+  .rules li:last-child { border-bottom: 1px solid var(--line); }
+  .rn {
+    font-family: var(--font-mono);
+    font-size: 15px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--acc-deep);
+    padding-top: 2px;
+  }
+  .rb h3 { margin: 0 0 7px; font-size: 18px; line-height: 1.3; }
+  .rb p { margin: 0; color: var(--muted); line-height: 1.65; }
+  .rmeta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 16px;
+    margin-top: 12px !important;
+  }
+  .rmeta:empty { display: none; }
+  .rlink {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--acc-deep);
+    text-decoration: none;
+    /* Поле промаха: строка 20 px, а попадать нужно пальцем. */
+    padding-block: 6px;
+    margin-block: -6px;
+  }
+  .rlink:hover { text-decoration: underline; }
+
+  /* «Не делаю» — тот же перечень, но вместо номера крестик. Нумеровать
+     отказы незачем: порядок в них ничего не значит. */
+  .nots {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .nots li {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr);
+    gap: 0 16px;
+    padding: 22px 0;
+    border-top: 1px solid var(--dark-line);
+  }
+  .nots li:last-child { border-bottom: 1px solid var(--dark-line); }
+  .nx {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid color-mix(in srgb, var(--acc-bright) 45%, transparent);
+    color: var(--acc-bright);
+  }
+  .nots h3 { color: var(--on-dark); }
+  .nots p { color: var(--on-dark-muted); }
+  .nots .rlink { color: var(--acc-bright); }
+
+  /* Проверяемость — карточки в один ряд по двое. */
+  .cgrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .ccard {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--r-l);
+    padding: 22px 20px;
+  }
+  .ci {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--acc-soft);
+    color: var(--acc-deep);
+    margin-bottom: 12px;
+  }
+  .ccard h3 { margin: 0 0 7px; font-size: 16.5px; line-height: 1.35; }
+  .ccard p { margin: 0 0 12px; color: var(--muted); font-size: 15px; line-height: 1.6; }
+  .reg { margin-top: 18px; font-size: 14px; color: var(--muted); }
+  .reg a { color: var(--acc-deep); }
+
+  @media (max-width: 599px) {
+    .rules li, .nots li { grid-template-columns: 38px minmax(0, 1fr); gap: 0 12px; padding: 18px 0; }
+    .rb h3 { font-size: 17px; }
+    .nx { width: 26px; height: 26px; }
+  }
+</style>
