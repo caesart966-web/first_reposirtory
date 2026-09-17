@@ -904,27 +904,69 @@ def cmd_recheck(args) -> int:
     return 0
 
 
+def _все_даты(record: dict) -> list[tuple[str, str]]:
+    """Все поля записи, значение которых разбирается как дата: (путь, значение).
+
+    Нужно, когда реестр хранит нужную дату под неизвестным именем.
+    Подсказки (_START_KEY_HINTS, _STOP_KEY_HINTS) тут нарочно не работают —
+    именно их и подбираем по этому списку.
+    """
+    found: list[tuple[str, str]] = []
+
+    def rec(obj: Any, path: str = "") -> None:
+        if isinstance(obj, dict):
+            for key, value in obj.items():
+                full = f"{path}.{key}" if path else key
+                if isinstance(value, str) and _parse_date(value):
+                    found.append((full, value))
+                elif isinstance(value, (dict, list)):
+                    rec(value, full)
+        elif isinstance(obj, list):
+            for n, item in enumerate(obj):
+                rec(item, f"{path}[{n}]")
+
+    rec(record)
+    return found
+
+
 def cmd_sample(args) -> int:
     """Сырая запись реестра и что из неё извлекает скрипт."""
     session = make_session()
-    payload = fetch_page(session, 1, 20)
-    if payload is None:
-        print("Реестр недоступен — проверьте интернет и повторите.", file=sys.stderr)
-        return 1
-    records = records_of(payload)
-    if not records:
-        print("Реестр ответил, но записей нет. Сырой ответ:")
-        print(json.dumps(payload, ensure_ascii=False)[:4000])
-        return 1
+    if args.инн:
+        инн = norm_inn(args.инн)
+        payload = fetch_by_inn(session, инн)
+        записи = [r for r in records_of(payload or {}) if norm_inn(r.get("inn")) == инн]
+        if not записи:
+            print(f"По ИНН {инн} реестр ничего не отдал.", file=sys.stderr)
+            return 1
+        records = записи
+        заголовок = f"=== ИНН {инн}: записей {len(records)} ==="
+    else:
+        payload = fetch_page(session, 1, 20)
+        if payload is None:
+            print("Реестр недоступен — проверьте интернет и повторите.", file=sys.stderr)
+            return 1
+        records = records_of(payload)
+        if not records:
+            print("Реестр ответил, но записей нет. Сырой ответ:")
+            print(json.dumps(payload, ensure_ascii=False)[:4000])
+            return 1
+        records = records[:args.count]
+        заголовок = f"=== Разбор первых записей (всего в реестре: {total_of(payload)}) ==="
 
-    print(f"=== Разбор первых записей (всего в реестре: {total_of(payload)}) ===\n")
-    for record in records[:args.count]:
+    print(заголовок + "\n")
+    for record in records:
         starts = _dates_by_hints(record, _START_KEY_HINTS)
+        stops = _dates_by_hints(record, _STOP_KEY_HINTS)
         print(f"ИНН {record.get('inn')} — {_first_str(record, 'short_description', 'full_description')[:55]}")
         print(f"  СРО:               {sro_name(record)}")
         print(f"  вид деятельности:  {activity_kind(record) or '— НЕ ОПРЕДЕЛЁН —'}")
         print(f"  даты вступления:   {[(f'{d:%d.%m.%Y}', k) for d, k in starts] or '— НЕ НАЙДЕНЫ —'}")
+        print(f"  даты прекращения:  {[(f'{d:%d.%m.%Y}', k) for d, k in stops] or '— НЕ НАЙДЕНЫ —'}")
         print(f"  статус:            «{member_status(record)}» (бывший: {is_former(record)})")
+        print("  ВСЕ поля с датами:")
+        for путь, значение in _все_даты(record):
+            print(f"    {путь:<45} {значение}")
         print()
 
     print("=== Первая запись целиком ===")
@@ -1082,6 +1124,7 @@ def main(argv: list[str] | None = None) -> int:
 
     p = sub.add_parser("образец", help="диагностика: сырая запись реестра")
     p.add_argument("--count", type=int, default=3, help="сколько записей разобрать")
+    p.add_argument("--инн", default="", help="показать записи одной компании")
     p.set_defaults(func=cmd_sample)
 
     args = parser.parse_args(argv)
