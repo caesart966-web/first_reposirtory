@@ -3,7 +3,7 @@ import { CONFIGURED, CONTACTS, LINKS } from '../content/contacts'
 import { REQUISITES, isPlaceholder } from '../content/facts'
 import { MENU, SERVICES_GROUP, TYPES_GROUP, isGroup, navHref, type NavLink } from '../content/nav'
 import { ScalesMark } from './illustrations'
-import { useLegalDocs } from './LegalDocs'
+import { legalHref } from './LegalDocs'
 import { MESSENGERS } from './messengers'
 import { MessengerLink } from './MessengerLink'
 
@@ -63,8 +63,6 @@ function LinkList({ items }: { items: NavLink[] }) {
 }
 
 export function Footer() {
-  const openLegal = useLegalDocs()
-
   return (
     // Тёмный, в цвет блока заявки: страница закрывается плотной полосой,
     // а не растворяется в подложке. Заодно снимается вопрос контраста над
@@ -193,27 +191,28 @@ export function Footer() {
               ))}
             </dl>
 
-            {/* Открывают типовые тексты под 152-ФЗ; оператор назван реквизитами */}
+            {/* Ссылки на страницу с документами, а не кнопки всплывающего
+                окна: из подвала документ чаще всего нужен «на руки» — чтобы
+                открыть по адресу, переслать, сослаться на него в переписке.
+                Окно осталось в форме заявки, где уходить со страницы нельзя. */}
             <div className="lg:text-right">
               <BarLabel>Документы</BarLabel>
               <ul className="mt-1.5 space-y-1.5 text-sm text-neutral-300">
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => openLegal('privacy')}
-                    className="text-left underline-offset-4 transition hover:text-white hover:underline"
+                  <a
+                    href={legalHref('privacy')}
+                    className="underline-offset-4 transition hover:text-white hover:underline"
                   >
                     Политика конфиденциальности
-                  </button>
+                  </a>
                 </li>
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => openLegal('consent')}
-                    className="text-left underline-offset-4 transition hover:text-white hover:underline"
+                  <a
+                    href={legalHref('consent')}
+                    className="underline-offset-4 transition hover:text-white hover:underline"
                   >
                     Согласие на обработку персональных данных
-                  </button>
+                  </a>
                 </li>
               </ul>
             </div>
