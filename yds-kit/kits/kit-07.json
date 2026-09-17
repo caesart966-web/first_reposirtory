@@ -1,0 +1,995 @@
+{
+  "kit": 7,
+  "topic": "Karma Konu Antrenmanı II",
+  "date": "2026",
+  "passages": [
+    {
+      "first": 43,
+      "last": 46,
+      "text": "A language does not die when its last speaker dies; by then it has been dead for a generation. The decisive moment comes much earlier and is almost invisible from outside: the point at which parents stop using it with their children. Everything that follows — the shrinking circle of fluent speakers, the shift of the language into ceremony and joke, the elderly woman photographed by a newspaper as the last of her kind — is the working out of a decision taken decades before, usually for reasons that had nothing to do with the language itself. Parents who switch are rarely rejecting anything. They are reading a labour market. This is why documentation and revival are not the same project and are often confused. A grammar and a sound archive preserve what a language was; neither creates a household in which a child hears it all day. Revival programmes that have succeeded have worked on the second problem, and they have all been expensive, slow and dependent on a community that had already decided it wanted the outcome."
+    },
+    {
+      "first": 47,
+      "last": 50,
+      "text": "Almost everything that determines the price of housing in a city was settled before the people now paying it were born. Zoning maps drawn in the 1920s and amended in the 1960s fix how tall a building may be, how many families may live on a plot and how much of that plot must be left empty. These rules were written by the residents of the time, for reasons that were often reasonable then, and they are enforced now against a population that was not consulted because it did not yet exist. The economics are not disputed: where supply is capped and demand is not, the price rises until enough people give up. What is disputed is who bears the cost, and here the accounting is unusual, because the people who bear it are mostly absent from the argument. They are the ones who did not move to the city, who commute two hours, or who are still living with their parents. No public meeting is attended by the household that was priced out four years ago."
+    },
+    {
+      "first": 51,
+      "last": 54,
+      "text": "Ask where a national dish comes from and the answer is usually a century old, not a millennium. The tomato reached most of the cuisines now unimaginable without it after 1500; the chilli did the same; and the dishes that a country teaches its children to regard as ancestral were in most cases codified between about 1880 and 1930, when cookbooks, railways and national feeling arrived together. This is not a debunking. A tradition that is a hundred and forty years old is still a tradition, and the cooks who wrote those books were usually recording something they had eaten rather than inventing it. What was new was the claim of nationality: the idea that a way of preparing a vegetable belonged to a country rather than to a valley. Historians of food therefore find themselves in an awkward position, because saying that a dish is younger than it is believed to be sounds like an accusation, and is generally received as one."
+    },
+    {
+      "first": 55,
+      "last": 58,
+      "text": "Until the railways, every town kept its own noon. Clocks were set by the sun where they stood, so that a town forty miles west of another was a few minutes behind it, and nobody was inconvenienced, because nobody could travel fast enough for the difference to matter. The railway made it matter. A timetable that meant one thing in one town and something else in the next was not a timetable, and after a number of collisions the companies imposed a single time along their own lines, which the towns they served eventually adopted. The interesting part is the resistance. Local time was felt to be a property of the place, like its weather, and to be told that noon was now an hour decided elsewhere was understood, correctly, as a transfer of authority. Courts in more than one country had to rule on which noon a contract referred to. What settled the question was not an argument but a habit: within a generation, the abolished local noon had been forgotten."
+    },
+    {
+      "first": 59,
+      "last": 62,
+      "text": "The written examination was invented to keep powerful families out of office. Imperial China used it for the better part of thirteen centuries, and when nineteenth-century British reformers borrowed the idea for their civil service, they borrowed it for the same reason: an anonymous paper, marked by a stranger, could not be a nephew. Both systems worked, in the narrow sense that they did what they were designed to do. Both also produced the complaint that has followed the examination ever since, which is that it selects not for the ability it names but for the ability to be examined — a related quality, distributed unevenly, and easier to buy than its defenders admit. The complaint is just, and it is not an argument for abolition, because the question is never whether the examination is a perfect instrument. It is whether the thing that would replace it, which is somebody's judgement of a candidate's promise, would be fairer. The historical record on that point is not encouraging."
+    }
+  ],
+  "questions": [
+    {
+      "no": 27, "group": "sentence_completion", "level": "B2",
+      "stem": "Although the committee had been warned more than once that the deadline was unrealistic, ----.",
+      "options": {
+        "o1": "it insisted on keeping the date it had originally set",
+        "o2": "it decided to move the date back by a further three months",
+        "o3": "the report was eventually published in two separate volumes",
+        "o4": "its members had all been appointed by the ministry",
+        "o5": "several of its recommendations were adopted the following year"
+      },
+      "order": ["o3", "o2", "o5", "o1", "o4"],
+      "answer": "o1", "trap": "o2",
+      "why": "Although bir ödün bağlacıdır ve beklenenin tersini ister: uyarılmasına rağmen komite tarihi değiştirmemiştir.",
+      "trap_note": "Uyarının beklenen sonucudur; ödün bağlacı bu beklentiyi kırmak için kullanılır, doğrulamak için değil."
+    },
+    {
+      "no": 28, "group": "sentence_completion", "level": "B2",
+      "stem": "----, the rent was still higher than anything the family could pay.",
+      "options": {
+        "o1": "Even though the flat had stood empty for years",
+        "o2": "Because the flat had stood empty for years",
+        "o3": "As soon as the flat was advertised for the second time",
+        "o4": "Unless the flat is repaired before the winter",
+        "o5": "So that the flat would not stand empty any longer"
+      },
+      "order": ["o4", "o1", "o2", "o5", "o3"],
+      "answer": "o1", "trap": "o2",
+      "why": "'still' zarfı beklenen düşüşün gerçekleşmediğini bildirir; boşluk da bu beklentiyi kuran bir ödün cümlesi olmalıdır.",
+      "trap_note": "Aynı olguyu neden diye sunar; boş kalmanın kirayı yükseltmesi 'still' ile kurulan karşıtlığı ortadan kaldırır."
+    },
+    {
+      "no": 29, "group": "sentence_completion", "level": "C1",
+      "stem": "Only after the accounts had been published ----.",
+      "options": {
+        "o1": "did the true scale of the deficit become apparent",
+        "o2": "the true scale of the deficit became apparent",
+        "o3": "had the treasurer been asked to resign from the board",
+        "o4": "the council will publish a second report in the spring",
+        "o5": "would the auditors have refused to sign the accounts"
+      },
+      "order": ["o1", "o3", "o2", "o5", "o4"],
+      "answer": "o1", "trap": "o2",
+      "why": "Only + zaman öbeği cümle başına gelince ana cümle devrilir: yardımcı fiil özneden önce gelir.",
+      "trap_note": "Anlamı doğrudur ama devrik yapı kurulmamıştır; Only ile başlayan cümlede düz sıralama kabul edilmez."
+    },
+    {
+      "no": 30, "group": "sentence_completion", "level": "B2",
+      "stem": "The northern branch of the museum receives school groups almost every day, whereas ----.",
+      "options": {
+        "o1": "the southern one sees hardly any visitors under eighteen",
+        "o2": "the southern one is also popular with younger visitors",
+        "o3": "its collection was assembled over a period of forty years",
+        "o4": "it was opened to the public only three years ago",
+        "o5": "teachers are asked to book their visits well in advance"
+      },
+      "order": ["o3", "o2", "o5", "o4", "o1"],
+      "answer": "o1", "trap": "o2",
+      "why": "whereas iki durumu karşı karşıya koyar; boşluk kuzey şubesiyle çelişen bir durum bildirmelidir.",
+      "trap_note": "Karşıtlık yerine benzerlik kurar; 'also' sözcüğü whereas'ın istediği zıtlığı doğrudan bozar."
+    },
+    {
+      "no": 31, "group": "sentence_completion", "level": "C1",
+      "stem": "If the city had kept the tram network it dismantled in the 1960s, ----.",
+      "options": {
+        "o1": "it would not now be digging an underground line along the same route",
+        "o2": "it will not need an underground line along the same route",
+        "o3": "the tram system was considered old-fashioned at the time",
+        "o4": "the underground line is expected to open next year",
+        "o5": "the decision had been taken by the previous council"
+      },
+      "order": ["o5", "o3", "o1", "o2", "o4"],
+      "answer": "o1", "trap": "o2",
+      "why": "Karma koşul cümlesidir: koşul geçmişte, sonuç bugündedir; ana cümle would + be + V-ing ister.",
+      "trap_note": "Gerçekleşmemiş bir geçmişe gelecek zamanlı bir sonuç bağlar; koşulun geçmişte kaldığını görmez."
+    },
+    {
+      "no": 32, "group": "sentence_completion", "level": "B2",
+      "stem": "The publisher agreed to a second edition provided that ----.",
+      "options": {
+        "o1": "the author removed the passage that had caused the complaint",
+        "o2": "the author had removed the passage that had caused the complaint",
+        "o3": "the first edition had sold out within a single year",
+        "o4": "the newspaper withdrew its complaint at once",
+        "o5": "readers found the passage unconvincing in any case"
+      },
+      "order": ["o1", "o3", "o2", "o4", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "provided that koşul bildirir ve gelecekteki bir edim ister; geçmiş zamanlı yapı burada şart anlamını taşır.",
+      "trap_note": "Koşulu daha önce yapılmış bir işe çevirir; oysa yayıncı henüz yapılmamış bir değişikliği şart koşmaktadır."
+    },
+    {
+      "no": 33, "group": "sentence_completion", "level": "C1",
+      "stem": "----, the practice survived in three mountain villages until the 1970s.",
+      "options": {
+        "o1": "Having been prohibited by law as early as 1834",
+        "o2": "Having prohibited it by law as early as 1834",
+        "o3": "Prohibiting it by law as early as 1834",
+        "o4": "It was prohibited by law as early as 1834",
+        "o5": "To have been prohibited by law as early as 1834"
+      },
+      "order": ["o3", "o2", "o4", "o5", "o1"],
+      "answer": "o1", "trap": "o2",
+      "why": "Özne uygulamanın kendisidir ve yasaklanan odur; bu yüzden ulaç edilgen kurulmalıdır.",
+      "trap_note": "Etken ulaç kullanır ve uygulamayı yasaklayan taraf hâline getirir; özne ile eylem arasındaki ilişkiyi ters çevirir."
+    },
+    {
+      "no": 34, "group": "sentence_completion", "level": "B2",
+      "stem": "The report names two officials, neither ---- was available for comment.",
+      "options": {
+        "o1": "of whom",
+        "o2": "of them",
+        "o3": "of which",
+        "o4": "whom",
+        "o5": "of those"
+      },
+      "order": ["o3", "o1", "o2", "o5", "o4"],
+      "answer": "o1", "trap": "o2",
+      "why": "İki cümleyi bağlayan bir ilgi adılı gerekir ve söz konusu olan kişilerdir; neither of whom bu görevi görür.",
+      "trap_note": "them bir ilgi adılı değildir; bağlaçsız iki cümleyi virgülle birleştirdiği için yapı bozulur."
+    },
+    {
+      "no": 35, "group": "sentence_completion", "level": "C1",
+      "stem": "Not only did the council reject the plan, ----.",
+      "options": {
+        "o1": "but it also refused to give any reason for doing so",
+        "o2": "but also it refused to give any reason for doing so",
+        "o3": "and it refused to give any reason for doing so",
+        "o4": "so it refused to give any reason for doing so",
+        "o5": "while refusing to give any reason for doing so"
+      },
+      "order": ["o5", "o2", "o3", "o1", "o4"],
+      "answer": "o1", "trap": "o2",
+      "why": "Not only ... but also kalıbında also özneden sonra, yardımcı fiille birlikte yer alır.",
+      "trap_note": "Kalıbın iki parçası doğrudur ama also yanlış yere konmuştur; sözcükler tanıdık olduğu için sıra gözden kaçar."
+    },
+    {
+      "no": 36, "group": "sentence_completion", "level": "C1",
+      "stem": "The manuscript ---- by a scribe working two centuries after the poet's death, since it contains spellings that did not exist before then.",
+      "options": {
+        "o1": "must have been copied",
+        "o2": "must be copied",
+        "o3": "cannot have been copied",
+        "o4": "should have copied",
+        "o5": "might be copying"
+      },
+      "order": ["o4", "o5", "o1", "o2", "o3"],
+      "answer": "o1", "trap": "o2",
+      "why": "Kanıttan geçmişe ilişkin güçlü bir çıkarım yapılmaktadır; bu çıkarım must have + V3 ile kurulur ve elyazması kopyalanan taraftır.",
+      "trap_note": "Aynı kipi şimdiki zamana taşır: 'kopyalanmalıdır' bir gereklilik bildirir, geçmişe dair bir çıkarım değildir."
+    },
+    {
+      "no": 37, "group": "translation", "level": "B2", "direction": "en_tr",
+      "stem": "The committee agreed on the wording only after three meetings, none of which produced a vote.",
+      "options": {
+        "o1": "Komite ifade üzerinde ancak üç toplantının ardından anlaşabildi; bu toplantıların hiçbirinde oylama yapılmadı.",
+        "o2": "Komite ifade üzerinde daha üç toplantıdan önce anlaşmıştı; bu toplantıların hiçbirinde oylama yapılmadı.",
+        "o3": "Komite üç toplantı boyunca ifade üzerinde anlaşamadı ve her toplantıda ayrı bir oylama yapıldı.",
+        "o4": "Üç toplantının hiçbirinde oylama yapılmadığı için komite ifade üzerinde anlaşamamıştır.",
+        "o5": "Komite, oylama yapılmayan üç toplantının ardından ifadeyi bütünüyle değiştirmeye karar verdi."
+      },
+      "order": ["o4", "o1", "o2", "o5", "o3"],
+      "answer": "o1", "trap": "o2",
+      "why": "only after kalıbı anlaşmanın ancak o üç toplantıdan sonra gerçekleştiğini bildirir; none of which de toplantıları niteler.",
+      "trap_note": "Zaman ilişkisini ters çevirir: 'ancak sonra' ifadesini 'daha önce' diye okuyunca cümle karşıt bir sıra anlatır."
+    },
+    {
+      "no": 38, "group": "translation", "level": "C1", "direction": "en_tr",
+      "stem": "So entrenched had the practice become that the ministry preferred to regulate it rather than attempt to end it.",
+      "options": {
+        "o1": "Uygulama öylesine yerleşmişti ki bakanlık onu sona erdirmeye çalışmak yerine düzenlemeyi yeğledi.",
+        "o2": "Bakanlık uygulamayı düzenlemek yerine sona erdirmeyi yeğlediği için uygulama iyice yerleşti.",
+        "o3": "Uygulama bu kadar yerleşmemiş olsaydı bakanlık onu düzenlemek yerine sona erdirirdi.",
+        "o4": "Bakanlık, yerleşmiş bir uygulamayı düzenlemenin sona erdirmekten kolay olduğunu savunmuştur.",
+        "o5": "Uygulama o kadar yaygınlaşmıştı ki bakanlık onu ne düzenleyebildi ne de sona erdirebildi."
+      },
+      "order": ["o5", "o2", "o4", "o1", "o3"],
+      "answer": "o1", "trap": "o2",
+      "why": "So + sıfat cümle başına gelince devrik kurulur; yapı bir derece-sonuç ilişkisi bildirir: yerleşiklik düzenleme tercihini doğurmuştur.",
+      "trap_note": "Neden ile sonucu değiştirir ve tercihi de tersine çevirir; devrik yapı, nedeni yerleşikliğe verir, bakanlığın tercihine değil."
+    },
+    {
+      "no": 39, "group": "translation", "level": "B2", "direction": "en_tr",
+      "stem": "What makes the collection valuable is not its size but the fact that it has never been divided.",
+      "options": {
+        "o1": "Koleksiyonu değerli kılan şey büyüklüğü değil, hiçbir zaman bölünmemiş olmasıdır.",
+        "o2": "Koleksiyonu değerli kılan şey hiç bölünmemiş olması değil, büyüklüğüdür.",
+        "o3": "Koleksiyon hem büyüklüğü hem de hiç bölünmemiş olması sayesinde değerlidir.",
+        "o4": "Koleksiyon bölünmediği sürece büyüklüğü ölçüsünde değerli kalacaktır.",
+        "o5": "Büyük olmayan bir koleksiyon, bölünmediği takdirde yine de değerli sayılır."
+      },
+      "order": ["o1", "o3", "o2", "o5", "o4"],
+      "answer": "o1", "trap": "o2",
+      "why": "What ile kurulan yapı vurguyu 'not X but Y' karşıtlığına taşır; değeri veren bölünmemiş olmasıdır.",
+      "trap_note": "Karşıtlığın iki ucunu değiştirir; sözcükler aynı kaldığı için cümlenin tersi tanıdık görünür."
+    },
+    {
+      "no": 40, "group": "translation", "level": "C1", "direction": "tr_en",
+      "stem": "Bir dilin ölümü, son konuşurunun ölümüyle değil, anne babaların çocuklarıyla o dili konuşmayı bıraktığı anda başlar.",
+      "options": {
+        "o1": "The death of a language begins not with the death of its last speaker but at the moment when parents stop speaking it to their children.",
+        "o2": "The death of a language begins not at the moment when parents stop speaking it to their children but with the death of its last speaker.",
+        "o3": "A language dies when its last speaker dies, long after parents have stopped speaking it to their children.",
+        "o4": "Parents stop speaking a language to their children once its last speaker has died.",
+        "o5": "The last speaker of a language is usually the child of parents who stopped speaking it."
+      },
+      "order": ["o4", "o2", "o1", "o5", "o3"],
+      "answer": "o1", "trap": "o2",
+      "why": "Türkçe cümle 'değil ... anda' kalıbıyla iki anı karşıt kurar; İngilizcede not ... but sırası korunmalıdır.",
+      "trap_note": "Kalıbı doğru kurar ama iki anı yer değiştirir; cümle bu kez ölümü son konuşurun ölümüne bağlar."
+    },
+    {
+      "no": 41, "group": "translation", "level": "B2", "direction": "tr_en",
+      "stem": "Bir şehirde konut fiyatını belirleyen kuralların çoğu, bugün o fiyatı ödeyen insanlar doğmadan önce yazılmıştı.",
+      "options": {
+        "o1": "Most of the rules that determine the price of housing in a city were written before the people now paying that price were born.",
+        "o2": "Most of the people now paying the price of housing in a city were born before the rules determining that price were written.",
+        "o3": "The rules that determine the price of housing in a city are rewritten as soon as a new generation is born.",
+        "o4": "People who pay high prices for housing rarely know which rules have determined those prices.",
+        "o5": "In most cities the price of housing is determined by rules that no longer apply to anyone."
+      },
+      "order": ["o3", "o4", "o2", "o5", "o1"],
+      "answer": "o1", "trap": "o2",
+      "why": "Cümlede iki olay zaman bakımından sıralanır: önce kurallar yazılmış, sonra bugün ödeyenler doğmuştur.",
+      "trap_note": "Sıralamayı ters çevirir; 'önce' bağlacının hangi olaya bağlandığı değişince cümle karşıt bir tarih kurar."
+    },
+    {
+      "no": 42, "group": "translation", "level": "C1", "direction": "tr_en",
+      "stem": "Sınav, adını taşıdığı yeteneği değil sınava girilebilme yeteneğini seçtiği gerekçesiyle eleştirilir; bu eleştiri haklıdır ama sınavın kaldırılmasını gerektirmez.",
+      "options": {
+        "o1": "The examination is criticised on the ground that it selects not the ability it is named after but the ability to be examined; the criticism is just, yet it does not require the examination to be abolished.",
+        "o2": "The examination is criticised on the ground that it selects not the ability it is named after but the ability to be examined; the criticism is just, and it therefore requires the examination to be abolished.",
+        "o3": "The examination selects the ability it is named after rather than the ability to be examined, which is why the criticism made of it is unjust.",
+        "o4": "Those who criticise the examination are unable to say which ability it ought to be selecting for.",
+        "o5": "The ability to be examined and the ability the examination is named after are in practice the same thing."
+      },
+      "order": ["o5", "o2", "o3", "o1", "o4"],
+      "answer": "o1", "trap": "o2",
+      "why": "Cümlenin ikinci yarısı bir ödün kurar: eleştiri haklı sayılır, ama sonuç olarak kaldırma önerilmez.",
+      "trap_note": "Ödünü sonuca çevirir; 'ama gerektirmez' yerine 'bu nedenle gerektirir' diyerek cümlenin yargısını tersine döndürür."
+    },
+    {
+      "no": 43, "group": "paragraph", "level": "B2", "qtype": "according_to",
+      "stem": "According to the passage, the decisive moment in the death of a language is ----.",
+      "options": {
+        "o1": "the point at which parents stop using it with their children",
+        "o2": "the death of the last person able to speak it fluently",
+        "o3": "the moment at which it disappears from public ceremony",
+        "o4": "the decision of a community to have it documented",
+        "o5": "the point at which it ceases to be written down"
+      },
+      "order": ["o3", "o2", "o4", "o5", "o1"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça bu anı açıkça belirler ve dışarıdan görünmez olduğunu ekler: geri kalan her şey o kararın işlemesidir.",
+      "trap_note": "Parçanın ilk cümlesiyle reddedilen andır: son konuşur öldüğünde dil zaten bir kuşaktır ölüdür."
+    },
+    {
+      "no": 44, "group": "paragraph", "level": "B2", "qtype": "it_is_clear",
+      "stem": "It is clear from the passage that parents who bring their children up in another language ----.",
+      "options": {
+        "o1": "are for the most part responding to what employment requires",
+        "o2": "have generally come to despise the language they give up",
+        "o3": "are unaware of the effect their choice will eventually have",
+        "o4": "have been discouraged from using it by a government policy",
+        "o5": "expect the older language to go on being spoken elsewhere"
+      },
+      "order": ["o1", "o3", "o2", "o5", "o4"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça bu tercihi bir reddediş değil, bir okuma sayar: 'They are reading a labour market.'",
+      "trap_note": "Parçanın 'nadiren bir şeyi reddediyorlar' cümlesiyle dışladığı açıklamayı seçer."
+    },
+    {
+      "no": 45, "group": "paragraph", "level": "C1", "qtype": "inference",
+      "stem": "It can be inferred from the passage that a well-funded documentation project ----.",
+      "options": {
+        "o1": "may leave the language no more likely to be spoken than before",
+        "o2": "is the first step that any revival programme has to take",
+        "o3": "will normally be opposed by the community concerned",
+        "o4": "costs less than the newspaper coverage that it attracts",
+        "o5": "has never been attempted for a language with few speakers"
+      },
+      "order": ["o4", "o2", "o1", "o3", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça iki işi ayırır: dilbilgisi ve ses arşivi dilin ne olduğunu saklar, çocuğun onu gün boyu duyduğu bir ev kurmaz.",
+      "trap_note": "İki projeyi aynı zincirin halkaları sayar; oysa parça bunların sık sık karıştırılan ayrı işler olduğunu söyler."
+    },
+    {
+      "no": 46, "group": "paragraph", "level": "B2", "qtype": "main_idea",
+      "stem": "Which of the following best expresses the main idea of the passage?",
+      "options": {
+        "o1": "A language is lost through an ordinary decision taken long before anyone notices, and recording it is not the same as saving it.",
+        "o2": "Revival programmes fail because they are begun only once the last speakers have died.",
+        "o3": "Newspapers give a misleading picture of the situation of endangered languages.",
+        "o4": "Most of the languages now spoken will have disappeared within a century.",
+        "o5": "Governments ought to require their schools to teach minority languages."
+      },
+      "order": ["o3", "o1", "o5", "o2", "o4"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça hem belirleyici anı öne alır hem de belgeleme ile canlandırmayı ayırır; iki savı birlikte taşıyan seçenek budur.",
+      "trap_note": "Parçada başarılı canlandırma örnekleri anlatılır; genel bir başarısızlık hükmü metinde yoktur."
+    },
+    {
+      "no": 47, "group": "paragraph", "level": "B2", "qtype": "it_is_clear",
+      "stem": "It is clear from the passage that the zoning rules described ----.",
+      "options": {
+        "o1": "were made by people who do not live under their present effects",
+        "o2": "were unreasonable even at the time when they were written",
+        "o3": "are reviewed whenever the population of a city changes",
+        "o4": "were designed in order to keep the price of housing low",
+        "o5": "apply only to buildings above a certain height"
+      },
+      "order": ["o2", "o4", "o5", "o1", "o3"],
+      "answer": "o1", "trap": "o2",
+      "why": "Kuralları yazanlar 'dönemin sakinleri'dir ve bugün uygulandıkları nüfusa danışılmamıştır; o nüfus henüz yoktur.",
+      "trap_note": "Parça tam tersini söyler: gerekçeler o zaman çoğu kez makuldü; sorun kuralların bugüne taşınmasıdır."
+    },
+    {
+      "no": 48, "group": "paragraph", "level": "B2", "qtype": "according_to",
+      "stem": "According to the passage, the economic effect of capping supply is ----.",
+      "options": {
+        "o1": "a rise in price that continues until enough people give up",
+        "o2": "a question on which economists are still divided",
+        "o3": "a fall in the quality of the housing that gets built",
+        "o4": "an increase in the number of families living on each plot",
+        "o5": "a movement of demand towards the outskirts of the city"
+      },
+      "order": ["o3", "o5", "o2", "o4", "o1"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça bu noktayı tartışmasız sayar ve mekanizmayı yazar: arz sınırlı, talep sınırsızsa fiyat yeterince kişi vazgeçene kadar yükselir.",
+      "trap_note": "Parçanın 'tartışmalı değildir' dediği şeyi tartışmalı gösterir; tartışmalı olan, maliyeti kimin taşıdığıdır."
+    },
+    {
+      "no": 49, "group": "paragraph", "level": "C1", "qtype": "inference",
+      "stem": "It can be inferred from the passage that public meetings about housing ----.",
+      "options": {
+        "o1": "systematically leave out the people on whom the cost falls",
+        "o2": "are attended mainly by those who have recently moved to the city",
+        "o3": "have no influence on the rules that are finally adopted",
+        "o4": "are held only when a new development has been proposed",
+        "o5": "would reach the same conclusion whoever attended them"
+      },
+      "order": ["o4", "o1", "o2", "o5", "o3"],
+      "answer": "o1", "trap": "o2",
+      "why": "Maliyeti taşıyanlar taşınmayanlar, iki saat yol gidenler ve ailesiyle oturmaya devam edenlerdir; son cümle hiçbir toplantıya katılmadıklarını söyler.",
+      "trap_note": "Katılımcıları yeni gelenler sayar; parçanın savı tam tersidir, gelemeyenler salonda yoktur."
+    },
+    {
+      "no": 50, "group": "paragraph", "level": "B2", "qtype": "main_idea",
+      "stem": "Which of the following best expresses the main idea of the passage?",
+      "options": {
+        "o1": "Rules inherited from an earlier generation fix housing costs that are paid by people with no voice in the argument.",
+        "o2": "Zoning rules ought to be abolished so that housing can be built wherever it is needed.",
+        "o3": "Economists continue to disagree about the causes of high housing costs.",
+        "o4": "Commuting for long distances has become normal in most large cities.",
+        "o5": "The population of cities has grown faster than anyone had predicted."
+      },
+      "order": ["o1", "o5", "o3", "o2", "o4"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça iki şeyi birleştirir: kuralların yaşı ve maliyeti taşıyanların tartışmada bulunmayışı.",
+      "trap_note": "Parçanın vermediği politika önerisini ona yükler; metin bir çözüm değil, bir muhasebe sorunu ortaya koyar."
+    },
+    {
+      "no": 51, "group": "paragraph", "level": "B2", "qtype": "according_to",
+      "stem": "According to the passage, the dishes a country treats as ancestral were mostly ----.",
+      "options": {
+        "o1": "set down in writing during a fairly short period before 1930",
+        "o2": "invented by the authors of the cookbooks that record them",
+        "o3": "brought from abroad after 1500 together with the tomato",
+        "o4": "forgotten until historians of food recovered them",
+        "o5": "prepared differently in every valley until the railways arrived"
+      },
+      "order": ["o2", "o4", "o1", "o3", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça tarihi verir: yemekler yaklaşık 1880 ile 1930 arasında, yemek kitaplarıyla birlikte derlenip yazıya geçirilmiştir.",
+      "trap_note": "Yazıya geçirmeyi uydurmakla karıştırır; parça aşçıların yedikleri bir şeyi kaydettiklerini özellikle söyler."
+    },
+    {
+      "no": 52, "group": "paragraph", "level": "C1", "qtype": "inference",
+      "stem": "It can be inferred from the passage that food historians are badly received because ----.",
+      "options": {
+        "o1": "a statement about a date is heard as a statement about worth",
+        "o2": "they claim that national dishes were borrowed from other countries",
+        "o3": "they rely on cookbooks rather than on archaeological evidence",
+        "o4": "the conclusions they reach change every few years",
+        "o5": "they refuse to say where any particular dish originated"
+      },
+      "order": ["o5", "o2", "o3", "o1", "o4"],
+      "answer": "o1", "trap": "o2",
+      "why": "Son cümle bunu söyler: bir yemeğin sanıldığından genç olduğunu söylemek suçlama gibi duyulur ve öyle karşılanır.",
+      "trap_note": "Rahatsızlığı kökene bağlar; oysa parçanın sözünü ettiği tepki yaşa, yani tarihe ilişkindir."
+    },
+    {
+      "no": 53, "group": "paragraph", "level": "B2", "qtype": "it_is_clear",
+      "stem": "It is clear from the passage that what was genuinely new around 1900 was ----.",
+      "options": {
+        "o1": "the attaching of a dish to a nation rather than to a district",
+        "o2": "the arrival of ingredients such as the tomato and the chilli",
+        "o3": "the practice of writing down recipes at all",
+        "o4": "a preference for vegetables over meat in daily cooking",
+        "o5": "the opening of restaurants outside the capital cities"
+      },
+      "order": ["o1", "o4", "o2", "o3", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça 'yeni olan şey milliyet iddiasıydı' der ve bunu bir vadiye değil bir ülkeye ait sayma fikriyle açıklar.",
+      "trap_note": "Domates ve biberin gelişi 1500'den sonradır; parça bunu yeniliğin tarihi olarak değil, çok daha eski bir olay olarak anar."
+    },
+    {
+      "no": 54, "group": "paragraph", "level": "B2", "qtype": "main_idea",
+      "stem": "Which of the following best expresses the main idea of the passage?",
+      "options": {
+        "o1": "National cuisines are younger than they are believed to be, and saying so is not a way of belittling them.",
+        "o2": "The cookbooks of the late nineteenth century invented most of what is now eaten.",
+        "o3": "The tomato transformed the cooking of every country that it reached.",
+        "o4": "Railways did more than any other invention to spread national feeling.",
+        "o5": "Food historians should keep away from subjects on which people hold strong views."
+      },
+      "order": ["o3", "o2", "o5", "o4", "o1"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça hem tarihi düzeltir hem de 'bu bir çürütme değildir' diyerek yargı bildirmediğini açıkça söyler.",
+      "trap_note": "Parçanın reddettiği okumadır: kitapları yazanlar uydurmamış, yedikleri şeyi kaydetmiştir."
+    },
+    {
+      "no": 55, "group": "paragraph", "level": "B2", "qtype": "it_is_clear",
+      "stem": "It is clear from the passage that before the railways the differences between local noons ----.",
+      "options": {
+        "o1": "caused inconvenience to nobody at all",
+        "o2": "were too small to be measured by the clocks of the period",
+        "o3": "were corrected once a year by the local authorities",
+        "o4": "varied according to the weather in each town",
+        "o5": "existed only between towns that were very far apart"
+      },
+      "order": ["o5", "o1", "o3", "o2", "o4"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça gerekçesiyle birlikte söyler: kimse rahatsız olmuyordu, çünkü kimse farkı önemli kılacak kadar hızlı yolculuk edemiyordu.",
+      "trap_note": "Nedeni ölçüm hassasiyetine bağlar; parçada fark ölçülemeyecek kadar küçük değil, önemsenmeyecek kadar etkisizdir."
+    },
+    {
+      "no": 56, "group": "paragraph", "level": "C1", "qtype": "according_to",
+      "stem": "According to the passage, the towns objected to a single railway time because ----.",
+      "options": {
+        "o1": "they understood it as authority passing to somewhere else",
+        "o2": "the new timetables were difficult for travellers to follow",
+        "o3": "the railway companies had not consulted the courts first",
+        "o4": "collisions had gone on happening in spite of the change",
+        "o5": "the clocks in most towns could not be adjusted at all"
+      },
+      "order": ["o4", "o2", "o1", "o5", "o3"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça direnişi açıklarken 'doğru olarak, bir yetki devri diye anlaşıldı' der; itiraz pratik değil, siyasidir.",
+      "trap_note": "İtirazı bir kullanım güçlüğüne indirger; parça tam tersine, itirazın yerinde bir yetki okuması olduğunu söyler."
+    },
+    {
+      "no": 57, "group": "paragraph", "level": "B2", "qtype": "inference",
+      "stem": "It can be inferred from the passage that the dispute over local time ended ----.",
+      "options": {
+        "o1": "not because anybody was persuaded but because people grew used to it",
+        "o2": "when the courts at last ruled on which noon a contract meant",
+        "o3": "as soon as the railway companies had agreed among themselves",
+        "o4": "after the last of the collisions had been investigated",
+        "o5": "once clocks accurate enough to settle it had been invented"
+      },
+      "order": ["o2", "o5", "o4", "o1", "o3"],
+      "answer": "o1", "trap": "o2",
+      "why": "Son cümle yanıtı verir: soruyu çözen bir sav değil, bir alışkanlıktır; bir kuşak içinde eski öğle vakti unutulmuştur.",
+      "trap_note": "Mahkemeler parçada sorunun bir belirtisi olarak anılır; kararların tartışmayı bitirdiği söylenmez."
+    },
+    {
+      "no": 58, "group": "paragraph", "level": "B2", "qtype": "main_idea",
+      "stem": "Which of the following best expresses the main idea of the passage?",
+      "options": {
+        "o1": "Standard time was imposed as a practical necessity of the railways, resisted as a loss of local authority, and then forgotten.",
+        "o2": "Railway collisions were caused by the fact that every town kept a noon of its own.",
+        "o3": "Courts in several countries were unable to define what noon actually meant.",
+        "o4": "Clocks were set by the sun until timepieces accurate enough to replace it appeared.",
+        "o5": "The railway altered daily life more than any other invention of its century."
+      },
+      "order": ["o1", "o3", "o2", "o4", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça üç aşamayı sırayla anlatır: zorunluluk, direniş ve unutuluş; seçenek bu üçünü birlikte taşır.",
+      "trap_note": "Parçadaki bir ayrıntıyı ana fikir yerine koyar; çarpışmalar yalnızca tek saate geçişin gerekçesi olarak anılır."
+    },
+    {
+      "no": 59, "group": "paragraph", "level": "C1", "qtype": "according_to",
+      "stem": "According to the passage, nineteenth-century British reformers introduced the written examination in order to ----.",
+      "options": {
+        "o1": "keep appointments from being made inside families",
+        "o2": "reproduce an institution that had worked in imperial China",
+        "o3": "raise the standard of education throughout the country",
+        "o4": "reduce the cost of recruiting officials to the service",
+        "o5": "make certain that candidates were able to write clearly"
+      },
+      "order": ["o3", "o4", "o2", "o5", "o1"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça amacı doğrudan yazar: yabancı birinin okuduğu imzasız bir kâğıt kimsenin yeğeni olamaz.",
+      "trap_note": "Aracı amaç yerine koyar; Çin örneği alınmıştır ama parça 'aynı nedenle' diyerek amacı ayrıca belirtir."
+    },
+    {
+      "no": 60, "group": "paragraph", "level": "B2", "qtype": "it_is_clear",
+      "stem": "It is clear from the passage that the standing complaint about examinations is that ----.",
+      "options": {
+        "o1": "what they measure is the capacity to sit them",
+        "o2": "they are marked by people who do not know the candidates",
+        "o3": "they were designed for a society that no longer exists",
+        "o4": "the preparation they require takes far too long",
+        "o5": "they favour written ability over spoken ability"
+      },
+      "order": ["o4", "o1", "o2", "o3", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça şikâyeti tanımlar: sınav adını taşıdığı yeteneği değil, sınava girilebilme yeteneğini seçer.",
+      "trap_note": "Parçada bu, şikâyet değil sistemin amacıdır: tanımayan birinin okuması kayırmayı engellemek içindir."
+    },
+    {
+      "no": 61, "group": "paragraph", "level": "C1", "qtype": "inference",
+      "stem": "It can be inferred from the passage that the writer regards the abolition of examinations as ----.",
+      "options": {
+        "o1": "a change that would have to be judged against whatever replaced them",
+        "o2": "a reform for which the evidence of history offers clear support",
+        "o3": "a matter that each country ought to settle for itself",
+        "o4": "an outcome that powerful families would certainly resist",
+        "o5": "a step that would lower the standard of the public service"
+      },
+      "order": ["o5", "o2", "o4", "o1", "o3"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça soruyu yeniden kurar: sınavın kusursuz olup olmadığı değil, yerine geçecek olanın daha adil olup olmayacağı sorulmalıdır.",
+      "trap_note": "Tarihin verdiği desteği ters okur; parça kayıtların bu noktada 'iç açıcı olmadığını' söyler."
+    },
+    {
+      "no": 62, "group": "paragraph", "level": "B2", "qtype": "main_idea",
+      "stem": "Which of the following best expresses the main idea of the passage?",
+      "options": {
+        "o1": "The examination is a flawed instrument that has survived because what would replace it is worse.",
+        "o2": "Examinations ought to be reformed so that they no longer favour those who can pay.",
+        "o3": "Britain took its civil service examinations directly from imperial China.",
+        "o4": "Written examinations have been criticised in every society that has used them.",
+        "o5": "Powerful families have always found ways of placing their relatives in office."
+      },
+      "order": ["o4", "o2", "o1", "o5", "o3"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça şikâyeti haklı bulur, kaldırmayı reddeder ve gerekçeyi alternatifin adaletine bağlar.",
+      "trap_note": "Parçanın vermediği bir reform önerisine atlar; metin sınavın düzeltilmesini değil, karşılaştırılmasını ister."
+    },
+    {
+      "no": 63, "group": "dialogue", "level": "B2",
+      "dialogue": [
+        ["Presenter", "You have been selling secondhand books in this street for thirty years. The internet was supposed to have finished shops like yours."],
+        ["Owner", "It finished the other kind. We used to make our money on the rare things, and anyone can now find a rare thing online in four seconds."],
+        ["Presenter", "----"],
+        ["Owner", "On what nobody knows they want. A customer comes in for one book and leaves with three, and no website has yet worked out how to do that."]
+      ],
+      "options": {
+        "o1": "Then what is it that you make your money on now?",
+        "o2": "So you have moved your rare stock online as well?",
+        "o3": "How many shops of this kind are left in the city?",
+        "o4": "Do you still buy books from private collections?",
+        "o5": "Has the rent in this street risen much over that time?"
+      },
+      "order": ["o1", "o4", "o2", "o5", "o3"],
+      "answer": "o1", "trap": "o2",
+      "why": "Yanıt 'On what ...' diye başlar ve bir şeyin neyden kazanıldığını söyler; boşluk da bunu soran cümledir.",
+      "trap_note": "Yanıt nadir kitaplardan söz etmez; dükkân sahibi bir önceki replikte o gelir kaynağının bittiğini söylemiştir."
+    },
+    {
+      "no": 64, "group": "dialogue", "level": "B2",
+      "dialogue": [
+        ["Interviewer", "The city has added a charge of two euros a night to every hotel bill. Visitors say they are being punished for coming."],
+        ["Official", "Two euros will not stop anybody coming. If it did, we would have learned something worth knowing."],
+        ["Interviewer", "----"],
+        ["Official", "To pay for the things that visitors use and residents pay for: the buses they take, the streets they walk along, the rubbish they leave behind."]
+      ],
+      "options": {
+        "o1": "Then what is the charge actually for?",
+        "o2": "So the aim is to bring the number of visitors down?",
+        "o3": "How much does the charge raise in the course of a year?",
+        "o4": "Do other cities in the country do the same thing?",
+        "o5": "Will the charge be raised again next season?"
+      },
+      "order": ["o3", "o4", "o5", "o2", "o1"],
+      "answer": "o1", "trap": "o2",
+      "why": "Yanıt 'To pay for ...' diye başlar ve bir amaç bildirir; boşluğa amacı soran cümle gelmelidir.",
+      "trap_note": "Yetkilinin bir önceki replikte reddettiği amacı yeniden önerir: iki euro kimseyi caydırmayacaktır."
+    },
+    {
+      "no": 65, "group": "dialogue", "level": "C1",
+      "dialogue": [
+        ["Interviewer", "Your company now projects the text above the stage even when the play is performed in the audience's own language. Is that not something of an insult?"],
+        ["Director", "We thought so for years. Then we counted how much of the text an audience actually catches in a large house, and stopped arguing."],
+        ["Interviewer", "----"],
+        ["Director", "Rather less than the actors would like to believe. And the loss is not spread evenly: it falls on the quiet lines, which are usually the ones that matter."]
+      ],
+      "options": {
+        "o1": "And how much does an audience catch?",
+        "o2": "And did the actors agree with what you found?",
+        "o3": "Was the experiment carried out in more than one theatre?",
+        "o4": "Do the surtitles not distract the audience from the stage?",
+        "o5": "Would a smaller house have made any difference?"
+      },
+      "order": ["o3", "o1", "o4", "o5", "o2"],
+      "answer": "o1", "trap": "o2",
+      "why": "Yanıt bir miktar bildirir ve o miktarı oyuncuların beklentisiyle karşılaştırır; boşluk niceliği soran cümledir.",
+      "trap_note": "Yanıtta oyuncuların adı geçtiği için ilgili görünür; ama verilen şey bir onay değil, bir orandır."
+    },
+    {
+      "no": 66, "group": "dialogue", "level": "B2",
+      "dialogue": [
+        ["Presenter", "You spend your days looking at payments. What gives a fraudulent one away?"],
+        ["Investigator", "Almost never the amount. People expect us to watch for the large transfer, and the large transfer is the one thing a careful fraudster will not make."],
+        ["Presenter", "----"],
+        ["Investigator", "The shape of the behaviour around it. An account that has paid the same four people for six years and suddenly pays a fifth, at three in the morning, from a city it has never been in."]
+      ],
+      "options": {
+        "o1": "What is it that you watch for instead, then?",
+        "o2": "So you set the threshold lower than people expect?",
+        "o3": "How long does an investigation of this kind usually take?",
+        "o4": "Are most of these payments recovered afterwards?",
+        "o5": "Do the customers report the losses themselves?"
+      },
+      "order": ["o2", "o5", "o4", "o1", "o3"],
+      "answer": "o1", "trap": "o2",
+      "why": "Uzman neye bakmadığını söylemiştir; yanıt ise neye baktığını anlatır, dolayısıyla boşluk bu karşıtlığı tamamlayan sorudur.",
+      "trap_note": "Konuyu yine tutara bağlar; oysa yanıt tutarı bütünüyle bırakıp davranış örüntüsüne geçer."
+    },
+    {
+      "no": 67, "group": "dialogue", "level": "B2",
+      "dialogue": [
+        ["Interviewer", "You took over a club that had not produced a national finalist in twenty years, and you have produced four in five."],
+        ["Coach", "I changed almost nothing about the training. I changed who was in the room."],
+        ["Interviewer", "----"],
+        ["Coach", "By going to schools that nobody else visits. The talent was never missing from this city; the scouting was."]
+      ],
+      "options": {
+        "o1": "And how did you go about changing that?",
+        "o2": "So the old training methods were at fault after all?",
+        "o3": "How many athletes are training at the club now?",
+        "o4": "Were the four finalists all competing in the same event?",
+        "o5": "Is the club funded by the municipality?"
+      },
+      "order": ["o4", "o2", "o1", "o5", "o3"],
+      "answer": "o1", "trap": "o2",
+      "why": "Yanıt 'By ...' ile bir yöntem bildirir; boşluk da bir işin nasıl yapıldığını soran cümledir.",
+      "trap_note": "Antrenörün açıkça dışladığı açıklamaya döner: antrenmanda neredeyse hiçbir şeyi değiştirmediğini söylemiştir."
+    },
+    {
+      "no": 68, "group": "restatement", "level": "C1",
+      "stem": "Little did the organisers realise that the hall they had booked would hold barely half of those who came.",
+      "options": {
+        "o1": "The organisers had no idea that the hall they had reserved would take only about half of the people who turned up.",
+        "o2": "The organisers were aware that the hall they had reserved would hold only half of those who came.",
+        "o3": "Barely half of the people the organisers had expected came to the hall that was booked.",
+        "o4": "The hall the organisers booked turned out to hold twice as many people as actually came.",
+        "o5": "The organisers booked a small hall because they were expecting very few people."
+      },
+      "order": ["o3", "o1", "o2", "o5", "o4"],
+      "answer": "o1", "trap": "o2",
+      "why": "Little did + özne devrik yapısı bir bilgisizlik bildirir: düzenleyiciler salonun yetmeyeceğini hiç öngörmemiştir.",
+      "trap_note": "Devrik yapıyı olumlu okur; 'little' sözcüğü burada nicelik değil, olumsuzluk taşır."
+    },
+    {
+      "no": 69, "group": "restatement", "level": "B2",
+      "stem": "The scheme was abandoned less because it was expensive than because nobody could explain what it was for.",
+      "options": {
+        "o1": "What brought the scheme to an end was not so much its cost as the fact that its purpose could not be explained.",
+        "o2": "The scheme was abandoned mainly on account of its cost and only secondarily because its purpose was unclear.",
+        "o3": "The scheme was expensive, but its purpose was perfectly clear to everyone involved in it.",
+        "o4": "Nobody was able to explain why the scheme had turned out to be so expensive.",
+        "o5": "The scheme would have been continued if it had been possible to reduce its cost."
+      },
+      "order": ["o2", "o4", "o3", "o5", "o1"],
+      "answer": "o1", "trap": "o2",
+      "why": "less because A than because B kalıbı ağırlığı B'ye verir: asıl neden amacın açıklanamamasıdır.",
+      "trap_note": "İki nedenin ağırlığını değiştirir; kalıbın hangi tarafı öne çıkardığı gözden kaçınca cümle tersine döner."
+    },
+    {
+      "no": 70, "group": "restatement", "level": "C1",
+      "stem": "Far from settling the question, the new evidence has made both explanations harder to rule out.",
+      "options": {
+        "o1": "Instead of resolving the question, the new evidence has made it more difficult to eliminate either explanation.",
+        "o2": "The new evidence has settled the question by ruling out one of the two explanations.",
+        "o3": "The new evidence has confirmed both of the explanations that had been put forward.",
+        "o4": "The question had already been settled long before the new evidence appeared.",
+        "o5": "Neither explanation can be ruled out until further evidence has been found."
+      },
+      "order": ["o1", "o3", "o5", "o2", "o4"],
+      "answer": "o1", "trap": "o2",
+      "why": "Far from + ulaç kalıbı beklenenin tam tersini bildirir: kanıt çözmemiş, ayıklamayı zorlaştırmıştır.",
+      "trap_note": "Kalıbı olumlu okur ve kanıta soruyu çözdürür; 'far from' tam da bu okumayı engellemek için vardır."
+    },
+    {
+      "no": 71, "group": "restatement", "level": "B2",
+      "stem": "Whatever the minister may say in public, the department has not changed its position.",
+      "options": {
+        "o1": "The department's position has remained the same, no matter what the minister says publicly.",
+        "o2": "The minister's public statements have obliged the department to change its position.",
+        "o3": "The department has changed its position without informing the minister of the fact.",
+        "o4": "The minister says in public exactly what the department has already decided.",
+        "o5": "The department will not change its position until the minister has spoken."
+      },
+      "order": ["o4", "o2", "o1", "o3", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Whatever ile kurulan ödün cümlesi bakanın söyledikleriyle bakanlığın tutumu arasındaki bağı koparır.",
+      "trap_note": "Ödünü bir nedene çevirir; cümle ise açıklamaların hiçbir etkisi olmadığını söyler."
+    },
+    {
+      "no": 72, "group": "paragraph_completion", "level": "B2",
+      "stem": "A public library is judged by the number of books it lends, which is the one thing about it that is easy to count. ---- The room itself does work that no lending figure records: it is warm, it is free, it asks nobody why they have come, and in many towns it is the only address of that description. A service measured only by its loans will be cut in exactly the places where it is doing most.",
+      "options": {
+        "o1": "That figure, however, describes a small part of what the building is for.",
+        "o2": "Loans have in fact been falling steadily for twenty years in most countries.",
+        "o3": "Libraries of this kind were originally paid for by private benefactors.",
+        "o4": "Staff are trained to help readers find what they are looking for.",
+        "o5": "Most branches now lend films and recorded music as well."
+      },
+      "order": ["o3", "o2", "o4", "o5", "o1"],
+      "answer": "o1", "trap": "o2",
+      "why": "Boşluktan sonra ödünç sayısının kaydetmediği işler sıralanır; boşluk da o sayının eksikliğini bildiren cümledir.",
+      "trap_note": "Sayının yönünü tartışır, kapsamını değil; paragrafın savı ödüncün azalması değil, ölçüt olarak yetersizliğidir."
+    },
+    {
+      "no": 73, "group": "paragraph_completion", "level": "C1",
+      "stem": "An institution that apologises for something done a century ago is regularly accused of making an empty gesture, and the accusation misses the point of such statements. ---- What an apology alters is the record: once it has been made, the thing apologised for can no longer be treated as a matter of opinion, and the institution's own archive becomes evidence against any later attempt to say otherwise. Whether that is worth anything depends on what is then done with it, which is a separate question.",
+      "options": {
+        "o1": "Nobody supposes that an apology repairs a harm done to people who are dead.",
+        "o2": "Most such apologies are issued only after years of public pressure.",
+        "o3": "Historians are rarely consulted before the wording is agreed on.",
+        "o4": "Some institutions have apologised more than once for the same thing.",
+        "o5": "The wording of these statements is usually prepared by lawyers."
+      },
+      "order": ["o1", "o3", "o2", "o4", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Boşluk, 'boş jest' suçlamasını kabul edip aşmalıdır: onarım beklenmediği söylenince paragraf özrün asıl işine geçebilir.",
+      "trap_note": "Özrün nasıl koparıldığını anlatır; paragrafın sorusu ise özrün ne işe yaradığıdır, nasıl elde edildiği değil."
+    },
+    {
+      "no": 74, "group": "paragraph_completion", "level": "B2",
+      "stem": "A town that removes the signs, barriers and markings from a junction expects the junction to become more dangerous, and finds that it does not. ---- Drivers who cannot tell whose right of way it is slow down and look at one another, which is the behaviour the signs had been trying, without success, to produce. The effect does not survive being copied everywhere: what makes the bare junction work is that it is unusual.",
+      "options": {
+        "o1": "The reason is that uncertainty makes people careful.",
+        "o2": "Most junctions of this kind carry very little traffic anyway.",
+        "o3": "Experiments of this sort were first carried out in the Netherlands.",
+        "o4": "Signs are expensive both to install and to maintain.",
+        "o5": "Pedestrians are less confident at these junctions than drivers are."
+      },
+      "order": ["o2", "o5", "o3", "o1", "o4"],
+      "answer": "o1", "trap": "o2",
+      "why": "Boşluktan sonraki cümle beklenmedik sonucu açıklar; boşluk da o açıklamanın başlığını, yani belirsizlik ile dikkat arasındaki bağı vermelidir.",
+      "trap_note": "Sonucu açıklamak yerine örneği küçümser; paragraf ise kavşağın işlemesini sürücü davranışına bağlar."
+    },
+    {
+      "no": 75, "group": "paragraph_completion", "level": "C1",
+      "stem": "A photograph of an event is treated as the least arguable kind of evidence, which is why editors choose them with such care. ---- The lens points somewhere, and everything outside the frame has been left out by somebody for reasons the reader is never told. A crowd of two hundred can be made to look like a crowd of two thousand by standing in the right place, and no part of the resulting picture is false. The argument, in other words, has been made before the reader sees anything at all.",
+      "options": {
+        "o1": "A photograph does not lie, but neither does it show everything.",
+        "o2": "Photographs are now edited by software before they are published.",
+        "o3": "Newspapers employ far fewer photographers than they once did.",
+        "o4": "Readers remember pictures for longer than they remember text.",
+        "o5": "The caption beneath a picture is written by somebody else."
+      },
+      "order": ["o1", "o4", "o5", "o2", "o3"],
+      "answer": "o1", "trap": "o2",
+      "why": "Paragraf fotoğrafın yalan söylemediğini ama çerçevesinin bir seçim olduğunu anlatır; boşluk bu iki yargıyı birden kurmalıdır.",
+      "trap_note": "Sorunu müdahaleye bağlar; oysa paragrafın örneğinde resmin hiçbir yeri sahte değildir, seçim çerçevededir."
+    },
+    {
+      "no": 76, "group": "odd_one_out", "level": "B2",
+      "sentences": [
+        "The safety bicycle of the 1890s was cheap enough for a clerk to buy and simple enough for anybody to ride.",
+        "Within a few years it had done more for the freedom of movement of women than any argument made on their behalf.",
+        "Bicycle racing became a professional sport during the same decade.",
+        "Dress reformers had campaigned for years against skirts that made walking difficult, and had been ignored.",
+        "The bicycle settled the question by making the old clothing simply impractical."
+      ],
+      "answer": "III", "trap": "I",
+      "why": "III. cümle bisikletin spor olarak gelişimine geçer; paragrafın anlattığı giyim tartışması ile bir ilgisi yoktur.",
+      "trap_note": "I. cümle giyimden söz etmediği için konu dışı sanılır; oysa bisikletin ucuzluğu ve kolaylığı, sonraki savın dayanağıdır."
+    },
+    {
+      "no": 77, "group": "odd_one_out", "level": "B2",
+      "sentences": [
+        "The two-day weekend was not won in a single campaign; it was assembled out of two separate arguments.",
+        "The first was religious: factories employing both Jewish and Christian workers found it simpler to close on Saturday as well as Sunday.",
+        "The second was industrial: managers discovered that output over six days was not much greater than output over five.",
+        "By the 1930s the two arguments had arrived at the same place from opposite directions.",
+        "Public holidays vary considerably from one European country to another."
+      ],
+      "answer": "V", "trap": "I",
+      "why": "V. cümle resmî tatillerin ülkelere göre farkına geçer; paragraf ise hafta sonunun iki ayrı gerekçeden nasıl kurulduğunu anlatır.",
+      "trap_note": "I. cümle bir genelleme gibi durur ama paragrafın yapısını kurar: 'iki ayrı sav' ifadesi sonraki iki cümlenin çerçevesidir."
+    },
+    {
+      "no": 78, "group": "odd_one_out", "level": "C1",
+      "sentences": [
+        "A map is read as a description of the world, which is exactly what makes it such an effective argument.",
+        "The first printed maps of Europe appeared in the second half of the fifteenth century.",
+        "A border drawn as a firm line looks like a fact, even where the territory it crosses is disputed and the line is one party's claim.",
+        "Publishers who sell in several countries therefore print several versions of the same map, each of them legally required somewhere.",
+        "The reader of any one of them is being shown a position and told that it is a place."
+      ],
+      "answer": "II", "trap": "IV",
+      "why": "II. cümle basılı haritaların tarihine geçer; paragrafın 'harita bir betimleme değil bir sav taşır' zincirini ilerletmez.",
+      "trap_note": "IV. cümle yayıncılıkla ilgili bir ayrıntı gibi durur ama savın kanıtıdır: aynı haritanın birden çok yasal sürümü vardır."
+    },
+    {
+      "no": 79, "group": "odd_one_out", "level": "B2",
+      "sentences": [
+        "The first cities to light their streets at night did so in order to reduce crime, and the effect on crime was modest.",
+        "The effect on everything else was not: shops stayed open later, theatres moved their performances back and a whole category of evening life came into being.",
+        "Gas was replaced by electricity in most European capitals around the turn of the century.",
+        "None of this had been intended by the authorities who paid for the lamps.",
+        "A measure adopted for one purpose had quietly rearranged the hours of the day."
+      ],
+      "answer": "III", "trap": "I",
+      "why": "III. cümle aydınlatma tekniğinin değişimine geçer; paragrafın konusu ise beklenmeyen toplumsal sonuçtur.",
+      "trap_note": "I. cümledeki 'etkisi sınırlıydı' yargısı konu dışı sanılır; oysa paragrafın karşıtlığı tam da o sınırlı etki üzerine kuruludur."
+    },
+    {
+      "no": 80, "group": "odd_one_out", "level": "B2",
+      "sentences": [
+        "Publishers resisted the cheap paperback for years on the ground that it would destroy the market for hardbacks.",
+        "The paper used in the earliest paperbacks was of poor quality and few copies of them have survived.",
+        "When one house finally tried it, the result was not a transfer of readers from one format to the other.",
+        "It was the appearance of a readership that had not been buying books at all.",
+        "The market the publishers had been protecting turned out to be smaller than the one they were refusing to enter."
+      ],
+      "answer": "II", "trap": "IV",
+      "why": "II. cümle kâğıt kalitesine ve nüshaların korunmasına geçer; paragraf ise cep kitabının pazarı nasıl büyüttüğünü anlatır.",
+      "trap_note": "IV. cümle tek başına okununca kopuk görünür; oysa III. cümlenin olumsuzladığı şeyin yerine geçen açıklamadır."
+    }
+  ],
+  "vocabulary": [
+    ["abolish (abolished)", "kaldırmak, ilga etmek"],
+    ["abolition", "kaldırma, ilga"],
+    ["accusation", "suçlama"],
+    ["actually", "aslında, gerçekte"],
+    ["alter", "değiştirmek"],
+    ["amend (amended)", "değiştirmek, tadil etmek"],
+    ["ancestral", "atalardan kalma"],
+    ["anonymous", "imzasız, kimliği belirsiz"],
+    ["archive", "arşiv"],
+    ["at fault", "kusurlu, suçlu"],
+    ["attempt", "teşebbüs, deneme"],
+    ["auditor", "denetçi"],
+    ["authority", "yetki"],
+    ["awkward", "tuhaf, sıkıntılı"],
+    ["bear the cost (bears the cost)", "maliyeti üstlenmek"],
+    ["benefactor", "hayırsever, bağışçı"],
+    ["border", "sınır"],
+    ["borrow (borrowed the idea)", "ödünç almak"],
+    ["branch (a branch of a library)", "şube"],
+    ["candidate", "aday"],
+    ["cap (supply is capped)", "sınırlamak, tavan koymak"],
+    ["caption", "resim altı yazısı"],
+    ["ceremony", "tören"],
+    ["civil service", "devlet memurluğu"],
+    ["claim", "iddia; iddia etmek"],
+    ["codify (codified)", "kurala bağlayarak derlemek"],
+    ["collision", "çarpışma"],
+    ["commute", "işe gidip gelmek"],
+    ["concerned (the community concerned)", "ilgili, söz konusu"],
+    ["consult (consulted)", "danışmak"],
+    ["deadline", "son teslim tarihi"],
+    ["debunking", "çürütme"],
+    ["decade", "on yıl"],
+    ["decisive", "belirleyici"],
+    ["defender", "savunucu"],
+    ["deficit", "açık, bütçe açığı"],
+    ["define", "tanımlamak"],
+    ["demand", "talep"],
+    ["dependent on", "-e bağlı"],
+    ["dismantle (dismantled)", "sökmek, dağıtmak"],
+    ["dispute", "anlaşmazlık, uyuşmazlık"],
+    ["documentation", "belgeleme"],
+    ["endangered", "nesli tehlike altında olan"],
+    ["enforce (enforced)", "uygulamak, yürürlüğe koymak"],
+    ["entrenched", "kökleşmiş"],
+    ["evidence", "kanıt"],
+    ["finalist", "finalist"],
+    ["fluent", "akıcı"],
+    ["format", "biçim"],
+    ["frame", "çerçeve"],
+    ["fraudster", "dolandırıcı"],
+    ["fraudulent", "hileli, sahte"],
+    ["further", "daha ileri, daha öte"],
+    ["gesture", "jest, gösteriş hareketi"],
+    ["hardback", "ciltli kitap"],
+    ["hardly", "nadiren"],
+    ["hold (the hall would hold)", "almak, sığdırmak"],
+    ["household", "hane, ev halkı"],
+    ["ignore", "yok saymak"],
+    ["imperial", "imparatorluğa ait"],
+    ["impose (imposed)", "dayatmak"],
+    ["impractical", "kullanışsız"],
+    ["inconvenience", "rahatsızlık, güçlük"],
+    ["infer", "çıkarım yapmak"],
+    ["insult", "hakaret"],
+    ["involved (everyone involved)", "dahil olan, ilgili"],
+    ["issue (apologies are issued)", "yayımlamak, çıkarmak"],
+    ["junction", "kavşak"],
+    ["labour market", "iş piyasası"],
+    ["lens", "mercek"],
+    ["likely", "muhtemel, olası"],
+    ["maintain", "bakımını yapmak; sürdürmek"],
+    ["manuscript", "elyazması"],
+    ["marking (road markings)", "yol çizgisi"],
+    ["measure", "önlem"],
+    ["modest (a modest effect)", "sınırlı, mütevazı"],
+    ["municipality", "belediye"],
+    ["nationality", "milliyet"],
+    ["nephew", "yeğen"],
+    ["no longer", "artık"],
+    ["noon", "öğle vakti"],
+    ["old-fashioned", "eski moda"],
+    ["outcome", "sonuç"],
+    ["output", "üretim, çıktı"],
+    ["paperback", "cep kitabı"],
+    ["plot (a plot of land)", "parsel, arsa"],
+    ["price out (priced out)", "fiyatıyla dışarıda bırakmak"],
+    ["professional", "profesyonel, meslekten"],
+    ["prohibit (prohibited)", "yasaklamak"],
+    ["promise (a candidate's promise)", "gelecek vadetme"],
+    ["property (a property of the place)", "nitelik, özellik"],
+    ["provide", "sağlamak, sunmak"],
+    ["publisher", "yayıncı"],
+    ["purpose", "amaç, hedef"],
+    ["raise", "artırmak, yükseltmek"],
+    ["rarely", "nadiren"],
+    ["rather than", "-den ziyade"],
+    ["readership", "okur kitlesi"],
+    ["rearrange (rearranged)", "yeniden düzenlemek"],
+    ["recommendation", "tavsiye"],
+    ["recover (payments recovered)", "geri almak"],
+    ["reformer", "reformcu"],
+    ["regularly", "sık sık, düzenli olarak"],
+    ["regulate", "düzenlemek"],
+    ["rely on", "-e dayanmak, güvenmek"],
+    ["rent", "kira"],
+    ["require", "gerektirmek"],
+    ["resistance", "direniş"],
+    ["revival", "canlandırma"],
+    ["right of way", "geçiş üstünlüğü"],
+    ["rule (courts had to rule)", "karara bağlamak"],
+    ["scale (the scale of)", "büyüklük, ölçek"],
+    ["scouting", "yetenek avcılığı"],
+    ["scribe", "yazıcı, müstensih"],
+    ["secondhand", "ikinci el"],
+    ["settle (settled the question)", "çözüme bağlamak"],
+    ["shrink (shrinking)", "küçülmek"],
+    ["skirt", "etek"],
+    ["spelling", "yazım, imla"],
+    ["stage", "sahne"],
+    ["stock (rare stock)", "mevcut mal, stok"],
+    ["surtitle", "üst yazı"],
+    ["that is", "yani, bir başka deyişle"],
+    ["the number of", "-nın sayısı"],
+    ["threshold", "eşik"],
+    ["through", "ile, sayesinde"],
+    ["timetable", "tarife, çizelge"],
+    ["transfer", "devir, aktarım"],
+    ["treasurer", "sayman"],
+    ["treat (treated as)", "saymak, addetmek"],
+    ["uneven", "düzensiz, eşit olmayan"],
+    ["unrealistic", "gerçekçi olmayan"],
+    ["wording", "ifade, sözcük seçimi"],
+    ["zoning", "imar, bölgeleme"]
+  ]
+}
