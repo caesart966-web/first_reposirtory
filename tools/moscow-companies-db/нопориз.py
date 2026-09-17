@@ -348,6 +348,26 @@ def fetch_page(session: requests.Session, page: int, page_size: int,
     return None
 
 
+def _пауза_перед_повтором(status: int | None, attempt: int) -> float:
+    """Сколько ждать перед следующей попыткой.
+
+    Разные отказы требуют разного обращения, и раньше все получали одну
+    пару 2/4/8/16 секунд. Для 500 это дорого впустую: у этого реестра
+    пятисотка случайная, тот же запрос через секунду проходит. На проверке
+    1892 ИНН по НОСТРОЮ такие паузы съели полтора часа — НОПРИЗ, который
+    отвечал чисто, справился за пятнадцать минут.
+
+    А вот 429 и 503 — это прямая просьба сбавить темп, и тут длинная
+    пауза как раз по делу: наоборот, торопиться значит получить отказ
+    на весь оставшийся прогон.
+    """
+    if status in (429, 503):
+        return min(2 ** attempt, 30)
+    if status is not None and 500 <= status < 600:
+        return min(attempt, 4)
+    return min(2 ** attempt, 20)  # сеть оборвалась — ждём по-настоящему
+
+
 def fetch_by_inn(session: requests.Session, inn: str, page_size: int = 50,
                  timeout: int = 60, attempts: int = 4) -> dict | None:
     """Все членства одной компании по ИНН.
@@ -358,16 +378,18 @@ def fetch_by_inn(session: requests.Session, inn: str, page_size: int = 50,
     """
     body = _тело(1, page_size, search=inn)
     for attempt in range(1, attempts + 1):
+        status = None
         try:
             resp = session.post(MEMBER_LIST_URL, json=body, timeout=timeout)
             if resp.status_code == 200:
                 return resp.json()
+            status = resp.status_code
             print(f"[нопориз] ИНН {inn}: HTTP {resp.status_code} "
                   f"(попытка {attempt}/{attempts})", flush=True)
         except (requests.RequestException, ValueError) as exc:
             print(f"[нопориз] ИНН {inn}: {type(exc).__name__} "
                   f"(попытка {attempt}/{attempts})", flush=True)
-        time.sleep(min(2 ** attempt, 20))
+        time.sleep(_пауза_перед_повтором(status, attempt))
     return None
 
 
