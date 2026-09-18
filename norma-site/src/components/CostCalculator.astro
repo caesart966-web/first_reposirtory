@@ -511,6 +511,7 @@ const tableOf = (dir: string) => (dir === 'build' ? 'build' : 'design')
 </style>
 
 <script>
+  import { CALC_KEY } from '../config/leadfields'
   // Пересчёт суммы. Числа берутся из data-amount у выбранных вариантов,
   // то есть из facts.ts, — здесь ни одной вписанной цифры.
   const box = document.getElementById('cost-box')
@@ -565,6 +566,40 @@ const tableOf = (dir: string) => (dir === 'build' ? 'build' : 'design')
       if (outMonths) {
         const word = months === 1 ? 'месяц' : months < 5 ? 'месяца' : 'месяцев'
         outMonths.textContent = `За ${months} ${word}`
+      }
+
+      // Расчёт кладётся рядом с заявкой. Человек, нажавший «подобрать СРО»,
+      // уже ответил на четыре вопроса — пересказывать их в форме незачем.
+      // Форма покажет приложенное видимой строкой и даст снять одной кнопкой.
+      // Подпись выбранного варианта берётся из самой разметки, а не
+      // пишется в скрипте вторым списком: у направлений это <b>,
+      // у уровней — предел договора .lvl-lim. Второй список разошёлся бы
+      // с первым при первой же правке сумм в facts.ts.
+      const label = (el: HTMLInputElement | null | undefined) => {
+        const box = el?.closest('label')
+        const t = box?.querySelector('b, .lvl-lim')?.textContent?.trim()
+        return t || el?.value || ''
+      }
+      try {
+        sessionStorage.setItem(
+          CALC_KEY,
+          JSON.stringify({
+            at: Date.now(),
+            kind: table === 'build' ? 'build' : table === 'survey' ? 'survey' : 'design',
+            summary: [
+              'Калькулятор взносов на странице «Стоимость»',
+              `Направление: ${label(dir)}`,
+              `Уровень по возмещению вреда: ${label(picked(`cost-harm-${table}`))} — ${money(harm)}`,
+              onTender
+                ? `Торги: да, договорные обязательства ${label(picked(`cost-contract-${table}`))} — ${money(odo)}`
+                : 'Торги: нет',
+              `Итого в компенсационные фонды: ${money(harm + odo)}`,
+              `Членские взносы за ${months} мес.: ${money(memberMonth * months)}`,
+            ].join('\n'),
+          }),
+        )
+      } catch {
+        /* приватное окно: расчёт просто не подставится */
       }
     }
 
