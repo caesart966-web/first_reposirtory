@@ -192,6 +192,7 @@ import { FEES } from '../config/fees'
 </style>
 
 <script>
+  import { CALC_KEY } from '../config/leadfields'
   type Option = { id: string; label: string; hint?: string }
   type Question = { id: string; title: string; hint?: string; options: Option[] }
 
@@ -509,12 +510,30 @@ import { FEES } from '../config/fees'
     if (backBtn) backBtn.hidden = false
     goal('quiz_finish')
 
+    const names: Record<string, string> = { work: 'Работы', party: 'Договор', sum: 'Сумма', tender: 'Торги' }
     const summary = Object.keys(labels)
-      .map((k) => {
-        const names: Record<string, string> = { work: 'Работы', party: 'Договор', sum: 'Сумма', tender: 'Торги' }
-        return `<div><dt>${names[k] || k}</dt><dd>${labels[k]}</dd></div>`
-      })
+      .map((k) => `<div><dt>${names[k] || k}</dt><dd>${labels[k]}</dd></div>`)
       .join('')
+
+    // Ответы кладутся рядом с заявкой, а не пересказываются заново.
+    // Форма их подхватит, подставит вид работ и приложит разбор к письму —
+    // видимой строкой, которую можно снять одной кнопкой. Просроченный
+    // снимок форма выбрасывает сама, см. CALC_TTL в config/leadfields.ts.
+    try {
+      sessionStorage.setItem(
+        CALC_KEY,
+        JSON.stringify({
+          at: Date.now(),
+          kind: answers.work || '',
+          summary: [
+            `Калькулятор «Нужна ли вам СРО» — ответ: ${v.badge}`,
+            ...Object.keys(labels).map((k) => `${names[k] || k}: ${labels[k]}`),
+          ].join('\n'),
+        }),
+      )
+    } catch {
+      /* приватное окно: расчёт просто не подставится */
+    }
 
     // Строки про взносы СРО. Считаются по тому, что человек ответил:
     // у строителей и у проектировщиков суммы разные, и подставлять «по

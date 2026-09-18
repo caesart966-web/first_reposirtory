@@ -80,13 +80,105 @@ check(await page.locator('#lf-ok').isVisible(), 'Боту показываетс
 
 // 7. Клавиатура: по форме можно пройти табом
 await page.goto(BASE + '/kontakty/', { waitUntil: 'networkidle' })
+// Обход табом идёт до кнопки, а не ровно восемь раз: полей в форме
+// стало больше, и записанное число молча превратило бы проверку
+// в проверку длины формы вместо достижимости кнопки.
 await page.focus('#lf-name')
 const reachable = []
-for (let i = 0; i < 8; i++) {
+for (let i = 0; i < 20 && !reachable.includes('lf-submit'); i++) {
   await page.keyboard.press('Tab')
   reachable.push(await page.evaluate(() => document.activeElement?.id || document.activeElement?.tagName))
 }
 check(reachable.includes('lf-submit'), 'Кнопка отправки достижима с клавиатуры', reachable.join(','))
+
+// ── Связка калькуляторов с заявкой ─────────────────────────────────────
+//
+// Человек отвечает на вопросы калькулятора, нажимает «получить расчёт»
+// и попадает на форму — пересказывать те же ответы заново ему незачем.
+// Ломается эта связка молча: форма просто остаётся пустой, а понять,
+// что так и было задумано, нельзя. Поэтому проверяется весь путь.
+{
+  const ctx = await browser.newContext({ viewport: { width: 1200, height: 900 } })
+  const q = await ctx.newPage()
+
+  await q.goto(BASE + '/#calc', { waitUntil: 'networkidle' })
+  await q.waitForTimeout(300)
+  const pick = async (n) => {
+    const btns = await q.$$('#calc button[data-id]')
+    if (!btns[n]) throw new Error('в калькуляторе нет кнопки ответа №' + n)
+    await btns[n].click()
+    await q.waitForTimeout(200)
+  }
+  await pick(0) // строительство
+  await pick(0) // с застройщиком
+  await pick(1) // свыше 10 млн
+  await pick(0) // торги
+  await q.waitForTimeout(300)
+
+  const snap = await q.evaluate(() => {
+    try {
+      return JSON.parse(sessionStorage.getItem('norma-calc') || 'null')
+    } catch {
+      return null
+    }
+  })
+  check(!!snap?.summary, 'Калькулятор «нужна ли СРО» сохраняет ответы для заявки')
+  check(snap?.kind === 'build', 'В снимке верный вид работ', String(snap?.kind))
+
+  await q.goto(BASE + '/kontakty/#form', { waitUntil: 'networkidle' })
+  await q.waitForTimeout(400)
+  const state = await q.evaluate(() => ({
+    shown: !document.querySelector('[data-calc-note]')?.hasAttribute('hidden'),
+    text: document.querySelector('[data-calc-text]')?.textContent || '',
+    kind: document.querySelector('#lf-kind')?.value,
+    hidden: document.querySelector('[data-calc-value]')?.value || '',
+  }))
+  check(state.shown, 'Расчёт показан в заявке видимой строкой, а не только скрытым полем')
+  check(state.kind === 'build', 'Вид работ подставлен из калькулятора', String(state.kind))
+  check(
+    state.hidden === state.text && state.hidden.length > 20,
+    'Что показано, то и уйдёт: видимый текст совпадает со скрытым полем',
+  )
+
+  // Кнопка «Убрать» должна убирать всё: и строку, и поле, и снимок.
+  await q.click('[data-calc-drop]')
+  await q.waitForTimeout(200)
+  const after = await q.evaluate(() => ({
+    shown: !document.querySelector('[data-calc-note]')?.hasAttribute('hidden'),
+    hidden: document.querySelector('[data-calc-value]')?.value || '',
+    stored: sessionStorage.getItem('norma-calc'),
+  }))
+  check(!after.shown && !after.hidden && !after.stored, 'Кнопка «Убрать» снимает расчёт целиком')
+
+  // Просроченный расчёт не подставляется: назавтра человек уже не помнит,
+  // что он отвечал, и приложенный разбор стал бы для него сюрпризом.
+  await q.evaluate(() => {
+    localStorage.removeItem('norma-lead-draft')
+    sessionStorage.setItem(
+      'norma-calc',
+      JSON.stringify({ at: Date.now() - 60 * 60 * 1000, kind: 'design', summary: 'Старый расчёт' }),
+    )
+  })
+  // reload, а не goto на тот же адрес с якорем: смена якоря — навигация
+  // внутри документа, страница не перезагружается и скрипт формы
+  // не запускается заново. На этом тест уже один раз соврал.
+  await q.reload({ waitUntil: 'networkidle' })
+  await q.waitForTimeout(400)
+  const stale = await q.evaluate(() => ({
+    shown: !document.querySelector('[data-calc-note]')?.hasAttribute('hidden'),
+    kind: document.querySelector('#lf-kind')?.value,
+  }))
+  check(!stale.shown && !stale.kind, 'Просроченный расчёт не подставляется')
+
+  // Список видов работ в форме обязан совпадать с ответами калькулятора,
+  // иначе подстановка промахнётся, а увидеть это без проверки нельзя.
+  const opts = await q.$$eval('#lf-kind option', (els) => els.map((e) => e.value).filter(Boolean))
+  for (const id of ['build', 'design', 'survey', 'demolition']) {
+    check(opts.includes(id), `В форме есть вид работ «${id}»`)
+  }
+
+  await ctx.close()
+}
 
 await browser.close()
 

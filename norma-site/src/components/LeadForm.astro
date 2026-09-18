@@ -9,7 +9,9 @@
 //    показываем ошибку, а не «спасибо».
 // 3. Антиспам без капчи: скрытое поле-ловушка + минимальное время заполнения.
 import { SITE, href } from '../config/site'
+import { REGIONS } from '../config/regions'
 import Icon from './Icon.astro'
+import { WORK_KINDS } from '../config/leadfields'
 
 interface Props {
   title?: string
@@ -58,10 +60,66 @@ const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
       </div>
 
       <div class="field" data-field="city">
-        <label for="lf-city">Город и вид работ</label>
-        <input type="text" id="lf-city" name="city" maxlength="120" placeholder="Иркутск, проектирование" />
+        <label for="lf-city">Город</label>
+        {/* Список-подсказка, а не выбор из закрытого перечня: городов
+            на сайте 33, а страна больше. Кто из Сургута — впишет Сургут
+            и получит подсказку, кто из Ялты — впишет Ялту и не упрётся
+            в «вашего города нет в списке». */}
+        <input
+          type="text"
+          id="lf-city"
+          name="city"
+          maxlength="80"
+          list="lf-cities"
+          autocomplete="address-level2"
+          placeholder="Иркутск"
+        />
+        <datalist id="lf-cities">
+          {REGIONS.map((r) => <option value={r.city}></option>)}
+        </datalist>
       </div>
     </div>
+
+    <div class="row">
+      {/* Вид работ раньше был частью свободной строки «Город и вид работ».
+          Свободный текст давал «строю дома» и «перезвоните» — заявки
+          приходили несравнимыми, и первый ответ всегда начинался
+          с уточняющего вопроса. Список — те же четыре варианта, что
+          в калькуляторе на главной, и пятый честный: «пока не знаю». */}
+      <div class="field" data-field="kind">
+        <label for="lf-kind">Какие работы</label>
+        <select id="lf-kind" name="kind">
+          <option value="">Выберите или пропустите</option>
+          {WORK_KINDS.map((k) => <option value={k.id}>{k.label}</option>)}
+        </select>
+      </div>
+
+      {/* Единственный вопрос, которого на сайте не было: специалисты НРС.
+          Он делит заявки на две совершенно разные работы — и спросить
+          его дешевле в форме, чем в первом звонке. */}
+      <div class="field" data-field="nrs">
+        <label for="lf-nrs">Специалисты НРС</label>
+        <select id="lf-nrs" name="nrs">
+          <option value="">Выберите или пропустите</option>
+          <option value="yes">Нужна помощь — своих нет или не проходят</option>
+          <option value="no">Не нужна — специалисты уже в реестре</option>
+          <option value="idk">Не знаю, нужно разобраться</option>
+        </select>
+      </div>
+    </div>
+
+    {/* Расчёт из калькулятора. Подставляется скриптом и показывается
+        ВИДИМО: скрытое поле, которое уходит вместе с заявкой, а человек
+        о нём не знает, — это ровно то, за что сайт ругает конкурентов. */}
+    <div class="calc-note" data-calc-note hidden>
+      <span class="cn-ic" aria-hidden="true"><Icon name="calculator" size={18} /></span>
+      <div class="cn-body">
+        <b>К заявке приложен ваш расчёт</b>
+        <p data-calc-text></p>
+      </div>
+      <button type="button" class="cn-drop" data-calc-drop>Убрать</button>
+    </div>
+    <input type="hidden" name="calc" data-calc-value />
 
     <div class="field" data-field="message">
       <label for="lf-message">Что нужно сделать</label>
@@ -161,6 +219,59 @@ const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
   .submit { justify-self: start; min-width: 220px; }
   .submit[disabled] { opacity: 0.6; cursor: progress; }
 
+  /* Полоса с приложенным расчётом. Не «успех» зелёным и не «внимание»
+     красным: это спокойная пометка на бланке — тонкая линейка, красный
+     значок, кнопка «убрать» без рамки. */
+  .calc-note {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 12px;
+    margin: 4px 0 2px;
+    padding: 13px 14px;
+    border: 1px solid color-mix(in srgb, var(--acc) 26%, transparent);
+    border-radius: var(--r-s);
+    background: var(--acc-soft);
+  }
+  .cn-ic { color: var(--acc-deep); line-height: 0; padding-top: 2px; }
+  .cn-body b { display: block; font-size: 14.5px; }
+  .cn-body p {
+    margin: 4px 0 0;
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--muted);
+    /* Разбор приходит строками — переносы в тексте должны остаться. */
+    white-space: pre-line;
+  }
+  .cn-drop {
+    border: 0;
+    background: none;
+    padding: 6px 2px;
+    margin: -6px -2px;
+    font: inherit;
+    font-size: 13.5px;
+    color: var(--acc-deep);
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  select {
+    width: 100%;
+    font: inherit;
+    font-size: 15px;
+    padding: 11px 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-s);
+    background: var(--paper);
+    color: var(--ink);
+  }
+  select:focus-visible { outline: 2px solid var(--acc); outline-offset: 1px; }
+
+  @media (max-width: 599px) {
+    .calc-note { grid-template-columns: auto minmax(0, 1fr); }
+    .cn-drop { grid-column: 2; justify-self: start; }
+  }
+
   .fine { font-size: 12.5px; color: var(--muted); line-height: 1.5; max-width: 62ch; }
 
   .state { display: grid; gap: 12px; justify-items: start; }
@@ -195,6 +306,8 @@ const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
 </style>
 
 <script>
+  import { CALC_KEY, CALC_TTL, workKindLabel, NRS_LABEL } from '../config/leadfields'
+
   const root = document.querySelector<HTMLElement>('.lead-form')
   const form = document.getElementById('lead-form-el') as HTMLFormElement | null
 
@@ -210,11 +323,18 @@ const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
     const openedAt = Date.now()
 
     // ── Черновик: заявка не теряется ни при сбое сети, ни при закрытии вкладки
+    // Когда посетитель сам выбрал вид работ. Нужно, чтобы свежий расчёт
+    // не перебивал его выбор, а старый черновик — не перебивал расчёт.
+    let kindTouched = 0
+
     const saveDraft = () => {
       try {
         const data = Object.fromEntries(new FormData(form).entries())
         delete data.company_site
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ saved: new Date().toISOString(), data }))
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({ saved: new Date().toISOString(), data, kindTouched }),
+        )
       } catch {
         /* приватный режим браузера — не беда, просто без черновика */
       }
@@ -223,7 +343,9 @@ const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
       try {
         const raw = localStorage.getItem(STORAGE_KEY)
         if (!raw) return
-        const { data } = JSON.parse(raw) as { data: Record<string, string> }
+        const parsed = JSON.parse(raw) as { data: Record<string, string>; kindTouched?: number }
+        const data = parsed.data
+        kindTouched = Number(parsed.kindTouched) || 0
         Object.entries(data).forEach(([k, v]) => {
           const el = form.elements.namedItem(k) as HTMLInputElement | null
           if (el && typeof v === 'string' && el.type !== 'checkbox') el.value = v
@@ -234,6 +356,69 @@ const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
     }
     restoreDraft()
     form.addEventListener('input', saveDraft)
+
+    // ── Расчёт из калькулятора
+    //
+    // Человек ответил на четыре вопроса в калькуляторе и нажал «получить
+    // расчёт» — заново пересказывать то же самое в заявке ему незачем.
+    // Калькуляторы кладут снимок ответов в sessionStorage, форма его
+    // подхватывает: подставляет вид работ и прикладывает к письму разбор.
+    //
+    // ПОКАЗЫВАЕТСЯ ВИДИМО И СНИМАЕТСЯ ОДНОЙ КНОПКОЙ. Скрытое поле,
+    // которое уходит вместе с заявкой, а человек о нём не знает, —
+    // это ровно то, за что сайт ругает конкурентов.
+    const note = root.querySelector<HTMLElement>('[data-calc-note]')
+    const noteText = root.querySelector<HTMLElement>('[data-calc-text]')
+    const calcValue = root.querySelector<HTMLInputElement>('[data-calc-value]')
+
+    const dropCalc = () => {
+      if (calcValue) calcValue.value = ''
+      note?.setAttribute('hidden', '')
+      try {
+        sessionStorage.removeItem(CALC_KEY)
+      } catch {
+        /* приватный режим */
+      }
+      saveDraft()
+    }
+
+    const applyCalc = () => {
+      if (!note || !noteText || !calcValue) return
+      let snap: { at?: number; kind?: string; summary?: string } | null = null
+      try {
+        const raw = sessionStorage.getItem(CALC_KEY)
+        snap = raw ? JSON.parse(raw) : null
+      } catch {
+        return
+      }
+      if (!snap?.summary) return
+      // Просроченный расчёт не подставляем: назавтра человек уже не помнит,
+      // что он там отвечал, и приложенный разбор будет для него сюрпризом.
+      if (!snap.at || Date.now() - snap.at > CALC_TTL) {
+        dropCalc()
+        return
+      }
+      calcValue.value = snap.summary
+      noteText.textContent = snap.summary
+      note.removeAttribute('hidden')
+
+      // Вид работ ставим из расчёта, если посетитель не выбирал его сам
+      // ПОЗЖЕ расчёта. Иначе получалось расхождение на глазах: полоса
+      // сообщает «Проектирование», а в списке остаётся «Строительство»
+      // из черновика прошлого захода.
+      const kindEl = form.elements.namedItem('kind') as HTMLSelectElement | null
+      if (kindEl && snap.kind && (!kindEl.value || snap.at > kindTouched)) {
+        const has = Array.from(kindEl.options).some((o) => o.value === snap!.kind)
+        if (has) kindEl.value = snap.kind
+      }
+      saveDraft()
+    }
+    root.querySelector('[data-calc-drop]')?.addEventListener('click', dropCalc)
+    form.elements.namedItem('kind')?.addEventListener('change', () => {
+      kindTouched = Date.now()
+      saveDraft()
+    })
+    applyCalc()
 
     // ── Телефон: приводим к единому виду прямо при вводе
     const phone = document.getElementById('lf-phone') as HTMLInputElement
@@ -290,8 +475,11 @@ const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
         `Имя: ${get('name')}`,
         `Телефон: ${get('phone')}`,
         get('email') && `E-mail: ${get('email')}`,
-        get('city') && `Город и вид работ: ${get('city')}`,
+        get('city') && `Город: ${get('city')}`,
+        get('kind') && `Работы: ${workKindLabel(get('kind'))}`,
+        get('nrs') && `Специалисты НРС: ${NRS_LABEL[get('nrs')] || get('nrs')}`,
         get('message') && `Задача: ${get('message')}`,
+        get('calc') && `\n— Расчёт с сайта —\n${get('calc')}`,
         `Страница: ${location.href}`,
       ]
         .filter(Boolean)
