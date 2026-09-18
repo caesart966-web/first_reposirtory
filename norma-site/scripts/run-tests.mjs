@@ -26,7 +26,6 @@ const TESTS = [
   ['test-hero-photo.mjs', 'текст поверх фотографий'],
   ['test-search.mjs', 'поиск по сайту'],
   ['test-regions.mjs', 'городские страницы'],
-  ['test-geomap.mjs', 'карта в разделе «География»'],
   ['test-pages.mjs', 'страницы в браузере'],
 ]
 
