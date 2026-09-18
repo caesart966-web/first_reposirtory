@@ -734,8 +734,14 @@ legend {
 }
 
 .simplecheckout-cart th.price,
-.simplecheckout-cart th.total,
-.simplecheckout-cart th.quantity { text-align: right; }
+.simplecheckout-cart th.total { text-align: right; }
+
+/* Счётчик стоит в середине своей колонки, значит и подпись должна быть
+   посередине. При выравнивании по правому краю «Кол-во» оказывалось
+   над кнопкой «убрать», а сам счётчик — левее, и колонка читалась
+   как две разные. */
+.simplecheckout-cart th.quantity,
+.simplecheckout-cart td.quantity { text-align: center; }
 
 .simplecheckout-cart td.price,
 .simplecheckout-cart td.total { text-align: right; }
@@ -745,10 +751,7 @@ legend {
    всю ширину ячейки, а кнопки переносились на вторую строку и наезжали
    на цену. Теперь это три части одного счётчика и отдельная кнопка
    «убрать» - она не участвует в подсчёте и стоит поодаль. */
-.simplecheckout-cart td.quantity {
-  min-width: 0;
-  text-align: right;
-}
+.simplecheckout-cart td.quantity { min-width: 0; }
 
 .simplecheckout-cart td.quantity .input-group,
 .simplecheckout-cart td.quantity .quantity {
@@ -813,18 +816,22 @@ legend {
 .simplecheckout-cart .btn[data-onclick*="removeProduct"]::after,
 .simplecheckout-cart td.remove [data-onclick]::after { content: "\00D7"; }
 
-/* Колонка «убрать» у модуля шириной 7 px — при его собственной вёрстке
-   там стояла картинка в 30 px, которая эту колонку и раздвигала.
-   Кнопке нужна своя ширина, иначе её не видно и не нажать. */
-.simplecheckout-cart col.remove { width: 52px; }
+/* Колонка «убрать». На этом сайте модуль оставляет её ПУСТОЙ: кнопка
+   удаления живёт внутри ячейки количества, рядом с плюсом. Пустая колонка
+   съедала полосу справа, и таблица выглядела недоделанной. Схлопываем её
+   по содержимому: если в ней однажды окажется кнопка (у модуля есть
+   и такой режим), колонка раздвинется сама. */
+.simplecheckout-cart col.remove { width: 1px; }
 
 .simplecheckout-cart th.remove,
 .simplecheckout-cart td.remove {
-  width: 52px;
-  padding-right: 0;
+  width: 1px;
+  padding: 0;
   text-align: right;
   vertical-align: middle;
 }
+
+.simplecheckout-cart td.remove:not(:empty) { padding-left: var(--sp-3); }
 
 .simplecheckout-cart td.remove [data-onclick] {
   display: inline-flex;
@@ -851,6 +858,7 @@ legend {
 .simplecheckout-cart td.remove .btn {
   margin-left: var(--sp-3);
   border-color: transparent;
+  background: none;
   color: var(--sg-muted);
 }
 
