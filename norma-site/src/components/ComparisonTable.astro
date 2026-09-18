@@ -5,13 +5,21 @@ import { LAW } from '../config/facts'
 import Icon from './Icon.astro'
 
 interface Props {
-  compact?: boolean
+  /** Короткий вид: только формулировки со статьями, без пояснений.
+      Стоит на главной. Раньше там был вид compact — те же карточки
+      с пояснениями, но обрезанные до четырёх в каждом столбце: он занимал
+      на телефоне почти два экрана и при этом ЗАМАЛЧИВАЛ четыре случая
+      из одиннадцати, в том числе «ГУП, МУП и компаниям с госучастием
+      членство не требуется». Короткий вид показывает все одиннадцать
+      и занимает вдвое меньше: пояснение каждому случаю живёт
+      на /komu-nuzhna-sro/, ссылка на неё стоит сразу под таблицей. */
+  brief?: boolean
   /** Уровень заголовков колонок. На странице, где перед таблицей нет своего
       заголовка второго уровня, ставим 2 — иначе порядок заголовков рвётся
       и страдают программы чтения с экрана. */
   headingLevel?: 2 | 3
 }
-const { compact = false, headingLevel = 3 } = Astro.props
+const { brief = false, headingLevel = 3 } = Astro.props
 const H = `h${headingLevel}` as 'h2' | 'h3'
 
 const needed = [
@@ -75,20 +83,19 @@ const notNeeded = [
   },
 ]
 
-const shown = compact ? { needed: needed.slice(0, 4), notNeeded: notNeeded.slice(0, 4) } : { needed, notNeeded }
 ---
 
-<div class="cols">
+<div class:list={['cols', brief && 'cols--brief']}>
   <div class="col col--yes">
     <div class="col-head">
       <span class="ic ic--yes"><Icon name="check" size={18} /></span>
       <H>Членство обязательно</H>
     </div>
     <ul>
-      {shown.needed.map((row) => (
+      {needed.map((row) => (
         <li>
           <b>{row.t}</b>
-          <p>{row.d}</p>
+          {!brief && <p>{row.d}</p>}
           <span class="law">{row.law}</span>
         </li>
       ))}
@@ -101,10 +108,10 @@ const shown = compact ? { needed: needed.slice(0, 4), notNeeded: notNeeded.slice
       <H>Членство не требуется</H>
     </div>
     <ul>
-      {shown.notNeeded.map((row) => (
+      {notNeeded.map((row) => (
         <li>
           <b>{row.t}</b>
-          <p>{row.d}</p>
+          {!brief && <p>{row.d}</p>}
           <span class="law">{row.law}</span>
         </li>
       ))}
@@ -135,6 +142,13 @@ const shown = compact ? { needed: needed.slice(0, 4), notNeeded: notNeeded.slice
     background: rgba(30, 142, 90, 0.1);
     border-color: rgba(30, 142, 90, 0.35);
   }
+
+  /* Короткий вид: строки идут плотнее, потому что каждая — одна мысль,
+     а не абзац. Чип со статьёй встаёт в ту же строку, если помещается. */
+  .cols--brief ul { gap: 13px; }
+  .cols--brief li { gap: 6px; grid-template-columns: auto; }
+  .cols--brief li b { font-size: 15px; }
+  .cols--brief .law { font-size: 12px; }
 
   @media (max-width: 800px) {
     .cols { grid-template-columns: 1fr; }

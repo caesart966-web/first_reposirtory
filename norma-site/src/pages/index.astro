@@ -62,6 +62,69 @@ const steps = [
   },
 ]
 
+// Разбивка взносов за первый год — строка таблицы «Стоимость» на главной.
+//
+// Каждая ячейка считается из FUNDS (компенсационные фонды, размеры в законе)
+// и FEES (взносы конкретных СРО, закон их не устанавливает). Руками сюда
+// не вписано ни одного числа: суммы обязаны сходиться с первым экраном
+// и со страницей «Стоимость», а один раз они уже разошлись.
+const feeCell = (v: string, cls?: string) => ({ v, cls })
+const feeRows = (() => {
+  const b = FEES.build
+  const d = FEES.design
+  const bFund = FUNDS.buildHarm[0]
+  const dFund = FUNDS.designHarm[0]
+  const bYear = b.memberMonth * 12
+  const dYear = d.memberMonth * 12
+  const insurance = (f: typeof b) =>
+    f.insuranceFirstYear ? feeCell('по ставке страховщика') : feeCell(money(0), 'free-v')
+  return [
+    {
+      t: 'Предельный размер обязательств',
+      d: 'первый уровень ответственности, самый массовый',
+      build: feeCell(bFund.limit),
+      design: feeCell(dFund.limit),
+    },
+    {
+      t: 'Компенсационный фонд возмещения вреда',
+      d: 'однократно, размер установлен законом',
+      build: feeCell(bFund.amount),
+      design: feeCell(dFund.amount),
+    },
+    {
+      t: 'Вступительный взнос',
+      d: 'разовый, устанавливает СРО',
+      build: feeCell(money(b.entry), b.entry === 0 ? 'free-v' : undefined),
+      design: feeCell(money(d.entry), d.entry === 0 ? 'free-v' : undefined),
+    },
+    {
+      t: 'Членские взносы за первый год',
+      d: `${money(b.memberMonth)} в месяц, со второго года по ставке СРО`,
+      build: feeCell(money(bYear)),
+      design: feeCell(money(dYear)),
+    },
+    {
+      t: 'Целевой взнос в национальное объединение',
+      d: 'устанавливает СРО',
+      build: feeCell(`${money(b.target)} в ${b.union}`),
+      design: feeCell(`${money(d.target)} в ${d.union}`),
+    },
+    {
+      t: 'Страхование ответственности',
+      d: b.insuranceFirstYear ? 'требуется с первого года' : 'в первый год не требуется',
+      build: insurance(b),
+      design: insurance(d),
+    },
+    {
+      t: 'Всего за первый год',
+      d: '',
+      total: true,
+      build: feeCell(money(bFund.amountNum + b.entry + bYear + b.target)),
+      design: feeCell(money(dFund.amountNum + d.entry + dYear + d.target)),
+    },
+  ]
+})()
+
 const faq = [
   {
     q: 'Существуют ли ещё допуски СРО?',
@@ -138,9 +201,9 @@ const howToSchema = {
         </p>
       </div>
       <div class="sbody">
-        <div class="rv"><ComparisonTable compact /></div>
+        <div class="rv"><ComparisonTable brief /></div>
         <p class="more rv">
-          <a href={href('/komu-nuzhna-sro/')}>Полный разбор всех случаев со ссылками на нормы →</a>
+          <a href={href('/komu-nuzhna-sro/')}>Каждый случай подробно: что считается договором, где проходит порог →</a>
         </p>
       </div>
     </div>
@@ -158,71 +221,66 @@ const howToSchema = {
         </p>
       </div>
 
-      <div class="price-cards">
-        {(['build', 'design'] as const).map((kind) => {
-          const fee = FEES[kind]
-          const fund = kind === 'build' ? FUNDS.buildHarm[0] : FUNDS.designHarm[0]
-          // Членский взнос помесячный, поэтому в «итого за первый год»
-          // он входит двенадцатью месяцами, а не одной суммой.
-          const memberYear = fee.memberMonth * 12
-          const total = fund.amountNum + fee.entry + memberYear + fee.target
-          return (
-            <div class="pcard rv">
-              <span class="ptag">{kind === 'build' ? 'Строителям' : 'Проектировщикам и изыскателям'}</span>
-              <h3>Первый уровень ответственности</h3>
-              <p class="psub">Договоры {fund.limit.replace('до ', 'до ')}</p>
-              <ul>
-                <li>
-                  <span>Компенсационный фонд возмещения вреда<small>однократно, размер установлен законом</small></span>
-                  <b>{fund.amount}</b>
-                </li>
-                <li>
-                  <span>Вступительный взнос<small>разовый, устанавливает СРО</small></span>
-                  <b class={fee.entry === 0 ? 'free-v' : ''}>{money(fee.entry)}</b>
-                </li>
-                <li>
-                  <span>Членские взносы за первый год<small>{money(fee.memberMonth)} в месяц, со второго года по ставке СРО</small></span>
-                  <b>{money(memberYear)}</b>
-                </li>
-                <li>
-                  <span>Целевой взнос в {fee.union}<small>устанавливает СРО</small></span>
-                  <b>{money(fee.target)}</b>
-                </li>
-                <li>
-                  <span>Страхование ответственности<small>в первый год не требуется</small></span>
-                  <b class="free-v">{money(0)}</b>
-                </li>
-                <li class="ptotal"><span>Всего за первый год</span><b>{money(total)}</b></li>
-              </ul>
-              <a class="btn btn--acc" href={href('/stoimost/#kalkulyator')}>Посчитать свой уровень</a>
-            </div>
-          )
-        })}
+      {/* РАЗБИВКА — ОДНОЙ ТАБЛИЦЕЙ, А НЕ ДВУМЯ ОДИНАКОВЫМИ КАРТОЧКАМИ.
+          Карточки «Строителям» и «Проектировщикам» отличались двумя числами
+          из шести и на телефоне вставали одна под другой: 1310 px, полтора
+          экрана на то, чтобы прочитать один и тот же список дважды, —
+          и сравнить суммы было нельзя, они не помещались в поле зрения
+          вместе. Таблица показывает те же шесть строк один раз, а ниже
+          600 px разворачивается в карточки по СТРОКЕ: сверху взнос,
+          под ним обе суммы с подписями. Сравнение появилось, высота
+          вдвое меньше.
+          Все суммы считаются из FUNDS и FEES — руками сюда не вписывается
+          ни одна, иначе заводится вторая точка правды. */}
+      <div class="cost-split">
+      <div class="tbl-wrap dark rv">
+        <table class="data fees-tbl">
+          <thead>
+            <tr>
+              <th scope="col">Взнос</th>
+              <th scope="col">Строителям</th>
+              <th scope="col">Проектировщикам и изыскателям</th>
+            </tr>
+          </thead>
+          <tbody>
+            {feeRows.map((row) => (
+              <tr class={row.total ? 'tr-total' : undefined}>
+                <td class="strong">
+                  {row.t}
+                  {row.d && <small>{row.d}</small>}
+                </td>
+                <td class:list={[row.build.cls, row.total && 'tot']} data-label="Строителям">{row.build.v}</td>
+                <td class:list={[row.design.cls, row.total && 'tot']} data-label="Проектировщикам и изыскателям">{row.design.v}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-        <div class="pcard pcard--warn rv">
-          <span class="ptag ptag--warn">Идёте на торги</span>
-          <h3>Нужен второй взнос — КФ ОДО</h3>
-          <p class="psub">Компенсационный фонд обеспечения договорных обязательств</p>
-          <ul>
-            <li><span>Строителям, первый уровень<small>сверх взноса выше, не вместо</small></span><b>{FUNDS.buildContract[0].amount}</b></li>
-            <li><span>Проектировщикам и изыскателям<small>первый уровень</small></span><b>{FUNDS.designContract[0].amount}</b></li>
-          </ul>
-          <p class="pnote">
-            Без этого взноса заявку на конкурентных закупках отклонят. Именно о нём
-            молчат сайты с обещанием «без скрытых платежей».
-          </p>
-          {/* Кнопка вела на #torgi — якорь, которого на странице нет.
-              Внешне работала: нажатие просто ничего не делало, и поймать
-              это глазами нельзя. Ведёт в разбор, который и обещает. */}
-          <a class="btn btn--ghost-dark" href={href('/baza-znaniy/otkaz-na-torgah/')}>Три причины отказа на торгах</a>
-        </div>
+      <div class="pcard pcard--warn rv">
+        <span class="ptag ptag--warn">Идёте на торги</span>
+        <h3>Нужен второй взнос — КФ ОДО</h3>
+        <p class="psub">Компенсационный фонд обеспечения договорных обязательств</p>
+        <ul>
+          <li><span>Строителям, первый уровень<small>сверх взноса выше, не вместо</small></span><b>{FUNDS.buildContract[0].amount}</b></li>
+          <li><span>Проектировщикам и изыскателям<small>первый уровень</small></span><b>{FUNDS.designContract[0].amount}</b></li>
+        </ul>
+        <p class="pnote">
+          Без этого взноса заявку на конкурентных закупках отклонят. Именно о нём
+          молчат сайты с обещанием «без скрытых платежей».
+        </p>
+        {/* Кнопка вела на #torgi — якорь, которого на странице нет.
+            Внешне работала: нажатие просто ничего не делало, и поймать
+            это глазами нельзя. Ведёт в разбор, который и обещает. */}
+        <a class="btn btn--ghost-dark" href={href('/baza-znaniy/otkaz-na-torgah/')}>Три причины отказа на торгах</a>
+      </div>
       </div>
 
       <p class="fees-note rv">{FEES_NOTE}</p>
 
       <div class="cost-cta rv">
-        <a class="btn btn--acc" href={href('/stoimost/')}>Полная разбивка с суммами по уровням</a>
-        <span>Все суммы — со ссылками на статьи закона</span>
+        <a class="btn btn--acc" href={href('/stoimost/#kalkulyator')}>Посчитать свой уровень</a>
+        <a class="cost-cta-more" href={href('/stoimost/')}>Все уровни ответственности →</a>
       </div>
     </div>
   </section>
@@ -254,15 +312,17 @@ const howToSchema = {
         ))}
       </ol>
 
+      <!-- Абзац существует ради одного: свести 5–10 дней здесь с «выпиской
+           за 2–3 дня» в шапке сайта. Всё остальное, что тут стояло раньше,
+           страница уже говорит — «помогу собрать недостающее» шагом 3,
+           а разницу между «бывает за день» и «гарантируем за день» —
+           вопросом «Сколько времени занимает вступление» ниже. -->
       <p class="steps-total rv">
         <b>Итого от первого разговора до выписки — 5–10 дней.</b> Два-три дня из них
         занимает последний шаг: от подачи документов до готовой выписки. Остальное —
-        подбор СРО и сбор бумаг, и здесь темп задаёте вы: пока не пришли ваши документы,
-        двигаться дальше нечем. Если они не собираются — застрять я не дам: подскажу,
-        где что заказать, и помогу оформить. Сжимать эти сроки в рекламное
-        «вступление за один день» я не буду: один день <b>бывает</b>, и если у вас
-        горит — сделаю всё, что от меня зависит. Но обещать его заранее нельзя:
-        решение принимает СРО, и срок на него — её, а не мой.
+        подбор СРО и сбор бумаг, и здесь темп задаёте вы. Рекламного «вступления
+        за один день» не обещаю: один день <b>бывает</b>, но решение принимает СРО,
+        и срок на него — её, а не мой.
       </p>
       </div>
     </div>
@@ -323,11 +383,12 @@ const howToSchema = {
             раздел читается как «работаю только в трёх городах». */}
         <div class="geo-rest rv">
           <p>
-            <b>Остальные регионы — так же.</b> Работаю по всей России: документы
-            электронные, приезжать никуда не нужно. Партнёрские организации у меня
+            <b>Остальные регионы — так же.</b> Партнёрские организации у меня
             в трёх городах, а для компании из любого другого субъекта я подбираю
             СРО отдельно — и называю её по имени и с регистрационным номером
-            до того, как вы что-то подпишете.
+            до того, как вы что-то подпишете. Фраза «работаю по всей России»
+            выше — не оборот речи: приезжать никуда не нужно ни вам, ни мне,
+            документы электронные.
           </p>
           <p class="geo-rest-more">
             <a href={href('/sro/')}>Как это работает в вашем регионе →</a>
@@ -496,8 +557,57 @@ const howToSchema = {
     .geo-cities a { padding: 8px 2px; font-size: 14.5px; }
   }
 
-  /* Стоимость-тизер: карточки в стиле образца */
-  .price-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+  /* Стоимость-тизер: таблица разбивки плюс карточка-предупреждение о КФ ОДО.
+     Цвета тёмной таблицы — общие, в global.css. Здесь только то, чего
+     у обычной table.data нет: подпись под названием взноса и строка итога. */
+  .fees-tbl td.strong small {
+    display: block;
+    margin-top: 3px;
+    font-weight: 400;
+    font-size: 12.5px;
+    line-height: 1.4;
+    color: var(--on-dark-muted);
+  }
+  /* Названию взноса — половина ширины, суммам хватает четверти: они короткие.
+     По умолчанию колонки делились поровну, и «Предельный размер обязательств»
+     ломался на две строки рядом с «до 90 млн ₽» — строка вырастала вдвое
+     из-за пустоты справа. */
+  /* Только пока таблица — таблица. Ниже 600 px строка разворачивается
+     в карточку, ячейки становятся блоками, и заданная ширина зажимает
+     их в 46 % экрана: раздел вырос с 2,75 до 3,58 экрана телефона,
+     то есть правка «чтобы не переносилось» на компьютере сломала
+     ровно то, ради чего таблица и затевалась. */
+  @media (min-width: 600px) {
+    .fees-tbl th:first-child, .fees-tbl td:first-child { width: 46%; }
+    .fees-tbl th:not(:first-child), .fees-tbl td:not(:first-child) { width: 27%; }
+  }
+  .fees-tbl .tr-total td { border-top: 1px solid var(--dark-line); }
+  .fees-tbl td.tot { color: var(--acc-bright); font-weight: 600; font-size: 17px; }
+  .fees-tbl td { font-variant-numeric: lining-nums tabular-nums; }
+  /* Зелёный «0 ₽» на графите: обычный --good здесь не читается. */
+  .fees-tbl .free-v { color: var(--good-bright); }
+
+  @media (max-width: 599px) {
+    /* В карточке строки название взноса — заголовок, и подпись под ним
+       не должна тянуть карточку вверх: у первой ячейки свои отступы. */
+    .fees-tbl td.strong small { margin-top: 2px; }
+    .fees-tbl td.tot { font-size: 18px; }
+  }
+
+  /* Таблица и предупреждение про КФ ОДО — рядом, пока хватает ширины.
+     Когда карточка встала ПОД таблицу на всех экранах, раздел на компьютере
+     вырос с 1181 до 1479 px: выигрыш от таблицы съела пустота справа от неё.
+     Ниже 900 px они всё равно идут друг за другом, и это правильно:
+     таблица к этой ширине уже развернулась в карточки по строкам.
+     Отступ сверху — под ярлык «Идёте на торги»: он вынесен за верхний
+     край карточки на 40 px и без запаса налезал бы на соседа. */
+  .cost-split { display: grid; gap: 16px; align-items: start; }
+  .pcard--warn { margin-top: 56px; }
+  @media (min-width: 900px) {
+    .cost-split { grid-template-columns: minmax(0, 1.9fr) minmax(270px, 1fr); gap: 26px; }
+    .pcard--warn { margin-top: 44px; }
+  }
+
   .pcard {
     background: var(--card);
     color: var(--ink);
@@ -571,8 +681,17 @@ const howToSchema = {
   .cost-card p { color: var(--on-dark-muted); font-size: 14.5px; }
   .cost-card p b { color: #fff; }
   .cost-card .law { justify-self: start; }
-  .cost-cta { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 22px; }
+  .cost-cta { display: flex; align-items: center; gap: 16px 22px; flex-wrap: wrap; margin-top: 22px; }
   .cost-cta span { color: var(--on-dark-muted); font-size: 14px; }
+  .cost-cta-more {
+    color: var(--acc-bright);
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+    /* Поле промаха: строка 20 px, норма попадания пальцем — 24. */
+    padding: 6px 0;
+  }
+  .cost-cta-more:hover { text-decoration: underline; }
 
   /* Шаги */
   .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
