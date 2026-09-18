@@ -12,6 +12,7 @@ import LeadForm from '../components/LeadForm.astro'
 import Icon from '../components/Icon.astro'
 import { SITE, href } from '../config/site'
 import { REGIONS } from '../config/regions'
+import { partnersOf } from '../config/partners'
 import { LAW, TERMS, FUNDS } from '../config/facts'
 import { FEES, FEES_NOTE, money } from '../config/fees'
 
@@ -27,21 +28,12 @@ import { FEES, FEES_NOTE, money } from '../config/fees'
 // Расхождения на самом деле нет: два-три дня — это последний отрезок,
 // от подачи до выписки. Но читателю это надо показать, а не объяснять
 // в примечании. Поэтому подпись «чьё время» и строка с итогом под лентой.
-// Города для блока «География» — по алфавиту и все до одного.
-// Порядок «по популярности» пришлось бы обосновывать цифрами, которых
-// у меня нет: любой другой список выдумывал бы рейтинг городов.
-const cities = [...REGIONS].sort((a, b) => a.city.localeCompare(b.city, 'ru'))
-const cityCount = REGIONS.length
-const cityTail = cityCount % 10
-const cityTen = cityCount % 100
-const gorodov =
-  cityTen >= 11 && cityTen <= 14
-    ? 'городов'
-    : cityTail === 1
-      ? 'город'
-      : cityTail >= 2 && cityTail <= 4
-        ? 'города'
-        : 'городов'
+// Города для блока «География». Порядок — как в regions.ts: Петербург,
+// Москва, Ростов-на-Дону. Раньше здесь была сортировка по алфавиту,
+// и она была обоснована: городов было тридцать три, и любой другой
+// порядок выдумывал бы рейтинг. Для троих алфавит не значит ничего,
+// а порядок из конфигурации хотя бы один — и правится в одном месте.
+const cities = REGIONS
 
 const steps = [
   {
@@ -304,14 +296,45 @@ const howToSchema = {
           организацию в любом регионе страны. Разницу путают даже крупные площадки —
           <a href={href('/baza-znaniy/regionalnyy-princip/')}>разбор нормы со ссылками</a>.
         </p>
-        <ul class="geo-cities rv" data-nosearch>
-          {cities.map((r) => (
-            <li><a href={href(`/sro/${r.slug}/`)}>{r.city}</a></li>
-          ))}
+
+        {/* Три города, где есть партнёрские СРО, — карточками, а не строчками
+            в списке: их трое, и каждый говорит своё. Список-реестр из тридцати
+            трёх городов, стоявший здесь раньше, для троих выглядел бы обрезанным
+            и наводил на мысль, что остальные потерялись. */}
+        <ul class="geo-cards rv">
+          {cities.map((r) => {
+            const n = partnersOf(r.slug).length
+            return (
+              <li>
+                <a href={href(`/sro/${r.slug}/`)}>
+                  <span class="gc-city">{r.city}</span>
+                  <span class="gc-sub">{r.subject} · код {r.code}</span>
+                  <span class="gc-n">
+                    {n} {n === 1 ? 'партнёрская СРО' : n < 5 ? 'партнёрские СРО' : 'партнёрских СРО'}
+                  </span>
+                  <span class="gc-go">Разбор по городу →</span>
+                </a>
+              </li>
+            )
+          })}
         </ul>
-        <p class="more rv">
-          <a href={href('/sro/')}>Все {cityCount} {gorodov}: субъект, код региона и что здесь путают →</a>
-        </p>
+
+        {/* Главное, что должен унести человек не из этих трёх городов.
+            Раньше на его вопрос отвечал список из тридцати трёх городов;
+            теперь — эта строка, и она обязана быть заметной, иначе
+            раздел читается как «работаю только в трёх городах». */}
+        <div class="geo-rest rv">
+          <p>
+            <b>Остальные регионы — так же.</b> Работаю по всей России: документы
+            электронные, приезжать никуда не нужно. Партнёрские организации у меня
+            в трёх городах, а для компании из любого другого субъекта я подбираю
+            СРО отдельно — и называю её по имени и с регистрационным номером
+            до того, как вы что-то подпишете.
+          </p>
+          <p class="geo-rest-more">
+            <a href={href('/sro/')}>Как это работает в вашем регионе →</a>
+          </p>
+        </div>
       </div>
     </div>
   </section>
@@ -385,12 +408,69 @@ const howToSchema = {
 
   .more { margin-top: 18px; font-size: 15px; font-weight: 600; }
 
-  /* География: города списком-реестром, а не облаком тегов.
-     Тонкие линейки между строками — та же графика, что у таблиц
-     на «Стоимости»: сайт про документы, и список городов выглядит
-     как перечень в документе. Поле промаха у ссылки — 40 px по высоте
-     при норме 24. */
+  /* География. Три города — карточками на линейках, а не облаком тегов
+     и не списком-реестром: реестр из трёх строк выглядит обрезанным
+     списком, будто остальные потерялись. Тонкие линейки — та же графика,
+     что у таблиц на «Стоимости». */
   .geo-lead { max-width: 68ch; color: var(--muted); }
+  .geo-cards {
+    list-style: none;
+    margin: 26px 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 0;
+    border-top: 1px solid var(--line);
+  }
+  .geo-cards li { border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); }
+  .geo-cards li:last-child { border-right: 0; }
+  .geo-cards a {
+    display: grid;
+    align-content: start;
+    gap: 3px;
+    padding: 18px 20px 18px 0;
+    text-decoration: none;
+    color: var(--ink);
+    height: 100%;
+  }
+  .geo-cards li:not(:first-child) a { padding-left: 20px; }
+  .gc-city { font-family: var(--font-head); font-size: 21px; line-height: 1.15; }
+  .gc-sub { font-size: 13px; color: var(--muted); }
+  .gc-n {
+    margin-top: 7px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    letter-spacing: 0.04em;
+    color: var(--acc-deep);
+  }
+  .gc-go {
+    margin-top: 10px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--acc-deep);
+  }
+  .geo-cards a:hover .gc-go { text-decoration: underline; }
+
+  /* Строка для всех остальных регионов. Она заметная нарочно: раньше
+     на вопрос «а мой город?» отвечал список из тридцати трёх городов,
+     теперь отвечает только этот абзац, и потеряться ему нельзя. */
+  .geo-rest {
+    margin-top: 22px;
+    padding: 18px 20px;
+    background: var(--paper-2);
+    border-left: 3px solid var(--acc);
+    border-radius: 0 var(--r-s) var(--r-s) 0;
+  }
+  .geo-rest p { margin: 0; font-size: 15px; line-height: 1.65; color: var(--muted); }
+  .geo-rest b { color: var(--ink); }
+  .geo-rest-more { margin-top: 10px !important; font-weight: 600; }
+  .geo-rest-more a { color: var(--acc-deep); text-decoration: none; }
+  .geo-rest-more a:hover { text-decoration: underline; }
+
+  @media (max-width: 599px) {
+    .geo-cards li { border-right: 0; }
+    .geo-cards a, .geo-cards li:not(:first-child) a { padding: 16px 0; }
+  }
   .geo-cities {
     list-style: none;
     margin: 24px 0 0;
