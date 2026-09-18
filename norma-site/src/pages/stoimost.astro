@@ -438,17 +438,10 @@ const faqSchema = {
   .tables { display: grid; gap: 28px; }
   .tbl-block { min-width: 0; }
   .tbl-block h3 { color: #fff; font-size: 19px; margin-bottom: 14px; }
-  .tbl-wrap.dark { background: rgba(255, 255, 255, 0.04); border-color: var(--dark-line); }
-  .tbl-wrap.dark :global(table.data th) { background: rgba(255, 255, 255, 0.05); color: var(--on-dark-muted); border-color: var(--dark-line); }
-  .tbl-wrap.dark :global(table.data td) { color: var(--on-dark); border-color: var(--dark-line); }
-  .tbl-wrap.dark :global(table.data td.strong) { color: #fff; }
-  .tbl-wrap.dark :global(table.data td.odo) { color: var(--acc-bright); font-weight: 500; }
-  /* Подписи ячеек появляются только на телефоне, когда таблица
-     разворачивается в карточки. На тёмной подложке они должны быть
-     светлыми, иначе тёмно-серое на тёмном не читается. */
-  .tbl-wrap.dark :global(table.data td::before) { color: var(--on-dark-muted); }
-  .tbl-wrap.dark :global(table.data tbody td:first-child) { color: #fff; }
-  .tbl-wrap.dark :global(table.data tr) { border-color: var(--dark-line); }
+  /* Цвета тёмной таблицы (.tbl-wrap.dark) лежат в global.css, а не здесь:
+     тёмная таблица теперь не одна — вторая на главной, в разбивке взносов.
+     Набор, объявленный у страницы, доставался бы только ей, и вторая
+     получила бы тёмные чернила на тёмном графите. */
   .tbl-note { font-size: 13.5px; color: var(--on-dark-muted); margin-top: 12px; max-width: 74ch; }
 
   .odo-callout {

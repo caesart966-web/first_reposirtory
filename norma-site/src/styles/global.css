@@ -49,6 +49,11 @@
      Приглушённый и тёплый — рядом с сургучом чистый зелёный выглядит
      светофором. */
   --good: #2C6B41;
+  /* Зелёный для тёмных подложек. Тот же случай, что у --acc-bright:
+     --good подобран под белую бумагу и на графите даёт 1.9:1.
+     Появился, когда разбивка взносов на главной переехала в таблицу
+     на тёмном фоне, — там «0 ₽» набрано зелёным. */
+  --good-bright: #4FA46F;
   --good-bg: #ECF3EC;
   --warn: #8A5D00;         /* вердикт «нужна при условии» */
   --warn-bg: #FBF3DE;
@@ -633,6 +638,27 @@ table.data td.strong { font-weight: 600; }
   table.data tbody td:first-child::before { content: none; }
   /* Ячейки с длинным текстом (не суммы) кладём под подпись, а не рядом. */
   table.data td.wide { grid-template-columns: 1fr; gap: 2px; }
+}
+
+/* ТАБЛИЦА НА ТЁМНОЙ ПОДЛОЖКЕ — ОБЩИМИ ПРАВИЛАМИ, А НЕ У КАЖДОЙ СТРАНИЦЫ.
+   Раньше этот набор лежал в scoped-стилях «Стоимости». Пока тёмная таблица
+   была одна, это работало; вторая (разбивка взносов на главной) получила бы
+   тёмные чернила на тёмном графите — то же самое, на чём уже попались
+   с тёмной шапкой .page-head. Правило то же: цвета тёмной подложки живут
+   в одном месте, страницы задают только свои отступы. */
+.tbl-wrap.dark { background: rgba(255, 255, 255, 0.04); border-color: var(--dark-line); }
+.tbl-wrap.dark table.data th { background: rgba(255, 255, 255, 0.05); color: var(--on-dark-muted); border-color: var(--dark-line); }
+.tbl-wrap.dark table.data td { color: var(--on-dark); border-color: var(--dark-line); }
+.tbl-wrap.dark table.data td.strong { color: #fff; }
+.tbl-wrap.dark table.data td.odo { color: var(--acc-bright); font-weight: 500; }
+.tbl-wrap.dark table.data tr { border-color: var(--dark-line); }
+
+@media (max-width: 599px) {
+  /* Подписи ячеек появляются только на телефоне, когда таблица
+     разворачивается в карточки. На тёмной подложке они должны быть
+     светлыми, иначе тёмно-серое на тёмном не читается. */
+  .tbl-wrap.dark table.data td::before { color: var(--on-dark-muted); }
+  .tbl-wrap.dark table.data tbody td:first-child { color: #fff; }
 }
 
 /* ── Списки с чекмарками ── */

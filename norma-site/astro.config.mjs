@@ -101,7 +101,7 @@ const lastmodFor = (path) => {
 const RULES = [
   [/^\/$/, 1.0, 'weekly'],
   [/^\/uslugi\/([^/]+\/)?$/, 0.9, 'monthly'],
-  [/^\/(stoimost|dokumenty|komu-nuzhna-sro|proverit-sro|kontakty)\/$/, 0.8, 'monthly'],
+  [/^\/(stoimost|dokumenty|komu-nuzhna-sro|proverit-sro|kontakty|obo-mne)\/$/, 0.8, 'monthly'],
   // Городские страницы отвечают на самые ходовые запросы («вступить в СРО
   // в Москве»), поэтому обходить их стоит следом за услугами.
   [/^\/sro\/$/, 0.8, 'monthly'],
