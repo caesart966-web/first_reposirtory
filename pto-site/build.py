@@ -1699,6 +1699,43 @@ def write_robots(site: Site, noindex: bool = False) -> None:
     (DIST_DIR / "robots.txt").write_text(text, encoding="utf-8")
 
 
+def write_photo_hint(site: Site) -> None:
+    """Памятка «как добавить фотографию объекта» — собирается по списку
+    объектов, а не пишется руками. Раньше имена были перечислены в файле
+    вручную, и после удаления объекта в памятке остался несуществующий:
+    такую ошибку не ловит ни одна проверка, она не противоречит ничему,
+    кроме действительности."""
+    rows = "\n".join(
+        f"    {it['slug']}.jpg".ljust(36) + f"{it['name']}, {it['city']}"
+        for it in site.raw["portfolio"]["items"])
+    text = f"""КАК ДОБАВИТЬ ФОТОГРАФИЮ ОБЪЕКТА
+================================
+
+Этот файл создаётся сборкой сам по списку объектов из data/site.json.
+Править его руками не нужно: при следующей сборке правка потеряется.
+
+Положите сюда файл с нужным именем — и фотография сама появится
+в карточке объекта на сайте. Ничего больше настраивать не надо.
+
+Имена файлов (расширение .jpg, .webp или .png — любое):
+
+{rows}
+
+После добавления файлов выполните пересборку:
+
+    python3 build.py
+
+Чтобы фотографии стали лёгкими (копии под размер экрана и формат AVIF):
+
+    python3 tools/make-thumbs.py && python3 build.py
+
+Если фотографии нет — в карточке выводится фирменная заставка,
+вёрстка не ломается.
+"""
+    (ASSETS_DIR / "img" / "objects" / "КАК-ДОБАВИТЬ-ФОТО.txt").write_text(
+        text, encoding="utf-8")
+
+
 def write_llms(site: Site) -> None:
     """Оглавление сайта для ИИ-помощников (llms.txt). Люди всё чаще
     спрашивают не поисковик, а чат; файл даёт ему короткое и точное
@@ -1892,6 +1929,7 @@ def build(regen_media: bool = False, base_path: str = None,
     write_sitemap(site, r.pages)
     write_robots(site, noindex=noindex)
     write_llms(site)
+    write_photo_hint(site)
     write_manifest(site)
     copy_server_config()
 
