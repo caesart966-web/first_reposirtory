@@ -17,14 +17,44 @@
 
   var calmMedia = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-  /* ---------- 0. Шапка: тень появляется только при прокрутке ------------- */
+  /* ---------- 0. Шапка: тень при прокрутке, на телефоне — прячется -------
+     На телефоне шапка липкая: без этого до меню и до телефона пришлось бы
+     прокручивать страницу до самого верха. Но 63 px из 780 — заметная доля
+     экрана, поэтому при прокрутке ВНИЗ шапка уезжает, а при прокрутке ВВЕРХ
+     возвращается сразу же: человек тянется вверх ровно тогда, когда ему
+     нужно меню или телефон.
+
+     Прячем только ниже 200 px: у самого верха страницы прыгающая шапка
+     выглядит дёрганой. И никогда — когда открыто меню, оно к ней привязано.
+     Порог 61.1875em тот же, что у переключения меню в бургер: два правила
+     обязаны двигаться вместе.                                            */
   var header = document.querySelector('.header');
   if (header) {
-    var onScroll = function () {
-      header.classList.toggle('is-scrolled', window.scrollY > 8);
+    var lastY = window.scrollY;
+    var ticking = false;
+    var phone = window.matchMedia('(max-width: 61.1875em)');
+
+    var apply = function () {
+      var y = window.scrollY;
+      header.classList.toggle('is-scrolled', y > 8);
+      var hide = phone.matches &&
+                 !document.documentElement.classList.contains('menu-open') &&
+                 y > 200 && y > lastY + 4;
+      if (hide) header.classList.add('is-hidden');
+      else if (y < lastY - 4 || y <= 200) header.classList.remove('is-hidden');
+      lastY = y;
+      ticking = false;
     };
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
+
+    apply();
+    window.addEventListener('scroll', function () {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(apply);
+    }, { passive: true });
+    phone.addEventListener('change', function () {
+      if (!phone.matches) header.classList.remove('is-hidden');
+    });
   }
 
   /* ---------- 0б. Появление блоков при прокрутке -------------------------
@@ -107,18 +137,63 @@
     });
   }
 
-  /* ---------- 1. Мобильное меню ----------------------------------------- */
+  /* ---------- 1. Мобильное меню -----------------------------------------
+     Пока открыто меню, страница под ним стоять должна. Одного
+     `body { overflow: hidden }` телефон не слушает — прокручивается
+     <html>, и страница уезжает за меню. Поэтому запоминаем положение
+     и фиксируем body на нём; шапку на это время прижимаем намертво
+     (класс menu-open в стилях), иначе липкая шапка внутри
+     зафиксированного body встаёт не там, где нужно.
+
+     Возврат прокрутки — instant: у <html> стоит scroll-behavior: smooth,
+     и обычный scrollTo проматывал бы страницу назад на глазах. */
   var burger = document.querySelector('.burger');
   var nav = document.getElementById('nav');
   if (burger && nav) {
-    burger.addEventListener('click', function () {
-      var open = nav.classList.toggle('is-open');
+    var root = document.documentElement;
+    var savedY = 0;
+
+    function setMenu(open) {
+      if (open === nav.classList.contains('is-open')) return;
+      if (open) {
+        savedY = window.scrollY || root.scrollTop || 0;
+        nav.classList.add('is-open');
+        root.classList.add('menu-open');
+        document.body.style.top = -savedY + 'px';
+      } else {
+        nav.classList.remove('is-open');
+        root.classList.remove('menu-open');
+        document.body.style.top = '';
+        window.scrollTo({ top: savedY, behavior: 'instant' });
+      }
       burger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    burger.addEventListener('click', function () {
+      setMenu(!nav.classList.contains('is-open'));
     });
     nav.addEventListener('click', function (e) {
-      if (e.target.closest('a')) {
-        nav.classList.remove('is-open');
-        burger.setAttribute('aria-expanded', 'false');
+      if (e.target.closest('a')) setMenu(false);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && nav.classList.contains('is-open')) {
+        setMenu(false);
+        burger.focus();
+      }
+    });
+    // Нажатие мимо меню закрывает его: так ведут себя все выпадающие
+    // списки, и человек пробует это первым делом.
+    document.addEventListener('click', function (e) {
+      if (!nav.classList.contains('is-open')) return;
+      if (e.target.closest('.nav') || e.target.closest('.burger')) return;
+      setMenu(false);
+    });
+    // Экран повернули или расширили до настольной ширины — меню
+    // превращается в обычную строку, и замок прокрутки надо снять.
+    window.addEventListener('resize', function () {
+      if (nav.classList.contains('is-open') &&
+          !window.matchMedia('(max-width: 61.1875em)').matches) {
+        setMenu(false);
       }
     });
   }

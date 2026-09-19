@@ -2425,7 +2425,20 @@ html {
   .nav.is-open .nav__list { flex-direction: column; align-items: stretch; gap: 0; }
   .nav.is-open .nav__link { min-height: 52px; border-bottom: 1px solid var(--line); border-radius: 0; }
   .nav.is-open .nav__link::after { display: none; }
-  .header { position: relative; }
+  /* Шапка на телефоне ОСТАЁТСЯ липкой. Раньше здесь стояло
+     position: relative — оно понадобилось, чтобы выпадающая панель меню
+     привязывалась к шапке, и заодно молча отменяло липкость: до меню
+     и до кнопки звонка приходилось прокручивать страницу до самого верха.
+     Привязка панели работает и без него: sticky — тоже позиционирование,
+     и absolute внутри него считает от шапки. */
+  html.menu-open .header { position: fixed; left: 0; right: 0; top: 0; }
+  /* Уезжает при прокрутке вниз, возвращается при прокрутке вверх.
+     Двигаем transform, а не высоту: высота пересчитывала бы раскладку
+     всей страницы под шапкой на каждом кадре. */
+  .header { transition: transform 220ms var(--ease), box-shadow var(--t-mid),
+                        background-color var(--t-mid); }
+  .header.is-hidden { transform: translateY(-100%); }
+  html.menu-open body { position: fixed; left: 0; right: 0; width: 100%; }
   .header__inner { min-height: 62px; gap: var(--s-3); }
   .header__contacts { display: none; }
   .burger { display: block; }
@@ -2474,6 +2487,10 @@ html {
     line-height: 1.5;
   }
   .reveal { opacity: 1 !important; transform: none !important; }
+  /* Уезжающая шапка — тоже движение: при «уменьшить движение» она
+     просто остаётся на месте. */
+  .header { transition: none; }
+  .header.is-hidden { transform: none; }
   .hero__inner > * { animation: none !important; }
 }
 

@@ -169,11 +169,45 @@ def main() -> int:
         if page.eval_on_selector_all(".field--error", "e => e.length") < 2:
             problems.append("/kontakty/: форма не ругается на пустые обязательные поля")
 
+        # Мобильное меню. Проверяем не «поставился ли класс», а поведение:
+        # видна ли шапка в середине длинной страницы, стоит ли фон под
+        # открытым меню и возвращается ли страница на место при закрытии.
+        # Однажды здесь молча пропала липкость шапки — до меню и до кнопки
+        # звонка приходилось прокручивать страницу до самого верха.
         page.set_viewport_size({"width": 390, "height": 844})
         page.goto(base + "/", wait_until="load"); page.wait_for_timeout(2500)
-        page.click(".burger"); page.wait_for_timeout(300)
+        page.evaluate("document.documentElement.style.scrollBehavior='auto';"
+                      "window.scrollTo(0, 1400)")
+        page.wait_for_timeout(350)
+        # Шапка на телефоне уезжает при прокрутке вниз — так и задумано.
+        # Проверяем главное: движение вверх возвращает её сразу же, иначе
+        # до меню и телефона пришлось бы мотать страницу до самого верха.
+        page.evaluate("window.scrollTo(0, 1200)")
+        page.wait_for_timeout(450)
+        started = page.evaluate("Math.round(window.scrollY)")
+        header = page.evaluate("Math.round(document.querySelector('.header')"
+                               ".getBoundingClientRect().bottom)")
+        if header <= 0:
+            problems.append("/: на телефоне шапка не возвращается при прокрутке вверх — "
+                            "до меню не добраться")
+        # Нажимаем по координатам, как пальцем: обычный click() сам
+        # прокручивает страницу и подменяет то, что мы меряем.
+        spot = page.evaluate("(() => {const r = document.querySelector('.burger')"
+                             ".getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]})()")
+        page.mouse.click(spot[0], spot[1]); page.wait_for_timeout(400)
         if not page.is_visible("#nav .nav__link"):
             problems.append("/: мобильное меню не открывается")
+        panel = page.evaluate("Math.round(document.querySelector('.nav').getBoundingClientRect().top)")
+        page.mouse.wheel(0, 900); page.wait_for_timeout(350)
+        moved = page.evaluate("Math.round(document.querySelector('.nav').getBoundingClientRect().top)")
+        if abs(moved - panel) > 1:
+            problems.append("/: под открытым меню прокручивается страница")
+        page.keyboard.press("Escape"); page.wait_for_timeout(450)
+        if page.get_attribute(".burger", "aria-expanded") != "false":
+            problems.append("/: меню не закрывается клавишей Esc")
+        back = page.evaluate("Math.round(window.scrollY)")
+        if abs(back - started) > 2:
+            problems.append(f"/: после закрытия меню страница уехала: {started} -> {back}")
 
         if errors:
             for e in dict.fromkeys(errors):

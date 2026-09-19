@@ -5,11 +5,29 @@ document.documentElement.classList.add('js');
 var calmMedia = window.matchMedia('(prefers-reduced-motion: reduce)');
 var header = document.querySelector('.header');
 if (header) {
-var onScroll = function () {
-header.classList.toggle('is-scrolled', window.scrollY > 8);
+var lastY = window.scrollY;
+var ticking = false;
+var phone = window.matchMedia('(max-width: 61.1875em)');
+var apply = function () {
+var y = window.scrollY;
+header.classList.toggle('is-scrolled', y > 8);
+var hide = phone.matches &&
+!document.documentElement.classList.contains('menu-open') &&
+y > 200 && y > lastY + 4;
+if (hide) header.classList.add('is-hidden');
+else if (y < lastY - 4 || y <= 200) header.classList.remove('is-hidden');
+lastY = y;
+ticking = false;
 };
-onScroll();
-window.addEventListener('scroll', onScroll, { passive: true });
+apply();
+window.addEventListener('scroll', function () {
+if (ticking) return;
+ticking = true;
+window.requestAnimationFrame(apply);
+}, { passive: true });
+phone.addEventListener('change', function () {
+if (!phone.matches) header.classList.remove('is-hidden');
+});
 }
 var revealTargets = [];
 if (!calmMedia.matches && 'IntersectionObserver' in window) {
@@ -67,14 +85,44 @@ card.style.setProperty('--my', (e.clientY - r.top) + 'px');
 var burger = document.querySelector('.burger');
 var nav = document.getElementById('nav');
 if (burger && nav) {
-burger.addEventListener('click', function () {
-var open = nav.classList.toggle('is-open');
+var root = document.documentElement;
+var savedY = 0;
+function setMenu(open) {
+if (open === nav.classList.contains('is-open')) return;
+if (open) {
+savedY = window.scrollY || root.scrollTop || 0;
+nav.classList.add('is-open');
+root.classList.add('menu-open');
+document.body.style.top = -savedY + 'px';
+} else {
+nav.classList.remove('is-open');
+root.classList.remove('menu-open');
+document.body.style.top = '';
+window.scrollTo({ top: savedY, behavior: 'instant' });
+}
 burger.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+burger.addEventListener('click', function () {
+setMenu(!nav.classList.contains('is-open'));
 });
 nav.addEventListener('click', function (e) {
-if (e.target.closest('a')) {
-nav.classList.remove('is-open');
-burger.setAttribute('aria-expanded', 'false');
+if (e.target.closest('a')) setMenu(false);
+});
+document.addEventListener('keydown', function (e) {
+if (e.key === 'Escape' && nav.classList.contains('is-open')) {
+setMenu(false);
+burger.focus();
+}
+});
+document.addEventListener('click', function (e) {
+if (!nav.classList.contains('is-open')) return;
+if (e.target.closest('.nav') || e.target.closest('.burger')) return;
+setMenu(false);
+});
+window.addEventListener('resize', function () {
+if (nav.classList.contains('is-open') &&
+!window.matchMedia('(max-width: 61.1875em)').matches) {
+setMenu(false);
 }
 });
 }
