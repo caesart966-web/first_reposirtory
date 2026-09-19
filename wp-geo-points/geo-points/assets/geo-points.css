@@ -1,0 +1,78 @@
+/* Оформление намеренно скромное: блоки встают в чужую тему, поэтому
+   шрифты и цвет текста наследуются, а своего задаётся минимум. */
+
+.gp-page { max-width: 46rem; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+.gp-point__title { margin: 0 0 .5rem; }
+.gp-point__lead { margin: 0 0 1.5rem; font-size: 1.125rem; opacity: .85; }
+
+.gp-nap { margin: 0 0 1.5rem; border-top: 1px solid rgba(0,0,0,.12); }
+.gp-nap__row {
+	display: grid; grid-template-columns: 1fr; gap: .15rem;
+	margin: 0; padding: .75rem 0; border-bottom: 1px solid rgba(0,0,0,.12);
+}
+.gp-nap__label { font-size: .8125rem; text-transform: uppercase; letter-spacing: .04em; opacity: .6; }
+.gp-nap__value { font-size: 1.0625rem; font-weight: 600; }
+.gp-nap__phone .gp-nap__value { font-size: 1.375rem; text-decoration: none; }
+.gp-nap__note { font-size: .875rem; opacity: .7; }
+
+/* Карта не грузится, пока её не попросили: 19 живых iframe на сайте —
+   это 19 мегабайт чужих скриптов и просевшая скорость на телефоне. */
+.gp-map { margin: 0 0 1.5rem; }
+.gp-map__facade {
+	display: flex; align-items: center; gap: .75rem;
+	width: 100%; min-height: 8rem; padding: 1rem 1.25rem;
+	text-align: left; cursor: pointer;
+	background: repeating-linear-gradient(45deg, rgba(0,0,0,.035) 0 12px, rgba(0,0,0,.06) 12px 24px);
+	border: 1px solid rgba(0,0,0,.18); border-radius: .5rem;
+	font: inherit; color: inherit;
+}
+.gp-map__facade:hover { background: rgba(0,0,0,.09); }
+.gp-map__facade:focus-visible { outline: 3px solid currentColor; outline-offset: 2px; }
+.gp-map__pin {
+	flex: 0 0 auto; width: 1.5rem; height: 1.5rem; border-radius: 50% 50% 50% 0;
+	transform: rotate(-45deg); background: #c0392b; box-shadow: 0 2px 6px rgba(0,0,0,.25);
+}
+.gp-map__text { display: flex; flex-direction: column; gap: .15rem; }
+.gp-map__text span { font-size: .9375rem; opacity: .75; }
+.gp-map iframe { display: block; width: 100%; height: 22.5rem; border: 0; border-radius: .5rem; }
+
+.gp-content { margin: 0 0 2rem; }
+.gp-served { margin: 0 0 2rem; }
+
+.gp-reviews { margin: 0 0 1.5rem; }
+.gp-reviews__summary { margin: 0 0 1rem; opacity: .8; }
+.gp-reviews__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; }
+.gp-review { padding: 1rem; border: 1px solid rgba(0,0,0,.14); border-radius: .5rem; }
+.gp-review__head { display: flex; flex-wrap: wrap; gap: .5rem; align-items: baseline; margin: 0 0 .5rem; }
+.gp-review__stars { color: #e8a317; letter-spacing: .05em; }
+.gp-review__when, .gp-reviews__source { font-size: .875rem; opacity: .65; }
+.gp-review__text { margin: 0; }
+
+.gp-cta {
+	display: block; margin: 0 0 2rem; padding: 1rem 1.25rem;
+	text-align: center; font-weight: 600; text-decoration: none;
+	color: #fff; background: #1a73e8; border-radius: .5rem;
+}
+.gp-cta:hover, .gp-cta:focus { background: #1558b0; color: #fff; }
+
+.gp-others { border-top: 1px solid rgba(0,0,0,.12); padding-top: 1rem; }
+.gp-others ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+.gp-others li span { display: block; font-size: .875rem; opacity: .7; }
+
+.gp-list { list-style: none; margin: 0 0 1.5rem; padding: 0; display: grid; gap: 1rem; }
+.gp-list__item { padding-bottom: 1rem; border-bottom: 1px solid rgba(0,0,0,.12); }
+.gp-list__link { font-size: 1.125rem; font-weight: 600; }
+.gp-list__district, .gp-list__address, .gp-list__metro { display: block; font-size: .9375rem; opacity: .75; }
+.gp-list__phone { font-size: 1.125rem; }
+
+@media (min-width: 40em) {
+	.gp-nap__row { grid-template-columns: 10rem 1fr; align-items: baseline; }
+	.gp-nap__note { grid-column: 2; }
+	.gp-others ul { grid-template-columns: 1fr 1fr; }
+}
+
+@media (prefers-color-scheme: dark) {
+	.gp-nap, .gp-nap__row, .gp-others, .gp-list__item { border-color: rgba(255,255,255,.18); }
+	.gp-map__facade, .gp-review { border-color: rgba(255,255,255,.22); }
+	.gp-map__facade { background: repeating-linear-gradient(45deg, rgba(255,255,255,.05) 0 12px, rgba(255,255,255,.08) 12px 24px); }
+}
