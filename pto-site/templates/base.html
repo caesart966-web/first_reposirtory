@@ -25,9 +25,21 @@
 <meta property="og:description" content="{{description}}">
 <meta property="og:url" content="{{canonical}}">
 <meta property="og:image" content="{{og_image}}">
+<meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="{{og_image_alt}}">
+
+<!-- Карточка в Twitter/X читает свои теги и на og: не смотрит.
+     Без них ссылка выглядит голой строкой. -->
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{og_title}}">
+<meta name="twitter:description" content="{{description}}">
+<meta name="twitter:image" content="{{og_image}}">
+<meta name="twitter:image:alt" content="{{og_image_alt}}">
+
+<meta name="author" content="{{legal_name}}">
+{{verification}}
 
 <!-- Шрифты грузятся заранее: так подмена системного на фирменный происходит
      до первой отрисовки и текст не «прыгает». Файлы лежат на своём сервере. -->
@@ -133,6 +145,7 @@
           <li><a href="{{base}}/o-kompanii/">О компании</a></li>
           <li><a href="{{base}}/kontakty/">Контакты</a></li>
           <li><a href="{{base}}/uslugi/">Все услуги</a></li>
+          <li><a href="{{base}}/politika/">Персональные данные</a></li>
         </ul>
       </div>
     </div>
@@ -143,6 +156,8 @@
     </div>
   </div>
 </footer>
+
+{{cookie_bar}}
 
 <div class="call-bar">
   <a class="btn btn--primary" href="tel:{{phone_href}}">Позвонить</a>

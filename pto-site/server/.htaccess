@@ -69,9 +69,16 @@ ErrorDocument 404 /404.html
   Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(), interest-cohort=()"
 
   # Откуда странице разрешено что-либо грузить. Всё своё, плюс адрес приёма
-  # заявок. Если поменяете обработчик формы — впишите его домен в connect-src,
-  # иначе браузер заблокирует отправку.
-  Header always set Content-Security-Policy "default-src 'self'; img-src 'self' data:; media-src 'self'; font-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://api.telegram.org https://*.workers.dev; form-action 'self'; frame-ancestors 'self'; base-uri 'self'"
+  # заявок и Яндекс.Метрика. Если поменяете обработчик формы — впишите его
+  # домен в connect-src, иначе браузер заблокирует отправку.
+  #
+  # Метрика перечислена здесь заранее, хотя счётчик может быть ещё не включён:
+  # без этих трёх разрешений она молча не заработает в тот день, когда номер
+  # счётчика впишут в настройки, — скрипт не загрузится (script-src), отчёты
+  # не уйдут (connect-src), не отрисуется пиксель (img-src). Запросы к Яндексу
+  # всё равно не пойдут, пока посетитель не нажмёт «Принять»: это решает
+  # полоса согласия, а не этот заголовок.
+  Header always set Content-Security-Policy "default-src 'self'; img-src 'self' data: https://mc.yandex.ru; media-src 'self'; font-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://mc.yandex.ru; connect-src 'self' https://api.telegram.org https://*.workers.dev https://mc.yandex.ru; frame-src https://mc.yandex.ru; form-action 'self'; frame-ancestors 'self'; base-uri 'self'"
 </IfModule>
 
 # ---------- Мелочи ----------------------------------------------------------

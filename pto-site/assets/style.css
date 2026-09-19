@@ -45,7 +45,8 @@
   font-weight: 100 900;
   font-display: swap;
   src: url("fonts/inter-latin.woff2") format("woff2");
-  unicode-range: U+0000-00FF, U+2013-2014, U+2018-201D, U+2026, U+2212;
+  unicode-range: U+0020-007E, U+00A0, U+00A9, U+00AB, U+00B0, U+00B7,
+    U+00BB, U+00D7, U+2013-2014, U+2018-201D, U+2026, U+2116, U+2192, U+2212;
 }
 /* Geologica — шрифт заголовков. Узкая техническая гротеска с острой гранью:
    длинные русские заголовки помещаются в строку, и вид у них инженерный,
@@ -65,7 +66,8 @@
   font-weight: 500 800;
   font-display: swap;
   src: url("fonts/geologica-latin.woff2") format("woff2");
-  unicode-range: U+0020-007E, U+00A0, U+2013-2014, U+2018-201D, U+2026, U+2212;
+  unicode-range: U+0020-007E, U+00A0, U+00A9, U+00AB, U+00B0, U+00B7,
+    U+00BB, U+00D7, U+2013-2014, U+2018-201D, U+2026, U+2116, U+2192, U+2212;
 }
 @font-face {
   font-family: "MonoVar";
@@ -73,7 +75,7 @@
   font-weight: 100 800;
   font-display: swap;
   src: url("fonts/mono-cyrillic.woff2") format("woff2");
-  unicode-range: U+0400-045F, U+0490-0491;
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
 }
 @font-face {
   font-family: "MonoVar";
@@ -81,7 +83,8 @@
   font-weight: 100 800;
   font-display: swap;
   src: url("fonts/mono-latin.woff2") format("woff2");
-  unicode-range: U+0020-007E, U+00A0, U+2013-2014, U+2018-201D, U+2026;
+  unicode-range: U+0020-007E, U+00A0, U+00A9, U+00AB, U+00B0, U+00B7,
+    U+00BB, U+00D7, U+2013-2014, U+2018-201D, U+2026, U+2116, U+2192, U+2212;
 }
 
 /* ---------- 1. Токены ---------------------------------------------------- */
@@ -111,8 +114,13 @@
   --ink:         #0d1c30;   /* основной текст */
   --ink-muted:   #55677e;   /* вторичный текст */
   /* Тускло-серый для мелких подписей. Раньше был #7286a0 — на белом это
-     3,7:1, ниже нормы читаемости для текста в 11px. Затемнён до 5,1:1. */
-  --ink-soft:    #5f7288;
+     3,7:1, ниже нормы читаемости для текста в 11px. Затемнён.
+     Второй раз затемнён с #5f7288: на белом он давал нужные 4,9:1,
+     но на серой плашке --surface-alt уже 4,42:1 — ниже нормы. Подписи
+     стоят и на белом, и на серой плашке, поэтому цвет подбирается
+     по худшему из фонов, а не по самому светлому. Сейчас 4,99:1 на
+     серой плашке и 5,57:1 на белой. */
+  --ink-soft:    #586a7d;
   --ink-inverse: #ffffff;
   --ink-inverse-muted: #b9c7d9;
 
@@ -644,9 +652,18 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   inset: 0;
   z-index: -3;
   background-color: var(--panel);
+  /* Заливка видна, пока кадр не загрузился, и по краям, если он не покрывает */
   background-image: linear-gradient(115deg, #091524 0%, #12263f 45%, #1b3a5e 100%);
-  background-size: cover;
-  background-position: center;
+  overflow: hidden;
+}
+/* Кадр вставлен картинкой, а не фоном: так браузер сам выбирает формат
+   (avif или webp) и качает только один файл. */
+.hero__media-img,
+.media-band__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .hero__video {
   position: absolute;
@@ -971,9 +988,10 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
-  background: var(--panel) center / cover no-repeat;
+  background: var(--panel);
   box-shadow: var(--shadow-md);
 }
+.media-band__img { position: absolute; inset: 0; }
 .media-band__video {
   position: absolute;
   inset: 0;
@@ -1032,7 +1050,14 @@ hr { border: 0; border-top: 1px solid var(--line); margin: var(--s-6) 0; }
 .object__media {
   position: relative;
   aspect-ratio: 16 / 10;
-  background: var(--panel);
+  /* Заглушка светлая, а не тёмная. Фотография грузится отложенно,
+     и до её появления на светлой странице на долю секунды вспыхивал
+     тёмно-синий прямоугольник — на медленном канале это заметно. */
+  background: var(--surface-alt);
+  background-image:
+    linear-gradient(rgba(13, 28, 48, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(13, 28, 48, 0.05) 1px, transparent 1px);
+  background-size: 28px 28px;
   border-bottom: 1px solid var(--line);
   overflow: hidden;
 }
@@ -2112,6 +2137,247 @@ html {
   border-radius: 4px;
 }
 
+/* ---------- 13б. Юридические документы ----------------------------------
+   Страница политики — это сплошной текст, который читают по диагонали
+   и в который возвращаются за одним абзацем. Поэтому: узкая колонка,
+   содержание со ссылками, номера разделов как якоря и отбивка каждого
+   раздела линейкой. Оформлена как документ, а не как страница сайта:
+   так видно, что это настоящий документ, а не строчка мелким шрифтом. */
+.legal { max-width: 52rem; }
+
+/* Шапка документа: кто оператор, какая редакция, на каком основании.
+   Это первое, что ищет и проверяющий, и внимательный посетитель. */
+.legal__meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--s-4);
+  padding: var(--s-5);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-xs);
+}
+.legal__meta-item { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.legal__meta-label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.legal__meta-value { font-weight: 600; font-size: 0.9375rem; }
+
+.legal__toc {
+  margin-top: var(--s-5);
+  padding: var(--s-5);
+  background: var(--surface-alt);
+  border-radius: var(--radius);
+}
+.legal__toc-title {
+  margin: 0 0 var(--s-3);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.legal__toc-list {
+  margin: 0; padding: 0; list-style: none;
+  columns: 2; column-gap: var(--s-6);
+}
+.legal__toc-list li { break-inside: avoid; margin-bottom: 6px; }
+.legal__toc-list a {
+  display: inline-block;
+  padding: 3px 0;
+  font-size: 0.9375rem;
+  color: var(--ink-muted);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+.legal__toc-list a:hover { color: var(--accent); border-bottom-color: currentColor; }
+
+.legal__section {
+  margin-top: var(--s-7);
+  padding-top: var(--s-6);
+  border-top: 1px solid var(--line);
+  /* Заголовок раздела не должен уезжать под липкую шапку, когда
+     на него перешли по ссылке из содержания. */
+  scroll-margin-top: calc(var(--header-h) + var(--s-5));
+}
+.legal__h { margin: 0 0 var(--s-4); font-size: 1.25rem; line-height: 1.3; }
+.legal__h--big { font-size: 1.5rem; }
+.legal p { margin: 0 0 var(--s-4); max-width: 44rem; }
+.legal__note {
+  color: var(--ink-muted);
+  font-size: 0.9375rem;
+  font-style: italic;
+}
+.legal__list { margin: 0 0 var(--s-4) 1.1rem; padding: 0; max-width: 44rem; }
+.legal__list li { margin-bottom: var(--s-3); }
+.legal__list li::marker { color: var(--accent); }
+
+.legal__terms { margin: 0 0 var(--s-4); }
+.legal__term {
+  padding: var(--s-3) 0;
+  border-bottom: 1px dashed var(--line);
+}
+.legal__term dt { font-weight: 650; margin-bottom: 4px; }
+.legal__term dd { margin: 0; color: var(--ink-muted); }
+
+.legal__table-wrap { margin: 0 0 var(--s-4); }
+.legal__table { width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
+.legal__table th, .legal__table td {
+  padding: var(--s-3);
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+.legal__table th {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+/* На телефоне строка таблицы разворачивается в карточку: три колонки
+   с длинными формулировками в 360 px не помещаются ни при каком кегле,
+   а боковую прокрутку внутри таблицы посетители не замечают. */
+@media (max-width: 37.5em) {
+  .legal__table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .legal__table tr { display: block; padding: var(--s-3) 0; border-bottom: 1px solid var(--line); }
+  .legal__table td { display: block; border: 0; padding: 2px 0; }
+  .legal__table td::before {
+    content: attr(data-label);
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+}
+
+.legal__section--consent {
+  margin-top: var(--s-8);
+  padding: var(--s-6);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 43.6875em) {
+  .legal__toc-list { columns: 1; }
+}
+
+/* ---------- 13в. Отметка о согласии в форме ------------------------------
+   Галочка обязательна и заранее НЕ проставлена: заранее проставленная
+   отметка согласием по закону не считается. Настоящий input скрыт,
+   но остаётся на месте — по нему работают клавиатура и проверка формы,
+   а рисуем мы свой квадрат, чтобы он был виден на тёмной плашке. */
+.field--consent { margin-top: var(--s-4); }
+.consent {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: var(--s-3);
+  align-items: start;
+  cursor: pointer;
+  /* Поле нажатия во всю строку и не меньше 44 px по высоте */
+  min-height: var(--tap);
+  padding: var(--s-2) 0;
+}
+.consent input {
+  position: absolute;
+  width: 22px; height: 22px;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.consent__box {
+  width: 22px; height: 22px;
+  margin-top: 1px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 5px;
+  background: var(--surface);
+  display: grid;
+  place-items: center;
+  transition: background-color var(--t-fast), border-color var(--t-fast);
+}
+.consent__box::after {
+  content: "";
+  width: 11px; height: 6px;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  transform: rotate(-45deg) scale(0.5);
+  opacity: 0;
+  transition: opacity var(--t-fast), transform var(--t-fast);
+}
+.consent input:checked + .consent__box {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.consent input:checked + .consent__box::after { opacity: 1; transform: rotate(-45deg) scale(1); }
+.consent input:focus-visible + .consent__box {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.consent__text { font-size: 0.875rem; line-height: 1.5; color: var(--ink-muted); }
+.consent__text a { color: var(--accent); }
+.field--consent.is-error .consent__box,
+.field--consent.field--error .consent__box { border-color: #c0392b; }
+
+/* ---------- 13г. Переход между страницами --------------------------------
+   Браузер сам делает плавное перетекание при переходе по внутренней ссылке:
+   страница не моргает белым. Кто не умеет — переходит как раньше, ничего
+   не ломается. Шапка помечена отдельным именем, чтобы она не мигала,
+   а оставалась на месте: она одинаковая на всех страницах. */
+@view-transition { navigation: auto; }
+
+.header { view-transition-name: header; }
+.call-bar { view-transition-name: callbar; }
+
+::view-transition-old(root) { animation-duration: 140ms; }
+::view-transition-new(root) { animation-duration: 190ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  @view-transition { navigation: none; }
+}
+
+/* ---------- 13д. Полоса про cookie ---------------------------------------
+   Появляется только когда счётчик настроен, и только до первого выбора.
+   Стоит над нижней панелью связи, чтобы не закрывать кнопку «Позвонить». */
+.cookie {
+  position: fixed;
+  left: var(--s-4);
+  right: var(--s-4);
+  bottom: var(--s-4);
+  z-index: 60;
+  max-width: 34rem;
+  margin-left: auto;
+  padding: var(--s-4) var(--s-5);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+.cookie__text {
+  margin: 0 0 var(--s-3);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--ink-muted);
+}
+.cookie__text a { color: var(--accent); }
+.cookie__row { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+
+/* Ниже 900 px снизу висит панель связи — полосу поднимаем над ней,
+   иначе она накрывает кнопку «Позвонить». Высоту панели меряет скрипт
+   и кладёт в --call-bar-h; пока не померил, берём запас. */
+@media (max-width: 56.25em) {
+  .cookie { bottom: calc(var(--call-bar-h, 64px) + var(--s-3)); max-width: none; }
+}
+
 /* ---------- 14. Утилиты и адаптив --------------------------------------- */
 .visually-hidden {
   position: absolute; width: 1px; height: 1px;
@@ -2159,14 +2425,29 @@ html {
   .nav.is-open .nav__list { flex-direction: column; align-items: stretch; gap: 0; }
   .nav.is-open .nav__link { min-height: 52px; border-bottom: 1px solid var(--line); border-radius: 0; }
   .nav.is-open .nav__link::after { display: none; }
-  .header { position: relative; }
+  /* Шапка на телефоне ОСТАЁТСЯ липкой. Раньше здесь стояло
+     position: relative — оно понадобилось, чтобы выпадающая панель меню
+     привязывалась к шапке, и заодно молча отменяло липкость: до меню
+     и до кнопки звонка приходилось прокручивать страницу до самого верха.
+     Привязка панели работает и без него: sticky — тоже позиционирование,
+     и absolute внутри него считает от шапки. */
+  html.menu-open .header { position: fixed; left: 0; right: 0; top: 0; }
+  /* Уезжает при прокрутке вниз, возвращается при прокрутке вверх.
+     Двигаем transform, а не высоту: высота пересчитывала бы раскладку
+     всей страницы под шапкой на каждом кадре. */
+  .header { transition: transform 220ms var(--ease), box-shadow var(--t-mid),
+                        background-color var(--t-mid); }
+  .header.is-hidden { transform: translateY(-100%); }
+  html.menu-open body { position: fixed; left: 0; right: 0; width: 100%; }
   .header__inner { min-height: 62px; gap: var(--s-3); }
   .header__contacts { display: none; }
   .burger { display: block; }
   .logo__sub { display: none; }
   .steps--3, .steps--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .call-bar { display: flex; }
-  body { padding-bottom: 66px; }   /* место под панель звонка */
+  /* Место под панель звонка. Точную высоту подставляет скрипт
+     (--call-bar-h): с вырезом снизу она больше записанной. */
+  body { padding-bottom: var(--call-bar-h, 66px); }
 }
 
 @media (max-width: 44.9375em) {
@@ -2206,6 +2487,10 @@ html {
     line-height: 1.5;
   }
   .reveal { opacity: 1 !important; transform: none !important; }
+  /* Уезжающая шапка — тоже движение: при «уменьшить движение» она
+     просто остаётся на месте. */
+  .header { transition: none; }
+  .header.is-hidden { transform: none; }
   .hero__inner > * { animation: none !important; }
 }
 
@@ -2287,6 +2572,17 @@ html {
   /* Стрелка выпадающего списка была нарисована тёмной */
   .field select {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%23a2b4c9' stroke-width='1.6' d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
+  }
+
+  /* Номер объекта — мелкий текст акцентным синим. На тёмной карточке это
+     3,6:1, ниже нормы; светлый оттенок того же синего даёт 7:1. */
+  .object__num { color: var(--accent-300); }
+  /* Сетка на заглушке под фотографию нарисована тёмным по светлому —
+     в тёмной теме её не было бы видно вовсе. */
+  .object__media {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
   }
 
   /* Значок контакта: на тёмной подложке нужен светлый оттенок акцента */
