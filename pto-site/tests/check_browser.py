@@ -37,7 +37,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 DIST = ROOT / "dist"
 PORT = 8177
 PAGES = ["/", "/uslugi/", "/uslugi/geodeziya/", "/obekty/", "/o-kompanii/",
-         "/kontakty/", "/404.html"]
+         "/kontakty/", "/politika/", "/404.html"]
 WIDTHS = (320, 360, 390, 768, 1024, 1280, 1440, 1600)
 # Браузер можно указать вручную, если он лежит не там, где ждёт playwright
 def _find_chrome() -> str | None:

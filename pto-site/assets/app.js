@@ -317,6 +317,17 @@
     if (d.length < 10) { setError(phone, 'Укажите телефон — 10 цифр и больше'); ok = false; }
     else setError(phone, '');
 
+    /* Согласие на обработку персональных данных. Галочка обязательна
+       и заранее не проставлена: заранее проставленная отметка согласием
+       не считается, и это первое, к чему цепляется проверяющий. */
+    var consent = form.elements.consent;
+    if (consent && !consent.checked) {
+      setError(consent, 'Без согласия на обработку данных заявку отправить нельзя');
+      ok = false;
+    } else if (consent) {
+      setError(consent, '');
+    }
+
     return ok;
   }
 
@@ -460,5 +471,83 @@
         phone.value = phone.value.replace(/[^\d+()\-\s]/g, '');
       });
     }
+  });
+})();
+
+/* =========================================================================
+   5. Полоса про cookie и подключение Яндекс.Метрики
+
+   Счётчик подключается ОТСЮДА и только после нажатия «Принять». Его нет
+   в разметке страницы нарочно: пока посетитель не выбрал, к Яндексу
+   не должно уйти ни одного запроса, иначе полоса спрашивает разрешение
+   на то, что уже сделано.
+
+   Полосы вообще нет на странице, если счётчик не настроен: сайт тогда
+   не ставит ни одного файла cookie, и спрашивать не о чем.
+
+   Выбор храним в localStorage, а не в cookie: хранить согласие на cookie
+   в cookie до получения согласия — замкнутый круг.
+   ========================================================================= */
+/* Высота нижней панели связи — МЕРЯЕТСЯ, а не записывается числом.
+   На телефонах с вырезом снизу к ней добавляется safe-area-inset, и
+   записанные по отступу 66 px оказываются больше. Под панелью стоят
+   и отступ страницы, и полоса про cookie: промахнёшься на три пикселя —
+   панель накроет кнопку. */
+(function () {
+  var bar = document.querySelector('.call-bar');
+  if (!bar) return;
+  function measure() {
+    var h = bar.offsetHeight;
+    if (h) document.documentElement.style.setProperty('--call-bar-h', h + 'px');
+  }
+  measure();
+  window.addEventListener('resize', measure);
+  window.addEventListener('orientationchange', measure);
+  if (window.ResizeObserver) new ResizeObserver(measure).observe(bar);
+})();
+
+(function () {
+  var bar = document.getElementById('cookie-bar');
+  if (!bar) return;
+
+  var KEY = 'xpto-cookie';
+  var id = bar.getAttribute('data-metrika');
+
+  function saved() {
+    try { return localStorage.getItem(KEY); } catch (e) { return null; }
+  }
+  function remember(value) {
+    try { localStorage.setItem(KEY, value); } catch (e) { /* режим инкогнито */ }
+  }
+
+  function startMetrika() {
+    if (!id || window['yaCounter' + id] || document.getElementById('ym-script')) return;
+    window.ym = window.ym || function () { (window.ym.a = window.ym.a || []).push(arguments); };
+    window.ym.l = +new Date();
+    var s = document.createElement('script');
+    s.id = 'ym-script';
+    s.async = true;
+    s.src = 'https://mc.yandex.ru/metrika/tag.js';
+    document.head.appendChild(s);
+    window.ym(id, 'init', {
+      clickmap: true,
+      trackLinks: true,
+      accurateTrackBounce: true,
+      webvisor: false
+    });
+  }
+
+  var choice = saved();
+  if (choice === 'all') { startMetrika(); return; }
+  if (choice === 'none') return;
+
+  bar.hidden = false;
+  bar.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-cookie]');
+    if (!btn) return;
+    var value = btn.getAttribute('data-cookie');
+    remember(value);
+    bar.hidden = true;
+    if (value === 'all') startMetrika();
   });
 })();

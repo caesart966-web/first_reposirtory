@@ -230,6 +230,13 @@ else setError(name, '');
 var d = digits(phone.value);
 if (d.length < 10) { setError(phone, 'Укажите телефон — 10 цифр и больше'); ok = false; }
 else setError(phone, '');
+var consent = form.elements.consent;
+if (consent && !consent.checked) {
+setError(consent, 'Без согласия на обработку данных заявку отправить нельзя');
+ok = false;
+} else if (consent) {
+setError(consent, '');
+}
 return ok;
 }
 function buildMessage(form) {
@@ -348,5 +355,57 @@ phone.addEventListener('input', function () {
 phone.value = phone.value.replace(/[^\d+()\-\s]/g, '');
 });
 }
+});
+})();
+(function () {
+var bar = document.querySelector('.call-bar');
+if (!bar) return;
+function measure() {
+var h = bar.offsetHeight;
+if (h) document.documentElement.style.setProperty('--call-bar-h', h + 'px');
+}
+measure();
+window.addEventListener('resize', measure);
+window.addEventListener('orientationchange', measure);
+if (window.ResizeObserver) new ResizeObserver(measure).observe(bar);
+})();
+(function () {
+var bar = document.getElementById('cookie-bar');
+if (!bar) return;
+var KEY = 'xpto-cookie';
+var id = bar.getAttribute('data-metrika');
+function saved() {
+try { return localStorage.getItem(KEY); } catch (e) { return null; }
+}
+function remember(value) {
+try { localStorage.setItem(KEY, value); } catch (e) { /* режим инкогнито */ }
+}
+function startMetrika() {
+if (!id || window['yaCounter' + id] || document.getElementById('ym-script')) return;
+window.ym = window.ym || function () { (window.ym.a = window.ym.a || []).push(arguments); };
+window.ym.l = +new Date();
+var s = document.createElement('script');
+s.id = 'ym-script';
+s.async = true;
+s.src = 'https://mc.yandex.ru/metrika/tag.js';
+document.head.appendChild(s);
+window.ym(id, 'init', {
+clickmap: true,
+trackLinks: true,
+accurateTrackBounce: true,
+webvisor: false
+});
+}
+var choice = saved();
+if (choice === 'all') { startMetrika(); return; }
+if (choice === 'none') return;
+bar.hidden = false;
+bar.addEventListener('click', function (e) {
+var btn = e.target.closest('[data-cookie]');
+if (!btn) return;
+var value = btn.getAttribute('data-cookie');
+remember(value);
+bar.hidden = true;
+if (value === 'all') startMetrika();
 });
 })();
