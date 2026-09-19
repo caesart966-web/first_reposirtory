@@ -659,6 +659,60 @@ def cookie_bar(site: Site) -> str:
 </div>'''
 
 
+# Короткие слова, после которых строка обрываться не должна. Предлог
+# или союз, повисший в конце строки, — самая заметная разница между
+# «набрано» и «свёрстано».
+#
+# В списке ТОЛЬКО предлоги, союзы и частицы. Местоимения и вопросительные
+# слова («их», «это», «как», «что») сюда не входят нарочно: они полноценные
+# слова, и связывать их с соседним значит делать длинные неразрывные куски,
+# которые на экране в 360 px вылезают за край. Список закрытый — гнать
+# неразрывный пробел после любого короткого слова нельзя.
+SHORT_WORDS = (
+    "а и о у в к с я не ни но да же ли бы во со ко об от до из за на по "
+    "для при над под без про или меж"
+).split()
+_SHORT_RE = re.compile(
+    r"(?<![\w\u0400-\u04FF])(" + "|".join(SHORT_WORDS) + r") +(?=[\w\u0400-\u04FF«(])",
+    re.IGNORECASE)
+# Сокращение с точкой перед числом: «ст. 18.1», «д. 7», «№ 152»
+_ABBR_RE = re.compile(r"(\b[а-яё]{1,4}\.|№) +(?=[\d«])", re.IGNORECASE)
+# Число и то, что к нему относится: «1200 ₽», «14 КБ», «5 лет»
+_UNIT_RE = re.compile(r"(\d) +(?=[%‰₽°]|[а-яё]{1,4}[.,)]?(?![\w\u0400-\u04FF]))")
+_NBSP = "\u00a0"
+
+
+def typo_ru(page: str) -> str:
+    """Русская типографика: неразрывные пробелы там, где перенос строки
+    выглядит ошибкой набора.
+
+    Работает по готовой странице и трогает ТОЛЬКО текст между тегами:
+    внутрь самих тегов не заглядывает вовсе, поэтому не может испортить
+    ни адрес ссылки, ни имя класса. Содержимое <script>, <style> и <pre>
+    пропускается целиком — там пробелы значащие."""
+    out = []
+    skip = 0
+    for chunk in re.split(r"(<[^>]*>)", page):
+        if chunk.startswith("<"):
+            name = re.match(r"</?\s*(script|style|pre|textarea)\b", chunk, re.I)
+            if name:
+                skip += 1 if not chunk.startswith("</") else -1
+                skip = max(skip, 0)
+            out.append(chunk)
+            continue
+        if skip or not chunk.strip():
+            out.append(chunk)
+            continue
+        text = chunk
+        text = _SHORT_RE.sub(lambda m: m.group(1) + _NBSP, text)
+        text = _ABBR_RE.sub(lambda m: m.group(1) + _NBSP, text)
+        text = _UNIT_RE.sub(lambda m: m.group(1) + _NBSP, text)
+        # Тире не должно начинать строку: оно остаётся с предыдущим словом.
+        text = text.replace(" —", _NBSP + "—")
+        out.append(text)
+    return "".join(out)
+
+
 def og_for(path: str) -> str:
     """Своя обложка страницы для соцсетей, если она нарисована
     инструментом tools/make-og.py. Имя файла повторяет адрес страницы:
@@ -890,6 +944,7 @@ class Renderer:
             return ctx[key]
 
         page = re.sub(r"\{\{(\w+)\}\}", sub, self.template)
+        page = typo_ru(page)
 
         out = DIST_DIR / path.strip("/") / "index.html" if path != "/" else DIST_DIR / "index.html"
         if path.endswith(".html"):
@@ -918,8 +973,13 @@ def page_home(r: Renderer) -> None:
     spec = []
     for st in offer["stats"]:
         unit = f'<span class="hero__spec-unit">{esc(st["unit"])}</span>' if st.get("unit") else ""
+        # {услуг} считается по списку услуг, а не пишется руками. Однажды
+        # услуг стало четырнадцать, а на первом экране осталось тринадцать:
+        # такую ошибку не ловит ни одна проверка — она не противоречит
+        # ничему, кроме действительности.
+        value = str(st["value"]).replace("{услуг}", str(len(site.services)))
         spec.append(f'''          <div class="hero__spec-item">
-            <div class="hero__spec-value">{esc(st["value"])}{unit}</div>
+            <div class="hero__spec-value">{esc(value)}{unit}</div>
             <div class="hero__spec-label">{esc(st["label"])}</div>
           </div>''')
 
