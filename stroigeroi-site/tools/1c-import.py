@@ -42,6 +42,7 @@ CATS = ROOT / '1c/kategorii.csv'
 OUT_HTML = ROOT / '1c/predprosmotr.html'
 OUT_SQL = ROOT / '1c/import.sql'
 OUT_TXT = ROOT / '1c/otchet.txt'
+DATE = ''
 
 # Служебные пометки 1С в начале названия. Распознаём только те, значение
 # которых известно наверняка; всё остальное вида «Я…!!!» попадает
@@ -101,6 +102,44 @@ def clean_name(raw):
     return t, model, marks
 
 
+# Русские буквы латиницей для адреса страницы. Таблица обычная,
+# «яндексовская»: щ -> sch, ю -> yu, я -> ya, мягкий и твёрдый знаки
+# пропадают. Меняете таблицу - меняются адреса уже опубликованных
+# товаров, а это потерянные позиции в поиске.
+TRANSLIT = {
+    'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'e',
+    'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
+    'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
+    'ф': 'f', 'х': 'h', 'ц': 'c', 'ч': 'ch', 'ш': 'sh', 'щ': 'sch',
+    'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya',
+}
+
+
+def slug(text, limit=90):
+    """Адрес страницы из названия товара."""
+    out = []
+    for ch in text.lower():
+        out.append(TRANSLIT.get(ch, ch))
+    s = re.sub(r'[^a-z0-9]+', '-', ''.join(out)).strip('-')
+    if len(s) > limit:
+        # Режем по дефису, чтобы адрес не обрывался посреди слова.
+        s = s[:limit].rsplit('-', 1)[0]
+    return s
+
+
+def unique_slugs(pairs):
+    """pairs: список (ключ, текст). Возвращает ключ -> адрес.
+    Повторы разводятся числом: два разных товара с одинаковым
+    названием в выгрузке есть, и без этого второй затёр бы первый."""
+    seen = Counter()
+    out = {}
+    for key, text in pairs:
+        base = slug(text) or 'tovar'
+        seen[base] += 1
+        out[key] = base if seen[base] == 1 else f'{base}-{seen[base]}'
+    return out
+
+
 def read_cats():
     """guid -> (название, подтверждено)"""
     out = {}
@@ -127,7 +166,9 @@ def q(s):
 
 
 def main():
+    global DATE
     root = ET.parse(SRC).getroot()
+    DATE = root.get('date') or 'дата не указана'
     shop = root.find('shop')
     file_cats = {c.get('id'): (c.text or '').strip() for c in shop.find('categories')}
     offers = list(shop.find('offers'))
@@ -322,17 +363,26 @@ SQL_HEAD = """-- ===============================================================
 -- =====================================================================
 --
 --  ПЕРЕД ЗАПУСКОМ: сделайте копию базы (phpMyAdmin -> Экспорт).
+--
 --  Скрипт можно запускать повторно: товар, который уже загружен,
 --  второй раз не добавится — он опознаётся по номеру из 1С (поле SKU).
 --
---  ОДНА НАСТРОЙКА, которую выбираете вы. Поставьте 0, если товары
---  должны сначала появиться скрытыми (пока не пришлют фотографии),
---  и 1, если показывать сразу.
+--  Но скрипт только ДОБАВЛЯЕТ. Если в 1С поменяли цену или название
+--  у товара, который уже на сайте, повторный запуск их не подтянет:
+--  иначе он затирал бы и правки, сделанные в админке руками.
+--  Обновление цен — отдельная задача, её делаем, когда понадобится.
+--
+--  ДВЕ НАСТРОЙКИ, которые выбираете вы.
+--
+--  1. Показывать товары сразу или завести скрытыми. Поставьте 0,
+--     если хотите сначала дождаться фотографий, и 1, если показывать
+--     сразу. Переключается потом и в админке, разом для всех.
 SET @status := 1;
 --
---  Родительский раздел для новых разделов каталога. 0 — верхний
---  уровень. Если хотите сложить всё внутрь существующего раздела,
---  впишите его номер (виден в адресе раздела в админке).
+--  2. Родительский раздел для новых разделов каталога. 0 — верхний
+--     уровень, разделы встанут в главное меню сайта. Если хотите
+--     сложить всё внутрь существующего раздела, впишите его номер
+--     (виден в адресе раздела в админке).
 SET @parent := 0;
 --
 -- ---------------------------------------------------------------------
@@ -341,13 +391,16 @@ SET @parent := 0;
 --  Язык, склад и единицы берём из настроек самого магазина, а не числом:
 --  на разных установках эти номера разные, и жёстко вписанная единица
 --  однажды разложит товары по чужим справочникам.
+SET @store := 0;
 SET @lang  := (SELECT language_id FROM `oc_language`
-               WHERE code = (SELECT value FROM `oc_setting` WHERE `key` = 'config_language' LIMIT 1)
+               WHERE code = (SELECT value FROM `oc_setting`
+                             WHERE `key` = 'config_language' AND store_id = @store LIMIT 1)
                LIMIT 1);
 SET @lang  := IFNULL(@lang, 1);
-SET @store := 0;
-SET @wcls  := IFNULL((SELECT value FROM `oc_setting` WHERE `key` = 'config_weight_class_id' LIMIT 1), 1);
-SET @lcls  := IFNULL((SELECT value FROM `oc_setting` WHERE `key` = 'config_length_class_id' LIMIT 1), 1);
+SET @wcls  := IFNULL((SELECT value FROM `oc_setting`
+                      WHERE `key` = 'config_weight_class_id' AND store_id = @store LIMIT 1), 1);
+SET @lcls  := IFNULL((SELECT value FROM `oc_setting`
+                      WHERE `key` = 'config_length_class_id' AND store_id = @store LIMIT 1), 1);
 
 --  Остатков в выгрузке нет. Врать «в наличии» нельзя, писать «нет
 --  на складе» — тоже неправда. Заводим отдельное состояние склада.
@@ -368,12 +421,21 @@ CREATE TABLE `oc_import_1c` (
   `model`       VARCHAR(64)   NOT NULL,
   `price`       DECIMAL(15,4) NOT NULL,
   `descr`       TEXT          NOT NULL,
+  `keyword`     VARCHAR(255)  NOT NULL,
   `category_id` INT DEFAULT NULL,
   `product_id`  INT DEFAULT NULL,
   PRIMARY KEY (`guid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+--  Кодировка именно utf8, а не utf8mb4: такими установщик ocStore
+--  создаёт все свои таблицы. Если у промежуточной будет другая,
+--  MySQL откажется сравнивать её колонки с колонками магазина
+--  («Illegal mix of collations»), и загрузка встанет на первом же
+--  соединении таблиц. На всякий случай сравнения ниже идут ещё
+--  и через CAST AS BINARY: номера из 1С и адреса страниц — латиница
+--  и цифры, побайтового сравнения им достаточно, а от кодировки
+--  оно уже не зависит.
 
-INSERT INTO `oc_import_1c` (`guid`,`cat_guid`,`name`,`model`,`price`,`descr`) VALUES
+INSERT INTO `oc_import_1c` (`guid`,`cat_guid`,`name`,`model`,`price`,`descr`,`keyword`) VALUES
 """
 
 SQL_TAIL = """
@@ -391,10 +453,11 @@ SELECT i.`model`, i.`guid`, '', '', '', '', '', '', 0, @stock,
        0, @wcls, 0, 0, 0, @lcls,
        0, 1, 0, @status, 0, NOW(), NOW()
 FROM `oc_import_1c` i
-WHERE NOT EXISTS (SELECT 1 FROM `oc_product` p WHERE p.`sku` = i.`guid`);
+WHERE NOT EXISTS (SELECT 1 FROM `oc_product` p
+                  WHERE CAST(p.`sku` AS BINARY) = CAST(i.`guid` AS BINARY));
 
 UPDATE `oc_import_1c` i
-  JOIN `oc_product` p ON p.`sku` = i.`guid`
+  JOIN `oc_product` p ON CAST(p.`sku` AS BINARY) = CAST(i.`guid` AS BINARY)
   SET i.`product_id` = p.`product_id`;
 
 INSERT IGNORE INTO `oc_product_description`
@@ -410,14 +473,40 @@ SELECT i.`product_id`, i.`category_id` FROM `oc_import_1c` i
 WHERE i.`product_id` IS NOT NULL AND i.`category_id` IS NOT NULL;
 
 -- ---- Что получилось -------------------------------------------------
-SELECT COUNT(*) AS 'строк из 1С' FROM `oc_import_1c`;
-SELECT COUNT(*) AS 'заведено товаров' FROM `oc_import_1c` WHERE `product_id` IS NOT NULL;
-SELECT COUNT(*) AS 'без раздела' FROM `oc_import_1c` WHERE `category_id` IS NULL;
+SELECT COUNT(*) AS `строк из 1С` FROM `oc_import_1c`;
+SELECT COUNT(*) AS `заведено товаров` FROM `oc_import_1c` WHERE `product_id` IS NOT NULL;
+SELECT COUNT(*) AS `без раздела` FROM `oc_import_1c` WHERE `category_id` IS NULL;
+
+-- ---- Человекопонятные адреса ----------------------------------------
+--  Без этого раздела товар открывается по адресу вида
+--  index.php?route=product/product&product_id=123 - работает, но
+--  и человеку, и поисковику такой адрес не говорит ничего.
+--
+--  Если адрес уже кем-то занят, мы его НЕ трогаем, а отказываемся
+--  от своего: в oc_seo_url нет запрета на повторы, и два одинаковых
+--  адреса открывали бы одну и ту же страницу вместо двух разных.
+--  Повторный запуск скрипта поэтому ничего не добавляет: адрес уже
+--  занят нашей же прошлой строкой.
+--
+--  Весь этот раздел можно удалить, если человекопонятные адреса
+--  в магазине выключены - тогда он просто ничего не даёт.
+UPDATE `oc_import_1c` i
+  JOIN `oc_seo_url` s
+    ON CAST(LOWER(s.`keyword`) AS BINARY) = CAST(i.`keyword` AS BINARY)
+   AND s.`store_id` = @store AND s.`language_id` = @lang
+  SET i.`keyword` = '';
+
+INSERT INTO `oc_seo_url` (`store_id`,`language_id`,`query`,`keyword`)
+SELECT @store, @lang, CONCAT('product_id=', i.`product_id`), i.`keyword`
+FROM `oc_import_1c` i
+WHERE i.`product_id` IS NOT NULL AND i.`keyword` <> '';
+
+SELECT COUNT(*) AS `адресов заведено` FROM `oc_import_1c` WHERE `keyword` <> '';
 
 --  Если какие-то из этих товаров уже были на сайте, заведённые руками,
 --  они не опознаются по номеру из 1С и удвоятся. Этот запрос показывает
 --  одинаковые названия — если список пуст, дублей нет.
-SELECT pd.`name` AS 'повторяется название', COUNT(*) AS 'штук'
+SELECT pd.`name` AS `повторяется название`, COUNT(*) AS `штук`
 FROM `oc_product_description` pd
 WHERE pd.`language_id` = @lang
 GROUP BY pd.`name` HAVING COUNT(*) > 1
@@ -485,23 +574,26 @@ def verify_sql(text, rows, cols):
 
 
 def write_sql(by_cat, cats):
+    order = sorted(by_cat.items(), key=lambda kv: -len(kv[1]))
+    slugs = unique_slugs(
+        [(('cat', cid), cats[cid][0]) for cid, _ in order]
+        + [(('prod', g['guid']), g['name']) for _, items in order for g in items])
     rows = []
     for cid, items in by_cat.items():
         for g in items:
             rows.append('  (' + ', '.join([
                 q(g['guid']), q(cid), q(g['name'][:255]), q(g['model'][:64]),
-                f'{g["price"]:.4f}', q(g['descr']),
+                f'{g["price"]:.4f}', q(g['descr']), q(slugs[('prod', g['guid'])]),
             ]) + ')')
     n = len(rows)
 
-    out = [SQL_HEAD.format(src=SRC.name, date='см. шапку файла выгрузки',
-                           n=n, c=len(by_cat))]
+    out = [SQL_HEAD.format(src=SRC.name, date=DATE, n=n, c=len(by_cat))]
     out.append(',\n'.join(rows) + ';\n')
 
     out.append('\n-- ---- Разделы каталога ----------------------------------------------\n'
                '--  Раздел ищется по названию: если такой уже есть, второй\n'
                '--  не заводится, а товары ложатся в существующий.\n')
-    for cid, items in sorted(by_cat.items(), key=lambda kv: -len(kv[1])):
+    for cid, items in order:
         name = cats[cid][0]
         out.append(f'\n-- {name} ({len(items)} тов.)')
         out.append(f'SET @cat := (SELECT category_id FROM `oc_category_description`\n'
@@ -532,13 +624,19 @@ def write_sql(by_cat, cats):
         out.append('INSERT IGNORE INTO `oc_category_path` (`category_id`,`path_id`,`level`) '
                    'VALUES (@cat, @cat, @lvl);')
         out.append(f'UPDATE `oc_import_1c` SET `category_id` = @cat WHERE `cat_guid` = {q(cid)};')
+        kw = slugs[('cat', cid)]
+        out.append(f'SET @kw := (SELECT 1 FROM `oc_seo_url` WHERE `keyword` = {q(kw)}\n'
+                   '              AND `store_id` = @store AND `language_id` = @lang LIMIT 1);')
+        out.append('INSERT INTO `oc_seo_url` (`store_id`,`language_id`,`query`,`keyword`)\n'
+                   f"SELECT @store, @lang, CONCAT('category_id=', @cat), {q(kw)}\n"
+                   '  FROM DUAL WHERE @kw IS NULL;')
 
     out.append(SQL_TAIL)
     text = '\n'.join(out) + '\n'
 
     # Собранный файл проверяется до записи: битый SQL лучше не отдавать
     # вовсе, чем отдать и узнать о поломке на живой базе.
-    bad = verify_sql(text, rows, 6)
+    bad = verify_sql(text, rows, 7)
     if bad:
         print('SQL не записан, в нём ошибки:')
         for b in bad:
