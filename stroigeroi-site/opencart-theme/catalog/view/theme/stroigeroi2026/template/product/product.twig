@@ -27,9 +27,9 @@
 
     {% if breadcrumbs %}
     <nav class="breadcrumbs" aria-label="Хлебные крошки">
-      <ol>
+      <ol itemscope itemtype="https://schema.org/BreadcrumbList">
         {% for breadcrumb in breadcrumbs %}
-        {% if loop.last %}<li aria-current="page">{{ breadcrumb.text }}</li>{% else %}<li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>{% endif %}
+        {% if loop.last %}<li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem" aria-current="page"><span itemprop="name">{{ breadcrumb.text }}</span><meta itemprop="position" content="{{ loop.index }}"></li>{% else %}<li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a itemprop="item" href="{{ breadcrumb.href }}"><span itemprop="name">{{ breadcrumb.text }}</span></a><meta itemprop="position" content="{{ loop.index }}"></li>{% endif %}
         {% endfor %}
       </ol>
     </nav>
@@ -37,11 +37,11 @@
 
     {{ content_top }}
 
-    <div class="product-hero">
+    <div class="product-hero" itemscope itemtype="https://schema.org/Product">
 
       <div class="gallery">
         <div class="gallery__main">
-          {% if thumb %}<img src="{{ thumb }}" alt="{{ heading_title }}" id="product-photo" decoding="async">{% endif %}
+          {% if thumb %}<img itemprop="image" src="{{ thumb }}" alt="{{ heading_title }}" id="product-photo" decoding="async">{% endif %}
           {% if popup %}<a class="gallery__zoom" href="{{ popup }}" target="_blank" rel="noopener" aria-label="Открыть фотографию целиком"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4M11 8.5v5M8.5 11h5"/></svg></a>{% endif %}
         </div>
         {% if images %}
@@ -55,9 +55,9 @@
       </div>
 
       <div class="product-info">
-        {% if manufacturer %}<p class="product-info__brand"><a href="{{ manufacturers }}">{{ manufacturer }}</a></p>{% endif %}
-        <h1>{{ heading_title }}</h1>
-        {% if model %}<p class="product-info__art">Артикул: {{ model }}</p>{% endif %}
+        {% if manufacturer %}<p class="product-info__brand" itemprop="brand" itemscope itemtype="https://schema.org/Brand"><meta itemprop="name" content="{{ manufacturer }}"><a href="{{ manufacturers }}">{{ manufacturer }}</a></p>{% endif %}
+        <h1 itemprop="name">{{ heading_title }}</h1>
+        {% if model %}<p class="product-info__art">Артикул: <span itemprop="sku">{{ model }}</span></p>{% endif %}
         {% if stock %}<p class="product-info__stock"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m5 13 4 4 10-10"/></svg> {{ stock }}</p>{% endif %}
 
         <form class="product-buy" data-product-form data-validate action="index.php?route=checkout/cart/add" method="post" novalidate>
@@ -67,6 +67,46 @@
           <div>
             {% if special %}<span class="price">{{ special }}</span><s class="price-old">{{ price }}</s>{% else %}<span class="price">{{ price }}</span>{% endif %}
             {% if tax %}<div class="price__unit gap-xs">Без налога: {{ tax }}</div>{% endif %}
+          </div>
+          {% endif %}
+
+          {#
+            Цена и наличие для поисковика (schema.org/Offer). Без этих двух строк
+            Яндекс и Google показывают товар голой ссылкой, а с ними - с ценой
+            и пометкой «в наличии» прямо в выдаче.
+
+            Движок отдаёт цену уже готовой строкой («1 250,00 руб.»), а разметке
+            нужно число. Поэтому строка чистится и ПРОВЕРЯЕТСЯ: если после чистки
+            осталось не число или в исходной строке не было рубля (другая валюта,
+            другой формат в настройках магазина) - блок не выводится совсем.
+            Пустая разметка лучше неверной цены: за цену в выдаче, которой нет
+            на сайте, Яндекс наказывает магазин, а не разметку.
+          #}
+          {% set price_shown = special ? special : price %}
+          {% set price_num = price_shown|replace({
+            ' ': '', ' ': '', ' ': '', ' ': '',
+            '₽': '', 'руб.': '', 'руб': '', 'р.': '', 'RUB': '', ',': '.'
+          })|trim %}
+          {% set price_ok = price_num matches '/^\\d+(\\.\\d+)?$/'
+            and ('₽' in price_shown or 'руб' in price_shown or 'р.' in price_shown or 'RUB' in price_shown) %}
+          {% if price_ok %}
+          <div itemprop="offers" itemscope itemtype="https://schema.org/Offer">
+            <meta itemprop="price" content="{{ price_num }}">
+            <meta itemprop="priceCurrency" content="RUB">
+            {#
+              Наличие берётся только там, где его видно наверняка: число
+              остатка (это включено в настройках) или две готовые строки
+              самого движка. Проверка на «Нет» идёт первой - «Нет в наличии»
+              тоже содержит слово «наличии», и без этого порядка товар,
+              которого нет, уезжал бы в выдачу как имеющийся.
+            #}
+            {% if stock matches '/^\\d+$/' %}
+            <link itemprop="availability" href="https://schema.org/{{ stock > 0 ? 'InStock' : 'OutOfStock' }}">
+            {% elseif 'Нет' in stock %}
+            <link itemprop="availability" href="https://schema.org/OutOfStock">
+            {% elseif 'наличии' in stock %}
+            <link itemprop="availability" href="https://schema.org/InStock">
+            {% endif %}
           </div>
           {% endif %}
 

@@ -5,18 +5,23 @@
   и историю заказов. Он общий и сухой, поэтому рядом стоит то, что человеку
   на Камчатке действительно нужно дальше: телефон магазина и адреса.
 
-  Номера заказа среди переменных нет - это шаблон общего «готово»,
-  его же движок показывает после других действий. Номер человек увидит
-  в письме и в истории заказов.
+  Заголовок берём у движка, если он его дал: на этом сайте оформление
+  заказа рисует модуль Simple, и он кладёт в заголовок номер - «Заказ
+  №20 сформирован!». Номер заказа - первое, что спрашивает менеджер
+  по телефону, и человеку незачем искать его в письме.
+
+  Запасное значение тут обязательно: этот же шаблон движок показывает
+  после других действий, и там заголовка может не быть вовсе. Тогда
+  остаётся наш «Заказ принят», как было до сих пор.
 #}
 {{ header }}
   <div class="container">
 
     {% if breadcrumbs %}
     <nav class="breadcrumbs" aria-label="Хлебные крошки">
-      <ol>
+      <ol itemscope itemtype="https://schema.org/BreadcrumbList">
         {% for breadcrumb in breadcrumbs %}
-        {% if loop.last %}<li aria-current="page">{{ breadcrumb.text }}</li>{% else %}<li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>{% endif %}
+        {% if loop.last %}<li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem" aria-current="page"><span itemprop="name">{{ breadcrumb.text }}</span><meta itemprop="position" content="{{ loop.index }}"></li>{% else %}<li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a itemprop="item" href="{{ breadcrumb.href }}"><span itemprop="name">{{ breadcrumb.text }}</span></a><meta itemprop="position" content="{{ loop.index }}"></li>{% endif %}
         {% endfor %}
       </ol>
     </nav>
@@ -33,7 +38,7 @@
 
     <div class="done">
       <div class="done__icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.5 2.5L16 9.5"/></svg></div>
-      <h1>Заказ принят</h1>
+      <h1>{{ heading_title|default('Заказ принят') }}</h1>
       {% if text_message %}{{ text_message|raw }}{% endif %}
       <p>Менеджер перезвонит, подтвердит наличие и скажет, когда можно забрать. Если звонка долго нет — наберите сами: <a class="tel-inline" href="tel:+79638300999">8-963-830-09-99</a>.</p>
       <p class="row-actions">

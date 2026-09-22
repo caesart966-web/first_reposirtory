@@ -47,6 +47,165 @@
 <meta property="og:title" content="{{ title }}">
 {% if description %}<meta property="og:description" content="{{ description }}">{% endif %}
 <meta name="twitter:card" content="summary_large_image">
+{# Картинка для ссылки, отправленной в WhatsApp или Telegram. Своего
+   снимка у каждой страницы тут нет - его отдаёт контроллер товара,
+   а не шапка, - поэтому стоит общий баннер магазина. Без него
+   пересланная ссылка выглядит пустой строчкой без картинки. #}
+<meta property="og:image" content="{{ base }}catalog/view/theme/stroigeroi2026/image/banner-1280.jpg">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="651">
+{#
+  Карточка магазина для поисковиков (schema.org/Store). Ровно те же
+  адреса, телефон и часы, что стоят на странице выше и в подвале, -
+  иначе Яндекс показывает одно, а посетитель на сайте видит другое.
+  Правите график или адрес - правьте и здесь.
+
+  Блок был написан и выверен ещё в макете, но при переносе в тему
+  потерялся: у магазина с тремя точками это ровно то, из чего
+  собирается карточка в выдаче и в Яндекс.Картах.
+#}
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Store",
+    "name": "Строй-Герой",
+    "slogan": "Наши материалы — ваша уверенность",
+    "url": "{{ base }}",
+    "telephone": "+7-963-830-09-99",
+    "email": "stroigeroi41@mail.ru",
+    "areaServed": "Камчатский край",
+    "department": [
+      {
+        "@type": "Store",
+        "name": "Строй-Герой — ул. Чубарова, 16, корп. 40",
+        "telephone": "+7-963-830-09-99",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "ул. Чубарова, 16, корп. 40",
+          "addressLocality": "Петропавловск-Камчатский",
+          "addressRegion": "Камчатский край",
+          "addressCountry": "RU"
+        },
+        "openingHoursSpecification": [
+          {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": [
+              "Monday",
+              "Tuesday",
+              "Wednesday",
+              "Thursday",
+              "Friday"
+            ],
+            "opens": "09:00",
+            "closes": "19:00"
+          },
+          {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": [
+              "Saturday",
+              "Sunday"
+            ],
+            "opens": "10:00",
+            "closes": "18:00"
+          }
+        ]
+      },
+      {
+        "@type": "Store",
+        "name": "Строй-Герой — просп. 50 лет Октября, 17А",
+        "telephone": "+7-963-830-09-99",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "просп. 50 лет Октября, 17А",
+          "addressLocality": "Петропавловск-Камчатский",
+          "addressRegion": "Камчатский край",
+          "addressCountry": "RU"
+        },
+        "openingHoursSpecification": [
+          {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": [
+              "Monday",
+              "Tuesday",
+              "Wednesday",
+              "Thursday",
+              "Friday"
+            ],
+            "opens": "09:00",
+            "closes": "19:00"
+          },
+          {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": [
+              "Saturday",
+              "Sunday"
+            ],
+            "opens": "09:00",
+            "closes": "18:00"
+          }
+        ]
+      },
+      {
+        "@type": "Store",
+        "name": "Строй-Герой — Магистральная ул., 2/2",
+        "telephone": "+7-963-830-09-99",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Магистральная ул., 2/2",
+          "addressLocality": "Елизово",
+          "addressRegion": "Камчатский край",
+          "addressCountry": "RU"
+        },
+        "openingHoursSpecification": [
+          {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": [
+              "Monday",
+              "Tuesday",
+              "Wednesday",
+              "Thursday",
+              "Friday"
+            ],
+            "opens": "09:00",
+            "closes": "19:00"
+          },
+          {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": [
+              "Saturday",
+              "Sunday"
+            ],
+            "opens": "09:00",
+            "closes": "18:00"
+          }
+        ]
+      }
+    ],
+    "openingHoursSpecification": [
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday"
+        ],
+        "opens": "09:00",
+        "closes": "19:00"
+      },
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": [
+          "Saturday",
+          "Sunday"
+        ],
+        "opens": "09:00",
+        "closes": "18:00"
+      }
+    ]
+  }
+</script>
 <link rel="icon" href="catalog/view/theme/stroigeroi2026/image/logo.png" type="image/png">
 <link rel="apple-touch-icon" href="catalog/view/theme/stroigeroi2026/image/logo.png">
 {#
