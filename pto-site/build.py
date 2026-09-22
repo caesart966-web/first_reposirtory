@@ -362,7 +362,41 @@ def block_objects(site: Site, items, limit: int = 0, level: str = "h3") -> str:
                      + photo_img(site, photos[0], alt, sizes, "object__img")
                      + f'<span class="object__count">{len(photos)} фото</span></button>')
         scope = f'<p class="object__scope">{esc(o["scope"])}</p>' if o.get("scope") else ""
+
+        # Нижняя часть карточки — паспорт объекта: разделы документации,
+        # застройщик и наш заказчик. На главной она сокращена до заказчика:
+        # там стоят три карточки подряд, и полный паспорт растягивает первый
+        # экран настолько, что до остальных разделов никто не доходит.
+        # Полный паспорт — на странице «Объекты», ссылка на неё тут же.
+        rows = []
+        clients = o.get("clients") or ([o["client"]] if o.get("client") else [])
+        if limit:
+            # Подпись только у первого: два «Заказчик» подряд читаются
+            # как ошибка вёрстки, а не как список из двух компаний.
+            for i, c in enumerate(clients):
+                rows.append(("Заказчик" if i == 0 else "", c))
+        else:
+            if o.get("sections"):
+                rows.append(("Разделы", o["sections"]))
+            if o.get("developer"):
+                rows.append(("Застройщик", o["developer"]))
+            for i, c in enumerate(clients):
+                # Подпись не повторяется у второго заказчика: два одинаковых
+                # слова подряд читаются как ошибка вёрстки, а не как список.
+                rows.append(("Наш заказчик" if i == 0 else "", c))
+        spec = "".join(
+            f'<div class="spec__row spec__row--cont">'
+            f'<span class="spec__val">{esc(val)}</span></div>'
+            if not key else
+            f'<div class="spec__row"><span class="spec__key">{esc(key)}</span>'
+            f'<span class="spec__dots"></span>'
+            f'<span class="spec__val">{esc(val)}</span></div>'
+            for key, val in rows)
+        spec = f'<div class="spec">{spec}</div>' if spec else ""
+
         css = "object object--wide" if (n - 1) in wide else "object"
+        if limit:
+            css += " object--brief"
         cards.append(f'''        <article class="{css}">
           {media}
           <div class="object__body">
@@ -370,10 +404,7 @@ def block_objects(site: Site, items, limit: int = 0, level: str = "h3") -> str:
             <{level} class="object__name">{esc(o["name"])}</{level}>
             <span class="object__city">{esc(o["city"])}</span>
             {scope}
-            <div class="spec">
-              <div class="spec__row"><span class="spec__key">Заказчик</span>
-                <span class="spec__dots"></span><span class="spec__val">{esc(o["client"])}</span></div>
-            </div>
+            {spec}
           </div>
         </article>''')
     return f'''      <div class="object-grid">
