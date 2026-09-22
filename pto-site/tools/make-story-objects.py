@@ -94,7 +94,7 @@ CARD = """
   .cards {{ position: relative; display: grid; grid-template-columns: 1fr 1fr;
            gap: 26px; }}
   .card {{ position: relative; border-radius: 16px; overflow: hidden;
-          border: 1px solid rgba(255,255,255,.1); background: #101f33; height: 320px; }}
+          border: 1px solid rgba(255,255,255,.1); background: #101f33; height: {card_h}px; }}
   .card img {{ width: 100%; height: 100%; object-fit: cover; display: block; }}
   .card .shade {{ position: absolute; inset: 0;
                  background: linear-gradient(to top, rgba(7,17,30,.94) 22%, rgba(7,17,30,.1) 62%); }}
@@ -131,11 +131,16 @@ CARD = """
 def main() -> int:
     site = json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))
     company, contacts = site["company"], site["contacts"]
-    # На кадр помещается ровно шесть плиток — сетка 2x3. Если объектов
-    # больше, остальные в кадр не войдут; инструмент называет их вслух,
-    # чтобы пропажа не была молчаливой.
+    # Сетка в два столбца подстраивается под число объектов: до шести —
+    # три ряда покрупнее, до восьми — четыре ряда помельче. Больше восьми
+    # в кадр 1080x1920 не влезает по-человечески; лишние инструмент
+    # называет вслух, чтобы пропажа не была молчаливой.
     all_items = site["portfolio"]["items"]
-    items, left_out = all_items[:6], all_items[6:]
+    limit = 6 if len(all_items) <= 6 else 8
+    items, left_out = all_items[:limit], all_items[limit:]
+    rows = (len(items) + 1) // 2
+    # Высота плитки: свободная высота под сеткой делится на число рядов.
+    card_h = int((1130 - (rows - 1) * 26) / rows)
 
     logo = re.sub(r"<!--.*?-->", "",
                   (ROOT / "assets" / "img" / "logo.svg").read_text(encoding="utf-8"),
@@ -150,6 +155,7 @@ def main() -> int:
                   f'<div class="ttl">{html.escape(it["name"])}</div></div></div>')
 
     body = CARD.format(
+        card_h=card_h,
         f=(ROOT / "assets" / "fonts").as_uri(),
         logo=logo,
         company=html.escape(company["name"]),
@@ -171,7 +177,8 @@ def main() -> int:
         page.screenshot(path=str(OUT), type="jpeg", quality=90)
         browser.close()
 
-    print(f"Готово: {OUT.relative_to(ROOT)} — объектов на кадре: {len(items)}")
+    print(f"Готово: {OUT.relative_to(ROOT)} — объектов на кадре: {len(items)}"
+          f", сетка 2x{rows}, плитка {card_h} px")
     for it in items:
         print(f"  • {it['name']}, {it['city']}")
     if left_out:

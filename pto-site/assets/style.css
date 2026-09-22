@@ -2044,6 +2044,34 @@ body.is-locked { overflow: hidden; }
 }
 .call-bar .btn { flex: 1 1 0; min-height: 46px; padding: var(--s-2) var(--s-3); font-size: 0.9375rem; }
 
+/* Членство в СРО — отдельной строкой над копирайтом. Это проверяемый
+   факт с номером в государственном реестре, а не строчка мелким шрифтом:
+   поэтому он стоит выше реквизитов и набран крупнее их. */
+.footer__sro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-2) var(--s-4);
+  margin-top: var(--s-6);
+  padding-top: var(--s-5);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+.sro__label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #7e93ad;
+  flex: none;
+}
+.sro__value { font-size: 0.9375rem; color: var(--ink-inverse-muted); max-width: 62rem; }
+.sro__reg {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: #fff;
+  white-space: nowrap;
+}
+
 /* ---------- 12б. Контакты ------------------------------------------------
    Каждый способ связи — отдельная карточка со значком: так на странице
    видно четыре равноценных двери, а не четыре строки мелкого текста. */
@@ -2151,6 +2179,91 @@ html {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
   border-radius: 4px;
+}
+
+/* ---------- 13а. Карта географии объектов ---------------------------------
+   Карта нарисована SVG, а не картинкой: резкая на любом экране, весит
+   меньше фотографии и перекрашивается вместе с темой. Контуры субъектов
+   и сетка меридианов — это и есть проекция, по которой карта построена:
+   она объясняет, почему страна выгнута дугой, и отличает карту от
+   декоративной картинки. */
+.geo__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 20rem);
+  gap: var(--s-7);
+  align-items: center;
+}
+.geo__map svg { display: block; width: 100%; height: auto; }
+.geo__lines path {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.10);
+  stroke-width: 0.7;
+}
+.geo__land {
+  fill: rgba(127, 176, 255, 0.09);
+  stroke: rgba(127, 176, 255, 0.55);
+  stroke-width: 0.8;
+  stroke-linejoin: round;
+}
+/* Подписи городов набраны тем же моноширинным, что и все технические
+   подписи на сайте. Размер задан в единицах карты, поэтому подпись
+   масштабируется вместе с ней и не «распухает» на узком экране. */
+.geo__label {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+  fill: #fff;
+  paint-order: stroke;
+  stroke: rgba(10, 20, 32, 0.85);
+  stroke-width: 3.5;
+  stroke-linejoin: round;
+}
+.geo__dot { fill: var(--accent); }
+.geo__halo {
+  fill: var(--accent);
+  opacity: 0.18;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: geo-pulse 2.8s var(--ease) infinite;
+}
+/* Метки «дышат» по очереди, а не все разом: одновременная пульсация
+   читается как мигание, а не как указание на точки. */
+.geo__mark:nth-child(2) .geo__halo { animation-delay: 0.7s; }
+.geo__mark:nth-child(3) .geo__halo { animation-delay: 1.4s; }
+.geo__mark:nth-child(4) .geo__halo { animation-delay: 2.1s; }
+@keyframes geo-pulse {
+  0%, 70%, 100% { transform: scale(1); opacity: 0.18; }
+  35%           { transform: scale(1.45); opacity: 0.06; }
+}
+
+.geo__legend { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-4); }
+.geo__item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  padding-bottom: var(--s-3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+.geo__city { font-size: 1.125rem; font-weight: 650; color: #fff; }
+.geo__dots {
+  flex: 1 1 auto;
+  min-width: var(--s-4);
+  align-self: center;
+  border-bottom: 1px dotted rgba(255, 255, 255, 0.28);
+}
+.geo__count {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-inverse-muted);
+  white-space: nowrap;
+}
+
+@media (max-width: 61.1875em) {
+  .geo__grid { grid-template-columns: minmax(0, 1fr); gap: var(--s-5); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .geo__halo { animation: none; }
 }
 
 /* ---------- 13б. Юридические документы ----------------------------------

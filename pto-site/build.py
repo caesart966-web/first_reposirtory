@@ -26,6 +26,7 @@ import argparse
 import html
 import json
 import re
+import math
 import shutil
 import struct
 import subprocess
@@ -68,10 +69,12 @@ def strip_tags(text: str) -> str:
 class Site:
     """Всё, что нужно знать странице о сайте в целом."""
 
-    def __init__(self, site: dict, services: list, legal: dict = None):
+    def __init__(self, site: dict, services: list, legal: dict = None,
+                 geo: dict = None):
         self.raw = site
         self.services = services
         self.legal = legal or {}
+        self.geo = geo or {}
         self.by_slug = {s["slug"]: s for s in services}
         self.company = site["company"]
         self.contacts = site["contacts"]
@@ -238,6 +241,97 @@ def block_media(site: Site, cfg: dict) -> str:
         {video}
         {caption}
       </figure>
+    </div>
+  </section>'''
+
+
+def map_point(site: Site, lon: float, lat: float):
+    """Широта и долгота — в координаты карты. Проекция та же, по которой
+    построен контур (Альберс, параллели 52° и 64°, меридиан 100° в. д.),
+    поэтому метка не может разойтись с картой: числа в единицах карты
+    руками нигде не пишутся."""
+    p = site.geo["projection"]
+    n = (math.sin(math.radians(p["lat1"])) + math.sin(math.radians(p["lat2"]))) / 2
+    c = math.cos(math.radians(p["lat1"])) ** 2 + 2 * n * math.sin(math.radians(p["lat1"]))
+    rho0 = math.sqrt(c - 2 * n * math.sin(math.radians(p["lat0"]))) / n
+    if lon < 0:
+        lon += 360
+    rho = math.sqrt(max(c - 2 * n * math.sin(math.radians(lat)), 0.0)) / n
+    theta = math.radians(n * (lon - p["lon0"]))
+    px, py = rho * math.sin(theta), rho0 - rho * math.cos(theta)
+    return ((px - p["minx"]) * p["scale"] + p["pad"],
+            (p["maxy"] - py) * p["scale"] + p["pad"])
+
+
+def block_geo(site: Site) -> str:
+    """Карта «Географические зоны наших объектов».
+
+    Города и число объектов берутся из списка объектов, а не пишутся здесь:
+    иначе карта и карточки разойдутся ровно в тот день, когда объект добавят
+    или уберут. Координаты — в data/site.json → geo_map.cities.
+
+    Карта нарисована SVG, а не картинкой: она резкая на любом экране,
+    весит меньше фотографии и перекрашивается вместе с темой сайта."""
+    cfg = site.raw.get("geo_map")
+    if not cfg or not site.geo:
+        return ""
+    items = site.raw["portfolio"]["items"]
+    counted = {}
+    for o in items:
+        counted[o["city"]] = counted.get(o["city"], 0) + 1
+
+    unknown = [c for c in counted if c not in cfg["cities"]]
+    if unknown:
+        # Город без координат молча пропал бы с карты, а карточка осталась.
+        print(f"  ВНИМАНИЕ: нет координат для города на карте: {', '.join(unknown)}"
+              f"\n  впишите их в data/site.json -> geo_map.cities")
+
+    marks, legend = [], []
+    for city, count in sorted(counted.items(), key=lambda kv: -kv[1]):
+        point = cfg["cities"].get(city)
+        if not point:
+            continue
+        x, y = map_point(site, point["lon"], point["lat"])
+        word = "объект" if count % 10 == 1 and count % 100 != 11 else (
+               "объекта" if count % 10 in (2, 3, 4) and count % 100 not in (12, 13, 14)
+               else "объектов")
+        # Подпись — справа от точки. Сдвиг можно задать в настройках города
+        # (label_dx/label_dy): Тверь и Москва стоят в двух сантиметрах друг
+        # от друга, и без сдвига их подписи наезжают.
+        dx = point.get("label_dx", 11)
+        dy = point.get("label_dy", 4)
+        marks.append(
+            f'<g class="geo__mark"><circle class="geo__halo" cx="{x:.1f}" cy="{y:.1f}" r="13"/>'
+            f'<circle class="geo__dot" cx="{x:.1f}" cy="{y:.1f}" r="5"/>'
+            f'<text class="geo__label" x="{x + dx:.1f}" y="{y + dy:.1f}">{esc(city)}</text>'
+            f'<title>{esc(city)} — {count} {word}</title></g>')
+        legend.append(
+            f'<li class="geo__item"><span class="geo__city">{esc(city)}</span>'
+            f'<span class="geo__dots"></span>'
+            f'<span class="geo__count">{count} {word}</span></li>')
+
+    grid = "".join(f'<path d="{g}"/>' for g in site.geo.get("grid", []))
+    return f'''  <section class="section section--dark geo" id="geografiya">
+    <div class="container">
+      <div class="section__head">
+        <span class="section__tag">География</span>
+        <h2>{esc(cfg["title"])}</h2>
+        <p class="lead">{esc(cfg["lead"])}</p>
+      </div>
+      <div class="geo__grid">
+        <div class="geo__map">
+          <svg viewBox="{esc(site.geo["view_box"])}" role="img"
+               aria-label="Карта России: города, в которых стоят объекты"
+               preserveAspectRatio="xMidYMid meet">
+            <g class="geo__lines">{grid}</g>
+            <path class="geo__land" d="{site.geo["country"]}"/>
+            {"".join(marks)}
+          </svg>
+        </div>
+        <ul class="geo__legend">
+          {"".join(legend)}
+        </ul>
+      </div>
     </div>
   </section>'''
 
@@ -663,6 +757,22 @@ def jsonld(obj) -> str:
             + "</script>")
 
 
+def sro_line(site: Site) -> str:
+    """Членство в СРО в подвале. Номер — регистрационный номер самой СРО
+    в государственном реестре: по нему организацию можно найти и проверить,
+    и это единственная причина, по которой номер вообще стоит на сайте.
+    Нет данных в настройках — строки нет вовсе."""
+    sro = site.company.get("sro")
+    if not sro or not sro.get("name"):
+        return ""
+    reg = (f' <span class="sro__reg">рег. № {esc(sro["reg"])}</span>'
+           if sro.get("reg") else "")
+    return f'''<div class="footer__sro">
+      <span class="sro__label">Членство в СРО</span>
+      <span class="sro__value">{esc(sro["name"])}{reg}</span>
+    </div>'''
+
+
 def cookie_bar(site: Site) -> str:
     """Полоса про cookie — и одновременно единственный выключатель Метрики.
 
@@ -966,6 +1076,7 @@ class Renderer:
             "geo": esc(c["geo"]),
             "year": str(date.today().year),
             "cookie_bar": cookie_bar(site),
+            "sro_line": sro_line(site),
         }
 
         def sub(m):
@@ -1326,6 +1437,8 @@ def page_objects(r: Renderer) -> None:
 {block_objects(site, cfg["items"], level="h2")}
     </div>
   </section>
+
+{block_geo(site)}
 
   <section class="section section--alt">
     <div class="container">
@@ -1924,7 +2037,8 @@ def build(regen_media: bool = False, base_path: str = None,
     site_data = load_json(DATA_DIR / "site.json")
     services = load_json(DATA_DIR / "services.json")
     legal = load_json(DATA_DIR / "legal.json")
-    site = Site(site_data, services, legal)
+    geo = load_json(DATA_DIR / "map.json")
+    site = Site(site_data, services, legal, geo)
 
     # Превью-сборка: адрес и подпапку задаём из командной строки,
     # чтобы боевые настройки в data/site.json остались нетронутыми.
