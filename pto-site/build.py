@@ -757,19 +757,33 @@ def jsonld(obj) -> str:
             + "</script>")
 
 
-def sro_line(site: Site) -> str:
-    """Членство в СРО в подвале. Номер — регистрационный номер самой СРО
-    в государственном реестре: по нему организацию можно найти и проверить,
-    и это единственная причина, по которой номер вообще стоит на сайте.
-    Нет данных в настройках — строки нет вовсе."""
+def sro_block(site: Site, dark: bool = True) -> str:
+    """Членство в СРО. Не строчка мелким шрифтом внизу, а отдельная панель
+    со знаком: для подрядчика это допуск к работе, и заказчик ищет его
+    первым делом. Номер — регистрационный номер самой СРО в государственном
+    реестре: по нему организацию можно найти и проверить, и это единственная
+    причина, по которой номер вообще стоит на сайте.
+    Нет данных в настройках — блока нет вовсе."""
     sro = site.company.get("sro")
     if not sro or not sro.get("name"):
         return ""
-    reg = (f' <span class="sro__reg">рег. № {esc(sro["reg"])}</span>'
-           if sro.get("reg") else "")
-    return f'''<div class="footer__sro">
-      <span class="sro__label">Членство в СРО</span>
-      <span class="sro__value">{esc(sro["name"])}{reg}</span>
+    short = esc(sro.get("short", ""))
+    reg = (f'''<div class="sro__row">
+          <span class="sro__key">Реестровый номер</span>
+          <span class="sro__num">{esc(sro["reg"])}</span>
+        </div>''' if sro.get("reg") else "")
+    kind = (f'''<div class="sro__row">
+          <span class="sro__key">Вид</span>
+          <span class="sro__kind">{esc(sro.get("kind", ""))}{", " + esc(sro["city"]) if sro.get("city") else ""}</span>
+        </div>''' if sro.get("kind") else "")
+    return f'''<div class="sro{' sro--dark' if dark else ''}">
+      <div class="sro__seal" aria-hidden="true"><span>{short}</span></div>
+      <div class="sro__body">
+        <span class="sro__label">Член саморегулируемой организации</span>
+        <p class="sro__name">{esc(sro["name"])}</p>
+        {reg}
+        {kind}
+      </div>
     </div>'''
 
 
@@ -1076,7 +1090,7 @@ class Renderer:
             "geo": esc(c["geo"]),
             "year": str(date.today().year),
             "cookie_bar": cookie_bar(site),
-            "sro_line": sro_line(site),
+            "sro_line": sro_block(site),
         }
 
         def sub(m):
@@ -1502,6 +1516,12 @@ def page_about(r: Renderer) -> None:
       <div class="grid grid--2">
 {blocks}
       </div>
+    </div>
+  </section>
+
+  <section class="section section--alt">
+    <div class="container">
+{sro_block(site, dark=False)}
     </div>
   </section>
 

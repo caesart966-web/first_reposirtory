@@ -2044,32 +2044,102 @@ body.is-locked { overflow: hidden; }
 }
 .call-bar .btn { flex: 1 1 0; min-height: 46px; padding: var(--s-2) var(--s-3); font-size: 0.9375rem; }
 
-/* Членство в СРО — отдельной строкой над копирайтом. Это проверяемый
-   факт с номером в государственном реестре, а не строчка мелким шрифтом:
-   поэтому он стоит выше реквизитов и набран крупнее их. */
-.footer__sro {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--s-2) var(--s-4);
-  margin-top: var(--s-6);
-  padding-top: var(--s-5);
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+/* Членство в СРО. Не строчка мелким шрифтом внизу, а панель со знаком:
+   для подрядчика СРО — это допуск к работе, и заказчик ищет его первым
+   делом. Поэтому блок стоит выше реквизитов, набран крупнее и слева
+   у него круглый знак — узнаваемая форма печати на документе. */
+.sro {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--s-5);
+  align-items: center;
+  padding: var(--s-5) var(--s-6);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
 }
+.footer .sro, .sro--dark {
+  margin-top: var(--s-6);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.14);
+  border-left-color: var(--accent);
+}
+
+/* Круглый знак с сокращением: форма печати читается с полувзгляда
+   и отличает блок от обычного абзаца текста. */
+.sro__seal {
+  width: 76px;
+  height: 76px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  box-shadow: inset 0 0 0 4px rgba(31, 111, 235, 0.12);
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-weight: 750;
+  font-size: 1.375rem;
+  letter-spacing: 0.02em;
+}
+.sro--dark .sro__seal, .footer .sro__seal {
+  color: var(--accent-300);
+  border-color: var(--accent-300);
+  box-shadow: inset 0 0 0 4px rgba(127, 176, 255, 0.14);
+}
+
 .sro__label {
+  display: block;
   font-family: var(--font-mono);
   font-size: 0.6875rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #7e93ad;
-  flex: none;
+  color: var(--ink-soft);
+  margin-bottom: var(--s-2);
 }
-.sro__value { font-size: 0.9375rem; color: var(--ink-inverse-muted); max-width: 62rem; }
-.sro__reg {
+.sro--dark .sro__label, .footer .sro__label { color: #93a8c2; }
+
+.sro__name {
+  margin: 0 0 var(--s-3);
+  font-size: 1.0625rem;
+  font-weight: 650;
+  line-height: 1.35;
+  color: var(--ink);
+}
+.sro--dark .sro__name, .footer .sro__name { color: #fff; }
+
+.sro__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-2) var(--s-3);
+  font-size: 0.875rem;
+}
+.sro__key {
   font-family: var(--font-mono);
-  font-size: 0.8125rem;
-  color: #fff;
-  white-space: nowrap;
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  flex: none;
+  min-width: 9.5rem;
+}
+.sro--dark .sro__key, .footer .sro__key { color: #93a8c2; }
+.sro__num {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  letter-spacing: 0.02em;
+  color: var(--accent);
+}
+.sro--dark .sro__num, .footer .sro__num { color: var(--accent-300); }
+.sro__kind { color: var(--ink-muted); }
+.sro--dark .sro__kind, .footer .sro__kind { color: var(--ink-inverse-muted); }
+
+@media (max-width: 37.5em) {
+  .sro { grid-template-columns: minmax(0, 1fr); gap: var(--s-4); padding: var(--s-5); }
+  .sro__key { min-width: 0; }
 }
 
 /* ---------- 12б. Контакты ------------------------------------------------
@@ -2706,6 +2776,15 @@ html {
   /* Номер объекта — мелкий текст акцентным синим. На тёмной карточке это
      3,6:1, ниже нормы; светлый оттенок того же синего даёт 7:1. */
   .object__num { color: var(--accent-300); }
+  /* Реестровый номер и знак СРО набраны акцентом. На светлой бумаге он
+     читается, а на тёмной плашке даёт 3,5:1 — ниже нормы; берём светлый
+     оттенок акцента, тот же, что у ссылок в тёмной теме. */
+  .sro__num { color: var(--accent-300); }
+  .sro__seal {
+    color: var(--accent-300);
+    border-color: var(--accent-300);
+    box-shadow: inset 0 0 0 4px rgba(127, 176, 255, 0.14);
+  }
   /* Сетка на заглушке под фотографию нарисована тёмным по светлому —
      в тёмной теме её не было бы видно вовсе. */
   .object__media {
