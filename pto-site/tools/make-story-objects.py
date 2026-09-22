@@ -131,7 +131,11 @@ CARD = """
 def main() -> int:
     site = json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))
     company, contacts = site["company"], site["contacts"]
-    items = site["portfolio"]["items"][:6]
+    # На кадр помещается ровно шесть плиток — сетка 2x3. Если объектов
+    # больше, остальные в кадр не войдут; инструмент называет их вслух,
+    # чтобы пропажа не была молчаливой.
+    all_items = site["portfolio"]["items"]
+    items, left_out = all_items[:6], all_items[6:]
 
     logo = re.sub(r"<!--.*?-->", "",
                   (ROOT / "assets" / "img" / "logo.svg").read_text(encoding="utf-8"),
@@ -170,6 +174,10 @@ def main() -> int:
     print(f"Готово: {OUT.relative_to(ROOT)} — объектов на кадре: {len(items)}")
     for it in items:
         print(f"  • {it['name']}, {it['city']}")
+    if left_out:
+        print(f"\nНе поместились на кадр ({len(left_out)}) — на сайте они есть:")
+        for it in left_out:
+            print(f"  – {it['name']}, {it['city']}")
     return 0
 
 
