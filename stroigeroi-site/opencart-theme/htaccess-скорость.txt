@@ -1,0 +1,93 @@
+# ============================================================================
+#  Строй-Герой: сжатие и кеш браузера
+# ============================================================================
+#
+#  Что это. Сейчас сервер отдаёт стили, скрипты и фотографии без сжатия
+#  и без срока годности: при каждом переходе по сайту браузер скачивает
+#  их заново. На Камчатке, где до сервера полстраны, это самая заметная
+#  часть ожидания.
+#
+#  Куда. Дописать В КОНЕЦ файла .htaccess в корне сайта
+#  (/var/www/u2934771/data/www/stroigeroi.ru/.htaccess).
+#  Если файла нет — значит, при установке не переименовали .htaccess.txt;
+#  тогда сначала переименуйте его в .htaccess, иначе ЧПУ не работают.
+#
+#  ПЕРЕД ПРАВКОЙ сохраните копию: скачайте .htaccess себе на компьютер.
+#  Ошибка в этом файле кладёт сайт целиком, с ошибкой 500, и правится
+#  только возвратом старого файла.
+#
+#  ПОСЛЕ ПРАВКИ откройте сайт. Если вместо страницы «Internal Server
+#  Error» — верните сохранённую копию. Значит, на этом хостинге нет
+#  нужного модуля Apache, и виноват не сайт.
+#
+# ============================================================================
+
+# ---- Сжатие ----------------------------------------------------------------
+# Текст сжимается в 4-6 раз. Картинки в список не входят нарочно:
+# jpg, png и webp уже сжаты, и повторное сжатие только греет процессор.
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css
+  AddOutputFilterByType DEFLATE application/javascript application/x-javascript
+  AddOutputFilterByType DEFLATE application/json application/xml
+  AddOutputFilterByType DEFLATE application/rss+xml image/svg+xml
+  AddOutputFilterByType DEFLATE font/ttf font/otf font/woff font/woff2
+</IfModule>
+
+# ---- Срок годности в браузере ----------------------------------------------
+<IfModule mod_expires.c>
+  ExpiresActive On
+
+  # Фотографии товаров OpenCart кладёт в image/cache/ под именем,
+  # в котором зашит размер. Меняется размер - меняется имя файла,
+  # поэтому год здесь безопасен.
+  ExpiresByType image/jpeg              "access plus 1 year"
+  ExpiresByType image/png               "access plus 1 year"
+  ExpiresByType image/gif               "access plus 1 year"
+  ExpiresByType image/webp              "access plus 1 year"
+  ExpiresByType image/avif              "access plus 1 year"
+  ExpiresByType image/svg+xml           "access plus 1 year"
+  ExpiresByType image/x-icon            "access plus 1 year"
+  ExpiresByType font/woff2              "access plus 1 year"
+  ExpiresByType font/woff               "access plus 1 year"
+
+  # Стили и скрипты - месяц, а не год, и это не осторожность ради
+  # осторожности. К НАШИМ style.css и app.js сборщик дописывает отпечаток
+  # (?v=38e74890): поменялся файл - поменялся адрес, и год им не страшен.
+  # Но рядом лежат чужие simple.css и live_search.js от расширений,
+  # у них отпечатка нет. Поставь год - и после обновления модуля
+  # у постоянных покупателей ещё год будет работать старая версия.
+  ExpiresByType text/css                "access plus 1 month"
+  ExpiresByType application/javascript  "access plus 1 month"
+  ExpiresByType text/javascript         "access plus 1 month"
+
+  # Страницы не кешируются никогда: цена и наличие меняются.
+  ExpiresByType text/html               "access plus 0 seconds"
+  ExpiresDefault                        "access plus 2 days"
+</IfModule>
+
+# ---- Кому можно хранить ----------------------------------------------------
+<IfModule mod_headers.c>
+  <FilesMatch "\.(css|js|jpg|jpeg|png|gif|webp|avif|svg|ico|woff2?)$">
+    Header set Cache-Control "public"
+  </FilesMatch>
+  # ETag с Expires вместе работают хуже, чем по отдельности: браузер
+  # всё равно ходит на сервер спрашивать, не изменился ли файл.
+  FileETag None
+  Header unset ETag
+</IfModule>
+
+# ---- Что нельзя отдавать посетителю ----------------------------------------
+# Файлы с настройками и журналами не должны открываться по прямой ссылке.
+# Написано дважды нарочно: «Require all denied» понимает только
+# Apache 2.4, а на 2.2 эта строка роняет сайт с ошибкой 500.
+<IfModule mod_authz_core.c>
+  <FilesMatch "\.(log|sql|bak|old|orig|save|swp|ini|yml|md)$">
+    Require all denied
+  </FilesMatch>
+</IfModule>
+<IfModule !mod_authz_core.c>
+  <FilesMatch "\.(log|sql|bak|old|orig|save|swp|ini|yml|md)$">
+    Order allow,deny
+    Deny from all
+  </FilesMatch>
+</IfModule>

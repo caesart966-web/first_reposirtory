@@ -32,3 +32,9 @@ pto-site/dist/assets/config.js
 
 # master-site: журнал заявок, если письмо не ушло (создаётся на хостинге)
 master-site/leads.log
+
+# stroigeroi-site: Twig для tools/render-check.php ставится composer'ом
+# рядом с проектом. Это чужой код, в репозитории ему делать нечего.
+stroigeroi-site/vendor/
+stroigeroi-site/composer.json
+stroigeroi-site/composer.lock

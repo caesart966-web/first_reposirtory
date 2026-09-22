@@ -173,11 +173,13 @@ foreach ($m[1] as $i => $json) {
     }
     // Телефон и адреса в разметке обязаны стоять и на самой странице,
     // иначе поисковик покажет одно, а посетитель увидит другое.
-    $plain = strip_tags($head);
+    // Саму разметку из поиска вычёркиваем: иначе адрес находится
+    // в ней же, и проверка всегда довольна собой.
+    $page = preg_replace('~<script type="application/ld\+json">.*?</script>~s', '', $head);
     foreach ($d['department'] ?? [] as $dep) {
         $street = $dep['address']['streetAddress'] ?? '';
-        if ($street && strpos($head, $street) === false) {
-            echo "header.twig: адрес «$street» есть в разметке, но не на странице\n";
+        if ($street && strpos($page, $street) === false) {
+            echo "header.twig: адрес «{$street}» есть в разметке, но не на странице\n";
             $bad++;
         }
     }

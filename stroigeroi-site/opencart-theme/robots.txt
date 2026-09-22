@@ -1,0 +1,63 @@
+# robots.txt для боевого сайта stroigeroi.ru
+#
+# Кладётся в корень сайта, рядом с index.php, — НЕ в папку темы.
+# В макете (stroigeroi-site/robots.txt) лежит другой файл, закрывающий
+# всё целиком: макет не должен попадать в поиск. Этот — наоборот.
+#
+# Чего здесь нарочно НЕТ: строки «Disallow: /index.php?route=».
+# Её советуют почти во всех готовых robots.txt для OpenCart, и она
+# закрывает весь сайт, если в магазине не включены человекопонятные
+# адреса (Система → Настройки → Сервер → ЧПУ). Проверять это надо
+# до выкладки, а не после исчезновения сайта из выдачи.
+
+User-agent: *
+
+# Личный кабинет, оформление заказа и всё, что за ними: страницы
+# для одного человека, в выдаче им делать нечего.
+Disallow: /*route=account/
+Disallow: /*route=affiliate/
+Disallow: /*route=checkout/
+Disallow: /*route=simplecheckout/
+Disallow: /*route=common/cart
+Disallow: /*route=product/compare
+Disallow: /*route=product/search
+Disallow: /*route=information/contact/success
+Disallow: /*route=extension/module/live_search
+Disallow: /admin/
+Disallow: /system/
+Disallow: /*.json$
+
+# Одна и та же страница каталога с разной сортировкой, разбивкой
+# и числом товаров — это одна страница, а не двадцать. Формат «/*sort=»
+# ловит и «?sort=», и «&sort=» внутри index.php?route=...
+Disallow: /*sort=
+Disallow: /*order=
+Disallow: /*limit=
+Disallow: /*tracking=
+Disallow: /*filter_name=
+Disallow: /*filter_description=
+
+# Постраничная навигация каталога остаётся открытой нарочно: без неё
+# поисковик не доберётся до товаров со второй и следующих страниц.
+Allow: /*page=
+
+Allow: /catalog/view/
+Allow: /image/
+Allow: /*.css$
+Allow: /*.js$
+Allow: /*.webp$
+Allow: /*.avif$
+
+# Яндексу вместо запрета лучше сказать, что параметр ничего не меняет:
+# страница остаётся в индексе, а вес не растекается по копиям.
+# Параметра page здесь нет нарочно: вторая страница каталога - это
+# другие товары, а не копия первой. Сказать про неё «ничего не меняет»
+# значило бы выкинуть из индекса весь каталог, кроме первых страниц.
+Clean-param: sort&order&limit&tracking /
+Clean-param: utm_source&utm_medium&utm_campaign&utm_term&utm_content&yclid&gclid&_openstat /
+
+# Карта сайта. ВКЛЮЧИТЬ ДО ВЫКЛАДКИ: Дополнения → Дополнения →
+# Ленты для товаров → Google Sitemap → Редактировать → Включено.
+# Пока лента выключена, этот адрес отдаёт пустую страницу,
+# и строку надо убрать, а не оставлять «на потом».
+Sitemap: https://stroigeroi.ru/index.php?route=extension/feed/google_sitemap

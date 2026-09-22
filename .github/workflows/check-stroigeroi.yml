@@ -57,6 +57,21 @@ jobs:
       - name: Шаблоны темы
         run: python3 tools/twigcheck.py opencart-theme
 
+      # twigcheck.py читает шаблоны снаружи и выражений не разбирает:
+      # строка вроде {% set ok = x matches '/^\d+$/' %} для него просто
+      # текст, а на сайте такая строка валит страницу белым экраном.
+      # Поэтому шаблоны ещё и собираются настоящим Twig — тем же,
+      # на котором работает OpenCart. Заодно страница товара строится
+      # с двенадцатью форматами цены и остатка: цену движок отдаёт
+      # готовой строкой, а поисковику в разметке нужно число, и цифры
+      # в разметке обязаны совпасть с ценой на странице.
+      - name: Шаблоны собираются настоящим Twig
+        run: |
+          mkdir -p "$RUNNER_TEMP/twig"
+          printf '{"require":{"twig/twig":"^1.42"}}' > "$RUNNER_TEMP/twig/composer.json"
+          composer --working-dir="$RUNNER_TEMP/twig" install --no-interaction --quiet
+          TWIG_AUTOLOAD="$RUNNER_TEMP/twig/vendor/autoload.php" php tools/render-check.php opencart-theme
+
       # Переменная, которой у контроллера нет, ошибкой не считается: Twig
       # подставит на её место пустоту и промолчит. Так у нас в шапке
       # оказались пустыми ссылки на сравнение и на товары со скидкой,
