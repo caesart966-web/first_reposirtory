@@ -53,11 +53,133 @@
 
 .pagination li > a:hover { border-color: var(--sg-blue); }
 
-.pagination li.active > span {
-  background: var(--sg-red);
-  border-color: var(--sg-red);
+/* Текущая страница. Цвет - как у .is-current в макете, синий. У движка
+   она помечена <li class="active"><span>, у навигации старой темы
+   (ниже) - <div class="pagination__item active"><span>; правило
+   ловит оба варианта, потому что держится за .active > span, а не за li. */
+.pagination .active > span,
+.pagination div.pagination__item.active:not(:has(> *)) {
+  background: var(--sg-blue);
+  border-color: var(--sg-blue);
   color: var(--sg-white);
   font-weight: 600;
+}
+
+html[data-theme="dark"] .pagination .active > span,
+html[data-theme="dark"] .pagination div.pagination__item.active:not(:has(> *)) {
+  color: #0e1117;
+}
+
+/* Если число лежит в div без span, рамки у него нет: правило макета
+   рисует рамку только у a и span. Без этого текущая страница выглядела
+   бы синей плашкой в размер цифры, а соседние - кнопками. */
+.pagination div.pagination__item:not(:has(> *)) {
+  min-width: 44px;
+  height: 44px;
+  padding: 0 var(--sp-3);
+  display: grid;
+  place-items: center;
+  border: 1.5px solid var(--sg-line);
+  border-radius: var(--r-md);
+}
+
+/* --- Навигация прежней темы ------------------------------------------------
+   На живом сайте постраничную навигацию рисует не OpenCart, а доставшийся
+   от прежней темы stroyhero вариант system/library/pagination.php:
+
+     <div class="pagination">
+       <a class="pagination__arrow pagination__arrow_first">
+         <svg class="svg"><use xlink:href=".../stroyhero/img/icons/icons.svg#arrow"></use></svg>
+       </a>
+       <a class="pagination__item">1</a>
+       <div class="pagination__item active"><span>2</span></div>
+     </div>
+
+   У <svg> нет размеров, и браузер рисует его по умолчанию - 300 на 150.
+   Получались широкая пустая рамка и стрелка вниз на полстраницы. Вниз -
+   потому что так нарисована иконка в спрайте, а поворачивал её CSS
+   прежней темы, который больше не подключается.
+
+   Спрайт прежней темы здесь не используется совсем: стрелки рисуются
+   свои, и навигация не сломается, когда папку stroyhero наконец удалят.
+
+   «В начало» и «в конец» - двойные стрелки, «назад» и «вперёд» -
+   одинарные. У прежней темы на всё была одна и та же стрелка, но ссылка
+   с классом _first ведёт на ПЕРВУЮ страницу, а не на предыдущую:
+   с пятой страницы одинарная стрелка обещала бы четвёртую, а открывала
+   первую.
+
+   Текста у этих ссылок нет вовсе, и программа экранного доступа
+   прочитала бы их как «ссылка» без названия. Название даёт скрытый
+   текст в ::after. Запись content: "" / "Первая страница", придуманная
+   ровно для этого, здесь не работает: Chrome 141 при пустом содержимом
+   подпись не берёт и отдаёт экранному диктору пустое имя (проверено
+   по его собственному дереву доступности). */
+
+/* Любой svg внутри навигации - не больше стрелки. Если разметка когда-нибудь
+   придёт в варианте, которого здесь нет, она не раздуется на полстраницы. */
+.pagination svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.pagination__arrow[class*="_first"] > svg,
+.pagination__arrow[class*="_prev"] > svg,
+.pagination__arrow[class*="_next"] > svg,
+.pagination__arrow[class*="_last"] > svg {
+  display: none;
+}
+
+.pagination__arrow[class*="_first"]::before,
+.pagination__arrow[class*="_prev"]::before,
+.pagination__arrow[class*="_next"]::before,
+.pagination__arrow[class*="_last"]::before {
+  content: "";
+  width: 18px;
+  height: 18px;
+  background: currentColor;
+  -webkit-mask: var(--pg-arrow) center / contain no-repeat;
+          mask: var(--pg-arrow) center / contain no-repeat;
+}
+
+.pagination__arrow[class*="_first"],
+.pagination__arrow[class*="_prev"],
+.pagination__arrow[class*="_next"],
+.pagination__arrow[class*="_last"] {
+  position: relative;
+}
+
+/* Подпись для экранного диктора: в дереве доступности она есть, на экране -
+   точка в один пиксель, обрезанная до нуля. */
+.pagination__arrow[class*="_first"]::after,
+.pagination__arrow[class*="_prev"]::after,
+.pagination__arrow[class*="_next"]::after,
+.pagination__arrow[class*="_last"]::after {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.pagination__arrow[class*="_first"]::after { content: "Первая страница"; }
+.pagination__arrow[class*="_prev"]::after  { content: "Предыдущая страница"; }
+.pagination__arrow[class*="_next"]::after  { content: "Следующая страница"; }
+.pagination__arrow[class*="_last"]::after  { content: "Последняя страница"; }
+
+.pagination__arrow[class*="_first"]::before {
+  --pg-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m11 17-5-5 5-5M18 17l-5-5 5-5'/%3E%3C/svg%3E");
+}
+.pagination__arrow[class*="_prev"]::before {
+  --pg-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m15 18-6-6 6-6'/%3E%3C/svg%3E");
+}
+.pagination__arrow[class*="_next"]::before {
+  --pg-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18 6-6-6-6'/%3E%3C/svg%3E");
+}
+.pagination__arrow[class*="_last"]::before {
+  --pg-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 17 5-5-5-5M13 17l5-5-5-5'/%3E%3C/svg%3E");
 }
 
 .pagination li.disabled > span {
