@@ -1486,3 +1486,98 @@ div.modal .close:hover { color: var(--sg-red); }
   position: absolute;
   inset: 0;
 }
+
+/* ---- «Сайт находится в разработке» на главной -------------------------
+   По просьбе заказчика: крупно и до баннера, чтобы человек не поехал
+   в магазин за ценой с сайта. Фирменный красный с красной подложкой -
+   это предупреждение, а не реклама, поэтому не синий. Номер - отдельной
+   крупной кнопкой: на телефоне по нему звонят одним нажатием. Цвета - на
+   переменных темы, и в тёмной теме подложка, красный и поверхность кнопки
+   берут свои тёмные значения. Убрать блок - dev_notice в home.twig. */
+.dev-notice {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-4) var(--sp-5);
+  margin: var(--sp-4) 0 var(--sp-2);
+  padding: var(--sp-5) var(--sp-6);
+  border: 2px solid var(--sg-red);
+  border-radius: var(--r-xl);
+  background: var(--sg-red-tint);
+}
+
+.dev-notice__icon {
+  width: 60px;
+  height: 60px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--sg-red);
+  color: var(--sg-white);
+}
+
+/* Текст в сетке: без min-width: 0 длинная строка распирала бы колонку. */
+.dev-notice__body {
+  min-width: 0;
+}
+
+.dev-notice__title {
+  margin: 0;
+  font-size: clamp(22px, 2.6vw, 30px);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--sg-ink);
+  text-wrap: balance;
+}
+
+.dev-notice__text {
+  margin: var(--sp-2) 0 0;
+  font-size: 17px;
+  line-height: 1.45;
+  color: var(--sg-ink);
+  text-wrap: pretty;
+}
+
+.dev-notice__phone {
+  padding: var(--sp-3) var(--sp-5);
+  border: 2px solid var(--sg-red);
+  border-radius: var(--r-lg);
+  background: var(--sg-white);
+  color: var(--sg-red);
+  font-size: clamp(20px, 2.2vw, 26px);
+  font-weight: 800;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.dev-notice__phone:hover,
+.dev-notice__phone:focus-visible {
+  background: var(--sg-red);
+  color: var(--sg-white);
+}
+
+.dev-notice__phone:focus-visible {
+  outline: 3px solid var(--sg-red);
+  outline-offset: 3px;
+}
+
+@media (max-width: 767px) {
+  .dev-notice {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: var(--sp-3) var(--sp-4);
+    padding: var(--sp-4);
+  }
+
+  .dev-notice__icon {
+    width: 48px;
+    height: 48px;
+    align-self: start;
+  }
+
+  .dev-notice__phone {
+    grid-column: 1 / -1;
+    text-align: center;
+  }
+}
