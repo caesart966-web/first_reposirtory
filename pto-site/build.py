@@ -784,7 +784,9 @@ def hero_sro(site: Site) -> str:
     kind = {"проектирование": "проектировщиков", "строительство": "строителей",
             "изыскания": "изыскателей"}.get(sro.get("kind", ""), "")
     title = f"Член СРО {kind} «{short}»".replace("  ", " ")
-    reg = (f'<span class="hero-sro__reg">рег. № {esc(sro["reg"])}</span>'
+    # Номер целиком в неразрывном блоке: разорванный на «СРО-П-116-»
+    # и «18012010» он перестаёт читаться как номер, а по нему ищут в реестре.
+    reg = (f'<span class="hero-sro__reg">рег. № <span class="nowrap">{esc(sro["reg"])}</span></span>'
            if sro.get("reg") else "")
     logo = sro_logo(site)
     if logo:
@@ -828,8 +830,13 @@ def sro_block(site: Site, dark: bool = True) -> str:
           <span class="sro__kind">{esc(sro.get("kind", ""))}{", " + esc(sro["city"]) if sro.get("city") else ""}</span>
         </div>''' if sro.get("kind") else "")
     anchor = "" if dark else ' id="sro"'
+    logo = sro_logo(site)
+    mark = (f'<div class="sro__logo" aria-hidden="true">'
+            f'<img src="{site.url(logo)}" alt="" width="120" height="70" loading="lazy" decoding="async"></div>'
+            if logo else
+            f'<div class="sro__seal" aria-hidden="true"><span>{short}</span></div>')
     return f'''<div class="sro{' sro--dark' if dark else ''}"{anchor}>
-      <div class="sro__seal" aria-hidden="true"><span>{short}</span></div>
+      {mark}
       <div class="sro__body">
         <span class="sro__label">Член саморегулируемой организации</span>
         <p class="sro__name">{esc(sro["name"])}</p>
