@@ -1,0 +1,86 @@
+name: 'Сборка настольной версии «ОДО-проверка» (Windows .exe)'
+
+on:
+  workflow_dispatch: # запустить руками из вкладки Actions
+  push:
+    branches: ['**']
+    paths:
+      - 'odo-app/**'
+      - '.claude/skills/sro-odo/**'
+      - '.github/workflows/build-odo-app.yml'
+
+permissions:
+  contents: write # чтобы выложить .exe в раздел Releases
+
+concurrency:
+  group: odo-app-build
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Сборка .exe на Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Зависимости
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r odo-app/requirements.txt pyinstaller pywebview
+
+      - name: Тесты движка и приложения
+        run: |
+          python .claude/skills/sro-odo/scripts/test_assess.py
+          python .claude/skills/sro-odo/scripts/test_rules.py
+          python -m pytest -q odo-app/tests
+
+      - name: Сборка PyInstaller
+        run: pyinstaller --clean --noconfirm odo-app/desktop/odo.spec
+
+      - name: Проверка запуска собранного .exe
+        shell: pwsh
+        env:
+          ODO_SMOKE: '1'
+          ODO_DATA_DIR: ${{ runner.temp }}\odo-smoke
+        run: |
+          $p = Start-Process -FilePath "dist\ODO-proverka.exe" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Write-Error "exe завершился с кодом $($p.ExitCode)"; exit 1 }
+          if (-not (Test-Path "$env:ODO_DATA_DIR\smoke.ok")) { Get-Content "$env:ODO_DATA_DIR\server.log" -ErrorAction SilentlyContinue; Write-Error "сервер внутри .exe не поднялся"; exit 1 }
+          Get-Content "$env:ODO_DATA_DIR\smoke.ok"
+
+      - name: Архив папочной версии
+        shell: pwsh
+        run: Compress-Archive -Path dist\ODO-proverka-folder\* -DestinationPath dist\ODO-proverka-folder.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ODO-proverka-exe
+          path: dist/ODO-proverka.exe
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ODO-proverka-folder
+          path: dist/ODO-proverka-folder.zip
+
+      - name: Выложить в Releases (odo-app-latest)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: odo-app-latest
+          name: 'ОДО-проверка — настольная версия (последняя сборка)'
+          body: |
+            **ODO-proverka.exe** — один файл, двойной щелчок, ничего устанавливать не нужно.
+            Первый запуск занимает несколько секунд: программа распаковывается. Windows может спросить
+            «Запустить?» (SmartScreen) — «Подробнее» → «Выполнить в любом случае».
+            Данные (база и загруженные договоры) появятся в папке «ОДО-данные» рядом с .exe.
+
+            **ODO-proverka-folder.zip** — то же самое папкой: запускается быстрее, реже пугает антивирус.
+            Распакуйте и запустите ODO-proverka.exe внутри.
+
+            Сборка из коммита ${{ github.sha }} (ветка ${{ github.ref_name }}).
+          files: |
+            dist/ODO-proverka.exe
+            dist/ODO-proverka-folder.zip

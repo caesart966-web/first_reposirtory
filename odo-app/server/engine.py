@@ -93,6 +93,8 @@ def money(x) -> str:
 def engine_tests() -> dict:
     """Быстрый самоконтроль движка: прогон тестов скилла (для страницы настроек)."""
     import subprocess
+    if getattr(sys, "frozen", False):
+        return {"тесты": "в собранном приложении не запускаются; движок проверен при сборке"}
     out = {}
     for t in ("test_assess.py", "test_rules.py"):
         r = subprocess.run([sys.executable, str(SCRIPTS_DIR / t)], capture_output=True, text=True, cwd=str(SCRIPTS_DIR), timeout=120)
