@@ -110,7 +110,12 @@ def main() -> int:
         ctx = browser.new_context(viewport={"width": 1280, "height": 900})
         page = ctx.new_page()
         errors: list[str] = []
-        page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
+        # config.js на хостинг кладут руками, в сборке его нет — и не должно
+        # быть, иначе обновление сайта затрёт настоящие настройки заявок.
+        # Поэтому 404 на него ошибкой не считается.
+        page.on("console", lambda m: errors.append(m.text)
+                if m.type == "error" and "config.js" not in (m.location or {}).get("url", "")
+                else None)
         page.on("pageerror", lambda e: errors.append(str(e)))
 
         # 1-2. вёрстка на всех ширинах, обычный и увеличенный шрифт.
