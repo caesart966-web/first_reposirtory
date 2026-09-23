@@ -300,7 +300,11 @@ def markdown(an: dict) -> str:
         out.append(f"{i}. По доводу о том, что {c['quote'].rstrip('.').lower()}. {verdict} {c['explanation']}" + (f" Основание: {cites(c['basis'])}." if c["basis"] else "")
                    + (f" Просим представить: {'; '.join(c['missing'])}." if c["missing"] else ""))
         out.append("")
-    out += [an["effect"], "", "## Нормы", ""] + [f"- **{n['cite']}** — {n['gist']}" for n in law.values()] + ["", f"> {an['verification_note']}"]
+    out += [an["effect"], ""]
+    win = (POLICY.get("sro") or {}).get("objection_window")
+    if win:
+        out += [f"Напоминаем, что возражения на акт проверки подаются в срок {win}, с приложением подтверждающих документов или их заверенных копий.", ""]
+    out += ["## Нормы", ""] + [f"- **{n['cite']}** — {n['gist']}" for n in law.values()] + ["", f"> {an['verification_note']}"]
     return "\n".join(out) + "\n"
 
 
