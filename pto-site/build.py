@@ -295,15 +295,17 @@ def block_geo(site: Site) -> str:
         word = "объект" if count % 10 == 1 and count % 100 != 11 else (
                "объекта" if count % 10 in (2, 3, 4) and count % 100 not in (12, 13, 14)
                else "объектов")
-        # Подпись — справа от точки. Сдвиг можно задать в настройках города
-        # (label_dx/label_dy): Тверь и Москва стоят в двух сантиметрах друг
-        # от друга, и без сдвига их подписи наезжают.
+        # Подпись — справа от точки. Сдвиг и сторону можно задать в настройках
+        # города (label_dx, label_dy, label_anchor: "end" — подпись слева):
+        # Тверь, Завидово и Москва на карте страны стоят почти в одной точке,
+        # и без разноса их подписи наезжают друг на друга.
         dx = point.get("label_dx", 11)
         dy = point.get("label_dy", 4)
         marks.append(
             f'<g class="geo__mark"><circle class="geo__halo" cx="{x:.1f}" cy="{y:.1f}" r="13"/>'
             f'<circle class="geo__dot" cx="{x:.1f}" cy="{y:.1f}" r="5"/>'
-            f'<text class="geo__label" x="{x + dx:.1f}" y="{y + dy:.1f}">{esc(city)}</text>'
+            f'<text class="geo__label" x="{x + dx:.1f}" y="{y + dy:.1f}"'
+            f' text-anchor="{point.get("label_anchor", "start")}">{esc(city)}</text>'
             f'<title>{esc(city)} — {count} {word}</title></g>')
         legend.append(
             f'<li class="geo__item"><span class="geo__city">{esc(city)}</span>'
@@ -458,26 +460,26 @@ def block_objects(site: Site, items, limit: int = 0, level: str = "h3") -> str:
         scope = f'<p class="object__scope">{esc(o["scope"])}</p>' if o.get("scope") else ""
 
         # Нижняя часть карточки — паспорт объекта: разделы документации,
-        # застройщик и наш заказчик. На главной она сокращена до заказчика:
-        # там стоят три карточки подряд, и полный паспорт растягивает первый
-        # экран настолько, что до остальных разделов никто не доходит.
-        # Полный паспорт — на странице «Объекты», ссылка на неё тут же.
+        # застройщик и наш заказчик. Одинаковый на главной и на странице
+        # «Объекты». Раньше на главной стоял сокращённый вид (описание
+        # в четыре строки, из паспорта только заказчик), и заказчик
+        # принял его за старые описания: одна и та же карточка в двух
+        # местах сайта обязана выглядеть одинаково.
         rows = []
         clients = o.get("clients") or ([o["client"]] if o.get("client") else [])
-        if limit:
-            # Подпись только у первого: два «Заказчик» подряд читаются
-            # как ошибка вёрстки, а не как список из двух компаний.
-            for i, c in enumerate(clients):
-                rows.append(("Заказчик" if i == 0 else "", c))
-        else:
-            if o.get("sections"):
-                rows.append(("Разделы", o["sections"]))
-            if o.get("developer"):
-                rows.append(("Застройщик", o["developer"]))
-            for i, c in enumerate(clients):
-                # Подпись не повторяется у второго заказчика: два одинаковых
-                # слова подряд читаются как ошибка вёрстки, а не как список.
-                rows.append(("Наш заказчик" if i == 0 else "", c))
+        if o.get("sections"):
+            rows.append(("Разделы", o["sections"]))
+        if o.get("developer"):
+            rows.append(("Застройщик", o["developer"]))
+        # «Наш заказчик» — только там, где заказчик это подтвердил в новом
+        # формате (поле clients). У объекта со старым полем client роль
+        # компании неизвестна: там стоит просто «Заказчик», чтобы сайт
+        # не приписал ей роль, которой у неё, возможно, не было.
+        first_label = "Наш заказчик" if o.get("clients") else "Заказчик"
+        for i, c in enumerate(clients):
+            # Подпись не повторяется у второго заказчика: два одинаковых
+            # слова подряд читаются как ошибка вёрстки, а не как список.
+            rows.append((first_label if i == 0 else "", c))
         spec = "".join(
             f'<div class="spec__row spec__row--cont">'
             f'<span class="spec__val">{esc(val)}</span></div>'
@@ -489,8 +491,6 @@ def block_objects(site: Site, items, limit: int = 0, level: str = "h3") -> str:
         spec = f'<div class="spec">{spec}</div>' if spec else ""
 
         css = "object object--wide" if (n - 1) in wide else "object"
-        if limit:
-            css += " object--brief"
         cards.append(f'''        <article class="{css}">
           {media}
           <div class="object__body">

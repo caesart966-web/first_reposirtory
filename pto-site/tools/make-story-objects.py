@@ -132,11 +132,11 @@ def main() -> int:
     site = json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))
     company, contacts = site["company"], site["contacts"]
     # Сетка в два столбца подстраивается под число объектов: до шести —
-    # три ряда покрупнее, до восьми — четыре ряда помельче. Больше восьми
+    # три ряда покрупнее, до восьми — четыре ряда, до десяти — пять. Больше десяти
     # в кадр 1080x1920 не влезает по-человечески; лишние инструмент
     # называет вслух, чтобы пропажа не была молчаливой.
     all_items = site["portfolio"]["items"]
-    limit = 6 if len(all_items) <= 6 else 8
+    limit = 6 if len(all_items) <= 6 else 8 if len(all_items) <= 8 else 10
     items, left_out = all_items[:limit], all_items[limit:]
     rows = (len(items) + 1) // 2
     # Высота плитки: свободная высота под сеткой делится на число рядов.
