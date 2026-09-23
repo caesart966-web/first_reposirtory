@@ -45,7 +45,7 @@ def facts_from_card(card: dict | None, assessment: dict | None) -> dict:
         for a in c.get("addenda") or []:
             if a.get("price_rub") is not None:
                 price = a["price_rub"]
-        f.update({"contract_kind": c.get("kind"), "mixed_parts": c.get("mixed_parts") or [], "price_rub": price, "procurement": c.get("procurement"),
+        f.update({"contract_kind": c.get("kind"), "mixed_parts": c.get("mixed_parts") or [], "price_rub": price, "procurement": c.get("procurement"), "procurement_law": c.get("procurement_law"),
                   "status": c.get("status"), "executed_rub": c.get("executed_rub"), "has_final_act": c.get("has_final_act"),
                   "termination_document": c.get("termination_document"), "contract_date": c.get("date"), "customer_kind": cu.get("kind"),
                   "customer_kind_basis": cu.get("kind_basis"), "object_is_capital": ob.get("is_capital"), "permit_required": ob.get("permit_required"),
@@ -138,8 +138,12 @@ def t_competitive(f):
     pos = f.get("sro_position_competitive_only")
     if pos is None:
         pos = POLICY.get("odo_scope") == "competitive_only"
+    if pr == "competitive" and f.get("procurement_law") == "voluntary_tender" and POLICY.get("voluntary_tender", "direct") == "direct":
+        return "founded", ("Тендер проведён по воле заказчика, закон торгов не требовал: конкурентным способом по ч. 1 ст. 60.1 ГрК РФ (и п. 1.2 Положения СРО о КФ ОДО) "
+                           "считаются закупки по 44-ФЗ, 223-ФЗ и обязательные торги. В совокупный размер по КФ ОДО договор не входит; уведомить СРО о нём член обязан (ч. 4 ст. 55.8)."), ["grk-60.1-1", "grk-55.8-3", "grk-55.8-4", "sro-odo-1.2"]
     if pr == "competitive":
-        return "unfounded", "Договор заключён конкурентным способом: именно такие договоры образуют совокупный размер обязательств по КФ ОДО (ч. 3 ст. 55.8, ч. 7 ст. 55.13 ГрК РФ).", ["grk-55.8-3", "grk-55.13-7", "fz-44", "fz-223"]
+        return "unfounded", ("Договор заключён конкурентным способом — по 44-ФЗ, 223-ФЗ или на обязательных по закону торгах (ч. 1 ст. 60.1 ГрК РФ): именно такие договоры "
+                             "образуют совокупный размер обязательств по КФ ОДО (ч. 3 ст. 55.8, ч. 7 ст. 55.13 ГрК РФ; п. 1.2 Положения СРО)."), ["grk-55.8-3", "grk-60.1-1", "grk-55.13-7", "fz-44", "fz-223", "sro-odo-1.2"]
     if pr == "direct":
         if pos:
             return "founded", "Совокупный размер обязательств по КФ ОДО считается по договорам, заключённым с использованием конкурентных способов (ч. 3 ст. 55.8, ч. 7 ст. 55.13 ГрК РФ в редакции 2026 года): прямой договор в него не входит. Уведомить СРО о таком договоре член обязан всё равно (ч. 4 ст. 55.8, с 01.03.2026).", ["grk-55.8-3", "grk-55.13-7", "grk-55.8-4", "fz-309"]

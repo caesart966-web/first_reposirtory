@@ -120,7 +120,11 @@ def contract_applicability(c, thresholds, policy=None):
         reasons.append("договор исполнен — обязательства, признанные исполненными по актам, в расчёт не входят (ч. 7 ст. 55.13 ГрК РФ)")
     in_scope = counts
     if counts and policy.get("odo_scope") == "competitive_only":
-        if c.get("procurement") == "competitive":
+        if c.get("procurement") == "competitive" and c.get("procurement_law") == "voluntary_tender" and policy.get("voluntary_tender", "direct") == "direct":
+            in_scope = False
+            flags.append("voluntary_tender")
+            reasons.append("тендер заказчика не был обязательным по закону — конкурентным способом не является (ч. 1 ст. 60.1 ГрК РФ, п. 1.2 Положения СРО о КФ ОДО); для КФ ОДО равен прямому, уведомляется (ч. 4 ст. 55.8)")
+        elif c.get("procurement") == "competitive":
             reasons.append("заключён конкурентным способом — входит в совокупный размер по КФ ОДО (ч. 3 ст. 55.8, ч. 7 ст. 55.13 ГрК РФ)")
         elif c.get("procurement") == "direct":
             in_scope = False
@@ -343,7 +347,8 @@ def compute(reg: dict, levels: dict) -> dict:
             "Строка идёт в «не СРО», если работ нет в Перечне 624 (отделка, благоустройство, уборка), либо это не работы (поставка, аренда, охрана, накладные, ФОТ), либо звёздочка на обычном объекте.",
             "Договор входит в совокупный размер, если компания — подрядчик по договору подряда с застройщиком, техзаказчиком, эксплуатирующей организацией или региональным оператором. Субподряд не входит.",
             "Совокупный размер по КФ ОДО считается по договорам, заключённым с использованием конкурентных способов (ч. 3 ст. 55.8, ч. 7 ст. 55.13 ГрК РФ, редакция 2026 года) — выборка competitive_only; прямые договоры уведомляются (ч. 4 ст. 55.8), но не входят. Выборка all_qualifying приводится справочно.",
-        ],
+            "Конкурентный способ — закупка по 44-ФЗ, по 223-ФЗ или торги, обязательные по закону (ч. 1 ст. 60.1 ГрК РФ; п. 1.2 Положения СРО о КФ ОДО). Добровольный тендер заказчика к ним не относится.",
+        ] + ([f"Положение СРО о КФ ОДО: {policy['sro'].get('on_exceeding')}."] if policy.get("sro") and policy["sro"].get("on_exceeding") else []),
         "contracts": contracts_out, "totals": totals, "excluded": excluded,
         "levels_hint": hints, "review_queue": review, "warnings": warnings,
     }

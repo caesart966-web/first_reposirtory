@@ -35,6 +35,7 @@
         "period_from": { "type": ["string", "null"], "format": "date" }, "period_to": { "type": ["string", "null"], "format": "date" },
         "procurement": { "enum": ["competitive", "direct", "unknown"] },
         "procurement_basis": { "type": ["string", "null"] },
+        "procurement_law": { "enum": ["44-fz", "223-fz", "mandatory_tender", "voluntary_tender", "unknown", null], "description": "Чем предписаны торги: 44-ФЗ, 223-ФЗ, иные обязательные по закону торги (например, капремонт МКД по ПП 615) — или добровольный тендер заказчика, которого закон не требовал. Добровольный тендер конкурентным способом по смыслу ст. 60.1 ГрК РФ не является." },
         "executed_rub": { "type": ["number", "null"], "description": "Принято по актам на дату оценки." },
         "executed_basis": { "type": ["string", "null"] },
         "has_final_act": { "type": ["boolean", "null"] },
