@@ -108,7 +108,7 @@ def find_similar(features: dict, limit: int = 5) -> list:
         for key, w in (("contract_kind", 0.15), ("customer_kind", 0.15), ("work_type", 0.1), ("price_band", 0.05), ("procurement", 0.05)):
             if features.get(key) and cf.get(key) == features.get(key):
                 s += w
-        if s > 0.15:
+        if s > 0.3:
             out.append({"id": c["id"], "date": c["date"], "kind": c["kind"], "score": round(min(s, 1.0), 2),
                         "human_decision": c["human"]["decision"], "note": c["human"].get("note"), "basis": c.get("basis", [])})
     out.sort(key=lambda x: -x["score"])
