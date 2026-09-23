@@ -38,7 +38,7 @@ KIND_BASIS = {"construction": ["gk-740", "gk-702"], "demolition": ["gk-740", "gr
 CUSTOMER_RU = {"developer": "застройщик", "technical_customer": "технический заказчик", "operator": "лицо, ответственное за эксплуатацию здания",
                "regional_operator": "региональный оператор", "general_contractor": "генеральный подрядчик", "contractor": "подрядчик",
                "individual": "физическое лицо", "state_entity": "государственное или муниципальное учреждение/предприятие", "other": "иное лицо", "unknown": "статус не установлен"}
-CUSTOMER_BASIS = {"developer": ["grk-1-16"], "technical_customer": ["grk-1-22", "grk-52-4"], "operator": ["grk-52-2.1"], "regional_operator": ["grk-52-2.1"]}
+CUSTOMER_BASIS = {"developer": ["grk-1-16"], "technical_customer": ["grk-1-22", "grk-52-4"], "operator": ["grk-55.25-1"], "regional_operator": ["grk-52-2.1"]}
 HOUSING_EXCLUDED = {"izhs", "blocked", "mkd_low", "garden", "auxiliary"}
 HOUSING_RU = {"izhs": "объект индивидуального жилищного строительства", "blocked": "жилой дом блокированной застройки до трёх этажей",
               "mkd_low": "многоквартирный дом до трёх этажей", "garden": "садовый дом", "auxiliary": "строение вспомогательного использования"}
@@ -385,6 +385,14 @@ class Assessor:
                 wsum[key] += amt
         share, share_basis = None, None
         if wsum["n"]:
+            all_star = all(w["asterisk"] for w in works_out if w["kind"] == "perechen") and any(w["kind"] == "perechen" for w in works_out)
+            expl = (f"Видов работ: {wsum['n']}; по Перечню 624 относятся к влияющим на безопасность («СРО»): {wsum['n_sro']}, не относятся: {wsum['n_non']}, "
+                    f"не решено: {wsum['n_unres']}. Разделение по Перечню показывает состав цены и не меняет учёт договора: с 01.07.2017 обязанность членства "
+                    "и совокупный размер обязательств определяются договором (вид, заказчик, цена, способ заключения), а не видом работ.")
+            if all_star and cat == "ordinary":
+                expl += (" Все виды работ по договору помечены в Перечне знаком «*», а объект обычный: по классификатору 2010 года такие работы на обычных объектах "
+                         "допуска не требовали. Это типичный довод подрядчика; после 372-ФЗ он на учёт договора не влияет.")
+            findings.append(self.F(6, "Виды работ по Перечню 624", "info", expl, ["order-624", "fz-372", "grk-52-2.1"] + (["order-624-note", "letter-33838"] if all_star else [])))
             if wsum["total"] > 0 and (wsum["sro"] + wsum["non"]) > 0:
                 share = wsum["sro"] / (wsum["sro"] + wsum["non"])
                 share_basis = "по стоимости видов работ" + (" (без нерешённых строк)" if wsum["unres"] > 0 else "")
@@ -503,7 +511,7 @@ class Assessor:
         if remaining is not None:
             s += f" Остаток обязательств {money(remaining)} ₽"
             if share is not None:
-                s += f", из них работы, относящиеся к СРО по Перечню 624, — {money(remaining * share)} ₽ ({share * 100:.0f} %)"
+                s += f"; справочно по Перечню 624 из них работы, влияющие на безопасность, — {money(remaining * share)} ₽ ({share * 100:.0f} %)"
             s += "."
         return s
 
@@ -530,8 +538,9 @@ def markdown(a: dict) -> str:
            "", "## Вывод", "",
            f"- **Обязательное членство в СРО:** {CONC_RU[v['membership_required']]}" + (f" (СРО {SRO_RU.get(v['sro_kind'], '')})" if v.get("sro_kind") else ""),
            f"- **Входит в совокупный размер обязательств (КФ ОДО):** {CONC_RU[v['counts_for_odo']]}",
-           f"- **Остаток обязательств:** {fmt(v['remaining_rub'])} ₽; из них по работам Перечня 624 («СРО»): {fmt(v['remaining_sro_rub'])} ₽"
-           + (f" — доля {v['share_sro'] * 100:.1f} % ({v['share_basis']})".replace(".", ",") if v.get("share_sro") is not None else ""),
+           f"- **Остаток обязательств по договору:** {fmt(v['remaining_rub'])} ₽" + (" — эта сумма идёт в совокупный размер" if v['counts_for_odo'] == 'yes' else ""),
+           f"- **Справочно, по Перечню 624:** работы, влияющие на безопасность, — {fmt(v['remaining_sro_rub'])} ₽ из остатка"
+           + (f" ({v['share_sro'] * 100:.1f} %, {v['share_basis']})".replace(".", ",") if v.get("share_sro") is not None else " (виды работ не разобраны)"),
            f"- **Уверенность:** {v['confidence']:.2f}", "", v["summary"], "", "## Разбор по шагам", ""]
     for f in a["findings"]:
         out.append(f"### {f['step']}. {f['title']}" + (f" — {CONC_RU[f['conclusion']]}" if f['conclusion'] != 'info' else ""))
