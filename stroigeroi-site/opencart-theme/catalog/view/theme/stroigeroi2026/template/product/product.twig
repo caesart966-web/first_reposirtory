@@ -65,7 +65,7 @@
 
           {% if price %}
           <div>
-            {% if special %}<span class="price">{{ special }}</span><s class="price-old">{{ price }}</s>{% else %}<span class="price">{{ price }}</span>{% endif %}
+            {% if special %}<span class="price">{{ special }}</span><s class="price--old">{{ price }}</s>{% else %}<span class="price">{{ price }}</span>{% endif %}
             {% if tax %}<div class="price__unit gap-xs">Без налога: {{ tax }}</div>{% endif %}
           </div>
           {% endif %}
@@ -83,8 +83,16 @@
             на сайте, Яндекс наказывает магазин, а не разметку.
           #}
           {% set price_shown = special ? special : price %}
+          {#
+            Пробел между числом и «руб» может прийти не символом, а текстом
+            «&nbsp;»: так записан знак валюты в настройках магазина (фильтр
+            OCFilter показывает его покупателю буквально - «13776&nbsp;руб»).
+            В разметке страницы это пробел, а для разбора - шесть лишних
+            знаков, и без них цена не распознавалась ни на одной карточке.
+          #}
           {% set price_num = price_shown|replace({
             ' ': '', ' ': '', ' ': '', ' ': '',
+            '&nbsp;': '', '&#160;': '', '&#xa0;': '', '&thinsp;': '', '&#8201;': '', '&#8239;': '',
             '₽': '', 'руб.': '', 'руб': '', 'р.': '', 'RUB': '', ',': '.'
           })|trim %}
           {% set price_ok = price_num matches '/^\\d+(\\.\\d+)?$/'
@@ -174,7 +182,7 @@
       {% if attribute_groups %}
       <div class="tabs__panel" id="tab-specs" role="tabpanel" hidden>
         {% for attribute_group in attribute_groups %}
-        <table class="specs">
+        <table class="spec-table">
           <caption>{{ attribute_group.name }}</caption>
           <tbody>
             {% for attribute in attribute_group.attribute %}
@@ -219,7 +227,7 @@
               <a class="product-card__title" href="{{ product.href }}">{{ product.name }}</a>
             </div>
             <div class="product-card__bottom">
-              {% if product.special %}<span class="price">{{ product.special }}</span><s class="price-old">{{ product.price }}</s>{% else %}<span class="price">{{ product.price }}</span>{% endif %}
+              {% if product.special %}<span class="price">{{ product.special }}</span><s class="price--old">{{ product.price }}</s>{% else %}<span class="price">{{ product.price }}</span>{% endif %}
               <button class="btn btn--action product-card__buy" type="button" data-add="cart" data-product-id="{{ product.product_id }}" aria-label="В корзину"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9.5" cy="19.5" r="1.6"/><circle cx="17" cy="19.5" r="1.6"/><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L20 8H6"/></svg><span>В корзину</span></button>
             </div>
           </article>

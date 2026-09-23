@@ -47,7 +47,7 @@
           <tr>
             <th scope="row">Цена</th>
             {% for product in products %}
-            <td data-label="Цена">{% if product.special %}<span class="price">{{ product.special }}</span><s class="price-old">{{ product.price }}</s>{% else %}<span class="price">{{ product.price }}</span>{% endif %}</td>
+            <td data-label="Цена">{% if product.special %}<span class="price">{{ product.special }}</span><s class="price--old">{{ product.price }}</s>{% else %}<span class="price">{{ product.price }}</span>{% endif %}</td>
             {% endfor %}
           </tr>
           <tr>
@@ -79,7 +79,8 @@
       </table>
     </div>
     {% else %}
-    <div class="empty">
+    <div class="empty empty-state">
+      <span class="empty-state__icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 20V10M12 20V4M18 20v-6"/></svg></span>
       <h2>Сравнивать пока нечего</h2>
       <p>Нажмите значок сравнения у двух-трёх товаров — здесь появится таблица с их отличиями.</p>
       <p class="row-actions"><a class="btn btn--action" href="{{ continue }}">В каталог</a></p>

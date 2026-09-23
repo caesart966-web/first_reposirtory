@@ -89,7 +89,7 @@
               <a class="product-card__title" href="{{ product.href }}">{{ product.name }}</a>
             </div>
             <div class="product-card__bottom">
-              {% if product.special %}<span class="price">{{ product.special }}</span><s class="price-old">{{ product.price }}</s>{% else %}<span class="price">{{ product.price }}</span>{% endif %}
+              {% if product.special %}<span class="price">{{ product.special }}</span><s class="price--old">{{ product.price }}</s>{% else %}<span class="price">{{ product.price }}</span>{% endif %}
               <button class="btn btn--action product-card__buy" type="button" data-add="cart" data-product-id="{{ product.product_id }}" aria-label="В корзину"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9.5" cy="19.5" r="1.6"/><circle cx="17" cy="19.5" r="1.6"/><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L20 8H6"/></svg><span>В корзину</span></button>
             </div>
           </article>
@@ -99,7 +99,8 @@
 
         {{ pagination }}
         {% else %}
-        <div class="empty">
+        <div class="empty empty-state">
+          <span class="empty-state__icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 18 12-12"/><circle cx="7.5" cy="7.5" r="2"/><circle cx="16.5" cy="16.5" r="2"/></svg></span>
           <h2>Сейчас скидок нет</h2>
           <p>Акции у нас бывают регулярно — загляните позже или спросите по телефону <a class="tel-inline" href="tel:+79638300999">8-963-830-09-99</a>: иногда цену снижают на месте, не вынося в акцию.</p>
           <p class="row-actions"><a class="btn btn--action" href="{{ continue }}">В каталог</a></p>

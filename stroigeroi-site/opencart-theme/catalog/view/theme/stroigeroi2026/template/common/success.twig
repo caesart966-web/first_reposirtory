@@ -36,12 +36,14 @@
       <span class="step is-current"><span class="step__num">4</span> Готово</span>
     </div>
 
-    <div class="done">
-      <div class="done__icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.5 2.5L16 9.5"/></svg></div>
+    <div class="done error-page">
+      <p class="error-page__code error-page__code--ok" aria-hidden="true">✓</p>
       <h1>{{ heading_title|default('Заказ принят') }}</h1>
+      <div class="error-page__text">
       {% if text_message %}{{ text_message|raw }}{% endif %}
       <p>Менеджер перезвонит, подтвердит наличие и скажет, когда можно забрать. Если звонка долго нет — наберите сами: <a class="tel-inline" href="tel:+79638300999">8-963-830-09-99</a>.</p>
-      <p class="row-actions">
+      </div>
+      <p class="row-actions error-page__links">
         <a class="btn btn--action" href="{{ continue }}">Вернуться в каталог</a>
         <a class="btn btn--outline" href="index.php?route=information/contact">Адреса магазинов</a>
       </p>
