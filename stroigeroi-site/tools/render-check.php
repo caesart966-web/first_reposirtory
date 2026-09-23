@@ -276,4 +276,40 @@ if ($grid && trim(preg_replace('~<a .*?</a>~s', '', $grid[1])) !== '') {
 }
 echo 'Значки отделов: ' . count($want) . " названий проверено\n";
 
+/*
+ * Значки подразделов на странице отдела (product/category.twig). Названия -
+ * 17 подразделов живой базы на 23.09.2026 и два нарочно трудных: «Ручные
+ * пилы» (в названии и «пил», и «ручн») и раздел, которого нет в списке.
+ */
+$wantSub = [
+    'Дрели, шуруповёрты, перфораторы' => 'drill', 'Пилы, цепи и шины' => 'saw',
+    'Инструмент Hanskonner' => 'toolcase', 'Аккумуляторы, зарядные, патроны' => 'battery',
+    'Шлифовальные машины' => 'grinder', 'Лобзики, рубанки, ручной инструмент' => 'hammer',
+    'ЭЛЕКТРОИНСТРУМЕНТЫ' => 'plugzap', 'Краскопульты и пневмоинструмент' => 'spray',
+    'Фены технические' => 'wind', 'Бетоносмесители' => 'mixer', 'Генераторы бензиновые' => 'generator',
+    'Пылесосы строительные' => 'vacuum', 'Мойки высокого давления' => 'droplets',
+    'Расходные материалы и крепёж' => 'bolt', 'Освещение' => 'lamp',
+    'Преобразователи напряжения' => 'zap', 'Кабель-менеджмент' => 'cable',
+    'Ручные пилы' => 'saw', 'Раздел, которого нет в списке' => 'box',
+];
+$catSrc = file_get_contents("$theme/product/category.twig");
+preg_match('~\{% set sub_icons = \{(.*?)\} %\}~s', $catSrc, $mapSrc);
+preg_match_all("~'(\\w+)': '([^']*)'~", $mapSrc ? $mapSrc[1] : '', $pairs, PREG_SET_ORDER);
+$subIconOf = [];
+foreach ($pairs as $pair) $subIconOf[$pair[2]] = $pair[1];
+$subs2 = [];
+foreach (array_keys($wantSub) as $i => $name) $subs2[] = ['name' => $name, 'href' => "https://stroigeroi.ru/s$i"];
+$page = $cat->render(['heading_title' => 'Инструменты', 'products' => [], 'categories' => $subs2]);
+preg_match_all('~<a class="category-card" href="[^"]*">\s*<span class="category-card__icon"><svg[^>]*>(.*?)</svg></span>\s*<span class="category-card__title">([^<]*)</span>~s', $page, $cards, PREG_SET_ORDER);
+$gotSub = [];
+foreach ($cards as $card) $gotSub[$card[2]] = $subIconOf[$card[1]] ?? 'неизвестный';
+foreach ($wantSub as $name => $icon) {
+    $has = $gotSub[$name] ?? 'нет плитки';
+    if ($has !== $icon) {
+        echo "category.twig: у подраздела «{$name}» значок {$has}, а нужен {$icon}\n";
+        $bad++;
+    }
+}
+echo 'Значки подразделов: ' . count($wantSub) . " названий проверено\n";
+
 exit($bad ? 1 : 0);

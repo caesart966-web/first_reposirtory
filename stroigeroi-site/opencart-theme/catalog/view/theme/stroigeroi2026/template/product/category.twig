@@ -146,10 +146,72 @@
           плитками по центру, теми же карточками, что на главной. Класса
           reveal у них нет нарочно: карточки должны быть видны и без скрипта.
         #}
+        {% set sub_icons = {
+          'box': '<path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/>',
+          'drill': '<path d="M10 18a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H5a3 3 0 0 1-3-3 1 1 0 0 1 1-1z" /><path d="M13 10H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1l-.81 3.242a1 1 0 0 1-.97.758H8" /><path d="M14 4h3a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-3" /><path d="M18 6h4" /><path d="m5 10-2 8" /><path d="m7 18 2-8" />',
+          'saw': '<path d="M3.5 6.5h3a1.5 1.5 0 0 1 1.5 1.5v8a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 2 16V8a1.5 1.5 0 0 1 1.5-1.5Z"/><path d="M5 9.5v5"/><path d="m8 7.5 14 3v3l-1.75 2-1.5-1.6-1.75 2-1.5-1.6-1.75 2-1.5-1.6-1.75 2-1.5-1.6L8 16.5"/>',
+          'toolcase': '<path d="M10 15h4" /><path d="m14.817 10.995-.971-1.45 1.034-1.232a2 2 0 0 0-2.025-3.238l-1.82.364L9.91 3.885a2 2 0 0 0-3.625.748L6.141 6.55l-1.725.426a2 2 0 0 0-.19 3.756l.657.27" /><path d="m18.822 10.995 2.26-5.38a1 1 0 0 0-.557-1.318L16.954 2.9a1 1 0 0 0-1.281.533l-.924 2.122" /><path d="M4 12.006A1 1 0 0 1 4.994 11H19a1 1 0 0 1 1 1v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />',
+          'battery': '<path d="m11 7-3 5h4l-3 5" /><path d="M14.856 6H16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.935" /><path d="M22 14v-4" /><path d="M5.14 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2.936" />',
+          'grinder': '<circle cx="10" cy="14" r="7"/><circle cx="10" cy="14" r="2"/><path d="M17.5 6.5 20 4M19 10l3-.5M14 4.5l.5-2.5"/>',
+          'hammer': '<path d="m15 12-9.373 9.373a1 1 0 0 1-3.001-3L12 9" /><path d="m18 15 4-4" /><path d="m21.5 11.5-1.914-1.914A2 2 0 0 1 19 8.172v-.344a2 2 0 0 0-.586-1.414l-1.657-1.657A6 6 0 0 0 12.516 3H9l1.243 1.243A6 6 0 0 1 12 8.485V10l2 2h1.172a2 2 0 0 1 1.414.586L18.5 14.5" />',
+          'plugzap': '<path d="M6.3 20.3a2.4 2.4 0 0 0 3.4 0L12 18l-6-6-2.3 2.3a2.4 2.4 0 0 0 0 3.4Z" /><path d="m2 22 3-3" /><path d="M7.5 13.5 10 11" /><path d="M10.5 16.5 13 14" /><path d="m18 3-4 4h6l-4 4" />',
+          'spray': '<path d="M3 3h.01" /><path d="M7 5h.01" /><path d="M11 7h.01" /><path d="M3 7h.01" /><path d="M7 9h.01" /><path d="M3 11h.01" /><rect width="4" height="4" x="15" y="5" /><path d="m19 9 2 2v10c0 .6-.4 1-1 1h-6c-.6 0-1-.4-1-1V11l2-2" /><path d="m13 14 8-2" /><path d="m13 19 8-2" />',
+          'mixer': '<g transform="rotate(-35 12 10)"><path d="M9 3h6"/><path d="M9 3 7 10a5 5 0 0 0 10 0l-2-7"/><path d="M7.6 8h8.8"/></g><path d="M12 15.5 8 21M12 15.5 16 21M4 21h16"/><circle cx="12" cy="15.5" r="1"/>',
+          'generator': '<rect x="3" y="7" width="18" height="11" rx="2"/><path d="m13 9.5-3 4h4l-3 4"/><path d="M6 18v2M18 18v2M8 7V5h8v2"/>',
+          'vacuum': '<path d="M10 8h8a1 1 0 0 1 1 1v8a2 2 0 0 1-2 2h-6a2 2 0 0 1-2-2V9a1 1 0 0 1 1-1Z"/><path d="M12 8V6.5a2 2 0 0 1 4 0V8"/><path d="M9 11c-3 0-5 2-5 5v3"/><path d="M2.5 19h3"/><circle cx="11" cy="21" r=".5"/><circle cx="17" cy="21" r=".5"/>',
+          'droplets': '<path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z" /><path d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97" />',
+          'bolt': '<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><circle cx="12" cy="12" r="4" />',
+          'lamp': '<path d="M12 2v5" /><path d="M14.829 15.998a3 3 0 1 1-5.658 0" /><path d="M20.92 14.606A1 1 0 0 1 20 16H4a1 1 0 0 1-.92-1.394l3-7A1 1 0 0 1 7 7h10a1 1 0 0 1 .92.606z" />',
+          'zap': '<path d="M15.914 4a1.5 1.5 0 00-2.474-1.561l-9 9A1.5 1.5 0 005.5 14h4.002a.5.5 0 01.471.666L8.086 20a1.5 1.5 0 002.475 1.56l9-9A1.5 1.5 0 0018.5 10h-3.997a.5.5 0 01-.472-.667z" />',
+          'cable': '<path d="M17 19a1 1 0 0 1-1-1v-2a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2a1 1 0 0 1-1 1z" /><path d="M17 21v-2" /><path d="M19 14V6.5a1 1 0 0 0-7 0v11a1 1 0 0 1-7 0V10" /><path d="M21 21v-2" /><path d="M3 5V3" /><path d="M4 10a2 2 0 0 1-2-2V6a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2a2 2 0 0 1-2 2z" /><path d="M7 5V3" />',
+          'wind': '<path d="M12.8 19.6A2 2 0 1 0 14 16H2" /><path d="M17.5 8a2.5 2.5 0 1 1 2 4H2" /><path d="M9.8 4.4A2 2 0 1 1 11 8H2" />'
+        } %}
         <div class="category-grid">
+          {#
+            Значок подраздела подбирается по названию, как значки отделов
+            в меню (common/menu.twig). Список свой: у подразделов другие
+            слова. Общим файлом значки не сделать - движок собирает каждый
+            шаблон отдельно и чужой шаблон подключить не даёт (в OpenCart
+            3.0.3.7 у Twig загрузчик из одной строки, ArrayLoader).
+            Значки - из набора Lucide (лицензия ISC), в той же сетке 24x24,
+            что значки макета; пилу, диск с искрами, бетономешалку,
+            пылесос и генератор в наборе не нашлось, они нарисованы здесь.
+            Порядок проверок важен: «пил» раньше «ручн» - «Ручные пилы»
+            это пилы, а не молоток; «фен» последним - короткое слово легко
+            найти внутри чужого.
+            Новый подраздел, которого нет в списке, получает коробку.
+
+            Значки drill, tool-case, battery-charging, hammer, plug-zap,
+            spray-can, wind, droplets, bolt, lamp-ceiling, zap, cable -
+            Lucide (lucide.dev), ISC License:
+            Copyright (c) 2026 Lucide Icons and Contributors
+            Permission to use, copy, modify, and/or distribute this software
+            for any purpose with or without fee is hereby granted, provided
+            that the above copyright notice and this permission notice
+            appear in all copies.
+          #}
           {% for category in categories %}
+          {%- set n = category.name|lower -%}
+          {%- if 'дрел' in n or 'шуруп' in n or 'перфорат' in n %}{% set icon = 'drill' -%}
+          {%- elseif 'аккумулятор' in n or 'зарядн' in n %}{% set icon = 'battery' -%}
+          {%- elseif 'hanskonner' in n %}{% set icon = 'toolcase' -%}
+          {%- elseif 'шлифов' in n or 'болгарк' in n %}{% set icon = 'grinder' -%}
+          {%- elseif 'электроинструмент' in n %}{% set icon = 'plugzap' -%}
+          {%- elseif 'краскопульт' in n or 'пневмо' in n %}{% set icon = 'spray' -%}
+          {%- elseif 'бетоносмесит' in n or 'бетономешалк' in n %}{% set icon = 'mixer' -%}
+          {%- elseif 'генератор' in n %}{% set icon = 'generator' -%}
+          {%- elseif 'пылесос' in n %}{% set icon = 'vacuum' -%}
+          {%- elseif 'мойк' in n or 'давлени' in n %}{% set icon = 'droplets' -%}
+          {%- elseif 'крепёж' in n or 'крепеж' in n or 'расходн' in n %}{% set icon = 'bolt' -%}
+          {%- elseif 'освещ' in n or 'светильн' in n or 'ламп' in n %}{% set icon = 'lamp' -%}
+          {%- elseif 'преобразоват' in n or 'стабилизат' in n or 'инвертор' in n %}{% set icon = 'zap' -%}
+          {%- elseif 'кабел' in n or 'провод' in n %}{% set icon = 'cable' -%}
+          {%- elseif 'пил' in n %}{% set icon = 'saw' -%}
+          {%- elseif 'лобзик' in n or 'рубан' in n or 'ручн' in n %}{% set icon = 'hammer' -%}
+          {%- elseif 'фен' in n %}{% set icon = 'wind' -%}
+          {%- else %}{% set icon = 'box' %}{% endif %}
           <a class="category-card" href="{{ category.href }}">
-            <span class="category-card__icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg></span>
+            <span class="category-card__icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">{{ sub_icons[icon]|raw }}</svg></span>
             <span class="category-card__title">{{ category.name }}</span>
           </a>
           {% endfor %}
