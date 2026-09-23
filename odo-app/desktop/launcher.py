@@ -84,6 +84,11 @@ def main() -> int:
         sys.path.insert(0, app_root())
     log_path = os.path.join(data, "server.log")
     smoke = bool(os.environ.get("ODO_SMOKE"))
+    # у оконного .exe нет консоли: sys.stdout/sys.stderr = None, а uvicorn спрашивает у них isatty()
+    if sys.stdout is None:
+        sys.stdout = open(os.path.join(data, "stdout.log"), "a", encoding="utf-8")
+    if sys.stderr is None:
+        sys.stderr = open(os.path.join(data, "stderr.log"), "a", encoding="utf-8")
     try:
         import uvicorn
         from server.main import app  # noqa: E402  (после установки окружения)
@@ -98,6 +103,8 @@ def main() -> int:
         return 2
 
     log_cfg = uvicorn.config.LOGGING_CONFIG
+    for fmt in log_cfg["formatters"].values():
+        fmt["use_colors"] = False
     for h in log_cfg["handlers"].values():
         h.pop("stream", None)
         h["class"] = "logging.FileHandler"
