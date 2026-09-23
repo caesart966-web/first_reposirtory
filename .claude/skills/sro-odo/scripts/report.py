@@ -120,11 +120,17 @@ def render(res: dict, reg: dict | None) -> str:
              "и правилам ГрК РФ о членстве в СРО; числа сняты с копий документов и подлежат сверке с оригиналами. "
              "Строки с пометкой «решает человек» в суммы «СРО» не входят и показаны отдельно. Отчёт не является выводом о нарушении: "
              "соответствие уровню ответственности определяется по данным реестра СРО.</div>"]
-    parts.append("<h2>1. Итог: все подходящие договоры</h2><p class=small muted>Договоры подряда с застройщиком, техническим заказчиком, лицом, ответственным за эксплуатацию, региональным оператором, где компания — подрядчик.</p>")
-    parts.append(totals_table(res["totals"]["all_qualifying"]))
-    parts.append("<h2>2. Итог: только договоры, заключённые конкурентным способом</h2><p class=small muted>Буква ч. 3 ст. 55.8 ГрК РФ. Какая из двух выборок применяется вашей СРО — по её положению о контроле.</p>")
-    parts.append(totals_table(res["totals"]["competitive_only"]))
-    if res.get("levels_hint"):
+    prim = res["settings"].get("primary_cut", "all_qualifying")
+    blocks = {"competitive_only": ("Совокупный размер по КФ ОДО: договоры, заключённые конкурентным способом",
+                                   "Ч. 3 ст. 55.8 и ч. 7 ст. 55.13 ГрК РФ (редакция 2026 года): совокупный размер считается по конкурентным договорам; исполненное по актам исключается."),
+              "all_qualifying": ("Справочно: все договоры подряда с застройщиком, техзаказчиком, эксплуатантом, региональным оператором",
+                                 "Где компания — подрядчик. Прямые договоры уведомляются в СРО (ч. 4 ст. 55.8), но в совокупный размер по ОДО не входят.")}
+    order = [prim] + [k for k in blocks if k != prim]
+    for i, cut in enumerate(order, 1):
+        t, sub = blocks[cut]
+        parts.append(f"<h2>{i}. {t}</h2><p class=small muted>{sub}</p>")
+        parts.append(totals_table(res["totals"][cut]))
+    if res.get("levels_hint") and res["settings"].get("compare_with_level", True):
         parts.append("<h2>3. Справочно: уровень ответственности по ст. 55.16 ГрК РФ</h2><div class=wrap><table><thead><tr><th>Вид СРО</th><th class=num>Остаток СРО</th><th>Покрывает уровень</th><th>Остаток без разделения → уровень</th><th>Цена СРО → уровень</th><th>Заявленный уровень</th></tr></thead><tbody>")
         for k, h in res["levels_hint"].items():
             parts.append(f"<tr><td>{KIND_LABEL[k]}</td><td class=num>{fmt(h['remaining_sro'])}</td><td>{h['level_covering_remaining_sro']}</td>"

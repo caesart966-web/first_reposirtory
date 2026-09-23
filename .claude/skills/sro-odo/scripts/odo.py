@@ -76,8 +76,13 @@ def _vat_factor(doc):
         return 1.0
 
 
-def contract_applicability(c, thresholds):
-    """Считается ли договор в совокупный размер обязательств и почему."""
+def contract_applicability(c, thresholds, policy=None):
+    """Считается ли договор в совокупный размер обязательств и почему.
+
+    Возвращает (qualifying, in_scope, reasons, flags): qualifying — подходит по
+    сторонам и виду (все договоры с застройщиком/техзаказчиком), in_scope —
+    входит по практике проверяющего (policy.json: odo_scope)."""
+    policy = policy or {}
     reasons, flags = [], []
     counts = True
     if c.get("role") != "contractor":
@@ -112,8 +117,20 @@ def contract_applicability(c, thresholds):
     if c.get("procurement") == "unknown" and counts:
         flags.append("procurement_unknown")
     if c.get("status") == "completed":
-        reasons.append("договор исполнен — обязательства, признанные исполненными по актам, в расчёт не входят (ч. 4 ст. 55.13 ГрК РФ)")
-    return counts, reasons, flags
+        reasons.append("договор исполнен — обязательства, признанные исполненными по актам, в расчёт не входят (ч. 7 ст. 55.13 ГрК РФ)")
+    in_scope = counts
+    if counts and policy.get("odo_scope") == "competitive_only":
+        if c.get("procurement") == "competitive":
+            reasons.append("заключён конкурентным способом — входит в совокупный размер по КФ ОДО (ч. 3 ст. 55.8, ч. 7 ст. 55.13 ГрК РФ)")
+        elif c.get("procurement") == "direct":
+            in_scope = False
+            reasons.append("заключён без конкурентных процедур — в совокупный размер по КФ ОДО не входит (ч. 3 ст. 55.8 ГрК РФ); уведомляется (ч. 4 ст. 55.8)")
+        else:
+            in_scope = False
+            reasons.append("способ заключения не указан — до подтверждения в совокупный размер не включён (ч. 3 ст. 55.8 ГрК РФ)")
+    if counts and "below_threshold" in flags and policy.get("below_threshold_competitive") == "include" and c.get("procurement") == "competitive":
+        reasons.append("ниже порога, но конкурентный — включён по практике проверяющего")
+    return counts, in_scope, reasons, flags
 
 
 def level_for(amount, table):
@@ -126,6 +143,7 @@ def level_for(amount, table):
 def compute(reg: dict, levels: dict) -> dict:
     settings = reg.get("settings") or {}
     basis = settings.get("vat_basis", "with_vat")
+    policy = load_json(os.path.join(DATA, "policy.json")) if os.path.exists(os.path.join(DATA, "policy.json")) else {}
     docs = {d["id"]: d for d in reg.get("documents", [])}
     objs = {o["id"]: o for o in reg.get("objects", [])}
     warnings, review = [], []
@@ -184,7 +202,7 @@ def compute(reg: dict, levels: dict) -> dict:
     excluded = []
 
     for c in reg.get("contracts", []):
-        counts, reasons, flags = contract_applicability(c, levels["thresholds"])
+        counts, in_scope, reasons, flags = contract_applicability(c, levels["thresholds"], policy)
         sro_kind = c.get("sro_kind") or KIND_TO_SRO.get(c.get("kind"))
         obj = objs.get(c.get("object_id") or "") or {}
         if obj and obj.get("category") == "unknown" and counts:
@@ -242,7 +260,7 @@ def compute(reg: dict, levels: dict) -> dict:
             "kind": c.get("kind"), "sro_kind": sro_kind, "role": c.get("role"),
             "counterparty": c.get("counterparty"), "procurement": c.get("procurement"),
             "status": c.get("status"), "object": obj.get("name"), "object_category": obj.get("category"),
-            "counts_for_odo": counts, "reasons": reasons, "flags": flags,
+            "counts_for_odo": in_scope, "qualifying": counts, "reasons": reasons, "flags": flags,
             "price": r2(price), "price_sro": r2(price_sro), "price_non_sro": r2(float(price) - price_sro) if price_sro is not None else None,
             "share_sro": None if share is None else round(share, 4), "share_basis": share_basis,
             "share_by_kind": {k: round(v, 4) for k, v in share_by_kind.items()},
@@ -257,9 +275,10 @@ def compute(reg: dict, levels: dict) -> dict:
         }
         contracts_out.append(rec)
 
-        if not counts:
+        if not in_scope:
             excluded.append({"id": c["id"], "number": c["number"], "counterparty": c["counterparty"]["name"],
                              "price": r2(price), "reasons": reasons})
+        if not counts:
             continue
         cuts = ["all_qualifying"] + (["competitive_only"] if c.get("procurement") == "competitive" else [])
         kinds = share_by_kind
@@ -284,12 +303,13 @@ def compute(reg: dict, levels: dict) -> dict:
 
     # Округление итогов и справочные уровни.
     hints = {}
+    primary = "competitive_only" if policy.get("odo_scope") == "competitive_only" else "all_qualifying"
     for cut in totals:
         for k in SRO_KINDS:
             totals[cut][k] = {kk: (r2(v) if isinstance(v, float) else v) for kk, v in totals[cut][k].items()}
     for k in SRO_KINDS:
-        t = totals["all_qualifying"][k]
-        if t["contracts"] == 0:
+        t = totals[primary][k]
+        if t["contracts"] == 0 or policy.get("compare_with_level") is False:
             continue
         table = levels["odo"][k]["levels"]
         hints[k] = {
@@ -312,12 +332,13 @@ def compute(reg: dict, levels: dict) -> dict:
 
     return {
         "subject": reg["subject"], "as_of": reg.get("as_of"),
-        "settings": {"vat_basis": basis, "odo_basis": "цена договора − выполнено по актам (ч. 4 ст. 55.13 ГрК РФ)"},
+        "settings": {"vat_basis": basis, "odo_basis": "цена договора − выполнено по актам (ч. 7 ст. 55.13 ГрК РФ)", "primary_cut": primary,
+                     "odo_scope": policy.get("odo_scope", "all_qualifying"), "compare_with_level": policy.get("compare_with_level", True)},
         "method_notes": [
             "Строка идёт в «СРО», если её вид работ есть в Перечне 624 без звёздочки, либо со звёздочкой на объекте ст. 48.1 ГрК РФ.",
             "Строка идёт в «не СРО», если работ нет в Перечне 624 (отделка, благоустройство, уборка), либо это не работы (поставка, аренда, охрана, накладные, ФОТ), либо звёздочка на обычном объекте.",
             "Договор входит в совокупный размер, если компания — подрядчик по договору подряда с застройщиком, техзаказчиком, эксплуатирующей организацией или региональным оператором. Субподряд не входит.",
-            "Выборка competitive_only — буква ч. 3 ст. 55.8 ГрК РФ (конкурентные способы); all_qualifying — все подходящие договоры. 309-ФЗ с 01.03.2026 расширил уведомления на все договоры; какая выборка применяется вашей СРО — уточняется по её положению о контроле.",
+            "Совокупный размер по КФ ОДО считается по договорам, заключённым с использованием конкурентных способов (ч. 3 ст. 55.8, ч. 7 ст. 55.13 ГрК РФ, редакция 2026 года) — выборка competitive_only; прямые договоры уведомляются (ч. 4 ст. 55.8), но не входят. Выборка all_qualifying приводится справочно.",
         ],
         "contracts": contracts_out, "totals": totals, "excluded": excluded,
         "levels_hint": hints, "review_queue": review, "warnings": warnings,
@@ -335,8 +356,12 @@ def markdown(res: dict) -> str:
     out = [f"# Обязательства члена СРО: {s['name']}" + (f" (ИНН {s['inn']})" if s.get("inn") else ""),
            f"Дата расчёта: {res['as_of']}. Базис: {'с НДС' if res['settings']['vat_basis'] == 'with_vat' else 'без НДС'}. "
            f"Остаток = {res['settings']['odo_basis']}.", ""]
-    for cut, title in (("all_qualifying", "Все договоры с застройщиком/техзаказчиком/эксплуатантом/региональным оператором"),
-                       ("competitive_only", "Только заключённые конкурентным способом")):
+    prim = res["settings"].get("primary_cut", "all_qualifying")
+    order = [("competitive_only", "Совокупный размер по КФ ОДО: договоры, заключённые конкурентным способом"),
+             ("all_qualifying", "Справочно: все договоры подряда с застройщиком/техзаказчиком/эксплуатантом/региональным оператором")]
+    if prim == "all_qualifying":
+        order = [order[1], order[0]]
+    for cut, title in order:
         out.append(f"## {title}")
         out.append("| Вид СРО | Договоров | Цена всего | из них СРО | Выполнено | из них СРО | Остаток всего | Остаток СРО | Остаток не разделён | Выполнено не решено |")
         out.append("|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|")

@@ -15,9 +15,10 @@ counterparty.kind ∈ {developer, technical_customer,
         operator, regional_operator} ───────► в расчёте
 counterparty.kind = unknown ────────────────► в расчёте условно + на проверку
 иначе (general_contractor, contractor, other) ► не в расчёте (субподряд)
-цена ≤ порога (10 млн / 1 млн) ─────────────► в расчёте с флагом below_threshold
-procurement = competitive ──────────────────► дополнительно в выборку competitive_only
-status = completed ─────────────────────────► остаток 0
+цена ≤ порога (10 млн / 1 млн) ─────────────► флаг below_threshold; конкурентный — в расчёте (policy)
+procurement = competitive ──────────────────► в совокупный размер по ОДО (основная выборка)
+procurement = direct ───────────────────────► не в расчёте по ОДО (ч. 3 ст. 55.8); справочно в all_qualifying
+status = completed ─────────────────────────► остаток 0 (ч. 7 ст. 55.13)
 ```
 
 ## Уровень строки (`classify.py`)
