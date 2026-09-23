@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Карточка договора {{ card.contract.number or '' }}{% endblock %}
+{% block content %}
+{% set c = card.contract %}{% set nr = meta.needs_review or [] %}{% set h = meta.hints or {} %}
+<p class="crumbs"><a href="/">Компании</a> › <a href="/company/{{ company.id }}">{{ company.name }}</a> › карточка договора</p>
+<h1>Проверьте карточку договора</h1>
+<p>Всё, что программа прочитала из документов, уже заполнено. <b>Жёлтые поля</b> она не смогла установить — заполните их. Затем нажмите «Рассчитать».</p>
+
+{% if errors %}<div class="notice error"><b>Не сохранено</b><ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+{% if meta.warnings %}<div class="notice warn"><b>Программа обратила внимание</b><ul>{% for w in meta.warnings %}<li>{{ w }}</li>{% endfor %}</ul></div>{% endif %}
+
+<p class="muted">Файлы: {% for f in files %}<a href="/contract/{{ ct.id }}/files/{{ f.id }}">{{ f.filename }}</a> <span class="tag">{{ {'contract':'договор','estimate':'смета','act':'акт','addendum':'ДС','letter':'письмо','other':'прочее'}.get(f.kind, f.kind) }}{% if f.scanned %}, скан{% endif %}</span>{{ ' · ' if not loop.last }}{% endfor %}
+{% if meta.source %} · разбор: {{ 'правила + ИИ' if meta.source == 'rules+llm' else 'правила' }}{% endif %}</p>
+
+<form method="post" class="cardform">
+<fieldset><legend>Договор</legend>
+<div class="grid">
+  <label class="{{ 'need' if not c.number }}">Номер <input name="number" value="{{ c.number or '' }}" required><small>{{ h.number or '' }}</small></label>
+  <label class="{{ 'need' if not c.date }}">Дата <input type="date" name="date" value="{{ c.date or '' }}"><small>{{ h.date or '' }}</small></label>
+  <label>Вид договора <select name="kind">{% for k,v in RU.kind.items() %}<option value="{{ k }}" {{ 'selected' if c.kind == k }}>{{ v }}</option>{% endfor %}</select></label>
+  <label>Статус <select name="status">{% for k,v in RU.contract_status.items() %}<option value="{{ k }}" {{ 'selected' if c.status == k }}>{{ v }}</option>{% endfor %}</select></label>
+  <label class="{{ 'need' if c.price_rub is none }}">Цена, ₽ (с НДС, по последней редакции) <input name="price_rub" value="{{ c.price_rub if c.price_rub is not none else '' }}" inputmode="decimal"><small>{{ h.price_rub or '' }}</small></label>
+  <label>НДС в цене <select name="price_includes_vat"><option value="null" {{ 'selected' if c.price_includes_vat is none }}>не ясно</option><option value="true" {{ 'selected' if c.price_includes_vat == true }}>включён</option><option value="false" {{ 'selected' if c.price_includes_vat == false }}>не облагается</option></select></label>
+  <label>Начало работ <input type="date" name="period_from" value="{{ c.period_from or '' }}"></label>
+  <label>Окончание работ <input type="date" name="period_to" value="{{ c.period_to or '' }}"></label>
+  <label class="wide">Предмет (дословно) <textarea name="subject_text" rows="2">{{ c.subject_text or '' }}</textarea></label>
+  <label class="wide">Откуда следует вид договора <textarea name="kind_basis" rows="2">{{ c.kind_basis or '' }}</textarea></label>
+  <label class="wide">Откуда взята цена <input name="price_basis" value="{{ c.price_basis or '' }}"></label>
+  <label class="wide">Статус: основание <input name="status_basis" value="{{ c.status_basis or '' }}"></label>
+</div></fieldset>
+
+<fieldset><legend>Как заключён</legend>
+<div class="grid">
+  <label class="{{ 'need' if 'procurement' in nr or c.procurement == 'unknown' }}">Способ заключения <select name="procurement">{% for k,v in RU.procurement.items() %}<option value="{{ k }}" {{ 'selected' if c.procurement == k }}>{{ v }}</option>{% endfor %}</select></label>
+  <label class="{{ 'need' if c.procurement == 'competitive' and c.procurement_law in (none, 'unknown') }}">Чем предписаны торги <select name="procurement_law"><option value="null" {{ 'selected' if not c.procurement_law }}>— (прямой договор)</option>{% for k,v in RU.procurement_law.items() %}<option value="{{ k }}" {{ 'selected' if c.procurement_law == k }}>{{ v }}</option>{% endfor %}</select><small>44‑ФЗ, 223‑ФЗ и обязательные торги — конкурентный способ по ст. 60.1 ГрК РФ; добровольный тендер — нет</small></label>
+  <label class="wide">Основание (протокол, ИКЗ, извещение) <input name="procurement_basis" value="{{ c.procurement_basis or '' }}"></label>
+  <label>Начальная (максимальная) цена закупки, ₽ <input name="nmck_rub" value="{{ c.nmck_rub if c.nmck_rub is not none else '' }}" inputmode="decimal"><small>нужна, если цена договора ниже 10 млн, а НМЦК была выше</small></label>
+  <label>Откуда взята НМЦК <input name="nmck_basis" value="{{ c.nmck_basis or '' }}"></label>
+</div></fieldset>
+
+<fieldset><legend>Исполнение</legend>
+<div class="grid">
+  <label>Принято по актам, ₽ (с НДС) <input name="executed_rub" value="{{ c.executed_rub if c.executed_rub is not none else '' }}" inputmode="decimal"><small>остаток = цена − принято (ч. 7 ст. 55.13)</small></label>
+  <label>Основание (акты КС‑2/КС‑3) <input name="executed_basis" value="{{ c.executed_basis or '' }}"></label>
+  <label>Итоговый акт подписан <select name="has_final_act"><option value="null" {{ 'selected' if c.has_final_act is none }}>не известно</option><option value="true" {{ 'selected' if c.has_final_act == true }}>да</option><option value="false" {{ 'selected' if c.has_final_act == false }}>нет</option></select></label>
+  <label>Документ о расторжении <input name="termination_document" value="{{ c.termination_document or '' }}"></label>
+</div>
+<div id="addenda">
+  <p><b>Дополнительные соглашения</b> <button type="button" class="ghost small" data-add="addenda">+ добавить</button></p>
+  <input type="hidden" name="addenda_n" id="addenda_n" value="{{ c.addenda|length }}">
+  {% for a in c.addenda %}
+  <div class="row4"><input name="add_number_{{ loop.index0 }}" value="{{ a.number }}" placeholder="№"><input type="date" name="add_date_{{ loop.index0 }}" value="{{ a.date or '' }}"><input name="add_price_{{ loop.index0 }}" value="{{ a.price_rub if a.price_rub is not none else '' }}" placeholder="новая цена, ₽"><input name="add_note_{{ loop.index0 }}" value="{{ a.note or '' }}" placeholder="что меняет"></div>
+  {% endfor %}
+</div>
+</fieldset>
+
+<fieldset><legend>Стороны</legend>
+<div class="grid">
+  <label>Член СРО (подрядчик) <input name="member_name" value="{{ card.member.name }}" required></label>
+  <label>ИНН члена <input name="member_inn" value="{{ card.member.inn or '' }}"></label>
+  <label>Роль члена в договоре <select name="member_role"><option value="contractor" {{ 'selected' if card.member.role == 'contractor' }}>подрядчик</option><option value="customer" {{ 'selected' if card.member.role == 'customer' }}>заказчик</option></select></label>
+  <label>Член — ГУП/МУП/учреждение <select name="member_is_state_entity"><option value="false" {{ 'selected' if card.member.is_state_entity == false }}>нет</option><option value="true" {{ 'selected' if card.member.is_state_entity == true }}>да (исключение ч. 2.2 ст. 52)</option><option value="null" {{ 'selected' if card.member.is_state_entity is none }}>не известно</option></select></label>
+  <label>Виды СРО члена <span class="checks">{% for k,v in [('build','строители'),('design','проектировщики'),('survey','изыскатели')] %}<label class="check"><input type="checkbox" name="member_sro_kinds" value="{{ k }}" {{ 'checked' if k in card.member.sro_kinds }}> {{ v }}</label>{% endfor %}</span></label>
+  <label>Дата вступления в СРО <input type="date" name="membership_date" value="{{ card.member.membership_date or '' }}"></label>
+  <label class="wide {{ 'need' if not card.customer.name }}">Заказчик <input name="customer_name" value="{{ card.customer.name }}" required><small>{{ h.customer_name or '' }}</small></label>
+  <label>ИНН заказчика <input name="customer_inn" value="{{ card.customer.inn or '' }}"><small>{{ h.customer_inn or '' }}</small></label>
+  <label class="{{ 'need' if card.customer.kind == 'unknown' }}">Кто заказчик <select name="customer_kind">{% for k,v in RU.customer_kind.items() %}<option value="{{ k }}" {{ 'selected' if card.customer.kind == k }}>{{ v }}</option>{% endfor %}</select><small>застройщик, техзаказчик, эксплуатант, регоператор — членство нужно; генподрядчик — субподряд</small></label>
+  <label class="wide">Чем подтверждён статус заказчика <textarea name="customer_kind_basis" rows="2">{{ card.customer.kind_basis or '' }}</textarea></label>
+</div></fieldset>
+
+<fieldset><legend>Объект и работы</legend>
+<div class="grid">
+  <label class="wide">Объект <input name="object_name" value="{{ card.object.name }}" required></label>
+  <label class="wide">Адрес <input name="object_address" value="{{ card.object.address or '' }}"></label>
+  <label>Кадастровый номер <input name="cadastral" value="{{ card.object.cadastral or '' }}"></label>
+  <label class="{{ 'need' if 'work_type' in nr or card.work_type == 'unknown' }}">Что делается <select name="work_type">{% for k,v in RU.work_type.items() %}<option value="{{ k }}" {{ 'selected' if card.work_type == k }}>{{ v }}</option>{% endfor %}</select><small>текущий ремонт и благоустройство — не работы на ОКС</small></label>
+  <label>Объект капитальный <select name="is_capital"><option value="null" {{ 'selected' if card.object.is_capital is none }}>не известно</option><option value="true" {{ 'selected' if card.object.is_capital == true }}>да</option><option value="false" {{ 'selected' if card.object.is_capital == false }}>нет</option></select></label>
+  <label>Нужно разрешение на строительство <select name="permit_required"><option value="null" {{ 'selected' if card.object.permit_required is none }}>не известно</option><option value="true" {{ 'selected' if card.object.permit_required == true }}>да</option><option value="false" {{ 'selected' if card.object.permit_required == false }}>нет</option></select></label>
+  <label>Категория <select name="category">{% for k,v in RU.category.items() %}<option value="{{ k }}" {{ 'selected' if card.object.category == k }}>{{ v }}</option>{% endfor %}</select><small>особо опасные и уникальные — ст. 48.1 ГрК РФ</small></label>
+  <label>Жильё / вспомогательное <select name="housing_type">{% for k,v in RU.housing.items() %}<option value="{{ k }}" {{ 'selected' if card.object.housing_type == k }}>{{ v }}</option>{% endfor %}</select></label>
+  <label class="wide">Основание по объекту <textarea name="object_basis" rows="2">{{ card.object.basis or '' }}</textarea></label>
+</div>
+<div id="works">
+  <p><b>Виды работ (строки смет, суммы без НДС)</b> <button type="button" class="ghost small" data-add="works">+ строка</button> <small class="muted">Разделение по Перечню 624 — справочно; на вывод об ОДО не влияет.</small></p>
+  <input type="hidden" name="works_n" id="works_n" value="{{ card.works|length }}">
+  {% for w in card.works %}
+  <div class="row4"><input name="work_name_{{ loop.index0 }}" value="{{ w.name }}" placeholder="наименование"><input name="work_amount_{{ loop.index0 }}" value="{{ w.amount_rub if w.amount_rub is not none else '' }}" placeholder="сумма, ₽"><input name="work_source_{{ loop.index0 }}" value="{{ w.source or '' }}" placeholder="источник"><select name="work_human_{{ loop.index0 }}"><option value="">по Перечню</option><option value="sro" {{ 'selected' if w.human_decision and w.human_decision.sro }}>СРО (решил человек)</option><option value="nosro" {{ 'selected' if w.human_decision and w.human_decision.sro == false }}>не СРО (решил человек)</option></select></div>
+  {% endfor %}
+</div>
+</fieldset>
+
+<fieldset><legend>Прочее</legend>
+<div class="grid">
+  <label>Дата оценки <input type="date" name="as_of" value="{{ card.as_of or '' }}"></label>
+  <label class="wide">Заметки <textarea name="notes" rows="2">{{ card.notes or '' }}</textarea></label>
+</div></fieldset>
+
+<div class="actions sticky"><button type="submit" class="primary">Рассчитать</button> <a class="btn ghost" href="/company/{{ company.id }}">Отмена</a></div>
+</form>
+
+<form method="post" action="/contract/{{ ct.id }}/delete" class="inline danger" onsubmit="return confirm('Удалить этот договор и его файлы?')"><input type="hidden" name="confirm" value="да"><button class="ghost">Удалить договор</button></form>
+{% endblock %}

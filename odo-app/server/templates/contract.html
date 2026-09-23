@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Договор {{ card.contract.number }} · заключение{% endblock %}
+{% block content %}
+{% set v = a.verdict %}{% set c = card.contract %}
+<p class="crumbs"><a href="/">Компании</a> › <a href="/company/{{ company.id }}">{{ company.name }}</a> › договор {{ c.number }}</p>
+<h1>Договор № {{ c.number }} <span class="muted">{{ c.date|dmy }}</span></h1>
+
+<div class="verdict {{ 'v-yes' if v.counts_for_odo == 'yes' else ('v-no' if v.counts_for_odo == 'no' else 'v-open') }}">
+  <div class="v-main">
+    <div class="v-big">{% if v.counts_for_odo == 'yes' %}Входит в ОДО{% elif v.counts_for_odo == 'no' %}В ОДО не входит{% elif v.counts_for_odo == 'conditional' %}Входит при условиях{% else %}Нужны факты{% endif %}</div>
+    <div class="v-sub">Членство в СРО: <b>{{ RU.membership[v.membership_required] }}</b>{% if v.sro_kind %} ({{ {'build':'строители','design':'проектировщики','survey':'изыскатели','mixed':'несколько видов'}[v.sro_kind] }}){% endif %}
+      · Сумма: <b>{{ v.amount_total_rub|money }} ₽</b>{% if v.remaining_rub is not none and v.remaining_rub != v.amount_total_rub %} · Остаток: <b>{{ v.remaining_rub|money }} ₽</b>{% endif %}
+      · Уверенность {{ '%.0f'|format(v.confidence * 100) }} %</div>
+  </div>
+  <div class="v-status">
+    {% if ct.status == 'confirmed' %}<span class="tag yes">подтверждено · {{ ct.decided_by }} · {{ ct.decided_at }}</span>
+    {% elif ct.status == 'disputed' %}<span class="tag warn">решено иначе · {{ ct.decided_by }}</span>
+    {% else %}<span class="tag open">ждёт решения проверяющего</span>{% endif %}
+    {% if ct.case_id %}<small class="muted">прецедент {{ ct.case_id }}</small>{% endif %}
+  </div>
+</div>
+
+<div class="two">
+<section>
+<h2>Коротко</h2>
+<p>{{ v.summary }}</p>
+{% if reasons %}<ol class="reasons">{% for r in reasons %}<li>{{ r }}</li>{% endfor %}</ol>{% endif %}
+{% if a.missing_facts %}<div class="notice warn"><b>Чего не хватает</b><ul>{% for m in a.missing_facts %}<li>{{ m }}</li>{% endfor %}</ul></div>{% endif %}
+</section>
+<section>
+<h2>Договор</h2>
+<table class="kv">
+<tr><th>Заказчик</th><td>{{ card.customer.name }}{% if card.customer.inn %} <span class="muted">ИНН {{ card.customer.inn }}</span>{% endif %}<br><small>{{ RU.customer_kind[card.customer.kind] }}</small></td></tr>
+<tr><th>Объект</th><td>{{ card.object.name }}{% if card.object.address %}<br><small>{{ card.object.address }}</small>{% endif %}</td></tr>
+<tr><th>Работы</th><td>{{ RU.work_type[card.work_type] }} · {{ RU.kind[c.kind] }}</td></tr>
+<tr><th>Как заключён</th><td>{{ RU.procurement[c.procurement] }}{% if c.procurement_law %} · {{ RU.procurement_law[c.procurement_law] }}{% endif %}{% if c.procurement_basis %}<br><small>{{ c.procurement_basis }}</small>{% endif %}{% if eis_url %}<br><a href="{{ eis_url }}" target="_blank" rel="noopener">открыть закупку в ЕИС ↗</a>{% endif %}</td></tr>
+<tr><th>Цена</th><td>{{ row.price|money }} ₽{% if c.price_includes_vat %} с НДС{% endif %}{% if c.nmck_rub %} · НМЦК {{ c.nmck_rub|money }} ₽{% endif %}{% if c.addenda %}<br><small>ДС: {% for ad in c.addenda %}№ {{ ad.number }} — {{ ad.note or '' }}{{ '; ' if not loop.last }}{% endfor %}</small>{% endif %}</td></tr>
+<tr><th>Исполнение</th><td>{{ RU.contract_status[c.status] }}{% if c.executed_rub %} · принято {{ c.executed_rub|money }} ₽{% endif %}{% if c.period_from or c.period_to %}<br><small>{{ c.period_from|dmy }} – {{ c.period_to|dmy }}</small>{% endif %}</td></tr>
+<tr><th>Уведомление в СРО<br><small>3 рабочих дня, ч. 4 ст. 55.8</small></th><td>
+<form method="post" action="/contract/{{ ct.id }}/notify" class="inline">
+<select name="notified"><option value="no" {{ 'selected' if not ct.sro_notified }}>не получено</option><option value="yes" {{ 'selected' if ct.sro_notified }}>получено</option></select>
+<input type="date" name="date" value="{{ ct.sro_notified_date or '' }}"> <button class="ghost small">сохранить</button>
+</form>
+{% if row.notify_overdue %}<span class="tag warn">срок {{ row.notify_deadline|dmy }} прошёл</span>{% elif row.notify_deadline and not ct.sro_notified %}<small class="muted">срок до {{ row.notify_deadline|dmy }}</small>{% endif %}
+</td></tr>
+<tr><th>Файлы</th><td>{% for f in files %}<a href="/contract/{{ ct.id }}/files/{{ f.id }}">{{ f.filename }}</a>{{ ', ' if not loop.last }}{% endfor %}</td></tr>
+</table>
+</section>
+</div>
+
+<div class="toolbar">
+  <a class="btn ghost" href="/contract/{{ ct.id }}/zaklyuchenie.docx">Заключение .docx</a>
+  <a class="btn ghost" href="/contract/{{ ct.id }}/zaklyuchenie.md">.md</a>
+  <a class="btn ghost" href="/contract/{{ ct.id }}/zaklyuchenie.json">.json</a>
+  <a class="btn ghost" href="/contract/{{ ct.id }}/card">Изменить карточку и пересчитать</a>
+  <a class="btn ghost" href="/contract/{{ ct.id }}/letter">Разобрать письмо-возражение</a>
+</div>
+
+{% if ct.status in ('assessed',) %}
+<section class="card decide">
+<h2>Решение проверяющего</h2>
+<p>Расчёт — предложение программы. Решение записывается в базу прецедентов без имён и номеров, и следующий похожий договор получит на него ссылку.</p>
+<div class="two">
+<form method="post" action="/contract/{{ ct.id }}/decision">
+  <input type="hidden" name="verdict" value="agree">
+  <label>Кто решает <input name="by" value="{{ user if user != 'проверяющий' else '' }}" placeholder="имя"></label>
+  <label>Заметка (не обязательно) <input name="note" placeholder="например: НМЦК в ЕИС проверена"></label>
+  <button type="submit" class="primary">Согласен с расчётом</button>
+</form>
+<form method="post" action="/contract/{{ ct.id }}/decision">
+  <input type="hidden" name="verdict" value="disagree">
+  <label>Кто решает <input name="by" value="{{ user if user != 'проверяющий' else '' }}" placeholder="имя"></label>
+  <label>Решение и почему <textarea name="note" rows="3" required placeholder="Входит / не входит в ОДО, потому что …"></textarea></label>
+  <button type="submit">Решить иначе</button>
+</form>
+</div>
+</section>
+{% elif ct.decision %}
+<section class="card"><h2>Решение</h2><p>{{ ct.decision }}</p>{% if ct.decision_note %}<p class="muted">{{ ct.decision_note }}</p>{% endif %}</section>
+{% endif %}
+
+<h2>Разбор по шагам</h2>
+{% for f in a.findings %}
+<div class="step">
+  <div class="step-head"><span class="step-n">{{ f.step }}</span> <b>{{ f.title }}</b>
+    <span class="tag {{ {'yes':'yes','no':'no','conditional':'open','needs_facts':'open','info':''}[f.conclusion] }}">{{ {'yes':'да','no':'нет','conditional':'при условиях','needs_facts':'нужны факты','info':'справка'}[f.conclusion] }}</span></div>
+  <p>{{ f.explanation }}</p>
+  {% if f.basis %}<p class="basis">Основание: {% for b in f.basis %}<span title="{{ a.law_index[b].gist if b in a.law_index else '' }}">{{ a.law_index[b].cite if b in a.law_index else b }}</span>{{ '; ' if not loop.last }}{% endfor %}</p>{% endif %}
+  {% if f.missing %}<p class="muted">Нужно: {{ f.missing|join('; ') }}</p>{% endif %}
+</div>
+{% endfor %}
+
+{% if a.works %}
+<h2>Виды работ по Перечню 624 <small class="muted">справочно</small></h2>
+<table class="data">
+<thead><tr><th>Вид работ</th><th class="num">Сумма, ₽</th><th>Итог</th><th>Перечень</th><th>Почему</th></tr></thead>
+<tbody>{% for w in a.works %}<tr><td>{{ w.name }}</td><td class="num">{{ w.amount_rub|money }}</td><td><span class="tag {{ 'yes' if w.sro else ('open' if w.sro is none else 'no') }}">{{ 'СРО' if w.sro else ('решает человек' if w.sro is none else 'не СРО') }}</span></td><td>{{ w.perechen_code or '—' }}{% if w.asterisk %} *{% endif %}</td><td><small>{{ w.reason }}</small></td></tr>{% endfor %}</tbody>
+</table>
+{% endif %}
+
+{% if a.precedents %}
+<h2>Похожие прецеденты</h2>
+<ul>{% for p in a.precedents %}<li><b>{{ p.id }}</b> ({{ p.date }}, сходство {{ '%.2f'|format(p.score) }}): {{ p.human_decision }}{% if p.note %} <span class="muted">— {{ p.note }}</span>{% endif %}</li>{% endfor %}</ul>
+{% endif %}
+
+{% if letters %}
+<h2>Письма-возражения</h2>
+<ul>{% for L in letters %}<li><a href="/letter/{{ L.id }}">{{ L.created_at }}</a> — {{ L.analysis.overall if L.analysis else '' }}</li>{% endfor %}</ul>
+{% endif %}
+
+<h2>Нормы</h2>
+<ul class="laws">{% for k, n in a.law_index.items() %}<li><b>{{ n.cite }}</b> — {{ n.gist }}</li>{% endfor %}</ul>
+<p class="muted">{{ a.verification_note }}</p>
+
+<form method="post" action="/contract/{{ ct.id }}/delete" class="inline danger" onsubmit="return confirm('Удалить этот договор и его файлы?')"><input type="hidden" name="confirm" value="да"><button class="ghost">Удалить договор</button></form>
+{% endblock %}

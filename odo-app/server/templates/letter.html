@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Письмо-возражение · {{ ct.number }}{% endblock %}
+{% block content %}
+<p class="crumbs"><a href="/">Компании</a> › <a href="/company/{{ company.id }}">{{ company.name }}</a> › <a href="/contract/{{ ct.id }}">договор {{ ct.number }}</a> › письмо</p>
+<h1>Письмо компании по договору {{ ct.number }}</h1>
+{% if claims is none %}
+<form method="post" action="/contract/{{ ct.id }}/letter/detect" enctype="multipart/form-data" class="card">
+  <p>Вставьте текст письма или загрузите файл. Программа найдёт доводы, вы проверите их типы — и получите разбор с нормами и проект ответа.</p>
+  <textarea name="text" rows="12" placeholder="Текст письма…"></textarea>
+  <p>или файл: <input type="file" name="file" accept=".docx,.pdf,.txt"></p>
+  <div class="actions"><button type="submit" class="primary">Найти доводы</button></div>
+</form>
+{% else %}
+<form method="post" action="/contract/{{ ct.id }}/letter/analyze" class="card">
+  <input type="hidden" name="text" value="{{ text }}">
+  <div class="grid">
+    <label>От кого <input name="letter_from" value="{{ meta.from or '' }}"></label>
+    <label>Дата письма <input type="date" name="letter_date" value="{{ meta.date or '' }}"></label>
+    <label>Исх. № <input name="letter_number" value="{{ meta.number or '' }}"></label>
+    <label class="wide">Суть письма (одной фразой) <input name="letter_summary" placeholder="просит исключить договор из расчёта"></label>
+  </div>
+  <p><b>Доводы</b> — проверьте тип каждого, лишние отметьте «убрать», недостающие добавьте. <button type="button" class="ghost small" data-add="claims">+ довод</button></p>
+  <input type="hidden" name="claims_n" id="claims_n" value="{{ claims|length }}">
+  <div id="claims">
+  {% for cl in claims %}
+  <div class="claim">
+    <select name="claim_type_{{ loop.index0 }}">{% for k, v in catalogue.items() %}<option value="{{ k }}" {{ 'selected' if cl.type == k }}>{{ v.title }}</option>{% endfor %}<option value="other" {{ 'selected' if cl.type == 'other' }}>иное (решает человек)</option></select>
+    <textarea name="claim_quote_{{ loop.index0 }}" rows="2">{{ cl.quote }}</textarea>
+    <label class="check"><input type="checkbox" name="claim_drop_{{ loop.index0 }}" value="1"> убрать</label>
+  </div>
+  {% endfor %}
+  </div>
+  {% if not claims %}<p class="notice warn">Типовых доводов не найдено. Добавьте довод вручную и выберите тип.</p>{% endif %}
+  <div class="actions"><button type="submit" class="primary">Разобрать</button> <a class="btn ghost" href="/contract/{{ ct.id }}/letter">Заново</a></div>
+</form>
+<template id="claim-tpl"><div class="claim"><select name="claim_type_N">{% for k, v in catalogue.items() %}<option value="{{ k }}">{{ v.title }}</option>{% endfor %}<option value="other">иное (решает человек)</option></select><textarea name="claim_quote_N" rows="2" placeholder="довод дословно из письма"></textarea><label class="check"><input type="checkbox" name="claim_drop_N" value="1"> убрать</label></div></template>
+{% endif %}
+{% endblock %}

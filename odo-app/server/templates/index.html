@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Компании · ОДО-проверка{% endblock %}
+{% block content %}
+<h1>Члены СРО на проверке</h1>
+{% if companies %}
+<table class="data">
+<thead><tr><th>Компания</th><th>ИНН</th><th class="num">Договоров</th><th class="num">В ОДО</th><th class="num">Совокупный размер, ₽</th><th>Уровень</th><th></th></tr></thead>
+<tbody>
+{% for c in companies %}
+<tr>
+  <td><a href="/company/{{ c.id }}"><b>{{ c.name }}</b></a>{% if c.n_warn %} <span class="tag warn" title="есть предупреждения">{{ c.n_warn }}</span>{% endif %}</td>
+  <td>{{ c.inn or '—' }}</td>
+  <td class="num">{{ c.totals.n_all }}{% if c.totals.n_open %} <span class="muted">({{ c.totals.n_open }} открыт.)</span>{% endif %}</td>
+  <td class="num">{{ c.totals.n_odo }}</td>
+  <td class="num"><b>{{ c.totals.odo_sum|money }}</b></td>
+  <td>{% if c.totals.level %}{{ c.totals.level.level }}-й, {{ c.totals.level.limit }}{% if c.totals.level_share is not none %} · занято {{ '%.0f'|format(c.totals.level_share) }} %{% endif %}{% else %}<span class="muted">не указан</span>{% endif %}</td>
+  <td><a class="btn small" href="/company/{{ c.id }}/contracts/new">+ договор</a></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<p class="muted">Пока никого нет. Добавьте компанию, потом загрузите её договор со сметами.</p>
+{% endif %}
+
+<section class="card">
+<h2>Новая компания</h2>
+<form method="post" action="/companies" class="grid">
+  <label>Название <input name="name" required placeholder="ООО «Пример»"></label>
+  <label>ИНН <input name="inn" pattern="\d{10}|\d{12}" placeholder="10 цифр"></label>
+  <label>СРО (название) <input name="sro_name" placeholder="Ассоциация «…»"></label>
+  <label>Уровень ответственности по ОДО (из реестра СРО, справочно)
+    <select name="odo_level"><option value="">не указан</option><option value="1">1-й — до 90 млн</option><option value="2">2-й — до 500 млн</option><option value="3">3-й — до 3 млрд</option><option value="4">4-й — до 10 млрд</option><option value="5">5-й — свыше</option></select></label>
+  <div class="actions"><button type="submit">Добавить</button></div>
+</form>
+</section>
+{% endblock %}

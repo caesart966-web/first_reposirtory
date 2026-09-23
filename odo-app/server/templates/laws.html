@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Нормы · ОДО-проверка{% endblock %}
+{% block content %}
+<h1>Реестр норм <small class="muted">{{ total }}</small></h1>
+<form class="inline"><input name="q" value="{{ q }}" placeholder="поиск: 55.8, порог, НОСТРОЙ…"> <button class="ghost">Найти</button></form>
+<table class="data">
+<thead><tr><th>Ссылка</th><th>Суть</th><th>Сверка</th></tr></thead>
+<tbody>{% for k, n in items %}<tr><td><b>{{ n.cite }}</b><br><small class="muted">{{ k }}</small></td><td>{{ n.gist }}</td><td><small>{{ n.verified or 'не сверялась' }}</small></td></tr>{% endfor %}</tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Прецеденты · ОДО-проверка{% endblock %}
+{% block content %}
+<h1>База прецедентов <small class="muted">{{ cases|length }}</small></h1>
+<p class="muted">Записи анонимны: без имён, ИНН и номеров договоров. Расхождения человека с расчётом — заготовки новых правил.</p>
+{% if suggestions %}<div class="notice warn"><b>Расхождения с расчётом</b><ul>{% for s in suggestions %}<li>{{ s }}</li>{% endfor %}</ul></div>{% endif %}
+<table class="data">
+<thead><tr><th>ID</th><th>Дата</th><th>Признаки</th><th>Решение человека</th><th>Совпало</th></tr></thead>
+<tbody>{% for c in cases %}<tr><td>{{ c.id }}</td><td>{{ c.date }}</td>
+<td><small>{% if c.kind == 'contract' %}{{ RU.work_type.get(c.features.work_type, c.features.work_type) }} · {{ RU.customer_kind.get(c.features.customer_kind, c.features.customer_kind) }} · {{ RU.procurement.get(c.features.procurement, c.features.procurement) }} · {{ c.features.price_band }}{% else %}письмо: {{ c.features.claim_types|join(', ') }}{% endif %}</small></td>
+<td>{{ c.human.decision }}{% if c.human.note %}<br><small class="muted">{{ c.human.note }}</small>{% endif %}</td>
+<td>{% if c.human.agrees_with_auto %}<span class="tag yes">да</span>{% elif c.human.agrees_with_auto == false %}<span class="tag warn">нет</span>{% else %}—{% endif %}</td></tr>{% endfor %}</tbody>
+</table>
+{% endblock %}

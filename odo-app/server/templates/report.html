@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><title>Реестр договоров: {{ company.name }}</title>
+<link rel="stylesheet" href="/static/app.css"><style>body{background:#fff}main{max-width:1100px}@media print{.noprint{display:none}}</style></head>
+<body><main>
+<p class="noprint"><a href="/company/{{ company.id }}">← назад</a> · <button onclick="window.print()">Печать</button></p>
+<h1>Совокупный размер обязательств по КФ ОДО</h1>
+<p><b>{{ company.name }}</b>{% if company.inn %}, ИНН {{ company.inn }}{% endif %}{% if company.sro_name %} · {{ company.sro_name }}{% endif %} · на {{ today|dmy }}</p>
+<table class="data">
+<thead><tr><th>Договор</th><th>Заказчик</th><th class="num">Цена, ₽</th><th class="num">Принято, ₽</th><th class="num">Остаток, ₽</th><th>Способ</th><th>Членство</th><th>В ОДО</th><th class="num">В расчёт, ₽</th><th>Решение</th></tr></thead>
+<tbody>{% for r in rows %}<tr><td>{{ r.number }}<br><small>{{ r.date|dmy }}</small></td><td>{{ r.customer }}</td><td class="num">{{ r.price|money }}</td><td class="num">{{ r.executed|money }}</td><td class="num">{{ r.remaining|money }}</td><td>{{ r.procurement_ru }}</td><td>{{ r.membership_ru }}</td><td>{{ r.odo_ru }}</td><td class="num">{% if r.odo == 'yes' %}{{ r.odo_amount|money }}{% else %}—{% endif %}</td><td>{{ r.decision_ru }}{% if r.decided_by %}, {{ r.decided_by }}{% endif %}</td></tr>{% endfor %}</tbody>
+<tfoot><tr><td colspan="8"><b>Итого в совокупный размер по КФ ОДО</b></td><td class="num"><b>{{ totals.odo_sum|money }}</b></td><td></td></tr></tfoot>
+</table>
+{% if totals.level %}<p>Справочно: уровень ответственности по ОДО {{ totals.level.level }}-й ({{ totals.level.limit }}){% if totals.level_share is not none %}, занято {{ '%.1f'|format(totals.level_share) }} %{% endif %}.</p>{% endif %}
+{% if warnings %}<h2>Обратить внимание</h2><ul>{% for w in warnings %}<li>{{ w }}</li>{% endfor %}</ul>{% endif %}
+<h2>Как считалось</h2>
+<ul>
+<li>В совокупный размер входят договоры строительного подряда и сноса, заключённые конкурентным способом — по 44‑ФЗ, 223‑ФЗ или на обязательных по закону торгах (ч. 3 ст. 55.8, ч. 1 ст. 60.1 ГрК РФ; п. 1.2 Положения СРО о КФ ОДО), по которым членство обязательно (цена выше 10 млн ₽, ч. 2.1 ст. 52 ГрК РФ).</li>
+<li>Остаток обязательств = цена договора с учётом ДС − принято по актам (ч. 7 ст. 55.13 ГрК РФ).</li>
+<li>Договоры ниже порога и прямые договоры в расчёт не входят (разъяснение НОСТРОЙ от 11.05.2022, письмо Минстроя № 18965‑ОС/02); о них член СРО уведомляет в три рабочих дня (ч. 4 ст. 55.8).</li>
+<li>Уровень ответственности показан справочно; вывод о превышении — решение проверяющего.</li>
+</ul>
+<p class="muted">Заключения по каждому договору с нормами под каждым шагом — в приложении.</p>
+</main></body></html>

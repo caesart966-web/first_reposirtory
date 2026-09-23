@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Настройки · ОДО-проверка{% endblock %}
+{% block content %}
+<h1>Настройки и состояние</h1>
+<div class="two">
+<section class="card">
+<h2>Практика проверки</h2>
+<table class="kv">
+<tr><th>Считаем по ОДО</th><td>{{ 'только конкурентные договоры' if policy.odo_scope == 'competitive_only' else 'все договоры с застройщиком' }}</td></tr>
+<tr><th>Ниже порога 10 млн, но с торгов</th><td>{{ 'не входит' if policy.below_threshold_competitive == 'exclude' else 'входит' }}</td></tr>
+<tr><th>Субподряд с торгов генподрядчика</th><td>{{ 'не входит' if policy.subcontract_competitive == 'exclude' else 'входит' }}</td></tr>
+<tr><th>Добровольный тендер</th><td>{{ 'равен прямому договору' if policy.voluntary_tender == 'direct' else 'считается конкурентным' }}</td></tr>
+<tr><th>Сравнение с уровнем</th><td>{{ 'только справочно' if not policy.compare_with_level else 'в отчёте' }}</td></tr>
+{% if policy.sro %}<tr><th>СРО</th><td>{{ policy.sro.name }}<br><small>{{ policy.sro.odo_regulation }}</small><br><small>{{ policy.sro.control_regulation }}</small></td></tr>{% endif %}
+</table>
+<p class="muted">Меняется в файле policy.json движка: {{ engine_dir }}/scripts/data/policy.json</p>
+</section>
+<section class="card">
+<h2>Система</h2>
+<table class="kv">
+<tr><th>Движок</th><td>{{ engine_dir }}</td></tr>
+<tr><th>Данные</th><td>{{ data_dir }}<br><small>база, загруженные файлы — здесь; резервная копия = копия папки</small></td></tr>
+<tr><th>Пароль</th><td>{{ 'включён (ODO_PASSWORD)' if password_on else 'выключен — задайте ODO_PASSWORD, если приложение открыто в сети' }}</td></tr>
+<tr><th>ИИ-разбор</th><td>{{ ('включён, модель ' ~ llm_model) if llm_on else 'выключен (нет ANTHROPIC_API_KEY)' }}</td></tr>
+</table>
+<p><a class="btn ghost" href="/settings?selftest=1">Проверить движок (тесты)</a></p>
+{% if tests %}<pre>{% for k, v in tests.items() %}{{ k }}: {{ v }}
+{% endfor %}</pre>{% endif %}
+</section>
+</div>
+<h2>Журнал</h2>
+<table class="data"><thead><tr><th>Когда</th><th>Кто</th><th>Действие</th><th>Договор</th><th>Детали</th></tr></thead>
+<tbody>{% for l in log %}<tr><td>{{ l.ts }}</td><td>{{ l.user or '' }}</td><td>{{ l.action }}</td><td>{% if l.contract_id %}<a href="/contract/{{ l.contract_id }}">{{ l.contract_id }}</a>{% endif %}</td><td><small>{{ l.details or '' }}</small></td></tr>{% endfor %}</tbody></table>
+{% endblock %}

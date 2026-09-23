@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}ОДО-проверка{% endblock %}</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="/">ОДО‑проверка</a>
+  <nav>
+    <a href="/">Компании</a>
+    <a href="/laws">Нормы</a>
+    <a href="/cases">Прецеденты</a>
+    <a href="/settings">Настройки</a>
+  </nav>
+  <form class="who" method="post" action="/whoami">
+    <input type="hidden" name="back" value="{{ request.url.path }}">
+    <input name="name" value="{{ user if user != 'проверяющий' else '' }}" placeholder="Ваше имя (для решений)" title="Имя записывается в решения и журнал">
+    <button type="submit" class="ghost">ок</button>
+  </form>
+</header>
+<main>
+{% block content %}{% endblock %}
+</main>
+<footer class="foot">Движок: скилл sro-odo · нормы: ГрК РФ, ГК РФ, приказ 624, положения СРО · расчёт детерминированный, решение за человеком</footer>
+<script src="/static/app.js"></script>
+</body>
+</html>

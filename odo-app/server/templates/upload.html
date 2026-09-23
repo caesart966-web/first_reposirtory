@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Новый договор · {{ company.name }}{% endblock %}
+{% block content %}
+<p class="crumbs"><a href="/">Компании</a> › <a href="/company/{{ company.id }}">{{ company.name }}</a> › новый договор</p>
+<h1>Загрузить договор</h1>
+<form method="post" enctype="multipart/form-data" class="card">
+  <p>Выберите сразу все файлы по одному договору: <b>договор</b> (docx или pdf), <b>сметы</b> (объектный и сводный расчёты, локальные сметы), <b>акты КС‑2/КС‑3</b> и <b>дополнительные соглашения</b>, если есть. Тип каждого файла определится по содержимому.</p>
+  <input type="file" name="files" multiple required accept=".docx,.pdf,.xlsx,.txt,.doc">
+  <p class="muted">Сканы без текстового слоя распознаются, только если на компьютере установлен tesseract; иначе данные из скана вносятся в форму вручную.</p>
+  {% if llm_on %}
+  <label class="check"><input type="checkbox" name="use_llm" value="1" checked> Разобрать договор с помощью ИИ ({{ llm_model }}) — для договоров нестандартной формы. Числа всё равно берутся правилами, карточку проверяет человек.</label>
+  {% else %}
+  <p class="muted">ИИ-разбор выключен: нет ключа ANTHROPIC_API_KEY. Контракты по 44‑ФЗ разбираются правилами, остальное дозаполняется в форме.</p>
+  {% endif %}
+  <div class="actions"><button type="submit">Разобрать документы</button></div>
+</form>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}{{ company.name }} · ОДО-проверка{% endblock %}
+{% block content %}
+<p class="crumbs"><a href="/">Компании</a> › {{ company.name }}</p>
+<h1>{{ company.name }} <span class="muted">{% if company.inn %}ИНН {{ company.inn }}{% endif %}</span></h1>
+
+<div class="kpi">
+  <div><span class="kpi-label">В совокупный размер по КФ ОДО</span><span class="kpi-value">{{ totals.odo_sum|money }} ₽</span></div>
+  <div><span class="kpi-label">Договоров</span><span class="kpi-value">{{ totals.n_all }} <small>в ОДО {{ totals.n_odo }}, не входят {{ totals.n_no }}, открытых {{ totals.n_open }}</small></span></div>
+  <div><span class="kpi-label">Уровень ответственности (справочно)</span>
+    <span class="kpi-value">{% if totals.level %}{{ totals.level.level }}-й, {{ totals.level.limit }}{% if totals.level_share is not none %}<small>занято {{ '%.1f'|format(totals.level_share) }} %</small>{% endif %}{% else %}<small>не указан — задайте в настройках компании</small>{% endif %}</span></div>
+</div>
+
+{% if warnings %}
+<div class="notice warn"><b>Обратите внимание</b><ul>{% for w in warnings %}<li>{{ w }}</li>{% endfor %}</ul></div>
+{% endif %}
+
+<div class="toolbar">
+  <a class="btn" href="/company/{{ company.id }}/contracts/new">+ Загрузить договор</a>
+  <a class="btn ghost" href="/company/{{ company.id }}/export.xlsx">Реестр в Excel</a>
+  <a class="btn ghost" href="/company/{{ company.id }}/report" target="_blank">Отчёт для печати</a>
+</div>
+
+{% if rows %}
+<table class="data">
+<thead><tr><th>Договор</th><th>Заказчик</th><th class="num">Цена, ₽</th><th class="num">Остаток, ₽</th><th>Способ</th><th>Членство</th><th>В ОДО</th><th class="num">В расчёт, ₽</th><th>Статус</th><th>Уведомл.</th></tr></thead>
+<tbody>
+{% for r in rows %}
+<tr class="{{ 'row-odo' if r.odo == 'yes' else ('row-open' if r.odo in ('needs_facts','conditional') or r.status == 'draft' else '') }}">
+  <td><a href="/contract/{{ r.id }}{{ '' if r.status != 'draft' else '/card' }}"><b>{{ r.number }}</b></a><br><small class="muted">{{ r.date|dmy }}</small></td>
+  <td>{{ r.customer }}</td>
+  <td class="num">{{ r.price|money }}</td>
+  <td class="num">{{ r.remaining|money }}</td>
+  <td>{{ r.procurement_ru }}</td>
+  <td>{{ r.membership_ru }}</td>
+  <td><span class="tag {{ 'yes' if r.odo == 'yes' else ('no' if r.odo == 'no' else 'open') }}">{{ r.odo_ru }}</span></td>
+  <td class="num">{% if r.odo == 'yes' %}<b>{{ r.odo_amount|money }}</b>{% else %}—{% endif %}</td>
+  <td>{{ r.decision_ru }}{% if r.decided_by %}<br><small class="muted">{{ r.decided_by }}</small>{% endif %}</td>
+  <td>{% if r.notified %}да{% elif r.notify_overdue %}<span class="tag warn">просрочено</span>{% elif r.notify_deadline %}до {{ r.notify_deadline|dmy }}{% else %}—{% endif %}</td>
+</tr>
+{% endfor %}
+</tbody>
+<tfoot><tr><td colspan="7"><b>Итого в совокупный размер</b></td><td class="num"><b>{{ totals.odo_sum|money }}</b></td><td colspan="2"></td></tr></tfoot>
+</table>
+{% else %}
+<p class="muted">Договоров ещё нет.</p>
+{% endif %}
+
+<details class="card">
+<summary>Настройки компании</summary>
+<form method="post" action="/company/{{ company.id }}/settings" class="grid">
+  <label>Название <input name="name" value="{{ company.name }}" required></label>
+  <label>ИНН <input name="inn" value="{{ company.inn or '' }}"></label>
+  <label>КПП <input name="kpp" value="{{ company.kpp or '' }}"></label>
+  <label>СРО <input name="sro_name" value="{{ company.sro_name or '' }}"></label>
+  <label>Уровень по ОДО (из реестра СРО) <select name="odo_level"><option value="">не указан</option>{% for L in levels %}<option value="{{ L.level }}" {{ 'selected' if company.odo_level == L.level }}>{{ L.level }}-й — {{ L.limit }}</option>{% endfor %}</select></label>
+  <label>Уровень по ВВ (справочно) <input name="vv_level" value="{{ company.vv_level or '' }}" size="2"></label>
+  <label class="wide">Заметки <textarea name="notes" rows="2">{{ company.notes or '' }}</textarea></label>
+  <div class="actions"><button type="submit">Сохранить</button></div>
+</form>
+<form method="post" action="/company/{{ company.id }}/delete" class="inline danger" onsubmit="return confirm('Удалить компанию со всеми договорами и файлами?')">
+  <input type="hidden" name="confirm" value="да"><button type="submit" class="ghost">Удалить компанию</button>
+</form>
+</details>
+{% endblock %}

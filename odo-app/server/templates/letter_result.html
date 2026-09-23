@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Разбор письма · {{ ct.number }}{% endblock %}
+{% block content %}
+{% set an = L.analysis %}
+<p class="crumbs"><a href="/">Компании</a> › <a href="/company/{{ company.id }}">{{ company.name }}</a> › <a href="/contract/{{ ct.id }}">договор {{ ct.number }}</a> › разбор письма</p>
+<h1>Разбор письма по договору {{ ct.number }}</h1>
+<div class="verdict v-open"><div class="v-main"><div class="v-big" style="font-size:1.2rem">{{ an.overall }}</div><div class="v-sub">{{ an.effect }}</div></div></div>
+
+{% for c in an.claims %}
+<div class="step">
+  <div class="step-head"><span class="step-n">{{ loop.index }}</span> <b>{{ catalogue[c.type].title if c.type in catalogue else 'Иной довод' }}</b> <span class="tag {{ {'founded':'yes','partially':'open','unfounded':'no','needs_facts':'open','needs_human':'open'}[c.status] }}">{{ RU.claim_status[c.status] }}</span></div>
+  <blockquote>{{ c.quote }}</blockquote>
+  <p>{{ c.explanation }}</p>
+  {% if c.basis %}<p class="basis">Основание: {% for b in c.basis %}{{ an.law_index[b].cite if an.law_index and b in an.law_index else b }}{{ '; ' if not loop.last }}{% endfor %}</p>{% endif %}
+  {% if c.missing %}<p class="muted">Просить представить: {{ c.missing|join('; ') }}</p>{% endif %}
+</div>
+{% endfor %}
+
+<div class="toolbar"><a class="btn" href="/letter/{{ L.id }}/otvet.docx">Проект ответа .docx</a> <a class="btn ghost" href="/letter/{{ L.id }}/otvet.md">.md</a></div>
+<details class="card" open><summary>Проект ответа</summary><pre class="reply">{{ L.reply_md }}</pre></details>
+
+<section class="card decide">
+<h2>Решение по письму</h2>
+<form method="post" action="/letter/{{ L.id }}/decision" class="grid">
+  <label>Кто решает <input name="by" value="{{ user if user != 'проверяющий' else '' }}"></label>
+  <label class="wide">Решение (что ответили компании) <input name="decision" required placeholder="доводы отклонены, договор остаётся в расчёте"></label>
+  <label class="wide">Заметка <input name="note"></label>
+  <div class="actions"><button type="submit">Записать прецедент</button></div>
+</form>
+</section>
+{% endblock %}
