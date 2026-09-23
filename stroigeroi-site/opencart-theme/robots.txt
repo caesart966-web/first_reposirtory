@@ -57,7 +57,7 @@ Clean-param: sort&order&limit&tracking /
 Clean-param: utm_source&utm_medium&utm_campaign&utm_term&utm_content&yclid&gclid&_openstat /
 
 # Карта сайта. ВКЛЮЧИТЬ ДО ВЫКЛАДКИ: Расширения → Расширения →
-# в списке типов тот, где есть Google Sitemap → Google Sitemap →
+# тип «Каналы продвижения» → Google Sitemap →
 # синяя кнопка с карандашом → Статус «Включено» → Сохранить. Пока лента выключена, этот адрес отдаёт пустую страницу
 # (так устроен сам движок), и строку надо убрать, а не оставлять
 # «на потом».
