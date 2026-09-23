@@ -16,6 +16,8 @@
      установлена рядом: npm pack axe-core);
   4. работают всплывающее окно с документом, галерея фотографий,
      мобильное меню и проверка полей формы;
+  2б. главная на всех ширинах от 320 до 1920 px с шагом 4 px — ловит
+     щели между правилами вёрстки, которые фиксированные ширины пропускают;
   5. в консоли браузера нет ошибок.
 
 Возвращает код 1, если что-то не так.
@@ -131,6 +133,25 @@ def main() -> int:
                     for item in page.evaluate(CLIPPED):
                         problems.append(f"{url} при ширине {width} ({scale}px): "
                                         f"обрезан текст — {item}")
+
+        # 2б. Перебор ВСЕХ ширин главной с шагом 4 px. Восемь фиксированных
+        # ширин выше пропускали щели между правилами: на 980 px не работало
+        # ни одно из двух соседних (одно кончалось на 979, другое начиналось
+        # с 981), а на 1320-1336 px подпись в шапке возвращалась раньше, чем
+        # для неё появлялось место. Обе щели нашёл только перебор.
+        cdp.send("Page.setFontSizes", {"fontSizes": {"standard": 16, "fixed": 16}})
+        page.goto(base + "/", wait_until="load")
+        page.wait_for_timeout(600)
+        gaps = []
+        for width in range(320, 1921, 4):
+            page.set_viewport_size({"width": width, "height": 900})
+            over = page.evaluate("document.documentElement.scrollWidth - innerWidth")
+            if over > 0:
+                gaps.append(f"{width}px (+{over})")
+        if gaps:
+            problems.append("/: страница шире экрана на ширинах " + ", ".join(gaps[:8])
+                            + (f" и ещё {len(gaps) - 8}" if len(gaps) > 8 else ""))
+        page.set_viewport_size({"width": 1280, "height": 900})
 
         # 3. доступность
         cdp.send("Page.setFontSizes", {"fontSizes": {"standard": 16, "fixed": 16}})
