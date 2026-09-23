@@ -1,99 +1,38 @@
 # ============================================================================
-#  Строй-Герой: сжатие и кеш браузера
+#  Строй-Герой: срок хранения в браузере для картинок webp и avif
 # ============================================================================
 #
-#  ЦЕЛИКОМ НЕ СТАВИТЬ. Замер 23.09.2026 на stroigeroi.ru: перед сайтом
-#  стоит nginx, и сервер без нас сжимает страницы и стили (gzip), а стили
-#  отдаёт со сроком 45 дней. Этот файл писался до замера, в расчёте
-#  на голый Apache, и почти всё в нём - повтор уже работающего. Без срока
-#  годности пришли только картинки webp; что с ними делать - в
-#  УСТАНОВКА.md, раздел «8. Сжатие и кеш».
+#  Куда. В КОНЕЦ файла .htaccess в корне сайта
+#  (/var/www/u2934771/data/www/stroigeroi.ru/.htaccess). Удобнее всего -
+#  командой из УСТАНОВКА.md, раздел «8. Сжатие и кеш»: она сама делает
+#  копию файла, открывает сайт после правки и при ошибке возвращает всё
+#  как было. Те же строки записаны в самой команде; что они совпадают
+#  с этим файлом, проверяет tools/check-htaccess.py.
 #
-#  Что это. Сжатие и срок годности в браузере для сервера, где их нет:
-#  без них при каждом переходе по сайту браузер скачивает стили
-#  и картинки заново.
+#  Почему только это. Замер на stroigeroi.ru 23.09.2026: перед сайтом
+#  стоит nginx. Страницы, стили и скрипты уже приходят сжатыми, а css,
+#  js, jpg и png nginx отдаёт сам и со сроком 45 дней. webp и avif он
+#  к своим не относит и передаёт Apache, а тот отдаёт их без срока:
+#  баннер на главной браузер спрашивает заново при каждом заходе.
+#  Кто отдал файл, видно по заголовку etag: у nginx «время-размер»,
+#  у Apache «размер-время», и время у него в микросекундах.
 #
-#  Куда. Дописать В КОНЕЦ файла .htaccess в корне сайта
-#  (/var/www/u2934771/data/www/stroigeroi.ru/.htaccess).
-#  Если файла нет — значит, при установке не переименовали .htaccess.txt;
-#  тогда сначала переименуйте его в .htaccess, иначе ЧПУ не работают.
+#  Раньше здесь лежал полный набор: сжатие, сроки для всех типов файлов,
+#  отказ от ETag. Он писался до замера, в расчёте на голый Apache, и
+#  повторял то, что уже работает, - а до файлов, которые отдаёт nginx,
+#  .htaccess не достаёт вовсе. Набор остался в истории git.
 #
-#  ПЕРЕД ПРАВКОЙ сохраните копию: скачайте .htaccess себе на компьютер.
-#  Ошибка в этом файле кладёт сайт целиком, с ошибкой 500, и правится
-#  только возвратом старого файла.
+#  Срок - 45 дней, как у jpg и png от nginx, а не год: в адресе баннера
+#  нет отпечатка, и новый баннер под старым именем постоянные посетители
+#  увидели бы только через год.
 #
-#  ПОСЛЕ ПРАВКИ откройте сайт. Если вместо страницы «Internal Server
-#  Error» — верните сохранённую копию. Значит, на этом хостинге нет
-#  нужного модуля Apache, и виноват не сайт.
-#
+#  Если модуля mod_headers на сервере нет, блок молча пропускается,
+#  а не роняет сайт.
 # ============================================================================
 
-# ---- Сжатие ----------------------------------------------------------------
-# Текст сжимается в 4-6 раз. Картинки в список не входят нарочно:
-# jpg, png и webp уже сжаты, и повторное сжатие только греет процессор.
-<IfModule mod_deflate.c>
-  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css
-  AddOutputFilterByType DEFLATE application/javascript application/x-javascript
-  AddOutputFilterByType DEFLATE application/json application/xml
-  AddOutputFilterByType DEFLATE application/rss+xml image/svg+xml
-  AddOutputFilterByType DEFLATE font/ttf font/otf font/woff font/woff2
-</IfModule>
-
-# ---- Срок годности в браузере ----------------------------------------------
-<IfModule mod_expires.c>
-  ExpiresActive On
-
-  # Фотографии товаров OpenCart кладёт в image/cache/ под именем,
-  # в котором зашит размер. Меняется размер - меняется имя файла,
-  # поэтому год здесь безопасен.
-  ExpiresByType image/jpeg              "access plus 1 year"
-  ExpiresByType image/png               "access plus 1 year"
-  ExpiresByType image/gif               "access plus 1 year"
-  ExpiresByType image/webp              "access plus 1 year"
-  ExpiresByType image/avif              "access plus 1 year"
-  ExpiresByType image/svg+xml           "access plus 1 year"
-  ExpiresByType image/x-icon            "access plus 1 year"
-  ExpiresByType font/woff2              "access plus 1 year"
-  ExpiresByType font/woff               "access plus 1 year"
-
-  # Стили и скрипты - месяц, а не год, и это не осторожность ради
-  # осторожности. К НАШИМ style.css и app.js сборщик дописывает отпечаток
-  # (?v=38e74890): поменялся файл - поменялся адрес, и год им не страшен.
-  # Но рядом лежат чужие simple.css и live_search.js от расширений,
-  # у них отпечатка нет. Поставь год - и после обновления модуля
-  # у постоянных покупателей ещё год будет работать старая версия.
-  ExpiresByType text/css                "access plus 1 month"
-  ExpiresByType application/javascript  "access plus 1 month"
-  ExpiresByType text/javascript         "access plus 1 month"
-
-  # Страницы не кешируются никогда: цена и наличие меняются.
-  ExpiresByType text/html               "access plus 0 seconds"
-  ExpiresDefault                        "access plus 2 days"
-</IfModule>
-
-# ---- Кому можно хранить ----------------------------------------------------
+# stroigeroi-webp-avif: nginx passes webp/avif to Apache with no cache headers; 45 days, as nginx gives jpg/png/css/js
 <IfModule mod_headers.c>
-  <FilesMatch "\.(css|js|jpg|jpeg|png|gif|webp|avif|svg|ico|woff2?)$">
-    Header set Cache-Control "public"
-  </FilesMatch>
-  # ETag с Expires вместе работают хуже, чем по отдельности: браузер
-  # всё равно ходит на сервер спрашивать, не изменился ли файл.
-  FileETag None
-  Header unset ETag
-</IfModule>
-
-# ---- Что нельзя отдавать посетителю ----------------------------------------
-# Файлы с настройками и журналами не должны открываться по прямой ссылке.
-# Написано дважды нарочно: «Require all denied» понимает только
-# Apache 2.4, а на 2.2 эта строка роняет сайт с ошибкой 500.
-<IfModule mod_authz_core.c>
-  <FilesMatch "\.(log|sql|bak|old|orig|save|swp|ini|yml|md)$">
-    Require all denied
-  </FilesMatch>
-</IfModule>
-<IfModule !mod_authz_core.c>
-  <FilesMatch "\.(log|sql|bak|old|orig|save|swp|ini|yml|md)$">
-    Order allow,deny
-    Deny from all
+  <FilesMatch "\.(webp|avif)$">
+    Header set Cache-Control "max-age=3888000"
   </FilesMatch>
 </IfModule>
