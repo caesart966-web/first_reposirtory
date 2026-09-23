@@ -1,0 +1,3 @@
+# Выключает человекопонятные адреса (config_seo_url = 0). То же самое, что
+# в админке «Использовать ЧПУ» -> «Нет» на вкладке «Сервер» настроек магазина.
+( cd /var/www/u2934771/data/www/stroigeroi.ru || exit 1; php -r 'mysqli_report(MYSQLI_REPORT_OFF); include "config.php"; $m = @new mysqli(DB_HOSTNAME, DB_USERNAME, DB_PASSWORD, DB_DATABASE, (int)DB_PORT); if ($m->connect_error) { echo "DB: ", $m->connect_error, "\n"; exit(1); } $m->query("UPDATE " . DB_PREFIX . "setting SET value = \"0\" WHERE store_id = 0 AND `key` = \"config_seo_url\""); $r = $m->query("SELECT value FROM " . DB_PREFIX . "setting WHERE store_id = 0 AND `key` = \"config_seo_url\""); $now = $r ? $r->fetch_row() : null; echo "config_seo_url = ", ($now ? $now[0] : "?"), "\n";' )

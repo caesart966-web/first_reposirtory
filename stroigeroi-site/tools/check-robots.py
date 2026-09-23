@@ -38,6 +38,13 @@ URLS = [
     (R + 'information/contact', True, 'контакты и адреса магазинов'),
     (R + 'information/sitemap', True, 'карта сайта для людей'),
     (R + 'extension/feed/google_sitemap', True, 'карта сайта для поисковиков — сама себя закрыть не должна'),
+    # Короткие адреса (ЧПУ). Сняты с живого сайта 23.09.2026: движок открывал
+    # их ещё до включения настройки, а после неё ведёт на них сам.
+    ('/elektrika-i-svet', True, 'отдел по короткому адресу'),
+    ('/elektrika-i-svet/osveschenie', True, 'подраздел внутри отдела'),
+    ('/pylesosy-stroitelnye', True, 'раздел из 1С'),
+    ('/otvertka-denzel-3-6v-lii-ion-1-3ach-s-aksessuarami-csl-3-6-01', True, 'карточка товара'),
+    ('/pylesosy-stroitelnye?page=2', True, 'вторая страница раздела — на ней другие товары'),
     ('/catalog/view/theme/stroigeroi2026/stylesheet/style.css?v=4d04a862', True, 'стили с отпечатком'),
     ('/catalog/view/javascript/jquery/jquery-2.1.1.min.js', True, 'скрипты движка'),
     ('/image/cache/import_files/40/40e63c0a-1000x1000.jpg', True, 'фотография товара'),
@@ -45,6 +52,9 @@ URLS = [
     (R + 'product/category&path=92&sort=p.price&order=ASC', False, 'та же страница раздела, другая сортировка'),
     (R + 'product/category&path=92&sort=p.price&order=ASC&page=2', False, 'сортировка + страница: всё равно копия'),
     (R + 'product/category&path=92&limit=100', False, 'та же страница, другое число товаров'),
+    ('/pylesosy-stroitelnye?sort=p.price&order=ASC', False, 'короткий адрес, другая сортировка'),
+    ('/pylesosy-stroitelnye?sort=p.price&order=ASC&page=2', False, 'короткий адрес, сортировка + страница'),
+    ('/pylesosy-stroitelnye?limit=100', False, 'короткий адрес, другое число товаров'),
     (R + 'product/product&manufacturer_id=5&product_id=154', False, 'товар через производителя — копия карточки'),
     (R + 'common/home', False, 'вторая копия главной'),
     (R + 'checkout/cart', False, 'корзина'),
