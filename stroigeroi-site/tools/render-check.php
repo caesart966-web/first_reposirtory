@@ -233,4 +233,47 @@ if (strpos($full, $EMPTY) !== false || strpos($full, 'class="category-card"') !=
 }
 echo "Страница раздела: 3 состояния проверено\n";
 
+/*
+ * Значки отделов в меню каталога. Подбираются по куску названия, и правка
+ * одного слова в menu.twig молча вернула бы отделу общую коробку - глазами
+ * это замечают, только открыв меню. Названия - 15 отделов живой базы
+ * на 23.09.2026, значки - те, что стоят у этих отделов в макете.
+ */
+$want = [
+    'Инструменты' => 'toolbox', 'Электрика и свет' => 'bulb',
+    'Сантехника и инженерные системы' => 'pipe', 'Ручной инструмент' => 'wrench',
+    'Автотовары' => 'car', 'Всё для сада' => 'sprout', 'Крепёж и фурнитура' => 'nut',
+    'Отделочные и стройматериалы' => 'bricks', 'Офис и дом' => 'house',
+    'Спорт и туризм' => 'backpack', 'Станки и промкомпоненты' => 'gear',
+    'Климат, отопление и вентиляция' => 'radiator', 'Клининг и химия' => 'spray',
+    'Строительное оборудование' => 'crane', 'Расходка, спецодежда и сиз' => 'helmet',
+    'Раздел, которого нет в списке' => 'box',
+];
+$menuSrc = file_get_contents("$theme/common/menu.twig");
+preg_match_all("~'(\\w+)': '([^']*)'~", $menuSrc, $pairs, PREG_SET_ORDER);
+$iconOf = [];
+foreach ($pairs as $pair) $iconOf[$pair[2]] = $pair[1];
+$cats = [];
+foreach (array_keys($want) as $i => $name) {
+    $cats[] = ['name' => $name, 'href' => "https://stroigeroi.ru/r$i", 'children' => [], 'column' => 1];
+}
+$menu = $twig->load('common/menu.twig')->render(['categories' => $cats]);
+preg_match('~<div class="catalog-menu__grid">(.*?)</div>~s', $menu, $grid);
+preg_match_all('~<a class="catalog-menu__link" href="[^"]*"><svg[^>]*>(.*?)</svg><span>([^<]*)</span></a>~s',
+    $grid ? $grid[1] : '', $links, PREG_SET_ORDER);
+$got = [];
+foreach ($links as $link) $got[$link[2]] = $iconOf[$link[1]] ?? 'неизвестный';
+foreach ($want as $name => $icon) {
+    $has = $got[$name] ?? 'нет в меню';
+    if ($has !== $icon) {
+        echo "menu.twig: у отдела «{$name}» значок {$has}, а в макете {$icon}\n";
+        $bad++;
+    }
+}
+if ($grid && trim(preg_replace('~<a .*?</a>~s', '', $grid[1])) !== '') {
+    echo "menu.twig: между ссылками меню остался текст — след опечатки в логике значков\n";
+    $bad++;
+}
+echo 'Значки отделов: ' . count($want) . " названий проверено\n";
+
 exit($bad ? 1 : 0);

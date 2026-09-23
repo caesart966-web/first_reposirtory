@@ -8,10 +8,18 @@
     2. catalog-menu   - выпадающий список всех разделов
     3. mobile-nav     - меню для телефона
 
-  Значков у разделов нет: их 18 штук, и нарисованные вручную к произвольным
-  разделам из базы не привязать. У категорий в базе заказчика свои картинки
-  (поле image), но стоковый контроллер меню их не отдаёт - это отдельная
-  доработка, описана в README темы.
+  Значки отделов - те же, что в утверждённом макете (index.html, меню
+  каталога). В макете они были привязаны к номерам разделов живой базы
+  (data-oc-path="59"...), но движок номера в меню не отдаёт, а с включёнными
+  ЧПУ номера нет и в адресе. Поэтому значок подбирается по названию: по куску
+  слова без первой буквы («лектрик», «нструмент»), чтобы совпадение не зависело
+  от заглавной буквы и от того, умеет ли сервер переводить кириллицу в нижний
+  регистр. Порядок проверок важен: «Ручной инструмент» раньше «Инструментов»,
+  «Климат» раньше «оборудования». Раздел, которого нет в списке, получает
+  общий значок-коробку - как было до сих пор.
+
+  Главная копирует значок отсюда в плитки «Разделы каталога» (app.js), а
+  подсказки поиска - в свой список: правка здесь меняет все три места.
 #}
 {#
   --- Адреса текстовых страниц --------------------------------------------
@@ -37,10 +45,51 @@
     </div>
   </div>
 
+{# Значки отделов из макета: ключ -> содержимое <svg>. #}
+{% set section_icons = {
+  'box': '<path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/>',
+  'toolbox': '<rect x="3" y="9" width="18" height="11" rx="2"/><path d="M8 9V7a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 14h18"/>',
+  'bulb': '<path d="M9.5 18h5M10.5 21h3"/><path d="M12 3a6 6 0 0 0-3.4 10.9c.5.4.8 1 .8 1.6V16h5.2v-.5c0-.6.3-1.2.8-1.6A6 6 0 0 0 12 3Z"/>',
+  'pipe': '<path d="M3 7h5a3 3 0 0 1 3 3v4a3 3 0 0 0 3 3h5"/><rect x="2" y="4" width="3" height="6" rx="1"/><rect x="19" y="14" width="3" height="6" rx="1"/>',
+  'wrench': '<path d="M15.5 3a5.5 5.5 0 0 0-5 7.7L3 18.2 5.8 21l7.5-7.5A5.5 5.5 0 0 0 21 8.5l-3.2 3.2-2.5-2.5L18.5 6"/>',
+  'car': '<path d="m5 11 1.6-4.4A2 2 0 0 1 8.5 5h7a2 2 0 0 1 1.9 1.6L19 11"/><rect x="3" y="11" width="18" height="6" rx="2"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/>',
+  'sprout': '<path d="M12 21v-8"/><path d="M12 13c0-3 2.2-5.2 5.2-5.2C17.2 10.8 15 13 12 13Z"/><path d="M12 13c0-2.6-1.9-4.7-4.7-4.7C7.3 10.9 9.2 13 12 13Z"/>',
+  'nut': '<path d="m12 3 7.2 4.1v8.2L12 19.4l-7.2-4.1V7.1z"/><circle cx="12" cy="11.2" r="3"/>',
+  'bricks': '<rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 12h18M9 5v7M15 12v7"/>',
+  'house': '<path d="m3 10 9-7 9 7v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9.5 21v-6.5h5V21"/>',
+  'backpack': '<rect x="5" y="7" width="14" height="14" rx="3"/><path d="M9 7V5.5a3 3 0 0 1 6 0V7M9 14h6"/>',
+  'gear': '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.2 5.2l2.1 2.1M16.7 16.7l2.1 2.1M18.8 5.2 16.7 7.3M7.3 16.7l-2.1 2.1"/>',
+  'radiator': '<rect x="3.5" y="6" width="17" height="12" rx="2"/><path d="M8 6v12M12 6v12M16 6v12"/>',
+  'shelves': '<path d="M3 20.5h18"/><rect x="3.5" y="12" width="7.5" height="6" rx="1"/><rect x="13" y="12" width="7.5" height="6" rx="1"/><rect x="8" y="4.5" width="8" height="7" rx="1"/>',
+  'spray': '<path d="M9 8.5h6V20a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1z"/><path d="M10 8.5V5h4v3.5M14 5h3.5M17.5 3.5V7"/>',
+  'crane': '<path d="M3 20.5h18"/><path d="M6 20.5V5.5l13 4"/><path d="M6 5.5h12.5L16 10"/><path d="M12.7 8.2V14"/>',
+  'helmet': '<path d="M3.5 17.5h17v2h-17z"/><path d="M5 17.5a7 7 0 0 1 14 0"/><path d="M10 4.5h4v5h-4z"/>'
+} %}
+
   <div class="catalog-menu" id="catalog-menu" data-catalog-menu hidden>
     <div class="container">
       <p class="catalog-menu__title">Все разделы каталога</p>
-      <div class="catalog-menu__grid">{% for category in categories %}<a class="catalog-menu__link" href="{{ category.href }}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg><span>{{ category.name }}</span></a>{% endfor %}<a class="catalog-menu__link catalog-menu__link--special" href="{{ url_special }}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 18 12-12"/><circle cx="7.5" cy="7.5" r="2"/><circle cx="16.5" cy="16.5" r="2"/></svg><span>Товары со скидкой</span></a></div>
+      <div class="catalog-menu__grid">{% for category in categories %}
+        {%- set n = category.name|lower -%}
+        {%- if 'учной' in n %}{% set icon = 'wrench' -%}
+        {%- elseif 'нструмент' in n %}{% set icon = 'toolbox' -%}
+        {%- elseif 'лектрик' in n or 'свет' in n %}{% set icon = 'bulb' -%}
+        {%- elseif 'антехник' in n %}{% set icon = 'pipe' -%}
+        {%- elseif 'втотовар' in n %}{% set icon = 'car' -%}
+        {%- elseif 'лимат' in n or 'топлен' in n %}{% set icon = 'radiator' -%}
+        {%- elseif 'сад' in n %}{% set icon = 'sprout' -%}
+        {%- elseif 'репёж' in n or 'репеж' in n %}{% set icon = 'nut' -%}
+        {%- elseif 'тделоч' in n or 'тройматериал' in n %}{% set icon = 'bricks' -%}
+        {%- elseif 'фис' in n %}{% set icon = 'house' -%}
+        {%- elseif 'уризм' in n %}{% set icon = 'backpack' -%}
+        {%- elseif 'танк' in n %}{% set icon = 'gear' -%}
+        {%- elseif 'лининг' in n or 'хими' in n %}{% set icon = 'spray' -%}
+        {%- elseif 'пецодежд' in n or 'сиз' in n %}{% set icon = 'helmet' -%}
+        {%- elseif 'борудован' in n %}{% set icon = 'crane' -%}
+        {%- elseif 'клад' in n %}{% set icon = 'shelves' -%}
+        {%- else %}{% set icon = 'box' %}{% endif -%}
+        <a class="catalog-menu__link" href="{{ category.href }}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">{{ section_icons[icon]|raw }}</svg><span>{{ category.name }}</span></a>
+        {%- endfor %}<a class="catalog-menu__link catalog-menu__link--special" href="{{ url_special }}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 18 12-12"/><circle cx="7.5" cy="7.5" r="2"/><circle cx="16.5" cy="16.5" r="2"/></svg><span>Товары со скидкой</span></a></div>
     </div>
   </div>
 
