@@ -7,8 +7,10 @@
 #
 # ASCII only, on purpose: the server sends .txt without a charset,
 # and browsers show any Russian text in this file as garbage.
-# The reasons behind every rule are in stroigeroi-site/README.md
-# ("Indeksaciya") and in opencart-theme/USTANOVKA.md, step 6.
+# The reasons behind every rule are in the project repository:
+# stroigeroi-site/README.md and the install guide next to the theme
+# (step 6). tools/check-robots.py runs these rules against real
+# addresses of the site - run it after any change here.
 #
 # There is deliberately NO "Disallow: /index.php?route=" here.
 # SEO URLs are OFF on this site: every page lives at index.php?route=...,
