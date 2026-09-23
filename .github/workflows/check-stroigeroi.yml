@@ -69,13 +69,24 @@ jobs:
       # текст, а на сайте такая строка валит страницу белым экраном.
       # Поэтому шаблоны ещё и собираются настоящим Twig — тем же,
       # на котором работает OpenCart. Заодно страница товара строится
-      # с двенадцатью форматами цены и остатка: цену движок отдаёт
+      # с восемнадцатью форматами цены и остатка: цену движок отдаёт
       # готовой строкой, а поисковику в разметке нужно число, и цифры
       # в разметке обязаны совпасть с ценой на странице.
+      #
+      # Composer с версии 2.9 отказывается ставить версии пакетов, у которых
+      # есть уведомления о безопасности, а они есть у всех Twig от 1.42
+      # до последней 1.44.8. Шаг падал на установке с «could not be
+      # resolved», и все проверки ниже не выполнялись вовсе. Twig здесь
+      # только собирает наши шаблоны с подставными данными и на сайт
+      # не попадает: на сайте работает тот, что вшит в OpenCart. Поэтому
+      # запрет снят для одного twig/twig:
+      # policy.advisories.ignore - так это называется в Composer 2.10,
+      # audit.block-insecure - в 2.9 (2.10 его не читает, раз есть policy).
+      # Проверено на 2.8.12, 2.9.8 и 2.10.3.
       - name: Шаблоны собираются настоящим Twig
         run: |
           mkdir -p "$RUNNER_TEMP/twig"
-          printf '{"require":{"twig/twig":"^1.42"}}' > "$RUNNER_TEMP/twig/composer.json"
+          printf '{"require":{"twig/twig":"^1.42"},"config":{"policy":{"advisories":{"ignore":["twig/twig"]}},"audit":{"block-insecure":false}}}' > "$RUNNER_TEMP/twig/composer.json"
           composer --working-dir="$RUNNER_TEMP/twig" install --no-interaction --quiet
           TWIG_AUTOLOAD="$RUNNER_TEMP/twig/vendor/autoload.php" php tools/render-check.php opencart-theme
 
