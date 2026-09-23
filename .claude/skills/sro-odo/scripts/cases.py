@@ -115,7 +115,30 @@ def find_similar(features: dict, limit: int = 5) -> list:
     return out[:limit]
 
 
+def scrub(text):
+    """Убрать из свободного текста номера договоров, ИНН, длинные числа и телефоны."""
+    if not isinstance(text, str):
+        return text
+    text = re.sub(r"№\s*[\w/.-]*\d[\w/.-]*", "№ ***", text)
+    text = re.sub(r"\d{6,}", "***", text)
+    return text
+
+
+def scrub_case(case: dict) -> dict:
+    h = case.get("human") or {}
+    for k in ("decision", "note"):
+        if h.get(k):
+            h[k] = scrub(h[k])
+    a = case.get("auto") or {}
+    for k in list(a):
+        if isinstance(a[k], str):
+            a[k] = scrub(a[k])
+    case["features"]["works"] = [{**w, "name": scrub(w.get("name", ""))} for w in case.get("features", {}).get("works", [])]
+    return case
+
+
 def add_case(case: dict) -> str:
+    case = scrub_case(case)
     os.makedirs(CASES_DIR, exist_ok=True)
     idx = load_index()
     if not case.get("id"):
@@ -143,8 +166,7 @@ def case_from_assessment(a: dict, decision: str, note: str | None, by: str | Non
     feats = {"contract_kind": r["kind"], "work_type": r.get("work_type"), "customer_kind": r["customer_kind"], "member_role": r["role"],
              "procurement": r["procurement"], "status": r["status"], "price_band": r["price_band"], "object_category": r["object_category"],
              "works": [{"name": w["name"], "auto_code": w.get("perechen_code"), "auto_sro": w["sro"]} for w in a["works"]]}
-    auto = {"membership_required": v["membership_required"], "counts_for_odo": v["counts_for_odo"], "sro_kind": v["sro_kind"], "share_sro": v["share_sro"],
-            "summary": v["summary"]}
+    auto = {"membership_required": v["membership_required"], "counts_for_odo": v["counts_for_odo"], "sro_kind": v["sro_kind"], "share_sro": v["share_sro"]}
     agrees = None
     d = decision.lower()
     if "не входит" in d or "не требует" in d:
