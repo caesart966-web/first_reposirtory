@@ -757,6 +757,57 @@ def jsonld(obj) -> str:
             + "</script>")
 
 
+def sro_logo(site: Site) -> str:
+    """Логотип СРО, если файл положили в assets/img/ под именем sro-logo
+    (svg, png или webp). Нет файла — вместо логотипа рисуется печать
+    с сокращением, и это не ошибка: так значок работает до того, как
+    логотип прислали."""
+    for ext in ("svg", "webp", "png"):
+        rel = f"/assets/img/sro-logo.{ext}"
+        if asset_exists(rel):
+            return rel
+    return ""
+
+
+def hero_sro(site: Site) -> str:
+    """Значок членства в СРО на первом экране главной.
+
+    Первый экран — единственное место, которое видят все посетители,
+    и для подрядчика членство в СРО — главный довод «с ним можно
+    работать». Значок короткий: знак, одна строка и реестровый номер;
+    полное название и вид СРО — по ссылке, в блоке на странице
+    «О компании». Нет данных в настройках — значка нет вовсе."""
+    sro = site.company.get("sro")
+    if not sro or not sro.get("name"):
+        return ""
+    short = esc(sro.get("short", ""))
+    kind = {"проектирование": "проектировщиков", "строительство": "строителей",
+            "изыскания": "изыскателей"}.get(sro.get("kind", ""), "")
+    title = f"Член СРО {kind} «{short}»".replace("  ", " ")
+    reg = (f'<span class="hero-sro__reg">рег. № {esc(sro["reg"])}</span>'
+           if sro.get("reg") else "")
+    logo = sro_logo(site)
+    if logo:
+        # Настоящий логотип СРО — на белой плашке: он нарисован под светлый
+        # фон, и на тёмном первом экране без подложки его золото тонет.
+        mark = (f'<span class="hero-sro__logo" aria-hidden="true">'
+                f'<img src="{site.url(logo)}" alt="" width="96" height="56" decoding="async"></span>')
+    else:
+        # Пока файла логотипа нет — круглая печать с сокращением.
+        mark = (f'<span class="hero-sro__seal" aria-hidden="true">'
+                f'<svg viewBox="0 0 64 64"><circle class="hero-sro__ring" cx="32" cy="32" r="29"/></svg>'
+                f'<span>{short}</span></span>')
+    return f'''        <a class="hero-sro" href="{site.url('/o-kompanii/')}#sro"
+           aria-label="{esc(title)}. Подробнее о членстве в СРО">
+          {mark}
+          <span class="hero-sro__text">
+            <span class="hero-sro__title">{esc(title)}</span>
+            {reg}
+          </span>
+          <svg class="hero-sro__arrow" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11M11 5.5 15.5 10 11 14.5"/></svg>
+        </a>'''
+
+
 def sro_block(site: Site, dark: bool = True) -> str:
     """Членство в СРО. Не строчка мелким шрифтом внизу, а отдельная панель
     со знаком: для подрядчика это допуск к работе, и заказчик ищет его
@@ -776,7 +827,8 @@ def sro_block(site: Site, dark: bool = True) -> str:
           <span class="sro__key">Вид</span>
           <span class="sro__kind">{esc(sro.get("kind", ""))}{", " + esc(sro["city"]) if sro.get("city") else ""}</span>
         </div>''' if sro.get("kind") else "")
-    return f'''<div class="sro{' sro--dark' if dark else ''}">
+    anchor = "" if dark else ' id="sro"'
+    return f'''<div class="sro{' sro--dark' if dark else ''}"{anchor}>
       <div class="sro__seal" aria-hidden="true"><span>{short}</span></div>
       <div class="sro__body">
         <span class="sro__label">Член саморегулируемой организации</span>
@@ -1205,6 +1257,7 @@ def page_home(r: Renderer) -> None:
         <div class="hero__spec">
 {chr(10).join(spec)}
         </div>
+{hero_sro(site)}
       </div>
     </div>
   </section>'''
