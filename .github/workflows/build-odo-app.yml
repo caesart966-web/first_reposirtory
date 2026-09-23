@@ -47,13 +47,25 @@ jobs:
           ODO_SMOKE: '1'
           ODO_DATA_DIR: ${{ runner.temp }}\odo-smoke
         run: |
-          $p = Start-Process -FilePath "dist\ODO-proverka.exe" -PassThru
-          if (-not $p.WaitForExit(180000)) { $p.Kill(); Write-Error "exe не завершился за 3 минуты" }
-          Get-Content "$env:ODO_DATA_DIR\start-error.txt" -ErrorAction SilentlyContinue
-          Get-Content "$env:ODO_DATA_DIR\server.log" -ErrorAction SilentlyContinue | Select-Object -Last 40
-          if ($p.ExitCode -ne 0) { Write-Error "exe завершился с кодом $($p.ExitCode)"; exit 1 }
-          if (-not (Test-Path "$env:ODO_DATA_DIR\smoke.ok")) { Write-Error "сервер внутри .exe не поднялся"; exit 1 }
+          New-Item -ItemType Directory -Force -Path $env:ODO_DATA_DIR | Out-Null
+          $p = Start-Process -FilePath "dist\ODO-proverka-console.exe" -PassThru -NoNewWindow `
+               -RedirectStandardOutput "$env:ODO_DATA_DIR\out.txt" -RedirectStandardError "$env:ODO_DATA_DIR\err.txt"
+          $finished = $p.WaitForExit(180000)
+          if (-not $finished) { taskkill /F /T /PID $p.Id | Out-Null; Write-Host "::error::exe не завершился за 3 минуты" }
+          Write-Host "--- stdout"; Get-Content "$env:ODO_DATA_DIR\out.txt" -ErrorAction SilentlyContinue
+          Write-Host "--- stderr"; Get-Content "$env:ODO_DATA_DIR\err.txt" -ErrorAction SilentlyContinue
+          Write-Host "--- start-error"; Get-Content "$env:ODO_DATA_DIR\start-error.txt" -ErrorAction SilentlyContinue
+          Write-Host "--- server.log"; Get-Content "$env:ODO_DATA_DIR\server.log" -ErrorAction SilentlyContinue | Select-Object -Last 40
+          if (-not $finished) { exit 1 }
+          if ($p.ExitCode -ne 0) { Write-Host "::error::exe завершился с кодом $($p.ExitCode)"; exit 1 }
+          if (-not (Test-Path "$env:ODO_DATA_DIR\smoke.ok")) { Write-Host "::error::сервер внутри .exe не поднялся"; exit 1 }
           Get-Content "$env:ODO_DATA_DIR\smoke.ok"
+          # оконная версия: тот же код, проверяем, что она тоже завершается
+          Remove-Item "$env:ODO_DATA_DIR\smoke.ok"
+          $w = Start-Process -FilePath "dist\ODO-proverka.exe" -PassThru
+          if (-not $w.WaitForExit(180000)) { taskkill /F /T /PID $w.Id | Out-Null; Write-Host "::error::оконный exe не завершился"; exit 1 }
+          if (-not (Test-Path "$env:ODO_DATA_DIR\smoke.ok")) { Get-Content "$env:ODO_DATA_DIR\start-error.txt" -ErrorAction SilentlyContinue; Write-Host "::error::оконный exe не поднял сервер"; exit 1 }
+          Write-Host "оконная версия: ok"
 
       - name: Архив папочной версии
         shell: pwsh
@@ -83,7 +95,11 @@ jobs:
             **ODO-proverka-folder.zip** — то же самое папкой: запускается быстрее, реже пугает антивирус.
             Распакуйте и запустите ODO-proverka.exe внутри.
 
+            **ODO-proverka-console.exe** — та же программа с чёрным окном журнала: если обычная не запускается,
+            запустите эту и пришлите текст из окна.
+
             Сборка из коммита ${{ github.sha }} (ветка ${{ github.ref_name }}).
           files: |
             dist/ODO-proverka.exe
             dist/ODO-proverka-folder.zip
+            dist/ODO-proverka-console.exe

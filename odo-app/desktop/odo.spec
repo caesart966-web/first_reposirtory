@@ -37,6 +37,9 @@ pyz = PYZ(a.pure)
 exe = EXE(pyz, a.scripts, a.binaries, a.datas, [], name="ODO-proverka", console=False, upx=False,
           icon=os.path.join(APP, "desktop", "odo.ico") if os.path.exists(os.path.join(APP, "desktop", "odo.ico")) else None)
 
+# консольная копия для диагностики: печатает ошибки в окно консоли
+exe_console = EXE(pyz, a.scripts, a.binaries, a.datas, [], name="ODO-proverka-console", console=True, upx=False)
+
 # папка (быстрее запускается, меньше ложных тревог антивирусов)
 exe_dir = EXE(pyz, a.scripts, [], exclude_binaries=True, name="ODO-proverka", console=False, upx=False,
               icon=os.path.join(APP, "desktop", "odo.ico") if os.path.exists(os.path.join(APP, "desktop", "odo.ico")) else None)

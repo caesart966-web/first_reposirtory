@@ -181,5 +181,27 @@ def _fatal(msg: str):
         print(msg, file=sys.stderr)
 
 
+def _guarded_main() -> int:
+    """Любая неожиданная ошибка — в файл: у оконного .exe консоли нет, а окно PyInstaller с ошибкой на сборочной машине ждёт вечно."""
+    try:
+        return main()
+    except BaseException:  # noqa: BLE001
+        import tempfile
+        import traceback
+        tb = traceback.format_exc()
+        d = os.environ.get("ODO_DATA_DIR") or tempfile.gettempdir()
+        try:
+            os.makedirs(d, exist_ok=True)
+            with open(os.path.join(d, "start-error.txt"), "a", encoding="utf-8") as f:
+                f.write(tb)
+        except OSError:
+            pass
+        if sys.stderr:
+            sys.stderr.write(tb)
+        if not os.environ.get("ODO_SMOKE"):
+            _fatal("Ошибка при запуске. Подробности в файле start-error.txt в папке данных.")
+        return 3
+
+
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(_guarded_main())
