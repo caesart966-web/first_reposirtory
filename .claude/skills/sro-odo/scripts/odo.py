@@ -128,8 +128,12 @@ def contract_applicability(c, thresholds, policy=None):
         else:
             in_scope = False
             reasons.append("способ заключения не указан — до подтверждения в совокупный размер не включён (ч. 3 ст. 55.8 ГрК РФ)")
-    if counts and "below_threshold" in flags and policy.get("below_threshold_competitive") == "include" and c.get("procurement") == "competitive":
-        reasons.append("ниже порога, но конкурентный — включён по практике проверяющего")
+    if counts and "below_threshold" in flags:
+        if policy.get("below_threshold_competitive") == "include" and c.get("procurement") == "competitive":
+            reasons.append("ниже порога, но конкурентный — включён по практике проверяющего")
+        else:
+            in_scope = False
+            reasons.append("ниже порога обязательного членства — в совокупный размер по КФ ОДО не входит (разъяснение НОСТРОЙ от 11.05.2022, письмо Минстроя № 18965-ОС/02)")
     return counts, in_scope, reasons, flags
 
 

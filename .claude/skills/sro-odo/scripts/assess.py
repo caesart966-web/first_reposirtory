@@ -199,7 +199,7 @@ class Assessor:
             base = f"Заказчик — {cu['name']}: {CUSTOMER_RU.get(ck, ck)}." + (f" Основание: {cu['kind_basis']}." if cu.get("kind_basis") else "")
             if ck in QUALIFYING:
                 findings.append(self.F(3, "Стороны договора", "yes",
-                    base + " Договор подряда с таким заказчиком требует членства подрядчика в СРО и входит в совокупный размер обязательств.",
+                    base + " По стороне заказчика препятствий нет: договор подряда с таким заказчиком требует членства подрядчика в СРО и учитывается в совокупном размере — при соблюдении остальных условий (порог, способ заключения, статус).",
                     CUSTOMER_BASIS.get(ck, []) + ["grk-52-2.1", "grk-48-4", "grk-47-2"]))
             elif ck in SUBCONTRACT:
                 extra = ""
@@ -258,11 +258,17 @@ class Assessor:
             elif price <= thr:
                 findings.append(self.F(4, "Порог по одному договору", "no",
                     f"Размер обязательств по договору {money(price)} ₽ не превышает {money(thr)[:-3]} ₽: обязательного членства по этому договору нет. "
-                    "Включать ли такой договор члена СРО в совокупный размер — определяет положение о контроле конкретной СРО; при консервативном подходе включается. "
-                    "Дробление одного объёма работ на договоры ниже порога СРО вправе рассматривать как обход."
-                    + (" Договор заключён конкурентным способом: по ч. 3 ст. 55.8 он входит в совокупный размер по КФ ОДО как конкурентный (практика проверяющего: включать)."
-                       if (proc == "competitive" and self.policy.get("below_threshold_competitive") == "include") else ""),
-                    ["grk-52-2.1" if kind == "construction" else "grk-55.31-5", "fz-124"] + (["grk-55.8-3"] if proc == "competitive" else [])))
+                    + ("Включать ли такой договор члена СРО в совокупный размер — определяет положение о контроле конкретной СРО; при консервативном подходе включается. "
+                       if self.policy.get("below_threshold_competitive") == "include" else
+                       "В совокупный размер обязательств такой договор не входит: обязательства перед СРО и её ответственность возникают только по договорам, для которых членство обязательно. ")
+                    + "Дробление одного объёма работ на договоры ниже порога СРО вправе рассматривать как обход."
+                    + ((" Договор заключён конкурентным способом: по ч. 3 ст. 55.8 он входит в совокупный размер по КФ ОДО как конкурентный (практика проверяющего: включать)."
+                        if self.policy.get("below_threshold_competitive") == "include" else
+                        " Договор заключён конкурентным способом, но в совокупный размер по КФ ОДО не включается: по разъяснению НОСТРОЙ от 11.05.2022 к 124-ФЗ и письму Минстроя "
+                        "№ 18965-ОС/02 обязательства перед СРО и её ответственность возникают только по договорам, для которых членство требуется законом.")
+                       if proc == "competitive" else ""),
+                    ["grk-52-2.1" if kind == "construction" else "grk-55.31-5", "fz-124"]
+                    + ((["grk-55.8-3"] if self.policy.get("below_threshold_competitive") == "include" else ["nostroy-2022-05-11", "minstroy-18965", "grk-55.8-3"]) if proc == "competitive" else [])))
                 hard_no.append("below_threshold")
             else:
                 findings.append(self.F(4, "Порог по одному договору", "yes",
@@ -314,7 +320,14 @@ class Assessor:
                 ["grk-55.8-4", "grk-55.13-7"], [] if doc else ["документ о расторжении договора"]))
             (hard_no if doc else needs).append("terminated")
         else:
-            if proc == "competitive":
+            if proc == "competitive" and "below_threshold" in hard_no and self.policy.get("below_threshold_competitive") != "include":
+                findings.append(self.F(5, "Совокупный размер обязательств", "no",
+                    "Договор заключён конкурентным способом, но цена не выше порога обязательного членства: в совокупный размер обязательств по КФ ОДО он не входит. "
+                    "Ч. 3 ст. 55.8 ГрК РФ говорит о договорах члена СРО, по которым у СРО возникает ответственность; по договору ниже порога членство не требуется, "
+                    "и ответственности СРО по нему нет (разъяснение НОСТРОЙ от 11.05.2022 к 124-ФЗ, письмо Минстроя № 18965-ОС/02). "
+                    "Уведомить СРО о договоре подрядчик всё равно обязан (ч. 4 ст. 55.8)." + (f" Основание: {c['procurement_basis']}." if c.get("procurement_basis") else ""),
+                    ["grk-55.8-3", "nostroy-2022-05-11", "minstroy-18965", "grk-55.8-4", "fz-44", "fz-223"]))
+            elif proc == "competitive":
                 findings.append(self.F(5, "Совокупный размер обязательств", "yes",
                     "Договор заключён конкурентным способом: у СРО должен быть сформирован КФ обеспечения договорных обязательств, а совокупный размер "
                     "обязательств члена по таким договорам не должен превышать уровень, за который внесён взнос. Договор входит в совокупный размер по КФ ОДО; "
@@ -420,12 +433,7 @@ class Assessor:
         elif "procurement" in needs or "terminated" in needs:
             counts = "needs_facts"
         elif below_only:
-            if proc == "competitive" and self.policy.get("below_threshold_competitive") == "include":
-                counts = "yes"
-            elif proc == "competitive":
-                counts = "conditional"
-            else:
-                counts = "no"
+            counts = "yes" if (proc == "competitive" and self.policy.get("below_threshold_competitive") == "include") else "no"
         elif membership == "needs_facts":
             counts = "needs_facts"
         elif membership == "conditional" or odo_conditional:
@@ -482,6 +490,7 @@ class Assessor:
     def _summary(self, card, membership, counts, sro_kind, price, share, remaining, hard_no, odo_conditional):
         c = card["contract"]
         who = card["member"]["name"]
+        proc = c.get("procurement", "unknown")
         p = f"{money(price)} ₽" if price is not None else "цена не установлена"
         if membership == "no":
             why = {"not_podryad": "договор не является договором подряда", "not_capital": "объект не является объектом капитального строительства",
@@ -493,7 +502,10 @@ class Assessor:
             if counts == "yes":
                 return (f"Договор № {c['number']} ({p}) обязательного членства в СРО не требует ({reasons}), но как заключённый конкурентным способом "
                         f"входит в совокупный размер обязательств по КФ ОДО (ч. 3 ст. 55.8 ГрК РФ)." + (f" Остаток обязательств {money(remaining)} ₽." if remaining is not None else ""))
-            tail = " Включение в совокупный размер — по положению СРО." if counts == "conditional" else ""
+            tail = ""
+            if hard_no == ["below_threshold"] and proc == "competitive":
+                tail = (" Хотя договор заключён на торгах, по разъяснению НОСТРОЙ от 11.05.2022 и письму Минстроя № 18965-ОС/02 договоры, по которым членство не требуется, "
+                        "в совокупный размер по КФ ОДО не входят и ответственности СРО не создают.")
             return f"Договор № {c['number']} ({p}) обязательного членства в СРО не требует и в совокупный размер обязательств не входит: {reasons}.{tail}"
         if membership == "needs_facts":
             return f"По договору № {c['number']} ({p}) вывод невозможен без установления фактов, перечисленных ниже."
