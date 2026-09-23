@@ -1581,3 +1581,68 @@ div.modal .close:hover { color: var(--sg-red); }
     text-align: center;
   }
 }
+
+/* ---- «Сайт в разработке» на страницах товаров и разделов ---------------
+   Та же весть, что крупным блоком на главной, но одной узкой строкой над
+   крошками: сюда приходят из поиска, минуя главную, и первым делом видят
+   цену. Номер - ссылкой в тексте, тёмным красным: у обычного красного
+   на розовой подложке контраст впритык к норме, у тёмного - с запасом,
+   и в тёмной теме переменная даёт светлый красный. Запас по высоте
+   (padding у строчной ссылки) увеличивает место для пальца и не
+   раздвигает строки. Убрать - dev_notice в category.twig и product.twig. */
+.dev-strip {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin: var(--sp-4) 0 0;
+  padding: var(--sp-2) var(--sp-4) var(--sp-2) var(--sp-2);
+  border: 1px solid var(--sg-red);
+  border-radius: var(--r-lg);
+  background: var(--sg-red-tint);
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--sg-ink);
+}
+
+.dev-strip__icon {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--sg-red);
+  color: var(--sg-white);
+}
+
+/* Текст во flex: без min-width: 0 длинная строка не сжималась бы. */
+.dev-strip__text {
+  min-width: 0;
+  text-wrap: pretty;
+}
+
+.dev-strip__phone {
+  padding: 6px 0;
+  color: var(--sg-red-dark);
+  font-weight: 800;
+  white-space: nowrap;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.dev-strip__phone:hover {
+  text-decoration-thickness: 2px;
+}
+
+.dev-strip__phone:focus-visible {
+  outline: 3px solid var(--sg-red);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+/* В несколько строк значок держится у первой, а не посередине. */
+@media (max-width: 767px) {
+  .dev-strip {
+    align-items: flex-start;
+  }
+}

@@ -54,6 +54,22 @@ for f in sorted(pathlib.Path(sys.argv[1]).rglob('*.twig')):
     for href in set(re.findall(r'href="([^"]*\.html[^"]*)"', raw)):
         print(f'{f}: ссылка на страницу макета — {href}'); bad += 1
 
+    # Пометки Яндекса «не индексировать»: <!--noindex--> ... <!--/noindex-->
+    # или <noindex> ... </noindex>. Незакрытая пометка молча выключает из
+    # индекса всё, что ниже неё, - почти всю страницу, а на странице её
+    # не видно. Вложенные Яндекс учитывает только до первой закрывающей.
+    # Комментарии Twig вычеркнуты: в них пометки упоминаются словами.
+    depth = 0
+    for closing in re.findall(r'<(?:!--\s*)?(/?)noindex\s*(?:--)?>',
+                              re.sub(r'\{#.*?#\}', '', raw, flags=re.S), re.I):
+        depth += -1 if closing else 1
+        if depth not in (0, 1):
+            print(f'{f}: пометки noindex вложены или закрыты лишний раз'); bad += 1
+            break
+    else:
+        if depth:
+            print(f'{f}: пометка noindex не закрыта — Яндекс не проиндексирует всё, что ниже неё'); bad += 1
+
     for m in re.finditer(r'<script>(.*?)</script>', raw, re.S):
         if '{{' in m.group(1) or '{%' in m.group(1):
             print(f'{f}: теги Twig внутри <script> - так делать нельзя'); bad += 1

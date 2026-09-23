@@ -322,4 +322,68 @@ foreach ($wantSub as $name => $icon) {
 }
 echo 'Значки подразделов: ' . count($wantSub) . " названий проверено\n";
 
+/*
+ * «Сайт находится в разработке»: на главной крупным блоком, на товарах
+ * и в разделах строкой. Проверяются три вещи, и ни одну не видно глазами.
+ * Пометки Яндекса noindex стоят парой вокруг предупреждения: без
+ * закрывающей он не индексирует всё, что ниже, то есть страницу целиком,
+ * а на странице пометку не видно. Номер тот же, что в шапке: сменят
+ * телефон в шапке и забудут здесь - человеку назовут не тот номер.
+ * И dev_notice = false убирает предупреждение вместе с пометками, не
+ * оставляя ни одной без пары. Каждый шаблон собирается в обоих
+ * положениях флага, в каком бы он ни стоял сейчас.
+ */
+$headTel = preg_match('~href="tel:(\+?\d+)"~', $head, $t) ? $t[1] : null;
+$noticePages = [
+    'common/home.twig'      => [],
+    'product/category.twig' => ['heading_title' => 'Дрели', 'products' => [], 'categories' => []],
+    'product/product.twig'  => ['heading_title' => 'Дрель', 'price' => '4 320,00 руб', 'special' => '',
+                                'stock' => '5', 'product_id' => 1, 'minimum' => 1],
+];
+$DEV = 'Сайт находится в разработке';
+$states = [];
+foreach ($noticePages as $name => $vars) {
+    $src = file_get_contents("$theme/$name");
+    if (!preg_match('~\{% set dev_notice = (true|false) %\}~', $src, $flag)) {
+        echo "$name: нет флага dev_notice - предупреждение «{$DEV}» не выключить одной строкой\n";
+        $bad++;
+        continue;
+    }
+    foreach (['true', 'false'] as $state) {
+        $html = $twig->createTemplate(str_replace($flag[0], "{% set dev_notice = $state %}", $src))->render($vars);
+        preg_match_all('~<!--\s*(/?)noindex\s*-->~', $html, $mk, PREG_OFFSET_CAPTURE);
+        $seq = '';
+        foreach ($mk[1] as $c) $seq .= $c[0] === '/' ? ')' : '(';
+        if ($state === 'false') {
+            if (strpos($html, $DEV) !== false || $seq !== '') {
+                echo "$name: при dev_notice = false на странице остаются предупреждение или пометки noindex\n";
+                $bad++;
+            }
+            continue;
+        }
+        if ($seq !== '()') {
+            echo "$name: пометки noindex не парой вокруг предупреждения (порядок: «{$seq}»)\n";
+            $bad++;
+            continue;
+        }
+        $from = $mk[0][0][1];
+        $inside = substr($html, $from, $mk[0][1][1] - $from);
+        if (strpos($inside, $DEV) === false) {
+            echo "$name: предупреждение «{$DEV}» стоит вне пометок noindex\n";
+            $bad++;
+        }
+        if (strpos($inside, 'data-nosnippet') === false) {
+            echo "$name: у предупреждения нет data-nosnippet - Google возьмёт его в описание страницы\n";
+            $bad++;
+        }
+        $tel = preg_match('~href="tel:(\+?\d+)"~', $inside, $tm) ? $tm[1] : 'нет';
+        if ($tel !== $headTel) {
+            echo "$name: номер в предупреждении ($tel) не тот, что в шапке ($headTel)\n";
+            $bad++;
+        }
+    }
+    $states[] = basename($name, '.twig') . ($flag[1] === 'true' ? ' - показано' : ' - выключено');
+}
+echo "Предупреждение «{$DEV}»: " . implode(', ', $states) . "\n";
+
 exit($bad ? 1 : 0);
