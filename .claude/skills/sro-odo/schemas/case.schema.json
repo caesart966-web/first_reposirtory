@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft-2020-12/schema",
+  "$id": "https://sro-odo/schemas/case.schema.json",
+  "title": "Case — решённый прецедент для базы знаний",
+  "description": "Анонимизированная запись: что за договор, что решил скрипт, что решил человек, почему. Из таких записей растут правила и тесты.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "date", "kind", "features", "auto", "human", "basis"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^case-[0-9]{4}-[0-9]{3,}$" },
+    "date": { "type": "string", "format": "date" },
+    "kind": { "enum": ["contract", "objection", "line_item"] },
+    "features": { "type": "object", "description": "Признаки без персональных данных: вид договора, вид работ, заказчик, ценовая полоса, объект, формулировки предмета." },
+    "auto": { "type": "object", "description": "Что выдал скрипт." },
+    "human": { "type": "object", "additionalProperties": false, "required": ["decision"], "properties": { "decision": { "type": "string" }, "agrees_with_auto": { "type": ["boolean", "null"] }, "note": { "type": ["string", "null"] }, "decided_by": { "type": ["string", "null"] } } },
+    "basis": { "type": "array", "items": { "type": "string" } },
+    "keywords": { "type": "array", "items": { "type": "string" } },
+    "rule_suggestion": { "type": ["object", "null"] },
+    "source_files": { "type": "array", "items": { "type": "string" }, "description": "Только имена файлов, без содержимого." }
+  }
+}

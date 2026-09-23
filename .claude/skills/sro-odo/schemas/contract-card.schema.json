@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft-2020-12/schema",
+  "$id": "https://sro-odo/schemas/contract-card.schema.json",
+  "title": "ContractCard — карточка одного договора для оценки",
+  "description": "Что Claude извлекает из договора (и приложений) перед оценкой. Каждое утверждение — с basis: цитата или место в документе. Неизвестно — null, не догадка.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "member", "contract", "customer", "object", "works", "sources"],
+  "properties": {
+    "schema_version": { "const": "1" },
+    "member": {
+      "type": "object", "additionalProperties": false, "required": ["name", "role"],
+      "properties": {
+        "name": { "type": "string" }, "inn": { "type": ["string", "null"] },
+        "role": { "enum": ["contractor", "customer"], "description": "Роль члена СРО в договоре." },
+        "is_state_entity": { "type": ["boolean", "null"], "description": "ГУП, МУП, учреждение, организация с публичным участием более 50 % — исключение ч. 2.2 ст. 52 применяется к подрядчику." },
+        "sro_kinds": { "type": "array", "items": { "enum": ["build", "design", "survey"] }, "description": "В каких СРО состоит (по выписке)." },
+        "membership_date": { "type": ["string", "null"], "format": "date" }
+      }
+    },
+    "contract": {
+      "type": "object", "additionalProperties": false, "required": ["number", "date", "subject_text", "kind", "price_rub", "status", "procurement"],
+      "properties": {
+        "number": { "type": "string" }, "date": { "type": ["string", "null"], "format": "date" },
+        "subject_text": { "type": "string", "description": "Предмет договора дословно." },
+        "kind": { "enum": ["construction", "demolition", "design", "survey", "mixed", "supply", "services", "rent", "other", "unknown"], "description": "Вид договора по содержанию обязательств, не по названию." },
+        "kind_basis": { "type": ["string", "null"], "description": "Из чего следует вид: пункт договора, формулировка." },
+        "mixed_parts": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["kind"], "properties": { "kind": { "enum": ["construction", "demolition", "design", "survey", "supply", "services", "rent", "other"] }, "amount_rub": { "type": ["number", "null"] }, "basis": { "type": ["string", "null"] } } }, "description": "Для смешанного договора — части и их цены, если выделены." },
+        "price_rub": { "type": ["number", "null"], "description": "Цена с НДС с учётом всех ДС." },
+        "price_basis": { "type": ["string", "null"] },
+        "price_includes_vat": { "type": ["boolean", "null"] },
+        "addenda": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["number"], "properties": { "number": { "type": "string" }, "date": { "type": ["string", "null"] }, "price_rub": { "type": ["number", "null"] }, "note": { "type": ["string", "null"] } } } },
+        "status": { "enum": ["active", "completed", "terminated", "unknown"] },
+        "status_basis": { "type": ["string", "null"] },
+        "period_from": { "type": ["string", "null"], "format": "date" }, "period_to": { "type": ["string", "null"], "format": "date" },
+        "procurement": { "enum": ["competitive", "direct", "unknown"] },
+        "procurement_basis": { "type": ["string", "null"] },
+        "executed_rub": { "type": ["number", "null"], "description": "Принято по актам на дату оценки." },
+        "executed_basis": { "type": ["string", "null"] },
+        "has_final_act": { "type": ["boolean", "null"] },
+        "termination_document": { "type": ["string", "null"] }
+      }
+    },
+    "customer": {
+      "type": "object", "additionalProperties": false, "required": ["name", "kind"],
+      "properties": {
+        "name": { "type": "string" }, "inn": { "type": ["string", "null"] },
+        "kind": { "enum": ["developer", "technical_customer", "operator", "regional_operator", "general_contractor", "contractor", "individual", "state_entity", "other", "unknown"] },
+        "kind_basis": { "type": ["string", "null"], "description": "Разрешение на строительство, проектная декларация, договор техзаказчика, текст договора." }
+      }
+    },
+    "object": {
+      "type": "object", "additionalProperties": false, "required": ["name", "is_capital", "category"],
+      "properties": {
+        "name": { "type": "string" }, "address": { "type": ["string", "null"] }, "cadastral": { "type": ["string", "null"] },
+        "is_capital": { "type": ["boolean", "null"], "description": "Объект капитального строительства (п. 10 ст. 1 ГрК РФ)." },
+        "permit_required": { "type": ["boolean", "null"], "description": "Требуется ли разрешение на строительство (ч. 17 ст. 51)." },
+        "housing_type": { "enum": ["none", "izhs", "blocked", "mkd_low", "garden", "auxiliary", "unknown"], "default": "unknown", "description": "ИЖС, блокированная застройка до 3 этажей, МКД до 3 этажей/4 секций, садовый дом, вспомогательная постройка — вне Перечня по п. 2 приказа 624." },
+        "category": { "enum": ["ordinary", "hazardous_48_1", "unknown"] },
+        "basis": { "type": ["string", "null"] }
+      }
+    },
+    "work_type": { "enum": ["construction", "reconstruction", "capital_repair", "demolition", "current_repair", "improvement", "design", "survey", "mixed", "unknown"], "default": "unknown", "description": "Что делается с объектом по пп. 13, 14, 14.2, 14.4 ст. 1 ГрК РФ. current_repair и improvement — не работы на ОКС в смысле ГрК." },
+    "works": {
+      "type": "array",
+      "description": "Виды работ из предмета, сметы или приложения. Если цены не выделены — amount_rub null, доля считается по числу строк с пометкой.",
+      "items": { "type": "object", "additionalProperties": false, "required": ["name"], "properties": { "name": { "type": "string" }, "amount_rub": { "type": ["number", "null"] }, "source": { "type": ["string", "null"] }, "human_decision": { "type": ["object", "null"], "additionalProperties": false, "properties": { "sro": { "type": ["boolean", "null"] }, "perechen_code": { "type": ["string", "null"] }, "note": { "type": ["string", "null"] } } } } }
+    },
+    "sources": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["file"], "properties": { "file": { "type": "string" }, "kind": { "type": ["string", "null"] }, "pages": { "type": ["integer", "null"] }, "extraction_confidence": { "type": ["number", "null"] } } } },
+    "as_of": { "type": ["string", "null"], "format": "date" },
+    "notes": { "type": ["string", "null"] }
+  }
+}

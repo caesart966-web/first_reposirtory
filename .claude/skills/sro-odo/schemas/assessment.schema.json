@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft-2020-12/schema",
+  "$id": "https://sro-odo/schemas/assessment.schema.json",
+  "title": "Assessment — заключение по одному договору",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "contract_ref", "verdict", "findings", "works", "missing_facts", "precedents", "law_index"],
+  "properties": {
+    "schema_version": { "const": "1" },
+    "contract_ref": { "type": "object" },
+    "verdict": {
+      "type": "object", "additionalProperties": false,
+      "required": ["membership_required", "sro_kind", "counts_for_odo", "confidence"],
+      "properties": {
+        "membership_required": { "enum": ["yes", "no", "conditional", "needs_facts"] },
+        "sro_kind": { "enum": ["build", "design", "survey", "mixed", null] },
+        "counts_for_odo": { "enum": ["yes", "no", "conditional", "needs_facts"] },
+        "odo_note": { "type": ["string", "null"] },
+        "amount_total_rub": { "type": ["number", "null"] },
+        "amount_sro_rub": { "type": ["number", "null"] },
+        "amount_non_sro_rub": { "type": ["number", "null"] },
+        "amount_unresolved_rub": { "type": ["number", "null"] },
+        "remaining_rub": { "type": ["number", "null"] },
+        "remaining_sro_rub": { "type": ["number", "null"] },
+        "share_sro": { "type": ["number", "null"] },
+        "share_basis": { "type": ["string", "null"] },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "summary": { "type": "string" }
+      }
+    },
+    "findings": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["step", "title", "conclusion", "explanation", "basis"], "properties": { "step": { "type": "integer" }, "title": { "type": "string" }, "conclusion": { "enum": ["yes", "no", "conditional", "needs_facts", "info"] }, "explanation": { "type": "string" }, "basis": { "type": "array", "items": { "type": "string" } }, "missing": { "type": "array", "items": { "type": "string" } } } } },
+    "works": { "type": "array", "items": { "type": "object" } },
+    "missing_facts": { "type": "array", "items": { "type": "string" } },
+    "precedents": { "type": "array", "items": { "type": "object" } },
+    "law_index": { "type": "object", "description": "id нормы → цитата и суть, для всех basis, использованных в заключении." },
+    "verification_note": { "type": "string" }
+  }
+}

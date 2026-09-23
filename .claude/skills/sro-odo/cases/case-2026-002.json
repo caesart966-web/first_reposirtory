@@ -1,0 +1,89 @@
+{
+  "id": "case-2026-002",
+  "date": "2026-09-23",
+  "kind": "objection",
+  "features": {
+    "claim_types": [
+      "not_competitive",
+      "works_not_in_list",
+      "price_includes_supply",
+      "executed",
+      "state_exempt"
+    ],
+    "claims": [
+      {
+        "type": "not_competitive",
+        "auto_status": null
+      },
+      {
+        "type": "works_not_in_list",
+        "auto_status": null
+      },
+      {
+        "type": "price_includes_supply",
+        "auto_status": null
+      },
+      {
+        "type": "executed",
+        "auto_status": null
+      },
+      {
+        "type": "state_exempt",
+        "auto_status": null
+      }
+    ]
+  },
+  "auto": {
+    "overall": "partially"
+  },
+  "human": {
+    "decision": "Доводы о торгах и об отделке приняты частично, о поставке лифтов и об учреждении отклонены, об исполнении — учтён остаток",
+    "agrees_with_auto": null,
+    "note": "Учебный прецедент",
+    "decided_by": "учебный пример"
+  },
+  "basis": [],
+  "keywords": [
+    "безопа",
+    "благоу",
+    "включе",
+    "влияют",
+    "выполн",
+    "догово",
+    "допуск",
+    "заказч",
+    "заключ",
+    "застро",
+    "значит",
+    "котора",
+    "лифтов",
+    "муници",
+    "никогд",
+    "оборуд",
+    "обязат",
+    "освобо",
+    "отдело",
+    "относи",
+    "постав",
+    "поэтом",
+    "принят",
+    "провед",
+    "работа",
+    "размер",
+    "расчет",
+    "совоку",
+    "специа",
+    "строит",
+    "торгов",
+    "требов",
+    "участи",
+    "учитыв",
+    "цену",
+    "части",
+    "часть",
+    "членст",
+    "являет"
+  ],
+  "rule_suggestion": null,
+  "source_files": []
+}

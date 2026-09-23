@@ -5,14 +5,18 @@
 2. **`.claude/skills/construction-control/`** — Claude Code skill «ИИ-ассистент
    строительного контроля» (описан ниже).
 3. **`.claude/skills/sro-odo/`** — Claude Code skill **`/sro-odo`** «Обязательства члена
-   СРО»: по договорам, сметам, КС-2/КС-3, УПД и уведомлениям в СРО раскладывает суммы
-   на работы, относящиеся к СРО (идут в расчёт КФ ОДО), и всё остальное — отдельно по
-   строительству, проектированию и изысканиям — и строит отчёт проверяющему.
+   СРО», три режима: оценка одного договора (требуется ли членство, входит ли в КФ ОДО,
+   какие работы относятся к СРО — с нормой под каждым выводом), разбор письма-возражения
+   компании (статус каждого довода и проект ответа) и реестр по пачке документов
+   (суммы «СРО / не СРО» по строительству, проектированию и изысканиям, отчёт
+   проверяющему). База прецедентов накапливает решения от договора к договору.
    Точка входа — [`SKILL.md`](.claude/skills/sro-odo/SKILL.md); быстрая проверка:
 
    ```bash
    cd .claude/skills/sro-odo
    python3 scripts/test_rules.py
+   python3 scripts/test_assess.py
+   python3 scripts/assess.py examples/contract-demo/card.json --md /tmp/z.md --quiet
    python3 scripts/classify.py examples/demo/register.json
    python3 scripts/odo.py examples/demo/register.json -o /tmp/r.json --md /tmp/s.md
    python3 scripts/report.py /tmp/r.json -o /tmp/report.html --register examples/demo/register.json

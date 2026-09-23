@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft-2020-12/schema",
+  "$id": "https://sro-odo/schemas/objection.schema.json",
+  "title": "Objection — письмо компании с возражениями и его разбор",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "letter", "claims"],
+  "properties": {
+    "schema_version": { "const": "1" },
+    "letter": { "type": "object", "additionalProperties": false, "required": ["from", "date", "summary"], "properties": { "from": { "type": "string" }, "to": { "type": ["string", "null"] }, "date": { "type": ["string", "null"] }, "number": { "type": ["string", "null"] }, "summary": { "type": "string" }, "file": { "type": ["string", "null"] }, "contract_number": { "type": ["string", "null"] } } },
+    "claims": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["type", "quote"], "properties": {
+      "type": { "type": "string", "description": "Ключ из objections.json либо other." },
+      "quote": { "type": "string", "description": "Дословно из письма." },
+      "facts": { "type": "object", "description": "Факты для теста этого возражения: подтверждённые документами. Ключи — из objections.json[type].facts." },
+      "attachments": { "type": "array", "items": { "type": "string" } }
+    } } },
+    "analysis": { "type": ["object", "null"] }
+  }
+}
