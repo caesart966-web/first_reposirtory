@@ -57,7 +57,9 @@ Clean-param: sort&order&limit&tracking /
 Clean-param: utm_source&utm_medium&utm_campaign&utm_term&utm_content&yclid&gclid&_openstat /
 
 # Карта сайта. ВКЛЮЧИТЬ ДО ВЫКЛАДКИ: Дополнения → Дополнения →
-# Ленты для товаров → Google Sitemap → Редактировать → Включено.
-# Пока лента выключена, этот адрес отдаёт пустую страницу,
-# и строку надо убрать, а не оставлять «на потом».
+# в списке типов тот, где есть Google Sitemap («Каналы продвижения»
+# или «Фиды» - зависит от перевода) → Google Sitemap → Редактировать
+# → Включено. Пока лента выключена, этот адрес отдаёт пустую страницу
+# (так устроен сам движок), и строку надо убрать, а не оставлять
+# «на потом».
 Sitemap: https://stroigeroi.ru/index.php?route=extension/feed/google_sitemap
