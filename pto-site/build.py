@@ -1300,7 +1300,7 @@ def page_home(r: Renderer) -> None:
     <div class="container">
       <div class="section__head">
         <h2>Услуги</h2>
-        <p>Четыре направления. Можно взять одну задачу, можно передать документальное сопровождение объекта целиком.</p>
+        <p>{number_word(len(site.groups)).capitalize()} {'направление' if len(site.groups) % 10 == 1 and len(site.groups) != 11 else 'направления' if len(site.groups) % 10 in (2, 3, 4) and len(site.groups) not in (12, 13, 14) else 'направлений'}. Можно взять одну задачу, можно передать документальное сопровождение объекта целиком.</p>
       </div>
 {block_services_by_group(site)}
       <div class="btn-row mt-6">
@@ -1353,6 +1353,20 @@ def page_home(r: Renderer) -> None:
 
 # ---------- список услуг --------------------------------------------------
 
+NUM_WORDS = ("ноль один два три четыре пять шесть семь восемь девять десять "
+             "одиннадцать двенадцать тринадцать четырнадцать пятнадцать шестнадцать "
+             "семнадцать восемнадцать девятнадцать двадцать").split()
+
+
+def number_word(n: int) -> str:
+    """Число словом — для текстов, где цифра смотрелась бы казённо.
+    Считается по данным, а не пишется руками: «Тринадцать направлений»
+    простояло на странице услуг, когда их было уже четырнадцать."""
+    if 0 <= n < len(NUM_WORDS):
+        return NUM_WORDS[n]
+    return str(n)
+
+
 def page_services_index(r: Renderer) -> None:
     site = r.site
     cfg = site.raw["services_index"]
@@ -1364,7 +1378,7 @@ def page_services_index(r: Renderer) -> None:
         <li>Услуги</li>
       </ul>
       <h1>{esc(cfg["h1"])}</h1>
-      <p class="lead">{esc(cfg["lead"])}</p>
+      <p class="lead">{esc(cfg["lead"].replace("{услуг_словами}", number_word(len(site.services)).capitalize()))}</p>
     </div>
   </section>
 
@@ -2098,14 +2112,12 @@ def copy_assets() -> None:
     example = dst / "config.example.js"
     if example.exists():
         example.unlink()
-    if not (dst / "config.js").exists():
-        # Заглушка, чтобы не было ошибки 404 при незаполненных настройках
-        (dst / "config.js").write_text(
-            "/* Настройки не заданы. Скопируйте assets/config.example.js "
-            "в assets/config.js и заполните — иначе форма не отправит заявку. */\n"
-            "window.SITE_CONFIG = {};\n",
-            encoding="utf-8",
-        )
+    # Заглушку config.js сборка НЕ создаёт. Раньше создавала — «чтобы не было
+    # ошибки 404», — и это была ловушка: настоящий config.js заливается
+    # на хостинг руками (в git его нет), а при следующем обновлении сайта
+    # заглушка из dist/ затирала его, и форма молча переставала отправлять
+    # заявки. Без файла сайт работает: форма показывает запасные кнопки
+    # «позвонить / написать», а скрипт берёт пустые настройки сам.
 
 
 # =========================================================================
