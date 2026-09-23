@@ -1352,3 +1352,64 @@ div.modal .close {
 }
 
 div.modal .close:hover { color: var(--sg-red); }
+
+/* ---- «О компании»: цифры магазина --------------------------------------
+   Страница «О компании» - текстовая страница движка, её текст хранится
+   в базе. Цифры заказчика (год, товары, клиенты, сотрудники) шли там
+   столбиком голых строк: «150 000», под ним «нас выбирают…», и так
+   пять раз - оформление прежней темы с ней и ушло. Здесь они плитками,
+   как преимущества на главной, но с крупной цифрой. Класс about-stats
+   ставится в самом тексте страницы; без него текст остаётся обычным.
+
+   Плитка здесь не ссылка, поэтому подсветка при наведении снята:
+   рамка, которая загорается под курсором, обещает переход. На узком
+   экране плитки главной становятся строками «значок - текст», а здесь
+   значка нет, и цифра должна стоять над подписью - это возвращено. */
+.legal .about-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-3);
+  margin: var(--sp-5) 0 var(--sp-6);
+}
+
+.legal .about-stats .tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-4);
+}
+
+.legal .about-stats .tile:hover {
+  border-color: var(--sg-line);
+  box-shadow: none;
+}
+
+.legal .about-stats .tile__title {
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--sg-blue);
+  font-variant-numeric: tabular-nums;
+}
+
+.legal .about-stats .tile__text {
+  font-size: 14px;
+}
+
+/* На узком экране у плиток главной цифра прижата к низу своей ячейки
+   (align-self: end), а в колонке это означает «к правому краю». */
+.legal .about-stats .tile__title,
+.legal .about-stats .tile__text {
+  align-self: flex-start;
+}
+
+@media (max-width: 767px) {
+  .legal .about-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .legal .about-stats .tile__title {
+    font-size: 24px;
+  }
+}
