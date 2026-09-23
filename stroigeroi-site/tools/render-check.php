@@ -191,4 +191,46 @@ foreach ($m[1] as $i => $json) {
 }
 echo 'Разметок ld+json в шапке: ' . count($m[1]) . "\n";
 
+/* ---- 5. Раздел-отдел: товаров нет, подразделы есть ------------------- */
+/* «Инструменты» после выгрузки из 1С держат товары уровнем ниже.
+   Написать на такой странице «пока пусто» - значит отправить человека
+   прочь от девяти полных подразделов: на телефоне боковая колонка
+   с ними свёрнута, и «пусто» - единственное, что он увидит. */
+
+$cat = $twig->load('product/category.twig');
+$EMPTY = 'В этом разделе пока пусто';
+$subs = [
+    ['name' => 'Дрели, шуруповёрты, перфораторы', 'href' => 'index.php?route=product/category&path=59_90'],
+    ['name' => 'Пилы, цепи и шины',               'href' => 'index.php?route=product/category&path=59_91'],
+];
+
+$dept = $cat->render(['heading_title' => 'Инструменты', 'products' => [], 'categories' => $subs]);
+if (strpos($dept, $EMPTY) !== false) {
+    echo "category.twig: раздел с подразделами и без своих товаров пишет «{$EMPTY}»\n";
+    $bad++;
+}
+foreach ($subs as $sub) {
+    $href = htmlspecialchars($sub['href'], ENT_QUOTES);
+    if (substr_count($dept, 'class="category-card" href="' . $sub['href'] . '"') + substr_count($dept, 'class="category-card" href="' . $href . '"') < 1) {
+        echo "category.twig: нет плитки подраздела «{$sub['name']}» по центру страницы\n";
+        $bad++;
+    }
+}
+
+$none = $cat->render(['heading_title' => 'Сантехника', 'products' => [], 'categories' => []]);
+if (strpos($none, $EMPTY) === false) {
+    echo "category.twig: совсем пустой раздел не говорит «{$EMPTY}» и не даёт телефон\n";
+    $bad++;
+}
+
+$full = $cat->render(['heading_title' => 'Дрели', 'categories' => [], 'products' => [[
+    'product_id' => 1, 'thumb' => 'image/a.jpg', 'name' => 'Дрель', 'href' => '#',
+    'price' => '4 320,00 руб', 'special' => '', 'description' => '', 'rating' => 0,
+]]]);
+if (strpos($full, $EMPTY) !== false || strpos($full, 'class="category-card"') !== false) {
+    echo "category.twig: раздел с товарами показывает «пусто» или плитки подразделов вместо товаров\n";
+    $bad++;
+}
+echo "Страница раздела: 3 состояния проверено\n";
+
 exit($bad ? 1 : 0);
