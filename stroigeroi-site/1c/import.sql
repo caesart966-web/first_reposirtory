@@ -520,15 +520,15 @@ INSERT INTO `oc_seo_url` (`store_id`,`language_id`,`query`,`keyword`)
 SELECT @store, @lang, CONCAT('category_id=', @cat), 'moyki-vysokogo-davleniya'
   FROM DUAL WHERE @kw IS NULL;
 
--- ЭЛЕКТРОИНСТРУМЕНТЫ (9 тов.)
+-- Электроинструменты (9 тов.)
 SET @cat := (SELECT category_id FROM `oc_category_description`
-             WHERE name = 'ЭЛЕКТРОИНСТРУМЕНТЫ' AND language_id = @lang LIMIT 1);
+             WHERE name = 'Электроинструменты' AND language_id = @lang LIMIT 1);
 INSERT INTO `oc_category` (`image`,`parent_id`,`top`,`column`,`sort_order`,`status`,`date_added`,`date_modified`)
 SELECT '', @parent, IF(@parent = 0, 1, 0), 1, 0, 1, NOW(), NOW()
   FROM DUAL WHERE @cat IS NULL;
 SET @cat := IFNULL(@cat, LAST_INSERT_ID());
 INSERT IGNORE INTO `oc_category_description` (`category_id`,`language_id`,`name`,`description`,`meta_title`,`meta_description`,`meta_keyword`)
-VALUES (@cat, @lang, 'ЭЛЕКТРОИНСТРУМЕНТЫ', '', 'ЭЛЕКТРОИНСТРУМЕНТЫ', '', '');
+VALUES (@cat, @lang, 'Электроинструменты', '', 'Электроинструменты', '', '');
 INSERT IGNORE INTO `oc_category_to_store` (`category_id`,`store_id`) VALUES (@cat, @store);
 INSERT IGNORE INTO `oc_category_path` (`category_id`,`path_id`,`level`)
 SELECT @cat, p.`path_id`, p.`level` FROM `oc_category_path` p

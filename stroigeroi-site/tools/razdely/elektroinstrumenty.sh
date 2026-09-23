@@ -1,0 +1,9 @@
+# Переименовывает раздел «ЭЛЕКТРОИНСТРУМЕНТЫ» в «Электроинструменты» (23.09.2026,
+# по просьбе заказчика: капсом он один среди разделов и не влезал в плитку).
+# Название и заголовок страницы (meta_title, если совпадал с названием).
+# Старые значения — в oc_rename_before, откат — elektroinstrumenty-otkat.sh.
+# Сравнение побайтное (BINARY): повторный запуск капсом уже ничего не найдёт
+# и ничего не тронет. Названия записаны кодами (hex2bin) — в команде одна
+# латиница. То же название исправлено в 1c/kategorii.csv: загрузка из 1С ищет
+# раздел по названию и иначе завела бы второй, капсом.
+( cd /var/www/u2934771/data/www/stroigeroi.ru || exit 1; php -r 'mysqli_report(MYSQLI_REPORT_OFF); include "config.php"; $m = @new mysqli(DB_HOSTNAME, DB_USERNAME, DB_PASSWORD, DB_DATABASE, (int)DB_PORT); if ($m->connect_error) { echo "DB: ", $m->connect_error, "\n"; exit(1); } $m->set_charset("utf8"); $p = DB_PREFIX; $old = $m->real_escape_string(hex2bin("d0add09bd095d09ad0a2d0a0d09ed098d09dd0a1d0a2d0a0d0a3d09cd095d09dd0a2d0ab")); $new = $m->real_escape_string(hex2bin("d0add0bbd0b5d0bad182d180d0bed0b8d0bdd181d182d180d183d0bcd0b5d0bdd182d18b")); $r = $m->query("SELECT COUNT(*) FROM {$p}category_description WHERE BINARY name = \"$old\""); $cnt = $r ? (int)$r->fetch_row()[0] : -1; if ($cnt < 1) { echo "rename: no category with the caps name (", $cnt, "), nothing changed\n"; exit(0); } if (!$m->query("CREATE TABLE {$p}rename_before AS SELECT category_id, language_id, name, meta_title FROM {$p}category_description WHERE BINARY name = \"$old\"")) { echo "rename STOP: ", $m->error, "\n"; exit(0); } $ok = $m->query("UPDATE {$p}category_description SET meta_title = IF(BINARY meta_title = BINARY name, \"$new\", meta_title), name = \"$new\" WHERE BINARY name = \"$old\""); echo "rename: ", ($ok ? $m->affected_rows . " row(s) now Elektroinstrumenty" : "SQL: " . $m->error), "\n";' )

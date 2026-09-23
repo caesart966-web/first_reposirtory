@@ -170,6 +170,11 @@ h4 {
   /* Заголовок разбивается на строки поровну, а не «шесть слов и одно».
      Браузеры без text-wrap просто переносят как раньше. */
   text-wrap: balance;
+  /* Слово длиннее строки рвётся, а не вылезает за край экрана. Названия
+     разделов приходят из 1С как есть, и «ЭЛЕКТРОИНСТРУМЕНТЫ» капсом
+     шире телефона уже при 34 px. Переносов с дефисом в заголовках нет
+     нарочно: они разбивали бы и обычные слова в конце строки. */
+  overflow-wrap: break-word;
 }
 
 /* Трекинг зависит от кегля: чем крупнее буквы, тем заметнее просветы
@@ -1244,6 +1249,12 @@ ul {
 .category-card__title {
   font-size: 17px;
   font-weight: 700;
+  /* Плитка на телефоне - половина экрана, и длинное название раздела
+     («ЭЛЕКТРОИНСТРУМЕНТЫ») вылезало за её рамку. Переносим по слогам
+     (язык страницы - ru), а где браузер слогов не знает - рвём слово,
+     но за рамку не выпускаем. */
+  hyphens: auto;
+  overflow-wrap: break-word;
 }
 
 .category-card__count {
@@ -2146,6 +2157,38 @@ html[data-theme="dark"] .shop-card__now--open {
 .footer-group__hint {
   display: inline-block;
   margin-top: var(--sp-3);
+}
+
+/* «Заказать звонок» в подвале - кнопка, а не ссылка: она открывает окно
+   здесь же. Своих стилей у неё не было, и на синем подвале браузер рисовал
+   серую системную кнопку с рамкой. Теперь она как соседние ссылки, только
+   с пунктиром - так же, как «Заказать звонок» в верхней полосе: пунктир
+   на сайте означает «откроется окно, а не другая страница». Пунктир -
+   подчёркиванием, а не рамкой: на телефоне кнопка вырастает до 44 px
+   под палец, и рамка ушла бы под низ этой высоты, далеко от букв. */
+.footer-group__button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--sg-on-dark);
+  font: inherit;
+  line-height: inherit;
+  text-align: left;
+  text-decoration: underline dashed;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.footer-group__button:hover {
+  opacity: 0.75;
+}
+
+.footer-group__button:focus-visible {
+  outline: 2px solid var(--sg-on-dark);
+  outline-offset: 3px;
+  border-radius: 2px;
 }
 
 .site-footer__contacts {
@@ -4570,6 +4613,10 @@ html[data-theme="dark"] .step.is-current .step__num {
     min-height: 44px;
     display: flex;
     align-items: center;
+  }
+
+  .footer-group__button {
+    min-height: 44px;
   }
 }
 
