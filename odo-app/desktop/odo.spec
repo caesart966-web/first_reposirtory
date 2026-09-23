@@ -17,7 +17,8 @@ datas = [
 ]
 datas += collect_data_files("pymupdf")
 hiddenimports = (collect_submodules("uvicorn") + collect_submodules("server") + collect_submodules("anthropic")
-                 + ["multipart", "jinja2", "jsonschema", "docx", "openpyxl", "pymupdf", "tkinter", "webview"])
+                 + ["multipart", "python_multipart", "jinja2", "jsonschema", "docx", "openpyxl", "pymupdf", "tkinter", "webview",
+                    "uvicorn.logging", "uvicorn.loops.auto", "uvicorn.protocols.http.auto", "uvicorn.protocols.websockets.auto", "uvicorn.lifespan.on"])
 
 a = Analysis(
     [os.path.join(APP, "desktop", "launcher.py")],

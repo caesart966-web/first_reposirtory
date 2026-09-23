@@ -82,10 +82,21 @@ def main() -> int:
 
     if not FROZEN:
         sys.path.insert(0, app_root())
-    import uvicorn
-    from server.main import app  # noqa: E402  (после установки окружения)
-
     log_path = os.path.join(data, "server.log")
+    smoke = bool(os.environ.get("ODO_SMOKE"))
+    try:
+        import uvicorn
+        from server.main import app  # noqa: E402  (после установки окружения)
+    except Exception:
+        import traceback
+        tb = traceback.format_exc()
+        with open(os.path.join(data, "start-error.txt"), "w", encoding="utf-8") as f:
+            f.write(tb)
+        if smoke:
+            return 2
+        _fatal("Не удалось загрузить приложение. Подробности в файле:\n" + os.path.join(data, "start-error.txt"))
+        return 2
+
     log_cfg = uvicorn.config.LOGGING_CONFIG
     for h in log_cfg["handlers"].values():
         h.pop("stream", None)
@@ -94,11 +105,20 @@ def main() -> int:
         h["encoding"] = "utf-8"
     config = uvicorn.Config(app, host="127.0.0.1", port=port, log_config=log_cfg, log_level="info")
     server = uvicorn.Server(config)
-    t = threading.Thread(target=server.run, daemon=True)
+
+    def run_server():
+        try:
+            server.run()
+        except Exception:
+            import traceback
+            with open(os.path.join(data, "start-error.txt"), "w", encoding="utf-8") as f:
+                f.write(traceback.format_exc())
+
+    t = threading.Thread(target=run_server, daemon=True)
     t.start()
 
     ok = False
-    for _ in range(200):
+    for _ in range(60 if smoke else 200):
         try:
             with urllib.request.urlopen(url + "health", timeout=1) as r:
                 ok = r.status == 200
@@ -107,10 +127,12 @@ def main() -> int:
         except Exception:
             time.sleep(0.1)
     if not ok:
-        _fatal(f"Сервер не запустился. Подробности в файле:\n{log_path}")
+        if smoke:
+            return 1
+        _fatal(f"Сервер не запустился. Подробности в файлах:\n{log_path}\n{os.path.join(data, 'start-error.txt')}")
         return 1
 
-    if os.environ.get("ODO_SMOKE"):
+    if smoke:
         # у оконного .exe нет консоли: результат проверки — файлом
         with open(os.path.join(data, "smoke.ok"), "w", encoding="utf-8") as f:
             f.write(f"smoke ok {url} {data}\n")

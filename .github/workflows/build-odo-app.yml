@@ -47,9 +47,12 @@ jobs:
           ODO_SMOKE: '1'
           ODO_DATA_DIR: ${{ runner.temp }}\odo-smoke
         run: |
-          $p = Start-Process -FilePath "dist\ODO-proverka.exe" -Wait -PassThru
+          $p = Start-Process -FilePath "dist\ODO-proverka.exe" -PassThru
+          if (-not $p.WaitForExit(180000)) { $p.Kill(); Write-Error "exe не завершился за 3 минуты" }
+          Get-Content "$env:ODO_DATA_DIR\start-error.txt" -ErrorAction SilentlyContinue
+          Get-Content "$env:ODO_DATA_DIR\server.log" -ErrorAction SilentlyContinue | Select-Object -Last 40
           if ($p.ExitCode -ne 0) { Write-Error "exe завершился с кодом $($p.ExitCode)"; exit 1 }
-          if (-not (Test-Path "$env:ODO_DATA_DIR\smoke.ok")) { Get-Content "$env:ODO_DATA_DIR\server.log" -ErrorAction SilentlyContinue; Write-Error "сервер внутри .exe не поднялся"; exit 1 }
+          if (-not (Test-Path "$env:ODO_DATA_DIR\smoke.ok")) { Write-Error "сервер внутри .exe не поднялся"; exit 1 }
           Get-Content "$env:ODO_DATA_DIR\smoke.ok"
 
       - name: Архив папочной версии
