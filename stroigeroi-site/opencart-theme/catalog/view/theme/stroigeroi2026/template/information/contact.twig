@@ -21,6 +21,10 @@
 #}
 {% set id_policy = 0 %}
 {% set url_policy = id_policy ? 'index.php?route=information/information&information_id=' ~ id_policy : '' %}
+{# Реквизиты: 7 - номер страницы на сайте (выдача правки 24). Тот же
+   номер стоит в подвале; tools/set-page-ids.py правит оба места. #}
+{% set id_requisites = 7 %}
+{% set url_requisites = id_requisites ? 'index.php?route=information/information&amp;information_id=' ~ id_requisites : '' %}
 {{ header }}
   <div class="container">
 
@@ -87,11 +91,14 @@
             <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/></svg><span><strong>Почта</strong><a href="mailto:stroigeroi41@mail.ru">stroigeroi41@mail.ru</a></span></li>
             <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span><strong>Режим работы</strong><span>Пн–Пт 9:00–19:00, Сб–Вс 9:00–18:00<br><span class="contact-note">На Чубарова, 16 в выходные — с 10:00.</span></span></span></li>
             {#
-              Здесь стояли две заготовки: «Реквизиты - название юрлица, ИНН,
-              ОГРН - от заказчика» и «Документы - политика обработки
-              персональных данных - от заказчика». Покупатели видели их как
-              есть. Дадут реквизиты и политику - вернуть сюда пунктами info-list.
+              Реквизиты - от заказчика (24.09.2026): кто продаёт, чтобы
+              юрлицу не искать; полные, с банком, - на странице «Реквизиты».
+              Второй заготовкой стояли «Документы - политика обработки
+              персональных данных - от заказчика». Политики на сайте пока
+              нет (страница выключена и пустая); появится - вернуть сюда
+              пунктом info-list.
             #}
+            <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg><span><strong>Реквизиты</strong><span class="info-list__legal"><span>ИП Лиманова Виктория Васильевна</span><span>ИНН&nbsp;410109423040, ОГРНИП&nbsp;324410000001111</span></span>{% if url_requisites %}<a class="info-list__more" href="{{ url_requisites }}">Все реквизиты и банк</a>{% endif %}</span></li>
           </ul>
         </div>
 

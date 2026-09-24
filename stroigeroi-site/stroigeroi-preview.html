@@ -2127,8 +2127,25 @@ html[data-theme="dark"] .shop-card__now--open {
   color: rgba(255, 255, 255, 0.62);
 }
 
+/* Продавец: имя, ИНН, ОГРНИП - каждое своей строкой, чтобы номер
+   не рвался переносом посередине. Цифры моноширинные, как на странице
+   «Реквизиты»: их переписывают в договор. */
 .footer-brand__legal {
-  display: inline-block;
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.62);
+  font-variant-numeric: tabular-nums;
+}
+
+.footer-brand__legal a {
+  margin-top: var(--sp-1);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .footer-links {
@@ -2738,6 +2755,20 @@ html[data-theme="dark"] .site-footer {
   display: block;
   font-size: 14px;
   color: var(--sg-muted);
+  font-weight: 600;
+}
+
+/* Реквизиты в «Общих контактах»: имя и номера - отдельными строками,
+   ИНН и ОГРНИП моноширинными цифрами. */
+.info-list__legal {
+  display: grid;
+  font-variant-numeric: tabular-nums;
+}
+
+.info-list__more {
+  display: inline-block;
+  margin-top: var(--sp-1);
+  font-size: 14px;
   font-weight: 600;
 }
 
@@ -4619,6 +4650,7 @@ html[data-theme="dark"] .step.is-current .step__num {
   .cat-list__link,
   .mobile-nav__link,
   .footer-group li a,
+  .footer-brand__legal a,
   .filters label {
     min-height: 44px;
     display: flex;
@@ -7504,7 +7536,7 @@ p a:not(.btn):hover,
             <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><span><strong>Телефон</strong><a href="tel:+79638319999">8-963-831-99-99</a></span></li>
             <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/></svg><span><strong>Почта</strong><a href="mailto:stroigeroi41@mail.ru">stroigeroi41@mail.ru</a></span></li>
             <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span><strong>Режим работы</strong><span>Пн–Пт 9:00–19:00, Сб–Вс 9:00–18:00<br><span class="contact-note">На Чубарова, 16 в выходные — с 10:00.</span></span></span></li>
-            <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg><span><strong>Реквизиты</strong><span class="ph ph--inline">название юрлица, ИНН, ОГРН — от заказчика</span></span></li>
+            <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg><span><strong>Реквизиты</strong><span class="info-list__legal"><span>ИП Лиманова Виктория Васильевна</span><span>ИНН&nbsp;410109423040, ОГРНИП&nbsp;324410000001111</span></span></span></li>
             <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3 7 3v5.5c0 4.4-3 8-7 9.5-4-1.5-7-5.1-7-9.5V6z"/><path d="m9 12 2 2 4-4"/></svg><span><strong>Документы</strong><span class="ph ph--inline">политика обработки персональных данных — от заказчика</span></span></li>
           </ul>
         </div>
@@ -8051,7 +8083,7 @@ p a:not(.btn):hover,
         <a class="footer-brand__word" href="#p-index">Строй-Герой</a>
         <p class="footer-brand__slogan">Наши материалы — ваша уверенность</p>
         <p class="footer-brand__note">Магазины строительных материалов, инструмента и хозтоваров на Камчатке: две точки в Петропавловске-Камчатском и одна в Елизово.</p>
-        <p class="footer-brand__legal ph ph--inline">Реквизиты организации — нужны от заказчика</p>
+        <p class="footer-brand__legal"><span>ИП Лиманова Виктория Васильевна</span><span>ИНН 410109423040</span><span>ОГРНИП 324410000001111</span></p>
       </div>
 
       <div class="footer-links">
@@ -9583,6 +9615,44 @@ p a:not(.btn):hover,
     calc.addEventListener('change', recount);
     setMode('gkl');
   }
+
+  /* ======================================================================
+     Кнопки «Копировать» у реквизитов (страница «Реквизиты», текст в базе).
+     Номер кладётся в буфер обмена; на кнопке на две секунды -
+     «Скопировано». Если браузер буфер не дал (старый браузер или страница
+     не по https), номер выделяется - его остаётся скопировать самому.
+     ====================================================================== */
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest ? e.target.closest('[data-copy]') : null;
+    if (!btn) return;
+    var text = btn.getAttribute('data-copy');
+    // Надпись кнопки запоминается один раз: при втором нажатии в эти
+    // две секунды на кнопке уже «Скопировано», и её бы и вернуло навсегда.
+    var done = function () {
+      if (!btn.hasAttribute('data-label')) btn.setAttribute('data-label', btn.textContent);
+      btn.textContent = 'Скопировано';
+      btn.classList.add('is-copied');
+      clearTimeout(btn.copyTimer);
+      btn.copyTimer = setTimeout(function () {
+        btn.textContent = btn.getAttribute('data-label');
+        btn.classList.remove('is-copied');
+      }, 2000);
+    };
+    var selectValue = function () {
+      var value = btn.parentNode ? btn.parentNode.querySelector('.req-val') : null;
+      if (!value || !window.getSelection) return;
+      var range = document.createRange();
+      range.selectNodeContents(value);
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, selectValue);
+    } else {
+      selectValue();
+    }
+  });
 
   /* ======================================================================
      Заглушки нерабочих действий макета

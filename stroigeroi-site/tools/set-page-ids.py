@@ -26,6 +26,7 @@ ROOT = pathlib.Path('opencart-theme/catalog/view/theme/stroigeroi2026/template')
 KNOWN = {
     'delivery': 'страница «Доставка и оплата»',
     'policy': 'страница «Политика обработки персональных данных»',
+    'requisites': 'страница «Реквизиты»',
 }
 
 

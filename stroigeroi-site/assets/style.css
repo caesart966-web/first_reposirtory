@@ -2117,8 +2117,25 @@ html[data-theme="dark"] .shop-card__now--open {
   color: rgba(255, 255, 255, 0.62);
 }
 
+/* Продавец: имя, ИНН, ОГРНИП - каждое своей строкой, чтобы номер
+   не рвался переносом посередине. Цифры моноширинные, как на странице
+   «Реквизиты»: их переписывают в договор. */
 .footer-brand__legal {
-  display: inline-block;
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.62);
+  font-variant-numeric: tabular-nums;
+}
+
+.footer-brand__legal a {
+  margin-top: var(--sp-1);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .footer-links {
@@ -2728,6 +2745,20 @@ html[data-theme="dark"] .site-footer {
   display: block;
   font-size: 14px;
   color: var(--sg-muted);
+  font-weight: 600;
+}
+
+/* Реквизиты в «Общих контактах»: имя и номера - отдельными строками,
+   ИНН и ОГРНИП моноширинными цифрами. */
+.info-list__legal {
+  display: grid;
+  font-variant-numeric: tabular-nums;
+}
+
+.info-list__more {
+  display: inline-block;
+  margin-top: var(--sp-1);
+  font-size: 14px;
   font-weight: 600;
 }
 
@@ -4609,6 +4640,7 @@ html[data-theme="dark"] .step.is-current .step__num {
   .cat-list__link,
   .mobile-nav__link,
   .footer-group li a,
+  .footer-brand__legal a,
   .filters label {
     min-height: 44px;
     display: flex;

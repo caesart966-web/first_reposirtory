@@ -19,7 +19,7 @@
   изменённые style.css или app.js, иначе у посетителей останутся старые
   из кеша браузера - и вы будете смотреть на исправленный сайт, а они нет.
 #}
-{% set asset_v = 'c88e1f83' %}
+{% set asset_v = '9d0ff0cd' %}
 {#
   Название магазина написано здесь словом, а не взято из настроек.
   Переменной name у подвала нет: движок рисует подвал отдельным вызовом
@@ -29,6 +29,22 @@
   в админке - поправьте эту строку.
 #}
 {% set shop = 'Строй-Герой' %}
+{#
+  --- Адреса текстовых страниц --------------------------------------------
+  Ставит tools/set-page-ids.py - он же правит тот же блок на странице
+  контактов. Пока стоит 0, ссылки нет совсем.
+  Политика. Ссылки «политике» (плашка про cookie) и «политикой
+  конфиденциальности» (галочка в «Заказать звонок») вели на informations[0] -
+  первую по порядку страницу из списка подвала, какой бы она ни была.
+  Страница политики на сайте выключена, так что это была заведомо
+  не политика. Теперь - как на странице контактов: нет номера - нет ссылки.
+  Реквизиты: 7 - номер страницы на сайте (выдача правки 24).
+  ------------------------------------------------------------------------
+#}
+{% set id_policy = 0 %}
+{% set url_policy = id_policy ? 'index.php?route=information/information&amp;information_id=' ~ id_policy : '' %}
+{% set id_requisites = 7 %}
+{% set url_requisites = id_requisites ? 'index.php?route=information/information&amp;information_id=' ~ id_requisites : '' %}
 </main>
 <footer class="site-footer">
   <div class="stripe-band stripe-band--thin" aria-hidden="true"></div>
@@ -50,10 +66,13 @@
         <p class="footer-brand__slogan">Наши материалы — ваша уверенность</p>
         <p class="footer-brand__note">Магазины строительных материалов, инструмента и хозтоваров на Камчатке: две точки в Петропавловске-Камчатском и одна в Елизово.</p>
         {#
-          Здесь стояла заготовка «Реквизиты организации - нужны от
-          заказчика», на каждой странице сайта. Дадут реквизиты - строкой
-          p.footer-brand__legal.
+          Продавец - по реквизитам от заказчика (24.09.2026). С кем
+          заключается договор, покупатель должен видеть на любой странице,
+          а не искать страницу «Реквизиты». Те же ИНН и ОГРНИП стоят
+          на ней, в «Общих контактах» и в разметке для поисковика в шапке
+          (legalName, taxID); render-check.php сверяет все четыре места.
         #}
+        <p class="footer-brand__legal"><span>ИП Лиманова Виктория Васильевна</span><span>ИНН 410109423040</span><span>ОГРНИП 324410000001111</span>{% if url_requisites %}<a href="{{ url_requisites }}">Все реквизиты</a>{% endif %}</p>
       </div>
 
       <div class="footer-links">
@@ -127,7 +146,7 @@
 
 <section class="cookie" data-cookie hidden aria-label="Использование cookie">
   <p>Сайт сохраняет в памяти браузера тему оформления, вид списка и содержимое корзины. Эти данные остаются на вашем устройстве.
-  {% if informations %}Подробности — в <a href="{{ informations[0].href }}">политике</a>.{% endif %}</p>
+  {% if url_policy %}Подробности — в <a href="{{ url_policy }}">политике</a>.{% endif %}</p>
   <button class="btn btn--primary" type="button" data-cookie-ok>Хорошо</button>
 </section>
 
@@ -163,7 +182,7 @@
       </div>
       <label class="consent">
         <input type="checkbox" name="consent" value="1" required>
-        <span>Согласен на <a href="{{ informations ? informations[0].href : '' }}#soglasie">обработку персональных данных</a> и с <a href="{{ informations ? informations[0].href : '' }}">политикой конфиденциальности</a>.</span>
+        <span>{% if url_policy %}Согласен на <a href="{{ url_policy }}#soglasie">обработку персональных данных</a> и с <a href="{{ url_policy }}">политикой конфиденциальности</a>.{% else %}Согласен на обработку персональных данных.{% endif %}</span>
         <span class="form__error">Без согласия отправить нельзя</span>
       </label>
       <button class="btn btn--action btn--block btn--lg" type="submit">Жду звонка</button>

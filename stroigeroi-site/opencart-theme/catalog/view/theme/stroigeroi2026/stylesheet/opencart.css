@@ -1796,3 +1796,333 @@ div.modal .close:hover { color: var(--sg-red); }
   max-width: 100%;
   height: auto;
 }
+
+/* ---- Фильтр OCFilter ------------------------------------------------------
+   Разметка снята с живого сайта 24.09.2026: у фильтра одна настройка -
+   цена с ползунком noUiSlider. Модуль рассчитан на Bootstrap 3, а тема его
+   стилей не подключает, отсюда все беды:
+   - режим «телефон» модуль включает, если видна обёртка .ocfilter-mobile
+     (на компьютере её прячут классы hidden-sm/md/lg из Bootstrap). У нас
+     она видна всегда, и фильтр на любом экране уезжал в выдвижную панель
+     с пустой кнопкой: значок в ней из Font Awesome, которого тоже нет.
+     Обёртка скрыта - фильтр остаётся в боковой колонке, а на телефоне
+     колонку и так сворачивает наша кнопка «Показать фильтры»;
+   - кнопка «Показать» прячется классом .hidden, который у нас ничего
+     не делал;
+   - ползунок - бирюзовый noUiSlider по умолчанию; здесь - цвета сайта.
+     Размер ручки не меняется (34x28, как в самой библиотеке), только
+     форма и цвет: смещение ручки в разных версиях noUiSlider задано
+     по-разному, и новый размер сдвинул бы её с конца полосы.
+   «&nbsp;руб» текстом в подписи цены исправлен в самой валюте, не здесь. */
+.ocfilter-mobile {
+  display: none !important;
+}
+
+#ocfilter .hidden {
+  display: none !important;
+}
+
+/* Кнопка «Показать» в разметке модуля стоит раньше настроек - порядком
+   во флексе она уходит под ползунок, где её и ждут. */
+#ocfilter.panel {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+
+#ocfilter #ocfilter-button {
+  order: 2;
+}
+
+#ocfilter .panel-heading {
+  margin: 0 0 var(--sp-3);
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--sg-ink);
+}
+
+#ocfilter .list-group {
+  margin: 0;
+  padding: 0;
+}
+
+#ocfilter .list-group-item {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+}
+
+#ocfilter .list-group-item + .list-group-item {
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--sg-line);
+}
+
+#ocfilter .ocf-option-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--sp-1);
+  margin-bottom: var(--sp-4);
+  font-size: 14px;
+  color: var(--sg-muted);
+}
+
+#ocfilter .ocf-option-name span {
+  color: var(--sg-ink);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Ручки стоят серединой на концах полосы и выходят за неё на 17 px
+   вбок и на 11 px вниз: отступ не даёт им вылезти за край колонки,
+   а колонка (overflow: hidden) обрезала бы их. */
+#ocfilter .ocf-option-values {
+  padding: 0 17px 14px;
+}
+
+#ocfilter .noUi-target {
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--sg-line);
+  box-shadow: none;
+}
+
+#ocfilter .noUi-horizontal {
+  height: 6px;
+}
+
+#ocfilter .noUi-connects {
+  border-radius: var(--r-pill);
+}
+
+#ocfilter .noUi-connect {
+  background: var(--sg-blue);
+}
+
+#ocfilter .noUi-horizontal .noUi-handle {
+  top: -11px;
+}
+
+#ocfilter .noUi-handle {
+  border: 2px solid var(--sg-blue);
+  border-radius: var(--r-pill);
+  background: var(--sg-white);
+  box-shadow: var(--sh-sm);
+  cursor: grab;
+}
+
+#ocfilter .noUi-handle:active {
+  cursor: grabbing;
+}
+
+#ocfilter .noUi-handle::before,
+#ocfilter .noUi-handle::after {
+  display: none;
+}
+
+#ocfilter .noUi-handle:focus-visible {
+  outline: 3px solid var(--sg-red);
+  outline-offset: 2px;
+}
+
+/* Кнопка «Показать» - как поиск: красная, во всю ширину колонки. */
+#ocfilter-button {
+  margin: var(--sp-4) 0 0;
+}
+
+#ocfilter-button .btn,
+.popover .btn-primary {
+  width: 100%;
+  background: var(--sg-red);
+  color: var(--sg-white);
+  border-color: transparent;
+}
+
+#ocfilter-button .btn:hover,
+.popover .btn-primary:hover {
+  background: var(--sg-red-dark);
+}
+
+#ocfilter-button .btn.disabled,
+.popover .btn.disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* Если модуль покажет кнопку всплывающей подсказкой Bootstrap (у варианта
+   с ценой стоит data-toggle="popover-price"): без стилей Bootstrap такая
+   подсказка легла бы текстом внизу страницы. Своих подсказок в теме нет,
+   поэтому правило ни с чем не спорит. */
+.popover {
+  position: absolute;
+  z-index: 1060;
+  max-width: 280px;
+  padding: var(--sp-3);
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  background: var(--sg-white);
+  box-shadow: var(--sh-md);
+}
+
+.popover .arrow {
+  display: none;
+}
+
+/* ---- Страница «Реквизиты» --------------------------------------------------
+   Текст страницы живёт в базе (текстовая страница движка, правка 25):
+   карточки - продавец, банк, адреса, телефоны; у номеров, которые
+   переписывают в договор и платёжку, - кнопка «Копировать» (app.js,
+   data-copy). Раньше это был сплошной столбик строк, где второй
+   «Р/СЧЕТ» на деле был корреспондентским счётом. */
+.legal .req {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-5);
+  margin: var(--sp-5) 0 0;
+}
+
+.req-card {
+  min-width: 0;
+  padding: var(--sp-5);
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  background: var(--sg-white);
+}
+
+.req-card--wide {
+  grid-column: 1 / -1;
+}
+
+.legal .req-card__kicker {
+  margin: 0 0 var(--sp-1);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--sg-muted);
+}
+
+/* Три класса, а не два: у .legal h2:first-child из style.css вес выше,
+   чем у двух классов, и заголовок карточки без подписи над ним
+   получал сверху лишние 24 px. */
+.legal .req-card .req-card__title {
+  max-width: none;
+  margin: 0 0 var(--sp-4);
+  font-size: 20px;
+}
+
+.req-list {
+  margin: 0;
+}
+
+.req-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 34%) minmax(0, 1fr);
+  gap: var(--sp-1) var(--sp-4);
+  align-items: baseline;
+  padding: var(--sp-3) 0;
+  border-top: 1px solid var(--sg-line);
+}
+
+.req-row:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.req-row dt {
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--sg-muted);
+}
+
+.req-row dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-3);
+  min-width: 0;
+  margin: 0;
+  line-height: 1.45;
+  color: var(--sg-ink);
+}
+
+/* Номера - моноширинными цифрами: разряды счёта сверяют глазами. */
+.req-val {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  overflow-wrap: anywhere;
+}
+
+.req-note {
+  font-size: 14px;
+  color: var(--sg-muted);
+}
+
+.req-copy {
+  min-height: 32px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-md);
+  background: var(--sg-white);
+  color: var(--sg-blue);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.req-copy:hover {
+  border-color: var(--sg-blue);
+  background: var(--sg-blue-tint);
+}
+
+.req-copy:focus-visible {
+  outline: 3px solid var(--sg-red);
+  outline-offset: 2px;
+}
+
+.req-copy.is-copied {
+  border-color: var(--sg-blue);
+  background: var(--sg-blue);
+  color: var(--sg-white);
+}
+
+/* Если внизу прежней страницы были картинки - они ставятся сюда
+   как были (правка 25 их не выбрасывает). */
+.req-extra {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--sp-5);
+}
+
+.req-extra img {
+  max-width: 100%;
+  height: auto;
+}
+
+@media (max-width: 767px) {
+  .legal .req {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-4);
+  }
+
+  .req-card {
+    padding: var(--sp-4);
+  }
+
+  .req-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

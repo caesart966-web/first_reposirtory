@@ -1402,6 +1402,44 @@
   }
 
   /* ======================================================================
+     Кнопки «Копировать» у реквизитов (страница «Реквизиты», текст в базе).
+     Номер кладётся в буфер обмена; на кнопке на две секунды -
+     «Скопировано». Если браузер буфер не дал (старый браузер или страница
+     не по https), номер выделяется - его остаётся скопировать самому.
+     ====================================================================== */
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest ? e.target.closest('[data-copy]') : null;
+    if (!btn) return;
+    var text = btn.getAttribute('data-copy');
+    // Надпись кнопки запоминается один раз: при втором нажатии в эти
+    // две секунды на кнопке уже «Скопировано», и её бы и вернуло навсегда.
+    var done = function () {
+      if (!btn.hasAttribute('data-label')) btn.setAttribute('data-label', btn.textContent);
+      btn.textContent = 'Скопировано';
+      btn.classList.add('is-copied');
+      clearTimeout(btn.copyTimer);
+      btn.copyTimer = setTimeout(function () {
+        btn.textContent = btn.getAttribute('data-label');
+        btn.classList.remove('is-copied');
+      }, 2000);
+    };
+    var selectValue = function () {
+      var value = btn.parentNode ? btn.parentNode.querySelector('.req-val') : null;
+      if (!value || !window.getSelection) return;
+      var range = document.createRange();
+      range.selectNodeContents(value);
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, selectValue);
+    } else {
+      selectValue();
+    }
+  });
+
+  /* ======================================================================
      Заглушки нерабочих действий макета
      ====================================================================== */
   document.addEventListener('click', function (e) {

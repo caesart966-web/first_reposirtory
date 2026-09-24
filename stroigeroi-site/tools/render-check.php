@@ -84,6 +84,10 @@ $cases = [
     ['4&nbsp;320,00&nbsp;руб', '',            '5',             '4320.00', 'InStock'],
     ['1 250,00&nbsp;руб.',   '999,00&nbsp;руб.', '2',          '999.00',  'InStock'],
     ['1&#160;250,00&#160;руб', '',            '0',             '1250.00', 'OutOfStock'],
+    // После правки 25 знак валюты в настройках - неразрывный пробел
+    // символом и «руб»: так цена выглядит на сайте теперь.
+    ['4 320,00' . $NB . 'руб',  '',              '5',             '4320.00', 'InStock'],
+    ['1 250,00' . $NB . 'руб',  '999,00' . $NB . 'руб', '2',      '999.00',  'InStock'],
     ['1' . $NB . '250,00 руб.', '',           '5',             '1250.00', 'InStock'],
     ['1 250.00 р.',          '',              '12',            '1250.00', 'InStock'],
     ['1 250 ₽',              '',              '3',             '1250',    'InStock'],
@@ -392,5 +396,70 @@ foreach ($noticePages as $name => $vars) {
     $states[] = basename($name, '.twig') . ($flag[1] === 'true' ? ' - показано' : ' - выключено');
 }
 echo "Предупреждение «{$DEV}»: " . implode(', ', $states) . "\n";
+
+/*
+ * Продавец (реквизиты от 24.09.2026) стоит в четырёх местах: подвал
+ * каждой страницы, «Общие контакты», страница «Реквизиты» (текст в базе,
+ * его пишет правка 25 из tools/rekvizity/rekvizity.html) и разметка
+ * магазина в шапке (legalName, taxID). Поправят номер в одном месте
+ * и забудут в другом - покупатель увидит внизу страницы один ИНН,
+ * а в реквизитах другой, и не будет знать, какому верить.
+ *
+ * И ссылки на политику в подвале (плашка cookie, галочка в «Заказать
+ * звонок») больше не берутся первой страницей из списка подвала: её адрес
+ * может стоять только в самом списке «Покупателям».
+ */
+$badBefore = $bad;
+$ld = [];
+foreach ($m[1] as $json) {
+    $x = json_decode($json, true);
+    if (($x['@type'] ?? '') === 'Store') { $ld = $x; break; }
+}
+$firstPage = 'index.php?route=information/information&amp;information_id=901';
+$foot = $twig->load('common/footer.twig')->render(['informations' => [
+    ['title' => 'Доставка', 'href' => $firstPage],
+    ['title' => 'Реквизиты', 'href' => 'index.php?route=information/information&amp;information_id=7'],
+]]);
+$contactPage = $twig->load('information/contact.twig')->render([]);
+$reqPage = file_get_contents(__DIR__ . '/rekvizity/rekvizity.html');
+$legal = preg_match('~<p class="footer-brand__legal">(.*?)</p>~s', $foot, $lm)
+    ? trim(preg_replace('/\s+/u', ' ', strip_tags(str_replace('</span>', ' ', preg_replace('~<a\b.*?</a>~s', '', $lm[1]))))) : '';
+$inn = preg_match('~ИНН (\d{10,12})\b~u', $legal, $x) ? $x[1] : '';
+$ogrn = preg_match('~ОГРНИП (\d{15})\b~u', $legal, $x) ? $x[1] : '';
+if ($legal === '' || $inn === '' || $ogrn === '') {
+    echo "footer.twig: в подвале нет строки продавца с ИНН и ОГРНИП (p.footer-brand__legal)\n";
+    $bad++;
+} else {
+    $name = $ld['legalName'] ?? '';
+    if (($ld['taxID'] ?? '') !== $inn) {
+        echo "header.twig: ИНН в разметке (" . ($ld['taxID'] ?? 'нет') . ") не тот, что в подвале ($inn)\n";
+        $bad++;
+    }
+    if ($name === '' || strpos($legal, $name) === false) {
+        echo "header.twig: продавец в разметке («{$name}») не тот, что в подвале («{$legal}»)\n";
+        $bad++;
+    }
+    foreach (['страница «Реквизиты»' => $reqPage, 'contact.twig' => $contactPage] as $where => $html) {
+        foreach (['ИНН' => $inn, 'ОГРНИП' => $ogrn, 'имя' => preg_replace('/^ИП /u', '', $name)] as $what => $val) {
+            if ($val === '' || strpos($html, $val) === false) {
+                echo "$where: нет того же, что в подвале: $what «{$val}»\n";
+                $bad++;
+            }
+        }
+    }
+    foreach ([$inn, $ogrn] as $val) {
+        if (strpos($reqPage, 'data-copy="' . $val . '"') === false) {
+            echo "страница «Реквизиты»: кнопка «Копировать» у номера $val копирует что-то другое\n";
+            $bad++;
+        }
+    }
+}
+if (substr_count($foot, $firstPage) !== 1) {
+    echo "footer.twig: адрес первой страницы подвала стоит не только в списке «Покупателям» - "
+        . "ссылка на политику снова берётся из informations[0]\n";
+    $bad++;
+}
+echo "Продавец: «{$legal}» - " . ($bad === $badBefore
+    ? "подвал, контакты, реквизиты и разметка сходятся\n" : "есть расхождения, см. выше\n");
 
 exit($bad ? 1 : 0);
