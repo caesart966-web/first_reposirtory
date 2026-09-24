@@ -7,7 +7,13 @@
     - адреса разделов каталога                  -> цикл по categories
     - поиск                                     -> маршрут product/search
     - корзина                                   -> {{ cart }}, шаблон common/cart.twig
-    - вход/личный кабинет                       -> logged ? account : login
+
+  Входа в кабинет и «Избранного» в шапке нет с 24.09.2026 (решение
+  заказчика по цифрам tools/server/lk-schet.php): кабинетов 4966,
+  заказывали из них двое, а людям регистрация закрыта ещё до нас (403
+  в .htaccess). «Избранное» в движке требует входа: гостю на сердечко он
+  отвечает «войдите или зарегистрируйтесь», а страница избранного
+  отправляет на вход. Заказ оформляется в корзине без кабинета.
 
   Чего здесь НЕТ и почему: телефон, адреса магазинов и график работы стоят
   текстом. Это не недоделка — в OpenCart нет полей под три магазина с разным
@@ -224,7 +230,7 @@
   Число одно на все три файла: обновился любой - адрес меняется у всех,
   зато нельзя забыть какой-то из них.
 #}
-{% set asset_v = '27441f05' %}
+{% set asset_v = 'bd0681a8' %}
 {#
   Стили расширений идут ПЕРВЫМИ, наши - последними, и порядок здесь
   важнее, чем кажется. Оформление заказа рисует модуль Simple, со своим
@@ -353,7 +359,7 @@
       {{ search }}
 
       <div class="header-actions">
-        <a class="header-action" href="{{ wishlist }}"><span class="header-action__icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20s-7-4.4-7-9.4A3.9 3.9 0 0 1 12 7.2 3.9 3.9 0 0 1 19 10.6c0 5-7 9.4-7 9.4Z"/></svg><span class="header-action__count" data-count="fav" data-hide-empty hidden>0</span></span><span class="header-action__label">Избранное</span></a><a class="header-action" href="{{ url_compare }}"><span class="header-action__icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 20V11M12 20V4M18 20v-6"/></svg><span class="header-action__count" data-count="compare" data-hide-empty hidden>0</span></span><span class="header-action__label">Сравнение</span></a>{{ cart }}<a class="header-action" href="{% if logged %}{{ account }}{% else %}{{ login }}{% endif %}"><span class="header-action__icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg></span><span class="header-action__label">{% if logged %}Кабинет{% else %}Войти{% endif %}</span></a>
+        <a class="header-action header-action--compare" href="{{ url_compare }}"><span class="header-action__icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 20V11M12 20V4M18 20v-6"/></svg><span class="header-action__count" data-count="compare" data-hide-empty hidden>0</span></span><span class="header-action__label">Сравнение</span></a>{{ cart }}
         <button class="header-burger" type="button" data-burger aria-expanded="false" aria-controls="mobile-nav" aria-label="Меню сайта"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
       </div>
     </div>

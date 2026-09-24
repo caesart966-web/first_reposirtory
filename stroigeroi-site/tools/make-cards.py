@@ -32,7 +32,10 @@
     с настоящей корзиной движка, а не с памятью браузера;
   - цена со скидкой выводится второй строкой, зачёркнутой - в макете
     такого не было, потому что цен не было вовсе;
-  - артикула, фасовки и остатка НЕТ: движок в модулях их не отдаёт.
+  - артикула, фасовки и остатка НЕТ: движок в модулях их не отдаёт;
+  - кнопки «В избранное» НЕТ (24.09.2026): избранное в движке работает
+    только с кабинетом, а кабинет с сайта убран - гостю на сердечко
+    движок отвечал «войдите или зарегистрируйтесь», регистрация закрыта.
     Пустые пунктирные плашки макета сюда переносить нельзя - на живом
     сайте они читались бы как поломка, а не как "данные будут".
 """
@@ -44,7 +47,6 @@ OUT = pathlib.Path('opencart-theme/catalog/view/theme') / THEME / 'template' / '
 
 ICON_PREV = '<svg class="icon-prev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg>'
 ICON_NEXT = ICON_PREV.replace('icon-prev', 'icon-next')
-ICON_FAV = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20s-7-4.4-7-9.4A3.9 3.9 0 0 1 12 7.2 3.9 3.9 0 0 1 19 10.6c0 5-7 9.4-7 9.4Z"/></svg>'
 ICON_CMP = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 20V11M12 20V4M18 20v-6"/></svg>'
 ICON_CART = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9.5" cy="19.5" r="1.6"/><circle cx="17" cy="19.5" r="1.6"/><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L20 8H6"/></svg>'
 
@@ -53,7 +55,6 @@ CARD = """          <article class="product-card reveal">
               {% if product.special %}<div class="product-card__badges"><span class="badge badge--sale">Скидка</span></div>{% endif %}
               <a class="product-card__photo" href="{{ product.href }}"><img src="{{ product.thumb }}" alt="{{ product.name }}" loading="lazy" decoding="async"></a>
               <div class="product-card__tools">
-                <button class="card-tool" type="button" data-add="fav" data-product-id="{{ product.product_id }}" aria-label="В избранное">""" + ICON_FAV + """</button>
                 <button class="card-tool" type="button" data-add="compare" data-product-id="{{ product.product_id }}" aria-label="К сравнению">""" + ICON_CMP + """</button>
               </div>
             </div>

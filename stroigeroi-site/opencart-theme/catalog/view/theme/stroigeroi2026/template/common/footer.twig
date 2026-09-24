@@ -19,7 +19,7 @@
   изменённые style.css или app.js, иначе у посетителей останутся старые
   из кеша браузера - и вы будете смотреть на исправленный сайт, а они нет.
 #}
-{% set asset_v = '27441f05' %}
+{% set asset_v = 'bd0681a8' %}
 {#
   Название магазина написано здесь словом, а не взято из настроек.
   Переменной name у подвала нет: движок рисует подвал отдельным вызовом
@@ -75,6 +75,12 @@
         <p class="footer-brand__legal"><span>ИП Лиманова Виктория Васильевна</span><span>ИНН 410109423040</span><span>ОГРНИП 324410000001111</span>{% if url_requisites %}<a href="{{ url_requisites }}">Все реквизиты</a>{% endif %}</p>
       </div>
 
+      {#
+        Колонки «Личный кабинет» нет с 24.09.2026: кабинет с сайта убран
+        (решение заказчика, см. шапку). «Возврат товара» переехал в «Сервисы»
+        на место «Избранного» - заявку на возврат движок принимает и без входа.
+        Колонок стало три; сетка на три - в opencart.css.
+      #}
       <div class="footer-links">
         <div class="footer-group">
           <p class="footer-group__label">Каталог</p>
@@ -100,20 +106,11 @@
           <ul>
             <li><a href="index.php?route=information/calculator">Калькулятор материалов</a></li>
             <li><a href="index.php?route=checkout/cart">Корзина</a></li>
-            <li><a href="{{ wishlist }}">Избранное</a></li>
+            <li><a href="{{ return }}">Возврат товара</a></li>
             <li><button class="footer-group__button" type="button" data-modal-open="modal-callback">Заказать звонок</button></li>
           </ul>
         </div>
 
-        <div class="footer-group">
-          <p class="footer-group__label">Личный кабинет</p>
-          <ul>
-            <li><a href="{{ account }}">Мой кабинет</a></li>
-            <li><a href="{{ order }}">История заказов</a></li>
-            <li><a href="{{ return }}">Возврат товара</a></li>
-            <li><a href="{{ voucher }}">Подарочные сертификаты</a></li>
-          </ul>
-        </div>
       </div>
 
     </div>
