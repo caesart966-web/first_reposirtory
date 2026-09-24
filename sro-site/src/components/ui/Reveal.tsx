@@ -7,6 +7,7 @@ import {
   type ElementType,
   type ReactNode,
 } from 'react'
+import { nbsp } from '../../lib/typo'
 
 // Появление при прокрутке: блок выплывает, заголовок поднимается по словам,
 // фотография открывается шторкой. Сами переходы — в index.css (.reveal,
@@ -81,7 +82,9 @@ export function RevealText({
   className?: string
 }) {
   const ref = useReveal<HTMLElement>()
-  const words = text.split(' ')
+  // Короткие предлоги склеены со следующим словом (nbsp) и попадают с ним
+  // в один блок: иначе «в» висело в конце строки («по вступлению в / СРО»).
+  const words = nbsp(text).split(' ')
   return createElement(
     as,
     { ref, className: `reveal-words ${className}`, 'aria-label': text },
