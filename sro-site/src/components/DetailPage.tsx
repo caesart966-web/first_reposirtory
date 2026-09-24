@@ -193,7 +193,7 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
                 на закон значило бы продавать, а не объяснять. */}
             <Section>
               <Reveal>
-                <h2 className="font-display text-[2.1rem] font-medium leading-[1.08] text-neutral-950 sm:text-[2.7rem]">
+                <h2 className="font-display text-[1.8rem] font-medium leading-[1.08] text-neutral-950 min-[360px]:text-[2.1rem] sm:text-[2.7rem]">
                   Членство обязательно, если
                 </h2>
               </Reveal>
@@ -231,7 +231,7 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
             {/* Область деятельности: что именно закрывает этот вид СРО. */}
             <Section size="compact" className="bg-neutral-100">
               <Reveal>
-                <h2 className="font-display text-[2.1rem] font-medium leading-[1.08] text-neutral-950 sm:text-[2.7rem]">
+                <h2 className="font-display text-[1.8rem] font-medium leading-[1.08] text-neutral-950 min-[360px]:text-[2.1rem] sm:text-[2.7rem]">
                   Что входит в область деятельности
                 </h2>
                 <p className="mt-3 max-w-2xl text-neutral-600">{detail.card.text}</p>
@@ -254,7 +254,7 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
                 не кандидат, и это стоит видеть сразу. */}
             <Section>
               <Reveal>
-                <h2 className="font-display text-[2.1rem] font-medium leading-[1.08] text-neutral-950 sm:text-[2.7rem]">
+                <h2 className="font-display text-[1.8rem] font-medium leading-[1.08] text-neutral-950 min-[360px]:text-[2.1rem] sm:text-[2.7rem]">
                   Как проходит вступление
                 </h2>
                 <p className="mt-3 max-w-3xl text-neutral-600">
@@ -281,7 +281,7 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
                 человек уверен, что договор аренды офиса требует кодекс. */}
             <Section size="compact" className="bg-neutral-100">
               <Reveal>
-                <h2 className="font-display text-[2.1rem] font-medium leading-[1.08] text-neutral-950 sm:text-[2.7rem]">
+                <h2 className="font-display text-[1.8rem] font-medium leading-[1.08] text-neutral-950 min-[360px]:text-[2.1rem] sm:text-[2.7rem]">
                   Какие документы понадобятся
                 </h2>
                 <p className="mt-3 max-w-3xl text-neutral-600">
@@ -337,7 +337,7 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
                 верно независимо от конкретных сумм. */}
             <Section>
               <Reveal>
-                <h2 className="font-display text-[2.1rem] font-medium leading-[1.08] text-neutral-950 sm:text-[2.7rem]">
+                <h2 className="font-display text-[1.8rem] font-medium leading-[1.08] text-neutral-950 min-[360px]:text-[2.1rem] sm:text-[2.7rem]">
                   Взносы в компенсационные фонды
                 </h2>
               </Reveal>

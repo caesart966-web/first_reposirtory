@@ -2,7 +2,7 @@
 //
 // Собирается из фирменных элементов сайта, а не рисуется отдельно: тот же
 // знак весов из illustrations.tsx, тот же тёплый графит accent-950, что у
-// раздела «Связаться», те же шрифты — Cormorant в имени, Onest в тексте.
+// раздела «Связаться», те же шрифты — Brygada 1918 в имени, Onest в тексте.
 // Фотографий нет намеренно — карточка в мессенджере показывается размером
 // с ноготь, и любой кадр там превращается в кашу, а знак и имя читаются.
 //
@@ -47,8 +47,8 @@ const html = `<!doctype html><html lang="ru"><head><meta charset="utf-8">
 <style>
   ${face('Onest', 'onest', 'onest-cyrillic-wght-normal.woff2')}
   ${face('Onest', 'onest', 'onest-latin-wght-normal.woff2')}
-  ${face('Cormorant', 'cormorant', 'cormorant-cyrillic-wght-normal.woff2')}
-  ${face('Cormorant', 'cormorant', 'cormorant-latin-wght-normal.woff2')}
+  ${face('Brygada', 'brygada-1918', 'brygada-1918-cyrillic-wght-normal.woff2')}
+  ${face('Brygada', 'brygada-1918', 'brygada-1918-latin-wght-normal.woff2')}
   *{margin:0;padding:0;box-sizing:border-box}
   body{width:1200px;height:630px;background:#1C1815;overflow:hidden;
     font-family:Onest,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
@@ -60,7 +60,7 @@ const html = `<!doctype html><html lang="ru"><head><meta charset="utf-8">
     justify-content:center;padding:0 90px}
   .eyebrow{margin-top:44px;display:flex;align-items:center;gap:16px;font-size:24px;color:#D6CDC1}
   .eyebrow i{display:block;width:44px;height:1px;background:#C09A68}
-  .name{margin-top:18px;font-family:Cormorant,Georgia,serif;font-size:92px;font-weight:500;
+  .name{margin-top:18px;font-family:Brygada,Georgia,serif;font-size:84px;font-weight:500;
     line-height:1;color:#FBF9F5;letter-spacing:-.01em;font-variant-numeric:lining-nums}
   .lead{margin-top:30px;font-size:27px;line-height:1.4;color:#D6CDC1;max-width:920px}
   .tags{margin-top:40px;padding-top:26px;border-top:1px solid #FFFFFF26;

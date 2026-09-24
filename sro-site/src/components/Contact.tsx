@@ -40,7 +40,7 @@ export function Contact({
               </p>
             </Reveal>
             <RevealText
-              text={"Расскажите о задаче\u00A0— отвечу лично"}
+              text={"Расскажите о\u00A0задаче\u00A0— отвечу лично"}
               className="mt-4 font-display text-[2.6rem] font-medium leading-[1.02] sm:text-5xl lg:text-[3.6rem]"
             />
             <Reveal delay={150}>
