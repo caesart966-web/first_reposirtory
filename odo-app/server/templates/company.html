@@ -19,6 +19,7 @@
   <a class="btn" href="/company/{{ company.id }}/contracts/new">+ Загрузить договор</a>
   <a class="btn ghost" href="/company/{{ company.id }}/export.xlsx">Реестр в Excel</a>
   <a class="btn ghost" href="/company/{{ company.id }}/report" target="_blank">Отчёт для печати</a>
+  <form method="post" action="/reports/open" class="inline"><input type="hidden" name="path" value="{{ reports_dir }}"><button class="ghost">Папка отчётов</button></form>
 </div>
 
 {% if rows %}

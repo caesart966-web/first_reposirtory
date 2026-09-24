@@ -20,6 +20,8 @@
 <table class="kv">
 <tr><th>Движок</th><td>{{ engine_dir }}</td></tr>
 <tr><th>Данные</th><td>{{ data_dir }}<br><small>база, загруженные файлы — здесь; резервная копия = копия папки</small></td></tr>
+<tr><th>Отчёты</th><td>{{ reports_dir }}<br><small>заключения, ответы на письма и реестры в Word и Excel, по папке на компанию</small>
+  <form method="post" action="/reports/open" class="inline"><input type="hidden" name="path" value="{{ reports_dir }}"><button class="ghost small">Открыть</button></form></td></tr>
 <tr><th>Пароль</th><td>{{ 'включён (ODO_PASSWORD)' if password_on else 'выключен — задайте ODO_PASSWORD, если приложение открыто в сети' }}</td></tr>
 <tr><th>ИИ-разбор</th><td>{{ ('включён, модель ' ~ llm_model) if llm_on else 'выключен (нет ANTHROPIC_API_KEY)' }}</td></tr>
 </table>

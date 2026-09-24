@@ -74,6 +74,10 @@ def main() -> int:
     eng = engine_dir()
     os.environ["ODO_DATA_DIR"] = data
     os.environ["ODO_ENGINE_DIR"] = eng
+    if not os.environ.get("ODO_REPORTS_DIR"):
+        rep = os.path.join(os.path.dirname(data), "ОДО-отчёты") if os.path.basename(data) == "ОДО-данные" else os.path.join(data, "отчёты")
+        os.makedirs(rep, exist_ok=True)
+        os.environ["ODO_REPORTS_DIR"] = rep
     os.environ.setdefault("ODO_CASES_DIR", seed_cases(data, eng))
     tess = os.path.join(BUNDLE, "tesseract", "tesseract.exe")
     if FROZEN and os.path.exists(tess):

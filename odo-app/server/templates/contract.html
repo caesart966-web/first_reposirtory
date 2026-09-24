@@ -48,8 +48,13 @@
 </section>
 </div>
 
+{% if report_exists %}
+<div class="notice {{ 'ok' if just_saved else '' }}"><b>Заключение сохранено в папку отчётов:</b> {{ report_path }}
+  <form method="post" action="/reports/open" class="inline"><input type="hidden" name="path" value="{{ report_path }}"><button class="ghost small">Открыть папку</button></form></div>
+{% endif %}
 <div class="toolbar">
-  <a class="btn ghost" href="/contract/{{ ct.id }}/zaklyuchenie.docx">Заключение .docx</a>
+  <form method="post" action="/contract/{{ ct.id }}/report/save" class="inline"><button class="ghost">Сохранить заключение в папку</button></form>
+  <a class="btn ghost" href="/contract/{{ ct.id }}/zaklyuchenie.docx">Скачать .docx</a>
   <a class="btn ghost" href="/contract/{{ ct.id }}/zaklyuchenie.md">.md</a>
   <a class="btn ghost" href="/contract/{{ ct.id }}/zaklyuchenie.json">.json</a>
   <a class="btn ghost" href="/contract/{{ ct.id }}/card">Изменить карточку и пересчитать</a>

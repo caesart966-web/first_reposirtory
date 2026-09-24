@@ -11,6 +11,7 @@ SCRIPTS_DIR = ENGINE_DIR / "scripts"
 DATA_DIR = Path(os.environ.get("ODO_DATA_DIR", ROOT / "data")).resolve()
 UPLOAD_DIR = DATA_DIR / "uploads"
 DB_PATH = DATA_DIR / "odo.sqlite3"
+REPORTS_DIR = Path(os.environ.get("ODO_REPORTS_DIR", DATA_DIR / "отчёты")).resolve()   # готовые заключения, ответы, реестры
 
 APP_PASSWORD = os.environ.get("ODO_PASSWORD") or None       # пусто — без пароля
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY") or None
@@ -20,3 +21,4 @@ PORT = int(os.environ.get("ODO_PORT", "8765"))
 
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+REPORTS_DIR.mkdir(parents=True, exist_ok=True)

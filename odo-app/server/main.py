@@ -19,7 +19,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from . import db, engine, export, letters, llm
-from .config import APP_PASSWORD, DATA_DIR, ENGINE_DIR, LLM_MODEL, UPLOAD_DIR
+from .config import APP_PASSWORD, DATA_DIR, ENGINE_DIR, LLM_MODEL, REPORTS_DIR, UPLOAD_DIR
 from .extract import extract_text, guess_kind
 from .parse_contract import build_card
 
@@ -47,7 +47,7 @@ RU = {
     "housing": {"none": "нет", "izhs": "ИЖС", "blocked": "блокированная застройка", "mkd_low": "МКД до 3 этажей", "garden": "садовый дом", "auxiliary": "вспомогательная постройка", "unknown": "не установлено"},
     "claim_status": {"founded": "обоснован", "partially": "частично обоснован", "unfounded": "не обоснован", "needs_facts": "нужны факты", "needs_human": "решает человек"},
 }
-templates.env.globals.update(RU=RU, money=engine.money, llm_on=llm.available(), llm_model=LLM_MODEL)
+templates.env.globals.update(RU=RU, money=engine.money, llm_on=llm.available(), llm_model=LLM_MODEL, reports_dir=str(REPORTS_DIR))
 templates.env.filters["money"] = lambda x: engine.money(x) if x is not None else "—"
 templates.env.filters["dmy"] = lambda s: (f"{s[8:10]}.{s[5:7]}.{s[0:4]}" if s and len(s) >= 10 else (s or "—"))
 
@@ -214,9 +214,9 @@ async def company_delete(request: Request, cid: int, confirm: str = Form("")):
 @app.get("/company/{cid}/export.xlsx")
 async def company_xlsx(cid: int):
     comp, rows, totals, _ = company_view(cid)
-    path = DATA_DIR / f"reestr-{cid}.xlsx"
+    path = export.report_file(REPORTS_DIR, comp["name"], "реестр договоров", None, dt.date.today().isoformat(), "xlsx")
     export.register_xlsx(comp, rows, totals, path)
-    return FileResponse(path, filename=f"Реестр {comp['name']}.xlsx".replace("/", "-"), media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    return FileResponse(path, filename=path.name, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 
 @app.get("/company/{cid}/report", response_class=HTMLResponse)
@@ -429,12 +429,16 @@ async def card_save(request: Request, ct_id: int):
     a, md = engine.assess_card(card)
     db.update_contract(ct_id, number=card["contract"]["number"], card=card, assessment=a, status="assessed", decision=None, decision_note=None, decided_by=None, decided_at=None, case_id=None)
     db.log(user_of(request), "contract.assess", ct_id, f"{a['verdict']['membership_required']}/{a['verdict']['counts_for_odo']}")
-    return RedirectResponse(f"/contract/{ct_id}", status_code=303)
+    try:
+        save_conclusion(db.contract(ct_id))
+    except Exception as e:  # noqa: BLE001 — отчёт не должен ломать расчёт
+        db.log(user_of(request), "report.error", ct_id, str(e)[:300])
+    return RedirectResponse(f"/contract/{ct_id}?saved=1", status_code=303)
 
 
 # ---------------------------------------------------------------- заключение
 @app.get("/contract/{ct_id}", response_class=HTMLResponse)
-async def contract_page(request: Request, ct_id: int):
+async def contract_page(request: Request, ct_id: int, saved: str = ""):
     ct = db.contract(ct_id)
     if not ct:
         return RedirectResponse("/", status_code=303)
@@ -442,8 +446,60 @@ async def contract_page(request: Request, ct_id: int):
         return RedirectResponse(f"/contract/{ct_id}/card", status_code=303)
     comp = db.company(ct["company_id"])
     row = contract_row(ct)
+    report_path = (ct.get("draft_meta") or {}).get("report_path")
     return render(request, "contract.html", ct=ct, card=ct["card"], a=ct["assessment"], company=comp, row=row, files=db.files_of(ct_id),
-                  letters=db.letters_of(ct_id), reasons=short_reasons(ct["assessment"]), eis_url=eis_link(ct["card"]))
+                  letters=db.letters_of(ct_id), reasons=short_reasons(ct["assessment"]), eis_url=eis_link(ct["card"]),
+                  report_path=report_path, report_exists=bool(report_path and Path(report_path).exists()), just_saved=bool(saved))
+
+
+def save_conclusion(ct: dict) -> Path:
+    """Заключение по договору — в папку отчётов, Word. Перезаписывается при каждом расчёте и решении."""
+    comp = db.company(ct["company_id"])
+    _, md = engine.assess_card(ct["card"], find_cases=True)
+    if ct.get("decision"):
+        md = md.replace("## Разбор по шагам", f"## Решение проверяющего\n\n{ct['decision']}" + (f"\n\n{ct['decision_note']}" if ct.get("decision_note") else "")
+                        + (f"\n\n_{ct.get('decided_by') or ''}, {ct.get('decided_at') or ''}_" if ct.get("decided_by") else "") + "\n\n## Разбор по шагам", 1)
+    path = export.report_file(REPORTS_DIR, comp["name"], "заключение", ct["card"]["contract"].get("number"), dt.date.today().isoformat(), "docx")
+    export.md_to_docx(md, path)
+    db.update_contract(ct["id"], draft_meta={**(ct.get("draft_meta") or {}), "report_path": str(path)})
+    return path
+
+
+def open_folder(path: Path) -> bool:
+    """Открыть папку в проводнике — сервер работает на том же компьютере, что и окно программы."""
+    import subprocess
+    import sys as _sys
+    try:
+        target = str(path if path.is_dir() else path.parent)
+        if _sys.platform.startswith("win"):
+            import os as _os
+            _os.startfile(target)  # type: ignore[attr-defined]
+        elif _sys.platform == "darwin":
+            subprocess.Popen(["open", target])
+        else:
+            subprocess.Popen(["xdg-open", target])
+        return True
+    except Exception:
+        return False
+
+
+@app.post("/contract/{ct_id}/report/save")
+async def report_save(request: Request, ct_id: int):
+    ct = db.contract(ct_id)
+    if not ct or not ct.get("assessment"):
+        return RedirectResponse(f"/contract/{ct_id}", status_code=303)
+    save_conclusion(ct)
+    return RedirectResponse(f"/contract/{ct_id}?saved=1", status_code=303)
+
+
+@app.post("/reports/open")
+async def reports_open(request: Request, path: str = Form("")):
+    p = Path(path) if path else REPORTS_DIR
+    if not str(p.resolve()).startswith(str(REPORTS_DIR)):
+        p = REPORTS_DIR
+    open_folder(p)
+    back = request.headers.get("referer") or "/"
+    return RedirectResponse(back, status_code=303)
 
 
 def eis_link(card: dict) -> str | None:
@@ -478,7 +534,11 @@ async def contract_decision(request: Request, ct_id: int, verdict: str = Form(..
     case_id = engine.add_precedent_from_assessment(a, decision, note.strip() or None, by)
     db.update_contract(ct_id, status=status, decision=decision, decision_note=note.strip() or None, decided_by=by, decided_at=db.now(), case_id=case_id)
     db.log(by, f"contract.{status}", ct_id, case_id)
-    return RedirectResponse(f"/contract/{ct_id}", status_code=303)
+    try:
+        save_conclusion(db.contract(ct_id))
+    except Exception as e:  # noqa: BLE001
+        db.log(by, "report.error", ct_id, str(e)[:300])
+    return RedirectResponse(f"/contract/{ct_id}?saved=1", status_code=303)
 
 
 @app.post("/contract/{ct_id}/notify")
@@ -504,9 +564,8 @@ async def contract_download(ct_id: int, fmt: str):
     _, md = engine.assess_card(ct["card"])
     name = f"Заключение по договору {ct['number'] or ct_id}".replace("/", "-")
     if fmt == "docx":
-        path = DATA_DIR / f"z-{ct_id}.docx"
-        export.md_to_docx(md, path)
-        return FileResponse(path, filename=name + ".docx", media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+        path = save_conclusion(ct)
+        return FileResponse(path, filename=path.name, media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
     if fmt == "json":
         return JSONResponse(ct["assessment"])
     return Response(md, media_type="text/markdown; charset=utf-8", headers={"Content-Disposition": "attachment; filename*=UTF-8''" + quote(name + ".md")})
@@ -562,6 +621,11 @@ async def letter_analyze(request: Request, ct_id: int):
            "claims": claims}
     an, md = engine.analyze_letter(obj, ct["card"], ct["assessment"])
     lid = db.add_letter(ct_id, text, obj, an, md)
+    try:
+        comp = db.company(ct["company_id"])
+        export.md_to_docx(md, export.report_file(REPORTS_DIR, comp["name"], f"ответ на письмо от {obj['letter'].get('date') or dt.date.today().isoformat()}", ct.get("number"), dt.date.today().isoformat(), "docx"))
+    except Exception as e:  # noqa: BLE001
+        db.log(user_of(request), "report.error", ct_id, str(e)[:300])
     db.log(user_of(request), "letter.analyze", ct_id, f"{len(claims)} доводов")
     return RedirectResponse(f"/letter/{lid}", status_code=303)
 
@@ -588,11 +652,13 @@ async def letter_decision(request: Request, lid: int, decision: str = Form(...),
 @app.get("/letter/{lid}/otvet.{fmt}")
 async def letter_download(lid: int, fmt: str):
     L = db.letter(lid)
-    name = f"Ответ на письмо {L['id']}"
+    ct = db.contract(L["contract_id"])
+    comp = db.company(ct["company_id"])
     if fmt == "docx":
-        path = DATA_DIR / f"otvet-{lid}.docx"
+        ldate = (L.get("objection") or {}).get("letter", {}).get("date") or L["created_at"][:10]
+        path = export.report_file(REPORTS_DIR, comp["name"], f"ответ на письмо от {ldate}", ct.get("number"), dt.date.today().isoformat(), "docx")
         export.md_to_docx(L["reply_md"], path)
-        return FileResponse(path, filename=name + ".docx", media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+        return FileResponse(path, filename=path.name, media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
     return Response(L["reply_md"], media_type="text/markdown; charset=utf-8")
 
 

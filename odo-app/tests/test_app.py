@@ -9,6 +9,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 TMP = tempfile.mkdtemp(prefix="odo-test-")
 os.environ["ODO_DATA_DIR"] = TMP
 os.environ["ODO_CASES_DIR"] = os.path.join(TMP, "cases")
+os.environ["ODO_REPORTS_DIR"] = os.path.join(TMP, "reports")
 sys.path.insert(0, str(ROOT))
 
 from fastapi.testclient import TestClient  # noqa: E402
@@ -42,9 +43,13 @@ def test_flow():
     # сохранить карточку как есть (форма → расчёт)
     form = _form_from_card(ct)
     r = client.post(f"/contract/{ct}/card", data=form)
-    assert r.status_code == 303 and r.headers["location"] == f"/contract/{ct}"
+    assert r.status_code == 303 and r.headers["location"].startswith(f"/contract/{ct}")
     page = client.get(f"/contract/{ct}").text.replace("\u00a0", " ")
     assert "Входит в ОДО" in page and "12 200 000,00" in page
+
+    # заключение само легло в папку отчётов с понятным именем
+    reports = list(pathlib.Path(TMP, "reports").rglob("*.docx"))
+    assert reports and "ООО ПРИМЕР-СТРОЙ — договор 0100000000000000001-7 — заключение — " in reports[0].name, [p.name for p in reports]
 
     # решение
     r = client.post(f"/contract/{ct}/decision", data={"verdict": "agree", "by": "Тест", "note": "тестовый прогон"})

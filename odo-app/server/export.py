@@ -5,6 +5,25 @@ import re
 from pathlib import Path
 
 
+def safe_name(s: str, limit: int = 80) -> str:
+    """Имя файла для Windows: без запрещённых знаков, кавычек-ёлочек и лишних пробелов."""
+    s = re.sub(r'[\\/:*?"<>|«»„“”]', "", s or "")
+    s = re.sub(r"\s+", " ", s).strip(" .")
+    return s[:limit] or "без названия"
+
+
+def report_file(reports_dir: Path, company_name: str, kind: str, number: str | None, date_iso: str, ext: str) -> Path:
+    """«ОДО-отчёты/ООО КИТ/ООО КИТ — договор 0145… — заключение — 2026-09-24.docx». Папка компании создаётся."""
+    comp = safe_name(company_name, 60)
+    parts = [comp]
+    if number:
+        parts.append(f"договор {safe_name(number, 40)}")
+    parts += [kind, date_iso]
+    folder = reports_dir / comp
+    folder.mkdir(parents=True, exist_ok=True)
+    return folder / (" — ".join(parts) + "." + ext)
+
+
 def md_to_docx(md: str, path: Path, title: str | None = None):
     from docx import Document
     from docx.shared import Pt
