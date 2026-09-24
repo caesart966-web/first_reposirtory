@@ -246,7 +246,7 @@ async def contract_upload(request: Request, cid: int, files: list[UploadFile] = 
         with open(dest, "wb") as f:
             shutil.copyfileobj(up.file, f)
         text, meta = extract_text(dest)
-        db.add_file(ct_id, up.filename, str(dest), meta["kind_hint"], len(text), meta["scanned"])
+        db.add_file(ct_id, up.filename, str(dest.relative_to(DATA_DIR)), meta["kind_hint"], len(text), meta["scanned"])
         docs.append({"filename": up.filename, "kind": meta["kind_hint"], "text": text, "scanned": meta["scanned"]})
     member = {"name": comp["name"], "inn": comp.get("inn"), "sro_kinds": ["build"]}
     card, meta = build_card(member, docs)
@@ -261,6 +261,19 @@ async def contract_upload(request: Request, cid: int, files: list[UploadFile] = 
     db.update_contract(ct_id, number=card["contract"].get("number") or None, card=card, draft_meta=meta)
     db.log(user_of(request), "contract.upload", ct_id, ", ".join(d["filename"] for d in docs))
     return RedirectResponse(f"/contract/{ct_id}/card", status_code=303)
+
+
+def file_path(f: dict) -> Path:
+    """Путь к загруженному файлу. В базе он хранится относительно папки данных, чтобы папку можно было
+    переносить между компьютерами; старые абсолютные пути и файлы, переехавшие вместе с папкой, тоже находятся."""
+    p = Path(f["stored_path"])
+    if not p.is_absolute():
+        p = DATA_DIR / p
+    if not p.exists():
+        alt = UPLOAD_DIR / str(f["contract_id"]) / Path(f["stored_path"]).name
+        if alt.exists():
+            p = alt
+    return p
 
 
 def _remove_files(ct_id: int):
@@ -443,7 +456,10 @@ async def contract_file(ct_id: int, fid: int):
     f = db.file(fid)
     if not f or f["contract_id"] != ct_id:
         return Response(status_code=404)
-    return FileResponse(f["stored_path"], filename=f["filename"])
+    p = file_path(f)
+    if not p.exists():
+        return Response("Файл не найден в папке данных", status_code=404)
+    return FileResponse(str(p), filename=f["filename"])
 
 
 # ---------------------------------------------------------------- письма-возражения
