@@ -109,7 +109,7 @@
 {% endif %}
 
 <h2>Нормы</h2>
-<ul class="laws">{% for k, n in a.law_index.items() %}<li><b>{{ n.cite }}</b> — {{ n.gist }}</li>{% endfor %}</ul>
+<ul class="laws">{% for k, n in a.law_index.items() %}<li><b>{{ n.cite }}</b> — {{ n.gist }}{% if n.source_url %} <a href="{{ n.source_url }}" target="_blank" rel="noopener">источник ↗</a>{% endif %}</li>{% endfor %}</ul>
 <p class="muted">{{ a.verification_note }}</p>
 
 <form method="post" action="/contract/{{ ct.id }}/delete" class="inline danger" onsubmit="return confirm('Удалить этот договор и его файлы?')"><input type="hidden" name="confirm" value="да"><button class="ghost">Удалить договор</button></form>

@@ -5,6 +5,6 @@
 <form class="inline"><input name="q" value="{{ q }}" placeholder="поиск: 55.8, порог, НОСТРОЙ…"> <button class="ghost">Найти</button></form>
 <table class="data">
 <thead><tr><th>Ссылка</th><th>Суть</th><th>Сверка</th></tr></thead>
-<tbody>{% for k, n in items %}<tr><td><b>{{ n.cite }}</b><br><small class="muted">{{ k }}</small></td><td>{{ n.gist }}</td><td><small>{{ n.verified or 'не сверялась' }}</small></td></tr>{% endfor %}</tbody>
+<tbody>{% for k, n in items %}<tr><td><b>{{ n.cite }}</b><br><small class="muted">{{ k }}</small></td><td>{{ n.gist }}{% if n.source_url %}<br><a href="{{ n.source_url }}" target="_blank" rel="noopener">открыть источник ↗</a>{% endif %}</td><td><small>{{ n.verified or 'не сверялась' }}</small></td></tr>{% endfor %}</tbody>
 </table>
 {% endblock %}

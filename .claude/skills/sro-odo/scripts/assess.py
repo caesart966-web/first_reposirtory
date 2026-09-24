@@ -604,7 +604,7 @@ def markdown(a: dict) -> str:
         out.append("")
     out += ["## Нормы, на которые опирается заключение", ""]
     for i, n in law.items():
-        out.append(f"- **{n['cite']}** — {n['gist']}")
+        out.append(f"- **{n['cite']}** — {n['gist']}" + (f" Источник: {n['source_url']}" if n.get("source_url") else ""))
     out += ["", f"> {a['verification_note']}"]
     return "\n".join(out) + "\n"
 
