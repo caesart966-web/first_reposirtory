@@ -2095,7 +2095,7 @@ def shrink_dist() -> None:
               f"(минус {round((1 - after / before) * 100)}%)")
 
 
-def copy_server_config() -> None:
+def copy_server_config(site: Site) -> None:
     """Кладёт настройки веб-сервера в корень сайта (server/.htaccess).
 
     Это кеширование, сжатие и заголовки безопасности для обычного хостинга.
@@ -2103,12 +2103,14 @@ def copy_server_config() -> None:
     src = ROOT / "server" / ".htaccess"
     if src.exists():
         shutil.copy2(src, DIST_DIR / ".htaccess")
-    # Обработчик заявок для хостинга с PHP. Токена в нём нет: он читает
-    # zayavki-config.php, который лежит на хостинге выше публичной папки.
+    # Обработчик заявок для хостинга с PHP: отправляет заявку письмом.
     handler = ROOT / "server" / "api" / "zayavka.php"
     if handler.exists():
         (DIST_DIR / "api").mkdir(exist_ok=True)
-        shutil.copy2(handler, DIST_DIR / "api" / "zayavka.php")
+        # Адрес для заявок — та же почта, что на сайте: одна точка правды.
+        email = site.contacts.get("email", "")
+        code = handler.read_text(encoding="utf-8").replace("{{почта_заявок}}", email)
+        (DIST_DIR / "api" / "zayavka.php").write_text(code, encoding="utf-8")
 
 
 def copy_assets() -> None:
@@ -2174,7 +2176,7 @@ def build(regen_media: bool = False, base_path: str = None,
     write_llms(site)
     write_photo_hint(site)
     write_manifest(site)
-    copy_server_config()
+    copy_server_config(site)
 
     # Проверка, что заголовки нигде не повторяются
     check_unique(r)
