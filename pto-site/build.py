@@ -2103,6 +2103,12 @@ def copy_server_config() -> None:
     src = ROOT / "server" / ".htaccess"
     if src.exists():
         shutil.copy2(src, DIST_DIR / ".htaccess")
+    # Обработчик заявок для хостинга с PHP. Токена в нём нет: он читает
+    # zayavki-config.php, который лежит на хостинге выше публичной папки.
+    handler = ROOT / "server" / "api" / "zayavka.php"
+    if handler.exists():
+        (DIST_DIR / "api").mkdir(exist_ok=True)
+        shutil.copy2(handler, DIST_DIR / "api" / "zayavka.php")
 
 
 def copy_assets() -> None:
