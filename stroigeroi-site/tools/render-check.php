@@ -409,6 +409,32 @@ echo "Предупреждение «{$DEV}»: " . implode(', ', $states) . "\n"
  * звонок») больше не берутся первой страницей из списка подвала: её адрес
  * может стоять только в самом списке «Покупателям».
  */
+/*
+ * Шаблон «не найдено» движок берёт и для пустой корзины: checkout/cart
+ * рисует им страницу с текстом «Ваша корзина пуста!». На сайте вместо
+ * «Корзина пуста» стояло «404 Такой страницы нет». Шаблон собирается
+ * с тем, что передаёт движок в каждом случае.
+ */
+$nfBefore = $bad;
+$nf = $twig->load('error/not_found.twig');
+$nfCases = [
+    'пустая корзина' => [['heading_title' => 'Корзина покупок', 'text_error' => 'Ваша корзина пуста!'], 'Корзина пуста', '404'],
+    'нет страницы'   => [['heading_title' => 'Запрашиваемая страница не найдена!', 'text_error' => 'Запрашиваемая страница не найдена!'], '404', 'Корзина пуста'],
+    'нет товара'     => [['heading_title' => 'Товар не найден!', 'text_error' => 'Товар не найден!'], '404', 'Корзина пуста'],
+    'нет раздела'    => [['heading_title' => 'Категория не найдена!', 'text_error' => 'Категория не найдена!'], '404', 'Корзина пуста'],
+    'без текста'     => [[], '404', 'Корзина пуста'],
+    'другое'         => [['heading_title' => 'Нет доступа', 'text_error' => 'Войдите, чтобы увидеть заказ.'], 'Войдите, чтобы увидеть заказ.', '404'],
+];
+foreach ($nfCases as $label => [$vars, $want, $never]) {
+    $html = $nf->render($vars + ['continue' => 'index.php?route=common/home']);
+    if (strpos($html, $want) === false || strpos($html, $never) !== false) {
+        echo "not_found.twig: {$label} - ждали «{$want}» и без «{$never}»\n";
+        $bad++;
+    }
+}
+echo 'Страница «не найдено»: ' . count($nfCases) . ' случаев'
+    . ($bad === $nfBefore ? ", пустая корзина - не 404\n" : ", есть ошибки, см. выше\n");
+
 $badBefore = $bad;
 $ld = [];
 foreach ($m[1] as $json) {
@@ -422,6 +448,7 @@ $foot = $twig->load('common/footer.twig')->render(['informations' => [
 ]]);
 $contactPage = $twig->load('information/contact.twig')->render([]);
 $reqPage = file_get_contents(__DIR__ . '/rekvizity/rekvizity.html');
+$b2bPage = file_get_contents(__DIR__ . '/yurlicam/yurlicam.html');
 $legal = preg_match('~<p class="footer-brand__legal">(.*?)</p>~s', $foot, $lm)
     ? trim(preg_replace('/\s+/u', ' ', strip_tags(str_replace('</span>', ' ', preg_replace('~<a\b.*?</a>~s', '', $lm[1]))))) : '';
 $inn = preg_match('~ИНН (\d{10,12})\b~u', $legal, $x) ? $x[1] : '';
@@ -439,7 +466,8 @@ if ($legal === '' || $inn === '' || $ogrn === '') {
         echo "header.twig: продавец в разметке («{$name}») не тот, что в подвале («{$legal}»)\n";
         $bad++;
     }
-    foreach (['страница «Реквизиты»' => $reqPage, 'contact.twig' => $contactPage] as $where => $html) {
+    foreach (['страница «Реквизиты»' => $reqPage, 'страница «Юридическим лицам»' => $b2bPage,
+              'contact.twig' => $contactPage] as $where => $html) {
         foreach (['ИНН' => $inn, 'ОГРНИП' => $ogrn, 'имя' => preg_replace('/^ИП /u', '', $name)] as $what => $val) {
             if ($val === '' || strpos($html, $val) === false) {
                 echo "$where: нет того же, что в подвале: $what «{$val}»\n";
@@ -447,10 +475,12 @@ if ($legal === '' || $inn === '' || $ogrn === '') {
             }
         }
     }
-    foreach ([$inn, $ogrn] as $val) {
-        if (strpos($reqPage, 'data-copy="' . $val . '"') === false) {
-            echo "страница «Реквизиты»: кнопка «Копировать» у номера $val копирует что-то другое\n";
-            $bad++;
+    foreach (['«Реквизиты»' => $reqPage, '«Юридическим лицам»' => $b2bPage] as $where => $html) {
+        foreach ([$inn, $ogrn] as $val) {
+            if (strpos($html, 'data-copy="' . $val . '"') === false) {
+                echo "страница {$where}: кнопка «Копировать» у номера $val копирует что-то другое\n";
+                $bad++;
+            }
         }
     }
 }
@@ -460,6 +490,6 @@ if (substr_count($foot, $firstPage) !== 1) {
     $bad++;
 }
 echo "Продавец: «{$legal}» - " . ($bad === $badBefore
-    ? "подвал, контакты, реквизиты и разметка сходятся\n" : "есть расхождения, см. выше\n");
+    ? "подвал, контакты, «Реквизиты», «Юридическим лицам» и разметка сходятся\n" : "есть расхождения, см. выше\n");
 
 exit($bad ? 1 : 0);

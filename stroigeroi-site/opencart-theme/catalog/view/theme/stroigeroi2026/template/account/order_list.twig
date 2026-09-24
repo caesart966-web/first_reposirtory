@@ -1,0 +1,77 @@
+{#
+  История заказов.
+
+  Стандартная тема рисовала таблицу в семь колонок. На телефоне она уезжала
+  вбок: сумму и кнопку «Просмотр» было видно, только если догадаться листать
+  таблицу в сторону, а ничто на это не намекало. Здесь та же таблица,
+  но уже 600 px каждая строка - карточка: подписи берутся из data-label.
+  Колонка с именем покупателя убрана - это его же имя в каждой строке.
+  Меню кабинета справа - как на остальных страницах кабинета (.row
+  и #content, правила в opencart.css).
+#}
+{{ header }}
+  <div class="container">
+
+    {% if breadcrumbs %}
+    <nav class="breadcrumbs" aria-label="Хлебные крошки">
+      <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+        {% for breadcrumb in breadcrumbs %}
+        {% if loop.last %}<li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem" aria-current="page"><span itemprop="name">{{ breadcrumb.text }}</span><meta itemprop="position" content="{{ loop.index }}"></li>{% else %}<li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a itemprop="item" href="{{ breadcrumb.href }}"><span itemprop="name">{{ breadcrumb.text }}</span></a><meta itemprop="position" content="{{ loop.index }}"></li>{% endif %}
+        {% endfor %}
+      </ol>
+    </nav>
+    {% endif %}
+
+    <div class="row">
+      <div id="content">
+        <h1>История заказов</h1>
+        {{ content_top }}
+
+        {% if orders %}
+        <table class="orders">
+          <thead>
+            <tr>
+              <th scope="col">Заказ</th>
+              <th scope="col">Дата</th>
+              <th scope="col">Статус</th>
+              <th scope="col" class="orders__num">Товаров</th>
+              <th scope="col" class="orders__num">Сумма</th>
+              <th scope="col"><span class="visually-hidden">Подробности</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for order in orders %}
+            <tr>
+              <td data-label="Заказ" class="orders__id">№&nbsp;{{ order.order_id }}</td>
+              <td data-label="Дата">{{ order.date_added }}</td>
+              <td data-label="Статус">{{ order.status }}</td>
+              <td data-label="Товаров" class="orders__num">{{ order.products }}</td>
+              <td data-label="Сумма" class="orders__num">{{ order.total }}</td>
+              <td class="orders__action"><a class="btn btn--outline btn--sm" href="{{ order.view }}">Подробнее<span class="visually-hidden"> о заказе №&nbsp;{{ order.order_id }}</span></a></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {{ pagination }}
+        {% if results %}<p class="pagination-results">{{ results }}</p>{% endif %}
+        {% else %}
+        <div class="empty empty-state">
+          <span class="empty-state__icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><polyline points="3.29 7 12 12 20.71 7"/><path d="m7.5 4.27 9 5.15"/></svg></span>
+          <h2>Заказов пока нет</h2>
+          <p>Здесь появятся заказы, оформленные на сайте.</p>
+          <p class="row-actions">
+            <a class="btn btn--action" href="index.php?route=information/sitemap">В каталог</a>
+          </p>
+        </div>
+        {% endif %}
+
+        <p class="row-actions">
+          <a class="btn btn--outline" href="{{ continue }}">В личный кабинет</a>
+        </p>
+
+        {{ content_bottom }}
+      </div>
+      {{ column_right }}
+    </div>
+  </div>
+{{ footer }}

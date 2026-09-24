@@ -136,10 +136,14 @@ PHONES = {
     '+79098904075': 'юрлицам, Петропавловск-Камчатский',
     '+79638304111': 'юрлицам, Елизово',
     '+79638300177': 'отдел рекламы, общий для всех магазинов',
+    '+74152232929': 'бухгалтерия; страницы «Реквизиты» и «Юридическим лицам»',
 }
 tels = {}
 theme_root = pathlib.Path(sys.argv[1])
-for f in sorted(theme_root.rglob('*.twig')) + sorted(theme_root.rglob('app.js')):
+# Тексты страниц, которые живут в базе и пишутся туда правками
+# («Реквизиты», «Юридическим лицам», «О компании»), - тоже сайт.
+pages_in_db = sorted(pathlib.Path(__file__).resolve().parent.glob('*/*.html'))
+for f in sorted(theme_root.rglob('*.twig')) + sorted(theme_root.rglob('app.js')) + pages_in_db:
     for num in re.findall(r'tel:(\+?\d+)', f.read_text(encoding='utf-8')):
         tels.setdefault(num, set()).add(f.name)
 for num, where in sorted(tels.items()):

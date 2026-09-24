@@ -97,7 +97,7 @@ foreach ($numbers as $n => $what) {
 }
 foreach ($strings as $s) {
     if (mb_strpos($flat, $s) === false) {
-        $miss[] = "«$s»";
+        $miss[] = "«{$s}»";
     }
 }
 if ($miss) {

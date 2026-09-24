@@ -39,10 +39,11 @@ TPL = ROOT / 'opencart-theme/catalog/view/theme/stroigeroi2026/template'
 OURS = ROOT / 'opencart-theme/catalog/controller'
 VARS = ROOT / 'tools/oc-vars.json'
 
-# Шаблон рисуется контроллером того же имени - кроме одного случая:
+# Шаблон рисуется контроллером того же имени - кроме двух случаев:
 # common/success.twig показывает checkout/success (своего контроллера
-# у этого шаблона нет, его выводят чужие).
-ROUTE_OF = {'common/success': 'checkout/success'}
+# у этого шаблона нет, его выводят чужие), а account/order_list.twig -
+# контроллер account/order (у него два шаблона: список и заказ).
+ROUTE_OF = {'common/success': 'checkout/success', 'account/order_list': 'account/order'}
 
 # Имена, которые Twig понимает сам: ключевые слова, литералы, счётчик цикла.
 KEYWORDS = set('''
@@ -68,6 +69,10 @@ SILENT = {
     'column_right': 'правой колонки в этой вёрстке нет вовсе',
 }
 SILENT_AT = {
+    'account/order': {
+        'success': 'сообщение после «Повторить заказ» - его показывает страница заказа '
+                   '(order_info, стандартная тема), а не список',
+    },
     'information/contact': {
         'captcha': 'форма уходит в наш information/callback, не в стоковый',
         'error_name': 'то же: поля проверяет наш обработчик',
@@ -78,6 +83,17 @@ SILENT_AT = {
         'captcha': 'отзывов на сайте нет - показывать нечего',
         'pagination': 'листалка отзывов; её рисует product/review.twig',
         'results': 'счётчик отзывов; там же',
+    },
+}
+
+# Строки языкового файла движок кладёт в данные шаблона сам (событие
+# event/language в OpenCart 3), в $data контроллера их нет. Перечислены
+# поимённо и с причиной, а не все text_* подряд: иначе проверка перестала
+# бы ловить опечатки в именах.
+LANGUAGE = {
+    'error/not_found': {
+        'heading_title': 'заголовок из языкового файла; у пустой корзины - из checkout/cart',
+        'text_error': 'текст из языкового файла; пустой корзине checkout/cart кладёт text_empty',
     },
 }
 
@@ -194,7 +210,7 @@ def main():
         if route not in known:
             noroute.append(name)
             continue
-        gives = set(known[route])
+        gives = set(known[route]) | set(LANGUAGE.get(route, {}))
         takes = used(tpl.read_text(encoding='utf-8'))
         for var, line in sorted(takes.items()):
             if var not in gives:

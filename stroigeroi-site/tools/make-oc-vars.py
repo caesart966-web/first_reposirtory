@@ -33,7 +33,7 @@ ROUTES = [
     'product/category', 'product/product', 'product/search',
     'product/special', 'product/compare',
     'information/information', 'information/contact', 'information/sitemap',
-    'account/login', 'account/wishlist',
+    'account/login', 'account/wishlist', 'account/account', 'account/order',
     'error/not_found',
     'extension/module/banner', 'extension/module/carousel',
     'extension/module/slideshow', 'extension/module/featured',

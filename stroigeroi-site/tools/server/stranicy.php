@@ -20,6 +20,10 @@
                 другие номера - ссылки tel: не из списка действующих.
   -- rekvizity  оформлена ли страница, кнопки «Копировать», все ли номера
                 на месте, что перенесено с прежней страницы.
+  -- yurlicam   «Юридическим лицам» (правка 27): карточки, цифры, кнопки
+                «Копировать», и не осталось ли «N-контрагентов»,
+                «крупнейших» и «филиалов».
+  -- korzina    пустая корзина: «Корзина пуста», а не «404» (правка 27).
   -- filtr      есть ли на странице раздела фильтр OCFilter.
 
   Первая версия (правка 23) печатала ещё разметку фильтра - по ней
@@ -52,7 +56,7 @@ $page = function ($name) use ($dir) {
 };
 
 echo "-- check\n";
-foreach (array('glavnaya', 'razdel', 'tovar', 'kontakty', 'rekv') as $name) {
+foreach (array('glavnaya', 'razdel', 'tovar', 'kontakty', 'rekv', 'yurlicam') as $name) {
     $h = $page($name);
     if ($h === '') {
         echo "$name: страница не открылась\n";
@@ -95,6 +99,34 @@ if ($h === '') {
          ', «Дополнительно» ', strpos($h, '>Дополнительно<') !== false ? 'есть' : 'нет',
          ', картинок с прежней страницы ', preg_match('~<div class="req-extra">(.*?)</div>~s', $h, $em) ? substr_count($em[1], '<img') : 0,
          "\n";
+}
+
+echo "-- yurlicam\n";
+$h = $page('yurlicam');
+if ($h === '') {
+    echo "страница не открылась\n";
+} elseif (strpos($h, 'class="b2b-features"') === false) {
+    echo "НЕ оформлена: на странице прежний текст\n";
+} else {
+    $left = array();
+    foreach (array('N-контрагент', 'крупнейш', 'филиал') as $w) {
+        if (mb_strpos($h, $w) !== false) {
+            $left[] = $w;
+        }
+    }
+    echo 'оформлена: карточек ', substr_count($h, 'class="b2b-feature"'),
+         ', цифр ', substr_count($h, 'class="tile"'),
+         ', кнопок «Копировать» ', substr_count($h, 'data-copy="'),
+         $left ? ', ОСТАЛОСЬ: ' . implode(', ', $left) : ', старых слов нет', "\n";
+}
+
+echo "-- korzina\n";
+$h = $page('korzina');
+if ($h === '') {
+    echo "страница не открылась\n";
+} else {
+    echo mb_strpos($h, 'Корзина пуста') !== false ? '«Корзина пуста»' : 'нет «Корзина пуста»',
+         strpos($h, 'error-page__code') !== false ? ', НО ЕСТЬ «404»' : ', без «404»', "\n";
 }
 
 echo "-- filtr\n";

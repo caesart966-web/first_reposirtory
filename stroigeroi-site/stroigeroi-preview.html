@@ -9655,6 +9655,40 @@ p a:not(.btn):hover,
   });
 
   /* ======================================================================
+     Календарь движка (bootstrap-datetimepicker 3.1.3 из OpenCart): поле
+     «Дата заказа» на странице возврата, опции товара с датой. Шаблоны
+     движка запускают его с языком из языкового пакета, и на сайте он
+     вышел по-английски - September, Mo Tu We. Названия месяцев и дней
+     виджет рисует один раз, при запуске, поэтому язык не поправить
+     ни стилями, ни настройкой потом: календарь запускается заново,
+     с теми же настройками, только по-русски. Кнопке со значком -
+     подпись для экранного диктора: в ней ничего, кроме значка.
+     Вид окна - opencart.css. В макете jQuery нет - здесь ничего
+     не делается.
+     ====================================================================== */
+  (function () {
+    var jq = window.jQuery;
+    var mom = window.moment;
+    if (!jq || !jq.fn.datetimepicker || !mom || !mom.locales || mom.locales().indexOf('ru') < 0) return;
+    jq(function () {
+      jq('.date, .datetime, .time').each(function () {
+        var el = jq(this);
+        var dp = el.data('DateTimePicker');
+        if (!dp) return;
+        el.find('.btn').each(function () {
+          if (!this.getAttribute('aria-label') && !this.textContent.trim()) {
+            this.setAttribute('aria-label', 'Открыть календарь');
+          }
+        });
+        if (dp.options.language === 'ru') return;
+        var opts = jq.extend({}, dp.options, { language: 'ru' });
+        dp.destroy();
+        el.datetimepicker(opts);
+      });
+    });
+  })();
+
+  /* ======================================================================
      Заглушки нерабочих действий макета
      ====================================================================== */
   document.addEventListener('click', function (e) {

@@ -1,0 +1,58 @@
+{#
+  Главная личного кабинета.
+
+  Стандартная тема рисовала здесь четыре заголовка и под ними столбики
+  ссылок, половина из которых магазину не нужна: партнёрская программа,
+  регулярные платежи, файлы для скачивания, транзакции. Здесь - карточки
+  того, чем покупатель строительного магазина пользуется: заказы, избранное,
+  возвраты, свои данные, пароль, адреса, рассылка; бонусные баллы - только
+  если они включены в настройках (reward движок отдаёт пустым).
+  Остальные разделы никуда не делись: они в меню кабинета на внутренних
+  страницах (модуль account) и открываются по своим адресам.
+
+  Меню кабинета справа здесь не выводится: на этой странице оно повторяло бы
+  карточки. Выход - маршрутом account/logout: у контроллера этой страницы
+  ссылки на выход нет.
+#}
+{{ header }}
+  <div class="container">
+
+    {% if breadcrumbs %}
+    <nav class="breadcrumbs" aria-label="Хлебные крошки">
+      <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+        {% for breadcrumb in breadcrumbs %}
+        {% if loop.last %}<li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem" aria-current="page"><span itemprop="name">{{ breadcrumb.text }}</span><meta itemprop="position" content="{{ loop.index }}"></li>{% else %}<li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"><a itemprop="item" href="{{ breadcrumb.href }}"><span itemprop="name">{{ breadcrumb.text }}</span></a><meta itemprop="position" content="{{ loop.index }}"></li>{% endif %}
+        {% endfor %}
+      </ol>
+    </nav>
+    {% endif %}
+
+    <div class="page-head">
+      <h1>Личный кабинет</h1>
+      <p>Ваши заказы, избранное и данные для входа. Вопрос по заказу — звоните <a class="tel-inline" href="tel:+79638319999">8-963-831-99-99</a>.</p>
+    </div>
+
+    {% if success %}<div class="alert alert-success">{{ success }}</div>{% endif %}
+
+    {{ content_top }}
+
+    <nav class="account-grid" aria-label="Разделы кабинета">
+      <a class="account-card" href="{{ order }}"><span class="account-card__icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><polyline points="3.29 7 12 12 20.71 7"/><path d="m7.5 4.27 9 5.15"/></svg></span><span class="account-card__body"><span class="account-card__title">История заказов</span><span class="account-card__text">Что заказывали, статус и сумма</span></span></a>
+      <a class="account-card" href="{{ wishlist }}"><span class="account-card__icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/></svg></span><span class="account-card__body"><span class="account-card__title">Избранное</span><span class="account-card__text">Отложенные товары</span></span></a>
+      <a class="account-card" href="{{ return }}"><span class="account-card__icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11"/></svg></span><span class="account-card__body"><span class="account-card__title">Возвраты</span><span class="account-card__text">Заявки на возврат товара</span></span></a>
+      <a class="account-card" href="{{ edit }}"><span class="account-card__icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg></span><span class="account-card__body"><span class="account-card__title">Мои данные</span><span class="account-card__text">Имя, почта и телефон</span></span></a>
+      <a class="account-card" href="{{ password }}"><span class="account-card__icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/></svg></span><span class="account-card__body"><span class="account-card__title">Пароль</span><span class="account-card__text">Сменить пароль для входа</span></span></a>
+      <a class="account-card" href="{{ address }}"><span class="account-card__icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg></span><span class="account-card__body"><span class="account-card__title">Адреса</span><span class="account-card__text">Адреса доставки</span></span></a>
+      {% if reward %}
+      <a class="account-card" href="{{ reward }}"><span class="account-card__icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 7v14"/><path d="M20 11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"/><path d="M7.5 7a1 1 0 0 1 0-5A4.8 8 0 0 1 12 7a4.8 8 0 0 1 4.5-5 1 1 0 0 1 0 5"/><rect x="3" y="7" width="18" height="4" rx="1"/></svg></span><span class="account-card__body"><span class="account-card__title">Бонусные баллы</span><span class="account-card__text">Сколько накоплено</span></span></a>
+      {% endif %}
+      <a class="account-card" href="{{ newsletter }}"><span class="account-card__icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg></span><span class="account-card__body"><span class="account-card__title">Рассылка</span><span class="account-card__text">Подписка на новости магазина</span></span></a>
+    </nav>
+
+    <p class="row-actions account-actions">
+      <a class="btn btn--outline" href="index.php?route=account/logout"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/></svg> Выйти из кабинета</a>
+    </p>
+
+    {{ content_bottom }}
+  </div>
+{{ footer }}

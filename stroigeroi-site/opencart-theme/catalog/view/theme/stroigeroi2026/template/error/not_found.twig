@@ -4,7 +4,29 @@
   Тупика здесь быть не должно: человек уже ошибся адресом, и единственное,
   что ему нужно, - выход. Поэтому ссылки на каталог, контакты и телефон,
   а не одно слово «Ошибка».
+
+  Этот же шаблон движок берёт не только для 404: пустую корзину
+  checkout/cart показывает им же, с текстом «Ваша корзина пуста!».
+  Шаблон об этом не знал и всем писал «404 Такой страницы нет» - так
+  и выглядела пустая корзина на сайте (нашёл заказчик, 24.09.2026).
+  Теперь он различает случаи по словам самого движка:
+    - «корзин…» в заголовке или тексте - пустая корзина, тот же блок,
+      что в checkout/cart.twig (там он стоит на случай пустого списка,
+      но движок до него не доходит);
+    - «не найден…» или текста нет вовсе - 404: так движок пишет во всех
+      настоящих 404 - страница, товар, раздел, производитель, статья;
+    - что-то третье - заголовок и текст движка как есть, без «404»:
+      придумывать за движок, что случилось, шаблон не должен.
+  render-check.php собирает шаблон во всех трёх случаях.
 #}
+{% set said = (heading_title ~ ' ' ~ text_error)|lower %}
+{% if 'корзин' in said or 'cart' in said %}
+{% set kind = 'cart' %}
+{% elseif not text_error or 'не найден' in said or 'not found' in said %}
+{% set kind = 'missing' %}
+{% else %}
+{% set kind = 'other' %}
+{% endif %}
 {{ header }}
   <div class="container">
 
@@ -20,6 +42,31 @@
 
     {{ content_top }}
 
+    {% if kind == 'cart' %}
+    <div class="page-head">
+      <h1>Корзина</h1>
+    </div>
+
+    <div class="empty empty-state">
+      <span class="empty-state__icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.8a1 1 0 0 0 1-.8L20 8H6.2"/></svg></span>
+      <h2>Корзина пуста</h2>
+      <p>Выберите товары в каталоге — или позвоните <a class="tel-inline" href="tel:+79638319999">8-963-831-99-99</a>, и мы соберём заказ по телефону.</p>
+      <p class="row-actions">
+        <a class="btn btn--action" href="index.php?route=information/sitemap">В каталог</a>
+        <a class="btn btn--outline" href="index.php?route=information/contact">Адреса магазинов</a>
+      </p>
+    </div>
+    {% elseif kind == 'other' %}
+    <div class="empty error-page">
+      <h1>{{ heading_title }}</h1>
+      <p class="error-page__text">{{ text_error }}</p>
+      <p class="row-actions error-page__links">
+        <a class="btn btn--action" href="{{ continue }}">На главную</a>
+        <a class="btn btn--outline" href="index.php?route=information/sitemap">Все разделы каталога</a>
+        <a class="btn btn--outline" href="index.php?route=information/contact">Адреса магазинов</a>
+      </p>
+    </div>
+    {% else %}
     <div class="empty error-page">
       <p class="error-page__code" aria-hidden="true">404</p>
       <h1>Такой страницы нет</h1>
@@ -31,6 +78,7 @@
         <a class="btn btn--outline" href="index.php?route=information/contact">Адреса магазинов</a>
       </p>
     </div>
+    {% endif %}
 
     {{ content_bottom }}
   </div>

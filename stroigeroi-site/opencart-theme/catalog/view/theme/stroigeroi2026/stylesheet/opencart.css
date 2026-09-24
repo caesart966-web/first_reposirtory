@@ -187,9 +187,12 @@ html[data-theme="dark"] .pagination div.pagination__item.active:not(:has(> *)) {
   opacity: .45;
 }
 
-/* Строка «Показано 1 — 16 из 48» движок кладёт рядом с навигацией. */
+/* Строка «Показано 1 — 16 из 48» движок кладёт рядом с навигацией,
+   в блок с классом text-right. Только блок: тем же классом стандартная
+   тема выравнивает ячейки таблиц, и в истории заказов номер, число
+   товаров и сумма выходили серыми и мельче соседних колонок. */
 .pagination-results,
-.text-right { color: var(--sg-muted); font-size: .92rem; }
+div.text-right { color: var(--sg-muted); font-size: .92rem; }
 
 /* --- Сообщения движка ------------------------------------------------------ */
 .alert {
@@ -356,11 +359,17 @@ textarea.form-control { min-height: 120px; resize: vertical; }
   vertical-align: top;
 }
 
-.table thead th {
+/* Шапку таблицы стандартная тема пишет ячейками td, а не th
+   (история заказов, возвраты, бонусы) - оформление то же. */
+.table thead th,
+.table thead td {
   font-size: 13px;
   color: var(--sg-muted);
   font-weight: 600;
 }
+
+.table th.text-right,
+.table td.text-right { text-align: right; }
 
 .table tfoot td { font-weight: 700; }
 
@@ -385,6 +394,10 @@ textarea.form-control { min-height: 120px; resize: vertical; }
 /* --- Мелочи ---------------------------------------------------------------- */
 #content > h1:first-child,
 #content > h2:first-child { margin-top: 0; }
+
+/* Заголовок страницы кабинета стоял вплотную к форме под ним. */
+#content > h1,
+#content > h2 { margin-bottom: var(--sp-4); }
 
 /* Значков Font Awesome наша шапка не подключает, поэтому элементы <i class="fa">
    на стандартных страницах и так пустые - рисовать нечем, и пустых квадратов
@@ -557,6 +570,22 @@ span.fa {
 .fa-arrow-right::before,
 .fa-long-arrow-right::before { content: "\2192"; }/* → */
 
+/* Календарь у поля даты (возврат товара, опции товара с датой). Знака
+   «календарь» среди символов системного шрифта нет - 📅 это цветная
+   эмодзи, на каждой системе своя, - поэтому значок нарисован той же
+   линией, что остальные значки темы, и красится цветом кнопки. */
+.fa-calendar::before,
+.fa-calendar-o::before {
+  content: "";
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4.5' width='18' height='17' rx='2'/%3E%3Cpath d='M16 2.5v4M8 2.5v4M3 10h18'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4.5' width='18' height='17' rx='2'/%3E%3Cpath d='M16 2.5v4M8 2.5v4M3 10h18'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
 /* Слово лучше знака, когда слово есть. Движок ставит кнопке title
    для всплывающей подсказки - это готовое название действия, написанное
    на языке магазина. Если title есть, показываем его, а знак прячем:
@@ -571,6 +600,19 @@ span.fa {
 
 .btn:has(> i:only-child)[title]:not([title=""])::after {
   content: attr(title);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Подсказки Bootstrap (common.js, при загрузке страницы) переносят title
+   в data-original-title и оставляют title пустым. У таких кнопок правило
+   выше подписи не находило: в истории заказов «Просмотр» был синим
+   квадратом без единого знака. Подпись та же, взятая из нового места. */
+.btn:has(> i:only-child)[data-original-title]:not([data-original-title=""]) > i { display: none; }
+
+.btn:has(> i:only-child)[data-original-title]:not([data-original-title=""])::after {
+  content: attr(data-original-title);
   font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
@@ -665,7 +707,8 @@ legend {
 .panel input[type="checkbox"],
 .panel input[type="radio"] { accent-color: var(--sg-blue); }
 
-.table thead th { color: var(--sg-muted); }
+.table thead th,
+.table thead td { color: var(--sg-muted); }
 .table th,
 .table td { border-bottom-color: var(--sg-line); }
 .table tfoot td,
@@ -2126,3 +2169,537 @@ div.modal .close:hover { color: var(--sg-red); }
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* ---- Страница «Юридическим лицам» -----------------------------------------
+   Текст в базе (правка 27, tools/yurlicam/yurlicam.html): четыре карточки
+   того, что заказчик пишет о работе с организациями, цифры - плитками
+   страницы «О компании» (about-stats), контакты и реквизиты - карточками
+   страницы «Реквизиты» (req). Прежний текст стоял столбиком голых строк
+   с пустотами на месте картинок прежней темы. */
+.legal .b2b-features {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-3);
+  margin: var(--sp-5) 0;
+}
+
+.b2b-feature {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+  padding: var(--sp-4);
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  background: var(--sg-white);
+}
+
+.b2b-feature__icon {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--r-md);
+  background: var(--sg-blue-tint);
+  color: var(--sg-blue);
+}
+
+.b2b-feature__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.legal .b2b-feature__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--sg-ink);
+}
+
+.legal .b2b-feature__note {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--sg-muted);
+}
+
+.legal .b2b-more {
+  margin: var(--sp-4) 0 0;
+  font-weight: 600;
+}
+
+.legal .b2b-cta {
+  margin: var(--sp-6) 0 0;
+}
+
+@media (max-width: 1023px) {
+  .legal .b2b-features {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* На телефоне карточка - строкой: значок слева, подпись справа. */
+@media (max-width: 479px) {
+  .legal .b2b-features {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .b2b-feature {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--sp-3);
+  }
+}
+
+/* ---- Календарь движка -----------------------------------------------------
+   bootstrap-datetimepicker 3.1.3 из OpenCart: поле «Дата заказа» на странице
+   возврата, опции товара с датой. Он рассчитан на стили Bootstrap, которых
+   в теме нет. Прятал окно календаря Bootstrap (.dropdown-menu), а сам
+   виджет только показывает его, когда нужно, - поэтому без Bootstrap
+   календарь висел внизу страницы открытым всегда, куском страницы,
+   а открытый кнопкой рисовался прозрачным поверх полей формы.
+   Теперь это выпадающее окно в стиле сайта. Язык (было «September»,
+   «Mo Tu We») переключает app.js: виджет рисует названия один раз,
+   при запуске, и стилями их не поменять.
+   Место окна считает сам виджет - под кнопкой, а если внизу не хватает
+   экрана, над ней; здесь только вид. */
+.bootstrap-datetimepicker-widget {
+  display: none;
+  position: absolute;
+  width: 296px;
+  margin-top: 6px;
+  padding: var(--sp-3);
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  background: var(--sg-white);
+  box-shadow: var(--sh-md);
+  color: var(--sg-ink);
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.bootstrap-datetimepicker-widget.top {
+  margin-top: 0;
+  margin-bottom: 6px;
+}
+
+/* Уголок-стрелка виджета нарисован серым и белым под Bootstrap: в тёмной
+   теме белый треугольник на тёмном окне. Окно и так стоит вплотную
+   к кнопке - стрелка не нужна. */
+.bootstrap-datetimepicker-widget.bottom::before,
+.bootstrap-datetimepicker-widget.bottom::after,
+.bootstrap-datetimepicker-widget.top::before,
+.bootstrap-datetimepicker-widget.top::after,
+.bootstrap-datetimepicker-widget td.today::before {
+  display: none;
+}
+
+.bootstrap-datetimepicker-widget table {
+  width: 100%;
+  margin: 0;
+  border-collapse: separate;
+  border-spacing: 2px;
+}
+
+.bootstrap-datetimepicker-widget th,
+.bootstrap-datetimepicker-widget td {
+  width: auto;
+  height: auto;
+  padding: 0;
+  line-height: 1.2;
+  text-align: center;
+  border-radius: var(--r-md);
+}
+
+/* Месяц и год над днями - кнопка: нажатие открывает выбор месяца,
+   потом года. Название месяца у moment строчное («сентябрь»). */
+.bootstrap-datetimepicker-widget th.picker-switch {
+  width: auto;
+  height: 36px;
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.bootstrap-datetimepicker-widget th.prev,
+.bootstrap-datetimepicker-widget th.next {
+  width: 36px;
+  height: 36px;
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--sg-blue);
+}
+
+.bootstrap-datetimepicker-widget thead tr:first-child th {
+  cursor: pointer;
+}
+
+.bootstrap-datetimepicker-widget thead tr:first-child th:hover {
+  background: var(--sg-blue-tint);
+  color: var(--sg-blue);
+}
+
+.bootstrap-datetimepicker-widget th.dow {
+  height: 28px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--sg-muted);
+  text-transform: capitalize;
+}
+
+.bootstrap-datetimepicker-widget td.day {
+  width: 36px;
+  height: 36px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.bootstrap-datetimepicker-widget td.day:hover,
+.bootstrap-datetimepicker-widget td span:hover {
+  background: var(--sg-blue-tint);
+  color: var(--sg-blue);
+}
+
+.bootstrap-datetimepicker-widget td.old,
+.bootstrap-datetimepicker-widget td.new,
+.bootstrap-datetimepicker-widget td span.old {
+  color: var(--sg-muted);
+}
+
+/* Сегодня - кольцом, выбранный день - заливкой: если выбрано сегодня,
+   видно и то и другое. */
+.bootstrap-datetimepicker-widget td.today {
+  box-shadow: inset 0 0 0 1.5px var(--sg-blue);
+}
+
+.bootstrap-datetimepicker-widget td.active,
+.bootstrap-datetimepicker-widget td.active:hover,
+.bootstrap-datetimepicker-widget td span.active {
+  background: var(--sg-blue);
+  color: var(--sg-white);
+  font-weight: 700;
+  text-shadow: none;
+}
+
+.bootstrap-datetimepicker-widget td.disabled,
+.bootstrap-datetimepicker-widget td.disabled:hover,
+.bootstrap-datetimepicker-widget td span.disabled,
+.bootstrap-datetimepicker-widget td span.disabled:hover,
+.bootstrap-datetimepicker-widget th.disabled,
+.bootstrap-datetimepicker-widget th.disabled:hover {
+  background: none;
+  color: var(--sg-line);
+  cursor: not-allowed;
+}
+
+/* Окно выравнивается по правому краю кнопки, а она стоит в 40 px от края
+   экрана: на экране уже 360 px окно в 296 px вылезало за левый край. */
+@media (max-width: 359px) {
+  .bootstrap-datetimepicker-widget {
+    width: 264px;
+    padding: var(--sp-2);
+  }
+
+  .bootstrap-datetimepicker-widget td.day,
+  .bootstrap-datetimepicker-widget th.prev,
+  .bootstrap-datetimepicker-widget th.next {
+    height: 32px;
+  }
+}
+
+/* Месяцы и годы - сеткой по четыре. */
+.bootstrap-datetimepicker-widget td span {
+  display: inline-block;
+  width: calc(25% - 4px);
+  height: 44px;
+  margin: 2px;
+  line-height: 44px;
+  border-radius: var(--r-md);
+  text-transform: capitalize;
+  cursor: pointer;
+}
+
+/* ---- Колонки стандартных страниц ------------------------------------------
+   Страницы кабинета - возврат товара, история заказов, адреса - рисует
+   стандартная тема движка: <div class="row"> с колонкой #content и меню
+   кабинета (модуль account) в #column-right. Без Bootstrap меню вставало
+   под форму и склеивалось в одну строку ссылок: «…Файлы для
+   скачиванияРегулярные платежи…». На компьютере меню - колонка справа,
+   как задумано в стандартной теме, каждый пункт своей строкой.
+   На телефоне стандартная тема его прячет (hidden-xs) - и мы тоже:
+   до него были бы экраны прокрутки, а «Войти» и кабинет есть в шапке.
+   Правило hidden-xs не общее: в разделах тот же класс стоит у колонки
+   с фильтром, а там на телефоне её открывает кнопка «Показать фильтры». */
+@media (min-width: 992px) {
+  .row:has(> #column-left),
+  .row:has(> #column-right) {
+    display: grid;
+    gap: var(--sp-6);
+    align-items: start;
+  }
+
+  .row:has(> #column-right) {
+    grid-template-columns: minmax(0, 1fr) 260px;
+  }
+
+  .row:has(> #column-left) {
+    grid-template-columns: 260px minmax(0, 1fr);
+  }
+
+  .row:has(> #column-left):has(> #column-right) {
+    grid-template-columns: 240px minmax(0, 1fr) 240px;
+  }
+}
+
+@media (max-width: 767px) {
+  .row > #column-left.hidden-xs,
+  .row > #column-right.hidden-xs {
+    display: none;
+  }
+}
+
+.row > #column-left .list-group,
+.row > #column-right .list-group {
+  display: flex;
+  flex-direction: column;
+  margin: 0 0 var(--sp-5);
+  padding: var(--sp-2) 0;
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  background: var(--sg-white);
+}
+
+.row > #column-left .list-group-item,
+.row > #column-right .list-group-item {
+  display: block;
+  padding: 9px var(--sp-4);
+  color: var(--sg-ink);
+  font-size: 15px;
+  line-height: 1.35;
+  text-decoration: none;
+}
+
+.row > #column-left a.list-group-item:hover,
+.row > #column-right a.list-group-item:hover {
+  background: var(--sg-blue-tint);
+  color: var(--sg-blue);
+}
+
+/* ---- Формы личного кабинета -----------------------------------------------
+   Возврат товара, свои данные, пароль, адрес, рассылка, восстановление
+   пароля - стандартная разметка движка. Браузерная рамка fieldset
+   с заголовком, врезанным в линию, выглядела чужой рядом с карточками
+   сайта: здесь это такие же карточки, заголовок - внутри.
+   Регистрации в списке нет нарочно: её на сайте рисует модуль Simple,
+   и у его блоков свои правила выше (simpleregister-block-content). */
+#account-edit fieldset,
+#account-password fieldset,
+#account-address fieldset,
+#account-forgotten fieldset,
+#account-reset fieldset,
+#account-newsletter fieldset,
+#account-return fieldset {
+  min-width: 0;
+  margin: 0 0 var(--sp-5);
+  padding: var(--sp-5);
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  background: var(--sg-white);
+}
+
+#account-edit legend,
+#account-password legend,
+#account-forgotten legend,
+#account-reset legend,
+#account-return legend {
+  float: left;
+  width: 100%;
+  margin: 0 0 var(--sp-4);
+  padding: 0;
+  font-size: 18px;
+}
+
+#account-edit legend + *,
+#account-password legend + *,
+#account-forgotten legend + *,
+#account-reset legend + *,
+#account-return legend + * {
+  clear: left;
+}
+
+/* «Назад» слева, «Продолжить» справа - как задумано в стандартной теме
+   классами pull-left и pull-right. */
+.buttons > .pull-right {
+  margin-left: auto;
+}
+
+/* ---- Главная личного кабинета ---------------------------------------------
+   Наш шаблон account/account.twig: карточки разделов вместо четырёх
+   столбиков ссылок стандартной темы. */
+.account-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: var(--sp-3);
+  margin: var(--sp-5) 0 0;
+}
+
+.account-card {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 88px;
+  padding: var(--sp-4);
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  background: var(--sg-white);
+  color: var(--sg-ink);
+  text-decoration: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.account-card:hover {
+  border-color: var(--sg-blue);
+  box-shadow: var(--sh-sm);
+  color: var(--sg-ink);
+}
+
+.account-card:focus-visible {
+  outline: 3px solid var(--sg-red);
+  outline-offset: 2px;
+}
+
+.account-card__icon {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--r-md);
+  background: var(--sg-blue-tint);
+  color: var(--sg-blue);
+}
+
+.account-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.account-card__title {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.account-card__text {
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--sg-muted);
+}
+
+.account-actions {
+  margin-top: var(--sp-6);
+}
+
+/* ---- История заказов (account/order_list.twig) ---------------------------- */
+.orders {
+  width: 100%;
+  margin: 0 0 var(--sp-4);
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.orders th {
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--sg-line);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  color: var(--sg-muted);
+}
+
+.orders td {
+  padding: var(--sp-3);
+  border-bottom: 1px solid var(--sg-line);
+  vertical-align: middle;
+}
+
+.orders .orders__num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.orders__id {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.orders__action {
+  text-align: right;
+}
+
+/* На телефоне строка - карточка: подпись слева, значение справа. Шапка
+   спрятана так, чтобы её читал экранный диктор. */
+@media (max-width: 599px) {
+  .orders thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .orders,
+  .orders tbody,
+  .orders tr,
+  .orders td {
+    display: block;
+    width: 100%;
+  }
+
+  .orders tr {
+    margin: 0 0 var(--sp-3);
+    padding: var(--sp-3) var(--sp-4);
+    border: 1px solid var(--sg-line);
+    border-radius: var(--r-lg);
+    background: var(--sg-white);
+  }
+
+  .orders td,
+  .orders .orders__num {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    padding: 6px 0;
+    border: 0;
+    text-align: right;
+  }
+
+  .orders td::before {
+    content: attr(data-label);
+    font-size: 14px;
+    font-weight: 400;
+    text-align: left;
+    color: var(--sg-muted);
+  }
+
+  .orders td.orders__action {
+    padding-top: var(--sp-3);
+  }
+
+  .orders td.orders__action::before {
+    display: none;
+  }
+
+  .orders__action .btn {
+    width: 100%;
+  }
+}
+
