@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import '@fontsource-variable/inter'
+import '@fontsource-variable/onest'
+import '@fontsource-variable/cormorant'
 import './index.css'
 import App from './App'
 import { setSiteRoot } from './lib/site'

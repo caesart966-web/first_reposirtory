@@ -7,6 +7,7 @@
 //
 // Рисуется из того же public/favicon.svg — второго источника правды нет.
 // Прозрачности нет намеренно: iOS подкладывает под ярлык чёрный фон.
+// Фон страницы — тот же графит, что у знака: iOS скругляет углы сам.
 //
 // Запуск: PLAYWRIGHT=/путь/к/playwright-core/index.js node scripts/build-icons.mjs
 import { readFileSync } from 'node:fs'
@@ -23,7 +24,7 @@ const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromi
 const page = await browser.newPage({ viewport: { width: SIZE, height: SIZE }, deviceScaleFactor: 1 })
 await page.setContent(
   `<!doctype html><meta charset="utf-8"><style>
-     html,body{margin:0;padding:0;background:#2F4BDE}
+     html,body{margin:0;padding:0;background:#1C1815}
      svg{display:block;width:${SIZE}px;height:${SIZE}px}
    </style>${svg}`,
   { waitUntil: 'load' },

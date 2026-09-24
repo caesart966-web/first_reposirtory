@@ -1,6 +1,4 @@
-import { Check } from 'lucide-react'
 import { ButtonLink } from './ui/Button'
-import { cardHoverStatic } from './ui/card'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
 
@@ -55,32 +53,35 @@ export function Pricing() {
         title="Форматы работы"
         subtitle="Консультации бесплатны на любом этапе. Стоимость работы зависит от вида СРО и готовности документов и согласовывается письменно до начала."
       />
-      <div className="mt-10 grid gap-5 lg:grid-cols-3">
+      {/* Три колонки листами, без рамок и теней. Главный формат — тёмный:
+          выделен цветом листа, а не плашкой «хит» над ним. */}
+      <div className="mt-16 grid gap-3 lg:grid-cols-3">
         {PLANS.map((plan, index) => (
-          <Reveal key={plan.name} delay={index * 80} className="h-full">
+          <Reveal key={plan.name} delay={index * 100} className="h-full">
             <article
-              className={`relative flex h-full flex-col rounded-2xl border bg-white p-7 shadow-card ${cardHoverStatic} ${
-                plan.featured ? 'border-accent-300 ring-1 ring-accent-200' : 'border-neutral-200'
+              className={`flex h-full flex-col rounded-3xl p-7 sm:p-9 ${
+                plan.featured ? 'bg-neutral-950 text-neutral-50' : 'bg-neutral-100 text-neutral-950'
               }`}
             >
-              {plan.featured && plan.badge && (
-                <span className="absolute -top-3 left-6 rounded-full bg-accent-600 px-3 py-1 text-xs font-semibold text-white">
-                  {plan.badge}
-                </span>
-              )}
-              <h3 className="text-lg font-semibold text-neutral-950">{plan.name}</h3>
-              <p
-                className={`mt-3 text-2xl font-bold tracking-tight ${
-                  plan.free ? 'text-accent-600' : 'text-neutral-950'
+              <p className={`text-sm ${plan.featured ? 'text-accent-200' : 'text-neutral-600'}`}>
+                {plan.featured && plan.badge ? plan.badge : 'Формат'}
+              </p>
+              <h3 className="mt-3 font-display text-[1.9rem] font-medium leading-tight">{plan.name}</h3>
+              <p className="mt-10 font-display text-[2.6rem] font-medium leading-none">{plan.price}</p>
+              <p className={`mt-3 text-sm ${plan.featured ? 'text-neutral-300' : 'text-neutral-600'}`}>
+                {plan.priceNote}
+              </p>
+              <ul
+                className={`mt-8 space-y-3 border-t pt-6 text-sm ${
+                  plan.featured ? 'border-white/15 text-neutral-200' : 'border-neutral-300 text-neutral-700'
                 }`}
               >
-                {plan.price}
-              </p>
-              <p className="mt-1 text-sm text-neutral-500">{plan.priceNote}</p>
-              <ul className="mt-5 space-y-2.5 border-t border-neutral-200 pt-5">
                 {plan.items.map((item) => (
-                  <li key={item} className="flex items-start gap-2.5 text-sm text-neutral-600">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-accent-600" aria-hidden="true" />
+                  <li key={item} className="flex gap-3">
+                    <span
+                      className={`mt-2 h-1 w-1 shrink-0 rounded-full ${plan.featured ? 'bg-accent-300' : 'bg-accent-500'}`}
+                      aria-hidden="true"
+                    />
                     {item}
                   </li>
                 ))}
@@ -89,8 +90,8 @@ export function Pricing() {
           </Reveal>
         ))}
       </div>
-      <Reveal className="mt-9 text-center">
-        <ButtonLink href="#quiz" size="lg">
+      <Reveal className="mt-12">
+        <ButtonLink href="#contacts" size="lg" arrow>
           Узнать стоимость для моей компании
         </ButtonLink>
       </Reveal>

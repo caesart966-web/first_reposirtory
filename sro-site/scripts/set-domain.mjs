@@ -11,9 +11,11 @@
 //   node scripts/set-domain.mjs https://sro-rostov.ru
 //
 // Скрипт заодно убирает пометку TODO про домен: она нужна была ровно до
-// этого момента, — и вписывает домен в ALLOWED_HOST обработчика заявок
-// public/api/submit.php, чтобы чужая страница не слала письма от имени
-// сайта. Проверку, что плейсхолдеров не осталось, делает набор og-sitemap.mjs.
+// этого момента. Проверку, что плейсхолдеров не осталось, делает набор
+// og-sitemap.mjs.
+//
+// До 24.09.2026 он ещё вписывал домен в ALLOWED_HOST обработчика заявок
+// public/api/submit.php. Форма снята вместе с квизом, обработчик удалён.
 import { readFileSync, writeFileSync } from 'node:fs'
 import { readdirSync, statSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
@@ -63,22 +65,6 @@ for (const file of targets()) {
     changed += 1
   }
   if (after.includes('example.com')) left += 1
-}
-
-// Обработчик заявок принимает запросы только со своего домена. Константа
-// пустая до этого момента (проверка выключена), и без подстановки о ней
-// легко забыть: сайт работает и так, просто форму может дёргать кто угодно.
-const php = join(root, 'public', 'api', 'submit.php')
-const phpBefore = readFileSync(php, 'utf8')
-const phpAfter = phpBefore.replace(/^const ALLOWED_HOST = '[^']*';$/m, `const ALLOWED_HOST = '${host}';`)
-if (phpAfter === phpBefore && !phpBefore.includes(`const ALLOWED_HOST = '${host}';`)) {
-  console.error('public/api/submit.php: строка ALLOWED_HOST не найдена — впишите домен вручную')
-  process.exit(1)
-}
-if (phpAfter !== phpBefore) {
-  writeFileSync(php, phpAfter)
-  console.log(`public/api/submit.php: ALLOWED_HOST = ${host}`)
-  changed += 1
 }
 
 console.log(`\nДомен: ${origin}`)

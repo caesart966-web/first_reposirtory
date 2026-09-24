@@ -1,18 +1,6 @@
-import {
-  ArrowRight,
-  Building2,
-  FileText,
-  GraduationCap,
-  Handshake,
-  ListPlus,
-  Search,
-  ShieldCheck,
-  UserCheck,
-  type LucideIcon,
-} from 'lucide-react'
+import { ArrowUpRight } from 'lucide-react'
 import { serviceBySlug } from '../content/services'
 import { page } from '../lib/site'
-import { cardHover } from './ui/card'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
 
@@ -25,7 +13,7 @@ import { Section, SectionHeading } from './ui/Section'
 // «Подбор СРО» и «Проверка СРО» — одна тема и одна страница. Поэтому
 // карточки и приподнимаются при наведении: по правилу из ui/card.ts подъём —
 // обещание клика, и здесь оно честное.
-type ServiceItem = { icon: LucideIcon; title: string; text: string; slug: string }
+type ServiceItem = { title: string; text: string; slug: string }
 type ServiceGroup = { title: string; items: ServiceItem[] }
 
 const GROUPS: ServiceGroup[] = [
@@ -33,25 +21,21 @@ const GROUPS: ServiceGroup[] = [
     title: 'Вступление и сопровождение',
     items: [
       {
-        icon: Building2,
         title: 'Вступление в СРО',
         text: 'Организую процесс от выбора СРО до внесения компании в реестр членов.',
         slug: 'vstuplenie',
       },
       {
-        icon: Search,
         title: 'Подбор СРО',
         text: 'Сравню требования, размеры взносов и условия нескольких организаций и предложу подходящие варианты.',
         slug: 'podbor',
       },
       {
-        icon: FileText,
         title: 'Подготовка документов',
         text: 'Соберу полный пакет и выверю каждый документ перед подачей.',
         slug: 'dokumenty',
       },
       {
-        icon: ShieldCheck,
         title: 'Проверка СРО',
         text: 'Проверю статус организации по открытым реестрам до оплаты взносов.',
         slug: 'podbor',
@@ -62,25 +46,21 @@ const GROUPS: ServiceGroup[] = [
     title: 'Специалисты и реестры',
     items: [
       {
-        icon: UserCheck,
         title: 'НРС',
         text: 'Проверю соответствие сотрудников требованиям и подготовлю документы для включения в национальный реестр специалистов.',
         slug: 'nrs',
       },
       {
-        icon: GraduationCap,
         title: 'НОК',
         text: 'Расскажу, как проходит независимая оценка квалификации, и помогу подготовиться к профессиональному экзамену.',
         slug: 'nok',
       },
       {
-        icon: ListPlus,
         title: 'Расширение видов работ',
         text: 'Оформлю изменение уровня ответственности или состава видов работ.',
         slug: 'uroven',
       },
       {
-        icon: Handshake,
         title: 'Сопровождение проверок',
         text: 'Подготовлю к проверке СРО и помогу корректно ответить на запросы.',
         slug: 'proverki',
@@ -99,53 +79,41 @@ const pathOf = (slug: string) => {
 
 export function Services() {
   return (
-    <Section id="services" className="bg-neutral-50/55">
+    <Section id="services" className="bg-neutral-100">
       <SectionHeading
         eyebrow="Услуги"
         title="Услуги по вступлению в СРО"
         subtitle="Отдельные задачи или полное сопровождение: от подбора саморегулируемой организации до внесения сведений в реестр членов."
       />
 
-      <div className="mt-10 space-y-10">
+      <div className="mt-16 space-y-14">
         {GROUPS.map((group) => (
           <div key={group.title}>
             <Reveal>
-              <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-neutral-600">
-                {group.title}
-              </h3>
+              <h3 className="text-sm text-neutral-600">{group.title}</h3>
             </Reveal>
-            {/* Фотографий в сетке услуг нет: обе группы — про действия, а не
-                про области, и любой кадр здесь иллюстрировал бы соседнюю тему.
-                Области показаны выше, в «Видах СРО», каждая своим снимком. */}
-            <div className="mt-5 grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
+            {/* Карточка — лист без рамки и тени. При наведении медленно темнеет
+                до графита, стрелка поворачивается — приём из ролика заказчика.
+                Описание видно всегда: спрятанное до наведения, оно оставляло
+                восемь пустых карточек, а на телефоне не читалось бы вовсе. */}
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {group.items.map((service, index) => (
-                <Reveal key={service.title} delay={(index % 4) * 70} className="h-full">
-                  {/* До sm иконка стоит в строке с заголовком, а не над ним:
-                      столбик «иконка / заголовок / текст» растягивал восемь
-                      услуг на четыре экрана прокрутки. С 640px карточек в
-                      строке уже две и высота не в дефиците — там прежний
-                      столбик, он читается спокойнее. */}
+                <Reveal key={service.title} delay={(index % 4) * 90} className="h-full">
                   <a
                     href={pathOf(service.slug)}
-                    className={`group/card flex h-full flex-col rounded-2xl border border-neutral-200 bg-white p-5 shadow-card sm:p-6 ${cardHover}`}
+                    className="group relative flex h-full flex-col justify-between gap-6 sm:min-h-[13rem] sm:gap-8 rounded-3xl bg-neutral-50 p-6 transition-colors duration-700 ease-silk hover:bg-neutral-950 focus-visible:bg-neutral-950 focus-visible:outline-none sm:p-7 lg:min-h-[15rem]"
                   >
-                    <div className="flex items-center gap-3.5 sm:block">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 sm:h-11 sm:w-11">
-                        <service.icon className="h-5 w-5" aria-hidden="true" />
-                      </div>
-                      {/* Стрелка стоит в строке заголовка, а не подписью внизу:
-                          восемь одинаковых «Подробнее об услуге» читались шумом,
-                          а карточка и так кликается целиком. Стрелка остаётся —
-                          без неё ничто не говорит, что здесь есть переход. */}
-                      <h4 className="flex min-w-0 flex-1 items-start gap-2 font-semibold text-neutral-950 sm:mt-5">
-                        <span className="min-w-0">{service.title}</span>
-                        <ArrowRight
-                          className="ml-auto mt-0.5 h-4 w-4 shrink-0 text-neutral-400 transition-all duration-200 group-hover/card:translate-x-0.5 group-hover/card:text-accent-600"
-                          aria-hidden="true"
-                        />
+                    <div className="flex items-start justify-between gap-4">
+                      <h4 className="font-display text-[1.6rem] font-medium leading-[1.1] text-neutral-950 transition-colors duration-700 ease-silk group-hover:text-neutral-50 group-focus-visible:text-neutral-50">
+                        {service.title}
                       </h4>
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-neutral-300 text-neutral-950 transition-all duration-700 ease-silk group-hover:rotate-45 group-hover:border-neutral-50 group-hover:bg-neutral-50 group-focus-visible:border-neutral-50 group-focus-visible:bg-neutral-50">
+                        <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+                      </span>
                     </div>
-                    <p className="mt-2.5 text-sm leading-relaxed text-neutral-600 sm:mt-2">{service.text}</p>
+                    <p className="text-sm leading-relaxed text-neutral-600 transition-colors duration-700 group-hover:text-neutral-300 group-focus-visible:text-neutral-300">
+                      {service.text}
+                    </p>
                   </a>
                 </Reveal>
               ))}

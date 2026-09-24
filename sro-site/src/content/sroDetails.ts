@@ -8,7 +8,6 @@
 // Суммы взносов — это МИНИМУМЫ по закону. Конкретная СРО не вправе взять
 // меньше, но своими документами может установить больше; об этом на странице
 // сказано прямо, иначе таблица читается как окончательный счёт.
-import { SRO_TYPES } from './sroTypes'
 import { IMAGES, type PageImage } from './images'
 
 /** Нормы, на которые ссылаются страницы.
@@ -251,13 +250,11 @@ export const DOCS_IP: DocItem[] = [
 ]
 
 export type SroDetail = {
-  /** Значение ?sro= на главной и data-sro в html страницы. */
+  /** Значение data-sro в html страницы. */
   slug: string
   /** Папка страницы. Отдельно от slug: в адресе нужен читаемый по-русски
    *  путь, а в параметре — короткий ключ, по которому страница находит себя. */
   path: string
-  /** Ответ квиза — тот же, что у карточки на главной. */
-  answer: string
   /** Заголовок вкладки и h1. */
   title: string
   /** Короткая строка под заголовком. */
@@ -284,7 +281,6 @@ export const SRO_DETAILS: SroDetail[] = [
   {
     slug: 'construction',
     path: 'sro-stroiteley',
-    answer: SRO_TYPES.construction,
     title: 'Вступление в СРО строителей',
     lead: 'Кому нужно членство, сколько по закону составляют взносы в компенсационные фонды и что для вступления понадобится.',
     description:
@@ -332,7 +328,6 @@ export const SRO_DETAILS: SroDetail[] = [
   {
     slug: 'design',
     path: 'sro-proektirovshchikov',
-    answer: SRO_TYPES.design,
     title: 'Вступление в СРО проектировщиков',
     lead: 'Кому нужно членство, сколько по закону составляют взносы в компенсационные фонды и что для вступления понадобится.',
     description:
@@ -366,7 +361,6 @@ export const SRO_DETAILS: SroDetail[] = [
   {
     slug: 'survey',
     path: 'sro-izyskateley',
-    answer: SRO_TYPES.survey,
     title: 'Вступление в СРО изыскателей',
     lead: 'Кому нужно членство, сколько по закону составляют взносы в компенсационные фонды и что для вступления понадобится.',
     description:
