@@ -377,7 +377,7 @@
         suggestList.innerHTML =
           '<p class="search-suggest__empty">По запросу «' + escapeHtml(searchInput.value.trim()) +
           '» раздела нет. Товары в макет ещё не загружены — позвоните ' +
-          '<a class="tel-inline" href="tel:+79638300999">8-963-830-09-99</a>, подскажем, есть ли в магазине.</p>';
+          '<a class="tel-inline" href="tel:+79638319999">8-963-831-99-99</a>, подскажем, есть ли в магазине.</p>';
         return;
       }
       if (suggestTitle) {
@@ -1191,9 +1191,9 @@
           if (said && typeof said === 'object') {
             said = Object.keys(said).map(function (key) { return said[key]; }).join(' ');
           }
-          toast(said ? plainText(String(said)) : 'Не получилось отправить. Позвоните нам: 8-963-830-09-99.');
+          toast(said ? plainText(String(said)) : 'Не получилось отправить. Позвоните нам: 8-963-831-99-99.');
         }).catch(function () {
-          toast('Не получилось отправить. Позвоните нам: 8-963-830-09-99.');
+          toast('Не получилось отправить. Позвоните нам: 8-963-831-99-99.');
         }).then(function () {
           if (button) button.disabled = false;
         });

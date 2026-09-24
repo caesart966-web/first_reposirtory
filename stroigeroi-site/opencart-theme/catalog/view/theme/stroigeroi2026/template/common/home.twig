@@ -32,7 +32,7 @@
         <p class="dev-notice__title">Сайт находится в разработке</p>
         <p class="dev-notice__text">Об актуальности цен и наличии товара узнавайте по телефону магазина</p>
       </div>
-      <a class="dev-notice__phone" href="tel:+79638300999">8-963-830-09-99</a>
+      <a class="dev-notice__phone" href="tel:+79638319999">8-963-831-99-99</a>
     </aside>
   </div>
   <!--/noindex-->
@@ -42,6 +42,13 @@
 
       <div class="hero"><picture><source type="image/avif" srcset="catalog/view/theme/stroigeroi2026/image/banner-640.avif 640w, catalog/view/theme/stroigeroi2026/image/banner-960.avif 960w, catalog/view/theme/stroigeroi2026/image/banner-1280.avif 1280w, catalog/view/theme/stroigeroi2026/image/banner.avif 1920w" sizes="(min-width: 1600px) 888px, (min-width: 1201px) 785px, 96vw"><source type="image/webp" srcset="catalog/view/theme/stroigeroi2026/image/banner-640.webp 640w, catalog/view/theme/stroigeroi2026/image/banner-960.webp 960w, catalog/view/theme/stroigeroi2026/image/banner-1280.webp 1280w, catalog/view/theme/stroigeroi2026/image/banner.webp 1920w" sizes="(min-width: 1600px) 888px, (min-width: 1201px) 785px, 96vw"><img class="hero__banner" src="catalog/view/theme/stroigeroi2026/image/banner.jpg" srcset="catalog/view/theme/stroigeroi2026/image/banner-640.jpg 640w, catalog/view/theme/stroigeroi2026/image/banner-960.jpg 960w, catalog/view/theme/stroigeroi2026/image/banner-1280.jpg 1280w, catalog/view/theme/stroigeroi2026/image/banner.jpg 1920w" sizes="(min-width: 1600px) 888px, (min-width: 1201px) 785px, 96vw" width="1920" height="976" alt="Строй-Герой: наши материалы — ваша уверенность" fetchpriority="high"></picture></div>
 
+      {#
+        Доставка, оплата, возврат: в макете здесь стояли заготовки «- от
+        заказчика», и на живом сайте их видели покупатели, а Яндекс взял
+        одну в описание сайта. Условий заказчик пока не дал, выдумывать
+        их нельзя - поэтому «уточняйте по телефону». Дадут условия (или
+        страницы о них) - текст сюда, а плитку можно сделать ссылкой.
+      #}
       <div class="tiles"><div class="tile reveal">
           <span class="tile__icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 9h16v11H4z"/><path d="m4 9 1.5-5h13L20 9M4 9a2.5 2.5 0 0 0 4 1 2.5 2.5 0 0 0 4 0 2.5 2.5 0 0 0 4 0 2.5 2.5 0 0 0 4-1"/></svg></span>
           <strong class="tile__title">Три магазина на Камчатке</strong>
@@ -49,15 +56,15 @@
         </div><div class="tile reveal">
           <span class="tile__icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 7h11v9H3z"/><path d="M14 10h3.5l3.5 3.5V16h-7z"/><circle cx="7.5" cy="18" r="1.7"/><circle cx="17" cy="18" r="1.7"/></svg></span>
           <strong class="tile__title">Доставка</strong>
-          <span class="tile__text ph ph--inline">зоны, сроки и стоимость — от заказчика</span>
+          <span class="tile__text">Условия уточняйте по телефону магазина</span>
         </div><div class="tile reveal">
           <span class="tile__icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 15h3"/></svg></span>
           <strong class="tile__title">Оплата</strong>
-          <span class="tile__text ph ph--inline">способы оплаты и работа с юрлицами — от заказчика</span>
+          <span class="tile__text">Способы оплаты уточняйте по телефону</span>
         </div><div class="tile reveal">
           <span class="tile__icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3 7 3v5.5c0 4.4-3 8-7 9.5-4-1.5-7-5.1-7-9.5V6z"/><path d="m9 12 2 2 4-4"/></svg></span>
           <strong class="tile__title">Гарантия и возврат</strong>
-          <span class="tile__text ph ph--inline">условия возврата и обмена — от заказчика</span>
+          <span class="tile__text">Условия уточняйте по телефону магазина</span>
         </div></div>
 
       <div class="intro">
@@ -112,13 +119,14 @@
     <div class="container">
       <div class="short-banners">
 
-        <article class="banner reveal">
-          <span class="banner__stripe" aria-hidden="true"></span>
-          <span class="banner__label">Акция</span>
-          <h2 class="banner__title">Скидки месяца</h2>
-          <p class="ph"><strong>Нужны данные</strong>Действующие акции и проценты — от заказчика. Сюда встанет предложение с датами.</p>
-        </article>
-
+        {#
+          Здесь в макете стоял баннер «Скидки месяца» с заготовкой «Нужны
+          данные - акции и проценты от заказчика». На живой сайт заготовка
+          уехала как есть; акций заказчик пока не дал, поэтому баннера нет.
+          Появится акция с датами - вернуть сюда article.banner (сетка на
+          два места; один баннер занимает всю ширину - правило
+          в opencart.css).
+        #}
         <article class="banner reveal">
           <span class="banner__stripe" aria-hidden="true"></span>
           <span class="banner__label">Бесплатно</span>
@@ -161,7 +169,7 @@
   <div class="shop-card__body">
     <p class="shop-card__city">Петропавловск-Камчатский</p>
     <h3 class="shop-card__addr">ул. Чубарова, 16, корп. 40</h3>
-    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><a href="tel:+79638300999">8-963-830-09-99</a></p>
+    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><a href="tel:+79638319999">8-963-831-99-99</a></p>
     <p class="shop-card__row shop-card__hours" data-hours-weekday="09:00-19:00" data-hours-weekend="10:00-18:00"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Пн–Пт 9:00–19:00, Сб–Вс 10:00–18:00</span><span class="shop-card__now" data-hours-now hidden></span></p><a class="shop-card__route" href="https://yandex.ru/maps/?rtext=~%D0%9F%D0%B5%D1%82%D1%80%D0%BE%D0%BF%D0%B0%D0%B2%D0%BB%D0%BE%D0%B2%D1%81%D0%BA-%D0%9A%D0%B0%D0%BC%D1%87%D0%B0%D1%82%D1%81%D0%BA%D0%B8%D0%B9%2C%20%D1%83%D0%BB.%20%D0%A7%D1%83%D0%B1%D0%B0%D1%80%D0%BE%D0%B2%D0%B0%2C%2016%2C%20%D0%BA%D0%BE%D1%80%D0%BF.%2040&amp;rtt=auto" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Построить маршрут</span><span class="visually-hidden"> (в новой вкладке)</span></a>
     
   </div>
@@ -170,7 +178,7 @@
   <div class="shop-card__body">
     <p class="shop-card__city">Петропавловск-Камчатский</p>
     <h3 class="shop-card__addr">просп. 50 лет Октября, 17А</h3>
-    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><a href="tel:+79638300999">8-963-830-09-99</a></p>
+    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><a href="tel:+79638319999">8-963-831-99-99</a></p>
     <p class="shop-card__row shop-card__hours" data-hours-weekday="09:00-19:00" data-hours-weekend="09:00-18:00"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Пн–Пт 9:00–19:00, Сб–Вс 9:00–18:00</span><span class="shop-card__now" data-hours-now hidden></span></p><a class="shop-card__route" href="https://yandex.ru/maps/?rtext=~%D0%9F%D0%B5%D1%82%D1%80%D0%BE%D0%BF%D0%B0%D0%B2%D0%BB%D0%BE%D0%B2%D1%81%D0%BA-%D0%9A%D0%B0%D0%BC%D1%87%D0%B0%D1%82%D1%81%D0%BA%D0%B8%D0%B9%2C%20%D0%BF%D1%80%D0%BE%D1%81%D0%BF.%2050%20%D0%BB%D0%B5%D1%82%20%D0%9E%D0%BA%D1%82%D1%8F%D0%B1%D1%80%D1%8F%2C%2017%D0%90&amp;rtt=auto" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Построить маршрут</span><span class="visually-hidden"> (в новой вкладке)</span></a>
     
   </div>
@@ -179,7 +187,7 @@
   <div class="shop-card__body">
     <p class="shop-card__city">Елизово</p>
     <h3 class="shop-card__addr">Магистральная ул., 2/2</h3>
-    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><a href="tel:+79638300999">8-963-830-09-99</a></p>
+    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><a href="tel:+79638319999">8-963-831-99-99</a></p>
     <p class="shop-card__row shop-card__hours" data-hours-weekday="09:00-19:00" data-hours-weekend="09:00-18:00"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Пн–Пт 9:00–19:00, Сб–Вс 9:00–18:00</span><span class="shop-card__now" data-hours-now hidden></span></p><a class="shop-card__route" href="https://yandex.ru/maps/?rtext=~%D0%95%D0%BB%D0%B8%D0%B7%D0%BE%D0%B2%D0%BE%2C%20%D0%9C%D0%B0%D0%B3%D0%B8%D1%81%D1%82%D1%80%D0%B0%D0%BB%D1%8C%D0%BD%D0%B0%D1%8F%20%D1%83%D0%BB.%2C%202/2&amp;rtt=auto" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Построить маршрут</span><span class="visually-hidden"> (в новой вкладке)</span></a>
     
   </div>

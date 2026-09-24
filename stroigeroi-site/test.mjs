@@ -431,7 +431,7 @@ for (const name of ['index', 'catalog', 'checkout', 'contacts', 'login']) {
     (await walk('корзина → оформление', () => page.click('a[href="checkout.html"]'), 'checkout.html')) &&
     (await walk('оформление → заказ принят', async () => {
       await page.fill('#co-name', 'Иван');
-      await page.fill('#co-phone', '9638300999');
+      await page.fill('#co-phone', '9638319999');
       await page.check('.consent input[type=checkbox]');
       await page.click('.checkout button[type=submit]');
     }, 'order-done.html'));

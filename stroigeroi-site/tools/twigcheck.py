@@ -70,6 +70,16 @@ for f in sorted(pathlib.Path(sys.argv[1]).rglob('*.twig')):
         if depth:
             print(f'{f}: пометка noindex не закрыта — Яндекс не проиндексирует всё, что ниже неё'); bad += 1
 
+    # Заготовки макета. В макете пунктирные места (класс ph) с подписью
+    # «- от заказчика» показывают, каких данных не хватает; в теме их
+    # видят покупатели. 24.09.2026 Яндекс показывал в описании сайта
+    # «Доставка зоны, сроки и стоимость - от заказчика». Комментарии Twig
+    # заменены пустыми строками, чтобы номера строк не съехали.
+    body = re.sub(r'\{#.*?#\}', lambda m: '\n' * m.group(0).count('\n'), raw, flags=re.S)
+    for m in re.finditer(r'class="(?:[^"]*\s)?ph(?:\s[^"]*)?"|от\s+заказчика|Нужны\s+данные', body):
+        line = body.count('\n', 0, m.start()) + 1
+        print(f'{f}:{line}: заготовка макета на живом сайте — «{m.group(0)}»'); bad += 1
+
     for m in re.finditer(r'<script>(.*?)</script>', raw, re.S):
         if '{{' in m.group(1) or '{%' in m.group(1):
             print(f'{f}: теги Twig внутри <script> - так делать нельзя'); bad += 1
@@ -107,5 +117,20 @@ if header.exists():
         elif loop >= 0 and at > loop:
             print(f'header.twig: {lib} подключается ПОСЛЕ скриптов расширений — '
                   f'им он нужен раньше'); bad += 1
+
+# Номер телефона написан в шаблонах словом, в двух десятках мест, и ещё
+# в app.js. 24.09.2026 заказчик сменил номер: поменять его не везде -
+# значит оставить покупателю ссылку, по которой звонок уйдёт на старый.
+# Все ссылки tel: в теме обязаны вести на один номер.
+tels = {}
+theme_root = pathlib.Path(sys.argv[1])
+for f in sorted(theme_root.rglob('*.twig')) + sorted(theme_root.rglob('app.js')):
+    for num in re.findall(r'tel:(\+?\d+)', f.read_text(encoding='utf-8')):
+        tels.setdefault(num, set()).add(f.name)
+if len(tels) > 1:
+    for num, where in sorted(tels.items()):
+        print(f'tel:{num} — {", ".join(sorted(where))}')
+    print('В теме ссылки tel: ведут на разные номера — номер поменяли не везде'); bad += 1
+print(f'Номер в ссылках tel: {", ".join(sorted(tels)) or "нет ни одной"}')
 
 sys.exit(1 if bad else 0)

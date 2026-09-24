@@ -171,9 +171,9 @@ ORDER_DONE = '''
 
       <div class="error-page__actions row-actions">
         <a class="btn btn--action btn--lg" href="catalog.html">Продолжить покупки</a>
-        <a class="btn btn--outline btn--lg" href="tel:+79638300999">
+        <a class="btn btn--outline btn--lg" href="tel:+79638319999">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg>
-          8-963-830-09-99
+          8-963-831-99-99
         </a>
       </div>
 

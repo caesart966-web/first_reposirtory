@@ -158,7 +158,9 @@ jobs:
             exit 1
           fi
 
-      # Обработчики форм выполняются на хостинге под PHP 7.4.33.
+      # Обработчики форм выполняются на хостинге под PHP 7.4.33. Туда же
+      # относятся серверные файлы правок из tools/server: их запускают
+      # командой в Shell хостинга, и версия PHP там может быть той же.
       #
       # Проверка в два приёма. Сначала обычный разбор синтаксиса тем PHP,
       # что стоит на сборочной машине. Потом — поиск конструкций, которые
@@ -169,9 +171,9 @@ jobs:
       # не имеющим.
       - name: Обработчики годятся для PHP 7.4
         run: |
-          find opencart-theme -name '*.php' -print0 | xargs -0 -r -n1 php -l
+          find opencart-theme tools/server -name '*.php' -print0 | xargs -0 -r -n1 php -l
           NEW='(\?->|\bmatch[[:space:]]*\(|\breadonly[[:space:]]|:[[:space:]]*never\b|\benum[[:space:]]+[A-Za-z]|\bstr_contains\(|\bstr_starts_with\(|\bstr_ends_with\()'
-          if grep -rInE "$NEW" --include='*.php' opencart-theme; then
+          if grep -rInE "$NEW" --include='*.php' opencart-theme tools/server; then
             echo '::error::В коде есть синтаксис новее PHP 7.4 — на хостинге он не выполнится.'
             exit 1
           fi
