@@ -219,7 +219,7 @@
   Число одно на все три файла: обновился любой - адрес меняется у всех,
   зато нельзя забыть какой-то из них.
 #}
-{% set asset_v = '89e642ac' %}
+{% set asset_v = 'c88e1f83' %}
 {#
   Стили расширений идут ПЕРВЫМИ, наши - последними, и порядок здесь
   важнее, чем кажется. Оформление заказа рисует модуль Simple, со своим
@@ -328,7 +328,12 @@
     <div class="container header-main__inner">
       <a class="site-logo" href="{{ home }}">
         <img src="catalog/view/theme/stroigeroi2026/image/logo.png" width="64" height="64" alt="{{ name }} — наши материалы, ваша уверенность" decoding="async">
-        <span class="site-logo__word">{{ name }}</span>
+        {#
+          Фирменная надпись «СТРОЙ★ГЕРОЙ» от заказчика (24.09.2026) вместо
+          названия текстом. alt пустой: имя магазина уже в alt знака рядом,
+          и экранный диктор прочёл бы его дважды. Размеры - в opencart.css.
+        #}
+        <picture class="site-logo__mark"><source type="image/avif" srcset="catalog/view/theme/stroigeroi2026/image/wordmark.avif"><source type="image/webp" srcset="catalog/view/theme/stroigeroi2026/image/wordmark.webp"><img src="catalog/view/theme/stroigeroi2026/image/wordmark.png" width="700" height="103" alt="" decoding="async"></picture>
       </a>
 
       <button class="header-catalog" type="button" data-catalog-toggle aria-expanded="false" aria-controls="catalog-menu">

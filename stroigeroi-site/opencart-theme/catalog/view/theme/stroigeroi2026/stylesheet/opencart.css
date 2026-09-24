@@ -1704,3 +1704,95 @@ div.modal .close:hover { color: var(--sg-red); }
   font-size: 14px;
   color: var(--sg-muted);
 }
+
+/* ---- Фирменная надпись «СТРОЙ★ГЕРОЙ» (картинка от заказчика) ------------
+   В шапке - рядом с круглым знаком, вместо названия текстом; в подвале -
+   вместо «Строй-Герой» словом. Чёрная обводка у надписи своя, поэтому
+   она одинаково читается на белой шапке, на синем подвале и в тёмной
+   теме.
+
+   Высота надписи в шапке - одна переменная --mark-h на все ширины,
+   подобранная замерами: шапка с надписью не должна стать выше, чем без
+   неё, а поиску должно хватать места.
+   - от 1280 px - 30 px;
+   - 1100-1279 - 24 px, 901-1099 - 20 px: с 901 px поиск стоит в той же
+     строке, и при 30 px ему оставалось 225 px на 1024 и меньше ниже;
+   - 768-900 - 30 px: поиск там на своей строке;
+   - шапка, сжатая при прокрутке, - не больше 24 px и не крупнее,
+     чем в обычной;
+   - телефон 390-767 - 20 px; 360-389 - 16 px и отступ меньше;
+     уже 360 - только круглый знак: знак, надпись и три значка
+     в одну строку не встают, шапка переносилась на третью строку.
+
+   Правило .site-header.is-compact .site-logo img в style.css растягивает
+   все картинки логотипа до 48x48 - и надпись тоже. Селектор ниже той же
+   силы и стоит позже (opencart.css подключается после style.css),
+   поэтому перебивает его. */
+.site-logo__mark {
+  display: block;
+  flex: none;
+  line-height: 0;
+}
+
+.site-header .site-logo .site-logo__mark img {
+  width: auto;
+  height: var(--mark-h, 30px);
+}
+
+@media (min-width: 1100px) and (max-width: 1279px) {
+  .site-logo {
+    --mark-h: 24px;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1099px) {
+  .site-logo {
+    --mark-h: 20px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 900px), (min-width: 1280px) {
+  .site-header.is-compact .site-logo {
+    --mark-h: 24px;
+  }
+}
+
+@media (max-width: 767px) {
+  .site-logo {
+    --mark-h: 20px;
+  }
+
+  /* В сжатой шапке знак на телефоне вырастал с 44 до 48 px (правило
+     для компьютера, 64 -> 48, задевало и телефон), и надпись рядом
+     переставала помещаться. Сжатая шапка знак не увеличивает. */
+  .site-header.is-compact .site-logo > img {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+@media (max-width: 389px) {
+  .site-logo {
+    --mark-h: 16px;
+    gap: var(--sp-2);
+  }
+}
+
+@media (max-width: 359px) {
+  .site-logo__mark {
+    display: none;
+  }
+}
+
+/* Ссылка в подвале теперь - картинка, а не слово: без line-height: 0
+   строка текста в 24 px оставляла зазор под надписью. */
+.footer-brand__word--mark {
+  line-height: 0;
+}
+
+.footer-brand__mark img {
+  display: block;
+  width: 240px;
+  max-width: 100%;
+  height: auto;
+}
