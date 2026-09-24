@@ -58,7 +58,10 @@
   Карточка магазина для поисковиков (schema.org/Store). Ровно те же
   адреса, телефон и часы, что стоят на странице выше и в подвале, -
   иначе Яндекс показывает одно, а посетитель на сайте видит другое.
-  Правите график или адрес - правьте и здесь.
+  Правите график, адрес или телефон - правьте и здесь. С 24.09.2026
+  у каждой точки свой номер (по 2ГИС), общий «telephone» - основной;
+  render-check.php сверяет номер каждой точки со списком «Магазины»
+  на странице.
 
   Блок был написан и выверен ещё в макете, но при переносе в тему
   потерялся: у магазина с тремя точками это ровно то, из чего
@@ -113,7 +116,7 @@
       {
         "@type": "Store",
         "name": "Строй-Герой — просп. 50 лет Октября, 17А",
-        "telephone": "+7-963-831-99-99",
+        "telephone": "+7-963-830-09-99",
         "address": {
           "@type": "PostalAddress",
           "streetAddress": "просп. 50 лет Октября, 17А",
@@ -148,7 +151,7 @@
       {
         "@type": "Store",
         "name": "Строй-Герой — Магистральная ул., 2/2",
-        "telephone": "+7-963-831-99-99",
+        "telephone": "+7-963-830-03-33",
         "address": {
           "@type": "PostalAddress",
           "streetAddress": "Магистральная ул., 2/2",
@@ -216,7 +219,7 @@
   Число одно на все три файла: обновился любой - адрес меняется у всех,
   зато нельзя забыть какой-то из них.
 #}
-{% set asset_v = 'd398e645' %}
+{% set asset_v = '89e642ac' %}
 {#
   Стили расширений идут ПЕРВЫМИ, наши - последними, и порядок здесь
   важнее, чем кажется. Оформление заказа рисует модуль Simple, со своим
@@ -295,7 +298,7 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg> Магазины <span class="icon-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></span>
           </button>
           <div class="dropdown__panel" id="util-shops" data-dropdown-panel hidden>
-            <div class="dropdown__item"><strong>ул. Чубарова, 16, корп. 40</strong><span>Петропавловск-Камчатский</span></div><div class="dropdown__item"><strong>просп. 50 лет Октября, 17А</strong><span>Петропавловск-Камчатский</span></div><div class="dropdown__item"><strong>Магистральная ул., 2/2</strong><span>Елизово</span></div>
+            <div class="dropdown__item"><strong>ул. Чубарова, 16, корп. 40</strong><span>Петропавловск-Камчатский</span><a class="dropdown__tel" href="tel:+79638319999">8-963-831-99-99</a></div><div class="dropdown__item"><strong>просп. 50 лет Октября, 17А</strong><span>Петропавловск-Камчатский</span><a class="dropdown__tel" href="tel:+79638300999">8-963-830-09-99</a></div><div class="dropdown__item"><strong>Магистральная ул., 2/2</strong><span>Елизово</span><a class="dropdown__tel" href="tel:+79638300333">8-963-830-03-33</a></div>
           </div>
         </div>
 

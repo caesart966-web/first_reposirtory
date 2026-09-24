@@ -462,7 +462,10 @@ ul {
   z-index: 50;
   min-width: 290px;
   padding: var(--sp-4);
-  background: var(--sg-on-dark);
+  /* Цвет поверхности, а не «белый на тёмном»: текст панели - var(--sg-ink),
+     и в тёмной теме он светлый. С белой подложкой адреса магазинов
+     и график были почти не видны (найдено 24.09.2026). */
+  background: var(--sg-white);
   border: 1px solid var(--sg-line);
   border-radius: var(--r-lg);
   box-shadow: var(--sh-md);
@@ -7457,7 +7460,7 @@ p a:not(.btn):hover,
 
     <div class="page-head">
       <h1>Контакты</h1>
-      <p>Три магазина: два в Петропавловске-Камчатском и один в Елизово. Телефон общий — звоните в любой.</p>
+      <p>Три магазина: два в Петропавловске-Камчатском и один в Елизово.</p>
     </div>
 
     <section class="section section--tight flush-top">

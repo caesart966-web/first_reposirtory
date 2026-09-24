@@ -1,11 +1,14 @@
 <?php
 /*
-  Серверная часть правки 21: страницы. Команда из сообщения заказчику
+  Серверная часть правки 22: страницы. Команда из сообщения заказчику
   снимает curl'ом главную, раздел, товар и контакты уже после правки
   и базы, а этот файл их читает. Только читает; через сайт не работает.
 
-  -- check    на каждой странице: сколько раз старый номер, сколько новый,
-              сколько заготовок макета (класс ph); ждём 0 / больше 0 / 0
+  -- check    на каждой странице: какой номер в шапке (ждём основной,
+              +79638319999), сколько из трёх магазинов со своим номером
+              (ждём 3/3 - список «Магазины» в шапке), не осталось ли
+              «один телефон на все магазины» и заготовок макета (класс ph),
+              и нет ли ссылок tel: на номера не из списка действующих
   -- blocks   все блоки OCFilter на странице раздела
   -- markup   дерево #ocfilter: теги, id, классы, data-атрибуты; одинаковых
               соседей по два, остальные - «... +N more»; до 120 строк
@@ -24,6 +27,9 @@ if (PHP_SAPI !== 'cli') {
 $dir = isset($argv[1]) ? rtrim($argv[1], '/') : '.';
 
 echo "-- check\n";
+$PHONES = array('+79638319999', '+74152319999', '+79638300999', '+74152400999', '+79638300333',
+                '+74152400333', '+79098904075', '+79638304111');
+$STORES = array('+79638319999', '+79638300999', '+79638300333');
 foreach (array('glavnaya', 'razdel', 'tovar', 'kontakty') as $name) {
     $f = "$dir/$name.html";
     $h = is_file($f) ? file_get_contents($f) : '';
@@ -31,10 +37,17 @@ foreach (array('glavnaya', 'razdel', 'tovar', 'kontakty') as $name) {
         echo "$name: страница не открылась\n";
         continue;
     }
-    $old = preg_match_all('/963\D{0,8}830\D{0,8}09\D{0,8}99/', $h);
-    $new = preg_match_all('/963\D{0,8}831\D{0,8}99\D{0,8}99/', $h);
+    $main = preg_match('/class="header-util__phone" href="tel:([^"]+)"/', $h, $mm) ? $mm[1] : 'нет';
+    $stores = 0;
+    foreach ($STORES as $t) {
+        $stores += strpos($h, 'href="tel:' . $t . '"') !== false ? 1 : 0;
+    }
+    $claims = preg_match_all('/один\s+телефон\s+на\s+все|Телефон\s+общий/u', $h);
     $ph = preg_match_all('/class="(?:[^"]*\s)?ph(?:\s[^"]*)?"/', $h);
-    echo "$name: old number $old, new number $new, placeholders $ph\n";
+    preg_match_all('/href="tel:([^"]+)"/', $h, $all);
+    $alien = array_values(array_unique(array_diff($all[1], $PHONES)));
+    echo "$name: main $main, stores $stores/3, old wording $claims, placeholders $ph",
+         $alien ? ', other numbers ' . implode(' ', $alien) : '', "\n";
 }
 
 $f = "$dir/razdel.html";

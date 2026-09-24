@@ -1654,3 +1654,53 @@ div.modal .close:hover { color: var(--sg-red); }
 .short-banners > :only-child {
   grid-column: 1 / -1;
 }
+
+/* ---- Свои телефоны у каждого магазина (24.09.2026) ----------------------
+   Раньше на сайте был один номер «на все магазины». По карточкам 2ГИС
+   у каждой точки свои номера: мобильный и городской, у Елизово ещё свой
+   номер для юрлиц. Основной номер (8-963-831-99-99) остался в шапке,
+   в предупреждении «Сайт в разработке» и в «Связаться с нами»; номера
+   точек - в списке «Магазины» в шапке, в подвале под адресом, в карточках
+   магазинов (главная, контакты) и в разметке для поисковиков. */
+.dropdown__tel {
+  display: inline-block;
+  margin-top: var(--sp-1);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--sg-blue);
+  text-decoration: none;
+}
+
+.dropdown__tel:hover,
+.dropdown__tel:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+/* Своей строкой под городом: город - строчный <em>, и номер вплотную
+   за ним читался «Петропавловск-Камчатский8-963-…». fit-content - чтобы
+   подчёркивание шло под номером, а не на всю колонку. */
+.footer-shops__tel {
+  display: block;
+  width: fit-content;
+  margin-top: 2px;
+  font-size: 14px;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+/* Два номера в строке карточки: рядом, а на узкой карточке - друг под
+   другом. Обёртка нужна строке-flex: иначе значок и две ссылки стали бы
+   тремя колонками. */
+.shop-card__phones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--sp-4);
+  min-width: 0;
+}
+
+.shop-card__row--legal {
+  font-size: 14px;
+  color: var(--sg-muted);
+}

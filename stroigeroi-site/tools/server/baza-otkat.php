@@ -1,8 +1,9 @@
 <?php
 /*
-  Откат замены номера из baza.php: возвращает прежние значения из таблицы
-  phone_before и удаляет её. Только из командной строки; через сайт не
-  работает. Запуск: php baza-otkat.php <папка сайта>
+  Откат замены номера из baza.php: возвращает прежние значения из таблиц
+  phone22_before (правка 22) и phone_before (правка 21) и удаляет их.
+  Только из командной строки; через сайт не работает.
+  Запуск: php baza-otkat.php <папка сайта>
 */
 if (PHP_SAPI !== 'cli') {
     exit;
@@ -16,25 +17,30 @@ if ($m->connect_error) {
     exit(1);
 }
 $m->set_charset('utf8');
-$b = DB_PREFIX . 'phone_before';
-$r = $m->query("SELECT tbl, where_sql, col, old_value FROM `$b`");
-if (!$r) {
-    echo "нет таблицы $b - откатывать нечего\n";
-    exit;
-}
-$ok = 0;
-$bad = 0;
-while ($row = $r->fetch_assoc()) {
-    $sql = 'UPDATE `' . $row['tbl'] . '` SET `' . $row['col'] . "` = '" . $m->real_escape_string($row['old_value']) . "' WHERE " . $row['where_sql'];
-    if ($m->query($sql)) {
-        $ok++;
-    } else {
-        echo $row['tbl'], ': ', $m->error, "\n";
-        $bad++;
+foreach (array('phone22_before', 'phone_before') as $name) {
+    $b = DB_PREFIX . $name;
+    $r = $m->query("SELECT tbl, where_sql, col, old_value FROM `$b`");
+    if (!$r) {
+        continue;
     }
+    $ok = 0;
+    $bad = 0;
+    while ($row = $r->fetch_assoc()) {
+        $sql = 'UPDATE `' . $row['tbl'] . '` SET `' . $row['col'] . "` = '" . $m->real_escape_string($row['old_value']) . "' WHERE " . $row['where_sql'];
+        if ($m->query($sql)) {
+            $ok++;
+        } else {
+            echo $row['tbl'], ': ', $m->error, "\n";
+            $bad++;
+        }
+    }
+    echo "$b: возвращено значений $ok", $bad ? ", не вышло $bad" : '', "\n";
+    if (!$bad) {
+        $m->query("DROP TABLE `$b`");
+        echo "таблица $b удалена\n";
+    }
+    $done = true;
 }
-echo "возвращено значений: $ok", $bad ? ", не вышло: $bad" : '', "\n";
-if (!$bad) {
-    $m->query("DROP TABLE `$b`");
-    echo "таблица $b удалена\n";
+if (empty($done)) {
+    echo "нет таблиц phone22_before и phone_before - откатывать нечего\n";
 }
