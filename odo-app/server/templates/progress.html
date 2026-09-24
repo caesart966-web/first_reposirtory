@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Разбор документов · {{ company.name }}{% endblock %}
+{% block content %}
+<p class="crumbs"><a href="/">Компании</a> › <a href="/company/{{ company.id }}">{{ company.name }}</a> › новый договор</p>
+<h1>Разбираю документы</h1>
+<div class="card">
+  <p id="stage">Готовлюсь…</p>
+  <div class="bar"><div id="fill" class="bar-fill" style="width:0%"></div></div>
+  <p id="detail" class="muted">Файлов: 0 из {{ job.files_total }}</p>
+  <p id="err" class="notice error" hidden></p>
+  <p class="muted">Сканы распознаются постранично, 2–3 секунды на страницу. Окно можно свернуть, но не закрывайте программу.</p>
+</div>
+<script>
+(function(){
+  var url='/contract/{{ ct.id }}/progress.json', stageEl=document.getElementById('stage'), fill=document.getElementById('fill'), det=document.getElementById('detail'), err=document.getElementById('err');
+  function mmss(s){ s=Math.max(0,Math.round(s)); return Math.floor(s/60)+':'+('0'+(s%60)).slice(-2); }
+  function tick(){
+    fetch(url,{cache:'no-store'}).then(function(r){return r.json();}).then(function(j){
+      if(j.stage==='done'){ window.location.replace('/contract/{{ ct.id }}/card'); return; }
+      if(j.stage==='error'){ stageEl.textContent='Не получилось разобрать документы.'; err.textContent=j.error||''; err.hidden=false; return; }
+      var files=j.files_total||1, fd=j.files_done||0, pct=0, text='';
+      if(j.stage==='ocr'){ text='Распознаю скан: '+j.file+' — страница '+Math.min(j.page+1,j.pages)+' из '+j.pages+(j.eta!=null?', осталось около '+mmss(j.eta):''); pct=(fd+(j.pages?j.page/j.pages:0))/files*100; }
+      else if(j.stage==='extract'){ text='Читаю: '+j.file; pct=(fd+0.5)/files*100; }
+      else if(j.stage==='parse'){ text='Заполняю карточку по документам…'; pct=97; }
+      else if(j.stage==='llm'){ text='ИИ уточняет карточку…'; pct=98; }
+      else { text='Готовлюсь…'; }
+      stageEl.textContent=text; fill.style.width=Math.max(2,Math.min(99,pct)).toFixed(0)+'%';
+      det.textContent='Файлов: '+fd+' из '+files+' · прошло '+mmss(j.elapsed||0);
+      setTimeout(tick,1000);
+    }).catch(function(){ setTimeout(tick,2000); });
+  }
+  tick();
+})();
+</script>
+{% endblock %}

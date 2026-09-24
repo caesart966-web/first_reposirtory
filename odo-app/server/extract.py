@@ -34,7 +34,7 @@ def ocr_available() -> bool:
     return tesseract_cmd() is not None
 
 
-def _pdf_text(path: Path) -> tuple[str, bool]:
+def _pdf_text(path: Path, progress=None) -> tuple[str, bool]:
     import pymupdf
     doc = pymupdf.open(path)
     parts = []
@@ -43,6 +43,8 @@ def _pdf_text(path: Path) -> tuple[str, bool]:
     text = "".join(parts)
     _pdf_text.last_ocr = False
     if len(text.strip()) > 40 * len(doc):
+        if progress:
+            progress(len(doc), len(doc), "text")
         return text, False
     # скан: распознаём, если есть tesseract (в .exe он встроен)
     cmd = tesseract_cmd()
@@ -52,12 +54,16 @@ def _pdf_text(path: Path) -> tuple[str, bool]:
         out = []
         with tempfile.TemporaryDirectory() as td:
             for i, p in enumerate(doc):
+                if progress:
+                    progress(i, len(doc), "ocr")
                 png = Path(td) / f"p{i}.png"
                 p.get_pixmap(dpi=200).save(str(png))
                 r = subprocess.run([cmd, str(png), "-", "-l", "rus+eng", "--psm", "3"], capture_output=True, text=True, env=env,
                                    encoding="utf-8", errors="replace", creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
                 out.append(f"\n===== стр. {i + 1} =====\n" + (r.stdout or ""))
         text = "".join(out)
+        if progress:
+            progress(len(doc), len(doc), "ocr")
         _pdf_text.last_ocr = len(text.strip()) >= 40 * len(doc)
         return text, len(text.strip()) < 40 * len(doc)
     return text, True
@@ -79,8 +85,8 @@ def _xlsx_text(path: Path) -> str:
     return "\n".join(out)
 
 
-def extract_text(path: str | Path) -> tuple[str, dict]:
-    """→ (текст, {scanned: bool, kind_hint: str})."""
+def extract_text(path: str | Path, progress=None) -> tuple[str, dict]:
+    """→ (текст, {scanned: bool, ocr: bool, kind_hint: str}). progress(page, pages, stage) — ход распознавания."""
     p = Path(path)
     ext = p.suffix.lower()
     scanned = False
@@ -88,7 +94,7 @@ def extract_text(path: str | Path) -> tuple[str, dict]:
     if ext == ".docx":
         text = _docx_text(p)
     elif ext == ".pdf":
-        text, scanned = _pdf_text(p)
+        text, scanned = _pdf_text(p, progress)
         ocr = _pdf_text.last_ocr
     elif ext in (".xlsx", ".xlsm"):
         text = _xlsx_text(p)

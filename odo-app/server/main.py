@@ -8,6 +8,8 @@ import json
 import re
 import secrets
 import shutil
+import threading
+import time
 from pathlib import Path
 from urllib.parse import quote
 
@@ -232,13 +234,17 @@ async def contract_new(request: Request, cid: int):
     return render(request, "upload.html", company=comp, ocr_on=ocr_available())
 
 
+JOBS: dict[int, dict] = {}   # ход разбора по договорам: {ct_id: {stage, file, files_done, files_total, page, pages, started, error}}
+
+
 @app.post("/company/{cid}/contracts/new")
 async def contract_upload(request: Request, cid: int, files: list[UploadFile] = File(...), use_llm: str = Form("")):
+    """Файлы сохраняются сразу, разбор (с распознаванием сканов) идёт в фоне — страница прогресса опрашивает состояние."""
     comp = db.company(cid)
     ct_id = db.add_contract(cid, None, {}, {"needs_review": [], "warnings": [], "hints": {}})
     folder = UPLOAD_DIR / str(ct_id)
     folder.mkdir(parents=True, exist_ok=True)
-    docs = []
+    saved = []
     for up in files:
         if not up.filename:
             continue
@@ -246,25 +252,73 @@ async def contract_upload(request: Request, cid: int, files: list[UploadFile] = 
         dest = folder / safe
         with open(dest, "wb") as f:
             shutil.copyfileobj(up.file, f)
-        text, meta = extract_text(dest)
-        db.add_file(ct_id, up.filename, str(dest.relative_to(DATA_DIR)), meta["kind_hint"], len(text), meta["scanned"])
-        docs.append({"filename": up.filename, "kind": meta["kind_hint"], "text": text, "scanned": meta["scanned"], "ocr": meta.get("ocr", False)})
-    member = {"name": comp["name"], "inn": comp.get("inn"), "sro_kinds": ["build"]}
-    card, meta = build_card(member, docs)
-    if use_llm and llm.available():
-        card, meta = llm.merge(card, llm.extract_card(docs, engine.card_schema(), member), meta)
-    scanned = [d["filename"] for d in docs if d.get("scanned")]
-    if scanned:
-        meta["warnings"].append("Скан без текстового слоя, распознавание недоступно или не дало текста: " + ", ".join(scanned) + ". Данные из этого файла надо внести вручную.")
-    ocred = [d["filename"] for d in docs if d.get("ocr")]
-    if ocred:
-        meta["warnings"].append("Распознано со скана: " + ", ".join(ocred) + ". Проверьте цифры — распознавание может ошибаться в отдельных знаках.")
-    dup = db.find_contract_by_number(cid, card["contract"].get("number"))
-    if dup and dup["id"] != ct_id:
-        meta["warnings"].append(f"Договор с номером {card['contract']['number']} уже есть в реестре (№ записи {dup['id']}).")
-    db.update_contract(ct_id, number=card["contract"].get("number") or None, card=card, draft_meta=meta)
-    db.log(user_of(request), "contract.upload", ct_id, ", ".join(d["filename"] for d in docs))
-    return RedirectResponse(f"/contract/{ct_id}/card", status_code=303)
+        saved.append((up.filename, dest))
+    JOBS[ct_id] = {"stage": "queued", "file": "", "files_done": 0, "files_total": len(saved), "page": 0, "pages": 0, "started": time.time(), "error": None}
+    threading.Thread(target=_process_upload, args=(ct_id, cid, comp, saved, bool(use_llm and llm.available()), user_of(request)), daemon=True).start()
+    return RedirectResponse(f"/contract/{ct_id}/progress", status_code=303)
+
+
+def _process_upload(ct_id: int, cid: int, comp: dict, saved: list, use_llm: bool, user: str):
+    job = JOBS[ct_id]
+    try:
+        docs = []
+        for i, (filename, dest) in enumerate(saved):
+            job.update(stage="extract", file=filename, files_done=i, page=0, pages=0)
+
+            def progress(page, pages, stage, _job=job):
+                _job.update(page=page, pages=pages, stage=("ocr" if stage == "ocr" else "extract"))
+
+            text, meta = extract_text(dest, progress=progress)
+            db.add_file(ct_id, filename, str(dest.relative_to(DATA_DIR)), meta["kind_hint"], len(text), meta["scanned"])
+            docs.append({"filename": filename, "kind": meta["kind_hint"], "text": text, "scanned": meta["scanned"], "ocr": meta.get("ocr", False)})
+        job.update(stage="parse", files_done=len(saved), file="")
+        member = {"name": comp["name"], "inn": comp.get("inn"), "sro_kinds": ["build"]}
+        card, meta = build_card(member, docs)
+        if use_llm:
+            job.update(stage="llm")
+            card, meta = llm.merge(card, llm.extract_card(docs, engine.card_schema(), member), meta)
+        scanned = [d["filename"] for d in docs if d.get("scanned")]
+        if scanned:
+            meta["warnings"].append("Скан без текстового слоя, распознавание недоступно или не дало текста: " + ", ".join(scanned) + ". Данные из этого файла надо внести вручную.")
+        ocred = [d["filename"] for d in docs if d.get("ocr")]
+        if ocred:
+            meta["warnings"].append("Распознано со скана: " + ", ".join(ocred) + ". Проверьте цифры — распознавание может ошибаться в отдельных знаках.")
+        dup = db.find_contract_by_number(cid, card["contract"].get("number"))
+        if dup and dup["id"] != ct_id:
+            meta["warnings"].append(f"Договор с номером {card['contract']['number']} уже есть в реестре (№ записи {dup['id']}).")
+        db.update_contract(ct_id, number=card["contract"].get("number") or None, card=card, draft_meta=meta)
+        db.log(user, "contract.upload", ct_id, ", ".join(d["filename"] for d in docs))
+        job.update(stage="done")
+    except Exception as e:  # noqa: BLE001 — ошибку показываем на странице прогресса, а не теряем в фоне
+        import traceback
+        job.update(stage="error", error=f"{e}\n{traceback.format_exc()[-1500:]}")
+
+
+@app.get("/contract/{ct_id}/progress", response_class=HTMLResponse)
+async def progress_page(request: Request, ct_id: int):
+    ct = db.contract(ct_id)
+    if not ct:
+        return RedirectResponse("/", status_code=303)
+    job = JOBS.get(ct_id)
+    if not job or job["stage"] == "done":
+        return RedirectResponse(f"/contract/{ct_id}/card", status_code=303)
+    return render(request, "progress.html", ct=ct, company=db.company(ct["company_id"]), job=job)
+
+
+@app.get("/contract/{ct_id}/progress.json")
+async def progress_json(ct_id: int):
+    job = JOBS.get(ct_id)
+    if not job:
+        return JSONResponse({"stage": "done"})
+    out = dict(job)
+    out["elapsed"] = round(time.time() - job["started"])
+    # оценка остатка: по средней скорости страниц текущего файла
+    if job["stage"] == "ocr" and job["page"] > 0 and job["pages"]:
+        per_page = out["elapsed"] / max(job["page"], 1)
+        out["eta"] = round(per_page * (job["pages"] - job["page"]))
+    else:
+        out["eta"] = None
+    return JSONResponse(out)
 
 
 def file_path(f: dict) -> Path:
@@ -292,6 +346,9 @@ async def card_page(request: Request, ct_id: int, errors: str = ""):
     ct = db.contract(ct_id)
     if not ct:
         return RedirectResponse("/", status_code=303)
+    job = JOBS.get(ct_id)
+    if job and job["stage"] not in ("done", "error"):
+        return RedirectResponse(f"/contract/{ct_id}/progress", status_code=303)
     comp = db.company(ct["company_id"])
     return render(request, "card.html", ct=ct, card=ct["card"], meta=ct["draft_meta"] or {}, company=comp, files=db.files_of(ct_id),
                   errors=[e for e in errors.split("||") if e])

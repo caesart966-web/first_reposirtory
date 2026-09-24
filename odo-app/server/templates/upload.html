@@ -7,7 +7,7 @@
   <p>Выберите сразу все файлы по одному договору: <b>договор</b> (docx или pdf), <b>сметы</b> (объектный и сводный расчёты, локальные сметы), <b>акты КС‑2/КС‑3</b> и <b>дополнительные соглашения</b>, если есть. Тип каждого файла определится по содержимому.</p>
   <input type="file" name="files" multiple required accept=".docx,.pdf,.xlsx,.txt,.doc">
   {% if ocr_on %}
-  <p class="muted">Сканы распознаются автоматически: примерно 2–3 секунды на страницу, контракт на 40 страниц — около двух минут. Не закрывайте окно.</p>
+  <p class="muted">Сканы распознаются автоматически, примерно 2–3 секунды на страницу; ход разбора будет виден на следующей странице.</p>
   {% else %}
   <p class="notice warn">Распознавание сканов недоступно на этом компьютере (нет tesseract): данные из сканов придётся внести в форму вручную. В собранной версии .exe распознавание встроено.</p>
   {% endif %}
@@ -16,7 +16,7 @@
   {% else %}
   <p class="muted">ИИ-разбор выключен: нет ключа ANTHROPIC_API_KEY. Контракты по 44‑ФЗ разбираются правилами, остальное дозаполняется в форме.</p>
   {% endif %}
-  <div class="actions"><button type="submit" id="go">Разобрать документы</button> <span id="busy" class="muted" hidden>Читаю документы… сканы распознаются, это может занять несколько минут.</span></div>
+  <div class="actions"><button type="submit" id="go">Разобрать документы</button> <span id="busy" class="muted" hidden>Загружаю файлы…</span></div>
 </form>
-<script>document.querySelector('form').addEventListener('submit',function(){var b=document.getElementById('go');b.disabled=true;b.textContent='Разбираю…';document.getElementById('busy').hidden=false;});</script>
+<script>document.querySelector('form').addEventListener('submit',function(){var b=document.getElementById('go');b.disabled=true;b.textContent='Загружаю…';document.getElementById('busy').hidden=false;});</script>
 {% endblock %}

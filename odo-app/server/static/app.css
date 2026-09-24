@@ -31,3 +31,5 @@ table.kv{width:100%;border-collapse:collapse}table.kv th{text-align:left;width:3
 blockquote{margin:6px 0;padding:6px 12px;border-left:3px solid var(--line);color:#444;background:#faf8f3}pre.reply{white-space:pre-wrap;font:inherit;background:#faf8f3;padding:12px;border-radius:6px}
 ul.laws li{margin:4px 0}details summary{cursor:pointer;font-weight:600}
 @media print{header.top,.toolbar,.actions,.danger,.decide,.foot{display:none}main{max-width:none}}
+
+.bar{height:14px;background:#eee7dc;border-radius:7px;overflow:hidden;margin:10px 0}.bar-fill{height:100%;background:var(--red);transition:width .6s ease}

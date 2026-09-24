@@ -28,7 +28,14 @@ def test_flow():
              ("files", ("ССР.txt", (FX / "summary_fiction.txt").read_bytes(), "text/plain"))]
     r = client.post(f"/company/{cid}/contracts/new", files=files)
     assert r.status_code == 303
-    ct = int(re.search(r"/contract/(\d+)/card", r.headers["location"]).group(1))
+    ct = int(re.search(r"/contract/(\d+)/progress", r.headers["location"]).group(1))
+    import time
+    for _ in range(200):   # разбор идёт в фоне — ждём страницу прогресса до конца
+        j = client.get(f"/contract/{ct}/progress.json").json()
+        if j["stage"] in ("done", "error"):
+            break
+        time.sleep(0.1)
+    assert j["stage"] == "done", j.get("error")
     page = client.get(f"/contract/{ct}/card").text
     assert "0100000000000000001-7" in page and "12200000.0" in page
 
