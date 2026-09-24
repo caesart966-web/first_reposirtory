@@ -228,7 +228,8 @@ async def company_report(request: Request, cid: int):
 @app.get("/company/{cid}/contracts/new", response_class=HTMLResponse)
 async def contract_new(request: Request, cid: int):
     comp = db.company(cid)
-    return render(request, "upload.html", company=comp)
+    from .extract import ocr_available
+    return render(request, "upload.html", company=comp, ocr_on=ocr_available())
 
 
 @app.post("/company/{cid}/contracts/new")
@@ -247,14 +248,17 @@ async def contract_upload(request: Request, cid: int, files: list[UploadFile] = 
             shutil.copyfileobj(up.file, f)
         text, meta = extract_text(dest)
         db.add_file(ct_id, up.filename, str(dest.relative_to(DATA_DIR)), meta["kind_hint"], len(text), meta["scanned"])
-        docs.append({"filename": up.filename, "kind": meta["kind_hint"], "text": text, "scanned": meta["scanned"]})
+        docs.append({"filename": up.filename, "kind": meta["kind_hint"], "text": text, "scanned": meta["scanned"], "ocr": meta.get("ocr", False)})
     member = {"name": comp["name"], "inn": comp.get("inn"), "sro_kinds": ["build"]}
     card, meta = build_card(member, docs)
     if use_llm and llm.available():
         card, meta = llm.merge(card, llm.extract_card(docs, engine.card_schema(), member), meta)
     scanned = [d["filename"] for d in docs if d.get("scanned")]
     if scanned:
-        meta["warnings"].append("Скан без текстового слоя (распознавание не выполнено): " + ", ".join(scanned) + ". Данные из этого файла надо внести вручную.")
+        meta["warnings"].append("Скан без текстового слоя, распознавание недоступно или не дало текста: " + ", ".join(scanned) + ". Данные из этого файла надо внести вручную.")
+    ocred = [d["filename"] for d in docs if d.get("ocr")]
+    if ocred:
+        meta["warnings"].append("Распознано со скана: " + ", ".join(ocred) + ". Проверьте цифры — распознавание может ошибаться в отдельных знаках.")
     dup = db.find_contract_by_number(cid, card["contract"].get("number"))
     if dup and dup["id"] != ct_id:
         meta["warnings"].append(f"Договор с номером {card['contract']['number']} уже есть в реестре (№ записи {dup['id']}).")

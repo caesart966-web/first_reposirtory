@@ -16,6 +16,9 @@ datas = [
     (os.path.join(ENGINE, "references"), os.path.join("engine", "references")),
 ]
 datas += collect_data_files("pymupdf")
+TESS = os.environ.get("ODO_TESS_DIR")   # папка установленного tesseract (Windows): в сборке станет tesseract/
+if TESS and os.path.isdir(TESS):
+    datas.append((TESS, "tesseract"))
 hiddenimports = (collect_submodules("uvicorn") + collect_submodules("server") + collect_submodules("anthropic")
                  + ["multipart", "python_multipart", "jinja2", "jsonschema", "docx", "openpyxl", "pymupdf", "tkinter", "webview",
                     "uvicorn.logging", "uvicorn.loops.auto", "uvicorn.protocols.http.auto", "uvicorn.protocols.websockets.auto", "uvicorn.lifespan.on"])

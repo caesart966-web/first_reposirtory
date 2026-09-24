@@ -75,6 +75,10 @@ def main() -> int:
     os.environ["ODO_DATA_DIR"] = data
     os.environ["ODO_ENGINE_DIR"] = eng
     os.environ.setdefault("ODO_CASES_DIR", seed_cases(data, eng))
+    tess = os.path.join(BUNDLE, "tesseract", "tesseract.exe")
+    if FROZEN and os.path.exists(tess):
+        os.environ.setdefault("ODO_TESSERACT", tess)
+        os.environ.setdefault("TESSDATA_PREFIX", os.path.join(BUNDLE, "tesseract", "tessdata"))
     port = free_port(int(os.environ.get("ODO_PORT", "8765")))
     os.environ["ODO_PORT"] = str(port)
     os.environ["ODO_HOST"] = "127.0.0.1"

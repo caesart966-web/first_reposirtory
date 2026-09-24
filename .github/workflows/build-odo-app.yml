@@ -32,6 +32,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r odo-app/requirements.txt pyinstaller pywebview
 
+      - name: Tesseract с русским языком (встраивается в .exe для сканов)
+        shell: pwsh
+        run: |
+          choco install tesseract -y --no-progress
+          $t = "C:\Program Files\Tesseract-OCR"
+          if (-not (Test-Path "$t\tesseract.exe")) { Write-Error "tesseract не установился"; exit 1 }
+          Invoke-WebRequest -Uri "https://github.com/tesseract-ocr/tessdata/raw/main/rus.traineddata" -OutFile "$t\tessdata\rus.traineddata"
+          & "$t\tesseract.exe" --list-langs
+          echo "ODO_TESS_DIR=$t" >> $env:GITHUB_ENV
+          echo "$t" >> $env:GITHUB_PATH
+
       - name: Тесты движка и приложения
         run: |
           python .claude/skills/sro-odo/scripts/test_assess.py
@@ -60,6 +71,7 @@ jobs:
           if ($p.ExitCode -ne 0) { Write-Host "::error::exe завершился с кодом $($p.ExitCode)"; exit 1 }
           if (-not (Test-Path "$env:ODO_DATA_DIR\smoke.ok")) { Write-Host "::error::сервер внутри .exe не поднялся"; exit 1 }
           Get-Content "$env:ODO_DATA_DIR\smoke.ok"
+          if (-not (Test-Path "dist\ODO-proverka-folder\_internal\tesseract\tesseract.exe")) { Write-Host "::error::tesseract не попал в сборку"; exit 1 }
           # оконная версия: тот же код, проверяем, что она тоже завершается
           Remove-Item "$env:ODO_DATA_DIR\smoke.ok"
           $w = Start-Process -FilePath "dist\ODO-proverka.exe" -PassThru

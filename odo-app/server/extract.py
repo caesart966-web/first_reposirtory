@@ -21,6 +21,19 @@ def _docx_text(path: Path) -> str:
     return re.sub(r"\n{3,}", "\n\n", t)
 
 
+def tesseract_cmd() -> str | None:
+    """Путь к tesseract: из переменной ODO_TESSERACT (так его подставляет запускатор .exe) или из PATH."""
+    import os
+    cand = os.environ.get("ODO_TESSERACT")
+    if cand and Path(cand).exists():
+        return cand
+    return shutil.which("tesseract")
+
+
+def ocr_available() -> bool:
+    return tesseract_cmd() is not None
+
+
 def _pdf_text(path: Path) -> tuple[str, bool]:
     import pymupdf
     doc = pymupdf.open(path)
@@ -28,20 +41,29 @@ def _pdf_text(path: Path) -> tuple[str, bool]:
     for i, p in enumerate(doc):
         parts.append(f"\n===== стр. {i + 1} =====\n" + p.get_text())
     text = "".join(parts)
+    _pdf_text.last_ocr = False
     if len(text.strip()) > 40 * len(doc):
         return text, False
-    # скан: пробуем OCR
-    if shutil.which("tesseract"):
+    # скан: распознаём, если есть tesseract (в .exe он встроен)
+    cmd = tesseract_cmd()
+    if cmd:
+        import os
+        env = dict(os.environ)
         out = []
         with tempfile.TemporaryDirectory() as td:
             for i, p in enumerate(doc):
                 png = Path(td) / f"p{i}.png"
                 p.get_pixmap(dpi=200).save(str(png))
-                r = subprocess.run(["tesseract", str(png), "-", "-l", "rus+eng"], capture_output=True, text=True)
+                r = subprocess.run([cmd, str(png), "-", "-l", "rus+eng", "--psm", "3"], capture_output=True, text=True, env=env,
+                                   encoding="utf-8", errors="replace", creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
                 out.append(f"\n===== стр. {i + 1} =====\n" + (r.stdout or ""))
         text = "".join(out)
+        _pdf_text.last_ocr = len(text.strip()) >= 40 * len(doc)
         return text, len(text.strip()) < 40 * len(doc)
     return text, True
+
+
+_pdf_text.last_ocr = False
 
 
 def _xlsx_text(path: Path) -> str:
@@ -62,10 +84,12 @@ def extract_text(path: str | Path) -> tuple[str, dict]:
     p = Path(path)
     ext = p.suffix.lower()
     scanned = False
+    ocr = False
     if ext == ".docx":
         text = _docx_text(p)
     elif ext == ".pdf":
         text, scanned = _pdf_text(p)
+        ocr = _pdf_text.last_ocr
     elif ext in (".xlsx", ".xlsm"):
         text = _xlsx_text(p)
     elif ext in (".txt", ".md", ".csv"):
@@ -74,7 +98,7 @@ def extract_text(path: str | Path) -> tuple[str, dict]:
         text, scanned = "", True  # старый формат: без конвертера не читается
     else:
         text = ""
-    return text, {"scanned": scanned, "kind_hint": guess_kind(p.name, text)}
+    return text, {"scanned": scanned, "ocr": ocr, "kind_hint": guess_kind(p.name, text)}
 
 
 def guess_kind(filename: str, text: str) -> str:

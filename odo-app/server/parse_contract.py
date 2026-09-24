@@ -17,6 +17,13 @@ LEGAL_FORMS = [
     (r"АКЦИОНЕРНОЕ ОБЩЕСТВО", "АО"), (r"Акционерное общество", "АО"),
     (r"ПУБЛИЧНОЕ АКЦИОНЕРНОЕ ОБЩЕСТВО", "ПАО"), (r"Публичное акционерное общество", "ПАО"),
     (r"ИНДИВИДУАЛЬНЫЙ ПРЕДПРИНИМАТЕЛЬ", "ИП"), (r"Индивидуальный предприниматель", "ИП"),
+    (r"Государственное унитарное предприятие", "ГУП"), (r"ГОСУДАРСТВЕННОЕ УНИТАРНОЕ ПРЕДПРИЯТИЕ", "ГУП"),
+    (r"Муниципальное унитарное предприятие", "МУП"), (r"МУНИЦИПАЛЬНОЕ УНИТАРНОЕ ПРЕДПРИЯТИЕ", "МУП"),
+    (r"Государственное бюджетное дошкольное образовательное учреждение", "ГБДОУ"),
+    (r"Государственное бюджетное общеобразовательное учреждение", "ГБОУ"),
+    (r"Муниципальное бюджетное общеобразовательное учреждение", "МБОУ"),
+    (r"Муниципальное бюджетное дошкольное образовательное учреждение", "МБДОУ"),
+    (r"Государственное бюджетное учреждение", "ГБУ"), (r"Муниципальное казенное учреждение", "МКУ"),
 ]
 
 
@@ -55,17 +62,46 @@ def date_iso(s: str | None) -> str | None:
 
 
 # ------------------------------------------------------------------ договор
-def parse_contract_text(t: str) -> tuple[dict, dict]:
-    """→ (поля договора, подсказки 'откуда взято')."""
-    f, hints = {}, {}
-    head = t[:6000]
+LEGAL_START = (r"(?:Государственн\w+|Муниципальн\w+|Федеральн\w+|Санкт-Петербургск\w+|Общество\s+с\s+ограниченной|Акционерное\s+общество|"
+               r"Публичное\s+акционерное|Непубличное\s+акционерное|Индивидуальн\w+\s+предпринимател\w+|Некоммерческ\w+|Автономн\w+|Региональн\w+|"
+               r"Фонд\b|Администраци\w+|Комитет\b|Управлени\w+|Департамент\b|Министерств\w+|Учреждени\w+|Товариществ\w+|Жилищн\w+|"
+               r"ООО\b|АО\b|ПАО\b|ГУП\b|МУП\b|ИП\b|ГБОУ\b|ГБДОУ\b|ГБУ\b|ГКУ\b|ГАУ\b|МБОУ\b|МБДОУ\b|МКУ\b|МАУ\b|ФГБУ\b|ФГУП\b|ФКУ\b|СПб\s+ГБУ)")
+MONTH_RE = r"(января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря)"
 
-    m = re.search(r"(?:КОНТРАКТ|ДОГОВОР|Контракт|Договор)[^\n№]{0,60}№\s*([^\s\n,;]+)", head)
+
+def _org(s: str) -> str:
+    """Начало наименования организации внутри куска преамбулы: от последней организационно-правовой формы."""
+    s = s.strip(" ,;:—–-")
+    # «(сокращённое наименование — ГУП «X»)» и «(ООО «X»)» — повтор полного имени, убираем до поиска начала
+    s = re.sub(r"\s*\((?:сокращ[^)]*|[А-ЯA-Z]{2,5}\s*[«\"][^)]*)\)", "", s)
+    last = None
+    for m in re.finditer(LEGAL_START, s):
+        last = m
+    if last:
+        s = s[last.start():]
+    s = s.split(" в лице")[0].split(", именуем")[0]
+    return short_name(s).strip(" ,;)")
+
+
+def parse_contract_text(t: str) -> tuple[dict, dict]:
+    """→ (поля договора, подсказки 'откуда взято').
+
+    Текст может прийти из docx (ровные строки) или из распознанного скана (строки рвутся где попало,
+    попадаются «_», «—» и лишние пробелы). Поэтому почти всё ищется по «плоской» копии, где любые
+    пробелы и переносы схлопнуты в один пробел.
+    """
+    f, hints = {}, {}
+    flat = re.sub(r"[ \t\u00a0]*\n[ \t\u00a0]*", " ", t)
+    flat = re.sub(r"[ \t\u00a0]+", " ", flat)
+    flat = re.sub(r"={3,}\s*стр\.\s*\d+\s*={3,}", " ", flat)   # маркеры страниц из OCR
+    head = flat[:6000]
+
+    m = re.search(r"(?:КОНТРАКТ|ДОГОВОР|Контракт|Договор)[^№]{0,80}?№\s*([^\s,;)]+)", head)
     if m:
-        f["number"] = m.group(1).strip("«»\"")
+        f["number"] = m.group(1).strip("«»\"_")
         hints["number"] = "заголовок документа"
 
-    m = re.search(r"код\s+закупки:?\s*(\d{36})", head, re.I)
+    m = re.search(r"код\s+закупки[\s:\-–—_]*(\d{36})", flat[:12000], re.I)
     if m:
         f["ikz"] = m.group(1)
         f["customer_inn"] = m.group(1)[3:13]
@@ -73,13 +109,13 @@ def parse_contract_text(t: str) -> tuple[dict, dict]:
         hints["customer_inn"] = "из ИКЗ (знаки 4–13)"
         f["procurement_law"] = "44-fz"
 
-    # дата: «от 18 мая 2026» / «18.05.2026» в шапке до преамбулы; «__2026» — не заполнена.
+    # дата: «13» марта 2025 / 18.05.2026 в шапке до преамбулы; «__2026» — не заполнена.
     # Даты законов («от 05.04.2013 №44-ФЗ») отсекаются: за ними идёт «№».
     cut = re.search(r"именуем", head)
     top = head[: cut.start()] if cut else head[:700]
-    m = re.search(r"«?(\d{1,2})»?\s*(января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря)\s*(\d{4})(?!\s*[№N])", top)
+    m = re.search(r"«?\s*(\d{1,2})\s*»?[\s_]*" + MONTH_RE + r"[\s_]*(\d{4})(?!\s*[№N])", top)
     if m:
-        f["date"] = date_iso(m.group(0))
+        f["date"] = date_iso(f"{m.group(1)} {m.group(2)} {m.group(3)}")
         hints["date"] = "шапка договора"
     else:
         m = re.search(r"(?<![\d.])(\d{2}\.\d{2}\.\d{4})(?![\d.])(?!\s*(?:г\.\s*)?[№N])", top)
@@ -90,108 +126,136 @@ def parse_contract_text(t: str) -> tuple[dict, dict]:
         f["date"] = None
         hints["date"] = "дата в тексте не заполнена (проект из ЕИС)"
 
-    # цена
-    m = re.search(r"Цена\s+(?:контракта|договора)\s+составляет\s*([\d\s ]+)\s*(?:руб\w*|\()\s*(?:\d{2})?\s*(?:коп\w*)?", t, re.I)
-    m2 = re.search(r"Цена\s+(?:контракта|договора)\s+составляет\s*([\d\s ]+)\s*руб\w*\s*(\d{2})\s*коп", t, re.I)
-    if m2:
-        f["price_rub"] = num(m2.group(1) + "." + m2.group(2))
-        hints["price_rub"] = "п. «Цена контракта»"
-    elif m:
-        f["price_rub"] = num(m.group(1))
-        hints["price_rub"] = "п. «Цена контракта»"
-    else:
-        m = re.search(r"(?:стоимость|цена)\s+(?:работ|договора|контракта)[^\d\n]{0,80}?([\d\s ]{5,}[,.]\d{2})\s*(?:руб|₽)", t, re.I)
+    # цена: «Цена контракта составляет 8480267 рублей 44 копеек» / «… является твёрдой … и составляет 768 333 211 (прописью) рублей 08 копеек»
+    price_seg = None
+    for pat in (r"Цена\s+(?:контракта|договора)[^.]{0,220}?составляет\s*([\d\s]{1,20}?\d)\s*(?:\([^)]{0,400}\))?\s*руб\w*\s*(\d{2})\s*коп",
+                r"Цена\s+(?:контракта|договора)[^.]{0,220}?составляет\s*([\d\s]{1,20}?\d)\s*(?:\([^)]{0,400}\))?\s*руб"):
+        m = re.search(pat, flat, re.I)
+        if m:
+            kop = m.group(2) if m.lastindex and m.lastindex >= 2 else "00"
+            f["price_rub"] = num(m.group(1) + "." + kop)
+            hints["price_rub"] = "п. «Цена контракта»"
+            price_seg = flat[max(0, m.start() - 50): m.end() + 500]
+            break
+    if f.get("price_rub") is None:
+        m = re.search(r"(?:стоимость|цена)\s+(?:работ|договора|контракта)[^\d]{0,80}?([\d\s]{5,}[,.]\d{2})\s*(?:руб|₽)", flat, re.I)
         if m:
             f["price_rub"] = num(m.group(1))
             hints["price_rub"] = "раздел о цене"
-    if f.get("price_rub") is not None:
-        seg = t[max(0, (m2 or m).start() - 50):(m2 or m).end() + 400] if (m2 or m) else ""
-        if re.search(r"НДС\s+не\s+облага|без\s+НДС", seg, re.I):
+            price_seg = flat[max(0, m.start() - 50): m.end() + 500]
+    if price_seg:
+        if re.search(r"НДС\s+не\s+облага|без\s+НДС", price_seg, re.I):
             f["price_includes_vat"] = False
-        elif re.search(r"с\s+учетом\s+(?:налога на добавленную стоимость|НДС)|включая\s+НДС|в том числе НДС", seg, re.I):
+        elif re.search(r"с\s+уч[её]том\s+(?:налога\s+на\s+добавленную\s+стоимость|НДС)|включая\s+НДС|в\s+том\s+числе\s+НДС", price_seg, re.I):
             f["price_includes_vat"] = True
 
-    # НМЦК — только если рядом стоит сумма в рублях (а не «10 процентов НМЦК» из раздела о штрафах)
-    m = re.search(r"начальн\w+\s+\(максимальн\w+\)\s+цен\w+[^\n\d]{0,40}?составля\w+\s*([\d\s ]+[,.]?\d{0,2})\s*руб", t, re.I)
+    # НМЦК: через обеспечение («10 % от НМЦК, что составляет N») или прямо («начальная (максимальная) цена … составляет N руб»)
+    m = re.search(r"начальн\w+\s+\(?максимальн\w+\)?\s+цен\w+\s+(?:контракта|договора)?\s*(?:составляет|равна|[:—–-])\s*([\d\s]{4,}?\d)\s*(?:\([^)]{0,300}\))?\s*руб\w*\s*(\d{2})?", flat, re.I)
     if m:
-        f["nmck_rub"] = num(m.group(1))
+        f["nmck_rub"] = num(m.group(1) + "." + (m.group(2) or "00"))
         hints["nmck_rub"] = "упоминание начальной (максимальной) цены в договоре"
+    else:
+        m = re.search(r"(\d{1,2})\s*%\s*от\s+начальн\w+\s+\(?максимальн\w+\)?\s+цены\s+контракта,?\s*что\s+составляет\s*([\d\s]{4,}?\d)\s*(?:\([^)]{0,300}\))?\s*руб\w*\s*(\d{2})?", flat, re.I)
+        if m:
+            amt = num(m.group(2) + "." + (m.group(3) or "00"))
+            if amt:
+                f["nmck_rub"] = round(amt * 100 / int(m.group(1)), 2)
+                hints["nmck_rub"] = f"расчёт: обеспечение {m.group(1)} % от НМЦК = {amt:,.2f} ₽ (пункт об обеспечении исполнения контракта)".replace(",", " ")
 
     # сроки
-    m = re.search(r"начало\s+выполнения\s+работ:?\s*(?:с\s*)?(\d{2}\.\d{2}\.\d{4}|«?\d{1,2}»?\s*[а-я]+\s*\d{4})", t, re.I)
+    m = re.search(r"начал\w+\s+выполнения\s+работ[^:.]{0,60}?[:—–-]?\s*(?:с\s*)?(\d{2}\.\d{2}\.\d{4}|«?\s*\d{1,2}\s*»?\s*[а-я]+\s*\d{4})", flat, re.I)
     if m:
         f["period_from"] = date_iso(m.group(1))
-    m = re.search(r"окончание\s+выполнения\s+работ:?\s*(?:по\s*|до\s*)?(\d{2}\.\d{2}\.\d{4}|«?\d{1,2}»?\s*[а-я]+\s*\d{4})", t, re.I)
+    else:
+        m = re.search(r"начальн\w+\s+срок\s+выполнения\s+работ[^.]{0,80}?с\s+" + MONTH_RE + r"\s+(\d{4})", flat, re.I)
+        if m:
+            f["period_from"] = f"{m.group(2)}-{MONTHS[m.group(1)]:02d}-01"
+            hints["period_from"] = "«с месяца» — взято первое число"
+    m = re.search(r"окончани\w+\s+выполнения\s+работ[^:.]{0,60}?[:—–-]?\s*(?:по\s*|до\s*)?(\d{2}\.\d{2}\.\d{4}|«?\s*\d{1,2}\s*»?\s*[а-я]+\s*\d{4})", flat, re.I)
     if m:
         f["period_to"] = date_iso(m.group(1))
+    else:
+        m = re.search(r"конечн\w+\s+срок\s+выполнения\s+работ[^.]{0,80}?(\d{1,3})\s*\([^)]*\)\s*(?:календарн\w+\s+)?(месяц\w*|дн\w*)", flat, re.I)
+        if m and f.get("period_from"):
+            import datetime as _dt
+            d0 = _dt.date.fromisoformat(f["period_from"])
+            n = int(m.group(1))
+            if m.group(2).startswith("мес"):
+                mm = d0.month - 1 + n
+                d1 = _dt.date(d0.year + mm // 12, mm % 12 + 1, min(d0.day, 28))
+            else:
+                d1 = d0 + _dt.timedelta(days=n)
+            f["period_to"] = d1.isoformat()
+            hints["period_to"] = f"{n} {m.group(2)} с начала работ — расчётно"
 
     # стороны
-    pre = re.search(r"(?P<a>[^\n]{2,600}?),?\s*именуем\w*\s+в\s+дальнейшем\s*[–—-]?\s*«?(?P<ra>Заказчик|Генподрядчик|Генеральный подрядчик|Застройщик|Технический заказчик)»?.*?с\s+одной\s+стороны,?\s+и\s+(?P<b>[^\n]{5,400}?)(?:,\s*именуем\w*\s+в\s+дальнейшем\s*[–—-]?\s*«?(?P<rb>Подрядчик|Субподрядчик|Генподрядчик|Исполнитель)»?|\s+в\s+лице)", t, re.S)
+    pre = re.search(r"(?P<a>.{2,700}?),?\s*именуем\w*\s+в\s+дальнейшем\s*[–—-]?\s*[«\"]?(?P<ra>Заказчик|Генподрядчик|Генеральный подрядчик|Застройщик|Технический заказчик)[»\"]?"
+                    r".*?с\s+одной\s+стороны,?\s+и\s+(?P<b>.{5,500}?)(?:,?\s*именуем\w*\s+в\s+дальнейшем\s*[–—-]?\s*[«\"]?(?P<rb>Подрядчик|Субподрядчик|Генподрядчик|Исполнитель)[»\"]?|\s+в\s+лице)", flat, re.S)
     if pre:
-        a = pre.group("a").split("\n")[-1]
-        f["customer_name"] = short_name(re.sub(r"^\S*\s*20\d\d\s*", "", a).split(" в лице")[0])
+        f["customer_name"] = _org(pre.group("a"))
         f["customer_role_word"] = pre.group("ra")
-        f["contractor_name"] = short_name(pre.group("b").split(" в лице")[0].split(", именуем")[0])
+        f["contractor_name"] = _org(pre.group("b"))
         f["contractor_role_word"] = pre.group("rb") or "Подрядчик"
         hints["customer_name"] = "преамбула"
         hints["contractor_name"] = "преамбула"
 
     # протокол торгов и закон
-    m = re.search(r"протокол\w*\s*№\s*([\d\-/A-Za-zА-Яа-я]+)\s*от\s*(\d{2}\.\d{2}\.\d{4})", t, re.I)
+    m = re.search(r"протокол\w*\s*№\s*([\d\-/A-Za-zА-Яа-я]+)\s*от\s*(\d{2}\.\d{2}\.\d{4})", flat, re.I)
     if m:
         f["protocol"] = f"протокол № {m.group(1)} от {m.group(2)}"
-    if re.search(r"44-ФЗ|О контрактной системе", t):
+    if re.search(r"44-ФЗ|О контрактной системе", flat):
         f["procurement_law"] = "44-fz"
-    elif re.search(r"223-ФЗ|о закупках товаров, работ, услуг отдельными видами юридических лиц", t, re.I):
+    elif re.search(r"223-ФЗ|о закупках товаров, работ, услуг отдельными видами юридических лиц", flat, re.I):
         f["procurement_law"] = "223-fz"
+    tender_words = re.search(r"по\s+(?:итогам|результатам)\s+(?:проведения\s+)?(?:электронн\w+\s+)?(?:аукцион|конкурс|торг|закупк|тендер)|победител\w+\s+закупки|коэффициент\w*\s+аукционного\s+снижения", flat, re.I)
     if f.get("procurement_law") in ("44-fz", "223-fz"):
         f["procurement"] = "competitive"
-    elif re.search(r"по\s+(?:итогам|результатам)\s+(?:аукцион|конкурс|торг|закупк|тендер)", t, re.I):
+        if re.search(r"единственн\w+\s+(?:поставщик|подрядчик)\w*\s*(?:\(|,)?\s*(?:подрядчик\w*|исполнител\w*)?[^.]{0,80}?(?:п\.|пункт\w*)\s*\d{1,2}\s*(?:ч\.|части)\s*1\s*(?:ст\.|статьи)\s*93", flat, re.I) and not tender_words:
+            f["procurement"] = "direct"
+            hints["procurement"] = "ссылка на закупку у единственного поставщика (п. … ч. 1 ст. 93 44-ФЗ)"
+    elif tender_words:
         f["procurement"] = "competitive"
         f["procurement_law"] = "unknown"
-    elif re.search(r"единственн\w+\s+поставщик|без\s+проведения\s+торгов", t, re.I):
+    elif re.search(r"единственн\w+\s+поставщик|без\s+проведения\s+торгов", flat, re.I):
         f["procurement"] = "direct"
     else:
         f["procurement"] = "unknown"
-    hints["procurement"] = "; ".join(x for x in [f.get("protocol"), {"44-fz": "ссылки на 44-ФЗ", "223-fz": "ссылки на 223-ФЗ"}.get(f.get("procurement_law"), None),
-                                                  ("ИКЗ " + f["ikz"]) if f.get("ikz") else None] if x)
+    if f.get("procurement") == "competitive" and "procurement" not in hints:
+        bits = [f.get("protocol"), {"44-fz": "ссылки на 44-ФЗ", "223-fz": "ссылки на 223-ФЗ"}.get(f.get("procurement_law")),
+                ("ИКЗ " + f["ikz"]) if f.get("ikz") else None, ("«" + tender_words.group(0) + "»") if tender_words else None,
+                "сноска о цене «по итогам проведения электронного конкурса»" if re.search(r"по\s+итогам\s+проведения\s+электронного\s+конкурса", flat, re.I) else None]
+        hints["procurement"] = "; ".join(x for x in bits if x)
 
     # предмет и объект
-    m = re.search(r"1\.1\.\s*(.+?)(?:\n|$)", t)
+    m = re.search(r"(?<![\d.])1\.1\.\s*(.+?)(?=\s(?<![\d.])1\.2\.|$)", flat)
     if m:
-        f["subject_text"] = re.sub(r"\s+", " ", m.group(1)).strip()[:1200]
-    m = re.search(r"Место\s+нахождения\s+объекта[^:\n]*:\s*(.+?)(?:\n|\*|$)", t, re.I) or re.search(r"(?:адрес\w*\s+объекта|место\s+выполнения\s+работ)[^:\n]*:\s*(.+?)(?:\n|$)", t, re.I)
+        f["subject_text"] = m.group(1).strip()[:1200]
+    m = re.search(r"Место\s+(?:нахождения\s+объекта|выполнени\w+\s+работ)[^:]{0,60}:\s*(.+?)(?=\s(?<![\d.])\d\.\d{1,2}\.|\*|$)", flat, re.I)
     if m:
-        f["object_address"] = re.sub(r"\s+", " ", m.group(1)).strip(" .*")
-    m = re.search(r"Результатом\s+работ[^\n]*?являются\s+(.+?)(?:\n|$)", t, re.I)
+        f["object_address"] = m.group(1).strip(" .*")[:300]
+    m = re.search(r"Результатом\s+(?:выполненной\s+)?работ\w*[^.]*?являе?тся\s+(.+?)(?=\s(?<![\d.])\d\.\d{1,2}\.|$)", flat, re.I)
     if m:
-        f["result_text"] = re.sub(r"\s+", " ", m.group(1)).strip()
+        f["result_text"] = m.group(1).strip()[:600]
 
-    # вид работ
-    low = t.lower()
-    if re.search(r"капитальн\w+\s+ремонт", low[:8000]):
-        f["work_type"] = "capital_repair"
-    elif re.search(r"текущ\w+\s+ремонт", low[:8000]):
-        f["work_type"] = "current_repair"
-    elif re.search(r"реконструкци", low[:4000]):
-        f["work_type"] = "reconstruction"
-    elif re.search(r"\bснос\w*\b|демонтаж\w*\s+здани", low[:4000]):
-        f["work_type"] = "demolition"
-    elif re.search(r"проектн\w+\s+документаци|разработк\w+\s+проект", low[:4000]):
-        f["work_type"] = "design"
-    elif re.search(r"инженерн\w+\s+изыскан", low[:4000]):
-        f["work_type"] = "survey"
-    elif re.search(r"строительств\w+\s+(?:объекта|здания|сооружения)", low[:4000]):
-        f["work_type"] = "construction"
-    elif re.search(r"\bремонт", low[:4000]):
-        f["work_type"] = "repair_unspecified"
+    # вид работ: сначала по предмету (п. 1.1 / заголовок), потом по началу текста; строительство и реконструкция — по первому упоминанию
+    subj = (f.get("subject_text") or "") + " " + head[:1500]
+    low = subj.lower()
+    order = [("капитальн\\w+\\s+ремонт", "capital_repair"), ("текущ\\w+\\s+ремонт", "current_repair"), ("реконструкци", "reconstruction"),
+             ("\\bснос\\w*\\b|демонтаж\\w*\\s+здани", "demolition"), ("проектн\\w+\\s+документаци|разработк\\w+\\s+проект", "design"),
+             ("инженерн\\w+\\s+изыскан", "survey"), ("строительств\\w*", "construction"), ("\\bремонт", "repair_unspecified")]
+    found = [(mm.start(), wt) for pat, wt in order for mm in [re.search(pat, low)] if mm]
+    if found:
+        # капремонт/текущий ремонт побеждают, если названы; иначе — что встретилось раньше
+        prio = [wt for _, wt in found if wt in ("capital_repair", "current_repair")]
+        f["work_type"] = prio[0] if prio else min(found)[1]
     else:
         f["work_type"] = "unknown"
 
-    m = re.search(r"\((\d\d\.\d\d\.\d\d\.\d{3})\)", t)
+    m = re.search(r"\((\d\d\.\d\d\.\d\d\.\d{3})\)", flat)
     if m:
         f["okpd2"] = m.group(1)
-    f["mentions_sro"] = bool(re.search(r"саморегулируем|\bСРО\b", t))
+    f["mentions_sro"] = bool(re.search(r"саморегулируем|\bСРО\b", flat))
+    f["requires_sro_membership"] = bool(re.search(r"(?:должен|обязан)\s+являться\s+членом\s+саморегулируемой", flat, re.I))
     return f, hints
 
 
@@ -284,18 +348,21 @@ def parse_addenda(texts: list[str]) -> list[dict]:
 
 
 # ------------------------------------------------------------------ карточка
-def customer_kind_guess(name: str | None) -> tuple[str, str]:
+def customer_kind_guess(name: str | None, work_type: str | None = None) -> tuple[str, str]:
     n = (name or "").lower()
     if not n:
         return "unknown", ""
+    building = work_type in ("construction", "reconstruction", "demolition")
     if re.search(r"фонд\w*\s+капитальн\w+\s+ремонт|региональн\w+\s+оператор", n):
         return "regional_operator", "региональный оператор капитального ремонта — по наименованию"
     if re.search(r"специализированн\w+\s+застройщик|\bсз\b", n):
         return "developer", "специализированный застройщик — по наименованию; проверить разрешение на строительство"
     if re.search(r"техническ\w+\s+заказчик", n):
         return "technical_customer", "по наименованию; проверить договор с застройщиком"
-    if re.search(r"учреждени|гбоу|гбдоу|гбу|мбоу|мбдоу|мку|мау|гку|гау|казенн|бюджетн|автономн|администраци|комитет|управлени|министерств|департамент", n):
-        return "operator", "государственное/муниципальное учреждение или орган: здание закреплено на праве оперативного управления — лицо, ответственное за эксплуатацию (ч. 1 ст. 55.25 ГрК РФ); право по выписке ЕГРН не проверялось"
+    if re.search(r"учреждени|гбоу|гбдоу|гбу|мбоу|мбдоу|мку|мау|гку|гау|казенн|бюджетн|автономн|администраци|комитет|управлени|министерств|департамент|унитарн\w+\s+предприяти|\bгуп\b|\bмуп\b|водоканал|теплосет|тепловые сети|электросет", n):
+        if building:
+            return "developer", "государственное/муниципальное предприятие, учреждение или орган строит (реконструирует) объект для себя: обеспечивает строительство на своём участке, получает разрешения на строительство и ввод — застройщик (п. 16 ст. 1 ГрК РФ); разрешение на строительство и право на участок не проверялись"
+        return "operator", "государственное/муниципальное учреждение, предприятие или орган: здание закреплено на праве оперативного управления или хозяйственного ведения — лицо, ответственное за эксплуатацию (ч. 1 ст. 55.25 ГрК РФ); право по выписке ЕГРН не проверялось"
     if re.search(r"генеральн\w+\s+подрядчик|генподряд|строй|строительн", n):
         return "general_contractor", "похоже на подрядную организацию — вероятен субподряд; проверить"
     return "unknown", ""
@@ -316,8 +383,8 @@ def build_card(member: dict, docs: list[dict]) -> tuple[dict, dict]:
     for a in addenda:
         if a.get("price_rub"):
             price = a["price_rub"]
-    ckind, ckind_basis = customer_kind_guess(f.get("customer_name"))
     wt = f.get("work_type", "unknown")
+    ckind, ckind_basis = customer_kind_guess(f.get("customer_name"), wt)
     wt_basis = None
     if wt == "repair_unspecified":
         if est["methodology_421"]:
@@ -362,7 +429,9 @@ def build_card(member: dict, docs: list[dict]) -> tuple[dict, dict]:
         warnings.append("Строки смет не распознаны: доля работ по Перечню 624 считаться не будет (на вывод об ОДО это не влияет).")
     if not f.get("date"):
         warnings.append("Дата договора не найдена или не заполнена — для реестра укажите дату подписания.")
-    if texts["contract"] and f.get("mentions_sro"):
+    if texts["contract"] and f.get("requires_sro_membership"):
+        warnings.append("Договор прямо требует от подрядчика членства в СРО — заказчик сам считал закупку конкурентной с обязательным членством.")
+    elif texts["contract"] and f.get("mentions_sro"):
         warnings.append("В договоре упоминается СРО — посмотрите, что именно требовал заказчик.")
     if price is not None and price <= 10_000_000 and f.get("procurement") == "competitive" and not f.get("nmck_rub"):
         warnings.append("Цена ниже 10 млн, торги: начальная цена закупки в договоре не найдена. Если в ЕИС она была выше 10 млн — случай спорный, укажите её в карточке.")
