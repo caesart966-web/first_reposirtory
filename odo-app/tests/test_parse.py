@@ -22,7 +22,7 @@ def test_contract_fields():
     assert f["date"] == "2026-05-18"
     assert f["price_rub"] == 12_200_000.0 and f["price_includes_vat"] is True
     assert f["customer_inn"] == "7700000000"
-    assert f["customer_name"].startswith("Государственное бюджетное")
+    assert f["customer_name"].startswith("ГБОУ")
     assert f["contractor_name"] == "ООО «ПРИМЕР-СТРОЙ»"
     assert f["procurement"] == "competitive" and f["procurement_law"] == "44-fz"
     assert "протокол № 0100000000000000001 от 05.05.2026" == f["protocol"]
