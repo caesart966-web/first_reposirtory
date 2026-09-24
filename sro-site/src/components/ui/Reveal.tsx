@@ -1,17 +1,23 @@
-import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react'
+import {
+  Fragment,
+  createElement,
+  useEffect,
+  useRef,
+  type CSSProperties,
+  type ElementType,
+  type ReactNode,
+} from 'react'
 
-// Лёгкий scroll-reveal на IntersectionObserver: без библиотек,
-// с уважением к prefers-reduced-motion.
-export function Reveal({
-  children,
-  delay = 0,
-  className = '',
-}: {
-  children: ReactNode
-  delay?: number
-  className?: string
-}) {
-  const ref = useRef<HTMLDivElement | null>(null)
+// Появление при прокрутке: блок выплывает, заголовок поднимается по словам,
+// фотография открывается шторкой. Сами переходы — в index.css (.reveal,
+// .reveal-words, .reveal-image), здесь только момент запуска.
+//
+// Запуск — когда верх блока заходит в нижние 90% экрана, а не когда видно
+// 15% его площади, как было. Прежнее правило на высоких блоках не
+// срабатывало никогда: карточка политики на телефоне выше экрана в несколько
+// раз, и 15% её площади в окно не помещаются — текст оставался прозрачным.
+function useReveal<T extends HTMLElement>() {
+  const ref = useRef<T | null>(null)
 
   useEffect(() => {
     const el = ref.current
@@ -29,16 +35,74 @@ export function Reveal({
           }
         }
       },
-      { threshold: 0.15, rootMargin: '0px 0px -32px 0px' },
+      { threshold: 0, rootMargin: '0px 0px -10% 0px' },
     )
     observer.observe(el)
     return () => observer.disconnect()
   }, [])
 
-  const style: CSSProperties | undefined = delay ? { transitionDelay: `${delay}ms` } : undefined
+  return ref
+}
 
+export function Reveal({
+  children,
+  delay = 0,
+  className = '',
+}: {
+  children: ReactNode
+  delay?: number
+  className?: string
+}) {
+  const ref = useReveal<HTMLDivElement>()
+  const style: CSSProperties | undefined = delay ? { transitionDelay: `${delay}ms` } : undefined
   return (
     <div ref={ref} className={`reveal ${className}`} style={style}>
+      {children}
+    </div>
+  )
+}
+
+/**
+ * Заголовок, который поднимается по словам из-под маски.
+ *
+ * Принимает только строку: слова режутся по пробелам, и каждое получает свою
+ * ступеньку задержки. Неразрывный пробел ( ) слова не делит — «в СРО»,
+ * «под ключ» так и едут парой, как и стоят в строке.
+ *
+ * Скринридер читает фразу целиком из aria-label, а не по кусочкам.
+ */
+export function RevealText({
+  as = 'h2',
+  text,
+  className = '',
+}: {
+  as?: ElementType
+  text: string
+  className?: string
+}) {
+  const ref = useReveal<HTMLElement>()
+  const words = text.split(' ')
+  return createElement(
+    as,
+    { ref, className: `reveal-words ${className}`, 'aria-label': text },
+    // Пробел между словами стоит СНАРУЖИ обрезающего блока: внутри
+    // inline-block конечный пробел схлопывается, и слова слипаются.
+    words.map((word, i) => (
+      <Fragment key={i}>
+        <span className="w" aria-hidden="true">
+          <span style={{ '--i': i } as CSSProperties}>{word}</span>
+        </span>
+        {i < words.length - 1 ? ' ' : null}
+      </Fragment>
+    )),
+  )
+}
+
+/** Обёртка фотографии: открывается шторкой снизу, кадр слегка отъезжает. */
+export function RevealImage({ children, className = '' }: { children: ReactNode; className?: string }) {
+  const ref = useReveal<HTMLDivElement>()
+  return (
+    <div ref={ref} className={`reveal-image ${className}`}>
       {children}
     </div>
   )

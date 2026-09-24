@@ -2,7 +2,7 @@ import { ArrowRight, ChevronDown, Menu, Phone, X } from 'lucide-react'
 import { useEffect, useRef, useState, type FocusEvent } from 'react'
 import { CONFIGURED, CONTACTS, LINKS } from '../content/contacts'
 import { HEADER_NAV, MENU, isGroup, navHref, type NavGroup, type NavLink } from '../content/nav'
-import { anchor, home } from '../lib/site'
+import { home } from '../lib/site'
 import { ScalesMark } from './illustrations'
 import { ButtonLink } from './ui/Button'
 
@@ -101,7 +101,7 @@ function Dropdown({ group }: { group: NavGroup }) {
         {/* Пункт — не одна строка, а название с подсказкой: человек ещё не
             знает, «строители» он или «проектировщики», и три голых слова
             ему не помогают. Подсказка — область деятельности со страницы вида. */}
-        <div className="rounded-2xl border border-neutral-200 bg-white p-2 shadow-card-hover">
+        <div className="rounded-3xl border border-neutral-200 bg-neutral-50 p-2 shadow-[0_24px_60px_-24px_rgba(28,24,21,0.28)]">
           {group.items.map((item) => {
             const here = isHere(item)
             return (
@@ -158,17 +158,20 @@ export function Header() {
     <header
       className={`sticky top-0 z-50 border-b backdrop-blur transition-colors duration-300 ${
         scrolled || open
-          ? 'border-neutral-200/80 bg-white/95 shadow-sm shadow-neutral-900/[0.03]'
-          : 'border-transparent bg-white/85'
+          ? 'border-neutral-200 bg-neutral-50/90'
+          : 'border-transparent bg-neutral-50/80'
       }`}
     >
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Знак aria-hidden: имя рядом уже озвучено, второй раз объяснять
             картинку скринридеру нечем. */}
-        <a href={home()} className="flex items-center gap-2.5">
-          <ScalesMark className="h-[22px] w-auto shrink-0 text-accent-600" />
+        {/* На 320px имя в 15px не помещалось рядом с двумя круглыми кнопками
+            и рвалось по дефису: «БИЗНЕС- / ГРУПП». Ниже 360px кегль и зазоры
+            на ступень меньше, а перенос внутри имени запрещён. */}
+        <a href={home()} className="flex min-w-0 items-center gap-2 min-[360px]:gap-2.5">
+          <ScalesMark className="h-5 w-auto shrink-0 text-accent-600 min-[360px]:h-[22px]" />
           <span className="flex flex-col leading-tight">
-            <span className="text-[15px] font-bold tracking-tight text-neutral-950">{CONTACTS.brand}</span>
+            <span className="whitespace-nowrap text-[13px] font-bold tracking-tight text-neutral-950 min-[360px]:text-[15px]">{CONTACTS.brand}</span>
             {/* neutral-600, а не 500: тёплая нейтральная шкала темнее прежней серой
                 по цвету, но светлее по контрасту, и на 500 подпись давала
                 4.46:1 при норме 4.5. Замерено на странице. */}
@@ -201,21 +204,21 @@ export function Header() {
             <a
               href={LINKS.tel}
               aria-label={`Позвонить: ${CONTACTS.phone}`}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-neutral-200 text-accent-600 transition hover:bg-neutral-50 xl:h-auto xl:w-auto xl:gap-2 xl:rounded-none xl:border-0 xl:text-sm xl:font-semibold xl:text-neutral-800 xl:hover:bg-transparent xl:hover:text-accent-700"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-neutral-300 text-neutral-950 transition hover:border-neutral-950 xl:h-auto xl:w-auto xl:gap-2 xl:rounded-none xl:border-0 xl:text-sm xl:font-semibold xl:text-neutral-950 xl:hover:bg-transparent xl:hover:text-accent-700"
             >
-              <Phone className="h-5 w-5 shrink-0 xl:h-4 xl:w-4 xl:text-accent-600" aria-hidden="true" />
+              <Phone className="h-5 w-5 shrink-0 xl:h-4 xl:w-4" aria-hidden="true" />
               <span className="hidden xl:inline">{CONTACTS.phone}</span>
             </a>
           )}
-          <ButtonLink href={anchor('#quiz')}>Оставить заявку</ButtonLink>
+          <ButtonLink href="#contacts">Связаться</ButtonLink>
         </div>
 
-        <div className="flex items-center gap-2 lg:hidden">
+        <div className="flex shrink-0 items-center gap-1.5 min-[360px]:gap-2 lg:hidden">
           {CONFIGURED.phone && (
             <a
               href={LINKS.tel}
               aria-label={`Позвонить: ${CONTACTS.phone}`}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-neutral-200 text-accent-600 transition hover:bg-neutral-50"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-neutral-300 text-neutral-950 transition hover:border-neutral-950"
             >
               <Phone className="h-5 w-5" aria-hidden="true" />
             </a>
@@ -223,7 +226,7 @@ export function Header() {
           <button
             type="button"
             onClick={() => setOpen((value) => !value)}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-neutral-200 text-neutral-700 transition hover:bg-neutral-50"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-neutral-300 text-neutral-950 transition hover:border-neutral-950"
             aria-expanded={open}
             aria-controls={open ? 'mobile-menu' : undefined}
             aria-label={open ? 'Закрыть меню' : 'Открыть меню'}
@@ -234,7 +237,7 @@ export function Header() {
       </div>
 
       {open && (
-        <div id="mobile-menu" className="max-h-[calc(100dvh-4rem)] overflow-y-auto border-t border-neutral-200 bg-white lg:hidden">
+        <div id="mobile-menu" className="max-h-[calc(100dvh-4rem)] overflow-y-auto border-t border-neutral-200 bg-neutral-50 lg:hidden">
           <nav className="mx-auto flex w-full max-w-6xl flex-col px-4 py-3 sm:px-6" aria-label="Мобильная навигация">
             {/* Группы в мобильном меню не сворачиваются: два лишних тапа ради
                 трёх строк — плохой размен. Заголовок группы набран как
@@ -243,7 +246,7 @@ export function Header() {
             {MENU.map((item) =>
               isGroup(item) ? (
                 <div key={item.label} className="py-1.5">
-                  <p className="px-2 pb-1 pt-2 text-xs font-semibold uppercase tracking-[0.16em] text-neutral-500">
+                  <p className="px-2 pb-1 pt-2 text-sm text-neutral-600">
                     {item.label}
                   </p>
                   {item.items.map((link) => (
@@ -272,8 +275,8 @@ export function Header() {
                 </a>
               ),
             )}
-            <ButtonLink href={anchor('#quiz')} onClick={() => setOpen(false)} className="mb-2 mt-3 w-full">
-              Оставить заявку
+            <ButtonLink href="#contacts" onClick={() => setOpen(false)} className="mb-2 mt-3 w-full">
+              Связаться
             </ButtonLink>
           </nav>
         </div>

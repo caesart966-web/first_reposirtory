@@ -1,10 +1,8 @@
-import { Check, FileCheck, Globe, MapPin, type LucideIcon } from 'lucide-react'
 import { FACTS, REQUISITES, isPlaceholder } from '../content/facts'
-import { anchor } from '../lib/site'
 import { ScalesMark } from './illustrations'
 import { ButtonLink } from './ui/Button'
 import { Reveal } from './ui/Reveal'
-import { Section } from './ui/Section'
+import { Section, SectionHeading } from './ui/Section'
 
 // Максимум три и строками, а не карточками: карточки уже заняты услугами.
 const ADVANTAGES = [
@@ -24,94 +22,68 @@ const CITY = 'Ростов-на-Дону'
 // сайте и решил, что она не вписывается. Цифры и так есть в тексте рядом:
 // три вида СРО — в списке преимуществ, регионы — в блоке географии,
 // бесплатная консультация — в «Стоимости».
-function Chip({ icon: Icon, children }: { icon: LucideIcon; children: string }) {
-  return (
-    <span className="inline-flex items-center gap-2 text-sm text-neutral-700">
-      <Icon className="h-4 w-4 shrink-0 text-accent-600" aria-hidden="true" />
-      {children}
-    </span>
-  )
-}
-
 export function AboutExpert() {
   return (
-    <Section id="about" className="bg-neutral-50/55">
-      <div className="grid items-center gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:gap-16">
-        <Reveal>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent-600">О нас</p>
-          <h2 className="mt-3 text-3xl font-bold tracking-tight text-neutral-950 sm:text-4xl">
-            Как построена работа
-          </h2>
-          <p className="mt-5 text-lg text-neutral-600">
-            {FACTS_READY ? (
-              <>
-                {REQUISITES.legalName} занимается вступлением в СРО {FACTS.yearsOfPractice} лет;
-                за это время сопровождение прошли {FACTS.companies} компаний из {FACTS.regions}{' '}
-                регионов.
-              </>
-            ) : (
-              <>
-                {REQUISITES.legalName} занимается вступлением в СРО строителей, проектировщиков
-                и изыскателей, а также вопросами специалистов НРС и независимой оценки
-                квалификации.
-              </>
-            )}
-          </p>
-          <p className="mt-4 text-neutral-600">
-            Каждую задачу от начала до конца ведёт один специалист: он отвечает на вопросы,
-            готовит документы и взаимодействует с саморегулируемой организацией. Вы всегда
-            знаете, кто занимается вашим вопросом и на каком он этапе.
-          </p>
-          <ul className="mt-7 space-y-3">
-            {ADVANTAGES.map((advantage) => (
-              <li key={advantage} className="flex items-start gap-3 text-neutral-700">
-                <Check className="mt-1 h-4 w-4 shrink-0 text-accent-600" aria-hidden="true" />
-                {advantage}
-              </li>
-            ))}
-          </ul>
-          <ButtonLink href={anchor('#quiz')} variant="secondary" size="lg" className="mt-8">
-            Обсудить задачу
-          </ButtonLink>
-        </Reveal>
-
-        {/* Визитка компании — на месте фотографии у конкурентов. Фотографии
-            нет: сайт представляет компанию, а не лицо. Реквизитов здесь тоже
-            нет — они в подвале, где их ищут; тут только знак, имя, город и
-            условия работы. */}
-        <Reveal delay={100}>
-          <div className="relative overflow-hidden rounded-3xl border border-neutral-200 bg-white p-6 shadow-card sm:p-8">
-            {/* Крупный знак в углу, полупрозрачный и за краем: узнаваемость
-                шапки, а не логотип во всю карточку. Текст лежит поверх него
-                только в правом верхнем углу, где строки короткие. */}
+    <Section id="about" className="bg-neutral-100">
+      <div className="grid gap-14 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:gap-20">
+        <div>
+          <SectionHeading eyebrow="О нас" title="Как построена работа" />
+          <Reveal delay={120}>
+            <p className="mt-8 font-display text-[1.55rem] font-medium leading-snug text-neutral-950 sm:text-[1.9rem]">
+              {FACTS_READY ? (
+                <>
+                  {REQUISITES.legalName} занимается вступлением в СРО {FACTS.yearsOfPractice} лет;
+                  за это время сопровождение прошли {FACTS.companies} компаний из {FACTS.regions}{' '}
+                  регионов.
+                </>
+              ) : (
+                <>
+                  {REQUISITES.legalName} занимается вступлением в СРО строителей,
+                  проектировщиков и изыскателей, а также вопросами специалистов НРС и
+                  независимой оценки квалификации.
+                </>
+              )}
+            </p>
+            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-neutral-600">
+              Каждую задачу от начала до конца ведёт один специалист: он отвечает на вопросы,
+              готовит документы и взаимодействует с саморегулируемой организацией. Вы всегда
+              знаете, кто занимается вашим вопросом и на каком он этапе.
+            </p>
+          </Reveal>
+        </div>
+        {/* Карточка компании — тёмный лист со знаком весов. Фотографии нет:
+            сайт представляет компанию, а не лицо. Реквизиты — в подвале. */}
+        <Reveal delay={160} className="lg:pt-10">
+          <div className="relative overflow-hidden rounded-3xl bg-neutral-950 p-8 text-neutral-50 sm:p-10">
             <ScalesMark
-              className="pointer-events-none absolute -right-10 -top-8 h-44 w-auto text-accent-50"
+              className="pointer-events-none absolute -right-8 -top-6 h-40 w-auto text-white/[0.06]"
               aria-hidden="true"
             />
             <div className="relative">
-              <div className="flex items-center gap-3">
-                <ScalesMark className="h-8 w-auto shrink-0 text-accent-600" aria-hidden="true" />
-                <div className="leading-tight">
-                  <p className="text-lg font-bold tracking-tight text-neutral-950">{REQUISITES.legalName}</p>
-                  <p className="text-sm text-neutral-600">Вступление в СРО</p>
-                </div>
-              </div>
-              <div className="mt-7 flex flex-col gap-3 border-t border-neutral-200 pt-6">
-                <Chip icon={MapPin}>{CITY}</Chip>
-                <Chip icon={Globe}>Дистанционно, личный визит не требуется</Chip>
-                <Chip icon={FileCheck}>Работаю по договору</Chip>
-              </div>
-              <a
-                href={anchor('#contacts')}
-                className="mt-6 inline-block text-sm font-medium text-accent-700 underline underline-offset-2 transition hover:text-accent-800"
-              >
-                Контакты
-              </a>
+              <ScalesMark className="h-8 w-auto text-accent-300" aria-hidden="true" />
+              <p className="mt-6 font-display text-[1.7rem] font-medium leading-tight">
+                {REQUISITES.legalName}
+              </p>
+              <p className="mt-1 text-sm text-neutral-400">Вступление в СРО · {CITY}</p>
+              <ul className="mt-8 space-y-4 border-t border-white/15 pt-6">
+                {ADVANTAGES.map((advantage) => (
+                  <li key={advantage} className="flex gap-3 text-sm leading-relaxed text-neutral-300">
+                    <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-accent-300" aria-hidden="true" />
+                    {advantage}
+                  </li>
+                ))}
+                <li className="flex gap-3 text-sm leading-relaxed text-neutral-300">
+                  <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-accent-300" aria-hidden="true" />
+                  Дистанционно, личный визит не требуется; работаю по договору
+                </li>
+              </ul>
+              <ButtonLink href="#contacts" variant="inverse" size="md" arrow className="mt-8">
+                Обсудить задачу
+              </ButtonLink>
             </div>
           </div>
         </Reveal>
       </div>
-
     </Section>
   )
 }

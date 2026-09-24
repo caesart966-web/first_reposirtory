@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { asset } from '../../lib/site'
+import { RevealImage } from './Reveal'
 
 // Один компонент на все фотослоты страницы: иначе у четырёх картинок из четырёх
 // мест разъедутся скругления, рамки и отступы.
@@ -34,6 +35,9 @@ type FigureProps = {
   frame?: boolean
   priority?: boolean // true только для первого экрана
   className?: string
+  // Открывать кадр шторкой при прокрутке (index.css, .reveal-image). У
+  // первого экрана выключено: кадр, который есть сразу, прятать нельзя.
+  reveal?: boolean
 }
 
 export function Figure({
@@ -48,16 +52,18 @@ export function Figure({
   frame = true,
   priority = false,
   className = '',
+  reveal = !priority,
 }: FigureProps) {
   return (
     <figure className={className}>
       <div
         className={
           frame
-            ? `overflow-hidden rounded-2xl border border-neutral-200/80 bg-neutral-100 ${ratio}`
+            ? `overflow-hidden rounded-3xl bg-neutral-200 ${ratio}`
             : ratio
         }
       >
+        <MaybeReveal on={reveal} className="h-full">
         <picture>
           {srcAvif && <source type="image/avif" srcSet={asset(srcAvif)} />}
           <img
@@ -70,8 +76,13 @@ export function Figure({
             className={`h-full w-full ${fit === 'contain' ? 'object-contain' : 'object-cover'}`}
           />
         </picture>
+        </MaybeReveal>
       </div>
       {caption && <figcaption className="mt-3 text-sm text-neutral-600">{caption}</figcaption>}
     </figure>
   )
+}
+
+function MaybeReveal({ on, className, children }: { on: boolean; className?: string; children: ReactNode }) {
+  return on ? <RevealImage className={className}>{children}</RevealImage> : <>{children}</>
 }

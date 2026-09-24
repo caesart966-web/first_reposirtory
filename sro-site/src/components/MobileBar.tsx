@@ -4,7 +4,7 @@ import { LINKS } from '../content/contacts'
 import { MESSENGERS } from './messengers'
 
 const itemClasses =
-  'flex min-h-[56px] flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-neutral-700 transition active:bg-neutral-50'
+  'flex min-h-[56px] flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-neutral-700 transition-colors active:bg-neutral-100'
 
 type Channel = {
   label: string
@@ -31,8 +31,8 @@ const GRID_BY_COUNT: Record<number, string> = {
 
 // Фиксированная нижняя панель быстрых контактов — только на мобильных.
 // Появляется после прокрутки ниже первого экрана (T18): пока посетитель
-// видит герой с кнопкой «Позвонить» и карточкой квиза, панель дублировала бы
-// их и съедала нижнюю кромку экрана.
+// видит первый экран с кнопками «Связаться» и «Позвонить», панель дублировала
+// бы их и съедала нижнюю кромку экрана.
 export function MobileBar() {
   const [visible, setVisible] = useState(false)
 
@@ -45,7 +45,7 @@ export function MobileBar() {
 
   return (
     <nav
-      className={`fixed inset-x-0 bottom-0 z-50 border-t border-neutral-200 bg-white/95 backdrop-blur transition-transform duration-300 md:hidden ${
+      className={`fixed inset-x-0 bottom-0 z-50 border-t border-neutral-200 bg-neutral-50/95 backdrop-blur transition-transform duration-500 ease-silk md:hidden ${
         visible ? 'translate-y-0' : 'pointer-events-none translate-y-full'
       }`}
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}

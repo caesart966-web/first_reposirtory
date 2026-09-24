@@ -1,7 +1,6 @@
 import { MapPin } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { LABELS, REGIONS, type RegionKey } from '../content/regions'
-import { anchor } from '../lib/site'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
 
@@ -60,7 +59,7 @@ export function Regions() {
     }
 
   return (
-    <Section id="regions" className="bg-neutral-50/55">
+    <Section id="regions" className="bg-neutral-100">
       <SectionHeading
         eyebrow="География"
         title="География работы"
@@ -78,7 +77,7 @@ export function Regions() {
             пятнадцатью контурами: полный перечень регионов он всё равно
             прочитает из списка ниже, и дублировать его голосом незачем. */}
         {!map ? (
-          <div className="w-full rounded-2xl bg-accent-50" style={{ aspectRatio: '1000 / 544' }} />
+          <div className="w-full rounded-3xl bg-neutral-200/60" style={{ aspectRatio: '1000 / 544' }} />
         ) : (
           <svg
             viewBox={map.VIEW_BOX}
@@ -90,15 +89,15 @@ export function Regions() {
               {/* Лёгкий градиент вместо плоской заливки: с ним выделенные
                   регионы выглядят подсвеченными, а не закрашенными маркером. */}
               <linearGradient id="ru-on" x1="0" y1="0" x2="0.3" y2="1">
-                <stop offset="0%" stopColor="#4A66EF" />
-                <stop offset="100%" stopColor="#2F4BDE" />
+                <stop offset="0%" stopColor="#C09A68" />
+                <stop offset="100%" stopColor="#9D7443" />
               </linearGradient>
               <linearGradient id="ru-hot" x1="0" y1="0" x2="0.3" y2="1">
-                <stop offset="0%" stopColor="#2F4BDE" />
-                <stop offset="100%" stopColor="#202F93" />
+                <stop offset="0%" stopColor="#6B4C26" />
+                <stop offset="100%" stopColor="#4D3A26" />
               </linearGradient>
               <filter id="ru-shadow" x="-6%" y="-12%" width="112%" height="130%">
-                <feDropShadow dx="0" dy="7" stdDeviation="9" floodColor="#141A45" floodOpacity="0.14" />
+                <feDropShadow dx="0" dy="7" stdDeviation="9" floodColor="#1C1815" floodOpacity="0.12" />
               </filter>
             </defs>
 
@@ -109,7 +108,7 @@ export function Regions() {
               <path
                 d={map.MAP_BASE}
                 fillRule="evenodd"
-                className="pointer-events-none fill-accent-100 stroke-white"
+                className="pointer-events-none fill-neutral-200 stroke-neutral-100"
                 strokeWidth="1.1"
               />
               {KEYS.map((key) => {
@@ -122,7 +121,7 @@ export function Regions() {
                     d={map.MAP_ACTIVE[key]}
                     fillRule="evenodd"
                     fill={on ? 'url(#ru-hot)' : 'url(#ru-on)'}
-                    className="cursor-default stroke-white transition-[fill] duration-200"
+                    className="cursor-default stroke-neutral-100 transition-[fill] duration-500"
                     strokeWidth="1.1"
                     onMouseEnter={() => setActive(key)}
                     onMouseLeave={() => setActive(null)}
@@ -195,7 +194,7 @@ export function Regions() {
         <p className="mx-auto mt-6 max-w-2xl px-3 text-center text-sm text-neutral-600">
           Вашего региона нет в списке?{' '}
           <a
-            href={anchor('#quiz')}
+            href="#contacts"
             className="font-semibold text-accent-700 underline underline-offset-2 transition hover:text-accent-800"
           >
             Напишите, уточню возможность работы

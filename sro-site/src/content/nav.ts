@@ -73,7 +73,7 @@ export const MENU: NavItem[] = [
   SERVICES_GROUP,
   { label: 'Стоимость', href: '#pricing', kind: 'anchor' },
   { label: 'О нас', href: '#about', kind: 'anchor' },
-  { label: 'FAQ', href: '#faq', kind: 'anchor' },
+  { label: 'Вопросы', href: '#faq', kind: 'anchor' },
   // География — в подвале и мобильном меню; в шапке для неё нет места,
   // а из «Услуг» она ушла, когда там появились страницы услуг.
   { label: 'География работы', href: '#regions', kind: 'anchor', footerOnly: true },
@@ -90,4 +90,11 @@ export const SECTIONS: NavLink[] = MENU.flatMap((item) => (isGroup(item) ? item.
 
 /** Адрес ссылки с учётом её вида: якорь главной или страница вида СРО.
  *  Вынесено сюда, а не в lib/site.ts: там нет знания о форме навигации. */
-export const navHref = (link: NavLink) => (link.kind === 'page' ? page(link.href) : anchor(link.href))
+export const navHref = (link: NavLink) =>
+  link.kind === 'page'
+    ? page(link.href)
+    : // «Связаться» есть внизу каждой страницы — ссылка на него местная,
+      // без перехода на главную.
+      link.href === '#contacts'
+      ? '#contacts'
+      : anchor(link.href)

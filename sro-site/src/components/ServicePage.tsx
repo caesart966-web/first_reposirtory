@@ -1,18 +1,17 @@
-import { ArrowLeft, ArrowRight, Check } from 'lucide-react'
+import { ArrowRight, Check } from 'lucide-react'
 import { SRO_DETAILS } from '../content/sroDetails'
 import { DOCS_IP, DOCS_LAW, DOCS_OOO, DOCS_SPECIALISTS, STEPS } from '../content/sroDetails'
 import type { ServiceBlock, ServicePage as ServicePageData } from '../content/services'
-import { anchor, home, page, quizWithHelp } from '../lib/site'
+import { anchor, page } from '../lib/site'
 import { DocGroup, Law, Step } from './DetailPage'
 import { Footer } from './Footer'
 import { Header } from './Header'
-import { LegalProvider } from './LegalDocs'
+import { Contact } from './Contact'
+import { PageHero } from './PageHero'
 import { MobileBar } from './MobileBar'
-import { ButtonLink } from './ui/Button'
 import { cardHover } from './ui/card'
 import { Reveal } from './ui/Reveal'
 import { Section } from './ui/Section'
-import { ThemisBackdrop } from './ui/ThemisBackdrop'
 
 // Страница услуги. Разметка собирается из блоков (content/services.ts):
 // текст, карточки, список документов, оговорка, а также три «сборных»
@@ -26,7 +25,7 @@ function Blocks({ block }: { block: ServiceBlock }) {
   if (block.kind === 'text') {
     return (
       <Reveal>
-        <h2 className="text-2xl font-bold tracking-tight text-neutral-950 sm:text-3xl">
+        <h2 className="font-display text-[2.1rem] font-medium leading-[1.08] text-neutral-950 sm:text-[2.7rem]">
           {block.title}
         </h2>
         {block.paragraphs.map((text) => (
@@ -42,7 +41,7 @@ function Blocks({ block }: { block: ServiceBlock }) {
   if (block.kind === 'note') {
     return (
       <Reveal>
-        <div className="rounded-2xl border-l-4 border-accent-500 bg-accent-50/70 p-6 sm:p-7">
+        <div className="rounded-3xl border-l-2 border-accent-500 bg-neutral-100 p-7 sm:p-9">
           <h2 className="font-semibold text-neutral-950">{block.title}</h2>
           {block.paragraphs.map((text) => (
             <p key={text} className="mt-2.5 text-sm leading-relaxed text-neutral-700">
@@ -59,7 +58,7 @@ function Blocks({ block }: { block: ServiceBlock }) {
     return (
       <>
         <Reveal>
-          <h2 className="text-2xl font-bold tracking-tight text-neutral-950 sm:text-3xl">
+          <h2 className="font-display text-[2.1rem] font-medium leading-[1.08] text-neutral-950 sm:text-[2.7rem]">
             {block.title}
           </h2>
           {block.intro && <p className="mt-3 max-w-3xl text-neutral-600">{block.intro}</p>}
@@ -69,7 +68,7 @@ function Blocks({ block }: { block: ServiceBlock }) {
             <Reveal key={item.title} delay={(index % 2) * 70} className="h-full">
               {/* Карточка читается, а не кликается: подсветка есть, подъёма
                   нет — подъём обещал бы клик (см. ui/card.ts). */}
-              <div className="h-full rounded-2xl border border-neutral-200 bg-white p-5 shadow-card transition-colors duration-200 hover:border-accent-300 sm:p-6">
+              <div className="h-full rounded-2xl border border-neutral-200 bg-white p-5 transition-colors duration-200 hover:border-accent-300 sm:p-6">
                 <div className="flex gap-3.5">
                   <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-accent-50 text-accent-600">
                     <Check className="h-3.5 w-3.5" aria-hidden="true" />
@@ -92,7 +91,7 @@ function Blocks({ block }: { block: ServiceBlock }) {
     return (
       <>
         <Reveal>
-          <h2 className="text-2xl font-bold tracking-tight text-neutral-950 sm:text-3xl">
+          <h2 className="font-display text-[2.1rem] font-medium leading-[1.08] text-neutral-950 sm:text-[2.7rem]">
             {block.title}
           </h2>
           {block.intro && <p className="mt-3 max-w-3xl text-neutral-600">{block.intro}</p>}
@@ -108,7 +107,7 @@ function Blocks({ block }: { block: ServiceBlock }) {
     return (
       <>
         <Reveal>
-          <h2 className="text-2xl font-bold tracking-tight text-neutral-950 sm:text-3xl">
+          <h2 className="font-display text-[2.1rem] font-medium leading-[1.08] text-neutral-950 sm:text-[2.7rem]">
             {block.title}
           </h2>
           <p className="mt-3 max-w-3xl text-neutral-600">{block.intro}</p>
@@ -130,7 +129,7 @@ function Blocks({ block }: { block: ServiceBlock }) {
     return (
       <>
         <Reveal>
-          <h2 className="text-2xl font-bold tracking-tight text-neutral-950 sm:text-3xl">
+          <h2 className="font-display text-[2.1rem] font-medium leading-[1.08] text-neutral-950 sm:text-[2.7rem]">
             {block.title}
           </h2>
           <p className="mt-3 max-w-3xl text-neutral-600">{block.intro}</p>
@@ -177,7 +176,7 @@ function Blocks({ block }: { block: ServiceBlock }) {
   return (
     <>
       <Reveal>
-        <h2 className="text-2xl font-bold tracking-tight text-neutral-950 sm:text-3xl">
+        <h2 className="font-display text-[2.1rem] font-medium leading-[1.08] text-neutral-950 sm:text-[2.7rem]">
           {block.title}
         </h2>
         <p className="mt-3 max-w-3xl text-neutral-600">{block.intro}</p>
@@ -187,7 +186,7 @@ function Blocks({ block }: { block: ServiceBlock }) {
           <Reveal key={detail.slug} delay={(index % 3) * 70} className="h-full">
             <a
               href={page(detail.path)}
-              className={`group/card flex h-full flex-col rounded-2xl border border-neutral-200 bg-white p-5 shadow-card sm:p-6 ${cardHover}`}
+              className={`group/card flex h-full flex-col rounded-3xl border border-neutral-200 bg-neutral-50 p-6 sm:p-7 ${cardHover}`}
             >
               <h3 className="font-semibold text-neutral-950">{detail.card.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-neutral-600">{detail.card.text}</p>
@@ -208,34 +207,16 @@ function Blocks({ block }: { block: ServiceBlock }) {
 
 export function ServicePage({ service }: { service: ServicePageData }) {
   return (
-    <LegalProvider>
-      <div id="top" className="relative">
-        <ThemisBackdrop />
-        <div className="relative z-10">
+    <div id="top">
           <Header />
           <main>
-            {/* Первый экран: крошка назад к услугам на главной, заголовок,
-                короткая строка и кнопка заявки с уже выбранной услугой. */}
-            <Section size="compact" className="bg-accent-50/60">
-              <Reveal>
-                <a
-                  href={anchor('#services')}
-                  className="inline-flex items-center gap-1.5 text-sm font-medium text-accent-700 transition hover:text-accent-800"
-                >
-                  <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
-                  Все услуги
-                </a>
-              </Reveal>
-              <Reveal className="mt-6 max-w-3xl">
-                <h1 className="text-3xl font-bold tracking-tight text-neutral-950 sm:text-4xl lg:text-[2.6rem] lg:leading-[1.1]">
-                  {service.title}
-                </h1>
-                <p className="mt-5 text-lg text-neutral-600">{service.lead}</p>
-                <ButtonLink href={quizWithHelp(service.slug)} size="lg" className="mt-7">
-                  Обсудить задачу
-                </ButtonLink>
-              </Reveal>
-            </Section>
+            {/* Первый экран: крошка к услугам на главной, заголовок, строка. */}
+            <PageHero
+              backHref={anchor('#services')}
+              backLabel="Все услуги"
+              title={service.title}
+              lead={service.lead}
+            />
 
             {/* Блоки чередуют фон, чтобы длинная страница читалась разделами,
                 а не одним полотном. */}
@@ -243,35 +224,15 @@ export function ServicePage({ service }: { service: ServicePageData }) {
               <Section
                 key={block.title}
                 size={block.kind === 'note' ? 'compact' : 'default'}
-                className={index % 2 === 1 ? 'bg-neutral-50/55' : undefined}
+                className={index % 2 === 1 ? 'bg-neutral-100' : undefined}
               >
                 <Blocks block={block} />
               </Section>
             ))}
 
-            <Section size="key" className="bg-accent-950">
-              <Reveal className="mx-auto max-w-3xl text-center">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent-300">
-                  Заявка
-                </p>
-                <h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                  Обсудим вашу ситуацию
-                </h2>
-                <p className="mt-4 text-lg text-neutral-300">
-                  Отвечу на вопросы по теме «{service.short}», разберу вашу ситуацию и назову
-                  порядок действий. Консультация бесплатная.
-                </p>
-                <div className="mt-8 flex flex-wrap justify-center gap-3">
-                  <ButtonLink href={quizWithHelp(service.slug)} variant="inverse" size="lg">
-                    Оставить заявку
-                    <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
-                  </ButtonLink>
-                  <ButtonLink href={home()} variant="outlineInverse" size="lg">
-                    На главную
-                  </ButtonLink>
-                </div>
-              </Reveal>
-            </Section>
+            <Contact
+              lead={`Отвечу на вопросы по теме «${service.short}», разберу вашу ситуацию и назову порядок действий. Консультация бесплатная — и первая, и все следующие.`}
+            />
           </main>
           <Footer />
           <div
@@ -280,8 +241,6 @@ export function ServicePage({ service }: { service: ServicePageData }) {
             aria-hidden="true"
           />
           <MobileBar />
-        </div>
-      </div>
-    </LegalProvider>
+    </div>
   )
 }

@@ -1,9 +1,8 @@
-import { CheckCircle2 } from 'lucide-react'
 import { IMAGES } from '../content/images'
 import { ButtonLink } from './ui/Button'
 import { Figure } from './ui/Figure'
 import { Reveal } from './ui/Reveal'
-import { Section } from './ui/Section'
+import { Section, SectionHeading } from './ui/Section'
 
 const DOCUMENTS = [
   { title: 'Заявление', text: 'по форме выбранной СРО' },
@@ -17,44 +16,44 @@ const DOCUMENTS = [
 
 export function Documents() {
   return (
-    <Section id="documents" size="compact" className="bg-neutral-50/55">
-      <div className="grid items-center gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-14">
-        <Reveal>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent-600">
-            Документы
-          </p>
-          <h2 className="mt-3 text-3xl font-bold tracking-tight text-neutral-950 sm:text-4xl">
-            Подготовлю пакет документов для вступления в СРО
-          </h2>
-          <p className="mt-5 text-lg text-neutral-600">
-            Соберу комплект под требования конкретной СРО и проверю каждый документ до подачи —
-            чтобы снизить риск замечаний и возвратов.
-          </p>
-          <ButtonLink href="#quiz" size="lg" className="mt-7">
-            Проверить мои документы
-          </ButtonLink>
-          {/* Папки: буквально то, о чём секция. Раньше кадр стоял полосой
-              в «Процессе», а здесь висел архивный разрез здания — оба не по теме. */}
-          <Figure {...IMAGES.documents} className="mt-9 max-w-md" />
-        </Reveal>
-        <Reveal delay={100}>
-          <div className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-card sm:p-8">
-            <p className="text-sm font-semibold uppercase tracking-wider text-neutral-500">
-              Что войдёт в пакет
+    <Section id="documents">
+      <div className="grid gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-20">
+        <div>
+          <SectionHeading eyebrow="Документы" title="Подготовлю пакет документов для вступления в СРО" />
+          <Reveal delay={120}>
+            <p className="mt-7 text-lg leading-relaxed text-neutral-600">
+              Соберу комплект под требования конкретной СРО и проверю каждый документ до
+              подачи — чтобы снизить риск замечаний и возвратов.
             </p>
-            <ul className="mt-5 space-y-3.5">
-              {DOCUMENTS.map((doc) => (
-                <li key={doc.title} className="flex items-start gap-3">
-                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-accent-600" aria-hidden="true" />
-                  <p className="text-neutral-800">
+            <ButtonLink href="#contacts" size="lg" arrow className="mt-9">
+              Проверить мои документы
+            </ButtonLink>
+          </Reveal>
+          <Figure {...IMAGES.documents} className="mt-12 max-w-md" />
+        </div>
+        {/* Перечень — строками с тонкими линейками, как опись в деле, а не
+            галочками в карточке: галочки означают «сделано», а это список
+            того, что войдёт в пакет. */}
+        <div className="lg:pt-24">
+          <Reveal>
+            <p className="text-sm text-neutral-600">Что войдёт в пакет</p>
+          </Reveal>
+          <ol className="mt-5 border-t border-neutral-300">
+            {DOCUMENTS.map((doc, index) => (
+              <li key={doc.title} className="border-b border-neutral-300">
+                <Reveal delay={index * 60} className="grid grid-cols-[2.5rem_minmax(0,1fr)] gap-2 py-5">
+                  <span className="pt-0.5 text-sm tabular-nums text-neutral-500">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                  <p className="text-neutral-950">
                     <span className="font-medium">{doc.title}</span>
-                    <span className="text-neutral-500"> — {doc.text}</span>
+                    <span className="text-neutral-600"> — {doc.text}</span>
                   </p>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </Reveal>
+                </Reveal>
+              </li>
+            ))}
+          </ol>
+        </div>
       </div>
     </Section>
   )

@@ -7,7 +7,7 @@
     <!-- Страницы с ошибкой в поиске не нужны. -->
     <meta name="robots" content="noindex, follow" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="theme-color" content="#141A45" />
+    <meta name="theme-color" content="#1C1815" />
     <!-- Обычная статическая страница, без React и без сборки: на неё уводит
          сам хостинг, когда адреса не существует, и она обязана открыться,
          даже если скрипты сайта почему-то не загрузились. Поэтому шрифт
@@ -15,35 +15,30 @@
     <style>
       *{margin:0;padding:0;box-sizing:border-box}
       body{min-height:100dvh;display:flex;align-items:center;justify-content:center;
-        padding:24px;background:#141A45;color:#D8D3CC;
-        font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+        padding:24px;background:#1C1815;color:#D6CDC1;
+        font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
         -webkit-font-smoothing:antialiased;line-height:1.5}
-      .grid{position:fixed;inset:0;z-index:0;
-        background-image:linear-gradient(#A3B8FC14 1px,transparent 1px),
-                         linear-gradient(90deg,#A3B8FC14 1px,transparent 1px);
-        background-size:60px 60px}
       main{position:relative;z-index:1;max-width:640px;width:100%}
-      .mark{width:88px;height:auto;color:#A3B8FC}
-      .code{margin-top:28px;font-size:15px;font-weight:600;letter-spacing:.16em;
-        text-transform:uppercase;color:#7490F7}
-      h1{margin-top:10px;font-size:clamp(28px,5vw,40px);font-weight:700;color:#fff;
-        letter-spacing:-.02em;line-height:1.15}
-      p{margin-top:16px;font-size:17px;color:#D8D3CC}
+      .mark{width:88px;height:auto;color:#D2B186}
+      .code{margin-top:28px;font-size:15px;color:#A79D91;display:flex;align-items:center;gap:12px}
+      .code::before{content:'';width:32px;height:1px;background:#D2B186}
+      h1{margin-top:14px;font-family:Georgia,'Times New Roman',serif;font-weight:500;
+        font-size:clamp(34px,6vw,54px);color:#FBF9F5;letter-spacing:-.01em;line-height:1.05}
+      p{margin-top:16px;font-size:17px;color:#D6CDC1}
       .links{margin-top:32px;display:flex;flex-wrap:wrap;gap:10px}
-      .links a{display:inline-flex;align-items:center;padding:12px 20px;border-radius:12px;
-        font-size:15px;font-weight:600;text-decoration:none;transition:background .2s,border-color .2s}
-      .primary{background:#2F4BDE;color:#fff}
-      .primary:hover{background:#4A66EF}
-      .ghost{border:1px solid rgba(255,255,255,.18);color:#fff}
-      .ghost:hover{border-color:#A3B8FC;background:rgba(255,255,255,.06)}
+      .links a{display:inline-flex;align-items:center;height:48px;padding:0 22px;border-radius:999px;
+        font-size:15px;font-weight:500;text-decoration:none;transition:background .5s,border-color .5s}
+      .primary{background:#FBF9F5;color:#14110F}
+      .primary:hover{background:#fff}
+      .ghost{border:1px solid rgba(255,255,255,.25);color:#FBF9F5}
+      .ghost:hover{border-color:rgba(255,255,255,.7)}
       .contact{margin-top:36px;padding-top:24px;border-top:1px solid rgba(255,255,255,.1);
-        font-size:15px;color:#A9A29A}
-      .contact a{color:#fff;font-weight:600;text-decoration:none}
-      .contact a:hover{color:#A3B8FC}
+        font-size:15px;color:#A79D91}
+      .contact a{color:#FBF9F5;font-weight:500;text-decoration:none}
+      .contact a:hover{color:#E3CDA9}
     </style>
   </head>
   <body>
-    <div class="grid"></div>
     <main>
       <!-- Тот же знак весов, что в шапке сайта. -->
       <svg class="mark" viewBox="0 0 46 26" fill="none" stroke="currentColor" stroke-width="2"
@@ -59,9 +54,8 @@
         куда можно перейти.</p>
       <div class="links">
         <a class="primary" href="/">На главную</a>
-        <a class="ghost" href="/#types">Виды СРО</a>
         <a class="ghost" href="/#services">Услуги</a>
-        <a class="ghost" href="/#quiz">Оставить заявку</a>
+        <a class="ghost" href="/#contacts">Связаться</a>
       </div>
       <p class="contact">
         Или напишите сразу: <a href="tel:+79001330219">+7 900 133-02-19</a>,
