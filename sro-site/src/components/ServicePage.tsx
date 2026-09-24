@@ -25,7 +25,7 @@ function Blocks({ block }: { block: ServiceBlock }) {
   if (block.kind === 'text') {
     return (
       <Reveal>
-        <h2 className="font-display text-[2.1rem] font-medium leading-[1.08] text-neutral-950 sm:text-[2.7rem]">
+        <h2 className="font-display text-[1.8rem] font-medium leading-[1.08] text-neutral-950 min-[360px]:text-[2.1rem] sm:text-[2.7rem]">
           {block.title}
         </h2>
         {block.paragraphs.map((text) => (
@@ -58,7 +58,7 @@ function Blocks({ block }: { block: ServiceBlock }) {
     return (
       <>
         <Reveal>
-          <h2 className="font-display text-[2.1rem] font-medium leading-[1.08] text-neutral-950 sm:text-[2.7rem]">
+          <h2 className="font-display text-[1.8rem] font-medium leading-[1.08] text-neutral-950 min-[360px]:text-[2.1rem] sm:text-[2.7rem]">
             {block.title}
           </h2>
           {block.intro && <p className="mt-3 max-w-3xl text-neutral-600">{block.intro}</p>}
@@ -91,7 +91,7 @@ function Blocks({ block }: { block: ServiceBlock }) {
     return (
       <>
         <Reveal>
-          <h2 className="font-display text-[2.1rem] font-medium leading-[1.08] text-neutral-950 sm:text-[2.7rem]">
+          <h2 className="font-display text-[1.8rem] font-medium leading-[1.08] text-neutral-950 min-[360px]:text-[2.1rem] sm:text-[2.7rem]">
             {block.title}
           </h2>
           {block.intro && <p className="mt-3 max-w-3xl text-neutral-600">{block.intro}</p>}
@@ -107,7 +107,7 @@ function Blocks({ block }: { block: ServiceBlock }) {
     return (
       <>
         <Reveal>
-          <h2 className="font-display text-[2.1rem] font-medium leading-[1.08] text-neutral-950 sm:text-[2.7rem]">
+          <h2 className="font-display text-[1.8rem] font-medium leading-[1.08] text-neutral-950 min-[360px]:text-[2.1rem] sm:text-[2.7rem]">
             {block.title}
           </h2>
           <p className="mt-3 max-w-3xl text-neutral-600">{block.intro}</p>
@@ -129,7 +129,7 @@ function Blocks({ block }: { block: ServiceBlock }) {
     return (
       <>
         <Reveal>
-          <h2 className="font-display text-[2.1rem] font-medium leading-[1.08] text-neutral-950 sm:text-[2.7rem]">
+          <h2 className="font-display text-[1.8rem] font-medium leading-[1.08] text-neutral-950 min-[360px]:text-[2.1rem] sm:text-[2.7rem]">
             {block.title}
           </h2>
           <p className="mt-3 max-w-3xl text-neutral-600">{block.intro}</p>
@@ -176,7 +176,7 @@ function Blocks({ block }: { block: ServiceBlock }) {
   return (
     <>
       <Reveal>
-        <h2 className="font-display text-[2.1rem] font-medium leading-[1.08] text-neutral-950 sm:text-[2.7rem]">
+        <h2 className="font-display text-[1.8rem] font-medium leading-[1.08] text-neutral-950 min-[360px]:text-[2.1rem] sm:text-[2.7rem]">
           {block.title}
         </h2>
         <p className="mt-3 max-w-3xl text-neutral-600">{block.intro}</p>

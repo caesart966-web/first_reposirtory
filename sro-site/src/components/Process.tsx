@@ -1,16 +1,13 @@
-import { asset } from '../lib/site'
 import { Reveal } from './ui/Reveal'
 import { SectionHeading } from './ui/Section'
 
-// Четыре шага работы — единственный тёмный раздел посреди страницы, и в нём
-// живёт Фемида.
+// Четыре шага работы — единственный тёмный раздел посреди страницы.
 //
-// Раньше гравюра была водяным знаком позади всех страниц сразу, на 5%
-// прозрачности. 24.09.2026 заказчик попросил её оставить, а оформление стало
-// строже, и фон «под всем» спорил бы с фотографиями. Теперь она в одном
-// месте, но крупно: белый штрих на графите справа, как предмет на тёмной
-// витрине. Обращение цвета и прозрачность — в index.css (.themis-engraving):
-// у гравюры белая подложка, и на тёмном её убирает только режим screen.
+// До 24.09.2026 здесь стояла гравюра Фемиды белым штрихом на графите.
+// Заказчик попросил её убрать: белый рисунок на чёрном смотрелся бедно
+// рядом с его примерами, где Фемида — бронзовая статуя на фотографии.
+// Место под такую фотографию — этот раздел; пока её нет, раздел стоит
+// без картинки.
 //
 // «Через форму на сайте» из первого шага убрано вместе с формой.
 const STEPS = [
@@ -38,17 +35,7 @@ const STEPS = [
 
 export function Process() {
   return (
-    <section id="process" className="relative isolate overflow-hidden bg-accent-950 py-24 text-neutral-50 sm:py-32">
-      <img
-        src={asset('./img/themis.webp')}
-        alt=""
-        aria-hidden="true"
-        width={938}
-        height={1600}
-        loading="lazy"
-        decoding="async"
-        className="themis-engraving pointer-events-none absolute -right-24 top-6 -z-10 h-[46%] w-auto select-none [mask-image:radial-gradient(60%_60%_at_50%_42%,#000_55%,transparent_100%)] sm:right-[-4rem] lg:right-[max(1rem,calc(50%-39rem))] lg:top-10 lg:h-[112%]"
-      />
+    <section id="process" className="bg-accent-950 py-24 text-neutral-50 sm:py-32">
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
         <SectionHeading dark eyebrow="Процесс" title="Как проходит работа" />
         <ol className="mt-16 grid border-t border-white/15 sm:grid-cols-2 lg:grid-cols-4">

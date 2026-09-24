@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
-"""Готовит фоновую гравюру Фемиды из исходного скана (ТЗ, T23, путь B).
+"""Готовит гравюру Фемиды из исходного скана (ТЗ, T23, путь B).
+
+С 24.09.2026 гравюры на сайте нет (заказчик попросил убрать), результат
+кладётся в assets-src/ и в сборку не попадает. Скрипт оставлен, чтобы
+обработку можно было повторить, если гравюра вернётся.
 
 В ТЗ путь записан командой ImageMagick; здесь тот же смысл на Pillow, чтобы
 обработку можно было повторить без установки magick:
 
     magick themis-source.jpg -colorspace Gray -normalize -level 30%,85% \
-      -resize x1600 -quality 82 public/img/themis.webp
+      -resize x1600 -quality 82 assets-src/themis-engraving.webp
 
 Что делает и зачем:
   1. grayscale     — снимает желтизну старой бумаги (она только в цвете);
@@ -26,8 +30,8 @@ from pathlib import Path
 
 from PIL import Image
 
-SRC = Path("public/img/themis-source.jpg")
-DST = Path("public/img/themis.webp")
+SRC = Path("assets-src/themis-source.jpg")
+DST = Path("assets-src/themis-engraving.webp")
 
 # Рамка оттиска начинается на y=780, фигура стоит на цоколе выше — режем по ней.
 CROP = (232, 44, 660, 774)  # left, top, right, bottom

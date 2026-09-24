@@ -1,7 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import '@fontsource-variable/onest'
-import '@fontsource-variable/cormorant'
+import '@fontsource-variable/brygada-1918'
 import './index.css'
 import { DetailPage } from './components/DetailPage'
 import { detailBySlug } from './content/sroDetails'

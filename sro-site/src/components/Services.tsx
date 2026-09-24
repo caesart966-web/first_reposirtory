@@ -1,6 +1,7 @@
 import { ArrowUpRight } from 'lucide-react'
 import { serviceBySlug } from '../content/services'
 import { page } from '../lib/site'
+import { nbsp } from '../lib/typo'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
 
@@ -103,13 +104,18 @@ export function Services() {
                     href={pathOf(service.slug)}
                     className="group relative flex h-full flex-col justify-between gap-6 sm:min-h-[13rem] sm:gap-8 rounded-3xl bg-neutral-50 p-6 transition-colors duration-700 ease-silk hover:bg-neutral-950 focus-visible:bg-neutral-950 focus-visible:outline-none sm:p-7 lg:min-h-[15rem]"
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <h4 className="font-display text-[1.6rem] font-medium leading-[1.1] text-neutral-950 transition-colors duration-700 ease-silk group-hover:text-neutral-50 group-focus-visible:text-neutral-50">
-                        {service.title}
-                      </h4>
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-neutral-300 text-neutral-950 transition-all duration-700 ease-silk group-hover:rotate-45 group-hover:border-neutral-50 group-hover:bg-neutral-50 group-focus-visible:border-neutral-50 group-focus-visible:bg-neutral-50">
+                    {/* Кружок-стрелка стоит отдельной строкой над заголовком,
+                        а не рядом с ним: в четыре колонки рядом с кружком
+                        «Сопровождение» не помещалось и выталкивало его за
+                        край карточки. На 1024–1279px кегль на ступень меньше:
+                        колонка там уже всего. */}
+                    <div>
+                      <span className="flex h-9 w-9 items-center justify-center rounded-full border border-neutral-300 text-neutral-950 transition-all duration-700 ease-silk group-hover:rotate-45 group-hover:border-neutral-50 group-hover:bg-neutral-50 group-focus-visible:border-neutral-50 group-focus-visible:bg-neutral-50">
                         <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
                       </span>
+                      <h4 className="mt-6 font-display text-[1.6rem] font-medium leading-[1.1] text-neutral-950 transition-colors duration-700 ease-silk group-hover:text-neutral-50 group-focus-visible:text-neutral-50 lg:text-[1.45rem] xl:text-[1.6rem]">
+                        {nbsp(service.title)}
+                      </h4>
                     </div>
                     <p className="text-sm leading-relaxed text-neutral-600 transition-colors duration-700 group-hover:text-neutral-300 group-focus-visible:text-neutral-300">
                       {service.text}
