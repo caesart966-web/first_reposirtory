@@ -106,6 +106,7 @@ export function Hero() {
                   loading={index === 0 ? 'eager' : 'lazy'}
                   decoding="async"
                   className="h-full w-full object-cover"
+                  style={{ objectPosition: slide.image.position }}
                 />
               </picture>
             </div>

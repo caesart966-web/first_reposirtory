@@ -49,6 +49,7 @@ export function PageHero({
               loading="eager"
               decoding="async"
               className="scroll-drift h-full w-full object-cover"
+              style={{ objectPosition: image.position }}
             />
           </picture>
           {/* На телефоне текст идёт во всю ширину, и плёнка ровная и плотная;
