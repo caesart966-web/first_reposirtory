@@ -48,6 +48,19 @@ try {
   process.exit(1)
 }
 
+// Превью-сборку отличаем СРАЗУ и по делу. Без этой проверки прогон
+// на превью выдавал три красные строки («посетитель не увидел
+// подтверждения», «письмо не сформировано», «заявка не записалась»),
+// и все три — правда, но не про ошибку: на превью форма нарочно
+// показывает телефон вместо отправки. Искать по ним причину можно долго,
+// а лечится одной командой.
+const contactsPage = join(dist, 'kontakty/index.html')
+if (!existsSync(contactsPage) || !readFileSync(contactsPage, 'utf8').includes('/api/submit.php')) {
+  console.log(red('\nВ dist лежит превью-сборка: форма там не отправляет заявки, а показывает телефон.'))
+  console.log('Соберите боевую и повторите:  ' + `npm run release -- ваш-домен.ru\n`)
+  process.exit(1)
+}
+
 const original = readFileSync(phpFile, 'utf8')
 const tmp = mkdtempSync(join(tmpdir(), 'norma-lead-'))
 const mailFile = join(tmp, 'lead.eml')
