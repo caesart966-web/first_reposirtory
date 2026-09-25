@@ -2223,11 +2223,13 @@ body.is-locked { overflow: hidden; }
 }
 .sro--dark .sro__name, .footer .sro__name { color: #fff; }
 
+/* Сетка, а не flex с переносом: длинное значение («Право») при переносе
+   уезжало под подпись, и строки блока выстраивались каждая по-своему. */
 .sro__row {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 9.5rem minmax(0, 1fr);
   align-items: baseline;
-  gap: var(--s-2) var(--s-3);
+  gap: var(--s-1) var(--s-3);
   font-size: 0.875rem;
 }
 .sro__key {
@@ -2249,11 +2251,19 @@ body.is-locked { overflow: hidden; }
 }
 .sro--dark .sro__num, .footer .sro__num { color: var(--accent-300); }
 .sro__kind { color: var(--ink-muted); }
+.sro__row + .sro__row { margin-top: var(--s-2); }
+.sro__check {
+  margin: var(--s-4) 0 0;
+  font-size: 0.875rem;
+  color: var(--ink-muted);
+}
+.sro__check a { font-weight: 600; }
 .sro--dark .sro__kind, .footer .sro__kind { color: var(--ink-inverse-muted); }
 
 @media (max-width: 37.5em) {
   .sro { grid-template-columns: minmax(0, 1fr); gap: var(--s-4); padding: var(--s-5); }
   .sro__key { min-width: 0; }
+  .sro__row { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* ---------- 12б. Контакты ------------------------------------------------
