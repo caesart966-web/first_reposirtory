@@ -58,7 +58,7 @@ foreach (array(dirname(__DIR__, 2), dirname(__DIR__, 3)) as $base) {
         break;
     }
 }
-$to = trim((string) ($config['to'] ?? 'lopezr2@yandex.ru'));
+$to = trim((string) ($config['to'] ?? 'info@x-pto.ru'));
 if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
     error_log('zayavka.php: не задан адрес для заявок');
     reply(500, array('ok' => false, 'error' => 'config'));
