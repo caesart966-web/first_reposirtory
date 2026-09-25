@@ -833,12 +833,18 @@ def sro_block(site: Site, dark: bool = True) -> str:
     # блоке на странице «О компании»: в подвале каждой страницы им тесно.
     extra = ""
     if not dark:
-        def row(key: str, value: str, cls: str = "sro__kind") -> str:
+        def row(key: str, value: str, cls: str = "sro__kind", by_dash: bool = False) -> str:
             if not value:
                 return ""
+            text = esc(value)
+            if by_dash:
+                # Номер из 23 знаков на экране в 320 px в строку не входит.
+                # Переносить разрешено только после дефиса: разорванный
+                # посреди цифр номер уже не найти в реестре.
+                text = '<span class="nowrap">' + '-</span><wbr><span class="nowrap">'.join(text.split("-")) + '</span>'
             return (f'<div class="sro__row"><span class="sro__key">{key}</span>'
-                    f'<span class="{cls}">{esc(value)}</span></div>\n        ')
-        extra = (row("Номер члена", sro.get("member_reg", ""), "sro__num nowrap")
+                    f'<span class="{cls}">{text}</span></div>\n        ')
+        extra = (row("Номер члена", sro.get("member_reg", ""), "sro__num", by_dash=True)
                  + row("Член СРО с", sro.get("since", ""))
                  + row("Право", sro.get("right", ""))
                  + row("Ответственность", sro.get("level", "")))
