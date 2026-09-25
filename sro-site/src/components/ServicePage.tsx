@@ -7,6 +7,7 @@ import { DocGroup, Law, Step } from './DetailPage'
 import { Footer } from './Footer'
 import { Header } from './Header'
 import { Contact } from './Contact'
+import { PageExtras } from './PageExtras'
 import { PageHero } from './PageHero'
 import { MobileBar } from './MobileBar'
 import { cardHover } from './ui/card'
@@ -205,7 +206,17 @@ function Blocks({ block }: { block: ServiceBlock }) {
   )
 }
 
+// Якорь раздела: «razdel-2». По нему ведёт строка «На этой странице»
+// в шапке. Оговорки (note) в оглавление не идут — это вставки, а не разделы.
+const blockId = (index: number) => `razdel-${index + 1}`
+
 export function ServicePage({ service }: { service: ServicePageData }) {
+  const toc = [
+    ...service.blocks.flatMap((block, index) =>
+      block.kind === 'note' ? [] : [{ id: blockId(index), title: block.title }],
+    ),
+    { id: 'stoimost', title: 'Сколько стоит' },
+  ]
   return (
     <div id="top">
           <Header />
@@ -216,6 +227,7 @@ export function ServicePage({ service }: { service: ServicePageData }) {
               backLabel="Все услуги"
               title={service.title}
               lead={service.lead}
+              toc={toc}
             />
 
             {/* Блоки чередуют фон, чтобы длинная страница читалась разделами,
@@ -223,12 +235,17 @@ export function ServicePage({ service }: { service: ServicePageData }) {
             {service.blocks.map((block, index) => (
               <Section
                 key={block.title}
+                id={blockId(index)}
                 size={block.kind === 'note' ? 'compact' : 'default'}
                 className={index % 2 === 1 ? 'bg-neutral-100' : undefined}
               >
                 <Blocks block={block} />
               </Section>
             ))}
+
+            {/* Фон — противоположный последнему блоку: они чередуются, и два
+                соседних раздела одного цвета слились бы в один. */}
+            <PageExtras related={service.related} muted={service.blocks.length % 2 === 1} />
 
             <Contact
               lead={`Отвечу на вопросы по теме «${service.short}», разберу вашу ситуацию и назову порядок действий. Консультация бесплатная — и первая, и все следующие.`}

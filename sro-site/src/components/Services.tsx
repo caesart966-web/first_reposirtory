@@ -5,78 +5,34 @@ import { nbsp } from '../lib/typo'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
 
-// Восемь равнозначных карточек читались как каша, поэтому услуги разбиты
-// на две понятные группы: что делаем с самой СРО и что — со специалистами.
+// Услуги разбиты на две группы: что делаем с самой СРО и что — со
+// специалистами и уровнем ответственности.
 //
-// Каждая карточка ведёт на отдельную страницу услуги (/uslugi/…): заказчик
-// попросил, чтобы посетитель, кликнув по карточке, попадал на страницу
-// с полным описанием, а не прыгал по главной. Страниц семь, карточек восемь:
-// «Подбор СРО» и «Проверка СРО» — одна тема и одна страница. Поэтому
-// карточки и приподнимаются при наведении: по правилу из ui/card.ts подъём —
-// обещание клика, и здесь оно честное.
-type ServiceItem = { title: string; text: string; slug: string }
-type ServiceGroup = { title: string; items: ServiceItem[] }
-
-const GROUPS: ServiceGroup[] = [
-  {
-    title: 'Вступление и сопровождение',
-    items: [
-      {
-        title: 'Вступление в СРО',
-        text: 'Организую процесс от выбора СРО до внесения компании в реестр членов.',
-        slug: 'vstuplenie',
-      },
-      {
-        title: 'Подбор СРО',
-        text: 'Сравню требования, размеры взносов и условия нескольких организаций и предложу подходящие варианты.',
-        slug: 'podbor',
-      },
-      {
-        title: 'Подготовка документов',
-        text: 'Соберу полный пакет и выверю каждый документ перед подачей.',
-        slug: 'dokumenty',
-      },
-      {
-        title: 'Проверка СРО',
-        text: 'Проверю статус организации по открытым реестрам до оплаты взносов.',
-        slug: 'podbor',
-      },
-    ],
-  },
-  {
-    title: 'Специалисты и реестры',
-    items: [
-      {
-        title: 'НРС',
-        text: 'Проверю соответствие сотрудников требованиям и подготовлю документы для включения в национальный реестр специалистов.',
-        slug: 'nrs',
-      },
-      {
-        title: 'НОК',
-        text: 'Расскажу, как проходит независимая оценка квалификации, и помогу подготовиться к профессиональному экзамену.',
-        slug: 'nok',
-      },
-      {
-        title: 'Расширение видов работ',
-        text: 'Оформлю изменение уровня ответственности или состава видов работ.',
-        slug: 'uroven',
-      },
-      {
-        title: 'Сопровождение проверок',
-        text: 'Подготовлю к проверке СРО и помогу корректно ответить на запросы.',
-        slug: 'proverki',
-      },
-    ],
-  },
+// Карточек ровно семь — по одной на страницу услуги (/uslugi/…), и берутся
+// они из тех же данных, что сами страницы и меню «Услуги» (content/services.ts).
+// До 25.09.2026 карточек было восемь со своими текстами, и это путало:
+// «Подбор СРО» и «Проверка СРО» вели на одну и ту же страницу, названия
+// карточек не совпадали с заголовками страниц, а карточка «Расширение видов
+// работ» обещала «изменение состава видов работ», хотя её же страница
+// объясняет, что перечни видов работ отменены в 2017 году.
+//
+// Под названием — подсказка из меню (hint): что человек найдёт на странице.
+// Так понятно, куда ведёт стрелка, ещё до нажатия.
+const GROUPS: { title: string; slugs: string[] }[] = [
+  { title: 'Вступление и сопровождение', slugs: ['vstuplenie', 'podbor', 'dokumenty', 'proverki'] },
+  { title: 'Специалисты и уровень ответственности', slugs: ['nrs', 'nok', 'uroven'] },
 ]
 
-// Адрес страницы по ключу; неизвестный ключ — ошибка сборки данных, а не
+// Страница по ключу; неизвестный ключ — ошибка сборки данных, а не
 // молчаливая ссылка в никуда.
-const pathOf = (slug: string) => {
+const serviceOf = (slug: string) => {
   const service = serviceBySlug(slug)
   if (!service) throw new Error(`Нет страницы услуги: ${slug}`)
-  return page(service.path)
+  return service
 }
+
+// Классы перечислены целиком: Tailwind собирает только то, что видит в коде.
+const COLS: Record<number, string> = { 3: 'lg:grid-cols-3', 4: 'lg:grid-cols-4' }
 
 export function Services() {
   return (
@@ -96,12 +52,12 @@ export function Services() {
             {/* Карточка — лист без рамки и тени. При наведении медленно темнеет
                 до графита, стрелка поворачивается — приём из ролика заказчика.
                 Описание видно всегда: спрятанное до наведения, оно оставляло
-                восемь пустых карточек, а на телефоне не читалось бы вовсе. */}
-            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {group.items.map((service, index) => (
-                <Reveal key={service.title} delay={(index % 4) * 90} className="h-full">
+                пустые карточки, а на телефоне не читалось бы вовсе. */}
+            <div className={`mt-5 grid gap-3 sm:grid-cols-2 ${COLS[group.slugs.length] ?? 'lg:grid-cols-4'}`}>
+              {group.slugs.map(serviceOf).map((service, index) => (
+                <Reveal key={service.slug} delay={(index % 4) * 90} className="h-full">
                   <a
-                    href={pathOf(service.slug)}
+                    href={page(service.path)}
                     className="group relative flex h-full flex-col justify-between gap-6 sm:min-h-[13rem] sm:gap-8 rounded-3xl bg-neutral-50 p-6 transition-colors duration-700 ease-silk hover:bg-neutral-950 focus-visible:bg-neutral-950 focus-visible:outline-none sm:p-7 lg:min-h-[15rem]"
                   >
                     {/* Кружок-стрелка стоит отдельной строкой над заголовком,
@@ -114,11 +70,11 @@ export function Services() {
                         <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
                       </span>
                       <h4 className="mt-6 font-display text-[1.6rem] font-medium leading-[1.1] text-neutral-950 transition-colors duration-700 ease-silk group-hover:text-neutral-50 group-focus-visible:text-neutral-50 lg:text-[1.45rem] xl:text-[1.6rem]">
-                        {nbsp(service.title)}
+                        {nbsp(service.short)}
                       </h4>
                     </div>
                     <p className="text-sm leading-relaxed text-neutral-600 transition-colors duration-700 group-hover:text-neutral-300 group-focus-visible:text-neutral-300">
-                      {service.text}
+                      {nbsp(service.hint)}
                     </p>
                   </a>
                 </Reveal>

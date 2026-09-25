@@ -54,7 +54,7 @@ export function Process() {
           height={1024}
           loading="lazy"
           decoding="async"
-          className="process-photo pointer-events-none absolute inset-x-0 top-0 -z-10 h-[26rem] w-full select-none object-cover object-[50%_12%] sm:h-[34rem] lg:inset-x-auto lg:right-0 lg:h-full lg:w-[40%] lg:object-[60%_20%] xl:w-[46%]"
+          className="process-photo scroll-settle pointer-events-none absolute inset-x-0 top-0 -z-10 h-[26rem] w-full select-none object-cover object-[50%_12%] sm:h-[34rem] lg:inset-x-auto lg:right-0 lg:h-full lg:w-[40%] lg:object-[60%_20%] xl:w-[46%]"
         />
       </picture>
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">

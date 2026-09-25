@@ -1,6 +1,7 @@
 import { ArrowLeft } from 'lucide-react'
 import type { PageImage } from '../content/images'
 import { asset } from '../lib/site'
+import { nbsp } from '../lib/typo'
 import { ButtonLink } from './ui/Button'
 import { Reveal, RevealText } from './ui/Reveal'
 
@@ -11,18 +12,28 @@ import { Reveal, RevealText } from './ui/Reveal'
 // вида — тот же, что на слайде главной, откуда человек сюда пришёл. У услуг
 // кадра нет: их семь, а кадров по теме нет, и выдумывать иллюстрацию к
 // «уровню ответственности» значило бы ставить случайную картинку.
+//
+// Строка «На этой странице» (toc) — оглавление разделами-пилюлями: человек
+// пришёл по стрелке с главной и сразу видит, что здесь есть и куда нажать,
+// не пролистывая всю страницу. Текст пилюль помечен data-hero-text: на
+// страницах видов они лежат поверх кадра, и их контраст меряет
+// scripts/test-hero-contrast.mjs.
+export type TocItem = { id: string; title: string }
+
 export function PageHero({
   backHref,
   backLabel,
   title,
   lead,
   image,
+  toc = [],
 }: {
   backHref: string
   backLabel: string
   title: string
   lead: string
   image?: PageImage
+  toc?: TocItem[]
 }) {
   return (
     <section className="relative isolate overflow-hidden bg-accent-950 text-neutral-50">
@@ -37,7 +48,7 @@ export function PageHero({
               height={image.height}
               loading="eager"
               decoding="async"
-              className="h-full w-full object-cover"
+              className="scroll-drift h-full w-full object-cover"
             />
           </picture>
           {/* На телефоне текст идёт во всю ширину, и плёнка ровная и плотная;
@@ -65,13 +76,34 @@ export function PageHero({
           />
           <Reveal delay={200}>
             <p className="mt-7 max-w-2xl text-lg leading-relaxed text-neutral-200">
-              <span data-hero-text>{lead}</span>
+              <span data-hero-text>{nbsp(lead)}</span>
             </p>
             <ButtonLink href="#contacts" variant="inverse" size="lg" arrow className="mt-9">
               Обсудить задачу
             </ButtonLink>
           </Reveal>
         </div>
+        {toc.length > 0 && (
+          <Reveal delay={320}>
+            <nav aria-label="На этой странице" className="mt-14 border-t border-white/15 pt-6">
+              <p className="text-sm text-neutral-300">
+                <span data-hero-text>На этой странице</span>
+              </p>
+              <ul className="mt-4 flex flex-wrap gap-2">
+                {toc.map((item) => (
+                  <li key={item.id}>
+                    <a
+                      href={`#${item.id}`}
+                      className="inline-flex min-h-11 items-center rounded-full border border-white/25 bg-accent-950/40 px-4 text-sm text-neutral-100 transition-colors duration-500 ease-silk hover:border-white/70 hover:text-neutral-50"
+                    >
+                      <span data-hero-text>{item.title}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          </Reveal>
+        )}
       </div>
     </section>
   )

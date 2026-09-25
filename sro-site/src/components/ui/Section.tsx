@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { nbsp } from '../../lib/typo'
 import { Reveal, RevealText } from './Reveal'
 
 // Ритм страницы: ключевые секции дышат шире, вторичные — компактнее.
@@ -83,7 +84,7 @@ export function SectionHeading({
       {subtitle && (
         <Reveal delay={150}>
           <p className={`text-base leading-relaxed sm:text-lg ${dark ? 'text-neutral-300' : 'text-neutral-600'}`}>
-            {subtitle}
+            {nbsp(subtitle)}
           </p>
         </Reveal>
       )}

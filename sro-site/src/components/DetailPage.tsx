@@ -13,6 +13,7 @@ import { home } from '../lib/site'
 import { Footer } from './Footer'
 import { Header } from './Header'
 import { Contact } from './Contact'
+import { PageExtras } from './PageExtras'
 import { PageHero } from './PageHero'
 import { MobileBar } from './MobileBar'
 import { Reveal } from './ui/Reveal'
@@ -172,6 +173,19 @@ function FundTable({
   )
 }
 
+// Оглавление шапки и услуги по теме — одинаковые у трёх видов СРО: разделы
+// у страниц видов общие, а подбор, документы и специалисты — три вопроса,
+// которые у вступающего возникают следующими.
+const DETAIL_TOC = [
+  { id: 'komu', title: 'Кому обязательно' },
+  { id: 'oblast', title: 'Область деятельности' },
+  { id: 'poryadok', title: 'Как проходит вступление' },
+  { id: 'dokumenty', title: 'Документы' },
+  { id: 'vznosy', title: 'Взносы в фонды' },
+  { id: 'stoimost', title: 'Сколько стоит' },
+]
+const DETAIL_RELATED = ['podbor', 'dokumenty', 'nrs']
+
 export function DetailPage({ detail }: { detail: SroDetail }) {
   return (
     <div id="top">
@@ -186,12 +200,13 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
               title={detail.title}
               lead={detail.lead}
               image={detail.card.image}
+              toc={DETAIL_TOC}
             />
 
             {/* Кому членство обязательно. Каждый пункт — с нормой: это ответ
                 на вопрос «а мне точно надо», и отвечать на него без ссылки
                 на закон значило бы продавать, а не объяснять. */}
-            <Section>
+            <Section id="komu">
               <Reveal>
                 <h2 className="font-display text-[1.8rem] font-medium leading-[1.08] text-neutral-950 min-[360px]:text-[2.1rem] sm:text-[2.7rem]">
                   Членство обязательно, если
@@ -229,7 +244,7 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
             </Section>
 
             {/* Область деятельности: что именно закрывает этот вид СРО. */}
-            <Section size="compact" className="bg-neutral-100">
+            <Section id="oblast" size="compact" className="bg-neutral-100">
               <Reveal>
                 <h2 className="font-display text-[1.8rem] font-medium leading-[1.08] text-neutral-950 min-[360px]:text-[2.1rem] sm:text-[2.7rem]">
                   Что входит в область деятельности
@@ -252,7 +267,7 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
                 страницу: он хочет понять, что будет происходить и что от него
                 потребуется. У каждого шага помечен исполнитель: половину делает
                 не кандидат, и это стоит видеть сразу. */}
-            <Section>
+            <Section id="poryadok">
               <Reveal>
                 <h2 className="font-display text-[1.8rem] font-medium leading-[1.08] text-neutral-950 min-[360px]:text-[2.1rem] sm:text-[2.7rem]">
                   Как проходит вступление
@@ -279,7 +294,7 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
 
             {/* ДОКУМЕНТЫ. Два списка, а не один: у посредников они слиты, и
                 человек уверен, что договор аренды офиса требует кодекс. */}
-            <Section size="compact" className="bg-neutral-100">
+            <Section id="dokumenty" size="compact" className="bg-neutral-100">
               <Reveal>
                 <h2 className="font-display text-[1.8rem] font-medium leading-[1.08] text-neutral-950 min-[360px]:text-[2.1rem] sm:text-[2.7rem]">
                   Какие документы понадобятся
@@ -335,7 +350,7 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
                 Цифра, по которой человек переводит деньги, не может стоять
                 «примерно». Объяснение устройства фондов при этом остаётся: оно
                 верно независимо от конкретных сумм. */}
-            <Section>
+            <Section id="vznosy">
               <Reveal>
                 <h2 className="font-display text-[1.8rem] font-medium leading-[1.08] text-neutral-950 min-[360px]:text-[2.1rem] sm:text-[2.7rem]">
                   Взносы в компенсационные фонды
@@ -436,6 +451,8 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
                 )}
               </div>
             </Section>
+
+            <PageExtras related={DETAIL_RELATED} />
 
             {/* Вместо квиза с выбранным видом — «Связаться» со строкой про этот
                 вид. Название вида подставляем как есть: toLowerCase()

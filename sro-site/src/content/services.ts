@@ -40,6 +40,9 @@ export type ServicePage = {
   /** Вариант ответа «Какая помощь нужна?», который квиз подставит сам. */
   help?: string
   blocks: ServiceBlock[]
+  /** Услуги по теме — ссылки внизу страницы, перед «Связаться». Чтобы
+      страница не кончалась тупиком: дочитав, человек видит, куда дальше. */
+  related: string[]
 }
 
 // Нормы, которых нет в LAW у страниц видов. Только уровень статьи: части
@@ -58,6 +61,7 @@ const WHAT_I_DO = 'Что делаю я'
 export const SERVICE_PAGES: ServicePage[] = [
   {
     slug: 'vstuplenie',
+    related: ['podbor', 'dokumenty', 'nrs'],
     path: 'uslugi/vstuplenie-v-sro',
     short: 'Вступление в СРО',
     title: 'Вступление в СРО',
@@ -108,6 +112,7 @@ export const SERVICE_PAGES: ServicePage[] = [
   },
   {
     slug: 'podbor',
+    related: ['vstuplenie', 'dokumenty', 'uroven'],
     path: 'uslugi/podbor-i-proverka-sro',
     short: 'Подбор и проверка СРО',
     title: 'Подбор и проверка СРО',
@@ -169,6 +174,7 @@ export const SERVICE_PAGES: ServicePage[] = [
   },
   {
     slug: 'dokumenty',
+    related: ['nrs', 'podbor', 'vstuplenie'],
     path: 'uslugi/dokumenty',
     short: 'Подготовка документов',
     title: 'Подготовка документов для вступления в СРО',
@@ -218,6 +224,7 @@ export const SERVICE_PAGES: ServicePage[] = [
   },
   {
     slug: 'nrs',
+    related: ['nok', 'dokumenty', 'proverki'],
     path: 'uslugi/specialisty-nrs',
     short: 'Специалисты НРС',
     title: 'Специалисты НРС',
@@ -281,6 +288,7 @@ export const SERVICE_PAGES: ServicePage[] = [
   },
   {
     slug: 'nok',
+    related: ['nrs', 'proverki', 'dokumenty'],
     path: 'uslugi/nok',
     short: 'НОК',
     title: 'Независимая оценка квалификации (НОК)',
@@ -337,6 +345,7 @@ export const SERVICE_PAGES: ServicePage[] = [
   },
   {
     slug: 'uroven',
+    related: ['podbor', 'proverki', 'vstuplenie'],
     path: 'uslugi/uroven-otvetstvennosti',
     short: 'Расширение видов работ',
     title: 'Изменение уровня ответственности',
@@ -400,6 +409,7 @@ export const SERVICE_PAGES: ServicePage[] = [
   },
   {
     slug: 'proverki',
+    related: ['nrs', 'nok', 'uroven'],
     path: 'uslugi/soprovozhdenie-proverok',
     short: 'Сопровождение проверок',
     title: 'Сопровождение проверок СРО',

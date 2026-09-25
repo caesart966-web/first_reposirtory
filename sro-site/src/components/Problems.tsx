@@ -1,36 +1,40 @@
 import { ArrowUpRight } from 'lucide-react'
 import { serviceBySlug } from '../content/services'
-import { anchor, page } from '../lib/site'
+import { page } from '../lib/site'
+import { nbsp } from '../lib/typo'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
 
-// Три типовые ситуации. Раньше каждая строка открывала квиз с готовым
-// ответом; квиза больше нет, и строка ведёт туда, где ситуация разобрана
-// подробно: документы — на страницу услуги, НРС — в раздел о специалистах,
-// сроки — в «Связаться», потому что срок называется только после разговора.
+// Три типовые ситуации. Каждая строка ведёт на страницу услуги, где ситуация
+// разобрана подробно: сроки — на «Вступление в СРО» (порядок и сроки по
+// закону), документы — на «Подготовку документов», НРС — на «Специалистов
+// НРС». До 25.09.2026 две строки вели в «Связаться» и в короткий раздел
+// главной: человек нажимал стрелку за подробностями и попадал на телефон.
+// Подпись у стрелки — название страницы, куда она ведёт.
 //
 // Строки, а не карточки: раздел должен читаться иначе, чем сетка услуг
 // ниже. Крупная цифра слева — номер, а не украшение: ситуаций ровно три.
-const documentsPage = serviceBySlug('dokumenty')
+const target = (slug: string) => {
+  const service = serviceBySlug(slug)
+  if (!service) throw new Error(`Нет страницы услуги: ${slug}`)
+  return { href: page(service.path), action: service.short }
+}
 
 const SCENARIOS = [
   {
     title: 'Срочное вступление в СРО',
     text: 'Подходит срок заключения договора, а членства в СРО ещё нет. Оценю, какие сроки реальны в вашей ситуации, и назову, что потребуется от вас.',
-    href: '#contacts',
-    action: 'Обсудить сроки',
+    ...target('vstuplenie'),
   },
   {
     title: 'Нужна проверка документов',
     text: 'Проверю подготовленный комплект до подачи в СРО, укажу на недочёты и помогу их устранить.',
-    href: documentsPage ? page(documentsPage.path) : anchor('#documents'),
-    action: 'Подготовка документов',
+    ...target('dokumenty'),
   },
   {
     title: 'Вопрос по специалистам НРС',
     text: 'Разберу требования к образованию, стажу и документам специалистов и предложу порядок действий.',
-    href: anchor('#nrs'),
-    action: 'Специалисты НРС',
+    ...target('nrs'),
   },
 ]
 
@@ -54,10 +58,10 @@ export function Problems() {
               </span>
               <span className="min-w-0">
                 <span className="block font-display text-[1.75rem] font-medium leading-tight text-neutral-950 transition-colors duration-700 ease-silk group-hover:text-accent-700 sm:text-[2.1rem]">
-                  {scenario.title}
+                  {nbsp(scenario.title)}
                 </span>
                 <span className="mt-3 block max-w-2xl leading-relaxed text-neutral-600">
-                  {scenario.text}
+                  {nbsp(scenario.text)}
                 </span>
               </span>
               <span className="inline-flex items-center gap-2 text-sm font-medium text-neutral-950">

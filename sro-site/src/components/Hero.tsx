@@ -81,7 +81,7 @@ export function Hero() {
     >
       {/* Слои кадров. Все три лежат друг на друге с самого начала — так
           браузер загружает их заранее, и шторка не упирается в пустоту. */}
-      <div className="absolute inset-0 -z-10" aria-hidden="true">
+      <div className="scroll-drift absolute inset-0 -z-10" aria-hidden="true">
         {SLIDES.map((slide, index) => {
           const role =
             index === current ? 'active' : index === prev ? 'prev' : 'idle'
