@@ -354,6 +354,50 @@ class TestParser(unittest.TestCase):
         parsed = parse_text("ООО\n«Ромашка»\nИНН 7812345675")
         self.assertEqual(parsed.company.short_name, "ООО «Ромашка»")
 
+    def test_label_above_value_layout(self):
+        """Подпись отдельной строкой НАД значением: «Юридический адрес:».
+
+        Раскладка частая, но её забирало правило «подпись ПОД значением»
+        (выписки банков), и в юридический адрес уходила шапка карточки —
+        «Реквизиты ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ …».
+        Различает их двоеточие: с ним подпись смотрит вниз, без него — вверх.
+        """
+        parsed = parse_text(
+            "Реквизиты\n"
+            "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ \"ВЫМПЕЛ\"\n"
+            "ООО «ВЫМПЕЛ»\n"
+            "Юридический адрес:\n"
+            "197706, г. Санкт-Петербург, вн. тер. г. город Сестрорецк,\n"
+            "ул. Транспортная, д.10 литера А.\n"
+            "Фактический адрес:\n"
+            "191040, г. Санкт-Петербург, Лиговский пр., д. 50\n"
+            "ИНН 7814867275\n"
+            "КПП 781401001\n"
+            "ОГРН 1267800069888\n"
+            "Тел.: +7 (904) 557-52-56\n"
+            "E-mail: office@vympel-test.example\n")
+        company = parsed.company
+
+        # Адрес — сам адрес, а не шапка карточки.
+        self.assertIn("Транспортная", company.legal_address)
+        self.assertNotIn("Реквизиты", company.legal_address)
+        self.assertNotIn("ОГРАНИЧЕННОЙ", company.legal_address)
+        # Перенос адреса на две строки дочитан.
+        self.assertIn("Сестрорецк", company.legal_address)
+        self.assertIn("литера А", company.legal_address)
+        # Соседнее поле не утащено в значение.
+        self.assertNotIn("Фактический", company.legal_address)
+
+        # Фактический адрес — свой, а не копия юридического.
+        self.assertIn("Лиговский", company.actual_address)
+        self.assertNotIn("Транспортная", company.actual_address)
+        # Следующая строка после него — новое поле, а не хвост адреса.
+        self.assertNotIn("ИНН", company.actual_address)
+
+        self.assertEqual(company.inn, "7814867275")
+        self.assertEqual(company.ogrn, "1267800069888")
+        self.assertIn("ВЫМПЕЛ", company.full_name)
+
     def test_bank_statement_layout(self):
         """Выписка банка: подпись поля напечатана ПОД значением.
 

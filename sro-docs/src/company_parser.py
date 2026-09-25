@@ -473,6 +473,35 @@ def _is_label_only(line: str) -> bool:
     return False
 
 
+#: Двоеточие в конце одинокой подписи — указатель ВНИЗ: «Юридический адрес:»
+#: и значение следующей строкой. Без двоеточия («Юридический адрес организации»
+#: в выписке банка) подпись относится к тому, что напечатано НАД ней.
+#: Различать обязательно: иначе подпись из одной карточки забирает значение
+#: из другой раскладки — например, шапку «Реквизиты ООО «Ромашка»».
+def _points_down(line: str) -> bool:
+    return (line or "").rstrip().endswith(":")
+
+
+def _starts_new_field(line: str) -> bool:
+    """Строка начинает НОВОЕ поле, а не продолжает предыдущее значение."""
+    line = (line or "").strip()
+    if not line:
+        return True
+    if _is_label_only(line):
+        return True
+    head = line.split(":", 1)[0] if ":" in line else ""
+    if head and _field_for_label(head):
+        return True
+    if split_label_value(line)[0]:
+        return True
+    # «ИНН 7814867275», «Тел.: …» — подпись стоит первыми словами строки.
+    words = line.split()
+    for count in range(1, min(4, len(words)) + 1):
+        if _field_for_label(" ".join(words[:count])):
+            return True
+    return False
+
+
 def pairs_from_labels_below(lines: list[str]) -> list[tuple[str, str]]:
     """Пары для карточек, где подпись поля напечатана ПОД значением.
 
@@ -480,6 +509,9 @@ def pairs_from_labels_below(lines: list[str]) -> list[tuple[str, str]]:
     несколько строк), под ним подпись — «Название организации»,
     «Юридический адрес организации». Обычный разбор «подпись: значение»
     такие карточки не видит вовсе.
+
+    Подпись с двоеточием сюда не относится: она указывает вниз, и её
+    разбирает `pairs_from_labels_above`.
     """
     found: list[tuple[str, str]] = []
     buffer: list[str] = []
@@ -489,13 +521,43 @@ def pairs_from_labels_below(lines: list[str]) -> list[tuple[str, str]]:
             buffer = []
             continue
         if _is_label_only(line):
-            if buffer:
+            if buffer and not _points_down(line):
                 found.append((line, " ".join(buffer)))
             buffer = []
             continue
         buffer.append(line)
         if len(buffer) > 4:      # больше четырёх строк одно значение не занимает
             buffer.pop(0)
+    return found
+
+
+def pairs_from_labels_above(lines: list[str]) -> list[tuple[str, str]]:
+    """Пары для карточек, где подпись стоит отдельной строкой НАД значением.
+
+    «Юридический адрес:» — и сам адрес следующей строкой. Раскладка частая,
+    но до появления этой функции её не разбирал никто: значение доставалось
+    правилу «подпись под значением», и в адрес уходила шапка карточки.
+
+    Длинный адрес бывает разбит на несколько строк — дочитываем, пока строка
+    оборвана на середине и следующая не начинает новое поле.
+    """
+    found: list[tuple[str, str]] = []
+    for index, raw in enumerate(lines):
+        line = (raw or "").strip()
+        if not _is_label_only(line) or not _points_down(line):
+            continue
+        following = (lines[index + 1] or "").strip() if index + 1 < len(lines) else ""
+        if not following or _starts_new_field(following):
+            continue
+        value, step = following, index + 1
+        while (step - index < 4 and step + 1 < len(lines)
+               and _CONTINUES_RE.search(value)):
+            nxt = (lines[step + 1] or "").strip()
+            if _starts_new_field(nxt):
+                break
+            value = value + " " + nxt
+            step += 1
+        found.append((line, value))
     return found
 
 
@@ -633,6 +695,13 @@ def parse_card(content: CardContent) -> ParseResult:
                 kind, name = picked
                 remember("full_name" if kind == "full" else "short_name", name)
         else:
+            remember(key, value)
+
+    # 1б². Карточки, где подпись стоит отдельной строкой НАД значением:
+    # «Юридический адрес:» и сам адрес следующей строкой.
+    for label, value in pairs_from_labels_above(lines):
+        key = _field_for_label(label)
+        if key:
             remember(key, value)
 
     # 1в. Карточки-«простыни»: «Юридический адрес 194363, …» без двоеточия.
