@@ -17,7 +17,9 @@
     "facts": "node scripts/check-facts.mjs",
     "indexnow": "node scripts/indexnow.mjs",
     "check:base": "SITE_URL=https://example.github.io BASE_PATH=/proverka/podpapka/ PUBLIC_NOINDEX=1 astro build && BASE_PATH=/proverka/podpapka/ node scripts/check-base.mjs && npm run build",
-    "watch:law": "node scripts/watch-law.mjs"
+    "watch:law": "node scripts/watch-law.mjs",
+    "release": "node scripts/release.mjs",
+    "test:lead": "node scripts/test-lead.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "3.7.3",
