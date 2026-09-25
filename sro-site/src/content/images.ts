@@ -54,8 +54,8 @@ export const IMAGES = {
     src: './img/slide-survey.webp',
     srcAvif: './img/slide-survey.avif',
     alt: 'Силуэты двух изыскателей с прибором на штативе, чертежами и ноутбуком на фоне закатного неба',
-    width: 1640,
-    height: 668,
+    width: 2460,
+    height: 1002,
     position: '60% 50%',
   },
 } satisfies Record<string, PageImage>

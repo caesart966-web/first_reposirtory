@@ -2,31 +2,38 @@
 """Готовит три кадра слайдера первого экрана (они же шапки страниц видов СРО).
 
 Исходники — кадры, присланные заказчиком 25.09.2026, шириной 820–960 px
-(кран и план вертикальные, изыскатели — узкая горизонтальная панорама).
-Первый экран растягивает их во всю ширину окна, поэтому кадр увеличивается вдвое:
-нейросетью EDSR, если передан её файл (`--edsr`), иначе Lanczos с лёгкой
-резкостью. EDSR даёт чуть более чистые тонкие линии (тросы кранов, линии
-чертежа), но деталей, которых нет в исходнике, не прибавляет ни то, ни другое.
-Придут оригиналы крупнее MIN_WIDTH — увеличение не сработает.
+(кран и план вертикальные, изыскатели — узкая горизонтальная панорама). Это
+и есть оригиналы: крупнее их у заказчика нет. Первый экран растягивает кадр
+во всю ширину окна, поэтому он увеличивается нейросетью Real-ESRGAN (x4plus),
+если передан путь к её программе (`--esrgan`), иначе Lanczos с лёгкой
+резкостью. Real-ESRGAN обучена на сжатых и уменьшенных снимках: снимает
+артефакты JPEG и дорисовывает правдоподобную мелкую фактуру. Деталей,
+которых в кадре не было, она не восстанавливает — придумывает похожие; для
+фона под плёнкой это допустимо, для документального снимка — нет.
+
+Модель увеличивает вчетверо, затем кадр уменьшается до SCALE исходника:
+уменьшение после увеличения даёт чистые края без ореолов.
 
 Затем тон серии: тени сводятся к графиту сайта, полутона — к латуни, света —
-к крему, частичным смешиванием (`tone`). Без него три кадра читались тремя
-разными сайтами: оранжевый закат, холодная белая бумага, бирюзовое небо.
+к крему, частичным смешиванием (`tone`). Без него кадры читались тремя
+разными сайтами: лиловое вечернее небо, холодная белая бумага, бирюзовое небо.
 
 Имена файлов прежние (hero-day, slide-design, slide-survey) — на них ссылается
 src/content/images.ts. Меняете кадры или тон — перемерьте контраст:
 `node scripts/test-hero-contrast.mjs`.
 
-    python3 scripts/prepare-slide-photos.py                         # Lanczos
-    python3 scripts/prepare-slide-photos.py --edsr EDSR_x2.pb       # нейросеть
+    python3 scripts/prepare-slide-photos.py                                   # Lanczos
+    python3 scripts/prepare-slide-photos.py --esrgan ./realesrgan-ncnn-vulkan # нейросеть
 
-Файл модели: https://raw.githubusercontent.com/Saafke/EDSR_Tensorflow/master/models/EDSR_x2.pb
-(38 МБ, в репозиторий не кладётся), нужен пакет opencv-contrib-python-headless.
-На процессоре EDSR считает 3–6 минут на кадр, поэтому результат кешируется
-во временной папке по содержимому исходника.
+Программа: https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesrgan-ncnn-vulkan-20220424-ubuntu.zip
+(47 МБ, в репозиторий не кладётся; модели лежат рядом с ней в models/). Без
+видеокарты работает через программный Vulkan (пакет mesa-vulkan-drivers),
+от 8 до 30 минут на кадр; результат кешируется во временной папке по содержимому
+исходника.
 """
 import argparse
 import hashlib
+import subprocess
 import tempfile
 from pathlib import Path
 
@@ -35,35 +42,34 @@ from PIL import Image, ImageEnhance, ImageFilter
 
 SRC = Path("assets-src")
 OUT = Path("public/img")
-# (исходник, имя, яркость, тон). Чертежи — белая бумага: без приглушения мелкий
-# текст первого экрана на 820–1024 px ложился на неё с контрастом 4,32:1 при
-# норме 4,5. Тон сильнее там, где кадр дальше от палитры: у крана над вечерним
-# городом верх неба лиловый, у чертежей — холодная белая бумага.
+# (исходник, имя, увеличение, яркость, тон). Чертежи — белая бумага: без
+# приглушения мелкий текст первого экрана на 820–1024 px ложился на неё
+# с контрастом 4,32:1 при норме 4,5. Тон сильнее там, где кадр дальше от
+# палитры: у крана верх вечернего неба лиловый, у плана — холодная бумага.
+# Панорама изыскателей увеличивается втрое: у неё всего 334 px высоты,
+# а первый экран на компьютере выше 800 px.
 SLIDES = [
-    ("slide-construction-src.jpg", "hero-day", 1.0, 0.25),
-    ("slide-design-src.jpg", "slide-design", 0.8, 0.35),
-    ("slide-survey-src.jpg", "slide-survey", 1.0, 0.30),
+    ("slide-construction-src.jpg", "hero-day", 2, 1.0, 0.25),
+    ("slide-design-src.jpg", "slide-design", 2, 0.8, 0.35),
+    ("slide-survey-src.jpg", "slide-survey", 3, 1.0, 0.30),
 ]
 SHADOW, MID, HIGH = (28, 24, 21), (157, 116, 67), (245, 241, 234)  # accent-950, accent-500, neutral-100
-MIN_WIDTH = 1000  # уже этого — увеличиваем вдвое
 WEBP_QUALITY, AVIF_QUALITY = 74, 50
 WEBP_LIMIT_KB, AVIF_LIMIT_KB = 180, 120
-CACHE = Path(tempfile.gettempdir()) / "sro-edsr-cache"
+CACHE = Path(tempfile.gettempdir()) / "sro-esrgan-cache"
 
 
-def upscale(src: Path, img: Image.Image, edsr: Path | None) -> Image.Image:
-    if edsr is None:
-        img = img.resize((img.width * 2, img.height * 2), Image.LANCZOS)
+def upscale(src: Path, img: Image.Image, scale: int, esrgan: Path | None) -> Image.Image:
+    size = (img.width * scale, img.height * scale)
+    if esrgan is None:
+        img = img.resize(size, Image.LANCZOS)
         return img.filter(ImageFilter.UnsharpMask(radius=1.2, percent=60, threshold=2))
-    cached = CACHE / f"{hashlib.sha1(src.read_bytes()).hexdigest()}.png"
+    cached = CACHE / f"{hashlib.sha1(src.read_bytes()).hexdigest()}-x4.png"
     if not cached.exists():
-        import cv2
-        sr = cv2.dnn_superres.DnnSuperResImpl_create()
-        sr.readModel(str(edsr))
-        sr.setModel("edsr", 2)
         CACHE.mkdir(exist_ok=True)
-        cv2.imwrite(str(cached), sr.upsample(cv2.imread(str(src))))
-    return Image.open(cached).convert("RGB")
+        subprocess.run([str(esrgan), "-i", str(src.resolve()), "-o", str(cached), "-n", "realesrgan-x4plus"],
+                       cwd=esrgan.parent, check=True, capture_output=True)
+    return Image.open(cached).convert("RGB").resize(size, Image.LANCZOS)
 
 
 def tone(img: Image.Image, strength: float) -> Image.Image:
@@ -77,10 +83,8 @@ def tone(img: Image.Image, strength: float) -> Image.Image:
     return Image.fromarray(np.clip(a * (1 - strength) + toned * strength, 0, 255).astype("uint8"))
 
 
-def prepare(src: Path, name: str, brightness: float, strength: float, edsr: Path | None) -> None:
-    img = Image.open(src).convert("RGB")
-    if img.width < MIN_WIDTH:
-        img = upscale(src, img, edsr)
+def prepare(src: Path, name: str, scale: int, brightness: float, strength: float, esrgan: Path | None) -> None:
+    img = upscale(src, Image.open(src).convert("RGB"), scale, esrgan)
     if brightness != 1.0:
         img = ImageEnhance.Brightness(img).enhance(brightness)
     if strength:
@@ -96,10 +100,10 @@ def prepare(src: Path, name: str, brightness: float, strength: float, edsr: Path
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--edsr", type=Path, help="файл модели EDSR_x2.pb (иначе Lanczos)")
+    ap.add_argument("--esrgan", type=Path, help="программа realesrgan-ncnn-vulkan (иначе Lanczos)")
     args = ap.parse_args()
-    for source, name, brightness, strength in SLIDES:
-        prepare(SRC / source, name, brightness, strength, args.edsr)
+    for source, name, scale, brightness, strength in SLIDES:
+        prepare(SRC / source, name, scale, brightness, strength, args.esrgan)
 
 
 if __name__ == "__main__":
