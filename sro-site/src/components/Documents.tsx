@@ -1,9 +1,8 @@
-import { IMAGES } from '../content/images'
+import { asset } from '../lib/site'
 import { nbsp } from '../lib/typo'
 import { ButtonLink } from './ui/Button'
-import { Figure } from './ui/Figure'
 import { Reveal } from './ui/Reveal'
-import { Section, SectionHeading } from './ui/Section'
+import { SectionHeading } from './ui/Section'
 
 const DOCUMENTS = [
   { title: 'Заявление', text: 'по форме выбранной СРО' },
@@ -15,11 +14,34 @@ const DOCUMENTS = [
   { title: 'Дополнительные документы', text: 'по требованиям конкретной СРО' },
 ]
 
+// Раздел стоит на фотографии папок во всю высоту (с 25.09.2026, выбор
+// заказчика из двух макетов): на компьютере кадр слева, от края до края
+// раздела, и растворяется к тексту; на телефоне и планшете — сверху и
+// растворяется книзу. Это зеркало раздела «Как проходит работа» выше:
+// там Фемида справа на графите, здесь папки слева на листе. Маски — в
+// index.css (.docs-photo). Контраст подписей над растворённым краем
+// меряет scripts/test-hero-contrast.mjs.
 export function Documents() {
   return (
-    <Section id="documents">
-      <div className="grid gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-20">
-        <div>
+    <section
+      id="documents"
+      className="relative isolate overflow-hidden pb-20 pt-[22rem] sm:pb-28 sm:pt-[28rem] lg:pt-28"
+    >
+      <picture>
+        <source type="image/avif" srcSet={asset('./img/documents-photo.avif')} />
+        <img
+          src={asset('./img/documents-photo.webp')}
+          alt=""
+          aria-hidden="true"
+          width={834}
+          height={1252}
+          loading="lazy"
+          decoding="async"
+          className="docs-photo scroll-settle pointer-events-none absolute inset-x-0 top-0 -z-10 h-[24rem] w-full select-none object-cover object-[50%_30%] sm:h-[30rem] sm:object-[50%_40%] lg:inset-x-auto lg:left-0 lg:h-full lg:w-[42%] lg:object-[0%_50%]"
+        />
+      </picture>
+      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div className="lg:ml-[44%]">
           <SectionHeading eyebrow="Документы" title="Подготовлю пакет документов для вступления в СРО" />
           <Reveal delay={120}>
             <p className="mt-7 text-lg leading-relaxed text-neutral-600">
@@ -31,17 +53,14 @@ export function Documents() {
               Проверить мои документы
             </ButtonLink>
           </Reveal>
-          <Figure {...IMAGES.documents} className="mt-12 max-w-md" />
-        </div>
-        {/* Перечень — строками с тонкими линейками, как опись в деле, а не
-            галочками в карточке: галочки означают «сделано», а это список
-            того, что войдёт в пакет.
-            Строка подсвечивается (.doc-row в index.css), но это не ссылка:
-            на компьютере — при наведении, на телефоне — когда проходит
-            середину экрана, ведь наведения там нет. */}
-        <div className="lg:pt-24">
+          {/* Перечень — строками с тонкими линейками, как опись в деле, а не
+              галочками в карточке: галочки означают «сделано», а это список
+              того, что войдёт в пакет.
+              Строка подсвечивается (.doc-row в index.css), но это не ссылка:
+              на компьютере — при наведении, на телефоне — когда проходит
+              середину экрана, ведь наведения там нет. */}
           <Reveal>
-            <p className="text-sm text-neutral-600">Что войдёт в пакет</p>
+            <p className="mt-16 text-sm text-neutral-600">Что войдёт в пакет</p>
           </Reveal>
           <ol className="mt-5 border-t border-neutral-300">
             {DOCUMENTS.map((doc, index) => (
@@ -60,6 +79,6 @@ export function Documents() {
           </ol>
         </div>
       </div>
-    </Section>
+    </section>
   )
 }

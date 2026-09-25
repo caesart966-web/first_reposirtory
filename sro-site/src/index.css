@@ -74,25 +74,6 @@
   transform: none;
 }
 
-/* Фотография открывается шторкой снизу вверх и слегка отъезжает назад. */
-.reveal-image {
-  clip-path: inset(18% 0 0 0);
-  transition: clip-path 1.4s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.reveal-image img {
-  transform: scale(1.08);
-  transition: transform 1.8s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.reveal-image.is-visible {
-  clip-path: inset(0 0 0 0);
-}
-
-.reveal-image.is-visible img {
-  transform: none;
-}
-
 
 /* Фотография Фемиды в разделе «Как проходит работа». На телефоне и планшете
    она стоит над заголовком и растворяется книзу — заголовок ложится на
@@ -116,6 +97,25 @@
 
 @media print {
   .process-photo {
+    display: none;
+  }
+}
+
+/* Фотография папок в разделе «Документы» — зеркало .process-photo: на
+   телефоне и планшете кадр сверху и растворяется книзу, с 1024px — слева
+   во всю высоту раздела и растворяется к тексту справа. */
+.docs-photo {
+  -webkit-mask-image: linear-gradient(to bottom, #000 45%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 45%, transparent 100%);
+}
+@media (min-width: 1024px) {
+  .docs-photo {
+    -webkit-mask-image: linear-gradient(to right, #000 62%, transparent 100%);
+    mask-image: linear-gradient(to right, #000 62%, transparent 100%);
+  }
+}
+@media print {
+  .docs-photo {
     display: none;
   }
 }
@@ -310,12 +310,9 @@
   }
 
   .reveal,
-  .reveal-words .w > span,
-  .reveal-image,
-  .reveal-image img {
+  .reveal-words .w > span {
     opacity: 1;
     transform: none;
-    clip-path: none;
     transition: none;
   }
 

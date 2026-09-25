@@ -9,9 +9,11 @@ import {
 } from 'react'
 import { nbsp } from '../../lib/typo'
 
-// Появление при прокрутке: блок выплывает, заголовок поднимается по словам,
-// фотография открывается шторкой. Сами переходы — в index.css (.reveal,
-// .reveal-words, .reveal-image), здесь только момент запуска.
+// Появление при прокрутке: блок выплывает, заголовок поднимается по словам.
+// Сами переходы — в index.css (.reveal, .reveal-words), здесь только момент
+// запуска. Шторка для фотографий (RevealImage) снята 25.09.2026 вместе
+// с последней фотографией в рамке: кадры разделов теперь стоят фоном
+// и въезжают по прокрутке (.scroll-settle).
 //
 // Запуск — когда верх блока заходит в нижние 90% экрана, а не когда видно
 // 15% его площади, как было. Прежнее правило на высоких блоках не
@@ -98,15 +100,5 @@ export function RevealText({
         {i < words.length - 1 ? ' ' : null}
       </Fragment>
     )),
-  )
-}
-
-/** Обёртка фотографии: открывается шторкой снизу, кадр слегка отъезжает. */
-export function RevealImage({ children, className = '' }: { children: ReactNode; className?: string }) {
-  const ref = useReveal<HTMLDivElement>()
-  return (
-    <div ref={ref} className={`reveal-image ${className}`}>
-      {children}
-    </div>
   )
 }

@@ -55,12 +55,4 @@ export const IMAGES = {
     height: 675,
     ratio: 'aspect-[16/9]',
   },
-  documents: {
-    src: './img/documents.webp',
-    srcAvif: './img/documents.avif',
-    alt: 'Стопка папок с подшитыми документами крупным планом',
-    width: 1200,
-    height: 652,
-    ratio: 'aspect-[4/3]',
-  },
 } satisfies Record<string, PageImage>
