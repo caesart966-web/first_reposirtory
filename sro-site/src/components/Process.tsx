@@ -1,13 +1,18 @@
+import { asset } from '../lib/site'
 import { Reveal } from './ui/Reveal'
 import { SectionHeading } from './ui/Section'
 
-// Четыре шага работы — единственный тёмный раздел посреди страницы.
+// Четыре шага работы — единственный тёмный раздел посреди страницы,
+// и в нём Фемида.
 //
-// До 24.09.2026 здесь стояла гравюра Фемиды белым штрихом на графите.
-// Заказчик попросил её убрать: белый рисунок на чёрном смотрелся бедно
-// рядом с его примерами, где Фемида — бронзовая статуя на фотографии.
-// Место под такую фотографию — этот раздел; пока её нет, раздел стоит
-// без картинки.
+// До 24.09.2026 здесь стояла гравюра белым штрихом на графите; заказчик
+// попросил её убрать — рядом с его примерами она смотрелась бедно.
+// 25.09.2026 на её место встала фотография статуи (выбор заказчика из трёх,
+// учёт — в public/img/CREDITS.md). На компьютере она справа, шаги слева
+// в две колонки; на телефоне и планшете — над заголовком раздела, и заголовок
+// ложится на её растворённый низ. Маски — в index.css (.process-photo): на
+// разных ширинах они разные, а классами Tailwind две маски не пересечь.
+// Контраст надписей поверх неё меряет scripts/test-hero-contrast.mjs.
 //
 // «Через форму на сайте» из первого шага убрано вместе с формой.
 const STEPS = [
@@ -35,18 +40,36 @@ const STEPS = [
 
 export function Process() {
   return (
-    <section id="process" className="bg-accent-950 py-24 text-neutral-50 sm:py-32">
+    <section
+      id="process"
+      className="relative isolate overflow-hidden bg-accent-950 pb-24 pt-72 text-neutral-50 sm:pb-32 sm:pt-[26rem] lg:pt-32"
+    >
+      <picture>
+        <source type="image/avif" srcSet={asset('./img/themis-photo.avif')} />
+        <img
+          src={asset('./img/themis-photo.webp')}
+          alt=""
+          aria-hidden="true"
+          width={1024}
+          height={1024}
+          loading="lazy"
+          decoding="async"
+          className="process-photo pointer-events-none absolute inset-x-0 top-0 -z-10 h-[26rem] w-full select-none object-cover object-[50%_12%] sm:h-[34rem] lg:inset-x-auto lg:right-0 lg:h-full lg:w-[40%] lg:object-[60%_20%] xl:w-[46%]"
+        />
+      </picture>
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
         <SectionHeading dark eyebrow="Процесс" title="Как проходит работа" />
-        <ol className="mt-16 grid border-t border-white/15 sm:grid-cols-2 lg:grid-cols-4">
+        {/* С 640px — сетка 2×2; на компьютере она занимает левые 58%,
+            правее стоит статуя. */}
+        <ol className="mt-16 grid border-t border-white/15 sm:grid-cols-2 lg:max-w-[58%]">
           {STEPS.map((step, index) => (
             <li
               key={step.number}
-              className="border-b border-white/15 py-8 sm:pr-8 lg:border-b-0 lg:border-r lg:py-10 lg:pl-8 lg:first:pl-0 lg:last:border-r-0"
+              className="border-b border-white/15 py-8 sm:odd:border-r sm:odd:pr-8 sm:even:pl-8 sm:[&:nth-child(n+3)]:border-b-0"
             >
               <Reveal delay={index * 120}>
                 <p className="text-sm tabular-nums text-neutral-400">{step.number}</p>
-                <h3 className="mt-10 font-display text-[1.9rem] font-medium leading-tight lg:mt-16">
+                <h3 className="mt-6 font-display text-[1.9rem] font-medium leading-tight lg:mt-8">
                   {step.title}
                 </h3>
                 <p className="mt-3 leading-relaxed text-neutral-300">{step.text}</p>

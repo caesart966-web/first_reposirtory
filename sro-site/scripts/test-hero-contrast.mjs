@@ -5,7 +5,9 @@
 // (самый близкий к ней по яркости) пиксель фона. Норма — 4,5:1 для любой
 // надписи, в том числе крупной: запас на смену кадров.
 //
-// Меряются три слайда главной и шапки страниц видов СРО на 1440, 820 и 390 px.
+// Меряются три слайда главной, шапки страниц видов СРО и раздел «Как проходит
+// работа» с фотографией Фемиды (там — заголовок, номера и тексты шагов)
+// на 1440, 1024, 820 и 390 px.
 // Первая версия плёнки давала 1,2:1 — кадры дневные, белая подпись ложилась
 // на небо; статический расчёт по стилям этого не видит принципиально.
 //
@@ -18,9 +20,11 @@ const NORM = 4.5
 const SHOTS = [
   ...[0, 1, 2].map((slide) => ({ path: '', slide })),
   { path: 'sro-stroiteley/' }, { path: 'sro-proektirovshchikov/' }, { path: 'sro-izyskateley/' }, { path: 'uslugi/nok/' },
+  { path: '', section: 'process', selector: '#process h2, #process h3, #process p' },
 ]
 const DEVICES = [
   ['1440', { width: 1440, height: 900 }, false],
+  ['1024', { width: 1024, height: 900 }, false],
   ['820', { width: 820, height: 1180 }, true],
   ['390', { width: 390, height: 844 }, true],
 ]
@@ -41,16 +45,31 @@ for (const [dev, vp, mob] of DEVICES) {
       await p.locator('section[aria-roledescription="слайдер"] button[aria-pressed]').nth(s.slide).click()
       await p.mouse.move(5, 5)
     }
+    const selector = s.selector || '[data-hero-text]'
+    if (s.section) {
+      // Шапка и нижняя панель — поверх раздела, их прячем и в обоих снимках:
+      // иначе под надписью оказалась бы шапка, а не фотография.
+      await p.addStyleTag({ content: 'header, nav[aria-label="Быстрая связь"]{visibility:hidden !important}' })
+      await p.evaluate((id) => document.getElementById(id).scrollIntoView({ behavior: 'instant' }), s.section)
+    }
     await p.evaluate(() => document.fonts.ready)
     await p.waitForTimeout(900)
-    const boxes = await p.$$eval('[data-hero-text]', (els) => els
-      .filter((e) => e.getClientRects().length)
-      .map((e) => {
-        const r = e.getBoundingClientRect()
-        return { text: e.textContent.trim().slice(0, 32), x: r.x, y: r.y, w: r.width, h: r.height, color: getComputedStyle(e).color }
+    // Меряется не прямоугольник элемента, а строки самого текста (прямоугольники
+    // диапазона): абзац-блок тянется на всю ширину колонки, и его правый край
+    // ложился на мраморную статую там, где букв нет, — замер давал 1:1.
+    const boxes = await p.$$eval(selector, (els) => els
+      .filter((e) => e.getClientRects().length && e.textContent.trim())
+      .flatMap((e) => {
+        const range = document.createRange()
+        range.selectNodeContents(e)
+        const color = getComputedStyle(e).color
+        const text = e.textContent.trim().slice(0, 32)
+        return [...range.getClientRects()]
+          .filter((r) => r.width > 2 && r.height > 2)
+          .map((r) => ({ text, x: r.x, y: r.y, w: r.width, h: r.height, color }))
       })
-      .filter((x) => x.w > 0 && x.y < innerHeight))
-    await p.addStyleTag({ content: '[data-hero-text]{visibility:hidden !important}' })
+      .filter((x) => x.y < innerHeight && x.y + x.h > 0))
+    await p.addStyleTag({ content: `${selector}{visibility:hidden !important}` })
     await p.waitForTimeout(200)
     const png = (await p.screenshot()).toString('base64')
     await ctx.close()
@@ -82,8 +101,11 @@ for (const [dev, vp, mob] of DEVICES) {
         return { text: bx.text, worst: min }
       })
     }, { png, boxes })
-    const name = `${s.path || '/'}${s.slide !== undefined ? ` слайд ${s.slide + 1}` : ''} @${dev}`
-    for (const r of worst) rows.push({ name, ...r })
+    const name = `${s.path || '/'}${s.slide !== undefined ? ` слайд ${s.slide + 1}` : ''}${s.section ? ` #${s.section}` : ''} @${dev}`
+    // Надпись в несколько строк даёт несколько прямоугольников — в отчёт идёт худший.
+    const byText = new Map()
+    for (const r of worst) if (!byText.has(r.text) || r.worst < byText.get(r.text).worst) byText.set(r.text, r)
+    for (const r of byText.values()) rows.push({ name, ...r })
   }
 }
 await b.close()
