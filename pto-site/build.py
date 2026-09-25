@@ -829,6 +829,26 @@ def sro_block(site: Site, dark: bool = True) -> str:
           <span class="sro__key">Вид</span>
           <span class="sro__kind">{esc(sro.get("kind", ""))}{", " + esc(sro["city"]) if sro.get("city") else ""}</span>
         </div>''' if sro.get("kind") else "")
+    # Сведения о самом члене СРО (из выписки из реестра) — только в полном
+    # блоке на странице «О компании»: в подвале каждой страницы им тесно.
+    extra = ""
+    if not dark:
+        def row(key: str, value: str, cls: str = "sro__kind") -> str:
+            if not value:
+                return ""
+            return (f'<div class="sro__row"><span class="sro__key">{key}</span>'
+                    f'<span class="{cls}">{esc(value)}</span></div>\n        ')
+        extra = (row("Номер члена", sro.get("member_reg", ""), "sro__num nowrap")
+                 + row("Член СРО с", sro.get("since", ""))
+                 + row("Право", sro.get("right", ""))
+                 + row("Ответственность", sro.get("level", "")))
+        if sro.get("registry_url"):
+            inn = site.company.get("inn", "")
+            where = esc(sro.get("registry_name", "реестр членов СРО"))
+            by_inn = f", поиск по ИНН {esc(inn)}" if inn else ""
+            extra += (f'<p class="sro__check"><a href="{esc(sro["registry_url"])}" '
+                      f'target="_blank" rel="noopener">Проверить в реестре</a> — '
+                      f'{where}{by_inn}</p>')
     anchor = "" if dark else ' id="sro"'
     logo = sro_logo(site)
     mark = (f'<div class="sro__logo" aria-hidden="true">'
@@ -842,6 +862,7 @@ def sro_block(site: Site, dark: bool = True) -> str:
         <p class="sro__name">{esc(sro["name"])}</p>
         {reg}
         {kind}
+        {extra}
       </div>
     </div>'''
 
@@ -981,6 +1002,12 @@ def schema_organization(site: Site) -> dict:
         # knowsAbout — темы, в которых компания разбирается. По ним
         # поисковик понимает, к каким запросам относить сайт.
         "knowsAbout": [s["nav_title"] for s in site.services],
+        # Членство в СРО — проверяемый факт с номером в госреестре.
+        **({"memberOf": {
+            "@type": "Organization",
+            "name": site.company["sro"]["name"],
+            "identifier": site.company["sro"].get("reg", ""),
+        }} if site.company.get("sro", {}).get("name") else {}),
         "contactPoint": [{
             "@type": "ContactPoint",
             "telephone": c["phone_href"],
