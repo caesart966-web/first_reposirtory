@@ -13,14 +13,23 @@ AddDefaultCharset UTF-8
 ErrorDocument 404 /404.html
 
 # ---------- Переход на https и без www --------------------------------------
-# Включайте ПОСЛЕ того, как на домене заработает сертификат, иначе сайт
-# станет недоступен.
+# Включено 25 сентября 2026, когда на x-pto.ru встал сертификат Let's Encrypt.
+# Если сертификат когда-нибудь пропадёт, сайт перестанет открываться —
+# тогда закомментируйте четыре строки RewriteCond/RewriteRule решёткой.
+#
+# Сначала www → без www сразу на https: так посетитель с www не попадает
+# на https://www..., где сертификата может и не быть.
+# Проверка https двойная: у Timeweb перед Apache стоит nginx, и Apache
+# видит обычный http даже тогда, когда посетитель пришёл по https, —
+# об этом говорит только заголовок X-Forwarded-Proto. По одному %{HTTPS}
+# сайт уходил бы в бесконечную переадресацию.
 <IfModule mod_rewrite.c>
   RewriteEngine On
-  # RewriteCond %{HTTPS} !=on
-  # RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
-  # RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
-  # RewriteRule ^(.*)$ https://%1/$1 [R=301,L]
+  RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+  RewriteRule ^(.*)$ https://%1/$1 [R=301,L]
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
 </IfModule>
 
 # ---------- Сжатие ----------------------------------------------------------
