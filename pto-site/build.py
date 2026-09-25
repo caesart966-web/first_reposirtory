@@ -844,10 +844,9 @@ def sro_block(site: Site, dark: bool = True) -> str:
                 text = '<span class="nowrap">' + '-</span><wbr><span class="nowrap">'.join(text.split("-")) + '</span>'
             return (f'<div class="sro__row"><span class="sro__key">{key}</span>'
                     f'<span class="{cls}">{text}</span></div>\n        ')
-        extra = (row("Номер члена", sro.get("member_reg", ""), "sro__num", by_dash=True)
-                 + row("Член СРО с", sro.get("since", ""))
-                 + row("Право", sro.get("right", ""))
-                 + row("Ответственность", sro.get("level", "")))
+        # Дату приёма, объём права и уровень ответственности заказчик
+        # попросил не выводить: всё это видно в реестре по ссылке ниже.
+        extra = row("Номер члена", sro.get("member_reg", ""), "sro__num", by_dash=True)
         if sro.get("registry_url"):
             inn = site.company.get("inn", "")
             where = esc(sro.get("registry_name", "реестр членов СРО"))
