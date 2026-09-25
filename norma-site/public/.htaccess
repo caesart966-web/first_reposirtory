@@ -1,0 +1,101 @@
+# Настройки сервера для боевого хостинга (Timeweb, Beget, REG.RU — любой Apache).
+#
+# Файл попадает в сборку сам: Astro копирует всё из public/ в dist/.
+# На превью GitHub Pages он просто лежит без дела — GitHub .htaccess не читает.
+#
+# ВАЖНО ПРО ПУТИ. Здесь адреса от корня сайта (/404.html), поэтому файл верен
+# только когда сайт лежит В КОРНЕ домена — как и планируется на Timeweb.
+# Если сайт когда-нибудь положат в подпапку, пути надо будет дописать.
+
+AddDefaultCharset UTF-8
+
+# Своя страница 404 вместо страницы хостинга. Без этой строки посетитель,
+# ошибшийся в адресе, видит заглушку Timeweb и уходит с сайта совсем.
+ErrorDocument 404 /404.html
+
+# Не показывать список файлов в папке, где нет index.html.
+Options -Indexes
+
+# Служебные файлы наружу не отдаём ни при каких обстоятельствах.
+<FilesMatch "^(\.|composer\.|package\.)">
+  Require all denied
+</FilesMatch>
+
+# ── Один канонический адрес ───────────────────────────────────────────────
+#
+# Без этого один и тот же сайт открывается по четырём адресам (http/https ×
+# с www/без www), поисковик считает их разными сайтами и делит между ними
+# вес. Дубли — одна из самых частых и самых дорогих ошибок при запуске.
+#
+# На Timeweb то же самое настраивается в панели («Перенаправление на HTTPS»
+# и выбор основного зеркала), и панель надёжнее: она работает на уровне nginx,
+# до Apache. Эти правила — второй рубеж, и они не мешают панели: если nginx
+# уже отдал https, условия ниже не срабатывают и петли не возникает.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # http → https. Проверяем ДВА признака: на shared-хостинге SSL снимает nginx,
+  # и до Apache переменная HTTPS может не дойти вовсе — тогда правило без
+  # второго условия отправляло бы браузер по кругу.
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+  # www → без www. Если решите наоборот, поменяйте местами это правило
+  # и основное зеркало в панели Timeweb — они обязаны говорить одно и то же.
+  RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+  RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]
+</IfModule>
+
+# ── Сжатие ────────────────────────────────────────────────────────────────
+#
+# woff2 и webp здесь намеренно отсутствуют: они уже сжаты внутри, и повторное
+# сжатие только тратит процессор хостинга, не уменьшая размер.
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml
+  AddOutputFilterByType DEFLATE application/javascript application/json
+  AddOutputFilterByType DEFLATE application/xml application/rss+xml
+  AddOutputFilterByType DEFLATE image/svg+xml
+</IfModule>
+
+# ── Кеширование ───────────────────────────────────────────────────────────
+#
+# Правило простое: файл с хешем в имени кешируется навсегда, файл без хеша —
+# ненадолго. Иначе правка сайта не доедет до тех, кто уже был.
+<IfModule mod_headers.c>
+  # Стили и скрипты сборки. Имя вида Base.uwwdhFC4.css меняется при каждой
+  # правке содержимого, поэтому старый файл можно держать в кеше вечно.
+  <FilesMatch "\.(css|js)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+
+  # Шрифты, картинки и значки лежат под своими именами и при подмене файла
+  # имя не меняется. Поэтому месяц, а не год, и без immutable: так замена
+  # шрифта доедет до посетителя за разумное время, а не через год.
+  <FilesMatch "\.(woff2|webp|jpg|jpeg|png|svg|ico)$">
+    Header set Cache-Control "public, max-age=2592000"
+  </FilesMatch>
+
+  # Страницы не кешируем: правка текста или цены обязана быть видна сразу.
+  # no-cache не значит «качать каждый раз» — браузер спросит сервер, изменилось
+  # ли, и при «нет» получит короткий ответ 304 без тела.
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+
+  # Индекс поиска, карта сайта, лента и файлы для ИИ-помощников пересобираются
+  # при каждой публикации под теми же именами. Час — чтобы новая статья
+  # находилась поиском по сайту в тот же день, а не через месяц.
+  <FilesMatch "^(search-index\.json|sitemap.*\.xml|rss\.xml|robots\.txt|llms.*\.txt|site\.webmanifest)$">
+    Header set Cache-Control "public, max-age=3600"
+  </FilesMatch>
+</IfModule>
+
+# Типы, которые старые сборки Apache могут не знать. Без правильного типа
+# браузер откажется применять шрифт или манифест.
+<IfModule mod_mime.c>
+  AddType font/woff2 .woff2
+  AddType image/webp .webp
+  AddType application/manifest+json .webmanifest
+  AddType image/svg+xml .svg
+</IfModule>
