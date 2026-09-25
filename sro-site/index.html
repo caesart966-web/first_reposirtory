@@ -14,7 +14,7 @@
     <!-- Safari не берёт SVG для ярлыка «на экран Домой»: без PNG
          вместо знака компании там окажется скриншот страницы. -->
     <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-    <meta name="theme-color" content="#ffffff" />
+    <meta name="theme-color" content="#FBF9F5" />
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="ru_RU" />
     <meta property="og:site_name" content="ООО «БИЗНЕС-ГРУПП» · Вступление в СРО" />
@@ -36,9 +36,13 @@
     <!-- Без JS reveal-блоки остались бы прозрачными: страница выглядела бы пустой -->
     <noscript>
       <style>
-        .reveal {
+        .reveal,
+        .reveal-words .w > span,
+        .reveal-image,
+        .reveal-image img {
           opacity: 1 !important;
           transform: none !important;
+          clip-path: none !important;
         }
       </style>
     </noscript>

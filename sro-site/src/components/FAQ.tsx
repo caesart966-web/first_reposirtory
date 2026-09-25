@@ -1,4 +1,4 @@
-import { ChevronDown } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
@@ -50,9 +50,9 @@ const ITEMS: { id: string; q: string; a: ReactNode }[] = [
       <>
         Консультации бесплатны на любом этапе. Оплачивается только работа: подготовка
         документов и сопровождение. Стоимость зависит от вида СРО и объёма работы и
-        согласовывается письменно до начала. Быстрее всего{' '}
-        <a href="#quiz" className="font-medium text-accent-700 underline underline-offset-2">
-          ответить на несколько вопросов в форме ниже
+        согласовывается письменно до начала. Назову её после короткого разговора —{' '}
+        <a href="#contacts" className="font-medium text-accent-700 underline underline-offset-2">
+          позвоните или напишите
         </a>
         .
       </>
@@ -105,16 +105,19 @@ export function FAQ() {
   }, [])
 
   return (
-    <Section id="faq" size="compact" className="bg-neutral-50/55">
-      <SectionHeading eyebrow="FAQ" title="Частые вопросы" />
-      <Reveal className="mt-10">
-        <div className="mx-auto max-w-3xl divide-y divide-neutral-200 rounded-2xl border border-neutral-200 bg-white shadow-card">
+    <Section id="faq">
+      <div className="grid gap-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-20">
+        <div>
+          <SectionHeading eyebrow="Вопросы" title="Частые вопросы" />
+        </div>
+        {/* Вопросы строками с тонкими линейками, без карточки: знак «+»
+            поворачивается в «×», ответ раскрывается мягко, на той же кривой
+            silk, что и все переходы сайта. */}
+        <Reveal className="border-t border-neutral-300">
           {ITEMS.map((item, index) => {
             const open = openIndex === index
-            // scroll-mt на обёртке — под липкую шапку: иначе адрес #faq-…
-            // привозит вопрос ровно под неё.
             return (
-              <div key={item.q} id={`faq-${item.id}`} className="scroll-mt-20">
+              <div key={item.q} id={`faq-${item.id}`} className="scroll-mt-24 border-b border-neutral-300">
                 <h3>
                   <button
                     type="button"
@@ -122,12 +125,14 @@ export function FAQ() {
                     aria-expanded={open}
                     aria-controls={`faq-panel-${index}`}
                     id={`faq-button-${index}`}
-                    className="flex w-full items-center justify-between gap-4 px-5 py-5 text-left font-semibold text-neutral-900 transition hover:text-accent-700 sm:px-7"
+                    className="group flex w-full items-center justify-between gap-6 py-6 text-left"
                   >
-                    {item.q}
-                    <ChevronDown
-                      className={`h-5 w-5 shrink-0 text-neutral-500 transition-transform duration-300 ${
-                        open ? 'rotate-180 text-accent-600' : ''
+                    <span className="font-display text-[1.45rem] font-medium leading-snug text-neutral-950 transition-colors duration-500 group-hover:text-accent-700 sm:text-[1.6rem]">
+                      {item.q}
+                    </span>
+                    <Plus
+                      className={`h-5 w-5 shrink-0 text-neutral-950 transition-transform duration-700 ease-silk ${
+                        open ? 'rotate-45' : ''
                       }`}
                       aria-hidden="true"
                     />
@@ -138,19 +143,19 @@ export function FAQ() {
                   role="region"
                   aria-labelledby={`faq-button-${index}`}
                   aria-hidden={!open}
-                  className={`grid transition-all duration-300 ease-in-out ${
+                  className={`grid transition-all duration-700 ease-silk ${
                     open ? 'visible grid-rows-[1fr] opacity-100' : 'invisible grid-rows-[0fr] opacity-0'
                   }`}
                 >
                   <div className="overflow-hidden">
-                    <p className="px-5 pb-6 text-neutral-600 sm:px-7">{item.a}</p>
+                    <p className="max-w-2xl pb-7 leading-relaxed text-neutral-600">{item.a}</p>
                   </div>
                 </div>
               </div>
             )
           })}
-        </div>
-      </Reveal>
+        </Reveal>
+      </div>
     </Section>
   )
 }

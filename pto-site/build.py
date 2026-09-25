@@ -26,8 +26,10 @@ import argparse
 import html
 import json
 import re
+import math
 import shutil
 import struct
+import subprocess
 from datetime import date
 from pathlib import Path
 
@@ -67,9 +69,12 @@ def strip_tags(text: str) -> str:
 class Site:
     """Всё, что нужно знать странице о сайте в целом."""
 
-    def __init__(self, site: dict, services: list):
+    def __init__(self, site: dict, services: list, legal: dict = None,
+                 geo: dict = None):
         self.raw = site
         self.services = services
+        self.legal = legal or {}
+        self.geo = geo or {}
         self.by_slug = {s["slug"]: s for s in services}
         self.company = site["company"]
         self.contacts = site["contacts"]
@@ -199,27 +204,136 @@ def photo_img(site: Site, rel: str, alt: str, sizes: str, css: str = "") -> str:
     return img
 
 
+def poster_img(site: Site, rel: str, css: str) -> str:
+    """Кадр под видео — тегом picture, а не фоном в стилях.
+
+    Так браузер скачивает ровно один файл: понимает avif — берёт его
+    (он вдвое легче), не понимает — берёт webp. С фоном в стилях
+    приходилось писать两 строки, и Chrome качал обе картинки."""
+    avif = rel.rsplit(".", 1)[0] + ".avif"
+    source = (f'<source type="image/avif" srcset="{site.url(avif)}">'
+              if asset_exists(avif) else "")
+    size = image_size(rel)
+    dims = f' width="{size[0]}" height="{size[1]}"' if size else ""
+    return (f'<picture>{source}<img class="{css}" src="{site.url(rel)}"{dims}'
+            f' alt="" fetchpriority="high" decoding="async"></picture>')
+
+
 def block_media(site: Site, cfg: dict) -> str:
     """Широкая видео-полоса. Ведёт себя как первый экран: постер виден сразу,
     видео подключается скриптом после загрузки страницы. Если файлов видео нет,
     остаётся постер — блок не ломается."""
     if not cfg:
         return ""
-    poster = site.url(resolve_media(cfg.get("poster"), []))
+    poster_rel = resolve_media(cfg.get("poster"), [])
+    poster = site.url(poster_rel)
     sources = "|".join(site.url(cfg[k]) for k in ("webm", "mp4") if asset_exists(cfg.get(k)))
     mobile = "/assets/media/about-mobile.mp4"
     mob_attr = f' data-src-mobile="{site.url(mobile)}"' if asset_exists(mobile) else ""
     video = (f'''<video class="media-band__video js-video" autoplay muted loop playsinline
-             preload="none" poster="{poster}" data-src="{sources}"{mob_attr}
+             preload="none" data-src="{sources}"{mob_attr}
              aria-hidden="true" tabindex="-1"></video>''' if sources else "")
     caption = (f'<figcaption class="media-band__caption">{esc(cfg["caption"])}</figcaption>'
                if cfg.get("caption") else "")
     return f'''  <section class="section section--tight">
     <div class="container">
-      <figure class="media-band" style="background-image:url({poster})">
+      <figure class="media-band">{poster_img(site, poster_rel, "media-band__img")}
         {video}
         {caption}
       </figure>
+    </div>
+  </section>'''
+
+
+def map_point(site: Site, lon: float, lat: float):
+    """Широта и долгота — в координаты карты. Проекция та же, по которой
+    построен контур (Альберс, параллели 52° и 64°, меридиан 100° в. д.),
+    поэтому метка не может разойтись с картой: числа в единицах карты
+    руками нигде не пишутся."""
+    p = site.geo["projection"]
+    n = (math.sin(math.radians(p["lat1"])) + math.sin(math.radians(p["lat2"]))) / 2
+    c = math.cos(math.radians(p["lat1"])) ** 2 + 2 * n * math.sin(math.radians(p["lat1"]))
+    rho0 = math.sqrt(c - 2 * n * math.sin(math.radians(p["lat0"]))) / n
+    if lon < 0:
+        lon += 360
+    rho = math.sqrt(max(c - 2 * n * math.sin(math.radians(lat)), 0.0)) / n
+    theta = math.radians(n * (lon - p["lon0"]))
+    px, py = rho * math.sin(theta), rho0 - rho * math.cos(theta)
+    return ((px - p["minx"]) * p["scale"] + p["pad"],
+            (p["maxy"] - py) * p["scale"] + p["pad"])
+
+
+def block_geo(site: Site) -> str:
+    """Карта «Географические зоны наших объектов».
+
+    Города и число объектов берутся из списка объектов, а не пишутся здесь:
+    иначе карта и карточки разойдутся ровно в тот день, когда объект добавят
+    или уберут. Координаты — в data/site.json → geo_map.cities.
+
+    Карта нарисована SVG, а не картинкой: она резкая на любом экране,
+    весит меньше фотографии и перекрашивается вместе с темой сайта."""
+    cfg = site.raw.get("geo_map")
+    if not cfg or not site.geo:
+        return ""
+    items = site.raw["portfolio"]["items"]
+    counted = {}
+    for o in items:
+        counted[o["city"]] = counted.get(o["city"], 0) + 1
+
+    unknown = [c for c in counted if c not in cfg["cities"]]
+    if unknown:
+        # Город без координат молча пропал бы с карты, а карточка осталась.
+        print(f"  ВНИМАНИЕ: нет координат для города на карте: {', '.join(unknown)}"
+              f"\n  впишите их в data/site.json -> geo_map.cities")
+
+    marks, legend = [], []
+    for city, count in sorted(counted.items(), key=lambda kv: -kv[1]):
+        point = cfg["cities"].get(city)
+        if not point:
+            continue
+        x, y = map_point(site, point["lon"], point["lat"])
+        word = "объект" if count % 10 == 1 and count % 100 != 11 else (
+               "объекта" if count % 10 in (2, 3, 4) and count % 100 not in (12, 13, 14)
+               else "объектов")
+        # Подпись — справа от точки. Сдвиг и сторону можно задать в настройках
+        # города (label_dx, label_dy, label_anchor: "end" — подпись слева):
+        # Тверь, Завидово и Москва на карте страны стоят почти в одной точке,
+        # и без разноса их подписи наезжают друг на друга.
+        dx = point.get("label_dx", 11)
+        dy = point.get("label_dy", 4)
+        marks.append(
+            f'<g class="geo__mark"><circle class="geo__halo" cx="{x:.1f}" cy="{y:.1f}" r="13"/>'
+            f'<circle class="geo__dot" cx="{x:.1f}" cy="{y:.1f}" r="5"/>'
+            f'<text class="geo__label" x="{x + dx:.1f}" y="{y + dy:.1f}"'
+            f' text-anchor="{point.get("label_anchor", "start")}">{esc(city)}</text>'
+            f'<title>{esc(city)} — {count} {word}</title></g>')
+        legend.append(
+            f'<li class="geo__item"><span class="geo__city">{esc(city)}</span>'
+            f'<span class="geo__dots"></span>'
+            f'<span class="geo__count">{count} {word}</span></li>')
+
+    grid = "".join(f'<path d="{g}"/>' for g in site.geo.get("grid", []))
+    return f'''  <section class="section section--dark geo" id="geografiya">
+    <div class="container">
+      <div class="section__head">
+        <span class="section__tag">География</span>
+        <h2>{esc(cfg["title"])}</h2>
+        <p class="lead">{esc(cfg["lead"])}</p>
+      </div>
+      <div class="geo__grid">
+        <div class="geo__map">
+          <svg viewBox="{esc(site.geo["view_box"])}" role="img"
+               aria-label="Карта России: города, в которых стоят объекты"
+               preserveAspectRatio="xMidYMid meet">
+            <g class="geo__lines">{grid}</g>
+            <path class="geo__land" d="{site.geo["country"]}"/>
+            {"".join(marks)}
+          </svg>
+        </div>
+        <ul class="geo__legend">
+          {"".join(legend)}
+        </ul>
+      </div>
     </div>
   </section>'''
 
@@ -344,6 +458,38 @@ def block_objects(site: Site, items, limit: int = 0, level: str = "h3") -> str:
                      + photo_img(site, photos[0], alt, sizes, "object__img")
                      + f'<span class="object__count">{len(photos)} фото</span></button>')
         scope = f'<p class="object__scope">{esc(o["scope"])}</p>' if o.get("scope") else ""
+
+        # Нижняя часть карточки — паспорт объекта: разделы документации,
+        # застройщик и наш заказчик. Одинаковый на главной и на странице
+        # «Объекты». Раньше на главной стоял сокращённый вид (описание
+        # в четыре строки, из паспорта только заказчик), и заказчик
+        # принял его за старые описания: одна и та же карточка в двух
+        # местах сайта обязана выглядеть одинаково.
+        rows = []
+        clients = o.get("clients") or ([o["client"]] if o.get("client") else [])
+        if o.get("sections"):
+            rows.append(("Разделы", o["sections"]))
+        if o.get("developer"):
+            rows.append(("Застройщик", o["developer"]))
+        # «Наш заказчик» — только там, где заказчик это подтвердил в новом
+        # формате (поле clients). У объекта со старым полем client роль
+        # компании неизвестна: там стоит просто «Заказчик», чтобы сайт
+        # не приписал ей роль, которой у неё, возможно, не было.
+        first_label = "Наш заказчик" if o.get("clients") else "Заказчик"
+        for i, c in enumerate(clients):
+            # Подпись не повторяется у второго заказчика: два одинаковых
+            # слова подряд читаются как ошибка вёрстки, а не как список.
+            rows.append((first_label if i == 0 else "", c))
+        spec = "".join(
+            f'<div class="spec__row spec__row--cont">'
+            f'<span class="spec__val">{esc(val)}</span></div>'
+            if not key else
+            f'<div class="spec__row"><span class="spec__key">{esc(key)}</span>'
+            f'<span class="spec__dots"></span>'
+            f'<span class="spec__val">{esc(val)}</span></div>'
+            for key, val in rows)
+        spec = f'<div class="spec">{spec}</div>' if spec else ""
+
         css = "object object--wide" if (n - 1) in wide else "object"
         cards.append(f'''        <article class="{css}">
           {media}
@@ -352,10 +498,7 @@ def block_objects(site: Site, items, limit: int = 0, level: str = "h3") -> str:
             <{level} class="object__name">{esc(o["name"])}</{level}>
             <span class="object__city">{esc(o["city"])}</span>
             {scope}
-            <div class="spec">
-              <div class="spec__row"><span class="spec__key">Заказчик</span>
-                <span class="spec__dots"></span><span class="spec__val">{esc(o["client"])}</span></div>
-            </div>
+            {spec}
           </div>
         </article>''')
     return f'''      <div class="object-grid">
@@ -449,6 +592,7 @@ def block_form(site: Site, preselect: str = "") -> str:
     """Форма заявки. Стоит на каждой странице, якорь #zayavka."""
     form_cfg = site.raw["form"]
     c = site.contacts
+    consent_url = site.legal.get("policy", {}).get("slug", "/politika/")
 
     options = ['<option value="">— не важно / несколько услуг —</option>']
     for s in site.services:
@@ -521,6 +665,15 @@ def block_form(site: Site, preselect: str = "") -> str:
           <div class="hp" aria-hidden="true">
             <label for="f-company">Не заполняйте это поле</label>
             <input id="f-company" name="company" type="text" tabindex="-1" autocomplete="off">
+          </div>
+          <div class="field field--consent">
+            <label class="consent">
+              <input id="f-consent" name="consent" type="checkbox" required>
+              <span class="consent__box" aria-hidden="true"></span>
+              <span class="consent__text">{esc(form_cfg["consent"])}
+                <a href="{site.url(consent_url)}#soglasie" target="_blank" rel="noopener">{esc(form_cfg["consent_link"])}</a>.</span>
+            </label>
+            <span class="field__error"></span>
           </div>
           <div class="form__status" role="status"></div>
           <button class="btn btn--primary btn--block" type="submit">Отправить заявку</button>
@@ -604,6 +757,227 @@ def jsonld(obj) -> str:
             + "</script>")
 
 
+def sro_logo(site: Site) -> str:
+    """Логотип СРО, если файл положили в assets/img/ под именем sro-logo
+    (svg, png или webp). Нет файла — вместо логотипа рисуется печать
+    с сокращением, и это не ошибка: так значок работает до того, как
+    логотип прислали."""
+    for ext in ("svg", "webp", "png"):
+        rel = f"/assets/img/sro-logo.{ext}"
+        if asset_exists(rel):
+            return rel
+    return ""
+
+
+def hero_sro(site: Site) -> str:
+    """Значок членства в СРО на первом экране главной.
+
+    Первый экран — единственное место, которое видят все посетители,
+    и для подрядчика членство в СРО — главный довод «с ним можно
+    работать». Значок короткий: знак, одна строка и реестровый номер;
+    полное название и вид СРО — по ссылке, в блоке на странице
+    «О компании». Нет данных в настройках — значка нет вовсе."""
+    sro = site.company.get("sro")
+    if not sro or not sro.get("name"):
+        return ""
+    short = esc(sro.get("short", ""))
+    kind = {"проектирование": "проектировщиков", "строительство": "строителей",
+            "изыскания": "изыскателей"}.get(sro.get("kind", ""), "")
+    title = f"Член СРО {kind} «{short}»".replace("  ", " ")
+    # Номер целиком в неразрывном блоке: разорванный на «СРО-П-116-»
+    # и «18012010» он перестаёт читаться как номер, а по нему ищут в реестре.
+    reg = (f'<span class="hero-sro__reg">рег. № <span class="nowrap">{esc(sro["reg"])}</span></span>'
+           if sro.get("reg") else "")
+    logo = sro_logo(site)
+    if logo:
+        # Настоящий логотип СРО — на белой плашке: он нарисован под светлый
+        # фон, и на тёмном первом экране без подложки его золото тонет.
+        mark = (f'<span class="hero-sro__logo" aria-hidden="true">'
+                f'<img src="{site.url(logo)}" alt="" width="96" height="56" decoding="async"></span>')
+    else:
+        # Пока файла логотипа нет — круглая печать с сокращением.
+        mark = (f'<span class="hero-sro__seal" aria-hidden="true">'
+                f'<svg viewBox="0 0 64 64"><circle class="hero-sro__ring" cx="32" cy="32" r="29"/></svg>'
+                f'<span>{short}</span></span>')
+    return f'''        <a class="hero-sro" href="{site.url('/o-kompanii/')}#sro"
+           aria-label="{esc(title)}. Подробнее о членстве в СРО">
+          {mark}
+          <span class="hero-sro__text">
+            <span class="hero-sro__title">{esc(title)}</span>
+            {reg}
+          </span>
+          <svg class="hero-sro__arrow" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11M11 5.5 15.5 10 11 14.5"/></svg>
+        </a>'''
+
+
+def sro_block(site: Site, dark: bool = True) -> str:
+    """Членство в СРО. Не строчка мелким шрифтом внизу, а отдельная панель
+    со знаком: для подрядчика это допуск к работе, и заказчик ищет его
+    первым делом. Номер — регистрационный номер самой СРО в государственном
+    реестре: по нему организацию можно найти и проверить, и это единственная
+    причина, по которой номер вообще стоит на сайте.
+    Нет данных в настройках — блока нет вовсе."""
+    sro = site.company.get("sro")
+    if not sro or not sro.get("name"):
+        return ""
+    short = esc(sro.get("short", ""))
+    reg = (f'''<div class="sro__row">
+          <span class="sro__key">Реестровый номер</span>
+          <span class="sro__num">{esc(sro["reg"])}</span>
+        </div>''' if sro.get("reg") else "")
+    kind = (f'''<div class="sro__row">
+          <span class="sro__key">Вид</span>
+          <span class="sro__kind">{esc(sro.get("kind", ""))}{", " + esc(sro["city"]) if sro.get("city") else ""}</span>
+        </div>''' if sro.get("kind") else "")
+    # Сведения о самом члене СРО (из выписки из реестра) — только в полном
+    # блоке на странице «О компании»: в подвале каждой страницы им тесно.
+    extra = ""
+    if not dark:
+        def row(key: str, value: str, cls: str = "sro__kind", by_dash: bool = False) -> str:
+            if not value:
+                return ""
+            text = esc(value)
+            if by_dash:
+                # Номер из 23 знаков на экране в 320 px в строку не входит.
+                # Переносить разрешено только после дефиса: разорванный
+                # посреди цифр номер уже не найти в реестре.
+                text = '<span class="nowrap">' + '-</span><wbr><span class="nowrap">'.join(text.split("-")) + '</span>'
+            return (f'<div class="sro__row"><span class="sro__key">{key}</span>'
+                    f'<span class="{cls}">{text}</span></div>\n        ')
+        # Дату приёма, объём права и уровень ответственности заказчик
+        # попросил не выводить: всё это видно в реестре по ссылке ниже.
+        extra = row("Номер члена", sro.get("member_reg", ""), "sro__num", by_dash=True)
+        if sro.get("registry_url"):
+            inn = site.company.get("inn", "")
+            where = esc(sro.get("registry_name", "реестр членов СРО"))
+            by_inn = f", поиск по ИНН {esc(inn)}" if inn else ""
+            extra += (f'<p class="sro__check"><a href="{esc(sro["registry_url"])}" '
+                      f'target="_blank" rel="noopener">Проверить в реестре</a> — '
+                      f'{where}{by_inn}</p>')
+    anchor = "" if dark else ' id="sro"'
+    logo = sro_logo(site)
+    mark = (f'<div class="sro__logo" aria-hidden="true">'
+            f'<img src="{site.url(logo)}" alt="" width="120" height="70" loading="lazy" decoding="async"></div>'
+            if logo else
+            f'<div class="sro__seal" aria-hidden="true"><span>{short}</span></div>')
+    return f'''<div class="sro{' sro--dark' if dark else ''}"{anchor}>
+      {mark}
+      <div class="sro__body">
+        <span class="sro__label">Член саморегулируемой организации</span>
+        <p class="sro__name">{esc(sro["name"])}</p>
+        {reg}
+        {kind}
+        {extra}
+      </div>
+    </div>'''
+
+
+def cookie_bar(site: Site) -> str:
+    """Полоса про cookie — и одновременно единственный выключатель Метрики.
+
+    Счётчик подключается ИЗ этого скрипта после нажатия «Принять», а не
+    стоит в разметке: до выбора посетителя к Яндексу не уходит ни одного
+    запроса. Полоса показывается, только когда счётчик вообще настроен —
+    без него сайт не ставит ни одного файла cookie, и полоса «сайт
+    использует cookie» была бы ровно тем враньём мелким шрифтом, против
+    которого написана вся политика.
+
+    Выбор хранится в localStorage, а не в cookie: хранить согласие
+    на cookie в cookie до получения согласия — замкнутый круг."""
+    mid = site.raw.get("seo", {}).get("metrika_id", "").strip()
+    if not mid:
+        return ""
+    policy = site.url(site.legal.get("policy", {}).get("slug", "/politika/"))
+    return f'''<div class="cookie" id="cookie-bar" hidden data-metrika="{esc(mid)}">
+  <p class="cookie__text">Мы считаем посещения страниц, чтобы понимать, какие из них
+    полезны. Для этого нужны файлы cookie. Подробности —
+    <a href="{policy}#razdel-15">в политике обработки данных</a>.</p>
+  <div class="cookie__row">
+    <button class="btn btn--primary btn--sm" type="button" data-cookie="all">Принять</button>
+    <button class="btn btn--ghost btn--sm" type="button" data-cookie="none">Только необходимые</button>
+  </div>
+</div>'''
+
+
+# Короткие слова, после которых строка обрываться не должна. Предлог
+# или союз, повисший в конце строки, — самая заметная разница между
+# «набрано» и «свёрстано».
+#
+# В списке ТОЛЬКО предлоги, союзы и частицы. Местоимения и вопросительные
+# слова («их», «это», «как», «что») сюда не входят нарочно: они полноценные
+# слова, и связывать их с соседним значит делать длинные неразрывные куски,
+# которые на экране в 360 px вылезают за край. Список закрытый — гнать
+# неразрывный пробел после любого короткого слова нельзя.
+SHORT_WORDS = (
+    "а и о у в к с я не ни но да же ли бы во со ко об от до из за на по "
+    "для при над под без про или меж"
+).split()
+_SHORT_RE = re.compile(
+    r"(?<![\w\u0400-\u04FF])(" + "|".join(SHORT_WORDS) + r") +(?=[\w\u0400-\u04FF«(])",
+    re.IGNORECASE)
+# Сокращение с точкой перед числом: «ст. 18.1», «д. 7», «№ 152»
+_ABBR_RE = re.compile(r"(\b[а-яё]{1,4}\.|№) +(?=[\d«])", re.IGNORECASE)
+# Число и то, что к нему относится: «1200 ₽», «14 КБ», «5 лет»
+_UNIT_RE = re.compile(r"(\d) +(?=[%‰₽°]|[а-яё]{1,4}[.,)]?(?![\w\u0400-\u04FF]))")
+_NBSP = "\u00a0"
+
+
+def typo_ru(page: str) -> str:
+    """Русская типографика: неразрывные пробелы там, где перенос строки
+    выглядит ошибкой набора.
+
+    Работает по готовой странице и трогает ТОЛЬКО текст между тегами:
+    внутрь самих тегов не заглядывает вовсе, поэтому не может испортить
+    ни адрес ссылки, ни имя класса. Содержимое <script>, <style> и <pre>
+    пропускается целиком — там пробелы значащие."""
+    out = []
+    skip = 0
+    for chunk in re.split(r"(<[^>]*>)", page):
+        if chunk.startswith("<"):
+            name = re.match(r"</?\s*(script|style|pre|textarea)\b", chunk, re.I)
+            if name:
+                skip += 1 if not chunk.startswith("</") else -1
+                skip = max(skip, 0)
+            out.append(chunk)
+            continue
+        if skip or not chunk.strip():
+            out.append(chunk)
+            continue
+        text = chunk
+        text = _SHORT_RE.sub(lambda m: m.group(1) + _NBSP, text)
+        text = _ABBR_RE.sub(lambda m: m.group(1) + _NBSP, text)
+        text = _UNIT_RE.sub(lambda m: m.group(1) + _NBSP, text)
+        # Тире не должно начинать строку: оно остаётся с предыдущим словом.
+        text = text.replace(" —", _NBSP + "—")
+        out.append(text)
+    return "".join(out)
+
+
+def og_for(path: str) -> str:
+    """Своя обложка страницы для соцсетей, если она нарисована
+    инструментом tools/make-og.py. Имя файла повторяет адрес страницы:
+    /uslugi/geodeziya/ -> uslugi-geodeziya.jpg. Нет файла — страница
+    возьмёт общую картинку, и это не ошибка."""
+    name = "-".join(p for p in path.strip("/").split("/") if p) or "home"
+    if name.endswith(".html"):
+        return ""
+    rel = f"/assets/img/og/{name}.jpg"
+    return rel if asset_exists(rel) else ""
+
+
+def verification_tags(site: Site) -> str:
+    """Коды подтверждения прав на сайт в Яндекс.Вебмастере и Google.
+    Пустая строка = не подключено, и тега нет вовсе: пустой content
+    Вебмастер считает неверным кодом и подтверждение не проходит."""
+    seo = site.raw.get("seo", {})
+    out = []
+    if seo.get("yandex_verification"):
+        out.append(f'<meta name="yandex-verification" content="{esc(seo["yandex_verification"])}">')
+    if seo.get("google_verification"):
+        out.append(f'<meta name="google-site-verification" content="{esc(seo["google_verification"])}">')
+    return "\n".join(out)
+
+
 def schema_organization(site: Site) -> dict:
     c = site.contacts
     return {
@@ -624,6 +998,21 @@ def schema_organization(site: Site) -> dict:
         "telephone": c["phone_href"],
         "taxID": site.company.get("inn", ""),
         "areaServed": {"@type": "Country", "name": "Россия"},
+        # Основатель — реальный человек с проверяемыми реквизитами ИП.
+        # Поисковик связывает карточку компании с её владельцем.
+        "founder": {
+            "@type": "Person",
+            "name": site.legal.get("responsible", site.company.get("legal_name", "")),
+        },
+        # knowsAbout — темы, в которых компания разбирается. По ним
+        # поисковик понимает, к каким запросам относить сайт.
+        "knowsAbout": [s["nav_title"] for s in site.services],
+        # Членство в СРО — проверяемый факт с номером в госреестре.
+        **({"memberOf": {
+            "@type": "Organization",
+            "name": site.company["sro"]["name"],
+            "identifier": site.company["sro"].get("reg", ""),
+        }} if site.company.get("sro", {}).get("name") else {}),
         "contactPoint": [{
             "@type": "ContactPoint",
             "telephone": c["phone_href"],
@@ -632,6 +1021,37 @@ def schema_organization(site: Site) -> dict:
             "areaServed": "RU",
             "availableLanguage": "Russian",
         }],
+    }
+
+
+def schema_website(site: Site) -> dict:
+    """Узел «сайт». Связывает все страницы в одно целое и указывает,
+    кто издатель — без него каждая страница живёт сама по себе."""
+    return {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "@id": site.abs_url("/") + "#website",
+        "url": site.abs_url("/"),
+        "name": site.company["name"],
+        "description": site.company["about_short"],
+        "inLanguage": "ru-RU",
+        "publisher": {"@id": site.abs_url("/") + "#organization"},
+    }
+
+
+def schema_webpage(site: Site, path: str, title: str, description: str) -> dict:
+    """Узел конкретной страницы: что это за страница, чьей частью является
+    и о ком она. Через @id к нему привязываются крошки и разметка услуги."""
+    return {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "@id": site.abs_url(path) + "#webpage",
+        "url": site.abs_url(path),
+        "name": title,
+        "description": description,
+        "inLanguage": "ru-RU",
+        "isPartOf": {"@id": site.abs_url("/") + "#website"},
+        "about": {"@id": site.abs_url("/") + "#organization"},
     }
 
 
@@ -711,12 +1131,21 @@ class Renderer:
     def render(self, *, path: str, title: str, description: str, body: str,
                head_extra: str = "", og_type: str = "website", og_title: str = "",
                in_sitemap: bool = True, priority: str = "0.7",
-               robots: str = "index, follow") -> None:
+               robots: str = "index, follow",
+               og_image: str = "", og_image_alt: str = "") -> None:
         if self.noindex:
             robots = "noindex, nofollow"
         site = self.site
         c = site.contacts
         f1, f2 = self.footer_services()
+
+        # Узлы «сайт» и «страница» собираются здесь, а не в каждой
+        # странице по отдельности: так ни одна не останется без них.
+        head_extra = "\n".join([
+            jsonld(schema_website(site)),
+            jsonld(schema_webpage(site, path, title, description)),
+            head_extra,
+        ])
 
         ctx = {
             "title": esc(title),
@@ -724,7 +1153,10 @@ class Renderer:
             "canonical": site.abs_url(path),
             "og_type": og_type,
             "og_title": esc(og_title or title),
-            "og_image": site.abs_url(site.raw.get("og_image", "/assets/img/og-default.png")),
+            "og_image": site.abs_url(og_image or og_for(path) or
+                                     site.raw.get("og_image", "/assets/img/og-default.jpg")),
+            "og_image_alt": esc(og_image_alt or title),
+            "verification": verification_tags(site),
             "robots": robots,
             "head_extra": head_extra,
             "base": site.base_path,
@@ -748,6 +1180,8 @@ class Renderer:
             "work_hours": esc(c["work_hours"]),
             "geo": esc(c["geo"]),
             "year": str(date.today().year),
+            "cookie_bar": cookie_bar(site),
+            "sro_line": sro_block(site),
         }
 
         def sub(m):
@@ -757,6 +1191,7 @@ class Renderer:
             return ctx[key]
 
         page = re.sub(r"\{\{(\w+)\}\}", sub, self.template)
+        page = typo_ru(page)
 
         out = DIST_DIR / path.strip("/") / "index.html" if path != "/" else DIST_DIR / "index.html"
         if path.endswith(".html"):
@@ -785,8 +1220,13 @@ def page_home(r: Renderer) -> None:
     spec = []
     for st in offer["stats"]:
         unit = f'<span class="hero__spec-unit">{esc(st["unit"])}</span>' if st.get("unit") else ""
+        # {услуг} считается по списку услуг, а не пишется руками. Однажды
+        # услуг стало четырнадцать, а на первом экране осталось тринадцать:
+        # такую ошибку не ловит ни одна проверка — она не противоречит
+        # ничему, кроме действительности.
+        value = str(st["value"]).replace("{услуг}", str(len(site.services)))
         spec.append(f'''          <div class="hero__spec-item">
-            <div class="hero__spec-value">{esc(st["value"])}{unit}</div>
+            <div class="hero__spec-value">{esc(value)}{unit}</div>
             <div class="hero__spec-label">{esc(st["label"])}</div>
           </div>''')
 
@@ -797,12 +1237,13 @@ def page_home(r: Renderer) -> None:
 
     # Постер — статичный кадр. Он показывается сразу, пока грузится видео,
     # и остаётся вместо видео на телефонах. Видео подключает app.js.
-    poster = site.url(resolve_media(h.get("poster"), [
+    poster_rel = resolve_media(h.get("poster"), [
         "/assets/media/hero-poster.webp",
         "/assets/media/hero-poster.jpg",
         "/assets/media/hero-poster.png",
         "/assets/media/hero-poster-placeholder.png",
-    ]))
+    ])
+    poster = site.url(poster_rel)
     # Тег видео вставляем, только если файл действительно лежит в assets/.
     # Иначе браузер зря дёргал бы несуществующий файл — а на экране всё равно
     # остаётся постер. Положите hero.mp4 в assets/media/, и видео появится само.
@@ -814,7 +1255,7 @@ def page_home(r: Renderer) -> None:
     mobile = "/assets/media/hero-mobile.mp4"
     mob_attr = f' data-src-mobile="{site.url(mobile)}"' if asset_exists(mobile) else ""
     video_tag = (f'''<video class="hero__video js-video" autoplay muted loop playsinline preload="none"
-           poster="{poster}" data-src="{sources}"{mob_attr} aria-hidden="true" tabindex="-1"></video>'''
+           data-src="{sources}"{mob_attr} aria-hidden="true" tabindex="-1"></video>'''
                  if sources else "")
 
     # Анонс объектов на главной: три штуки и ссылка на полный список
@@ -836,7 +1277,7 @@ def page_home(r: Renderer) -> None:
   </section>'''
 
     hero = f'''  <section class="hero">
-    <div class="hero__media" style="background-image:url({poster})"></div>
+    <div class="hero__media" aria-hidden="true">{poster_img(site, poster_rel, "hero__media-img")}</div>
     {video_tag}
     <div class="hero__scan" aria-hidden="true"></div>
     <div class="hero__frame" aria-hidden="true"></div>
@@ -855,6 +1296,7 @@ def page_home(r: Renderer) -> None:
         <div class="hero__spec">
 {chr(10).join(spec)}
         </div>
+{hero_sro(site)}
       </div>
     </div>
   </section>'''
@@ -890,7 +1332,7 @@ def page_home(r: Renderer) -> None:
     <div class="container">
       <div class="section__head">
         <h2>Услуги</h2>
-        <p>Четыре направления. Можно взять одну задачу, можно передать документальное сопровождение объекта целиком.</p>
+        <p>{number_word(len(site.groups)).capitalize()} {'направление' if len(site.groups) % 10 == 1 and len(site.groups) != 11 else 'направления' if len(site.groups) % 10 in (2, 3, 4) and len(site.groups) not in (12, 13, 14) else 'направлений'}. Можно взять одну задачу, можно передать документальное сопровождение объекта целиком.</p>
       </div>
 {block_services_by_group(site)}
       <div class="btn-row mt-6">
@@ -920,14 +1362,13 @@ def page_home(r: Renderer) -> None:
     # начать качать её сразу, не дожидаясь разбора стилей: экран появляется
     # заметно раньше.
     head = "\n".join([
-        f'<link rel="preload" as="image" href="{poster}" fetchpriority="high">',
+        (f'<link rel="preload" as="image" type="image/avif" fetchpriority="high"'
+         f' href="{site.url(poster_rel.rsplit(".", 1)[0] + ".avif")}">'
+         if asset_exists(poster_rel.rsplit(".", 1)[0] + ".avif") else
+         f'<link rel="preload" as="image" href="{poster}" fetchpriority="high">'),
         jsonld(schema_organization(site)),
-        jsonld({
-            "@context": "https://schema.org",
-            "@type": "WebSite",
-            "name": site.company["name"],
-            "url": site.abs_url("/"),
-        }),
+        # Узел «сайт» ставит render() на каждой странице — здесь он
+        # был бы вторым и разошёлся бы с ним по составу полей.
         jsonld(schema_faq(faq["items"])),
     ])
 
@@ -944,6 +1385,20 @@ def page_home(r: Renderer) -> None:
 
 # ---------- список услуг --------------------------------------------------
 
+NUM_WORDS = ("ноль один два три четыре пять шесть семь восемь девять десять "
+             "одиннадцать двенадцать тринадцать четырнадцать пятнадцать шестнадцать "
+             "семнадцать восемнадцать девятнадцать двадцать").split()
+
+
+def number_word(n: int) -> str:
+    """Число словом — для текстов, где цифра смотрелась бы казённо.
+    Считается по данным, а не пишется руками: «Тринадцать направлений»
+    простояло на странице услуг, когда их было уже четырнадцать."""
+    if 0 <= n < len(NUM_WORDS):
+        return NUM_WORDS[n]
+    return str(n)
+
+
 def page_services_index(r: Renderer) -> None:
     site = r.site
     cfg = site.raw["services_index"]
@@ -955,7 +1410,7 @@ def page_services_index(r: Renderer) -> None:
         <li>Услуги</li>
       </ul>
       <h1>{esc(cfg["h1"])}</h1>
-      <p class="lead">{esc(cfg["lead"])}</p>
+      <p class="lead">{esc(cfg["lead"].replace("{услуг_словами}", number_word(len(site.services)).capitalize()))}</p>
     </div>
   </section>
 
@@ -1103,6 +1558,8 @@ def page_objects(r: Renderer) -> None:
     </div>
   </section>
 
+{block_geo(site)}
+
   <section class="section section--alt">
     <div class="container">
       <div class="section__head"><h2>Что делаем на таких объектах</h2></div>
@@ -1165,6 +1622,12 @@ def page_about(r: Renderer) -> None:
       <div class="grid grid--2">
 {blocks}
       </div>
+    </div>
+  </section>
+
+  <section class="section section--alt">
+    <div class="container">
+{sro_block(site, dark=False)}
     </div>
   </section>
 
@@ -1247,6 +1710,148 @@ def page_contacts(r: Renderer) -> None:
              body=body, head_extra=head, priority="0.6")
 
 
+# ---------- политика обработки персональных данных ------------------------
+
+def legal_tokens(site: Site) -> dict:
+    """Подстановки для юридических текстов. Реквизиты пишутся один раз
+    в site.json и legal.json — на странице они не дублируются руками,
+    иначе редакции неизбежно разойдутся."""
+    c, co, lg = site.contacts, site.company, site.legal
+    address = (lg.get("address") or "").strip()
+    return {
+        "{оператор}": co.get("legal_name", co["name"]),
+        "{инн}": co.get("inn", ""),
+        "{огрнип}": co.get("ogrnip", ""),
+        "{почта}": c["email"],
+        "{телефон}": c["phone_display"],
+        "{сайт}": site.abs_url("/"),
+        "{адрес_политики}": site.abs_url(lg["policy"]["slug"]),
+        "{ответственный}": lg.get("responsible", co.get("legal_name", "")),
+        # Адреса может не быть — тогда фраза о нём не выводится вовсе,
+        # а не показывается посетителю незаполненной скобкой.
+        "{адрес_фраза}": f" Почтовый адрес: {address}." if address else "",
+        "{адрес_запроса}": f" либо почтой по адресу {address}" if address else "",
+    }
+
+
+def legal_text(text: str, tokens: dict) -> str:
+    out = esc(text)
+    for key, value in tokens.items():
+        out = out.replace(key, esc(value))
+    return out
+
+
+def legal_section(sec: dict, tokens: dict, site: Site) -> str:
+    """Один раздел документа: заголовок, абзацы, списки, таблица."""
+    parts = [f'      <h2 class="legal__h">{legal_text(sec["h"], tokens)}</h2>']
+    for key in ("p", "ul", "dl", "table", "p2"):
+        if key not in sec:
+            continue
+        if key in ("p", "p2"):
+            parts += [f'      <p>{legal_text(t, tokens)}</p>' for t in sec[key]]
+        elif key == "ul":
+            items = "".join(f"<li>{legal_text(t, tokens)}</li>" for t in sec[key])
+            parts.append(f'      <ul class="legal__list">{items}</ul>')
+        elif key == "dl":
+            rows = "".join(
+                f'<div class="legal__term"><dt>{legal_text(t, tokens)}</dt>'
+                f'<dd>{legal_text(d, tokens)}</dd></div>' for t, d in sec[key])
+            parts.append(f'      <dl class="legal__terms">{rows}</dl>')
+        elif key == "table":
+            head = "".join(f"<th scope=\"col\">{esc(h)}</th>" for h in sec[key]["head"])
+            cols = sec[key]["head"]
+            rows = "".join(
+                "<tr>" + "".join(
+                    f'<td data-label="{esc(cols[i])}">{esc(v)}</td>'
+                    for i, v in enumerate((pr["name"], pr["what"], pr["where"])))
+                + "</tr>" for pr in site.legal.get("processors", []))
+            parts.append('      <div class="legal__table-wrap">'
+                         f'<table class="legal__table"><thead><tr>{head}</tr></thead>'
+                         f"<tbody>{rows}</tbody></table></div>")
+    return "\n".join(parts)
+
+
+def page_policy(r: Renderer) -> None:
+    site = r.site
+    lg = site.legal
+    pol = lg["policy"]
+    tokens = legal_tokens(site)
+
+    # Раздел про cookie появляется в документе только тогда, когда счётчик
+    # действительно подключён. Пока его нет, сайт не ставит ни одного файла
+    # cookie, и политика, обещающая обратное, была бы неправдой.
+    parts = list(pol["sections"])
+    if site.raw.get("seo", {}).get("metrika_id") and lg.get("cookie_section"):
+        parts.append(lg["cookie_section"])
+    pol = dict(pol, sections=parts)
+
+    toc = "".join(
+        f'<li><a href="#razdel-{i}">{esc(sec["h"])}</a></li>'
+        for i, sec in enumerate(pol["sections"], start=1))
+    toc += '<li><a href="#soglasie">' + esc(lg["consent"]["h"]) + "</a></li>"
+
+    sections = "\n".join(
+        f'    <section class="legal__section" id="razdel-{i}">\n'
+        f"{legal_section(sec, tokens, site)}\n    </section>"
+        for i, sec in enumerate(pol["sections"], start=1))
+
+    consent = lg["consent"]
+    consent_html = "\n".join(
+        f"      <p>{legal_text(t, tokens)}</p>" for t in consent["p"])
+
+    body = f'''  <section class="page-head">
+    <div class="container">
+      <ul class="breadcrumbs">
+        <li><a href="{site.url('/')}">Главная</a></li>
+        <li>Персональные данные</li>
+      </ul>
+      <h1>{esc(pol["h1"])}</h1>
+      <p class="lead">{esc(pol["lead"])}</p>
+    </div>
+  </section>
+
+  <section class="section section--surface">
+    <div class="container legal">
+      <div class="legal__meta">
+        <div class="legal__meta-item">
+          <span class="legal__meta-label">Оператор</span>
+          <span class="legal__meta-value">{esc(tokens["{оператор}"])}</span>
+        </div>
+        <div class="legal__meta-item">
+          <span class="legal__meta-label">Редакция</span>
+          <span class="legal__meta-value">№ {esc(lg.get("version", "1.0"))} от {esc(lg.get("approved", ""))}</span>
+        </div>
+        <div class="legal__meta-item">
+          <span class="legal__meta-label">Основание</span>
+          <span class="legal__meta-value">ст. 18.1 Федерального закона № 152-ФЗ</span>
+        </div>
+      </div>
+
+      <nav class="legal__toc" aria-label="Содержание документа">
+        <p class="legal__toc-title">Содержание</p>
+        <ol class="legal__toc-list">{toc}</ol>
+      </nav>
+
+{sections}
+
+    <section class="legal__section legal__section--consent" id="soglasie">
+      <h2 class="legal__h legal__h--big">{esc(consent["h"])}</h2>
+      <p class="legal__note">{esc(consent["lead"])}</p>
+{consent_html}
+    </section>
+    </div>
+  </section>
+
+{block_form(site)}'''
+
+    head = "\n".join([
+        jsonld(schema_organization(site)),
+        jsonld(schema_breadcrumbs(site, [("Главная", "/"), ("Персональные данные", pol["slug"])])),
+    ])
+    r.render(path=pol["slug"], title=pol["title"], description=pol["description"],
+             body=body, head_extra=head, priority="0.3")
+
+
 # ---------- 404 -----------------------------------------------------------
 
 def page_404(r: Renderer) -> None:
@@ -1277,11 +1882,46 @@ def page_404(r: Renderer) -> None:
 # 5. sitemap.xml, robots.txt, файлы
 # =========================================================================
 
+def source_date(*files) -> str:
+    """Дата последнего изменения исходника — из истории git, а не из часов
+    сборщика. Дата сборки означала бы «на каждой публикации изменились все
+    страницы разом», и за такой lastmod поисковики перестают его учитывать
+    вовсе. Нет git (архив, чужая машина) — берём дату файла."""
+    best = ""
+    for f in files:
+        rel = str(Path(f).relative_to(ROOT)) if Path(f).is_absolute() else str(f)
+        got = ""
+        try:
+            out = subprocess.run(["git", "log", "-1", "--format=%cs", "--", rel],
+                                 cwd=ROOT, capture_output=True, text=True, timeout=10)
+            got = out.stdout.strip()
+        except Exception:
+            got = ""
+        if not got:
+            path = ROOT / rel
+            if path.exists():
+                got = date.fromtimestamp(path.stat().st_mtime).isoformat()
+        best = max(best, got)
+    return best or date.today().isoformat()
+
+
 def write_sitemap(site: Site, pages) -> None:
-    today = date.today().isoformat()
+    # Что меняет страницу: услуги приходят из services.json, остальные
+    # страницы — из site.json, политика — ещё и из legal.json.
+    d_site = source_date(DATA_DIR / "site.json", TPL_DIR / "base.html")
+    d_serv = source_date(DATA_DIR / "services.json", TPL_DIR / "base.html")
+    d_legal = source_date(DATA_DIR / "legal.json", TPL_DIR / "base.html")
+
+    def lastmod(path: str) -> str:
+        if path.startswith("/uslugi/"):
+            return d_serv
+        if path.startswith("/politika"):
+            return d_legal
+        return d_site
+
     rows = "\n".join(
         f"  <url>\n    <loc>{site.abs_url(path)}</loc>\n"
-        f"    <lastmod>{today}</lastmod>\n    <priority>{priority}</priority>\n  </url>"
+        f"    <lastmod>{lastmod(path)}</lastmod>\n    <priority>{priority}</priority>\n  </url>"
         for path, priority in pages
     )
     xml = ('<?xml version="1.0" encoding="UTF-8"?>\n'
@@ -1319,9 +1959,96 @@ def write_robots(site: Site, noindex: bool = False) -> None:
     else:
         text = ("User-agent: *\n"
                 "Allow: /\n"
-                "Disallow: /assets/config.js\n\n"
+                # Настройки приёма заявок — не для индексации.
+                "Disallow: /assets/config.js\n"
+                # Служебная страница с кадрами для сторис: она для нас,
+                # а не для посетителей, и в поиске ей делать нечего.
+                "Disallow: /assets/promo/\n"
+                "Disallow: /api/\n\n"
                 f"Sitemap: {site.abs_url('/sitemap.xml')}\n")
     (DIST_DIR / "robots.txt").write_text(text, encoding="utf-8")
+
+
+def write_photo_hint(site: Site) -> None:
+    """Памятка «как добавить фотографию объекта» — собирается по списку
+    объектов, а не пишется руками. Раньше имена были перечислены в файле
+    вручную, и после удаления объекта в памятке остался несуществующий:
+    такую ошибку не ловит ни одна проверка, она не противоречит ничему,
+    кроме действительности."""
+    rows = "\n".join(
+        f"    {it['slug']}.jpg".ljust(36) + f"{it['name']}, {it['city']}"
+        for it in site.raw["portfolio"]["items"])
+    text = f"""КАК ДОБАВИТЬ ФОТОГРАФИЮ ОБЪЕКТА
+================================
+
+Этот файл создаётся сборкой сам по списку объектов из data/site.json.
+Править его руками не нужно: при следующей сборке правка потеряется.
+
+Положите сюда файл с нужным именем — и фотография сама появится
+в карточке объекта на сайте. Ничего больше настраивать не надо.
+
+Имена файлов (расширение .jpg, .webp или .png — любое):
+
+{rows}
+
+После добавления файлов выполните пересборку:
+
+    python3 build.py
+
+Чтобы фотографии стали лёгкими (копии под размер экрана и формат AVIF):
+
+    python3 tools/make-thumbs.py && python3 build.py
+
+Если фотографии нет — в карточке выводится фирменная заставка,
+вёрстка не ломается.
+"""
+    (ASSETS_DIR / "img" / "objects" / "КАК-ДОБАВИТЬ-ФОТО.txt").write_text(
+        text, encoding="utf-8")
+
+
+def write_llms(site: Site) -> None:
+    """Оглавление сайта для ИИ-помощников (llms.txt). Люди всё чаще
+    спрашивают не поисковик, а чат; файл даёт ему короткое и точное
+    описание вместо того, чтобы он собирал его из вёрстки сам.
+    Собирается из тех же данных, что и страницы: ни одного факта,
+    написанного здесь руками, — иначе заведётся вторая точка правды."""
+    c = site.contacts
+    lines = [
+        f"# {site.company['name']} — {site.company['tagline']}",
+        "",
+        f"> {site.company['about_short']} {c['geo']}.",
+        "",
+        f"Исполнитель: {site.company.get('legal_name', '')}, "
+        f"ИНН {site.company.get('inn', '')}, ОГРНИП {site.company.get('ogrnip', '')}.",
+        f"Телефон: {c['phone_display']}. Почта: {c['email']}. Telegram: {c['telegram_display']}.",
+        f"Режим работы: {c['work_hours']}.",
+        "",
+        "## Услуги",
+        "",
+    ]
+    for group in site.groups:
+        items = site.services_in_group(group["id"])
+        if not items:
+            continue
+        lines.append(f"### {group['title']}")
+        lines.append("")
+        for srv in items:
+            url = site.abs_url(site.service_url(srv["slug"]))
+            lines.append(f"- [{srv['nav_title']}]({url}): {strip_tags(srv['short'])}")
+        lines.append("")
+    lines += [
+        "## Разделы сайта",
+        "",
+        f"- [Все услуги]({site.abs_url('/uslugi/')}): список из "
+        f"{len(site.services)} направлений документации.",
+        f"- [Объекты]({site.abs_url('/obekty/')}): объекты, на которых велась документация.",
+        f"- [О компании]({site.abs_url('/o-kompanii/')}): как устроена работа.",
+        f"- [Контакты]({site.abs_url('/kontakty/')}): телефон, почта, мессенджеры.",
+        f"- [Персональные данные]({site.abs_url('/politika/')}): политика обработки "
+        "персональных данных и текст согласия.",
+        "",
+    ]
+    (DIST_DIR / "llms.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def minify_css(text: str) -> str:
@@ -1400,7 +2127,7 @@ def shrink_dist() -> None:
               f"(минус {round((1 - after / before) * 100)}%)")
 
 
-def copy_server_config() -> None:
+def copy_server_config(site: Site) -> None:
     """Кладёт настройки веб-сервера в корень сайта (server/.htaccess).
 
     Это кеширование, сжатие и заголовки безопасности для обычного хостинга.
@@ -1408,6 +2135,14 @@ def copy_server_config() -> None:
     src = ROOT / "server" / ".htaccess"
     if src.exists():
         shutil.copy2(src, DIST_DIR / ".htaccess")
+    # Обработчик заявок для хостинга с PHP: отправляет заявку письмом.
+    handler = ROOT / "server" / "api" / "zayavka.php"
+    if handler.exists():
+        (DIST_DIR / "api").mkdir(exist_ok=True)
+        # Адрес для заявок — та же почта, что на сайте: одна точка правды.
+        email = site.contacts.get("email", "")
+        code = handler.read_text(encoding="utf-8").replace("{{почта_заявок}}", email)
+        (DIST_DIR / "api" / "zayavka.php").write_text(code, encoding="utf-8")
 
 
 def copy_assets() -> None:
@@ -1417,14 +2152,12 @@ def copy_assets() -> None:
     example = dst / "config.example.js"
     if example.exists():
         example.unlink()
-    if not (dst / "config.js").exists():
-        # Заглушка, чтобы не было ошибки 404 при незаполненных настройках
-        (dst / "config.js").write_text(
-            "/* Настройки не заданы. Скопируйте assets/config.example.js "
-            "в assets/config.js и заполните — иначе форма не отправит заявку. */\n"
-            "window.SITE_CONFIG = {};\n",
-            encoding="utf-8",
-        )
+    # Заглушку config.js сборка НЕ создаёт. Раньше создавала — «чтобы не было
+    # ошибки 404», — и это была ловушка: настоящий config.js заливается
+    # на хостинг руками (в git его нет), а при следующем обновлении сайта
+    # заглушка из dist/ затирала его, и форма молча переставала отправлять
+    # заявки. Без файла сайт работает: форма показывает запасные кнопки
+    # «позвонить / написать», а скрипт берёт пустые настройки сам.
 
 
 # =========================================================================
@@ -1435,7 +2168,9 @@ def build(regen_media: bool = False, base_path: str = None,
           base_url: str = None, noindex: bool = False) -> Site:
     site_data = load_json(DATA_DIR / "site.json")
     services = load_json(DATA_DIR / "services.json")
-    site = Site(site_data, services)
+    legal = load_json(DATA_DIR / "legal.json")
+    geo = load_json(DATA_DIR / "map.json")
+    site = Site(site_data, services, legal, geo)
 
     # Превью-сборка: адрес и подпапку задаём из командной строки,
     # чтобы боевые настройки в data/site.json остались нетронутыми.
@@ -1464,13 +2199,16 @@ def build(regen_media: bool = False, base_path: str = None,
     page_objects(r)
     page_about(r)
     page_contacts(r)
+    page_policy(r)
     page_404(r)
 
     copy_assets()
     write_sitemap(site, r.pages)
     write_robots(site, noindex=noindex)
+    write_llms(site)
+    write_photo_hint(site)
     write_manifest(site)
-    copy_server_config()
+    copy_server_config(site)
 
     # Проверка, что заголовки нигде не повторяются
     check_unique(r)
@@ -1480,7 +2218,51 @@ def build(regen_media: bool = False, base_path: str = None,
 
     print(f"\nГотово. Собрано страниц: {len(r.pages) + 1} (включая 404).")
     print(f"Сайт лежит в: {DIST_DIR}")
+    launch_checklist(site)
     return site
+
+
+def launch_checklist(site: Site) -> None:
+    """Что ещё не заполнено перед запуском на боевом домене.
+
+    Каждый пункт — то, что нельзя вычислить из кода и что должен
+    сообщить владелец сайта. Пока пункт не закрыт, сайт работает,
+    но часть его возможностей выключена — и молчать об этом нельзя:
+    забытая мелочь вроде адреса в политике обходится дороже всего."""
+    seo = site.raw.get("seo", {})
+    todo = []
+
+    if "example.com" in site.base_url:
+        todo.append("АДРЕС САЙТА. В data/site.json → base_url всё ещё example.com. "
+                    "Пока он там, в canonical, карте сайта и картинках для соцсетей "
+                    "стоит несуществующий адрес, и поисковик их не примет.")
+    if not (ASSETS_DIR / "config.js").exists():
+        todo.append("ПРИЁМ ЗАЯВОК. Нет файла assets/config.js — форма никуда не "
+                    "отправляет заявки и показывает запасные кнопки. Образец: "
+                    "assets/config.example.js, порядок — в README.")
+    if not site.legal.get("address"):
+        todo.append("АДРЕС ОПЕРАТОРА в data/legal.json → address. Это адрес, по "
+                    "которому вы готовы принимать письменные запросы об обработке "
+                    "персональных данных; он же нужен для уведомления в Роскомнадзор. "
+                    "Пока пусто — строка с адресом на страницу политики не выводится.")
+    if not seo.get("metrika_id"):
+        todo.append("ЯНДЕКС.МЕТРИКА в data/site.json → seo.metrika_id. Без неё "
+                    "не видно, сколько людей пришло и откуда.")
+    if not seo.get("yandex_verification"):
+        todo.append("ПОДТВЕРЖДЕНИЕ ПРАВ в Яндекс.Вебмастере: "
+                    "data/site.json → seo.yandex_verification.")
+    if not (ASSETS_DIR / "img" / "og").exists():
+        todo.append("ОБЛОЖКИ ДЛЯ СОЦСЕТЕЙ не нарисованы: python3 tools/make-og.py, "
+                    "затем пересобрать сайт.")
+
+    if not todo:
+        print("\nК запуску готово: все настройки заполнены.")
+        return
+    print("\n" + "─" * 66)
+    print(f"ЕЩЁ НЕ ЗАПОЛНЕНО ({len(todo)}) — сайт работает, но не в полную силу:")
+    for i, item in enumerate(todo, start=1):
+        print(f"\n{i}. {item}")
+    print("─" * 66)
 
 
 def check_unique(r: Renderer) -> None:

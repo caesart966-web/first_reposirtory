@@ -28,6 +28,7 @@ node_modules
 
 # pto-site: реальные токены приёма заявок (заливаются на хостинг руками)
 pto-site/assets/config.js
+pto-site/**/zayavki-config.php
 pto-site/dist/assets/config.js
 
 # master-site: журнал заявок, если письмо не ушло (создаётся на хостинге)

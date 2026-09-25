@@ -17,14 +17,44 @@
 
   var calmMedia = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-  /* ---------- 0. Шапка: тень появляется только при прокрутке ------------- */
+  /* ---------- 0. Шапка: тень при прокрутке, на телефоне — прячется -------
+     На телефоне шапка липкая: без этого до меню и до телефона пришлось бы
+     прокручивать страницу до самого верха. Но 63 px из 780 — заметная доля
+     экрана, поэтому при прокрутке ВНИЗ шапка уезжает, а при прокрутке ВВЕРХ
+     возвращается сразу же: человек тянется вверх ровно тогда, когда ему
+     нужно меню или телефон.
+
+     Прячем только ниже 200 px: у самого верха страницы прыгающая шапка
+     выглядит дёрганой. И никогда — когда открыто меню, оно к ней привязано.
+     Порог 61.1875em тот же, что у переключения меню в бургер: два правила
+     обязаны двигаться вместе.                                            */
   var header = document.querySelector('.header');
   if (header) {
-    var onScroll = function () {
-      header.classList.toggle('is-scrolled', window.scrollY > 8);
+    var lastY = window.scrollY;
+    var ticking = false;
+    var phone = window.matchMedia('(max-width: 61.1875em)');
+
+    var apply = function () {
+      var y = window.scrollY;
+      header.classList.toggle('is-scrolled', y > 8);
+      var hide = phone.matches &&
+                 !document.documentElement.classList.contains('menu-open') &&
+                 y > 200 && y > lastY + 4;
+      if (hide) header.classList.add('is-hidden');
+      else if (y < lastY - 4 || y <= 200) header.classList.remove('is-hidden');
+      lastY = y;
+      ticking = false;
     };
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
+
+    apply();
+    window.addEventListener('scroll', function () {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(apply);
+    }, { passive: true });
+    phone.addEventListener('change', function () {
+      if (!phone.matches) header.classList.remove('is-hidden');
+    });
   }
 
   /* ---------- 0б. Появление блоков при прокрутке -------------------------
@@ -107,18 +137,63 @@
     });
   }
 
-  /* ---------- 1. Мобильное меню ----------------------------------------- */
+  /* ---------- 1. Мобильное меню -----------------------------------------
+     Пока открыто меню, страница под ним стоять должна. Одного
+     `body { overflow: hidden }` телефон не слушает — прокручивается
+     <html>, и страница уезжает за меню. Поэтому запоминаем положение
+     и фиксируем body на нём; шапку на это время прижимаем намертво
+     (класс menu-open в стилях), иначе липкая шапка внутри
+     зафиксированного body встаёт не там, где нужно.
+
+     Возврат прокрутки — instant: у <html> стоит scroll-behavior: smooth,
+     и обычный scrollTo проматывал бы страницу назад на глазах. */
   var burger = document.querySelector('.burger');
   var nav = document.getElementById('nav');
   if (burger && nav) {
-    burger.addEventListener('click', function () {
-      var open = nav.classList.toggle('is-open');
+    var root = document.documentElement;
+    var savedY = 0;
+
+    function setMenu(open) {
+      if (open === nav.classList.contains('is-open')) return;
+      if (open) {
+        savedY = window.scrollY || root.scrollTop || 0;
+        nav.classList.add('is-open');
+        root.classList.add('menu-open');
+        document.body.style.top = -savedY + 'px';
+      } else {
+        nav.classList.remove('is-open');
+        root.classList.remove('menu-open');
+        document.body.style.top = '';
+        window.scrollTo({ top: savedY, behavior: 'instant' });
+      }
       burger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    burger.addEventListener('click', function () {
+      setMenu(!nav.classList.contains('is-open'));
     });
     nav.addEventListener('click', function (e) {
-      if (e.target.closest('a')) {
-        nav.classList.remove('is-open');
-        burger.setAttribute('aria-expanded', 'false');
+      if (e.target.closest('a')) setMenu(false);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && nav.classList.contains('is-open')) {
+        setMenu(false);
+        burger.focus();
+      }
+    });
+    // Нажатие мимо меню закрывает его: так ведут себя все выпадающие
+    // списки, и человек пробует это первым делом.
+    document.addEventListener('click', function (e) {
+      if (!nav.classList.contains('is-open')) return;
+      if (e.target.closest('.nav') || e.target.closest('.burger')) return;
+      setMenu(false);
+    });
+    // Экран повернули или расширили до настольной ширины — меню
+    // превращается в обычную строку, и замок прокрутки надо снять.
+    window.addEventListener('resize', function () {
+      if (nav.classList.contains('is-open') &&
+          !window.matchMedia('(max-width: 61.1875em)').matches) {
+        setMenu(false);
       }
     });
   }
@@ -247,6 +322,27 @@
     lightbox.querySelector('[data-close]').focus();
   }
 
+  /* Пока окно открыто, Tab ходит только внутри него.
+     Без этого фокус уходит на страницу за окном: человек с клавиатуры
+     «проваливается» в невидимое содержимое и не понимает, где он. */
+  function trapFocus(e) {
+    if (e.key !== 'Tab' || !lightbox || lightbox.hidden) return;
+    var able = lightbox.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    var list = Array.prototype.filter.call(able, function (el) {
+      return !el.hasAttribute('hidden') && el.offsetParent !== null;
+    });
+    if (!list.length) return;
+    var first = list[0];
+    var last = list[list.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault(); last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault(); first.focus();
+    } else if (!lightbox.contains(document.activeElement)) {
+      e.preventDefault(); first.focus();
+    }
+  }
+
   function closeLightbox() {
     if (!lightbox || lightbox.hidden) return;
     lightbox.hidden = true;
@@ -267,6 +363,7 @@
     if (e.key === 'Escape') closeLightbox();
     if (e.key === 'ArrowLeft') show(current - 1);
     if (e.key === 'ArrowRight') show(current + 1);
+    trapFocus(e);
   });
 
   /* ---------- 4. Форма заявки -------------------------------------------- */
@@ -294,6 +391,17 @@
     var d = digits(phone.value);
     if (d.length < 10) { setError(phone, 'Укажите телефон — 10 цифр и больше'); ok = false; }
     else setError(phone, '');
+
+    /* Согласие на обработку персональных данных. Галочка обязательна
+       и заранее не проставлена: заранее проставленная отметка согласием
+       не считается, и это первое, к чему цепляется проверяющий. */
+    var consent = form.elements.consent;
+    if (consent && !consent.checked) {
+      setError(consent, 'Без согласия на обработку данных заявку отправить нельзя');
+      ok = false;
+    } else if (consent) {
+      setError(consent, '');
+    }
 
     return ok;
   }
@@ -438,5 +546,83 @@
         phone.value = phone.value.replace(/[^\d+()\-\s]/g, '');
       });
     }
+  });
+})();
+
+/* =========================================================================
+   5. Полоса про cookie и подключение Яндекс.Метрики
+
+   Счётчик подключается ОТСЮДА и только после нажатия «Принять». Его нет
+   в разметке страницы нарочно: пока посетитель не выбрал, к Яндексу
+   не должно уйти ни одного запроса, иначе полоса спрашивает разрешение
+   на то, что уже сделано.
+
+   Полосы вообще нет на странице, если счётчик не настроен: сайт тогда
+   не ставит ни одного файла cookie, и спрашивать не о чем.
+
+   Выбор храним в localStorage, а не в cookie: хранить согласие на cookie
+   в cookie до получения согласия — замкнутый круг.
+   ========================================================================= */
+/* Высота нижней панели связи — МЕРЯЕТСЯ, а не записывается числом.
+   На телефонах с вырезом снизу к ней добавляется safe-area-inset, и
+   записанные по отступу 66 px оказываются больше. Под панелью стоят
+   и отступ страницы, и полоса про cookie: промахнёшься на три пикселя —
+   панель накроет кнопку. */
+(function () {
+  var bar = document.querySelector('.call-bar');
+  if (!bar) return;
+  function measure() {
+    var h = bar.offsetHeight;
+    if (h) document.documentElement.style.setProperty('--call-bar-h', h + 'px');
+  }
+  measure();
+  window.addEventListener('resize', measure);
+  window.addEventListener('orientationchange', measure);
+  if (window.ResizeObserver) new ResizeObserver(measure).observe(bar);
+})();
+
+(function () {
+  var bar = document.getElementById('cookie-bar');
+  if (!bar) return;
+
+  var KEY = 'xpto-cookie';
+  var id = bar.getAttribute('data-metrika');
+
+  function saved() {
+    try { return localStorage.getItem(KEY); } catch (e) { return null; }
+  }
+  function remember(value) {
+    try { localStorage.setItem(KEY, value); } catch (e) { /* режим инкогнито */ }
+  }
+
+  function startMetrika() {
+    if (!id || window['yaCounter' + id] || document.getElementById('ym-script')) return;
+    window.ym = window.ym || function () { (window.ym.a = window.ym.a || []).push(arguments); };
+    window.ym.l = +new Date();
+    var s = document.createElement('script');
+    s.id = 'ym-script';
+    s.async = true;
+    s.src = 'https://mc.yandex.ru/metrika/tag.js';
+    document.head.appendChild(s);
+    window.ym(id, 'init', {
+      clickmap: true,
+      trackLinks: true,
+      accurateTrackBounce: true,
+      webvisor: false
+    });
+  }
+
+  var choice = saved();
+  if (choice === 'all') { startMetrika(); return; }
+  if (choice === 'none') return;
+
+  bar.hidden = false;
+  bar.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-cookie]');
+    if (!btn) return;
+    var value = btn.getAttribute('data-cookie');
+    remember(value);
+    bar.hidden = true;
+    if (value === 'all') startMetrika();
   });
 })();

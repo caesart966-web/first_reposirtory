@@ -5,11 +5,29 @@ document.documentElement.classList.add('js');
 var calmMedia = window.matchMedia('(prefers-reduced-motion: reduce)');
 var header = document.querySelector('.header');
 if (header) {
-var onScroll = function () {
-header.classList.toggle('is-scrolled', window.scrollY > 8);
+var lastY = window.scrollY;
+var ticking = false;
+var phone = window.matchMedia('(max-width: 61.1875em)');
+var apply = function () {
+var y = window.scrollY;
+header.classList.toggle('is-scrolled', y > 8);
+var hide = phone.matches &&
+!document.documentElement.classList.contains('menu-open') &&
+y > 200 && y > lastY + 4;
+if (hide) header.classList.add('is-hidden');
+else if (y < lastY - 4 || y <= 200) header.classList.remove('is-hidden');
+lastY = y;
+ticking = false;
 };
-onScroll();
-window.addEventListener('scroll', onScroll, { passive: true });
+apply();
+window.addEventListener('scroll', function () {
+if (ticking) return;
+ticking = true;
+window.requestAnimationFrame(apply);
+}, { passive: true });
+phone.addEventListener('change', function () {
+if (!phone.matches) header.classList.remove('is-hidden');
+});
 }
 var revealTargets = [];
 if (!calmMedia.matches && 'IntersectionObserver' in window) {
@@ -67,14 +85,44 @@ card.style.setProperty('--my', (e.clientY - r.top) + 'px');
 var burger = document.querySelector('.burger');
 var nav = document.getElementById('nav');
 if (burger && nav) {
-burger.addEventListener('click', function () {
-var open = nav.classList.toggle('is-open');
+var root = document.documentElement;
+var savedY = 0;
+function setMenu(open) {
+if (open === nav.classList.contains('is-open')) return;
+if (open) {
+savedY = window.scrollY || root.scrollTop || 0;
+nav.classList.add('is-open');
+root.classList.add('menu-open');
+document.body.style.top = -savedY + 'px';
+} else {
+nav.classList.remove('is-open');
+root.classList.remove('menu-open');
+document.body.style.top = '';
+window.scrollTo({ top: savedY, behavior: 'instant' });
+}
 burger.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+burger.addEventListener('click', function () {
+setMenu(!nav.classList.contains('is-open'));
 });
 nav.addEventListener('click', function (e) {
-if (e.target.closest('a')) {
-nav.classList.remove('is-open');
-burger.setAttribute('aria-expanded', 'false');
+if (e.target.closest('a')) setMenu(false);
+});
+document.addEventListener('keydown', function (e) {
+if (e.key === 'Escape' && nav.classList.contains('is-open')) {
+setMenu(false);
+burger.focus();
+}
+});
+document.addEventListener('click', function (e) {
+if (!nav.classList.contains('is-open')) return;
+if (e.target.closest('.nav') || e.target.closest('.burger')) return;
+setMenu(false);
+});
+window.addEventListener('resize', function () {
+if (nav.classList.contains('is-open') &&
+!window.matchMedia('(max-width: 61.1875em)').matches) {
+setMenu(false);
 }
 });
 }
@@ -174,6 +222,23 @@ lightbox.hidden = false;
 document.body.classList.add('is-locked');
 lightbox.querySelector('[data-close]').focus();
 }
+function trapFocus(e) {
+if (e.key !== 'Tab' || !lightbox || lightbox.hidden) return;
+var able = lightbox.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+var list = Array.prototype.filter.call(able, function (el) {
+return !el.hasAttribute('hidden') && el.offsetParent !== null;
+});
+if (!list.length) return;
+var first = list[0];
+var last = list[list.length - 1];
+if (e.shiftKey && document.activeElement === first) {
+e.preventDefault(); last.focus();
+} else if (!e.shiftKey && document.activeElement === last) {
+e.preventDefault(); first.focus();
+} else if (!lightbox.contains(document.activeElement)) {
+e.preventDefault(); first.focus();
+}
+}
 function closeLightbox() {
 if (!lightbox || lightbox.hidden) return;
 lightbox.hidden = true;
@@ -192,6 +257,7 @@ if (!lightbox || lightbox.hidden) return;
 if (e.key === 'Escape') closeLightbox();
 if (e.key === 'ArrowLeft') show(current - 1);
 if (e.key === 'ArrowRight') show(current + 1);
+trapFocus(e);
 });
 var forms = document.querySelectorAll('form[data-form="lead"]');
 function digits(s) { return (s || '').replace(/\D/g, ''); }
@@ -212,6 +278,13 @@ else setError(name, '');
 var d = digits(phone.value);
 if (d.length < 10) { setError(phone, 'Укажите телефон — 10 цифр и больше'); ok = false; }
 else setError(phone, '');
+var consent = form.elements.consent;
+if (consent && !consent.checked) {
+setError(consent, 'Без согласия на обработку данных заявку отправить нельзя');
+ok = false;
+} else if (consent) {
+setError(consent, '');
+}
 return ok;
 }
 function buildMessage(form) {
@@ -330,5 +403,57 @@ phone.addEventListener('input', function () {
 phone.value = phone.value.replace(/[^\d+()\-\s]/g, '');
 });
 }
+});
+})();
+(function () {
+var bar = document.querySelector('.call-bar');
+if (!bar) return;
+function measure() {
+var h = bar.offsetHeight;
+if (h) document.documentElement.style.setProperty('--call-bar-h', h + 'px');
+}
+measure();
+window.addEventListener('resize', measure);
+window.addEventListener('orientationchange', measure);
+if (window.ResizeObserver) new ResizeObserver(measure).observe(bar);
+})();
+(function () {
+var bar = document.getElementById('cookie-bar');
+if (!bar) return;
+var KEY = 'xpto-cookie';
+var id = bar.getAttribute('data-metrika');
+function saved() {
+try { return localStorage.getItem(KEY); } catch (e) { return null; }
+}
+function remember(value) {
+try { localStorage.setItem(KEY, value); } catch (e) { /* режим инкогнито */ }
+}
+function startMetrika() {
+if (!id || window['yaCounter' + id] || document.getElementById('ym-script')) return;
+window.ym = window.ym || function () { (window.ym.a = window.ym.a || []).push(arguments); };
+window.ym.l = +new Date();
+var s = document.createElement('script');
+s.id = 'ym-script';
+s.async = true;
+s.src = 'https://mc.yandex.ru/metrika/tag.js';
+document.head.appendChild(s);
+window.ym(id, 'init', {
+clickmap: true,
+trackLinks: true,
+accurateTrackBounce: true,
+webvisor: false
+});
+}
+var choice = saved();
+if (choice === 'all') { startMetrika(); return; }
+if (choice === 'none') return;
+bar.hidden = false;
+bar.addEventListener('click', function (e) {
+var btn = e.target.closest('[data-cookie]');
+if (!btn) return;
+var value = btn.getAttribute('data-cookie');
+remember(value);
+bar.hidden = true;
+if (value === 'all') startMetrika();
 });
 })();

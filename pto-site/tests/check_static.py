@@ -10,7 +10,10 @@
   3. у каждой картинки есть подпись alt;
   4. уровни заголовков не перескакивают (h1 -> h3 без h2);
   5. в карте сайта нет чужих и битых адресов;
-  6. в собранном сайте не осталось незаполненных мест вида {{...}}.
+  6. в собранном сайте не осталось незаполненных мест вида {{...}};
+  7. политика обработки персональных данных на месте, ссылка на неё есть
+     на каждой странице, отметка согласия в форме не проставлена заранее;
+  8. картинки для соцсетей (og:image) реально лежат на диске.
 
 Возвращает код 1, если что-то не так, — поэтому годится для проверки
 при выкладке: сломанная сборка не уедет на сайт.
@@ -125,6 +128,45 @@ def check_sitemap() -> None:
             fail("sitemap.xml", f"адреса нет на диске: {loc}")
 
 
+def check_privacy() -> None:
+    """Сайт собирает имя и телефон — значит, обязан иметь политику
+    обработки персональных данных в свободном доступе (ч. 2 ст. 18.1
+    152-ФЗ), ссылку на неё и НЕ проставленную заранее отметку согласия
+    в форме. Заранее проставленная отметка согласием не считается —
+    это первое, к чему цепляется проверяющий."""
+    policy = DIST / "politika" / "index.html"
+    if not policy.exists():
+        fail("/politika/", "страницы политики обработки персональных данных нет")
+        return
+    text = policy.read_text(encoding="utf-8")
+    for must in ("152-ФЗ", "Оператор", "Роскомнадзор", "ответственн"):
+        if must not in text:
+            fail("/politika/", f"в документе нет обязательного упоминания: {must}")
+
+    for page in pages():
+        html = page.read_text(encoding="utf-8")
+        if "politika" not in html:
+            fail(rel(page), "нет ссылки на политику обработки персональных данных")
+        if 'data-form="lead"' not in html:
+            continue
+        if 'name="consent"' not in html:
+            fail(rel(page), "в форме нет отметки о согласии на обработку данных")
+        elif re.search(r'name="consent"[^>]*\bchecked\b', html):
+            fail(rel(page), "отметка согласия проставлена заранее — это не согласие")
+
+
+def check_social_images() -> None:
+    """Картинка, которую увидят в мессенджере, должна существовать
+    на диске. Битая ссылка в og:image не видна на самом сайте никак —
+    её замечают, только когда ссылку уже кому-то отправили."""
+    for page in pages():
+        html = page.read_text(encoding="utf-8")
+        for src in re.findall(r'<meta (?:property|name)="(?:og|twitter):image" content="([^"]+)"', html):
+            tail = re.sub(r"^https?://[^/]+", "", src)
+            if tail.startswith("/") and not (DIST / tail.lstrip("/")).exists():
+                fail(rel(page), f"нет картинки для соцсетей: {tail}")
+
+
 def main() -> int:
     if not DIST.exists():
         print("Сначала соберите сайт: python3 build.py")
@@ -139,6 +181,8 @@ def main() -> int:
         check_headings(html, page)
         check_placeholders(html, page)
     check_sitemap()
+    check_privacy()
+    check_social_images()
 
     print(f"Проверено страниц: {len(files)}")
     if problems:

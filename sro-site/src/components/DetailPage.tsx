@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, Check, FileText, Scale } from 'lucide-react'
+import { Check, FileText, Scale } from 'lucide-react'
 import type { SroDetail } from '../content/sroDetails'
 import {
   DOCS_LAW,
@@ -9,16 +9,15 @@ import {
   LAW,
   STEPS,
 } from '../content/sroDetails'
-import { anchor, home, quizWithType } from '../lib/site'
+import { home } from '../lib/site'
 import { Footer } from './Footer'
 import { Header } from './Header'
-import { LegalProvider } from './LegalDocs'
+import { Contact } from './Contact'
+import { PageExtras } from './PageExtras'
+import { PageHero } from './PageHero'
 import { MobileBar } from './MobileBar'
-import { ButtonLink } from './ui/Button'
-import { Figure } from './ui/Figure'
 import { Reveal } from './ui/Reveal'
 import { Section } from './ui/Section'
-import { ThemisBackdrop } from './ui/ThemisBackdrop'
 
 // Ссылка на норму. Не украшение: на странице есть суммы и пороги, и каждый
 // из них посетитель должен уметь проверить сам, не веря нам на слово.
@@ -84,7 +83,7 @@ export function DocGroup({
       className={`h-full rounded-2xl border p-5 transition-colors duration-200 sm:p-6 ${
         tone === 'law'
           ? 'border-accent-100 bg-accent-50/40 hover:border-accent-300'
-          : 'border-neutral-200 bg-white shadow-card hover:border-accent-300'
+          : 'border-neutral-200 bg-white hover:border-accent-300'
       }`}
     >
       <h3 className="font-semibold text-neutral-950">{title}</h3>
@@ -134,7 +133,7 @@ function FundTable({
   law: string
 }) {
   return (
-    <div className="flex h-full flex-col rounded-2xl border border-neutral-200 bg-white p-5 shadow-card sm:p-6">
+    <div className="flex h-full flex-col rounded-3xl border border-neutral-200 bg-neutral-50 p-6 sm:p-7">
       <h3 className="font-semibold text-neutral-950">{caption}</h3>
       <p className="mt-1.5 text-sm text-neutral-600">{hint}</p>
       {/* Таблица прокручивается внутри себя, а не тянет за собой страницу:
@@ -174,58 +173,49 @@ function FundTable({
   )
 }
 
+// Оглавление шапки и услуги по теме — одинаковые у трёх видов СРО: разделы
+// у страниц видов общие, а подбор, документы и специалисты — три вопроса,
+// которые у вступающего возникают следующими.
+const DETAIL_TOC = [
+  { id: 'komu', title: 'Кому обязательно' },
+  { id: 'oblast', title: 'Область деятельности' },
+  { id: 'poryadok', title: 'Как проходит вступление' },
+  { id: 'dokumenty', title: 'Документы' },
+  { id: 'vznosy', title: 'Взносы в фонды' },
+  { id: 'stoimost', title: 'Сколько стоит' },
+]
+const DETAIL_RELATED = ['podbor', 'dokumenty', 'nrs']
+
 export function DetailPage({ detail }: { detail: SroDetail }) {
   return (
-    <LegalProvider>
-      <div id="top" className="relative">
-        <ThemisBackdrop />
-        <div className="relative z-10">
+    <div id="top">
           <Header />
           <main>
-            {/* Первый экран страницы: заголовок, короткая строка и хлебная
-                крошка назад. Кадр — тот же, что на карточке главной: человек
-                пришёл с неё и должен узнать, куда попал. */}
-            <Section size="compact" className="bg-accent-50/60">
-              <Reveal>
-                <a
-                  href={anchor('#types')}
-                  className="inline-flex items-center gap-1.5 text-sm font-medium text-accent-700 transition hover:text-accent-800"
-                >
-                  <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
-                  Все виды СРО
-                </a>
-              </Reveal>
-              <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-center lg:gap-14">
-                <Reveal>
-                  <h1 className="text-3xl font-bold tracking-tight text-neutral-950 sm:text-4xl lg:text-[2.6rem] lg:leading-[1.1]">
-                    {detail.title}
-                  </h1>
-                  <p className="mt-5 text-lg text-neutral-600">{detail.lead}</p>
-                  <div className="mt-7 flex flex-wrap gap-3">
-                    <ButtonLink href={quizWithType(detail.slug)} size="lg">
-                      Обсудить задачу
-                    </ButtonLink>
-                  </div>
-                </Reveal>
-                <Reveal delay={90}>
-                  <Figure {...detail.card.image} ratio="aspect-[16/9]" />
-                </Reveal>
-              </div>
-            </Section>
+            {/* Первый экран: крошка на главную (там слайдер трёх видов), заголовок,
+                короткая строка. Кадр — тот же, что на слайде главной: человек
+                пришёл с него и должен узнать, куда попал. */}
+            <PageHero
+              backHref={home()}
+              backLabel="Все виды СРО"
+              title={detail.title}
+              lead={detail.lead}
+              image={detail.card.image}
+              toc={DETAIL_TOC}
+            />
 
             {/* Кому членство обязательно. Каждый пункт — с нормой: это ответ
                 на вопрос «а мне точно надо», и отвечать на него без ссылки
                 на закон значило бы продавать, а не объяснять. */}
-            <Section>
+            <Section id="komu">
               <Reveal>
-                <h2 className="text-2xl font-bold tracking-tight text-neutral-950 sm:text-3xl">
+                <h2 className="font-display text-[1.8rem] font-medium leading-[1.08] text-neutral-950 min-[360px]:text-[2.1rem] sm:text-[2.7rem]">
                   Членство обязательно, если
                 </h2>
               </Reveal>
               <div className="mt-8 grid gap-4 sm:gap-5 lg:grid-cols-2">
                 {detail.who.map((item, index) => (
                   <Reveal key={item.text} delay={(index % 2) * 70} className="h-full">
-                    <div className="h-full rounded-2xl border border-neutral-200 bg-white p-5 shadow-card sm:p-6">
+                    <div className="h-full rounded-3xl border border-neutral-200 bg-neutral-50 p-6 sm:p-7">
                       <div className="flex gap-3.5">
                         <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-accent-50 text-accent-600">
                           <Check className="h-3.5 w-3.5" aria-hidden="true" />
@@ -254,9 +244,9 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
             </Section>
 
             {/* Область деятельности: что именно закрывает этот вид СРО. */}
-            <Section size="compact" className="bg-neutral-50/55">
+            <Section id="oblast" size="compact" className="bg-neutral-100">
               <Reveal>
-                <h2 className="text-2xl font-bold tracking-tight text-neutral-950 sm:text-3xl">
+                <h2 className="font-display text-[1.8rem] font-medium leading-[1.08] text-neutral-950 min-[360px]:text-[2.1rem] sm:text-[2.7rem]">
                   Что входит в область деятельности
                 </h2>
                 <p className="mt-3 max-w-2xl text-neutral-600">{detail.card.text}</p>
@@ -277,9 +267,9 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
                 страницу: он хочет понять, что будет происходить и что от него
                 потребуется. У каждого шага помечен исполнитель: половину делает
                 не кандидат, и это стоит видеть сразу. */}
-            <Section>
+            <Section id="poryadok">
               <Reveal>
-                <h2 className="text-2xl font-bold tracking-tight text-neutral-950 sm:text-3xl">
+                <h2 className="font-display text-[1.8rem] font-medium leading-[1.08] text-neutral-950 min-[360px]:text-[2.1rem] sm:text-[2.7rem]">
                   Как проходит вступление
                 </h2>
                 <p className="mt-3 max-w-3xl text-neutral-600">
@@ -304,9 +294,9 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
 
             {/* ДОКУМЕНТЫ. Два списка, а не один: у посредников они слиты, и
                 человек уверен, что договор аренды офиса требует кодекс. */}
-            <Section size="compact" className="bg-neutral-50/55">
+            <Section id="dokumenty" size="compact" className="bg-neutral-100">
               <Reveal>
-                <h2 className="text-2xl font-bold tracking-tight text-neutral-950 sm:text-3xl">
+                <h2 className="font-display text-[1.8rem] font-medium leading-[1.08] text-neutral-950 min-[360px]:text-[2.1rem] sm:text-[2.7rem]">
                   Какие документы понадобятся
                 </h2>
                 <p className="mt-3 max-w-3xl text-neutral-600">
@@ -360,15 +350,15 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
                 Цифра, по которой человек переводит деньги, не может стоять
                 «примерно». Объяснение устройства фондов при этом остаётся: оно
                 верно независимо от конкретных сумм. */}
-            <Section>
+            <Section id="vznosy">
               <Reveal>
-                <h2 className="text-2xl font-bold tracking-tight text-neutral-950 sm:text-3xl">
+                <h2 className="font-display text-[1.8rem] font-medium leading-[1.08] text-neutral-950 min-[360px]:text-[2.1rem] sm:text-[2.7rem]">
                   Взносы в компенсационные фонды
                 </h2>
               </Reveal>
               <div className="mt-8 grid gap-5 lg:grid-cols-2">
                 <Reveal className="h-full">
-                  <div className="h-full rounded-2xl border border-neutral-200 bg-white p-5 shadow-card sm:p-6">
+                  <div className="h-full rounded-3xl border border-neutral-200 bg-neutral-50 p-6 sm:p-7">
                     <h3 className="font-semibold text-neutral-950">Фонд возмещения вреда</h3>
                     <p className="mt-2.5 text-sm leading-relaxed text-neutral-600">
                       Платят все члены СРО. Размер взноса зависит от заявленного уровня
@@ -379,7 +369,7 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
                   </div>
                 </Reveal>
                 <Reveal delay={70} className="h-full">
-                  <div className="h-full rounded-2xl border border-neutral-200 bg-white p-5 shadow-card sm:p-6">
+                  <div className="h-full rounded-3xl border border-neutral-200 bg-neutral-50 p-6 sm:p-7">
                     <h3 className="font-semibold text-neutral-950">
                       Фонд обеспечения договорных обязательств
                     </h3>
@@ -393,7 +383,10 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
                 </Reveal>
               </div>
               {FUNDS_CONFIRMED && (
-                <div className="mt-8 grid gap-5 lg:grid-cols-2">
+                <div className="mt-8 grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-2">
+                  {/* minmax(0,1fr), а не просто grid: у таблицы минимальная
+                      ширина 300px, и без этого на 360px колонка растягивалась
+                      по ней, а страница получала горизонтальную прокрутку. */}
                   <Reveal className="h-full">
                     <FundTable
                       caption="Фонд возмещения вреда — сколько"
@@ -429,10 +422,10 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
             </Section>
 
             {/* Требования к специалистам и срок — общие для всех трёх видов. */}
-            <Section size="compact" className="bg-neutral-50/55">
+            <Section size="compact" className="bg-neutral-100">
               <div className="grid gap-5 lg:grid-cols-2">
                 <Reveal className="h-full">
-                  <div className="h-full rounded-2xl border border-neutral-200 bg-white p-5 shadow-card sm:p-6">
+                  <div className="h-full rounded-3xl border border-neutral-200 bg-neutral-50 p-6 sm:p-7">
                     <h3 className="font-semibold text-neutral-950">Срок рассмотрения заявления</h3>
                     <p className="mt-2.5 text-sm leading-relaxed text-neutral-600">
                       Закон отводит саморегулируемой организации не более двух месяцев на
@@ -444,7 +437,7 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
                 </Reveal>
                 {detail.regional && (
                   <Reveal delay={70} className="h-full">
-                    <div className="h-full rounded-2xl border border-neutral-200 bg-white p-5 shadow-card sm:p-6">
+                    <div className="h-full rounded-3xl border border-neutral-200 bg-neutral-50 p-6 sm:p-7">
                       <h3 className="font-semibold text-neutral-950">Региональный принцип</h3>
                       <p className="mt-2.5 text-sm leading-relaxed text-neutral-600">
                         Строительная компания или предприниматель вступает только в ту СРО,
@@ -459,34 +452,14 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
               </div>
             </Section>
 
-            {/* Закрывающий призыв: возвращает на главную, в квиз, с уже
-                выбранным видом СРО — человек не отвечает второй раз на то,
-                что выбрал кликом по карточке. */}
-            <Section size="key" className="bg-accent-950">
-              <Reveal className="mx-auto max-w-3xl text-center">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent-300">
-                  Заявка
-                </p>
-                <h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                  Обсудим вашу ситуацию
-                </h2>
-                <p className="mt-4 text-lg text-neutral-300">
-                  {/* Название вида подставляем как есть: toLowerCase() превращал
-                      аббревиатуру в «сро строителей». */}
-                  Отвечу на вопросы по {detail.card.title}, подберу организацию и назову
-                  порядок действий. Консультация бесплатная.
-                </p>
-                <div className="mt-8 flex flex-wrap justify-center gap-3">
-                  <ButtonLink href={quizWithType(detail.slug)} variant="inverse" size="lg">
-                    Оставить заявку
-                    <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
-                  </ButtonLink>
-                  <ButtonLink href={home()} variant="outlineInverse" size="lg">
-                    На главную
-                  </ButtonLink>
-                </div>
-              </Reveal>
-            </Section>
+            <PageExtras related={DETAIL_RELATED} />
+
+            {/* Вместо квиза с выбранным видом — «Связаться» со строкой про этот
+                вид. Название вида подставляем как есть: toLowerCase()
+                превращал аббревиатуру в «сро строителей». */}
+            <Contact
+              lead={`Отвечу на вопросы по ${detail.card.title}, подберу организацию и назову порядок действий. Консультация бесплатная — и первая, и все следующие.`}
+            />
           </main>
           <Footer />
           <div
@@ -495,8 +468,6 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
             aria-hidden="true"
           />
           <MobileBar />
-        </div>
-      </div>
-    </LegalProvider>
+    </div>
   )
 }

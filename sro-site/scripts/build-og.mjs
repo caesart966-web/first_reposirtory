@@ -1,10 +1,13 @@
 // Картинка для мессенджеров (og:image), 1200×630.
 //
 // Собирается из фирменных элементов сайта, а не рисуется отдельно: тот же
-// знак весов из illustrations.tsx, тот же тёмный фон accent-950, что у блока
-// заявки и подвала, тот же Inter. Фотографий нет намеренно — карточка в
-// мессенджере показывается размером с ноготь, и любой кадр там превращается
-// в кашу, а знак и имя читаются.
+// знак весов из illustrations.tsx, тот же тёплый графит accent-950, что у
+// раздела «Связаться», те же шрифты — Brygada 1918 в имени, Onest в тексте.
+// Фотографий нет намеренно — карточка в мессенджере показывается размером
+// с ноготь, и любой кадр там превращается в кашу, а знак и имя читаются.
+//
+// С 24.09.2026 — в новой палитре: графит и латунь вместо синего. Сетка
+// чертежа и синее свечение сняты вместе с прежним оформлением.
 //
 // Playwright в зависимостях сайта не нужен: картинка пересобирается редко,
 // а тащить браузер в прод-сборку ради неё незачем. Скрипт берёт модуль из
@@ -24,54 +27,54 @@ import { dirname, resolve } from 'node:path'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const OUT = resolve(root, 'public/og.png')
 
-// Тот же Inter, что на сайте, и берём его из node_modules, а не из сети:
-// среда сборки может быть без интернета, и тогда картинка молча уехала бы
-// системным шрифтом — на глаз почти незаметно, а фирменный вид уже не тот.
-const FONTS = resolve(root, 'node_modules/@fontsource-variable/inter/files')
-const face = (subset) =>
-  `@font-face{font-family:Inter;font-style:normal;font-weight:100 900;src:url(data:font/woff2;base64,` +
-  readFileSync(resolve(FONTS, `inter-${subset}-wght-normal.woff2`)).toString('base64') +
+// Шрифты сайта берём из node_modules, а не из сети: среда сборки может быть
+// без интернета, и тогда картинка молча уехала бы системным шрифтом — на глаз
+// почти незаметно, а фирменный вид уже не тот.
+const face = (family, pkg, file) =>
+  `@font-face{font-family:${family};font-style:normal;font-weight:100 900;src:url(data:font/woff2;base64,` +
+  readFileSync(resolve(root, `node_modules/@fontsource-variable/${pkg}/files/${file}`)).toString('base64') +
   `) format('woff2-variations')}`
 
-// Знак весов — те же координаты, что в ScalesMark: viewBox 0 0 46 26.
-const SCALES = `<svg viewBox="0 0 46 26" fill="none" stroke="#A3B8FC" stroke-width="2"
-  stroke-linecap="round" stroke-linejoin="round" style="width:150px;height:auto">
-  <path d="M23 1.8V5"/><path d="M8.98 7 23 5l14.04 2"/>
-  <path d="M8.98 7 1.99 21M8.98 7l6.99 14"/><path d="M1.99 21a8.9 8.9 0 0 0 13.98 0"/>
-  <path d="M1.99 21h13.98"/><path d="M37.02 7 30.03 21M37.02 7l6.99 14"/>
-  <path d="M30.03 21a8.9 8.9 0 0 0 13.98 0"/><path d="M30.03 21h13.98"/></svg>`
+// Знак — те же координаты, что в ScalesMark (весы под фронтоном).
+const SCALES = `<svg viewBox="-1 2 50 37.4" fill="#C09A68" stroke="#C09A68"
+  stroke-linecap="round" stroke-linejoin="round" style="width:104px;height:auto">
+  <path d="M3.2 12.6 24 3.6l20.8 9Z" fill="none" stroke-width="2"/>
+  <path d="M24 12.6v20" fill="none" stroke-width="2.2"/>
+  <path d="M5.2 13.4.6 25.2m4.6-11.8 4.6 11.8m33-11.8-4.6 11.8m4.6-11.8 4.6 11.8" fill="none" stroke-width="1.2"/>
+  <path d="M-.4 25.2h11.2q-5.6 7.2-11.2 0Zm37.6 0h11.2q-5.6 7.2-11.2 0Z" stroke="none"/>
+  <path d="M20.4 32.4h7.2l2.2 4.2H18.2Z" stroke="none"/>
+  <path d="M16.2 37.9h15.6" fill="none" stroke-width="1.5"/></svg>`
 
 const html = `<!doctype html><html lang="ru"><head><meta charset="utf-8">
 <style>
-  ${face('cyrillic')}
-  ${face('latin')}
+  ${face('Onest', 'onest', 'onest-cyrillic-wght-normal.woff2')}
+  ${face('Onest', 'onest', 'onest-latin-wght-normal.woff2')}
+  ${face('Brygada', 'brygada-1918', 'brygada-1918-cyrillic-wght-normal.woff2')}
+  ${face('Brygada', 'brygada-1918', 'brygada-1918-latin-wght-normal.woff2')}
   *{margin:0;padding:0;box-sizing:border-box}
-  body{width:1200px;height:630px;background:#141A45;overflow:hidden;
-    font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
-  /* Чертёжная сетка — тот же приём, что на первом экране сайта: едва заметная,
-     она даёт фону строительный характер и не спорит с текстом. */
-  .grid{position:absolute;inset:0;
-    background-image:linear-gradient(#A3B8FC14 1px,transparent 1px),
-                     linear-gradient(90deg,#A3B8FC14 1px,transparent 1px);
-    background-size:60px 60px}
-  .glow{position:absolute;right:-140px;top:-160px;width:620px;height:620px;border-radius:50%;
-    background:radial-gradient(circle,#2F4BDE55 0%,#2F4BDE00 68%)}
+  body{width:1200px;height:630px;background:#1C1815;overflow:hidden;
+    font-family:Onest,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  /* Мягкий тёплый свет из правого верхнего угла — как на тёмных разделах
+     сайта: плоский графит в ленте мессенджера читается провалом. */
+  .light{position:absolute;right:-180px;top:-220px;width:720px;height:720px;border-radius:50%;
+    background:radial-gradient(circle,#9D744333 0%,#9D744300 70%)}
   .wrap{position:relative;height:100%;display:flex;flex-direction:column;
-    justify-content:center;padding:0 86px}
-  .name{margin-top:38px;font-size:64px;font-weight:700;color:#fff;letter-spacing:-.02em}
-  .role{margin-top:14px;font-size:34px;font-weight:600;color:#A3B8FC}
-  .lead{margin-top:30px;font-size:27px;line-height:1.35;color:#D8D3CC;max-width:900px}
-  .rule{margin-top:38px;width:104px;height:5px;border-radius:3px;background:#2F4BDE}
-  .tags{margin-top:26px;font-size:23px;color:#A9A29A;letter-spacing:.02em}
+    justify-content:center;padding:0 90px}
+  .eyebrow{margin-top:44px;display:flex;align-items:center;gap:16px;font-size:24px;color:#D6CDC1}
+  .eyebrow i{display:block;width:44px;height:1px;background:#C09A68}
+  .name{margin-top:18px;font-family:Brygada,Georgia,serif;font-size:84px;font-weight:500;
+    line-height:1;color:#FBF9F5;letter-spacing:-.01em;font-variant-numeric:lining-nums}
+  .lead{margin-top:30px;font-size:27px;line-height:1.4;color:#D6CDC1;max-width:920px}
+  .tags{margin-top:40px;padding-top:26px;border-top:1px solid #FFFFFF26;
+    font-size:22px;color:#A79D91;letter-spacing:.01em}
 </style></head><body>
-  <div class="grid"></div><div class="glow"></div>
+  <div class="light"></div>
   <div class="wrap">
     ${SCALES}
-    <div class="name">ООО «БИЗНЕС-ГРУПП»</div>
-    <div class="role">Вступление в СРО</div>
+    <div class="eyebrow"><i></i>ООО «БИЗНЕС-ГРУПП»</div>
+    <div class="name">Вступление в&nbsp;СРО<br>под&nbsp;ключ</div>
     <div class="lead">Строители, проектировщики, изыскатели. Подбор СРО, подготовка
       документов, специалисты НРС — до внесения в реестр членов.</div>
-    <div class="rule"></div>
     <div class="tags">СРО · НРС · НОК · Документы · Сопровождение</div>
   </div>
 </body></html>`

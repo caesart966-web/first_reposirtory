@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import '@fontsource-variable/inter'
+import '@fontsource-variable/onest'
+import '@fontsource-variable/brygada-1918'
 import './index.css'
 import { ServicePage } from './components/ServicePage'
 import { serviceBySlug } from './content/services'

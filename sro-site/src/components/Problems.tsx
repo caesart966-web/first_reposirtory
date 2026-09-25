@@ -1,89 +1,79 @@
-import { ArrowRight } from 'lucide-react'
-import { QUESTION_IDS, useStartQuiz } from './QuizContext'
+import { ArrowUpRight } from 'lucide-react'
+import { serviceBySlug } from '../content/services'
+import { page } from '../lib/site'
+import { nbsp } from '../lib/typo'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
 
-// Каждый сценарий — это уже готовый ответ на один из вопросов квиза:
-// клик по строке не просто ведёт вниз, а записывает то, что посетитель
-// про себя уже сформулировал.
+// Три типовые ситуации. Каждая строка ведёт на страницу услуги, где ситуация
+// разобрана подробно: сроки — на «Вступление в СРО» (порядок и сроки по
+// закону), документы — на «Подготовку документов», НРС — на «Специалистов
+// НРС». До 25.09.2026 две строки вели в «Связаться» и в короткий раздел
+// главной: человек нажимал стрелку за подробностями и попадал на телефон.
+// Подпись у стрелки — название страницы, куда она ведёт.
 //
-// Строки «не знаете, какая СРО подходит» здесь больше нет: ровно это
-// предлагает секция «Виды СРО» ссылкой «Помогу определить», тем же ответом
-// на тот же вопрос и через один экран — это читалось как один и тот же
-// вопрос, заданный дважды.
-//
-// Оставшийся «Документы» пишет тот же ответ, что и вариант в карточке героя,
-// и это осознанно: там строка списка вариантов, здесь описанная ситуация,
-// между ними два экрана, и повторно отвечать никого не заставляют — квиз
-// пропускает вопрос, на который ответ уже есть (см. nextStep в Quiz.tsx).
+// Строки, а не карточки: раздел должен читаться иначе, чем сетка услуг
+// ниже. Крупная цифра слева — номер, а не украшение: ситуаций ровно три.
+const target = (slug: string) => {
+  const service = serviceBySlug(slug)
+  if (!service) throw new Error(`Нет страницы услуги: ${slug}`)
+  return { href: page(service.path), action: service.short }
+}
+
 const SCENARIOS = [
   {
-    tag: 'Срочно',
     title: 'Срочное вступление в СРО',
     text: 'Подходит срок заключения договора, а членства в СРО ещё нет. Оценю, какие сроки реальны в вашей ситуации, и назову, что потребуется от вас.',
-    questionId: QUESTION_IDS.urgency,
-    answer: 'Максимально срочно',
+    ...target('vstuplenie'),
   },
   {
-    tag: 'Документы',
     title: 'Нужна проверка документов',
     text: 'Проверю подготовленный комплект до подачи в СРО, укажу на недочёты и помогу их устранить.',
-    questionId: QUESTION_IDS.help,
-    answer: 'Подготовка документов',
+    ...target('dokumenty'),
   },
   {
-    tag: 'НРС',
     title: 'Вопрос по специалистам НРС',
     text: 'Разберу требования к образованию, стажу и документам специалистов и предложу порядок действий.',
-    questionId: QUESTION_IDS.nrs,
-    answer: 'Не знаю, нужна проверка',
+    ...target('nrs'),
   },
 ]
 
 export function Problems() {
-  const startQuiz = useStartQuiz()
-
   return (
     <Section id="problems">
       <SectionHeading
         eyebrow="Типовые ситуации"
         title="С чем обычно обращаются"
-        subtitle="Выберите ситуацию, похожую на вашу. Задам несколько уточняющих вопросов и предложу порядок действий."
+        subtitle="Выберите ситуацию, похожую на вашу: по каждой — что делаю и с чего начать."
       />
-      {/* Не карточки, а крупные строки: секция должна читаться иначе,
-          чем сетки услуг и контактов. */}
-      <Reveal className="mx-auto mt-10 max-w-4xl divide-y divide-neutral-200 border-y border-neutral-200">
-        {SCENARIOS.map((scenario) => (
-          <button
-            key={scenario.title}
-            type="button"
-            onClick={() => startQuiz(scenario.questionId, scenario.answer)}
-            className="group flex w-full flex-col gap-2 py-6 text-left transition-colors duration-200 hover:bg-accent-50/40 sm:flex-row sm:items-center sm:gap-8"
-          >
-            {/* До sm строка вертикальная: колонка тега шириной 112px оставляла
-                тексту ~190px из 358 — описания рвались на 5-7 коротких строк. */}
-            <span className="shrink-0 text-xs font-semibold uppercase tracking-[0.14em] text-accent-600 sm:w-32">
-              {scenario.tag}
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="flex items-center gap-2 font-semibold text-neutral-950 sm:text-lg">
-                {scenario.title}
-                <ArrowRight
-                  className="h-4 w-4 shrink-0 text-neutral-400 transition-all duration-200 group-hover:translate-x-1 group-hover:text-accent-600 sm:hidden"
-                  aria-hidden="true"
-                />
+      <div className="mt-14 border-t border-neutral-300">
+        {SCENARIOS.map((scenario, index) => (
+          <Reveal key={scenario.title} delay={index * 90}>
+            <a
+              href={scenario.href}
+              className="group grid gap-3 border-b border-neutral-300 py-8 sm:grid-cols-[5rem_minmax(0,1fr)_auto] sm:items-baseline sm:gap-8 sm:py-10"
+            >
+              <span className="font-display text-2xl text-neutral-500 sm:text-3xl" aria-hidden="true">
+                0{index + 1}
               </span>
-              <span className="mt-1 block text-sm leading-relaxed text-neutral-600">
-                {scenario.text}
+              <span className="min-w-0">
+                <span className="block font-display text-[1.75rem] font-medium leading-tight text-neutral-950 transition-colors duration-700 ease-silk group-hover:text-accent-700 sm:text-[2.1rem]">
+                  {nbsp(scenario.title)}
+                </span>
+                <span className="mt-3 block max-w-2xl leading-relaxed text-neutral-600">
+                  {nbsp(scenario.text)}
+                </span>
               </span>
-            </span>
-            <ArrowRight
-              className="hidden h-5 w-5 shrink-0 text-neutral-400 transition-all duration-200 group-hover:translate-x-1 group-hover:text-accent-600 sm:block"
-              aria-hidden="true"
-            />
-          </button>
+              <span className="inline-flex items-center gap-2 text-sm font-medium text-neutral-950">
+                {scenario.action}
+                <span className="flex h-9 w-9 items-center justify-center rounded-full border border-neutral-300 transition-all duration-700 ease-silk group-hover:rotate-45 group-hover:border-neutral-950 group-hover:bg-neutral-950 group-hover:text-neutral-50">
+                  <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+                </span>
+              </span>
+            </a>
+          </Reveal>
         ))}
-      </Reveal>
+      </div>
     </Section>
   )
 }
