@@ -109,6 +109,12 @@ if ($r && $r->num_rows > 0) {
 }
 $why['в другой группе'] = "c.customer_group_id <> $group";
 
+// Повторный запуск (правка 29 повторяет правку 28) - не ошибка: чистка
+// уже была, её список и копии на месте.
+if ($exists('lk_delete')) {
+    echo "уже чистили: список и копия - в таблицах {$p}lk_delete и {$p}lk_bak_*; второй раз не трогаю\n";
+    exit;
+}
 if (!$m->query("CREATE TABLE `{$p}lk_delete` (customer_id INT NOT NULL PRIMARY KEY)")) {
     echo 'STOP: ', $m->error, " - уже чистили? ничего не менял\n";
     exit(1);
