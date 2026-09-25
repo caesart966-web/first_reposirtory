@@ -60,7 +60,7 @@ export function AboutExpert() {
               aria-hidden="true"
             />
             <div className="relative">
-              <ScalesMark className="h-8 w-auto text-accent-300" aria-hidden="true" />
+              <ScalesMark className="h-10 w-auto text-accent-300" aria-hidden="true" />
               <p className="mt-6 font-display text-[1.7rem] font-medium leading-tight">
                 {REQUISITES.legalName}
               </p>

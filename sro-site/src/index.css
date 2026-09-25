@@ -120,6 +120,91 @@
   }
 }
 
+/* Опись документов: строка подсвечивается тёплым листом, номер становится
+   латунным, текст чуть сдвигается. Это не ссылка — курсор обычный. Наведение
+   только там, где оно есть (hover: hover): на телефоне «липкое» наведение
+   после касания оставляло бы строку подсвеченной. На телефоне строка
+   загорается, когда проходит середину экрана, — тоже без скриптов. */
+.doc-row {
+  position: relative;
+  isolation: isolate;
+}
+.doc-row::before {
+  content: '';
+  position: absolute;
+  inset: 0.25rem -0.75rem;
+  z-index: -1;
+  border-radius: 1rem;
+  background: theme('colors.accent.50');
+  opacity: 0;
+  transform: scaleX(0.97);
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.doc-row .doc-num {
+  transition: color 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.doc-row .doc-text {
+  transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (hover: hover) {
+  .doc-row:hover::before {
+    opacity: 1;
+    transform: none;
+  }
+  .doc-row:hover .doc-num {
+    color: theme('colors.accent.600');
+  }
+  .doc-row:hover .doc-text {
+    transform: translateX(0.25rem);
+  }
+}
+@supports (animation-timeline: view()) {
+  @media (hover: none) and (prefers-reduced-motion: no-preference) {
+    .doc-row::before,
+    .doc-row .doc-num {
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-timeline: view();
+      animation-range: cover 38% cover 62%;
+    }
+    .doc-row::before {
+      animation-name: doc-glow;
+    }
+    .doc-row .doc-num {
+      animation-name: doc-num;
+    }
+  }
+}
+@keyframes doc-glow {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scaleX(0.97);
+  }
+  50% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes doc-num {
+  0%,
+  100% {
+    color: theme('colors.neutral.500');
+  }
+  50% {
+    color: theme('colors.accent.600');
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .doc-row::before,
+  .doc-row .doc-num,
+  .doc-row .doc-text {
+    transition: none;
+  }
+}
+
 /* Движение по прокрутке — приём со страниц Apple: кадр шапки чуть
    приближается, пока страница уходит вверх, фотография раздела отъезжает
    из приближения, пока въезжает в экран. Только CSS (scroll-driven

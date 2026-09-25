@@ -51,7 +51,7 @@ export function Footer() {
         <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-[1.3fr_0.9fr_1fr_0.8fr] lg:gap-10">
           <div>
             <div className="flex items-center gap-3">
-              <ScalesMark className="h-6 w-auto shrink-0 text-accent-300" />
+              <ScalesMark className="h-8 w-auto shrink-0 text-accent-300" />
               <span className="font-display text-[1.45rem] font-medium leading-none text-neutral-50">
                 {CONTACTS.brand}
               </span>

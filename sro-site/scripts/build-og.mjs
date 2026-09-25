@@ -35,13 +35,15 @@ const face = (family, pkg, file) =>
   readFileSync(resolve(root, `node_modules/@fontsource-variable/${pkg}/files/${file}`)).toString('base64') +
   `) format('woff2-variations')}`
 
-// Знак весов — те же координаты, что в ScalesMark: viewBox 0 0 46 26.
-const SCALES = `<svg viewBox="0 0 46 26" fill="none" stroke="#C09A68" stroke-width="1.6"
-  stroke-linecap="round" stroke-linejoin="round" style="width:120px;height:auto">
-  <path d="M23 1.8V5"/><path d="M8.98 7 23 5l14.04 2"/>
-  <path d="M8.98 7 1.99 21M8.98 7l6.99 14"/><path d="M1.99 21a8.9 8.9 0 0 0 13.98 0"/>
-  <path d="M1.99 21h13.98"/><path d="M37.02 7 30.03 21M37.02 7l6.99 14"/>
-  <path d="M30.03 21a8.9 8.9 0 0 0 13.98 0"/><path d="M30.03 21h13.98"/></svg>`
+// Знак — те же координаты, что в ScalesMark (весы под фронтоном).
+const SCALES = `<svg viewBox="-1 2 50 37.4" fill="#C09A68" stroke="#C09A68"
+  stroke-linecap="round" stroke-linejoin="round" style="width:104px;height:auto">
+  <path d="M3.2 12.6 24 3.6l20.8 9Z" fill="none" stroke-width="2"/>
+  <path d="M24 12.6v20" fill="none" stroke-width="2.2"/>
+  <path d="M5.2 13.4.6 25.2m4.6-11.8 4.6 11.8m33-11.8-4.6 11.8m4.6-11.8 4.6 11.8" fill="none" stroke-width="1.2"/>
+  <path d="M-.4 25.2h11.2q-5.6 7.2-11.2 0Zm37.6 0h11.2q-5.6 7.2-11.2 0Z" stroke="none"/>
+  <path d="M20.4 32.4h7.2l2.2 4.2H18.2Z" stroke="none"/>
+  <path d="M16.2 37.9h15.6" fill="none" stroke-width="1.5"/></svg>`
 
 const html = `<!doctype html><html lang="ru"><head><meta charset="utf-8">
 <style>

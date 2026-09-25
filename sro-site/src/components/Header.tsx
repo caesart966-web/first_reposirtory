@@ -169,7 +169,7 @@ export function Header() {
             и рвалось по дефису: «БИЗНЕС- / ГРУПП». Ниже 360px кегль и зазоры
             на ступень меньше, а перенос внутри имени запрещён. */}
         <a href={home()} className="flex min-w-0 items-center gap-2 min-[360px]:gap-2.5">
-          <ScalesMark className="h-5 w-auto shrink-0 text-accent-600 min-[360px]:h-[22px]" />
+          <ScalesMark className="h-6 w-auto shrink-0 text-accent-600 min-[360px]:h-7" />
           <span className="flex flex-col leading-tight">
             <span className="whitespace-nowrap text-[13px] font-bold tracking-tight text-neutral-950 min-[360px]:text-[15px]">{CONTACTS.brand}</span>
             {/* neutral-600, а не 500: тёплая нейтральная шкала темнее прежней серой
