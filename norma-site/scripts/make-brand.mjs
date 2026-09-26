@@ -112,12 +112,13 @@ const browser = await chromium.launch()
 // с пустотой справа — вставить такой в письмо или в документ нельзя,
 // он выглядит сдвинутым. Поле вокруг задаётся явно, чтобы буквы
 // не упирались в край.
-const shot = async (name, w, h, body, { bg = 'transparent', scale = 2, pdf = false, pad = 0, fits = null } = {}) => {
+const shot = async (name, w, h, body, { bg = 'transparent', scale = 2, pdf = false, pad = 0, fits = null, jpeg = false } = {}) => {
   const ctx = await browser.newContext({ viewport: { width: w + pad * 2, height: h + pad * 2 }, deviceScaleFactor: scale })
   const p = await ctx.newPage()
   await p.setContent(page(w + pad * 2, h + pad * 2, `<div id="a" style="padding:${pad}px;display:inline-block">${body}</div>`, bg), { waitUntil: 'load' })
   await p.evaluate(() => document.fonts.ready)
   const el = p.locator('#a')
+  const file = join(out, `${name}.${jpeg ? 'jpg' : 'png'}`)
   // Строка услуг набрана в одну линию и обрезается молча: браузер просто
   // уводит хвост за край, и в письме «юридические услуги» превратятся
   // в «юридичес». Меряем настоящие пиксели.
@@ -125,13 +126,17 @@ const shot = async (name, w, h, body, { bg = 'transparent', scale = 2, pdf = fal
     const over = await p.locator(fits).evaluate((n) => n.scrollWidth - n.clientWidth)
     if (over > 0) throw new Error(`строка услуг шире поля на ${over} px — сократите подписи в SERVICE_ROWS`)
   }
-  await el.screenshot({ path: join(out, `${name}.png`), omitBackground: bg === 'transparent' })
+  await el.screenshot({
+    path: file,
+    omitBackground: !jpeg && bg === 'transparent',
+    ...(jpeg ? { type: 'jpeg', quality: 92 } : {}),
+  })
   if (pdf) {
     const box = await el.boundingBox()
     await p.pdf({ path: join(out, `${name}.pdf`), width: `${box.width}px`, height: `${box.height}px`, printBackground: bg !== 'transparent', pageRanges: '1' })
   }
   await ctx.close()
-  return `${name}.png`
+  return file
 }
 
 // 1. Знак отдельно — для аватарок и мест, где нужен только символ.
@@ -181,6 +186,14 @@ const header = `
   </div>`
 await shot('pochta-shapka', 600, 200, header, { bg: PAPER, fits: '#uslugi' })
 
+// Запасные варианты шапки. Почтовые сервисы капризны к вложениям в подпись:
+// Mail.ru отказался грузить файл с пробелом и скобками в имени, а некоторые
+// режут по ширине или не принимают PNG. Поэтому рядом лежат тот же рисунок
+// в одинарном масштабе (600 px по ширине) и в JPEG. Картинка одна и та же,
+// разница только в размере файла и формате.
+await shot('pochta-shapka-600', 600, 200, header, { bg: PAPER, scale: 1 })
+await shot('pochta-shapka', 600, 200, header, { bg: PAPER, jpeg: true })
+
 await browser.close()
 
 // Размеры читаем из самих файлов: записанные руками расходятся с делом
@@ -203,6 +216,7 @@ ${row('logotip-belyy.png', 'для тёмного фона')}
 ${row('avatar.png', 'аватар, тёмный')}
 ${row('avatar-svetlyy.png', 'аватар, светлый')}
 ${row('pochta-shapka.png', 'шапка письма, 600 px по ширине')}
+${row('pochta-shapka-600.png', 'она же в одинарном масштабе')}
   logotip.pdf            вектор       для печати
 
 Цвета и контакты взяты из site.ts и global.css — руками здесь не вписано ничего.
