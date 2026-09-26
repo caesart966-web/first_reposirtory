@@ -159,8 +159,13 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
 
 if (ALLOWED_HOST !== '') {
     $origin = $_SERVER['HTTP_ORIGIN'] ?? $_SERVER['HTTP_REFERER'] ?? '';
-    $host = $origin === '' ? '' : (string) parse_url($origin, PHP_URL_HOST);
-    if ($host !== ALLOWED_HOST) {
+    $host = $origin === '' ? '' : strtolower((string) parse_url($origin, PHP_URL_HOST));
+    // Адрес с www — тот же сайт. Обычно .htaccess переводит www на адрес
+    // без него, и оттуда форму никто не отправляет. Но если перенаправление
+    // однажды пропадёт (переезд, потерянный при заливке .htaccess), сайт
+    // откроется по www — и без второго условия каждая заявка оттуда
+    // получала бы отказ, а посетитель — экран ошибки вместо «отправлено».
+    if ($host !== ALLOWED_HOST && $host !== 'www.' . ALLOWED_HOST) {
         fail(403, 'Запрос не с сайта');
     }
 }

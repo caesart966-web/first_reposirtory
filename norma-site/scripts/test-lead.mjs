@@ -93,8 +93,11 @@ console.log('\nБоевой путь заявки: форма → PHP → пис
 writeFileSync(phpFile, original.replace(/const ALLOWED_HOST = '[^']*';/, "const ALLOWED_HOST = '127.0.0.1';"))
 if (existsSync(logFile)) rmSync(logFile)
 
+// Своя временная папка у PHP — это счётчик частоты заявок (rate_limited
+// в submit.php): иначе он копился бы между прогонами, и на шестом запуске
+// за час проверка упала бы с «слишком много заявок» на исправном сайте.
 server = spawn('php', ['-S', `127.0.0.1:${PORT}`, '-t', dist], {
-  env: { ...process.env, NORMA_MAIL_DRY_RUN: mailFile },
+  env: { ...process.env, NORMA_MAIL_DRY_RUN: mailFile, TMPDIR: tmp },
   stdio: 'ignore',
 })
 
@@ -176,15 +179,36 @@ if (!existsSync(logFile)) {
   else fail(`журнал открывается в браузере — там персональные данные: ${body.slice(0, 80)}`)
 }
 
-// ── Чужой сайт ────────────────────────────────────────────────────────────
-const foreign = await fetch(`${base}/api/submit.php`, {
+// ── Чужой сайт и www ──────────────────────────────────────────────────────
+//
+// Запросы несут НАСТОЯЩИЙ ключ формы и непустой текст, так что отказать им
+// может только сверка адреса. Прежний вариант слал ключ 'x' и прошёл бы,
+// даже если бы сверки не было вовсе: отказ давала проверка ключа ниже неё.
+const token = (original.match(/const FORM_TOKEN = '([^']+)'/) || [])[1] || ''
+const logLines = () => (existsSync(logFile) ? readFileSync(logFile, 'utf8').trim().split('\n').length : 0)
+const post = (origin, message) => fetch(`${base}/api/submit.php`, {
   method: 'POST',
-  headers: { 'Content-Type': 'application/json', Origin: 'https://chuzhoy-sayt.ru' },
-  body: JSON.stringify({ access_key: 'x', message: 'подделка' }),
+  headers: { 'Content-Type': 'application/json', Origin: origin },
+  body: JSON.stringify({ access_key: token, subject: 'Проверка адреса', message }),
 })
+
+const before = logLines()
+const foreign = await post('https://chuzhoy-sayt.ru', 'подделка с чужого сайта')
 const foreignBody = await foreign.json().catch(() => ({}))
-if (foreignBody.success === false) ok('заявку с чужого сайта обработчик не принимает')
-else fail('чужой сайт может слать заявки от вашего имени')
+if (foreign.status === 403 && foreignBody.success === false && logLines() === before) {
+  ok('заявку с чужого сайта обработчик не принимает')
+} else {
+  fail(`чужой сайт может слать заявки от вашего имени (ответ ${foreign.status})`)
+}
+
+// Адрес с www — тот же сайт. Если перенаправление с www когда-нибудь
+// пропадёт, форма оттуда обязана работать, а не отвечать «запрос не с сайта».
+// Этот же запрос доказывает, что заголовок Origin вообще доходит до PHP:
+// без него отказ получили бы оба, и отказ чужому сайту ничего бы не значил.
+const www = await post(`http://www.127.0.0.1:${PORT}`, 'заявка со страницы на www')
+const wwwBody = await www.json().catch(() => ({}))
+if (wwwBody.success === true) ok('заявку со страницы на www обработчик принимает')
+else fail(`со страницы на www заявка получает отказ: ${wwwBody.message || www.status}`)
 
 console.log(
   problems
