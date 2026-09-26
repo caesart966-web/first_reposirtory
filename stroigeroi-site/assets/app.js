@@ -1297,11 +1297,17 @@
      Калькулятор материалов.
      Считает по обычным формулам и только по тем числам, которые ввёл
      пользователь. Никаких «средних расходов от производителя» не
-     подставляем — расход и вес мешка человек берёт с упаковки.
+     подставляем — расход и вес мешка человек берёт с упаковки, мощность
+     секции радиатора — из паспорта.
      ====================================================================== */
   var calc = $('[data-calc]');
   if (calc) {
     var mode = 'gkl';
+
+    /* Вкладку можно открыть ссылкой: …/calculator#radiatory. Имена
+       латиницей по-русски, как адреса разделов: такую ссылку диктуют
+       по телефону и печатают в объявлении. */
+    var HASH = { gkl: 'gipsokarton', mix: 'smesi', rad: 'radiatory' };
 
     /* По-русски дробная часть отделяется запятой, а тысячи — пробелом.
        Запятую на входе num() понимал и раньше, а на выходе везде печаталась
@@ -1314,11 +1320,28 @@
       });
     };
 
-    var num = function (sel) {
-      var el = $(sel, calc);
+    var num = function (sel, root) {
+      var el = $(sel, root || calc);
       if (!el) return NaN;
       var v = parseFloat(String(el.value).replace(',', '.'));
       return isNaN(v) ? NaN : v;
+    };
+
+    /* Округление вверх до целого. Дроби в JS неточные: 90 м² с запасом 10 %
+       на листах по 3 м² — это ровно 33 листа, а деление давало
+       33,00000000000001, и Math.ceil насчитывал 34. Хвост в миллиардную долю
+       отбрасываем. */
+    var up = function (x) { return Math.ceil(x - 1e-9); };
+
+    /* 1 лист, 2 листа, 5 листов, 11 листов, 21 лист, 22 листа. Прежняя
+       проверка «один / меньше пяти / остальное» писала «22 листов». */
+    var plural = function (n, one, few, many) {
+      var tens = n % 100;
+      var unit = n % 10;
+      if (tens >= 11 && tens <= 14) return many;
+      if (unit === 1) return one;
+      if (unit >= 2 && unit <= 4) return few;
+      return many;
     };
 
     var setMode = function (next) {
@@ -1332,10 +1355,11 @@
       recount();
     };
 
-    var render = function (answer, unit, rows, hint) {
+    var render = function (answer, unit, rows, hint, eyebrow) {
       var out = $('[data-calc-answer]', calc);
       var list = $('[data-calc-rows]', calc);
       var note = $('[data-calc-note]', calc);
+      var head = $('[data-calc-eyebrow]', calc);
       if (out) out.textContent = answer === null ? '—' : ru(answer) + ' ' + unit;
       if (list) {
         list.innerHTML = rows.map(function (r) {
@@ -1343,10 +1367,14 @@
         }).join('');
       }
       if (note) note.textContent = hint;
+      if (head) head.textContent = eyebrow || 'Нужно купить';
     };
 
     var recount = function () {
-      var reserve = num('[data-calc-reserve]');
+      /* Запас — из открытой вкладки: у каждой он свой. Раньше читалось первое
+         поле запаса на странице, то есть гипсокартонное, и на вкладке смесей
+         запас не менялся ни от какой цифры. */
+      var reserve = num('[data-calc-reserve]', $('[data-calc-panel="' + mode + '"]', calc));
       if (isNaN(reserve)) reserve = 0;
 
       if (mode === 'gkl') {
@@ -1358,12 +1386,53 @@
           return;
         }
         var need = area * (layers || 1) * (1 + reserve / 100);
-        var sheets = Math.ceil(need / sheet);
-        render(sheets, sheets === 1 ? 'лист' : (sheets < 5 ? 'листа' : 'листов'), [
+        var sheets = up(need / sheet);
+        render(sheets, plural(sheets, 'лист', 'листа', 'листов'), [
           ['Площадь обшивки', ru(area * (layers || 1), 1) + ' м²'],
           ['Запас', ru(reserve) + ' %'],
           ['Площадь одного листа', ru(sheet, 2) + ' м²']
         ], 'Оценка по площади. Проёмы, подрезка и раскладка листов могут изменить число — уточните в магазине.');
+        return;
+      }
+
+      /* Радиаторы — прикидка для квартиры по объёму комнаты, поля — как просил
+         заказчик: площадь, высота, дом, сколько стен на улицу.
+         Тепло = объём × норма на 1 м³ (панельный дом 41 Вт, кирпичный 34) ×
+         поправка на стены (угловая +20 %, три стены +40 %) × запас 15 %:
+         обычно советуют 10–20 %, отдельным полем его не спрашиваем.
+         Секции = тепло ÷ мощность одной секции. Мощность у каждой модели своя
+         и стоит в паспорте, поэтому пока её нет — показываем, сколько тепла
+         нужно комнате: по этой цифре выбирают и радиатор без секций. */
+      if (mode === 'rad') {
+        var RESERVE = 15;
+        var room = num('[data-rad-area]');
+        var height = num('[data-rad-height]');
+        var norm = num('[data-rad-norm]');
+        var walls = num('[data-rad-walls]');
+        var power = num('[data-rad-section]');
+        if (isNaN(room) || room <= 0 || isNaN(height) || height <= 0 || isNaN(norm) || norm <= 0) {
+          render(null, '', [], 'Впишите площадь комнаты и высоту потолка.');
+          return;
+        }
+        if (isNaN(walls) || walls < 1) walls = 1;
+        var volume = room * height;
+        var heat = up(volume * norm * walls * (1 + RESERVE / 100));
+        var extra = Math.round((walls - 1) * 100);
+        if (isNaN(power) || power <= 0) {
+          render(heat, 'Вт', [
+            ['Объём комнаты', ru(volume, 1) + ' м³'],
+            ['Тепла на 1 м³', ru(norm) + ' Вт'],
+            ['Стены на улицу', extra ? '+' + ru(extra) + ' %' : 'одна'],
+            ['Запас', ru(RESERVE) + ' %']
+          ], 'Столько тепла нужно комнате. Впишите мощность одной секции из паспорта радиатора — посчитаем секции. У стального панельного радиатора секций нет: берите модель мощностью не меньше этой цифры.', 'Нужно тепла');
+          return;
+        }
+        var sections = up(heat / power);
+        render(sections, plural(sections, 'секция', 'секции', 'секций'), [
+          ['Объём комнаты', ru(volume, 1) + ' м³'],
+          ['Нужно тепла с запасом', ru(heat) + ' Вт'],
+          ['Мощность секции', ru(power) + ' Вт']
+        ], 'Прикидка по объёму комнаты, а не расчёт теплопотерь. Первому и последнему этажу, большому окну и нижнему подключению радиатора тепла нужно больше.');
         return;
       }
 
@@ -1385,8 +1454,8 @@
         return;
       }
       var kg = sArea * thick * usage * (1 + reserve / 100);
-      var bags = Math.ceil(kg / bag);
-      render(bags, bags === 1 ? 'мешок' : (bags < 5 ? 'мешка' : 'мешков'), [
+      var bags = up(kg / bag);
+      render(bags, plural(bags, 'мешок', 'мешка', 'мешков'), [
         ['Нужно смеси', ru(Math.round(kg)) + ' кг'],
         ['Запас', ru(reserve) + ' %'],
         ['Вес мешка', ru(bag) + ' кг']
@@ -1394,11 +1463,24 @@
     };
 
     $$('[data-calc-mode]', calc).forEach(function (btn) {
-      btn.addEventListener('click', function () { setMode(btn.getAttribute('data-calc-mode')); });
+      btn.addEventListener('click', function () {
+        var next = btn.getAttribute('data-calc-mode');
+        setMode(next);
+        /* Адрес собираем целиком: в теме OpenCart на странице стоит
+           <base href>, и голое «#radiatory» указало бы на главную. */
+        if (HASH[next] && window.history && history.replaceState) {
+          history.replaceState(null, '', location.pathname + location.search + '#' + HASH[next]);
+        }
+      });
     });
     calc.addEventListener('input', recount);
     calc.addEventListener('change', recount);
-    setMode('gkl');
+
+    var start = 'gkl';
+    Object.keys(HASH).forEach(function (key) {
+      if (location.hash === '#' + HASH[key] && $('[data-calc-mode="' + key + '"]', calc)) start = key;
+    });
+    setMode(start);
   }
 
   /* ======================================================================

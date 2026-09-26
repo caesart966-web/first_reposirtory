@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Калькулятор материалов | Строй-Герой</title>
-<meta name="description" content="Посчитайте, сколько листов гипсокартона и мешков смеси нужно на объект.">
+<meta name="description" content="Посчитайте листы гипсокартона и мешки смеси на объект и секции радиатора для комнаты.">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0e1117" media="(prefers-color-scheme: dark)">
 <link rel="canonical" href="calculator.html">
@@ -12,7 +12,7 @@
 <meta property="og:site_name" content="Строй-Герой">
 <meta property="og:locale" content="ru_RU">
 <meta property="og:title" content="Калькулятор материалов | Строй-Герой">
-<meta property="og:description" content="Посчитайте, сколько листов гипсокартона и мешков смеси нужно на объект.">
+<meta property="og:description" content="Посчитайте листы гипсокартона и мешки смеси на объект и секции радиатора для комнаты.">
 <meta property="og:url" content="https://caesart966-web.github.io/first_reposirtory/stroigeroi/calculator.html">
 <meta property="og:image" content="https://caesart966-web.github.io/first_reposirtory/stroigeroi/assets/banner.jpg">
 <meta property="og:image:width" content="1920">
@@ -148,7 +148,7 @@
 
     <div class="page-head">
       <h1>Калькулятор материалов</h1>
-      <p>Прикидка на месте: сколько листов гипсокартона и мешков смеси уйдёт на вашу площадь. Считает по тем числам, которые вы введёте, — чужой расход мы не подставляем, он у каждой смеси свой.</p>
+      <p>Прикидка на месте: сколько листов гипсокартона и мешков смеси уйдёт на вашу площадь и сколько секций радиатора нужно комнате. Считает по тем числам, которые вы введёте: расход смеси и мощность радиатора у каждой модели свои, поэтому чужих мы не подставляем.</p>
     </div>
 
     <div class="calc" data-calc>
@@ -157,6 +157,7 @@
         <div class="tabs__list gap-lg-below" role="tablist">
           <button class="tabs__btn" type="button" role="tab" data-calc-mode="gkl" aria-selected="true">Гипсокартон</button>
           <button class="tabs__btn" type="button" role="tab" data-calc-mode="mix" aria-selected="false">Шпатлёвка и штукатурка</button>
+          <button class="tabs__btn" type="button" role="tab" data-calc-mode="rad" aria-selected="false">Радиаторы</button>
         </div>
 
         <div data-calc-panel="gkl">
@@ -215,10 +216,43 @@
           <p class="calc__hint">Расход и вес мешка указаны на упаковке смеси. У штукатурки и финишной шпатлёвки они отличаются в разы, поэтому своих значений мы не подставляем.</p>
         </div>
 
+        <div data-calc-panel="rad" hidden>
+          <div class="calc__grid">
+            <div class="calc__field">
+              <label for="rad-area">Площадь комнаты, м²</label>
+              <input id="rad-area" type="text" inputmode="decimal" value="15" data-rad-area>
+            </div>
+            <div class="calc__field">
+              <label for="rad-height">Высота потолка, м</label>
+              <input id="rad-height" type="text" inputmode="decimal" value="2,7" data-rad-height>
+            </div>
+            <div class="calc__field">
+              <label for="rad-house">Дом</label>
+              <select id="rad-house" data-rad-norm>
+                <option value="41">Панельный — 41 Вт на 1 м³</option>
+                <option value="34">Кирпичный — 34 Вт на 1 м³</option>
+              </select>
+            </div>
+            <div class="calc__field">
+              <label for="rad-walls">Стен на улицу</label>
+              <select id="rad-walls" data-rad-walls>
+                <option value="1">Одна</option>
+                <option value="1.2">Две — угловая комната, +20 %</option>
+                <option value="1.4">Три — +40 %</option>
+              </select>
+            </div>
+            <div class="calc__field">
+              <label for="rad-section">Мощность одной секции, Вт</label>
+              <input id="rad-section" type="text" inputmode="decimal" placeholder="если знаете — из паспорта" data-rad-section>
+            </div>
+          </div>
+          <p class="calc__hint">41 и 34 Вт на 1 м³ — распространённая норма тепла для квартиры в панельном и кирпичном доме, к ней добавлен запас 15 % (обычно советуют от 10 до 20 %). Для частного дома такой расчёт не годится: там всё решают материал стен и утепление.</p>
+        </div>
+
       </div>
 
       <aside class="calc__result">
-        <p class="eyebrow">Нужно купить</p>
+        <p class="eyebrow" data-calc-eyebrow>Нужно купить</p>
         <p class="calc__answer" data-calc-answer>—</p>
         <ul class="calc__breakdown" data-calc-rows></ul>
         <p class="calc__hint gap-md" data-calc-note></p>
@@ -231,6 +265,7 @@
       <div class="section__head"><h2 class="section__title">Что калькулятор не считает</h2></div>
       <div class="prose">
         <p>Это быстрая прикидка, а не проектный расчёт. Она не учитывает раскладку листов, проёмы, кривизну стен, профиль, крепёж и грунтовку. На сложных объектах разница бывает заметной.</p>
+        <p>Радиаторы калькулятор считает по объёму комнаты — для квартиры. Это тоже прикидка, а не расчёт теплопотерь: этаж, окна и схему подключения радиатора он не учитывает. Частный дом так не посчитать — там всё решают материал стен и утепление.</p>
         <p>Если объём большой или геометрия нестандартная — позвоните <a class="tel-inline" href="tel:+79638319999">8-963-831-99-99</a>. Посчитаем вместе и подскажем, что докупить.</p>
       </div>
     </section>
@@ -377,7 +412,7 @@
 </dialog>
 
 
-<script src="assets/app.js?v=c951fda4"></script>
+<script src="assets/app.js?v=2e215bf2"></script>
 <script type="speculationrules">
 {
   "prefetch": [{"source": "document", "where": {"selector_matches": "a[href$='.html']"}, "eagerness": "moderate"}],

@@ -619,6 +619,96 @@ for (const name of ['index', 'catalog', 'checkout', 'contacts', 'login']) {
     if (/\d\.\d/.test(row)) fail(`калькулятор: точка вместо запятой — «${row}»`);
   }
 
+  /* Запас у каждой вкладки свой. Раньше читалось первое поле запаса
+     на странице — гипсокартонное, и на смесях 0 % давали те же 50 мешков.
+     120 × 8 × 1,4 = 1344 кг ÷ 30 = 44,8 → 45 */
+  await page.fill('#mix-reserve', '0');
+  await page.waitForTimeout(200);
+  const mix0 = (await read()).answer;
+  if (!/^45\s/.test(mix0)) fail(`калькулятор: смеси без запаса должны дать 45 мешков, получено «${mix0}»`);
+
+  /* Склонение и округление. 57 м² + 10 % = 62,7 ÷ 3 = 20,9 → «21 лист»;
+     60 м² → 22 → «22 листа» (было «22 листов»); 90 м² + 10 % = ровно 99 ÷ 3 = 33,
+     а дробь 33,00000000000001 давала 34. */
+  await page.click('[data-calc-mode="gkl"]');
+  for (const [area, want] of [['57', /^21\sлист$/], ['60', /^22\sлиста$/], ['90', /^33\sлиста$/]]) {
+    await page.fill('[data-gkl-area]', area);
+    await page.waitForTimeout(150);
+    const got = (await read()).answer;
+    if (!want.test(got)) fail(`калькулятор: ${area} м² гипсокартона — ждали ${want}, получено «${got}»`);
+  }
+
+  /* Радиаторы. На теме OpenCart у страницы <base href> на главную:
+     адрес вкладки обязан собираться от самой страницы, иначе «#radiatory»
+     уводил бы на главную. Ставим такой же <base> и здесь. */
+  const pageUrl = page.url().replace(/#.*$/, '');
+  await page.evaluate(() => {
+    const base = document.createElement('base');
+    base.href = 'file:///nonexistent/';
+    document.head.prepend(base);
+  });
+  await page.click('[data-calc-mode="rad"]');
+  await page.waitForTimeout(200);
+  if (page.url() !== pageUrl + '#radiatory') fail(`калькулятор: вкладка радиаторов должна дать адрес …#radiatory, получено ${page.url()}`);
+
+  const readRad = () =>
+    page.evaluate(() => ({
+      answer: document.querySelector('[data-calc-answer]').textContent.trim(),
+      eyebrow: document.querySelector('[data-calc-eyebrow]').textContent.trim(),
+      rows: [...document.querySelectorAll('[data-calc-rows] li')].map((l) => l.textContent.trim()),
+    }));
+
+  /* Мощности секции ещё нет — ответ в ваттах: 15 × 2,7 × 41 × 1,15 = 1909,6 → 1910 Вт.
+     Запас 15 % отдельным полем не спрашиваем, но в расчёте он виден. */
+  const heat = await readRad();
+  if (!/^1\s?910\sВт$/.test(heat.answer) || heat.eyebrow !== 'Нужно тепла') {
+    fail(`калькулятор: радиаторы без мощности секции — ждали «Нужно тепла: 1 910 Вт», получено «${heat.eyebrow}: ${heat.answer}»`);
+  }
+  if (!heat.rows.some((r) => /^Запас\s*15\s%$/.test(r))) fail(`калькулятор: в расчёте радиаторов должна быть строка «Запас 15 %», получено ${JSON.stringify(heat.rows)}`);
+
+  /* 1910 ÷ 180 = 10,6 → 11 секций; кирпичный дом: 15 × 2,7 × 34 × 1,15 = 1583,6 → 1584 ÷ 180 = 8,8 → 9 */
+  await page.fill('[data-rad-section]', '180');
+  await page.waitForTimeout(150);
+  const panel = await readRad();
+  if (!/^11\sсекций$/.test(panel.answer) || panel.eyebrow !== 'Нужно купить') {
+    fail(`калькулятор: 180 Вт на секцию должны дать «Нужно купить: 11 секций», получено «${panel.eyebrow}: ${panel.answer}»`);
+  }
+  for (const row of panel.rows) {
+    if (/\d\.\d/.test(row)) fail(`калькулятор: точка вместо запятой — «${row}»`);
+  }
+  await page.selectOption('[data-rad-norm]', '34');
+  await page.waitForTimeout(150);
+  const brick = (await readRad()).answer;
+  if (!/^9\sсекций$/.test(brick)) fail(`калькулятор: кирпичный дом должен дать 9 секций, получено «${brick}»`);
+
+  /* Угловая комната, две стены на улицу — +20 %:
+     15 × 2,7 × 41 × 1,2 × 1,15 = 2291,5 → 2292 Вт ÷ 180 = 12,7 → 13 секций */
+  await page.selectOption('[data-rad-norm]', '41');
+  await page.selectOption('[data-rad-walls]', '1.2');
+  await page.waitForTimeout(150);
+  const corner = (await readRad()).answer;
+  if (!/^13\sсекций$/.test(corner)) fail(`калькулятор: угловая комната должна дать 13 секций, получено «${corner}»`);
+
+  /* Склонение: 20 × 2,7 × 41 × 1,15 = 2546,1 → 2547 Вт; ÷ 125 = 20,4 → «21 секция», ÷ 120 = 21,2 → «22 секции» */
+  await page.selectOption('[data-rad-walls]', '1');
+  await page.fill('[data-rad-area]', '20');
+  for (const [power, want] of [['125', /^21\sсекция$/], ['120', /^22\sсекции$/]]) {
+    await page.fill('[data-rad-section]', power);
+    await page.waitForTimeout(150);
+    const got = (await readRad()).answer;
+    if (!want.test(got)) fail(`калькулятор: ${power} Вт на секцию — ждали ${want}, получено «${got}»`);
+  }
+
+  /* По ссылке с #radiatory страница открывается сразу на радиаторах */
+  const direct = await ctx.newPage();
+  await direct.goto(pageUrl + '#radiatory', { waitUntil: 'load' });
+  await direct.waitForTimeout(300);
+  const opened = await direct.evaluate(() => ({
+    tab: document.querySelector('[data-calc-mode="rad"]').getAttribute('aria-selected'),
+    shown: !document.querySelector('[data-calc-panel="rad"]').hidden,
+  }));
+  if (opened.tab !== 'true' || !opened.shown) fail('калькулятор: ссылка …#radiatory должна открывать вкладку радиаторов');
+
   await ctx.close();
 }
 
