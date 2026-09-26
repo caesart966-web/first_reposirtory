@@ -51,11 +51,8 @@ export function Problems() {
           <Reveal key={scenario.title} delay={index * 90}>
             <a
               href={scenario.href}
-              className="group grid gap-3 border-b border-neutral-300 py-8 sm:grid-cols-[5rem_minmax(0,1fr)_auto] sm:items-baseline sm:gap-8 sm:py-10"
+              className="group grid gap-4 border-b border-neutral-300 py-8 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-10 sm:py-10"
             >
-              <span className="font-display text-2xl text-neutral-500 sm:text-3xl" aria-hidden="true">
-                0{index + 1}
-              </span>
               <span className="min-w-0">
                 <span className="block font-display text-[1.75rem] font-medium leading-tight text-neutral-950 transition-colors duration-700 ease-silk group-hover:text-accent-700 sm:text-[2.1rem]">
                   {nbsp(scenario.title)}

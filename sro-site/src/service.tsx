@@ -1,4 +1,5 @@
 import React from 'react'
+import { flushSync } from 'react-dom'
 import ReactDOM from 'react-dom/client'
 import '@fontsource-variable/onest'
 import '@fontsource-variable/brygada-1918'
@@ -19,9 +20,13 @@ const service = serviceBySlug(mount.dataset.service ?? '')
 if (!service) {
   location.replace('../../')
 } else {
-  ReactDOM.createRoot(mount).render(
-    <React.StrictMode>
-      <ServicePage service={service} />
-    </React.StrictMode>,
+  // Синхронно — см. main.tsx.
+  const root = ReactDOM.createRoot(mount)
+  flushSync(() =>
+    root.render(
+      <React.StrictMode>
+        <ServicePage service={service} />
+      </React.StrictMode>,
+    ),
   )
 }

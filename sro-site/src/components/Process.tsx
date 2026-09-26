@@ -1,18 +1,15 @@
-import { asset } from '../lib/site'
+import { nbsp } from '../lib/typo'
 import { Reveal } from './ui/Reveal'
 import { SectionHeading } from './ui/Section'
 
-// Четыре шага работы — единственный тёмный раздел посреди страницы,
-// и в нём Фемида.
+// Четыре шага работы — тёмный раздел посреди страницы, пауза между
+// светлыми блоками.
 //
-// До 24.09.2026 здесь стояла гравюра белым штрихом на графите; заказчик
-// попросил её убрать — рядом с его примерами она смотрелась бедно.
-// 25.09.2026 на её место встала фотография статуи (выбор заказчика из трёх,
-// учёт — в public/img/CREDITS.md). На компьютере она справа, шаги слева
-// в две колонки; на телефоне и планшете — над заголовком раздела, и заголовок
-// ложится на её растворённый низ. Маски — в index.css (.process-photo): на
-// разных ширинах они разные, а классами Tailwind две маски не пересечь.
-// Контраст надписей поверх неё меряет scripts/test-hero-contrast.mjs.
+// С 26.09.2026 без фотографии. Здесь стояла Фемида (до того — гравюра), но
+// раздел рассказывает про шаги, а символ правосудия ни один шаг не объясняет:
+// она переехала в «О нас», где сайт говорит, на чём держится работа. Рисунок
+// раздела теперь — сами шаги: четыре в ряд на компьютере, номера крупно
+// латунью. Номера здесь по делу: это последовательность.
 //
 // «Через форму на сайте» из первого шага убрано вместе с формой.
 const STEPS = [
@@ -40,39 +37,26 @@ const STEPS = [
 
 export function Process() {
   return (
-    <section
-      id="process"
-      className="relative isolate overflow-hidden bg-accent-950 pb-24 pt-72 text-neutral-50 sm:pb-32 sm:pt-[26rem] lg:pt-32"
-    >
-      <picture>
-        <source type="image/avif" srcSet={asset('./img/themis-photo.avif')} />
-        <img
-          src={asset('./img/themis-photo.webp')}
-          alt=""
-          aria-hidden="true"
-          width={1024}
-          height={1024}
-          loading="lazy"
-          decoding="async"
-          className="process-photo scroll-settle pointer-events-none absolute inset-x-0 top-0 -z-10 h-[26rem] w-full select-none object-cover object-[50%_12%] sm:h-[34rem] lg:inset-x-auto lg:right-0 lg:h-full lg:w-[40%] lg:object-[60%_20%] xl:w-[46%]"
-        />
-      </picture>
+    <section id="process" className="relative isolate bg-accent-950 py-24 text-neutral-50 sm:py-32">
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
         <SectionHeading dark eyebrow="Процесс" title="Как проходит работа" />
-        {/* С 640px — сетка 2×2; на компьютере она занимает левые 58%,
-            правее стоит статуя. */}
-        <ol className="mt-16 grid border-t border-white/15 sm:grid-cols-2 lg:max-w-[58%]">
+        {/* Телефон — столбик, с 640px — сетка 2×2, с 1024px — четыре шага
+            в ряд. Номера набраны крупно латунью: без фотографии они и есть
+            рисунок раздела. */}
+        <ol className="mt-16 grid border-t border-white/15 sm:grid-cols-2 lg:grid-cols-4">
           {STEPS.map((step, index) => (
             <li
               key={step.number}
-              className="border-b border-white/15 py-8 sm:odd:border-r sm:odd:pr-8 sm:even:pl-8 sm:[&:nth-child(n+3)]:border-b-0"
+              className="border-b border-white/15 py-8 sm:odd:border-r sm:odd:pr-8 sm:even:pl-8 sm:[&:nth-child(n+3)]:border-b-0 lg:border-b-0 lg:border-r lg:px-8 lg:py-10 lg:first:pl-0 lg:last:border-r-0 lg:last:pr-0"
             >
               <Reveal delay={index * 120}>
-                <p className="text-sm tabular-nums text-neutral-400">{step.number}</p>
-                <h3 className="mt-6 font-display text-[1.9rem] font-medium leading-tight lg:mt-8">
+                <p className="font-display text-[2.6rem] font-medium leading-none tabular-nums text-accent-300">
+                  {step.number}
+                </p>
+                <h3 className="mt-8 font-display text-[1.9rem] font-medium leading-tight lg:text-[1.6rem] xl:text-[1.9rem]">
                   {step.title}
                 </h3>
-                <p className="mt-3 leading-relaxed text-neutral-300">{step.text}</p>
+                <p className="mt-3 leading-relaxed text-neutral-300">{nbsp(step.text)}</p>
               </Reveal>
             </li>
           ))}

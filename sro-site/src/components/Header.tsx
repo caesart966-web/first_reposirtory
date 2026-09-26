@@ -156,7 +156,7 @@ export function Header() {
 
   return (
     <header
-      className={`sticky top-0 z-50 border-b backdrop-blur transition-colors duration-300 ${
+      className={`vt-header sticky top-0 z-50 border-b backdrop-blur transition-colors duration-300 ${
         scrolled || open
           ? 'border-neutral-200 bg-neutral-50/90'
           : 'border-transparent bg-neutral-50/80'

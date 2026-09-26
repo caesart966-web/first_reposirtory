@@ -227,6 +227,7 @@ export function ServicePage({ service }: { service: ServicePageData }) {
               backLabel="Все услуги"
               title={service.title}
               lead={service.lead}
+              image={service.image}
               toc={toc}
             />
 

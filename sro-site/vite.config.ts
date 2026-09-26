@@ -2,6 +2,19 @@ import { resolve } from 'node:path'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
+// Скрипт страницы — render-blocking: браузер не рисует страницу, пока скрипт
+// её не собрал. Нужно плавному переходу между страницами (@view-transition
+// в index.css): иначе новая страница снималась бы пустой. Первого показа
+// это не задерживает — до скрипта на странице и так пусто.
+const renderBlockingEntry = {
+  name: 'render-blocking-entry',
+  transformIndexHtml: {
+    order: 'post' as const,
+    handler: (html: string) =>
+      html.replace(/<script type="module" crossorigin/g, '<script type="module" blocking="render" crossorigin'),
+  },
+}
+
 // base: './' — собранный сайт работает из любого подкаталога (хостинг, GitHub Pages).
 //
 // Точек входа одиннадцать: главная, три страницы видов СРО и семь страниц услуг. Каждая — обычный
@@ -11,7 +24,7 @@ import { defineConfig } from 'vite'
 // из public/, якоря на секции главной) знают о своей глубине через
 // src/lib/site.ts — см. комментарий там.
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), renderBlockingEntry],
   base: './',
   build: {
     rollupOptions: {

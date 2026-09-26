@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
-"""Готовит фотографию Фемиды для тёмного раздела «Как проходит работа».
+"""Готовит фотографию Фемиды для тёмного раздела «О нас».
 
 Исходник — assets-src/themis-photo-src.jpg (1024×1024, прислан заказчиком
-25.09.2026). Раздел залит тёплым графитом accent-950 (#1C1815), а фон снимка —
-холодный серый: на стыке маски он читался бы серым прямоугольником. Поэтому
-самые тёмные тона сводятся к графиту сайта: чем темнее пиксель, тем сильнее
-(до яркости THRESHOLD правка сходит на нет), — сама статуя не трогается.
+25.09.2026). До 26.09.2026 кадр стоял в «Как проходит работа», теперь —
+фоном раздела «О нас». Раздел залит тёплым графитом accent-950 (#1C1815),
+а фон снимка — холодный серый: на стыке маски он читался бы серым
+прямоугольником. Тёплый монохром сайта (scripts/monotone.py) это и решает:
+его тёмный конец — тот же графит, и чёрная точка LEVELS уводит фон в него
+целиком, а статуя переходит в ту же гамму, что остальные фотографии.
 
-Только Pillow, без numpy: маска строится из яркости через Image.point.
+Только Pillow, без numpy.
 
     python3 scripts/prepare-themis-photo.py      # из sro-site/
 """
@@ -15,21 +17,18 @@ from pathlib import Path
 
 from PIL import Image
 
+from monotone import monotone
+
 SRC = Path("assets-src/themis-photo-src.jpg")
 OUT = Path("public/img")
 NAME = "themis-photo"
-GRAPHITE = (28, 24, 21)  # accent-950
-THRESHOLD = 48  # ярче этого пиксель остаётся как есть
+LEVELS = (0.03, 0.92, 0.95)  # монохром: black, white, gamma
 WEBP_QUALITY, AVIF_QUALITY = 80, 55
 WEBP_LIMIT_KB, AVIF_LIMIT_KB = 180, 120
 
 
 def main() -> None:
-    img = Image.open(SRC).convert("RGB")
-    luma = img.convert("L")
-    # 255 — полностью графит (чёрный фон), 0 — без правки (статуя).
-    weight = luma.point(lambda v: round(max(0.0, (THRESHOLD - v) / THRESHOLD) * 255))
-    graded = Image.composite(Image.new("RGB", img.size, GRAPHITE), img, weight)
+    graded = monotone(Image.open(SRC).convert("RGB"), *LEVELS)
 
     webp, avif = OUT / f"{NAME}.webp", OUT / f"{NAME}.avif"
     graded.save(webp, "WEBP", quality=WEBP_QUALITY, method=6)

@@ -13,6 +13,7 @@
 // Правило то же, что на всём сайте: факты — только те, что уже есть на сайте
 // или в законе, с чипом статьи. Цифр, сроков и цен, которых заказчик не
 // называл, здесь нет.
+import { IMAGES, type PageImage } from './images'
 import { DOCS_SPECIALISTS, LAW, type DocItem } from './sroDetails'
 
 export type ServiceBlock =
@@ -40,6 +41,8 @@ export type ServicePage = {
   /** Вариант ответа «Какая помощь нужна?», который квиз подставит сам. */
   help?: string
   blocks: ServiceBlock[]
+  /** Кадр в шапке — только если у услуги есть предмет, который можно снять. */
+  image?: PageImage
   /** Услуги по теме — ссылки внизу страницы, перед «Связаться». Чтобы
       страница не кончалась тупиком: дочитав, человек видит, куда дальше. */
   related: string[]
@@ -175,6 +178,7 @@ export const SERVICE_PAGES: ServicePage[] = [
   {
     slug: 'dokumenty',
     related: ['nrs', 'podbor', 'vstuplenie'],
+    image: IMAGES.documents,
     path: 'uslugi/dokumenty',
     short: 'Подготовка документов',
     title: 'Подготовка документов для вступления в СРО',

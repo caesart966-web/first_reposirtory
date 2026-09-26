@@ -132,13 +132,19 @@ for (const path of PAGES) {
 // размеру экрана, а по видимой части окна браузера: адресная строка
 // и панель вкладок съедают 60–180 px, и 390 × 844 на деле — 390 × 664…780.
 const HERO = 'section[aria-labelledby="hero-title"]'
-const heroGeometry = (p) => p.evaluate((sel) => {
+// Меряется ПОСЛЕ появления: текст первого экрана выплывает снизу на 18 px,
+// и замер посреди анимации принимал сдвиг за вёрстку (список «уезжал» за край
+// экрана на ровно 18 px). Ждутся только анимации по времени — привязанные
+// к прокрутке (.scroll-drift) не кончаются никогда.
+const heroGeometry = (p) => p.evaluate(async (sel) => {
+  await Promise.all(document.getAnimations()
+    .filter((a) => a.timeline === document.timeline)
+    .map((a) => a.finished.catch(() => {})))
   const hero = document.querySelector(sel)
   const rect = (el) => el.getBoundingClientRect()
   const links = [...hero.querySelectorAll('#hero-types + ul a')]
   const buttons = [...hero.querySelectorAll('a[href="#contacts"], a[href^="tel:"]')]
   const photo = hero.querySelector('img')
-  const texts = [...hero.querySelectorAll('h1, p, #hero-types + ul')]
   return {
     hrefs: links.map((a) => a.getAttribute('href')),
     rows: links.map((a) => Math.round(rect(a).height)),
@@ -146,8 +152,6 @@ const heroGeometry = (p) => p.evaluate((sel) => {
     buttonsBottom: Math.round(Math.max(...buttons.map((a) => rect(a).bottom))),
     buttons: buttons.length,
     photoLoaded: photo.complete && photo.naturalWidth > 0,
-    photoLeft: Math.round(rect(photo.closest('div')).left),
-    textRight: Math.round(Math.max(...texts.map((e) => rect(e).right))),
   }
 }, HERO)
 {
@@ -163,16 +167,10 @@ const heroGeometry = (p) => p.evaluate((sel) => {
   check('первый экран 1440: подсказки видов в одну строку', g.rows.every((h) => h === g.rows[0]), g.rows.join(','))
   await ctx.close()
 
-  // Текст и кадр не наезжают друг на друга ни на одной ширине с колонками.
-  for (const width of [1024, 1100, 1280, 1440, 1920]) {
-    const c = await b.newContext({ viewport: { width, height: 900 } })
-    const cp = await c.newPage()
-    await cp.goto(BASE, { waitUntil: 'networkidle' })
-    await cp.evaluate(() => document.fonts.ready)
-    const cg = await heroGeometry(cp)
-    check(`первый экран ${width}: текст не заходит на кадр`, cg.textRight + 16 <= cg.photoLeft, `текст до ${cg.textRight}, кадр с ${cg.photoLeft}`)
-    await c.close()
-  }
+  // Проверки «текст не заходит на кадр» здесь больше нет (26.09.2026): кадр
+  // растворяется в бумаге и заходит под текст нарочно. Что под буквами он
+  // прозрачен, меряет по пикселям scripts/test-hero-contrast.mjs — вместе
+  // с заголовком.
 
   // prefers-reduced-motion: всё видно сразу.
   const rctx = await b.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' })
@@ -182,6 +180,42 @@ const heroGeometry = (p) => p.evaluate((sel) => {
   const hidden = await rp.evaluate(() => [...document.querySelectorAll('.reveal')].filter((e) => getComputedStyle(e).opacity !== '1').length)
   check('reduced motion: все блоки видны без прокрутки', hidden === 0, String(hidden))
   await rctx.close()
+}
+
+// Переход между страницами (@view-transition в index.css). Проверяется, что
+// он срабатывает и что новая страница в момент показа уже собрана: корень
+// у страниц заполняет скрипт, и без blocking="render" у него (плагин
+// в vite.config.ts) и синхронной первой отрисовки (flushSync в main.tsx,
+// detail.tsx, service.tsx) переход «проявлял» бы пустой лист. При «уменьшить
+// движение» перехода нет вовсе.
+for (const motion of ['no-preference', 'reduce']) {
+  const ctx = await b.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: motion })
+  await ctx.addInitScript(() => {
+    addEventListener('pagereveal', (e) => {
+      window.__vt = Boolean(e.viewTransition)
+      window.__rootEmpty = !document.getElementById('root')?.children.length
+    })
+  })
+  const p = await ctx.newPage()
+  await p.goto(BASE, { waitUntil: 'networkidle' })
+  // Скрипты новой страницы — с задержкой, как на медленной сети. Без неё
+  // проверка не ловит ничего: с локального сервера скрипт приходит раньше
+  // первого кадра, и пустой лист не получается даже без защиты (проверено:
+  // blocking="render" убран из сборки — без задержки проверка проходила).
+  await p.route(/\/assets\/.+\.js$/, async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 700))
+    await route.continue()
+  })
+  await p.locator('#hero-types + ul a').first().click()
+  await p.waitForLoadState('networkidle')
+  const [vt, empty] = await p.evaluate(() => [window.__vt, window.__rootEmpty])
+  if (motion === 'reduce') {
+    check('переход между страницами: при «уменьшить движение» его нет', vt === false, String(vt))
+  } else {
+    check('переход между страницами: срабатывает', vt === true, String(vt))
+    check('переход между страницами: новая страница в момент показа не пустая', empty === false, String(empty))
+  }
+  await ctx.close()
 }
 
 // Телефон: первый экран на разной высоте видимой части окна. На 664

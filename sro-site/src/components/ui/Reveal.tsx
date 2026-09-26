@@ -78,10 +78,12 @@ export function RevealText({
   as = 'h2',
   text,
   className = '',
+  id,
 }: {
   as?: ElementType
   text: string
   className?: string
+  id?: string
 }) {
   const ref = useReveal<HTMLElement>()
   // Короткие предлоги склеены со следующим словом (nbsp) и попадают с ним
@@ -89,7 +91,7 @@ export function RevealText({
   const words = nbsp(text).split(' ')
   return createElement(
     as,
-    { ref, className: `reveal-words ${className}`, 'aria-label': text },
+    { ref, id, className: `reveal-words ${className}`, 'aria-label': text },
     // Пробел между словами стоит СНАРУЖИ обрезающего блока: внутри
     // inline-block конечный пробел схлопывается, и слова слипаются.
     words.map((word, i) => (

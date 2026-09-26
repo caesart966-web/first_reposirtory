@@ -87,14 +87,18 @@ export function Regions() {
           >
             <defs>
               {/* Лёгкий градиент вместо плоской заливки: с ним выделенные
-                  регионы выглядят подсвеченными, а не закрашенными маркером. */}
+                  регионы выглядят подсвеченными, а не закрашенными маркером.
+                  С 26.09.2026 — в тёплом сером, как фотографии в монохроме:
+                  латунные Красноярский край и Якутия огромными пятнами
+                  перетягивали на себя весь раздел. Латунь — только у региона
+                  под курсором. */}
               <linearGradient id="ru-on" x1="0" y1="0" x2="0.3" y2="1">
-                <stop offset="0%" stopColor="#C09A68" />
-                <stop offset="100%" stopColor="#9D7443" />
+                <stop offset="0%" stopColor="#BDB1A2" />
+                <stop offset="100%" stopColor="#A09383" />
               </linearGradient>
               <linearGradient id="ru-hot" x1="0" y1="0" x2="0.3" y2="1">
-                <stop offset="0%" stopColor="#6B4C26" />
-                <stop offset="100%" stopColor="#4D3A26" />
+                <stop offset="0%" stopColor="#C09A68" />
+                <stop offset="100%" stopColor="#9D7443" />
               </linearGradient>
               <filter id="ru-shadow" x="-6%" y="-12%" width="112%" height="130%">
                 <feDropShadow dx="0" dy="7" stdDeviation="9" floodColor="#1C1815" floodOpacity="0.12" />

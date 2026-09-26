@@ -90,9 +90,11 @@ export function Pricing() {
           </Reveal>
         ))}
       </div>
+      {/* На телефоне — «Узнать стоимость»: полная надпись не помещалась
+          в строку, и кнопка ломалась на две. */}
       <Reveal className="mt-12">
         <ButtonLink href="#contacts" size="lg" arrow>
-          Узнать стоимость для моей компании
+          Узнать стоимость<span className="hidden sm:inline">&nbsp;для моей компании</span>
         </ButtonLink>
       </Reveal>
     </Section>

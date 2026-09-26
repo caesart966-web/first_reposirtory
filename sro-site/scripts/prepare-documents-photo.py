@@ -10,7 +10,8 @@
 исходника и запустите скрипт снова; увеличение сработает, только если
 исходник уже MIN_WIDTH.
 
-Цвет не трогается: коричневые, бежевые и серые корешки и так в палитре сайта.
+С 26.09.2026 кадр в тёплом монохроме, как все фотографии сайта
+(scripts/monotone.py): коричневые корешки уходят в графит и песок.
 
     python3 scripts/prepare-documents-photo.py      # из sro-site/
 """
@@ -18,11 +19,14 @@ from pathlib import Path
 
 from PIL import Image, ImageFilter
 
+from monotone import monotone
+
 SRC = Path("assets-src/documents-photo-src.jpg")
 OUT = Path("public/img")
 NAME = "documents-photo"
 MIN_WIDTH = 800  # уже этого — увеличиваем вдвое
 MAX_WIDTH = 1200  # шире не нужно: на компьютере кадр занимает 42% экрана
+LEVELS = (0.02, 0.90, 0.95)  # монохром: black, white, gamma
 WEBP_QUALITY, AVIF_QUALITY = 80, 55
 WEBP_LIMIT_KB, AVIF_LIMIT_KB = 180, 120
 
@@ -34,6 +38,7 @@ def main() -> None:
         img = img.filter(ImageFilter.UnsharpMask(radius=1.2, percent=60, threshold=2))
     elif img.width > MAX_WIDTH:
         img = img.resize((MAX_WIDTH, round(img.height * MAX_WIDTH / img.width)), Image.LANCZOS)
+    img = monotone(img, *LEVELS)
 
     webp, avif = OUT / f"{NAME}.webp", OUT / f"{NAME}.avif"
     img.save(webp, "WEBP", quality=WEBP_QUALITY, method=6)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Готовит три кадра видов СРО: шапки страниц видов, а кран (hero-day) — ещё
-и первый экран главной (с 26.09.2026 он там один, справа во всю высоту).
+и первый экран главной (с 26.09.2026 он там один и растворяется в бумаге).
 
 Исходники — кадры, присланные заказчиком 25.09.2026, шириной 820–960 px
 (кран и план вертикальные, изыскатели — узкая горизонтальная панорама). Это
@@ -15,9 +15,12 @@
 Модель увеличивает вчетверо, затем кадр уменьшается до SCALE исходника:
 уменьшение после увеличения даёт чистые края без ореолов.
 
-Затем тон серии: тени сводятся к графиту сайта, полутона — к латуни, света —
-к крему, частичным смешиванием (`tone`). Без него кадры читались тремя
-разными сайтами: лиловое вечернее небо, холодная белая бумага, бирюзовое небо.
+Затем тёплый монохром (scripts/monotone.py) — общий для всех фотографий
+сайта: яркость в градиент «графит → бумага», у каждого кадра свои уровни.
+До 26.09.2026 здесь было частичное тонирование в латунь, и кадры всё равно
+читались тремя разными сайтами: лиловое небо, холодная бумага, бирюзовое небо.
+Кран — «светлым ключом»: небо уходит в бумагу, и на первом экране кадр
+растворяется в листе без серой полосы на стыке.
 
 Имена файлов прежние (hero-day, slide-design, slide-survey) — на них ссылается
 src/content/images.ts. Меняете кадры или тон — перемерьте контраст:
@@ -38,23 +41,23 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-import numpy as np
 from PIL import Image, ImageEnhance, ImageFilter
+
+from monotone import monotone
 
 SRC = Path("assets-src")
 OUT = Path("public/img")
-# (исходник, имя, увеличение, яркость, тон). Чертежи — белая бумага: без
-# приглушения мелкий текст первого экрана на 820–1024 px ложился на неё
-# с контрастом 4,32:1 при норме 4,5. Тон сильнее там, где кадр дальше от
-# палитры: у крана верх вечернего неба лиловый, у плана — холодная бумага.
+# (исходник, имя, увеличение, яркость, уровни монохрома black/white/gamma).
+# Чертежи — белая бумага: без приглушения мелкий текст шапки на 820–1024 px
+# ложился на неё с контрастом 4,32:1 при норме 4,5. Кран — светлым ключом:
+# белая точка на половине яркости уводит небо в бумагу.
 # Панорама изыскателей увеличивается втрое: у неё всего 334 px высоты,
-# а первый экран на компьютере выше 800 px.
+# а шапка страницы на компьютере выше 800 px.
 SLIDES = [
-    ("slide-construction-src.jpg", "hero-day", 2, 1.0, 0.25),
-    ("slide-design-src.jpg", "slide-design", 2, 0.8, 0.35),
-    ("slide-survey-src.jpg", "slide-survey", 3, 1.0, 0.30),
+    ("slide-construction-src.jpg", "hero-day", 2, 1.0, (0.03, 0.52, 0.80)),
+    ("slide-design-src.jpg", "slide-design", 2, 0.8, (0.02, 0.95, 1.0)),
+    ("slide-survey-src.jpg", "slide-survey", 3, 1.0, (0.02, 0.85, 0.95)),
 ]
-SHADOW, MID, HIGH = (28, 24, 21), (157, 116, 67), (245, 241, 234)  # accent-950, accent-500, neutral-100
 WEBP_QUALITY, AVIF_QUALITY = 74, 50
 WEBP_LIMIT_KB, AVIF_LIMIT_KB = 180, 120
 CACHE = Path(tempfile.gettempdir()) / "sro-esrgan-cache"
@@ -73,23 +76,12 @@ def upscale(src: Path, img: Image.Image, scale: int, esrgan: Path | None) -> Ima
     return Image.open(cached).convert("RGB").resize(size, Image.LANCZOS)
 
 
-def tone(img: Image.Image, strength: float) -> Image.Image:
-    """Три точки палитры по яркости: тень → латунь → крем, смешивание strength."""
-    a = np.asarray(img, float)
-    lum = ((0.2126 * a[..., 0] + 0.7152 * a[..., 1] + 0.0722 * a[..., 2]) / 255.0)[..., None]
-    shadow, mid, high = (np.array(c, float) for c in (SHADOW, MID, HIGH))
-    toned = np.where(lum < 0.5,
-                     shadow + (mid - shadow) * np.clip(lum / 0.5, 0, 1),
-                     mid + (high - mid) * np.clip((lum - 0.5) / 0.5, 0, 1))
-    return Image.fromarray(np.clip(a * (1 - strength) + toned * strength, 0, 255).astype("uint8"))
-
-
-def prepare(src: Path, name: str, scale: int, brightness: float, strength: float, esrgan: Path | None) -> None:
+def prepare(src: Path, name: str, scale: int, brightness: float,
+            levels: tuple[float, float, float], esrgan: Path | None) -> None:
     img = upscale(src, Image.open(src).convert("RGB"), scale, esrgan)
     if brightness != 1.0:
         img = ImageEnhance.Brightness(img).enhance(brightness)
-    if strength:
-        img = tone(img, strength)
+    img = monotone(img, *levels)
     webp, avif = OUT / f"{name}.webp", OUT / f"{name}.avif"
     img.save(webp, "WEBP", quality=WEBP_QUALITY, method=6)
     img.save(avif, "AVIF", quality=AVIF_QUALITY)
@@ -103,8 +95,8 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--esrgan", type=Path, help="программа realesrgan-ncnn-vulkan (иначе Lanczos)")
     args = ap.parse_args()
-    for source, name, scale, brightness, strength in SLIDES:
-        prepare(SRC / source, name, scale, brightness, strength, args.esrgan)
+    for source, name, scale, brightness, levels in SLIDES:
+        prepare(SRC / source, name, scale, brightness, levels, args.esrgan)
 
 
 if __name__ == "__main__":

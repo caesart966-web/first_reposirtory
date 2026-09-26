@@ -1,3 +1,4 @@
+import { IMAGES } from '../content/images'
 import { asset } from '../lib/site'
 import { nbsp } from '../lib/typo'
 import { ButtonLink } from './ui/Button'
@@ -28,13 +29,13 @@ export function Documents() {
       className="relative isolate overflow-hidden pb-20 pt-[22rem] sm:pb-28 sm:pt-[28rem] lg:pt-28"
     >
       <picture>
-        <source type="image/avif" srcSet={asset('./img/documents-photo.avif')} />
+        {IMAGES.documents.srcAvif && <source type="image/avif" srcSet={asset(IMAGES.documents.srcAvif)} />}
         <img
-          src={asset('./img/documents-photo.webp')}
+          src={asset(IMAGES.documents.src)}
           alt=""
           aria-hidden="true"
-          width={834}
-          height={1252}
+          width={IMAGES.documents.width}
+          height={IMAGES.documents.height}
           loading="lazy"
           decoding="async"
           className="docs-photo scroll-settle pointer-events-none absolute inset-x-0 top-0 -z-10 h-[24rem] w-full select-none object-cover object-[50%_30%] sm:h-[30rem] sm:object-[50%_40%] lg:inset-x-auto lg:left-0 lg:h-full lg:w-[42%] lg:object-[0%_50%]"
