@@ -218,23 +218,57 @@ copyFileSync(join(out, 'pochta-shapka.png'), join(root, 'public/img/pochta-shapk
 // Берём то, что есть у всех: Georgia под антикву (она и рисовалась как
 // антиква для экрана, то есть говорит о том же, что Literata) и Arial
 // под остальное. Стили — строчные: почтовые сервисы вырезают <style>.
+// Вёрстка таблицами и атрибутами, а не современным CSS: редактор подписи —
+// это WYSIWYG, он режет всё, чего не понимает, а почтовые клиенты
+// не знают ни flex, ни grid. Сургучная линейка слева — отдельная ячейка
+// с bgcolor, а не border: атрибут bgcolor понимают вообще все, включая
+// Outlook, а border-left у ячейки он местами теряет. Высоту эта ячейка
+// берёт от соседней сама — на то и таблица.
+//
+// Приём взят с сайта: поле бланка, отчёркнутое красным. Это единственное
+// украшение здесь, всё остальное делает типографика и воздух.
+const cell = 'font-size:0;line-height:0'
 const sig = `<!doctype html><meta charset="utf-8">
-<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-family:Arial,Helvetica,sans-serif">
-  <tr><td style="padding:0 0 2px">
-    <span style="font-family:Georgia,'Times New Roman',serif;font-weight:bold;font-size:20px;letter-spacing:1.5px;color:${INK}">${BRAND}</span>
-    <span style="font-size:12px;color:#6B6156">&nbsp;&nbsp;${TAG}</span>
-  </td></tr>
-  <tr><td style="padding:8px 0 0;font-size:14px;font-weight:bold;color:${INK}">Алихан Багишев</td></tr>
-  <tr><td style="padding:4px 0 0;font-size:14px;color:${INK}">
-    <a href="tel:${PHONE.replace(/[^+\d]/g, '')}" style="color:${INK};text-decoration:none">${PHONE}</a>
-    <span style="color:#C9C2B6">&nbsp;·&nbsp;</span>
-    <a href="https://${DOMAIN}/" style="color:${ACC};text-decoration:none">${DOMAIN}</a>
-  </td></tr>
-  <tr><td style="padding:10px 0 0"><table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr>
-    <td width="46" height="3" bgcolor="${ACC}" style="font-size:0;line-height:0">&nbsp;</td>
-    <td width="420" height="1" bgcolor="${LINE}" style="font-size:0;line-height:0">&nbsp;</td>
-  </tr></table></td></tr>
-  <tr><td style="padding:8px 0 0;font-size:11.5px;color:#6B6156">${SERVICE_LINE}</td></tr>
+<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse">
+<tr>
+  <td width="3" bgcolor="${ACC}" style="${cell};width:3px">&nbsp;</td>
+  <td width="18" style="${cell}">&nbsp;</td>
+  <td style="font-family:Arial,Helvetica,sans-serif;padding:2px 0 3px">
+
+    <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr>
+      <td style="font-family:Georgia,'Times New Roman',serif;font-weight:bold;
+                 font-size:23px;letter-spacing:2px;color:${INK};line-height:1.1">${BRAND}</td>
+      <td width="14" style="${cell}">&nbsp;</td>
+      <td valign="bottom" style="font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;
+                 padding-bottom:3px;
+                 color:${ACC};white-space:nowrap">${TAG}</td>
+    </tr></table>
+
+    <div style="height:14px;${cell}">&nbsp;</div>
+
+    <div style="font-size:15px;font-weight:bold;color:${INK};line-height:1.3">Алихан Багишев</div>
+
+    <div style="height:6px;${cell}">&nbsp;</div>
+
+    <div style="font-size:15px;color:${INK};line-height:1.4">
+      <a href="tel:${PHONE.replace(/[^+\d]/g, '')}" style="color:${INK};text-decoration:none">${PHONE}</a>
+      <span style="color:#C9C2B6">&nbsp; · &nbsp;</span>
+      <a href="https://${DOMAIN}/" style="color:${ACC};text-decoration:none;font-weight:bold">${DOMAIN}</a>
+    </div>
+
+    <div style="height:14px;${cell}">&nbsp;</div>
+
+    <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr>
+      <td width="46" height="3" bgcolor="${ACC}" style="${cell}">&nbsp;</td>
+      <td width="413" height="1" bgcolor="${LINE}" style="${cell}">&nbsp;</td>
+    </tr></table>
+
+    <div style="height:9px;${cell}">&nbsp;</div>
+
+    <div style="font-size:11.5px;color:#6B6156;line-height:1.5">${SERVICE_LINE}</div>
+
+  </td>
+</tr>
 </table>
 `
 writeFileSync(join(out, 'podpis.html'), sig)
