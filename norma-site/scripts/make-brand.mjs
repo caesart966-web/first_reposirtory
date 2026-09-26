@@ -108,11 +108,20 @@ await shot('znak', 512, 512, `<svg style="display:block" viewBox="-6 -6 112 112"
 await shot('logotip', 460, 110, lockup(INK, ACC, '#6B6156'), { pdf: true, pad: 14 })
 await shot('logotip-belyy', 460, 110, lockup('#FFFFFF', ACC_BRIGHT, '#B3A99C'), { pad: 14 })
 
-// 3. Аватар для мессенджеров: знак на тёмном, как значок сайта.
-await shot('avatar', 512, 512,
-  `<div style="width:512px;height:512px;background:${DARK};display:grid;place-items:center">
-     <svg style="display:block" viewBox="0 0 100 100" width="250" height="250" fill="${ACC_BRIGHT}">${PATHS.map((d) => `<path d="${d}"/>`).join('')}</svg>
-   </div>`, { bg: DARK, scale: 1 })
+// 3. Аватар для мессенджеров и почты.
+//
+// Знак занимает ТРЕТЬ квадрата, а не половину, и это не вкусовщина.
+// Почти все такие места обрезают картинку в круг, а некоторые ещё и
+// подрезают его изнутри собственной рамкой. Знак во всю ширину теряет
+// при этом засечки — а засечки здесь и делают из двух букв монограмму.
+// Треть оставляет запас с любой стороны: круг вписан в квадрат, и центр
+// при любой обрезке остаётся нетронутым.
+const avatar = (bg, fill) =>
+  `<div style="width:512px;height:512px;background:${bg};display:grid;place-items:center">
+     <svg style="display:block" viewBox="0 0 100 100" width="172" height="172" fill="${fill}">${PATHS.map((d) => `<path d="${d}"/>`).join('')}</svg>
+   </div>`
+await shot('avatar', 512, 512, avatar(DARK, ACC_BRIGHT), { bg: DARK, scale: 1 })
+await shot('avatar-svetlyy', 512, 512, avatar(PAPER, ACC), { bg: PAPER, scale: 1 })
 
 // 4. Шапка письма. 600×140 в пересчёте на экран — стандартная ширина письма;
 //    снимается в двойном размере, чтобы не мылилась на телефоне.
@@ -153,7 +162,8 @@ console.log(`
 ${row('znak.png', 'прозрачный фон')}
 ${row('logotip.png', 'прозрачный фон')}
 ${row('logotip-belyy.png', 'для тёмного фона')}
-${row('avatar.png', 'для мессенджеров')}
+${row('avatar.png', 'аватар, тёмный')}
+${row('avatar-svetlyy.png', 'аватар, светлый')}
 ${row('pochta-shapka.png', 'шапка письма, 600×140 на экране')}
   logotip.pdf            вектор       для печати
 
