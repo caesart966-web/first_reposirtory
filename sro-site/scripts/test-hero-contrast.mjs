@@ -5,10 +5,12 @@
 // (самый близкий к ней по яркости) пиксель фона. Норма — 4,5:1 для любой
 // надписи, в том числе крупной: запас на смену кадров.
 //
-// Меряются три слайда главной, шапки страниц видов СРО, раздел «Как проходит
-// работа» с фотографией Фемиды (там — заголовок, номера и тексты шагов)
-// и раздел «Документы» с фотографией папок (подпись, заголовок и абзац
-// ложатся на растворённый край кадра) на 1440, 1024, 820 и 390 px.
+// Меряются первый экран главной (с 26.09.2026 текст там на бумаге рядом
+// с кадром — замер ловит, если кадр заедет под буквы), шапки страниц видов
+// СРО, раздел «Как проходит работа» с фотографией Фемиды (там — заголовок,
+// номера и тексты шагов) и раздел «Документы» с фотографией папок (подпись,
+// заголовок и абзац ложатся на растворённый край кадра) на 1440, 1024, 820
+// и 390 px.
 // Первая версия плёнки давала 1,2:1 — кадры дневные, белая подпись ложилась
 // на небо; статический расчёт по стилям этого не видит принципиально.
 //
@@ -19,7 +21,7 @@ const { chromium } = pw.default ?? pw
 const BASE = process.env.BASE || 'http://localhost:4181/'
 const NORM = 4.5
 const SHOTS = [
-  ...[0, 1, 2].map((slide) => ({ path: '', slide })),
+  { path: '' },
   { path: 'sro-stroiteley/' }, { path: 'sro-proektirovshchikov/' }, { path: 'sro-izyskateley/' }, { path: 'uslugi/nok/' },
   { path: '', section: 'process', selector: '#process h2, #process h3, #process p' },
   { path: '', section: 'documents', selector: '#documents h2, #documents p' },
@@ -43,10 +45,6 @@ for (const [dev, vp, mob] of DEVICES) {
     const ctx = await b.newContext({ viewport: vp, hasTouch: mob, isMobile: mob, reducedMotion: 'reduce', deviceScaleFactor: 1 })
     const p = await ctx.newPage()
     await p.goto(BASE + s.path, { waitUntil: 'networkidle' })
-    if (s.slide) {
-      await p.locator('section[aria-roledescription="слайдер"] button[aria-pressed]').nth(s.slide).click()
-      await p.mouse.move(5, 5)
-    }
     const selector = s.selector || '[data-hero-text]'
     if (s.section) {
       // Шапка и нижняя панель — поверх раздела, их прячем и в обоих снимках:
@@ -103,7 +101,7 @@ for (const [dev, vp, mob] of DEVICES) {
         return { text: bx.text, worst: min }
       })
     }, { png, boxes })
-    const name = `${s.path || '/'}${s.slide !== undefined ? ` слайд ${s.slide + 1}` : ''}${s.section ? ` #${s.section}` : ''} @${dev}`
+    const name = `${s.path || '/'}${s.section ? ` #${s.section}` : ''} @${dev}`
     // Надпись в несколько строк даёт несколько прямоугольников — в отчёт идёт худший.
     const byText = new Map()
     for (const r of worst) if (!byText.has(r.text) || r.worst < byText.get(r.text).worst) byText.set(r.text, r)

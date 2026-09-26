@@ -1,5 +1,5 @@
 // Сквозная проверка сайта: все одиннадцать страниц на пяти ширинах, плюс
-// слайдер первого экрана, меню и нижняя панель на телефоне.
+// первый экран главной, меню и нижняя панель на телефоне.
 //
 // Живёт в репозитории, а не в рабочей папке сессии: 24.09.2026 рабочая
 // папка пропала вместе с контейнером, и с ней — все наборы проверок.
@@ -124,50 +124,86 @@ for (const path of PAGES) {
   await ctx.close()
 }
 
-// Слайдер первого экрана.
+// Первый экран главной: три вида СРО списком, кадр справа.
+//
+// Главное, что здесь стережётся, — что видно БЕЗ прокрутки: заголовок,
+// обе кнопки и все три вида. До 26.09.2026 тут стоял слайдер, и в каждый
+// момент на экране была треть предложения. Высоты телефона взяты не по
+// размеру экрана, а по видимой части окна браузера: адресная строка
+// и панель вкладок съедают 60–180 px, и 390 × 844 на деле — 390 × 664…780.
+const HERO = 'section[aria-labelledby="hero-title"]'
+const heroGeometry = (p) => p.evaluate((sel) => {
+  const hero = document.querySelector(sel)
+  const rect = (el) => el.getBoundingClientRect()
+  const links = [...hero.querySelectorAll('#hero-types + ul a')]
+  const buttons = [...hero.querySelectorAll('a[href="#contacts"], a[href^="tel:"]')]
+  const photo = hero.querySelector('img')
+  const texts = [...hero.querySelectorAll('h1, p, #hero-types + ul')]
+  return {
+    hrefs: links.map((a) => a.getAttribute('href')),
+    rows: links.map((a) => Math.round(rect(a).height)),
+    lastLink: Math.round(Math.max(...links.map((a) => rect(a).bottom))),
+    buttonsBottom: Math.round(Math.max(...buttons.map((a) => rect(a).bottom))),
+    buttons: buttons.length,
+    photoLoaded: photo.complete && photo.naturalWidth > 0,
+    photoLeft: Math.round(rect(photo.closest('div')).left),
+    textRight: Math.round(Math.max(...texts.map((e) => rect(e).right))),
+  }
+}, HERO)
 {
   const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } })
   const p = await ctx.newPage()
   await p.goto(BASE, { waitUntil: 'networkidle' })
-  const hero = p.locator('section[aria-roledescription="слайдер"]')
-  const pressed = () => hero.locator('button[aria-pressed="true"]').getAttribute('aria-label')
-  check('слайдер: стартует с первого вида', (await pressed()) === 'СРО строителей', await pressed())
-  await p.waitForTimeout(7600)
-  check('слайдер: сам переходит ко второму через ~7 с', (await pressed()) === 'СРО проектировщиков', await pressed())
-  await hero.locator('button[aria-label="СРО изыскателей"]').click()
-  await p.waitForTimeout(300)
-  check('слайдер: вкладка переключает слайд', (await pressed()) === 'СРО изыскателей', await pressed())
-  check('слайдер: при наведении на вкладки — пауза', /progress-paused/.test(await hero.getAttribute('class')))
-  await p.waitForTimeout(8000)
-  check('слайдер: на паузе не уезжает', (await pressed()) === 'СРО изыскателей', await pressed())
-  await p.mouse.move(700, 150)
-  check('слайдер: увёл мышь — пауза снята', !/progress-paused/.test(await hero.getAttribute('class')))
-  const links = await hero.locator('a[href*="sro-"]').evaluateAll((els) => els.map((a) => a.getAttribute('href')))
-  check('слайдер: у каждого вида ссылка на свою страницу', ['sro-stroiteley/', 'sro-proektirovshchikov/', 'sro-izyskateley/'].every((x) => links.some((l) => l.endsWith(x))), links.join(' '))
+  await p.evaluate(() => document.fonts.ready)
+  const g = await heroGeometry(p)
+  check('первый экран: у каждого вида ссылка на свою страницу',
+    g.hrefs.length === 3 && ['sro-stroiteley/', 'sro-proektirovshchikov/', 'sro-izyskateley/'].every((x) => g.hrefs.some((l) => l.endsWith(x))), g.hrefs.join(' '))
+  check('первый экран: кадр загрузился', g.photoLoaded)
+  check('первый экран 1440 × 900: все три вида видны без прокрутки', g.lastLink <= 900, `низ списка ${g.lastLink}`)
+  check('первый экран 1440: подсказки видов в одну строку', g.rows.every((h) => h === g.rows[0]), g.rows.join(','))
   await ctx.close()
 
-  // prefers-reduced-motion: автосмены нет, всё видно сразу.
+  // Текст и кадр не наезжают друг на друга ни на одной ширине с колонками.
+  for (const width of [1024, 1100, 1280, 1440, 1920]) {
+    const c = await b.newContext({ viewport: { width, height: 900 } })
+    const cp = await c.newPage()
+    await cp.goto(BASE, { waitUntil: 'networkidle' })
+    await cp.evaluate(() => document.fonts.ready)
+    const cg = await heroGeometry(cp)
+    check(`первый экран ${width}: текст не заходит на кадр`, cg.textRight + 16 <= cg.photoLeft, `текст до ${cg.textRight}, кадр с ${cg.photoLeft}`)
+    await c.close()
+  }
+
+  // prefers-reduced-motion: всё видно сразу.
   const rctx = await b.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' })
   const rp = await rctx.newPage()
   await rp.goto(BASE, { waitUntil: 'networkidle' })
-  await rp.waitForTimeout(8000)
-  const rh = rp.locator('section[aria-roledescription="слайдер"]')
-  check('reduced motion: слайдер не листается сам', (await rh.locator('button[aria-pressed="true"]').getAttribute('aria-label')) === 'СРО строителей')
+  await rp.waitForTimeout(1500)
   const hidden = await rp.evaluate(() => [...document.querySelectorAll('.reveal')].filter((e) => getComputedStyle(e).opacity !== '1').length)
   check('reduced motion: все блоки видны без прокрутки', hidden === 0, String(hidden))
   await rctx.close()
 }
 
-// Телефон: слайдер, меню, нижняя панель.
+// Телефон: первый экран на разной высоте видимой части окна. На 664
+// (iPhone с развёрнутыми панелями Safari) все три вида уже не помещаются —
+// там требуются заголовок и кнопки связи, а список начинается у края.
+for (const [width, height, need] of [[390, 780, 'all'], [360, 740, 'all'], [390, 664, 'buttons']]) {
+  const ctx = await b.newContext({ viewport: { width, height }, isMobile: true, hasTouch: true })
+  const p = await ctx.newPage()
+  await p.goto(BASE, { waitUntil: 'networkidle' })
+  await p.evaluate(() => document.fonts.ready)
+  const g = await heroGeometry(p)
+  check(`телефон ${width} × ${height}: обе кнопки связи видны без прокрутки`, g.buttons === 2 && g.buttonsBottom <= height, `низ кнопок ${g.buttonsBottom}`)
+  if (need === 'all') check(`телефон ${width} × ${height}: все три вида видны без прокрутки`, g.lastLink <= height, `низ списка ${g.lastLink}`)
+  check(`телефон ${width}: строки видов не ниже 44px и в одну строку`, g.rows.every((h) => h >= 44 && h < 70), g.rows.join(','))
+  await ctx.close()
+}
+
+// Телефон: меню и нижняя панель.
 {
   const ctx = await b.newContext({ viewport: { width: 390, height: 780 }, isMobile: true, hasTouch: true })
   const p = await ctx.newPage()
   await p.goto(BASE, { waitUntil: 'networkidle' })
-  const tabs = await p.locator('section[aria-roledescription="слайдер"] button[aria-pressed]').evaluateAll((els) =>
-    els.map((e) => { const r = e.getBoundingClientRect(); return [r.left, r.right, r.height] }))
-  const overlapTabs = tabs.some((t, i) => i && t[0] < tabs[i - 1][1] - 1)
-  check('телефон: вкладки слайдера не наезжают', !overlapTabs, JSON.stringify(tabs))
-  check('телефон: вкладки не ниже 44px', tabs.every((t) => t[2] >= 44), tabs.map((t) => Math.round(t[2])).join(','))
   const bar = p.locator('nav[aria-label="Быстрая связь"]')
   check('телефон: нижняя панель скрыта на первом экране', (await bar.getAttribute('aria-hidden')) === 'true')
   await p.evaluate(() => scrollTo({ top: 2000, behavior: 'instant' }))

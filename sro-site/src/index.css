@@ -243,67 +243,6 @@
   }
 }
 
-/* Слайдер первого экрана: новый кадр входит шторкой справа налево, старый
-   под ним уезжает влево на треть скорости — отсюда ощущение глубины, как в
-   ролике заказчика. 1.3 с и симметричная кривая: шторка не должна дёрнуться
-   в конце. */
-@keyframes curtain-in {
-  from {
-    clip-path: inset(0 0 0 100%);
-  }
-  to {
-    clip-path: inset(0 0 0 0);
-  }
-}
-
-@keyframes drift-out {
-  from {
-    transform: translateX(0) scale(1.04);
-  }
-  to {
-    transform: translateX(-7%) scale(1.04);
-  }
-}
-
-@keyframes slow-zoom {
-  from {
-    transform: scale(1.08);
-  }
-  to {
-    transform: scale(1.02);
-  }
-}
-
-@keyframes progress {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
-}
-
-.slide-in {
-  animation: curtain-in 1.3s cubic-bezier(0.65, 0, 0.35, 1) both;
-}
-
-.slide-in img {
-  animation: slow-zoom 9s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.slide-out img {
-  animation: drift-out 1.3s cubic-bezier(0.65, 0, 0.35, 1) both;
-}
-
-.progress-run {
-  transform-origin: left;
-  animation: progress var(--slide-ms, 7000ms) linear both;
-}
-
-.progress-paused .progress-run {
-  animation-play-state: paused;
-}
-
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
