@@ -194,6 +194,51 @@ await shot('pochta-shapka', 600, 200, header, { bg: PAPER, fits: '#uslugi' })
 await shot('pochta-shapka-600', 600, 200, header, { bg: PAPER, scale: 1 })
 await shot('pochta-shapka', 600, 200, header, { bg: PAPER, jpeg: true })
 
+// ── Шапка едет вместе с сайтом ────────────────────────────────────────────
+//
+// Mail.ru отказался принимать файл в подпись — и с исходным именем,
+// и с переименованным. Обходной путь надёжнее самой загрузки: картинка
+// лежит на своём сайте, а в подпись вставляется ССЫЛКОЙ. Тогда её
+// не нужно никуда загружать, а поменяется шапка — обновится у всех
+// писем разом, без правки подписи.
+//
+// Поэтому файл копируется в public/img/ и уезжает в сборку сайта.
+// Ни одна страница его не показывает, и это не мусор: потребитель
+// у него есть — подпись в почте, адрес записан в brand/README.md.
+const { copyFileSync } = await import('node:fs')
+copyFileSync(join(out, 'pochta-shapka.png'), join(root, 'public/img/pochta-shapka.png'))
+
+// ── Подпись без картинки ──────────────────────────────────────────────────
+//
+// Запасной путь, и местами он лучше основного: почтовые клиенты часто
+// блокируют картинки в письмах, пока получатель не нажмёт «показать
+// изображения», — текст виден всегда.
+//
+// Шрифты сайта здесь не годятся: в письме их нет и подставить неоткуда.
+// Берём то, что есть у всех: Georgia под антикву (она и рисовалась как
+// антиква для экрана, то есть говорит о том же, что Literata) и Arial
+// под остальное. Стили — строчные: почтовые сервисы вырезают <style>.
+const sig = `<!doctype html><meta charset="utf-8">
+<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-family:Arial,Helvetica,sans-serif">
+  <tr><td style="padding:0 0 2px">
+    <span style="font-family:Georgia,'Times New Roman',serif;font-weight:bold;font-size:20px;letter-spacing:1.5px;color:${INK}">${BRAND}</span>
+    <span style="font-size:12px;color:#6B6156">&nbsp;&nbsp;${TAG}</span>
+  </td></tr>
+  <tr><td style="padding:8px 0 0;font-size:14px;font-weight:bold;color:${INK}">Алихан Багишев</td></tr>
+  <tr><td style="padding:4px 0 0;font-size:14px;color:${INK}">
+    <a href="tel:${PHONE.replace(/[^+\d]/g, '')}" style="color:${INK};text-decoration:none">${PHONE}</a>
+    <span style="color:#C9C2B6">&nbsp;·&nbsp;</span>
+    <a href="https://${DOMAIN}/" style="color:${ACC};text-decoration:none">${DOMAIN}</a>
+  </td></tr>
+  <tr><td style="padding:10px 0 0"><table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr>
+    <td width="46" height="3" bgcolor="${ACC}" style="font-size:0;line-height:0">&nbsp;</td>
+    <td width="420" height="1" bgcolor="${LINE}" style="font-size:0;line-height:0">&nbsp;</td>
+  </tr></table></td></tr>
+  <tr><td style="padding:8px 0 0;font-size:11.5px;color:#6B6156">${SERVICE_LINE}</td></tr>
+</table>
+`
+writeFileSync(join(out, 'podpis.html'), sig)
+
 await browser.close()
 
 // Размеры читаем из самих файлов: записанные руками расходятся с делом
@@ -218,6 +263,11 @@ ${row('avatar-svetlyy.png', 'аватар, светлый')}
 ${row('pochta-shapka.png', 'шапка письма, 600 px по ширине')}
 ${row('pochta-shapka-600.png', 'она же в одинарном масштабе')}
   logotip.pdf            вектор       для печати
+  podpis.html            текст        подпись без картинки: открыть, Ctrl+A, Ctrl+C
+
+Шапка скопирована в public/img/ — после заливки сайта она будет доступна
+по адресу https://${DOMAIN}/img/pochta-shapka.png и вставляется в подпись
+ссылкой, без загрузки файла в почту.
 
 Цвета и контакты взяты из site.ts и global.css — руками здесь не вписано ничего.
 `)
