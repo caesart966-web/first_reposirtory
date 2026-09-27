@@ -157,6 +157,17 @@ if (!existsSync(mailFile)) {
   if (lost.length) fail(`в письме нет: ${lost.join(', ')}`)
   else ok('в письме всё, что ввёл человек')
 
+  // Получателей может быть несколько (MAIL_TO через запятую), и каждый
+  // обязан попасть в адрес письма: иначе второй ящик молча остаётся без
+  // заявок, а заметят это, когда заявку ждали именно там.
+  const recipients = ((original.match(/const MAIL_TO = '([^']+)'/) || [])[1] || '')
+    .split(',').map((a) => a.trim()).filter(Boolean)
+  const toLine = (mail.match(/^To: (.*)$/m) || [])[1] || ''
+  const missed = recipients.filter((a) => !toLine.includes(a))
+  if (!recipients.length) fail('в submit.php не нашлось MAIL_TO — заявкам некуда приходить')
+  else if (missed.length) fail(`письмо не уходит в ${missed.join(', ')}`)
+  else ok(`письмо уходит во все ящики: ${recipients.join(', ')}`)
+
   // Адрес отправителя обязан быть на домене сайта: с чужого домена письмо
   // не пройдёт SPF и уляжется в спам — молча, без единой ошибки на сайте.
   const from = (mail.match(/^From:.*<([^>]+)>/m) || [])[1] || ''
