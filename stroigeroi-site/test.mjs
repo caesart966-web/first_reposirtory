@@ -824,16 +824,18 @@ for (const name of ['index', 'catalog', 'checkout', 'contacts', 'login']) {
   await set({ power: '120' });
   expect('радиаторы, 120 Вт', (await read()).answer, '22 секции');
 
-  /* Адрес: вкладка — в адресе, а при <base href> на главную (так в теме
+  /* Адрес: калькулятор и то, что отличается от значений по умолчанию
+     (через 0,4 с после ввода). При <base href> на главную (так в теме
      OpenCart) адрес всё равно собирается от самой страницы. */
-  if (!page.url().endsWith('#radiatory')) fail(`калькулятор: у радиаторов адрес …#radiatory, получено ${page.url()}`);
+  await page.waitForTimeout(500);
+  if (new URL(page.url()).hash !== '#radiatory?area=20&power=120') fail(`калькулятор: у радиаторов адрес …#radiatory?area=20&power=120, получено ${page.url()}`);
   await page.evaluate(() => {
     const base = document.createElement('base');
     base.href = 'file:///nonexistent/';
     document.head.prepend(base);
   });
   await open('wallpaper');
-  if (page.url() !== pageUrl + '#oboi') fail(`калькулятор: при <base href> адрес должен остаться …calculator.html#oboi, получено ${page.url()}`);
+  if (page.url() !== pageUrl + '#oboi?rapport=64&glue=6') fail(`калькулятор: при <base href> адрес должен остаться …calculator.html#oboi?rapport=64&glue=6, получено ${page.url()}`);
 
   /* Отправка менеджеру: окно звонка открывается, расчёт уходит полем message;
      если окно открыть другой кнопкой — поле пустое. */
@@ -861,6 +863,9 @@ for (const name of ['index', 'catalog', 'checkout', 'contacts', 'login']) {
   await page.waitForTimeout(300);
   const copied = await page.evaluate(() => navigator.clipboard.readText().catch(() => ''));
   if (copied && !/Обои: комната/.test(copied)) fail(`калькулятор: скопирован не тот текст — «${copied.slice(0, 80)}»`);
+  if (copied && !copied.includes('Открыть расчёт: ' + pageUrl + '#oboi?length=4&width=3&height=2.7&doors=0&roll=0.53x10.05&rapport=64&trim=10&glue=6')) {
+    fail(`калькулятор: в тексте расчёта нет ссылки со всеми размерами — «${copied.split('\n').pop()}»`);
+  }
   const toastText = await page.evaluate(() => document.querySelector('[data-demo-note]').textContent);
   if (!/скопирован/.test(toastText)) fail(`калькулятор: после копирования нет сообщения, получено «${toastText}»`);
 
@@ -890,6 +895,13 @@ for (const name of ['index', 'catalog', 'checkout', 'contacts', 'login']) {
   await page.click('[data-calc-list-remove="0"]');
   const left = await page.$$eval('.calc-list__name', (n) => n.map((x) => x.textContent));
   if (left.length !== 1 || left[0] !== 'Перегородка') fail(`калькулятор: после удаления в списке — ${JSON.stringify(left)}`);
+  /* Очистка — со второго нажатия: первое только спрашивает. */
+  await page.click('[data-calc-list-clear]');
+  const armed = await page.evaluate(() => ({
+    shown: !document.querySelector('[data-calc-list]').hidden,
+    text: document.querySelector('[data-calc-list-clear]').textContent,
+  }));
+  if (!armed.shown || armed.text !== 'Точно очистить?') fail(`калькулятор: первое нажатие «Очистить» должно спросить, а не стереть — ${JSON.stringify(armed)}`);
   await page.click('[data-calc-list-clear]');
   if (!(await page.evaluate(() => document.querySelector('[data-calc-list]').hidden))) fail('калькулятор: пустой список должен прятаться');
 
@@ -932,6 +944,7 @@ for (const name of ['index', 'catalog', 'checkout', 'contacts', 'login']) {
   await page.keyboard.press('Escape');
   await page.waitForTimeout(200);
   await page.click('[data-calc-list-clear]');
+  await page.click('[data-calc-list-clear]');
 
   /* Память полей и «Сбросить» */
   await open('gkl');
@@ -952,6 +965,235 @@ for (const name of ['index', 'catalog', 'checkout', 'contacts', 'login']) {
     if ((await direct.getAttribute(`[data-calc-pick="${id}"]`, 'aria-pressed')) !== 'true') fail(`калькулятор: ссылка …#${hash} должна открывать ${id}`);
     await direct.close();
   }
+
+  /* Ссылка на расчёт. По ссылке открываются те же размеры; чего в ссылке
+     нет — по умолчанию; непонятное (не число, нет такого варианта)
+     пропускается. Стёртое поле передаётся пустым. Ссылку можно вставить
+     и в уже открытую страницу. */
+  const values = (pg) => pg.evaluate(() => {
+    const out = {};
+    document.querySelectorAll('[data-calc-form] [name]').forEach((el) => {
+      if (el.type === 'radio') { if (el.checked) out[el.name] = el.value; } else out[el.name] = el.value;
+    });
+    out.answer = document.querySelector('[data-calc-answer]').textContent.replace(/ /g, ' ');
+    return out;
+  });
+  /* Своя вкладка в отдельном профиле: значения из ссылки запоминаются,
+     и в общей памяти они подменили бы размеры для проверок ниже. */
+  const lctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const linked = await lctx.newPage();
+  linked.on('pageerror', (e) => errors.push(e.message));
+  await linked.goto(pageUrl + '#armstrong?length=6&width=3&lamps=abc', { waitUntil: 'load' });
+  await linked.waitForTimeout(300);
+  let got = await values(linked);
+  if (got.length !== '6' || got.width !== '3' || got.lamps !== '0' || got.answer !== '50 плит') fail(`калькулятор: ссылка с размерами — ${JSON.stringify(got)}`);
+  await linked.fill('[data-calc-form] [name="length"]', '7');
+  await linked.waitForTimeout(600);
+  if (new URL(linked.url()).hash !== '#armstrong?length=7&width=3') fail(`калькулятор: адрес после ввода — ${new URL(linked.url()).hash}`);
+  /* «Ссылка на расчёт» — со всеми видимыми полями. Буфер обмена подменяем:
+     разрешения на чтение из него у страницы с file:// может не быть. */
+  await linked.evaluate(() => {
+    window.__copied = [];
+    if (navigator.clipboard) navigator.clipboard.writeText = (t) => { window.__copied.push(t); return Promise.resolve(); };
+    document.execCommand = () => { window.__copied.push(document.activeElement.value); return true; };
+  });
+  await linked.click('[data-calc-link]');
+  await linked.waitForTimeout(200);
+  const link = await linked.evaluate(() => window.__copied[0] || '');
+  if (link !== pageUrl + '#armstrong?length=7&width=3&lamps=0&runner=3.6&angle=3&hang=1.2') fail(`калькулятор: «Ссылка на расчёт» скопировала «${link}»`);
+  await linked.goto(pageUrl + '#peregorodka?sides=1&sheet=3&step=9', { waitUntil: 'load' });
+  await linked.waitForTimeout(300);
+  got = await values(linked);
+  if (got.sides !== '1' || got.sheet !== '3' || got.step !== '0.6' || got.answer !== '4 листа') fail(`калькулятор: ссылка с вариантами — ${JSON.stringify(got)}`);
+  await linked.evaluate(() => { location.hash = '#plitka?area=20'; });
+  await linked.waitForTimeout(300);
+  got = await values(linked);
+  if (got.area !== '20' || got.answer !== '242 плитки') fail(`калькулятор: ссылка, вставленная в открытую страницу — ${JSON.stringify(got)}`);
+  await linked.fill('[data-calc-form] [name="area"]', '');
+  await linked.waitForTimeout(600);
+  if (new URL(linked.url()).hash !== '#plitka?area=') fail(`калькулятор: стёртое поле должно попасть в адрес пустым — ${new URL(linked.url()).hash}`);
+  await lctx.close();
+
+  /* Площадь по размерам комнаты. Гипсокартон на стены 4 × 3 × 2,7, проёмы
+     не вычитаем: 37,8 м² × 1,1 ÷ 3 = 13,9 → 14 листов; стены и потолок:
+     49,8 → 19. Плитка на пол 4 × 3: 12 × 1,1 ÷ 0,302² = 144,7 → 145; на
+     стены 34,8 м² → 419,7 → 420. Стяжка на пол 12 м² слоем 10 мм, расход
+     1,8, мешки по 25: 237,6 кг → 10. Панели на стены 34,8 × 1,1 ÷ 0,75 =
+     51,04 → 52. Перед каждой проверкой — «Сбросить»: выше в тех же
+     калькуляторах вписаны свои числа. */
+  await open('gkl');
+  await page.click('[data-calc-reset]');
+  await set({ mode: 'room' });
+  r = await read();
+  expect('гипсокартон по комнате', r.answer, '14 листов');
+  expect('гипсокартон по комнате, стены', (r.rows.find((x) => x[0].startsWith('Стены')) || [])[1], '37,8 м²');
+  await set({ surf: 'both' });
+  r = await read();
+  expect('гипсокартон, стены и потолок', r.answer, '19 листов');
+  expect('гипсокартон, итог площади', (r.rows.find((x) => x[0] === 'Площадь обшивки') || [])[1], '49,8 м²');
+  await set({ height: '' });
+  expect('гипсокартон без высоты', (await read()).note, 'Впишите высоту стен.');
+  await page.click('[data-calc-reset]');
+  await open('tile');
+  await page.click('[data-calc-reset]');
+  await set({ mode: 'room' });
+  expect('плитка на пол по комнате', (await read()).answer, '145 плиток');
+  await set({ surf: 'walls' });
+  expect('плитка на стены по комнате', (await read()).answer, '420 плиток');
+  await page.click('[data-calc-reset]');
+  await open('mix');
+  await page.click('[data-calc-reset]');
+  await set({ kind: 'screed', mode: 'room', surf: 'floor', usage: '1,8', bag: '25' });
+  expect('стяжка по комнате', (await read()).answer, '10 мешков');
+  await page.click('[data-calc-reset]');
+  await open('panels');
+  await page.click('[data-calc-reset]');
+  await set({ mode: 'room' });
+  expect('панели по комнате', (await read()).answer, '52 панели');
+  await page.click('[data-calc-reset]');
+
+  /* Предупреждения о похожем на опечатку: видны под полем, связаны с ним
+     для экранного диктора и пропадают, когда число исправили. */
+  const warnOf = (name) => page.evaluate((n) => {
+    const w = document.querySelector(`[data-warn-for="${n}"]`);
+    const input = document.querySelector(`[data-calc-form] [name="${n}"]`);
+    return { shown: !!w && !w.hidden, text: w ? w.textContent : '', linked: !!w && (input.getAttribute('aria-describedby') || '').split(' ').includes(w.id) };
+  }, name);
+  await open('tile');
+  await set({ tileL: '30' });
+  let warn = await warnOf('tileL');
+  if (!warn.shown || !/миллиметрах/.test(warn.text) || !warn.linked) fail(`калькулятор: плитка 30 мм — нет предупреждения о миллиметрах — ${JSON.stringify(warn)}`);
+  await set({ tileL: '300' });
+  if ((await warnOf('tileL')).shown) fail('калькулятор: предупреждение не пропало после исправления');
+  await page.click('[data-calc-reset]');
+  await open('radiator');
+  await set({ power: '1500' });
+  warn = await warnOf('power');
+  if (!warn.shown || !/одной секции/.test(warn.text)) fail(`калькулятор: мощность 1500 Вт на секцию — нет предупреждения — ${JSON.stringify(warn)}`);
+  await page.click('[data-calc-reset]');
+  await open('mix');
+  await set({ usage: '9' });
+  if (!(await warnOf('usage')).shown) fail('калькулятор: расход смеси 9 кг на 1 мм — нет предупреждения');
+  await page.click('[data-calc-reset]');
+  await open('paint');
+  await set({ rate: '120' });
+  if (!(await warnOf('rate')).shown) fail('калькулятор: 120 м² с литра — нет подсказки переключить единицы');
+  await set({ rateUnit: 'mlm2' });
+  if ((await warnOf('rate')).shown) fail('калькулятор: 120 мл на 1 м² — подсказки быть не должно');
+  await page.click('[data-calc-reset]');
+
+  /* Схемы рисуются по тем же числам, что в ответе. Потолок 5 × 4: три линии
+     главного профиля, по 6 подвесов на линии — 18 точек, поперечных 1,2 —
+     8 линий, 0,6 — 3, подрезка у двух стен. Перегородка: 8 стоек. Скат
+     8 × 4 по листу 1,1 × 1,5: 7 стыков по ширине и 2 нахлёста. Обои:
+     26 стыков полос, рулонов 9 — через один закрашены 4. */
+  const scheme = () => page.evaluate(() => {
+    const fig = document.querySelector('[data-calc-scheme]');
+    const count = (cls, re) => {
+      const el = fig.querySelector('.' + cls);
+      return el ? (el.getAttribute('d').match(re) || []).length : 0;
+    };
+    return {
+      shown: !!fig && !fig.hidden,
+      main: count('scheme__main', /M/g), hang: count('scheme__hang', /a/g) / 2, t12: count('scheme__t12', /M/g), t06: count('scheme__t06', /M/g),
+      studs: count('scheme__stud', /M/g), sheets: count('scheme__sheet', /M/g), seams: count('scheme__seam', /M/g),
+      cut: fig.querySelectorAll('.scheme__cut').length, laps: fig.querySelectorAll('.scheme__lap').length, alt: fig.querySelectorAll('.scheme__alt').length,
+      caption: fig.querySelector('[data-calc-scheme-cap]').textContent.replace(/ /g, ' '),
+    };
+  });
+  await open('ceiling');
+  await page.click('[data-calc-reset]');
+  let sc = await scheme();
+  if (!sc.shown || sc.main !== 3 || sc.hang !== 18 || sc.t12 !== 8 || sc.t06 !== 3 || sc.cut !== 2 || !/ячеек 9 × 7/.test(sc.caption)) fail(`калькулятор: схема потолка — ${JSON.stringify(sc)}`);
+  await open('frame');
+  await page.click('[data-calc-reset]');
+  sc = await scheme();
+  if (!sc.shown || sc.studs !== 8 || !/8 стоек/.test(sc.caption)) fail(`калькулятор: схема перегородки — ${JSON.stringify(sc)}`);
+  await open('roof');
+  await set({ useful: '1,1', sheetLen: '1,5' });
+  sc = await scheme();
+  if (!sc.shown || sc.sheets !== 9 || sc.laps !== 2 || sc.cut !== 1 || !/8 листов в ряд, 3 ряда/.test(sc.caption)) fail(`калькулятор: схема ската — ${JSON.stringify(sc)}`);
+  await page.click('[data-calc-reset]');
+  await open('wallpaper');
+  await page.click('[data-calc-reset]');
+  sc = await scheme();
+  if (!sc.shown || sc.seams !== 26 || sc.alt !== 4 || !/27 полос по 0,53 м, из рулона — 3, рулонов 9/.test(sc.caption)) fail(`калькулятор: схема обоев — ${JSON.stringify(sc)}`);
+  await open('radiator');
+  if ((await scheme()).shown) fail('калькулятор: у радиаторов схемы нет — рамка должна прятаться');
+
+  /* Поиск каждой позиции в каталоге: подпись — название товара, запрос —
+     основа слова, чтобы стандартный поиск нашёл и «саморез», и «саморезы». */
+  const chips = () => page.$$eval('[data-calc-find] .calc__chip', (a) => a.map((x) => [x.textContent, decodeURIComponent(x.getAttribute('href').split('search=')[1] || '')]));
+  await open('frame');
+  const frameChips = JSON.stringify(await chips());
+  if (frameChips !== JSON.stringify([['Гипсокартон', 'гипсокартон'], ['Профиль', 'профиль'], ['Саморезы', 'саморез'], ['Дюбели', 'дюбел'], ['Уплотнительная лента', 'уплотнител'], ['Серпянка', 'серпянк']])) {
+    fail(`калькулятор: поиск позиций перегородки — ${frameChips}`);
+  }
+  await open('mix');
+  await set({ kind: 'screed' });
+  if (JSON.stringify(await chips()) !== JSON.stringify([['Смесь для стяжки', 'стяжк']])) fail(`калькулятор: поиск смеси для стяжки — ${JSON.stringify(await chips())}`);
+  await page.click('[data-calc-reset]');
+  await open('ceiling');
+  await set({ lamps: '2' });
+  if (!(await chips()).some((c) => c[0] === 'Светильники')) fail('калькулятор: при светильниках нет кнопки поиска светильников');
+  await page.click('[data-calc-reset]');
+
+  /* Всего по списку: одинаковые позиции разных расчётов сложены. Две
+     перегородки, 4 и 3 м: гипсокартона 8 + 6 = 14 листов. Расчёт из
+     списка открывается снова со своими размерами. */
+  await open('frame');
+  await page.click('[data-calc-add]');
+  await set({ length: '3' });
+  await page.click('[data-calc-add]');
+  await page.waitForTimeout(200);
+  const total = await page.evaluate(() => {
+    const box = document.querySelector('[data-calc-list-total]');
+    const rows = [...box.querySelectorAll('li')].map((li) => li.textContent.replace(/ /g, ' ').replace(/\s+/g, ' ').trim());
+    return { shown: !box.hidden, rows };
+  });
+  if (!total.shown || !total.rows.includes('Гипсокартон 1200 × 2500 мм из 2 расчётов14 листов')) fail(`калькулятор: «Всего по списку» — ${JSON.stringify(total)}`);
+  await page.evaluate(() => {
+    window.__copied = [];
+    if (navigator.clipboard) navigator.clipboard.writeText = (t) => { window.__copied.push(t); return Promise.resolve(); };
+    document.execCommand = () => { window.__copied.push(document.activeElement.value); return true; };
+  });
+  await page.click('[data-calc-list-copy]');
+  await page.waitForTimeout(200);
+  const listCopy = await page.evaluate(() => window.__copied[0] || '');
+  if (!listCopy.includes('Всего по списку (одинаковые позиции сложены):\n— Гипсокартон 1200 × 2500 мм: 14 листов')) fail(`калькулятор: в тексте списка нет итога — «${listCopy.slice(0, 160)}»`);
+  await set({ length: '9' });
+  await page.click('[data-calc-list-open="0"]');
+  await page.waitForTimeout(300);
+  expect('перегородка, открытая из списка', await page.inputValue('[data-calc-form] input[name="length"]'), '4');
+  await page.click('[data-calc-list-open="1"]');
+  await page.waitForTimeout(300);
+  expect('вторая перегородка, открытая из списка', await page.inputValue('[data-calc-form] input[name="length"]'), '3');
+  await page.click('[data-calc-list-clear]');
+  await page.click('[data-calc-list-clear]');
+
+  /* Список, сохранённый до правки 32 (позиции без чисел), показывается как
+     был: без «Всего по списку» и без «Открыть в калькуляторе». */
+  await page.evaluate(() => localStorage.setItem('sg-calc-list', JSON.stringify([
+    { title: 'Обои', summary: 'комната 4 × 3', items: [['Обои 0,53 × 10,05 м', '9 рулонов']] },
+    { title: 'Обои', summary: 'комната 5 × 3', items: [['Обои 0,53 × 10,05 м', '10 рулонов']] },
+  ])));
+  await page.goto(pageUrl, { waitUntil: 'load' });
+  await page.waitForTimeout(300);
+  const old = await page.evaluate(() => ({
+    entries: document.querySelectorAll('.calc-list__entry').length,
+    total: !document.querySelector('[data-calc-list-total]').hidden,
+    open: document.querySelectorAll('[data-calc-list-open]').length,
+  }));
+  if (old.entries !== 2 || old.total || old.open) fail(`калькулятор: старый список — ${JSON.stringify(old)}`);
+  await page.click('[data-calc-list-clear]');
+  await page.click('[data-calc-list-clear]');
+
+  /* Enter — к следующему полю, как по бланку. */
+  await open('ceiling');
+  await page.focus('[data-calc-form] input[name="length"]');
+  await page.keyboard.press('Enter');
+  const next = await page.evaluate(() => document.activeElement && document.activeElement.name);
+  if (next !== 'width') fail(`калькулятор: Enter из «Длины» должен вести в «Ширину», а привёл в «${next}»`);
 
   if (errors.length) fail(`калькулятор: ошибки скрипта — ${errors.join('; ')}`);
   await ctx.close();

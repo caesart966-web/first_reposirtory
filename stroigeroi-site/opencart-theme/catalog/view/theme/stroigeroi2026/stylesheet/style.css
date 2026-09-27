@@ -4929,6 +4929,299 @@ html[data-theme="dark"] .step.is-current .step__num {
   margin-top: var(--sp-4);
 }
 
+/* «Очистить» со второго нажатия: первое спрашивает «Точно очистить?» */
+.calc-list__actions .is-armed {
+  border-color: var(--sg-red);
+  color: var(--sg-red);
+}
+
+/* Открыть расчёт из списка снова — поправить и добавить заново */
+.calc-list__open {
+  min-height: 36px;
+  margin-top: var(--sp-2);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--sg-blue);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.calc-list__open:hover {
+  text-decoration: underline;
+}
+
+/* Всего по списку: одинаковые позиции разных расчётов сложены */
+.calc-list__total {
+  margin-top: var(--sp-4);
+  padding: var(--sp-4);
+  border: 2px solid var(--sg-blue);
+  border-radius: var(--r-md);
+  background: var(--sg-blue-tint);
+}
+
+.calc-list__total[hidden] {
+  display: none;
+}
+
+.calc-list__total-title {
+  margin: 0 0 var(--sp-2);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.calc-list__total .calc-list__items b {
+  color: var(--sg-blue);
+}
+
+.calc-list__from {
+  font-size: 12px;
+  color: var(--sg-muted);
+  white-space: nowrap;
+}
+
+/* Найти позицию в каталоге: по кнопке на каждый материал */
+.calc__find {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: var(--sp-2) 0 0;
+  font-size: 14px;
+}
+
+.calc__find-label {
+  font-weight: 600;
+  color: var(--sg-muted);
+}
+
+.calc__chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 var(--sp-3);
+  border: 1.5px solid var(--sg-line);
+  border-radius: var(--r-pill);
+  background: var(--sg-white);
+  color: var(--sg-blue);
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  transition: border-color 0.15s ease;
+}
+
+.calc__chip:hover {
+  border-color: var(--sg-blue);
+}
+
+/* Предупреждение под полем: число похоже на опечатку или перепутанные
+   единицы. Считать оно не мешает — вдруг размеры и правда такие. */
+.calc__warn {
+  margin: 6px 0 0;
+  padding: 6px var(--sp-2);
+  border-left: 3px solid var(--sg-red);
+  border-radius: var(--r-sm);
+  background: var(--sg-red-tint);
+  color: var(--sg-ink);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.calc__warn[hidden] {
+  display: none;
+}
+
+/* Схема под полями: потолок сверху, перегородка сбоку. Рисунок в
+   сантиметрах, линии — одной толщины при любом размере комнаты. */
+.calc__scheme {
+  margin: var(--sp-5) 0 0;
+  padding: var(--sp-4);
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  background: var(--sg-bg-soft);
+}
+
+.calc__scheme[hidden] {
+  display: none;
+}
+
+.scheme {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 360px;
+}
+
+.scheme path,
+.scheme rect {
+  vector-effect: non-scaling-stroke;
+}
+
+.scheme__room {
+  fill: var(--sg-white);
+}
+
+.scheme__edge {
+  fill: none;
+  stroke: var(--sg-ink);
+  stroke-width: 2;
+}
+
+.scheme__cut {
+  fill: var(--sg-red-tint);
+}
+
+.scheme__t06 {
+  fill: none;
+  stroke: var(--sg-muted);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+
+.scheme__t12 {
+  fill: none;
+  stroke: var(--sg-ink);
+  stroke-opacity: 0.45;
+  stroke-width: 1.25;
+}
+
+.scheme__main {
+  fill: none;
+  stroke: var(--sg-blue);
+  stroke-width: 3;
+}
+
+.scheme__hang {
+  fill: var(--sg-red);
+}
+
+.scheme__seam {
+  fill: none;
+  stroke: var(--sg-muted);
+  stroke-width: 1.25;
+  stroke-dasharray: 6 4;
+}
+
+.scheme__stud {
+  fill: none;
+  stroke: var(--sg-blue);
+  stroke-width: 2.5;
+}
+
+.scheme__guide {
+  fill: none;
+  stroke: var(--sg-blue);
+  stroke-width: 5;
+}
+
+.scheme__splice {
+  fill: none;
+  stroke: var(--sg-red);
+  stroke-width: 3;
+}
+
+.scheme__sheet {
+  fill: none;
+  stroke: var(--sg-ink);
+  stroke-opacity: 0.55;
+  stroke-width: 1.25;
+}
+
+.scheme__lap {
+  fill: var(--sg-blue);
+  fill-opacity: 0.18;
+}
+
+.scheme__alt {
+  fill: var(--sg-blue);
+  fill-opacity: 0.12;
+}
+
+.calc__scheme-cap {
+  margin-top: var(--sp-3);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--sg-muted);
+}
+
+.calc__scheme-cap b {
+  color: var(--sg-ink);
+}
+
+.scheme-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px var(--sp-4);
+  margin: var(--sp-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scheme-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.scheme-key {
+  flex: none;
+  display: inline-block;
+  width: 20px;
+  height: 0;
+  border-top: 3px solid var(--sg-blue);
+}
+
+.scheme-key--t12 {
+  border-top: 1.5px solid var(--sg-muted);
+}
+
+.scheme-key--t06,
+.scheme-key--seam {
+  border-top: 1.5px dashed var(--sg-muted);
+}
+
+.scheme-key--hang {
+  width: 8px;
+  height: 8px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--sg-red);
+}
+
+.scheme-key--cut {
+  width: 16px;
+  height: 10px;
+  border: 1px solid var(--sg-line);
+  background: var(--sg-red-tint);
+}
+
+.scheme-key--stud {
+  border-top-width: 2.5px;
+}
+
+.scheme-key--guide {
+  border-top-width: 5px;
+}
+
+.scheme-key--splice {
+  width: 12px;
+  border-top-color: var(--sg-red);
+}
+
+.scheme-key--sheet {
+  border-top: 1.5px solid var(--sg-muted);
+}
+
+.scheme-key--lap,
+.scheme-key--alt {
+  width: 16px;
+  height: 10px;
+  border: 1px solid var(--sg-line);
+  background: var(--sg-blue-tint);
+}
+
 /* На широком экране — два ровных ряда по семь: 14 карточек в сетке
    «сколько влезет» ложились 6 + 6 + 2, и последний ряд торчал обрубком. */
 @media (min-width: 1100px) {
@@ -5078,6 +5371,7 @@ body:has(.demo-note:not([hidden])) .calc-peek {
   body.is-print-calc .calcs ~ *,
   body.is-print-calc .calc-list__actions,
   body.is-print-calc .calc-list__remove,
+  body.is-print-calc .calc-list__open,
   body.is-print-calc .calc-list > .calc__hint {
     display: none !important;
   }

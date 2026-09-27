@@ -9,7 +9,7 @@
   Адрес поиска для кнопки «Найти в каталоге» - в data-search-url: у макета
   он свой, у движка свой.
 #}
-{% set asset_v = '4a2d9d6c' %}
+{% set asset_v = '2149d8d7' %}
 {{ header }}
   <div class="container">
 
@@ -34,7 +34,7 @@
 
     <div class="page-head">
       <h1>Строительный калькулятор</h1>
-      <p>14 калькуляторов для ремонта и стройки — от гипсокартона и плитки до потолка «Армстронг», бетона и радиаторов. Считают по вашим размерам и по данным с упаковки: чужой расход мы не подставляем. Результат можно сложить в список покупок, распечатать или отправить менеджеру.</p>
+      <p>14 калькуляторов для ремонта и стройки — от гипсокартона и плитки до потолка «Армстронг», бетона и радиаторов. Считают по вашим размерам и по данным с упаковки: чужой расход мы не подставляем. Результат можно сложить в список покупок, распечатать, отправить менеджеру или переслать ссылкой — по ней откроются те же размеры.</p>
     </div>
 
     <div class="calcs" data-calcs data-search-url="index.php?route=product/search&amp;search=">
@@ -59,8 +59,9 @@
           </div>
           <div class="calc__tools">
             <button class="calc__tool" type="button" data-calc-copy><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg> Скопировать расчёт</button>
-            <a class="calc__tool" href="index.php?route=information/sitemap" data-calc-find>Найти в каталоге</a>
+            <button class="calc__tool" type="button" data-calc-link><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5"/></svg> Ссылка на расчёт</button>
           </div>
+          <div class="calc__find" data-calc-find></div>
         </aside>
       </div>
 
@@ -69,6 +70,7 @@
           <h2 class="calc-list__title" id="calc-list-title">Список покупок</h2>
           <span class="calc-list__count" data-calc-list-count></span>
         </div>
+        <div class="calc-list__total" data-calc-list-total hidden></div>
         <ul class="calc-list__entries" data-calc-list-body></ul>
         <div class="calc-list__actions">
           <button class="btn btn--action" type="button" data-calc-list-send data-calc-send data-modal-open="modal-callback"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 3 10 14"/><path d="M21 3 14 21l-4-7-7-4z"/></svg> Отправить менеджеру</button>

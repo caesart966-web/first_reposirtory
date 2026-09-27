@@ -11,7 +11,9 @@
 страницу в нужном состоянии, - заказчик нашёл кнопку с телефона.
 
 Проверка собирает классы из всех шаблонов темы, из app.js (className,
-classList.add/toggle) и из разметки, которую строкой собирает calc.js, и ищет каждый в style.css и opencart.css. Классы,
+classList.add/toggle), из разметки, которую строкой собирает calc.js,
+и из имён, которые calc.js передаёт в svgPath/svgRect, и ищет каждый
+в style.css и opencart.css. Классы,
 которые нарочно ничем не оформлены (крючки для разметки, скриптов или
 поисковиков), перечислены ниже с причиной; всё остальное - ошибка.
 
@@ -60,9 +62,15 @@ def used_classes():
             for cls in m.group(1).split():
                 used.setdefault(cls, set()).add(name)
         # Калькулятор собирает разметку строками: class="..." внутри JS.
+        # Подставленное выражение (class="' + cls + '") - не класс: его
+        # имя приходит строкой в вызов svgPath('scheme__main', ...) или
+        # svgRect(...), и такие строки проверяются отдельно ниже.
         for m in re.finditer(r'class="([^"]*)"', js):
-            for cls in m.group(1).split():
+            static = re.sub(r"'\s*\+.*?\+\s*'", ' ', m.group(1))
+            for cls in static.split():
                 used.setdefault(cls, set()).add(name)
+        for m in re.finditer(r"\bsvg(?:Path|Rect)\('([\w-]+)'", js):
+            used.setdefault(m.group(1), set()).add(name)
     return used
 
 
