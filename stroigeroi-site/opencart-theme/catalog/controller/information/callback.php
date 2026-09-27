@@ -86,6 +86,17 @@ class ControllerInformationCallback extends Controller {
 		}
 
 		if (!$json) {
+			// Письмо уходит простым текстом, а движок хранит присланное
+			// с заменой & " < > на &amp; и т. п. Без обратной замены
+			// менеджер видел бы «&amp;» в тексте, а ссылка калькулятора
+			// на расчёт (…#armstrong?length=6&width=4) открывала бы его
+			// без половины размеров. Раскодируем до очистки от переводов
+			// строки: очистка должна видеть ровно тот текст, что уйдёт
+			// в письмо.
+			$name    = html_entity_decode($name, ENT_QUOTES, 'UTF-8');
+			$phone   = html_entity_decode($phone, ENT_QUOTES, 'UTF-8');
+			$message = html_entity_decode($message, ENT_QUOTES, 'UTF-8');
+
 			// Переводы строки и возврат каретки выбрасываем до того, как
 			// значение попадёт в тему письма.
 			$safe_name  = str_replace(array("\r", "\n", "\t"), ' ', $name);

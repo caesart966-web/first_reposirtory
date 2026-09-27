@@ -1548,8 +1548,10 @@
       h.slice(q + 1).split('&').forEach(function (pair) {
         var i = pair.indexOf('=');
         if (i < 1) return;
+        /* «&amp;» вместо «&» — ссылку по дороге экранировали (письмо,
+           мессенджер): имя поля тогда начинается с «amp;». */
         try {
-          out.params[decodeURIComponent(pair.slice(0, i))] = decodeURIComponent(pair.slice(i + 1));
+          out.params[decodeURIComponent(pair.slice(0, i)).replace(/^amp;/, '')] = decodeURIComponent(pair.slice(i + 1));
         } catch (e) { /* битый кусок ссылки — пропускаем */ }
       });
     }

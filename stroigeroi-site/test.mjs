@@ -1005,6 +1005,11 @@ for (const name of ['index', 'catalog', 'checkout', 'contacts', 'login']) {
   await linked.waitForTimeout(300);
   got = await values(linked);
   if (got.sides !== '1' || got.sheet !== '3' || got.step !== '0.6' || got.answer !== '4 листа') fail(`калькулятор: ссылка с вариантами — ${JSON.stringify(got)}`);
+  /* Ссылку экранировали по дороге (письмо, мессенджер): «&amp;» вместо «&». */
+  await linked.goto(pageUrl + '#armstrong?length=6&amp;width=3&amp;lamps=0', { waitUntil: 'load' });
+  await linked.waitForTimeout(300);
+  got = await values(linked);
+  if (got.length !== '6' || got.width !== '3' || got.answer !== '50 плит') fail(`калькулятор: ссылка с «&amp;» — ${JSON.stringify(got)}`);
   await linked.evaluate(() => { location.hash = '#plitka?area=20'; });
   await linked.waitForTimeout(300);
   got = await values(linked);
