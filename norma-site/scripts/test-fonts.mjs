@@ -20,15 +20,17 @@ import { chromium } from './lib/browser.mjs'
 
 const BASE = process.argv[2] || 'http://127.0.0.1:4321'
 
-// Что проверяем. В каждом случае текст целиком из знаков, которые есть
-// в наших файлах: «₽» в шрифтах нет, и строка с ним честно покажет запасной
-// шрифт для одного знака, — поэтому здесь её нет.
+// Что проверяем. Суммы со знаком «₽» — отдельными пунктами: знака нет
+// ни в латинской, ни в кириллической части, он лежит в своих файлах
+// (golos-rub, literata-rub), и до 27.09.2026 рисовался системным шрифтом.
 const CASES = [
   { path: '/', sel: '.mobile-bar a', font: 'Golos Text', what: 'подписи нижней панели связи' },
   { path: '/', sel: '.apply-direct .ad-phone', font: 'Golos Text', what: 'телефон под формой заявки' },
   { path: '/', sel: '.hero .page-title', font: 'Literata', what: 'заголовок первого экрана (пробелы — из латинской части)' },
   { path: '/', sel: '.steps .sn', font: 'Literata', what: 'номера шагов' },
   { path: '/kontakty/', sel: '.k-phone', font: 'Golos Text', what: 'номер телефона на «Контактах»' },
+  { path: '/', sel: '.ho-list li', font: 'Golos Text', what: 'условия на первом экране — цифры и «₽»' },
+  { path: '/', sel: '.pt-sum', font: 'Literata', what: 'суммы первого года — «₽» в антикве' },
 ]
 
 let problems = 0
@@ -45,7 +47,7 @@ console.log('\nШрифты применены, а не только загру�
   const html = await (await fetch(BASE + '/')).text()
   const preloaded = [...html.matchAll(/<link[^>]+rel="preload"[^>]+as="font"[^>]*>/g)]
     .map((m) => (m[0].match(/href="([^"]+)"/) || [])[1] || '')
-  for (const file of ['golos-cyrillic', 'golos-latin', 'literata-cyrillic', 'literata-latin']) {
+  for (const file of ['golos-cyrillic', 'golos-latin', 'golos-rub', 'literata-cyrillic', 'literata-latin', 'literata-rub']) {
     if (preloaded.some((h) => h.endsWith(`/fonts/${file}.woff2`))) ok(`${file}.woff2 загружается заранее`)
     else fail(`${file}.woff2 не загружается заранее — при font-display: optional браузер его не применит`)
   }

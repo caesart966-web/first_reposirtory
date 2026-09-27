@@ -4,6 +4,7 @@ import Hero from '../components/Hero.astro'
 import Calculator from '../components/Calculator.astro'
 import LeadForm from '../components/LeadForm.astro'
 import Icon from '../components/Icon.astro'
+import BrandIcon from '../components/BrandIcon.astro'
 import { SITE, href } from '../config/site'
 import { REGIONS } from '../config/regions'
 import { partnersOf } from '../config/partners'
@@ -118,7 +119,7 @@ const faq = [
   },
   {
     q: 'Правда ли, что порог для строителей — 3 млн ₽?',
-    a: 'Нет, это устаревшая информация. Порог поднят до 10 млн ₽ законом 124-ФЗ с 1 мая 2022 года. Цифру в 3 млн до сих пор пишет примерно половина сайтов по теме — это самый простой способ проверить, следит ли площадка за изменениями.',
+    a: 'Нет, это устаревшая информация. Порог поднят до 10 млн ₽ законом 124-ФЗ с 1 мая 2022 года. Цифра в 3 млн до сих пор встречается на сайтах по теме — по ней проще всего проверить, следит ли площадка за изменениями.',
   },
   {
     q: 'Можно ли вступить в СРО другого региона?',
@@ -226,22 +227,24 @@ const howToSchema = {
   <section class="section section--paper apply" id="zayavka" data-anchor>
     <div class="wrap apply-grid">
       <div class="apply-form rv">
-        <LeadForm />
+        <LeadForm who />
         {/* Прямые каналы — строкой под формой, а не отдельной карточкой:
             на телефоне те же кнопки и так стоят в нижней панели, а почты
             там нет. */}
         <p class="apply-direct">
           <span>Или напрямую:</span>
-          <a class="ad-phone" href={SITE.phoneHref} data-goal="click_phone">{SITE.phone}</a>
+          <a class="ad-phone" href={SITE.phoneHref} data-goal="click_phone">
+            <BrandIcon name="phone" size={18} idp="apply" /> {SITE.phone}
+          </a>
           <a href={SITE.whatsapp} target="_blank" rel="noopener noreferrer" data-goal="click_whatsapp">
-            <Icon name="whatsapp" size={16} /> WhatsApp
+            <BrandIcon name="whatsapp" size={18} idp="apply" /> WhatsApp
           </a>
           <a href={SITE.telegram} target="_blank" rel="noopener noreferrer" data-goal="click_telegram">
-            <Icon name="telegram" size={16} /> Telegram
+            <BrandIcon name="telegram" size={18} idp="apply" /> Telegram
           </a>
           {SITE.maxLink && (
             <a href={SITE.maxLink} target="_blank" rel="noopener noreferrer" data-goal="click_max">
-              <Icon name="chat" size={16} /> MAX
+              <BrandIcon name="max" size={18} idp="apply" /> MAX
             </a>
           )}
           <a href={`mailto:${SITE.email}`}>{SITE.email}</a>
@@ -470,7 +473,9 @@ const howToSchema = {
     margin-block: -6px;
   }
   .apply-direct a:hover { color: var(--acc-deep); text-decoration: underline; }
-  .apply-direct :global(svg) { color: var(--acc); }
+  /* Значки — те же круги, что на нижней панели; красный круг телефона —
+     цветом текста, сургучом. */
+  .apply-direct :global(svg) { flex: none; color: var(--acc-btn); }
   .ad-phone { font-variant-numeric: lining-nums tabular-nums; }
   .apply-next .s-head { margin-bottom: 24px; }
   .apply-next h2 { font-size: clamp(24px, 2.4vw, 30px); }

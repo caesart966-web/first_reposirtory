@@ -176,6 +176,9 @@ const graph = {
     <link rel="preload" as="font" type="font/woff2" href={href('/fonts/golos-cyrillic.woff2')} crossorigin />
     <link rel="preload" as="font" type="font/woff2" href={href('/fonts/golos-latin.woff2')} crossorigin />
     <link rel="preload" as="font" type="font/woff2" href={href('/fonts/literata-latin.woff2')} crossorigin />
+    {/* Знак рубля — по килобайту (styles/fonts.css): «₽» стоит в каждой сумме. */}
+    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/golos-rub.woff2')} crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/literata-rub.woff2')} crossorigin />
 
     <!-- Значок сайта. SVG понимают все современные браузеры, но Яндекс
          в выдаче берёт растр, а телефоны — apple-touch-icon: значок сайта

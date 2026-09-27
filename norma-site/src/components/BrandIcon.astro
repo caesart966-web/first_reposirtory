@@ -22,14 +22,17 @@
 //     фон повторяет цвета их знака по краям;
 //   • телефон — трубка Material Icons (Apache 2.0).
 //
-// У переходов свои id. Компонент стоит на странице один раз — в нижней
-// панели; второй экземпляр на той же странице потребует уникальных id
-// (проверка ссылок следит за повторами).
+// У переходов свои id, и на одной странице значок стоит до трёх раз
+// (нижняя панель, строка под кнопками первого экрана, строка под формой).
+// Повтор id проверка ссылок считает ошибкой, поэтому у каждого места
+// своя приставка: idp="hero", idp="apply"; у нижней панели — по умолчанию.
 interface Props {
   name: 'phone' | 'whatsapp' | 'telegram' | 'max'
   size?: number
+  idp?: string
 }
-const { name, size = 28 } = Astro.props
+const { name, size = 28, idp = 'bi' } = Astro.props
+const id = (k: string) => `${idp}-${k}`
 ---
 
 {name === 'phone' && (
@@ -57,12 +60,12 @@ const { name, size = 28 } = Astro.props
 {name === 'telegram' && (
   <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
     <defs>
-      <linearGradient id="bi-tg" x1="0" y1="0" x2="0" y2="1">
+      <linearGradient id={id("tg")} x1="0" y1="0" x2="0" y2="1">
         <stop offset="0" stop-color="#38B0E3" />
         <stop offset="1" stop-color="#1D93D2" />
       </linearGradient>
     </defs>
-    <circle cx="12" cy="12" r="12" fill="url(#bi-tg)" />
+    <circle cx="12" cy="12" r="12" fill={`url(#${id("tg")})`} />
     <path
       fill="#FFFFFF"
       transform="translate(12 12) scale(.1) translate(-120 -120)"
@@ -74,28 +77,28 @@ const { name, size = 28 } = Astro.props
 {name === 'max' && (
   <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
     <defs>
-      <linearGradient id="bi-mx-a" x1="0" y1="0" x2="1" y2="0">
+      <linearGradient id={id("mx-a")} x1="0" y1="0" x2="1" y2="0">
         <stop offset="0" stop-color="#44CBFF" />
         <stop offset=".5" stop-color="#4C58E7" />
         <stop offset="1" stop-color="#9433DE" />
       </linearGradient>
-      <radialGradient id="bi-mx-b" cx=".38" cy="0" r=".62">
+      <radialGradient id={id("mx-b")} cx=".38" cy="0" r=".62">
         <stop offset="0" stop-color="#2F22B4" stop-opacity=".95" />
         <stop offset="1" stop-color="#2F22B4" stop-opacity="0" />
       </radialGradient>
-      <radialGradient id="bi-mx-c" cx="0" cy=".8" r=".55">
+      <radialGradient id={id("mx-c")} cx="0" cy=".8" r=".55">
         <stop offset="0" stop-color="#44CCFF" />
         <stop offset="1" stop-color="#44CCFF" stop-opacity="0" />
       </radialGradient>
-      <radialGradient id="bi-mx-d" cx="1" cy=".05" r=".6">
+      <radialGradient id={id("mx-d")} cx="1" cy=".05" r=".6">
         <stop offset="0" stop-color="#9A34DD" />
         <stop offset="1" stop-color="#9A34DD" stop-opacity="0" />
       </radialGradient>
     </defs>
-    <circle cx="12" cy="12" r="12" fill="url(#bi-mx-a)" />
-    <circle cx="12" cy="12" r="12" fill="url(#bi-mx-b)" />
-    <circle cx="12" cy="12" r="12" fill="url(#bi-mx-c)" />
-    <circle cx="12" cy="12" r="12" fill="url(#bi-mx-d)" />
+    <circle cx="12" cy="12" r="12" fill={`url(#${id("mx-a")})`} />
+    <circle cx="12" cy="12" r="12" fill={`url(#${id("mx-b")})`} />
+    <circle cx="12" cy="12" r="12" fill={`url(#${id("mx-c")})`} />
+    <circle cx="12" cy="12" r="12" fill={`url(#${id("mx-d")})`} />
     <g transform="translate(12 12) scale(.0145) translate(-640 -640)">
       <path fill="#FFFFFF" transform="translate(0 1280) scale(.1 -.1)" d="M6182 11260 c-1490 -89 -2849 -810 -3722 -1975 -658 -878 -974 -1896 -946 -3050 20 -862 118 -1453 440 -2653 173 -645 236 -1006 255 -1462 12 -274 36 -346 147 -451 168 -156 499 -180 901 -63 389 113 786 343 1006 585 l63 69 65 -47 c441 -321 851 -513 1254 -588 426 -78 1052 -84 1535 -14 2460 358 4249 2557 4101 5045 -162 2736 -2409 4765 -5099 4604z m463 -2395 c1148 -121 2051 -977 2232 -2115 28 -179 25 -563 -5 -725 -178 -947 -815 -1676 -1714 -1963 -666 -213 -1373 -124 -1962 246 l-98 62 -84 -80 c-251 -237 -507 -396 -603 -375 -184 40 -389 679 -463 1445 -17 181 -18 855 0 1005 65 556 192 958 426 1353 479 806 1347 1244 2271 1147z" />
     </g>

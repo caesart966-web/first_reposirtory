@@ -30,12 +30,19 @@ interface Props {
    * значит заставить его искать.
    */
   expanded?: boolean
+  /**
+   * Показать над заголовком, кому уходит заявка: фото, имя, чем занимается.
+   * На главной: «отвечу лично» рядом с лицом убедительнее, чем без него.
+   * На «Контактах» то же самое уже делает ConsultBlock — там не нужно.
+   */
+  who?: boolean
 }
 const {
   title = 'Оставьте заявку\u00a0— отвечу лично',
   subtitle = 'Достаточно имени и телефона — остальное спрошу сам. Если СРО вам не нужна, так и скажу.',
   id = 'form',
   expanded = false,
+  who = false,
 } = Astro.props
 
 // Адрес приёмника заявок и токен. Задаются при сборке; на превью-хостинге
@@ -46,6 +53,14 @@ const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
 
 <div class="lead-form" id={id} data-anchor data-nosearch data-endpoint={endpoint} data-token={token}>
   <div class="lf-head">
+    {/* Квадрат, а не круг — как на «Контактах»: заказчик просил, чтобы
+        фотография была видна целиком, а круг срезает углы кадра. */}
+    {who && SITE.photo && (
+      <div class="lf-who">
+        <img src={href(`/img/${SITE.photo}`)} width="72" height="72" alt={SITE.shortName} loading="lazy" />
+        <p><b>{SITE.shortName}</b><span>Вступление в СРО, НРС, НОК и лицензии</span></p>
+      </div>
+    )}
     <h2>{title}</h2>
     <p>{subtitle}</p>
   </div>
@@ -234,6 +249,26 @@ const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
   }
   .lf-head { margin-bottom: 22px; display: grid; gap: 8px; }
   .lf-head h2 { font-size: clamp(21px, 2.6vw, 27px); }
+  .lf-who {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 14px;
+    align-items: center;
+    padding-bottom: 16px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid var(--line);
+  }
+  .lf-who img {
+    width: 72px;
+    height: 72px;
+    border-radius: var(--r-m);
+    object-fit: cover;
+    display: block;
+    border: 1px solid var(--line);
+  }
+  .lf-who p { margin: 0; max-width: none; }
+  .lf-who b { display: block; font-size: 16.5px; color: var(--ink); }
+  .lf-who span { display: block; color: var(--muted); font-size: 14px; line-height: 1.45; margin-top: 2px; }
   .lf-head p { color: var(--muted); font-size: 15.5px; max-width: 60ch; }
 
   form { display: grid; gap: 16px; }
