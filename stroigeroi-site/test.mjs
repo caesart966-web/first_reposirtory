@@ -649,29 +649,122 @@ for (const name of ['index', 'catalog', 'checkout', 'contacts', 'login']) {
     }
   };
 
-  /* Гипсокартон: 20 м² + 10 % = 22 ÷ 3 = 7,3 → 8. Склонение: 57 м² → 20,9
-     → «21 лист»; 60 → «22 листа» (было «22 листов»); 90 м² + 10 % = ровно
-     99 ÷ 3 = 33, а дробь 33,00000000000001 давала 34. Запятая на входе. */
+  /* Гипсокартон — весь комплект, а не одни листы: «там ещё идёт профиль»,
+     сказал заказчик. По умолчанию стена 4 × 2,7 м на каркасе ПС + ПН:
+     10,8 м² × 1,1 ÷ 3 = 3,96 → 4 листа; стоек 4 ÷ 0,6 → 7 + 1 = 8;
+     ПН 2 × (4 ÷ 3 → 2) = 4; саморезов 4 листа × 33 = 132; клопов 8 × 4
+     = 32; дюбелей 2 × (4 ÷ 0,5 + 1) по полу и потолку + 2 × (2,7 ÷ 0,5 → 6
+     + 1) по крайним стойкам = 32; лента 2 × (4 + 2,7) = 13,4 м; серпянка
+     3 шва × 2,7 + 1 × 4 = 12,1 м. */
   await open('gkl');
-  expect('гипсокартон по умолчанию', (await read()).answer, '8 листов');
+  let r = await read();
+  expect('гипсокартон по умолчанию', r.answer, '4 листа');
+  const kit = (label, r, want) => {
+    for (const [name, qty] of Object.entries(want)) {
+      const got = qty === null ? (r.buy.some((b) => b[0].startsWith(name)) ? 'есть' : null) : buyOf(r, name);
+      if (got !== (qty === null ? null : qty)) fail(`калькулятор, ${label}: «${name}» — ждали ${qty === null ? 'нет в списке' : '«' + qty + '»'}, получено «${got}»`);
+    }
+  };
+  kit('гипсокартон, стена на ПС', r, {
+    'Профиль стоечный ПС, 3 м': '8 шт.', 'Профиль направляющий ПН, 3 м': '4 шт.', 'Саморезы для гипсокартона': '132 шт.',
+    'Саморезы-клопы': '32 шт.', 'Дюбель-гвозди': '32 шт.', 'Лента уплотнительная': '13,4 м', 'Серпянка': '12,1 м', 'Подвесы': null,
+  });
+  if (!/Шпатлёвку и грунтовку посчитаем по расходу с упаковки/.test(r.note)) fail(`калькулятор, гипсокартон: не сказано, как посчитать шпатлёвку и грунтовку — «${r.note}»`);
+
+  /* Каркас ПП на прямых подвесах: профилей те же 8, подвесов 2,7 ÷ 0,6
+     → 5 − 1 = 4 на профиль (концы держат направляющие), всего 32; дюбелей
+     18 по направляющим + 2 × 32 = 82; клопов 32 + 2 × 32 = 96; лента —
+     только под направляющими, 8 м. */
+  await set({ mount: 'pp' });
+  kit('гипсокартон, стена на ПП', await read(), {
+    'Профиль потолочный ПП 60 × 27, 3 м': '8 шт.', 'Профиль направляющий ПН 28 × 27, 3 м': '4 шт.', 'Подвесы прямые': '32 шт.',
+    'Дюбель-гвозди': '82 шт.', 'Саморезы-клопы': '96 шт.', 'Лента уплотнительная': '8 м', 'Профиль стоечный': null,
+  });
+
+  /* Стены комнаты 4 × 3 × 2,7: 37,8 м² × 1,1 ÷ 3 = 13,9 → 14 листов;
+     стоек 8 + 6 + 8 + 6 = 28 — у каждой стены свои крайние; ПН по периметру
+     подряд: 2 × (14 ÷ 3 → 5) = 10; дюбели только по полу и потолку:
+     2 × (9 + 7 + 9 + 7) = 64; серпянка 2 × 12,1 + 2 × 8,4 и 4 угла × 2,7
+     = 51,8 м. */
+  await set({ surf: 'walls', mount: 'ps' });
+  r = await read();
+  expect('гипсокартон, стены комнаты', r.answer, '14 листов');
+  kit('гипсокартон, стены комнаты', r, {
+    'Профиль стоечный ПС': '28 шт.', 'Профиль направляющий ПН': '10 шт.', 'Дюбель-гвозди': '64 шт.', 'Лента уплотнительная': '28 м', 'Серпянка': '51,8 м',
+  });
+
+  /* Потолок 4 × 3: 12 × 1,1 ÷ 3 = 4,4 → 5 листов; каркас потолка
+     не считаем и говорим об этом; выбора крепления нет. Швы: листы вдоль
+     длинной стены — 2 шва по 4 м и 1 поперёк по 3 м = 11 м. */
+  await set({ surf: 'ceiling' });
+  r = await read();
+  expect('гипсокартон, потолок', r.answer, '5 листов');
+  kit('гипсокартон, потолок', r, { 'Серпянка': '11 м', 'Профиль': null, 'Саморезы': null });
+  if (!/Каркас потолка здесь не считаем/.test(r.note)) fail(`калькулятор, гипсокартон на потолок: не сказано, что каркас не посчитан — «${r.note}»`);
+  if (!(await page.evaluate(() => document.querySelector('[data-field="mount"]').hidden))) fail('калькулятор, гипсокартон на потолок: выбор крепления листов должен прятаться');
+
+  /* На клей: без каркаса и крепежа; клей — по расходу с мешка:
+     10,8 × 5 = 54 кг → 2 мешка по 30 кг. Два слоя на клей не сажают —
+     переключатель прячется, листов по-прежнему 4. */
+  await set({ surf: 'wall', layers: '2', mount: 'glue' });
+  r = await read();
+  expect('гипсокартон на клей', r.answer, '4 листа');
+  if (!/Клей посчитаем по расходу с мешка/.test(r.note)) fail(`калькулятор, гипсокартон на клей без расхода — «${r.note}»`);
+  await set({ glueRate: '5', glueBag: '30' });
+  kit('гипсокартон на клей', await read(), { 'Клей для гипсокартона, мешки по 30 кг': '2 мешка', 'Профиль': null, 'Дюбель-гвозди': null, 'Серпянка': '12,1 м' });
+  await set({ mount: 'none' });
+  r = await read();
+  if (r.buy.map((b) => b[0]).join('|') !== 'Гипсокартон 1200 × 2500 мм|Серпянка для швов') fail(`калькулятор, только листы — ${JSON.stringify(r.buy)}`);
+  expect('гипсокартон, только листы в два слоя', r.answer, '8 листов');
+
+  /* Отделка: шпатлёвка 10,8 × 0,3 = 3,24 кг — 3,2 кг, с мешком 25 кг —
+     1 мешок; грунтовка 10,8 × 150 мл = 1,62 л → канистра 10 л; уголок —
+     5,4 м ÷ 3 = 1,8 → 2 шт.; утеплитель — площадь обшивки. */
+  await page.click('[data-calc-reset]');
+  await set({ puttyRate: '0,3', insul: '1', corners: '5,4' });
+  kit('гипсокартон, шпатлёвка без мешка', await read(), { 'Шпатлёвка для швов': '3,2 кг', 'Утеплитель': '10,8 м²', 'Уголок перфорированный, 3 м': '2 шт.' });
+  await set({ puttyBag: '25', primerRate: '150', primerCan: '10' });
+  r = await read();
+  kit('гипсокартон, отделка', r, { 'Шпатлёвка для швов, мешки по 25 кг': '1 мешок', 'Грунтовка, канистры по 10 л': '1 канистра' });
+  if (/посчитаем по расходу/.test(r.note)) fail(`калькулятор, гипсокартон: расход вписан, а подсказка осталась — «${r.note}»`);
+  await set({ primerRate: '0,15' });
+  if (!(await page.evaluate(() => !document.querySelector('[data-warn-for="primerRate"]').hidden))) fail('калькулятор: грунтовка 0,15 мл на 1 м² — нет подсказки, что это литры');
+  noDots(await read(), 'гипсокартон');
+  await page.click('[data-calc-reset]');
+
+  /* По площади: 20 м² + 10 % = 22 ÷ 3 = 7,3 → 8. Склонение: 57 м² → 20,9
+     → «21 лист»; 60 → «22 листа» (было «22 листов»); 90 м² + 10 % = ровно
+     99 ÷ 3 = 33, а дробь 33,00000000000001 давала 34. Запятая на входе.
+     Каркас по площади — как у одной стены длиной площадь ÷ высота. */
+  await set({ surf: 'area' });
+  r = await read();
+  expect('гипсокартон 20 м²', r.answer, '8 листов');
+  expect('гипсокартон 20 м², каркас', (r.rows.find((x) => x[0].startsWith('Каркас')) || [])[1], '7,41 м × 2,7 м');
   for (const [area, want] of [['57', '21 лист'], ['60', '22 листа'], ['90', '33 листа'], ['18,5', '7 листов']]) {
     await set({ area });
     expect(`гипсокартон ${area} м²`, (await read()).answer, want);
   }
-  noDots(await read(), 'гипсокартон');
+  await page.click('[data-calc-reset]');
 
   /* Перегородка 4 × 2,7 м, две стороны, лист 1200 × 2500: 10,8 × 2 × 1,1 ÷ 3
      = 7,9 → 8 листов; стоек 4 ÷ 0,6 → 7 + 1 = 8; ПН 2 × (4 ÷ 3 → 2) = 4;
      саморезов на лист 3 стойки × (2,5 ÷ 0,25 + 1) = 33, × 8 = 264;
-     серпянка (3 шва × 2,7 + 1 × 4) × 2 = 24,2 м. */
+     серпянка (3 шва × 2,7 + 1 × 4) × 2 = 24,2 м. Формула каркаса та же,
+     что у гипсокартона. Шпатлёвка — на обе стороны: 21,6 × 0,3 = 6,5 кг. */
   await open('frame');
-  let r = await read();
+  r = await read();
   expect('перегородка, листы', r.answer, '8 листов');
   expect('перегородка, стойки', buyOf(r, 'Профиль стоечный'), '8 шт.');
   expect('перегородка, направляющие', buyOf(r, 'Профиль направляющий'), '4 шт.');
   expect('перегородка, саморезы', buyOf(r, 'Саморезы для гипсокартона'), '264 шт.');
   expect('перегородка, дюбели', buyOf(r, 'Дюбель-гвозди'), '32 шт.');
   expect('перегородка, серпянка', buyOf(r, 'Серпянка'), '24,2 м');
+  expect('перегородка, клопы', buyOf(r, 'Саморезы-клопы'), '32 шт.');
+  await set({ puttyRate: '0,3', insul: '1' });
+  r = await read();
+  expect('перегородка, шпатлёвка на две стороны', buyOf(r, 'Шпатлёвка для швов'), '6,5 кг');
+  expect('перегородка, звукоизоляция', buyOf(r, 'Утеплитель'), '10,8 м²');
+  await page.click('[data-calc-reset]');
 
   /* Смеси: без расхода — не считаем; 120 × 8 × 1,4 × 1,1 ÷ 30 = 49,3 → 50;
      запас у вкладки свой: 0 % → 1344 ÷ 30 = 44,8 → 45. */
@@ -950,14 +1043,55 @@ for (const name of ['index', 'catalog', 'checkout', 'contacts', 'login']) {
 
   /* Память полей и «Сбросить» */
   await open('gkl');
-  await set({ area: '42' });
+  await set({ surf: 'walls', length: '6' });
   await page.waitForTimeout(500);
   await page.goto(pageUrl, { waitUntil: 'load' });
   await page.waitForTimeout(300);
-  expect('гипсокартон после перезагрузки', await page.inputValue('[data-calc-form] input[name="area"]'), '42');
+  expect('гипсокартон после перезагрузки', await page.inputValue('[data-calc-form] input[name="length"]'), '6');
+  expect('гипсокартон после перезагрузки, что обшиваем', await page.evaluate(() => document.querySelector('[data-calc-form] input[name="surf"]:checked').value), 'walls');
   await page.click('[data-calc-reset]');
   await page.waitForTimeout(150);
-  expect('гипсокартон после «Сбросить»', await page.inputValue('[data-calc-form] input[name="area"]'), '20');
+  expect('гипсокартон после «Сбросить»', await page.inputValue('[data-calc-form] input[name="length"]'), '4');
+
+  /* Гипсокартон до правки 34: площадь задавали «Знаю площадь» или «По
+     размерам комнаты» (mode). Старые ссылки и память браузера открываются
+     теми же размерами, а не значениями по умолчанию: 30 м² → 11 листов,
+     потолок 5 × 3 → 15 × 1,1 ÷ 3 = 5,5 → 6. Вариант, которого больше нет
+     (surf=both), не оставляет переключатель без выбора. В памяти старого
+     вида «Знаю площадь» стояло рядом с невидимым surf=walls — открыться
+     должна площадь, а не стены комнаты 5 × 4 × 3 (54 м², 20 листов). */
+  {
+    const octx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const op = await octx.newPage();
+    op.on('pageerror', (e) => errors.push(e.message));
+    const state = () => op.evaluate(() => ({
+      surf: (document.querySelector('[data-calc-form] input[name="surf"]:checked') || {}).value || null,
+      answer: document.querySelector('[data-calc-answer]').textContent.replace(/\u00a0/g, ' '),
+    }));
+    for (const [hash, want] of [
+      ['#gipsokarton?area=30', { surf: 'area', answer: '11 листов' }],
+      ['#gipsokarton?mode=room&surf=ceiling&length=5', { surf: 'ceiling', answer: '6 листов' }],
+      ['#gipsokarton?mode=room&surf=both', { surf: 'walls', answer: '14 листов' }],
+    ]) {
+      await op.goto(pageUrl + hash, { waitUntil: 'load' });
+      await op.waitForTimeout(300);
+      const got = await state();
+      if (JSON.stringify(got) !== JSON.stringify(want)) fail(`калькулятор: старая ссылка ${hash} — ${JSON.stringify(got)}`);
+    }
+    /* Память пишется через 0,4 с после расчёта — ждём, чтобы она не
+       затёрла подложенную запись, и уходим со страницы совсем: переход
+       по одной решётке остался бы на той же странице. */
+    await op.waitForTimeout(500);
+    await op.evaluate(() => localStorage.setItem('sg-calc-v-gkl', JSON.stringify({ mode: 'area', area: '30', surf: 'walls', length: '5', width: '4', height: '3', openings: '0', sheet: '2.5', layers: '1', reserve: '10', mount: 'нет-такого' })));
+    await op.goto('about:blank');
+    await op.goto(pageUrl + '#gipsokarton', { waitUntil: 'load' });
+    await op.waitForTimeout(300);
+    const kept = await state();
+    if (kept.surf !== 'area' || kept.answer !== '11 листов') fail(`калькулятор: память гипсокартона до правки 34 — ${JSON.stringify(kept)}`);
+    const mount = await op.evaluate(() => (document.querySelector('[data-calc-form] input[name="mount"]:checked') || {}).value || null);
+    if (mount !== 'ps') fail(`калькулятор: в памяти вариант крепления, которого нет, — переключатель должен стоять на варианте по умолчанию, а стоит ${mount}`);
+    await octx.close();
+  }
 
   /* Старые адреса вкладок и ссылка «Калькулятор радиаторов» с карточки */
   for (const [hash, id] of [['gipsokarton', 'gkl'], ['smesi', 'mix'], ['radiatory', 'radiator'], ['armstrong', 'ceiling']]) {
@@ -1022,23 +1156,25 @@ for (const name of ['index', 'catalog', 'checkout', 'contacts', 'login']) {
   await lctx.close();
 
   /* Площадь по размерам комнаты. Гипсокартон на стены 4 × 3 × 2,7, проёмы
-     не вычитаем: 37,8 м² × 1,1 ÷ 3 = 13,9 → 14 листов; стены и потолок:
-     49,8 → 19. Плитка на пол 4 × 3: 12 × 1,1 ÷ 0,302² = 144,7 → 145; на
-     стены 34,8 м² → 419,7 → 420. Стяжка на пол 12 м² слоем 10 мм, расход
-     1,8, мешки по 25: 237,6 кг → 10. Панели на стены 34,8 × 1,1 ÷ 0,75 =
-     51,04 → 52. Перед каждой проверкой — «Сбросить»: выше в тех же
-     калькуляторах вписаны свои числа. */
+     не вычитаем: 37,8 м² × 1,1 ÷ 3 = 13,9 → 14 листов; с окнами и дверями
+     5 м² — 32,8 × 1,1 ÷ 3 = 12,03 → 13. Плитка на пол 4 × 3: 12 × 1,1
+     ÷ 0,302² = 144,7 → 145; на стены 34,8 м² → 419,7 → 420. Стяжка на пол
+     12 м² слоем 10 мм, расход 1,8, мешки по 25: 237,6 кг → 10. Панели
+     на стены 34,8 × 1,1 ÷ 0,75 = 51,04 → 52. Перед каждой проверкой —
+     «Сбросить»: выше в тех же калькуляторах вписаны свои числа. */
   await open('gkl');
   await page.click('[data-calc-reset]');
-  await set({ mode: 'room' });
+  await set({ surf: 'walls' });
   r = await read();
   expect('гипсокартон по комнате', r.answer, '14 листов');
-  expect('гипсокартон по комнате, стены', (r.rows.find((x) => x[0].startsWith('Стены')) || [])[1], '37,8 м²');
-  await set({ surf: 'both' });
+  expect('гипсокартон по комнате, площадь', (r.rows.find((x) => x[0] === 'Площадь обшивки') || [])[1], '37,8 м²');
+  await set({ openings: '5' });
   r = await read();
-  expect('гипсокартон, стены и потолок', r.answer, '19 листов');
-  expect('гипсокартон, итог площади', (r.rows.find((x) => x[0] === 'Площадь обшивки') || [])[1], '49,8 м²');
-  await set({ height: '' });
+  expect('гипсокартон по комнате с проёмами', r.answer, '13 листов');
+  expect('гипсокартон по комнате с проёмами, площадь', (r.rows.find((x) => x[0] === 'Площадь без окон и дверей') || [])[1], '32,8 м²');
+  await set({ openings: '40' });
+  expect('гипсокартон, проёмы больше стен', (await read()).note, 'Окна и двери получились больше стен — проверьте размеры.');
+  await set({ openings: '0', height: '' });
   expect('гипсокартон без высоты', (await read()).note, 'Впишите высоту стен.');
   await page.click('[data-calc-reset]');
   await open('tile');
@@ -1116,6 +1252,25 @@ for (const name of ['index', 'catalog', 'checkout', 'contacts', 'login']) {
   await page.click('[data-calc-reset]');
   sc = await scheme();
   if (!sc.shown || sc.studs !== 8 || !/8 стоек/.test(sc.caption)) fail(`калькулятор: схема перегородки — ${JSON.stringify(sc)}`);
+  /* Обшивка на подвесах: 8 профилей и 32 точки подвесов — столько же,
+     сколько в ответе. Стены комнаты — развёрткой: четыре рамки, 28 стоек.
+     У потолка каркас не считается — и схемы нет. */
+  await open('gkl');
+  await page.click('[data-calc-reset]');
+  await set({ mount: 'pp' });
+  sc = await scheme();
+  if (!sc.shown || sc.studs !== 8 || sc.hang !== 32 || !/Схема обшивки 4 м × 2,7 м: 8 профилей ПП через 600 мм, на каждом 4 подвеса/.test(sc.caption)) {
+    fail(`калькулятор: схема обшивки на подвесах — ${JSON.stringify(sc)}`);
+  }
+  await set({ surf: 'walls', mount: 'ps' });
+  sc = await scheme();
+  const frames = await page.evaluate(() => document.querySelectorAll('[data-calc-scheme] .scheme__edge').length);
+  if (!sc.shown || sc.studs !== 28 || frames !== 4 || sc.hang || !/Развёртка стен 4 \+ 3 \+ 4 \+ 3 м, высота 2,7 м: 28 стоек/.test(sc.caption)) {
+    fail(`калькулятор: развёртка стен комнаты — ${JSON.stringify(sc)}, рамок ${frames}`);
+  }
+  await set({ surf: 'ceiling' });
+  if ((await scheme()).shown) fail('калькулятор: каркас потолка из гипсокартона не считается — схемы быть не должно');
+  await page.click('[data-calc-reset]');
   await open('roof');
   await set({ useful: '1,1', sheetLen: '1,5' });
   sc = await scheme();
@@ -1133,9 +1288,20 @@ for (const name of ['index', 'catalog', 'checkout', 'contacts', 'login']) {
   const chips = () => page.$$eval('[data-calc-find] .calc__chip', (a) => a.map((x) => [x.textContent.replace(/\u00a0/g, ' '), decodeURIComponent(x.getAttribute('href').split('search=')[1] || '')]));
   await open('frame');
   const frameChips = JSON.stringify(await chips());
-  if (frameChips !== JSON.stringify([['Гипсокартон', 'гипсокартон'], ['Профиль', 'профиль'], ['Саморезы', 'саморез'], ['Дюбели', 'дюбел'], ['Уплотнительная лента', 'уплотнител'], ['Серпянка', 'серпянк']])) {
+  if (frameChips !== JSON.stringify([['Гипсокартон', 'гипсокартон'], ['Профиль', 'профиль'], ['Саморезы', 'саморез'], ['Дюбели', 'дюбел'], ['Уплотнительная лента', 'уплотнител'], ['Серпянка', 'серпянк'], ['Шпатлёвка', 'шпатлевк'], ['Грунтовка', 'грунт']])) {
     fail(`калькулятор: поиск позиций перегородки — ${frameChips}`);
   }
+  /* У обшивки на подвесах — ещё и подвесы: запрос из двух основ находит
+     «Подвес прямой» и не находит подвесы потолка «Армстронг». */
+  await open('gkl');
+  await set({ mount: 'pp', corners: '3' });
+  const gklChips = JSON.stringify(await chips());
+  if (gklChips !== JSON.stringify([['Гипсокартон', 'гипсокартон'], ['Профиль', 'профиль'], ['Подвесы прямые', 'подвес прям'], ['Саморезы', 'саморез'], ['Дюбели', 'дюбел'], ['Уплотнительная лента', 'уплотнител'], ['Серпянка', 'серпянк'], ['Шпатлёвка', 'шпатлевк'], ['Грунтовка', 'грунт'], ['Уголок перфорированный', 'уголок перфор']])) {
+    fail(`калькулятор: поиск позиций обшивки — ${gklChips}`);
+  }
+  await set({ mount: 'glue' });
+  if (!(await chips()).some((c) => c[1] === 'клей гипс') || (await chips()).some((c) => c[0] === 'Профиль')) fail(`калькулятор: поиск позиций обшивки на клей — ${JSON.stringify(await chips())}`);
+  await page.click('[data-calc-reset]');
   await open('mix');
   await set({ kind: 'screed' });
   if (JSON.stringify(await chips()) !== JSON.stringify([['Смесь для стяжки', 'стяжк']])) fail(`калькулятор: поиск смеси для стяжки — ${JSON.stringify(await chips())}`);
@@ -1213,29 +1379,31 @@ for (const name of ['index', 'catalog', 'checkout', 'contacts', 'login']) {
     await rp.waitForTimeout(300);
 
     /* Число и единица — через неразрывный пробел: при правке 32 он
-       превратился в обычный, и «8» могла уехать от «листов» на другую
+       превратился в обычный, и «4» могла уехать от «листа» на другую
        строку. Проверки выше заменяют его пробелом — здесь смотрим сам знак. */
     const nb = await rp.evaluate(() => document.querySelector('[data-calc-answer]').textContent);
-    if (nb !== '8 листов') fail(`калькулятор: между числом и единицей не неразрывный пробел — ${JSON.stringify(nb)}`);
+    if (nb !== '4 листа') fail(`калькулятор: между числом и единицей не неразрывный пробел — ${JSON.stringify(nb)}`);
 
     /* Щелчок по уже открытой карточке не теряет только что введённое. */
-    await rp.fill('[data-calc-form] input[name="area"]', '42');
+    await rp.fill('[data-calc-form] input[name="wallLen"]', '6');
     await rp.click('[data-calc-pick="gkl"]');
     await rp.waitForTimeout(150);
-    if ((await val('area')) !== '42') fail(`калькулятор: после щелчка по открытой карточке площадь ${await val('area')}, а вписали 42`);
+    if ((await val('wallLen')) !== '6') fail(`калькулятор: после щелчка по открытой карточке длина стены ${await val('wallLen')}, а вписали 6`);
 
     /* «10%» — это 10; число, которое не разобрать, уходит в ссылку пустым,
        как и считается, а не подменяется значением по умолчанию. */
+    await rp.evaluate(() => { document.querySelector('.calc__more').open = true; });
     await rp.fill('[data-calc-form] input[name="reserve"]', '10%');
     await rp.waitForTimeout(150);
     const pct = await rp.evaluate(() => [...document.querySelectorAll('[data-calc-rows] li')].map((li) => li.textContent.replace(/ /g, ' ')));
-    if (!pct.includes('Запас10 %')) fail(`калькулятор: «10%» не понят как 10 — ${JSON.stringify(pct)}`);
+    if (!pct.includes('Запас на листы10 %')) fail(`калькулятор: «10%» не понят как 10 — ${JSON.stringify(pct)}`);
     await rp.fill('[data-calc-form] input[name="reserve"]', 'abc');
     await rp.waitForTimeout(600);
     if (!/[?&]reserve=(&|$)/.test(new URL(rp.url()).hash)) fail(`калькулятор: непонятный запас должен уйти в ссылку пустым — ${new URL(rp.url()).hash}`);
     await rp.click('[data-calc-reset]');
 
-    /* Перезагрузка сразу после ввода: адрес ещё старый, память новее. */
+    /* Перезагрузка сразу после ввода: адрес ещё старый, память новее.
+       Ссылка — в старом виде, до правки 34: площадь без surf=area. */
     const rp2 = await rctx.newPage();
     await rp2.goto(url + '#gipsokarton?area=30', { waitUntil: 'load' });
     await rp2.waitForTimeout(300);
@@ -1392,7 +1560,9 @@ for (const name of ['index', 'catalog', 'checkout', 'contacts', 'login']) {
   if (!under.note || under.peek !== 'hidden') fail(`калькулятор на телефоне: плашка итога поверх сообщения внизу экрана — ${JSON.stringify(under)}`);
   await page.evaluate(() => { document.querySelector('[data-demo-note]').hidden = true; });
   if ((await page.evaluate(() => getComputedStyle(document.querySelector('[data-calc-peek]')).visibility)) !== 'visible') fail('калькулятор на телефоне: плашка итога не вернулась после сообщения');
-  await page.evaluate(() => document.querySelector('[data-calc-result]').scrollIntoView());
+  /* Прокрутка — мгновенная: плавная у длинной формы не успевает доехать
+     за время проверки, а проверяем мы плашку, а не анимацию. */
+  await page.evaluate(() => document.querySelector('[data-calc-result]').scrollIntoView({ behavior: 'instant' }));
   await page.waitForTimeout(400);
   if (!(await page.evaluate(() => document.querySelector('[data-calc-peek]').hidden))) fail('калькулятор на телефоне: плашка итога должна прятаться, когда итог на экране');
   await ctx.close();

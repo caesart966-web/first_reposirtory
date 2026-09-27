@@ -4615,6 +4615,29 @@ html[data-theme="dark"] .step.is-current .step__num {
   border: 0;
 }
 
+/* Четыре длинных варианта («Каркас ПП на подвесах») в половине формы
+   ломались на две строки по два — такой переключатель идёт во всю ширину.
+   На телефоне и вся ширина мала: строки ложились по одному, два и одному
+   варианту, поэтому там — ровная сетка два на два. */
+.calc__field--wide {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 560px) {
+  .calc__field--wide .seg {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .calc__field--wide .seg__opt {
+    display: flex;
+  }
+
+  .calc__field--wide .seg__opt span {
+    flex: 1;
+  }
+}
+
 .calc__seg legend {
   display: block;
   margin-bottom: var(--sp-2);
@@ -10641,7 +10664,8 @@ p a:not(.btn):hover,
     brick: ['кирпич', 'кирпича', 'кирпичей'],
     block: ['блок', 'блока', 'блоков'],
     pallet: ['поддон', 'поддона', 'поддонов'],
-    section: ['секция', 'секции', 'секций']
+    section: ['секция', 'секции', 'секций'],
+    canister: ['канистра', 'канистры', 'канистр']
   };
   var CALC_FORMS = ['расчёт', 'расчёта', 'расчётов'];
 
@@ -10776,6 +10800,148 @@ p a:not(.btn):hover,
     };
   }
 
+  /* ======================================================================
+     Гипсокартон: каркас, швы, отделка — общие у перегородки и обшивки
+     стен. Одна формула на оба калькулятора: одинаковые позиции называются
+     одинаково и складываются во «Всего по списку».
+     ====================================================================== */
+
+  /* Каркас под листы. o: walls — длины стен (у перегородки одна), H —
+     высота, kind — 'ps' (стоечный ПС в направляющих ПН) или 'pp'
+     (потолочный ПП на прямых подвесах), ends — крайние стойки крепят
+     к соседним стенам (у перегородки и одной стены; в комнате стойки
+     соседних стен сходятся в углу), sheets — листов всего, sheetLen,
+     what — что рисует схема, v — поля: шаг стоек, длина профиля, шаги
+     саморезов, дюбелей и подвесов. */
+  function frameItems(o) {
+    var v = o.v;
+    var H = o.H;
+    var pp = o.kind === 'pp';
+    var step = Number(v.step);
+    var PL = Number(v.profile);
+    var screwStep = pos(v.screw) ? v.screw / 1000 : 0.25;
+    var dowelStep = pos(v.dowel) ? v.dowel / 1000 : 0.5;
+    var hangStep = pos(v.hang) ? v.hang / 1000 : 0.6;
+    var studs = 0;
+    var run = 0;
+    var dowels = 0;
+    /* Стойки через шаг плюс крайняя — у каждой стены свои. Дюбели —
+       по направляющим через шаг и у обоих концов. */
+    o.walls.forEach(function (L) {
+      studs += up(L / step) + 1;
+      run += L;
+      dowels += 2 * (up(L / dowelStep) + 1);
+    });
+    /* Стена выше профиля — стойку наращивают: целых профилей на стойку
+       столько, сколько нужно по высоте. Направляющие — по полу
+       и по потолку; вдоль стен комнаты их режут подряд, и обрезок с одной
+       стены идёт на следующую. */
+    var pieces = up(H / PL);
+    var guides = 2 * up(run / PL);
+    /* Лист крепится ко всем стойкам под ним: на ширину 1200 мм это три
+       стойки при шаге 600 и четыре при шаге 400. */
+    var perSheet = (Math.round(1.2 / step) + 1) * (up(o.sheetLen / screwStep) + 1);
+    var tape = 2 * run;
+    if (o.ends) {
+      dowels += 2 * (up(H / dowelStep) + 1);
+      tape += 2 * H;
+    }
+    /* Подвесы — через шаг по высоте, концы профиля держат направляющие.
+       К стене подвес крепят двумя дюбелями, к профилю — двумя клопами. */
+    var perStud = pp ? Math.max(0, up(H / hangStep) - 1) : 0;
+    var hangers = studs * perStud;
+    dowels += 2 * hangers;
+    var clops = studs * 4 + 2 * hangers;
+
+    var items = pp ? [
+      item('Профиль потолочный ПП 60 × 27, ' + ru(PL) + ' м', studs * pieces, 'шт.'),
+      item('Профиль направляющий ПН 28 × 27, ' + ru(PL) + ' м', guides, 'шт.')
+    ] : [
+      item('Профиль стоечный ПС, ' + ru(PL) + ' м', studs * pieces, 'шт.'),
+      item('Профиль направляющий ПН, ' + ru(PL) + ' м', guides, 'шт.')
+    ];
+    if (hangers) items.push(item('Подвесы прямые', hangers, 'шт.'));
+    items.push(
+      item('Саморезы для гипсокартона', o.sheets * perSheet, 'шт.'),
+      item('Саморезы-клопы для каркаса', clops, 'шт.'),
+      item('Дюбель-гвозди', dowels, 'шт.'),
+      item('Лента уплотнительная', Math.round(tape * 10) / 10, 'м')
+    );
+    var rows = [[pp ? 'Профилей ПП' : 'Стоек', ru(studs) + ' через ' + ru(step * 1000) + ' мм']];
+    if (hangers) rows.push(['Подвесов', ru(perStud) + ' на профиль, шаг до ' + ru(hangStep * 1000) + ' мм']);
+    rows.push(
+      ['Саморезов на лист', ru(perSheet) + ', шаг ' + ru(screwStep * 1000) + ' мм'],
+      ['Клопов', (pp ? '4 на профиль' : '4 на стойку') + (hangers ? ', 2 на подвес' : '')],
+      ['Дюбели', (o.ends ? 'по полу, потолку и стенам' : 'по полу и потолку') + ' через ' + ru(dowelStep * 1000) + ' мм' + (hangers ? ', 2 на подвес' : '')]
+    );
+    return {
+      items: items,
+      rows: rows,
+      draw: { kind: 'frame', what: o.what, walls: o.walls, H: H, step: step, PL: PL, pieces: pieces, sheetLen: o.sheetLen, hangers: perStud, pp: pp }
+    };
+  }
+
+  /* Швы наружного слоя — под серпянку: между листами по ширине (1,2 м)
+     и поперёк, если лист короче стены. a — сторона поперёк листов,
+     b — вдоль них. */
+  function seamsOf(a, b, sheetLen) {
+    return Math.max(0, up(a / 1.2) - 1) * b + Math.max(0, up(b / sheetLen) - 1) * a;
+  }
+
+  /* Отделка. Уголок — по длине внешних углов; шпатлёвка и грунтовка —
+     по площади и расходу с упаковки: своих цифр не подставляем, у разных
+     смесей расход отличается в разы. */
+  function finishFields() {
+    return [
+      num('cornerLen', 'Длина уголка', 'м', 3, { more: true, warn: under(1, 'Короче 1 м — проверьте: длина здесь в метрах.') }),
+      num('puttyRate', 'Расход шпатлёвки на 1 м²', 'кг', '', {
+        more: true, ph: 'с мешка', warn: over(3, 'Больше 3 кг на 1 м² — проверьте: здесь расход, а не вес мешка.')
+      }),
+      num('puttyBag', 'Вес мешка шпатлёвки', 'кг', '', { more: true, ph: 'с мешка' }),
+      num('primerRate', 'Расход грунтовки на 1 м²', 'мл', '', {
+        more: true, ph: 'с канистры', warn: under(10, 'Меньше 10 мл на 1 м² — похоже, расход в литрах: 0,15 л — это 150 мл.')
+      }),
+      num('primerCan', 'Объём канистры грунтовки', 'л', '', { more: true, ph: 'с канистры' })
+    ];
+  }
+  var cornersField = function () {
+    return num('corners', 'Внешние углы', 'м', 0, {
+      hint: 'Длина всех выступающих углов — короба, колонны, откосов. На них ставят перфорированный уголок.',
+      warn: warnRoom
+    });
+  };
+
+  /* Позиции отделки дописываются в items и rows. Возвращает подсказку,
+     чего не хватило, — или пустую строку. */
+  function finishItems(v, area, items, rows) {
+    var missing = [];
+    if (pos(v.puttyRate)) {
+      var kg = area * v.puttyRate;
+      items.push(pos(v.puttyBag)
+        ? item('Шпатлёвка для швов, мешки по ' + ru(v.puttyBag) + NB + 'кг', up(kg / v.puttyBag), W.bag)
+        : item('Шпатлёвка для швов', Math.round(kg * 10) / 10, 'кг'));
+      rows.push(['Шпатлёвка', ru(v.puttyRate) + NB + 'кг на 1 м²']);
+    } else {
+      missing.push('шпатлёвку');
+    }
+    if (pos(v.primerRate)) {
+      var liters = area * v.primerRate / 1000;
+      items.push(pos(v.primerCan)
+        ? item('Грунтовка, канистры по ' + ru(v.primerCan) + NB + 'л', up(liters / v.primerCan), W.canister)
+        : item('Грунтовка', Math.round(liters * 10) / 10, 'л'));
+      rows.push(['Грунтовка', ru(v.primerRate) + NB + 'мл на 1 м²']);
+    } else {
+      missing.push('грунтовку');
+    }
+    if (pos(v.corners)) {
+      var cl = pos(v.cornerLen) ? v.cornerLen : 3;
+      items.push(item('Уголок перфорированный, ' + ru(cl) + ' м', up(v.corners / cl), 'шт.'));
+    }
+    if (!missing.length) return '';
+    var what = missing.join(' и ');
+    return what.charAt(0).toUpperCase() + what.slice(1) + ' посчитаем по расходу с упаковки — впишите его в «Дополнительных параметрах».';
+  }
+
   /* Что искать в каталоге. Поиск магазина — стандартный OpenCart: товар
      находится, если КАЖДОЕ слово запроса есть в названии как кусок текста.
      Поэтому запрос короткий, и лучше основа без окончания: «саморез»
@@ -10806,6 +10972,9 @@ p a:not(.btn):hover,
     plinth: ['Плинтус', 'плинтус'],
     armstrong: ['Потолок «Армстронг»', 'армстронг'],
     hanger: ['Подвесы', 'подвес'],
+    direct: ['Подвесы прямые', 'подвес прям'],
+    corner: ['Уголок перфорированный', 'уголок перфор'],
+    gklGlue: ['Клей для гипсокартона', 'клей гипс'],
     angle: ['Уголок', 'уголок'],
     lamp: ['Светильники', 'светильник'],
     panel: ['Панели', 'панел'],
@@ -10857,32 +11026,174 @@ p a:not(.btn):hover,
     /* ---------------------------------------------------------------- */
     {
       id: 'gkl', hash: 'gipsokarton', icon: I.gkl,
-      title: 'Гипсокартон', short: 'Листы на обшивку',
-      lead: 'Сколько листов уйдёт на обшивку стен или потолка.',
-      find: [Q.gkl, Q.profile, Q.screw],
-      fields: roomFields({
-        label: 'Площадь обшивки', value: 20,
-        hint: 'По стенам и потолку, без вычета проёмов: подрезка всё равно съест часть листа.',
-        surfLabel: 'Что обшиваем', surfs: [['walls', 'Стены'], ['ceiling', 'Потолок'], ['both', 'Стены и потолок']],
-        openings: 0, openingsHint: 'Проёмы можно не вычитать: подрезка всё равно съест часть листа.'
-      }).concat([
-        sel('sheet', 'Размер листа', SHEETS, '2.5'),
-        seg('layers', 'Слоёв обшивки', [['1', 'Один'], ['2', 'Два']], '1'),
-        num('reserve', 'Запас на подрезку', '%', 10, { warn: warnReserve })
-      ]),
+      title: 'Гипсокартон', short: 'Листы, профиль, крепёж',
+      lead: 'Всё на обшивку стен: листы, профиль каркаса, подвесы, саморезы, дюбели, серпянка и уголки, а по расходу с упаковки — шпатлёвка и грунтовка.',
+      find: function (v) {
+        var ceiling = v.surf === 'ceiling';
+        var framed = !ceiling && (v.mount === 'ps' || v.mount === 'pp');
+        var out = [Q.gkl];
+        /* Каркас потолка не считаем, но искать его части в каталоге можно. */
+        if (framed || ceiling) out.push(Q.profile);
+        if (ceiling || (framed && v.mount === 'pp')) out.push(Q.direct);
+        if (framed) out.push(Q.screw, Q.dowel, Q.tape);
+        if (framed && v.insul === '1') out.push(Q.insulation);
+        if (!ceiling && v.mount === 'glue') out.push(Q.gklGlue);
+        out.push(Q.serp, Q.putty, Q.primer);
+        if (pos(v.corners)) out.push(Q.corner);
+        return out;
+      },
+      /* До правки 34 площадь задавали иначе: «Знаю площадь» или «По размерам
+         комнаты» (mode) и стены, потолок или то и другое (surf). Старые
+         ссылки и память браузера переводим на новые поля — расчёт
+         открывается с теми же размерами. Признак старого формата — mode
+         или площадь без surf: новая ссылка без surf=area площадь не несёт. */
+      upgrade: function (p) {
+        if (p.mode === undefined && (p.area === undefined || p.surf !== undefined)) return p;
+        var q = extend({}, p);
+        delete q.mode;
+        q.surf = p.mode === 'room' ? (p.surf === 'ceiling' ? 'ceiling' : 'walls') : 'area';
+        return q;
+      },
+      fields: (function () {
+        var wall = function (v) { return v.surf === 'wall'; };
+        var room = function (v) { return v.surf === 'walls' || v.surf === 'ceiling'; };
+        var byArea = function (v) { return v.surf === 'area'; };
+        var walls = function (v) { return v.surf !== 'ceiling'; };
+        var framed = function (v) { return walls(v) && (v.mount === 'ps' || v.mount === 'pp'); };
+        return [
+          seg('surf', 'Что обшиваем', [['wall', 'Стену'], ['walls', 'Стены комнаты'], ['ceiling', 'Потолок'], ['area', 'Знаю площадь']], 'wall', { wide: true }),
+          num('wallLen', 'Длина стены', 'м', 4, { show: wall, warn: warnRoom }),
+          num('length', 'Длина комнаты', 'м', 4, { show: room, warn: warnRoom }),
+          num('width', 'Ширина комнаты', 'м', 3, { show: room, warn: warnRoom }),
+          num('area', 'Площадь стен', 'м²', 20, { show: byArea, hint: 'Без окон и дверей. Каркас посчитаем как для одной стены такой площади.' }),
+          num('height', 'Высота', 'м', 2.7, { show: walls, warn: warnHeight }),
+          num('openings', 'Окна и двери', 'м²', 0, {
+            show: function (v) { return v.surf === 'wall' || v.surf === 'walls'; },
+            hint: 'Проёмы можно не вычитать: подрезка всё равно съест часть листа.'
+          }),
+          cornersField(),
+          sel('sheet', 'Размер листа', SHEETS, '2.5'),
+          seg('layers', 'Слоёв обшивки', [['1', 'Один'], ['2', 'Два']], '1', { show: function (v) { return v.surf === 'ceiling' || v.mount !== 'glue'; } }),
+          seg('mount', 'Крепление листов', [['ps', 'Каркас ПС + ПН'], ['pp', 'Каркас ПП на подвесах'], ['glue', 'На клей'], ['none', 'Только листы']], 'ps', { show: walls, wide: true }),
+          seg('step', 'Шаг стоек', [['0.6', '600 мм'], ['0.4', '400 мм']], '0.6', { show: framed }),
+          sel('profile', 'Длина профиля', [['3', '3 м'], ['4', '4 м']], '3', { show: framed }),
+          seg('insul', 'Утеплитель в каркас', [['0', 'Не нужен'], ['1', 'Нужен']], '0', { show: framed }),
+          num('glueRate', 'Расход клея на 1 м²', 'кг', '', {
+            show: function (v) { return walls(v) && v.mount === 'glue'; }, ph: 'с мешка',
+            warn: over(20, 'Больше 20 кг на 1 м² — проверьте: здесь расход, а не вес мешка.')
+          }),
+          num('glueBag', 'Вес мешка клея', 'кг', '', { show: function (v) { return walls(v) && v.mount === 'glue'; }, ph: 'с мешка' }),
+          num('reserve', 'Запас на листы', '%', 10, { more: true, warn: warnReserve }),
+          num('screw', 'Шаг саморезов по стойке', 'мм', 250, { more: true, show: framed, warn: warnStep }),
+          num('dowel', 'Шаг дюбелей', 'мм', 500, { more: true, show: framed, warn: warnStep }),
+          num('hang', 'Шаг подвесов по профилю', 'мм', 600, {
+            more: true, show: function (v) { return walls(v) && v.mount === 'pp'; }, warn: warnStep
+          })
+        ].concat(finishFields());
+      })(),
+      hint: 'Каркас из ПС и ПН стоит на полу и потолке и держится сам — в нём место под утеплитель и проводку. Каркас из ПП притягивают к стене прямыми подвесами: так выравнивают стены, теряя меньше места. На клей листы сажают прямо на стену, без каркаса.',
       calc: function (v) {
-        var s = surface(v, 'Впишите площадь обшивки.', 'Площадь обшивки');
-        if (s.need) return need(s.need);
-        var sheet = 1.2 * Number(v.sheet);
-        var layers = Number(v.layers);
+        var s = v.surf;
+        var ceiling = s === 'ceiling';
+        var mount = ceiling ? 'none' : v.mount;
+        var H = v.height;
+        var walls = [];
+        var gross;
+        var summary;
+        var what = 'wall';
+        if (ceiling) {
+          if (!pos(v.length) || !pos(v.width)) return need('Впишите длину и ширину комнаты.');
+          gross = v.length * v.width;
+          summary = 'потолок ' + mm(v.length) + ' × ' + mm(v.width);
+        } else if (s === 'area') {
+          if (!pos(v.area) || !pos(H)) return need('Впишите площадь стен и высоту.');
+          walls = [v.area / H];
+          gross = v.area;
+          what = 'area';
+          summary = 'стены ' + m2(v.area) + ', высота ' + mm(H);
+        } else if (s === 'walls') {
+          if (!pos(v.length) || !pos(v.width)) return need('Впишите длину и ширину комнаты.');
+          if (!pos(H)) return need('Впишите высоту стен.');
+          walls = [v.length, v.width, v.length, v.width];
+          gross = 2 * (v.length + v.width) * H;
+          what = 'room';
+          summary = 'стены комнаты ' + mm(v.length) + ' × ' + mm(v.width) + ', высота ' + mm(H);
+        } else {
+          if (!pos(v.wallLen) || !pos(H)) return need('Впишите длину и высоту стены.');
+          walls = [v.wallLen];
+          gross = v.wallLen * H;
+          summary = 'стена ' + mm(v.wallLen) + ' × ' + mm(H);
+        }
+        var holes = (s === 'wall' || s === 'walls') && pos(v.openings) ? v.openings : 0;
+        var area = gross - holes;
+        if (area <= 0) return need('Окна и двери получились больше стен — проверьте размеры.');
+
+        var sheetLen = Number(v.sheet);
+        var sheet = 1.2 * sheetLen;
+        var layers = mount === 'glue' ? 1 : Number(v.layers);
         var r = reserveOf(v.reserve);
-        var total = s.area * layers;
+        var total = area * layers;
         var sheets = up(total * (1 + r / 100) / sheet);
+        var items = [item('Гипсокартон ' + sheetName(v.sheet), sheets, W.sheet)];
+        var rows = [[holes ? 'Площадь без окон и дверей' : 'Площадь обшивки', m2(round2(area))]];
+        if (layers === 2) rows.push(['В два слоя', m2(round2(total))]);
+        rows.push(['Площадь листа', m2(sheet)], ['Запас на листы', pc(r)]);
+        var notes = [];
+        var draw;
+
+        if (mount === 'ps' || mount === 'pp') {
+          var fr = frameItems({
+            v: v, walls: walls, H: H, kind: mount, ends: mount === 'ps' && walls.length === 1,
+            sheets: sheets, sheetLen: sheetLen, what: what
+          });
+          items = items.concat(fr.items);
+          if (what === 'area') rows.push(['Каркас — как одна стена', mm(round2(walls[0])) + ' × ' + mm(H)]);
+          rows = rows.concat(fr.rows);
+          draw = fr.draw;
+          if (v.insul === '1') {
+            items.push(item('Утеплитель', Math.round(area * 10) / 10, 'м²'));
+            notes.push('Утеплитель со стороны комнаты обычно закрывают пароизоляцией; упаковки посчитает калькулятор «Утеплитель».');
+          }
+          notes.unshift(mount === 'ps'
+            ? 'ПН берут той же ширины, что ПС. Для одного слоя берут саморезы 25 мм, для второго — 35 мм.'
+            : 'ПП вставляют в направляющие ПН 28 × 27 и притягивают к стене подвесами — ими же выставляют ровную плоскость. Для одного слоя берут саморезы 25 мм, для второго — 35 мм.');
+        } else if (mount === 'glue') {
+          if (pos(v.glueRate)) {
+            var kg = area * v.glueRate;
+            items.push(pos(v.glueBag)
+              ? item('Клей для гипсокартона, мешки по ' + ru(v.glueBag) + NB + 'кг', up(kg / v.glueBag), W.bag)
+              : item('Клей для гипсокартона', Math.round(kg * 10) / 10, 'кг'));
+            rows.push(['Клей', ru(v.glueRate) + NB + 'кг на 1 м²']);
+          } else {
+            notes.push('Клей посчитаем по расходу с мешка — впишите его и вес мешка.');
+          }
+          notes.unshift('Расход клея зависит от неровности стены — берите по большей цифре с мешка.');
+        } else if (ceiling) {
+          notes.push('Каркас потолка здесь не считаем: его собирают из профиля ПП на подвесах, и раскладка зависит от направления листов — уточните у менеджера.');
+        } else {
+          notes.push('Каркас и крепёж не считаем — для них выберите крепление на каркас.');
+        }
+
+        /* Серпянка — на швы наружного слоя; у стен комнаты ещё и на четыре
+           внутренних угла. На потолке листы ведут вдоль длинной стороны. */
+        var seams = 0;
+        if (ceiling) seams = seamsOf(Math.min(v.length, v.width), Math.max(v.length, v.width), sheetLen);
+        walls.forEach(function (L) { seams += seamsOf(L, H, sheetLen); });
+        if (s === 'walls') {
+          seams += 4 * H;
+          rows.push(['Серпянка', 'на швы и 4 внутренних угла']);
+        }
+        if (seams > 0) items.push(item('Серпянка для швов', Math.round(seams * 10) / 10, 'м'));
+        var finish = finishItems(v, area, items, rows);
+        if (finish) notes.push(finish);
+
+        var MOUNT = { ps: 'каркас ПС + ПН', pp: 'каркас ПП на подвесах', glue: 'на клей' };
         return {
-          items: [item('Гипсокартон ' + sheetName(v.sheet), sheets, W.sheet)],
-          rows: s.rows.concat(layers === 2 ? [['В два слоя', m2(round2(total))]] : [], [['Площадь листа', m2(sheet)], ['Запас', pc(r)]]),
-          note: 'Оценка по площади: проёмы и раскладка листов могут изменить число. Профили, саморезы и дюбели посчитает калькулятор «Перегородка».',
-          summary: s.summary + ', ' + (layers === 2 ? 'два слоя' : 'один слой')
+          items: items,
+          rows: rows,
+          note: notes.join(' '),
+          summary: summary + (MOUNT[mount] ? ', ' + MOUNT[mount] : '') + ', ' + (layers === 2 ? 'два слоя' : 'один слой'),
+          draw: draw
         };
       }
     },
@@ -10891,8 +11202,14 @@ p a:not(.btn):hover,
     {
       id: 'frame', hash: 'peregorodka', icon: I.frame,
       title: 'Перегородка', short: 'Гипсокартон на каркасе',
-      lead: 'Листы, профили, саморезы и дюбели на перегородку или обшивку стены по каркасу.',
-      find: [Q.gkl, Q.profile, Q.screw, Q.dowel, Q.tape, Q.serp],
+      lead: 'Листы, профили, крепёж и серпянка на перегородку из гипсокартона, а по расходу с упаковки — шпатлёвка и грунтовка.',
+      find: function (v) {
+        var out = [Q.gkl, Q.profile, Q.screw, Q.dowel, Q.tape];
+        if (v.insul === '1') out.push(Q.insulation);
+        out.push(Q.serp, Q.putty, Q.primer);
+        if (pos(v.corners)) out.push(Q.corner);
+        return out;
+      },
       fields: [
         num('length', 'Длина перегородки', 'м', 4, { warn: warnRoom }),
         num('height', 'Высота', 'м', 2.7, { warn: warnHeight }),
@@ -10901,10 +11218,12 @@ p a:not(.btn):hover,
         sel('sheet', 'Размер листа', SHEETS, '2.5'),
         seg('step', 'Шаг стоек', [['0.6', '600 мм'], ['0.4', '400 мм']], '0.6'),
         sel('profile', 'Длина профиля', [['3', '3 м'], ['4', '4 м']], '3'),
+        seg('insul', 'Звукоизоляция в каркас', [['0', 'Не нужна'], ['1', 'Нужна']], '0'),
+        cornersField(),
         num('reserve', 'Запас на листы', '%', 10, { more: true, warn: warnReserve }),
         num('screw', 'Шаг саморезов по стойке', 'мм', 250, { more: true, warn: warnStep }),
         num('dowel', 'Шаг дюбелей', 'мм', 500, { more: true, warn: warnStep })
-      ],
+      ].concat(finishFields()),
       calc: function (v) {
         var L = v.length;
         var H = v.height;
@@ -10912,54 +11231,25 @@ p a:not(.btn):hover,
         var sheetLen = Number(v.sheet);
         var sides = Number(v.sides);
         var layers = Number(v.layers);
-        var step = Number(v.step);
-        var PL = Number(v.profile);
         var r = reserveOf(v.reserve);
-        var screwStep = pos(v.screw) ? v.screw / 1000 : 0.25;
-        var dowelStep = pos(v.dowel) ? v.dowel / 1000 : 0.5;
 
         var face = L * H;
         var sheets = up(face * sides * layers * (1 + r / 100) / (1.2 * sheetLen));
-        /* Стойки через шаг плюс крайняя; если стена выше профиля, стойку
-           наращивают — целых профилей на стойку столько, сколько нужно
-           по высоте. Направляющие — по полу и по потолку. */
-        var studs = up(L / step) + 1;
-        var pieces = up(H / PL);
-        var studPieces = studs * pieces;
-        var guides = 2 * up(L / PL);
-        /* Лист крепится ко всем стойкам под ним: на ширину 1200 мм это три
-           стойки при шаге 600 и четыре при шаге 400. */
-        var perSheet = (Math.round(1.2 / step) + 1) * (up(sheetLen / screwStep) + 1);
-        var screws = sheets * perSheet;
-        var frameScrews = studs * 4;
-        var dowels = 2 * (up(L / dowelStep) + 1) + 2 * (up(H / dowelStep) + 1);
-        var tape = 2 * (L + H);
-        /* Серпянка — на швы наружного слоя: вертикальные между листами
-           и горизонтальные, если лист короче высоты. */
-        var joints = (Math.max(0, up(L / 1.2) - 1) * H + Math.max(0, up(H / sheetLen) - 1) * L) * sides;
+        var fr = frameItems({ v: v, walls: [L], H: H, kind: 'ps', ends: true, sheets: sheets, sheetLen: sheetLen, what: 'partition' });
+        var items = [item('Гипсокартон ' + sheetName(v.sheet), sheets, W.sheet)].concat(fr.items);
+        /* Звукоизоляция — плиты между стойками на всю площадь перегородки. */
+        if (v.insul === '1') items.push(item('Утеплитель', Math.round(face * 10) / 10, 'м²'));
+        items.push(item('Серпянка для швов', Math.round(seamsOf(L, H, sheetLen) * sides * 10) / 10, 'м'));
+        var rows = [['Площадь одной стороны', m2(round2(face))]].concat(fr.rows, [['Запас на листы', pc(r)]]);
+        var finish = finishItems(v, face * sides, items, rows);
 
         return {
-          items: [
-            item('Гипсокартон ' + sheetName(v.sheet), sheets, W.sheet),
-            item('Профиль стоечный ПС, ' + ru(PL) + ' м', studPieces, 'шт.'),
-            item('Профиль направляющий ПН, ' + ru(PL) + ' м', guides, 'шт.'),
-            item('Саморезы для гипсокартона', screws, 'шт.'),
-            item('Саморезы для каркаса', frameScrews, 'шт.'),
-            item('Дюбель-гвозди', dowels, 'шт.'),
-            item('Лента уплотнительная', Math.round(tape * 10) / 10, 'м'),
-            item('Серпянка для швов', Math.round(joints * 10) / 10, 'м')
-          ],
-          rows: [
-            ['Площадь одной стороны', m2(round2(face))],
-            ['Стоек', ru(studs) + ' через ' + ru(step * 1000) + ' мм'],
-            ['Саморезов на лист', ru(perSheet) + ', шаг ' + ru(screwStep * 1000) + ' мм'],
-            ['Саморезов для каркаса', '4 на стойку'],
-            ['Дюбели', 'по полу, потолку и стенам через ' + ru(dowelStep * 1000) + ' мм'],
-            ['Запас на листы', pc(r)]
-          ],
-          note: 'Для одного слоя берут саморезы 25 мм, для второго — 35 мм. Дверной проём не вычитаем: вокруг него ставят дополнительные стойки, а обрезки листов уйдут на подрезку.',
+          items: items,
+          rows: rows,
+          note: 'Для одного слоя берут саморезы 25 мм, для второго — 35 мм. Дверной проём не вычитаем: вокруг него ставят дополнительные стойки, а обрезки листов уйдут на подрезку.' +
+            (v.insul === '1' ? ' Упаковки утеплителя посчитает калькулятор «Утеплитель».' : '') + (finish ? ' ' + finish : ''),
           summary: mm(L) + ' × ' + mm(H) + ', ' + (sides === 2 ? 'обшивка с двух сторон' : 'с одной стороны'),
-          draw: { kind: 'frame', L: L, H: H, step: step, studs: studs, PL: PL, pieces: pieces, sheetLen: sheetLen }
+          draw: fr.draw
         };
       }
     },
@@ -11678,23 +11968,28 @@ p a:not(.btn):hover,
   function fieldHtml(f, saved) {
     var id = 'cf-' + f.name;
     var value = saved && saved[f.name] !== undefined ? saved[f.name] : f.value;
+    /* Варианта из памяти больше нет (калькулятор поменялся) — берём
+       вариант по умолчанию: иначе переключатель остался бы без выбора. */
+    if (f.t !== 'num' && !f.options.some(function (o) { return o[0] === value; })) value = f.value;
     var hint = f.hint ? '<p class="calc__field-hint" id="ch-' + f.name + '">' + txt(f.hint) + '</p>' : '';
     var warn = f.warn ? '<p class="calc__warn" id="cw-' + f.name + '" data-warn-for="' + f.name + '" hidden></p>' : '';
+    /* Переключатель на четыре длинных варианта — во всю ширину формы. */
+    var wide = f.wide ? ' calc__field--wide' : '';
     if (f.t === 'seg') {
-      return '<fieldset class="calc__field calc__seg" data-field="' + f.name + '"><legend>' + txt(f.label) + '</legend><div class="seg">' +
+      return '<fieldset class="calc__field calc__seg' + wide + '" data-field="' + f.name + '"><legend>' + txt(f.label) + '</legend><div class="seg">' +
         f.options.map(function (o) {
           return '<label class="seg__opt"><input type="radio" name="' + f.name + '" value="' + esc(o[0]) + '"' + (o[0] === value ? ' checked' : '') + '><span>' + txt(o[1]) + '</span></label>';
         }).join('') + '</div>' + hint + '</fieldset>';
     }
     if (f.t === 'sel') {
-      return '<div class="calc__field" data-field="' + f.name + '"><label for="' + id + '">' + txt(f.label) + '</label><select id="' + id + '" name="' + f.name + '">' +
+      return '<div class="calc__field' + wide + '" data-field="' + f.name + '"><label for="' + id + '">' + txt(f.label) + '</label><select id="' + id + '" name="' + f.name + '">' +
         f.options.map(function (o) {
           return '<option value="' + esc(o[0]) + '"' + (o[0] === value ? ' selected' : '') + '>' + esc(o[1]) + '</option>';
         }).join('') + '</select>' + hint + '</div>';
     }
     var unit = unitOf(f, {});
     var described = (f.hint ? 'ch-' + f.name : '') + (f.warn ? (f.hint ? ' ' : '') + 'cw-' + f.name : '');
-    return '<div class="calc__field" data-field="' + f.name + '"><label for="' + id + '">' + txt(f.label) + '</label>' +
+    return '<div class="calc__field' + wide + '" data-field="' + f.name + '"><label for="' + id + '">' + txt(f.label) + '</label>' +
       '<div class="calc__input"><input id="' + id + '" name="' + f.name + '" type="text" inputmode="decimal" enterkeyhint="next" autocomplete="off" value="' + esc(String(value).replace('.', ',')) + '"' +
       (f.ph ? ' placeholder="' + esc(f.ph) + '"' : '') + (described ? ' aria-describedby="' + described + '"' : '') + '>' +
       (unit !== undefined ? '<span class="calc__unit" data-unit-for="' + f.name + '">' + esc(unit) + '</span>' : '') + '</div>' + hint + warn + '</div>';
@@ -11702,6 +11997,7 @@ p a:not(.btn):hover,
 
   function renderForm(c) {
     var saved = store.get('v-' + c.id, null);
+    if (saved && c.upgrade) saved = c.upgrade(saved);
     var main = c.fields.filter(function (f) { return !f.more; });
     var more = c.fields.filter(function (f) { return f.more; });
     form.innerHTML =
@@ -11762,12 +12058,20 @@ p a:not(.btn):hover,
     return w > 0.5 && h > 0.5 ? '<rect class="' + cls + '" x="' + f1(x) + '" y="' + f1(y) + '" width="' + f1(w) + '" height="' + f1(h) + '"/>' : '';
   }
   /* over — то, что лежит на самой рамке (направляющие, конёк): рисуется
-     поверх неё, иначе рамка закрыла бы линию. */
-  function svgWrap(w, h, body, over) {
+     поверх неё, иначе рамка закрыла бы линию. parts — куски рисунка
+     со своей рамкой, [[x, ширина], …]: стены комнаты в развёртке идут
+     с просветом, у каждой своя рамка. */
+  function svgWrap(w, h, body, over, parts) {
     var pad = Math.max(w, h) * 0.02;
+    var room = '';
+    var edge = '';
+    (parts || [[0, w]]).forEach(function (p) {
+      room += svgRect('scheme__room', p[0], 0, p[1], h);
+      edge += svgRect('scheme__edge', p[0], 0, p[1], h);
+    });
     return '<svg class="scheme" viewBox="' + [-pad, -pad, w + 2 * pad, h + 2 * pad].map(f1).join(' ') +
       '" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">' +
-      svgRect('scheme__room', 0, 0, w, h) + body + svgRect('scheme__edge', 0, 0, w, h) + (over || '') + '</svg>';
+      room + body + edge + (over || '') + '</svg>';
   }
   /* Образцы линий для подписи под схемой — те же цвета, что на рисунке. */
   var KEYS = {
@@ -11831,38 +12135,75 @@ p a:not(.btn):hover,
       };
     },
 
-    /* Перегородка с одной стороны: стойки через шаг и крайняя, листы
-       шириной 1,2 м от угла и от пола; неполные — у дальнего края и сверху. */
+    /* Каркас под листы, вид спереди: стойки через шаг и крайняя, листы
+       шириной 1,2 м от угла и от пола; неполные — у дальнего края и сверху.
+       Стены комнаты — развёрткой, одна за другой с просветом: у каждой
+       свои крайние стойки, и листы каждой начинаются от её угла. На профиле
+       ПП точками — прямые подвесы, ровно столько, сколько в ответе. */
     frame: function (d) {
-      if (d.studs > 400 || d.H > 100) return null;
-      var w = d.L * 100;
+      var studCount = 0;
+      var total = 0;
+      d.walls.forEach(function (L) { studCount += up(L / d.step) + 1; total += L; });
+      if (studCount > 400 || d.H > 100 || studCount * d.hangers > 3000) return null;
       var h = d.H * 100;
       var sl = d.sheetLen * 100;
-      var cols = up(d.L / 1.2);
       var rowsN = up(d.H / d.sheetLen);
-      var cut = '';
-      var remX = w - (cols - 1) * 120;
       var remY = h - (rowsN - 1) * sl;
-      if (remX < 119.5) cut += svgRect('scheme__cut', w - remX, 0, remX, h);
-      if (remY < sl - 0.5) cut += svgRect('scheme__cut', 0, 0, w, remY);
+      var gap = d.walls.length > 1 ? total * 2 : 0;
+      /* Точка подвеса — не толще трети шага стоек: в развёртке комнаты
+         рисунок мельче, и крупные точки слипались бы в полосу. */
+      var r = Math.min(Math.max(total * 100, h) * 0.009 + 1.5, d.step * 100 * 0.15);
+      var cut = '';
       var seams = '';
-      for (var j = 1; j < cols; j++) seams += vline(120 * j, 0, h);
-      for (var k = 1; k < rowsN; k++) seams += hline(h - sl * k, 0, w);
       var studs = '';
       var splices = '';
-      for (var i = 0; i < d.studs; i++) {
-        var x = i < d.studs - 1 ? i * d.step * 100 : w;
-        studs += vline(x, 0, h);
-        for (var p = 1; p < d.pieces; p++) splices += hline(h - d.PL * 100 * p, x - 6, x + 6);
-      }
-      var guides = hline(0, 0, w) + hline(h, 0, w);
-      var keys = [['stud', 'стойки ПС'], ['guide', 'направляющие ПН'], ['seam', 'стыки листов — серпянка']];
-      if (splices) keys.push(['splice', 'стойки наращивают']);
+      var hang = '';
+      var guides = '';
+      var parts = [];
+      var x0 = 0;
+      d.walls.forEach(function (L) {
+        var lw = L * 100;
+        var cols = up(L / 1.2);
+        var remX = lw - (cols - 1) * 120;
+        if (remX < 119.5) cut += svgRect('scheme__cut', x0 + lw - remX, 0, remX, h);
+        if (remY < sl - 0.5) cut += svgRect('scheme__cut', x0, 0, lw, remY);
+        for (var j = 1; j < cols; j++) seams += vline(x0 + 120 * j, 0, h);
+        for (var k = 1; k < rowsN; k++) seams += hline(h - sl * k, x0, x0 + lw);
+        var count = up(L / d.step) + 1;
+        for (var i = 0; i < count; i++) {
+          var x = x0 + (i < count - 1 ? i * d.step * 100 : lw);
+          studs += vline(x, 0, h);
+          for (var p = 1; p < d.pieces; p++) splices += hline(h - d.PL * 100 * p, x - 6, x + 6);
+          for (var q = 1; q <= d.hangers; q++) hang += dot(x, h * q / (d.hangers + 1), r);
+        }
+        guides += hline(0, x0, x0 + lw) + hline(h, x0, x0 + lw);
+        parts.push([x0, lw]);
+        x0 += lw + gap;
+      });
+      var w = x0 - gap;
+      var keys = [['stud', d.pp ? 'профили ПП' : 'стойки ПС'], ['guide', 'направляющие ПН']];
+      if (hang) keys.push(['hang', 'прямые подвесы']);
+      keys.push(['seam', 'стыки листов — серпянка']);
+      if (splices) keys.push(['splice', d.pp ? 'профили наращивают' : 'стойки наращивают']);
       if (cut) keys.push(['cut', 'подрезанные листы']);
+      var text = ru(studCount) + ' ' + plural(studCount, d.pp ? ['профиль ПП', 'профиля ПП', 'профилей ПП'] : ['стойка', 'стойки', 'стоек']) +
+        ' через ' + ru(d.step * 1000) + ' мм' +
+        (d.hangers ? ', на каждом ' + ru(d.hangers) + ' ' + plural(d.hangers, ['подвес', 'подвеса', 'подвесов']) : '');
+      var head;
+      if (d.what === 'partition') {
+        head = 'Схема перегородки';
+        text = mm(d.walls[0]) + ' × ' + mm(d.H) + ', одна сторона: ' + text + ', листы 1200 мм от угла.';
+      } else if (d.what === 'room') {
+        head = 'Развёртка стен';
+        text = d.walls.map(function (L) { return ru(L); }).join(' + ') + ' м, высота ' + mm(d.H) + ': ' + text +
+          ' — у каждой стены свои крайние, листы 1200 мм от угла каждой стены.';
+      } else {
+        head = 'Схема обшивки';
+        text = mm(round2(d.walls[0])) + ' × ' + mm(d.H) + (d.what === 'area' ? ' (площадь как одна стена)' : '') + ': ' + text + ', листы 1200 мм от угла.';
+      }
       return {
-        svg: svgWrap(w, h, cut + svgPath('scheme__seam', seams) + svgPath('scheme__stud', studs), svgPath('scheme__guide', guides) + svgPath('scheme__splice', splices)),
-        caption: '<b>Схема перегородки</b> ' + txt(mm(d.L) + ' × ' + mm(d.H) + ', одна сторона: ' + ru(d.studs) + ' ' +
-          plural(d.studs, ['стойка', 'стойки', 'стоек']) + ' через ' + ru(d.step * 1000) + ' мм, листы 1200 мм от угла.') + legend(keys)
+        svg: svgWrap(w, h, cut + svgPath('scheme__seam', seams) + svgPath('scheme__stud', studs), svgPath('scheme__guide', guides) + svgPath('scheme__splice', splices) + svgPath('scheme__hang', hang), parts),
+        caption: '<b>' + head + '</b> ' + txt(text) + legend(keys)
       };
     },
 
@@ -12149,6 +12490,7 @@ p a:not(.btn):hover,
      Непонятные значения (не число, нет такого варианта) пропускаем. */
   function applyParams(c, params) {
     var raw = {};
+    if (c.upgrade) params = c.upgrade(params);
     c.fields.forEach(function (f) {
       if (!Object.prototype.hasOwnProperty.call(params, f.name)) return;
       var val = String(params[f.name]);

@@ -4605,6 +4605,29 @@ html[data-theme="dark"] .step.is-current .step__num {
   border: 0;
 }
 
+/* Четыре длинных варианта («Каркас ПП на подвесах») в половине формы
+   ломались на две строки по два — такой переключатель идёт во всю ширину.
+   На телефоне и вся ширина мала: строки ложились по одному, два и одному
+   варианту, поэтому там — ровная сетка два на два. */
+.calc__field--wide {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 560px) {
+  .calc__field--wide .seg {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .calc__field--wide .seg__opt {
+    display: flex;
+  }
+
+  .calc__field--wide .seg__opt span {
+    flex: 1;
+  }
+}
+
 .calc__seg legend {
   display: block;
   margin-bottom: var(--sp-2);
