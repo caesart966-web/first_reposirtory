@@ -36,6 +36,7 @@ const INK = val(css, '--ink', /--ink:\s*(#[0-9A-Fa-f]{6})/)
 const DARK = val(css, '--dark', /--dark:\s*(#[0-9A-Fa-f]{6})/)
 const LINE = val(css, '--line', /--line:\s*(#[0-9A-Fa-f]{6})/)
 const PAPER = val(css, '--paper', /--paper:\s*(#[0-9A-Fa-f]{6})/)
+const ON_DARK = val(css, '--on-dark', /--on-dark:\s*(#[0-9A-Fa-f]{6})/)
 const DOMAIN = 'norma-sro.ru'
 
 // ── Строка услуг в шапке письма ───────────────────────────────────────────
@@ -112,7 +113,12 @@ const browser = await chromium.launch()
 // с пустотой справа — вставить такой в письмо или в документ нельзя,
 // он выглядит сдвинутым. Поле вокруг задаётся явно, чтобы буквы
 // не упирались в край.
-const shot = async (name, w, h, body, { bg = 'transparent', scale = 2, pdf = false, pad = 0, fits = null, jpeg = false } = {}) => {
+// Доля радиуса вписанного круга, за которую содержимое квадратных картинок
+// не должно выходить. Не 100 %: часть мест рисует поверх круга ещё и рамку
+// изнутри, и знак, упёртый в край, теряет засечки.
+const CIRCLE_SAFE = 0.85
+
+const shot = async (name, w, h, body, { bg = 'transparent', scale = 2, pdf = false, pad = 0, fits = null, circle = null, jpeg = false } = {}) => {
   const ctx = await browser.newContext({ viewport: { width: w + pad * 2, height: h + pad * 2 }, deviceScaleFactor: scale })
   const p = await ctx.newPage()
   await p.setContent(page(w + pad * 2, h + pad * 2, `<div id="a" style="padding:${pad}px;display:inline-block">${body}</div>`, bg), { waitUntil: 'load' })
@@ -125,6 +131,28 @@ const shot = async (name, w, h, body, { bg = 'transparent', scale = 2, pdf = fal
   if (fits) {
     const over = await p.locator(fits).evaluate((n) => n.scrollWidth - n.clientWidth)
     if (over > 0) throw new Error(`строка услуг шире поля на ${over} px — сократите подписи в SERVICE_ROWS`)
+  }
+  // Квадратные картинки почти везде обрезают в круг. Проверяем по настоящим
+  // прямоугольникам элементов, что каждый их угол лежит внутри круга
+  // с запасом, — а не надеемся, что подпись «вроде бы влезла».
+  if (circle) {
+    const far = await p.evaluate((sels) => {
+      const box = document.querySelector('#a').getBoundingClientRect()
+      const cx = box.left + box.width / 2
+      const cy = box.top + box.height / 2
+      const r = Math.min(box.width, box.height) / 2
+      let worst = 0
+      for (const s of sels) for (const n of document.querySelectorAll(s)) {
+        const b = n.getBoundingClientRect()
+        for (const [x, y] of [[b.left, b.top], [b.right, b.top], [b.left, b.bottom], [b.right, b.bottom]]) {
+          worst = Math.max(worst, Math.hypot(x - cx, y - cy) / r)
+        }
+      }
+      return worst
+    }, circle)
+    if (far > CIRCLE_SAFE) {
+      throw new Error(`${name}: содержимое доходит до ${Math.round(far * 100)} % радиуса при допустимых ${Math.round(CIRCLE_SAFE * 100)} % — при обрезке в круг его срежет`)
+    }
   }
   await el.screenshot({
     path: file,
@@ -160,6 +188,27 @@ const avatar = (bg, fill) =>
    </div>`
 await shot('avatar', 512, 512, avatar(DARK, ACC_BRIGHT), { bg: DARK, scale: 1 })
 await shot('avatar-svetlyy', 512, 512, avatar(PAPER, ACC), { bg: PAPER, scale: 1 })
+
+// 3а. Квадратный логотип с подписью — для каталогов организаций
+//     (Яндекс Бизнес и подобные), где картинка стоит рядом с названием.
+//
+// Подписать знак попросил заказчик (27.09.2026): в каталоге рядом стоит
+// название «Норма», а слово «норма» само по себе о предмете не говорит —
+// разбор имени в README. Подпись та же, что у горизонтального логотипа
+// (SITE.brandTag), но с заглавной: здесь она стоит отдельной строкой.
+//
+// Такие картинки тоже обрезают в круг, поэтому знак меньше, чем у аватара
+// (150 против 172), а вписанность в круг меряет shot(): подпись шире знака,
+// и её углы уходят к краю первыми. Снимается в 1024 px — каталоги
+// принимают крупные файлы и сами уменьшают их под свои размеры.
+const TAG_LINE = TAG[0].toUpperCase() + TAG.slice(1)
+const square = (bg, fill, ink) =>
+  `<div style="width:512px;height:512px;background:${bg};display:grid;place-content:center;justify-items:center;gap:24px">
+     <svg style="display:block" viewBox="0 0 100 100" width="150" height="150" fill="${fill}">${PATHS.map((d) => `<path d="${d}"/>`).join('')}</svg>
+     <div id="tag" style="font-family:G;font-weight:600;font-size:38px;letter-spacing:.01em;line-height:1;white-space:nowrap;color:${ink}">${TAG_LINE}</div>
+   </div>`
+await shot('logotip-kvadrat', 512, 512, square(DARK, ACC_BRIGHT, ON_DARK), { bg: DARK, circle: ['#a svg', '#tag'] })
+await shot('logotip-kvadrat-svetlyy', 512, 512, square(PAPER, ACC, INK), { bg: PAPER, circle: ['#a svg', '#tag'] })
 
 // 4. Шапка письма. 600×140 в пересчёте на экран — стандартная ширина письма;
 //    снимается в двойном размере, чтобы не мылилась на телефоне.
@@ -306,22 +355,24 @@ const png = (f) => {
 }
 const row = (f, what) => {
   const { w, h, kb } = png(f)
-  return `  ${f.padEnd(22)} ${String(w + '×' + h).padEnd(12)} ${what.padEnd(28)} ${kb} КБ`
+  return `  ${f.padEnd(28)} ${String(w + '×' + h).padEnd(12)} ${what.padEnd(30)} ${kb} КБ`
 }
 console.log(`
 Фирменные файлы собраны в norma-site/brand/
 
-  znak.svg, znak-belyy.svg   вектор, только монограмма
+  znak.svg, znak-belyy.svg     вектор       только монограмма
 ${row('znak.png', 'прозрачный фон')}
 ${row('logotip.png', 'прозрачный фон')}
 ${row('logotip-belyy.png', 'для тёмного фона')}
 ${row('avatar.png', 'аватар, тёмный')}
 ${row('avatar-svetlyy.png', 'аватар, светлый')}
+${row('logotip-kvadrat.png', 'знак с подписью, тёмный')}
+${row('logotip-kvadrat-svetlyy.png', 'знак с подписью, светлый')}
 ${row('pochta-shapka.png', 'шапка письма, 600 px по ширине')}
 ${row('pochta-shapka-600.png', 'она же в одинарном масштабе')}
-  logotip.pdf            вектор       для печати
-  podpis.html            текст        подпись с оформлением: открыть, Ctrl+A, Ctrl+C
-  podpis.txt             текст        подпись совсем без разметки
+  logotip.pdf                  вектор       для печати
+  podpis.html                  текст        подпись с оформлением: открыть, Ctrl+A, Ctrl+C
+  podpis.txt                   текст        подпись совсем без разметки
 
 Шапка скопирована в public/img/ — после заливки сайта она будет доступна
 по адресу https://${DOMAIN}/img/pochta-shapka.png и вставляется в подпись
