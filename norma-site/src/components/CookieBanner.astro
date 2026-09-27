@@ -112,17 +112,6 @@ const metrikaId = import.meta.env.PUBLIC_NOINDEX === '1' ? '' : SITE.metrikaId
         })
       }
 
-      // Высота нижней панели связи меряется, а не пишется числом: я записал
-      // 58 px по отступу body, а на деле она 61 — полоса перекрывала кнопку
-      // «Позвонить» на 3 px. Высота у панели постоянная, показана она или нет.
-      var bar = document.querySelector('.mobile-bar')
-      if (bar) {
-        document.documentElement.style.setProperty(
-          '--bar-h',
-          Math.round(bar.getBoundingClientRect().height) + 'px',
-        )
-      }
-
       var choice = read()
       if (choice === 'all') {
         loadMetrika()
@@ -188,10 +177,14 @@ const metrikaId = import.meta.env.PUBLIC_NOINDEX === '1' ? '' : SITE.metrikaId
 
   @media (max-width: 767px) {
     /* Над панелью связи, а не поверх неё: иначе первое, что закрывает
-       баннер, — кнопки «Позвонить» и «WhatsApp». Высоту панели подставляет
-       скрипт; запасные 61 px — её замер на 390 px. Отступ под вырез экрана
-       уже входит в высоту панели, второй раз его прибавлять не нужно. */
-    .cookie { bottom: var(--bar-h, 61px); padding: 11px 0; }
+       баннер, — кнопки «Позвонить» и «WhatsApp».
+       Высота панели — то же выражение, что у неё самой (--mbar-h плюс запас
+       под полоску iPhone), а не замер скриптом. Замер понадобился, когда
+       в стилях было записано 58 px, а панель выходила 61; теперь высота
+       задана одним числом, и сойтись с ней можно точно. Замер к тому же
+       устаревал: запас под полоску Safari меняет на ходу, когда прячет
+       и показывает свою нижнюю строку, а скрипт мерил один раз. */
+    .cookie { bottom: calc(var(--mbar-h) + env(safe-area-inset-bottom, 0px)); padding: 11px 0; }
     .cookie-in { justify-content: stretch; gap: 9px; }
     .cookie-text { font-size: 13.5px; line-height: 1.5; }
     .cookie-act { width: 100%; gap: 8px; flex-wrap: nowrap; }

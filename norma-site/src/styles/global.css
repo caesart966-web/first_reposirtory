@@ -80,6 +80,12 @@
   --font-head: 'Literata Variable', 'Literata Fallback', Georgia, 'Times New Roman', serif;
   --font-body: 'Golos Text Variable', 'Golos Fallback', 'Segoe UI', system-ui, sans-serif;
   --font-mono: 'Golos Text Variable', 'Golos Fallback', 'Segoe UI', system-ui, sans-serif;
+
+  /* Высота нижней панели связи на телефоне — без запаса под полоску
+     «домой» у iPhone, он прибавляется отдельно: env(safe-area-inset-bottom).
+     Одно число на три места — саму панель, отступ страницы под ней
+     и полосу про cookie над ней. */
+  --mbar-h: 60px;
 }
 
 * { box-sizing: border-box; }
@@ -289,7 +295,15 @@ img { max-width: 100%; height: auto; }
 /* Якоря не прячутся под липкой шапкой */
 section[id], [data-anchor] { scroll-margin-top: 84px; }
 
-.wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+/* Поля страницы — 20 px, но не меньше выреза экрана: с viewport-fit=cover
+   (Base.astro) страница в альбомной ориентации заходит под «чёлку» iPhone,
+   и без max() первые буквы строк прятались бы под ней. */
+.wrap {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding-block: 0;
+  padding-inline: max(20px, env(safe-area-inset-left, 0px)) max(20px, env(safe-area-inset-right, 0px));
+}
 
 /* ── Типографические роли ── */
 
@@ -745,7 +759,16 @@ table.data td.strong { font-weight: 600; }
 /* ── Мобильная нижняя панель ── */
 
 /* Видна всегда, с первого экрана. Колонок столько, сколько каналов
-   в site.ts: без ссылки на MAX их три, и панель не держит пустую ячейку. */
+   в site.ts: без ссылки на MAX их три, и панель не держит пустую ячейку.
+
+   Фон СПЛОШНОЙ. Раньше разделители были щелями по 1 px между ячейками,
+   а под ними лежал полупрозрачный фон панели — то есть сквозь «линии»
+   просвечивала страница: на белом листе они выходили белыми и жирными,
+   а над карточкой условий в щели попадал обрывок её красной линейки.
+   Заказчик прислал снимок: «некрасиво, сделай ровнее». Теперь разделитель —
+   нарисованная линейка в 1 px, и она короче ячейки: не касается ни верха,
+   ни низа, как на бланке. Верхний край — такая же линейка тенью внутрь
+   (она не добавляет высоты) плюс мягкая тень над панелью. */
 .mobile-bar {
   position: fixed;
   left: 0; right: 0; bottom: 0;
@@ -753,26 +776,54 @@ table.data td.strong { font-weight: 600; }
   display: none;
   grid-auto-flow: column;
   grid-auto-columns: minmax(0, 1fr);
-  gap: 1px;
-  background: var(--dark-line);
-  border-top: 1px solid var(--dark-line);
-  padding-bottom: env(safe-area-inset-bottom, 0);
+  background: var(--dark);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 -12px 28px -16px rgba(22, 19, 15, 0.5);
+  /* Запас под полоску «домой» у iPhone. Работает только вместе
+     с viewport-fit=cover в Base.astro — без него env() всегда ноль,
+     и подписи ложились вплотную к полоске. */
+  padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
 }
 .mobile-bar a {
-  display: grid;
-  justify-items: center;
-  gap: 2px;
-  background: var(--dark);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: var(--mbar-h);
   color: var(--on-dark);
   text-decoration: none;
-  font-size: 11.5px;
-  padding: 9px 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--t-fast) var(--ease);
 }
-.mobile-bar a svg { width: 20px; height: 20px; color: var(--acc-bright); }
+.mobile-bar a + a::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 14px;
+  bottom: 14px;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.1);
+}
+/* Нажатие видно: ячейка чуть светлеет. Системную синюю вспышку
+   нажатия на телефоне отключили выше — синего на сайте нет. */
+.mobile-bar a:active { background: rgba(255, 255, 255, 0.06); }
+.mobile-bar a:focus-visible { outline: 2px solid var(--acc-bright); outline-offset: -5px; border-radius: 8px; }
+/* Значки — фирменные, цветные (BrandIcon.astro): по цвету их и узнают.
+   Цвет текста берёт только трубка телефона. */
+.mobile-bar a svg { width: 26px; height: 26px; flex: none; color: var(--on-dark); }
 
 @media (max-width: 767px) {
   .mobile-bar { display: grid; }
-  body { padding-bottom: 58px; }
+  /* Низ страницы не прячется под панелью — ровно на её высоту. */
+  body { padding-bottom: calc(var(--mbar-h) + env(safe-area-inset-bottom, 0px)); }
 }
 
 /* Печать. Страницы «Документы» и «Стоимость» распечатывают и берут с собой —
