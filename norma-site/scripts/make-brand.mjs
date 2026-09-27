@@ -118,7 +118,7 @@ const browser = await chromium.launch()
 // изнутри, и знак, упёртый в край, теряет засечки.
 const CIRCLE_SAFE = 0.85
 
-const shot = async (name, w, h, body, { bg = 'transparent', scale = 2, pdf = false, pad = 0, fits = null, circle = null, jpeg = false } = {}) => {
+const shot = async (name, w, h, body, { bg = 'transparent', scale = 2, pdf = false, pad = 0, fits = null, circle = null, safe = null, jpeg = false } = {}) => {
   const ctx = await browser.newContext({ viewport: { width: w + pad * 2, height: h + pad * 2 }, deviceScaleFactor: scale })
   const p = await ctx.newPage()
   await p.setContent(page(w + pad * 2, h + pad * 2, `<div id="a" style="padding:${pad}px;display:inline-block">${body}</div>`, bg), { waitUntil: 'load' })
@@ -152,6 +152,27 @@ const shot = async (name, w, h, body, { bg = 'transparent', scale = 2, pdf = fal
     }, circle)
     if (far > CIRCLE_SAFE) {
       throw new Error(`${name}: содержимое доходит до ${Math.round(far * 100)} % радиуса при допустимых ${Math.round(CIRCLE_SAFE * 100)} % — при обрезке в круг его срежет`)
+    }
+  }
+  // Широкие картинки обрезают не в круг, а в кадр другой пропорции.
+  // Зона, которая переживает обрезку, задаётся прямоугольником в координатах
+  // полотна, и каждый элемент из списка обязан лежать в ней целиком.
+  if (safe) {
+    const outside = await p.evaluate(({ sels, x0, y0, x1, y1 }) => {
+      const box = document.querySelector('#a').getBoundingClientRect()
+      const bad = []
+      for (const s of sels) for (const n of document.querySelectorAll(s)) {
+        const b = n.getBoundingClientRect()
+        const l = b.left - box.left
+        const t = b.top - box.top
+        const r = b.right - box.left
+        const d = b.bottom - box.top
+        if (l < x0 || t < y0 || r > x1 || d > y1) bad.push(`${s}: ${Math.round(l)}–${Math.round(r)} × ${Math.round(t)}–${Math.round(d)}`)
+      }
+      return bad
+    }, safe)
+    if (outside.length) {
+      throw new Error(`${name}: выходит из зоны ${Math.round(safe.x0)}–${Math.round(safe.x1)} × ${Math.round(safe.y0)}–${Math.round(safe.y1)}, которую не срежет обрезка: ${outside.join('; ')}`)
     }
   }
   await el.screenshot({
@@ -202,13 +223,40 @@ await shot('avatar-svetlyy', 512, 512, avatar(PAPER, ACC), { bg: PAPER, scale: 1
 // и её углы уходят к краю первыми. Снимается в 1024 px — каталоги
 // принимают крупные файлы и сами уменьшают их под свои размеры.
 const TAG_LINE = TAG[0].toUpperCase() + TAG.slice(1)
-const square = (bg, fill, ink) =>
-  `<div style="width:512px;height:512px;background:${bg};display:grid;place-content:center;justify-items:center;gap:24px">
-     <svg style="display:block" viewBox="0 0 100 100" width="150" height="150" fill="${fill}">${PATHS.map((d) => `<path d="${d}"/>`).join('')}</svg>
-     <div id="tag" style="font-family:G;font-weight:600;font-size:38px;letter-spacing:.01em;line-height:1;white-space:nowrap;color:${ink}">${TAG_LINE}</div>
+const stack = (w, h, bg, fill, ink, { mark, gap, size }) =>
+  `<div style="width:${w}px;height:${h}px;background:${bg};display:grid;place-content:center;justify-items:center;gap:${gap}px">
+     <svg style="display:block" viewBox="0 0 100 100" width="${mark}" height="${mark}" fill="${fill}">${PATHS.map((d) => `<path d="${d}"/>`).join('')}</svg>
+     <div id="tag" style="font-family:G;font-weight:600;font-size:${size}px;letter-spacing:.01em;line-height:1;white-space:nowrap;color:${ink}">${TAG_LINE}</div>
    </div>`
+const square = (bg, fill, ink) => stack(512, 512, bg, fill, ink, { mark: 150, gap: 24, size: 38 })
 await shot('logotip-kvadrat', 512, 512, square(DARK, ACC_BRIGHT, ON_DARK), { bg: DARK, circle: ['#a svg', '#tag'] })
 await shot('logotip-kvadrat-svetlyy', 512, 512, square(PAPER, ACC, INK), { bg: PAPER, circle: ['#a svg', '#tag'] })
+
+// 3б. Обложка — тот же знак с подписью на широком полотне (просьба
+//     заказчика, 27.09.2026: «такой же логотип для обложки»).
+//
+// Справку Яндекса из среды сборки не открыть (yandex.ru закрыт сетевой
+// политикой), а вторичные источники называют разные пропорции: 2,5 : 1
+// (400×160) и 4 : 1 (1440×360). Поэтому полотно — 2,5 : 1, 2000×800,
+// а знак с подписью стоят в зоне, которая переживает обе обрезки: по высоте —
+// полоса 4 : 1 из середины, по ширине — кадр 16 : 9 на случай, если узкий
+// экран подрежет обложку с боков. Проверяет это shot(), по настоящим
+// прямоугольникам. Текста, кроме подписи, нет нарочно: контакты на обложке
+// каталоги не любят, и у них для этого есть свои поля.
+const COVER_W = 1000
+const COVER_H = 400
+const band = COVER_W / 4
+const frame = (COVER_H * 16) / 9
+const COVER_SAFE = {
+  sels: ['#a svg', '#tag'],
+  x0: (COVER_W - frame) / 2 + 24,
+  x1: (COVER_W + frame) / 2 - 24,
+  y0: (COVER_H - band) / 2 + 16,
+  y1: (COVER_H + band) / 2 - 16,
+}
+const cover = (bg, fill, ink) => stack(COVER_W, COVER_H, bg, fill, ink, { mark: 140, gap: 22, size: 36 })
+await shot('oblozhka', COVER_W, COVER_H, cover(DARK, ACC_BRIGHT, ON_DARK), { bg: DARK, safe: COVER_SAFE })
+await shot('oblozhka-svetlaya', COVER_W, COVER_H, cover(PAPER, ACC, INK), { bg: PAPER, safe: COVER_SAFE })
 
 // 4. Шапка письма. 600×140 в пересчёте на экран — стандартная ширина письма;
 //    снимается в двойном размере, чтобы не мылилась на телефоне.
@@ -368,6 +416,8 @@ ${row('avatar.png', 'аватар, тёмный')}
 ${row('avatar-svetlyy.png', 'аватар, светлый')}
 ${row('logotip-kvadrat.png', 'знак с подписью, тёмный')}
 ${row('logotip-kvadrat-svetlyy.png', 'знак с подписью, светлый')}
+${row('oblozhka.png', 'обложка каталога, тёмная')}
+${row('oblozhka-svetlaya.png', 'обложка каталога, светлая')}
 ${row('pochta-shapka.png', 'шапка письма, 600 px по ширине')}
 ${row('pochta-shapka-600.png', 'она же в одинарном масштабе')}
   logotip.pdf                  вектор       для печати
