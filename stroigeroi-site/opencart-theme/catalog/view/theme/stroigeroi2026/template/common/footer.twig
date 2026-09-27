@@ -19,7 +19,7 @@
   изменённые style.css или app.js, иначе у посетителей останутся старые
   из кеша браузера - и вы будете смотреть на исправленный сайт, а они нет.
 #}
-{% set asset_v = 'f239c61f' %}
+{% set asset_v = 'ebed33b9' %}
 {#
   Название магазина написано здесь словом, а не взято из настроек.
   Переменной name у подвала нет: движок рисует подвал отдельным вызовом
@@ -104,7 +104,7 @@
         <div class="footer-group">
           <p class="footer-group__label">Сервисы</p>
           <ul>
-            <li><a href="index.php?route=information/calculator">Калькулятор материалов</a></li>
+            <li><a href="index.php?route=information/calculator">Строительный калькулятор</a></li>
             <li><a href="index.php?route=checkout/cart">Корзина</a></li>
             <li><a href="{{ return }}">Возврат товара</a></li>
             <li><button class="footer-group__button" type="button" data-modal-open="modal-callback">Заказать звонок</button></li>

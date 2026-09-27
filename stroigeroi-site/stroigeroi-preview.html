@@ -4326,7 +4326,7 @@ html[data-theme="dark"] .step.is-current .step__num {
 }
 
 /* ==========================================================================
-   Калькулятор материалов
+   Калькулятор: сетка формы и карточка ответа
    ========================================================================== */
 
 .calc {
@@ -4937,6 +4937,12 @@ html[data-theme="dark"] .step.is-current .step__num {
   flex-wrap: wrap;
   gap: var(--sp-2);
   margin-top: var(--sp-4);
+}
+
+/* «Поделиться» есть только там, где есть меню телефона, — скрипт снимает
+   hidden сам. У .btn свой display, поэтому hidden надо подтвердить. */
+.calc-list__actions .btn[hidden] {
+  display: none;
 }
 
 /* «Очистить» со второго нажатия: первое спрашивает «Точно очистить?» */
@@ -6906,7 +6912,7 @@ p a:not(.btn):hover,
   <div class="container">
     <nav class="mobile-nav" id="mobile-nav" data-mobile-nav hidden aria-label="Мобильное меню">
       <a class="mobile-nav__link" href="#p-catalog">А1 САНТЕХНИКА</a><a class="mobile-nav__link" href="#p-catalog">Инструменты</a><a class="mobile-nav__link" href="#p-catalog">Товар</a><a class="mobile-nav__link" href="#p-catalog">Электрика и свет</a><a class="mobile-nav__link" href="#p-catalog">Сантехника и инженерные системы</a><a class="mobile-nav__link" href="#p-catalog">Ручной инструмент</a><a class="mobile-nav__link" href="#p-catalog">Автотовары</a><a class="mobile-nav__link" href="#p-catalog">Всё для сада</a><a class="mobile-nav__link" href="#p-catalog">Крепёж и фурнитура</a><a class="mobile-nav__link" href="#p-catalog">Отделочные и стройматериалы</a><a class="mobile-nav__link" href="#p-catalog">Офис и дом</a><a class="mobile-nav__link" href="#p-catalog">Спорт и туризм</a><a class="mobile-nav__link" href="#p-catalog">Станки и промкомпоненты</a><a class="mobile-nav__link" href="#p-catalog">Климат, отопление и вентиляция</a><a class="mobile-nav__link" href="#p-catalog">Склад</a><a class="mobile-nav__link" href="#p-catalog">Клининг и химия</a><a class="mobile-nav__link" href="#p-catalog">Строительное оборудование</a><a class="mobile-nav__link" href="#p-catalog">Расходка, спецодежда и СИЗ</a><a class="mobile-nav__link" href="#p-catalog">Товары со скидкой</a>
-      <a class="mobile-nav__link" href="#p-calculator">Калькулятор материалов</a>
+      <a class="mobile-nav__link" href="#p-calculator">Строительный калькулятор</a>
       <a class="mobile-nav__link" href="#p-delivery">Доставка и оплата</a>
       <a class="mobile-nav__link" href="#p-contacts">Контакты и магазины</a>
       <a class="mobile-nav__link" href="tel:+79638319999">8-963-831-99-99</a>
@@ -8347,6 +8353,7 @@ p a:not(.btn):hover,
         <div class="calc-list__actions">
           <button class="btn btn--action" type="button" data-calc-list-send data-calc-send data-modal-open="modal-callback"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 3 10 14"/><path d="M21 3 14 21l-4-7-7-4z"/></svg> Отправить менеджеру</button>
           <button class="btn btn--outline" type="button" data-calc-list-copy><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg> Скопировать</button>
+          <button class="btn btn--outline" type="button" data-calc-list-share hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg> Поделиться</button>
           <button class="btn btn--outline" type="button" data-calc-list-print>Распечатать</button>
           <button class="btn btn--outline" type="button" data-calc-list-clear>Очистить</button>
         </div>
@@ -9061,7 +9068,7 @@ p a:not(.btn):hover,
         <div class="footer-group">
           <p class="footer-group__label">Сервисы</p>
           <ul>
-            <li><a href="#p-calculator">Калькулятор материалов</a></li>
+            <li><a href="#p-calculator">Строительный калькулятор</a></li>
             <li><a href="#p-cart">Корзина</a></li>
             <li><a href="#p-contacts">Контакты и магазины</a></li>
             <li><a href="#" data-demo="заказ звонка">Заказать звонок</a></li>
@@ -11629,6 +11636,18 @@ p a:not(.btn):hover,
     toast.timer = setTimeout(function () { note.hidden = true; }, 3200);
   }
 
+  /* На телефоне — меню «Поделиться» самого телефона (WhatsApp, Telegram,
+     почта): так расчёт обычно и пересылают. На компьютере это меню
+     неудобно, там ссылка просто копируется. */
+  var canShare = !!(navigator.share && window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+  function share(data, fallback) {
+    if (!canShare) { fallback(); return; }
+    navigator.share(data).catch(function (err) {
+      /* Закрыли меню — это не ошибка. Любая другая — копируем. */
+      if (!err || err.name !== 'AbortError') fallback();
+    });
+  }
+
   /* ======================================================================
      Разметка
      ====================================================================== */
@@ -12302,6 +12321,8 @@ p a:not(.btn):hover,
   function renderList() {
     if (!listBox) return;
     listBox.hidden = !list.length;
+    var shareBtn = $('[data-calc-list-share]', listBox);
+    if (shareBtn) shareBtn.hidden = !canShare;
     var body = $('[data-calc-list-body]', listBox);
     var count = $('[data-calc-list-count]', listBox);
     if (count) count.textContent = list.length ? ru(list.length) + ' ' + plural(list.length, CALC_FORMS) : '';
@@ -12406,9 +12427,20 @@ p a:not(.btn):hover,
     toast('Значения по умолчанию');
   });
 
+  var linkBtn = $('[data-calc-link]', result);
+  if (canShare && linkBtn && linkBtn.lastChild && linkBtn.lastChild.nodeType === 3) {
+    linkBtn.lastChild.textContent = ' Поделиться расчётом';
+  }
+
   result.addEventListener('click', function (e) {
     if (e.target.closest('[data-calc-link]')) {
-      copyText(pageUrl() + '#' + linkOf(current, last.raw, true), 'Ссылка на расчёт скопирована — по ней откроются те же размеры');
+      var url = pageUrl() + '#' + linkOf(current, last.raw, true);
+      var ready = last.r && !last.r.need;
+      share({
+        title: 'Расчёт: ' + current.title,
+        text: ready ? lines(current, last.r).join('\n') : current.title,
+        url: url
+      }, function () { copyText(url, 'Ссылка на расчёт скопирована — по ней откроются те же размеры'); });
       return;
     }
     if (!last || !last.r || last.r.need) return;
@@ -12481,6 +12513,8 @@ p a:not(.btn):hover,
       }
       if (e.target.closest('[data-calc-list-copy]')) {
         copyText(listText(), 'Список скопирован');
+      } else if (e.target.closest('[data-calc-list-share]')) {
+        share({ title: 'Список покупок — Строй-Герой', text: listText() }, function () { copyText(listText(), 'Список скопирован'); });
       } else if (e.target.closest('[data-calc-list-send]')) {
         var sent = listMessage();
         var all = list.length;

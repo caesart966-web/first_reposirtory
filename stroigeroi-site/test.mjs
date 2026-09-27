@@ -879,9 +879,11 @@ for (const name of ['index', 'catalog', 'checkout', 'contacts', 'login']) {
   const listed = await page.evaluate(() => ({
     shown: !document.querySelector('[data-calc-list]').hidden,
     entries: [...document.querySelectorAll('.calc-list__name')].map((n) => n.textContent),
+    share: !document.querySelector('[data-calc-list-share]').hidden,
     count: document.querySelector('[data-calc-list-count]').textContent.replace(/ /g, ' '),
   }));
   if (!listed.shown || listed.entries.length !== 2 || listed.count !== '2 расчёта') fail(`калькулятор: список покупок — ${JSON.stringify(listed)}`);
+  if (listed.share) fail('калькулятор: на компьютере меню «Поделиться» нет — кнопка в списке должна прятаться');
   await page.goto(pageUrl, { waitUntil: 'load' });
   await page.waitForTimeout(300);
   const kept = await page.$$eval('.calc-list__name', (n) => n.map((x) => x.textContent));
@@ -1231,6 +1233,33 @@ for (const name of ['index', 'catalog', 'checkout', 'contacts', 'login']) {
   await page.evaluate(() => document.querySelector('[data-calc-result]').scrollIntoView());
   await page.waitForTimeout(400);
   if (!(await page.evaluate(() => document.querySelector('[data-calc-peek]').hidden))) fail('калькулятор на телефоне: плашка итога должна прятаться, когда итог на экране');
+  await ctx.close();
+}
+
+/* Телефон: «Поделиться» открывает меню самого телефона — в сообщении
+   позиции расчёта и ссылка со всеми размерами; у списка своя кнопка
+   «Поделиться». Меню подменяем: в браузере для проверок его нет. */
+{
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 780 }, isMobile: true, hasTouch: true });
+  const page = await ctx.newPage();
+  await page.addInitScript(() => { navigator.share = (d) => { window.__shared = d; return Promise.resolve(); }; });
+  await page.goto('file://' + path.join(DIR, 'calculator.html') + '#armstrong?length=6&width=3', { waitUntil: 'load' });
+  await page.waitForTimeout(400);
+  const label = (await page.textContent('[data-calc-link]')).trim();
+  if (label !== 'Поделиться расчётом') fail(`калькулятор на телефоне: кнопка ссылки называется «${label}»`);
+  await page.click('[data-calc-link]');
+  await page.waitForTimeout(200);
+  const shared = await page.evaluate(() => window.__shared || null);
+  if (!shared || !/— Плиты 600 × 600 мм: 50\sплит/.test(shared.text) || !shared.url.endsWith('#armstrong?length=6&width=3&lamps=0&runner=3.6&angle=3&hang=1.2')) {
+    fail(`калькулятор на телефоне: «Поделиться» отправило ${JSON.stringify(shared)}`);
+  }
+  await page.click('[data-calc-add]');
+  await page.waitForTimeout(200);
+  if (await page.evaluate(() => document.querySelector('[data-calc-list-share]').hidden)) fail('калькулятор на телефоне: у списка нет кнопки «Поделиться»');
+  await page.click('[data-calc-list-share]');
+  await page.waitForTimeout(200);
+  const list = await page.evaluate(() => window.__shared || {});
+  if (!/Список покупок/.test(list.title || '') || !/Потолок «Армстронг»/.test(list.text || '')) fail(`калькулятор на телефоне: список ушёл в «Поделиться» как ${JSON.stringify(list).slice(0, 120)}`);
   await ctx.close();
 }
 

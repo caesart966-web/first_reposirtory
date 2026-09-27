@@ -1080,6 +1080,18 @@
     toast.timer = setTimeout(function () { note.hidden = true; }, 3200);
   }
 
+  /* На телефоне — меню «Поделиться» самого телефона (WhatsApp, Telegram,
+     почта): так расчёт обычно и пересылают. На компьютере это меню
+     неудобно, там ссылка просто копируется. */
+  var canShare = !!(navigator.share && window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+  function share(data, fallback) {
+    if (!canShare) { fallback(); return; }
+    navigator.share(data).catch(function (err) {
+      /* Закрыли меню — это не ошибка. Любая другая — копируем. */
+      if (!err || err.name !== 'AbortError') fallback();
+    });
+  }
+
   /* ======================================================================
      Разметка
      ====================================================================== */
@@ -1753,6 +1765,8 @@
   function renderList() {
     if (!listBox) return;
     listBox.hidden = !list.length;
+    var shareBtn = $('[data-calc-list-share]', listBox);
+    if (shareBtn) shareBtn.hidden = !canShare;
     var body = $('[data-calc-list-body]', listBox);
     var count = $('[data-calc-list-count]', listBox);
     if (count) count.textContent = list.length ? ru(list.length) + ' ' + plural(list.length, CALC_FORMS) : '';
@@ -1857,9 +1871,20 @@
     toast('Значения по умолчанию');
   });
 
+  var linkBtn = $('[data-calc-link]', result);
+  if (canShare && linkBtn && linkBtn.lastChild && linkBtn.lastChild.nodeType === 3) {
+    linkBtn.lastChild.textContent = ' Поделиться расчётом';
+  }
+
   result.addEventListener('click', function (e) {
     if (e.target.closest('[data-calc-link]')) {
-      copyText(pageUrl() + '#' + linkOf(current, last.raw, true), 'Ссылка на расчёт скопирована — по ней откроются те же размеры');
+      var url = pageUrl() + '#' + linkOf(current, last.raw, true);
+      var ready = last.r && !last.r.need;
+      share({
+        title: 'Расчёт: ' + current.title,
+        text: ready ? lines(current, last.r).join('\n') : current.title,
+        url: url
+      }, function () { copyText(url, 'Ссылка на расчёт скопирована — по ней откроются те же размеры'); });
       return;
     }
     if (!last || !last.r || last.r.need) return;
@@ -1932,6 +1957,8 @@
       }
       if (e.target.closest('[data-calc-list-copy]')) {
         copyText(listText(), 'Список скопирован');
+      } else if (e.target.closest('[data-calc-list-share]')) {
+        share({ title: 'Список покупок — Строй-Герой', text: listText() }, function () { copyText(listText(), 'Список скопирован'); });
       } else if (e.target.closest('[data-calc-list-send]')) {
         var sent = listMessage();
         var all = list.length;

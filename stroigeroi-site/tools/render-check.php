@@ -492,4 +492,84 @@ if (substr_count($foot, $firstPage) !== 1) {
 echo "Продавец: «{$legal}» - " . ($bad === $badBefore
     ? "подвал, контакты, «Реквизиты», «Юридическим лицам» и разметка сходятся\n" : "есть расхождения, см. выше\n");
 
+/*
+ * Кнопка калькулятора у товара и приглашение в калькулятор в разделе
+ * (правка 33). Материал узнаётся по словам в названии, первое совпадение
+ * по порядку списка. Список стоит в двух шаблонах, и разойтись им нельзя:
+ * сверяем сам текст списка и то, куда ведёт кнопка, на наборе названий -
+ * в том числе таких, где слово материала есть, а калькулятор не нужен.
+ */
+$badBefore = $bad;
+$listOf = function ($file) use ($theme) {
+    $src = file_get_contents("$theme/$file");
+    if (!preg_match('~\{% set calc_links = \[(.*?)\] %\}~s', $src, $m)) {
+        return null;
+    }
+    return preg_replace('/\s+/u', ' ', $m[1]);
+};
+$prodList = $listOf('product/product.twig');
+$catList = $listOf('product/category.twig');
+if ($prodList === null || $prodList !== $catList) {
+    echo "product.twig и category.twig: списки калькуляторов по названию разошлись\n";
+    $bad++;
+}
+$calcCases = [
+    'Радиатор биметаллический 500, 10 секций' => 'radiatory',
+    'Плита потолочная Армстронг 600×600' => 'armstrong',
+    'Шпатлёвка для швов гипсокартона 25 кг' => 'smesi',   // и «гипсокартон», и «шпатлёвка»
+    'Шпатлёвка для гипсокартона 25 кг' => 'smesi',        // и «для гипсокартона» (перегородка)
+    'Смесь для стяжки пола 25 кг' => 'smesi',
+    'Сухие смеси' => 'smesi',
+    'Профиль стоечный ПС 50×50 3 м' => 'peregorodka',
+    'Саморезы для гипсокартона 3,5×25' => 'peregorodka',
+    'Гипсокартон Кнауф 12,5 мм 1200×2500' => 'gipsokarton',
+    'Блок газобетонный D500 600×300×200' => 'kladka',     // и «бетон»
+    'Кирпич облицовочный' => 'kladka',
+    'Бетоноконтакт 5 кг' => 'kraska',                     // и «бетон»
+    'Эмаль ПФ-115 белая' => 'kraska',
+    'Лакокрасочные материалы' => 'kraska',
+    'Цемент М500 50 кг' => 'beton',
+    'Клей для плитки 25 кг' => 'plitka',
+    'Керамогранит 600×600' => 'plitka',
+    'Обои виниловые 1,06×10,05' => 'oboi',
+    'Ламинат 33 класс' => 'laminat',
+    'Вагонка ПВХ 3 м' => 'paneli',
+    'Утеплитель базальтовый 50 мм' => 'uteplitel',
+    'Теплоизоляция' => 'uteplitel',
+    'Профнастил С8' => 'krovlya',
+    'Кровельные материалы' => 'krovlya',
+    'Плитка облицовочная под кирпич' => 'plitka',        // и «кирпич»
+    'Клей плиточный на цементной основе' => 'plitka',     // и «цемент»
+    'Цемент' => 'beton',
+    'Подвесные потолки' => 'armstrong',
+    'Сайдинг виниловый' => 'paneli',
+    'Лаки и пропитки' => 'kraska',
+    'Стеновые блоки' => 'kladka',
+    'Строительные смеси' => 'smesi',
+    'Цементно-стружечная плита 10 мм' => null,          // исключение, хотя «цемент»
+    'Смесители для ванной' => null,
+    'Стяжка кабельная 200 мм' => null,
+    'Блок питания 12 В' => null,
+    'Дрель ударная' => null,
+];
+$prodTpl = $twig->load('product/product.twig');
+$catTpl = $twig->load('product/category.twig');
+foreach ($calcCases as $name => $want) {
+    $pages = [
+        'product.twig' => $prodTpl->render(['heading_title' => $name, 'price' => '100 руб.', 'special' => '', 'stock' => '5',
+            'product_id' => 1, 'breadcrumbs' => []]),
+        'category.twig' => $catTpl->render(['heading_title' => $name, 'products' => [], 'categories' => []]),
+    ];
+    foreach ($pages as $file => $html) {
+        preg_match_all('~information/calculator#([a-z]+)~', $html, $m);
+        $got = $m[1] ? $m[1][0] : null;
+        if ($got !== $want || count(array_unique($m[1])) > 1) {
+            echo "$file: «{$name}» - калькулятор " . var_export($got, true) . ', ждали ' . var_export($want, true) . "\n";
+            $bad++;
+        }
+    }
+}
+echo 'Кнопка калькулятора у товара и раздела: ' . count($calcCases) . ' названий - '
+    . ($bad === $badBefore ? "всё ведёт куда надо, списки в двух шаблонах одинаковые\n" : "есть ошибки, см. выше\n");
+
 exit($bad ? 1 : 0);

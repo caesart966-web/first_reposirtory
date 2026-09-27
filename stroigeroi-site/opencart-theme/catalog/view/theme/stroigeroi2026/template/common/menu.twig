@@ -97,7 +97,7 @@
     <nav class="mobile-nav" id="mobile-nav" data-mobile-nav hidden aria-label="Мобильное меню">
       {% for category in categories %}<a class="mobile-nav__link" href="{{ category.href }}">{{ category.name }}</a>{% endfor %}
       <a class="mobile-nav__link" href="{{ url_special }}">Товары со скидкой</a>
-      <a class="mobile-nav__link" href="{{ url_calculator }}">Калькулятор материалов</a>
+      <a class="mobile-nav__link" href="{{ url_calculator }}">Строительный калькулятор</a>
       {% if url_delivery %}<a class="mobile-nav__link" href="{{ url_delivery }}">Доставка и оплата</a>{% endif %}
       <a class="mobile-nav__link" href="index.php?route=information/contact">Контакты и магазины</a>
       <a class="mobile-nav__link" href="tel:+79638319999">8-963-831-99-99</a>
