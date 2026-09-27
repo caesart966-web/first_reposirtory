@@ -35,10 +35,13 @@ const metrikaId = import.meta.env.PUBLIC_NOINDEX === '1' ? '' : SITE.metrikaId
 {metrikaId && (
   <div class="cookie" id="cookie-note" role="region" aria-label="Файлы cookie" hidden>
     <div class="wrap cookie-in">
+      {/* Коротко нарочно. Прежний текст в четыре строки закрывал на телефоне
+          четверть первого экрана — вместе с кнопкой «Узнать стоимость».
+          Что именно собирается и зачем, по-прежнему расписано в политике,
+          а выбор настоящий: «Только необходимые» Метрику не грузит. */}
       <p class="cookie-text">
-        Сайт использует файлы cookie. Необходимые — чтобы страницы работали; остальные —
-        чтобы я видел, какие страницы читают и откуда приходят.
-        Что именно собирается и зачем — в <a href={href('/politika/')}>политике обработки данных</a>.
+        Сайт использует cookie для статистики посещений.
+        Подробнее — в <a href={href('/politika/')}>политике обработки данных</a>.
       </p>
       <div class="cookie-act">
         <button type="button" class="btn btn--acc btn--sm" data-cookie="all">Принять</button>
@@ -164,7 +167,7 @@ const metrikaId = import.meta.env.PUBLIC_NOINDEX === '1' ? '' : SITE.metrikaId
   }
   .cookie-text {
     margin: 0;
-    max-width: 78ch;
+    flex: 1 1 32ch;
     font-size: 14px;
     line-height: 1.6;
     color: var(--on-dark);
@@ -188,9 +191,13 @@ const metrikaId = import.meta.env.PUBLIC_NOINDEX === '1' ? '' : SITE.metrikaId
        баннер, — кнопки «Позвонить» и «WhatsApp». Высоту панели подставляет
        скрипт; запасные 61 px — её замер на 390 px. Отступ под вырез экрана
        уже входит в высоту панели, второй раз его прибавлять не нужно. */
-    .cookie { bottom: var(--bar-h, 61px); padding-bottom: 14px; }
-    .cookie-in { justify-content: stretch; }
-    .cookie-act { width: 100%; }
-    .cookie-act .btn { flex: 1 1 auto; }
+    .cookie { bottom: var(--bar-h, 61px); padding: 11px 0; }
+    .cookie-in { justify-content: stretch; gap: 9px; }
+    .cookie-text { font-size: 13.5px; line-height: 1.5; }
+    .cookie-act { width: 100%; gap: 8px; flex-wrap: nowrap; }
+    .cookie-act .btn { flex: 1 1 0; padding-inline: 10px; }
+  }
+  @media (max-width: 380px) {
+    .cookie-act .btn { font-size: 13px; padding-inline: 6px; }
   }
 </style>

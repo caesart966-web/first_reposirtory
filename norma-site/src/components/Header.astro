@@ -82,8 +82,8 @@ const isCurrent = (url: string) => path === url || (url !== href('/') && path.st
           «проверить, нужна ли СРО» — необязывающий шаг, в шапке «оставить
           заявку» — целевой, и он же заменил круглую плавающую кнопку. */}
       <a class="btn btn--acc btn--sm hdr-cta" href={href('/kontakty/#form')}>Оставить заявку</a>
-      <!-- На телефоне номер должен быть виден с первого экрана, не только
-           в нижней панели, которая появляется после прокрутки. -->
+      <!-- Номер и в шапке: сюда смотрят первым, а нижняя панель
+           на планшете уже не показывается. -->
       <a class="icon-phone" href={SITE.phoneHref} aria-label={`Позвонить ${SITE.phone}`} data-goal="click_phone">
         <Icon name="phone" size={19} />
       </a>
@@ -144,6 +144,9 @@ const isCurrent = (url: string) => path === url || (url !== href('/') && path.st
         ))}
       </nav>
       <a class="btn btn--acc mm-cta" href={href('/#calc')}>Проверить, нужна ли СРО</a>
+      {/* На телефоне кнопки «Оставить заявку» в шапке нет — не помещается.
+          Без неё в меню путь к форме лежал через «Контакты» и прокрутку. */}
+      <a class="btn btn--ghost-dark mm-cta mm-cta--2" href={href('/kontakty/#form')}>Оставить заявку</a>
       <a class="mm-phone" href={SITE.phoneHref}>{SITE.phone}</a>
     </div>
   </div>
@@ -507,6 +510,7 @@ const isCurrent = (url: string) => path === url || (url !== href('/') && path.st
   .mobile-menu nav a:hover { color: var(--acc-bright); }
   .mobile-menu nav a[aria-current='page'] { color: var(--acc-bright); }
   .mm-cta { margin-top: 24px; width: 100%; }
+  .mm-cta--2 { margin-top: 10px; }
   .mm-phone {
     display: block;
     margin-top: 12px;
