@@ -8,6 +8,12 @@
 // 2. Молчаливого «успеха» не бывает: если сервер не подтвердил доставку —
 //    показываем ошибку, а не «спасибо».
 // 3. Антиспам без капчи: скрытое поле-ловушка + минимальное время заполнения.
+//
+// И четвёртая, появившаяся позже: на виду только то, без чего заявку
+// не отправить, — имя, телефон и согласие. Раньше форма встречала восемью
+// полями, и человек, которому нужно одно «перезвоните», видел анкету.
+// Вид работ, специалисты, город, почта и текст никуда не делись — они
+// в раскрывающемся блоке «Уточнить задачу».
 import { SITE, href } from '../config/site'
 import { REGIONS } from '../config/regions'
 import Icon from './Icon.astro'
@@ -17,11 +23,19 @@ interface Props {
   title?: string
   subtitle?: string
   id?: string
+  /**
+   * Раскрыть «Уточнить задачу» сразу. Для страниц, где заголовок формы
+   * сам просит подробностей («пришлите название организации», «напишите
+   * вид работ и сумму»): прятать поле, о котором только что попросили,
+   * значит заставить его искать.
+   */
+  expanded?: boolean
 }
 const {
-  title = 'Оставьте заявку — отвечу лично',
-  subtitle = 'Разберу вашу ситуацию и скажу прямо, нужна ли вам СРО. Если не нужна — так и напишу.',
+  title = 'Оставьте заявку\u00a0— отвечу лично',
+  subtitle = 'Достаточно имени и телефона — остальное спрошу сам. Если СРО вам не нужна, так и скажу.',
   id = 'form',
+  expanded = false,
 } = Astro.props
 
 // Адрес приёмника заявок и токен. Задаются при сборке; на превью-хостинге
@@ -58,67 +72,11 @@ const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
       </div>
     </div>
 
-    <div class="row">
-      <div class="field" data-field="email">
-        <label for="lf-email">E-mail</label>
-        <input type="email" id="lf-email" name="email" class="ym-hide-content ym-disable-keys" autocomplete="email" maxlength="120" />
-        <span class="hint">Необязательно — если удобнее письмом</span>
-        <span class="error" id="err-email">Проверьте адрес почты</span>
-      </div>
-
-      <div class="field" data-field="city">
-        <label for="lf-city">Город</label>
-        {/* Список-подсказка, а не выбор из закрытого перечня: городов
-            на сайте три, а страна больше. Кто из Сургута — впишет Сургут
-            и получит подсказку, кто из Ялты — впишет Ялту и не упрётся
-            в «вашего города нет в списке». */}
-        <input
-          type="text"
-          id="lf-city"
-          name="city"
-          class="ym-hide-content ym-disable-keys"
-          maxlength="80"
-          list="lf-cities"
-          autocomplete="address-level2"
-          placeholder="Иркутск"
-        />
-        <datalist id="lf-cities">
-          {REGIONS.map((r) => <option value={r.city}></option>)}
-        </datalist>
-      </div>
-    </div>
-
-    <div class="row">
-      {/* Вид работ раньше был частью свободной строки «Город и вид работ».
-          Свободный текст давал «строю дома» и «перезвоните» — заявки
-          приходили несравнимыми, и первый ответ всегда начинался
-          с уточняющего вопроса. Список — те же четыре варианта, что
-          в калькуляторе на главной, и пятый честный: «пока не знаю». */}
-      <div class="field" data-field="kind">
-        <label for="lf-kind">Какие работы</label>
-        <select id="lf-kind" name="kind">
-          <option value="">Выберите или пропустите</option>
-          {WORK_KINDS.map((k) => <option value={k.id}>{k.label}</option>)}
-        </select>
-      </div>
-
-      {/* Единственный вопрос, которого на сайте не было: специалисты НРС.
-          Он делит заявки на две совершенно разные работы — и спросить
-          его дешевле в форме, чем в первом звонке. */}
-      <div class="field" data-field="nrs">
-        <label for="lf-nrs">Специалисты НРС</label>
-        <select id="lf-nrs" name="nrs">
-          <option value="">Выберите или пропустите</option>
-          <option value="yes">Нужна помощь — своих нет или не проходят</option>
-          <option value="no">Не нужна — специалисты уже в реестре</option>
-          <option value="idk">Не знаю, нужно разобраться</option>
-        </select>
-      </div>
-    </div>
-
     {/* Расчёт из калькулятора. Подставляется скриптом и показывается
         ВИДИМО: скрытое поле, которое уходит вместе с заявкой, а человек
-        о нём не знает, — это ровно то, за что сайт ругает конкурентов. */}
+        о нём не знает, — это ровно то, за что сайт ругает конкурентов.
+        Стоит над раскрывающимся блоком, а не в нём: свёрнутый блок
+        спрятал бы его так же надёжно, как скрытое поле. */}
     <div class="calc-note" data-calc-note hidden>
       <span class="cn-ic" aria-hidden="true"><Icon name="calculator" size={18} /></span>
       <div class="cn-body">
@@ -129,11 +87,81 @@ const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
     </div>
     <input type="hidden" name="calc" data-calc-value />
 
-    <div class="field" data-field="message">
-      <label for="lf-message">Что нужно сделать</label>
-      <textarea id="lf-message" name="message" class="ym-hide-content ym-disable-keys" rows="3" maxlength="1500"
-        placeholder="Коротко о задаче: какие работы, с кем договор, на какую сумму. Или просто «перезвоните»."></textarea>
-    </div>
+    {/* Необязательное — свёрнуто. Правило то же, что у полосы с расчётом:
+        с заявкой не должно уйти ничего, чего человек не видел. Поэтому
+        блок раскрывается сам, если в нём уже что-то есть — из черновика
+        прошлого захода или из калькулятора, — и если в нём ошибка. */}
+    <details class="lf-more" data-lf-more open={expanded}>
+      <summary>
+        <span class="lf-more-t">Уточнить задачу</span>
+        <span class="lf-more-d">вид работ, город, почта, комментарий — необязательно</span>
+      </summary>
+      <div class="lf-more-body">
+        <div class="row">
+          {/* Вид работ раньше был частью свободной строки «Город и вид работ».
+              Свободный текст давал «строю дома» и «перезвоните» — заявки
+              приходили несравнимыми, и первый ответ всегда начинался
+              с уточняющего вопроса. Список — те же четыре варианта, что
+              в калькуляторе на главной, и пятый честный: «пока не знаю». */}
+          <div class="field" data-field="kind">
+            <label for="lf-kind">Какие работы</label>
+            <select id="lf-kind" name="kind">
+              <option value="">Выберите или пропустите</option>
+              {WORK_KINDS.map((k) => <option value={k.id}>{k.label}</option>)}
+            </select>
+          </div>
+
+          {/* Единственный вопрос, которого на сайте не было: специалисты НРС.
+              Он делит заявки на две совершенно разные работы — и спросить
+              его дешевле в форме, чем в первом звонке. */}
+          <div class="field" data-field="nrs">
+            <label for="lf-nrs">Специалисты НРС</label>
+            <select id="lf-nrs" name="nrs">
+              <option value="">Выберите или пропустите</option>
+              <option value="yes">Нужна помощь — своих нет или не проходят</option>
+              <option value="no">Не нужна — специалисты уже в реестре</option>
+              <option value="idk">Не знаю, нужно разобраться</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field" data-field="city">
+            <label for="lf-city">Город</label>
+            {/* Список-подсказка, а не выбор из закрытого перечня: городов
+                на сайте три, а страна больше. Кто из Сургута — впишет Сургут
+                и получит подсказку, кто из Ялты — впишет Ялту и не упрётся
+                в «вашего города нет в списке». */}
+            <input
+              type="text"
+              id="lf-city"
+              name="city"
+              class="ym-hide-content ym-disable-keys"
+              maxlength="80"
+              list="lf-cities"
+              autocomplete="address-level2"
+              placeholder="Иркутск"
+            />
+            <datalist id="lf-cities">
+              {REGIONS.map((r) => <option value={r.city}></option>)}
+            </datalist>
+          </div>
+
+          <div class="field" data-field="email">
+            <label for="lf-email">E-mail</label>
+            <input type="email" id="lf-email" name="email" class="ym-hide-content ym-disable-keys" autocomplete="email" maxlength="120" />
+            <span class="hint">Если удобнее ответ письмом</span>
+            <span class="error" id="err-email">Проверьте адрес почты</span>
+          </div>
+        </div>
+
+        <div class="field" data-field="message">
+          <label for="lf-message">Что нужно сделать</label>
+          <textarea id="lf-message" name="message" class="ym-hide-content ym-disable-keys" rows="3" maxlength="1500"
+            placeholder="Коротко о задаче: какие работы, с кем договор, на какую сумму."></textarea>
+        </div>
+      </div>
+    </details>
 
     <!-- Ловушка для ботов: человек этого поля не видит и не заполнит -->
     <div class="hp-field" aria-hidden="true">
@@ -226,6 +254,60 @@ const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
 
   .submit { justify-self: start; min-width: 220px; }
   .submit[disabled] { opacity: 0.6; cursor: progress; }
+
+  /* «Уточнить задачу». Не кнопка и не карточка — строка между двумя
+     линейками, как пункт в бланке: заметно, что там что-то есть,
+     и не спорит с кнопкой отправки. Знак «плюс» тот же, что у вопросов
+     на главной, и так же превращается в «минус». */
+  .lf-more { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .lf-more > summary {
+    list-style: none;
+    cursor: pointer;
+    display: grid;
+    grid-template-columns: 14px minmax(0, 1fr);
+    gap: 2px 12px;
+    align-items: center;
+    padding: 12px 0;
+  }
+  .lf-more > summary::-webkit-details-marker { display: none; }
+  .lf-more > summary::before {
+    content: '';
+    grid-row: 1 / span 2;
+    width: 14px;
+    height: 14px;
+    background-image:
+      linear-gradient(var(--acc-deep), var(--acc-deep)),
+      linear-gradient(var(--acc-deep), var(--acc-deep));
+    background-position: center, center;
+    background-repeat: no-repeat;
+    background-size: 14px 1.5px, 1.5px 14px;
+    transition: background-size var(--t-mid) var(--ease), transform var(--t-mid) var(--ease);
+  }
+  .lf-more[open] > summary::before {
+    background-size: 14px 1.5px, 1.5px 0;
+    transform: rotate(180deg);
+  }
+  .lf-more-t { font-weight: 600; font-size: 15px; color: var(--acc-deep); }
+  .lf-more > summary:hover .lf-more-t { text-decoration: underline; }
+  .lf-more-d { grid-column: 2; font-size: 13px; line-height: 1.45; color: var(--muted); }
+  .lf-more-body { display: grid; gap: 16px; padding: 6px 0 18px; }
+  /* Раскрывается плавно там, где браузер умеет анимировать height: auto
+     (interpolate-size задан в global.css), в остальных — сразу. */
+  .lf-more::details-content {
+    height: 0;
+    overflow: hidden;
+    /* clip с запасом, а не hidden: поля стоят вровень с краем, и hidden
+       срезал бы рамку фокуса слева на три пикселя. */
+    overflow: clip;
+    overflow-clip-margin: 6px;
+    transition:
+      height var(--t-mid) var(--ease),
+      content-visibility var(--t-mid) allow-discrete;
+  }
+  .lf-more[open]::details-content { height: auto; }
+  @media (prefers-reduced-motion: reduce) {
+    .lf-more > summary::before, .lf-more::details-content { transition: none; }
+  }
 
   /* Полоса с приложенным расчётом. Не «успех» зелёным и не «внимание»
      красным: это спокойная пометка на бланке — тонкая линейка, красный
@@ -362,7 +444,23 @@ const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
         /* повреждённый черновик игнорируем */
       }
     }
+    // ── «Уточнить задачу»: свёрнуто, но ничего не прячет
+    //
+    // Если в необязательных полях уже что-то есть — из черновика прошлого
+    // захода или из калькулятора, — блок раскрывается: иначе с заявкой
+    // ушло бы то, чего человек перед отправкой не видел.
+    const more = root.querySelector<HTMLDetailsElement>('[data-lf-more]')
+    const OPTIONAL = ['kind', 'nrs', 'city', 'email', 'message']
+    const syncMore = () => {
+      if (!more || more.open) return
+      const filled = OPTIONAL.some(
+        (n) => ((form.elements.namedItem(n) as HTMLInputElement | null)?.value || '').trim() !== '',
+      )
+      if (filled) more.open = true
+    }
+
     restoreDraft()
+    syncMore()
     form.addEventListener('input', saveDraft)
 
     // ── Расчёт из калькулятора
@@ -419,6 +517,7 @@ const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
         const has = Array.from(kindEl.options).some((o) => o.value === snap!.kind)
         if (has) kindEl.value = snap.kind
       }
+      syncMore()
       saveDraft()
     }
     root.querySelector('[data-calc-drop]')?.addEventListener('click', dropCalc)
@@ -427,6 +526,10 @@ const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
       saveDraft()
     })
     applyCalc()
+    // На главной калькулятор и форма стоят на одной странице: расчёт
+    // появляется уже после загрузки, и ждать перезагрузки, чтобы его
+    // подхватить, нельзя. Калькулятор сообщает о нём событием.
+    window.addEventListener('norma:calc', applyCalc)
 
     // ── Телефон: приводим к единому виду прямо при вводе
     const phone = document.getElementById('lf-phone') as HTMLInputElement
@@ -467,6 +570,8 @@ const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
         agree: !agree,
       }
       Object.entries(bad).forEach(([k, v]) => setError(k, v))
+      // Ошибка в свёрнутом блоке не должна быть невидимой.
+      if (bad.email && more) more.open = true
       const firstBad = Object.entries(bad).find(([, v]) => v)
       if (firstBad) {
         const el = form.querySelector<HTMLElement>(`[data-field="${firstBad[0]}"] input`)

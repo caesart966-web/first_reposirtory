@@ -37,6 +37,12 @@ const nav = [
 // одинаково, и человек теряет, в каком разделе находится.
 const path = Astro.url.pathname
 const isCurrent = (url: string) => path === url || (url !== href('/') && path.startsWith(url))
+
+// Куда ведёт «Оставить заявку». С главной — к форме на ней же: форма
+// стоит под калькулятором, и уводить человека на «Контакты» ради двух
+// полей значило бы потерять место, где он читал. С остальных страниц —
+// на «Контакты», где форма есть всегда.
+const formHref = path === href('/') ? '#zayavka' : href('/kontakty/#form')
 ---
 
 <header class="site-header">
@@ -84,7 +90,7 @@ const isCurrent = (url: string) => path === url || (url !== href('/') && path.st
           Развести действия оказалось и проще, и честнее: в первом экране
           «проверить, нужна ли СРО» — необязывающий шаг, в шапке «оставить
           заявку» — целевой, и он же заменил круглую плавающую кнопку. */}
-      <a class="btn btn--acc btn--sm hdr-cta" href={href('/kontakty/#form')}>Оставить заявку</a>
+      <a class="btn btn--acc btn--sm hdr-cta" href={formHref}>Оставить заявку</a>
       <!-- Номер и в шапке: сюда смотрят первым, а нижняя панель
            на планшете уже не показывается. -->
       <a class="icon-phone" href={SITE.phoneHref} aria-label={`Позвонить ${SITE.phone}`} data-goal="click_phone">
@@ -149,7 +155,7 @@ const isCurrent = (url: string) => path === url || (url !== href('/') && path.st
       <a class="btn btn--acc mm-cta" href={href('/#calc')}>Проверить, нужна ли СРО</a>
       {/* На телефоне кнопки «Оставить заявку» в шапке нет — не помещается.
           Без неё в меню путь к форме лежал через «Контакты» и прокрутку. */}
-      <a class="btn btn--ghost-dark mm-cta mm-cta--2" href={href('/kontakty/#form')}>Оставить заявку</a>
+      <a class="btn btn--ghost-dark mm-cta mm-cta--2" href={formHref}>Оставить заявку</a>
       <a class="mm-phone" href={SITE.phoneHref}>{SITE.phone}</a>
     </div>
   </div>
