@@ -816,9 +816,9 @@ table.data td.strong { font-weight: 600; }
    нажатия на телефоне отключили выше — синего на сайте нет. */
 .mobile-bar a:active { background: rgba(255, 255, 255, 0.06); }
 .mobile-bar a:focus-visible { outline: 2px solid var(--acc-bright); outline-offset: -5px; border-radius: 8px; }
-/* Значки — фирменные, цветные (BrandIcon.astro): по цвету их и узнают.
-   Цвет текста берёт только трубка телефона. */
-.mobile-bar a svg { width: 26px; height: 26px; flex: none; color: var(--on-dark); }
+/* Значки — одинаковые круги в фирменных цветах (BrandIcon.astro).
+   Цвет текста берёт только круг телефона: сургуч, как у кнопок заявки. */
+.mobile-bar a svg { width: 28px; height: 28px; flex: none; color: var(--acc-btn); }
 
 @media (max-width: 767px) {
   .mobile-bar { display: grid; }
