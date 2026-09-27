@@ -255,40 +255,38 @@ const graph = {
     </main>
     <Footer />
 
-    <!-- Круглая кнопка связи в углу убрана.
-         Она была единственным быстрым путём к форме при долгой прокрутке —
-         пока кнопка в шапке вела к калькулятору и дублировала кнопку первого
-         экрана. Теперь кнопка в шапке ведёт к форме, липнет к верху страницы
-         и делает то же самое, не занимая угол. Заодно ушёл единственный
-         элемент, из-за которого сайт с печатью и бумагой выглядел как
-         соседние лендинги: круглый значок в правом нижнем углу читается
-         виджетом чата и стоит на каждом втором сайте рынка.
-         На телефоне за связь по-прежнему отвечает нижняя панель. -->
+    <!-- Кнопки связи на телефоне: столбик круглых значков у правого края.
+         Видны сразу, с первого экрана, все четыре канала — у многих клиентов
+         рабочий мессенджер MAX («всё, что человеку нужно, — на самом видном
+         месте», просьба заказчика).
 
-    <!-- Панель связи на мобильных: видна сразу, с первого экрана.
-         Раньше выезжала только после прокрутки — и первым экраном человек
-         видел заголовок и кнопку калькулятора, а позвонить или написать
-         мог только через значок телефона в шапке. По просьбе заказчика
-         «всё, что человеку нужно, — на самом видном месте» каналы связи
-         стоят внизу постоянно, все четыре: у многих клиентов рабочий
-         мессенджер — MAX. -->
-    <nav class="mobile-bar" aria-label="Быстрая связь">
-      <a href={SITE.phoneHref} data-goal="click_phone">
-        <BrandIcon name="phone" />
-        Позвонить
+         До 27.09.2026 здесь была сплошная тёмная полоса во всю ширину низа
+         экрана, с подписями. Заказчик попросил убрать «чёрный блок» и оставить
+         одни значки справа. Цена названа: значки лежат поверх страницы и
+         закрывают правый край строк, пока те проезжают под ними, — полоса
+         держала под собой своё место. Поэтому столбик уходит, когда мешает
+         по-настоящему: открыто меню, человек печатает в поле формы (global.css)
+         и страница докручена до конца (скрипт ниже, у подвала своя связь).
+         Над полосой про cookie он поднимается сам — её высоту сообщает
+         CookieBanner.astro.
+
+         Порядок в разметке — телефон первым, как и раньше: так их читает
+         экранный диктор. На экране столбик собран снизу вверх, и телефон
+         оказывается внизу, ближе всего к большому пальцу. Подписей
+         на экране нет, поэтому у каждой ссылки есть aria-label. -->
+    <nav class="contact-rail" aria-label="Быстрая связь">
+      <a href={SITE.phoneHref} data-goal="click_phone" aria-label={`Позвонить: ${SITE.phone}`}>
+        <BrandIcon name="phone" size={46} />
       </a>
-      <a href={SITE.whatsapp} target="_blank" rel="noopener noreferrer" data-goal="click_whatsapp">
-        <BrandIcon name="whatsapp" />
-        WhatsApp
+      <a href={SITE.whatsapp} target="_blank" rel="noopener noreferrer" data-goal="click_whatsapp" aria-label="Написать в WhatsApp">
+        <BrandIcon name="whatsapp" size={46} />
       </a>
-      <a href={SITE.telegram} target="_blank" rel="noopener noreferrer" data-goal="click_telegram">
-        <BrandIcon name="telegram" />
-        Telegram
+      <a href={SITE.telegram} target="_blank" rel="noopener noreferrer" data-goal="click_telegram" aria-label="Написать в Telegram">
+        <BrandIcon name="telegram" size={46} />
       </a>
       {SITE.maxLink && (
-        <a href={SITE.maxLink} target="_blank" rel="noopener noreferrer" data-goal="click_max">
-          <BrandIcon name="max" />
-          MAX
+        <a href={SITE.maxLink} target="_blank" rel="noopener noreferrer" data-goal="click_max" aria-label="Написать в MAX">
+          <BrandIcon name="max" size={46} />
         </a>
       )}
     </nav>
@@ -365,6 +363,17 @@ const graph = {
         setTimeout(() => items.forEach((el) => el.classList.add('in')), 3000)
       }
       reveal()
+
+      // Кнопки связи на телефоне уходят в самом конце страницы.
+      // Дальше подвала прокрутить нельзя, и правый край его последних строк
+      // (реквизиты, оговорка, © ) остался бы под значками навсегда.
+      // Связь при этом не теряется: в подвале свои телефон и мессенджеры.
+      const legal = document.querySelector('.site-footer .legal')
+      if (legal && 'IntersectionObserver' in window) {
+        new IntersectionObserver(([entry]) => {
+          document.documentElement.classList.toggle('at-page-end', entry.isIntersecting)
+        }).observe(legal)
+      }
 
       // Цели Яндекс.Метрики на кликах по контактам.
       document.querySelectorAll('[data-goal]').forEach((el) => {
