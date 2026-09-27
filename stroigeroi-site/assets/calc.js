@@ -27,7 +27,10 @@
   var $$ = function (sel, el) {
     return Array.prototype.slice.call((el || document).querySelectorAll(sel));
   };
-  var NB = ' ';
+  /* Неразрывный пробел — экранированием: живой символ U+00A0 в тексте
+     файла однажды уже превратился в обычный пробел при правке, и цифры
+     начали отрываться от единиц. */
+  var NB = '\u00a0';
 
   /* ======================================================================
      Числа и слова по-русски
@@ -43,8 +46,9 @@
 
   /* Вверх до целого. Дроби в JS неточные: 90 м² гипсокартона с запасом
      10 % — ровно 33 листа, а деление даёт 33,00000000000001, и Math.ceil
-     насчитывал 34. Хвост в миллиардную долю отбрасываем. */
-  function up(x) { return Math.ceil(x - 1e-9); }
+     насчитывал 34. Хвост в миллиардную долю отбрасываем. «|| 0» —
+     потому что Math.ceil(-0,000000001) — это −0, и в ответе было «−0 шт.». */
+  function up(x) { return Math.ceil(x - 1e-9) || 0; }
   function round2(x) { return Math.round(x * 100) / 100; }
 
   /* 1 лист, 2 листа, 5 листов, 11 листов, 21 лист, 22 листа */
@@ -57,9 +61,10 @@
     return forms[2];
   }
 
-  /* «2,7» и «2.7» — одно и то же; пустое поле — NaN, а не ноль. */
+  /* «2,7» и «2.7» — одно и то же; «10%» — это 10: знак процента
+     дописывают по привычке. Пустое поле — NaN, а не ноль. */
   function parse(raw) {
-    var text = String(raw).replace(/[\s ]/g, '').replace(',', '.');
+    var text = String(raw).replace(/[\s\u00a0]/g, '').replace(',', '.').replace(/%$/, '');
     if (text === '') return NaN;
     var v = Number(text);
     return isFinite(v) ? v : NaN;
@@ -140,7 +145,10 @@
     return extend({ t: 'seg', name: name, label: label, options: options, value: value }, o);
   }
 
-  function item(name, n, unit) { return { name: name, n: n, unit: unit }; }
+  /* info — пояснительная строка к позиции выше («Это плиток: 121 шт.»):
+     своего товара у неё нет, и в «Всего по списку» она не складывается —
+     иначе сложились бы плитки разного размера. */
+  function item(name, n, unit, info) { return { name: name, n: n, unit: unit, info: !!info }; }
   function need(text, rows) { return { need: text, rows: rows || [] }; }
 
   /* Предупреждения — о перепутанных единицах и опечатках: 27 м вместо
@@ -599,7 +607,7 @@
         var items = [];
         if (pos(v.perPack)) {
           items.push(item(name + ', упаковки по ' + ru(v.perPack) + NB + 'шт.', up(tiles / v.perPack), W.pack));
-          items.push(item('Это плиток', tiles, 'шт.'));
+          items.push(item('Это плиток', tiles, 'шт.', true));
         } else {
           items.push(item(name, tiles, W.tile));
         }
@@ -660,7 +668,7 @@
           : item('Ламинат', Math.round(needArea * 10) / 10, 'м²'));
         if (pos(v.under)) items.push(item('Подложка, упаковки по ' + ru(v.under) + NB + 'м²', up(needArea / v.under), W.pack));
         var perimeter = Math.max(0, 2 * (v.length + v.width) - (pos(v.doors) ? v.doors : 0));
-        if (pos(v.plinth)) items.push(item('Плинтус ' + ru(v.plinth) + NB + 'м', up(perimeter * (1 + r / 100) / v.plinth), 'шт.'));
+        if (pos(v.plinth) && perimeter > 0) items.push(item('Плинтус ' + ru(v.plinth) + NB + 'м', up(perimeter * (1 + r / 100) / v.plinth), 'шт.'));
         return {
           items: items,
           rows: [['Площадь пола', m2(round2(area))], ['С запасом', m2(round2(needArea))], ['Периметр без дверей', mm(round2(perimeter))], ['Запас', pc(r)]],
@@ -682,9 +690,9 @@
         num('length', 'Длина комнаты', 'м', 5, { warn: warnRoom }),
         num('width', 'Ширина комнаты', 'м', 4, { warn: warnRoom }),
         num('lamps', 'Светильники 600 × 600 вместо плит', 'шт.', 0),
-        num('runner', 'Длина главного профиля', 'м', 3.6, { more: true }),
-        num('angle', 'Длина пристенного уголка', 'м', 3, { more: true }),
-        num('hang', 'Шаг подвесов по главному профилю', 'м', 1.2, { more: true })
+        num('runner', 'Длина главного профиля', 'м', 3.6, { more: true, warn: under(1, 'Короче 1 м — проверьте: длина здесь в метрах.') }),
+        num('angle', 'Длина пристенного уголка', 'м', 3, { more: true, warn: under(1, 'Короче 1 м — проверьте: длина здесь в метрах.') }),
+        num('hang', 'Шаг подвесов по главному профилю', 'м', 1.2, { more: true, warn: under(0.3, 'Меньше 0,3 м — проверьте: шаг здесь в метрах.') })
       ],
       hint: 'Длины профиля и уголка — на ценнике. Главный профиль идёт вдоль длинной стены через 1,2 м, поперечные 1,2 и 0,6 м делят потолок на ячейки 600 × 600.',
       calc: function (v) {
@@ -762,7 +770,7 @@
         var one = v.panelL * v.panelW;
         var panels = up(s.area * (1 + r / 100) / one);
         var items = [item('Панели ' + ru(v.panelL) + ' × ' + ru(v.panelW) + NB + 'м', panels, W.panel)];
-        if (pos(v.perPack)) items.push(item('Это упаковок по ' + ru(v.perPack) + NB + 'шт.', up(panels / v.perPack), W.pack));
+        if (pos(v.perPack)) items.push(item('Это упаковок по ' + ru(v.perPack) + NB + 'шт.', up(panels / v.perPack), W.pack, true));
         return {
           items: items,
           rows: s.rows.concat([['Площадь с запасом', m2(round2(s.area * (1 + r / 100)))], ['Площадь одной панели', m2(round2(one))], ['Запас', pc(r)]]),
@@ -826,7 +834,7 @@
         var pieces = up(base * (1 + r / 100));
         var mortar = Math.max(0, area * thick - base * oneVol);
         var items = [item(name, pieces, forms)];
-        if (pos(v.pallet)) items.push(item('Это поддонов по ' + ru(v.pallet) + NB + 'шт.', up(pieces / v.pallet), W.pallet));
+        if (pos(v.pallet)) items.push(item('Это поддонов по ' + ru(v.pallet) + NB + 'шт.', up(pieces / v.pallet), W.pallet, true));
         items.push(item(v.mat === 'block' ? 'Раствор или клей' : 'Раствор', Math.round(mortar * 100) / 100, 'м³'));
         return {
           items: items,
@@ -1231,7 +1239,7 @@
        Главный профиль — на каждой второй линии сетки, пока линий хватает;
        остальные продольные линии — поперечные 0,6 м между поперечными 1,2. */
     ceiling: function (d) {
-      if (d.nx > 200 || d.ny > 200) return null;
+      if (d.nx > 200 || d.ny > 200 || d.lines * d.perLine > 3000) return null;
       var w = d.L * 100;
       var h = d.W * 100;
       var cut = '';
@@ -1540,7 +1548,12 @@
           return;
         }
         var n = parse(val);
-        if (isNaN(n)) return;
+        /* Не разобрать — для расчёта поле пустое; так его и передаём,
+           иначе у получателя подставилось бы число по умолчанию. */
+        if (isNaN(n)) {
+          if (f.value !== '') parts.push(f.name + '=');
+          return;
+        }
         if (!full && f.value !== '' && n === parse(f.value)) return;
         val = String(n);
       } else if (!full && val === f.value) {
@@ -1604,7 +1617,10 @@
 
   function pick(id, fromUser) {
     var c = byId[id] || CALCS[0];
-    if (current && current.id !== c.id) flush();
+    /* Всегда, а не только при смене калькулятора: форма ниже рисуется
+       из памяти, и щелчок по уже открытой карточке терял бы последнее
+       исправление. */
+    flush();
     current = c;
     $$('[data-calc-pick]', picker).forEach(function (b) {
       b.setAttribute('aria-pressed', b.getAttribute('data-calc-pick') === c.id ? 'true' : 'false');
@@ -1735,9 +1751,16 @@
      нет — такие позиции показываются как были и в итог не входят.
      ====================================================================== */
 
-  var list = store.get('list', []);
-  if (!Array.isArray(list)) list = [];
-  list = list.filter(function (e) { return e && e.title && Array.isArray(e.items); });
+  /* Список перечитываем из памяти перед каждым изменением: в другой
+     вкладке его могли дополнить, и запись своей старой копии стёрла бы
+     чужие расчёты. Изменения из другой вкладки приходят событием storage. */
+  var list = [];
+  function freshList() {
+    var stored = store.get('list', []);
+    list = (Array.isArray(stored) ? stored : []).filter(function (e) { return e && e.title && Array.isArray(e.items); });
+    return list;
+  }
+  freshList();
   var listBox = $('[data-calc-list]', root);
 
   /* Одинаковые позиции разных расчётов — одно название и одна единица —
@@ -1811,22 +1834,28 @@
     return out.join('\n');
   }
 
-  /* Для заявки: целыми расчётами, сколько поместится в её предел,
-     и строка о тех, что не вошли, — менеджер должен знать, что это
-     не весь список. */
+  /* Для заявки: итог по списку — целиком, подробности — целыми
+     расчётами, сколько поместится в её предел, и в конце строка о тех,
+     что не вошли: менеджер должен знать, что это не весь список. Строку
+     о невошедших не отрезаем никогда — режем только сам текст. */
   function listMessage() {
     var summed = !!totals();
-    for (var n = list.length; ; n--) {
-      var text = listText(n);
-      var rest = list.length - n;
-      if (rest) {
-        text += '\n\nИ ещё ' + ru(rest) + ' ' + plural(rest, CALC_FORMS) + ' в списке у покупателя — подробно в заявку ' +
-          plural(rest, ['не поместился', 'не поместились', 'не поместились']) +
-          (summed ? ', во «Всего по списку» ' + plural(rest, ['учтён', 'учтены', 'учтены']) : '') + '.';
-      }
-      /* Один расчёт — строк десять, в предел он помещается всегда. */
-      if (n <= 1 || sentLength(text) <= LIMIT) return { text: text, n: n };
+    var tailOf = function (rest, whole) {
+      if (!rest) return '';
+      return '\n\nИ ещё ' + ru(rest) + ' ' + plural(rest, CALC_FORMS) + ' в списке у покупателя — подробно в заявку ' +
+        plural(rest, ['не поместился', 'не поместились', 'не поместились']) +
+        (summed && whole ? ', во «Всего по списку» ' + plural(rest, ['учтён', 'учтены', 'учтены']) : '') + '.';
+    };
+    for (var n = list.length; n >= 0; n--) {
+      var text = listText(n) + tailOf(list.length - n, true);
+      if (sentLength(text) <= LIMIT) return { text: text, n: n, cut: false };
     }
+    /* Не влез даже итог — режем его строками, строку о списке оставляем;
+       итог тогда неполный, и хвост об этом не врёт. */
+    var tail = tailOf(list.length, false);
+    var rows = listText(0).split('\n');
+    while (rows.length > 1 && sentLength(rows.join('\n') + '\n…' + tail) > LIMIT) rows.pop();
+    return { text: rows.join('\n') + '\n…' + tail, n: 0, cut: true };
   }
 
   function saveList() { store.set('list', list); renderList(); }
@@ -1893,11 +1922,13 @@
     if (e.target.closest('[data-calc-add]')) {
       var raw = {};
       Object.keys(last.raw).forEach(function (k) { raw[k] = last.raw[k]; });
+      freshList();
       list.push({
+        key: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
         id: c.id,
         title: c.title,
         summary: r.summary || '',
-        items: r.items.map(function (it) { return [it.name, qty(it), it.n, it.unit]; }),
+        items: r.items.map(function (it) { return [it.name, qty(it), it.info ? null : it.n, it.unit]; }),
         raw: raw
       });
       saveList();
@@ -1914,15 +1945,28 @@
   var clearTimer;
   if (listBox) {
     listBox.addEventListener('click', function (e) {
+      /* Номер в кнопке — место в показанном списке; после перечитывания
+         расчёт ищем по его ключу, если он есть. */
+      var at = function (btn, attr) {
+        var i = Number(btn.getAttribute(attr));
+        var shown = list[i];
+        freshList();
+        if (shown && shown.key) {
+          for (var k = 0; k < list.length; k++) if (list[k].key === shown.key) return k;
+          return -1;
+        }
+        return i;
+      };
       var remove = e.target.closest('[data-calc-list-remove]');
       if (remove) {
-        list.splice(Number(remove.getAttribute('data-calc-list-remove')), 1);
+        var gone = at(remove, 'data-calc-list-remove');
+        if (gone >= 0 && gone < list.length) list.splice(gone, 1);
         saveList();
         return;
       }
       var reopen = e.target.closest('[data-calc-list-open]');
       if (reopen) {
-        var entry = list[Number(reopen.getAttribute('data-calc-list-open'))];
+        var entry = list[at(reopen, 'data-calc-list-open')];
         if (!entry || !byId[entry.id]) return;
         flush();
         store.set('v-' + entry.id, entry.raw || {});
@@ -1962,10 +2006,19 @@
       } else if (e.target.closest('[data-calc-list-send]')) {
         var sent = listMessage();
         var all = list.length;
-        attach(sent.text, sent.n === all
-          ? 'К заявке приложен список покупок, ' + ru(all) + ' ' + plural(all, CALC_FORMS) + '. Менеджер увидит его в письме и перезвонит.'
-          : 'В заявку ' + plural(sent.n, ['поместился', 'поместились', 'поместились']) + ' ' + ru(sent.n) + ' ' +
-            plural(sent.n, CALC_FORMS) + ' из ' + ru(all) + ' — длиннее 2000 знаков она не принимает. Остальные продиктуйте менеджеру, когда он перезвонит.');
+        var said;
+        if (sent.n === all) {
+          said = 'К заявке приложен список покупок, ' + ru(all) + ' ' + plural(all, CALC_FORMS) + '. Менеджер увидит его в письме и перезвонит.';
+        } else if (sent.n > 0) {
+          said = 'В заявку ' + plural(sent.n, ['поместился', 'поместились', 'поместились']) + ' ' + ru(sent.n) + ' ' +
+            plural(sent.n, CALC_FORMS) + ' из ' + ru(all) + ' — длиннее 2000 знаков она не принимает' +
+            (totals() ? ', «Всего по списку» приложен целиком' : '') + '. Остальные продиктуйте менеджеру, когда он перезвонит.';
+        } else if (!sent.cut) {
+          said = 'В заявку поместился только «Всего по списку»: подробности расчётов длиннее 2000 знаков. Продиктуйте их менеджеру, когда он перезвонит.';
+        } else {
+          said = 'Список длиннее, чем принимает заявка (2000 знаков), — в неё вошло только начало итога. Лучше распечатайте список или продиктуйте его менеджеру, когда он перезвонит.';
+        }
+        attach(sent.text, said);
       } else if (e.target.closest('[data-calc-list-print]')) {
         var stamp = $('[data-print-date]');
         if (stamp) {
@@ -1977,6 +2030,9 @@
     });
   }
   window.addEventListener('afterprint', function () { document.body.classList.remove('is-print-calc'); });
+  window.addEventListener('storage', function (e) {
+    if (e.key === 'sg-calc-list') { freshList(); renderList(); }
+  });
 
   /* ======================================================================
      Старт: калькулятор из адреса (#oboi, #oboi?length=5), иначе последний
@@ -1984,14 +2040,26 @@
      те же. Ссылку можно вставить и в уже открытую страницу.
      ====================================================================== */
 
-  function fromAddress() {
+  /* Страницу перезагрузили или вернулись на неё кнопкой «Назад»? Тогда
+     память свежее адреса: адрес обновляется через 0,4 с после ввода, и
+     перезагрузка сразу после ввода иначе вернула бы старое число.
+     Открыли ссылку — значения берём из ссылки. */
+  function returning() {
+    try {
+      var nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+      if (nav) return nav.type === 'reload' || nav.type === 'back_forward';
+      return !!performance.navigation && (performance.navigation.type === 1 || performance.navigation.type === 2);
+    } catch (e) { return false; }
+  }
+
+  function fromAddress(atStart) {
     var h = readHash();
     var c = calcByHash(h.key);
-    if (c && h.params) applyParams(c, h.params);
+    if (c && h.params && !(atStart && returning())) applyParams(c, h.params);
     return c;
   }
 
-  var startCalc = fromAddress();
+  var startCalc = fromAddress(true);
   pick(startCalc ? startCalc.id : store.get('last', CALCS[0].id), false);
   renderList();
   if (startCalc && root.scrollIntoView) {
@@ -2001,7 +2069,7 @@
   }
   window.addEventListener('hashchange', function () {
     flush();
-    var c = fromAddress();
+    var c = fromAddress(false);
     if (c) pick(c.id, false);
   });
 })();

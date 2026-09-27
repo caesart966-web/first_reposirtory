@@ -1130,7 +1130,7 @@ for (const name of ['index', 'catalog', 'checkout', 'contacts', 'login']) {
 
   /* Поиск каждой позиции в каталоге: подпись — название товара, запрос —
      основа слова, чтобы стандартный поиск нашёл и «саморез», и «саморезы». */
-  const chips = () => page.$$eval('[data-calc-find] .calc__chip', (a) => a.map((x) => [x.textContent, decodeURIComponent(x.getAttribute('href').split('search=')[1] || '')]));
+  const chips = () => page.$$eval('[data-calc-find] .calc__chip', (a) => a.map((x) => [x.textContent.replace(/\u00a0/g, ' '), decodeURIComponent(x.getAttribute('href').split('search=')[1] || '')]));
   await open('frame');
   const frameChips = JSON.stringify(await chips());
   if (frameChips !== JSON.stringify([['Гипсокартон', 'гипсокартон'], ['Профиль', 'профиль'], ['Саморезы', 'саморез'], ['Дюбели', 'дюбел'], ['Уплотнительная лента', 'уплотнител'], ['Серпянка', 'серпянк']])) {
@@ -1166,7 +1166,7 @@ for (const name of ['index', 'catalog', 'checkout', 'contacts', 'login']) {
   });
   await page.click('[data-calc-list-copy]');
   await page.waitForTimeout(200);
-  const listCopy = await page.evaluate(() => window.__copied[0] || '');
+  const listCopy = await page.evaluate(() => (window.__copied[0] || '').replace(/\u00a0/g, ' '));
   if (!listCopy.includes('Всего по списку (одинаковые позиции сложены):\n— Гипсокартон 1200 × 2500 мм: 14 листов')) fail(`калькулятор: в тексте списка нет итога — «${listCopy.slice(0, 160)}»`);
   await set({ length: '9' });
   await page.click('[data-calc-list-open="0"]');
@@ -1201,6 +1201,168 @@ for (const name of ['index', 'catalog', 'checkout', 'contacts', 'login']) {
   await page.keyboard.press('Enter');
   const next = await page.evaluate(() => document.activeElement && document.activeElement.name);
   if (next !== 'width') fail(`калькулятор: Enter из «Длины» должен вести в «Ширину», а привёл в «${next}»`);
+
+  /* Находки вычитки кода (правка 33) — каждая закреплена проверкой. */
+  {
+    const rctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const rp = await rctx.newPage();
+    rp.on('pageerror', (e) => errors.push(e.message));
+    const url = pageUrl;
+    const val = (name) => rp.inputValue(`[data-calc-form] input[name="${name}"]`);
+    await rp.goto(url + '#gipsokarton', { waitUntil: 'load' });
+    await rp.waitForTimeout(300);
+
+    /* Число и единица — через неразрывный пробел: при правке 32 он
+       превратился в обычный, и «8» могла уехать от «листов» на другую
+       строку. Проверки выше заменяют его пробелом — здесь смотрим сам знак. */
+    const nb = await rp.evaluate(() => document.querySelector('[data-calc-answer]').textContent);
+    if (nb !== '8 листов') fail(`калькулятор: между числом и единицей не неразрывный пробел — ${JSON.stringify(nb)}`);
+
+    /* Щелчок по уже открытой карточке не теряет только что введённое. */
+    await rp.fill('[data-calc-form] input[name="area"]', '42');
+    await rp.click('[data-calc-pick="gkl"]');
+    await rp.waitForTimeout(150);
+    if ((await val('area')) !== '42') fail(`калькулятор: после щелчка по открытой карточке площадь ${await val('area')}, а вписали 42`);
+
+    /* «10%» — это 10; число, которое не разобрать, уходит в ссылку пустым,
+       как и считается, а не подменяется значением по умолчанию. */
+    await rp.fill('[data-calc-form] input[name="reserve"]', '10%');
+    await rp.waitForTimeout(150);
+    const pct = await rp.evaluate(() => [...document.querySelectorAll('[data-calc-rows] li')].map((li) => li.textContent.replace(/ /g, ' ')));
+    if (!pct.includes('Запас10 %')) fail(`калькулятор: «10%» не понят как 10 — ${JSON.stringify(pct)}`);
+    await rp.fill('[data-calc-form] input[name="reserve"]', 'abc');
+    await rp.waitForTimeout(600);
+    if (!/[?&]reserve=(&|$)/.test(new URL(rp.url()).hash)) fail(`калькулятор: непонятный запас должен уйти в ссылку пустым — ${new URL(rp.url()).hash}`);
+    await rp.click('[data-calc-reset]');
+
+    /* Перезагрузка сразу после ввода: адрес ещё старый, память новее. */
+    const rp2 = await rctx.newPage();
+    await rp2.goto(url + '#gipsokarton?area=30', { waitUntil: 'load' });
+    await rp2.waitForTimeout(300);
+    await rp2.fill('[data-calc-form] input[name="area"]', '42');
+    await rp2.reload({ waitUntil: 'load' });
+    await rp2.waitForTimeout(300);
+    const afterReload = await rp2.inputValue('[data-calc-form] input[name="area"]');
+    if (afterReload !== '42') fail(`калькулятор: перезагрузка сразу после ввода вернула площадь ${afterReload} вместо 42`);
+    await rp2.close();
+
+    /* Крошечный шаг подвесов: подсказка, а схема не рисуется — сотни тысяч
+       точек подвесили бы страницу. */
+    await rp.click('[data-calc-pick="ceiling"]');
+    await rp.waitForTimeout(150);
+    await rp.evaluate(() => { document.querySelector('.calc__more').open = true; });
+    const t0 = Date.now();
+    await rp.fill('[data-calc-form] input[name="hang"]', '0,00001');
+    await rp.waitForTimeout(150);
+    const tiny = await rp.evaluate(() => ({
+      scheme: !document.querySelector('[data-calc-scheme]').hidden,
+      warn: !document.querySelector('[data-warn-for="hang"]').hidden,
+    }));
+    if (tiny.scheme || !tiny.warn || Date.now() - t0 > 3000) fail(`калькулятор: шаг подвесов 0,00001 м — ${JSON.stringify(tiny)}, ${Date.now() - t0} мс`);
+    await rp.click('[data-calc-reset]');
+
+    /* Дверей больше, чем стен: плинтуса нет, а не «−0 шт.». */
+    await rp.click('[data-calc-pick="floor"]');
+    await rp.waitForTimeout(150);
+    await rp.evaluate(() => { document.querySelector('.calc__more').open = true; });
+    await rp.fill('[data-calc-form] input[name="doors"]', '30');
+    await rp.waitForTimeout(150);
+    /* Смотрим сам ответ и список покупок: кнопка поиска «Плинтус» ниже
+       остаётся — искать плинтус в каталоге можно и так. */
+    const floorText = await rp.evaluate(() => document.querySelector('[data-calc-answer]').textContent + ' ' + document.querySelector('[data-calc-buy]').textContent);
+    if (/-0|−0|Плинтус/.test(floorText)) fail(`калькулятор: при дверях шире стен в ответе остался плинтус или «−0» — ${floorText}`);
+    await rp.click('[data-calc-reset]');
+
+    /* «Это плиток», «Это упаковок…» — пояснения к позиции, а не товар:
+       две разные плитки не складываются в «Всего по списку». */
+    await rp.click('[data-calc-pick="tile"]');
+    await rp.waitForTimeout(150);
+    await rp.fill('[data-calc-form] input[name="perPack"]', '11');
+    await rp.waitForTimeout(150);
+    await rp.click('[data-calc-add]');
+    await rp.fill('[data-calc-form] input[name="tileL"]', '600');
+    await rp.fill('[data-calc-form] input[name="tileW"]', '600');
+    await rp.fill('[data-calc-form] input[name="perPack"]', '4');
+    await rp.waitForTimeout(150);
+    await rp.click('[data-calc-add]');
+    await rp.waitForTimeout(150);
+    if (!(await rp.evaluate(() => document.querySelector('[data-calc-list-total]').hidden))) fail('калькулятор: две разные плитки сложились во «Всего по списку»');
+
+    /* Две вкладки: список дополняется, а не затирается чужой копией. */
+    const tabB = await rctx.newPage();
+    await tabB.goto(url + '#oboi', { waitUntil: 'load' });
+    await tabB.waitForTimeout(300);
+    await tabB.click('[data-calc-add]');
+    await tabB.waitForTimeout(200);
+    /* Первая вкладка узнаёт о расчёте из второй сама, без перезагрузки. */
+    const seen = await rp.$$eval('.calc-list__name', (n) => n.map((x) => x.textContent));
+    if (!seen.includes('Обои')) fail(`калькулятор: первая вкладка не увидела расчёт из второй — ${JSON.stringify(seen)}`);
+    /* И перед добавлением список перечитывается: запись, о которой вкладка
+       не узнала (событие не пришло), не затирается. */
+    await rp.evaluate(() => {
+      const l = JSON.parse(localStorage.getItem('sg-calc-list'));
+      l.push({ key: 'silent', id: 'wallpaper', title: 'Тихая запись', summary: '', raw: {}, items: [['Обои', '1 рулон', 1, 'рулон']] });
+      localStorage.setItem('sg-calc-list', JSON.stringify(l));
+    });
+    await rp.click('[data-calc-pick="gkl"]');
+    await rp.waitForTimeout(150);
+    await rp.click('[data-calc-add]');
+    await rp.waitForTimeout(200);
+    const tabs = await rp.evaluate(() => ({
+      stored: JSON.parse(localStorage.getItem('sg-calc-list')).map((e) => e.title),
+      shown: [...document.querySelectorAll('.calc-list__name')].map((n) => n.textContent),
+    }));
+    if (tabs.stored.length !== 5 || tabs.shown.length !== 5 || !tabs.stored.includes('Обои') || !tabs.stored.includes('Тихая запись')) fail(`калькулятор: две вкладки — ${JSON.stringify(tabs)}`);
+    await tabB.close();
+    await rp.click('[data-calc-list-clear]');
+    await rp.click('[data-calc-list-clear]');
+
+    /* Длинный список с итогом: итог — целиком, подробности — сколько
+       влезет, строка о невошедших — всегда, и окно говорит то, что ушло. */
+    await rp.click('[data-calc-pick="frame"]');
+    await rp.waitForTimeout(150);
+    await rp.click('[data-calc-add]');
+    await rp.waitForTimeout(150);
+    await rp.evaluate(() => {
+      const one = JSON.parse(localStorage.getItem('sg-calc-list'))[0];
+      localStorage.setItem('sg-calc-list', JSON.stringify(Array.from({ length: 15 }, (_, i) => ({ ...one, key: 'k' + i }))));
+    });
+    await rp.goto(url, { waitUntil: 'load' });
+    await rp.waitForTimeout(300);
+    const measure = async () => {
+      await rp.click('[data-calc-list-send]');
+      await rp.waitForTimeout(200);
+      const out = await rp.evaluate(async () => {
+        const body = await new Response(new FormData(document.querySelector('#modal-callback form'))).text();
+        const value = (body.match(/name="message"\r\n\r\n([\s\S]*?)\r\n--/) || [])[1] || '';
+        const server = value.trim().replace(/[&"<>]/g, (ch) => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' })[ch]);
+        return { length: [...server].length, value, note: document.querySelector('[data-calc-attached]').textContent.replace(/ /g, ' ') };
+      });
+      await rp.keyboard.press('Escape');
+      await rp.waitForTimeout(150);
+      return out;
+    };
+    let sent = await measure();
+    if (sent.length > 2000 || !/Всего по списку/.test(sent.value) || !/И ещё \d+ расчёт/.test(sent.value.split('\n').pop()) ||
+        !/из 15 .*«Всего по списку» приложен целиком/.test(sent.note)) {
+      fail(`калькулятор: 15 перегородок в заявке — ${sent.length} знаков, конец «${sent.value.split('\n').pop()}», окно «${sent.note}»`);
+    }
+    /* Итог не влезает сам: шестьдесят разных расчётов и одна общая позиция. */
+    await rp.evaluate(() => {
+      const entries = Array.from({ length: 60 }, (_, i) => ({
+        key: 'u' + i, id: 'gkl', title: 'Расчёт ' + i, summary: '', raw: {},
+        items: [['Уникальная позиция номер ' + i + ' с длинным названием', '1 шт.', 1, 'шт.'], ['Общая позиция', '1 шт.', 1, 'шт.']],
+      }));
+      localStorage.setItem('sg-calc-list', JSON.stringify(entries));
+    });
+    await rp.goto(url, { waitUntil: 'load' });
+    await rp.waitForTimeout(300);
+    sent = await measure();
+    if (sent.length > 2000 || !/И ещё 60 расчётов/.test(sent.value) || !/вошло только начало итога/.test(sent.note)) {
+      fail(`калькулятор: итог длиннее заявки — ${sent.length} знаков, конец «${sent.value.split('\n').pop()}», окно «${sent.note}»`);
+    }
+    await rctx.close();
+  }
 
   if (errors.length) fail(`калькулятор: ошибки скрипта — ${errors.join('; ')}`);
   await ctx.close();
