@@ -1,6 +1,7 @@
 ---
 import { SITE, href } from '../config/site'
 import Icon from './Icon.astro'
+import BrandIcon from './BrandIcon.astro'
 import Seal from './Seal.astro'
 import { OFFER } from '../config/offer'
 
@@ -131,14 +132,14 @@ import { OFFER } from '../config/offer'
       <p class="direct">
         <span>Или напишите напрямую:</span>
         <a href={SITE.whatsapp} target="_blank" rel="noopener noreferrer" data-goal="click_whatsapp">
-          <Icon name="whatsapp" size={16} /> WhatsApp
+          <BrandIcon name="whatsapp" size={18} idp="hero" /> WhatsApp
         </a>
         <a href={SITE.telegram} target="_blank" rel="noopener noreferrer" data-goal="click_telegram">
-          <Icon name="telegram" size={16} /> Telegram
+          <BrandIcon name="telegram" size={18} idp="hero" /> Telegram
         </a>
         {SITE.maxLink && (
           <a href={SITE.maxLink} target="_blank" rel="noopener noreferrer" data-goal="click_max">
-            <Icon name="chat" size={16} /> MAX
+            <BrandIcon name="max" size={18} idp="hero" /> MAX
           </a>
         )}
       </p>
@@ -148,7 +149,7 @@ import { OFFER } from '../config/offer'
         подпись капсом сверху, печать в углу. На компьютере занимает
         правую колонку, на телефоне встаёт под кнопками. */}
     <aside class="hero-offer rv">
-      <span class="ho-tag">Условия, которых нет больше нигде</span>
+      <span class="ho-tag">Условия вступления</span>
       <p class="ho-title">Первый год — <b>только обязательные взносы</b></p>
       <ul class="ho-list">
         {OFFER.map((p) => (
@@ -504,7 +505,10 @@ import { OFFER } from '../config/offer'
     transition: color var(--t-fast) var(--ease);
   }
   .direct a:hover { color: var(--acc-deep); text-decoration: underline; }
-  .direct :global(svg) { color: var(--acc); }
+  /* Значки те же, что на нижней панели телефона (BrandIcon.astro): одинаковые
+     круги в фирменных цветах. Здесь стояли тонкие красные — разнобой
+     с панелью. */
+  .direct :global(svg) { flex: none; }
   @media (max-width: 767px) {
     .direct { display: none; }
   }

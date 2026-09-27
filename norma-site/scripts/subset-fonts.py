@@ -16,6 +16,9 @@
 Результат: public/fonts/*.woff2
 
 Повторять нужно, только если в текстах появятся необычные символы.
+
+Можно пересобрать не всё, а только названные файлы:
+    python3 scripts/subset-fonts.py golos-rub literata-rub
 """
 
 import sys
@@ -52,6 +55,15 @@ JOBS = [
     ("@fontsource-variable/literata", "literata-latin-wght-italic.woff2", "literata-latin-italic.woff2", LATIN),
     ("@fontsource-variable/golos-text", "golos-text-cyrillic-wght-normal.woff2", "golos-cyrillic.woff2", CYRILLIC),
     ("@fontsource-variable/golos-text", "golos-text-latin-wght-normal.woff2", "golos-latin.woff2", LATIN),
+    # Знак рубля — отдельными крошечными файлами. Его нет ни в латинской,
+    # ни в кириллической части: в наборах fontsource он лежит в «latin-ext»,
+    # а тот целиком тянет сотню ненужных знаков. Без этих файлов «₽»
+    # рисовался системным шрифтом рядом с фирменными цифрами — в каждой
+    # сумме на сайте. Склеить знак с латинской частью нельзя: fontTools
+    # не умеет сливать переменные шрифты, — поэтому файл свой, а в CSS
+    # у него свой unicode-range (U+20BD).
+    ("@fontsource-variable/golos-text", "golos-text-latin-ext-wght-normal.woff2", "golos-rub.woff2", "₽"),
+    ("@fontsource-variable/literata", "literata-latin-ext-wght-normal.woff2", "literata-rub.woff2", "₽"),
 ]
 
 
@@ -98,7 +110,13 @@ def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
     total_before = total_after = 0
 
-    for pkg, src_name, out_name, chars in JOBS:
+    only = {a.removesuffix(".woff2") for a in sys.argv[1:]}
+    jobs = [j for j in JOBS if not only or j[2].removesuffix(".woff2") in only]
+    if only and len(jobs) != len(only):
+        print("Нет таких файлов в списке JOBS:", ", ".join(sorted(only - {j[2].removesuffix('.woff2') for j in jobs})), file=sys.stderr)
+        return 1
+
+    for pkg, src_name, out_name, chars in jobs:
         before, after, count = subset_one(pkg, src_name, out_name, chars)
         total_before += before
         total_after += after
