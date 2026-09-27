@@ -123,7 +123,7 @@ const DO = [
   {
     t: 'Довести комплект до выписки из реестра',
     d: OFFER[0].note,
-    link: { label: 'Все пять условий', url: href('/#predlozhenie') },
+    link: { label: 'Все пять условий', url: href('/stoimost/#predlozhenie') },
   },
   {
     t: 'Гарантировать приём — или сказать «нет» заранее',
@@ -338,6 +338,7 @@ const CHECK = [
   </section>
 
   <LeadForm
+    expanded
     title="Расскажите про вашу компанию"
     note="Посчитаю, нужна ли вам СРО, и скажу прямо, если не нужна."
   />

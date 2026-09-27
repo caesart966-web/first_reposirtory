@@ -17,6 +17,19 @@ const check = (ok, name, detail = '') => {
 
 await page.goto(BASE + '/kontakty/', { waitUntil: 'networkidle' })
 
+// Раскрыть «Уточнить задачу», если блок свёрнут. Кликом по заголовку,
+// как человек, — но только когда он закрыт: второй клик свернул бы его.
+const openMore = async (p) => {
+  if (!(await p.locator('.lf-more').evaluate((d) => d.open))) await p.click('.lf-more > summary')
+}
+
+// 0. На виду только обязательное: имя, телефон, согласие. Раньше форма
+//    встречала восемью полями, и человек с одним «перезвоните» видел анкету.
+check(
+  (await page.isVisible('#lf-name')) && (await page.isVisible('#lf-phone')) && !(await page.isVisible('#lf-email')),
+  'На виду имя и телефон, необязательные поля свёрнуты',
+)
+
 // 1. Пустая форма не отправляется, показывает ошибки
 await page.click('#lf-submit')
 await page.waitForTimeout(200)
@@ -38,14 +51,28 @@ check(masked === '+7 931 969-86-64', 'Телефон форматируется'
 
 // 3. Неверная почта не пропускается
 await page.fill('#lf-name', 'Иван')
+await openMore(page)
 await page.fill('#lf-email', 'не-почта')
 await page.check('#lf-agree')
 await page.click('#lf-submit')
 await page.waitForTimeout(200)
 check(await page.locator('[data-field="email"].field--error').count() > 0, 'Неверная почта не проходит')
 
+// 3а. Ошибка в свёрнутом блоке не прячется: блок раскрывается сам.
+await page.click('.lf-more > summary') // свернули
+await page.waitForTimeout(400)
+await page.click('#lf-submit')
+await page.waitForTimeout(400)
+check(
+  (await page.locator('.lf-more').evaluate((d) => d.open)) && (await page.isVisible('#err-email')),
+  'Ошибка в «Уточнить задачу» раскрывает блок, а не прячется в нём',
+)
+
 // 4. Корректные данные: приёмник не настроен — должен быть честный экран ошибки,
 //    а не ложное «заявка отправлена»
+// Блок раскрываем сами: если проверка выше упала, он остался свёрнутым,
+// и без этого прогон оборвался бы здесь, не дойдя до остальных проверок.
+await openMore(page)
 await page.fill('#lf-email', 'test@example.ru')
 await page.waitForTimeout(2600) // ловушка по времени: боты отправляют мгновенно
 await page.click('#lf-submit')
@@ -125,6 +152,17 @@ check(reachable.includes('lf-submit'), 'Кнопка отправки дости
   check(!!snap?.summary, 'Калькулятор «нужна ли СРО» сохраняет ответы для заявки')
   check(snap?.kind === 'build', 'В снимке верный вид работ', String(snap?.kind))
 
+  // На главной форма стоит на той же странице, что и калькулятор, и уже
+  // прочитала хранилище при загрузке. Расчёт должен появиться в ней сразу,
+  // без перезагрузки, а кнопка результата — вести к ней, а не на «Контакты».
+  const live = await q.evaluate(() => ({
+    shown: !document.querySelector('#zayavka [data-calc-note]')?.hasAttribute('hidden'),
+    kind: document.querySelector('#zayavka #lf-kind')?.value,
+    cta: document.querySelector('#calc .v-actions a.btn--acc')?.getAttribute('href') || '',
+  }))
+  check(live.shown && live.kind === 'build', 'На главной расчёт попадает в форму ниже сразу, без перезагрузки')
+  check(/\/#zayavka$/.test(live.cta), 'Кнопка результата ведёт к форме на этой же странице', live.cta)
+
   await q.goto(BASE + '/kontakty/#form', { waitUntil: 'networkidle' })
   await q.waitForTimeout(400)
   const state = await q.evaluate(() => ({
@@ -135,6 +173,10 @@ check(reachable.includes('lf-submit'), 'Кнопка отправки дости
   }))
   check(state.shown, 'Расчёт показан в заявке видимой строкой, а не только скрытым полем')
   check(state.kind === 'build', 'Вид работ подставлен из калькулятора', String(state.kind))
+  check(
+    await q.locator('.lf-more').evaluate((d) => d.open),
+    'Подставленный вид работ виден: «Уточнить задачу» раскрыт, а не прячет его',
+  )
   check(
     state.hidden === state.text && state.hidden.length > 20,
     'Что показано, то и уйдёт: видимый текст совпадает со скрытым полем',

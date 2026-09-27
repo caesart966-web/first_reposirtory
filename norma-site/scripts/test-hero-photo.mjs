@@ -83,7 +83,7 @@ const TARGETS = [
     hide: '.hero .hero-offer, .hero .cta, .hero svg, .hero .law',
     // .direct — строка «Или напишите напрямую» с мессенджерами. На телефоне
     // её нет (там каналы в нижней панели), и замер там пропускается сам.
-    texts: ['.geo', '.page-title', '.hero-lead', '.note', '.direct span', '.direct a', '.verify p', '.stat .v', '.stat .d'],
+    texts: ['.geo', '.page-title', '.hero-lead', '.note span', '.direct span', '.direct a', '.verify p'],
   },
   ...HEADS.map((url) => ({
     url,

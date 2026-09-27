@@ -125,6 +125,8 @@ await page.goto(`${base}/kontakty/`, { waitUntil: 'networkidle' })
 const form = page.locator('#form')
 await form.locator('input[name=name]').fill(LEAD.name)
 await form.locator('input[name=phone]').fill(LEAD.phone)
+// Необязательные поля свёрнуты в «Уточнить задачу» — раскрываем, как человек.
+if (!(await form.locator('.lf-more').evaluate((d) => d.open))) await form.locator('.lf-more > summary').click()
 await form.locator('input[name=email]').fill(LEAD.email)
 await form.locator('input[name=city]').fill(LEAD.city)
 await form.locator('select[name=kind]').selectOption(LEAD.kind)
