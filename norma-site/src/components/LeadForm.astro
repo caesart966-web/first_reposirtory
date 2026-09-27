@@ -36,17 +36,24 @@ const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
     <p>{subtitle}</p>
   </div>
 
+  {/* Поля, куда человек пишет о себе, помечены ym-hide-content и ym-disable-keys:
+      Вебвизор Метрики записывает страницу целиком и сам прячет только поля,
+      которые распознал как личные (имя, телефон, почту). Текст обращения
+      он не распознает, а там пишут «Иван, звоните на 8-900…». Ответственность
+      за маскировку по условиям Метрики — на владельце сайта, а политика
+      обещает, что статистика обезличена. Новому полю с текстом нужны те же
+      классы — npm run facts иначе упадёт. */}
   <form novalidate id="lead-form-el">
     <div class="row">
       <div class="field" data-field="name">
         <label for="lf-name">Ваше имя <span aria-hidden="true">*</span></label>
-        <input type="text" id="lf-name" name="name" autocomplete="name" required maxlength="80" />
+        <input type="text" id="lf-name" name="name" class="ym-hide-content ym-disable-keys" autocomplete="name" required maxlength="80" />
         <span class="error" id="err-name">Напишите, как к вам обращаться</span>
       </div>
 
       <div class="field" data-field="phone">
         <label for="lf-phone">Телефон <span aria-hidden="true">*</span></label>
-        <input type="tel" id="lf-phone" name="phone" autocomplete="tel" inputmode="tel" required placeholder="+7 900 000-00-00" />
+        <input type="tel" id="lf-phone" name="phone" class="ym-hide-content ym-disable-keys" autocomplete="tel" inputmode="tel" required placeholder="+7 900 000-00-00" />
         <span class="error" id="err-phone">Нужен телефон в формате +7 900 000-00-00</span>
       </div>
     </div>
@@ -54,7 +61,7 @@ const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
     <div class="row">
       <div class="field" data-field="email">
         <label for="lf-email">E-mail</label>
-        <input type="email" id="lf-email" name="email" autocomplete="email" maxlength="120" />
+        <input type="email" id="lf-email" name="email" class="ym-hide-content ym-disable-keys" autocomplete="email" maxlength="120" />
         <span class="hint">Необязательно — если удобнее письмом</span>
         <span class="error" id="err-email">Проверьте адрес почты</span>
       </div>
@@ -62,13 +69,14 @@ const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
       <div class="field" data-field="city">
         <label for="lf-city">Город</label>
         {/* Список-подсказка, а не выбор из закрытого перечня: городов
-            на сайте 33, а страна больше. Кто из Сургута — впишет Сургут
+            на сайте три, а страна больше. Кто из Сургута — впишет Сургут
             и получит подсказку, кто из Ялты — впишет Ялту и не упрётся
             в «вашего города нет в списке». */}
         <input
           type="text"
           id="lf-city"
           name="city"
+          class="ym-hide-content ym-disable-keys"
           maxlength="80"
           list="lf-cities"
           autocomplete="address-level2"
@@ -123,7 +131,7 @@ const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
 
     <div class="field" data-field="message">
       <label for="lf-message">Что нужно сделать</label>
-      <textarea id="lf-message" name="message" rows="3" maxlength="1500"
+      <textarea id="lf-message" name="message" class="ym-hide-content ym-disable-keys" rows="3" maxlength="1500"
         placeholder="Коротко о задаче: какие работы, с кем договор, на какую сумму. Или просто «перезвоните»."></textarea>
     </div>
 
@@ -184,7 +192,7 @@ const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
     </div>
     <details class="copy-box">
       <summary>Скопировать текст заявки</summary>
-      <pre id="lf-dump"></pre>
+      <pre id="lf-dump" class="ym-hide-content"></pre>
     </details>
   </div>
 </div>

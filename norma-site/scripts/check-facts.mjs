@@ -309,13 +309,46 @@ if (agreeTag && !/\brequired\b/.test(agreeTag[0])) {
   problems++
 }
 
+// Вебвизор Метрики записывает страницу целиком и сам прячет только поля,
+// которые распознал как личные. Текст обращения он не распознаёт, а политика
+// обещает обезличенную статистику, и отвечает за маскировку по условиям
+// Метрики владелец сайта. Поэтому КАЖДОЕ поле, куда человек пишет текст,
+// обязано нести ym-hide-content — и новое тоже: проверка перебирает поля
+// формы, а не сверяет записанный список. Кроме ловушки для ботов: человек
+// её не видит и не заполняет.
+const formBlock = rawForm.match(/<form[^>]*id="lead-form-el"[\s\S]*?<\/form>/)
+if (!formBlock) {
+  console.log('  ✗ на главной не нашлась форма заявки')
+  problems++
+} else {
+  const typed = [...formBlock[0].matchAll(/<(input|textarea)\b[^>]*>/g)]
+    .map((m) => m[0])
+    .filter((tag) => !/type="(hidden|checkbox|radio|submit|button)"/.test(tag))
+    .filter((tag) => !/name="company_site"/.test(tag))
+  const open = typed.filter((tag) => !/class="[^"]*\bym-hide-content\b/.test(tag))
+  for (const tag of open) {
+    const name = (tag.match(/name="([^"]+)"/) || [])[1] || tag.slice(0, 60)
+    console.log(`  ✗ поле «${name}» без ym-hide-content: Вебвизор запишет, что в нём набрали`)
+    problems++
+  }
+  if (typed.length < 5) {
+    console.log(`  ✗ в форме нашлось ${typed.length} текстовых полей из пяти — разбор формы сломался`)
+    problems++
+  }
+}
+const dumpTag = rawForm.match(/<pre[^>]*id="lf-dump"[^>]*>/)
+if (!dumpTag || !/\bym-hide-content\b/.test(dumpTag[0])) {
+  console.log('  ✗ «Скопировать текст заявки» без ym-hide-content: там имя и телефон целиком')
+  problems++
+}
+
 // Полоса про cookie появляется только вместе со счётчиком — иначе сайт
 // сообщал бы о файлах cookie, которых не ставит.
 if (!S.metrikaId) {
   console.log('  · счётчик Метрики не подключён (SITE.metrikaId пуст): полосы про cookie нет,')
   console.log('      и это правильно — без счётчика сайт не ставит ни одного файла cookie.')
 }
-if (problems === before4) console.log('  ✓ реквизиты в политике и согласие в форме сходятся с site.ts')
+if (problems === before4) console.log('  ✓ реквизиты в политике и согласие в форме сходятся с site.ts; поля формы скрыты от Вебвизора')
 
 console.log('\n' + '─'.repeat(64))
 if (problems) {
