@@ -96,7 +96,12 @@ if (existsSync(logFile)) rmSync(logFile)
 // Своя временная папка у PHP — это счётчик частоты заявок (rate_limited
 // в submit.php): иначе он копился бы между прогонами, и на шестом запуске
 // за час проверка упала бы с «слишком много заявок» на исправном сайте.
-server = spawn('php', ['-S', `127.0.0.1:${PORT}`, '-t', dist], {
+//
+// OPcache выключен нарочно. Во встроенном сервере PHP он работает (opcache.enable_cli
+// касается только командной строки) и перечитывает файл не чаще раза в две
+// секунды — а проверка переписывает submit.php на ходу, и подменённый журнал
+// молча исполнялся старым кодом.
+server = spawn('php', ['-d', 'opcache.enable=0', '-S', `127.0.0.1:${PORT}`, '-t', dist], {
   env: { ...process.env, NORMA_MAIL_DRY_RUN: mailFile, TMPDIR: tmp },
   stdio: 'ignore',
 })
@@ -161,6 +166,8 @@ if (!existsSync(mailFile)) {
 
   if (mail.includes(`Reply-To: ${LEAD.email}`)) ok('на письмо можно ответить прямо из почты')
   else fail('нет заголовка Reply-To — ответить на заявку одной кнопкой не выйдет')
+
+  if (mail.includes('журнал заявок не записался')) fail('журнал записан, а письмо сообщает, что нет')
 }
 
 // ── Журнал ────────────────────────────────────────────────────────────────
@@ -209,6 +216,31 @@ const www = await post(`http://www.127.0.0.1:${PORT}`, 'заявка со стр
 const wwwBody = await www.json().catch(() => ({}))
 if (wwwBody.success === true) ok('заявку со страницы на www обработчик принимает')
 else fail(`со страницы на www заявка получает отказ: ${wwwBody.message || www.status}`)
+
+// ── Журнал не пишется ─────────────────────────────────────────────────────
+//
+// Так и случилось на хостинге: заявка дошла письмом, а журнала не появилось,
+// и узнать об этом было неоткуда — ошибка записи глушилась. Теперь о сбое
+// обязано сказать само письмо. Проверяем подменой: журнал направляется
+// в папку, которой нет, — запись туда не пройдёт даже у root.
+writeFileSync(
+  phpFile,
+  original
+    .replace(/const ALLOWED_HOST = '[^']*';/, "const ALLOWED_HOST = '127.0.0.1';")
+    .replace(/const LEADS_LOG = [^;]+;/, "const LEADS_LOG = '/net-takoy-papki-norma/leads.log.php';"),
+)
+const broken = await post(`http://127.0.0.1:${PORT}`, 'заявка при сломанном журнале')
+const brokenBody = await broken.json().catch(() => ({}))
+const brokenMail = existsSync(mailFile) ? readFileSync(mailFile, 'utf8') : ''
+if (brokenBody.success === true && brokenMail.includes('заявка при сломанном журнале')
+    && brokenMail.includes('журнал заявок не записался') && brokenMail.includes('Причина:')) {
+  ok('журнал не записался — письмо говорит об этом и называет причину')
+} else {
+  const why = brokenBody.success !== true
+    ? `обработчик ответил ${JSON.stringify(brokenBody)}`
+    : 'в письме нет строки о сбое журнала'
+  fail(`журнал не записался, а письмо об этом молчит: ${why}`)
+}
 
 console.log(
   problems

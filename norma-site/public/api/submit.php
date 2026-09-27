@@ -107,8 +107,16 @@ function rate_limited(): bool
     return false;
 }
 
-/** Дописывает заявку в резервный журнал. Сбой журнала заявку не блокирует. */
-function log_lead(string $subject, string $message, string $replyTo): void
+/**
+ * Дописывает заявку в резервный журнал. Сбой журнала заявку не блокирует,
+ * но и не проходит молча: функция возвращает причину, и она уходит в письмо.
+ *
+ * Молча — так и было. На хостинге первая же заявка дошла письмом, а журнала
+ * не появилось: запись не прошла, и узнать об этом было неоткуда. Посетителю
+ * сообщать не о чем, сервер молчит, а журнал — это страховка ровно на тот
+ * день, когда письмо не дойдёт. Выяснилось бы это в тот самый день.
+ */
+function log_lead(string $subject, string $message, string $replyTo): ?string
 {
     $line = json_encode([
         'received' => date('c'),
@@ -117,14 +125,40 @@ function log_lead(string $subject, string $message, string $replyTo): void
         'replyto' => $replyTo,
         'message' => $message,
     ], JSON_UNESCAPED_UNICODE);
-    if ($line !== false) {
-        // Заглушка пишется вместе с первой заявкой, одной операцией:
-        // отдельная проверка «файла ещё нет» на двух одновременных заявках
-        // дала бы гонку. Лишняя заглушка вреда не несёт — PHP остановится
-        // на первой.
-        $guard = is_file(LEADS_LOG) ? '' : "<?php exit; ?>\n";
-        @file_put_contents(LEADS_LOG, $guard . $line . "\n", FILE_APPEND | LOCK_EX);
+    if ($line === false) {
+        return 'заявку не удалось записать в журнал: ошибка кодирования';
     }
+
+    // Заглушка пишется вместе с первой заявкой, одной операцией:
+    // отдельная проверка «файла ещё нет» на двух одновременных заявках
+    // дала бы гонку. Лишняя заглушка вреда не несёт — PHP остановится
+    // на первой.
+    $guard = is_file(LEADS_LOG) ? '' : "<?php exit; ?>\n";
+    if (@file_put_contents(LEADS_LOG, $guard . $line . "\n", FILE_APPEND | LOCK_EX) !== false) {
+        return null;
+    }
+
+    // Вторая попытка — без блокировки. Не на всякой файловой системе
+    // хостинга она работает: на сетевой flock отказывает, и тогда журнал
+    // не писался бы никогда. Строка заявки короткая, дописывание в конец
+    // файла без блокировки её не порвёт.
+    if (@file_put_contents(LEADS_LOG, $guard . $line . "\n", FILE_APPEND) !== false) {
+        return null;
+    }
+
+    // Не вышло и так — собираем всё, по чему видна причина: права папки,
+    // её владельца и того, от чьего имени работает PHP.
+    $err = error_get_last();
+    $dir = dirname(LEADS_LOG);
+    $perms = @fileperms($dir);
+    $owner = @fileowner($dir);
+    $me = function_exists('posix_geteuid') ? posix_geteuid() : 'неизвестно';
+    return 'Причина: ' . ($err['message'] ?? 'неизвестна') . "\n"
+        . 'Папка: ' . $dir
+        . ', права ' . ($perms === false ? '?' : substr(sprintf('%o', $perms), -4))
+        . ', владелец ' . ($owner === false ? '?' : $owner)
+        . ', PHP работает от ' . $me
+        . ', запись в папку ' . (is_writable($dir) ? 'разрешена' : 'запрещена');
 }
 
 /**
@@ -203,7 +237,7 @@ if (rate_limited()) {
 }
 
 // Сначала журнал, потом почта: при сбое почты заявка остаётся в журнале.
-log_lead($subject, $message, $replyTo);
+$logError = log_lead($subject, $message, $replyTo);
 
 $headers = [
     'From: ' . encode_subject($fromName) . ' <' . MAIL_FROM . '>',
@@ -217,6 +251,13 @@ if ($replyTo !== '') {
 
 // В письмо добавляем время и адрес — пригодится, если заявка спорная.
 $body = $message . "\n\n---\nПолучено: " . date('d.m.Y H:i:s') . "\nIP: " . client_ip();
+
+// Журнал не записался — об этом говорит само письмо. Больше это узнать
+// неоткуда, а заявка в таком случае существует только здесь.
+if ($logError !== null) {
+    $body .= "\n\n!!! Резервный журнал заявок не записался — эта заявка есть только в этом письме.\n"
+        . $logError;
+}
 
 if (!deliver(MAIL_TO, encode_subject($subject), $body, $headers)) {
     // Молчаливого «успеха» быть не должно: посетитель увидит экран ошибки
