@@ -44,7 +44,10 @@ const isCurrent = (url: string) => path === url || (url !== href('/') && path.st
     <a class="logo" href={href('/')}>
       <LogoMark size={27} class="logo-mark" />
       <span class="logo-text">
-        <b>{SITE.brand}</b>
+        {/* Название — не <b>: жирным его делают стили, а тег «важный текст»
+            на каждой странице дважды (шапка и подвал) проверки SEO считают
+            переспамом одного слова. */}
+        <span class="logo-name">{SITE.brand}</span>
         <small>{SITE.brandTag}</small>
       </span>
     </a>
@@ -222,7 +225,7 @@ const isCurrent = (url: string) => path === url || (url !== href('/') && path.st
      которого у чужой разметки нет. Без этого знак остался бы белым. */
   .logo :global(.logo-mark) { color: var(--acc-bright); flex: none; display: block; }
   .logo-text { display: grid; line-height: 1.15; }
-  .logo-text b { font-family: var(--font-head); font-size: 17px; font-weight: 800; letter-spacing: 0.08em; }
+  .logo-name { font-family: var(--font-head); font-size: 17px; font-weight: 800; letter-spacing: 0.08em; }
   .logo-text small { font-size: 11px; letter-spacing: 0.01em; color: var(--on-dark-muted); }
 
   .nav { display: none; gap: 20px; font-size: 14.5px; }
