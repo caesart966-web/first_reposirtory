@@ -112,6 +112,19 @@ const metrikaId = import.meta.env.PUBLIC_NOINDEX === '1' ? '' : SITE.metrikaId
         })
       }
 
+      // Кнопки связи на телефоне стоят над полосой, а не под ней: её высоту
+      // они берут из --cookie-h. Меряет ResizeObserver, а не разовый замер:
+      // высота полосы меняется — перенос строк при повороте экрана, запас
+      // под полоску iPhone, который Safari меняет на ходу, — и разовый замер
+      // устаревал бы. Следим за рамкой целиком (border-box): запас под
+      // полоску сидит в отступе, и по одному содержимому его перемены
+      // не видно. Спрятанная полоса даёт ноль, и кнопки опускаются.
+      if (note && 'ResizeObserver' in window) {
+        new ResizeObserver(function () {
+          document.documentElement.style.setProperty('--cookie-h', (note.hidden ? 0 : note.offsetHeight) + 'px')
+        }).observe(note, { box: 'border-box' })
+      }
+
       var choice = read()
       if (choice === 'all') {
         loadMetrika()
@@ -176,15 +189,10 @@ const metrikaId = import.meta.env.PUBLIC_NOINDEX === '1' ? '' : SITE.metrikaId
   }
 
   @media (max-width: 767px) {
-    /* Над панелью связи, а не поверх неё: иначе первое, что закрывает
-       баннер, — кнопки «Позвонить» и «WhatsApp».
-       Высота панели — то же выражение, что у неё самой (--mbar-h плюс запас
-       под полоску iPhone), а не замер скриптом. Замер понадобился, когда
-       в стилях было записано 58 px, а панель выходила 61; теперь высота
-       задана одним числом, и сойтись с ней можно точно. Замер к тому же
-       устаревал: запас под полоску Safari меняет на ходу, когда прячет
-       и показывает свою нижнюю строку, а скрипт мерил один раз. */
-    .cookie { bottom: calc(var(--mbar-h) + env(safe-area-inset-bottom, 0px)); padding: 11px 0; }
+    /* Полоса стоит у самого низа экрана, а кнопки связи поднимаются
+       над ней (--cookie-h, скрипт выше). Пока внизу была сплошная панель
+       связи, полоса стояла над панелью — панели больше нет. */
+    .cookie { padding: 11px 0 calc(11px + env(safe-area-inset-bottom, 0px)); }
     .cookie-in { justify-content: stretch; gap: 9px; }
     .cookie-text { font-size: 13.5px; line-height: 1.5; }
     .cookie-act { width: 100%; gap: 8px; flex-wrap: nowrap; }

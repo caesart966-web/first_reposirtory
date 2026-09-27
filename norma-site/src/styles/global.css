@@ -80,12 +80,6 @@
   --font-head: 'Literata Variable', 'Literata Fallback', Georgia, 'Times New Roman', serif;
   --font-body: 'Golos Text Variable', 'Golos Fallback', 'Segoe UI', system-ui, sans-serif;
   --font-mono: 'Golos Text Variable', 'Golos Fallback', 'Segoe UI', system-ui, sans-serif;
-
-  /* Высота нижней панели связи на телефоне — без запаса под полоску
-     «домой» у iPhone, он прибавляется отдельно: env(safe-area-inset-bottom).
-     Одно число на три места — саму панель, отступ страницы под ней
-     и полосу про cookie над ней. */
-  --mbar-h: 60px;
 }
 
 * { box-sizing: border-box; }
@@ -756,74 +750,68 @@ table.data td.strong { font-weight: 600; }
   white-space: nowrap;
 }
 
-/* ── Мобильная нижняя панель ── */
+/* ── Кнопки связи на телефоне ── */
 
-/* Видна всегда, с первого экрана. Колонок столько, сколько каналов
-   в site.ts: без ссылки на MAX их три, и панель не держит пустую ячейку.
+/* Столбик круглых значков у правого края, телефон внизу (разметка
+   и история — в Base.astro). Значки те же, что были в полосе
+   (BrandIcon.astro): одинаковые круги в фирменных цветах, телефон —
+   сургуч кнопок заявки.
 
-   Фон СПЛОШНОЙ. Раньше разделители были щелями по 1 px между ячейками,
-   а под ними лежал полупрозрачный фон панели — то есть сквозь «линии»
-   просвечивала страница: на белом листе они выходили белыми и жирными,
-   а над карточкой условий в щели попадал обрывок её красной линейки.
-   Заказчик прислал снимок: «некрасиво, сделай ровнее». Теперь разделитель —
-   нарисованная линейка в 1 px, и она короче ячейки: не касается ни верха,
-   ни низа, как на бланке. Верхний край — такая же линейка тенью внутрь
-   (она не добавляет высоты) плюс мягкая тень над панелью. */
-.mobile-bar {
+   Размер 46 px — больше минимума для пальца в 44 px: подписей больше нет,
+   и промахнуться по соседнему значку не должно быть легче, чем раньше.
+   Тень мягкая и тёплая — значки лежат поверх белого листа и должны
+   от него отделяться, но не выглядеть наклейками.
+
+   Низ столбика — большее из двух: обычный отступ над полоской «домой»
+   у iPhone или высота полосы про cookie, пока она на экране (её сообщает
+   CookieBanner.astro в --cookie-h). Иначе полоса легла бы поверх
+   кнопок «Позвонить» и «WhatsApp». */
+.contact-rail {
   position: fixed;
-  left: 0; right: 0; bottom: 0;
+  right: max(12px, env(safe-area-inset-right, 0px));
+  bottom: max(calc(16px + env(safe-area-inset-bottom, 0px)), calc(var(--cookie-h, 0px) + 12px));
   z-index: 60;
   display: none;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(0, 1fr);
-  background: var(--dark);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 -12px 28px -16px rgba(22, 19, 15, 0.5);
-  /* Запас под полоску «домой» у iPhone. Работает только вместе
-     с viewport-fit=cover в Base.astro — без него env() всегда ноль,
-     и подписи ложились вплотную к полоске. */
-  padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+  flex-direction: column-reverse;
+  gap: 10px;
+  transition: opacity var(--t-fast) var(--ease), visibility var(--t-fast) var(--ease);
 }
-.mobile-bar a {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  height: var(--mbar-h);
-  color: var(--on-dark);
-  text-decoration: none;
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 1;
-  letter-spacing: 0.01em;
-  white-space: nowrap;
+.contact-rail a {
+  display: block;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  box-shadow: 0 4px 12px -2px rgba(22, 19, 15, 0.35);
   -webkit-tap-highlight-color: transparent;
-  transition: background-color var(--t-fast) var(--ease);
+  transition: transform var(--t-fast) var(--ease);
 }
-.mobile-bar a + a::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 14px;
-  bottom: 14px;
-  width: 1px;
-  background: rgba(255, 255, 255, 0.1);
-}
-/* Нажатие видно: ячейка чуть светлеет. Системную синюю вспышку
+/* Нажатие видно: значок чуть проседает. Системную синюю вспышку
    нажатия на телефоне отключили выше — синего на сайте нет. */
-.mobile-bar a:active { background: rgba(255, 255, 255, 0.06); }
-.mobile-bar a:focus-visible { outline: 2px solid var(--acc-bright); outline-offset: -5px; border-radius: 8px; }
-/* Значки — одинаковые круги в фирменных цветах (BrandIcon.astro).
-   Цвет текста берёт только круг телефона: сургуч, как у кнопок заявки. */
-.mobile-bar a svg { width: 28px; height: 28px; flex: none; color: var(--acc-btn); }
+.contact-rail a:active { transform: scale(0.93); }
+.contact-rail a:focus-visible { outline: 2px solid var(--acc); outline-offset: 3px; }
+.contact-rail a svg { display: block; width: 100%; height: 100%; color: var(--acc-btn); }
 
 @media (max-width: 767px) {
-  .mobile-bar { display: grid; }
-  /* Низ страницы не прячется под панелью — ровно на её высоту. */
-  body { padding-bottom: calc(var(--mbar-h) + env(safe-area-inset-bottom, 0px)); }
+  .contact-rail { display: flex; }
+}
+
+/* Столбик уходит, когда мешает по-настоящему.
+   Меню: оно кроет весь экран, и значки легли бы поверх его пунктов
+   (а связь в меню есть своя — «Оставить заявку» и номер).
+   Поле формы в фокусе: на телефоне открыта клавиатура, экран вдвое ниже,
+   и столбик закрывал бы правый край поля, в которое человек печатает.
+   Флажки и переключатели калькулятора сюда не входят: на них фокус
+   встаёт от простого нажатия, и значки мигали бы при каждом ответе.
+   Конец страницы (html.at-page-end, скрипт в Base.astro): дальше подвала
+   не прокрутить, и значки навсегда закрыли бы правый край его строк. */
+html.menu-open .contact-rail,
+html.at-page-end .contact-rail,
+html:has(:is(textarea, select, input:not([type='checkbox'], [type='radio'], [type='range'], [type='submit'], [type='button'])):focus) .contact-rail {
+  opacity: 0;
+  visibility: hidden;
+}
+@media (prefers-reduced-motion: reduce) {
+  .contact-rail, .contact-rail a { transition: none; }
 }
 
 /* Печать. Страницы «Документы» и «Стоимость» распечатывают и берут с собой —
@@ -831,7 +819,7 @@ table.data td.strong { font-weight: 600; }
    Форма заявки и блок консультации занимали в конце полстраницы:
    на бумаге в них не написать, а лист уходит. */
 @media print {
-  .mobile-bar,
+  .contact-rail,
   .site-header,
   .site-footer,
   .lead-form,
