@@ -10,8 +10,8 @@
 остались под старыми. Глазами такое не видно, пока не откроешь нужную
 страницу в нужном состоянии, - заказчик нашёл кнопку с телефона.
 
-Проверка собирает классы из всех шаблонов темы и из app.js (className,
-classList.add/toggle) и ищет каждый в style.css и opencart.css. Классы,
+Проверка собирает классы из всех шаблонов темы, из app.js (className,
+classList.add/toggle) и из разметки, которую строкой собирает calc.js, и ищет каждый в style.css и opencart.css. Классы,
 которые нарочно ничем не оформлены (крючки для разметки, скриптов или
 поисковиков), перечислены ниже с причиной; всё остальное - ошибка.
 
@@ -54,10 +54,15 @@ def used_classes():
             # Выражения Twig внутри class="..." - не классы, а их источник.
             for cls in re.sub(r'\{\{.*?\}\}|\{%.*?%\}', ' ', m.group(1)).split():
                 used.setdefault(cls, set()).add(str(path.relative_to(THEME / 'template')))
-    js = (THEME / 'javascript/app.js').read_text(encoding='utf-8')
-    for m in re.finditer(r"(?:className\s*=\s*|classList\.(?:add|toggle)\()\s*'([^']+)'", js):
-        for cls in m.group(1).split():
-            used.setdefault(cls, set()).add('app.js')
+    for name in ('app.js', 'calc.js'):
+        js = (THEME / 'javascript' / name).read_text(encoding='utf-8')
+        for m in re.finditer(r"(?:className\s*=\s*|classList\.(?:add|toggle|contains)\()\s*'([^']+)'", js):
+            for cls in m.group(1).split():
+                used.setdefault(cls, set()).add(name)
+        # Калькулятор собирает разметку строками: class="..." внутри JS.
+        for m in re.finditer(r'class="([^"]*)"', js):
+            for cls in m.group(1).split():
+                used.setdefault(cls, set()).add(name)
     return used
 
 
@@ -74,7 +79,7 @@ def main():
         if cls not in used:
             print(f'Класс «{cls}» числится в исключениях, но в шаблонах его больше нет — убрать из HOOKS')
             bad += 1
-    print(f'Классов в шаблонах и app.js: {len(used)}'
+    print(f'Классов в шаблонах, app.js и calc.js: {len(used)}'
           + (f', без стилей: {bad}' if bad else ' — у каждого есть стили или причина их не иметь'))
     return 1 if bad else 0
 

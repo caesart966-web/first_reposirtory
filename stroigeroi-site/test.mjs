@@ -178,6 +178,14 @@ for (const name of PAGES) {
       });
       if (a11y.noAlt) fail(`${name}: картинок без alt — ${a11y.noAlt}`);
       if (a11y.nameless.length) fail(`${name}: кнопки/ссылки без названия — ${a11y.nameless.join(', ')}`);
+
+      /* Ошибки форм — только после попытки отправки. Смотрим на display
+         самого сообщения, а не на видимость: сообщение в закрытом окне
+         «Заказать звонок» тоже не должно быть готово показаться. */
+      const early = await page.evaluate(() => [...document.querySelectorAll('.form__error')]
+        .filter((e) => getComputedStyle(e).display !== 'none')
+        .map((e) => e.textContent.trim()));
+      if (early.length) fail(`${name}: ошибки форм видны до отправки — ${[...new Set(early)].join('; ')}`);
     }
 
     await ctx.close();
@@ -444,6 +452,10 @@ for (const name of ['index', 'catalog', 'checkout', 'contacts', 'login']) {
     await page.waitForTimeout(400);
     if (here() === 'order-done.html') {
       fail('сценарий: пустая форма оформления пропускает дальше — проверка полей не работает');
+    } else {
+      const consent = await page.evaluate(() => [...document.querySelectorAll('form.checkout .consent .form__error')]
+        .map((e) => getComputedStyle(e).display !== 'none'));
+      if (!consent.length || !consent.every(Boolean)) fail('сценарий: без галочки согласия сообщение под ней не показалось');
     }
   }
 
@@ -576,139 +588,402 @@ for (const name of ['index', 'catalog', 'checkout', 'contacts', 'login']) {
 }
 
 /* ==========================================================================
-   Калькулятор: счёт и русский формат чисел
-   ========================================================================== */
+   Строительный калькулятор: 14 расчётов, склонения, адреса, список, отправка
+   ==========================================================================
+
+   Числа в ожиданиях посчитаны руками, формула — в комментарии рядом.
+   Каждое поле заполняется тем же путём, каким его заполнит человек:
+   число — вводом, список — выбором, переключатель — щелчком. */
 
 {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  await ctx.grantPermissions(['clipboard-read', 'clipboard-write']).catch(() => {});
   const page = await ctx.newPage();
-  await page.goto('file://' + path.join(DIR, 'calculator.html'), { waitUntil: 'load' });
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  const pageUrl = 'file://' + path.join(DIR, 'calculator.html');
+  await page.goto(pageUrl, { waitUntil: 'load' });
+  await page.evaluate(() => localStorage.clear());
+  await page.goto(pageUrl, { waitUntil: 'load' });
   await page.waitForTimeout(300);
 
-  const read = () =>
-    page.evaluate(() => ({
-      answer: document.querySelector('[data-calc-answer]').textContent.trim(),
-      rows: [...document.querySelectorAll('[data-calc-rows] li')].map((l) => l.textContent.trim()),
-    }));
+  const picks = await page.$$eval('[data-calc-pick]', (b) => b.length);
+  if (picks !== 14) fail(`калькулятор: карточек выбора ${picks}, а калькуляторов 14`);
 
-  /* 20 м² в один слой, запас 10 %, лист 3 м²: 22 / 3 = 7.33 → 8 листов */
-  const gkl = await read();
-  if (!/^8\s/.test(gkl.answer)) fail(`калькулятор: 20 м² должны дать 8 листов, получено «${gkl.answer}»`);
-
-  /* Запятую на входе понимать обязан: по-русски дробное пишут через неё */
-  await page.fill('[data-gkl-area]', '18,5');
-  await page.waitForTimeout(200);
-  const comma = await read();
-  if (!/^7\s/.test(comma.answer)) fail(`калькулятор: 18,5 м² должны дать 7 листов, получено «${comma.answer}»`);
-
-  /* И на выходе тоже запятая, а не точка */
-  for (const row of comma.rows) {
-    if (/\d\.\d/.test(row)) fail(`калькулятор: точка вместо запятой в дробном числе — «${row}»`);
-  }
-
-  await page.click('[data-calc-mode="mix"]');
-  await page.waitForTimeout(200);
-  for (const [sel, v] of [['[data-mix-area]', '120'], ['[data-mix-thick]', '8'], ['[data-mix-usage]', '1,4'], ['[data-mix-bag]', '30']]) {
-    await page.fill(sel, v);
-  }
-  await page.waitForTimeout(250);
-  const mix = await read();
-  /* 120 × 8 × 1,4 × 1,1 = 1478,4 кг ÷ 30 = 49,28 → 50 мешков */
-  if (!/^50\s/.test(mix.answer)) fail(`калькулятор: смеси должны дать 50 мешков, получено «${mix.answer}»`);
-  for (const row of mix.rows) {
-    if (/\d\.\d/.test(row)) fail(`калькулятор: точка вместо запятой — «${row}»`);
-  }
-
-  /* Запас у каждой вкладки свой. Раньше читалось первое поле запаса
-     на странице — гипсокартонное, и на смесях 0 % давали те же 50 мешков.
-     120 × 8 × 1,4 = 1344 кг ÷ 30 = 44,8 → 45 */
-  await page.fill('#mix-reserve', '0');
-  await page.waitForTimeout(200);
-  const mix0 = (await read()).answer;
-  if (!/^45\s/.test(mix0)) fail(`калькулятор: смеси без запаса должны дать 45 мешков, получено «${mix0}»`);
-
-  /* Склонение и округление. 57 м² + 10 % = 62,7 ÷ 3 = 20,9 → «21 лист»;
-     60 м² → 22 → «22 листа» (было «22 листов»); 90 м² + 10 % = ровно 99 ÷ 3 = 33,
-     а дробь 33,00000000000001 давала 34. */
-  await page.click('[data-calc-mode="gkl"]');
-  for (const [area, want] of [['57', /^21\sлист$/], ['60', /^22\sлиста$/], ['90', /^33\sлиста$/]]) {
-    await page.fill('[data-gkl-area]', area);
+  const open = async (id) => {
+    await page.click(`[data-calc-pick="${id}"]`);
+    await page.waitForTimeout(120);
+  };
+  /* Поле в «Дополнительных параметрах» сначала раскрываем — как человек. */
+  const set = async (values) => {
+    for (const [name, value] of Object.entries(values)) {
+      const el = await page.$(`[data-calc-form] [name="${name}"]`);
+      if (!el) { fail(`калькулятор: нет поля ${name}`); continue; }
+      await el.evaluate((n) => { const d = n.closest('details'); if (d) d.open = true; });
+      const kind = await el.evaluate((n) => (n.tagName === 'SELECT' ? 'select' : n.type));
+      if (kind === 'select') await page.selectOption(`[data-calc-form] select[name="${name}"]`, value);
+      else if (kind === 'radio') await page.check(`[data-calc-form] input[name="${name}"][value="${value}"]`);
+      else await page.fill(`[data-calc-form] input[name="${name}"]`, value);
+    }
     await page.waitForTimeout(150);
-    const got = (await read()).answer;
-    if (!want.test(got)) fail(`калькулятор: ${area} м² гипсокартона — ждали ${want}, получено «${got}»`);
-  }
+  };
+  const read = () =>
+    page.evaluate(() => {
+      const clean = (t) => t.replace(/ /g, ' ').replace(/\s+/g, ' ').trim();
+      const pairs = (sel) => [...document.querySelectorAll(sel)].map((li) => [clean(li.children[0].textContent), clean(li.children[1].textContent)]);
+      return {
+        eyebrow: clean(document.querySelector('[data-calc-eyebrow]').textContent),
+        answer: clean(document.querySelector('[data-calc-answer]').textContent),
+        buy: pairs('[data-calc-buy] li'),
+        rows: pairs('[data-calc-rows] li'),
+        note: clean(document.querySelector('[data-calc-note]').textContent),
+      };
+    });
+  const expect = (label, got, want) => {
+    if (got !== want) fail(`калькулятор, ${label}: ждали «${want}», получено «${got}»`);
+  };
+  const buyOf = (r, name) => (r.buy.find((b) => b[0].startsWith(name)) || [])[1];
+  const noDots = (r, label) => {
+    for (const [a, b] of r.rows.concat(r.buy)) {
+      if (/\d\.\d/.test(a + b)) fail(`калькулятор, ${label}: точка вместо запятой — «${a} ${b}»`);
+    }
+  };
 
-  /* Радиаторы. На теме OpenCart у страницы <base href> на главную:
-     адрес вкладки обязан собираться от самой страницы, иначе «#radiatory»
-     уводил бы на главную. Ставим такой же <base> и здесь. */
-  const pageUrl = page.url().replace(/#.*$/, '');
+  /* Гипсокартон: 20 м² + 10 % = 22 ÷ 3 = 7,3 → 8. Склонение: 57 м² → 20,9
+     → «21 лист»; 60 → «22 листа» (было «22 листов»); 90 м² + 10 % = ровно
+     99 ÷ 3 = 33, а дробь 33,00000000000001 давала 34. Запятая на входе. */
+  await open('gkl');
+  expect('гипсокартон по умолчанию', (await read()).answer, '8 листов');
+  for (const [area, want] of [['57', '21 лист'], ['60', '22 листа'], ['90', '33 листа'], ['18,5', '7 листов']]) {
+    await set({ area });
+    expect(`гипсокартон ${area} м²`, (await read()).answer, want);
+  }
+  noDots(await read(), 'гипсокартон');
+
+  /* Перегородка 4 × 2,7 м, две стороны, лист 1200 × 2500: 10,8 × 2 × 1,1 ÷ 3
+     = 7,9 → 8 листов; стоек 4 ÷ 0,6 → 7 + 1 = 8; ПН 2 × (4 ÷ 3 → 2) = 4;
+     саморезов на лист 3 стойки × (2,5 ÷ 0,25 + 1) = 33, × 8 = 264;
+     серпянка (3 шва × 2,7 + 1 × 4) × 2 = 24,2 м. */
+  await open('frame');
+  let r = await read();
+  expect('перегородка, листы', r.answer, '8 листов');
+  expect('перегородка, стойки', buyOf(r, 'Профиль стоечный'), '8 шт.');
+  expect('перегородка, направляющие', buyOf(r, 'Профиль направляющий'), '4 шт.');
+  expect('перегородка, саморезы', buyOf(r, 'Саморезы для гипсокартона'), '264 шт.');
+  expect('перегородка, дюбели', buyOf(r, 'Дюбель-гвозди'), '32 шт.');
+  expect('перегородка, серпянка', buyOf(r, 'Серпянка'), '24,2 м');
+
+  /* Смеси: без расхода — не считаем; 120 × 8 × 1,4 × 1,1 ÷ 30 = 49,3 → 50;
+     запас у вкладки свой: 0 % → 1344 ÷ 30 = 44,8 → 45. */
+  await open('mix');
+  r = await read();
+  expect('смеси без расхода', r.answer, '—');
+  if (!/расход и вес мешка/.test(r.note)) fail(`калькулятор, смеси без расхода: не сказано, чего не хватает — «${r.note}»`);
+  await set({ area: '120', thick: '8', usage: '1,4', bag: '30' });
+  expect('смеси', (await read()).answer, '50 мешков');
+  await set({ reserve: '0' });
+  expect('смеси без запаса', (await read()).answer, '45 мешков');
+
+  /* Краска: 30 м² × 2 слоя ÷ 10 м²/л × 1,1 = 6,6 л → банки по 2,5 л: 3.
+     Расход «150 мл на 1 м²»: 30 × 2 × 0,15 × 1,1 = 9,9 л → 4 банки.
+     По комнате 4 × 3 × 2,7 минус 3 м² окон: 34,8 м² → 7,66 л → 4 банки. */
+  await open('paint');
+  await set({ rate: '10' });
+  expect('краска, литры', (await read()).answer, '6,6 л');
+  await set({ can: '2,5' });
+  expect('краска, банки', (await read()).answer, '3 банки');
+  await set({ rateUnit: 'mlm2', rate: '150' });
+  expect('краска, расход в мл', (await read()).answer, '4 банки');
+  await set({ rateUnit: 'm2l', rate: '10', mode: 'room' });
+  r = await read();
+  expect('краска по комнате', r.answer, '4 банки');
+  expect('краска, стены по комнате', (r.rows.find((x) => x[0].startsWith('Стены')) || [])[1], '34,8 м²');
+
+  /* Обои 4 × 3 × 2,7: периметр 14 м, полоса 2,8 м, из рулона 10,05 м — 3
+     полосы; полос 14 ÷ 0,53 → 27; рулонов 27 ÷ 3 → 9. Метровые — 14 полос,
+     5 рулонов. Раппорт 64 см: полоса 3,44 м, из рулона 2, рулонов 14. */
+  await open('wallpaper');
+  expect('обои', (await read()).answer, '9 рулонов');
+  await set({ roll: '1.06x10.05' });
+  expect('обои метровые', (await read()).answer, '5 рулонов');
+  await set({ roll: '0.53x10.05', rapport: '64', glue: '6' });
+  r = await read();
+  expect('обои с раппортом', r.answer, '14 рулонов');
+  expect('обои, клей', buyOf(r, 'Клей для обоев'), '3 упаковки');
+
+  /* Плитка 300 × 300, шов 2: 10 × 1,1 ÷ 0,302² = 120,6 → «121 плитка»;
+     по 11 в упаковке — 11 упаковок; клей 10 × 4 × 1,1 = 44 кг → 2 мешка
+     по 25; затирка (600 ÷ 90 000) × 8 × 2 × 1,6 × 10 × 1,1 = 1,88 кг →
+     1 упаковка по 2 кг. */
+  await open('tile');
+  expect('плитка', (await read()).answer, '121 плитка');
+  await set({ perPack: '11', glueRate: '4', glueBag: '25', thick: '8', density: '1,6', groutPack: '2' });
+  r = await read();
+  expect('плитка, упаковки', r.answer, '11 упаковок');
+  expect('плитка, клей', buyOf(r, 'Плиточный клей'), '2 мешка');
+  expect('плитка, затирка', buyOf(r, 'Затирка'), '1 упаковка');
+  noDots(r, 'плитка');
+
+  /* Ламинат 5 × 4: 22 м² с запасом; по 2 м² — 11 упаковок; подложка по 10 м²
+     — 3; плинтус (18 − 0,8) × 1,1 ÷ 2,5 = 7,6 → 8. */
+  await open('floor');
+  expect('ламинат без упаковки', (await read()).answer, '22 м²');
+  await set({ pack: '2', under: '10' });
+  r = await read();
+  expect('ламинат', r.answer, '11 упаковок');
+  expect('ламинат, подложка', buyOf(r, 'Подложка'), '3 упаковки');
+  expect('ламинат, плинтус', buyOf(r, 'Плинтус'), '8 шт.');
+
+  /* «Армстронг» 5 × 4: ячеек 9 × 7 = 63 плиты; линий главного профиля
+     4 ÷ 1,2 → 4 − 1 = 3, по 2 профиля 3,6 м — 6; поперечных 1,2: 8 линий ×
+     4 = 32; 0,6: (6 − 3) × 9 = 27; уголок 2 × 2 + 2 × 2 = 8; подвесов
+     3 × (5 ÷ 1,2 → 5 + 1) = 18. Светильники вместо 4 плит — 59 плит.
+     Комната 1 × 1: четыре ячейки, главного профиля и подвесов нет. */
+  await open('ceiling');
+  r = await read();
+  expect('армстронг, плиты', r.answer, '63 плиты');
+  expect('армстронг, главный', buyOf(r, 'Профиль главный'), '6 шт.');
+  expect('армстронг, 1,2', buyOf(r, 'Профиль поперечный 1,2'), '32 шт.');
+  expect('армстронг, 0,6', buyOf(r, 'Профиль поперечный 0,6'), '27 шт.');
+  expect('армстронг, уголок', buyOf(r, 'Уголок'), '8 шт.');
+  expect('армстронг, подвесы', buyOf(r, 'Подвесы'), '18 шт.');
+  await set({ lamps: '4' });
+  r = await read();
+  expect('армстронг со светильниками', r.answer, '59 плит');
+  expect('армстронг, светильники', buyOf(r, 'Светильники'), '4 шт.');
+  await set({ lamps: '0', length: '1', width: '1' });
+  r = await read();
+  expect('армстронг 1 × 1', r.answer, '4 плиты');
+  if (buyOf(r, 'Подвесы') || buyOf(r, 'Профиль главный')) fail('калькулятор, армстронг 1 × 1: главного профиля и подвесов быть не должно');
+
+  /* Панели 10 м² + 10 % ÷ (3 × 0,25) = 14,7 → 15; по 10 в упаковке — 2. */
+  await open('panels');
+  expect('панели', (await read()).answer, '15 панелей');
+  await set({ perPack: '10' });
+  expect('панели, упаковки', buyOf(await read(), 'Это упаковок'), '2 упаковки');
+
+  /* Кирпич: 10 × 2,7 = 27 м², в кирпич — 2 ÷ (0,26 × 0,075) = 102,6 на м²,
+     с запасом 5 % — 2908; раствор 27 × 0,25 − 2769 × 0,00195 = 1,35 м³.
+     Блок 600 × 200 × 300 на клею, шов 3: 27 ÷ (0,603 × 0,203) × 1,05 = 231,6
+     → 232; клей 0,16 м³. */
+  await open('masonry');
+  r = await read();
+  expect('кирпич', r.answer, '2 908 кирпичей');
+  expect('кирпич, раствор', buyOf(r, 'Раствор'), '1,35 м³');
+  await set({ mat: 'block', joint: '3' });
+  r = await read();
+  expect('блоки', r.answer, '232 блока');
+  expect('блоки, клей', buyOf(r, 'Раствор или клей'), '0,16 м³');
+
+  /* Бетон: плита 6 × 6 × 0,2 × 1,05 = 7,56 м³; лента 24 × 0,4 × 0,8 × 1,05
+     = 8,06; столбы 12 × π × 0,1² × 1,5 × 1,05 = 0,59; плита из мешков
+     с выходом 20 л — 7560 ÷ 20 = 378. */
+  await open('concrete');
+  expect('бетон, плита', (await read()).answer, '7,56 м³');
+  await set({ kind: 'strip' });
+  expect('бетон, лента', (await read()).answer, '8,06 м³');
+  await set({ kind: 'piles' });
+  expect('бетон, столбы', (await read()).answer, '0,59 м³');
+  await set({ kind: 'slab', bag: '20' });
+  expect('бетон, мешки', buyOf(await read(), 'Сухая смесь'), '378 мешков');
+
+  /* Утеплитель: 100 мм плитами по 50 — 2 слоя; 50 × 2 × 1,05 = 105 м²;
+     по 6 м² в упаковке — 17,5 → 18. */
+  await open('insulation');
+  expect('утеплитель без упаковки', (await read()).answer, '105 м²');
+  await set({ pack: '6' });
+  expect('утеплитель', (await read()).answer, '18 упаковок');
+
+  /* Кровля 8 × 4, два ската, рабочая ширина 1,1: 8 ÷ 1,1 → 8 листов в ряд,
+     16 на крышу; конёк 8 ÷ 1,9 → 5. Листы по 1,5 м с нахлёстом 20 см:
+     рядов (4 − 0,2) ÷ 1,3 → 3, листов 48. */
+  await open('roof');
+  expect('кровля без ширины листа', (await read()).answer, '—');
+  await set({ useful: '1,1' });
+  r = await read();
+  expect('кровля', r.answer, '16 листов');
+  expect('кровля, конёк', buyOf(r, 'Конёк'), '5 шт.');
+  await set({ sheetLen: '1,5' });
+  expect('кровля, короткие листы', (await read()).answer, '48 листов');
+
+  /* Радиаторы: 15 × 2,7 × 41 × 1,15 = 1909,6 → 1910 Вт; ÷ 180 → 11 секций;
+     кирпичный дом 15 × 2,7 × 34 × 1,15 = 1583,6 → 9; угловая +20 % — 2292 Вт
+     → 13; 20 м²: 2547 Вт ÷ 125 → «21 секция», ÷ 120 → «22 секции». */
+  await open('radiator');
+  r = await read();
+  expect('радиаторы без мощности', `${r.eyebrow}: ${r.answer}`, 'Нужно тепла: 1 910 Вт');
+  if (!r.rows.some((x) => x[0] === 'Запас' && x[1] === '15 %')) fail('калькулятор, радиаторы: в расчёте нет строки «Запас 15 %»');
+  await set({ power: '180' });
+  expect('радиаторы', (await read()).answer, '11 секций');
+  await set({ norm: '34' });
+  expect('радиаторы, кирпичный дом', (await read()).answer, '9 секций');
+  await set({ norm: '41', walls: '1.2' });
+  expect('радиаторы, угловая', (await read()).answer, '13 секций');
+  await set({ walls: '1', area: '20', power: '125' });
+  expect('радиаторы, 125 Вт', (await read()).answer, '21 секция');
+  await set({ power: '120' });
+  expect('радиаторы, 120 Вт', (await read()).answer, '22 секции');
+
+  /* Адрес: вкладка — в адресе, а при <base href> на главную (так в теме
+     OpenCart) адрес всё равно собирается от самой страницы. */
+  if (!page.url().endsWith('#radiatory')) fail(`калькулятор: у радиаторов адрес …#radiatory, получено ${page.url()}`);
   await page.evaluate(() => {
     const base = document.createElement('base');
     base.href = 'file:///nonexistent/';
     document.head.prepend(base);
   });
-  await page.click('[data-calc-mode="rad"]');
+  await open('wallpaper');
+  if (page.url() !== pageUrl + '#oboi') fail(`калькулятор: при <base href> адрес должен остаться …calculator.html#oboi, получено ${page.url()}`);
+
+  /* Отправка менеджеру: окно звонка открывается, расчёт уходит полем message;
+     если окно открыть другой кнопкой — поле пустое. */
+  await page.click('[data-calc-result] [data-calc-send]');
   await page.waitForTimeout(200);
-  if (page.url() !== pageUrl + '#radiatory') fail(`калькулятор: вкладка радиаторов должна дать адрес …#radiatory, получено ${page.url()}`);
-
-  const readRad = () =>
-    page.evaluate(() => ({
-      answer: document.querySelector('[data-calc-answer]').textContent.trim(),
-      eyebrow: document.querySelector('[data-calc-eyebrow]').textContent.trim(),
-      rows: [...document.querySelectorAll('[data-calc-rows] li')].map((l) => l.textContent.trim()),
-    }));
-
-  /* Мощности секции ещё нет — ответ в ваттах: 15 × 2,7 × 41 × 1,15 = 1909,6 → 1910 Вт.
-     Запас 15 % отдельным полем не спрашиваем, но в расчёте он виден. */
-  const heat = await readRad();
-  if (!/^1\s?910\sВт$/.test(heat.answer) || heat.eyebrow !== 'Нужно тепла') {
-    fail(`калькулятор: радиаторы без мощности секции — ждали «Нужно тепла: 1 910 Вт», получено «${heat.eyebrow}: ${heat.answer}»`);
-  }
-  if (!heat.rows.some((r) => /^Запас\s*15\s%$/.test(r))) fail(`калькулятор: в расчёте радиаторов должна быть строка «Запас 15 %», получено ${JSON.stringify(heat.rows)}`);
-
-  /* 1910 ÷ 180 = 10,6 → 11 секций; кирпичный дом: 15 × 2,7 × 34 × 1,15 = 1583,6 → 1584 ÷ 180 = 8,8 → 9 */
-  await page.fill('[data-rad-section]', '180');
-  await page.waitForTimeout(150);
-  const panel = await readRad();
-  if (!/^11\sсекций$/.test(panel.answer) || panel.eyebrow !== 'Нужно купить') {
-    fail(`калькулятор: 180 Вт на секцию должны дать «Нужно купить: 11 секций», получено «${panel.eyebrow}: ${panel.answer}»`);
-  }
-  for (const row of panel.rows) {
-    if (/\d\.\d/.test(row)) fail(`калькулятор: точка вместо запятой — «${row}»`);
-  }
-  await page.selectOption('[data-rad-norm]', '34');
-  await page.waitForTimeout(150);
-  const brick = (await readRad()).answer;
-  if (!/^9\sсекций$/.test(brick)) fail(`калькулятор: кирпичный дом должен дать 9 секций, получено «${brick}»`);
-
-  /* Угловая комната, две стены на улицу — +20 %:
-     15 × 2,7 × 41 × 1,2 × 1,15 = 2291,5 → 2292 Вт ÷ 180 = 12,7 → 13 секций */
-  await page.selectOption('[data-rad-norm]', '41');
-  await page.selectOption('[data-rad-walls]', '1.2');
-  await page.waitForTimeout(150);
-  const corner = (await readRad()).answer;
-  if (!/^13\sсекций$/.test(corner)) fail(`калькулятор: угловая комната должна дать 13 секций, получено «${corner}»`);
-
-  /* Склонение: 20 × 2,7 × 41 × 1,15 = 2546,1 → 2547 Вт; ÷ 125 = 20,4 → «21 секция», ÷ 120 = 21,2 → «22 секции» */
-  await page.selectOption('[data-rad-walls]', '1');
-  await page.fill('[data-rad-area]', '20');
-  for (const [power, want] of [['125', /^21\sсекция$/], ['120', /^22\sсекции$/]]) {
-    await page.fill('[data-rad-section]', power);
-    await page.waitForTimeout(150);
-    const got = (await readRad()).answer;
-    if (!want.test(got)) fail(`калькулятор: ${power} Вт на секцию — ждали ${want}, получено «${got}»`);
-  }
-
-  /* По ссылке с #radiatory страница открывается сразу на радиаторах */
-  const direct = await ctx.newPage();
-  await direct.goto(pageUrl + '#radiatory', { waitUntil: 'load' });
-  await direct.waitForTimeout(300);
-  const opened = await direct.evaluate(() => ({
-    tab: document.querySelector('[data-calc-mode="rad"]').getAttribute('aria-selected'),
-    shown: !document.querySelector('[data-calc-panel="rad"]').hidden,
+  const sent = await page.evaluate(() => ({
+    open: !!document.querySelector('#modal-callback[open]'),
+    message: (document.querySelector('#modal-callback form input[name="message"]') || {}).value || '',
+    note: (el => (el && !el.hidden ? el.textContent : ''))(document.querySelector('[data-calc-attached]')),
   }));
-  if (opened.tab !== 'true' || !opened.shown) fail('калькулятор: ссылка …#radiatory должна открывать вкладку радиаторов');
+  if (!sent.open) fail('калькулятор: «Отправить менеджеру» не открыло окно заявки');
+  if (!/строительный калькулятор/.test(sent.message) || !/Обои/.test(sent.message)) fail(`калькулятор: к заявке не приложен расчёт — «${sent.message.slice(0, 80)}»`);
+  if (!/приложен\s+расчёт\s+«Обои»/.test(sent.note)) fail(`калькулятор: в окне заявки не сказано, какой расчёт приложен — «${sent.note}»`);
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
+  await page.evaluate(() => document.querySelector('[data-modal-open="modal-callback"]:not([data-calc-send])').click());
+  await page.waitForTimeout(200);
+  const plain = await page.evaluate(() => (document.querySelector('#modal-callback form input[name="message"]') || {}).value || '');
+  if (plain) fail('калькулятор: обычная заявка на звонок ушла бы с чужим расчётом');
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
 
+  /* Копирование: в буфере — текст расчёта. */
+  await page.click('[data-calc-copy]');
+  await page.waitForTimeout(300);
+  const copied = await page.evaluate(() => navigator.clipboard.readText().catch(() => ''));
+  if (copied && !/Обои: комната/.test(copied)) fail(`калькулятор: скопирован не тот текст — «${copied.slice(0, 80)}»`);
+  const toastText = await page.evaluate(() => document.querySelector('[data-demo-note]').textContent);
+  if (!/скопирован/.test(toastText)) fail(`калькулятор: после копирования нет сообщения, получено «${toastText}»`);
+
+  /* Список покупок: два расчёта, переживает перезагрузку, удаление,
+     печать только списка, очистка. */
+  await open('ceiling');
+  await page.click('[data-calc-add]');
+  await open('frame');
+  await page.click('[data-calc-add]');
+  await page.waitForTimeout(500);
+  const listed = await page.evaluate(() => ({
+    shown: !document.querySelector('[data-calc-list]').hidden,
+    entries: [...document.querySelectorAll('.calc-list__name')].map((n) => n.textContent),
+    count: document.querySelector('[data-calc-list-count]').textContent.replace(/ /g, ' '),
+  }));
+  if (!listed.shown || listed.entries.length !== 2 || listed.count !== '2 расчёта') fail(`калькулятор: список покупок — ${JSON.stringify(listed)}`);
+  await page.goto(pageUrl, { waitUntil: 'load' });
+  await page.waitForTimeout(300);
+  const kept = await page.$$eval('.calc-list__name', (n) => n.map((x) => x.textContent));
+  if (kept.length !== 2) fail(`калькулятор: список покупок не пережил перезагрузку — ${JSON.stringify(kept)}`);
+  const lastOpen = await page.getAttribute('[data-calc-pick="frame"]', 'aria-pressed');
+  if (lastOpen !== 'true') fail('калькулятор: после перезагрузки должен открыться последний калькулятор');
+  await page.evaluate(() => { window.print = () => { window.__printed = document.body.classList.contains('is-print-calc'); }; });
+  await page.click('[data-calc-list-print]');
+  if (!(await page.evaluate(() => window.__printed))) fail('калькулятор: печать списка не включила режим «только список»');
+  await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
+  await page.click('[data-calc-list-remove="0"]');
+  const left = await page.$$eval('.calc-list__name', (n) => n.map((x) => x.textContent));
+  if (left.length !== 1 || left[0] !== 'Перегородка') fail(`калькулятор: после удаления в списке — ${JSON.stringify(left)}`);
+  await page.click('[data-calc-list-clear]');
+  if (!(await page.evaluate(() => document.querySelector('[data-calc-list]').hidden))) fail('калькулятор: пустой список должен прятаться');
+
+  /* Длинный список уходит в заявку целыми расчётами, пока помещается
+     в 2000 знаков обработчика, и считать надо, как считает он: перевод
+     строки браузер отправляет парой \r\n, а & " < > движок хранит
+     сущностями. Поэтому меряем то, что браузер на самом деле отправит.
+     Одиннадцать расчётов ниже — 1 905 знаков по счёту JS и 2 015 по счёту
+     обработчика: без учёта \r\n ушли бы все, и заявку отклонили бы. */
+  await page.evaluate(() => {
+    const items = [];
+    for (let i = 1; i <= 8; i++) items.push([`Позиция ${i}`, `${i} шт.`]);
+    const entries = [];
+    for (let i = 1; i <= 11; i++) entries.push({ title: `Расчёт ${i}`, summary: 'кухня', items });
+    localStorage.setItem('sg-calc-list', JSON.stringify(entries));
+  });
+  await page.goto(pageUrl, { waitUntil: 'load' });
+  await page.waitForTimeout(300);
+  await page.click('[data-calc-list-send]');
+  await page.waitForTimeout(200);
+  const long = await page.evaluate(async () => {
+    const form = document.querySelector('#modal-callback form');
+    const body = await new Response(new FormData(form)).text();
+    const m = body.match(/name="message"\r\n\r\n([\s\S]*?)\r\n--/);
+    const value = m ? m[1] : '';
+    const server = value.trim().replace(/[&"<>]/g, (ch) => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' })[ch]);
+    return {
+      length: [...server].length,
+      entries: (value.match(/^Расчёт \d+:/gm) || []).length,
+      items: (value.match(/^— Позиция \d+:/gm) || []).length,
+      tail: /И ещё \d+ расчёт/.test(value),
+      note: document.querySelector('[data-calc-attached]').textContent.replace(/\u00a0/g, ' '),
+    };
+  });
+  if (long.length > 2000) fail(`калькулятор: список уходит в заявку длиной ${long.length} — обработчик принимает до 2000 знаков и отклонил бы заявку целиком`);
+  if (long.entries < 1 || long.entries >= 11 || long.items !== long.entries * 8 || !long.tail) {
+    fail(`калькулятор: длинный список — в заявке ${long.entries} расчётов из 11 и ${long.items} строк из ${long.entries * 8}, приписка об остальных ${long.tail ? 'есть' : 'НЕТ'}`);
+  }
+  if (!new RegExp(`поместились ${long.entries} расчёт\\S* из 11`).test(long.note)) fail(`калькулятор: не сказано, сколько расчётов вошло в заявку — «${long.note}»`);
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
+  await page.click('[data-calc-list-clear]');
+
+  /* Память полей и «Сбросить» */
+  await open('gkl');
+  await set({ area: '42' });
+  await page.waitForTimeout(500);
+  await page.goto(pageUrl, { waitUntil: 'load' });
+  await page.waitForTimeout(300);
+  expect('гипсокартон после перезагрузки', await page.inputValue('[data-calc-form] input[name="area"]'), '42');
+  await page.click('[data-calc-reset]');
+  await page.waitForTimeout(150);
+  expect('гипсокартон после «Сбросить»', await page.inputValue('[data-calc-form] input[name="area"]'), '20');
+
+  /* Старые адреса вкладок и ссылка «Калькулятор радиаторов» с карточки */
+  for (const [hash, id] of [['gipsokarton', 'gkl'], ['smesi', 'mix'], ['radiatory', 'radiator'], ['armstrong', 'ceiling']]) {
+    const direct = await ctx.newPage();
+    await direct.goto(pageUrl + '#' + hash, { waitUntil: 'load' });
+    await direct.waitForTimeout(250);
+    if ((await direct.getAttribute(`[data-calc-pick="${id}"]`, 'aria-pressed')) !== 'true') fail(`калькулятор: ссылка …#${hash} должна открывать ${id}`);
+    await direct.close();
+  }
+
+  if (errors.length) fail(`калькулятор: ошибки скрипта — ${errors.join('; ')}`);
+  await ctx.close();
+}
+
+/* Телефон: итог под длинной формой, поэтому пока форма на экране, внизу
+   висит плашка с ответом; когда доскроллили до итога — прячется. */
+{
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 780 }, isMobile: true, hasTouch: true });
+  const page = await ctx.newPage();
+  await page.goto('file://' + path.join(DIR, 'calculator.html') + '#peregorodka', { waitUntil: 'load' });
+  await page.waitForTimeout(400);
+  await page.evaluate(() => window.scrollTo(0, 300));
+  await page.waitForTimeout(400);
+  const peek = await page.evaluate(() => {
+    const p = document.querySelector('[data-calc-peek]');
+    return { hidden: p.hidden, text: p.textContent.replace(/ /g, ' ').trim() };
+  });
+  if (peek.hidden || peek.text !== 'Итог: 8 листов') fail(`калькулятор на телефоне: плашка итога — ${JSON.stringify(peek)}`);
+  /* Сообщение внизу экрана встаёт на место плашки — плашка ему уступает. */
+  await page.evaluate(() => document.querySelector('[data-calc-reset]').click());
+  await page.waitForTimeout(100);
+  const under = await page.evaluate(() => ({
+    note: !document.querySelector('[data-demo-note]').hidden,
+    peek: getComputedStyle(document.querySelector('[data-calc-peek]')).visibility,
+  }));
+  if (!under.note || under.peek !== 'hidden') fail(`калькулятор на телефоне: плашка итога поверх сообщения внизу экрана — ${JSON.stringify(under)}`);
+  await page.evaluate(() => { document.querySelector('[data-demo-note]').hidden = true; });
+  if ((await page.evaluate(() => getComputedStyle(document.querySelector('[data-calc-peek]')).visibility)) !== 'visible') fail('калькулятор на телефоне: плашка итога не вернулась после сообщения');
+  await page.evaluate(() => document.querySelector('[data-calc-result]').scrollIntoView());
+  await page.waitForTimeout(400);
+  if (!(await page.evaluate(() => document.querySelector('[data-calc-peek]').hidden))) fail('калькулятор на телефоне: плашка итога должна прятаться, когда итог на экране');
   await ctx.close();
 }
 

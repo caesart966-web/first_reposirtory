@@ -4,8 +4,8 @@
  * Делает три вещи, которые руками делать нельзя — забудешь и получишь
  * рассыпавшуюся страницу у заказчика:
  *
- * 1. Проставляет к style.css и app.js отпечаток содержимого (?v=…). Без него
- *    браузер берёт свежий HTML со старым CSS из кэша.
+ * 1. Проставляет к style.css, app.js и calc.js отпечаток содержимого (?v=…).
+ *    Без него браузер берёт свежий HTML со старым CSS из кэша.
  * 2. Собирает stroigeroi-preview.html — все страницы, стили, скрипт и картинки
  *    одним файлом. Его пересылают заказчику вложением, рядом с ним ничего
  *    не нужно.
@@ -17,7 +17,7 @@
  *   node build.mjs --check   только проверить, ничего не писать (для CI)
  */
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -53,7 +53,8 @@ const changed = [];
 
 function write(file, next) {
   const full = path.join(DIR, file);
-  const prev = readFileSync(full, 'utf8');
+  /* Файла может ещё не быть: так появилась копия calc.js в теме. */
+  const prev = existsSync(full) ? readFileSync(full, 'utf8') : null;
   if (prev === next) return;
   changed.push(file);
   if (!CHECK_ONLY) writeFileSync(full, next);
@@ -65,12 +66,16 @@ function write(file, next) {
 
 const cssFingerprint = md5(readBin('assets/style.css'));
 const jsFingerprint = md5(readBin('assets/app.js'));
+/* Калькулятор — отдельный файл: 14 расчётов нужны на одной странице,
+   и тащить их на каждую страницу сайта в app.js незачем. */
+const calcFingerprint = md5(readBin('assets/calc.js'));
 
 for (const [name] of PAGES) {
   const file = `${name}.html`;
   const next = read(file)
     .replace(/assets\/style\.css(\?v=[a-f0-9]+)?/g, `assets/style.css?v=${cssFingerprint}`)
-    .replace(/assets\/app\.js(\?v=[a-f0-9]+)?/g, `assets/app.js?v=${jsFingerprint}`);
+    .replace(/assets\/app\.js(\?v=[a-f0-9]+)?/g, `assets/app.js?v=${jsFingerprint}`)
+    .replace(/assets\/calc\.js(\?v=[a-f0-9]+)?/g, `assets/calc.js?v=${calcFingerprint}`);
   write(file, next);
 }
 
@@ -298,6 +303,8 @@ ${tail}
 <script>
 ${read('assets/app.js').trim()}
 
+${read('assets/calc.js').trim()}
+
 ${previewNavScript.trim()}
 </script>
 </body>
@@ -381,23 +388,26 @@ const THEME_DIR = 'opencart-theme/catalog/view/theme/stroigeroi2026';
 const COPIES = [
   ['assets/style.css', `${THEME_DIR}/stylesheet/style.css`],
   ['assets/app.js', `${THEME_DIR}/javascript/app.js`],
+  ['assets/calc.js', `${THEME_DIR}/javascript/calc.js`],
 ];
 
 for (const [from, to] of COPIES) {
   write(to, read(from));
 }
 
-/* Отпечаток один на все три файла темы: style.css, opencart.css и app.js.
-   Шапка и подвал рисуются движком по отдельности, своими вызовами, поэтому
-   `asset_v` объявляется в каждом шаблоне — значение одно и то же. */
+/* Отпечаток один на все файлы темы: style.css, opencart.css, app.js
+   и calc.js. Шапка, подвал и калькулятор рисуются движком по отдельности,
+   своими вызовами, поэтому `asset_v` объявляется в каждом из этих
+   шаблонов — значение одно и то же. */
 const assetV = md5(Buffer.concat([
   readBin('assets/style.css'),
   readBin(`${THEME_DIR}/stylesheet/opencart.css`),
   readBin('assets/app.js'),
+  readBin('assets/calc.js'),
 ]));
 
-for (const tpl of ['header', 'footer']) {
-  const file = `${THEME_DIR}/template/common/${tpl}.twig`;
+for (const tpl of ['common/header', 'common/footer', 'information/calculator']) {
+  const file = `${THEME_DIR}/template/${tpl}.twig`;
   const mark = /\{% set asset_v = '[^']*' %\}/;
   if (!mark.test(read(file))) {
     problems.push(`в ${tpl}.twig нет строки {% set asset_v = … %} — тема потеряет отпечаток стилей`);
@@ -410,7 +420,7 @@ for (const tpl of ['header', 'footer']) {
    Итог
    ========================================================================== */
 
-console.log(`Отпечатки: style.css ?v=${cssFingerprint}, app.js ?v=${jsFingerprint}`);
+console.log(`Отпечатки: style.css ?v=${cssFingerprint}, app.js ?v=${jsFingerprint}, calc.js ?v=${calcFingerprint}`);
 console.log(`Тема OpenCart: asset_v = ${assetV}`);
 console.log(`Превью: ${(Buffer.byteLength(preview) / 1024 / 1024).toFixed(2)} МБ, ${PAGES.length} страниц`);
 

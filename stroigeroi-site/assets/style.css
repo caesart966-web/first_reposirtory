@@ -4420,6 +4420,682 @@ html[data-theme="dark"] .step.is-current .step__num {
 }
 
 /* ==========================================================================
+   Строительный калькулятор: выбор, поля, ответ, список покупок
+   ==========================================================================
+
+   Разметку полей собирает assets/calc.js по описанию калькулятора — здесь
+   только внешний вид. Все цвета — переменные темы, поэтому тёмная тема
+   ничего своего не требует. */
+
+.calcs {
+  margin-bottom: var(--sp-7);
+}
+
+/* Выбор калькулятора: карточки на компьютере, лента на телефоне */
+.calc-picker {
+  margin-bottom: var(--sp-5);
+}
+
+.calc-picker__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(176px, 1fr));
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.calc-pick {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  height: 100%;
+  min-height: 64px;
+  padding: var(--sp-3);
+  border: 1.5px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  background: var(--sg-white);
+  color: var(--sg-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.calc-pick:hover {
+  border-color: var(--sg-blue);
+  box-shadow: var(--sh-sm);
+}
+
+.calc-pick[aria-pressed="true"] {
+  border-color: var(--sg-blue);
+  background: var(--sg-blue-tint);
+  box-shadow: inset 0 0 0 1px var(--sg-blue);
+}
+
+.calc-pick__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-md);
+  background: var(--sg-bg-soft);
+  color: var(--sg-blue);
+}
+
+.calc-pick[aria-pressed="true"] .calc-pick__icon {
+  background: var(--sg-blue);
+  color: var(--sg-white);
+}
+
+.calc-pick__body {
+  min-width: 0;
+}
+
+.calc-pick__title {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.calc-pick__text {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--sg-muted);
+}
+
+/* Шапка формы: значок, название, «Сбросить» */
+.calc__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-5);
+}
+
+.calc__head-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--r-lg);
+  background: var(--sg-blue-tint);
+  color: var(--sg-blue);
+}
+
+.calc__head-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.calc__title {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.calc__lead {
+  margin: var(--sp-1) 0 0;
+  font-size: 14px;
+  color: var(--sg-muted);
+}
+
+.calc__reset {
+  flex: none;
+  min-height: 44px;
+  padding: 0 var(--sp-2);
+  border: 0;
+  background: none;
+  color: var(--sg-muted);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.calc__reset:hover {
+  color: var(--sg-blue);
+  text-decoration: underline;
+}
+
+.calc__field[hidden] {
+  display: none;
+}
+
+/* Число и единица в одном поле: «20 м²», единица справа, не мешает вводу */
+.calc__input {
+  position: relative;
+}
+
+.calc__input input {
+  padding-right: 64px;
+}
+
+.calc__unit {
+  position: absolute;
+  top: 50%;
+  right: var(--sp-3);
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: var(--sg-muted);
+  pointer-events: none;
+}
+
+.calc__field input[aria-invalid="true"] {
+  border-color: var(--sg-red);
+}
+
+.calc__field-hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--sg-muted);
+}
+
+/* Переключатель на два–четыре варианта: виден сразу, без раскрытия списка */
+.calc__seg {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.calc__seg legend {
+  display: block;
+  margin-bottom: var(--sp-2);
+  padding: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.seg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border: 1.5px solid var(--sg-line);
+  border-radius: var(--r-md);
+  background: var(--sg-bg-soft);
+}
+
+.seg__opt {
+  position: relative;
+  flex: 1 1 auto;
+}
+
+.seg__opt input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.seg__opt span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 var(--sp-3);
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--sg-muted);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.seg__opt:hover span {
+  color: var(--sg-blue);
+}
+
+.seg__opt input:checked + span {
+  background: var(--sg-blue);
+  color: var(--sg-white);
+}
+
+.seg__opt input:focus-visible + span {
+  outline: 2px solid var(--sg-blue);
+  outline-offset: 2px;
+}
+
+/* «Дополнительные параметры» — редкие поля, чтобы форма не пугала */
+.calc__more {
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--sg-line);
+}
+
+.calc__more > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 44px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--sg-blue);
+  list-style: none;
+  cursor: pointer;
+}
+
+.calc__more > summary::-webkit-details-marker {
+  display: none;
+}
+
+.calc__more > summary::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease;
+}
+
+.calc__more[open] > summary::before {
+  transform: rotate(45deg);
+}
+
+.calc__more > .calc__grid {
+  margin-top: var(--sp-2);
+}
+
+.calc__form > .calc__hint {
+  margin-top: var(--sp-4);
+}
+
+/* Ответ: большое число, что купить, как считали, действия */
+.calc__caption {
+  margin: 0 0 var(--sp-3);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.calc__answer.is-changed {
+  animation: calc-pop 0.3s ease;
+}
+
+@keyframes calc-pop {
+  from {
+    opacity: 0.35;
+    transform: translateY(4px);
+  }
+}
+
+.calc__buy {
+  margin: 0 0 var(--sp-2);
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--sg-line);
+}
+
+.calc__buy li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px dashed var(--sg-line);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.calc__buy b {
+  flex: none;
+  color: var(--sg-blue);
+  white-space: nowrap;
+}
+
+.calc__how {
+  margin: var(--sp-4) 0 var(--sp-1);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sg-muted);
+}
+
+.calc__breakdown b {
+  flex: none;
+  max-width: 60%;
+  font-weight: 600;
+  text-align: right;
+  color: var(--sg-ink);
+}
+
+.calc__actions {
+  display: grid;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+}
+
+.calc__tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--sp-4);
+  margin-top: var(--sp-2);
+}
+
+.calc__tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--sg-blue);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.calc__tool:hover {
+  text-decoration: underline;
+}
+
+.calc__actions .btn:disabled,
+.calc__tool:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Пометка в форме звонка: к заявке приложен расчёт */
+.calc__attached {
+  margin: 0 0 var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-left: 3px solid var(--sg-blue);
+  border-radius: var(--r-sm);
+  background: var(--sg-blue-tint);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.calc__attached[hidden] {
+  display: none;
+}
+
+/* Список покупок */
+.calc-list {
+  margin-top: var(--sp-6);
+  padding: var(--sp-5);
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  background: var(--sg-white);
+}
+
+.calc-list[hidden] {
+  display: none;
+}
+
+.calc-list__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2) var(--sp-4);
+}
+
+.calc-list__title {
+  margin: 0;
+  font-size: 22px;
+}
+
+.calc-list__count {
+  font-size: 14px;
+  color: var(--sg-muted);
+}
+
+.calc-list__entries {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--sp-3);
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.calc-list__entry {
+  position: relative;
+  padding: var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--sg-bg-soft);
+}
+
+.calc-list__name {
+  margin: 0 40px 2px 0;
+  font-weight: 700;
+}
+
+.calc-list__summary {
+  margin: 0 40px var(--sp-2) 0;
+  font-size: 13px;
+  color: var(--sg-muted);
+}
+
+.calc-list__items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+}
+
+.calc-list__items li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-3);
+  padding: 3px 0;
+}
+
+.calc-list__items b {
+  flex: none;
+  white-space: nowrap;
+}
+
+.calc-list__remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: none;
+  color: var(--sg-muted);
+  cursor: pointer;
+}
+
+.calc-list__remove:hover {
+  color: var(--sg-red);
+}
+
+.calc-list__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+}
+
+/* На широком экране — два ровных ряда по семь: 14 карточек в сетке
+   «сколько влезет» ложились 6 + 6 + 2, и последний ряд торчал обрубком. */
+@media (min-width: 1100px) {
+  .calc-picker__list {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+
+  .calc-pick {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-2);
+    padding: var(--sp-3) var(--sp-3) var(--sp-4);
+  }
+}
+
+@media (max-width: 1023px) {
+  .calc__result {
+    margin-top: var(--sp-2);
+  }
+}
+
+/* Плашка с итогом: на телефоне ответ стоит под длинной формой, и пока
+   человек заполняет поля, итог где-то внизу. Плашка показывает его сразу
+   и по нажатию прокручивает к подробностям. */
+.calc-peek {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--sp-4) + env(safe-area-inset-bottom, 0px));
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  max-width: calc(100vw - 32px);
+  min-height: 44px;
+  padding: var(--sp-2) var(--sp-4);
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--sg-blue);
+  color: var(--sg-white);
+  font: inherit;
+  font-size: 15px;
+  box-shadow: var(--sh-lg);
+  transform: translateX(-50%);
+  cursor: pointer;
+}
+
+.calc-peek[hidden] {
+  display: none;
+}
+
+.calc-peek b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Сообщение внизу экрана («Добавлено в список…») встаёт на то же место -
+   на эти три секунды плашка уступает ему. */
+body:has(.demo-note:not([hidden])) .calc-peek {
+  visibility: hidden;
+}
+
+@media (max-width: 900px) {
+  .calc-peek {
+    bottom: calc(62px + var(--sp-3) + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (min-width: 1024px) {
+  .calc-peek {
+    display: none !important;
+  }
+}
+
+/* На телефоне выбор — лента во всю ширину экрана, которую листают
+   пальцем; подписи под названием не помещаются и прячутся. */
+@media (max-width: 640px) {
+  .calc-picker__list {
+    display: flex;
+    gap: var(--sp-2);
+    margin: 0 calc(-1 * var(--sp-4));
+    padding: 2px var(--sp-4) var(--sp-2);
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  .calc-picker__list::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Край ленты гаснет: видно, что калькуляторов больше, чем влезло */
+  .calc-picker__list {
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+  }
+
+  .calc-picker__list > li {
+    flex: none;
+    scroll-snap-align: start;
+  }
+
+  .calc-pick {
+    min-height: 48px;
+    padding: var(--sp-2) var(--sp-3);
+  }
+
+  .calc-pick__icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .calc-pick__text {
+    display: none;
+  }
+
+  .calc__head-icon {
+    display: none;
+  }
+
+  .calc__title {
+    font-size: 20px;
+  }
+
+  .calc-list {
+    padding: var(--sp-4);
+  }
+
+  .calc-list__actions .btn {
+    flex: 1 1 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .calc__answer.is-changed {
+    animation: none;
+  }
+}
+
+/* Печать списка покупок с калькулятора: только шапка магазина и список */
+@media print {
+  body.is-print-calc .site-header,
+  body.is-print-calc .breadcrumbs,
+  body.is-print-calc .page-head,
+  body.is-print-calc .calc-picker,
+  body.is-print-calc .calc,
+  body.is-print-calc .calcs ~ *,
+  body.is-print-calc .calc-list__actions,
+  body.is-print-calc .calc-list__remove,
+  body.is-print-calc .calc-list > .calc__hint {
+    display: none !important;
+  }
+
+  body.is-print-calc .calc-list {
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  body.is-print-calc .calc-list__entry {
+    break-inside: avoid;
+    border: 1px solid #999;
+    background: none;
+  }
+}
+
+/* ==========================================================================
    Текстовые страницы и 404
    ========================================================================== */
 
@@ -5754,9 +6430,12 @@ p a:not(.btn):hover,
 
 /* Сообщение об ошибке под галочкой согласия. Внутри <label> может лежать
    только строчное содержимое, поэтому там это <span>, а не <p> — валидатор
-   разметки справедливо на это ругался. Оформление остаётся прежним. */
+   разметки справедливо на это ругался. Оформление остаётся прежним.
+   Блоком его делает .form__error.is-shown, а не это правило: здесь стоял
+   display: block, он перебивал .form__error { display: none }, и «Без
+   согласия отправить нельзя» горело красным в каждом окне «Заказать
+   звонок» ещё до попытки отправки. */
 .consent .form__error {
-  display: block;
   grid-column: 1 / -1;
 }
 
