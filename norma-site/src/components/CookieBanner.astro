@@ -24,9 +24,15 @@ import { SITE, href } from '../config/site'
 
 /** Ключ в localStorage: 'all' — согласен на статистику, 'need' — только необходимые. */
 const KEY = 'norma-cookie'
+
+// Счётчик — только на сайте, открытом людям. Превью (PUBLIC_NOINDEX=1)
+// считать в той же Метрике нельзя: заходы владельца на черновик смешались
+// бы с настоящими, а Вебвизор записывал бы черновик. Без счётчика нет
+// и полосы — превью не ставит ни одного файла cookie.
+const metrikaId = import.meta.env.PUBLIC_NOINDEX === '1' ? '' : SITE.metrikaId
 ---
 
-{SITE.metrikaId && (
+{metrikaId && (
   <div class="cookie" id="cookie-note" role="region" aria-label="Файлы cookie" hidden>
     <div class="wrap cookie-in">
       <p class="cookie-text">
@@ -43,7 +49,7 @@ const KEY = 'norma-cookie'
     </div>
   </div>
 
-  <script is:inline define:vars={{ id: SITE.metrikaId, key: KEY }}>
+  <script is:inline define:vars={{ id: metrikaId, key: KEY }}>
     ;(function () {
       var note = document.getElementById('cookie-note')
 
@@ -65,9 +71,17 @@ const KEY = 'norma-cookie'
         }
       }
 
+      // Загрузчик и настройки — как в коде, который Метрика выдала для этого
+      // счётчика 27 сентября 2026: tag.js с номером в адресе и ssr: true.
+      // Отличий три, и все нарочно: код вызывается отсюда, после согласия,
+      // а не стоит в разметке; нет картинки в noscript — она уходила бы
+      // к Яндексу до всякого выбора; нет ecommerce — магазина на сайте нет.
+      // Номер — числом, как в выданном коде: по window.__metrikaId шлются
+      // все цели сайта, и ключ счётчика должен совпасть с тем, что в init.
       function loadMetrika() {
         if (window.__metrikaId) return
-        window.__metrikaId = id
+        var num = Number(id)
+        window.__metrikaId = num
         ;(function (m, e, t, r, i, k, a) {
           m[i] =
             m[i] ||
@@ -83,12 +97,15 @@ const KEY = 'norma-cookie'
           k.async = 1
           k.src = r
           a.parentNode.insertBefore(k, a)
-        })(window, document, 'script', 'https://mc.yandex.ru/metrika/tag.js', 'ym')
-        window.ym(id, 'init', {
-          clickmap: true,
-          trackLinks: true,
-          accurateTrackBounce: true,
+        })(window, document, 'script', 'https://mc.yandex.ru/metrika/tag.js?id=' + num, 'ym')
+        window.ym(num, 'init', {
+          ssr: true,
           webvisor: true,
+          clickmap: true,
+          referrer: document.referrer,
+          url: location.href,
+          accurateTrackBounce: true,
+          trackLinks: true,
         })
       }
 
