@@ -40,6 +40,8 @@ export const IMAGES = {
   // сайт перешёл на тёплую палитру, и синий кадр в ней выглядел чужим.
   // С 25.09.2026 — серия в тёплом вечернем свете, выбранная из десяти кадров
   // заказчика (scripts/prepare-slide-photos.py). Имена файлов прежние.
+  // 28.09.2026 проектировщики и изыскатели заменены: план с рулеткой
+  // и геодезист с тахеометром (присланы заказчиком, см. CREDITS.md).
   construction: {
     src: './img/hero-day.webp',
     srcAvif: './img/hero-day.avif',
@@ -53,10 +55,10 @@ export const IMAGES = {
   design: {
     src: './img/slide-design.webp',
     srcAvif: './img/slide-design.avif',
-    alt: 'План этажа на листе, ручка и свёрнутые чертежи на каменном столе',
-    width: 1920,
-    height: 2400,
-    position: '50% 50%',
+    alt: 'Лист с планом этажа на столе, рядом рулетка и трафареты мебели',
+    width: 1200,
+    height: 1600,
+    position: '50% 45%',
     thumb: './img/sro-thumb-design.webp',
     thumbAvif: './img/sro-thumb-design.avif',
   },
@@ -73,10 +75,10 @@ export const IMAGES = {
   survey: {
     src: './img/slide-survey.webp',
     srcAvif: './img/slide-survey.avif',
-    alt: 'Силуэты двух изыскателей с прибором на штативе, чертежами и ноутбуком на фоне закатного неба',
-    width: 2460,
-    height: 1002,
-    position: '60% 50%',
+    alt: 'Геодезист у тахеометра на штативе на размеченном участке',
+    width: 1695,
+    height: 2548,
+    position: '50% 30%',
     thumb: './img/sro-thumb-survey.webp',
     thumbAvif: './img/sro-thumb-survey.avif',
   },

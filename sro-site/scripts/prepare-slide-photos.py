@@ -2,9 +2,9 @@
 """Готовит три кадра видов СРО: шапки страниц видов, а кран (hero-day) — ещё
 и первый экран главной (с 26.09.2026 он там один и растворяется в бумаге).
 
-Исходники — кадры, присланные заказчиком 25.09.2026, шириной 820–960 px
-(кран и план вертикальные, изыскатели — узкая горизонтальная панорама). Это
-и есть оригиналы: крупнее их у заказчика нет. Шапки страниц видов растягивают
+Исходники — кадры, присланные заказчиком: кран — 25.09.2026 (900×1200),
+план с рулеткой и геодезист — 28.09.2026 (1200×1600 и 1130×1699), все три
+вертикальные. Это и есть оригиналы: крупнее их у заказчика нет. Шапки страниц видов растягивают
 кадр во всю ширину окна, поэтому он увеличивается нейросетью Real-ESRGAN (x4plus),
 если передан путь к её программе (`--esrgan`), иначе Lanczos с лёгкой
 резкостью. Real-ESRGAN обучена на сжатых и уменьшенных снимках: снимает
@@ -51,15 +51,21 @@ OUT = Path("public/img")
 # Чертежи — белая бумага: без приглушения мелкий текст шапки на 820–1024 px
 # ложился на неё с контрастом 4,32:1 при норме 4,5. Кран — светлым ключом:
 # белая точка на половине яркости уводит небо в бумагу.
-# Панорама изыскателей увеличивается втрое: у неё всего 334 px высоты,
-# а шапка страницы на компьютере выше 800 px.
-# Последнее поле — центр квадратной миниатюры (доли ширины и высоты): она стоит
+# Кадры 28.09.2026 (план, геодезист) крупнее прежних: нейросеть им не нужна,
+# план не увеличивается вовсе, геодезист — в полтора раза, обычным Lanczos.
+# Последнее поле — снять шум медианным фильтром 3×3 перед обработкой: шум
+# снимка и артефакты сжатия делали план 509 КБ при бюджете 180 (тонкие линии
+# сами по себе сжимаются хорошо, плохо сжимается зерно между ними). Нейросеть
+# у крана снимает шум сама.
+# Геодезист — чуть темнее по белой точке (0.75): жёлтый штатив и прибор
+# в монохроме уходили в бумагу, а деревья наверху — в сплошной графит.
+# Предпоследнее поле — центр квадратной миниатюры (доли ширины и высоты): она стоит
 # в списке видов СРО на первом экране главной, и в квадрат должен попасть
 # предмет — башня крана, лист плана, изыскатели, а не небо.
 SLIDES = [
-    ("slide-construction-src.jpg", "hero-day", "construction", 2, 1.0, (0.03, 0.52, 0.80), (0.62, 0.22)),
-    ("slide-design-src.jpg", "slide-design", "design", 2, 0.8, (0.02, 0.95, 1.0), (0.5, 0.55)),
-    ("slide-survey-src.jpg", "slide-survey", "survey", 3, 1.0, (0.02, 0.85, 0.95), (0.72, 0.5)),
+    ("slide-construction-src.jpg", "hero-day", "construction", 2, 1.0, (0.03, 0.52, 0.80), (0.62, 0.22), False),
+    ("design-plan-src.webp", "slide-design", "design", 1, 1.0, (0.05, 0.88, 1.0), (0.5, 0.45), True),
+    ("survey-geodesist-src.webp", "slide-survey", "survey", 1.5, 1.0, (0.03, 0.75, 1.0), (0.5, 0.3), True),
 ]
 THUMB = 160  # px: миниатюра стоит в 48–56 px, запас на экраны с плотностью 3×
 THUMB_LIMIT_KB = 12
@@ -68,9 +74,13 @@ WEBP_LIMIT_KB, AVIF_LIMIT_KB = 180, 120
 CACHE = Path(tempfile.gettempdir()) / "sro-esrgan-cache"
 
 
-def upscale(src: Path, img: Image.Image, scale: int, esrgan: Path | None) -> Image.Image:
-    size = (img.width * scale, img.height * scale)
-    if esrgan is None:
+def upscale(src: Path, img: Image.Image, scale: float, esrgan: Path | None, denoise: bool) -> Image.Image:
+    size = (round(img.width * scale), round(img.height * scale))
+    if denoise:
+        img = img.filter(ImageFilter.MedianFilter(3))
+    if scale == 1:
+        return img
+    if esrgan is None or scale < 2:
         img = img.resize(size, Image.LANCZOS)
         return img.filter(ImageFilter.UnsharpMask(radius=1.2, percent=60, threshold=2))
     cached = CACHE / f"{hashlib.sha1(src.read_bytes()).hexdigest()}-x4.png"
@@ -81,9 +91,10 @@ def upscale(src: Path, img: Image.Image, scale: int, esrgan: Path | None) -> Ima
     return Image.open(cached).convert("RGB").resize(size, Image.LANCZOS)
 
 
-def prepare(src: Path, name: str, slug: str, scale: int, brightness: float,
-            levels: tuple[float, float, float], centering: tuple[float, float], esrgan: Path | None) -> None:
-    img = upscale(src, Image.open(src).convert("RGB"), scale, esrgan)
+def prepare(src: Path, name: str, slug: str, scale: float, brightness: float,
+            levels: tuple[float, float, float], centering: tuple[float, float], denoise: bool,
+            esrgan: Path | None) -> None:
+    img = upscale(src, Image.open(src).convert("RGB"), scale, esrgan, denoise)
     if brightness != 1.0:
         img = ImageEnhance.Brightness(img).enhance(brightness)
     img = monotone(img, *levels)
@@ -110,8 +121,8 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--esrgan", type=Path, help="программа realesrgan-ncnn-vulkan (иначе Lanczos)")
     args = ap.parse_args()
-    for source, name, slug, scale, brightness, levels, centering in SLIDES:
-        prepare(SRC / source, name, slug, scale, brightness, levels, centering, args.esrgan)
+    for source, name, slug, scale, brightness, levels, centering, denoise in SLIDES:
+        prepare(SRC / source, name, slug, scale, brightness, levels, centering, denoise, args.esrgan)
 
 
 if __name__ == "__main__":
