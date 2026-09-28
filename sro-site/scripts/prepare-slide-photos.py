@@ -65,7 +65,7 @@ OUT = Path("public/img")
 SLIDES = [
     ("slide-construction-src.jpg", "hero-day", "construction", 2, 1.0, (0.03, 0.52, 0.80), (0.62, 0.22), False),
     ("design-plan-src.webp", "slide-design", "design", 1, 1.0, (0.05, 0.88, 1.0), (0.5, 0.45), True),
-    ("survey-geodesist-src.webp", "slide-survey", "survey", 1.5, 1.0, (0.03, 0.75, 1.0), (0.5, 0.3), True),
+    ("survey-geodesist-src.jpg", "slide-survey", "survey", 1.5, 1.0, (0.03, 0.75, 1.0), (0.5, 0.3), True),
 ]
 THUMB = 160  # px: миниатюра стоит в 48–56 px, запас на экраны с плотностью 3×
 THUMB_LIMIT_KB = 12
