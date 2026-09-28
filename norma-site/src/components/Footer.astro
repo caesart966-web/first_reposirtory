@@ -77,7 +77,7 @@ const year = new Date().getFullYear()
          полезной человеку: она отвечает на вопрос «а вы в моём городе?»
          на любой странице, не заставляя никуда ходить. -->
     <nav class="cities" aria-label="Города, где есть партнёрские СРО">
-      <span class="cities-label">Партнёрские СРО:</span>
+      <a class="cities-label" href={href('/partnery/')}>Партнёрские СРО:</a>
       {REGIONS.map((r) => (
         <a href={href(`/sro/${r.slug}/`)}>{r.city}</a>
       ))}

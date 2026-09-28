@@ -169,9 +169,16 @@ for (const partner of partnersWaiting) {
 // Теперь сверяется пара «подпись — значение» внутри своей карточки.
 const strip = (x) => flat(x.replace(/<[^>]+>/g, ' ')).trim()
 
-for (const partner of PARTNERS.filter((p) => p.reg)) {
-  const url = `/sro/${partner.citySlug}/`
-  const file = join(DIST, 'sro', partner.citySlug, 'index.html')
+// Каждая карточка стоит на двух страницах: своего города и общего списка
+// /partnery/ (28.09.2026). Разметка у них общая (PartnerCards.astro),
+// но проверяется каждая страница: общий компонент стережёт от расхождения
+// в шаблоне, а не от того, что страницу собрали без карточки.
+const partnerPages = (p) => [
+  { url: `/sro/${p.citySlug}/`, file: join(DIST, 'sro', p.citySlug, 'index.html') },
+  { url: '/partnery/', file: join(DIST, 'partnery', 'index.html') },
+]
+
+for (const partner of PARTNERS.filter((p) => p.reg)) for (const { url, file } of partnerPages(partner)) {
   if (!existsSync(file)) { fail(`страница ${url} не собрана, а на ней должна быть СРО «${partner.short}»`); continue }
   const html = readFileSync(file, 'utf8')
 
@@ -219,7 +226,7 @@ for (const partner of PARTNERS.filter((p) => p.reg)) {
 }
 if (problems === before2a) {
   const shown = PARTNERS.length - partnersWaiting.length
-  console.log(`  ✓ ${shown} СРО: суммы в карточках совпадают с конфигурацией, отличия названы`)
+  console.log(`  ✓ ${shown} СРО: суммы в карточках совпадают с конфигурацией, отличия названы — на городских страницах и в общем списке`)
 }
 
 // ── 2б. Обещанные фотографии городов ────────────────────────────────────

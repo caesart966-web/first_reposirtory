@@ -28,7 +28,7 @@ const CASES = [
   { path: '/', sel: '.apply-direct a', font: 'Golos Text', what: 'телефон и «WhatsApp», «Telegram», «MAX» под формой' },
   { path: '/', sel: '.apply-direct .ad-phone', font: 'Golos Text', what: 'телефон под формой заявки' },
   { path: '/', sel: '.hero .page-title', font: 'Literata', what: 'заголовок первого экрана (пробелы — из латинской части)' },
-  { path: '/', sel: '.steps .sn', font: 'Literata', what: 'номера шагов' },
+  { path: '/', sel: '.steps4 .s4-num', font: 'Literata', what: 'номера шагов' },
   { path: '/kontakty/', sel: '.k-phone', font: 'Golos Text', what: 'номер телефона на «Контактах»' },
   { path: '/', sel: '.ho-list li', font: 'Golos Text', what: 'условия на первом экране — цифры и «₽»' },
   { path: '/', sel: '.pt-sum', font: 'Literata', what: 'суммы первого года — «₽» в антикве' },
