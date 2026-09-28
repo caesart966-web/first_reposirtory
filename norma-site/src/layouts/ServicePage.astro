@@ -2,6 +2,7 @@
 import Base from './Base.astro'
 import LeadForm from '../components/LeadForm.astro'
 import Icon from '../components/Icon.astro'
+import DirIcon from '../components/DirIcon.astro'
 import HeadPhoto from '../components/HeadPhoto.astro'
 import { SERVICES } from '../config/services'
 import { href, SITE } from '../config/site'
@@ -156,7 +157,9 @@ const serviceSchema = {
       <div class="grid-3">
         {others.map((s) => (
           <a class="card oc" href={href(`/uslugi/${s.slug}/`)}>
-            <span class="ic"><Icon name={s.icon} size={19} /></span>
+            {s.dirIcon
+              ? <span class="dic"><DirIcon name={s.dirIcon} size={48} /></span>
+              : <span class="ic"><Icon name={s.icon} size={19} /></span>}
             <h3>{s.short}</h3>
             <p>{s.excerpt}</p>
           </a>
@@ -261,7 +264,12 @@ const serviceSchema = {
   .narrow { max-width: 780px; }
 
   .others h2 { font-size: 22px; margin-bottom: 18px; }
-  .oc { display: grid; gap: 9px; align-content: start; }
+  /* Первая строка карточки — 48 px у всех: в одном ряду бывают и значки
+     направлений заказчика (48 px), и пиктограммы в квадрате (38 px), и без
+     общей высоты заголовки соседних карточек стояли бы вразнобой. */
+  .oc { display: grid; grid-template-rows: 48px; gap: 9px; align-content: start; }
+  .oc .ic { align-self: center; }
+  .dic { color: var(--acc); display: inline-flex; align-self: center; }
   .oc h3 { font-size: 17px; margin: 0; }
   .ic { width: 38px; height: 38px; border-radius: var(--r-s); background: var(--acc-soft); color: var(--acc-deep); display: grid; place-items: center; }
 
