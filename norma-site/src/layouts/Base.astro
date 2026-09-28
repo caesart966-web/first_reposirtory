@@ -375,7 +375,8 @@ const graph = {
         }).observe(legal)
       }
 
-      // Цели Яндекс.Метрики на кликах по контактам.
+      // Цели Яндекс.Метрики на кликах по контактам и по окошку «Сайт компании —
+      // бесплатно» на первом экране (список целей — в README).
       document.querySelectorAll('[data-goal]').forEach((el) => {
         el.addEventListener('click', () => {
           const goal = (el as HTMLElement).dataset.goal
