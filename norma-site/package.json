@@ -20,7 +20,8 @@
     "watch:law": "node scripts/watch-law.mjs",
     "release": "node scripts/release.mjs",
     "test:lead": "node scripts/test-lead.mjs",
-    "brand": "node scripts/make-brand.mjs"
+    "brand": "node scripts/make-brand.mjs",
+    "yandex": "node --experimental-strip-types --no-warnings scripts/make-yandex.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "3.7.3",
