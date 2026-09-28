@@ -29,7 +29,7 @@ const year = new Date().getFullYear()
       <div class="brand-col">
         <div class="logo">
           <LogoMark size={28} class="logo-mark" />
-          <span class="logo-text"><b>{SITE.brand}</b><small>{SITE.brandTag}</small></span>
+          <span class="logo-text"><span class="logo-name">{SITE.brand}</span><small>{SITE.brandTag}</small></span>
         </div>
         <p class="tagline">
           Помощь во вступлении в СРО, внесении специалистов в НРС, прохождении НОК
@@ -77,7 +77,7 @@ const year = new Date().getFullYear()
          полезной человеку: она отвечает на вопрос «а вы в моём городе?»
          на любой странице, не заставляя никуда ходить. -->
     <nav class="cities" aria-label="Города, где есть партнёрские СРО">
-      <span class="cities-label">Партнёрские СРО:</span>
+      <a class="cities-label" href={href('/partnery/')}>Партнёрские СРО:</a>
       {REGIONS.map((r) => (
         <a href={href(`/sro/${r.slug}/`)}>{r.city}</a>
       ))}
@@ -124,7 +124,7 @@ const year = new Date().getFullYear()
      которого у чужой разметки нет. Без этого знак остался бы белым. */
   .logo :global(.logo-mark) { color: var(--acc-bright); flex: none; display: block; }
   .logo-text { display: grid; line-height: 1.15; }
-  .logo-text b { font-family: var(--font-head); font-size: 17px; font-weight: 800; letter-spacing: 0.08em; }
+  .logo-name { font-family: var(--font-head); font-size: 17px; font-weight: 800; letter-spacing: 0.08em; }
   .logo-text small { font-size: 11px; color: var(--on-dark-muted); }
 
   .tagline { max-width: 40ch; }

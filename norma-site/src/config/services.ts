@@ -4,6 +4,15 @@ export type Service = {
   title: string
   short: string
   icon: string
+  /**
+   * Значок направления из присланных заказчиком (DirIcon.astro) — только
+   * у трёх видов СРО. Где он есть, он стоит ВМЕСТО `icon` везде, где
+   * показана услуга: на главной, на «Услугах», в «Других услугах», на
+   * страницах городов. Заказчик увидел на «Услугах» старые значки после
+   * того, как главная получила новые, — поэтому значок записан здесь,
+   * один раз, а не в каждой странице своей строкой.
+   */
+  dirIcon?: 'builder' | 'design' | 'survey'
   excerpt: string
   group: 'sro' | 'people' | 'safety' | 'marketing'
 }
@@ -14,6 +23,7 @@ export const SERVICES: Service[] = [
     title: 'Вступление в СРО строителей',
     short: 'СРО строителей',
     icon: 'building',
+    dirIcon: 'builder',
     excerpt:
       'Нужна при обязательствах свыше 10 млн ₽ по прямому договору. Действует региональный принцип: СРО должна быть в вашем субъекте РФ. Реестр — НОСТРОЙ.',
     group: 'sro',
@@ -23,6 +33,7 @@ export const SERVICES: Service[] = [
     title: 'Вступление в СРО проектировщиков',
     short: 'СРО проектировщиков',
     icon: 'ruler',
+    dirIcon: 'design',
     excerpt:
       'Нужна при любой сумме прямого договора — порога нет. Региональной привязки тоже нет: можно выбрать СРО любого субъекта. Реестр — НОПРИЗ.',
     group: 'sro',
@@ -32,6 +43,7 @@ export const SERVICES: Service[] = [
     title: 'Вступление в СРО изыскателей',
     short: 'СРО изыскателей',
     icon: 'search',
+    dirIcon: 'survey',
     excerpt:
       'Инженерные изыскания по прямому договору требуют членства при любой сумме. Отдельная СРО, отдельные специалисты. Реестр — НОПРИЗ.',
     group: 'sro',
@@ -112,3 +124,17 @@ export const GROUP_LABELS: Record<Service['group'], string> = {
 }
 
 export const byGroup = (group: Service['group']) => SERVICES.filter((s) => s.group === group)
+
+/** Услуга по адресу страницы. Опечатка в адресе — ошибка сборки, а не пустая карточка. */
+export const serviceBySlug = (slug: string): Service => {
+  const s = SERVICES.find((x) => x.slug === slug)
+  if (!s) throw new Error(`Нет услуги с адресом «${slug}» в config/services.ts`)
+  return s
+}
+
+/** Значок направления услуги СРО. Нет значка — ошибка сборки, а не пустое место на карточке. */
+export const dirIconOf = (slug: string) => {
+  const icon = serviceBySlug(slug).dirIcon
+  if (!icon) throw new Error(`У услуги «${slug}» нет dirIcon в config/services.ts`)
+  return icon
+}

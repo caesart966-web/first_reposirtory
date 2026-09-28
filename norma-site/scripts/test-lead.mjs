@@ -93,8 +93,16 @@ console.log('\nБоевой путь заявки: форма → PHP → пис
 writeFileSync(phpFile, original.replace(/const ALLOWED_HOST = '[^']*';/, "const ALLOWED_HOST = '127.0.0.1';"))
 if (existsSync(logFile)) rmSync(logFile)
 
-server = spawn('php', ['-S', `127.0.0.1:${PORT}`, '-t', dist], {
-  env: { ...process.env, NORMA_MAIL_DRY_RUN: mailFile },
+// Своя временная папка у PHP — это счётчик частоты заявок (rate_limited
+// в submit.php): иначе он копился бы между прогонами, и на шестом запуске
+// за час проверка упала бы с «слишком много заявок» на исправном сайте.
+//
+// OPcache выключен нарочно. Во встроенном сервере PHP он работает (opcache.enable_cli
+// касается только командной строки) и перечитывает файл не чаще раза в две
+// секунды — а проверка переписывает submit.php на ходу, и подменённый журнал
+// молча исполнялся старым кодом.
+server = spawn('php', ['-d', 'opcache.enable=0', '-S', `127.0.0.1:${PORT}`, '-t', dist], {
+  env: { ...process.env, NORMA_MAIL_DRY_RUN: mailFile, TMPDIR: tmp },
   stdio: 'ignore',
 })
 
@@ -117,6 +125,8 @@ await page.goto(`${base}/kontakty/`, { waitUntil: 'networkidle' })
 const form = page.locator('#form')
 await form.locator('input[name=name]').fill(LEAD.name)
 await form.locator('input[name=phone]').fill(LEAD.phone)
+// Необязательные поля свёрнуты в «Уточнить задачу» — раскрываем, как человек.
+if (!(await form.locator('.lf-more').evaluate((d) => d.open))) await form.locator('.lf-more > summary').click()
 await form.locator('input[name=email]').fill(LEAD.email)
 await form.locator('input[name=city]').fill(LEAD.city)
 await form.locator('select[name=kind]').selectOption(LEAD.kind)
@@ -149,6 +159,17 @@ if (!existsSync(mailFile)) {
   if (lost.length) fail(`в письме нет: ${lost.join(', ')}`)
   else ok('в письме всё, что ввёл человек')
 
+  // Получателей может быть несколько (MAIL_TO через запятую), и каждый
+  // обязан попасть в адрес письма: иначе второй ящик молча остаётся без
+  // заявок, а заметят это, когда заявку ждали именно там.
+  const recipients = ((original.match(/const MAIL_TO = '([^']+)'/) || [])[1] || '')
+    .split(',').map((a) => a.trim()).filter(Boolean)
+  const toLine = (mail.match(/^To: (.*)$/m) || [])[1] || ''
+  const missed = recipients.filter((a) => !toLine.includes(a))
+  if (!recipients.length) fail('в submit.php не нашлось MAIL_TO — заявкам некуда приходить')
+  else if (missed.length) fail(`письмо не уходит в ${missed.join(', ')}`)
+  else ok(`письмо уходит во все ящики: ${recipients.join(', ')}`)
+
   // Адрес отправителя обязан быть на домене сайта: с чужого домена письмо
   // не пройдёт SPF и уляжется в спам — молча, без единой ошибки на сайте.
   const from = (mail.match(/^From:.*<([^>]+)>/m) || [])[1] || ''
@@ -158,6 +179,8 @@ if (!existsSync(mailFile)) {
 
   if (mail.includes(`Reply-To: ${LEAD.email}`)) ok('на письмо можно ответить прямо из почты')
   else fail('нет заголовка Reply-To — ответить на заявку одной кнопкой не выйдет')
+
+  if (mail.includes('журнал заявок не записался')) fail('журнал записан, а письмо сообщает, что нет')
 }
 
 // ── Журнал ────────────────────────────────────────────────────────────────
@@ -176,15 +199,60 @@ if (!existsSync(logFile)) {
   else fail(`журнал открывается в браузере — там персональные данные: ${body.slice(0, 80)}`)
 }
 
-// ── Чужой сайт ────────────────────────────────────────────────────────────
-const foreign = await fetch(`${base}/api/submit.php`, {
+// ── Чужой сайт и www ──────────────────────────────────────────────────────
+//
+// Запросы несут НАСТОЯЩИЙ ключ формы и непустой текст, так что отказать им
+// может только сверка адреса. Прежний вариант слал ключ 'x' и прошёл бы,
+// даже если бы сверки не было вовсе: отказ давала проверка ключа ниже неё.
+const token = (original.match(/const FORM_TOKEN = '([^']+)'/) || [])[1] || ''
+const logLines = () => (existsSync(logFile) ? readFileSync(logFile, 'utf8').trim().split('\n').length : 0)
+const post = (origin, message) => fetch(`${base}/api/submit.php`, {
   method: 'POST',
-  headers: { 'Content-Type': 'application/json', Origin: 'https://chuzhoy-sayt.ru' },
-  body: JSON.stringify({ access_key: 'x', message: 'подделка' }),
+  headers: { 'Content-Type': 'application/json', Origin: origin },
+  body: JSON.stringify({ access_key: token, subject: 'Проверка адреса', message }),
 })
+
+const before = logLines()
+const foreign = await post('https://chuzhoy-sayt.ru', 'подделка с чужого сайта')
 const foreignBody = await foreign.json().catch(() => ({}))
-if (foreignBody.success === false) ok('заявку с чужого сайта обработчик не принимает')
-else fail('чужой сайт может слать заявки от вашего имени')
+if (foreign.status === 403 && foreignBody.success === false && logLines() === before) {
+  ok('заявку с чужого сайта обработчик не принимает')
+} else {
+  fail(`чужой сайт может слать заявки от вашего имени (ответ ${foreign.status})`)
+}
+
+// Адрес с www — тот же сайт. Если перенаправление с www когда-нибудь
+// пропадёт, форма оттуда обязана работать, а не отвечать «запрос не с сайта».
+// Этот же запрос доказывает, что заголовок Origin вообще доходит до PHP:
+// без него отказ получили бы оба, и отказ чужому сайту ничего бы не значил.
+const www = await post(`http://www.127.0.0.1:${PORT}`, 'заявка со страницы на www')
+const wwwBody = await www.json().catch(() => ({}))
+if (wwwBody.success === true) ok('заявку со страницы на www обработчик принимает')
+else fail(`со страницы на www заявка получает отказ: ${wwwBody.message || www.status}`)
+
+// ── Журнал не пишется ─────────────────────────────────────────────────────
+//
+// Раньше ошибка записи глушилась, и о сбое журнала узнать было неоткуда.
+// Теперь о нём обязано сказать само письмо. Проверяем подменой: журнал направляется
+// в папку, которой нет, — запись туда не пройдёт даже у root.
+writeFileSync(
+  phpFile,
+  original
+    .replace(/const ALLOWED_HOST = '[^']*';/, "const ALLOWED_HOST = '127.0.0.1';")
+    .replace(/const LEADS_LOG = [^;]+;/, "const LEADS_LOG = '/net-takoy-papki-norma/leads.log.php';"),
+)
+const broken = await post(`http://127.0.0.1:${PORT}`, 'заявка при сломанном журнале')
+const brokenBody = await broken.json().catch(() => ({}))
+const brokenMail = existsSync(mailFile) ? readFileSync(mailFile, 'utf8') : ''
+if (brokenBody.success === true && brokenMail.includes('заявка при сломанном журнале')
+    && brokenMail.includes('журнал заявок не записался') && brokenMail.includes('Причина:')) {
+  ok('журнал не записался — письмо говорит об этом и называет причину')
+} else {
+  const why = brokenBody.success !== true
+    ? `обработчик ответил ${JSON.stringify(brokenBody)}`
+    : 'в письме нет строки о сбое журнала'
+  fail(`журнал не записался, а письмо об этом молчит: ${why}`)
+}
 
 console.log(
   problems

@@ -5,6 +5,7 @@ import '../styles/global.css'
 import Header from '../components/Header.astro'
 import Footer from '../components/Footer.astro'
 import Icon from '../components/Icon.astro'
+import BrandIcon from '../components/BrandIcon.astro'
 import CookieBanner from '../components/CookieBanner.astro'
 import { SITE, href } from '../config/site'
 import { SEO } from '../config/seo'
@@ -137,7 +138,11 @@ const graph = {
 <html lang="ru">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {/* viewport-fit=cover — ради нижней панели связи: без него iPhone отдаёт
+        env(safe-area-inset-bottom) нулём, и подписи панели ложатся вплотную
+        к полоске «домой». Поля страницы при этом не уходят под «чёлку»
+        в альбомной ориентации — .wrap берёт max(20px, выреза), global.css. */}
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>{title}</title>
     <meta name="description" content={description} />
     {/* У страницы, закрытой от поиска, canonical только вредит: 404
@@ -150,16 +155,30 @@ const graph = {
          так они успевают к первой отрисовке и вёрстка не дёргается.
          Латиница нужна не ради латинских слов, а ради цифр: «2–3 дня», «10 млн ₽».
          Курсив заранее не грузим: он встречается только в статьях. -->
-    <!-- Предзагружается только кириллица. Латиница на сайте встречается
-         в десятке слов («WhatsApp», «Telegram», адреса реестров), но весит
-         60 КБ из 98 — вдвое больше кириллицы. На критическом пути она
-         отнимала канал у тех начертаний, которыми набрана вся страница,
-         а при font-display: optional это решает судьбу всего показа:
-         не успел шрифт к первой отрисовке — посетитель весь визит читает
-         запасным. Латиница грузится обычным порядком, по unicode-range,
-         когда встретится. -->
+    <!-- Латиница предзагружается вместе с кириллицей — все четыре файла.
+         Какое-то время грузилась одна кириллица: латиница весит 60 КБ из 98,
+         и было решено, что она подгрузится сама, «когда встретится».
+         Не подгружалась никогда. При font-display: optional браузер берёт
+         шрифт, только если тот готов к первой отрисовке, а незагруженный
+         заранее к ней не готов ни при каком канале — даже с локального
+         сервера. В латинской части не только латиница: цифры, пробел,
+         знаки препинания, «₽» рядом с ними. Поэтому телефон, все суммы,
+         «WhatsApp» и «Telegram» в панели связи набирались запасными
+         шрифтами (Helvetica или Arial, в заголовках Georgia), а «Позвонить»
+         рядом — Golos. Заказчик увидел
+         это на панели: «некрасиво, сделай ровнее».
+         Замер 27.09.2026 (медленный 4G, процессор ×4, пять прогонов):
+         с предзагрузкой первый экран не медленнее, а быстрее — главная
+         1,78 → 1,58 с, «Контакты» 1,80 → 1,63 с, «Стоимость» без разницы;
+         сдвиг вёрстки 0 в обоих случаях. Прежний довод «2236 → 1700 мс»
+         при нынешней сборке не повторяется. -->
     <link rel="preload" as="font" type="font/woff2" href={href('/fonts/literata-cyrillic.woff2')} crossorigin />
     <link rel="preload" as="font" type="font/woff2" href={href('/fonts/golos-cyrillic.woff2')} crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/golos-latin.woff2')} crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/literata-latin.woff2')} crossorigin />
+    {/* Знак рубля — по килобайту (styles/fonts.css): «₽» стоит в каждой сумме. */}
+    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/golos-rub.woff2')} crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href={href('/fonts/literata-rub.woff2')} crossorigin />
 
     <!-- Значок сайта. SVG понимают все современные браузеры, но Яндекс
          в выдаче берёт растр, а телефоны — apple-touch-icon: значок сайта
@@ -236,30 +255,40 @@ const graph = {
     </main>
     <Footer />
 
-    <!-- Круглая кнопка связи в углу убрана.
-         Она была единственным быстрым путём к форме при долгой прокрутке —
-         пока кнопка в шапке вела к калькулятору и дублировала кнопку первого
-         экрана. Теперь кнопка в шапке ведёт к форме, липнет к верху страницы
-         и делает то же самое, не занимая угол. Заодно ушёл единственный
-         элемент, из-за которого сайт с печатью и бумагой выглядел как
-         соседние лендинги: круглый значок в правом нижнем углу читается
-         виджетом чата и стоит на каждом втором сайте рынка.
-         На телефоне за связь по-прежнему отвечает нижняя панель. -->
+    <!-- Кнопки связи на телефоне: столбик круглых значков у правого края.
+         Видны сразу, с первого экрана, все четыре канала — у многих клиентов
+         рабочий мессенджер MAX («всё, что человеку нужно, — на самом видном
+         месте», просьба заказчика).
 
-    <!-- Панель связи на мобильных: появляется после первого экрана -->
-    <nav class="mobile-bar" aria-label="Быстрая связь">
-      <a href={SITE.phoneHref} data-goal="click_phone">
-        <Icon name="phone" size={20} />
-        Позвонить
+         До 27.09.2026 здесь была сплошная тёмная полоса во всю ширину низа
+         экрана, с подписями. Заказчик попросил убрать «чёрный блок» и оставить
+         одни значки справа. Цена названа: значки лежат поверх страницы и
+         закрывают правый край строк, пока те проезжают под ними, — полоса
+         держала под собой своё место. Поэтому столбик уходит, когда мешает
+         по-настоящему: открыто меню, человек печатает в поле формы (global.css)
+         и страница докручена до конца (скрипт ниже, у подвала своя связь).
+         Над полосой про cookie он поднимается сам — её высоту сообщает
+         CookieBanner.astro.
+
+         Порядок в разметке — телефон первым, как и раньше: так их читает
+         экранный диктор. На экране столбик собран снизу вверх, и телефон
+         оказывается внизу, ближе всего к большому пальцу. Подписей
+         на экране нет, поэтому у каждой ссылки есть aria-label. -->
+    <nav class="contact-rail" aria-label="Быстрая связь">
+      <a href={SITE.phoneHref} data-goal="click_phone" aria-label={`Позвонить: ${SITE.phone}`}>
+        <BrandIcon name="phone" size={46} />
       </a>
-      <a href={SITE.whatsapp} target="_blank" rel="noopener noreferrer" data-goal="click_whatsapp">
-        <Icon name="whatsapp" size={20} />
-        WhatsApp
+      <a href={SITE.whatsapp} target="_blank" rel="noopener noreferrer" data-goal="click_whatsapp" aria-label="Написать в WhatsApp">
+        <BrandIcon name="whatsapp" size={46} />
       </a>
-      <a href={SITE.telegram} target="_blank" rel="noopener noreferrer" data-goal="click_telegram">
-        <Icon name="telegram" size={20} />
-        Telegram
+      <a href={SITE.telegram} target="_blank" rel="noopener noreferrer" data-goal="click_telegram" aria-label="Написать в Telegram">
+        <BrandIcon name="telegram" size={46} />
       </a>
+      {SITE.maxLink && (
+        <a href={SITE.maxLink} target="_blank" rel="noopener noreferrer" data-goal="click_max" aria-label="Написать в MAX">
+          <BrandIcon name="max" size={46} />
+        </a>
+      )}
     </nav>
 
     {/* СЧЁТЧИК ЯНДЕКС.МЕТРИКИ. Номер вписывается в src/config/site.ts →
@@ -335,12 +364,15 @@ const graph = {
       }
       reveal()
 
-      // Нижняя панель связи показывается, когда посетитель ушёл с первого экрана.
-      const bar = document.querySelector('.mobile-bar')
-      if (bar) {
-        const toggle = () => bar.classList.toggle('show', window.scrollY > window.innerHeight * 0.6)
-        toggle()
-        window.addEventListener('scroll', toggle, { passive: true })
+      // Кнопки связи на телефоне уходят в самом конце страницы.
+      // Дальше подвала прокрутить нельзя, и правый край его последних строк
+      // (реквизиты, оговорка, © ) остался бы под значками навсегда.
+      // Связь при этом не теряется: в подвале свои телефон и мессенджеры.
+      const legal = document.querySelector('.site-footer .legal')
+      if (legal && 'IntersectionObserver' in window) {
+        new IntersectionObserver(([entry]) => {
+          document.documentElement.classList.toggle('at-page-end', entry.isIntersecting)
+        }).observe(legal)
       }
 
       // Цели Яндекс.Метрики на кликах по контактам.

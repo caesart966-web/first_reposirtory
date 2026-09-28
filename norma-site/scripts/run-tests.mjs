@@ -18,9 +18,12 @@ const BASE = `http://127.0.0.1:${PORT}`
 const TESTS = [
   ['test-calc.mjs', 'калькулятор «нужна ли СРО»'],
   ['test-form.mjs', 'форма заявки'],
+  ['test-metrika.mjs', 'Метрика только после согласия'],
   ['test-cost.mjs', 'калькулятор взносов'],
   ['test-a11y.mjs', 'клавиатура, меню и работа без скриптов'],
+  ['test-contact-rail.mjs', 'кнопки связи на телефоне'],
   ['test-contrast.mjs', 'контраст надписей'],
+  ['test-fonts.mjs', 'шрифты применены, а не только загружены'],
   ['test-widths.mjs', 'вёрстка на всех ширинах'],
   ['test-tables.mjs', 'таблицы'],
   ['test-hero-photo.mjs', 'текст поверх фотографий'],

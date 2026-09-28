@@ -289,7 +289,15 @@ img { max-width: 100%; height: auto; }
 /* Якоря не прячутся под липкой шапкой */
 section[id], [data-anchor] { scroll-margin-top: 84px; }
 
-.wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+/* Поля страницы — 20 px, но не меньше выреза экрана: с viewport-fit=cover
+   (Base.astro) страница в альбомной ориентации заходит под «чёлку» iPhone,
+   и без max() первые буквы строк прятались бы под ней. */
+.wrap {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding-block: 0;
+  padding-inline: max(20px, env(safe-area-inset-left, 0px)) max(20px, env(safe-area-inset-right, 0px));
+}
 
 /* ── Типографические роли ── */
 
@@ -742,41 +750,68 @@ table.data td.strong { font-weight: 600; }
   white-space: nowrap;
 }
 
-/* ── Мобильная нижняя панель ── */
+/* ── Кнопки связи на телефоне ── */
 
-.mobile-bar {
+/* Столбик круглых значков у правого края, телефон внизу (разметка
+   и история — в Base.astro). Значки те же, что были в полосе
+   (BrandIcon.astro): одинаковые круги в фирменных цветах, телефон —
+   сургуч кнопок заявки.
+
+   Размер 46 px — больше минимума для пальца в 44 px: подписей больше нет,
+   и промахнуться по соседнему значку не должно быть легче, чем раньше.
+   Тень мягкая и тёплая — значки лежат поверх белого листа и должны
+   от него отделяться, но не выглядеть наклейками.
+
+   Низ столбика — большее из двух: обычный отступ над полоской «домой»
+   у iPhone или высота полосы про cookie, пока она на экране (её сообщает
+   CookieBanner.astro в --cookie-h). Иначе полоса легла бы поверх
+   кнопок «Позвонить» и «WhatsApp». */
+.contact-rail {
   position: fixed;
-  left: 0; right: 0; bottom: 0;
+  right: max(12px, env(safe-area-inset-right, 0px));
+  bottom: max(calc(16px + env(safe-area-inset-bottom, 0px)), calc(var(--cookie-h, 0px) + 12px));
   z-index: 60;
   display: none;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1px;
-  background: var(--dark-line);
-  border-top: 1px solid var(--dark-line);
-  transform: translateY(100%);
-  transition: transform 0.25s ease;
-  padding-bottom: env(safe-area-inset-bottom, 0);
+  flex-direction: column-reverse;
+  gap: 10px;
+  transition: opacity var(--t-fast) var(--ease), visibility var(--t-fast) var(--ease);
 }
-.mobile-bar.show { transform: none; }
-.mobile-bar a {
-  display: grid;
-  justify-items: center;
-  gap: 2px;
-  background: var(--dark);
-  color: var(--on-dark);
-  text-decoration: none;
-  font-size: 11.5px;
-  padding: 9px 4px 10px;
+.contact-rail a {
+  display: block;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  box-shadow: 0 4px 12px -2px rgba(22, 19, 15, 0.35);
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--t-fast) var(--ease);
 }
-.mobile-bar a svg { width: 20px; height: 20px; color: var(--acc-bright); }
+/* Нажатие видно: значок чуть проседает. Системную синюю вспышку
+   нажатия на телефоне отключили выше — синего на сайте нет. */
+.contact-rail a:active { transform: scale(0.93); }
+.contact-rail a:focus-visible { outline: 2px solid var(--acc); outline-offset: 3px; }
+.contact-rail a svg { display: block; width: 100%; height: 100%; color: var(--acc-btn); }
 
 @media (max-width: 767px) {
-  .mobile-bar { display: grid; }
-  body { padding-bottom: 58px; }
+  .contact-rail { display: flex; }
 }
 
+/* Столбик уходит, когда мешает по-настоящему.
+   Меню: оно кроет весь экран, и значки легли бы поверх его пунктов
+   (а связь в меню есть своя — «Оставить заявку» и номер).
+   Поле формы в фокусе: на телефоне открыта клавиатура, экран вдвое ниже,
+   и столбик закрывал бы правый край поля, в которое человек печатает.
+   Флажки и переключатели калькулятора сюда не входят: на них фокус
+   встаёт от простого нажатия, и значки мигали бы при каждом ответе.
+   Конец страницы (html.at-page-end, скрипт в Base.astro): дальше подвала
+   не прокрутить, и значки навсегда закрыли бы правый край его строк. */
+html.menu-open .contact-rail,
+html.at-page-end .contact-rail,
+html:has(:is(textarea, select, input:not([type='checkbox'], [type='radio'], [type='range'], [type='submit'], [type='button'])):focus) .contact-rail {
+  opacity: 0;
+  visibility: hidden;
+}
 @media (prefers-reduced-motion: reduce) {
-  .mobile-bar { transition: none; }
+  .contact-rail, .contact-rail a { transition: none; }
 }
 
 /* Печать. Страницы «Документы» и «Стоимость» распечатывают и берут с собой —
@@ -784,7 +819,7 @@ table.data td.strong { font-weight: 600; }
    Форма заявки и блок консультации занимали в конце полстраницы:
    на бумаге в них не написать, а лист уходит. */
 @media print {
-  .mobile-bar,
+  .contact-rail,
   .site-header,
   .site-footer,
   .lead-form,

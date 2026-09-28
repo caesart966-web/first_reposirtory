@@ -2,128 +2,145 @@
 import Base from '../layouts/Base.astro'
 import Hero from '../components/Hero.astro'
 import Calculator from '../components/Calculator.astro'
-import ComparisonTable from '../components/ComparisonTable.astro'
-import RegistryCheck from '../components/RegistryCheck.astro'
-import SpecialOffer from '../components/SpecialOffer.astro'
-import WhyMe from '../components/WhyMe.astro'
-import ServicesGrid from '../components/ServicesGrid.astro'
 import LeadForm from '../components/LeadForm.astro'
 import Icon from '../components/Icon.astro'
+import BrandIcon from '../components/BrandIcon.astro'
+import DirIcon from '../components/DirIcon.astro'
 import { SITE, href } from '../config/site'
+import { dirIconOf } from '../config/services'
 import { REGIONS } from '../config/regions'
 import { partnersOf } from '../config/partners'
 import { LAW, TERMS, FUNDS } from '../config/facts'
-import { FEES, FEES_NOTE, money } from '../config/fees'
+import { FEES, FEES_NOTE, money, type FeeSet } from '../config/fees'
 
-// Порядок работы.
+// ГЛАВНАЯ — ПЯТЬ РАЗДЕЛОВ, А НЕ ДВЕНАДЦАТЬ.
 //
-// У каждого шага сказано не только сколько он длится, но и ЧЬЁ это время.
-// Без этого шаги читались как одна очередь и складывались в 5–10 дней —
-// притом что в шапке сайта стоит «выписка за 2–3 дня». Посетитель,
-// который умеет считать, ловил сайт на расхождении, а расхождение здесь
-// дороже, чем на любом другом сайте: весь текст держится на том, что
-// цифры можно проверить.
+// Заказчик: «начальная страница сильно перегружена, много текста; надо
+// упростить и сделать максимально удобной подачу заявки». Замер до правки:
+// 25,7 экрана телефона и 2 200 слов, форма заявки — на 21-м экране.
 //
-// Расхождения на самом деле нет: два-три дня — это последний отрезок,
-// от подачи до выписки. Но читателю это надо показать, а не объяснять
-// в примечании. Поэтому подпись «чьё время» и строка с итогом под лентой.
-// Города для блока «География». Порядок — как в regions.ts: Петербург,
-// Москва, Ростов-на-Дону. Раньше здесь была сортировка по алфавиту,
-// и она была обоснована: городов было тридцать три, и любой другой
-// порядок выдумывал бы рейтинг. Для троих алфавит не значит ничего,
-// а порядок из конфигурации хотя бы один — и правится в одном месте.
-const cities = REGIONS
+// Правило, записанное в CLAUDE.md после прошлой попытки, — начинать
+// с вопроса «какой раздел убираем целиком», а не подрезать абзацы.
+// Убраны целиком пять разделов, и у каждого есть своя страница, где он
+// сказан полнее, чем здесь:
+//   • красный блок «Разбор предложения» — на «Стоимости» (#predlozhenie);
+//     на главной он повторял карточку первого экрана теми же пятью
+//     пунктами и занимал два с половиной экрана телефона;
+//   • таблица «Кому нужна СРО» — страница /komu-nuzhna-sro/ в главном
+//     меню, и на тот же вопрос отвечает калькулятор;
+//   • «Проверьте СРО в реестре» — /proverit-sro/, ссылка в подвале;
+//   • «Почему через меня» — страница «Обо мне» в главном меню;
+//   • «Что я делаю» (список услуг) — «Услуги» в меню и полный список
+//     в подвале.
+// Остальное сжато: разбивка взносов стала ценой первого года, порядок
+// работы встал рядом с формой как «что будет после заявки».
+//
+// Форма поднята к калькулятору и стала короче: на виду имя и телефон,
+// остальное — в «Уточнить задачу» (LeadForm.astro).
 
-const steps = [
+// ЧЕТЫРЕ ШАГА ВСТУПЛЕНИЯ — по образцу, который заказчик прислал сам
+// (сро.онлайн, «МРЦС», 28.09.2026): консультация, документы, оплата взносов,
+// приём в члены. Взяты порядок и названия шагов; текст свой — в первом лице,
+// без «приезжайте к нам в офис» (офиса нет) и без «наших экспертов».
+//
+// СРОКОВ У ШАГОВ НЕТ — решение заказчика. Раньше у каждого шага стояло,
+// сколько он длится и чьё это время, а внизу — «итого 5–10 дней». Срок
+// вступления по-прежнему назван там, где о нём спрашивают: вопрос «Сколько
+// времени занимает вступление?» ниже, со статьёй закона.
+//
+// Номер шага — не украшение: шаги действительно идут по порядку, и оплата
+// не раньше документов. Текст шага уходит в микроразметку HowTo как есть.
+const steps: { t: string; d: string; law?: string }[] = [
   {
-    t: 'Разбор ситуации',
-    d: 'Смотрю, что за работы, с кем договор и на какую сумму. Если членство не требуется — говорю об этом сразу и работу не начинаю.',
-    time: '15–30 минут',
-    who: 'моё время',
-  },
-  {
-    t: 'Подбор СРО и проверка',
-    d: 'Подбираю СРО под ваш регион и уровень ответственности, проверяю её в госреестре и показываю выписку вам. Для строителей действует региональный принцип, для проектировщиков и изыскателей — нет.',
-    time: '1–2 дня',
-    who: 'моё время',
+    t: 'Консультация',
+    d: 'По телефону или в мессенджере, бесплатно. Разберу ситуацию и скажу, нужна ли вам СРО вообще, — если нет, на этом всё.',
   },
   {
     t: 'Подготовка документов',
-    d: 'Заявление и все бумаги по комплекту оформляю я, и это бесплатно. Но пока от вас не пришли устав, выписка и документы по специалистам, собирать нечего — поэтому срок здесь задаёте вы. Прислали всё сразу — уложимся в день. Если чего-то не хватает или непонятно, где брать, — не бросаю на этом месте: скажу, где заказать, помогу восстановить и оформить.',
-    time: '2–5 дней',
-    who: 'зависит от вас',
+    d: 'Вы присылаете сканы документов компании и специалистов, я сам заполняю все формы для СРО и собираю комплект.',
   },
   {
-    t: 'Подача, взносы и выписка',
-    d: `Подаю документы в СРО. Взносы вы переводите напрямую на её счёт, минуя меня. Дальше решение о приёме и выписка из реестра: от подачи до готовой выписки проходит ${TERMS.extract}, а когда у вас горит — бывает и ${TERMS.extractRush}. По закону у СРО есть на рассмотрение ${TERMS.law} — этот срок остаётся её правом, и обещать за неё я не могу. Но с полным комплектом документов до него не доходит.`,
-    time: `${TERMS.extract}`,
-    who: 'время СРО',
-    law: LAW.term,
+    t: 'Оплата взносов',
+    d: 'Все платежи вы переводите напрямую на расчётный счёт СРО — не через меня.',
+  },
+  {
+    t: 'Приём в члены СРО',
+    d: 'Сведения о компании вносятся в единый реестр членов СРО — НОСТРОЙ или НОПРИЗ, — и вы получаете выписку из реестра.',
+    law: LAW.membership,
+  },
+]
+// «4 шага», «5 шагов» — числом из списка, а не словом в тексте.
+const stepsWord = (n: number) =>
+  n % 10 === 1 && n % 100 !== 11 ? 'шаг' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? 'шага' : 'шагов'
+
+// ТРИ НАПРАВЛЕНИЯ — сразу под первым экраном, как в том же образце:
+// человек находит своё («я проектировщик») до калькулятора и цен.
+// Работы перечислены только те, про которые на сайте уже сказано, что им
+// нужно членство, — со страниц услуг. «Стройконтроль» и «технадзор»
+// из образца сюда не перенесены: сайт нигде не утверждает, что им нужна
+// СРО, и утверждать это здесь, мимо страниц с нормами, было бы новым
+// фактом без статьи. Фотографий нет нарочно: у образца это стоковые
+// краны и каски, а стоковых касок на этом сайте быть не должно. Значки —
+// те, что прислал заказчик, обведены в вектор (DirIcon.astro); какой
+// услуге какой — поле dirIcon в services.ts, одно на весь сайт.
+const dirs = [
+  {
+    slug: 'sro-stroiteley',
+    icon: dirIconOf('sro-stroiteley'),
+    t: 'СРО строителей',
+    works: ['строительство', 'реконструкция', 'капитальный ремонт', 'снос объектов капитального строительства', 'функции технического заказчика'],
+    note: 'Нужна, если обязательства по прямому договору больше 10 млн ₽. СРО — вашего субъекта РФ.',
+  },
+  {
+    slug: 'sro-proektirovshchikov',
+    icon: dirIconOf('sro-proektirovshchikov'),
+    t: 'СРО проектировщиков',
+    works: ['подготовка проектной документации', 'архитектурно-строительное проектирование'],
+    note: 'Нужна при любой сумме прямого договора. Регион не важен: СРО — любого субъекта.',
+  },
+  {
+    slug: 'sro-izyskateley',
+    icon: dirIconOf('sro-izyskateley'),
+    t: 'СРО изыскателей',
+    works: ['инженерно-геодезические изыскания', 'инженерно-геологические', 'инженерно-гидрометеорологические', 'инженерно-экологические', 'инженерно-геотехнические'],
+    note: 'Нужна при любой сумме прямого договора. Регион не важен: СРО — любого субъекта.',
   },
 ]
 
-// Разбивка взносов за первый год — строка таблицы «Стоимость» на главной.
+// Цена первого года — коротко; полная разбивка по уровням на «Стоимости».
 //
-// Каждая ячейка считается из FUNDS (компенсационные фонды, размеры в законе)
-// и FEES (взносы конкретных СРО, закон их не устанавливает). Руками сюда
-// не вписано ни одного числа: суммы обязаны сходиться с первым экраном
-// и со страницей «Стоимость», а один раз они уже разошлись.
-const feeCell = (v: string, cls?: string) => ({ v, cls })
-const feeRows = (() => {
-  const b = FEES.build
-  const d = FEES.design
-  const bFund = FUNDS.buildHarm[0]
-  const dFund = FUNDS.designHarm[0]
-  const bYear = b.memberMonth * 12
-  const dYear = d.memberMonth * 12
-  const insurance = (f: typeof b) =>
-    f.insuranceFirstYear ? feeCell('по ставке страховщика') : feeCell(money(0), 'free-v')
-  return [
-    {
-      t: 'Предельный размер обязательств',
-      d: 'первый уровень ответственности, самый массовый',
-      build: feeCell(bFund.limit),
-      design: feeCell(dFund.limit),
-    },
-    {
-      t: 'Компенсационный фонд возмещения вреда',
-      d: 'однократно, размер установлен законом',
-      build: feeCell(bFund.amount),
-      design: feeCell(dFund.amount),
-    },
-    {
-      t: 'Вступительный взнос',
-      d: 'разовый, устанавливает СРО',
-      build: feeCell(money(b.entry), b.entry === 0 ? 'free-v' : undefined),
-      design: feeCell(money(d.entry), d.entry === 0 ? 'free-v' : undefined),
-    },
-    {
-      t: 'Членские взносы за первый год',
-      d: `${money(b.memberMonth)} в месяц, со второго года по ставке СРО`,
-      build: feeCell(money(bYear)),
-      design: feeCell(money(dYear)),
-    },
-    {
-      t: 'Целевой взнос в национальное объединение',
-      d: 'устанавливает СРО',
-      build: feeCell(`${money(b.target)} в ${b.union}`),
-      design: feeCell(`${money(d.target)} в ${d.union}`),
-    },
-    {
-      t: 'Страхование ответственности',
-      d: b.insuranceFirstYear ? 'требуется с первого года' : 'в первый год не требуется',
-      build: insurance(b),
-      design: insurance(d),
-    },
-    {
-      t: 'Всего за первый год',
-      d: '',
-      total: true,
-      build: feeCell(money(bFund.amountNum + b.entry + bYear + b.target)),
-      design: feeCell(money(dFund.amountNum + d.entry + dYear + d.target)),
-    },
-  ]
-})()
+// Раньше здесь стояла таблица из семи строк, и на телефоне каждая строка
+// разворачивалась в карточку: 2,7 экрана. Отличаются у строителей
+// и проектировщиков только компенсационный фонд и итог — их и видно
+// рядом, крупно; всё, что у обоих одинаково, сказано один раз.
+//
+// Руками не вписано ни одного числа: всё считается из FUNDS (размеры
+// фондов в законе) и FEES (взносы СРО, закон их не устанавливает).
+// Если суммы у строителей и проектировщиков разойдутся, строка сама
+// назовёт обе.
+const firstYear = (f: FeeSet, fund: number) => fund + f.entry + f.memberMonth * 12 + f.target
+const b = FEES.build
+const d = FEES.design
+const totals = [
+  { who: 'Строителям', fund: FUNDS.buildHarm[0], total: firstYear(b, FUNDS.buildHarm[0].amountNum) },
+  { who: 'Проектировщикам и изыскателям', fund: FUNDS.designHarm[0], total: firstYear(d, FUNDS.designHarm[0].amountNum) },
+]
+const both = (x: number, y: number, tail = '') =>
+  x === y ? `${money(x)}${tail}` : `${money(x)}${tail} строителям, ${money(y)}${tail} проектировщикам`
+const insurance = b.insuranceFirstYear || d.insuranceFirstYear
+const common: { t: string; s?: string; v: string; free: boolean }[] = [
+  { t: 'Членские взносы', s: both(b.memberMonth, d.memberMonth, ' в месяц'), v: both(b.memberMonth * 12, d.memberMonth * 12), free: false },
+  { t: `Целевой взнос в ${b.union} или ${d.union}`, v: both(b.target, d.target), free: false },
+  { t: 'Вступительный взнос', v: both(b.entry, d.entry), free: b.entry === 0 && d.entry === 0 },
+  { t: 'Страхование в первый год', v: insurance ? 'по ставке страховщика' : money(0), free: !insurance },
+  { t: 'Мои услуги: документы и сопровождение', v: money(0), free: true },
+]
+
+// Сколько городов с партнёрскими СРО — словом, но из данных: «двадцать
+// четыре разбора» на странице 404 однажды уже разошлись с сайтом.
+const partnerCities = REGIONS.filter((r) => partnersOf(r.slug).length > 0).length
+const IN_N = ['', 'одном', 'двух', 'трёх', 'четырёх', 'пяти', 'шести', 'семи', 'восьми', 'девяти', 'десяти']
+const inCities = `в ${IN_N[partnerCities] ?? partnerCities} ${partnerCities === 1 ? 'городе' : 'городах'}`
 
 const faq = [
   {
@@ -132,7 +149,7 @@ const faq = [
   },
   {
     q: 'Правда ли, что порог для строителей — 3 млн ₽?',
-    a: 'Нет, это устаревшая информация. Порог поднят до 10 млн ₽ законом 124-ФЗ с 1 мая 2022 года. Цифру в 3 млн до сих пор пишет примерно половина сайтов по теме — это самый простой способ проверить, следит ли площадка за изменениями.',
+    a: 'Нет, это устаревшая информация. Порог поднят до 10 млн ₽ законом 124-ФЗ с 1 мая 2022 года. Цифра в 3 млн до сих пор встречается на сайтах по теме — по ней проще всего проверить, следит ли площадка за изменениями.',
   },
   {
     q: 'Можно ли вступить в СРО другого региона?',
@@ -144,7 +161,7 @@ const faq = [
   },
   {
     q: 'Какие взносы придётся платить и когда?',
-    a: 'При вступлении — взнос в компенсационный фонд возмещения вреда (обязателен всем) и вступительный взнос СРО. Для участия в конкурентных закупках дополнительно нужен взнос в компенсационный фонд обеспечения договорных обязательств. Дальше идут членские взносы — в первый год 5 000 ₽ в месяц, платить можно за месяц, квартал, полгода или год. Со второго года они не исчезают, это регулярный платёж, и я говорю об этом сразу. Полная разбивка со ссылками на нормы — на странице «Стоимость».',
+    a: `При вступлении — взнос в компенсационный фонд возмещения вреда (обязателен всем) и вступительный взнос СРО. Для участия в конкурентных закупках дополнительно нужен взнос в компенсационный фонд обеспечения договорных обязательств. Дальше идут членские взносы — в первый год ${both(b.memberMonth, d.memberMonth, ' в месяц')}, платить можно за месяц, квартал, полгода или год. Со второго года они не исчезают, это регулярный платёж, и я говорю об этом сразу. Полная разбивка со ссылками на нормы — на странице «Стоимость».`,
   },
   {
     q: 'У меня нет двух специалистов для НРС. Что делать?',
@@ -152,7 +169,7 @@ const faq = [
   },
   {
     q: 'Чем вы отличаетесь от других?',
-    a: 'Тем, что говорю «вам это не нужно», когда это действительно так, и показываю норму, на которую опираюсь. И тем, что все цифры на этом сайте сверены с действующей редакцией Градостроительного кодекса — дата сверки указана внизу каждой страницы.',
+    a: 'Тем, что говорю «вам это не нужно», когда это действительно так, и показываю норму, на которую опираюсь. И тем, что все нормы на этом сайте сверены с действующей редакцией Градостроительного кодекса — дата сверки указана внизу каждой страницы.',
   },
 ]
 
@@ -180,187 +197,183 @@ const howToSchema = {
 
 <Base
   title="Вступление в СРО — строителям и проектировщикам | НОРМА"
-  description="От подачи до выписки из реестра 2–3 дня, подготовка документов и сопровождение бесплатно. Калькулятор покажет, нужна ли вам СРО, — со ссылкой на статью закона."
+  description="От подачи до выписки из реестра — 2–3 дня, документы и сопровождение бесплатно. Проверьте, нужна ли вам СРО: ответ со ссылкой на закон."
   schema={[faqSchema, howToSchema]}
 >
   <Hero />
 
-  <Calculator />
-
-  <SpecialOffer />
-
-  <!-- Кому нужна / кому нет -->
-  <section class="section section--paper section--split" id="komu" data-anchor>
+  <!-- Три направления: строители, проектировщики, изыскатели -->
+  <section class="section section--paper dirs-sec" id="napravleniya" data-anchor>
     <div class="wrap">
-      <div class="s-head rv">
-        <span class="eyebrow">Без умолчаний</span>
-        <h2>Кому нужна СРО, <em>а кому нет</em></h2>
-        <p>
-          Оба столбца одинаково важны. Правый — тот, который обычно прячут:
-          на нём не заработать, но именно он экономит компаниям сотни тысяч рублей.
-        </p>
-      </div>
-      <div class="sbody">
-        <div class="rv"><ComparisonTable brief /></div>
-        <p class="more rv">
-          <a href={href('/komu-nuzhna-sro/')}>Каждый случай подробно: что считается договором, где проходит порог →</a>
-        </p>
-      </div>
+      <ul class="dirs">
+        {dirs.map((d) => (
+          <li class="dir rv">
+            <a class="dir-in" href={href(`/uslugi/${d.slug}/`)}>
+              <span class="dir-ico"><DirIcon name={d.icon} /></span>
+              <h2 class="dir-t">{d.t}</h2>
+              <ul class="dir-works">
+                {d.works.map((w) => <li><Icon name="check" size={15} />{w}</li>)}
+              </ul>
+              <p class="dir-note">{d.note}</p>
+              <span class="dir-go">Подробнее <Icon name="arrow" size={15} /></span>
+            </a>
+          </li>
+        ))}
+      </ul>
     </div>
   </section>
 
-  <!-- Стоимость: тизер -->
-  <section class="section section--dark" id="stoimost-teaser" data-anchor>
+  <Calculator />
+
+  <!-- Цена первого года -->
+  <section class="section section--split" id="stoimost-teaser" data-anchor>
     <div class="wrap">
       <div class="s-head rv">
         <span class="eyebrow">Стоимость</span>
-        <h2>Открыто: из чего складываются <em>расходы</em></h2>
-        <p>
-          Платите вы только установленные законом и СРО взносы — и платите их
-          напрямую в СРО, минуя меня.
-        </p>
-      </div>
-
-      {/* РАЗБИВКА — ОДНОЙ ТАБЛИЦЕЙ, А НЕ ДВУМЯ ОДИНАКОВЫМИ КАРТОЧКАМИ.
-          Карточки «Строителям» и «Проектировщикам» отличались двумя числами
-          из шести и на телефоне вставали одна под другой: 1310 px, полтора
-          экрана на то, чтобы прочитать один и тот же список дважды, —
-          и сравнить суммы было нельзя, они не помещались в поле зрения
-          вместе. Таблица показывает те же шесть строк один раз, а ниже
-          600 px разворачивается в карточки по СТРОКЕ: сверху взнос,
-          под ним обе суммы с подписями. Сравнение появилось, высота
-          вдвое меньше.
-          Все суммы считаются из FUNDS и FEES — руками сюда не вписывается
-          ни одна, иначе заводится вторая точка правды. */}
-      <div class="cost-split">
-      <div class="tbl-wrap dark rv">
-        <table class="data fees-tbl">
-          <thead>
-            <tr>
-              <th scope="col">Взнос</th>
-              <th scope="col">Строителям</th>
-              <th scope="col">Проектировщикам и изыскателям</th>
-            </tr>
-          </thead>
-          <tbody>
-            {feeRows.map((row) => (
-              <tr class={row.total ? 'tr-total' : undefined}>
-                <td class="strong">
-                  {row.t}
-                  {row.d && <small>{row.d}</small>}
-                </td>
-                <td class:list={[row.build.cls, row.total && 'tot']} data-label="Строителям">{row.build.v}</td>
-                <td class:list={[row.design.cls, row.total && 'tot']} data-label="Проектировщикам и изыскателям">{row.design.v}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <div class="pcard pcard--warn rv">
-        <span class="ptag ptag--warn">Идёте на торги</span>
-        <h3>Нужен второй взнос — КФ ОДО</h3>
-        <p class="psub">Компенсационный фонд обеспечения договорных обязательств</p>
-        <ul>
-          <li><span>Строителям, первый уровень<small>сверх взноса выше, не вместо</small></span><b>{FUNDS.buildContract[0].amount}</b></li>
-          <li><span>Проектировщикам и изыскателям<small>первый уровень</small></span><b>{FUNDS.designContract[0].amount}</b></li>
-        </ul>
-        <p class="pnote">
-          Без этого взноса заявку на конкурентных закупках отклонят. Именно о нём
-          молчат сайты с обещанием «без скрытых платежей».
-        </p>
-        {/* Кнопка вела на #torgi — якорь, которого на странице нет.
-            Внешне работала: нажатие просто ничего не делало, и поймать
-            это глазами нельзя. Ведёт в разбор, который и обещает. */}
-        <a class="btn btn--ghost-dark" href={href('/baza-znaniy/otkaz-na-torgah/')}>Три причины отказа на торгах</a>
-      </div>
-      </div>
-
-      <p class="fees-note rv">{FEES_NOTE}</p>
-
-      <div class="cost-cta rv">
-        <a class="btn btn--acc" href={href('/stoimost/#kalkulyator')}>Посчитать свой уровень</a>
-        <a class="cost-cta-more" href={href('/stoimost/')}>Все уровни ответственности →</a>
-      </div>
-    </div>
-  </section>
-
-  <!-- Как проходит вступление -->
-  <section class="section section--split" id="process" data-anchor>
-    <div class="wrap">
-      <div class="s-head rv">
-        <span class="eyebrow">Порядок работы</span>
-        <h2>Как проходит <em>вступление</em></h2>
-        <p>Сроки реальные, а не рекламные: там, где закон даёт два месяца, я так и пишу.</p>
+        <h2>Сколько стоит <em>первый год</em></h2>
+        <p>Мои услуги — 0 ₽. Взносы вы переводите напрямую в СРО, минуя меня.</p>
       </div>
 
       <div class="sbody">
-      <ol class="steps">
-        {steps.map((s, i) => (
-          <li class="rv">
-            <span class="sn">{i + 1}</span>
-            <div class="sc">
-              <div class="sc-top">
-                <h3>{s.t}</h3>
-                <span class="stime">{s.time}</span>
-                <span class="swho">{s.who}</span>
-              </div>
-              <p>{s.d}</p>
-              {s.law && <span class="law">{s.law}</span>}
-            </div>
-          </li>
-        ))}
-      </ol>
+        <ul class="price-tot rv">
+          {totals.map((t) => (
+            <li>
+              <span class="pt-who">{t.who}</span>
+              <b class="pt-sum">{money(t.total)}</b>
+              <span class="pt-sub">за первый год, договоры {t.fund.limit}</span>
+              <span class="pt-fund">из них <b>{t.fund.amount}</b> — компенсационный фонд, размер по закону</span>
+            </li>
+          ))}
+        </ul>
 
-      <!-- Абзац существует ради одного: свести 5–10 дней здесь с «выпиской
-           за 2–3 дня» в шапке сайта. Всё остальное, что тут стояло раньше,
-           страница уже говорит — «помогу собрать недостающее» шагом 3,
-           а разницу между «бывает за день» и «гарантируем за день» —
-           вопросом «Сколько времени занимает вступление» ниже. -->
-      <p class="steps-total rv">
-        <b>Итого от первого разговора до выписки — 5–10 дней.</b> Два-три дня из них
-        занимает последний шаг: от подачи документов до готовой выписки. Остальное —
-        подбор СРО и сбор бумаг, и здесь темп задаёте вы. Рекламного «вступления
-        за один день» не обещаю: один день <b>бывает</b>, но решение принимает СРО,
-        и срок на него — её, а не мой.
-      </p>
+        <p class="price-cap rv">Остальное у всех одинаково</p>
+        <ul class="price-list rv">
+          {common.map((c) => (
+            <li>
+              <span>{c.t}{c.s && <small>{c.s}</small>}</span>
+              <b class:list={[c.free && 'free']}>{c.v}</b>
+            </li>
+          ))}
+        </ul>
+
+        {/* КФ ОДО — отдельной строкой, а не мелким шрифтом: именно о нём
+            молчат сайты с обещанием «без скрытых платежей». В итог выше
+            он не входит нарочно: нужен только тем, кто идёт на торги. */}
+        <p class="price-odo rv">
+          <b>Идёте на торги?</b> Нужен второй взнос — в компенсационный фонд обеспечения
+          договорных обязательств: {FUNDS.buildContract[0].amount} строителям
+          и {FUNDS.designContract[0].amount} проектировщикам и изыскателям, сверх суммы выше.
+        </p>
+
+        <p class="fees-note rv">{FEES_NOTE}</p>
+
+        <a class="btn btn--ghost price-go rv" href={href('/stoimost/#kalkulyator')}>
+          Посчитать для своего уровня <Icon name="arrow" size={16} />
+        </a>
       </div>
     </div>
   </section>
 
-  <RegistryCheck />
+  <!-- Четыре шага вступления -->
+  <section class="section" id="process" data-anchor>
+    <div class="wrap">
+      <div class="s-head rv">
+        <span class="eyebrow">Порядок вступления</span>
+        <h2>{steps.length} {stepsWord(steps.length)} <em>для вступления в СРО</em></h2>
+        <p>
+          Чтобы не ошибиться в документах и не затянуть вступление, начните с бесплатной
+          консультации: позвоните по номеру <a class="s4-tel" href={SITE.phoneHref} data-goal="click_phone">{SITE.phone}</a> или
+          напишите в мессенджер.
+        </p>
+      </div>
+      <ol class="steps4">
+        {steps.map((s, i) => (
+          <li class="rv">
+            <div class="s4-head" aria-hidden="true">
+              <span class="s4-num">{i + 1}</span>
+              <span class="s4-line"></span>
+            </div>
+            <h3>{s.t}</h3>
+            <p>{s.d}</p>
+            {s.law && <span class="law">{s.law}</span>}
+          </li>
+        ))}
+      </ol>
+      <div class="s4-cta rv">
+        <a class="btn btn--acc btn--lg" href="#zayavka">Оставить заявку</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Заявка -->
+  <section class="section section--paper apply" id="zayavka" data-anchor>
+    <div class="wrap apply-one">
+      <div class="apply-form rv">
+        <LeadForm who />
+        {/* Прямые каналы — строкой под формой, а не отдельной карточкой:
+            на телефоне те же каналы и так стоят столбиком справа, а почты
+            там нет. */}
+        <p class="apply-direct">
+          <span>Или напрямую:</span>
+          <a class="ad-phone" href={SITE.phoneHref} data-goal="click_phone">
+            <BrandIcon name="phone" size={18} idp="apply" /> {SITE.phone}
+          </a>
+          <a href={SITE.whatsapp} target="_blank" rel="noopener noreferrer" data-goal="click_whatsapp">
+            <BrandIcon name="whatsapp" size={18} idp="apply" /> WhatsApp
+          </a>
+          <a href={SITE.telegram} target="_blank" rel="noopener noreferrer" data-goal="click_telegram">
+            <BrandIcon name="telegram" size={18} idp="apply" /> Telegram
+          </a>
+          {SITE.maxLink && (
+            <a href={SITE.maxLink} target="_blank" rel="noopener noreferrer" data-goal="click_max">
+              <BrandIcon name="max" size={18} idp="apply" /> MAX
+            </a>
+          )}
+          <a href={`mailto:${SITE.email}`}>{SITE.email}</a>
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Вопросы -->
+  <section class="section section--split" id="faq" data-anchor>
+    <div class="wrap">
+      <div class="s-head rv">
+        <span class="eyebrow">Вопросы</span>
+        <h2>Частые <em>вопросы</em></h2>
+      </div>
+      <div class="faq rv sbody">
+        {faq.map((f) => (
+          <details name="faq">
+            <summary>{f.q}</summary>
+            <div class="fa"><p>{f.a}</p></div>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
 
   <!-- География: раздел «Города».
-       Стоит на главной, а не только в подвале и в меню: городские страницы
-       отвечают на запросы вида «вступить в СРО в Москве», и без входящей
-       ссылки с самой сильной страницы сайта они остаются на отшибе.
-       Заодно это единственное место на главной, где сказано, что регион
-       вообще имеет значение — и только для строителей. -->
-  <section class="section section--split" id="goroda" data-anchor>
+       Стоит на главной, а не только в подвале: городские страницы отвечают
+       на запросы вида «вступить в СРО в Москве», и без входящей ссылки
+       с самой сильной страницы сайта они остаются на отшибе. И это место,
+       где сказано, что регион имеет значение — и только для строителей. -->
+  <section class="section section--paper section--split" id="goroda" data-anchor>
     <div class="wrap">
       <div class="s-head rv">
         <span class="eyebrow">География</span>
         <h2>Ваш город <em>и ваш регион</em></h2>
         <p>
-          Работаю по всей России: документы электронные, приезжать никуда не нужно.
-          Но у строителей регион решает — саморегулируемая организация должна быть
-          зарегистрирована в том же субъекте РФ, что и компания.
+          Работаю по всей России, документы электронные — приезжать никуда не нужно.
+          Но у строителей регион решает: СРО должна быть зарегистрирована в том же
+          субъекте РФ, что и компания.
         </p>
         <span class="law">{LAW.membership}</span>
       </div>
       <div class="sbody">
-        <p class="geo-lead rv">
-          У проектировщиков и изыскателей такой привязки нет вовсе: они выбирают
-          организацию в любом регионе страны. Разницу путают даже крупные площадки —{' '}
-          <a href={href('/baza-znaniy/regionalnyy-princip/')}>разбор нормы со ссылками</a>.
-        </p>
-
-        {/* Три города, где есть партнёрские СРО, — карточками, а не строчками
-            в списке: их трое, и каждый говорит своё. Список-реестр из тридцати
-            трёх городов, стоявший здесь раньше, для троих выглядел бы обрезанным
-            и наводил на мысль, что остальные потерялись. */}
         <ul class="geo-cards rv">
-          {cities.map((r) => {
+          {REGIONS.map((r) => {
             const n = partnersOf(r.slug).length
             return (
               <li>
@@ -377,18 +390,14 @@ const howToSchema = {
           })}
         </ul>
 
-        {/* Главное, что должен унести человек не из этих трёх городов.
-            Раньше на его вопрос отвечал список из тридцати трёх городов;
-            теперь — эта строка, и она обязана быть заметной, иначе
-            раздел читается как «работаю только в трёх городах». */}
+        {/* Главное, что должен унести человек не из этих городов. Строка
+            обязана быть заметной, иначе раздел читается как «работаю только
+            в трёх городах», и посетитель из четвёртого уходит. */}
         <div class="geo-rest rv">
           <p>
-            <b>Остальные регионы — так же.</b> Партнёрские организации у меня
-            в трёх городах, а для компании из любого другого субъекта я подбираю
-            СРО отдельно — и называю её по имени и с регистрационным номером
-            до того, как вы что-то подпишете. Фраза «работаю по всей России»
-            выше — не оборот речи: приезжать никуда не нужно ни вам, ни мне,
-            документы электронные.
+            <b>Остальные регионы — так же.</b> Партнёрские СРО у меня {inCities};
+            для компании из любого другого субъекта подбираю организацию отдельно
+            и называю её с регистрационным номером до того, как вы что-то подпишете.
           </p>
           <p class="geo-rest-more">
             <a href={href('/sro/')}>Как это работает в вашем регионе →</a>
@@ -397,88 +406,312 @@ const howToSchema = {
       </div>
     </div>
   </section>
-
-  <WhyMe />
-
-  <ServicesGrid compact title="Что я делаю" />
-
-  <!-- FAQ -->
-  <section class="section section--paper section--split" id="faq" data-anchor>
-    <div class="wrap">
-      <div class="s-head rv">
-        <span class="eyebrow">Вопросы</span>
-        <h2>Частые <em>вопросы</em></h2>
-        <p>
-          Семь вопросов, которые задают чаще всего. На четыре из них
-          половина сайтов по теме до сих пор отвечает неверно.
-        </p>
-      </div>
-      <div class="faq rv sbody">
-        {faq.map((f, i) => (
-          <details name="faq" open={i === 0}>
-            <summary>{f.q}</summary>
-            <div class="fa"><p>{f.a}</p></div>
-          </details>
-        ))}
-      </div>
-    </div>
-  </section>
-
-  <!-- Контакты -->
-  <section class="section contacts-cta" id="zayavka" data-anchor>
-    <div class="wrap">
-      <div class="cc-grid">
-        <div class="rv">
-          <LeadForm />
-        </div>
-        <aside class="rv side">
-          <h3>Или свяжитесь напрямую</h3>
-          <a class="big-phone" href={SITE.phoneHref} data-goal="click_phone">{SITE.phone}</a>
-          <a class="mail" href={`mailto:${SITE.email}`}>{SITE.email}</a>
-          <div class="msg-list">
-            <a href={SITE.whatsapp} target="_blank" rel="noopener noreferrer" data-goal="click_whatsapp">
-              <Icon name="whatsapp" size={18} /> WhatsApp
-            </a>
-            <a href={SITE.telegram} target="_blank" rel="noopener noreferrer" data-goal="click_telegram">
-              <Icon name="telegram" size={18} /> Telegram
-            </a>
-            {SITE.maxLink && (
-              <a href={SITE.maxLink} target="_blank" rel="noopener noreferrer" data-goal="click_max">
-                <Icon name="phone" size={18} /> MAX
-              </a>
-            )}
-          </div>
-          <p class="side-note">
-            {SITE.geo}. Личная встреча для вступления в СРО не нужна:
-            документы подписываются электронно или пересылаются.
-          </p>
-          <div class="checked">
-            <span class="stamp">Проверено · {SITE.checkedDate}</span>
-            <p>Все нормы и суммы на сайте сверены с действующей редакцией Градостроительного кодекса РФ.</p>
-          </div>
-        </aside>
-      </div>
-    </div>
-  </section>
 </Base>
 
 <style>
-  /* Честный блок */
+  /* ── Цена первого года ──
+     Два итога рядом — единственное, что у строителей и проектировщиков
+     различается, — и один список того, что одинаково. Сравнить суммы
+     можно одним взглядом и на телефоне: колонки остаются рядом. */
+  .price-tot {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--r-m);
+  }
+  /* subgrid: строки двух карточек выравниваются между собой. Иначе
+     «Проектировщикам и изыскателям» на телефоне шло в две строки и сдвигало
+     свою сумму ниже соседней — сравнивать было неудобно ровно то, ради
+     чего суммы и поставлены рядом. */
+  .price-tot { grid-template-rows: repeat(4, auto); }
+  .price-tot li {
+    padding: 20px 22px 18px;
+    display: grid;
+    grid-row: span 4;
+    grid-template-rows: subgrid;
+    row-gap: 4px;
+    align-content: start;
+  }
+  .price-tot li + li { border-left: 1px solid var(--line); }
+  .pt-who { font-size: 14px; font-weight: 600; line-height: 1.35; }
+  .pt-sum {
+    font-family: var(--font-head);
+    font-size: clamp(28px, 3.2vw, 36px);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--acc-deep);
+    font-variant-numeric: lining-nums tabular-nums;
+    white-space: nowrap;
+  }
+  .pt-sub, .pt-fund { font-size: 13px; line-height: 1.45; color: var(--muted); }
+  .pt-fund { margin-top: 8px; padding-top: 9px; border-top: 1px solid var(--line); }
+  .pt-fund b { color: var(--ink); font-weight: 600; white-space: nowrap; }
 
-  .more { margin-top: 18px; font-size: 15px; font-weight: 600; }
+  .price-cap {
+    margin-top: 24px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .price-list { list-style: none; margin: 8px 0 0; padding: 0; border-top: 1px solid var(--line); }
+  .price-list li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 16px;
+    align-items: baseline;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 15px;
+  }
+  .price-list small { display: block; margin-top: 1px; font-size: 12.5px; color: var(--muted); }
+  .price-list b { font-weight: 600; white-space: nowrap; font-variant-numeric: lining-nums tabular-nums; }
+  .price-list .free { color: var(--good); }
 
-  /* География. Три города — карточками на линейках, а не облаком тегов
-     и не списком-реестром: реестр из трёх строк выглядит обрезанным
-     списком, будто остальные потерялись. Тонкие линейки — та же графика,
-     что у таблиц на «Стоимости». */
-  .geo-lead { max-width: 68ch; color: var(--muted); }
+  .price-odo {
+    margin-top: 20px;
+    padding: 15px 18px;
+    background: var(--paper-2);
+    border-left: 3px solid var(--acc);
+    border-radius: 0 var(--r-s) var(--r-s) 0;
+    font-size: 14.5px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+  .price-odo b { color: var(--ink); }
+  /* Оговорка под ценами: обязательна везде, где показаны суммы СРО. */
+  .fees-note { margin-top: 16px; max-width: 82ch; font-size: 13px; line-height: 1.6; color: var(--muted); }
+  .price-go { margin-top: 20px; }
+
+  @media (max-width: 599px) {
+    .price-tot li { padding: 16px 14px 14px; }
+    .pt-sum { font-size: 25px; }
+    .price-list li { font-size: 14.5px; }
+  }
+  /* Самый узкий телефон: «170 000 ₽» крупным кеглем в половину экрана
+     не входит — итоги встают друг под другом. */
+  @media (max-width: 359px) {
+    .price-tot { grid-template-columns: 1fr; }
+    .price-tot li + li { border-left: 0; border-top: 1px solid var(--line); }
+  }
+
+  /* ── Заявка ──
+     Одна колонка: шаги вступления стоят над формой отдельной секцией
+     и отвечают на вопрос «что будет, когда я нажму кнопку» до неё. */
+  .apply-one { max-width: 780px; }
+  .apply-direct {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 18px;
+    margin-top: 16px;
+    font-size: 14.5px;
+    color: var(--muted);
+  }
+  .apply-direct a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--ink);
+    font-weight: 600;
+    text-decoration: none;
+    /* Поле нажатия выше строки — как у ссылок в подвале. */
+    padding-block: 6px;
+    margin-block: -6px;
+  }
+  .apply-direct a:hover { color: var(--acc-deep); text-decoration: underline; }
+  /* Значки — те же круги, что на нижней панели; красный круг телефона —
+     цветом текста, сургучом. */
+  .apply-direct :global(svg) { flex: none; color: var(--acc-btn); }
+  .ad-phone { font-variant-numeric: lining-nums tabular-nums; }
+
+  /* ── Четыре шага ──
+     Раскладка — по образцу заказчика: крупная цифра и линия к следующему
+     шагу, в ряд. Линия — та же размерная линия с засечками, что делит
+     секции сайта (цитата из чертежа), а не декоративная полоска: шаги
+     и правда отмеряют путь от консультации до выписки. На телефоне шаги
+     встают столбиком, и линия там не нужна. */
+  .steps4 {
+    list-style: none;
+    margin: 8px 0 0;
+    padding: 0;
+    display: grid;
+    gap: 28px 30px;
+  }
+  @media (min-width: 900px) {
+    .steps4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
+  .steps4 li { display: grid; align-content: start; gap: 8px; }
+  .s4-head { display: flex; align-items: center; gap: 14px; margin-bottom: 6px; }
+  .s4-num {
+    font-family: var(--font-head);
+    font-size: 64px;
+    font-weight: 400;
+    line-height: 0.9;
+    color: var(--acc);
+    font-variant-numeric: lining-nums;
+  }
+  .s4-line { position: relative; flex: 1; height: 1px; background: var(--muted); opacity: 0.45; }
+  .s4-line::before,
+  .s4-line::after {
+    content: '';
+    position: absolute;
+    top: -5px;
+    width: 1px;
+    height: 11px;
+    background: inherit;
+  }
+  .s4-line::before { left: 0; }
+  .s4-line::after { right: 0; }
+  .steps4 li:last-child .s4-line { display: none; }
+  .steps4 h3 { margin: 0; font-size: 18px; }
+  .steps4 p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.6; max-width: 40ch; }
+  .steps4 .law { justify-self: start; margin-top: 4px; }
+  .s4-tel { font-weight: 600; white-space: nowrap; }
+  .s4-cta { margin-top: 34px; }
+  /* На телефоне цифра встаёт слева от текста, а не над ним: шаг занимает
+     вдвое меньше высоты, и форма заявки под шагами не уезжает вниз.
+     Линия к следующему шагу здесь не нужна — шаги и так идут столбиком. */
+  @media (max-width: 899px) {
+    .steps4 { gap: 22px; }
+    .steps4 li { grid-template-columns: 46px minmax(0, 1fr); column-gap: 14px; row-gap: 5px; }
+    .s4-head { grid-row: 1 / span 3; margin: 0; align-items: flex-start; }
+    .s4-line { display: none; }
+    .s4-num { font-size: 46px; }
+    .steps4 h3, .steps4 p, .steps4 .law { grid-column: 2; }
+  }
+
+  /* ── Три направления ──
+     Сразу под первым экраном: карточка целиком — ссылка на страницу услуги.
+     Значок вместо фотографии: у образца здесь стоковые краны и каски.
+     Секция на тёплом листе (section--paper): белые карточки на нём видны,
+     а размерная линия-разделитель не встаёт над тёмным калькулятором —
+     правило в global.css рисует её между двумя белыми секциями. */
+  .dirs-sec { padding-top: 34px; }
+  .dirs {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+    gap: 18px;
+  }
+  .dir-in {
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto auto 1fr auto auto;
+    gap: 12px;
+    padding: 24px 22px 20px;
+    background: var(--card, var(--paper));
+    border: 1px solid var(--line);
+    border-radius: var(--r-m);
+    color: inherit;
+    text-decoration: none;
+    transition: border-color var(--t-fast) var(--ease);
+  }
+  .dir-in:hover { border-color: var(--acc); }
+  .dir-in:focus-visible { outline: 2px solid var(--acc); outline-offset: 3px; }
+  .dir-ico { color: var(--acc); display: inline-flex; }
+  .dir-t { margin: 0; font-size: 22px; }
+  /* align-content: start — иначе строка сетки карточки растягивает список,
+     и два пункта у проектировщиков разъезжаются на всю высоту соседей. */
+  .dir-works { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; align-content: start; }
+  /* «Инженерно-гидрометеорологические» — одно слово шире узкой карточки
+     при крупном шрифте (режим «версия для ПК» на телефоне): без переноса
+     оно распирало страницу на 15 px, поймал test-widths. */
+  .dir-works li { display: grid; grid-template-columns: 15px minmax(0, 1fr); gap: 9px; align-items: start; font-size: 15px; line-height: 1.45; hyphens: auto; overflow-wrap: anywhere; }
+  .dir-works :global(svg) { margin-top: 3px; color: var(--good, var(--acc)); }
+  .dir-note { margin: 4px 0 0; padding-top: 12px; border-top: 1px solid var(--line); font-size: 14px; line-height: 1.55; color: var(--muted); }
+  .dir-go { display: inline-flex; align-items: center; gap: 6px; font-size: 14.5px; font-weight: 600; color: var(--acc-deep); }
+  .dir-in:hover .dir-go { text-decoration: underline; }
+  /* На телефоне виды работ идут строкой, а не столбиком: три карточки
+     подряд иначе занимали полтора экрана и отодвигали калькулятор. */
+  @media (max-width: 599px) {
+    .dirs { gap: 12px; }
+    .dir-in { padding: 18px 18px 16px; gap: 10px; }
+    .dir-t { font-size: 20px; }
+    .dir-works { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+    .dir-works li { display: inline-flex; gap: 6px; font-size: 14.5px; }
+    .dir-works :global(svg) { margin-top: 2px; flex: none; }
+    .dir-note { padding-top: 10px; }
+  }
+
+  /* ── Вопросы ──
+     Раскрываются плавно, без JavaScript: interpolate-size (в global.css)
+     разрешает браузеру анимировать переход к height: auto. Там, где браузер
+     этого не умеет, ответ просто появляется сразу. Все вопросы закрыты:
+     ответы длинные, а заказчик просил меньше текста на главной. */
+  .faq { display: grid; gap: 10px; max-width: 900px; }
+  .faq details {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--r-m);
+    overflow: hidden;
+    transition: border-color var(--t-mid) var(--ease);
+  }
+  .faq details:hover { border-color: color-mix(in srgb, var(--acc) 35%, var(--line)); }
+  .faq details[open] { border-color: color-mix(in srgb, var(--acc) 45%, var(--line)); }
+  .faq summary {
+    padding: 17px 22px;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    align-items: center;
+    transition: color var(--t-fast) var(--ease);
+  }
+  .faq summary:hover { color: var(--acc-deep); }
+  .faq summary::-webkit-details-marker { display: none; }
+  /* Знак «плюс» из двух линеек: при раскрытии вертикальная схлопывается,
+     знак доворачивается на пол-оборота — настоящий переход «плюс → минус». */
+  .faq summary::after {
+    content: '';
+    width: 14px;
+    height: 14px;
+    flex: none;
+    background-image:
+      linear-gradient(var(--acc-deep), var(--acc-deep)),
+      linear-gradient(var(--acc-deep), var(--acc-deep));
+    background-position: center, center;
+    background-repeat: no-repeat;
+    background-size: 14px 1.5px, 1.5px 14px;
+    transition:
+      background-size var(--t-mid) var(--ease),
+      transform var(--t-mid) var(--ease);
+  }
+  .faq details[open] summary::after {
+    background-size: 14px 1.5px, 1.5px 0;
+    transform: rotate(180deg);
+  }
+  .faq details::details-content {
+    height: 0;
+    overflow: hidden;
+    transition:
+      height var(--t-mid) var(--ease),
+      content-visibility var(--t-mid) allow-discrete;
+  }
+  .faq details[open]::details-content { height: auto; }
+  .faq .fa { padding: 0 22px 20px; }
+  .faq .fa p { color: var(--muted); font-size: 15.5px; max-width: 76ch; }
+
+  /* ── География ──
+     Три города — карточками на линейках, а не списком-реестром: реестр
+     из трёх строк выглядит обрезанным, будто остальные потерялись. */
   .geo-cards {
     list-style: none;
-    margin: 26px 0 0;
+    margin: 0;
     padding: 0;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-    gap: 0;
     border-top: 1px solid var(--line);
   }
   .geo-cards li { border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); }
@@ -502,392 +735,32 @@ const howToSchema = {
     letter-spacing: 0.04em;
     color: var(--acc-deep);
   }
-  .gc-go {
-    margin-top: 10px;
-    font-size: 13.5px;
-    font-weight: 600;
-    color: var(--acc-deep);
-  }
+  .gc-go { margin-top: 10px; font-size: 13.5px; font-weight: 600; color: var(--acc-deep); }
   .geo-cards a:hover .gc-go { text-decoration: underline; }
 
-  /* Строка для всех остальных регионов. Она заметная нарочно: раньше
-     на вопрос «а мой город?» отвечал список из тридцати трёх городов,
-     теперь отвечает только этот абзац, и потеряться ему нельзя. */
+  /* Рейка заголовка — сетка, и чип без этого растягивался во всю её ширину. */
+  #goroda .s-head .law { justify-self: start; }
+
   .geo-rest {
     margin-top: 22px;
-    padding: 18px 20px;
-    background: var(--paper-2);
+    padding: 16px 20px;
+    background: var(--card);
     border-left: 3px solid var(--acc);
     border-radius: 0 var(--r-s) var(--r-s) 0;
   }
   .geo-rest p { margin: 0; font-size: 15px; line-height: 1.65; color: var(--muted); }
   .geo-rest b { color: var(--ink); }
-  .geo-rest-more { margin-top: 10px !important; font-weight: 600; }
+  .geo-rest-more { margin-top: 8px !important; font-weight: 600; }
   .geo-rest-more a { color: var(--acc-deep); text-decoration: none; }
   .geo-rest-more a:hover { text-decoration: underline; }
 
   @media (max-width: 599px) {
     .geo-cards li { border-right: 0; }
-    .geo-cards a, .geo-cards li:not(:first-child) a { padding: 16px 0; }
-  }
-  .geo-cities {
-    list-style: none;
-    margin: 24px 0 0;
-    padding: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 0 26px;
-    border-top: 1px solid var(--line);
-  }
-  .geo-cities li { border-bottom: 1px solid var(--line); }
-  .geo-cities a {
-    display: block;
-    padding: 10px 2px;
-    font-size: 15px;
-    color: var(--ink);
-    text-decoration: none;
-  }
-  .geo-cities a:hover { color: var(--acc-deep); }
-
-  /* На телефоне список встаёт в две колонки и получается семнадцать строк.
-     Поэтому строки здесь ниже: 38 px вместо 40 — всё ещё больше нормы
-     в 24 px для попадания пальцем, но блок короче почти на экран. */
-  @media (max-width: 599px) {
-    .geo-cities { gap: 0 18px; }
-    .geo-cities a { padding: 8px 2px; font-size: 14.5px; }
+    .geo-cards a, .geo-cards li:not(:first-child) a { padding: 15px 0; }
   }
 
-  /* Стоимость-тизер: таблица разбивки плюс карточка-предупреждение о КФ ОДО.
-     Цвета тёмной таблицы — общие, в global.css. Здесь только то, чего
-     у обычной table.data нет: подпись под названием взноса и строка итога. */
-  .fees-tbl td.strong small {
-    display: block;
-    margin-top: 3px;
-    font-weight: 400;
-    font-size: 12.5px;
-    line-height: 1.4;
-    color: var(--on-dark-muted);
-  }
-  /* Названию взноса — половина ширины, суммам хватает четверти: они короткие.
-     По умолчанию колонки делились поровну, и «Предельный размер обязательств»
-     ломался на две строки рядом с «до 90 млн ₽» — строка вырастала вдвое
-     из-за пустоты справа. */
-  /* Только пока таблица — таблица. Ниже 600 px строка разворачивается
-     в карточку, ячейки становятся блоками, и заданная ширина зажимает
-     их в 46 % экрана: раздел вырос с 2,75 до 3,58 экрана телефона,
-     то есть правка «чтобы не переносилось» на компьютере сломала
-     ровно то, ради чего таблица и затевалась. */
-  @media (min-width: 600px) {
-    .fees-tbl th:first-child, .fees-tbl td:first-child { width: 46%; }
-    .fees-tbl th:not(:first-child), .fees-tbl td:not(:first-child) { width: 27%; }
-  }
-  .fees-tbl .tr-total td { border-top: 1px solid var(--dark-line); }
-  .fees-tbl td.tot { color: var(--acc-bright); font-weight: 600; font-size: 17px; }
-  .fees-tbl td { font-variant-numeric: lining-nums tabular-nums; }
-  /* Зелёный «0 ₽» на графите: обычный --good здесь не читается. */
-  .fees-tbl .free-v { color: var(--good-bright); }
-
-  @media (max-width: 599px) {
-    /* В карточке строки название взноса — заголовок, и подпись под ним
-       не должна тянуть карточку вверх: у первой ячейки свои отступы. */
-    .fees-tbl td.strong small { margin-top: 2px; }
-    .fees-tbl td.tot { font-size: 18px; }
-  }
-
-  /* Таблица и предупреждение про КФ ОДО — рядом, пока хватает ширины.
-     Когда карточка встала ПОД таблицу на всех экранах, раздел на компьютере
-     вырос с 1181 до 1479 px: выигрыш от таблицы съела пустота справа от неё.
-     Ниже 900 px они всё равно идут друг за другом, и это правильно:
-     таблица к этой ширине уже развернулась в карточки по строкам.
-     Отступ сверху — под ярлык «Идёте на торги»: он вынесен за верхний
-     край карточки на 40 px и без запаса налезал бы на соседа. */
-  .cost-split { display: grid; gap: 16px; align-items: start; }
-  .pcard--warn { margin-top: 56px; }
-  @media (min-width: 900px) {
-    .cost-split { grid-template-columns: minmax(0, 1.9fr) minmax(270px, 1fr); gap: 26px; }
-    .pcard--warn { margin-top: 44px; }
-  }
-
-  .pcard {
-    background: var(--card);
-    color: var(--ink);
-    border-radius: var(--r-l);
-    padding: 26px 24px 24px;
-    display: grid;
-    gap: 12px;
-    align-content: start;
-    /* Замер ширины карточки для правила ниже. Считаем в em, поэтому если
-       посетитель увеличил размер текста в браузере, карточка «сужается»
-       в этих единицах и строки перестраиваются, а не вылезают за край. */
-    container-type: inline-size;
-  }
-  .ptag {
-    justify-self: center;
-    margin-top: -40px;
-    background: var(--acc-btn);
-    color: #fff;
-    font-weight: 700;
-    font-size: 13.5px;
-    padding: 8px 20px;
-    border-radius: 999px;
-    text-align: center;
-  }
-  .ptag--warn { background: #B4231F; }
-  .pcard h3 { font-size: 19px; margin: 4px 0 0; text-align: center; }
-  .psub { font-size: 13.5px; color: var(--muted); text-align: center; margin-bottom: 6px; }
-  .pcard ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
-  .pcard li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: baseline; font-size: 15px; }
-  .pcard li span { display: grid; gap: 2px; }
-  .pcard li small { color: var(--muted); font-size: 12.5px; line-height: 1.4; }
-  .pcard li > b { font-variant-numeric: lining-nums tabular-nums; white-space: nowrap; font-size: 16px; }
-  .free-v { color: var(--good); }
-  .warn-v { color: #B4231F; font-weight: 600; font-size: 14px !important; }
-  .muted-v { color: var(--muted); font-weight: 500; font-size: 14px !important; }
-  .ptotal { border-top: 1px solid var(--line); padding-top: 14px; }
-  .ptotal > b { color: var(--acc-deep); font-size: 22px !important; }
-
-  /* Крупный текст: название и сумма встают друг под другом.
-     Иначе на узкой колонке длинное слово не помещается рядом с цифрой. */
-  @container (max-width: 13em) {
-    .pcard li { grid-template-columns: minmax(0, 1fr); gap: 2px; }
-    .pcard li > b { justify-self: start; }
-  }
-  .pnote { font-size: 13.5px; color: var(--muted); line-height: 1.55; }
-  .pcard .btn { justify-self: stretch; margin-top: 4px; }
-  .pcard--warn { background: var(--dark-2); color: var(--on-dark); }
-  .pcard--warn h3 { color: #fff; }
-  .pcard--warn .psub, .pcard--warn li small, .pcard--warn .pnote { color: var(--on-dark-muted); }
-  .pcard--warn li > b { color: #fff; }
-
-  .cost-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
-  .cost-card {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--dark-line);
-    border-radius: var(--r-l);
-    padding: 22px;
-    display: grid;
-    gap: 10px;
-    align-content: start;
-  }
-  .cost-card--accent { border-color: color-mix(in srgb, var(--acc-bright) 45%, transparent); background: color-mix(in srgb, var(--acc-bright) 7%, transparent); }
-  .cc-ic {
-    width: 38px; height: 38px;
-    border-radius: var(--r-s);
-    background: color-mix(in srgb, var(--acc-bright) 15%, transparent);
-    color: var(--acc-bright);
-    display: grid; place-items: center;
-  }
-  .cost-card h3 { color: #fff; font-size: 16.5px; }
-  .cost-card p { color: var(--on-dark-muted); font-size: 14.5px; }
-  .cost-card p b { color: #fff; }
-  .cost-card .law { justify-self: start; }
-  .cost-cta { display: flex; align-items: center; gap: 16px 22px; flex-wrap: wrap; margin-top: 22px; }
-  .cost-cta span { color: var(--on-dark-muted); font-size: 14px; }
-  .cost-cta-more {
-    color: var(--acc-bright);
-    font-weight: 600;
-    font-size: 15px;
-    text-decoration: none;
-    /* Поле промаха: строка 20 px, норма попадания пальцем — 24. */
-    padding: 6px 0;
-  }
-  .cost-cta-more:hover { text-decoration: underline; }
-
-  /* Шаги */
-  .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
-  .steps li { display: grid; grid-template-columns: 50px 1fr; gap: 20px; align-items: start; }
-  .sn {
-    width: 44px; height: 44px;
-    border-radius: 50%;
-    background: var(--card);
-    border: 2px solid var(--acc-soft);
-    color: var(--acc-deep);
-    font-family: var(--font-head);
-    font-weight: 800;
-    font-size: 17px;
-    display: grid; place-items: center;
-    position: relative;
-    z-index: 1;
-  }
-  /* Первый шаг залит акцентом — глаз сразу находит начало ленты */
-  .steps li:first-child .sn { background: var(--acc-btn); border-color: var(--acc-btn); color: #fff; }
-  .steps li:not(:last-child) .sn::after {
-    content: '';
-    position: absolute;
-    top: 46px; bottom: -30px;
-    left: 50%;
-    width: 2px;
-    margin-left: -1px;
-    background: var(--line);
-    z-index: 0;
-  }
-  .sc { padding-bottom: 26px; }
-  .sc-top { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 6px; }
-  .sc-top h3 { font-size: 18px; }
-  .stime {
-    font-family: var(--font-mono);
-    font-size: 12px;
-    color: var(--acc-deep);
-    background: var(--acc-soft);
-    padding: 2px 9px;
-    border-radius: 6px;
-    white-space: nowrap;
-  }
-  .sc p { color: var(--muted); font-size: 15.5px; max-width: 74ch; }
-  /* Подпись «чьё время» намеренно тише срока: срок — цифра, которую ищут,
-     а подпись объясняет, почему цифры не складываются в одну очередь. */
-  .swho {
-    font-family: var(--font-mono);
-    font-size: 11.5px;
-    letter-spacing: 0.04em;
-    color: var(--muted);
-    white-space: nowrap;
-  }
-  .steps-total {
-    margin-top: 26px;
-    padding-top: 20px;
-    border-top: 1px solid var(--line);
-    color: var(--muted);
-    font-size: 15.5px;
-    max-width: 74ch;
-  }
-  .steps-total b { color: var(--ink); }
-
-  /* Статьи */
-  .go { display: inline-flex; align-items: center; gap: 6px; font-size: 14.5px; font-weight: 600; color: var(--acc-deep); }
-
-  /* Оговорка под ценами: обязательна везде, где показаны суммы СРО. */
-  .fees-note {
-    margin-top: 26px;
-    max-width: 82ch;
-    font-size: 13.5px;
-    line-height: 1.6;
-    color: var(--on-dark-muted);
-  }
-
-  /* FAQ.
-     Раскрывается плавно, без JavaScript: interpolate-size разрешает браузеру
-     анимировать переход к height: auto, который раньше был неанимируемым.
-     Там, где браузер этого не умеет (пока это Safari), ответ просто
-     появляется сразу — как и было. Ключевое слово allow-discrete нужно,
-     чтобы вместе с высотой доехала и прозрачность: без него содержимое
-     мигает в первом же кадре. */
-  .faq { display: grid; gap: 10px; max-width: 900px; }
-  .faq details {
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: var(--r-m);
-    overflow: hidden;
-    transition: border-color var(--t-mid) var(--ease);
-  }
-  .faq details:hover { border-color: color-mix(in srgb, var(--acc) 35%, var(--line)); }
-  .faq details[open] { border-color: color-mix(in srgb, var(--acc) 45%, var(--line)); }
-  .faq summary {
-    padding: 18px 22px;
-    font-weight: 600;
-    font-size: 16px;
-    cursor: pointer;
-    list-style: none;
-    display: flex;
-    justify-content: space-between;
-    gap: 14px;
-    align-items: center;
-    transition: color var(--t-fast) var(--ease);
-  }
-  .faq summary:hover { color: var(--acc-deep); }
-  .faq summary::-webkit-details-marker { display: none; }
-  /* Знак «плюс» из двух линеек. При раскрытии вертикальная линейка
-     схлопывается по высоте, а знак доворачивается на пол-оборота —
-     получается настоящий переход «плюс → минус», а не подмена одного
-     символа другим рывком. Схлопывание делается анимацией background-size:
-     у фоновых слоёв размер анимируется независимо. */
-  .faq summary::after {
-    content: '';
-    width: 14px;
-    height: 14px;
-    flex: none;
-    background-image:
-      linear-gradient(var(--acc-deep), var(--acc-deep)),
-      linear-gradient(var(--acc-deep), var(--acc-deep));
-    background-position: center, center;
-    background-repeat: no-repeat;
-    background-size: 14px 1.5px, 1.5px 14px;
-    transition:
-      background-size var(--t-mid) var(--ease),
-      transform var(--t-mid) var(--ease);
-  }
-  .faq details[open] summary::after {
-    background-size: 14px 1.5px, 1.5px 0;
-    transform: rotate(180deg);
-  }
-
-  /* Ответ выезжает плавно и без единой строки JavaScript.
-     ::details-content — это само содержимое <details>, к которому раньше
-     нельзя было обратиться из стилей; вместе с interpolate-size (задан
-     в global.css на :root) браузер умеет анимировать переход к height: auto,
-     который десятилетиями был неанимируемым. Где этого ещё нет (Safari),
-     ответ просто раскрывается сразу — как и раньше. */
-  .faq details::details-content {
-    height: 0;
-    overflow: hidden;
-    transition:
-      height var(--t-mid) var(--ease),
-      content-visibility var(--t-mid) allow-discrete;
-  }
-  .faq details[open]::details-content { height: auto; }
-
-  .faq .fa { padding: 0 22px 20px; }
-  .faq .fa p { color: var(--muted); font-size: 15.5px; max-width: 76ch; }
-
-  /* Контакты */
-  .contacts-cta { background: var(--paper); }
-  .cc-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; align-items: start; }
-  .side {
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: var(--r-l);
-    padding: 26px;
-    display: grid;
-    gap: 12px;
-    align-content: start;
-  }
-  .side h3 { font-size: 17px; }
-  .big-phone {
-    font-family: var(--font-mono);
-    font-size: clamp(22px, 3vw, 28px);
-    font-weight: 500;
-    color: var(--ink);
-    text-decoration: none;
-    line-height: 1.2;
-  }
-  .big-phone:hover { color: var(--acc-deep); }
-  .mail { color: var(--muted); text-decoration: none; font-size: 15px; }
-  .mail:hover { color: var(--acc-deep); }
-  .msg-list { display: grid; gap: 8px; }
-  .msg-list a {
-    display: inline-flex;
-    align-items: center;
-    gap: 9px;
-    color: var(--ink);
-    text-decoration: none;
-    font-size: 15px;
-    padding: 9px 12px;
-    border: 1px solid var(--line);
-    border-radius: var(--r-s);
-  }
-  .msg-list a:hover { border-color: var(--acc-btn); color: var(--acc-deep); }
-  .msg-list svg { color: var(--acc-deep); }
-  .side-note { font-size: 13.5px; color: var(--muted); line-height: 1.55; }
-  .checked { border-top: 1px solid var(--line); padding-top: 14px; display: grid; gap: 8px; justify-items: start; }
-  .checked p { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
-
-  @media (max-width: 900px) {
-    .cc-grid { grid-template-columns: 1fr; }
-  }
   @media (max-width: 640px) {
-    .cost-cta .btn { width: 100%; }
-    .steps li { grid-template-columns: 40px 1fr; gap: 14px; }
-    .sn { width: 36px; height: 36px; font-size: 15px; }
-    .steps li:not(:last-child) .sn::after { top: 38px; }
+    .price-go { width: 100%; }
+    .s4-cta .btn { width: 100%; }
   }
 </style>

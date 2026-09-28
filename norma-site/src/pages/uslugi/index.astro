@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro'
 import Icon from '../../components/Icon.astro'
+import DirIcon from '../../components/DirIcon.astro'
 import LeadForm from '../../components/LeadForm.astro'
 import HeadPhoto from '../../components/HeadPhoto.astro'
 import { byGroup, SERVICES } from '../../config/services'
@@ -63,7 +64,9 @@ const servicesList = {
         <div class="grid-3">
           {sro.map((s) => (
             <a class="card srv" href={href(`/uslugi/${s.slug}/`)}>
-              <span class="ic"><Icon name={s.icon} size={20} /></span>
+              {s.dirIcon
+                ? <span class="dic"><DirIcon name={s.dirIcon} /></span>
+                : <span class="ic"><Icon name={s.icon} size={20} /></span>}
               <h3>{s.title}</h3>
               <p>{s.excerpt}</p>
               <span class="go">Подробнее <Icon name="arrow" size={15} /></span>
@@ -83,7 +86,9 @@ const servicesList = {
         <div class="grid-3">
           {people.map((s) => (
             <a class="card srv" href={href(`/uslugi/${s.slug}/`)}>
-              <span class="ic"><Icon name={s.icon} size={20} /></span>
+              {s.dirIcon
+                ? <span class="dic"><DirIcon name={s.dirIcon} /></span>
+                : <span class="ic"><Icon name={s.icon} size={20} /></span>}
               <h3>{s.title}</h3>
               <p>{s.excerpt}</p>
               <span class="go">Подробнее <Icon name="arrow" size={15} /></span>
@@ -104,7 +109,9 @@ const servicesList = {
         <div class="grid-3">
           {safety.map((s) => (
             <a class="card srv" href={href(`/uslugi/${s.slug}/`)}>
-              <span class="ic"><Icon name={s.icon} size={20} /></span>
+              {s.dirIcon
+                ? <span class="dic"><DirIcon name={s.dirIcon} /></span>
+                : <span class="ic"><Icon name={s.icon} size={20} /></span>}
               <h3>{s.title}</h3>
               <p>{s.excerpt}</p>
               <span class="go">Подробнее <Icon name="arrow" size={15} /></span>
@@ -124,7 +131,9 @@ const servicesList = {
         <div class="grid-3">
           {marketing.map((s) => (
             <a class="card srv" href={href(`/uslugi/${s.slug}/`)}>
-              <span class="ic"><Icon name={s.icon} size={20} /></span>
+              {s.dirIcon
+                ? <span class="dic"><DirIcon name={s.dirIcon} /></span>
+                : <span class="ic"><Icon name={s.icon} size={20} /></span>}
               <h3>{s.title}</h3>
               <p>{s.excerpt}</p>
               <span class="go">Подробнее <Icon name="arrow" size={15} /></span>
@@ -160,6 +169,7 @@ const servicesList = {
   <section class="section">
     <div class="wrap narrow">
       <LeadForm
+        expanded
         title="Не знаете, что именно вам нужно?"
         subtitle="Опишите работы и договоры — разберу и назову только то, что действительно требуется по закону."
       />
@@ -183,6 +193,10 @@ const servicesList = {
   .srv { display: grid; gap: 10px; align-content: start; }
   .srv h3 { font-size: 18px; margin: 0; }
   .ic { width: 40px; height: 40px; border-radius: var(--r-s); background: var(--acc-soft); color: var(--acc-deep); display: grid; place-items: center; }
+  /* Значки трёх видов СРО — присланные заказчиком, те же, что на главной
+     (поле dirIcon в services.ts). Без подложки: это рисунок, а не пиктограмма,
+     и в квадрат 40 px он не влезает читаемым. */
+  .dic { color: var(--acc); display: inline-flex; }
   .go { display: inline-flex; align-items: center; gap: 6px; font-size: 14.5px; font-weight: 600; color: var(--acc-deep); }
 
   .honest { display: grid; grid-template-columns: 52px 1fr; gap: 20px; align-items: start; }

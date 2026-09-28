@@ -1,0 +1,239 @@
+---
+import Base from '../layouts/Base.astro'
+import LeadForm from '../components/LeadForm.astro'
+import HeadPhoto from '../components/HeadPhoto.astro'
+import PartnerCards from '../components/PartnerCards.astro'
+import PartnerDiffNote from '../components/PartnerDiffNote.astro'
+import { PARTNERS, PARTNERS_NOTE, partnerKind, partnersOf } from '../config/partners'
+import { anyDiffers } from '../lib/partner-terms'
+import { REGIONS } from '../config/regions'
+import { LAW } from '../config/facts'
+import { FEES_NOTE } from '../config/fees'
+import { href, REGISTRIES } from '../config/site'
+
+// Страница «Партнёрские СРО»: все организации, куда вступают клиенты,
+// одним списком (28.09.2026).
+//
+// ОТКУДА ИДЕЯ. Заказчик прислал сайт конкурента (сро.онлайн, «МРЦС»)
+// с просьбой взять оттуда полезное. У них партнёры вынесены на свою
+// страницу, а здесь были разложены по трём городским, и «Обо мне» вела
+// только к петербургскому списку — московские и ростовские организации
+// оказывались в двух переходах. Взята идея, не текст и не их утверждения:
+// «более 10 лет», «700 членов», «высококлассные специалисты» здесь
+// не повторены — проверить их нельзя, а сайт держится на том, что можно.
+//
+// ЧТО ЗДЕСЬ СВОЁ. Карточки те же, что на городских страницах
+// (PartnerCards.astro), и npm run facts разбирает их здесь так же построчно.
+// Все числа — из partners.ts: сколько организаций, сколько городов, сколько
+// каких видов. Написанное словами «восемь» разошлось бы со списком при первой
+// же новой СРО.
+//
+// ЧЕГО ЗДЕСЬ НЕТ. Печати «Сверено с законом»: список — условия конкретных
+// организаций, а не нормы закона. Чип со статьёй стоит только у того,
+// что написано в кодексе: региональный принцип и компенсационные фонды.
+
+const published = PARTNERS.filter((p) => p.reg)
+
+// Города по алфавиту: любой другой порядок пришлось бы обосновывать рейтингом.
+const cities = REGIONS.map((r) => ({ r, list: partnersOf(r.slug) }))
+  .filter((c) => c.list.length > 0)
+  .sort((a, b) => a.r.city.localeCompare(b.r.city, 'ru'))
+
+const plural = (n: number, [one, few, many]: [string, string, string]) => {
+  const m10 = n % 10
+  const m100 = n % 100
+  if (m10 === 1 && m100 !== 11) return one
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few
+  return many
+}
+
+const n = published.length
+const kinds = { build: 0, design: 0, survey: 0 }
+for (const p of published) kinds[partnerKind(p.reg)]++
+const kindLine = [
+  kinds.build && `${kinds.build} ${plural(kinds.build, ['строительная', 'строительные', 'строительных'])}`,
+  kinds.design && `${kinds.design} ${plural(kinds.design, ['проектная', 'проектные', 'проектных'])}`,
+  kinds.survey && `${kinds.survey} ${plural(kinds.survey, ['изыскательская', 'изыскательские', 'изыскательских'])}`,
+].filter(Boolean).join(', ')
+const cityWord = `${cities.length} ${plural(cities.length, ['городе', 'городах', 'городах'])}`
+const orgWord = `${n} ${plural(n, ['организация', 'организации', 'организаций'])}`
+---
+
+<Base
+  title="Партнёрские СРО: список с номерами в реестре | НОРМА"
+  description="СРО, куда вступают мои клиенты: строительные, проектные и изыскательские. У каждой — регистрационный номер для проверки в государственном реестре и условия вступления."
+  breadcrumbs={[{ label: 'Главная', url: href('/') }, { label: 'Партнёрские СРО' }]}
+>
+  <section class="section page-head">
+    <HeadPhoto src="office.webp" position="12% 58%" />
+    <div class="wrap">
+      <span class="eyebrow">С кем я работаю</span>
+      <h1>СРО, куда <em>вступают мои клиенты</em></h1>
+      <p class="lead">
+        Не «подберём что-нибудь подходящее», а список с регистрационными номерами.
+        Каждый номер открывается в государственном реестре: там видно, действует ли
+        организация, где она зарегистрирована и кто в ней
+        состоит. <b>Проверьте до того, как что-то подписывать.</b>
+      </p>
+    </div>
+  </section>
+
+  <!-- Кому какая подходит: без этого список читается как «выбирайте любую»,
+       а строителю закон разрешает только СРО своего субъекта. -->
+  <section class="section">
+    <div class="wrap">
+      <div class="s-head rv">
+        <span class="eyebrow">Прежде чем выбирать</span>
+        <h2>Кому какая <em>подходит</em></h2>
+      </div>
+      <div class="fit rv">
+        <div class="card fit-card">
+          <h3>Строителям — СРО своего субъекта</h3>
+          <p>
+            Строительная СРО должна быть зарегистрирована в том же субъекте РФ, что и компания:
+            у ООО это юридический адрес, у предпринимателя — место жительства. Поэтому строителю
+            из этого списка подходят организации его субъекта. Исключения есть, но узкие —
+            они в разборе по ссылке.
+          </p>
+          <p class="fit-law"><span class="law">{LAW.membership}</span></p>
+          <a class="fit-more" href={href('/baza-znaniy/regionalnyy-princip/')}>Региональный принцип — подробно</a>
+        </div>
+        <div class="card fit-card">
+          <h3>Проектировщикам и изыскателям — любая</h3>
+          <p>
+            Региональной привязки у них нет: проектная или изыскательская СРО из списка подойдёт
+            компании из любого региона. Ехать никуда не нужно — документы подаются электронно.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--dark" id="spisok" data-anchor>
+    <div class="wrap">
+      <div class="s-head rv">
+        <span class="eyebrow">Список</span>
+        <h2>{orgWord} в {cityWord}</h2>
+        <p>{kindLine}. Города — по алфавиту.</p>
+      </div>
+
+      {cities.map(({ r, list }) => (
+        <div class="city">
+          <h3 class="city-name rv">{r.city}</h3>
+          <p class="city-note rv">{PARTNERS_NOTE[r.slug]}</p>
+          <PartnerCards partners={list} explain={false} />
+          <p class="city-link rv">
+            <a href={href(`/sro/${r.slug}/`)}>Вступление в СРО: {r.city} — субъект, соседи и частые ошибки</a>
+          </p>
+        </div>
+      ))}
+
+      {anyDiffers(published) && <PartnerDiffNote />}
+
+      <p class="pc-law rv">
+        Компенсационный фонд в карточки не входит: его размеры установлены законом,
+        одинаковы у всех СРО страны и зависят только от уровня ответственности.
+        <span class="law law--dark">{LAW.funds}</span>
+      </p>
+      <p class="pc-fees-note rv">{FEES_NOTE}</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="two rv">
+        <div>
+          <h2 class="h-small">Вашего региона <em>нет в списке</em>?</h2>
+          <p>
+            Это не отказ. Строительную СРО вашего субъекта подбираю отдельно и называю её
+            с регистрационным номером до того, как вы что-то подпишете. Проектировщику
+            и изыскателю подходят организации из этого списка — откуда бы ни была компания.
+          </p>
+          <a class="more" href={href('/sro/')}>Как я работаю с остальными регионами</a>
+        </div>
+        <div>
+          <h2 class="h-small">Как проверить <em>номер</em></h2>
+          <p>
+            Строительные СРО — в реестре НОСТРОЙ, проектные и изыскательские — в реестре НОПРИЗ.
+            Номер вводится в поиск, регистрации не нужно, всё бесплатно.
+          </p>
+          <p class="reg-links">
+            <a href={REGISTRIES.nostroy} target="_blank" rel="noopener noreferrer">reestr.nostroy.ru</a>
+            <a href={REGISTRIES.nopriz} target="_blank" rel="noopener noreferrer">nopriz.ru</a>
+          </p>
+          <a class="more" href={href('/proverit-sro/')}>Что ещё смотреть в реестре</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--paper" id="zayavka" data-anchor>
+    <div class="wrap narrow">
+      <LeadForm
+        expanded
+        title="Подскажу, какая СРО подходит вам"
+        subtitle="Напишите вид работ и регион — назову организацию из списка или подберу в вашем субъекте, с условиями и номером в реестре. Если СРО вам не нужна, так и скажу."
+      />
+    </div>
+  </section>
+</Base>
+
+<style>
+  .fit {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+    gap: 18px;
+  }
+  .fit-card { display: grid; gap: 10px; align-content: start; }
+  .fit-card h3 { margin: 0; font-size: 20px; }
+  .fit-card p { margin: 0; color: var(--muted); line-height: 1.65; }
+  .fit-law { margin-top: 2px; }
+  .fit-more,
+  .more {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 5px 0;
+    font-weight: 600;
+    color: var(--acc-deep);
+  }
+
+  .city + .city { margin-top: 44px; }
+  .city-name {
+    margin: 0 0 8px;
+    font-size: 26px;
+    color: var(--on-dark);
+  }
+  .city-note {
+    max-width: 74ch;
+    margin: 0 0 18px;
+    font-size: 15.5px;
+    line-height: 1.65;
+    color: var(--on-dark);
+  }
+  .city-link { margin: 14px 0 0; font-size: 15px; }
+  .city-link a { color: var(--acc-bright); font-weight: 600; }
+
+  .pc-law,
+  .pc-fees-note {
+    max-width: 74ch;
+    line-height: 1.65;
+  }
+  .pc-law { margin-top: 22px; font-size: 14.5px; color: var(--on-dark-muted); }
+  .pc-law .law { margin-left: 8px; vertical-align: middle; }
+  .pc-fees-note { margin-top: 10px; font-size: 14px; color: var(--on-dark-muted); }
+
+  .two {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr));
+    gap: 34px 48px;
+  }
+  .two p { margin: 10px 0 0; color: var(--muted); line-height: 1.65; max-width: 60ch; }
+  .h-small { margin: 0; font-size: clamp(22px, 2.4vw, 28px); }
+  .reg-links { display: flex; flex-wrap: wrap; gap: 8px 18px; }
+  .reg-links a {
+    font-family: var(--font-mono);
+    font-size: 15px;
+    color: var(--acc-deep);
+    padding: 4px 0;
+  }
+</style>

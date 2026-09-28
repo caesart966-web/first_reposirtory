@@ -52,6 +52,7 @@ const HEADS = [
   '/politika/',
   '/kontakty/',
   '/obo-mne/',
+  '/partnery/',
   '/poisk/',
   // Города со своими фотографиями. Шапка города рисует кадр, только если
   // файл действительно лежит в public/img/ — города без файла проверка
@@ -81,7 +82,9 @@ const TARGETS = [
     photo: '.hero .photo',
     // Что прячем, чтобы не мешало замеру: собственные подложки и рисунки.
     hide: '.hero .hero-offer, .hero .cta, .hero svg, .hero .law',
-    texts: ['.geo', '.page-title', '.hero-lead', '.note', '.verify p', '.stat .v', '.stat .d'],
+    // .direct — строка «Или напишите напрямую» с мессенджерами. На телефоне
+    // её нет (там каналы в нижней панели), и замер там пропускается сам.
+    texts: ['.geo', '.page-title', '.hero-lead', '.note span', '.direct span', '.direct a', '.verify p'],
   },
   ...HEADS.map((url) => ({
     url,

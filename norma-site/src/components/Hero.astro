@@ -1,7 +1,7 @@
 ---
 import { SITE, href } from '../config/site'
-import { LAW, TERMS } from '../config/facts'
 import Icon from './Icon.astro'
+import BrandIcon from './BrandIcon.astro'
 import Seal from './Seal.astro'
 import { OFFER } from '../config/offer'
 
@@ -27,16 +27,15 @@ import { OFFER } from '../config/offer'
 // Всё это весит несколько килобайт разметки вместо восьмисот килобайт
 // видео и рисуется мгновенно.
 //
-// Числа внизу набраны как строка сметы: подпись капсом, значение крупно,
-// у двух — чип со статьёй закона. С первого экрана видно, что цифры
-// на сайте не с потолка.
-
-const stats = [
-  { v: TERMS.extract, d: `от подачи документов до выписки из реестра; когда горит — бывает и ${TERMS.extractRush}` },
-  { v: '0 ₽', d: 'подготовка документов и сопровождение — мои услуги' },
-  { v: '10', unit: 'млн ₽', d: 'порог, с которого строителю нужно членство', law: LAW.build },
-  { v: '≤ 2', unit: 'мес.', d: 'срок рассмотрения по закону; с готовыми документами — дни', law: LAW.term },
-]
+// Строки чисел под первым экраном больше нет. Четыре числа в ней
+// повторяли соседей: «2–3 дня» стоят в плашке над заголовком, «0 ₽» —
+// первой строкой карточки условий, порог 10 млн ₽ спрашивает калькулятор,
+// срок по закону называют вопросы. Заказчик сказал, что первый экран
+// перегружен, — начали с того, что говорилось дважды.
+//
+// На телефоне главная кнопка теперь «Оставить заявку», а не калькулятор:
+// калькулятор стоит сразу под первым экраном и виден при первой же
+// прокрутке, а форма раньше начиналась на двадцать первом экране.
 ---
 
 <section class="hero">
@@ -105,30 +104,62 @@ const stats = [
 
       <p class="hero-lead">
         Строителям, проектировщикам и изыскателям — по всей России.
-        Скажу сразу, нужно ли вам членство, и покажу норму, на которой
-        это основано. Если не нужно — так и скажу, до оплаты.
+        Если членство вам не нужно, скажу об этом до оплаты и покажу норму.
       </p>
 
+      {/* Кнопки разные на телефоне и с 768 px, и это не прихоть.
+          С 768 px в шапке стоит красная «Оставить заявку», и первый экран
+          ведёт к калькулятору: две одинаковые красные кнопки с одинаковой
+          надписью в поле зрения разом уже были и убраны (Header.astro).
+          На телефоне кнопки в шапке нет — она не помещается, — и до формы
+          было не добраться иначе как прокруткой или через меню. Поэтому
+          здесь первой стоит заявка, а калькулятор — второй. */}
       <div class="cta">
-        <a class="btn btn--acc btn--lg" href="#calc">Проверить, нужна ли СРО</a>
-        <a class="btn btn--ghost btn--lg" href={href('/stoimost/')}>Узнать стоимость</a>
+        <a class="btn btn--acc btn--lg on-phone" href="#zayavka">Оставить заявку</a>
+        <a class="btn btn--ghost btn--lg on-phone" href="#calc">Проверить, нужна ли СРО</a>
+        <a class="btn btn--acc btn--lg on-wide" href="#calc">Проверить, нужна ли СРО</a>
+        <a class="btn btn--ghost btn--lg on-wide" href={href('/stoimost/')}>Узнать стоимость</a>
       </div>
-      <p class="note">2 минуты · 4 вопроса · ответ со ссылкой на закон</p>
+      <p class="note">
+        <span class="on-phone">Достаточно имени и телефона · отвечаю лично</span>
+        <span class="on-wide">2 минуты · 4 вопроса · ответ со ссылкой на закон</span>
+      </p>
 
+      {/* Прямые каналы — в первом экране, а не только на «Контактах»
+          и в подвале: кто уже решил, тому калькулятор не нужен, ему нужно
+          написать. На телефоне строки нет — там те же кнопки стоят
+          в нижней панели постоянно. */}
+      <p class="direct">
+        <span>Или напишите напрямую:</span>
+        <a href={SITE.whatsapp} target="_blank" rel="noopener noreferrer" data-goal="click_whatsapp">
+          <BrandIcon name="whatsapp" size={18} idp="hero" /> WhatsApp
+        </a>
+        <a href={SITE.telegram} target="_blank" rel="noopener noreferrer" data-goal="click_telegram">
+          <BrandIcon name="telegram" size={18} idp="hero" /> Telegram
+        </a>
+        {SITE.maxLink && (
+          <a href={SITE.maxLink} target="_blank" rel="noopener noreferrer" data-goal="click_max">
+            <BrandIcon name="max" size={18} idp="hero" /> MAX
+          </a>
+        )}
+      </p>
     </div>
 
     {/* Главное предложение сайта. Оформлено как бланк: тонкая рамка,
         подпись капсом сверху, печать в углу. На компьютере занимает
         правую колонку, на телефоне встаёт под кнопками. */}
     <aside class="hero-offer rv">
-      <span class="ho-tag">Условия, которых нет больше нигде</span>
+      <span class="ho-tag">Условия вступления</span>
       <p class="ho-title">Первый год — <b>только обязательные взносы</b></p>
       <ul class="ho-list">
         {OFFER.map((p) => (
           <li><Icon name="check" size={15} /> {p.short}</li>
         ))}
       </ul>
-      <a class="ho-go" href={href('/#predlozhenie')}>
+      {/* Разбор пяти условий по пунктам живёт на «Стоимости»: на главной
+          он занимал два с половиной экрана телефона и повторял эту же
+          карточку — теми же пятью пунктами, только длиннее. */}
+      <a class="ho-go" href={href('/stoimost/#predlozhenie')}>
         Все пять условий <Icon name="arrow" size={15} />
       </a>
     </aside>
@@ -143,28 +174,13 @@ const stats = [
         должно попасться на глаза цветное. */}
     <div class="verify rv">
       <span class="v-seal"><Seal size={104} /></span>
+      {/* «Нормы», а не «все цифры»: взносы СРО законом не установлены,
+          статьи у них нет и быть не должно (config/fees.ts). */}
       <p>
-        Все цифры на сайте сверены с действующей редакцией
-        Градостроительного кодекса, и рядом с каждой стоит статья.
-        Дату сверки видно на печати — врать ею нельзя.
+        Нормы закона на сайте сверены с Градостроительным кодексом,
+        у каждой — статья. Дата сверки — на печати.
       </p>
     </div>
-  </div>
-
-  <div class="wrap">
-    <ul class="stats">
-      {stats.map((s) => (
-        <li class="stat rv">
-          {/* Пробел ставится явно: Astro съедает пробел перед строчным тегом,
-              и число слипалось с единицей — «10млн ₽». Отступом в стилях это
-              не лечится: при копировании текста и в программе чтения с экрана
-              пробела всё равно бы не было. */}
-          <span class="v">{s.unit ? <>{s.v}{' '}<em>{s.unit}</em></> : s.v}</span>
-          <span class="d">{s.d}</span>
-          {s.law && <span class="law">{s.law}</span>}
-        </li>
-      ))}
-    </ul>
   </div>
 </section>
 
@@ -322,6 +338,22 @@ const stats = [
         linear-gradient(180deg, transparent 0%, #000 10%, #000 40%, transparent 74%);
     }
   }
+  /* Телефон. Заголовок здесь теперь в две строки, а не в четыре, и абзац
+     поднялся примерно на 130 px — прямо в полосу, где кадр виден целиком:
+     2.31:1 при норме 4.5, поймал scripts/test-hero-photo.mjs. Слой стал
+     короче и гаснет раньше, чем начинается абзац: фотография остаётся
+     за плашкой и заголовком, как и задумано. */
+  @media (max-width: 560px) {
+    .photo {
+      height: 250px;
+      mask-image:
+        linear-gradient(90deg, transparent 0%, transparent 22%, rgba(0, 0, 0, 0.4) 52%, #000 82%),
+        linear-gradient(180deg, transparent 0%, #000 12%, #000 40%, transparent 60%);
+      -webkit-mask-image:
+        linear-gradient(90deg, transparent 0%, transparent 22%, rgba(0, 0, 0, 0.4) 52%, #000 82%),
+        linear-gradient(180deg, transparent 0%, #000 12%, #000 40%, transparent 60%);
+    }
+  }
 
   /* ── Чертёж ──
      Стоит справа и намеренно уходит за край экрана: рисунок должен
@@ -445,8 +477,60 @@ const stats = [
     margin-top: 22px;
   }
   .cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 30px; }
+  /* Порог тот же, что у кнопки в шапке (Header.astro, 768 px). */
+  @media (min-width: 768px) { .on-phone { display: none !important; } }
+  @media (max-width: 767px) { .on-wide { display: none !important; } }
   .btn--lg { padding: 16px 28px; font-size: 16px; min-height: 54px; }
   .note { font-size: 13px; color: var(--muted); margin-top: 15px; }
+
+  .direct {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 18px;
+    margin-top: 20px;
+    font-size: 14.5px;
+    color: var(--muted);
+  }
+  .direct a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--ink);
+    font-weight: 600;
+    text-decoration: none;
+    /* Поле нажатия выше строки — как у ссылок в подвале. */
+    padding-block: 6px;
+    margin-block: -6px;
+    transition: color var(--t-fast) var(--ease);
+  }
+  .direct a:hover { color: var(--acc-deep); text-decoration: underline; }
+  /* Значки те же, что на нижней панели телефона (BrandIcon.astro): одинаковые
+     круги в фирменных цветах. Здесь стояли тонкие красные — разнобой
+     с панелью. */
+  .direct :global(svg) { flex: none; }
+  @media (max-width: 767px) {
+    .direct { display: none; }
+  }
+
+  /* Телефон: первый экран плотнее. На 390×844 заголовок шёл в четыре
+     строки, подпись под ним — в пять, и карточка с условиями «0 ₽»
+     начиналась ниже края экрана. Теперь без прокрутки видно и обе
+     кнопки, и заголовок карточки с первыми условиями. */
+  @media (max-width: 560px) {
+    .hero { padding-top: 22px; }
+    .hero-in { gap: 24px; padding-bottom: 34px; }
+    .geo { font-size: 12.5px; margin-bottom: 14px; padding: 4px 11px; }
+    .page-title { font-size: clamp(28px, 7.9vw, 34px); max-width: none; }
+    .hero-lead { font-size: 15.5px; line-height: 1.55; margin-top: 12px; }
+    .cta { margin-top: 20px; gap: 10px; }
+    .btn--lg { min-height: 50px; padding: 13px 20px; }
+    .note { margin-top: 10px; }
+  }
+  /* Самые узкие телефоны: плашка «по всей России · выписка…» — в одну строку. */
+  @media (max-width: 380px) {
+    .geo { font-size: 11.5px; gap: 7px; padding: 4px 10px; }
+  }
 
   /* Строка о сверке: печать и объяснение рядом. Печать вынесена
      в отдельную обёртку — стили компонента живут в Seal.astro, а класс,
@@ -527,60 +611,16 @@ const stats = [
     transition: gap var(--t-fast) var(--ease);
   }
   .ho-go:hover { gap: 12px; text-decoration: underline; }
-
-  /* ── Строка чисел ── */
-
-  .stats {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    border-top: 1px solid var(--line);
-  }
-  .stat {
-    padding: 24px 22px 30px;
-    border-left: 1px solid var(--line);
-    display: grid;
-    gap: 6px;
-    align-content: start;
-  }
-  .stat:first-child { border-left: 0; padding-left: 0; }
-  .v {
-    font-family: var(--font-head);
-    font-size: 32px;
-    font-weight: 700;
-    color: var(--ink);
-    font-variant-numeric: lining-nums tabular-nums;
-    line-height: 1.05;
-    letter-spacing: -0.03em;
-  }
-  .v em { font-style: normal; color: var(--acc-deep); font-size: 21px; }
-  .d { font-size: 13.5px; color: var(--muted); line-height: 1.45; }
-  .stat .law { justify-self: start; margin-top: 7px; }
-
-  /* minmax(0, 1fr), а не 1fr: у 1fr нижняя граница — min-content,
-     и чип со статьёй («ч. 2.1 ст. 52 ГрК РФ», он неразрывный) раздвигал
-     колонку до 163 px при 140 доступных. Строка цифр вылезала за экран
-     и обрезалась по краю первого экрана — последние два числа читались
-     наполовину. */
-  @media (max-width: 900px) {
-    .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .stat { border-left: 0; padding: 20px 14px 20px 0; }
-    .stat:nth-child(n + 3) { border-top: 1px solid var(--line); }
+  /* На телефоне заголовок карточки в две строки, а не в четыре: так
+     первые условия («Мои услуги — 0 ₽») попадают в первый экран.
+     Правило стоит после основных — у них та же сила, и победит
+     последнее. */
+  @media (max-width: 560px) {
+    .hero-offer { padding: 20px 20px 18px; gap: 11px; }
+    .ho-title { font-size: 23px; }
   }
 
   @media (max-width: 560px) {
     .cta .btn { width: 100%; }
-    .v { font-size: 26px; }
-  }
-
-  /* На самом узком телефоне два столбца не спасает и minmax: под чип
-     остаётся 140 px, а он неразрывный. Числа встают в один столбец —
-     их всего четыре, и по одному они читаются лучше, чем в обрез. */
-  @media (max-width: 400px) {
-    .stats { grid-template-columns: 1fr; }
-    .stat { padding: 18px 0; }
-    .stat:nth-child(n + 2) { border-top: 1px solid var(--line); }
   }
 </style>

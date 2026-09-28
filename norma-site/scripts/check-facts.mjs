@@ -71,6 +71,32 @@ for (const p of pages) {
 }
 if (!problems) console.log('  ✓ ничего запрещённого не найдено')
 
+// ── 1а. Непроверяемые утверждения ───────────────────────────────────────
+// «Половина сайтов пишет 3 млн», «половине обратившихся членство
+// не требуется», «условия, которых нет больше нигде». Сайт держится
+// на проверяемости, а эти цифры не посчитаны ни по чему: их нельзя
+// показать, если спросят. Убраны 27.09.2026 по решению заказчика —
+// факт закона в каждой фразе остался, выдуманная доля ушла.
+// Опровержения здесь не бывает, поэтому и исключений нет. Смотрим
+// и страницы, и скрипты сборки: тексты калькулятора живут в них.
+const beforeUnv = problems
+console.log('\nНепроверяемые утверждения')
+const UNVERIFIABLE = [
+  /половин\S*\s+(сайтов|обратившихся|отраслевых|площадок|клиентов|компаний)/i,
+  /нет больше нигде/i,
+  /одн\S+ из самых частых ошибок/i,
+]
+const scripts = existsSync(join(DIST, '_astro'))
+  ? readdirSync(join(DIST, '_astro')).filter((f) => f.endsWith('.js')).map((f) => ({ url: `_astro/${f}`, body: readFileSync(join(DIST, '_astro', f), 'utf8') }))
+  : []
+for (const p of [...pages, ...scripts]) {
+  for (const re of UNVERIFIABLE) {
+    const m = p.body.match(re)
+    if (m) fail(`${p.url} — непроверяемое утверждение: «…${p.body.slice(Math.max(0, m.index - 40), m.index + m[0].length + 20).trim()}…»`)
+  }
+}
+if (problems === beforeUnv) console.log('  ✓ выдуманных долей и «нет больше нигде» нет')
+
 // ── 2. Числа из конфигурации ────────────────────────────────────────────
 // Значения берём из единых точек правды, а не из головы: если кто-то
 // поменяет facts.ts, проверка сама начнёт требовать новое число.
@@ -143,9 +169,16 @@ for (const partner of partnersWaiting) {
 // Теперь сверяется пара «подпись — значение» внутри своей карточки.
 const strip = (x) => flat(x.replace(/<[^>]+>/g, ' ')).trim()
 
-for (const partner of PARTNERS.filter((p) => p.reg)) {
-  const url = `/sro/${partner.citySlug}/`
-  const file = join(DIST, 'sro', partner.citySlug, 'index.html')
+// Каждая карточка стоит на двух страницах: своего города и общего списка
+// /partnery/ (28.09.2026). Разметка у них общая (PartnerCards.astro),
+// но проверяется каждая страница: общий компонент стережёт от расхождения
+// в шаблоне, а не от того, что страницу собрали без карточки.
+const partnerPages = (p) => [
+  { url: `/sro/${p.citySlug}/`, file: join(DIST, 'sro', p.citySlug, 'index.html') },
+  { url: '/partnery/', file: join(DIST, 'partnery', 'index.html') },
+]
+
+for (const partner of PARTNERS.filter((p) => p.reg)) for (const { url, file } of partnerPages(partner)) {
   if (!existsSync(file)) { fail(`страница ${url} не собрана, а на ней должна быть СРО «${partner.short}»`); continue }
   const html = readFileSync(file, 'utf8')
 
@@ -193,7 +226,7 @@ for (const partner of PARTNERS.filter((p) => p.reg)) {
 }
 if (problems === before2a) {
   const shown = PARTNERS.length - partnersWaiting.length
-  console.log(`  ✓ ${shown} СРО: суммы в карточках совпадают с конфигурацией, отличия названы`)
+  console.log(`  ✓ ${shown} СРО: суммы в карточках совпадают с конфигурацией, отличия названы — на городских страницах и в общем списке`)
 }
 
 // ── 2б. Обещанные фотографии городов ────────────────────────────────────
@@ -309,13 +342,46 @@ if (agreeTag && !/\brequired\b/.test(agreeTag[0])) {
   problems++
 }
 
+// Вебвизор Метрики записывает страницу целиком и сам прячет только поля,
+// которые распознал как личные. Текст обращения он не распознаёт, а политика
+// обещает обезличенную статистику, и отвечает за маскировку по условиям
+// Метрики владелец сайта. Поэтому КАЖДОЕ поле, куда человек пишет текст,
+// обязано нести ym-hide-content — и новое тоже: проверка перебирает поля
+// формы, а не сверяет записанный список. Кроме ловушки для ботов: человек
+// её не видит и не заполняет.
+const formBlock = rawForm.match(/<form[^>]*id="lead-form-el"[\s\S]*?<\/form>/)
+if (!formBlock) {
+  console.log('  ✗ на главной не нашлась форма заявки')
+  problems++
+} else {
+  const typed = [...formBlock[0].matchAll(/<(input|textarea)\b[^>]*>/g)]
+    .map((m) => m[0])
+    .filter((tag) => !/type="(hidden|checkbox|radio|submit|button)"/.test(tag))
+    .filter((tag) => !/name="company_site"/.test(tag))
+  const open = typed.filter((tag) => !/class="[^"]*\bym-hide-content\b/.test(tag))
+  for (const tag of open) {
+    const name = (tag.match(/name="([^"]+)"/) || [])[1] || tag.slice(0, 60)
+    console.log(`  ✗ поле «${name}» без ym-hide-content: Вебвизор запишет, что в нём набрали`)
+    problems++
+  }
+  if (typed.length < 5) {
+    console.log(`  ✗ в форме нашлось ${typed.length} текстовых полей из пяти — разбор формы сломался`)
+    problems++
+  }
+}
+const dumpTag = rawForm.match(/<pre[^>]*id="lf-dump"[^>]*>/)
+if (!dumpTag || !/\bym-hide-content\b/.test(dumpTag[0])) {
+  console.log('  ✗ «Скопировать текст заявки» без ym-hide-content: там имя и телефон целиком')
+  problems++
+}
+
 // Полоса про cookie появляется только вместе со счётчиком — иначе сайт
 // сообщал бы о файлах cookie, которых не ставит.
 if (!S.metrikaId) {
   console.log('  · счётчик Метрики не подключён (SITE.metrikaId пуст): полосы про cookie нет,')
   console.log('      и это правильно — без счётчика сайт не ставит ни одного файла cookie.')
 }
-if (problems === before4) console.log('  ✓ реквизиты в политике и согласие в форме сходятся с site.ts')
+if (problems === before4) console.log('  ✓ реквизиты в политике и согласие в форме сходятся с site.ts; поля формы скрыты от Вебвизора')
 
 console.log('\n' + '─'.repeat(64))
 if (problems) {
