@@ -286,6 +286,36 @@
   }
 }
 
+/* Очень широкий экран (от 1800 px). Кадры первого экрана, «Документов»
+   и «О нас» привязаны к краю окна, а текст стоит в колонке 1152 px по
+   центру. На 1440 это одно целое, а на мониторе шире (или в браузере,
+   уменьшенном до 33–50 %, что для страницы то же самое) кадр уезжал к краю
+   экрана и отрывался от текста — заказчик прислал снимок. Кадр привязан
+   к колонке — не дальше 900 px от центра (классы min-[1800px]:… в разметке:
+   правила Tailwind для ширин идут в конце файла и перебили бы здесь left
+   и right), а свободный край здесь растворяется в фоне, как тот, что
+   у текста. */
+@media (min-width: 1800px) {
+  .hero-photo {
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 45%, #000 82%, transparent 100%),
+      linear-gradient(to bottom, #000 58%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, #000 45%, #000 82%, transparent 100%),
+      linear-gradient(to bottom, #000 58%, transparent 100%);
+  }
+
+  .docs-photo {
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 18%, #000 62%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, #000 18%, #000 62%, transparent 100%);
+  }
+
+  .about-photo {
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 42%, #000 82%, transparent 100%),
+      linear-gradient(to bottom, #000 78%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, #000 42%, #000 82%, transparent 100%),
+      linear-gradient(to bottom, #000 78%, transparent 100%);
+  }
+}
+
 /* Появление первого экрана при загрузке. Кадр «проявляется», как отпечаток
    на фотобумаге: сверху лежит лист цвета бумаги (.hero-develop) и медленно
    гаснет, а сам кадр чуть оседает из приближения. Подпись, строка, кнопки
@@ -341,7 +371,8 @@
 
 /* ── Переходы между страницами (View Transitions, только CSS) ──
    Старая страница растворяется, новая проявляется; шапка сайта стоит
-   на месте; кадр первого экрана перетекает в шапку страницы вида.
+   на месте; миниатюра вида СРО из списка первого экрана разворачивается
+   в шапку страницы этого вида (имя «sro-<вид>» задаётся у обоих в разметке).
    Коротко — 0,4 с: долгий переход между страницами делает сайт медленным.
    Браузер без поддержки (Firefox) просто открывает страницу, как раньше. */
 @media (prefers-reduced-motion: no-preference) {
@@ -351,9 +382,6 @@
 }
 .vt-header {
   view-transition-name: site-header;
-}
-.vt-photo {
-  view-transition-name: sro-photo;
 }
 ::view-transition-group(*) {
   animation-duration: 0.42s;

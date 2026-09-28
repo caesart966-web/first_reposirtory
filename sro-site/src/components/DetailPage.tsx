@@ -199,6 +199,7 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
               title={detail.title}
               lead={detail.lead}
               image={detail.card.image}
+              transitionName={`sro-${detail.slug}`}
               toc={DETAIL_TOC}
             />
 

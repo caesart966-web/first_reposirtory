@@ -182,6 +182,41 @@ const heroGeometry = (p) => p.evaluate(async (sel) => {
   await rctx.close()
 }
 
+// Широкий экран: кадры первого экрана, «Документов» и «О нас» держатся
+// у колонки текста — не дальше 900 px от центра. Без этого на мониторе шире
+// 1800 px (и в уменьшенном браузере) кадр уезжал к краю окна и отрывался
+// от текста. Проверяется поведение, а не классы: правила Tailwind для ширин
+// идут в конце файла стилей и уже один раз молча перебили такую привязку.
+{
+  const W = 2560
+  const ctx = await b.newContext({ viewport: { width: W, height: 1300 } })
+  const p = await ctx.newPage()
+  await p.goto(BASE, { waitUntil: 'networkidle' })
+  // По раскладке (offset*), а не по getBoundingClientRect: у кадров есть
+  // движение по прокрутке (scale), и увеличенный на 12 % кадр выглядел бы
+  // вылезшим за границу, хотя стоит на месте. Родитель у всех трёх — раздел
+  // во всю ширину окна, поэтому offsetLeft — это и есть координата в окне.
+  const edges = await p.evaluate(() => {
+    const el = (sel) => document.querySelector(sel)
+    const right = (e) => e.offsetLeft + e.offsetWidth
+    return { hero: right(el('.hero-photo')), docs: el('.docs-photo').offsetLeft, about: right(el('.about-photo')) }
+  })
+  check(`широкий экран ${W}: кадр первого экрана у колонки текста`, edges.hero <= W / 2 + 901, `правый край ${Math.round(edges.hero)}`)
+  check(`широкий экран ${W}: кадр «Документов» у колонки текста`, edges.docs >= W / 2 - 901, `левый край ${Math.round(edges.docs)}`)
+  check(`широкий экран ${W}: кадр «О нас» у колонки текста`, edges.about <= W / 2 + 901, `правый край ${Math.round(edges.about)}`)
+
+  // Карта точками: у каждого региона из списка есть свои точки. Маленькому
+  // региону сетка может не дать ни одной — тогда build-map-dots.mjs ставит
+  // точку в метку; проверка следит, что регион не пропал с карты молча.
+  await p.locator('#regions').scrollIntoViewIfNeeded()
+  await p.waitForFunction(() => document.querySelectorAll('#regions svg path[fill="url(#ru-dot)"]').length > 0)
+  const empty = await p.evaluate(() => [...document.querySelectorAll('#regions svg path[fill="url(#ru-dot)"]')]
+    .filter((el) => !el.getAttribute('d')).length)
+  const regions = await p.evaluate(() => document.querySelectorAll('#regions svg path[fill="url(#ru-dot)"]').length)
+  check('карта: у каждого выделенного региона есть точки', regions >= 13 && empty === 0, `регионов ${regions}, пустых ${empty}`)
+  await ctx.close()
+}
+
 // Переход между страницами (@view-transition в index.css). Проверяется, что
 // он срабатывает и что новая страница в момент показа уже собрана: корень
 // у страниц заполняет скрипт, и без blocking="render" у него (плагин

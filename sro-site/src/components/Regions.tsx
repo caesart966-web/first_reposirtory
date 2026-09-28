@@ -1,19 +1,38 @@
-import { MapPin } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { LABELS, REGIONS, type RegionKey } from '../content/regions'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
 
 const KEYS = Object.keys(LABELS) as RegionKey[]
 
-type MapData = typeof import('../content/mapData')
+type MapData = typeof import('../content/mapData') & typeof import('../content/mapDots')
+
+// Точки сетки одной строкой «x,y x,y …» → один путь из кружков. Один путь
+// на группу, а не две с лишним тысячи элементов <circle>: страница остаётся
+// лёгкой, а браузер рисует карту одним вызовом на регион.
+function dotsPath(dots: string, r: number): string {
+  let d = ''
+  for (const pair of dots.split(' ')) {
+    const [x, y] = pair.split(',').map(Number)
+    d += `M${(x - r).toFixed(1)} ${y}a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r} 0 1 0 ${-2 * r} 0`
+  }
+  return d
+}
 
 // Карта охвата: где заказчик помогает вступить в СРО.
 //
 // Границы субъектов настоящие (см. scripts/build-map.py), поэтому регион
-// закрашивается целиком, а не отмечается булавкой. Разница не косметическая:
-// закрашенная Якутия сразу показывает масштаб работы, точка на её месте
-// говорила ровно столько же, сколько точка на Костроме.
+// выделяется целиком, а не отмечается булавкой: выделенная Якутия сразу
+// показывает масштаб работы, одна точка на её месте говорила бы ровно
+// столько же, сколько точка на Костроме.
+//
+// С 28.09.2026 карта точечная (scripts/build-map-dots.mjs): страна разложена
+// шестиугольной сеткой точек, точки выделенных регионов — латунью и чуть
+// крупнее. Заливкой контуров огромные регионы ложились сплошными пятнами
+// и перетягивали на себя весь раздел (сначала латунными, потом серыми), а
+// карта выглядела картинкой из справочника. Контуры регионов остались
+// невидимыми — по ним ловится наведение, иначе курсор проваливался бы
+// в промежутки между точками.
 //
 // Почему карта И список, а не что-то одно. Карта одним взглядом показывает
 // главное — работа идёт от Петербурга до Якутска, а не «по Ростову». Но на
@@ -35,13 +54,23 @@ export function Regions() {
   const [map, setMap] = useState<MapData | null>(null)
   useEffect(() => {
     let alive = true
-    import('../content/mapData').then((data) => {
-      if (alive) setMap(data)
+    Promise.all([import('../content/mapData'), import('../content/mapDots')]).then(([shapes, dots]) => {
+      if (alive) setMap({ ...shapes, ...dots })
     })
     return () => {
       alive = false
     }
   }, [])
+
+  // Пути из точек считаются один раз, когда карта пришла.
+  const dots = useMemo(() => {
+    if (!map) return null
+    const step = map.DOT_STEP
+    return {
+      base: dotsPath(map.DOTS_BASE, step * 0.28),
+      active: Object.fromEntries(KEYS.map((key) => [key, dotsPath(map.DOTS_ACTIVE[key] ?? '', step * 0.36)])),
+    }
+  }, [map])
 
   const point = active && map ? map.MAP_ANCHORS[active] : null
   // Плашку не измерить: ширину текста в SVG без отдельного прохода вёрстки
@@ -61,7 +90,6 @@ export function Regions() {
   return (
     <Section id="regions" className="bg-neutral-100">
       <SectionHeading
-        eyebrow="География"
         title="География работы"
         // Неразрывный пробел держит «субъекта РФ» вместе: без него «РФ»
         // срывалось на отдельную строку и висело там одно.
@@ -86,54 +114,46 @@ export function Regions() {
             aria-label="Карта России: регионы, где помогаю вступить в СРО, выделены цветом"
           >
             <defs>
-              {/* Лёгкий градиент вместо плоской заливки: с ним выделенные
-                  регионы выглядят подсвеченными, а не закрашенными маркером.
-                  С 26.09.2026 — в тёплом сером, как фотографии в монохроме:
-                  латунные Красноярский край и Якутия огромными пятнами
-                  перетягивали на себя весь раздел. Латунь — только у региона
-                  под курсором. */}
-              <linearGradient id="ru-on" x1="0" y1="0" x2="0.3" y2="1">
-                <stop offset="0%" stopColor="#BDB1A2" />
-                <stop offset="100%" stopColor="#A09383" />
+              {/* Латунь с лёгким переходом по всей карте, а не плоская заливка:
+                  точки на западе светлее, на востоке глубже — карта читается
+                  освещённой, как лист, а не залитой маркером. */}
+              <linearGradient id="ru-dot" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="1000" y2="544">
+                <stop offset="0%" stopColor="#C9A370" />
+                <stop offset="100%" stopColor="#9A6F3E" />
               </linearGradient>
-              <linearGradient id="ru-hot" x1="0" y1="0" x2="0.3" y2="1">
-                <stop offset="0%" stopColor="#C09A68" />
-                <stop offset="100%" stopColor="#9D7443" />
-              </linearGradient>
-              <filter id="ru-shadow" x="-6%" y="-12%" width="112%" height="130%">
-                <feDropShadow dx="0" dy="7" stdDeviation="9" floodColor="#1C1815" floodOpacity="0.12" />
-              </filter>
             </defs>
 
-            <g filter="url(#ru-shadow)">
-              {/* Остальная страна — только фон. Правило evenodd нужно из-за
-                  анклавов: Адыгея внутри Краснодарского края, Ненецкий округ
-                  внутри Архангельской области. Без него дырки бы залились. */}
-              <path
-                d={map.MAP_BASE}
-                fillRule="evenodd"
-                className="pointer-events-none fill-neutral-200 stroke-neutral-100"
-                strokeWidth="1.1"
-              />
-              {KEYS.map((key) => {
-                const on = active === key
-                return (
-                  // onClick — ради телефона: наведения там нет, а тап по
-                  // региону подпись показывает.
+            {dots && (
+              <>
+                {/* Остальная страна — светлые точки, только фон. */}
+                <path d={dots.base} className="pointer-events-none fill-neutral-300" />
+                {KEYS.map((key) => (
                   <path
                     key={key}
-                    d={map.MAP_ACTIVE[key]}
-                    fillRule="evenodd"
-                    fill={on ? 'url(#ru-hot)' : 'url(#ru-on)'}
-                    className="cursor-default stroke-neutral-100 transition-[fill] duration-500"
-                    strokeWidth="1.1"
-                    onMouseEnter={() => setActive(key)}
-                    onMouseLeave={() => setActive(null)}
-                    onClick={() => setActive(key)}
+                    d={dots.active[key]}
+                    fill={active === key ? '#4D3A26' : 'url(#ru-dot)'}
+                    className="pointer-events-none transition-[fill] duration-500"
                   />
-                )
-              })}
-            </g>
+                ))}
+              </>
+            )}
+
+            {/* Невидимые контуры выделенных регионов — поверхность для
+                наведения и касания. onClick — ради телефона: наведения там
+                нет, а касание региона показывает подпись. evenodd — из-за
+                анклавов: Адыгея внутри Краснодарского края. */}
+            {KEYS.map((key) => (
+              <path
+                key={key}
+                d={map.MAP_ACTIVE[key]}
+                fillRule="evenodd"
+                fill="transparent"
+                className="cursor-default"
+                onMouseEnter={() => setActive(key)}
+                onMouseLeave={() => setActive(null)}
+                onClick={() => setActive(key)}
+              />
+            ))}
 
             {/* Метка города и подпись рисуются последними, поверх контуров:
                 иначе соседний регион накрыл бы им край. По вертикали подпись
@@ -167,9 +187,11 @@ export function Regions() {
       </Reveal>
 
       <Reveal delay={80} className="mt-8">
-        {/* Три колонки на десктопе, одна на телефоне: пятнадцать строк в три
-            колонки на узком экране дают нечитаемые обрезки названий. */}
-        <ul className="mx-auto grid max-w-4xl gap-1 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Три колонки на компьютере, две на планшете. На телефоне — в поток,
+            как слова в строке: в один столбик пятнадцать строк тянулись
+            на полтора экрана, а в колонки длинные названия («Свердловская
+            область, Екатеринбург») рвались на обрезки. */}
+        <ul className="mx-auto flex max-w-4xl flex-wrap gap-x-1 gap-y-0 sm:grid sm:grid-cols-2 sm:gap-1 lg:grid-cols-3">
           {REGIONS.map((region) => {
             const on = active === region.point
             return (
@@ -179,13 +201,14 @@ export function Regions() {
                 <div
                   onMouseEnter={() => setActive(region.point)}
                   onMouseLeave={() => setActive(null)}
-                  className={`flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-colors duration-150 ${
+                  className={`flex items-center gap-2 rounded-xl px-2 py-1.5 text-sm transition-colors duration-150 sm:gap-2.5 sm:px-3 sm:py-2 ${
                     on ? 'bg-accent-50 text-accent-800' : 'text-neutral-700'
                   }`}
                 >
-                  <MapPin
-                    className={`h-4 w-4 shrink-0 transition-colors duration-150 ${
-                      on ? 'text-accent-600' : 'text-accent-500/60'
+                  {/* Точка вместо булавки — та же, что на карте. */}
+                  <span
+                    className={`h-2 w-2 shrink-0 rounded-full transition-colors duration-150 ${
+                      on ? 'bg-accent-800' : 'bg-accent-500'
                     }`}
                     aria-hidden="true"
                   />

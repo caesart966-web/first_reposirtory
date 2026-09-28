@@ -41,7 +41,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from PIL import Image, ImageEnhance, ImageFilter
+from PIL import Image, ImageEnhance, ImageFilter, ImageOps
 
 from monotone import monotone
 
@@ -53,11 +53,16 @@ OUT = Path("public/img")
 # белая точка на половине яркости уводит небо в бумагу.
 # Панорама изыскателей увеличивается втрое: у неё всего 334 px высоты,
 # а шапка страницы на компьютере выше 800 px.
+# Последнее поле — центр квадратной миниатюры (доли ширины и высоты): она стоит
+# в списке видов СРО на первом экране главной, и в квадрат должен попасть
+# предмет — башня крана, лист плана, изыскатели, а не небо.
 SLIDES = [
-    ("slide-construction-src.jpg", "hero-day", 2, 1.0, (0.03, 0.52, 0.80)),
-    ("slide-design-src.jpg", "slide-design", 2, 0.8, (0.02, 0.95, 1.0)),
-    ("slide-survey-src.jpg", "slide-survey", 3, 1.0, (0.02, 0.85, 0.95)),
+    ("slide-construction-src.jpg", "hero-day", "construction", 2, 1.0, (0.03, 0.52, 0.80), (0.62, 0.22)),
+    ("slide-design-src.jpg", "slide-design", "design", 2, 0.8, (0.02, 0.95, 1.0), (0.5, 0.55)),
+    ("slide-survey-src.jpg", "slide-survey", "survey", 3, 1.0, (0.02, 0.85, 0.95), (0.72, 0.5)),
 ]
+THUMB = 160  # px: миниатюра стоит в 48–56 px, запас на экраны с плотностью 3×
+THUMB_LIMIT_KB = 12
 WEBP_QUALITY, AVIF_QUALITY = 74, 50
 WEBP_LIMIT_KB, AVIF_LIMIT_KB = 180, 120
 CACHE = Path(tempfile.gettempdir()) / "sro-esrgan-cache"
@@ -76,8 +81,8 @@ def upscale(src: Path, img: Image.Image, scale: int, esrgan: Path | None) -> Ima
     return Image.open(cached).convert("RGB").resize(size, Image.LANCZOS)
 
 
-def prepare(src: Path, name: str, scale: int, brightness: float,
-            levels: tuple[float, float, float], esrgan: Path | None) -> None:
+def prepare(src: Path, name: str, slug: str, scale: int, brightness: float,
+            levels: tuple[float, float, float], centering: tuple[float, float], esrgan: Path | None) -> None:
     img = upscale(src, Image.open(src).convert("RGB"), scale, esrgan)
     if brightness != 1.0:
         img = ImageEnhance.Brightness(img).enhance(brightness)
@@ -90,13 +95,23 @@ def prepare(src: Path, name: str, scale: int, brightness: float,
         mark = "ok" if kb <= limit else f"ПРЕВЫШЕН бюджет {limit} КБ"
         print(f"{path}: {img.width}×{img.height}, {kb:.0f} КБ — {mark}")
 
+    # Миниатюра для списка видов СРО на первом экране. Отдельным файлом:
+    # полный кадр весит 70–130 КБ, а в списке он занимает 56 px.
+    thumb = ImageOps.fit(img, (THUMB, THUMB), Image.LANCZOS, centering=centering)
+    for ext, fmt, quality in (("webp", "WEBP", 80), ("avif", "AVIF", 60)):
+        path = OUT / f"sro-thumb-{slug}.{ext}"
+        thumb.save(path, fmt, quality=quality)
+        kb = path.stat().st_size / 1024
+        mark = "ok" if kb <= THUMB_LIMIT_KB else f"ПРЕВЫШЕН бюджет {THUMB_LIMIT_KB} КБ"
+        print(f"{path}: {THUMB}×{THUMB}, {kb:.0f} КБ — {mark}")
+
 
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--esrgan", type=Path, help="программа realesrgan-ncnn-vulkan (иначе Lanczos)")
     args = ap.parse_args()
-    for source, name, scale, brightness, levels in SLIDES:
-        prepare(SRC / source, name, scale, brightness, levels, args.esrgan)
+    for source, name, slug, scale, brightness, levels, centering in SLIDES:
+        prepare(SRC / source, name, slug, scale, brightness, levels, centering, args.esrgan)
 
 
 if __name__ == "__main__":

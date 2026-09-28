@@ -49,7 +49,6 @@ export function Pricing() {
   return (
     <Section id="pricing">
       <SectionHeading
-        eyebrow="Стоимость"
         title="Форматы работы"
         subtitle="Консультации бесплатны на любом этапе. Стоимость работы зависит от вида СРО и готовности документов и согласовывается письменно до начала."
       />

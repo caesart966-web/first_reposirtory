@@ -70,8 +70,8 @@ export function PageExtras({
                       {nbsp(service.hint)}
                     </span>
                   </span>
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-neutral-300 text-neutral-950 transition-all duration-700 ease-silk group-hover:rotate-45 group-hover:border-neutral-950 group-hover:bg-neutral-950 group-hover:text-neutral-50">
-                    <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-neutral-300 text-neutral-950 transition-all duration-700 ease-silk group-hover:rotate-45 group-hover:border-neutral-950 group-hover:bg-neutral-950 group-hover:text-neutral-50">
+                    <ArrowUpRight className="h-5 w-5" aria-hidden="true" />
                   </span>
                 </a>
               </li>

@@ -108,7 +108,7 @@ export function FAQ() {
     <Section id="faq">
       <div className="grid gap-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-20">
         <div>
-          <SectionHeading eyebrow="Вопросы" title="Частые вопросы" />
+          <SectionHeading title="Частые вопросы" />
         </div>
         {/* Вопросы строками с тонкими линейками, без карточки: знак «+»
             поворачивается в «×», ответ раскрывается мягко, на той же кривой

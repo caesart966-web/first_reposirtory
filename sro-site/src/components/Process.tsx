@@ -39,7 +39,7 @@ export function Process() {
   return (
     <section id="process" className="relative isolate bg-accent-950 py-24 text-neutral-50 sm:py-32">
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
-        <SectionHeading dark eyebrow="Процесс" title="Как проходит работа" />
+        <SectionHeading dark title="Как проходит работа" />
         {/* Телефон — столбик, с 640px — сетка 2×2, с 1024px — четыре шага
             в ряд. Номера набраны крупно латунью: без фотографии они и есть
             рисунок раздела. */}

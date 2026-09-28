@@ -38,12 +38,12 @@ export function Documents() {
           height={IMAGES.documents.height}
           loading="lazy"
           decoding="async"
-          className="docs-photo scroll-settle pointer-events-none absolute inset-x-0 top-0 -z-10 h-[24rem] w-full select-none object-cover object-[50%_30%] sm:h-[30rem] sm:object-[50%_40%] lg:inset-x-auto lg:left-0 lg:h-full lg:w-[42%] lg:object-[0%_50%]"
+          className="docs-photo scroll-settle pointer-events-none absolute inset-x-0 top-0 -z-10 h-[24rem] w-full select-none object-cover object-[50%_30%] sm:h-[30rem] sm:object-[50%_40%] lg:inset-x-auto lg:left-0 lg:h-full lg:w-[42%] lg:object-[0%_50%] min-[1800px]:left-[max(0px,calc(50%-900px))] min-[1800px]:w-[760px]"
         />
       </picture>
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="lg:ml-[44%]">
-          <SectionHeading eyebrow="Документы" title="Подготовлю пакет документов для вступления в СРО" />
+          <SectionHeading title="Подготовлю пакет документов для вступления в СРО" />
           <Reveal delay={120}>
             <p className="mt-7 text-lg leading-relaxed text-neutral-600">
               {nbsp(

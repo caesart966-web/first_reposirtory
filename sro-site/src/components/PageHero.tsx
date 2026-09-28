@@ -1,4 +1,5 @@
 import { ArrowLeft } from 'lucide-react'
+import type { CSSProperties } from 'react'
 import type { PageImage } from '../content/images'
 import { asset } from '../lib/site'
 import { nbsp } from '../lib/typo'
@@ -9,8 +10,9 @@ import { Reveal, RevealText } from './ui/Reveal'
 //
 // Тёмный графит, заголовок антиквой, кнопка-пилюля со стрелкой. У страниц
 // видов под плёнкой лежит кадр своего вида (у строителей — тот же кран, что
-// на первом экране главной; при переходе с главной он перетекает сюда —
-// .vt-photo в index.css). У услуг кадр только там, где есть предмет, который
+// на первом экране главной). При переходе с главной сюда перетекает миниатюра
+// вида из списка первого экрана: у обоих одно имя перехода (transitionName,
+// «sro-<вид>»). У услуг кадр только там, где есть предмет, который
 // можно снять: папки у «Подготовки документов». Выдумывать иллюстрацию
 // к «уровню ответственности» значило бы ставить случайную картинку.
 //
@@ -27,6 +29,7 @@ export function PageHero({
   title,
   lead,
   image,
+  transitionName,
   toc = [],
 }: {
   backHref: string
@@ -34,12 +37,18 @@ export function PageHero({
   title: string
   lead: string
   image?: PageImage
+  /** Имя для плавного перехода между страницами (view-transition-name). */
+  transitionName?: string
   toc?: TocItem[]
 }) {
   return (
     <section className="relative isolate overflow-hidden bg-accent-950 text-neutral-50">
       {image && (
-        <div className="vt-photo absolute inset-0 -z-10" aria-hidden="true">
+        <div
+          className="absolute inset-0 -z-10"
+          style={transitionName ? ({ viewTransitionName: transitionName } as CSSProperties) : undefined}
+          aria-hidden="true"
+        >
           <picture>
             {image.srcAvif && <source type="image/avif" srcSet={asset(image.srcAvif)} />}
             <img

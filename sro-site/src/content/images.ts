@@ -19,6 +19,10 @@ export type PageImage = {
   alt: string
   width: number
   height: number
+  // Квадратная миниатюра 160×160 — у трёх кадров видов СРО: она стоит в списке
+  // видов на первом экране главной. Готовит scripts/prepare-slide-photos.py.
+  thumb?: string
+  thumbAvif?: string
   // Какую часть кадра показывать, когда рамка его обрезает (object-position).
   // Кран и план вертикальные, а шапка страницы вида на компьютере широкая —
   // из них видна горизонтальная полоса; у панорамы изыскателей, наоборот,
@@ -43,6 +47,8 @@ export const IMAGES = {
     width: 1800,
     height: 2400,
     position: '50% 20%',
+    thumb: './img/sro-thumb-construction.webp',
+    thumbAvif: './img/sro-thumb-construction.avif',
   },
   design: {
     src: './img/slide-design.webp',
@@ -51,6 +57,8 @@ export const IMAGES = {
     width: 1920,
     height: 2400,
     position: '50% 50%',
+    thumb: './img/sro-thumb-design.webp',
+    thumbAvif: './img/sro-thumb-design.avif',
   },
   // Папки: фон раздела «Документы» на главной и шапка страницы услуги
   // «Подготовка документов» — там у услуги есть предмет, который можно снять.
@@ -69,5 +77,7 @@ export const IMAGES = {
     width: 2460,
     height: 1002,
     position: '60% 50%',
+    thumb: './img/sro-thumb-survey.webp',
+    thumbAvif: './img/sro-thumb-survey.avif',
   },
 } satisfies Record<string, PageImage>

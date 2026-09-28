@@ -12,8 +12,15 @@ import { Section, SectionHeading } from './ui/Section'
 // главной: человек нажимал стрелку за подробностями и попадал на телефон.
 // Подпись у стрелки — название страницы, куда она ведёт.
 //
-// Строки, а не карточки: раздел должен читаться иначе, чем сетка услуг
-// ниже. Крупная цифра слева — номер, а не украшение: ситуаций ровно три.
+// Строки, а не карточки: раздел должен читаться иначе, чем сетка услуг ниже.
+//
+// Текст переписан 28.09.2026: заказчик попросил убрать то, что выдаёт текст
+// нейросети. Заголовки — словами клиента, как он сам описал бы свою
+// ситуацию, а не канцелярскими «Срочное вступление» и «Вопрос по…».
+// Ушли одинаковые по ритму фразы из трёх глаголов («проверю, укажу
+// и помогу»), подпись «Выберите ситуацию, похожую на вашу: по каждой — …»,
+// объяснявшая читателю, что делать с разделом, и надзаголовок «Типовые
+// ситуации», повторявший заголовок. Смысл каждой строки прежний.
 const target = (slug: string) => {
   const service = serviceBySlug(slug)
   if (!service) throw new Error(`Нет страницы услуги: ${slug}`)
@@ -22,18 +29,18 @@ const target = (slug: string) => {
 
 const SCENARIOS = [
   {
-    title: 'Срочное вступление в СРО',
-    text: 'Подходит срок заключения договора, а членства в СРО ещё нет. Оценю, какие сроки реальны в вашей ситуации, и назову, что потребуется от вас.',
+    title: 'Скоро договор, а членства в СРО нет',
+    text: 'Скажу, реально ли успеть к вашей дате и что для этого понадобится от вас.',
     ...target('vstuplenie'),
   },
   {
-    title: 'Нужна проверка документов',
-    text: 'Проверю подготовленный комплект до подачи в СРО, укажу на недочёты и помогу их устранить.',
+    title: 'Документы собраны, нужна проверка',
+    text: 'Посмотрю комплект до подачи в СРО и помогу исправить то, что найду.',
     ...target('dokumenty'),
   },
   {
-    title: 'Вопрос по специалистам НРС',
-    text: 'Разберу требования к образованию, стажу и документам специалистов и предложу порядок действий.',
+    title: 'Нет специалистов в НРС',
+    text: 'Проверю, подходят ли ваши сотрудники. Если нет, расскажу, какие варианты даёт закон.',
     ...target('nrs'),
   },
 ]
@@ -41,11 +48,7 @@ const SCENARIOS = [
 export function Problems() {
   return (
     <Section id="problems">
-      <SectionHeading
-        eyebrow="Типовые ситуации"
-        title="С чем обычно обращаются"
-        subtitle="Выберите ситуацию, похожую на вашу: по каждой — что делаю и с чего начать."
-      />
+      <SectionHeading title="С чем обычно обращаются" />
       <div className="mt-14 border-t border-neutral-300">
         {SCENARIOS.map((scenario, index) => (
           <Reveal key={scenario.title} delay={index * 90}>
@@ -63,8 +66,8 @@ export function Problems() {
               </span>
               <span className="inline-flex items-center gap-2 text-sm font-medium text-neutral-950">
                 {scenario.action}
-                <span className="flex h-9 w-9 items-center justify-center rounded-full border border-neutral-300 transition-all duration-700 ease-silk group-hover:rotate-45 group-hover:border-neutral-950 group-hover:bg-neutral-950 group-hover:text-neutral-50">
-                  <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+                <span className="flex h-11 w-11 items-center justify-center rounded-full border border-neutral-300 transition-all duration-700 ease-silk group-hover:rotate-45 group-hover:border-neutral-950 group-hover:bg-neutral-950 group-hover:text-neutral-50">
+                  <ArrowUpRight className="h-5 w-5" aria-hidden="true" />
                 </span>
               </span>
             </a>

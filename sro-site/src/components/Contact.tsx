@@ -33,15 +33,9 @@ export function Contact({
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-end lg:gap-16">
           <div>
-            <Reveal>
-              <p className="flex items-center gap-3 text-sm text-neutral-300">
-                <span className="h-px w-8 bg-accent-300" aria-hidden="true" />
-                Связаться
-              </p>
-            </Reveal>
             <RevealText
               text={"Расскажите о\u00A0задаче\u00A0— отвечу лично"}
-              className="mt-4 font-display text-[2.6rem] font-medium leading-[1.02] sm:text-5xl lg:text-[3.6rem]"
+              className="font-display text-[2.6rem] font-medium leading-[1.02] sm:text-5xl lg:text-[3.6rem]"
             />
             <Reveal delay={150}>
               <p className="mt-6 max-w-md text-lg leading-relaxed text-neutral-300">{lead}</p>

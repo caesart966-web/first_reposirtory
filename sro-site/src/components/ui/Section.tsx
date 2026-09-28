@@ -34,18 +34,22 @@ export function Section({
 // Раньше: подпись капсом с разрядкой, заголовок и подзаголовок — всё по
 // центру. Именно этот набор читается «сделано нейросетью»: он стоял над
 // каждым из двенадцати разделов одинаково. Теперь заголовок антиквой по
-// левому краю, крупно, поднимается по словам; подпись над ним — обычным
-// регистром с короткой латунной чертой, как рубрика в журнале.
+// левому краю, крупно, поднимается по словам.
+//
+// Надзаголовка («— Документы» над «Подготовлю пакет документов…») больше нет
+// (28.09.2026): короткая латунная черта с подписью стояла над каждым
+// разделом и почти везде повторяла заголовок — «Вопросы» над «Частыми
+// вопросами», «География» над «Географией работы». Одинаковая рубрика над
+// всеми разделами — примета шаблонной страницы, сделанной нейросетью,
+// а заказчик попросил таких примет не оставлять.
 //
 // Подзаголовок на широком экране уходит вправо от заголовка, в свою
 // колонку: так раздел начинается одной строкой, а не столбиком из трёх.
 export function SectionHeading({
-  eyebrow,
   title,
   subtitle,
   dark = false,
 }: {
-  eyebrow?: string
   title: string
   subtitle?: string
   dark?: boolean
@@ -59,24 +63,9 @@ export function SectionHeading({
       }
     >
       <div>
-        {eyebrow && (
-          <Reveal>
-            <p
-              className={`flex items-center gap-3 text-sm ${
-                dark ? 'text-neutral-300' : 'text-neutral-600'
-              }`}
-            >
-              <span
-                className={`h-px w-8 ${dark ? 'bg-accent-300' : 'bg-accent-500'}`}
-                aria-hidden="true"
-              />
-              {eyebrow}
-            </p>
-          </Reveal>
-        )}
         <RevealText
           text={title}
-          className={`mt-4 font-display text-[2.6rem] font-medium leading-[1.02] tracking-[-0.01em] sm:text-5xl lg:text-[3.6rem] ${
+          className={`font-display text-[2.6rem] font-medium leading-[1.02] tracking-[-0.01em] sm:text-5xl lg:text-[3.6rem] ${
             dark ? 'text-neutral-50' : 'text-neutral-950'
           }`}
         />

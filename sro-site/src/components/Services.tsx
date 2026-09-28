@@ -38,7 +38,6 @@ export function Services() {
   return (
     <Section id="services" className="bg-neutral-100">
       <SectionHeading
-        eyebrow="Услуги"
         title="Услуги по вступлению в СРО"
         subtitle="Отдельные задачи или полное сопровождение: от подбора саморегулируемой организации до внесения сведений в реестр членов."
       />
@@ -75,8 +74,8 @@ export function Services() {
                       <p className="text-sm leading-relaxed text-neutral-600 transition-colors duration-700 group-hover:text-neutral-300 group-focus-visible:text-neutral-300">
                         {nbsp(service.hint)}
                       </p>
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-neutral-300 text-neutral-950 transition-all duration-700 ease-silk group-hover:rotate-45 group-hover:border-neutral-50 group-hover:bg-neutral-50 group-focus-visible:border-neutral-50 group-focus-visible:bg-neutral-50">
-                        <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-neutral-300 text-neutral-950 transition-all duration-700 ease-silk group-hover:rotate-45 group-hover:border-neutral-50 group-hover:bg-neutral-50 group-focus-visible:border-neutral-50 group-focus-visible:bg-neutral-50">
+                        <ArrowUpRight className="h-5 w-5" aria-hidden="true" />
                       </span>
                     </div>
                   </a>

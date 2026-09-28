@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react'
 import { LINKS } from '../content/contacts'
 import { IMAGES } from '../content/images'
 import { TYPES_GROUP } from '../content/nav'
+import { SRO_DETAILS } from '../content/sroDetails'
 import { asset, page } from '../lib/site'
 import { nbsp } from '../lib/typo'
 import { ButtonLink } from './ui/Button'
@@ -24,8 +25,11 @@ import { RevealText } from './ui/Reveal'
 // ключом»: небо уходит в бумагу, поэтому кадр растворяется в листе без рамки
 // и без серой полосы (маска .hero-photo в index.css). При загрузке он
 // «проявляется», как отпечаток, текст выплывает ступенькой (.hero-rise, --d).
-// Кадр назван для перехода между страницами (.vt-photo): нажали вид СРО —
-// он перетекает в шапку страницы этого вида.
+// У каждого вида СРО в списке — миниатюра своего кадра из той же серии
+// (sro-thumb-*, 160 px, 2–5 КБ). У миниатюры и шапки страницы вида одно имя
+// перехода, «sro-<вид>»: нажали вид — миниатюра разворачивается в шапку.
+// При наведении строка ложится на лист, миниатюра чуть приближается,
+// кружок со стрелкой темнеет и поворачивается.
 //
 // ТЕЛЕФОН. Первый экран обязан показать, что это, для кого и как связаться:
 // заголовок, обе кнопки и все три вида — без прокрутки при видимой высоте
@@ -37,10 +41,12 @@ import { RevealText } from './ui/Reveal'
 // Ступенька появления: задержка анимации .hero-rise.
 const delay = (ms: number) => ({ '--d': `${ms}ms` }) as CSSProperties
 
-const TYPES = TYPES_GROUP.items.map((item) => ({
-  title: item.label,
-  hint: item.hint,
-  href: page(item.href),
+const TYPES = SRO_DETAILS.map((detail) => ({
+  slug: detail.slug,
+  title: detail.card.title,
+  hint: TYPES_GROUP.items.find((item) => item.href === detail.path)?.hint,
+  href: page(detail.path),
+  image: detail.card.image,
 }))
 
 export function Hero() {
@@ -51,7 +57,7 @@ export function Hero() {
           часть раздела во всю высоту, край к краю экрана; растворяется
           к тексту. Лист поверх (.hero-develop) — для «проявления». */}
       <div
-        className="hero-photo vt-photo relative h-28 overflow-hidden min-[380px]:h-32 sm:h-72 lg:absolute lg:inset-y-0 lg:left-[46%] lg:right-0 lg:h-auto"
+        className="hero-photo relative h-28 overflow-hidden min-[380px]:h-32 sm:h-72 lg:absolute lg:inset-y-0 lg:left-[46%] lg:right-0 lg:h-auto min-[1800px]:left-[calc(50%-90px)] min-[1800px]:right-[max(0px,calc(50%-900px))]"
         aria-hidden="true"
       >
         <picture className="hero-print block h-full w-full">
@@ -99,19 +105,38 @@ export function Hero() {
           </div>
         </div>
 
-        <div className="hero-rise mt-8 sm:mt-12 lg:mt-auto lg:w-[56%] lg:pt-8 xl:w-[58%]" style={delay(600)}>
+        <div className="hero-rise mt-6 sm:mt-12 lg:mt-auto lg:w-[56%] lg:pt-8 xl:w-[62%]" style={delay(600)}>
           <p id="hero-types" data-hero-text className="text-sm font-medium text-neutral-600">
             Выберите вид СРО
           </p>
-          <ul aria-labelledby="hero-types" className="mt-3 border-b border-neutral-300">
+          <ul aria-labelledby="hero-types" className="mt-2 border-b border-neutral-300 sm:mt-3">
             {TYPES.map((type) => (
-              <li key={type.href}>
+              <li key={type.href} className="border-t border-neutral-300">
                 <a
                   href={type.href}
-                  className="group flex min-h-14 items-center gap-4 border-t border-neutral-300 py-3 transition-colors duration-500 ease-silk hover:border-accent-500 sm:gap-5 sm:py-4 lg:gap-4 lg:py-3.5"
+                  className="group -mx-2 flex min-h-14 items-center gap-3 rounded-2xl px-2 py-1.5 transition-colors duration-500 ease-silk hover:bg-neutral-100 sm:gap-5 sm:py-3 lg:gap-4 lg:py-2.5"
                 >
+                  {type.image.thumb && (
+                    <span
+                      className="block h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-neutral-200 sm:h-14 sm:w-14 lg:h-12 lg:w-12"
+                      style={{ viewTransitionName: `sro-${type.slug}` } as CSSProperties}
+                    >
+                      <picture>
+                        {type.image.thumbAvif && <source type="image/avif" srcSet={asset(type.image.thumbAvif)} />}
+                        <img
+                          src={asset(type.image.thumb)}
+                          alt=""
+                          width={160}
+                          height={160}
+                          loading="eager"
+                          decoding="async"
+                          className="h-full w-full object-cover transition-transform duration-700 ease-silk group-hover:scale-110"
+                        />
+                      </picture>
+                    </span>
+                  )}
                   <span className="min-w-0 flex-1">
-                    <span data-hero-text className="block font-display text-[1.3rem] font-medium leading-tight min-[380px]:text-[1.45rem] sm:text-2xl">
+                    <span data-hero-text className="block font-display text-[1.2rem] font-medium leading-tight min-[380px]:text-[1.3rem] sm:text-2xl">
                       {type.title}
                     </span>
                     {type.hint && (
@@ -120,10 +145,12 @@ export function Hero() {
                       </span>
                     )}
                   </span>
-                  <ArrowUpRight
-                    className="h-5 w-5 shrink-0 text-accent-600 transition-transform duration-500 ease-silk group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                  <span
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-neutral-300 text-neutral-950 transition-all duration-700 ease-silk group-hover:rotate-45 group-hover:border-neutral-950 group-hover:bg-neutral-950 group-hover:text-neutral-50 sm:h-11 sm:w-11"
                     aria-hidden="true"
-                  />
+                  >
+                    <ArrowUpRight className="h-5 w-5" />
+                  </span>
                 </a>
               </li>
             ))}
