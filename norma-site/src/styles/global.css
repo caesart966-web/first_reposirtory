@@ -564,6 +564,49 @@ a.card:hover {
   box-shadow: var(--shadow);
 }
 
+/* ── Карточка-ссылка ──
+   Текст ссылки — только заголовок карточки, а нажимается вся карточка:
+   невидимый слой ::after у ссылки растянут на карточку целиком.
+   Раньше ссылкой была сама карточка, и текстом ссылки становилось всё её
+   содержимое подряд, слитно, без пробелов между блоками: «СРО строителей-
+   строительствореконструкция…» на 225 знаков. Аудит 28.09.2026 назвал это
+   «слишком длинными текстами ссылок» — на сайте таких было 105. Поисковик
+   берёт текст ссылки как название страницы, на которую она ведёт, а экранный
+   диктор читает его вслух целиком. «Подробнее →» внутри такой карточки —
+   span с aria-hidden: вторая ссылка на тот же адрес была бы повтором.
+   Размер цели test-a11y и test-pages меряют у такой ссылки по карточке,
+   а не по строке заголовка: нажимается именно карточка. */
+.card--link,
+.stretch { position: relative; }
+.stretch-link { color: inherit; text-decoration: none; }
+.stretch-link::after { content: ''; position: absolute; inset: 0; z-index: 1; }
+.stretch-link:focus-visible { outline: none; }
+.card--link:has(.stretch-link:focus-visible),
+.stretch:has(.stretch-link:focus-visible) { outline: 2px solid var(--acc-btn); outline-offset: 3px; }
+.card--link {
+  transition:
+    border-color var(--t-mid) var(--ease),
+    transform var(--t-mid) var(--ease),
+    box-shadow var(--t-mid) var(--ease);
+}
+.card--link:hover {
+  border-color: color-mix(in srgb, var(--acc) 45%, var(--line));
+  transform: translateY(-3px);
+  box-shadow: var(--shadow);
+}
+
+/* Видно только голосом (и поисковику): текст у ссылок-значков. Раньше
+   у них было одно aria-label, а текста не было вовсе — для поисковика это
+   пустые ссылки (аудит 28.09.2026: пять на каждой странице). */
+.vh {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
 /* ── Таблицы ── */
 
 .tbl-wrap {

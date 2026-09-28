@@ -166,7 +166,7 @@ const faq = [
   },
   {
     q: 'Чем вы отличаетесь от других?',
-    a: 'Тем, что говорю «вам это не нужно», когда это действительно так, и показываю норму, на которую опираюсь. И тем, что все нормы на этом сайте сверены с действующей редакцией Градостроительного кодекса — дата сверки указана внизу каждой страницы.',
+    a: 'Тем, что говорю «вам это не нужно», когда это действительно так, и показываю норму, на которую опираюсь. И тем, что устаревших норм на этом сайте нет: все нормы сверены с действующей редакцией Градостроительного кодекса — дата сверки указана внизу каждой страницы.',
   },
 ]
 
@@ -205,15 +205,15 @@ const howToSchema = {
       <ul class="dirs">
         {dirs.map((d) => (
           <li class="dir rv">
-            <a class="dir-in" href={href(`/uslugi/${d.slug}/`)}>
+            <div class="dir-in stretch">
               <span class="dir-ico"><DirIcon name={d.icon} /></span>
-              <h2 class="dir-t">{d.t}</h2>
+              <h2 class="dir-t"><a class="stretch-link" href={href(`/uslugi/${d.slug}/`)}>{d.t}</a></h2>
               <ul class="dir-works">
                 {d.works.map((w) => <li><Icon name="check" size={15} />{w}</li>)}
               </ul>
               <p class="dir-note">{d.note}</p>
-              <span class="dir-go">Подробнее <Icon name="arrow" size={15} /></span>
-            </a>
+              <span class="dir-go" aria-hidden="true">Подробнее <Icon name="arrow" size={15} /></span>
+            </div>
           </li>
         ))}
       </ul>
@@ -257,7 +257,7 @@ const howToSchema = {
           решаете вы на каждом шаге, со статьями кодекса. Она же отвечает
           на запрос «как вступить в СРО», и ссылка с главной — её вес. */}
       <div class="s4-cta rv">
-        <a class="btn btn--acc btn--lg" href="#zayavka">Оставить заявку</a>
+        <a class="btn btn--acc btn--lg" href="#zayavka">Начать с консультации</a>
         <a class="s4-more" href={href('/baza-znaniy/kak-vstupit-v-sro/')}>
           Как вступить в СРО: подробная инструкция <Icon name="arrow" size={15} class="s4-arrow" />
         </a>
@@ -340,15 +340,15 @@ const howToSchema = {
           {REGIONS.map((r) => {
             const n = partnersOf(r.slug).length
             return (
-              <li>
-                <a href={href(`/sro/${r.slug}/`)}>
-                  <span class="gc-city">{r.city}</span>
+              <li class="stretch">
+                <div class="gc">
+                  <a class="gc-city stretch-link" href={href(`/sro/${r.slug}/`)}>{r.city}</a>
                   <span class="gc-sub">{r.subject} · код {r.code}</span>
                   <span class="gc-n">
                     {n} {n === 1 ? 'партнёрская СРО' : n < 5 ? 'партнёрские СРО' : 'партнёрских СРО'}
                   </span>
-                  <span class="gc-go">Разбор по городу →</span>
-                </a>
+                  <span class="gc-go" aria-hidden="true">Разбор по городу →</span>
+                </div>
               </li>
             )
           })}
@@ -509,7 +509,6 @@ const howToSchema = {
     transition: border-color var(--t-fast) var(--ease);
   }
   .dir-in:hover { border-color: var(--acc); }
-  .dir-in:focus-visible { outline: 2px solid var(--acc); outline-offset: 3px; }
   .dir-ico { color: var(--acc); display: inline-flex; }
   .dir-t { margin: 0; font-size: 22px; }
   /* align-content: start — иначе строка сетки карточки растягивает список,
@@ -609,7 +608,7 @@ const howToSchema = {
   }
   .geo-cards li { border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); }
   .geo-cards li:last-child { border-right: 0; }
-  .geo-cards a {
+  .geo-cards .gc {
     display: grid;
     align-content: start;
     gap: 3px;
@@ -618,7 +617,7 @@ const howToSchema = {
     color: var(--ink);
     height: 100%;
   }
-  .geo-cards li:not(:first-child) a { padding-left: 20px; }
+  .geo-cards li:not(:first-child) .gc { padding-left: 20px; }
   .gc-city { font-family: var(--font-head); font-size: 21px; line-height: 1.15; }
   .gc-sub { font-size: 13px; color: var(--muted); }
   .gc-n {
@@ -629,7 +628,7 @@ const howToSchema = {
     color: var(--acc-deep);
   }
   .gc-go { margin-top: 10px; font-size: 13.5px; font-weight: 600; color: var(--acc-deep); }
-  .geo-cards a:hover .gc-go { text-decoration: underline; }
+  .geo-cards li:hover .gc-go { text-decoration: underline; }
 
   /* Рейка заголовка — сетка, и чип без этого растягивался во всю её ширину. */
   #goroda .s-head .law { justify-self: start; }
@@ -649,7 +648,7 @@ const howToSchema = {
 
   @media (max-width: 599px) {
     .geo-cards li { border-right: 0; }
-    .geo-cards a, .geo-cards li:not(:first-child) a { padding: 15px 0; }
+    .geo-cards .gc, .geo-cards li:not(:first-child) .gc { padding: 15px 0; }
   }
 
   @media (max-width: 640px) {

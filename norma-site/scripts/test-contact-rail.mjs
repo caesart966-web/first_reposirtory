@@ -37,7 +37,7 @@ const rail = (page) =>
     const r = el.getBoundingClientRect()
     const links = [...el.querySelectorAll('a')].map((a) => {
       const b = a.getBoundingClientRect()
-      return { w: b.width, h: b.height, top: b.top, label: a.getAttribute('aria-label') || '', tel: a.href.startsWith('tel:') }
+      return { w: b.width, h: b.height, top: b.top, label: a.getAttribute('aria-label') || a.textContent.trim(), tel: a.href.startsWith('tel:') }
     })
     return { shown: cs.display !== 'none' && cs.visibility !== 'hidden' && cs.opacity !== '0', top: r.top, bottom: r.bottom, left: r.left, right: r.right, links }
   })
@@ -83,7 +83,7 @@ await page.goto(BASE + '/', { waitUntil: 'networkidle' })
     const small = r.links.filter((l) => l.w < 44 || l.h < 44)
     check(!small.length, 'Значки не меньше 44 px — по ним попадают пальцем', small.map((l) => `${l.label}: ${Math.round(l.w)}×${Math.round(l.h)}`).join(', '))
     const unnamed = r.links.filter((l) => !l.label.trim())
-    check(!unnamed.length, 'У каждой ссылки есть название для экранного диктора (aria-label)', `без названия: ${unnamed.length}`)
+    check(!unnamed.length, 'У каждой ссылки есть название для экранного диктора и поисковика', `без названия: ${unnamed.length}`)
     const lowest = r.links.reduce((a, b) => (b.top > a.top ? b : a))
     check(lowest.tel, 'Телефон внизу, ближе всего к большому пальцу')
   }

@@ -296,16 +296,16 @@ const IDENT = [
         <p>Два инструмента, которые часто снимают вопрос без всякого общения.</p>
       </div>
       <div class="grid-2">
-        <a class="card ba rv" href={href('/#calc')}>
+        <div class="card card--link ba rv">
           <span class="ic"><Icon name="calculator" size={20} /></span>
-          <h3>Калькулятор «Нужна ли вам СРО»</h3>
+          <h3><a class="stretch-link" href={href('/#calc')}>Калькулятор «Нужна ли вам СРО»</a></h3>
           <p>Четыре вопроса и честный ответ со ссылкой на норму — включая ответ «не нужна».</p>
-        </a>
-        <a class="card ba rv" href={href('/stoimost/')}>
+        </div>
+        <div class="card card--link ba rv">
           <span class="ic"><Icon name="wallet" size={20} /></span>
-          <h3>Открытая разбивка стоимости</h3>
+          <h3><a class="stretch-link" href={href('/stoimost/')}>Открытая разбивка стоимости</a></h3>
           <p>Все взносы с суммами по уровням ответственности, включая отдельный взнос для торгов.</p>
-        </a>
+        </div>
       </div>
     </div>
   </section>

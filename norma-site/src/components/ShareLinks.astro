@@ -1,0 +1,76 @@
+---
+// Ссылки «Поделиться» — обычные ссылки, без чужих скриптов и cookie.
+//
+// Виджеты соцсетей (кнопки VK, «класс», счётчики) грузят скрипты своих
+// сетей на каждой странице и ставят cookie ещё до всякого согласия — ровно
+// то, чего на этом сайте нет нарочно (Метрика и та включается только после
+// «Принять»). Здесь же — адрес «поделиться» у каждой сети: пока по ссылке
+// не нажали, к сети не уходит ни одного запроса.
+//
+// Появились 28.09.2026 по аудиту: «на странице мало кнопок „поделиться“».
+// Настоящая польза — не в оценке аудита: статью про порог 10 млн пересылают
+// бухгалтеру или партнёру, и адрес уходит вместе с названием, без копирования.
+//
+// Тексты ссылок — «в Telegram», а не «Telegram»: в подвале рядом стоят
+// ссылки связи с теми же названиями, и одинаковые тексты с разными адресами
+// путают и человека, и поисковик.
+interface Props {
+  /** Полный адрес страницы — тот же, что в canonical. */
+  url: string
+  /** Название страницы — уходит подписью к ссылке. */
+  title: string
+  label?: string
+  /** Тёмный подвал или светлая страница. */
+  tone?: 'dark' | 'light'
+}
+
+const { url, title, label = 'Поделиться страницей', tone = 'light' } = Astro.props
+const e = encodeURIComponent
+const links = [
+  { name: 'в Telegram', href: `https://t.me/share/url?url=${e(url)}&text=${e(title)}` },
+  { name: 'в WhatsApp', href: `https://wa.me/?text=${e(`${title} ${url}`)}` },
+  { name: 'во ВКонтакте', href: `https://vk.com/share.php?url=${e(url)}&title=${e(title)}` },
+  { name: 'в Одноклассники', href: `https://connect.ok.ru/offer?url=${e(url)}&title=${e(title)}` },
+]
+---
+
+<p class:list={['share', `share--${tone}`]} data-nosearch>
+  <span class="sh-label">{label}:</span>
+  {/* Без точек-разделителей: при переносе на телефоне точка вставала
+      в начало строки. Пробел между ссылками — для копирования текста
+      и для диктора; на экране расстояние задаёт gap. */}
+  {links.map((l) => (
+    <Fragment>
+      {' '}<a href={l.href} target="_blank" rel="noopener noreferrer nofollow">{l.name}</a>
+    </Fragment>
+  ))}
+</p>
+
+<style>
+  .share {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 16px;
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .sh-label { margin-right: -4px; }
+  /* Высота ссылки не меньше 24 px — проверки считают её тап-целью. */
+  .share a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .share a:hover { text-decoration: underline; }
+
+  .share--light .sh-label { color: var(--muted); }
+  .share--light a { color: var(--acc-deep); }
+
+  .share--dark .sh-label { color: var(--on-dark-muted); }
+  .share--dark a { color: var(--on-dark); }
+  .share--dark a:hover { color: var(--acc-bright); }
+</style>

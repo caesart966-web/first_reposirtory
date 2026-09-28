@@ -3,6 +3,21 @@ import { SITE, REGISTRIES, href } from '../config/site'
 import { SERVICES } from '../config/services'
 import { REGIONS } from '../config/regions'
 import LogoMark from './LogoMark.astro'
+import ShareLinks from './ShareLinks.astro'
+
+interface Props {
+  /** Название страницы — для ссылок «Поделиться». */
+  title?: string
+  /**
+   * Строка «Поделиться страницей» внизу. У статей её нет: там своя, заметная,
+   * сразу под текстом, и вторая такая же в подвале была бы повтором.
+   * У 404 и поиска тоже нет — делиться там нечем.
+   */
+  share?: boolean
+}
+const { title = SITE.brand, share = true } = Astro.props
+const pageUrl = new URL(Astro.url.pathname, Astro.site).toString()
+const home = new URL('/', Astro.site).toString()
 
 // Список услуг берётся из config/services.ts, а не переписан здесь руками:
 // раньше он был копией и при добавлении услуги подвал молча отставал.
@@ -12,11 +27,14 @@ const pages = [
   { label: 'Кому нужна СРО, а кому нет', url: href('/komu-nuzhna-sro/') },
   { label: 'Какие документы нужны', url: href('/dokumenty/') },
   { label: 'Как проверить СРО', url: href('/proverit-sro/') },
-  { label: 'Стоимость', url: href('/stoimost/') },
-  { label: 'База знаний', url: href('/baza-znaniy/') },
+  // Подписи длиннее, чем в меню шапки, нарочно: одинаковый текст ссылки
+  // дважды на странице аудит 28.09.2026 отметил повтором, а поисковику
+  // «Стоимость вступления в СРО» говорит о странице больше, чем «Стоимость».
+  { label: 'Стоимость вступления в СРО', url: href('/stoimost/') },
+  { label: 'База знаний о СРО', url: href('/baza-znaniy/') },
   { label: 'Вступление в СРО по городам', url: href('/sro/') },
   { label: 'Обо мне: как я работаю', url: href('/obo-mne/') },
-  { label: 'Контакты', url: href('/kontakty/') },
+  { label: 'Контакты и реквизиты', url: href('/kontakty/') },
   { label: 'Политика обработки данных', url: href('/politika/') },
 ]
 
@@ -26,17 +44,27 @@ const year = new Date().getFullYear()
 <footer class="site-footer">
   <div class="wrap">
     <div class="cols">
-      <div class="brand-col">
+      {/* Микроразметка организации прямо в разметке (microdata), с тем же
+          @id, что узел #org в JSON-LD из Base.astro, и из тех же полей site.ts.
+          JSON-LD остаётся главным; этот блок — для проверок, которые JSON-LD
+          не читают (аудит 28.09.2026: «дополнительная разметка не найдена»),
+          и для Яндекса, который исторически лучше всего знает microdata. */}
+      <div class="brand-col" itemscope itemtype="https://schema.org/ProfessionalService" itemid={`${home}#org`}>
+        <link itemprop="url" href={home} />
+        <meta itemprop="name" content={`${SITE.brand} — вступление в СРО`} />
+        <div itemprop="address" itemscope itemtype="https://schema.org/PostalAddress">
+          <meta itemprop="addressCountry" content="RU" />
+        </div>
         <div class="logo">
           <LogoMark size={28} class="logo-mark" />
-          <span class="logo-text"><span class="logo-name">{SITE.brand}</span><small>{SITE.brandTag}</small></span>
+          <span class="logo-text"><span class="logo-name">{SITE.brand}</span>{' '}<small>{SITE.brandTag}</small></span>
         </div>
         <p class="tagline">
           Помощь во вступлении в СРО, внесении специалистов в НРС, прохождении НОК
           и получении лицензий. Если СРО вам не нужна — скажу прямо.
         </p>
-        <a class="fphone" href={SITE.phoneHref}>{SITE.phone}</a>
-        <a class="fmail" href={`mailto:${SITE.email}`}>{SITE.email}</a>
+        <a class="fphone" href={SITE.phoneHref}><span itemprop="telephone">{SITE.phone}</span></a>
+        <a class="fmail" href={`mailto:${SITE.email}`}><span itemprop="email">{SITE.email}</span></a>
         <div class="msgs">
           <a href={SITE.whatsapp} target="_blank" rel="noopener noreferrer">WhatsApp</a>
           <a href={SITE.telegram} target="_blank" rel="noopener noreferrer">Telegram</a>
@@ -95,6 +123,7 @@ const year = new Date().getFullYear()
         Информация на сайте сверена с действующей редакцией Градостроительного кодекса РФ
         {' '}{SITE.checkedDate}.
       </p>
+      {share && <ShareLinks url={pageUrl} title={title} tone="dark" />}
       <p class="copy">© {year} {SITE.brand}</p>
     </div>
   </div>

@@ -123,7 +123,7 @@ const orgWord = `${n} ${plural(n, ['организация', 'организац
           <p class="city-note rv">{PARTNERS_NOTE[r.slug]}</p>
           <PartnerCards partners={list} explain={false} />
           <p class="city-link rv">
-            <a href={href(`/sro/${r.slug}/`)}>Вступление в СРО: {r.city} — субъект, соседи и частые ошибки</a>
+            <a href={href(`/sro/${r.slug}/`)}>Вступление в СРО {r.inCity}</a> — субъект, соседи и частые ошибки
           </p>
         </div>
       ))}
