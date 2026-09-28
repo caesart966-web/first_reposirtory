@@ -50,7 +50,7 @@ import { FEES, money } from '../config/fees'
 //
 // Номер шага — не украшение: шаги действительно идут по порядку, и оплата
 // не раньше документов. Текст шага уходит в микроразметку HowTo как есть.
-const steps: { t: string; d: string; law?: string }[] = [
+const steps: { t: string; d: string; law?: string; more?: { label: string; url: string } }[] = [
   {
     t: 'Консультация',
     d: 'По телефону или в мессенджере, бесплатно. Разберу ситуацию и скажу, нужна ли вам СРО вообще, — если нет, на этом всё.',
@@ -65,9 +65,27 @@ const steps: { t: string; d: string; law?: string }[] = [
   },
   {
     t: 'Приём в члены СРО',
-    d: 'Сведения о компании вносятся в единый реестр членов СРО — НОСТРОЙ или НОПРИЗ, — и вы получаете выписку из реестра.',
+    // Последняя фраза — с сайта СРО «СОМ» (прислал заказчик 28.09.2026):
+    // у них четвёртый шаг кончается «зайдите в реестр НОСТРОЙ, внесите ИНН
+    // и убедитесь, что вы состоите». Для этого сайта это главный довод
+    // целиком — «проверьте меня», — поэтому ссылка ведёт в разбор того,
+    // что должно появиться в реестре, а не просто на реестр.
+    d: 'Сведения о компании вносятся в единый реестр членов СРО — НОСТРОЙ или НОПРИЗ, — и вы получаете выписку из реестра. Реестр открытый: запись о компании вы проверите сами, по\u00a0ИНН.',
     law: LAW.membership,
+    more: { label: 'Что проверить в реестре', url: '/proverit-sro/#posle' },
   },
+]
+
+// Что человек получит в ответ на заявку — список у формы. Идея — с сайта
+// СРО «СОМ» («расчёт до рубля», «проверка специалистов», «анализ рисков
+// отказа»); каждый пункт здесь — обещание, которое сайт уже даёт: ответ
+// «не нужна» со ссылкой на норму (калькулятор), условия СРО с номером
+// в реестре до подписи (раздел «География»), проверка специалистов
+// по образованию и стажу (услуга НРС).
+const formPoints = [
+  { b: 'Нужна ли вам СРО', t: 'ответ со ссылкой на норму закона. Если не нужна, так и скажу.' },
+  { b: 'Суммы по конкретной СРО', t: 'с её номером в реестре, до того как вы что-то подпишете.' },
+  { b: 'Проверку специалистов', t: 'подходят ли они для национального реестра по образованию и стажу.' },
 ]
 // «4 шага», «5 шагов» — числом из списка, а не словом в тексте.
 const stepsWord = (n: number) =>
@@ -226,6 +244,11 @@ const howToSchema = {
             <h3>{s.t}</h3>
             <p>{s.d}</p>
             {s.law && <span class="law">{s.law}</span>}
+            {s.more && (
+              <a class="s4-link" href={href(s.more.url)}>
+                {s.more.label} <Icon name="arrow" size={14} />
+              </a>
+            )}
           </li>
         ))}
       </ol>
@@ -246,7 +269,11 @@ const howToSchema = {
   <section class="section section--paper apply" id="zayavka" data-anchor>
     <div class="wrap apply-one">
       <div class="apply-form rv">
-        <LeadForm who />
+        <LeadForm
+          who
+          subtitle="Достаточно имени и телефона — остальное спрошу сам. В ответ вы получите:"
+          points={formPoints}
+        />
         {/* Прямые каналы — строкой под формой, а не отдельной карточкой:
             на телефоне те же каналы и так стоят столбиком справа, а почты
             там нет. */}
@@ -418,6 +445,21 @@ const howToSchema = {
   .steps4 h3 { margin: 0; font-size: 18px; }
   .steps4 p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.6; max-width: 40ch; }
   .steps4 .law { justify-self: start; margin-top: 4px; }
+  /* Высота не меньше 32 px: строка в 22 px — мелкая цель для пальца,
+     и test-a11y её роняет. Ссылка короткая и в одну строку, поэтому
+     flex здесь безопасен (у .s4-more ниже — наоборот, см. комментарий). */
+  .s4-link {
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 32px;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--acc-deep);
+    text-decoration: none;
+  }
+  .s4-link:hover { text-decoration: underline; }
   .s4-tel { font-weight: 600; white-space: nowrap; }
   .s4-cta { margin-top: 34px; display: flex; flex-wrap: wrap; align-items: center; gap: 14px 28px; }
   /* Строчный текст, а не flex: на телефоне ссылка переносится на две
@@ -435,7 +477,7 @@ const howToSchema = {
     .s4-head { grid-row: 1 / span 3; margin: 0; align-items: flex-start; }
     .s4-line { display: none; }
     .s4-num { font-size: 46px; }
-    .steps4 h3, .steps4 p, .steps4 .law { grid-column: 2; }
+    .steps4 h3, .steps4 p, .steps4 .law, .steps4 .s4-link { grid-column: 2; }
   }
 
   /* ── Три направления ──

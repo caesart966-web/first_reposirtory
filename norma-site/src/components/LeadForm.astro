@@ -36,6 +36,15 @@ interface Props {
    * На «Контактах» то же самое уже делает ConsultBlock — там не нужно.
    */
   who?: boolean
+  /**
+   * Что человек получит в ответ на заявку — короткий список под
+   * подзаголовком. Идея — с сайта СРО «СОМ», который прислал заказчик
+   * 28.09.2026: там у формы стоят «расчёт до рубля», «проверка
+   * специалистов» и «анализ рисков отказа». Сюда идут только обещания,
+   * которые сайт уже даёт в других местах; «100% одобрение» и «перезвоним
+   * за минуту» не взяты — обещать чужое решение и минуту ответа нельзя.
+   */
+  points?: { b: string; t: string }[]
 }
 const {
   title = 'Оставьте заявку\u00a0— отвечу лично',
@@ -43,6 +52,7 @@ const {
   id = 'form',
   expanded = false,
   who = false,
+  points = [],
 } = Astro.props
 
 // Адрес приёмника заявок и токен. Задаются при сборке; на превью-хостинге
@@ -63,6 +73,13 @@ const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
     )}
     <h2>{title}</h2>
     <p>{subtitle}</p>
+    {points.length > 0 && (
+      <ul class="lf-points">
+        {points.map((pt) => (
+          <li><Icon name="check" size={16} class="lf-tick" /><span><b>{pt.b}</b> — {pt.t}</span></li>
+        ))}
+      </ul>
+    )}
   </div>
 
   {/* Поля, куда человек пишет о себе, помечены ym-hide-content и ym-disable-keys:
@@ -270,6 +287,18 @@ const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
   .lf-who b { display: block; font-size: 16.5px; color: var(--ink); }
   .lf-who span { display: block; color: var(--muted); font-size: 14px; line-height: 1.45; margin-top: 2px; }
   .lf-head p { color: var(--muted); font-size: 15.5px; max-width: 60ch; }
+  .lf-points { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 8px; max-width: 64ch; }
+  .lf-points li {
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.55;
+  }
+  .lf-points b { color: var(--ink); font-weight: 600; }
+  .lf-points :global(.lf-tick) { color: var(--acc); margin-top: 4px; }
 
   form { display: grid; gap: 16px; }
   .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
