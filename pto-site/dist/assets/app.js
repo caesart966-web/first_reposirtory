@@ -1,6 +1,22 @@
+window.xptoGoal = function (name) {
+var bar = document.getElementById('cookie-bar');
+var id = bar && bar.getAttribute('data-metrika');
+if (id && typeof window.ym === 'function') {
+try { window.ym(Number(id), 'reachGoal', name); } catch (e) { /* счётчик не загрузился */ }
+}
+};
 (function () {
 'use strict';
 var CFG = window.SITE_CONFIG || {};
+document.addEventListener('click', function (e) {
+var a = e.target.closest && e.target.closest('a[href]');
+if (!a) return;
+var href = a.getAttribute('href') || '';
+if (href.indexOf('tel:') === 0) window.xptoGoal('telefon');
+else if (href.indexOf('mailto:') === 0) window.xptoGoal('pochta');
+else if (href.indexOf('t.me/') > -1) window.xptoGoal('telegram');
+else if (href.indexOf('max.ru') > -1) window.xptoGoal('max');
+});
 document.documentElement.classList.add('js');
 var calmMedia = window.matchMedia('(prefers-reduced-motion: reduce)');
 var header = document.querySelector('.header');
@@ -387,6 +403,7 @@ send(form)
 .then(function () {
 form.reset();
 showStatus(form, 'ok', form.getAttribute('data-success') || 'Заявка отправлена.');
+window.xptoGoal('zayavka');
 })
 .catch(function (err) {
 showStatus(form, 'err', form.getAttribute('data-error') || 'Не удалось отправить.');

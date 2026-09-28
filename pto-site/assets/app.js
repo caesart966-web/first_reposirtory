@@ -6,10 +6,33 @@
    3. Всплывающее окно с документом
    4. Форма заявки -> Telegram
    ========================================================================= */
+/* Цель в Метрике. Срабатывает, только если счётчик уже запущен — то есть
+   посетитель нажал «Принять» в полосе про cookie. Без согласия window.ym
+   не существует, и функция молча ничего не делает. */
+window.xptoGoal = function (name) {
+  var bar = document.getElementById('cookie-bar');
+  var id = bar && bar.getAttribute('data-metrika');
+  if (id && typeof window.ym === 'function') {
+    try { window.ym(Number(id), 'reachGoal', name); } catch (e) { /* счётчик не загрузился */ }
+  }
+};
+
 (function () {
   'use strict';
 
   var CFG = window.SITE_CONFIG || {};
+
+  // Цели по нажатиям на способы связи: звонок, почта, мессенджеры.
+  // Названия целей те же, что заводятся в Метрике (см. README).
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[href]');
+    if (!a) return;
+    var href = a.getAttribute('href') || '';
+    if (href.indexOf('tel:') === 0) window.xptoGoal('telefon');
+    else if (href.indexOf('mailto:') === 0) window.xptoGoal('pochta');
+    else if (href.indexOf('t.me/') > -1) window.xptoGoal('telegram');
+    else if (href.indexOf('max.ru') > -1) window.xptoGoal('max');
+  });
 
   // Метка «скрипты работают». Всё, что прячет контент до анимации, висит
   // на этом классе — значит без JS и у поисковиков текст виден всегда.
@@ -528,6 +551,7 @@
         .then(function () {
           form.reset();
           showStatus(form, 'ok', form.getAttribute('data-success') || 'Заявка отправлена.');
+          window.xptoGoal('zayavka');
         })
         .catch(function (err) {
           showStatus(form, 'err', form.getAttribute('data-error') || 'Не удалось отправить.');
