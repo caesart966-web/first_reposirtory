@@ -277,6 +277,10 @@ const cardStyle = `
 .tx { display: grid; gap: 24px; justify-items: center; }
 h1 { font: 700 84px/1.06 ${HEAD}; letter-spacing: -.015em; text-wrap: balance; max-width: 1150px; }
 p { font: 400 40px/1.4 ${BODY}; color: ${C.muted}; text-wrap: balance; max-width: 1060px; }
+.more { display: grid; gap: 24px; justify-items: center; }
+/* Короткий вариант: значок и название, без абзаца и статьи. */
+.short .more { display: none; }
+.short h1 { font-size: 92px; }
 `
 
 for (const s of SERVICES) {
@@ -292,8 +296,10 @@ for (const s of SERVICES) {
        <div class="ic">${serviceIcon(s)}</div>
        <div class="tx">
          <h1>${nbsp(s.title)}</h1>
-         <p>${nbsp(firstSentence(s.excerpt))}</p>
-         ${law ? chip(law, 30) : ''}
+         <div class="more">
+           <p>${nbsp(firstSentence(s.excerpt))}</p>
+           ${law ? chip(law, 30) : ''}
+         </div>
        </div>
      </div>`,
   )
@@ -311,8 +317,24 @@ for (const s of SERVICES) {
   if (over) throw new Error(`«${s.title}»: текст не помещается в безопасную полосу 1200×900`)
   const file = join(out, `usluga-${s.slug}.jpg`)
   await p.screenshot({ path: file, type: 'jpeg', quality: 92 })
-  await p.close()
   made.push(file)
+
+  // КОРОТКИЙ ВАРИАНТ — значок и название, без абзаца и статьи. 28.09.2026
+  // из девяти полных картинок модерация Яндекса пропустила три
+  // (проектировщики, промбезопасность, сайт) и отклонила шесть без
+  // объяснения причины; закономерности по тексту не видно. Короткий
+  // вариант меньше похож на рекламный баннер — его пробуют повторно
+  // вместо отклонённой полной, а не заливают ту же картинку ещё раз.
+  await p.evaluate(() => document.body.classList.add('short'))
+  const shortFile = join(out, `usluga-${s.slug}-korotko.jpg`)
+  await p.screenshot({ path: shortFile, type: 'jpeg', quality: 92 })
+  made.push(shortFile)
+  await p.close()
+}
+if (process.env.YX_ONLY === 'images') {
+  await browser.close()
+  console.log(made.map((f) => '  ' + f.replace(root + '/', '')).join('\n'))
+  process.exit(0)
 }
 
 // ═════════════════════════════ РОЛИК ═══════════════════════════════════════
