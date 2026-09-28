@@ -34,7 +34,7 @@
 // (--experimental-strip-types, флаг стоит в package.json).
 
 import { spawn, spawnSync } from 'node:child_process'
-import { mkdirSync, readFileSync, statSync } from 'node:fs'
+import { mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright'
@@ -44,8 +44,10 @@ const out = join(root, 'release/yandex')
 mkdirSync(out, { recursive: true })
 
 const { OFFER, GIFTS, GIFT_TAG } = await import('../src/config/offer.ts')
-const { TERMS, LAW, THRESHOLD_BUILD } = await import('../src/config/facts.ts')
-const { SERVICES } = await import('../src/config/services.ts')
+const { TERMS, LAW, THRESHOLD_BUILD, FUNDS } = await import('../src/config/facts.ts')
+const { SERVICES, GROUP_LABELS } = await import('../src/config/services.ts')
+const { FEES, FEES_NOTE, money } = await import('../src/config/fees.ts')
+const DOMAIN = 'norma-sro.ru'
 
 // ── Цвета и шрифты — из стилей сайта ──────────────────────────────────────
 const css = readFileSync(join(root, 'src/styles/global.css'), 'utf8')
@@ -153,6 +155,80 @@ body { background: ${C.paper}; color: ${C.ink}; font-family: ${BODY}; -webkit-fo
 .light { position: absolute; inset: 0; background: radial-gradient(120% 90% at 85% 0%, rgba(255,255,255,.85), rgba(255,255,255,0) 60%), linear-gradient(180deg, rgba(0,0,0,0) 70%, rgba(80,60,30,.05)); }
 ${style}
 </style><body>${body}</body></html>`
+
+// ═══════════════════ ТЕКСТЫ ДЛЯ «ТОВАРОВ И УСЛУГ» ═══════════════════════
+// Карточка услуги в Яндекс Бизнесе: название, категория, цена, описание
+// до 3000 знаков, ссылка, фото. Яндекс не показывает в Картах услугу без
+// цены, поэтому у трёх видов СРО цена — все платежи первого года, как
+// в блоке «Сколько стоит первый год» на главной (та же формула: фонд
+// первого уровня + вступительный + членские за 12 месяцев + целевой).
+// Не «0 ₽ — мои услуги»: в строке с ценой это читалось бы как «вступление
+// бесплатно», а сайт весь держится на том, что цена названа целиком.
+// У остальных услуг цен на сайте нет (их не назвал заказчик) — и здесь
+// их нет: вписать цену может только он.
+const firstYear = (f, fund) => fund + f.entry + f.memberMonth * 12 + f.target
+const SRO_PRICE = {
+  'sro-stroiteley': { fee: FEES.build, fund: FUNDS.buildHarm[0], odo: FUNDS.buildContract[0] },
+  'sro-proektirovshchikov': { fee: FEES.design, fund: FUNDS.designHarm[0], odo: FUNDS.designContract[0] },
+  'sro-izyskateley': { fee: FEES.design, fund: FUNDS.designHarm[0], odo: FUNDS.designContract[0] },
+}
+const giftSentence = `Подарок на выбор: ${GIFTS.map((g, i) =>
+  `${i === 0 ? '' : i === GIFTS.length - 1 ? ' или ' : ', '}${g.short}${g.d ? ` ${g.d}` : ''}`,
+).join('')}.`
+const plain = (t) => t.replace(/\u00a0/g, ' ')
+
+const tovary = SERVICES.map((sv, i) => {
+  const pr = SRO_PRICE[sv.slug]
+  const lines = [sv.excerpt]
+  if (pr) {
+    const { fee, fund, odo } = pr
+    lines.push(
+      [
+        `Цена — все платежи первого года при договорах ${fund.limit}:`,
+        `— компенсационный фонд ${fund.amount} (размер установлен законом);`,
+        `— членские взносы ${money(fee.memberMonth)} в месяц, ${money(fee.memberMonth * 12)} за год;`,
+        `— целевой взнос в ${fee.union} ${money(fee.target)};`,
+        `— вступительный взнос ${money(fee.entry)}, страхование в первый год ${fee.insuranceFirstYear ? 'по ставке страховщика' : 'не нужно'};`,
+        '— мои услуги: документы и сопровождение до выписки из реестра — 0 ₽.',
+        'Взносы вы переводите напрямую в СРО, минуя меня.',
+      ].join('\n'),
+      `Для участия в торгах нужен второй взнос — в компенсационный фонд обеспечения договорных обязательств: ${odo.amount}.`,
+      FEES_NOTE,
+      giftSentence,
+    )
+  }
+  const description = plain(lines.join('\n\n'))
+  if (description.length > 3000) throw new Error(`«${sv.title}»: описание длиннее 3000 знаков`)
+  if (/\+?\d[\d\s()-]{9,}\d/.test(description.replace(/\d[\d ]*₽/g, ''))) throw new Error(`«${sv.title}»: в описании похоже на телефон`)
+  const price = pr ? String(firstYear(pr.fee, pr.fund.amountNum)) : 'впишите свою — без цены Яндекс не покажет услугу в Картах'
+  return [
+    `${i + 1}. ${sv.title}`,
+    `Фото: usluga-${sv.slug}.jpg`,
+    `Название: ${sv.title}`,
+    `Категория: ${GROUP_LABELS[sv.group]}`,
+    `Цена, ₽: ${price}${pr ? '   (поле «за» можно оставить пустым)' : ''}`,
+    'Описание:',
+    description,
+    `Ссылка на страницу товара: https://${DOMAIN}/uslugi/${sv.slug}/`,
+    `Популярный товар: ${pr ? 'включить' : 'не включать'}`,
+    'В наличии: включить',
+  ].join('\n')
+})
+
+const tovaryFile = join(out, 'tovary-i-uslugi.txt')
+writeFileSync(
+  tovaryFile,
+  [
+    'Тексты для Яндекс Бизнеса: «О компании» → «Товары и услуги» → «Добавить».',
+    'Одна услуга — одна карточка. Фото — файл из этой же папки.',
+    'Собрано командой npm run yandex из настроек сайта: цены, условия и описания те же, что на сайте.',
+    'Правила Яндекса: без телефонов и ссылок в описании (ссылка — только в своём поле), без слов целиком заглавными.',
+    '',
+    ...tovary.flatMap((t) => ['────────────────────────────────────────', t, '']),
+  ].join('\n'),
+)
+console.log(`✓ Тексты для «Товаров и услуг»: ${tovaryFile.replace(root + '/', '')}`)
+if (process.env.YX_ONLY === 'text') process.exit(0)
 
 const browser = await chromium.launch()
 const made = []
