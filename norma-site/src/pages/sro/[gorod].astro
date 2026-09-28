@@ -4,12 +4,14 @@ import LeadForm from '../../components/LeadForm.astro'
 import HeadPhoto from '../../components/HeadPhoto.astro'
 import { existsSync } from 'node:fs'
 import Icon from '../../components/Icon.astro'
+import DirIcon from '../../components/DirIcon.astro'
 import PartnerCards from '../../components/PartnerCards.astro'
 import { REGIONS } from '../../config/regions'
 import { LAW, TERMS, FUNDS } from '../../config/facts'
 import { FEES, FEES_NOTE, money } from '../../config/fees'
 import { partnersOf, PARTNERS_NOTE } from '../../config/partners'
 import { href, SITE } from '../../config/site'
+import { dirIconOf } from '../../config/services'
 
 // Страница города: «Вступление в СРО в Москве».
 //
@@ -180,7 +182,7 @@ const others = REGIONS.filter((x) => x.slug !== r.slug)
 
       <div class="grid-2">
         <div class="card rcard rv">
-          <div class="rc-top"><Icon name="building" size={20} /><span class="host">строителям</span></div>
+          <div class="rc-top"><span class="rc-ico"><DirIcon name={dirIconOf('sro-stroiteley')} size={44} /></span><span class="host">строителям</span></div>
           <h3>Привязка есть</h3>
           <p>
             СРО должна быть зарегистрирована {r.inSubject}. Организация соседнего субъекта
@@ -193,7 +195,7 @@ const others = REGIONS.filter((x) => x.slug !== r.slug)
         </div>
 
         <div class="card rcard rv">
-          <div class="rc-top"><Icon name="ruler" size={20} /><span class="host">проектировщикам и изыскателям</span></div>
+          <div class="rc-top"><span class="rc-ico"><DirIcon name={dirIconOf('sro-proektirovshchikov')} size={44} /><DirIcon name={dirIconOf('sro-izyskateley')} size={44} /></span><span class="host">проектировщикам и изыскателям</span></div>
           <h3>Привязки нет</h3>
           <p>
             Выбирать можно среди организаций всей России — {r.inCity} вы не ограничены
@@ -531,7 +533,10 @@ const others = REGIONS.filter((x) => x.slug !== r.slug)
   .cities a:hover { border-color: var(--acc); background: var(--acc-soft); }
 
   .rcard { display: grid; gap: 10px; align-content: start; }
-  .rc-top { display: flex; align-items: center; gap: 10px; color: var(--acc-deep); }
+  .rc-top { display: flex; align-items: center; gap: 12px; color: var(--acc-deep); }
+  /* Значки направлений заказчика, те же, что на главной и на «Услугах»
+     (поле dirIcon в services.ts): у проектировщиков и изыскателей их два. */
+  .rc-ico { display: inline-flex; gap: 6px; color: var(--acc); }
   .host {
     font-family: var(--font-mono);
     font-size: 12px;

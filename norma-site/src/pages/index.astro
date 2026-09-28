@@ -7,6 +7,7 @@ import Icon from '../components/Icon.astro'
 import BrandIcon from '../components/BrandIcon.astro'
 import DirIcon from '../components/DirIcon.astro'
 import { SITE, href } from '../config/site'
+import { dirIconOf } from '../config/services'
 import { REGIONS } from '../config/regions'
 import { partnersOf } from '../config/partners'
 import { LAW, TERMS, FUNDS } from '../config/facts'
@@ -80,25 +81,26 @@ const stepsWord = (n: number) =>
 // СРО, и утверждать это здесь, мимо страниц с нормами, было бы новым
 // фактом без статьи. Фотографий нет нарочно: у образца это стоковые
 // краны и каски, а стоковых касок на этом сайте быть не должно. Значки —
-// те, что прислал заказчик, обведены в вектор (DirIcon.astro).
+// те, что прислал заказчик, обведены в вектор (DirIcon.astro); какой
+// услуге какой — поле dirIcon в services.ts, одно на весь сайт.
 const dirs = [
   {
     slug: 'sro-stroiteley',
-    icon: 'builder' as const,
+    icon: dirIconOf('sro-stroiteley'),
     t: 'СРО строителей',
     works: ['строительство', 'реконструкция', 'капитальный ремонт', 'снос объектов капитального строительства', 'функции технического заказчика'],
     note: 'Нужна, если обязательства по прямому договору больше 10 млн ₽. СРО — вашего субъекта РФ.',
   },
   {
     slug: 'sro-proektirovshchikov',
-    icon: 'design' as const,
+    icon: dirIconOf('sro-proektirovshchikov'),
     t: 'СРО проектировщиков',
     works: ['подготовка проектной документации', 'архитектурно-строительное проектирование'],
     note: 'Нужна при любой сумме прямого договора. Регион не важен: СРО — любого субъекта.',
   },
   {
     slug: 'sro-izyskateley',
-    icon: 'survey' as const,
+    icon: dirIconOf('sro-izyskateley'),
     t: 'СРО изыскателей',
     works: ['инженерно-геодезические изыскания', 'инженерно-геологические', 'инженерно-гидрометеорологические', 'инженерно-экологические', 'инженерно-геотехнические'],
     note: 'Нужна при любой сумме прямого договора. Регион не важен: СРО — любого субъекта.',
