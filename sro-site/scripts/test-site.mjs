@@ -89,6 +89,25 @@ for (const path of PAGES) {
         hiddenReveal: [...document.querySelectorAll('.reveal, .reveal-words, .reveal-image')]
           .filter((el) => vis(el) && !el.classList.contains('is-visible')).length,
         oldDomain: document.documentElement.outerHTML.includes('example.com'),
+        // Заголовок, из которого длинное слово вылезает за его колонку:
+        // горизонтальной прокрутки при этом нет, слово просто ложится
+        // на соседний текст («компенсационные» в узкой колонке раздела).
+        // Меряется сам текст (прямоугольники строк), а не scrollWidth:
+        // у вопросов FAQ повёрнутый значок «+» выступает на 4 px, букв это
+        // не касается.
+        wideHeads: [...document.querySelectorAll('h1, h2, h3')]
+          .filter((h) => vis(h))
+          .filter((h) => {
+            const box = h.getBoundingClientRect()
+            const walk = document.createTreeWalker(h, NodeFilter.SHOW_TEXT)
+            const range = document.createRange()
+            for (let t = walk.nextNode(); t; t = walk.nextNode()) {
+              range.selectNodeContents(t)
+              if ([...range.getClientRects()].some((r) => r.width > 0 && (r.right > box.right + 1 || r.left < box.left - 1))) return true
+            }
+            return false
+          })
+          .map((h) => h.textContent.trim().slice(0, 40)),
         // Шрифт заголовков действительно загрузился, а не подменился Georgia.
         displayFont: document.fonts.check('500 40px "Brygada 1918 Variable"', 'Вступление'),
       }
@@ -105,6 +124,7 @@ for (const path of PAGES) {
     check(`${tag}: у каждой картинки есть alt`, r.noAlt.length === 0, r.noAlt.join(' '))
     check(`${tag}: после прокрутки всё проявилось`, r.hiddenReveal === 0, `${r.hiddenReveal} блоков остались скрытыми`)
     check(`${tag}: без example.com`, !r.oldDomain)
+    check(`${tag}: заголовки не шире своей колонки`, r.wideHeads.length === 0, r.wideHeads.join(' | '))
     check(`${tag}: шрифт заголовков загружен`, r.displayFont)
     check(`${tag}: без ошибок в консоли`, errs.length === 0, errs[0]?.slice(0, 140) ?? '')
     check(`${tag}: без битых запросов`, failed.length === 0, failed.join(' '))
@@ -205,15 +225,18 @@ const heroGeometry = (p) => p.evaluate(async (sel) => {
   check(`широкий экран ${W}: кадр «Документов» у колонки текста`, edges.docs >= W / 2 - 901, `левый край ${Math.round(edges.docs)}`)
   check(`широкий экран ${W}: кадр «О нас» у колонки текста`, edges.about <= W / 2 + 901, `правый край ${Math.round(edges.about)}`)
 
-  // Карта точками: у каждого региона из списка есть свои точки. Маленькому
-  // региону сетка может не дать ни одной — тогда build-map-dots.mjs ставит
-  // точку в метку; проверка следит, что регион не пропал с карты молча.
+  // Карта: у каждого выделенного региона есть контур, и наведение на строку
+  // списка зажигает его регион (связь списка и карты в обе стороны).
   await p.locator('#regions').scrollIntoViewIfNeeded()
-  await p.waitForFunction(() => document.querySelectorAll('#regions svg path[fill="url(#ru-dot)"]').length > 0)
-  const empty = await p.evaluate(() => [...document.querySelectorAll('#regions svg path[fill="url(#ru-dot)"]')]
-    .filter((el) => !el.getAttribute('d')).length)
-  const regions = await p.evaluate(() => document.querySelectorAll('#regions svg path[fill="url(#ru-dot)"]').length)
-  check('карта: у каждого выделенного региона есть точки', regions >= 13 && empty === 0, `регионов ${regions}, пустых ${empty}`)
+  await p.waitForFunction(() => document.querySelectorAll('#regions svg path[fill^="url(#ru-"]').length > 0)
+  const shapes = await p.evaluate(() => {
+    const all = [...document.querySelectorAll('#regions svg path[fill^="url(#ru-"]')]
+    return { count: all.length, empty: all.filter((el) => !el.getAttribute('d')).length }
+  })
+  check('карта: у каждого выделенного региона есть контур', shapes.count >= 13 && shapes.empty === 0, `регионов ${shapes.count}, пустых ${shapes.empty}`)
+  await p.locator('#regions li div').first().hover()
+  const hot = await p.evaluate(() => document.querySelectorAll('#regions svg path[fill="url(#ru-hot)"]').length)
+  check('карта: строка списка зажигает свой регион', hot === 1, `подсвечено ${hot}`)
   await ctx.close()
 }
 

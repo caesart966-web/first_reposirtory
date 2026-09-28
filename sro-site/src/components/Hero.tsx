@@ -1,5 +1,5 @@
 import { ArrowUpRight, Phone } from 'lucide-react'
-import type { CSSProperties } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { LINKS } from '../content/contacts'
 import { IMAGES } from '../content/images'
 import { TYPES_GROUP } from '../content/nav'
@@ -31,6 +31,18 @@ import { RevealText } from './ui/Reveal'
 // При наведении строка ложится на лист, миниатюра чуть приближается,
 // кружок со стрелкой темнеет и поворачивается.
 //
+// СМЕНА КАДРА (с 28.09.2026). Наведение на вид СРО (или фокус с клавиатуры)
+// меняет кадр в окне на кадр этого вида: план этажа для проектировщиков,
+// изыскатели с прибором для изыскателей; ушёл курсор со списка — вернулся кран.
+// Кадр меняется в том же окне, а не разворачивается на весь фон: текст
+// остаётся на бумаге, и контраст не зависит от того, какой кадр сейчас
+// под ним (на весь фон понадобилось бы затемнение и белый текст — это уже
+// другой первый экран). Новый кадр проступает поверх крана (opacity) и чуть
+// оседает из приближения, как при загрузке. Два дополнительных кадра —
+// около 200 КБ, поэтому грузятся после загрузки страницы, когда браузер
+// свободен, и только там, где есть наведение и окно шире телефона:
+// на телефоне кадр — узкая полоса, а наведения нет вовсе.
+//
 // ТЕЛЕФОН. Первый экран обязан показать, что это, для кого и как связаться:
 // заголовок, обе кнопки и все три вида — без прокрутки при видимой высоте
 // окна 780 px (стережёт test-site.mjs). Поэтому там кадр — невысокая полоса
@@ -49,8 +61,53 @@ const TYPES = SRO_DETAILS.map((detail) => ({
   image: detail.card.image,
 }))
 
+// Какую часть кадра показывать в окне первого экрана. Окно на компьютере
+// почти квадратное, панорама изыскателей широкая — из неё берутся люди
+// с прибором, а не мачта с левого края. Классы записаны целиком: Tailwind
+// собирает только те, что видит в исходнике.
+const FRAME: Record<string, string> = {
+  construction: 'object-[50%_30%] lg:object-[50%_18%]',
+  design: 'object-[50%_50%] lg:object-[45%_50%]',
+  survey: 'object-[70%_40%] lg:object-[80%_45%]',
+}
+
+// Кадр, который сейчас на экране, и загружены ли остальные. Смена кадра —
+// только там, где есть наведение: на телефоне касание строки сразу ведёт
+// на страницу вида, и грузить ради него два кадра незачем.
+const canHover = () => matchMedia('(hover: hover) and (min-width: 640px)').matches
+const idle = 'requestIdleCallback' in window
+
+function useHoverFrame() {
+  const [shown, setShown] = useState<string | null>(null)
+  const [ready, setReady] = useState(false)
+  useEffect(() => {
+    if (!canHover()) return
+    let handle = 0
+    const start = () => {
+      handle = idle
+        ? requestIdleCallback(() => setReady(true), { timeout: 3000 })
+        : window.setTimeout(() => setReady(true), 1200)
+    }
+    if (document.readyState === 'complete') start()
+    else addEventListener('load', start, { once: true })
+    return () => {
+      removeEventListener('load', start)
+      if (idle) cancelIdleCallback(handle)
+      else clearTimeout(handle)
+    }
+  }, [])
+  const show = (slug: string | null) => {
+    if (!canHover()) return
+    // Курсор пришёл раньше, чем браузер освободился, — грузим сразу.
+    if (slug) setReady(true)
+    setShown(slug)
+  }
+  return { shown, ready, show }
+}
+
 export function Hero() {
   const image = IMAGES.construction
+  const frame = useHoverFrame()
   return (
     <section className="relative isolate overflow-hidden bg-neutral-50 text-neutral-950" aria-labelledby="hero-title">
       {/* Кадр: на телефоне и планшете — полоса над текстом, с 1024px — правая
@@ -69,9 +126,28 @@ export function Hero() {
             height={image.height}
             loading="eager"
             decoding="async"
-            className="scroll-drift h-full w-full object-cover object-[50%_30%] lg:object-[50%_18%]"
+            className={`scroll-drift h-full w-full object-cover ${FRAME.construction}`}
           />
         </picture>
+        {frame.ready &&
+          TYPES.filter((type) => type.image !== image).map((type) => (
+            <picture
+              key={type.slug}
+              className={`absolute inset-0 transition-[opacity,transform] duration-1000 ease-silk ${
+                frame.shown === type.slug ? 'opacity-100' : 'opacity-0 motion-safe:scale-[1.04]'
+              }`}
+            >
+              {type.image.srcAvif && <source type="image/avif" srcSet={asset(type.image.srcAvif)} />}
+              <img
+                src={asset(type.image.src)}
+                alt=""
+                width={type.image.width}
+                height={type.image.height}
+                decoding="async"
+                className={`scroll-drift h-full w-full object-cover ${FRAME[type.slug] ?? ''}`}
+              />
+            </picture>
+          ))}
         <span className="hero-develop absolute inset-0 bg-neutral-50" aria-hidden="true" />
       </div>
 
@@ -109,11 +185,18 @@ export function Hero() {
           <p id="hero-types" data-hero-text className="text-sm font-medium text-neutral-600">
             Выберите вид СРО
           </p>
-          <ul aria-labelledby="hero-types" className="mt-2 border-b border-neutral-300 sm:mt-3">
+          <ul
+            aria-labelledby="hero-types"
+            className="mt-2 border-b border-neutral-300 sm:mt-3"
+            onMouseLeave={() => frame.show(null)}
+          >
             {TYPES.map((type) => (
               <li key={type.href} className="border-t border-neutral-300">
                 <a
                   href={type.href}
+                  onMouseEnter={() => frame.show(type.slug)}
+                  onFocus={() => frame.show(type.slug)}
+                  onBlur={() => frame.show(null)}
                   className="group -mx-2 flex min-h-14 items-center gap-3 rounded-2xl px-2 py-1.5 transition-colors duration-500 ease-silk hover:bg-neutral-100 sm:gap-5 sm:py-3 lg:gap-4 lg:py-2.5"
                 >
                   {type.image.thumb && (

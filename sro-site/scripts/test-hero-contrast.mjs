@@ -12,6 +12,9 @@
 // (у неё в шапке папки), раздел «О нас» с фотографией Фемиды и раздел
 // «Документы» с фотографией папок (подпись, заголовок и абзац ложатся
 // на растворённый край кадра) на 1440, 1024, 820 и 390 px.
+// С 28.09.2026 первый экран меряется ещё и с наведением на проектировщиков
+// и изыскателей: кадр в окне меняется на кадр вида, и под текстом списка
+// оказывается уже не кран (только там, где есть наведение, — не на 820 и 390).
 // Первая версия плёнки давала 1,2:1 — кадры дневные, белая подпись ложилась
 // на небо; статический расчёт по стилям этого не видит принципиально.
 //
@@ -23,6 +26,7 @@ const BASE = process.env.BASE || 'http://localhost:4181/'
 const NORM = 4.5
 const SHOTS = [
   { path: '' },
+  { path: '', hover: 1 }, { path: '', hover: 2 },
   { path: 'sro-stroiteley/' }, { path: 'sro-proektirovshchikov/' }, { path: 'sro-izyskateley/' }, { path: 'uslugi/nok/' },
   { path: 'uslugi/dokumenty/' },
   { path: '', section: 'about', selector: '#about h2, #about p, #about li span:last-child' },
@@ -44,6 +48,7 @@ await calc.setContent('<canvas id="c"></canvas>')
 const rows = []
 for (const [dev, vp, mob] of DEVICES) {
   for (const s of SHOTS) {
+    if (s.hover !== undefined && mob) continue
     const ctx = await b.newContext({ viewport: vp, hasTouch: mob, isMobile: mob, reducedMotion: 'reduce', deviceScaleFactor: 1 })
     const p = await ctx.newPage()
     await p.goto(BASE + s.path, { waitUntil: 'networkidle' })
@@ -55,6 +60,14 @@ for (const [dev, vp, mob] of DEVICES) {
       await p.evaluate((id) => document.getElementById(id).scrollIntoView({ behavior: 'instant' }), s.section)
     }
     await p.evaluate(() => document.fonts.ready)
+    if (s.hover !== undefined) {
+      await p.locator('#hero-types + ul a').nth(s.hover).hover()
+      // Кадр проступает за секунду (transition-opacity в Hero.tsx).
+      await p.waitForTimeout(1400)
+      const shown = await p.evaluate(() => [...document.querySelectorAll('.hero-photo picture')]
+        .filter((el) => getComputedStyle(el).opacity === '1').length)
+      if (shown < 2) throw new Error(`наведение на вид ${s.hover}: кадр не сменился`)
+    }
     await p.waitForTimeout(900)
     // Меряется не прямоугольник элемента, а строки самого текста (прямоугольники
     // диапазона): абзац-блок тянется на всю ширину колонки, и его правый край
@@ -103,7 +116,7 @@ for (const [dev, vp, mob] of DEVICES) {
         return { text: bx.text, worst: min }
       })
     }, { png, boxes })
-    const name = `${s.path || '/'}${s.section ? ` #${s.section}` : ''} @${dev}`
+    const name = `${s.path || '/'}${s.section ? ` #${s.section}` : ''}${s.hover !== undefined ? ` наведение ${s.hover}` : ''} @${dev}`
     // Надпись в несколько строк даёт несколько прямоугольников — в отчёт идёт худший.
     const byText = new Map()
     for (const r of worst) if (!byText.has(r.text) || r.worst < byText.get(r.text).worst) byText.set(r.text, r)

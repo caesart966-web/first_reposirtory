@@ -80,10 +80,14 @@ export function PageHero({
           </a>
         </Reveal>
         <div className="max-w-3xl">
+          {/* Кегль на телефоне — по самому длинному слову заголовков:
+              «проектировщиков», «ответственности». На 2,9rem они были шире
+              экрана и обрезались краем шапки (до 28.09.2026 — незаметно:
+              горизонтальной прокрутки при этом нет). */}
           <RevealText
             as="h1"
             text={title}
-            className="mt-10 font-display text-[2.9rem] font-medium leading-[1] tracking-[-0.01em] sm:text-6xl lg:text-[4.6rem]"
+            className="mt-10 font-display text-[1.95rem] font-medium leading-[1.02] tracking-[-0.01em] min-[380px]:text-[2.35rem] sm:text-6xl lg:text-[4.6rem]"
           />
           <Reveal delay={200}>
             <p className="mt-7 max-w-2xl text-lg leading-relaxed text-neutral-200">
