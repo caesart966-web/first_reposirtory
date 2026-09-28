@@ -108,6 +108,17 @@ for (const path of PAGES) {
             return false
           })
           .map((h) => h.textContent.trim().slice(0, 40)),
+        // Крупные цифры под шапкой страниц видов СРО стоят без переноса
+        // (whitespace-nowrap) — значит, обязаны помещаться в свою плитку.
+        wideFacts: [...document.querySelectorAll('section[aria-label="Коротко"] dd')]
+          .filter((dd) => {
+            const cell = dd.parentElement
+            const box = cell.getBoundingClientRect()
+            const range = document.createRange()
+            range.selectNodeContents(dd)
+            return range.getBoundingClientRect().right > box.right - parseFloat(getComputedStyle(cell).paddingRight) + 1
+          })
+          .map((dd) => dd.textContent),
         // Шрифт заголовков действительно загрузился, а не подменился Georgia.
         displayFont: document.fonts.check('500 40px "Brygada 1918 Variable"', 'Вступление'),
       }
@@ -125,6 +136,7 @@ for (const path of PAGES) {
     check(`${tag}: после прокрутки всё проявилось`, r.hiddenReveal === 0, `${r.hiddenReveal} блоков остались скрытыми`)
     check(`${tag}: без example.com`, !r.oldDomain)
     check(`${tag}: заголовки не шире своей колонки`, r.wideHeads.length === 0, r.wideHeads.join(' | '))
+    check(`${tag}: ключевые цифры помещаются в плитки`, r.wideFacts.length === 0, r.wideFacts.join(' | '))
     check(`${tag}: шрифт заголовков загружен`, r.displayFont)
     check(`${tag}: без ошибок в консоли`, errs.length === 0, errs[0]?.slice(0, 140) ?? '')
     check(`${tag}: без битых запросов`, failed.length === 0, failed.join(' '))
