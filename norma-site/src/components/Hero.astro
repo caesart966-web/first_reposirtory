@@ -150,17 +150,25 @@ import { GIFT_TAG, GIFTS, OFFER } from '../config/offer'
         Обёртка нужна, чтобы окошко стояло сразу под карточкой, а не ниже
         всей левой колонки: карточка короче текста слева на треть экрана. */}
     <div class="hero-side">
-    {/* Главное предложение сайта. Оформлено как бланк: тонкая рамка,
-        подпись капсом сверху, печать в углу. На компьютере занимает
-        правую колонку, на телефоне встаёт под кнопками. */}
+    {/* Главное предложение сайта. С 28.09.2026 — тариф по образцу сайта
+        СРО «СОМ», который прислал заказчик: бирка на верхней кромке (как
+        у окошка «Подарок на выбор» ниже — у двух карточек один приём),
+        строки прайса — подпись слева, значение справа, льготы зелёным.
+        Раньше это был список с галочками: суммы стояли в конце строк
+        разной длины, и сравнить их взглядом было нельзя. Цвета и шрифты
+        свои — синий и капс образца не взяты. На компьютере карточка
+        занимает правую колонку, на телефоне встаёт под кнопками. */}
     <aside class="hero-offer rv">
       <span class="ho-tag">Условия вступления</span>
       <p class="ho-title">Первый год — <b>только обязательные взносы</b></p>
-      <ul class="ho-list">
+      <dl class="ho-list">
         {OFFER.map((p) => (
-          <li><Icon name="check" size={15} /> {p.short}</li>
+          <div class="ho-row">
+            <dt>{p.label}</dt>
+            <dd class={p.good ? 'good' : undefined}>{p.value}</dd>
+          </div>
         ))}
-      </ul>
+      </dl>
       {/* Разбор пяти условий по пунктам живёт на «Стоимости»: на главной
           он занимал два с половиной экрана телефона и повторял эту же
           карточку — теми же пятью пунктами, только длиннее. */}
@@ -610,43 +618,42 @@ import { GIFT_TAG, GIFTS, OFFER } from '../config/offer'
     background: var(--card);
     border: 1px solid var(--line);
     border-radius: var(--r-m);
-    padding: 26px 24px 22px;
+    padding: 30px 24px 18px;
     display: grid;
-    gap: 13px;
+    gap: 14px;
     align-content: start;
     box-shadow: var(--shadow);
   }
-  /* Красная линейка сверху — как поле бланка. */
-  .hero-offer::before {
-    content: '';
-    position: absolute;
-    left: -1px;
-    right: -1px;
-    top: -1px;
-    height: 3px;
-    background: var(--acc);
-    border-radius: var(--r-m) var(--r-m) 0 0;
-  }
-  .ho-tag {
-    font-family: var(--font-mono);
-    font-size: 11.5px;
-    font-weight: 600;
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-    color: var(--acc-deep);
-  }
+  /* Бирка на кромке — общий приём двух карточек правой колонки,
+     правило одно на обе (.hg-tag ниже). Красная линейка по верху
+     карточки ушла вместе с биркой: два красных акцента на одной кромке
+     спорили друг с другом. */
   .ho-title { font-family: var(--font-head); font-size: 27px; line-height: 1.14; font-weight: 700; margin: 0; letter-spacing: -0.02em; }
   .ho-title b { color: var(--acc-deep); font-weight: 700; }
-  .ho-list { list-style: none; margin: 2px 0 0; padding: 0; display: grid; gap: 9px; }
-  .ho-list li {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: 10px;
-    align-items: start;
-    font-size: 15px;
-    color: var(--ink);
+  /* Строки прайса: подпись слева, значение справа, между строк — линейка
+     в 1 px, как везде на сайте. Значение не переносится: «5 000 ₽ в месяц»
+     разорванным читается как две суммы. */
+  .ho-list { margin: 0; display: grid; }
+  .ho-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 4px 14px;
+    padding: 8px 0;
+    border-top: 1px solid var(--line);
   }
-  .ho-list :global(svg) { color: var(--good); margin-top: 3px; }
+  .ho-row:last-child { border-bottom: 1px solid var(--line); }
+  .ho-row dt { font-size: 15px; color: var(--ink); }
+  .ho-row dd {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .ho-row dd.good { color: var(--good); }
   .ho-go {
     display: inline-flex;
     align-items: center;
@@ -665,8 +672,9 @@ import { GIFT_TAG, GIFTS, OFFER } from '../config/offer'
      Правило стоит после основных — у них та же сила, и победит
      последнее. */
   @media (max-width: 560px) {
-    .hero-offer { padding: 20px 20px 18px; gap: 11px; }
+    .hero-offer { padding: 24px 18px 14px; gap: 11px; }
     .ho-title { font-size: 23px; }
+    .ho-row { padding: 7px 0; }
   }
 
   /* ── Окошко «Подарок на выбор» ──
@@ -693,7 +701,8 @@ import { GIFT_TAG, GIFTS, OFFER } from '../config/offer'
     border-radius: calc(var(--r-m) - 3px);
     pointer-events: none;
   }
-  .hg-tag {
+  .hg-tag,
+  .ho-tag {
     position: absolute;
     top: 0;
     left: 18px;

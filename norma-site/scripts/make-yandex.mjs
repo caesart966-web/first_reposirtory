@@ -43,7 +43,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const out = join(root, 'release/yandex')
 mkdirSync(out, { recursive: true })
 
-const { OFFER, GIFTS, GIFT_TAG } = await import('../src/config/offer.ts')
+const { OFFER, GIFTS, GIFT_TAG, offerLine } = await import('../src/config/offer.ts')
 const { TERMS, LAW, THRESHOLD_BUILD, FUNDS } = await import('../src/config/facts.ts')
 const { SERVICES, GROUP_LABELS } = await import('../src/config/services.ts')
 const { FEES, FEES_NOTE, money } = await import('../src/config/fees.ts')
@@ -493,7 +493,7 @@ ${scene(
     <div class="st" style="margin-top:22px;${at('offer', 0.3)}">Первый год — <em>только обязательные взносы</em></div>
     <div class="card" style="${at('offer', 0.5)}">
       <ul class="two">
-        ${OFFER.map((o, i) => `<li style="${at('offer', 0.8 + i * 0.3)}">${check(40)}<span>${o.short}</span></li>`).join('')}
+        ${OFFER.map((o, i) => `<li style="${at('offer', 0.8 + i * 0.3)}">${check(40)}<span>${offerLine(o)}</span></li>`).join('')}
       </ul>
     </div>
     <p class="note" style="${at('offer', 2.4, 'fade', 0.8)}">${nbsp('Точный набор условий зависит от подобранной СРО — назову его до подачи документов.')}</p>
