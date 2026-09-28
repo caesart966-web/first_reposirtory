@@ -38,7 +38,7 @@ import { RevealText } from './ui/Reveal'
 // остаётся на бумаге, и контраст не зависит от того, какой кадр сейчас
 // под ним (на весь фон понадобилось бы затемнение и белый текст — это уже
 // другой первый экран). Новый кадр проступает поверх крана (opacity) и чуть
-// оседает из приближения, как при загрузке. Два дополнительных кадра —
+// оседает из приближения, как при загрузке; уходящий гаснет вдвое медленнее. Два дополнительных кадра —
 // около 200 КБ, поэтому грузятся после загрузки страницы, когда браузер
 // свободен, и только там, где есть наведение и окно шире телефона:
 // на телефоне кадр — узкая полоса, а наведения нет вовсе.
@@ -133,8 +133,11 @@ export function Hero() {
           TYPES.filter((type) => type.image !== image).map((type) => (
             <picture
               key={type.slug}
-              className={`absolute inset-0 transition-[opacity,transform] duration-1000 ease-silk ${
-                frame.shown === type.slug ? 'opacity-100' : 'opacity-0 motion-safe:scale-[1.04]'
+              // Приходящий кадр проступает быстрее, чем гаснет уходящий:
+              // при переходе с вида на вид иначе на середине сквозь оба
+              // просвечивал кран — двойная экспозиция.
+              className={`absolute inset-0 transition-[opacity,transform] ease-silk ${
+                frame.shown === type.slug ? 'opacity-100 duration-700' : 'opacity-0 duration-[1400ms] motion-safe:scale-[1.04]'
               }`}
             >
               {type.image.srcAvif && <source type="image/avif" srcSet={asset(type.image.srcAvif)} />}
