@@ -81,6 +81,8 @@ class Site:
         self.base_url = site["base_url"].rstrip("/")
         self.base_path = site.get("base_path", "").rstrip("/")
         self.groups = site["groups"]
+        self.articles = []          # заполняет build() из data/articles/
+        self.article_links = set()  # внутренние ссылки из статей — для проверки
 
         seen = set()
         for s in services:
@@ -1356,6 +1358,8 @@ def page_home(r: Renderer) -> None:
 
 {block_faq(faq["items"])}
 
+{block_articles(site, site.articles[:3], "Статьи", more=True)}
+
 {block_form(site)}'''
 
     # Кадр первого экрана — самая крупная картинка страницы. Просим браузер
@@ -1517,6 +1521,8 @@ def page_service(r: Renderer, service: dict, city: dict = None) -> None:
 {block_steps(service["steps"], "Как проходит работа", columns=3, dark=True)}
 
 {block_faq(service["faq"])}
+
+{block_articles(site, articles_for(site, service["slug"]))}
 
 {block_related(site, service)}
 
@@ -1854,6 +1860,306 @@ def page_policy(r: Renderer) -> None:
 
 # ---------- 404 -----------------------------------------------------------
 
+# ---------- статьи --------------------------------------------------------
+#
+# Статья — файл data/articles/<адрес>.md: сверху шапка между строками ---,
+# ниже текст в упрощённой разметке. Своя разметка, а не библиотека:
+# сборщик держится на голой стандартной библиотеке Python.
+#
+#   ## Заголовок раздела      — попадает в содержание статьи
+#   ### Подзаголовок
+#   - пункт списка / 1. пункт нумерованного списка
+#   > выноска
+#   **жирный**, [ссылка](/uslugi/zos/)
+#
+# Ссылки на страницы сайта пишутся от корня (/uslugi/zos/) — подпапку
+# превью генератор подставит сам, а после сборки проверит, что каждая такая
+# страница существует: битая ссылка из статьи роняет сборку.
+
+ARTICLES_DIR = DATA_DIR / "articles"
+MONTHS_GEN = ("января февраля марта апреля мая июня июля "
+              "августа сентября октября ноября декабря").split()
+_LIST_RE = re.compile(r"^(- |\d+\. )")
+
+
+def date_ru(iso: str) -> str:
+    y, m, d = iso.split("-")
+    return f"{int(d)} {MONTHS_GEN[int(m) - 1]} {y}"
+
+
+def load_articles(site: Site) -> list:
+    out = []
+    if not ARTICLES_DIR.exists():
+        return out
+    for f in sorted(ARTICLES_DIR.glob("*.md")):
+        raw = f.read_text(encoding="utf-8").replace("\r\n", "\n")
+        m = re.match(r"---\n(.*?)\n---\n(.*)", raw, re.S)
+        if not m:
+            raise SystemExit(f"Статья {f.name}: нет шапки между строками ---")
+        meta = {}
+        for line in m.group(1).splitlines():
+            if not line.strip() or line.lstrip().startswith("#"):
+                continue
+            key, _, value = line.partition(":")
+            meta[key.strip()] = value.strip()
+        for req in ("title", "description", "h1", "lead", "updated"):
+            if not meta.get(req):
+                raise SystemExit(f"Статья {f.name}: в шапке не заполнено «{req}»")
+        if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", meta["updated"]):
+            raise SystemExit(f"Статья {f.name}: дата updated пишется как 2026-09-28")
+        meta["services"] = [s.strip() for s in meta.get("services", "").split(",") if s.strip()]
+        for slug in meta["services"]:
+            if slug not in site.by_slug:
+                raise SystemExit(f"Статья {f.name}: услуги «{slug}» нет в services.json")
+        meta["slug"] = f.stem
+        meta["body"] = m.group(2)
+        meta["file"] = f
+        out.append(meta)
+    out.sort(key=lambda a: a["updated"], reverse=True)
+    return out
+
+
+def md_inline(text: str, site: Site) -> str:
+    t = esc(text)
+    t = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", t)
+
+    def link(m):
+        label, url = m.group(1), m.group(2)
+        if url.startswith("/"):
+            site.article_links.add(url.split("#")[0])
+            return f'<a href="{site.url(url)}">{label}</a>'
+        return f'<a href="{url}" target="_blank" rel="noopener">{label}</a>'
+    return re.sub(r"\[([^\]]+)\]\(([^)\s]+)\)", link, t)
+
+
+def md_to_html(text: str, site: Site, toc: list) -> str:
+    lines = text.strip().split("\n")
+    html, para, i = [], [], 0
+
+    def flush():
+        if para:
+            html.append(f"<p>{md_inline(' '.join(para), site)}</p>")
+            para.clear()
+
+    while i < len(lines):
+        line = lines[i].rstrip()
+        if not line.strip():
+            flush()
+            i += 1
+        elif line.startswith("## "):
+            flush()
+            title = line[3:].strip()
+            anchor = f"r{len(toc) + 1}"
+            toc.append((anchor, title))
+            html.append(f'<h2 id="{anchor}">{md_inline(title, site)}</h2>')
+            i += 1
+        elif line.startswith("### "):
+            flush()
+            html.append(f"<h3>{md_inline(line[4:].strip(), site)}</h3>")
+            i += 1
+        elif _LIST_RE.match(line):
+            flush()
+            tag = "ul" if line.startswith("- ") else "ol"
+            items = []
+            while i < len(lines) and _LIST_RE.match(lines[i]):
+                item = _LIST_RE.sub("", lines[i]).strip()
+                i += 1
+                # Продолжение пункта — строки с отступом
+                while i < len(lines) and lines[i].startswith("  ") and lines[i].strip():
+                    item += " " + lines[i].strip()
+                    i += 1
+                items.append(f"<li>{md_inline(item, site)}</li>")
+            html.append(f"<{tag}>{''.join(items)}</{tag}>")
+        elif line.startswith(">"):
+            flush()
+            buf = []
+            while i < len(lines) and lines[i].startswith(">"):
+                buf.append(lines[i][1:].strip())
+                i += 1
+            html.append(f'<div class="prose__note"><p>{md_inline(" ".join(buf), site)}</p></div>')
+        else:
+            para.append(line.strip())
+            i += 1
+    flush()
+    return "\n".join(html)
+
+
+def article_card(site: Site, a: dict, level: str = "h3") -> str:
+    return f'''        <a class="card card--link article-card" href="{site.url(f"/stati/{a['slug']}/")}">
+          <span class="article-card__date">{date_ru(a["updated"])}</span>
+          <{level}>{esc(a["h1"])}</{level}>
+          <p>{esc(a["lead"])}</p>
+        </a>'''
+
+
+def block_articles(site: Site, items: list, title: str = "Статьи по теме",
+                   more: bool = False) -> str:
+    """Карточки статей: на страницах услуг — статьи о той же услуге,
+    на главной — последние. Нет статей — блока нет."""
+    if not items:
+        return ""
+    link = (f'<a class="section__more" href="{site.url("/stati/")}">Все статьи</a>'
+            if more else "")
+    return f'''  <section class="section" data-articles>
+    <div class="container">
+      <div class="section__head"><h2>{esc(title)}</h2>{link}</div>
+      <div class="grid grid--{min(len(items), 3)}">
+{chr(10).join(article_card(site, a) for a in items)}
+      </div>
+    </div>
+  </section>'''
+
+
+def articles_for(site: Site, service_slug: str, limit: int = 3) -> list:
+    return [a for a in site.articles if service_slug in a["services"]][:limit]
+
+
+def schema_article(site: Site, a: dict, path: str) -> dict:
+    org = {"@id": site.abs_url("/") + "#organization"}
+    return {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": a["h1"],
+        "description": a["description"],
+        "datePublished": a.get("published", a["updated"]),
+        "dateModified": a["updated"],
+        "inLanguage": "ru",
+        "author": org,
+        "publisher": org,
+        "mainEntityOfPage": site.abs_url(path),
+        "image": site.abs_url(og_for(path) or site.raw.get("og_image", "/assets/img/og-default.jpg")),
+    }
+
+
+def page_article(r: Renderer, a: dict) -> None:
+    site = r.site
+    path = f"/stati/{a['slug']}/"
+    toc = []
+    content = md_to_html(a["body"], site, toc)
+    words = len(strip_tags(content).split())
+    minutes = max(1, round(words / 180))
+    services = [site.by_slug[s] for s in a["services"]]
+
+    toc_html = ""
+    if len(toc) >= 3:
+        items = "\n".join(f'            <li><a href="#{k}">{esc(t)}</a></li>' for k, t in toc)
+        toc_html = f'''        <nav class="prose__toc" aria-label="Содержание статьи">
+          <div class="prose__toc-title">Содержание</div>
+          <ol>
+{items}
+          </ol>
+        </nav>'''
+
+    related = "\n".join(
+        f'                <li><a href="{site.url(site.service_url(s["slug"]))}">{esc(s["nav_title"])}</a></li>'
+        for s in services)
+    related_html = (f'''            <div class="panel" style="margin-top:1.25rem">
+              <h3>Услуги по теме</h3>
+              <ul class="link-list">
+{related}
+              </ul>
+            </div>''' if services else "")
+
+    body = f'''  <section class="page-head">
+    <div class="container">
+      <ul class="breadcrumbs">
+        <li><a href="{site.url("/")}">Главная</a></li>
+        <li><a href="{site.url("/stati/")}">Статьи</a></li>
+        <li>{esc(a["h1"])}</li>
+      </ul>
+      <span class="eyebrow">Статья</span>
+      <h1>{esc(a["h1"])}</h1>
+      <p class="lead">{esc(a["lead"])}</p>
+      <p class="article-meta">Обновлено <time datetime="{a["updated"]}">{date_ru(a["updated"])}</time> · {minutes} мин чтения</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container split">
+      <article class="prose">
+{toc_html}
+{content}
+      </article>
+
+      <aside>
+        <div class="sticky-box">
+          <div class="panel panel--accent">
+            <h3>Нужна помощь с документацией?</h3>
+            <p style="color:var(--ink-muted)">Опишите объект — скажем, что реально успеть к вашей дате сдачи. Ответ в течение рабочего дня.</p>
+            <div class="btn-row" style="margin-top:1.25rem">
+              <a class="btn btn--primary btn--block" href="#zayavka">Оставить заявку</a>
+              <a class="btn btn--ghost btn--block" href="tel:{esc(site.contacts["phone_href"])}">{esc(site.contacts["phone_display"])}</a>
+            </div>
+          </div>
+{related_html}
+        </div>
+      </aside>
+    </div>
+  </section>
+
+{block_articles(site, [x for x in site.articles if x["slug"] != a["slug"]][:3], "Читайте также")}
+
+{block_form(site, preselect=services[0]["nav_title"] if services else "")}'''
+
+    crumbs = [("Главная", "/"), ("Статьи", "/stati/"), (a["h1"], path)]
+    head = "\n".join([
+        jsonld(schema_organization(site)),
+        jsonld(schema_article(site, a, path)),
+        jsonld(schema_breadcrumbs(site, crumbs)),
+    ])
+    r.render(path=path, title=a["title"], description=a["description"], body=body,
+             head_extra=head, og_type="article", priority="0.6")
+
+
+def page_articles_index(r: Renderer) -> None:
+    site = r.site
+    if not site.articles:
+        return
+    path = "/stati/"
+    title = f"Статьи о документации в строительстве — {site.company['name']}"
+    description = ("Разборы для подрядчиков и заказчиков: исполнительная документация, "
+                   "КС-2 и КС-3, ППР, сдача объекта и ЗОС. Как собрать документы "
+                   "и сдать объект без возвратов.")
+    cards = "\n".join(article_card(site, a, "h2") for a in site.articles)
+    body = f'''  <section class="page-head">
+    <div class="container">
+      <ul class="breadcrumbs">
+        <li><a href="{site.url("/")}">Главная</a></li>
+        <li>Статьи</li>
+      </ul>
+      <span class="eyebrow">Статьи</span>
+      <h1>Статьи о документации в строительстве</h1>
+      <p class="lead">Разбираем то, о чём нас спрашивают чаще всего: что входит в исполнительную документацию, как защитить объёмы в КС-2, когда нужен ППР и как пройти итоговую проверку.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="grid grid--2">
+{cards}
+      </div>
+    </div>
+  </section>
+
+{block_form(site)}'''
+    crumbs = [("Главная", "/"), ("Статьи", path)]
+    head = "\n".join([jsonld(schema_organization(site)),
+                      jsonld(schema_breadcrumbs(site, crumbs))])
+    r.render(path=path, title=title, description=description, body=body,
+             head_extra=head, priority="0.6")
+
+
+def check_article_links(site: Site) -> None:
+    """Каждая внутренняя ссылка из статей обязана вести на собранную страницу."""
+    bad = []
+    for url in sorted(site.article_links):
+        target = DIST_DIR / url.strip("/") / "index.html" if url != "/" else DIST_DIR / "index.html"
+        if not target.exists():
+            bad.append(url)
+    if bad:
+        raise SystemExit("В статьях ссылки на несуществующие страницы: " + ", ".join(bad))
+
+
 def page_404(r: Renderer) -> None:
     site = r.site
     body = f'''  <section class="page-head">
@@ -1912,7 +2218,15 @@ def write_sitemap(site: Site, pages) -> None:
     d_serv = source_date(DATA_DIR / "services.json", TPL_DIR / "base.html")
     d_legal = source_date(DATA_DIR / "legal.json", TPL_DIR / "base.html")
 
+    # У статьи дата — её собственное updated: та же, что написана на странице.
+    by_path = {f"/stati/{a['slug']}/": a["updated"] for a in site.articles}
+    newest = max(by_path.values(), default="")
+
     def lastmod(path: str) -> str:
+        if path in by_path:
+            return by_path[path]
+        if path == "/stati/":
+            return newest or d_site
         if path.startswith("/uslugi/"):
             return d_serv
         if path.startswith("/politika"):
@@ -2035,6 +2349,11 @@ def write_llms(site: Site) -> None:
         for srv in items:
             url = site.abs_url(site.service_url(srv["slug"]))
             lines.append(f"- [{srv['nav_title']}]({url}): {strip_tags(srv['short'])}")
+        lines.append("")
+    if site.articles:
+        lines += ["## Статьи", ""]
+        for a in site.articles:
+            lines.append(f"- [{a['h1']}]({site.abs_url('/stati/' + a['slug'] + '/')}): {a['lead']}")
         lines.append("")
     lines += [
         "## Разделы сайта",
@@ -2189,6 +2508,7 @@ def build(regen_media: bool = False, base_path: str = None,
 
     template = (TPL_DIR / "base.html").read_text(encoding="utf-8")
     r = Renderer(site, template, noindex=noindex)
+    site.articles = load_articles(site)
 
     page_home(r)
     page_services_index(r)
@@ -2200,7 +2520,11 @@ def build(regen_media: bool = False, base_path: str = None,
     page_about(r)
     page_contacts(r)
     page_policy(r)
+    page_articles_index(r)
+    for article in site.articles:
+        page_article(r, article)
     page_404(r)
+    check_article_links(site)
 
     copy_assets()
     write_sitemap(site, r.pages)

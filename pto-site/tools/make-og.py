@@ -16,6 +16,7 @@
 Вторая сборка нужна, чтобы страницы подхватили появившиеся файлы.
 Нужен playwright: pip install playwright
 """
+import base64
 import html
 import pathlib
 import re
@@ -75,14 +76,18 @@ def collect():
 
 CARD = """
 <style>
-  @font-face {{ font-family: "DisplayVar"; src: url("{f}/geologica-cyrillic.woff2") format("woff2");
-               font-weight: 300 800; font-display: block; }}
-  @font-face {{ font-family: "InterVar"; src: url("{f}/inter-cyrillic.woff2") format("woff2");
-               font-weight: 300 800; font-display: block; }}
-  @font-face {{ font-family: "MonoVar"; src: url("{f}/mono-cyrillic.woff2") format("woff2");
-               font-weight: 400 700; font-display: block; }}
-  @font-face {{ font-family: "MonoVar"; src: url("{f}/mono-latin.woff2") format("woff2");
-               font-weight: 400 700; font-display: block; }}
+  @font-face {{ font-family: "DisplayVar"; src: url("{geo_c}") format("woff2");
+               font-weight: 300 800; font-display: block; unicode-range: U+0400-04FF; }}
+  @font-face {{ font-family: "DisplayVar"; src: url("{geo_l}") format("woff2");
+               font-weight: 300 800; font-display: block; unicode-range: U+0000-03FF, U+2000-206F; }}
+  @font-face {{ font-family: "InterVar"; src: url("{int_c}") format("woff2");
+               font-weight: 300 800; font-display: block; unicode-range: U+0400-04FF; }}
+  @font-face {{ font-family: "InterVar"; src: url("{int_l}") format("woff2");
+               font-weight: 300 800; font-display: block; unicode-range: U+0000-03FF, U+2000-206F; }}
+  @font-face {{ font-family: "MonoVar"; src: url("{mono_c}") format("woff2");
+               font-weight: 400 700; font-display: block; unicode-range: U+0400-04FF; }}
+  @font-face {{ font-family: "MonoVar"; src: url("{mono_l}") format("woff2");
+               font-weight: 400 700; font-display: block; unicode-range: U+0000-03FF, U+2000-206F; }}
   * {{ margin: 0; padding: 0; box-sizing: border-box; }}
   body {{ width: 1200px; height: 630px; overflow: hidden;
          font-family: "InterVar", sans-serif; background: #0d1c30; color: #fff; }}
@@ -146,6 +151,14 @@ def main() -> int:
         return print("Сначала соберите сайт: python3 build.py") or 1
     OUT.mkdir(parents=True, exist_ok=True)
 
+    def font_uri(name: str) -> str:
+        data = base64.b64encode((FONTS / name).read_bytes()).decode("ascii")
+        return f"data:font/woff2;base64,{data}"
+    fonts = {key: font_uri(f"{fam}-{part}.woff2")
+             for key, fam, part in (("geo_c", "geologica", "cyrillic"), ("geo_l", "geologica", "latin"),
+                                    ("int_c", "inter", "cyrillic"), ("int_l", "inter", "latin"),
+                                    ("mono_c", "mono", "cyrillic"), ("mono_l", "mono", "latin"))}
+
     chrome = find_chrome()
     made = 0
     with sync_playwright() as p:
@@ -158,7 +171,10 @@ def main() -> int:
             # в карточку и обрезается на самом важном слове.
             size = 68 if len(title) <= 34 else 58 if len(title) <= 52 else 48
             body = CARD.format(
-                f=(ROOT / "assets" / "fonts").as_uri(),
+                # Шрифты встраиваются в страницу целиком: set_content открывает
+                # её как about:blank, и ссылки на file:// браузер не грузит —
+                # обложки молча рисовались системным шрифтом.
+                **fonts,
                 size=size,
                 logo=logo,
                 company=html.escape(company["name"]),
@@ -169,6 +185,7 @@ def main() -> int:
                 domain=html.escape(domain),
             )
             page.set_content(body)
+            page.evaluate("document.fonts.ready.then(() => true)")
             page.wait_for_timeout(120)
             page.screenshot(path=str(OUT / f"{name}.jpg"), type="jpeg", quality=88)
             made += 1
