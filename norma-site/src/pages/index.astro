@@ -5,6 +5,7 @@ import Calculator from '../components/Calculator.astro'
 import LeadForm from '../components/LeadForm.astro'
 import Icon from '../components/Icon.astro'
 import BrandIcon from '../components/BrandIcon.astro'
+import DirIcon from '../components/DirIcon.astro'
 import { SITE, href } from '../config/site'
 import { REGIONS } from '../config/regions'
 import { partnersOf } from '../config/partners'
@@ -78,25 +79,26 @@ const stepsWord = (n: number) =>
 // из образца сюда не перенесены: сайт нигде не утверждает, что им нужна
 // СРО, и утверждать это здесь, мимо страниц с нормами, было бы новым
 // фактом без статьи. Фотографий нет нарочно: у образца это стоковые
-// краны и каски, а стоковых касок на этом сайте быть не должно.
+// краны и каски, а стоковых касок на этом сайте быть не должно. Значки —
+// те, что прислал заказчик, обведены в вектор (DirIcon.astro).
 const dirs = [
   {
     slug: 'sro-stroiteley',
-    icon: 'building',
+    icon: 'builder' as const,
     t: 'СРО строителей',
     works: ['строительство', 'реконструкция', 'капитальный ремонт', 'снос объектов капитального строительства', 'функции технического заказчика'],
     note: 'Нужна, если обязательства по прямому договору больше 10 млн ₽. СРО — вашего субъекта РФ.',
   },
   {
     slug: 'sro-proektirovshchikov',
-    icon: 'ruler',
+    icon: 'design' as const,
     t: 'СРО проектировщиков',
     works: ['подготовка проектной документации', 'архитектурно-строительное проектирование'],
     note: 'Нужна при любой сумме прямого договора. Регион не важен: СРО — любого субъекта.',
   },
   {
     slug: 'sro-izyskateley',
-    icon: 'search',
+    icon: 'survey' as const,
     t: 'СРО изыскателей',
     works: ['инженерно-геодезические изыскания', 'инженерно-геологические', 'инженерно-гидрометеорологические', 'инженерно-экологические', 'инженерно-геотехнические'],
     note: 'Нужна при любой сумме прямого договора. Регион не важен: СРО — любого субъекта.',
@@ -205,7 +207,7 @@ const howToSchema = {
         {dirs.map((d) => (
           <li class="dir rv">
             <a class="dir-in" href={href(`/uslugi/${d.slug}/`)}>
-              <span class="dir-ico"><Icon name={d.icon} size={26} /></span>
+              <span class="dir-ico"><DirIcon name={d.icon} /></span>
               <h2 class="dir-t">{d.t}</h2>
               <ul class="dir-works">
                 {d.works.map((w) => <li><Icon name="check" size={15} />{w}</li>)}

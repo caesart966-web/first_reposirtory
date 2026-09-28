@@ -5,7 +5,8 @@ import Icon from '../components/Icon.astro'
 import HeadPhoto from '../components/HeadPhoto.astro'
 import { href, REGISTRIES, SITE } from '../config/site'
 import { LAW, TERMS } from '../config/facts'
-import { OFFER } from '../config/offer'
+import { KF_OPTION, OFFER } from '../config/offer'
+import { FEES, money } from '../config/fees'
 import { ABOUT } from '../config/about'
 import { PARTNERS } from '../config/partners'
 import { REGIONS } from '../config/regions'
@@ -33,9 +34,8 @@ import { REGIONS } from '../config/regions'
 //     сайт и так уже делает (калькулятор, реестры, разбивка стоимости).
 //     Придуманное обязательство ничем не лучше придуманного факта:
 //     за него придётся отвечать живому человеку;
-//   · повторов блока «Почему через меня» с главной. Тот блок — четыре
-//     причины одной строкой, эта страница — подробности и обратная
-//     сторона: чего я НЕ делаю. Пересказ в третий раз не убеждает.
+//   · сравнений с «другими»: «чего не могут предложить другие» проверить
+//     нельзя, сравнить себя со всем рынком — тоже.
 //
 // ЧЕГО ЗДЕСЬ ПОКА НЕТ. Нет ответа на вопрос «что будет, если СРО откажет»:
 // это обязательство, и дать его может только владелец сайта. Нет и ответа
@@ -91,6 +91,51 @@ const title = 'Обо мне: как я работаю и чего не дела
 const description =
   'Не биография, а обязательства: что я делаю по шагам, чего не берусь делать и что вы можете проверить про меня сами — в ЕГРИП и в реестрах СРО.'
 
+// ПОЧЕМУ ЧЕРЕЗ МЕНЯ — по образцу блока «Почему мы» с сайта, который прислал
+// заказчик (сро.онлайн, «МРЦС», 28.09.2026). Из трёх пунктов образца:
+//   · «компенсация взноса в компфонд или кэшбэк» → второй вариант условий
+//     из offer.ts (KF_OPTION), дословно тем, что заказчик сам написал
+//     в условиях; «кэшбэка» и «до 100 %» у него нет;
+//   · «выписка не более чем за 24 часа» → срок этого сайта (TERMS.extract).
+//     Сутки здесь уже стояли, и заказчик сам их исправил на 2–3 дня: один
+//     день БЫВАЕТ, когда горит, — это и написано, словом «бывает»;
+//   · «вознаграждение партнёрам на 5 000 ₽ выше» — НЕ взят: про агентские
+//     вознаграждения заказчик просил не писать.
+// Третьим вместо него — бесплатная консультация: у образца рядом с блоком
+// стоит форма «Бесплатная консультация», здесь форма внизу страницы.
+// Вступление образца «чего не могут предложить другие» не взято (см. выше).
+const memberFirst =
+  FEES.build.memberMonth === FEES.design.memberMonth
+    ? `${money(FEES.build.memberMonth)} в месяц`
+    : `${money(FEES.build.memberMonth)} в месяц строителям и ${money(FEES.design.memberMonth)} проектировщикам`
+const WHY: { icon: string; t: string; d: string; law?: string; link?: { label: string; url: string } }[] = [
+  {
+    icon: 'gift',
+    t: 'Взнос в компенсационный фонд могу внести за вас',
+    d:
+      `Вариантов условий два. Первый — льготные членские в первый год, ${memberFirst}, а взнос в фонд вы вносите сами. ` +
+      `Второй — ${KF_OPTION}`,
+    link: { label: 'Все пять условий', url: href('/stoimost/#predlozhenie') },
+  },
+  {
+    icon: 'clock',
+    t: `Выписка из реестра\u00a0— обычно за ${TERMS.extract}`,
+    d:
+      `С полным комплектом документов от подачи до выписки проходит ${TERMS.extract}. Если горит — подам в тот же день ` +
+      `и попрошу рассмотреть вне очереди, и тогда бывает и ${TERMS.extractRush}. Но решение принимает СРО, по закону ` +
+      `у неё на это ${TERMS.law}, и обещать его за неё я не стану.`,
+    law: LAW.term,
+  },
+  {
+    icon: 'chat',
+    t: 'Консультация\u00a0— бесплатно и без обязательств',
+    d:
+      'По телефону или в мессенджере. Разберу вашу ситуацию и скажу, нужна ли вам СРО вообще, — ' +
+      'если не нужна, на этом всё. Заявка ни к чему не обязывает.',
+    link: { label: 'Оставить заявку', url: '#form' },
+  },
+]
+
 // ЧТО ОБЯЗУЮСЬ. Каждый пункт опирается на то, что на сайте уже есть.
 const DO = [
   {
@@ -109,7 +154,7 @@ const DO = [
       'Подобранную СРО я называю по имени и с регистрационным номером: он открывается в государственном реестре, ' +
       'и на проверку у вас уйдёт минута.',
     law: LAW.membership,
-    link: { label: 'С кем я работаю', url: href('/sro/sankt-peterburg/#partnery') },
+    link: { label: 'С кем я работаю', url: href('/partnery/') },
   },
   {
     t: 'Назвать все платежи до подачи документов, а не после',
@@ -241,6 +286,29 @@ const CHECK = [
           </li>
         ))}
       </ul>
+    </div>
+  </section>
+
+  <!-- ПОЧЕМУ ЧЕРЕЗ МЕНЯ -->
+  <section class="section section--paper" id="pochemu" data-anchor>
+    <div class="wrap">
+      <div class="s-head rv">
+        <span class="eyebrow">Почему через меня</span>
+        <h2>Что вы получаете, <em>вступая через меня</em></h2>
+      </div>
+      <div class="cgrid rv">
+        {WHY.map((c) => (
+          <article class="ccard">
+            <span class="ci" aria-hidden="true"><Icon name={c.icon} size={20} /></span>
+            <h3>{c.t}</h3>
+            <p>{c.d}</p>
+            <p class="rmeta">
+              {c.law && <span class="law">{c.law}</span>}
+              {c.link && <a class="rlink" href={c.link.url}>{c.link.label} →</a>}
+            </p>
+          </article>
+        ))}
+      </div>
     </div>
   </section>
 
@@ -505,6 +573,7 @@ const CHECK = [
   }
   .ccard h3 { margin: 0 0 7px; font-size: 16.5px; line-height: 1.35; }
   .ccard p { margin: 0 0 12px; color: var(--muted); font-size: 15px; line-height: 1.6; }
+  .ccard .rmeta { margin: 0 !important; }
   .reg { margin-top: 18px; font-size: 14px; color: var(--muted); }
   .reg a { color: var(--acc-deep); }
 
