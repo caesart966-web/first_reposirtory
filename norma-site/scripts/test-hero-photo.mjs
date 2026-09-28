@@ -81,7 +81,8 @@ const TARGETS = [
     root: '.hero',
     photo: '.hero .photo',
     // Что прячем, чтобы не мешало замеру: собственные подложки и рисунки.
-    hide: '.hero .hero-offer, .hero .cta, .hero svg, .hero .law',
+    // Окошко «Сайт бесплатно» (.hero-site) — такая же подложка, как карточка.
+    hide: '.hero .hero-offer, .hero .hero-site, .hero .cta, .hero svg, .hero .law',
     // .direct — строка «Или напишите напрямую» с мессенджерами. На телефоне
     // её нет (там каналы в нижней панели), и замер там пропускается сам.
     texts: ['.geo', '.page-title', '.hero-lead', '.note span', '.direct span', '.direct a', '.verify p'],

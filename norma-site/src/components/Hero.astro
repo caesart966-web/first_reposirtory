@@ -145,6 +145,10 @@ import { OFFER } from '../config/offer'
       </p>
     </div>
 
+    {/* Правая колонка: карточка условий и под ней окошко про сайт.
+        Обёртка нужна, чтобы окошко стояло сразу под карточкой, а не ниже
+        всей левой колонки: карточка короче текста слева на треть экрана. */}
+    <div class="hero-side">
     {/* Главное предложение сайта. Оформлено как бланк: тонкая рамка,
         подпись капсом сверху, печать в углу. На компьютере занимает
         правую колонку, на телефоне встаёт под кнопками. */}
@@ -163,6 +167,24 @@ import { OFFER } from '../config/offer'
         Все пять условий <Icon name="arrow" size={15} />
       </a>
     </aside>
+
+    {/* САЙТ БЕСПЛАТНО — просьба заказчика (28.09.2026): небольшое окошко
+        под условиями, по нажатию — страница, где предложение разобрано.
+        Это ОТДЕЛЬНОЕ предложение, а не шестое условие вступления, поэтому
+        не в списке карточки и выглядит иначе: пунктирная рамка талона,
+        без красной линейки бланка. Чипа со статьёй и печати рядом нет —
+        это условие заказчика, а не норма закона. Что НЕ входит (домен,
+        хостинг, реклама), сказано на странице сразу под заголовком,
+        куда ведёт ссылка, — туда и ведёт, а не в начало страницы. */}
+    <a class="hero-site rv" href={href('/uslugi/marketing/#besplatno')} data-goal="click_free_site">
+      <span class="hs-ic" aria-hidden="true"><Icon name="monitor" size={20} /></span>
+      <span class="hs-txt">
+        <span class="hs-t">Сайт компании — бесплатно</span>{' '}
+        <span class="hs-d">если вступаете в&nbsp;СРО через меня</span>
+      </span>
+      <span class="hs-go" aria-hidden="true"><Icon name="arrow" size={18} /></span>
+    </a>
+    </div>
 
     {/* Печать стоит здесь, а не на карточке предложения, и это важно.
         Она говорит «сверено с Градостроительным кодексом» — а условия
@@ -429,8 +451,9 @@ import { OFFER } from '../config/offer'
     /* Строка со сверкой — под текстом, в той же левой колонке.
        Карточка предложения занимает правую колонку целиком. */
     .verify { grid-column: 1; }
-    .hero-offer { grid-column: 2; grid-row: 1 / span 2; }
+    .hero-side { grid-column: 2; grid-row: 1 / span 2; }
   }
+  .hero-side { display: grid; gap: 14px; align-content: start; }
 
   .geo {
     display: inline-flex;
@@ -618,6 +641,51 @@ import { OFFER } from '../config/offer'
   @media (max-width: 560px) {
     .hero-offer { padding: 20px 20px 18px; gap: 11px; }
     .ho-title { font-size: 23px; }
+  }
+
+  /* ── Окошко «Сайт компании — бесплатно» ──
+     Талон, а не бланк: пунктирная рамка отрывного купона говорит «это
+     отдельное предложение», а не продолжение списка условий над ним.
+     Фон плотный — окошко лежит поверх фотографии, как и карточка.
+     При наведении пунктир становится сплошной линией, стрелка уходит
+     вправо: видно, что окошко — ссылка целиком, а не надпись. */
+  .hero-site {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px 14px 14px;
+    background: var(--card);
+    border: 1px dashed color-mix(in srgb, var(--acc) 55%, var(--line));
+    border-radius: var(--r-m);
+    box-shadow: var(--shadow);
+    color: var(--ink);
+    text-decoration: none;
+    transition: border-color var(--t-fast) var(--ease);
+  }
+  .hero-site:hover { border-style: solid; border-color: var(--acc); }
+  .hs-ic {
+    width: 42px;
+    height: 42px;
+    border-radius: var(--r-s);
+    background: var(--acc-soft);
+    color: var(--acc-deep);
+    display: grid;
+    place-items: center;
+  }
+  .hs-txt { display: grid; gap: 2px; }
+  .hs-t { font-size: 16px; font-weight: 700; line-height: 1.3; }
+  /* balance: на телефоне без него «меня» уезжало на вторую строку одно. */
+  .hs-d { font-size: 14px; line-height: 1.4; color: var(--muted); text-wrap: balance; }
+  .hs-go {
+    display: inline-flex;
+    color: var(--acc-deep);
+    transition: transform var(--t-fast) var(--ease);
+  }
+  .hero-site:hover .hs-go { transform: translateX(4px); }
+  @media (prefers-reduced-motion: reduce) {
+    .hero-site,
+    .hs-go { transition: none; }
   }
 
   @media (max-width: 560px) {
