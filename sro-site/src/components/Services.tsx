@@ -39,7 +39,7 @@ export function Services() {
     <Section id="services" className="bg-neutral-100">
       <SectionHeading
         title="Услуги по вступлению в СРО"
-        subtitle="Отдельные задачи или полное сопровождение: от подбора саморегулируемой организации до внесения сведений в реестр членов."
+        subtitle="Можно поручить одну задачу или всё вступление целиком."
       />
 
       <div className="mt-16 space-y-14">

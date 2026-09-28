@@ -6,13 +6,13 @@ import { Reveal } from './ui/Reveal'
 import { SectionHeading } from './ui/Section'
 
 const DOCUMENTS = [
-  { title: 'Заявление', text: 'по форме выбранной СРО' },
-  { title: 'Регистрационные документы', text: 'ОГРН / ОГРНИП, ИНН, устав' },
-  { title: 'Документы организации', text: 'сведения о компании и руководителе' },
-  { title: 'Документы специалистов', text: 'дипломы, подтверждение стажа' },
-  { title: 'Документы НРС', text: 'подтверждение включения специалистов в реестр' },
-  { title: 'Сведения о квалификации', text: 'удостоверения о повышении квалификации, НОК' },
-  { title: 'Дополнительные документы', text: 'по требованиям конкретной СРО' },
+  { title: 'Заявление', text: 'По форме выбранной СРО' },
+  { title: 'Регистрационные документы', text: 'ОГРН или ОГРНИП, ИНН, устав' },
+  { title: 'Документы организации', text: 'Сведения о компании и руководителе' },
+  { title: 'Документы специалистов', text: 'Дипломы, подтверждение стажа' },
+  { title: 'Документы НРС', text: 'Подтверждение включения специалистов в реестр' },
+  { title: 'Сведения о квалификации', text: 'Удостоверения о повышении квалификации, НОК' },
+  { title: 'Дополнительные документы', text: 'По требованиям выбранной СРО' },
 ]
 
 // Раздел стоит на фотографии папок во всю высоту (с 25.09.2026, выбор
@@ -47,7 +47,7 @@ export function Documents() {
           <Reveal delay={120}>
             <p className="mt-7 text-lg leading-relaxed text-neutral-600">
               {nbsp(
-                'Соберу комплект под требования конкретной СРО и проверю каждый документ до подачи — чтобы снизить риск замечаний и возвратов.',
+                'Соберу комплект под требования выбранной СРО и проверю каждый документ до подачи.',
               )}
             </p>
             <ButtonLink href="#contacts" size="lg" arrow className="mt-9">
@@ -70,9 +70,11 @@ export function Documents() {
                   <span className="doc-num pt-0.5 text-sm tabular-nums text-neutral-500">
                     {String(index + 1).padStart(2, '0')}
                   </span>
+                  {/* Название и пояснение — двумя строками, а не через тире:
+                      тире в каждой строке описи читалось шаблоном. */}
                   <p className="doc-text text-neutral-950">
-                    <span className="font-medium">{doc.title}</span>
-                    <span className="text-neutral-600"> — {nbsp(doc.text)}</span>
+                    <span className="block font-medium">{doc.title}</span>
+                    <span className="mt-0.5 block text-sm text-neutral-600">{nbsp(doc.text)}</span>
                   </p>
                 </Reveal>
               </li>

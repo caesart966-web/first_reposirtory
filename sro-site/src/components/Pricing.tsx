@@ -15,7 +15,7 @@ const PLANS = [
     items: [
       'Разбор вашей ситуации',
       'Ответы на вопросы по СРО, НРС и НОК',
-      'Понятный план дальнейших шагов',
+      'План действий по шагам',
     ],
   },
   {
@@ -36,7 +36,6 @@ const PLANS = [
     priceNote: 'зависит от вида СРО и состава работ',
     free: false,
     featured: true,
-    badge: 'Полное сопровождение',
     items: [
       'Подбор и проверка СРО',
       'Полный пакет документов',
@@ -62,10 +61,10 @@ export function Pricing() {
                 plan.featured ? 'bg-neutral-950 text-neutral-50' : 'bg-neutral-100 text-neutral-950'
               }`}
             >
-              <p className={`text-sm ${plan.featured ? 'text-accent-200' : 'text-neutral-600'}`}>
-                {plan.featured && plan.badge ? plan.badge : 'Формат'}
-              </p>
-              <h3 className="mt-3 font-display text-[1.9rem] font-medium leading-tight">{plan.name}</h3>
+              {/* Подписи «Формат» над каждой карточкой больше нет: одинаковая
+                  рубрика над тремя листами ничего не сообщала. Главный формат
+                  выделен цветом листа. */}
+              <h3 className="font-display text-[1.9rem] font-medium leading-tight">{plan.name}</h3>
               <p className="mt-10 font-display text-[2.6rem] font-medium leading-none">{plan.price}</p>
               <p className={`mt-3 text-sm ${plan.featured ? 'text-neutral-300' : 'text-neutral-600'}`}>
                 {plan.priceNote}

@@ -203,7 +203,7 @@ export function Regions() {
             href="#contacts"
             className="font-semibold text-accent-700 underline underline-offset-2 transition hover:text-accent-800"
           >
-            Напишите, уточню возможность работы
+            Напишите — скажу, смогу ли помочь
           </a>
           . Перечень пополняется, а для проектировщиков и изыскателей региональных ограничений
           нет.
