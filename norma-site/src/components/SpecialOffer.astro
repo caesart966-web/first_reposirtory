@@ -1,5 +1,5 @@
 ---
-import { OFFER } from '../config/offer'
+import { GIFTS, OFFER } from '../config/offer'
 import { FEES, money } from '../config/fees'
 
 // Сумма считается, а не вписана в текст.
@@ -69,13 +69,27 @@ import Icon from './Icon.astro'
       </ol>
 
       <div class="ofoot">
+        {/* Подарок — ОДИН на выбор (GIFTS в config/offer.ts). Здесь стояла
+            ссылка «И сайт компании бесплатно — отдельным подарком»; с 28.09.2026
+            подарков три — сайт, год без членских взносов или кэшбэк, — и слова
+            «один на выбор» обязательны: без них «год без членских» спорил бы
+            с третьим пунктом списка выше. Ссылка — только у сайта: у него есть
+            своя страница. */}
+        <p class="ogift">
+          <Icon name="gift" size={16} />
+          <span>
+            Плюс подарок — один на выбор:{' '}
+            {GIFTS.map((g, i) => (
+              <>
+                {i > 0 && (i === GIFTS.length - 1 ? ' или ' : ', ')}
+                {g.url ? <a href={href(g.url)}>{g.short}</a> : g.short}
+                {g.d && ` ${g.d}`}
+              </>
+            ))}.
+          </span>
+        </p>
         <div class="oacts">
           <a class="btn btn--white btn--lg" href={href('/kontakty/#form')}>Узнать условия для моей компании</a>
-          <a class="oplus" href={href('/uslugi/marketing/')}>
-            <Icon name="gift" size={16} />
-            <span>И сайт компании бесплатно — отдельным подарком</span>
-            <Icon name="arrow" size={15} />
-          </a>
         </div>
       </div>
     </div>
@@ -164,18 +178,25 @@ import Icon from './Icon.astro'
   @media (min-width: 760px) {
     .oacts { grid-template-columns: auto minmax(0, 1fr); gap: 22px; }
   }
-  .oplus {
-    display: inline-flex;
-    align-items: center;
-    gap: 9px;
+  .ogift {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin: 0;
+    max-width: 70ch;
+    font-size: 15px;
+    line-height: 1.6;
+    color: #fff;
+  }
+  .ogift :global(svg) { flex: none; margin-top: 4px; }
+  .ogift a {
     color: #fff;
     font-weight: 600;
-    font-size: 15px;
-    text-decoration: none;
-    padding: 6px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.45);
+    text-decoration: underline;
+    text-decoration-color: rgba(255, 255, 255, 0.55);
+    text-underline-offset: 3px;
   }
-  .oplus:hover { color: #fff; border-bottom-color: #fff; }
+  .ogift a:hover { text-decoration-color: #fff; }
 
   @media print {
     .obox { background: none; color: #000; border: 1px solid #000; box-shadow: none; }

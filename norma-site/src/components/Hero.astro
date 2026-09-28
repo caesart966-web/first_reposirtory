@@ -3,7 +3,8 @@ import { SITE, href } from '../config/site'
 import Icon from './Icon.astro'
 import BrandIcon from './BrandIcon.astro'
 import Seal from './Seal.astro'
-import { OFFER } from '../config/offer'
+import GiftIcon from './GiftIcon.astro'
+import { GIFT_TAG, GIFTS, OFFER } from '../config/offer'
 
 // Первый экран — лист бумаги, а не заставка.
 //
@@ -168,22 +169,45 @@ import { OFFER } from '../config/offer'
       </a>
     </aside>
 
-    {/* САЙТ БЕСПЛАТНО — просьба заказчика (28.09.2026): небольшое окошко
-        под условиями, по нажатию — страница, где предложение разобрано.
-        Это ОТДЕЛЬНОЕ предложение, а не шестое условие вступления, поэтому
-        не в списке карточки и выглядит иначе: пунктирная рамка талона,
-        без красной линейки бланка. Чипа со статьёй и печати рядом нет —
-        это условие заказчика, а не норма закона. Что НЕ входит (домен,
-        хостинг, реклама), сказано на странице сразу под заголовком,
-        куда ведёт ссылка, — туда и ведёт, а не в начало страницы. */}
-    <a class="hero-site rv" href={href('/uslugi/marketing/#besplatno')} data-goal="click_free_site">
-      <span class="hs-ic" aria-hidden="true"><Icon name="monitor" size={20} /></span>
-      <span class="hs-txt">
-        <span class="hs-t">Сайт компании — бесплатно</span>{' '}
-        <span class="hs-d">если вступаете в&nbsp;СРО через меня</span>
-      </span>
-      <span class="hs-go" aria-hidden="true"><Icon name="arrow" size={18} /></span>
-    </a>
+    {/* ПОДАРОК НА ВЫБОР — просьба заказчика (28.09.2026). Сначала здесь
+        было окошко про один сайт; заказчик дополнил его: подарок при
+        вступлении один на выбор — сайт, год без членских взносов или кэшбэк
+        30 000 ₽. Текст — GIFTS в config/offer.ts; там же записано, почему
+        «год без членских» не спорит с «5 000 ₽ в месяц» в карточке над
+        окошком: это выбор вместо двух других подарков. Поэтому бирка
+        «Подарок на выбор» и «или» между строками обязательны.
+        Отдельное предложение, а не шестое условие: не в списке карточки,
+        рамка двойная, как у подарочного сертификата, без красной линейки
+        бланка. Чипа со статьёй и печати рядом нет.
+        Ссылка — только у сайта: у него есть страница, где сказано, что
+        входит и что оплачивается отдельно. «Год» и «кэшбэк» — не ссылки:
+        вести с них некуда, а вести на страницу про сайт значило бы
+        обмануть ожидание. */}
+    <div class="hero-gift rv">
+      <span class="hg-tag">{GIFT_TAG}</span>
+      <ul class="hg-list">
+        {GIFTS.map((g) => (
+          <li>
+            {g.url ? (
+              <a class="hg-row hg-row--link" href={href(g.url)} data-goal={g.goal}>
+                <span class="hg-ic"><GiftIcon name={g.id} /></span>
+                <span class="hg-txt">
+                  <span class="hg-t">{g.t}</span>{g.d && <>{' '}<span class="hg-d">{g.d}</span></>}
+                </span>
+                <span class="hg-go" aria-hidden="true"><Icon name="arrow" size={17} /></span>
+              </a>
+            ) : (
+              <div class="hg-row">
+                <span class="hg-ic"><GiftIcon name={g.id} /></span>
+                <span class="hg-txt">
+                  <span class="hg-t">{g.t}</span>{g.d && <>{' '}<span class="hg-d">{g.d}</span></>}
+                </span>
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
     </div>
 
     {/* Печать стоит здесь, а не на карточке предложения, и это важно.
@@ -453,7 +477,9 @@ import { OFFER } from '../config/offer'
     .verify { grid-column: 1; }
     .hero-side { grid-column: 2; grid-row: 1 / span 2; }
   }
-  .hero-side { display: grid; gap: 14px; align-content: start; }
+  /* 26 px, а не 14: бирка «Подарок на выбор» выступает над рамкой окошка
+     на половину своей высоты и иначе легла бы на карточку условий. */
+  .hero-side { display: grid; gap: 26px; align-content: start; }
 
   .geo {
     display: inline-flex;
@@ -643,49 +669,89 @@ import { OFFER } from '../config/offer'
     .ho-title { font-size: 23px; }
   }
 
-  /* ── Окошко «Сайт компании — бесплатно» ──
-     Талон, а не бланк: пунктирная рамка отрывного купона говорит «это
-     отдельное предложение», а не продолжение списка условий над ним.
-     Фон плотный — окошко лежит поверх фотографии, как и карточка.
-     При наведении пунктир становится сплошной линией, стрелка уходит
-     вправо: видно, что окошко — ссылка целиком, а не надпись. */
-  .hero-site {
+  /* ── Окошко «Подарок на выбор» ──
+     Подарочный сертификат, а не бланк: двойная рамка (внешняя линия в тон
+     бумаге, внутренняя — розоватая) и бирка на верхней кромке. Так окошко
+     не читается продолжением списка условий над ним. Здесь была пунктирная
+     рамка отрывного талона — заказчик попросил сделать красивее.
+     «Или» между строками — не украшение: подарок один на выбор, и без этого
+     «год без членских» спорил бы с «5 000 ₽ в месяц» в карточке выше.
+     Фон плотный — окошко лежит поверх фотографии, как и карточка. */
+  .hero-gift {
+    position: relative;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--r-m);
+    box-shadow: var(--shadow);
+    padding: 24px 12px 10px;
+  }
+  .hero-gift::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border: 1px solid color-mix(in srgb, var(--acc) 26%, transparent);
+    border-radius: calc(var(--r-m) - 3px);
+    pointer-events: none;
+  }
+  .hg-tag {
+    position: absolute;
+    top: 0;
+    left: 18px;
+    transform: translateY(-50%);
+    padding: 4px 11px;
+    border-radius: 999px;
+    background: var(--acc-btn);
+    color: #fff;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .hg-list { list-style: none; margin: 0; padding: 0; display: grid; }
+  /* «или» набрано курсивом Literata — единственный курсив на сайте, и он
+     читается союзом в строке, а не ещё одной подписью капсом. */
+  .hg-list > li + li::before {
+    content: 'или';
+    display: block;
+    margin: 0 8px;
+    padding: 1px 0;
+    text-align: center;
+    font-family: var(--font-head);
+    font-style: italic;
+    font-size: 13.5px;
+    line-height: 1;
+    color: var(--muted);
+    background:
+      linear-gradient(var(--line), var(--line)) left center / calc(50% - 22px) 1px no-repeat,
+      linear-gradient(var(--line), var(--line)) right center / calc(50% - 22px) 1px no-repeat;
+  }
+  .hg-row {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
-    gap: 14px;
-    padding: 14px 18px 14px 14px;
-    background: var(--card);
-    border: 1px dashed color-mix(in srgb, var(--acc) 55%, var(--line));
-    border-radius: var(--r-m);
-    box-shadow: var(--shadow);
+    gap: 12px;
+    padding: 8px;
+    border-radius: var(--r-s);
     color: var(--ink);
     text-decoration: none;
-    transition: border-color var(--t-fast) var(--ease);
   }
-  .hero-site:hover { border-style: solid; border-color: var(--acc); }
-  .hs-ic {
-    width: 42px;
-    height: 42px;
-    border-radius: var(--r-s);
-    background: var(--acc-soft);
-    color: var(--acc-deep);
-    display: grid;
-    place-items: center;
-  }
-  .hs-txt { display: grid; gap: 2px; }
-  .hs-t { font-size: 16px; font-weight: 700; line-height: 1.3; }
-  /* balance: на телефоне без него «меня» уезжало на вторую строку одно. */
-  .hs-d { font-size: 14px; line-height: 1.4; color: var(--muted); text-wrap: balance; }
-  .hs-go {
+  .hg-row--link { transition: background-color var(--t-fast) var(--ease); }
+  .hg-row--link:hover { background: var(--acc-soft); }
+  .hg-ic { display: inline-flex; color: var(--acc); }
+  .hg-txt { display: grid; gap: 1px; }
+  .hg-t { font-size: 15.5px; font-weight: 700; line-height: 1.3; }
+  .hg-d { font-size: 13px; line-height: 1.4; color: var(--muted); text-wrap: pretty; }
+  .hg-go {
     display: inline-flex;
     color: var(--acc-deep);
     transition: transform var(--t-fast) var(--ease);
   }
-  .hero-site:hover .hs-go { transform: translateX(4px); }
+  .hg-row--link:hover .hg-go { transform: translateX(4px); }
   @media (prefers-reduced-motion: reduce) {
-    .hero-site,
-    .hs-go { transition: none; }
+    .hg-row--link,
+    .hg-go { transition: none; }
   }
 
   @media (max-width: 560px) {
