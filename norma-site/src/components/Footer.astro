@@ -17,11 +17,16 @@ interface Props {
 }
 const { title = SITE.brand, share = true } = Astro.props
 const pageUrl = new URL(Astro.url.pathname, Astro.site).toString()
-const home = new URL('/', Astro.site).toString()
 
 // Список услуг берётся из config/services.ts, а не переписан здесь руками:
 // раньше он был копией и при добавлении услуги подвал молча отставал.
-const services = SERVICES.map((s) => ({ label: s.short, url: href(`/uslugi/${s.slug}/`) }))
+// У трёх видов СРО — полное название («Вступление в СРО строителей»), а не
+// короткое: короткие стоят заголовками карточек на главной, и одинаковый
+// текст двух ссылок второй аудит 28.09.2026 отметил повтором. Полное к тому
+// же совпадает с H1 страницы, на которую ведёт. У остальных услуг полные
+// названия длинные («Промышленная, пожарная безопасность и…») и разорвали
+// бы колонку — у них повтора нет.
+const services = SERVICES.map((s) => ({ label: s.dirIcon ? s.title : s.short, url: href(`/uslugi/${s.slug}/`) }))
 
 const pages = [
   { label: 'Кому нужна СРО, а кому нет', url: href('/komu-nuzhna-sro/') },
@@ -44,17 +49,7 @@ const year = new Date().getFullYear()
 <footer class="site-footer">
   <div class="wrap">
     <div class="cols">
-      {/* Микроразметка организации прямо в разметке (microdata), с тем же
-          @id, что узел #org в JSON-LD из Base.astro, и из тех же полей site.ts.
-          JSON-LD остаётся главным; этот блок — для проверок, которые JSON-LD
-          не читают (аудит 28.09.2026: «дополнительная разметка не найдена»),
-          и для Яндекса, который исторически лучше всего знает microdata. */}
-      <div class="brand-col" itemscope itemtype="https://schema.org/ProfessionalService" itemid={`${home}#org`}>
-        <link itemprop="url" href={home} />
-        <meta itemprop="name" content={`${SITE.brand} — вступление в СРО`} />
-        <div itemprop="address" itemscope itemtype="https://schema.org/PostalAddress">
-          <meta itemprop="addressCountry" content="RU" />
-        </div>
+      <div class="brand-col">
         <div class="logo">
           <LogoMark size={28} class="logo-mark" />
           <span class="logo-text"><span class="logo-name">{SITE.brand}</span>{' '}<small>{SITE.brandTag}</small></span>
@@ -63,8 +58,8 @@ const year = new Date().getFullYear()
           Помощь во вступлении в СРО, внесении специалистов в НРС, прохождении НОК
           и получении лицензий. Если СРО вам не нужна — скажу прямо.
         </p>
-        <a class="fphone" href={SITE.phoneHref}><span itemprop="telephone">{SITE.phone}</span></a>
-        <a class="fmail" href={`mailto:${SITE.email}`}><span itemprop="email">{SITE.email}</span></a>
+        <a class="fphone" href={SITE.phoneHref}>{SITE.phone}</a>
+        <a class="fmail" href={`mailto:${SITE.email}`}>{SITE.email}</a>
         <div class="msgs">
           <a href={SITE.whatsapp} target="_blank" rel="noopener noreferrer">WhatsApp</a>
           <a href={SITE.telegram} target="_blank" rel="noopener noreferrer">Telegram</a>
@@ -106,8 +101,11 @@ const year = new Date().getFullYear()
          на любой странице, не заставляя никуда ходить. -->
     <nav class="cities" aria-label="Города, где есть партнёрские СРО">
       <a class="cities-label" href={href('/partnery/')}>Партнёрские СРО:</a>
+      {/* «в Москве», а не «Москва»: те же названия стоят заголовками
+          карточек городов на главной, и одинаковый текст двух ссылок аудит
+          отмечает повтором. «Партнёрские СРО: в Москве» и читается так. */}
       {REGIONS.map((r) => (
-        <a href={href(`/sro/${r.slug}/`)}>{r.city}</a>
+        <a href={href(`/sro/${r.slug}/`)}>{r.inCity}</a>
       ))}
       <a class="cities-all" href={href('/sro/')}>остальные регионы →</a>
     </nav>
