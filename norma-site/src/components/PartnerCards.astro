@@ -1,0 +1,115 @@
+---
+// КАРТОЧКИ СРО-ПАРТНЁРОВ — одна разметка для городских страниц
+// и для общего списка /partnery/.
+//
+// Вынесены из sro/[gorod].astro 28.09.2026, когда появился общий список:
+// две копии карточки разошлись бы при первой же правке, а npm run facts
+// разбирает каждую карточку построчно — пару «подпись — значение» — и на обеих
+// страницах ждёт одного и того же. Условия считает lib/partner-terms.ts.
+//
+// Карточки рассчитаны на ТЁМНУЮ секцию (section--dark): все цвета из тёмного
+// набора. Номер набран моноширинным начертанием — его будут переносить в поиск
+// по реестру глазами и руками, и в моноширинном цифры не сливаются.
+import PartnerDiffNote from './PartnerDiffNote.astro'
+import { anyDiffers, partnerTerms } from '../lib/partner-terms'
+import type { Partner } from '../config/partners'
+
+interface Props {
+  partners: readonly Partner[]
+  /**
+   * Объяснение звёздочек под карточками, если у кого-то из этих СРО условия
+   * отличаются. В общем списке оно одно на всю страницу, поэтому там false.
+   */
+  explain?: boolean
+}
+
+const { partners, explain = true } = Astro.props
+const terms = partners.map(partnerTerms)
+---
+
+<div class={partners.length === 1 ? 'prt prt--one rv' : 'prt rv'}>
+  {terms.map((t) => (
+    <article class="pcard">
+      <header class="pc-top">
+        <span class="pc-kind">{t.kindWord} СРО</span>
+        <h3>{t.p.short}</h3>
+        <p class="pc-full">{t.p.name}</p>
+        <p class="pc-reg">{t.p.reg}</p>
+        <p class="pc-since">в реестре с {t.since}</p>
+      </header>
+      <p class="pc-note">{t.p.note}</p>
+      <dl class="pc-fees">
+        {t.rows.map((row) => (
+          <div class={row.other ? 'pc-row pc-row--other' : 'pc-row'}>
+            <dt>{row.label}{row.other && <span class="pc-star">*</span>}</dt>
+            <dd>{row.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </article>
+  ))}
+</div>
+
+{explain && anyDiffers(partners) && <PartnerDiffNote />}
+
+<style>
+  .prt {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+    gap: 18px;
+    margin-top: 8px;
+  }
+  /* Одна карточка во всю ширину экрана выглядит растянутой: строки взносов
+     разъезжаются на 1100 px, подпись слева, сумма у правого края. */
+  .prt--one { max-width: 620px; }
+  .pcard {
+    border: 1px solid var(--dark-line);
+    border-radius: var(--r-m);
+    padding: 22px 20px;
+    display: grid;
+    /* Шапка — по содержимому, описание тянется, взносы прижаты к низу:
+       так строки взносов у соседних карточек стоят на одной высоте,
+       и колонку сумм можно читать поперёк, а не только внутри карточки. */
+    grid-template-rows: auto 1fr auto;
+    gap: 14px;
+  }
+  .pc-top { display: grid; gap: 6px; }
+  .pc-kind {
+    font-size: 11.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--acc-bright);
+  }
+  .pcard h3 { margin: 0; font-size: 22px; color: var(--on-dark); }
+  .pc-full { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--on-dark-muted); }
+  .pc-reg {
+    margin: 4px 0 0;
+    font-family: var(--font-mono);
+    font-size: 13.5px;
+    letter-spacing: 0.02em;
+    color: var(--on-dark);
+  }
+  .pc-since { margin: 0; font-size: 13px; color: var(--on-dark-muted); }
+  .pc-note { margin: 0; font-size: 15px; line-height: 1.6; color: var(--on-dark); }
+
+  .pc-fees { margin: 0; display: grid; gap: 0; }
+  .pc-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 4px 14px;
+    padding: 9px 0;
+    border-top: 1px solid var(--dark-line);
+  }
+  .pc-row dt { font-size: 14px; color: var(--on-dark-muted); }
+  .pc-row dd {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 15px;
+    color: var(--on-dark);
+    text-align: right;
+  }
+  .pc-star { color: var(--acc-bright); }
+  .pc-row--other dd { color: var(--acc-bright); }
+</style>

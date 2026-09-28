@@ -25,6 +25,7 @@ const PAGES = [
   '/uslugi/sro-stroiteley/',
   '/dokumenty/',
   '/proverit-sro/',
+  '/partnery/',
   '/baza-znaniy/regionalnyy-princip/',
   '/sro/',
   '/sro/moskva/',

@@ -36,44 +36,70 @@ import { FEES, FEES_NOTE, money, type FeeSet } from '../config/fees'
 // Форма поднята к калькулятору и стала короче: на виду имя и телефон,
 // остальное — в «Уточнить задачу» (LeadForm.astro).
 
-// Порядок работы — рядом с формой: «что будет, когда я нажму кнопку».
+// ЧЕТЫРЕ ШАГА ВСТУПЛЕНИЯ — по образцу, который заказчик прислал сам
+// (сро.онлайн, «МРЦС», 28.09.2026): консультация, документы, оплата взносов,
+// приём в члены. Взяты порядок и названия шагов; текст свой — в первом лице,
+// без «приезжайте к нам в офис» (офиса нет) и без «наших экспертов».
 //
-// У каждого шага сказано не только сколько он длится, но и ЧЬЁ это время.
-// Без этого шаги читались как одна очередь и складывались в 5–10 дней —
-// притом что в шапке сайта стоит «выписка за 2–3 дня». Расхождения на самом
-// деле нет: два-три дня — это последний отрезок, от подачи до выписки.
-// Сроки не должны рваться по строкам: браузер переносит и после тире
-// («2–» в конце строки, «3 дня» в начале следующей), и между числом
-// и словом. Текст шага остаётся простым — он же уходит в микроразметку, —
-// а неразрывность добавляется только при выводе.
-const esc = (x: string) => x.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-const keepTerms = (x: string) => esc(x).replace(/(\d+–\d+ \S+?)(?=[.,;:!?]?(\s|$))/g, '<span class="nw">$1</span>')
+// СРОКОВ У ШАГОВ НЕТ — решение заказчика. Раньше у каждого шага стояло,
+// сколько он длится и чьё это время, а внизу — «итого 5–10 дней». Срок
+// вступления по-прежнему назван там, где о нём спрашивают: вопрос «Сколько
+// времени занимает вступление?» ниже, со статьёй закона.
+//
+// Номер шага — не украшение: шаги действительно идут по порядку, и оплата
+// не раньше документов. Текст шага уходит в микроразметку HowTo как есть.
+const steps: { t: string; d: string; law?: string }[] = [
+  {
+    t: 'Консультация',
+    d: 'По телефону или в мессенджере, бесплатно. Разберу ситуацию и скажу, нужна ли вам СРО вообще, — если нет, на этом всё.',
+  },
+  {
+    t: 'Подготовка документов',
+    d: 'Вы присылаете сканы документов компании и специалистов, я сам заполняю все формы для СРО и собираю комплект.',
+  },
+  {
+    t: 'Оплата взносов',
+    d: 'Все платежи вы переводите напрямую на расчётный счёт СРО — не через меня.',
+  },
+  {
+    t: 'Приём в члены СРО',
+    d: 'Сведения о компании вносятся в единый реестр членов СРО — НОСТРОЙ или НОПРИЗ, — и вы получаете выписку из реестра.',
+    law: LAW.membership,
+  },
+]
+// «4 шага», «5 шагов» — числом из списка, а не словом в тексте.
+const stepsWord = (n: number) =>
+  n % 10 === 1 && n % 100 !== 11 ? 'шаг' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? 'шага' : 'шагов'
 
-const steps = [
+// ТРИ НАПРАВЛЕНИЯ — сразу под первым экраном, как в том же образце:
+// человек находит своё («я проектировщик») до калькулятора и цен.
+// Работы перечислены только те, про которые на сайте уже сказано, что им
+// нужно членство, — со страниц услуг. «Стройконтроль» и «технадзор»
+// из образца сюда не перенесены: сайт нигде не утверждает, что им нужна
+// СРО, и утверждать это здесь, мимо страниц с нормами, было бы новым
+// фактом без статьи. Фотографий нет нарочно: у образца это стоковые
+// краны и каски, а стоковых касок на этом сайте быть не должно.
+const dirs = [
   {
-    t: 'Разбор ситуации',
-    d: 'Смотрю работы, договор и сумму. Если членство не нужно — говорю сразу и работу не начинаю.',
-    time: '15–30 минут',
-    who: 'моё время',
+    slug: 'sro-stroiteley',
+    icon: 'building',
+    t: 'СРО строителей',
+    works: ['строительство', 'реконструкция', 'капитальный ремонт', 'снос объектов капитального строительства', 'функции технического заказчика'],
+    note: 'Нужна, если обязательства по прямому договору больше 10 млн ₽. СРО — вашего субъекта РФ.',
   },
   {
-    t: 'Подбор и проверка СРО',
-    d: 'Под ваш регион и уровень ответственности. Показываю её в госреестре до того, как вы что-то подпишете.',
-    time: '1–2 дня',
-    who: 'моё время',
+    slug: 'sro-proektirovshchikov',
+    icon: 'ruler',
+    t: 'СРО проектировщиков',
+    works: ['подготовка проектной документации', 'архитектурно-строительное проектирование'],
+    note: 'Нужна при любой сумме прямого договора. Регион не важен: СРО — любого субъекта.',
   },
   {
-    t: 'Документы',
-    d: 'Весь комплект оформляю бесплатно. От вас — устав, выписка и документы специалистов; чего нет — подскажу, где взять.',
-    time: '2–5 дней',
-    who: 'зависит от вас',
-  },
-  {
-    t: 'Подача и выписка',
-    d: `Взносы вы переводите напрямую на счёт СРО. По закону на решение у неё ${TERMS.law}; с полным комплектом до выписки проходит ${TERMS.extract}.`,
-    time: TERMS.extract,
-    who: 'время СРО',
-    law: LAW.term,
+    slug: 'sro-izyskateley',
+    icon: 'search',
+    t: 'СРО изыскателей',
+    works: ['инженерно-геодезические изыскания', 'инженерно-геологические', 'инженерно-гидрометеорологические', 'инженерно-экологические', 'инженерно-геотехнические'],
+    note: 'Нужна при любой сумме прямого договора. Регион не важен: СРО — любого субъекта.',
   },
 ]
 
@@ -172,6 +198,27 @@ const howToSchema = {
 >
   <Hero />
 
+  <!-- Три направления: строители, проектировщики, изыскатели -->
+  <section class="section section--paper dirs-sec" id="napravleniya" data-anchor>
+    <div class="wrap">
+      <ul class="dirs">
+        {dirs.map((d) => (
+          <li class="dir rv">
+            <a class="dir-in" href={href(`/uslugi/${d.slug}/`)}>
+              <span class="dir-ico"><Icon name={d.icon} size={26} /></span>
+              <h2 class="dir-t">{d.t}</h2>
+              <ul class="dir-works">
+                {d.works.map((w) => <li><Icon name="check" size={15} />{w}</li>)}
+              </ul>
+              <p class="dir-note">{d.note}</p>
+              <span class="dir-go">Подробнее <Icon name="arrow" size={15} /></span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
   <Calculator />
 
   <!-- Цена первого года -->
@@ -223,13 +270,44 @@ const howToSchema = {
     </div>
   </section>
 
-  <!-- Заявка и что будет после неё -->
+  <!-- Четыре шага вступления -->
+  <section class="section" id="process" data-anchor>
+    <div class="wrap">
+      <div class="s-head rv">
+        <span class="eyebrow">Порядок вступления</span>
+        <h2>{steps.length} {stepsWord(steps.length)} <em>для вступления в СРО</em></h2>
+        <p>
+          Чтобы не ошибиться в документах и не затянуть вступление, начните с бесплатной
+          консультации: позвоните по номеру <a class="s4-tel" href={SITE.phoneHref} data-goal="click_phone">{SITE.phone}</a> или
+          напишите в мессенджер.
+        </p>
+      </div>
+      <ol class="steps4">
+        {steps.map((s, i) => (
+          <li class="rv">
+            <div class="s4-head" aria-hidden="true">
+              <span class="s4-num">{i + 1}</span>
+              <span class="s4-line"></span>
+            </div>
+            <h3>{s.t}</h3>
+            <p>{s.d}</p>
+            {s.law && <span class="law">{s.law}</span>}
+          </li>
+        ))}
+      </ol>
+      <div class="s4-cta rv">
+        <a class="btn btn--acc btn--lg" href="#zayavka">Оставить заявку</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Заявка -->
   <section class="section section--paper apply" id="zayavka" data-anchor>
-    <div class="wrap apply-grid">
+    <div class="wrap apply-one">
       <div class="apply-form rv">
         <LeadForm who />
         {/* Прямые каналы — строкой под формой, а не отдельной карточкой:
-            на телефоне те же кнопки и так стоят в нижней панели, а почты
+            на телефоне те же каналы и так стоят столбиком справа, а почты
             там нет. */}
         <p class="apply-direct">
           <span>Или напрямую:</span>
@@ -251,32 +329,6 @@ const howToSchema = {
         </p>
       </div>
 
-      <div class="apply-next" id="process" data-anchor>
-        <div class="s-head rv">
-          <span class="eyebrow">Что будет после заявки</span>
-          <h2>Как проходит <em>вступление</em></h2>
-        </div>
-        <ol class="steps">
-          {steps.map((s, i) => (
-            <li class="rv">
-              <span class="sn">{i + 1}</span>
-              <div class="sc">
-                <div class="sc-top">
-                  <h3>{s.t}</h3>
-                  <span class="stime">{s.time}</span>
-                  <span class="swho">{s.who}</span>
-                </div>
-                <p set:html={keepTerms(s.d)} />
-                {s.law && <span class="law">{s.law}</span>}
-              </div>
-            </li>
-          ))}
-        </ol>
-        <p class="steps-total rv">
-          <b>Итого от первого разговора до выписки — <span class="nw">5–10 дней</span>.</b> Быстрее всего идёт
-          последний шаг, дольше всего — сбор бумаг, и темп здесь задаёте вы.
-        </p>
-      </div>
     </div>
   </section>
 
@@ -446,12 +498,9 @@ const howToSchema = {
   }
 
   /* ── Заявка ──
-     Форма слева, «что будет после заявки» справа: второе отвечает на вопрос,
-     который человек задаёт себе ровно перед нажатием кнопки. */
-  .apply-grid { display: grid; gap: 44px; align-items: start; }
-  @media (min-width: 1000px) {
-    .apply-grid { grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr); gap: 56px; }
-  }
+     Одна колонка: шаги вступления стоят над формой отдельной секцией
+     и отвечают на вопрос «что будет, когда я нажму кнопку» до неё. */
+  .apply-one { max-width: 780px; }
   .apply-direct {
     display: flex;
     flex-wrap: wrap;
@@ -477,72 +526,117 @@ const howToSchema = {
      цветом текста, сургучом. */
   .apply-direct :global(svg) { flex: none; color: var(--acc-btn); }
   .ad-phone { font-variant-numeric: lining-nums tabular-nums; }
-  .apply-next .s-head { margin-bottom: 24px; }
-  .apply-next h2 { font-size: clamp(24px, 2.4vw, 30px); }
 
-  /* Шаги */
-  .steps { list-style: none; margin: 0; padding: 0; display: grid; }
-  .steps li { position: relative; display: grid; grid-template-columns: 44px 1fr; gap: 16px; align-items: start; }
-  .sn {
-    width: 40px; height: 40px;
-    border-radius: 50%;
-    background: var(--card);
-    border: 2px solid var(--acc-soft);
-    color: var(--acc-deep);
-    font-family: var(--font-head);
-    font-weight: 800;
-    font-size: 16px;
-    display: grid; place-items: center;
-    position: relative;
-    z-index: 1;
+  /* ── Четыре шага ──
+     Раскладка — по образцу заказчика: крупная цифра и линия к следующему
+     шагу, в ряд. Линия — та же размерная линия с засечками, что делит
+     секции сайта (цитата из чертежа), а не декоративная полоска: шаги
+     и правда отмеряют путь от консультации до выписки. На телефоне шаги
+     встают столбиком, и линия там не нужна. */
+  .steps4 {
+    list-style: none;
+    margin: 8px 0 0;
+    padding: 0;
+    display: grid;
+    gap: 28px 30px;
   }
-  /* Первый шаг залит акцентом — глаз сразу находит начало ленты */
-  .steps li:first-child .sn { background: var(--acc-btn); border-color: var(--acc-btn); color: #fff; }
-  /* Линия ленты — от кружка до следующего кружка. Её рисует строка шага,
-     а не кружок: у кружка своя высота, и линия от него обрывалась
-     на полпути, как только текст шага становился длиннее. */
-  .steps li:not(:last-child)::before {
+  @media (min-width: 900px) {
+    .steps4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
+  .steps4 li { display: grid; align-content: start; gap: 8px; }
+  .s4-head { display: flex; align-items: center; gap: 14px; margin-bottom: 6px; }
+  .s4-num {
+    font-family: var(--font-head);
+    font-size: 64px;
+    font-weight: 400;
+    line-height: 0.9;
+    color: var(--acc);
+    font-variant-numeric: lining-nums;
+  }
+  .s4-line { position: relative; flex: 1; height: 1px; background: var(--muted); opacity: 0.45; }
+  .s4-line::before,
+  .s4-line::after {
     content: '';
     position: absolute;
-    top: 40px;
-    bottom: 0;
-    left: 19px;
-    width: 2px;
-    background: var(--line);
+    top: -5px;
+    width: 1px;
+    height: 11px;
+    background: inherit;
   }
-  .sc { padding-bottom: 22px; }
-  .sc-top { display: flex; align-items: baseline; gap: 6px 12px; flex-wrap: wrap; margin-bottom: 5px; }
-  .sc-top h3 { font-size: 17px; }
-  .stime {
-    font-family: var(--font-mono);
-    font-size: 12px;
-    color: var(--acc-deep);
-    background: var(--acc-soft);
-    padding: 2px 9px;
-    border-radius: 6px;
-    white-space: nowrap;
+  .s4-line::before { left: 0; }
+  .s4-line::after { right: 0; }
+  .steps4 li:last-child .s4-line { display: none; }
+  .steps4 h3 { margin: 0; font-size: 18px; }
+  .steps4 p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.6; max-width: 40ch; }
+  .steps4 .law { justify-self: start; margin-top: 4px; }
+  .s4-tel { font-weight: 600; white-space: nowrap; }
+  .s4-cta { margin-top: 34px; }
+  /* На телефоне цифра встаёт слева от текста, а не над ним: шаг занимает
+     вдвое меньше высоты, и форма заявки под шагами не уезжает вниз.
+     Линия к следующему шагу здесь не нужна — шаги и так идут столбиком. */
+  @media (max-width: 899px) {
+    .steps4 { gap: 22px; }
+    .steps4 li { grid-template-columns: 46px minmax(0, 1fr); column-gap: 14px; row-gap: 5px; }
+    .s4-head { grid-row: 1 / span 3; margin: 0; align-items: flex-start; }
+    .s4-line { display: none; }
+    .s4-num { font-size: 46px; }
+    .steps4 h3, .steps4 p, .steps4 .law { grid-column: 2; }
   }
-  /* Подпись «чьё время» намеренно тише срока: срок — цифра, которую ищут,
-     а подпись объясняет, почему цифры не складываются в одну очередь. */
-  .swho {
-    font-family: var(--font-mono);
-    font-size: 11.5px;
-    letter-spacing: 0.04em;
-    color: var(--muted);
-    white-space: nowrap;
+
+  /* ── Три направления ──
+     Сразу под первым экраном: карточка целиком — ссылка на страницу услуги.
+     Значок вместо фотографии: у образца здесь стоковые краны и каски.
+     Секция на тёплом листе (section--paper): белые карточки на нём видны,
+     а размерная линия-разделитель не встаёт над тёмным калькулятором —
+     правило в global.css рисует её между двумя белыми секциями. */
+  .dirs-sec { padding-top: 34px; }
+  .dirs {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+    gap: 18px;
   }
-  .sc p { color: var(--muted); font-size: 15px; max-width: 62ch; }
-  .nw, .sc p :global(.nw) { white-space: nowrap; }
-  .sc .law { margin-top: 8px; }
-  .steps-total {
-    margin-top: 6px;
-    padding-top: 16px;
-    border-top: 1px solid var(--line);
-    color: var(--muted);
-    font-size: 14.5px;
-    max-width: 62ch;
+  .dir-in {
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto auto 1fr auto auto;
+    gap: 12px;
+    padding: 24px 22px 20px;
+    background: var(--card, var(--paper));
+    border: 1px solid var(--line);
+    border-radius: var(--r-m);
+    color: inherit;
+    text-decoration: none;
+    transition: border-color var(--t-fast) var(--ease);
   }
-  .steps-total b { color: var(--ink); }
+  .dir-in:hover { border-color: var(--acc); }
+  .dir-in:focus-visible { outline: 2px solid var(--acc); outline-offset: 3px; }
+  .dir-ico { color: var(--acc); display: inline-flex; }
+  .dir-t { margin: 0; font-size: 22px; }
+  /* align-content: start — иначе строка сетки карточки растягивает список,
+     и два пункта у проектировщиков разъезжаются на всю высоту соседей. */
+  .dir-works { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; align-content: start; }
+  /* «Инженерно-гидрометеорологические» — одно слово шире узкой карточки
+     при крупном шрифте (режим «версия для ПК» на телефоне): без переноса
+     оно распирало страницу на 15 px, поймал test-widths. */
+  .dir-works li { display: grid; grid-template-columns: 15px minmax(0, 1fr); gap: 9px; align-items: start; font-size: 15px; line-height: 1.45; hyphens: auto; overflow-wrap: anywhere; }
+  .dir-works :global(svg) { margin-top: 3px; color: var(--good, var(--acc)); }
+  .dir-note { margin: 4px 0 0; padding-top: 12px; border-top: 1px solid var(--line); font-size: 14px; line-height: 1.55; color: var(--muted); }
+  .dir-go { display: inline-flex; align-items: center; gap: 6px; font-size: 14.5px; font-weight: 600; color: var(--acc-deep); }
+  .dir-in:hover .dir-go { text-decoration: underline; }
+  /* На телефоне виды работ идут строкой, а не столбиком: три карточки
+     подряд иначе занимали полтора экрана и отодвигали калькулятор. */
+  @media (max-width: 599px) {
+    .dirs { gap: 12px; }
+    .dir-in { padding: 18px 18px 16px; gap: 10px; }
+    .dir-t { font-size: 20px; }
+    .dir-works { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+    .dir-works li { display: inline-flex; gap: 6px; font-size: 14.5px; }
+    .dir-works :global(svg) { margin-top: 2px; flex: none; }
+    .dir-note { padding-top: 10px; }
+  }
 
   /* ── Вопросы ──
      Раскрываются плавно, без JavaScript: interpolate-size (в global.css)
@@ -663,8 +757,6 @@ const howToSchema = {
 
   @media (max-width: 640px) {
     .price-go { width: 100%; }
-    .steps li { grid-template-columns: 36px 1fr; gap: 13px; }
-    .sn { width: 34px; height: 34px; font-size: 14.5px; }
-    .steps li:not(:last-child)::before { top: 34px; left: 16px; }
+    .s4-cta .btn { width: 100%; }
   }
 </style>
