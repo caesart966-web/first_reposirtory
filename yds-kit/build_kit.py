@@ -104,6 +104,24 @@ MIN_VOCAB = 40
 #: Her paragrafın dört sorusunda bu tiplerin her birinden en az biri bulunmalı.
 PARAGRAPH_QTYPES = ("according_to", "it_is_clear", "inference", "main_idea")
 
+#: Kural sürümü. Kit JSON'unda "spec": 2 yazılıysa aşağıdaki uzunluk ve
+#: diyalog kuralları da zorunlu olur. Alan yoksa kit 1. sürüm sayılır —
+#: kitler 1-7 bu kurallardan önce yazıldı ve yeniden basılabilmeleri gerekiyor.
+SPEC = 2
+
+#: Cümle tamamlamada verilen yarı da, seçenekler de gerçek bir cümle olmalı.
+#: Tek sözcüklük dilbilgisi şıkları (of whom / of them) YDS'nin sorma biçimi
+#: değildir: YDS dilbilgisini anlamlı bir metnin içinde sorar.
+MIN_SC_STEM_WORDS = 15
+MIN_SC_OPTION_WORDS = 7
+
+#: Paragraf metinleri gerçek YDS uzunluğunda olmalı.
+PASSAGE_WORDS = (230, 275)
+
+#: Boşluğun diyalogdaki yeri değişmeli: YDS kimi zaman ilk repliği,
+#: kimi zaman ortadakini, kimi zaman sonuncuyu sorar.
+DIALOGUE_BLANK = "----"
+
 # Görsel dil: ÖSYM kitapçığı — lacivert metin, ince çerçeveler, beyaz kâğıt.
 NAVY = RGBColor(0x1B, 0x33, 0x5F)
 INK = RGBColor(0x14, 0x1C, 0x2B)
@@ -191,6 +209,9 @@ def validate(kit: dict) -> list[str]:
         if not (p.get("text") or "").strip():
             errors.append(f"Parça {p.get('first')}-{p.get('last')}: metin boş.")
 
+    if kit.get("spec", 1) >= 2:
+        errors += _validate_spec2(kit, by_no)
+
     covered = set()
     for p in kit.get("passages", []):
         covered.update(range(p.get("first", 0), p.get("last", -1) + 1))
@@ -228,6 +249,75 @@ def validate(kit: dict) -> list[str]:
 
     for w in warnings:
         print(f"  uyarı: {w}", file=sys.stderr)
+    return errors
+
+
+def _words(text: str) -> int:
+    return len([w for w in re.split(r"\s+", (text or "").strip()) if w and w != "----"])
+
+
+def _validate_spec2(kit: dict, by_no: dict) -> list[str]:
+    """spec 2 kuralları: uzunluklar ve diyalogda boşluğun yeri.
+
+    Üçü de gerçek YDS ile arayı açan noktalar olduğu için sert kontrol:
+    kısa cümle tamamlama, kısa paragraf ve hep aynı yerden sorulan diyalog.
+    """
+    errors: list[str] = []
+
+    for n in range(27, 37):
+        q = by_no.get(n)
+        if not q:
+            continue
+        if _words(q.get("stem")) < MIN_SC_STEM_WORDS:
+            errors.append(
+                f"Soru {n}: cümle tamamlama kökü en az {MIN_SC_STEM_WORDS} sözcük olmalı "
+                f"({_words(q.get('stem'))} bulundu)."
+            )
+        short = [k for k, v in (q.get("options") or {}).items()
+                 if _words(v) < MIN_SC_OPTION_WORDS]
+        if short:
+            errors.append(
+                f"Soru {n}: cümle tamamlama seçenekleri en az {MIN_SC_OPTION_WORDS} sözcük "
+                f"olmalı; kısa olanlar: {', '.join(sorted(short))}. Tek sözcüklük dilbilgisi "
+                f"şıkkı YDS'nin sorma biçimi değil."
+            )
+
+    lo, hi = PASSAGE_WORDS
+    for p in kit.get("passages", []):
+        w = _words(p.get("text"))
+        if not lo <= w <= hi:
+            errors.append(
+                f"Parça {p.get('first')}-{p.get('last')}: {w} sözcük; "
+                f"gerçek YDS uzunluğu için {lo}-{hi} arası olmalı."
+            )
+
+    spots: list[tuple[int, int, int]] = []  # (soru, boşluğun sırası, replik sayısı)
+    for n in range(63, 68):
+        q = by_no.get(n)
+        lines = (q or {}).get("dialogue") or []
+        blanks = [i for i, (_who, line) in enumerate(lines)
+                  if (line or "").strip() == DIALOGUE_BLANK]
+        if len(blanks) != 1:
+            errors.append(f"Soru {n}: diyalogda tam olarak bir '{DIALOGUE_BLANK}' repliği olmalı.")
+            continue
+        spots.append((n, blanks[0], len(lines)))
+
+    if len(spots) == 5:
+        idx = [i for _n, i, _t in spots]
+        if len(set(idx)) < 3:
+            errors.append(
+                f"Diyalog boşlukları 63-67'de en az üç ayrı replikte olmalı; "
+                f"şu an sıralar: {idx}."
+            )
+        if not any(i == 0 for _n, i, _t in spots):
+            errors.append("Diyaloglardan en az birinde boşluk ilk replik olmalı.")
+        if not any(i == t - 1 for _n, i, t in spots):
+            errors.append("Diyaloglardan en az birinde boşluk son replik olmalı.")
+        for i in set(idx):
+            if idx.count(i) > 2:
+                errors.append(
+                    f"Diyalog boşlukları aynı sırada ({i + 1}. replik) ikiden çok kez olamaz."
+                )
     return errors
 
 
