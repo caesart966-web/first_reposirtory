@@ -229,8 +229,15 @@ const howToSchema = {
           </li>
         ))}
       </ol>
+      {/* Ссылка на полный разбор пути — статью «Как вступить в СРО».
+          Четыре шага здесь — что происходит с заявкой; статья — что
+          решаете вы на каждом шаге, со статьями кодекса. Она же отвечает
+          на запрос «как вступить в СРО», и ссылка с главной — её вес. */}
       <div class="s4-cta rv">
         <a class="btn btn--acc btn--lg" href="#zayavka">Оставить заявку</a>
+        <a class="s4-more" href={href('/baza-znaniy/kak-vstupit-v-sro/')}>
+          Как вступить в СРО: подробная инструкция <Icon name="arrow" size={15} class="s4-arrow" />
+        </a>
       </div>
     </div>
   </section>
@@ -412,7 +419,13 @@ const howToSchema = {
   .steps4 p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.6; max-width: 40ch; }
   .steps4 .law { justify-self: start; margin-top: 4px; }
   .s4-tel { font-weight: 600; white-space: nowrap; }
-  .s4-cta { margin-top: 34px; }
+  .s4-cta { margin-top: 34px; display: flex; flex-wrap: wrap; align-items: center; gap: 14px 28px; }
+  /* Строчный текст, а не flex: на телефоне ссылка переносится на две
+     строки, и во flex-ряду стрелка уезжала к правому краю экрана,
+     отдельно от слов. В строке она идёт сразу за последним словом. */
+  .s4-more { font-weight: 600; line-height: 1.5; color: var(--acc-deep); text-decoration: none; }
+  .s4-more:hover { text-decoration: underline; }
+  .s4-more :global(.s4-arrow) { display: inline-block; vertical-align: -2px; margin-left: 4px; }
   /* На телефоне цифра встаёт слева от текста, а не над ним: шаг занимает
      вдвое меньше высоты, и форма заявки под шагами не уезжает вниз.
      Линия к следующему шагу здесь не нужна — шаги и так идут столбиком. */
