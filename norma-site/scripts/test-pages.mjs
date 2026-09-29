@@ -138,6 +138,26 @@ for (const [screen, width, height] of [['телефон', 320, 720], ['комп�
   }
   await ctx.close()
 }
+
+// ── Предзагрузка по наведению ──
+// Хостинг отвечает на запрос страницы 1,5–4,4 с (29.09.2026). Правила
+// speculationrules в Base.astro запрашивают страницу, пока курсор идёт
+// к клику. Проверяется поведение: наведение на ссылку даёт запрос
+// с Sec-Purpose: prefetch, а не просто наличие тега в разметке.
+{
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } })
+  const page = await ctx.newPage()
+  let prefetched = false
+  page.on('request', (r) => {
+    if (/prefetch/.test(r.headers()['sec-purpose'] || '') && new URL(r.url()).pathname.endsWith('/stoimost/')) prefetched = true
+  })
+  await page.goto(BASE + '/', { waitUntil: 'networkidle' })
+  await page.hover('header a[href$="/stoimost/"]')
+  for (let i = 0; i < 20 && !prefetched; i++) await page.waitForTimeout(100)
+  if (!prefetched) problems.push('наведение на «Стоимость» в шапке не запросило страницу заранее (speculationrules в Base.astro)')
+  else console.log('✓ Наведение на ссылку запрашивает страницу заранее (Sec-Purpose: prefetch)')
+  await ctx.close()
+}
 await browser.close()
 
 if (tight.size) {

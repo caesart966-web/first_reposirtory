@@ -247,6 +247,35 @@ const graph = {
 
     <script type="application/ld+json" set:html={JSON.stringify(graph)} />
 
+    {/* Предзагрузка страниц по наведению — правила для браузера, без скрипта.
+        Хостинг отвечает на запрос страницы за 1,5–4,4 с (Seobility и Вебмастер,
+        29.09.2026), а та же сборка на Apache с нашим .htaccess — за 2–4 мс:
+        ждёт сервер, не сайт. Навёл курсор на ссылку — браузер запрашивает
+        страницу, пока рука идёт к клику, и ожидание проходит заранее.
+        Только prefetch, не prerender: страница скачивается, но не выполняется,
+        поэтому Метрика не считает визит, которого не было. Chrome, Edge
+        и Яндекс Браузер понимают правила, остальные браузеры их пропускают.
+        Стережёт test-pages: наведение даёт запрос с Sec-Purpose: prefetch. */}
+    <script
+      is:inline
+      type="speculationrules"
+      set:html={JSON.stringify({
+        prefetch: [
+          {
+            source: 'document',
+            where: {
+              and: [
+                { href_matches: `${import.meta.env.BASE_URL}*` },
+                { not: { href_matches: `${import.meta.env.BASE_URL}api/*` } },
+                { not: { selector_matches: '[download], [target=_blank]' } },
+              ],
+            },
+            eagerness: 'moderate',
+          },
+        ],
+      })}
+    />
+
     <!-- Прятать блоки под анимацию можно только когда скрипт точно работает.
          Ставим класс до отрисовки, чтобы не было мигания. -->
     <script is:inline>document.documentElement.classList.add('js')</script>
