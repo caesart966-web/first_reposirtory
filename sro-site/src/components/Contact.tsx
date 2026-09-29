@@ -47,7 +47,7 @@ export function Contact({
               <a
                 href={LINKS.tel}
                 data-channel="Позвонить"
-                className="group block font-display text-[2.7rem] font-medium leading-none tracking-tight text-neutral-50 sm:text-6xl"
+                className="group block whitespace-nowrap font-display text-[2.35rem] font-medium leading-none tracking-tight text-neutral-50 min-[380px]:text-[2.7rem] sm:text-6xl"
               >
                 <span className="bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-left-bottom bg-no-repeat pb-1 transition-[background-size] duration-700 ease-silk group-hover:bg-[length:100%_1px]">
                   {CONTACTS.phone}
@@ -55,15 +55,21 @@ export function Contact({
               </a>
             )}
             {MESSENGERS.length > 0 && (
-              <ul className="mt-8 flex flex-wrap gap-2.5">
+              // На телефоне три кнопки — ровным рядом равной ширины: в строку
+              // по содержимому MAX уходил один на вторую строку. Уже 380 px
+              // значок прячется, иначе «WhatsApp» не помещается в треть.
+              <ul
+                className="mt-8 grid gap-2 sm:flex sm:flex-wrap sm:gap-2.5"
+                style={{ gridTemplateColumns: `repeat(${MESSENGERS.length}, minmax(0, 1fr))` }}
+              >
                 {MESSENGERS.map((channel) => (
                   <li key={channel.label}>
                     <MessengerLink
                       channel={channel.id}
                       label={channel.label}
-                      className="inline-flex h-12 items-center gap-2.5 rounded-full border border-white/20 px-5 text-[15px] font-medium text-neutral-50 transition-colors duration-500 ease-silk hover:border-white/60 hover:bg-white/5"
+                      className="flex h-12 items-center justify-center gap-2 rounded-full border border-white/20 px-2 text-sm font-medium text-neutral-50 transition-colors duration-500 ease-silk hover:border-white/60 hover:bg-white/5 sm:inline-flex sm:gap-2.5 sm:px-5 sm:text-[15px]"
                     >
-                      <channel.icon className="h-[18px] w-[18px] shrink-0 text-accent-300" />
+                      <channel.icon className="hidden h-[18px] w-[18px] shrink-0 text-accent-300 min-[380px]:block" />
                       {channel.label}
                     </MessengerLink>
                   </li>
