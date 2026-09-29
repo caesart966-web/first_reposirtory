@@ -4,6 +4,7 @@
 // Запуск: node scripts/test-form.mjs [адрес]
 
 import { chromium } from './lib/browser.mjs'
+import { readFileSync } from 'node:fs'
 
 const BASE = process.argv[2] || 'http://127.0.0.1:4321'
 const browser = await chromium.launch()
@@ -215,7 +216,14 @@ check(reachable.includes('lf-submit'), 'Кнопка отправки дости
   // Список видов работ в форме обязан совпадать с ответами калькулятора,
   // иначе подстановка промахнётся, а увидеть это без проверки нельзя.
   const opts = await q.$$eval('#lf-kind option', (els) => els.map((e) => e.value).filter(Boolean))
-  for (const id of ['build', 'design', 'survey', 'demolition']) {
+  // Ответы первого вопроса — из исходника калькулятора, а не списком здесь:
+  // записанный список молча пропустил бы новый вид работ (капремонт МКД
+  // добавлен 29.09.2026 — его бы и пропустил).
+  const calcSrc = readFileSync(new URL('../src/components/Calculator.astro', import.meta.url), 'utf8')
+  const qWork = calcSrc.match(/const Q_WORK[\s\S]*?options:\s*\[([\s\S]*?)\n\s*\],/)?.[1] ?? ''
+  const calcIds = [...qWork.matchAll(/\{\s*id:\s*'([a-z]+)'/g)].map((m) => m[1])
+  check(calcIds.length >= 4, `Виды работ калькулятора прочитаны из исходника: ${calcIds.join(', ')}`)
+  for (const id of calcIds) {
     check(opts.includes(id), `В форме есть вид работ «${id}»`)
   }
 

@@ -1,8 +1,9 @@
 import { defineConfig } from 'astro/config'
 import sitemap from '@astrojs/sitemap'
 import { execFileSync } from 'node:child_process'
-import { existsSync, readdirSync, readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 // Куда собираем сайт.
 //
@@ -111,6 +112,36 @@ const RULES = [
   [/^\/politika\/$/, 0.2, 'yearly'],
 ]
 
+// ── Комментарии из исходников в страницы не попадают ──────────────────────
+//
+// HTML-комментарии из .astro Astro переносит в готовую страницу как есть.
+// Здесь это заметки для того, кто правит сайт: почему сделано так и что
+// решил заказчик. Они весили 13 % всего HTML (на главной 11 КБ из 139),
+// уходили каждому посетителю и были видны в «Просмотре кода»; заметил это
+// замер ответа сервера в Вебмастере 29.09.2026. Снимаются после сборки
+// со всех страниц. Содержимое <script> и <style> не трогается: там «<!--»
+// могло бы оказаться частью кода. Стережёт check-html.mjs.
+const COMMENT = /(<script\b[\s\S]*?<\/script>|<style\b[\s\S]*?<\/style>)|<!--[\s\S]*?-->/g
+const stripHtmlComments = {
+  name: 'strip-html-comments',
+  hooks: {
+    'astro:build:done': ({ dir }) => {
+      const walk = (d) => {
+        for (const e of readdirSync(d, { withFileTypes: true })) {
+          const p = join(d, e.name)
+          if (e.isDirectory()) walk(p)
+          else if (e.name.endsWith('.html')) {
+            const src = readFileSync(p, 'utf8')
+            const out = src.replace(COMMENT, (m, keep) => keep ?? '')
+            if (out !== src) writeFileSync(p, out)
+          }
+        }
+      }
+      walk(fileURLToPath(dir))
+    },
+  },
+}
+
 export default defineConfig({
   site: SITE_URL,
   base: BASE_PATH,
@@ -134,6 +165,7 @@ export default defineConfig({
         return item
       },
     }),
+    stripHtmlComments,
   ],
   build: {
     format: 'directory',

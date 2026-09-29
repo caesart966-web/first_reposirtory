@@ -58,17 +58,37 @@ Options -Indexes
   # сертификат истечёт, и сайт ляжет без единой правки с вашей стороны.
   RewriteRule ^\.well-known/ - [L]
 
+  # ПРАВИЛО: любой неканонический адрес уходит на канонический ОДНИМ
+  # переходом. Канонический — https, без www, у папки косая черта в конце
+  # (/stoimost/): так стоят canonical, ссылки и карта сайта.
+  # Проверено на Apache 2.4 за прокси, как у Timeweb (29.09.2026): раньше
+  # /stoimost уходил на /stoimost/ через http — это делал сам Apache
+  # (mod_dir, DirectorySlash), не зная, что снаружи был https. Выходило
+  # два перехода, а с www — четыре. Теперь каждый вариант — один переход.
+
+  # Имя сайта без www — для правил ниже.
+  RewriteCond %{HTTP_HOST} ^(www\.)?(.+)$ [NC]
+  RewriteRule ^ - [E=CANON_HOST:%2]
+
+  # Папка без косой черты в конце → с ней, сразу на https и без www.
+  # Стоит раньше mod_dir, поэтому его перехода через http больше нет.
+  # Первое условие — на запрос без имени сайта: адрес вышел бы https:///.
+  RewriteCond %{ENV:CANON_HOST} .
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^(.*[^/])$ https://%{ENV:CANON_HOST}/$1/ [R=301,L]
+
+  # www → без www, сразу на https. Если решите наоборот, поменяйте это
+  # правило и основное зеркало в панели Timeweb — они обязаны говорить
+  # одно и то же.
+  RewriteCond %{HTTP_HOST} ^www\. [NC]
+  RewriteRule ^ https://%{ENV:CANON_HOST}%{REQUEST_URI} [R=301,L]
+
   # http → https. Проверяем ДВА признака: на shared-хостинге SSL снимает nginx,
   # и до Apache переменная HTTPS может не дойти вовсе — тогда правило без
   # второго условия отправляло бы браузер по кругу.
   RewriteCond %{HTTPS} !=on
   RewriteCond %{HTTP:X-Forwarded-Proto} !=https
   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
-
-  # www → без www. Если решите наоборот, поменяйте местами это правило
-  # и основное зеркало в панели Timeweb — они обязаны говорить одно и то же.
-  RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
-  RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]
 </IfModule>
 
 # ── Сжатие ────────────────────────────────────────────────────────────────
