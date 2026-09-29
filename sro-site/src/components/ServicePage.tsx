@@ -63,7 +63,7 @@ function StatementBlock({ block }: { block: Of<'statement'> }) {
     <>
       <Head title={block.title} />
       <Reveal className="mt-10 border-l-2 border-accent-400 pl-6 sm:pl-10">
-        <p className="max-w-4xl font-display text-[1.55rem] font-medium leading-snug text-neutral-950 sm:text-[2rem] lg:text-[2.3rem]">
+        <p className="max-w-4xl font-display text-[1.55rem] font-medium leading-snug text-balance text-neutral-950 sm:text-[2rem] lg:text-[2.3rem]">
           {nbsp(block.quote)}
         </p>
         {block.text && <p className="mt-5 max-w-3xl text-[17px] leading-relaxed text-neutral-600">{nbsp(block.text)}</p>}
