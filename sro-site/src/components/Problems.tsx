@@ -48,7 +48,7 @@ const SCENARIOS = [
 export function Problems() {
   return (
     <Section id="problems">
-      <SectionHeading title="С чем обычно обращаются" />
+      <SectionHeading title="С чем обращаются" />
       <div className="mt-14 border-t border-neutral-300">
         {SCENARIOS.map((scenario, index) => (
           <Reveal key={scenario.title} delay={index * 90}>

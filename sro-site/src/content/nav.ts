@@ -20,6 +20,8 @@ export type NavLink = {
   /** Строка под названием в выпадающем меню. Только факты, уже проверенные
    *  на странице вида: сюда ничего не пишется руками. */
   hint?: string
+  /** Миниатюра кадра вида СРО — та же, что в списке на первом экране. */
+  thumb?: { webp: string; avif?: string }
 }
 
 export type NavGroup = {
@@ -51,6 +53,7 @@ export const TYPES_GROUP: NavGroup = {
     href: detail.path,
     kind: 'page',
     hint: HINTS[detail.slug] ?? detail.scope.slice(0, 3).join(', '),
+    thumb: detail.card.image.thumb ? { webp: detail.card.image.thumb, avif: detail.card.image.thumbAvif } : undefined,
   })),
 }
 

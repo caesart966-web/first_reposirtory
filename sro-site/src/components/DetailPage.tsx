@@ -289,7 +289,7 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
         <Part id="dokumenty">
           <Head
             title="Документы"
-            lead="Закон называет основу и отсылает к требованиям самой СРО, поэтому комплект всегда шире перечня в кодексе."
+            lead="Закон называет основу и отсылает к требованиям самой СРО. Точный список — в положении о членстве выбранной организации."
           />
           <Reveal className="mt-10 grid gap-10 md:grid-cols-2 lg:grid-cols-3 lg:gap-12">
             <DocColumn title="Требует закон" hint="Одинаково для любой СРО." items={DOCS_LAW} law={LAW.membership} />
@@ -302,7 +302,7 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
             <SroDocs />
           </Reveal>
           {/* Переход к описи с пояснениями — строкой с кнопкой, как в «С чем
-              обычно обращаются»: строка говорит, что там, кнопка — куда. */}
+              обращаются»: строка говорит, что там, кнопка — куда. */}
           <Reveal>
             <a
               href={page('uslugi/dokumenty')}
@@ -360,7 +360,7 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
             вид. Название вида подставляем как есть: toLowerCase()
             превращал аббревиатуру в «сро строителей». */}
         <Contact
-          lead={`Отвечу на вопросы по ${detail.card.title}, подберу организацию и назову порядок действий. Консультация бесплатная — и первая, и все следующие.`}
+          lead={`Отвечу на вопросы по ${detail.card.title}, подберу организацию и назову порядок действий.`}
         />
       </main>
       <Footer />

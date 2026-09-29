@@ -49,7 +49,7 @@ export function Pricing() {
     <Section id="pricing">
       <SectionHeading
         title="Форматы работы"
-        subtitle="Консультации бесплатны на любом этапе. Стоимость работы зависит от вида СРО и готовности документов и согласовывается письменно до начала."
+        subtitle="Стоимость работы зависит от вида СРО и готовности документов и согласовывается письменно до начала."
       />
       {/* Три колонки листами, без рамок и теней. Главный формат — тёмный:
           выделен цветом листа, а не плашкой «хит» над ним. */}
@@ -64,8 +64,11 @@ export function Pricing() {
               {/* Подписи «Формат» над каждой карточкой больше нет: одинаковая
                   рубрика над тремя листами ничего не сообщала. Главный формат
                   выделен цветом листа. */}
-              <h3 className="font-display text-[1.9rem] font-medium leading-tight">{plan.name}</h3>
-              <p className="mt-10 font-display text-[2.6rem] font-medium leading-none">{plan.price}</p>
+              {/* Высота названия — на две строки у всех трёх: иначе
+                  «Консультация» в одну строку поднимала свою цену выше
+                  соседних, и ряд цен шёл лесенкой. */}
+              <h3 className="font-display text-[1.9rem] font-medium leading-tight lg:min-h-[2.5em]">{plan.name}</h3>
+              <p className="mt-8 font-display text-[2.6rem] font-medium leading-none lg:mt-6">{plan.price}</p>
               <p className={`mt-3 text-sm ${plan.featured ? 'text-neutral-300' : 'text-neutral-600'}`}>
                 {plan.priceNote}
               </p>
@@ -92,7 +95,11 @@ export function Pricing() {
           в строку, и кнопка ломалась на две. */}
       <Reveal className="mt-12">
         <ButtonLink href="#contacts" size="lg" arrow>
-          Узнать стоимость<span className="hidden sm:inline">&nbsp;для моей компании</span>
+          {/* Одним span: иначе хвост надписи становился отдельным элементом
+              кнопки и отодвигался от начала на её зазор. */}
+          <span>
+            Узнать стоимость<span className="hidden sm:inline">&nbsp;для моей компании</span>
+          </span>
         </ButtonLink>
       </Reveal>
     </Section>

@@ -40,7 +40,7 @@ export function Specialists() {
           выглядеть он должен иначе, чем мои советы под ним. */}
       <Reveal className="mt-16">
         <blockquote className="border-l-2 border-accent-500 pl-6 sm:pl-10">
-          <p className="font-display text-[1.55rem] font-medium leading-snug text-neutral-950 sm:text-[2rem]">
+          <p className="text-balance font-display text-[1.55rem] font-medium leading-snug text-neutral-950 sm:text-[2rem]">
             В штате члена СРО по основному месту работы должно быть не менее двух специалистов
             по организации работ, сведения о которых внесены в национальный реестр
             специалистов (НРС).

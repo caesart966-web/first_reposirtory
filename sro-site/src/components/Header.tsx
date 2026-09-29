@@ -2,7 +2,7 @@ import { ArrowRight, ChevronDown, Menu, Phone, X } from 'lucide-react'
 import { useEffect, useRef, useState, type FocusEvent } from 'react'
 import { CONFIGURED, CONTACTS, LINKS } from '../content/contacts'
 import { HEADER_NAV, MENU, isGroup, navHref, type NavGroup, type NavLink } from '../content/nav'
-import { home } from '../lib/site'
+import { asset, home } from '../lib/site'
 import { ScalesMark } from './illustrations'
 import { ButtonLink } from './ui/Button'
 
@@ -27,6 +27,14 @@ const isHere = (link: NavLink) =>
 // кнопку, и без них меню схлопывалось прямо под рукой.
 function Dropdown({ group }: { group: NavGroup }) {
   const [open, setOpen] = useState(false)
+  const wide = group.items.length > 4
+  // Миниатюры грузятся с первым открытием: закрытое меню на телефоне
+  // скрыто целиком, и картинки в нём не загрузились бы никогда — проверка
+  // сайта считает такие битыми, а трафик на них тратить незачем.
+  const [seen, setSeen] = useState(false)
+  useEffect(() => {
+    if (open) setSeen(true)
+  }, [open])
   const root = useRef<HTMLDivElement>(null)
   const timer = useRef<number>()
   const pointer = useRef<string | null>(null)
@@ -93,15 +101,22 @@ function Dropdown({ group }: { group: NavGroup }) {
       {/* Пока закрыто — invisible, а не display:none: так остаётся анимация
           появления, а ссылки внутри всё равно не получают фокус и Tab их
           пропускает. */}
+      {/* Панель по содержимому (29.09.2026). «Виды СРО» — три строки
+          с миниатюрами тех же кадров, что на первом экране: вид узнаётся
+          по картинке раньше, чем по названию. «Услуги» — две колонки
+          по четыре: семь пунктов одним столбцом давали панель в полэкрана
+          высотой. Маркеров-точек перед пунктами нет: у каждого пункта
+          и так есть название и подсказка, точка ничего к ним не добавляла. */}
       <div
-        className={`absolute left-1/2 top-full z-50 w-[22rem] -translate-x-1/2 pt-3 transition duration-150 ease-out ${
-          open ? 'visible translate-y-0 opacity-100' : 'invisible -translate-y-1 opacity-0'
-        }`}
+        className={`absolute left-1/2 top-full z-50 -translate-x-1/2 pt-3 transition duration-150 ease-out ${
+          wide ? 'w-[40rem]' : 'w-[26rem]'
+        } ${open ? 'visible translate-y-0 opacity-100' : 'invisible -translate-y-1 opacity-0'}`}
       >
-        {/* Пункт — не одна строка, а название с подсказкой: человек ещё не
-            знает, «строители» он или «проектировщики», и три голых слова
-            ему не помогают. Подсказка — область деятельности со страницы вида. */}
-        <div className="rounded-3xl border border-neutral-200 bg-neutral-50 p-2 shadow-[0_24px_60px_-24px_rgba(28,24,21,0.28)]">
+        <div
+          className={`rounded-3xl border border-neutral-200 bg-neutral-50 p-2 shadow-[0_24px_60px_-24px_rgba(28,24,21,0.28)] ${
+            wide ? 'grid grid-flow-col grid-cols-2 grid-rows-4' : ''
+          }`}
+        >
           {group.items.map((item) => {
             const here = isHere(item)
             return (
@@ -110,14 +125,11 @@ function Dropdown({ group }: { group: NavGroup }) {
                 href={navHref(item)}
                 aria-current={here ? 'page' : undefined}
                 onClick={() => setOpen(false)}
-                className={`group/item flex items-start gap-3 rounded-xl px-3 py-2.5 transition-colors ${
+                className={`group/item flex items-center gap-3.5 rounded-2xl px-3 py-2.5 transition-colors ${
                   here ? 'bg-accent-50' : 'hover:bg-accent-50'
                 }`}
               >
-                <span
-                  className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-accent-500 transition-transform group-hover/item:scale-125"
-                  aria-hidden="true"
-                />
+                {item.thumb && <NavThumb thumb={item.thumb} load={seen} />}
                 <span className="min-w-0 flex-1">
                   <span
                     className={`block text-sm font-semibold ${
@@ -131,7 +143,7 @@ function Dropdown({ group }: { group: NavGroup }) {
                   )}
                 </span>
                 <ArrowRight
-                  className="mt-0.5 h-4 w-4 shrink-0 -translate-x-1 text-accent-500 opacity-0 transition group-hover/item:translate-x-0 group-hover/item:opacity-100"
+                  className="h-4 w-4 shrink-0 -translate-x-1 text-accent-600 opacity-0 transition group-hover/item:translate-x-0 group-hover/item:opacity-100"
                   aria-hidden="true"
                 />
               </a>
@@ -140,6 +152,27 @@ function Dropdown({ group }: { group: NavGroup }) {
         </div>
       </div>
     </div>
+  )
+}
+
+// Миниатюра вида СРО в меню. Картинка без подписи: название стоит рядом.
+function NavThumb({ thumb, load = true }: { thumb: NonNullable<NavLink['thumb']>; load?: boolean }) {
+  return (
+    <span className="block h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-neutral-200">
+      {load && (
+        <picture>
+          {thumb.avif && <source type="image/avif" srcSet={asset(thumb.avif)} />}
+          <img
+            src={asset(thumb.webp)}
+            alt=""
+            width={160}
+            height={160}
+            decoding="async"
+            className="h-full w-full object-cover"
+          />
+        </picture>
+      )}
+    </span>
   )
 }
 
@@ -254,9 +287,9 @@ export function Header() {
                       key={link.href}
                       href={navHref(link)}
                       onClick={() => setOpen(false)}
-                      className="flex items-start gap-3 rounded-xl px-2 py-2.5 transition hover:bg-neutral-50"
+                      className="flex items-center gap-3 rounded-xl px-2 py-2.5 transition hover:bg-neutral-100"
                     >
-                      <span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-accent-500" aria-hidden="true" />
+                      {link.thumb && <NavThumb thumb={link.thumb} />}
                       <span className="min-w-0">
                         <span className="block text-base font-medium text-neutral-800">{link.label}</span>
                         {link.hint && <span className="block text-sm text-neutral-600">{link.hint}</span>}

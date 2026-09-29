@@ -287,7 +287,7 @@ export function ServicePage({ service }: { service: ServicePageData }) {
         <PageExtras related={service.related} muted={service.blocks.length % 2 === 1} />
 
         <Contact
-          lead={`Отвечу на вопросы по теме «${service.short}», разберу вашу ситуацию и назову порядок действий. Консультация бесплатная — и первая, и все следующие.`}
+          lead={`Отвечу на вопросы по теме «${service.short}», разберу вашу ситуацию и назову порядок действий.`}
         />
       </main>
       <Footer />

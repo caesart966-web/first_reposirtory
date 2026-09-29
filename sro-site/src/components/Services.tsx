@@ -31,8 +31,33 @@ const serviceOf = (slug: string) => {
   return service
 }
 
-// Классы перечислены целиком: Tailwind собирает только то, что видит в коде.
-const COLS: Record<number, string> = { 3: 'lg:grid-cols-3', 4: 'lg:grid-cols-4' }
+// Раскладка (29.09.2026): обе группы — в одной сетке по четыре колонки,
+// чтобы карточки второго ряда были той же ширины, что и первого (раньше
+// три карточки второй группы растягивались шире четырёх первой, и ряды
+// не совпадали по вертикали). Четвёртое место второго ряда — бесплатная
+// консультация: для того, кто не знает, какая из семи услуг его.
+// Подсказка стоит сразу под названием, стрелка — внизу: раньше подсказку
+// прижимало к низу рядом со стрелкой, и между ней и названием зияла пустота.
+const CARD =
+  'group relative flex h-full flex-col rounded-3xl p-6 transition-colors duration-700 ease-silk focus-visible:outline-none sm:min-h-[13rem] sm:p-7 lg:min-h-[14.5rem]'
+
+// Стрелка: на компьютере — внизу справа под текстом; на телефоне — в углу
+// рядом с подсказкой, чтобы карточка не росла на лишнюю строку.
+function Arrow({ dark = false }: { dark?: boolean }) {
+  return (
+    <span className="absolute bottom-6 right-6 sm:static sm:mt-auto sm:flex sm:justify-end sm:pt-6">
+      <span
+        className={`flex h-11 w-11 items-center justify-center rounded-full border transition-all duration-700 ease-silk group-hover:rotate-45 ${
+          dark
+            ? 'border-white/30 text-neutral-50 group-hover:border-neutral-50 group-hover:bg-neutral-50 group-hover:text-neutral-950'
+            : 'border-neutral-300 text-neutral-950 group-hover:border-neutral-50 group-hover:bg-neutral-50 group-focus-visible:border-neutral-50 group-focus-visible:bg-neutral-50'
+        }`}
+      >
+        <ArrowUpRight className="h-5 w-5" aria-hidden="true" />
+      </span>
+    </span>
+  )
+}
 
 export function Services() {
   return (
@@ -43,7 +68,7 @@ export function Services() {
       />
 
       <div className="mt-16 space-y-14">
-        {GROUPS.map((group) => (
+        {GROUPS.map((group, groupIndex) => (
           <div key={group.title}>
             <Reveal>
               <h3 className="text-sm text-neutral-600">{group.title}</h3>
@@ -52,35 +77,41 @@ export function Services() {
                 до графита, стрелка поворачивается — приём из ролика заказчика.
                 Описание видно всегда: спрятанное до наведения, оно оставляло
                 пустые карточки, а на телефоне не читалось бы вовсе. */}
-            <div className={`mt-5 grid gap-3 sm:grid-cols-2 ${COLS[group.slugs.length] ?? 'lg:grid-cols-4'}`}>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {group.slugs.map(serviceOf).map((service, index) => (
                 <Reveal key={service.slug} delay={(index % 4) * 90} className="h-full">
                   <a
                     href={page(service.path)}
-                    className="group relative flex h-full flex-col justify-between gap-6 sm:min-h-[13rem] sm:gap-8 rounded-3xl bg-neutral-50 p-6 transition-colors duration-700 ease-silk hover:bg-neutral-950 focus-visible:bg-neutral-950 focus-visible:outline-none sm:p-7 lg:min-h-[15rem]"
+                    className={`${CARD} bg-neutral-50 hover:bg-neutral-950 focus-visible:bg-neutral-950`}
                   >
-                    {/* Кружок-стрелка — внизу, рядом с подписью (с 26.09.2026).
-                        Над заголовком он читался непонятным значком и оставлял
-                        пустоту; рядом с заголовком не помещался: в четыре
-                        колонки «Сопровождение» выталкивало его за край.
-                        На 1024–1279px кегль на ступень меньше: колонка там
-                        уже всего. */}
-                    <div>
-                      <h4 className="font-display text-[1.6rem] font-medium leading-[1.1] text-neutral-950 transition-colors duration-700 ease-silk group-hover:text-neutral-50 group-focus-visible:text-neutral-50 lg:text-[1.45rem] xl:text-[1.6rem]">
-                        {nbsp(service.short)}
-                      </h4>
-                    </div>
-                    <div className="flex items-end justify-between gap-4">
-                      <p className="text-sm leading-relaxed text-neutral-600 transition-colors duration-700 group-hover:text-neutral-300 group-focus-visible:text-neutral-300">
-                        {nbsp(service.hint)}
-                      </p>
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-neutral-300 text-neutral-950 transition-all duration-700 ease-silk group-hover:rotate-45 group-hover:border-neutral-50 group-hover:bg-neutral-50 group-focus-visible:border-neutral-50 group-focus-visible:bg-neutral-50">
-                        <ArrowUpRight className="h-5 w-5" aria-hidden="true" />
-                      </span>
-                    </div>
+                    {/* На 1024–1279px кегль на ступень меньше: колонка там уже
+                        всего, и «Сопровождение» не помещалось в строку. */}
+                    <h4 className="font-display text-[1.6rem] font-medium leading-[1.1] text-neutral-950 transition-colors duration-700 ease-silk group-hover:text-neutral-50 group-focus-visible:text-neutral-50 lg:text-[1.45rem] xl:text-[1.6rem]">
+                      {nbsp(service.short)}
+                    </h4>
+                    <p className="mt-3 pr-14 text-sm leading-relaxed text-neutral-600 transition-colors sm:pr-0 duration-700 group-hover:text-neutral-300 group-focus-visible:text-neutral-300">
+                      {nbsp(service.hint)}
+                    </p>
+                    <Arrow />
                   </a>
                 </Reveal>
               ))}
+              {groupIndex === GROUPS.length - 1 && (
+                <Reveal delay={group.slugs.length * 90} className="h-full">
+                  <a
+                    href="#contacts"
+                    className={`${CARD} bg-accent-950 hover:bg-neutral-950 focus-visible:ring-2 focus-visible:ring-accent-400`}
+                  >
+                    <h4 className="font-display text-[1.6rem] font-medium leading-[1.1] text-neutral-50 lg:text-[1.45rem] xl:text-[1.6rem]">
+                      Бесплатная консультация
+                    </h4>
+                    <p className="mt-3 pr-14 text-sm leading-relaxed text-neutral-300 sm:pr-0">
+                      {nbsp('Разберу вашу ситуацию и скажу, с какой услуги начать.')}
+                    </p>
+                    <Arrow dark />
+                  </a>
+                </Reveal>
+              )}
             </div>
           </div>
         ))}
