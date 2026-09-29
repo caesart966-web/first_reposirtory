@@ -29,6 +29,10 @@ const SHOTS = [
   { path: '', hover: 1 }, { path: '', hover: 2 },
   { path: 'sro-stroiteley/' }, { path: 'sro-proektirovshchikov/' }, { path: 'sro-izyskateley/' }, { path: 'uslugi/nok/' },
   { path: 'uslugi/dokumenty/' },
+  // Шапки остальных услуг — с кадрами с 29.09.2026.
+  { path: 'uslugi/vstuplenie-v-sro/' }, { path: 'uslugi/podbor-i-proverka-sro/' },
+  { path: 'uslugi/specialisty-nrs/' }, { path: 'uslugi/uroven-otvetstvennosti/' },
+  { path: 'uslugi/soprovozhdenie-proverok/' },
   { path: '', section: 'about', selector: '#about h2, #about p, #about li span:last-child' },
   { path: '', section: 'documents', selector: '#documents h2, #documents p' },
 ]

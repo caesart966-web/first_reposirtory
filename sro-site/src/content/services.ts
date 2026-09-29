@@ -85,6 +85,7 @@ export const SERVICE_PAGES: ServicePage[] = [
   {
     slug: 'vstuplenie',
     related: ['podbor', 'dokumenty', 'nrs'],
+    image: IMAGES.svcVstuplenie,
     path: 'uslugi/vstuplenie-v-sro',
     short: 'Вступление в СРО',
     title: 'Вступление в СРО',
@@ -146,6 +147,7 @@ export const SERVICE_PAGES: ServicePage[] = [
   {
     slug: 'podbor',
     related: ['vstuplenie', 'dokumenty', 'uroven'],
+    image: IMAGES.svcPodbor,
     path: 'uslugi/podbor-i-proverka-sro',
     short: 'Подбор и проверка СРО',
     title: 'Подбор и проверка СРО',
@@ -266,6 +268,7 @@ export const SERVICE_PAGES: ServicePage[] = [
   {
     slug: 'nrs',
     related: ['nok', 'dokumenty', 'proverki'],
+    image: IMAGES.svcNrs,
     path: 'uslugi/specialisty-nrs',
     short: 'Специалисты НРС',
     title: 'Специалисты НРС',
@@ -332,6 +335,7 @@ export const SERVICE_PAGES: ServicePage[] = [
   {
     slug: 'nok',
     related: ['nrs', 'proverki', 'dokumenty'],
+    image: IMAGES.svcNok,
     path: 'uslugi/nok',
     short: 'НОК',
     title: 'Независимая оценка квалификации (НОК)',
@@ -398,6 +402,7 @@ export const SERVICE_PAGES: ServicePage[] = [
   {
     slug: 'uroven',
     related: ['podbor', 'proverki', 'vstuplenie'],
+    image: IMAGES.svcUroven,
     path: 'uslugi/uroven-otvetstvennosti',
     short: 'Расширение видов работ',
     title: 'Изменение уровня ответственности',
@@ -472,6 +477,7 @@ export const SERVICE_PAGES: ServicePage[] = [
   {
     slug: 'proverki',
     related: ['nrs', 'nok', 'uroven'],
+    image: IMAGES.svcProverki,
     path: 'uslugi/soprovozhdenie-proverok',
     short: 'Сопровождение проверок',
     title: 'Сопровождение проверок СРО',
