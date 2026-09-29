@@ -1,7 +1,7 @@
 import { ArrowUpRight, Check, FileText, Scale } from 'lucide-react'
 import { useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react'
 import type { DocItem } from '../content/sroDetails'
-import { DOCS_IP, DOCS_OOO, SRO_DETAILS, STEPS } from '../content/sroDetails'
+import { DOCS_IP, DOCS_LAW, DOCS_OOO, DOCS_SPECIALISTS, LAW, SRO_DETAILS, STEPS } from '../content/sroDetails'
 import { TYPES_GROUP } from '../content/nav'
 import { asset, page } from '../lib/site'
 import { nbsp } from '../lib/typo'
@@ -101,8 +101,8 @@ export function StepsGrid() {
 }
 
 // Строка перечня документов. С details — пояснение и норма под названием
-// (страница «Подготовка документов»); без — только название (страницы видов:
-// там нужен объём комплекта, а опись — по ссылке).
+// (блок list на страницах услуг); без — только название (страницы видов:
+// там нужен объём комплекта, а опись — по ссылке на «Подготовку документов»).
 // Норма у строки не повторяется, если та же стоит под всей колонкой (known):
 // у перечня из кодекса она одна на все четыре документа.
 export function DocRow({
@@ -131,19 +131,9 @@ export function DocRow({
   )
 }
 
-export function DocColumn({
-  title,
-  hint,
-  items,
-  law,
-  details = false,
-}: {
-  title: string
-  hint: string
-  items: DocItem[]
-  law?: string
-  details?: boolean
-}) {
+// Колонка перечня на страницах видов: только названия, опись с пояснениями —
+// на «Подготовке документов» (DocInventory ниже).
+export function DocColumn({ title, hint, items, law }: { title: string; hint: string; items: DocItem[]; law?: string }) {
   return (
     <div>
       {/* Строка заголовка той же высоты, что у колонки с переключателем
@@ -152,7 +142,7 @@ export function DocColumn({
       <p className="mt-1 min-h-10 text-sm leading-snug text-neutral-600">{nbsp(hint)}</p>
       <ul className="mt-4 border-t border-neutral-300">
         {items.map((item) => (
-          <DocRow key={item.title} item={item} icon="check" details={details} known={law} />
+          <DocRow key={item.title} item={item} icon="check" details={false} known={law} />
         ))}
       </ul>
       {law && <Law>{law}</Law>}
@@ -164,68 +154,163 @@ export function DocColumn({
 // из двух. Переключатель вместо двух колонок рядом: второй список ему
 // не нужен, а на телефоне он добавлял полэкрана. Кнопки, а не радиокнопки:
 // полей ввода на сайте нет и быть не должно (test-site.mjs).
-// wide — список в две колонки (на странице услуги раздел во всю ширину).
 const FORMS = [
   { key: 'ooo', label: 'ООО', items: DOCS_OOO },
   { key: 'ip', label: 'ИП', items: DOCS_IP },
 ] as const
+type FormKey = (typeof FORMS)[number]['key']
+const SRO_HINT = 'Обычный запрос сверх кодекса. У другой СРО список может отличаться.'
 
-export function SroDocs({ details = false, wide = false }: { details?: boolean; wide?: boolean }) {
-  const [form, setForm] = useState<(typeof FORMS)[number]['key']>('ooo')
+function useForm() {
+  const [form, setForm] = useState<FormKey>('ooo')
+  return [FORMS.find((f) => f.key === form) ?? FORMS[0], setForm] as const
+}
+
+function FormTabs({ form, onChange }: { form: FormKey; onChange: (key: FormKey) => void }) {
   const tabs = useRef<(HTMLButtonElement | null)[]>([])
-  const current = FORMS.find((f) => f.key === form) ?? FORMS[0]
   // Стрелки влево-вправо переключают вкладку, как положено у tablist.
   const onKey = (event: KeyboardEvent, index: number) => {
     if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
     event.preventDefault()
     const next = (index + (event.key === 'ArrowRight' ? 1 : FORMS.length - 1)) % FORMS.length
-    setForm(FORMS[next].key)
+    onChange(FORMS[next].key)
     tabs.current[next]?.focus()
   }
+  return (
+    <div role="tablist" aria-label="Форма организации" className="inline-flex shrink-0 rounded-full bg-neutral-200/80 p-1">
+      {FORMS.map((f, index) => {
+        const on = f.key === form
+        return (
+          <button
+            key={f.key}
+            ref={(el) => {
+              tabs.current[index] = el
+            }}
+            type="button"
+            role="tab"
+            id={`docs-tab-${f.key}`}
+            aria-selected={on}
+            aria-controls="docs-panel"
+            tabIndex={on ? 0 : -1}
+            onClick={() => onChange(f.key)}
+            onKeyDown={(event) => onKey(event, index)}
+            className={`min-h-9 rounded-full px-4 text-sm font-medium transition-colors duration-300 ease-silk ${
+              on ? 'bg-white text-neutral-950 shadow-sm' : 'text-neutral-600 hover:text-neutral-950'
+            }`}
+          >
+            {f.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+// Страницы видов: три колонки названий, третья — с переключателем.
+export function SroDocs() {
+  const [current, setForm] = useForm()
   return (
     <div>
       <div className="flex min-h-11 items-center justify-between gap-4">
         <h3 className="text-lg font-semibold leading-snug text-neutral-950">Запрашивает СРО</h3>
-        <div role="tablist" aria-label="Форма организации" className="inline-flex shrink-0 rounded-full bg-neutral-200/80 p-1">
-          {FORMS.map((f, index) => {
-            const on = f.key === form
-            return (
-              <button
-                key={f.key}
-                ref={(el) => {
-                  tabs.current[index] = el
-                }}
-                type="button"
-                role="tab"
-                id={`docs-tab-${f.key}`}
-                aria-selected={on}
-                aria-controls="docs-panel"
-                tabIndex={on ? 0 : -1}
-                onClick={() => setForm(f.key)}
-                onKeyDown={(event) => onKey(event, index)}
-                className={`min-h-9 rounded-full px-4 text-sm font-medium transition-colors duration-300 ease-silk ${
-                  on ? 'bg-white text-neutral-950 shadow-sm' : 'text-neutral-600 hover:text-neutral-950'
-                }`}
-              >
-                {f.label}
-              </button>
-            )
-          })}
-        </div>
+        <FormTabs form={current.key} onChange={setForm} />
       </div>
-      <p className="mt-1 min-h-10 text-sm leading-snug text-neutral-600">
-        {nbsp('Обычный запрос сверх кодекса. У другой СРО список может отличаться.')}
-      </p>
-      <ul
-        id="docs-panel"
-        role="tabpanel"
-        aria-labelledby={`docs-tab-${current.key}`}
-        className={`mt-4 border-t border-neutral-300 ${wide ? 'grid sm:grid-cols-2 sm:gap-x-10' : ''}`}
-      >
+      <p className="mt-1 min-h-10 text-sm leading-snug text-neutral-600">{nbsp(SRO_HINT)}</p>
+      <ul id="docs-panel" role="tabpanel" aria-labelledby={`docs-tab-${current.key}`} className="mt-4 border-t border-neutral-300">
         {current.items.map((item) => (
-          <DocRow key={item.title} item={item} icon="file" details={details} />
+          <DocRow key={item.title} item={item} icon="file" details={false} />
         ))}
       </ul>
+    </div>
+  )
+}
+
+// Опись документов — страница «Подготовка документов» (29.09.2026).
+// Раньше здесь стояли две колонки рядом («закон» и «специалисты») и под ними
+// третья сеткой в две колонки: у соседних пунктов разная длина пояснений,
+// строки расходились по высоте, а в сетке короткий пункт растягивался
+// под длинного соседа пустотой. Теперь — как лист описи: слева группа
+// (что это, для кого, норма, у СРО — переключатель ООО / ИП), справа
+// документы одной колонкой, по порядку, с номером и пояснением. Номер здесь
+// уместен: это опись, в ней у документа есть место в перечне.
+// На телефоне группа встаёт над своим списком.
+// Слово через дефис не рвётся по строкам: «акт приёма-/передачи» на телефоне
+// читался как два слова.
+function keepHyphens(text: string): ReactNode {
+  return text
+    .split(/(\S+-\S+)/)
+    .map((part, index) => (index % 2 ? <span key={index} className="whitespace-nowrap">{part}</span> : nbsp(part)))
+}
+
+function DocGroup({
+  title,
+  hint,
+  law,
+  items,
+  control,
+  panel,
+}: {
+  title: string
+  hint: string
+  law?: string
+  items: readonly DocItem[]
+  control?: ReactNode
+  panel?: { id: string; labelledBy: string }
+}) {
+  return (
+    <Reveal className="grid gap-6 border-t border-neutral-400 pt-8 pb-12 last:pb-0 lg:grid-cols-[minmax(0,19rem)_minmax(0,1fr)] lg:gap-16 lg:pt-10">
+      <div>
+        <h3 className="font-display text-[1.6rem] font-medium leading-tight text-neutral-950 sm:text-[1.85rem]">{title}</h3>
+        <p className="mt-2 text-[15px] leading-relaxed text-neutral-600">{nbsp(hint)}</p>
+        {law && <Law>{law}</Law>}
+        {control && <div className="mt-5">{control}</div>}
+      </div>
+      <ol
+        id={panel?.id}
+        role={panel ? 'tabpanel' : undefined}
+        aria-labelledby={panel?.labelledBy}
+        className="border-t border-neutral-200 lg:border-t-0"
+      >
+        {items.map((item, index) => (
+          <li
+            key={item.title}
+            className="grid grid-cols-[2.25rem_minmax(0,1fr)] border-b border-neutral-200 py-4 last:border-b-0 lg:first:pt-1"
+          >
+            <span className="font-display text-lg font-medium leading-snug tabular-nums text-accent-600">
+              {String(index + 1).padStart(2, '0')}
+            </span>
+            <span className="min-w-0">
+              <span className="block text-[17px] font-medium leading-snug text-neutral-950">{keepHyphens(item.title)}</span>
+              {item.detail && (
+                <span className="mt-1 block text-[15px] leading-relaxed text-neutral-600">{nbsp(item.detail)}</span>
+              )}
+              {item.law && item.law !== law && <Law>{item.law}</Law>}
+            </span>
+          </li>
+        ))}
+      </ol>
+    </Reveal>
+  )
+}
+
+export function DocInventory() {
+  const [current, setForm] = useForm()
+  return (
+    <div className="mt-12">
+      <DocGroup title="Требует закон" hint="Одинаково для любой СРО." law={LAW.membership} items={DOCS_LAW} />
+      <DocGroup
+        title="Специалисты в НРС"
+        hint="На каждого из двух специалистов, по основному месту работы."
+        law={LAW.specialists}
+        items={DOCS_SPECIALISTS}
+      />
+      <DocGroup
+        title="Запрашивает СРО"
+        hint={SRO_HINT}
+        items={current.items}
+        control={<FormTabs form={current.key} onChange={setForm} />}
+        panel={{ id: 'docs-panel', labelledBy: `docs-tab-${current.key}` }}
+      />
     </div>
   )
 }

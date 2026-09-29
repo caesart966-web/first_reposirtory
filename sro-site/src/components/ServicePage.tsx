@@ -1,5 +1,4 @@
 import { Check } from 'lucide-react'
-import { DOCS_LAW, DOCS_SPECIALISTS, LAW } from '../content/sroDetails'
 import type { ServiceBlock, ServicePage as ServicePageData } from '../content/services'
 import { anchor } from '../lib/site'
 import { nbsp } from '../lib/typo'
@@ -9,7 +8,7 @@ import { Contact } from './Contact'
 import { PageExtras } from './PageExtras'
 import { PageHero } from './PageHero'
 import { MobileBar } from './MobileBar'
-import { DocColumn, DocRow, H2, Head, Law, Part, SroDocs, StepsGrid, TypeRows } from './PageParts'
+import { DocInventory, DocRow, H2, Head, Law, Part, StepsGrid, TypeRows } from './PageParts'
 import { Reveal } from './ui/Reveal'
 
 // Страница услуги. Разметка собирается из блоков (content/services.ts):
@@ -168,14 +167,13 @@ function Blocks({ block }: { block: ServiceBlock }) {
 
   if (block.kind === 'cards') {
     // Три пункта — в три колонки, четыре — два на два: так сетка без хвоста.
+    // Четыре этапа — в один ряд: порядок читается слева направо, как лента.
+    const wide =
+      block.items.length === 3 ? 'lg:grid-cols-3' : block.ordered && block.items.length === 4 ? 'lg:grid-cols-4' : ''
     return (
       <>
         <Head title={block.title} lead={block.intro} />
-        <ol
-          className={`mt-10 grid border-t border-neutral-300 sm:grid-cols-2 sm:gap-x-10 ${
-            block.items.length === 3 ? 'lg:grid-cols-3' : ''
-          }`}
-        >
+        <ol className={`mt-10 grid border-t border-neutral-300 sm:grid-cols-2 sm:gap-x-10 ${wide}`}>
           {block.items.map((item, index) => (
             <li key={item.title} className="border-b border-neutral-300 py-6">
               <Reveal delay={(index % 3) * 60}>
@@ -235,19 +233,7 @@ function Blocks({ block }: { block: ServiceBlock }) {
     return (
       <>
         <Head title={block.title} lead={block.intro} />
-        <Reveal className="mt-10 grid gap-10 md:grid-cols-2 lg:gap-12">
-          <DocColumn title="Требует закон" hint="Одинаково для любой СРО." items={DOCS_LAW} law={LAW.membership} details />
-          <DocColumn
-            title="Специалисты в НРС"
-            hint="На каждого из двух специалистов, по основному месту работы."
-            items={DOCS_SPECIALISTS}
-            law={LAW.specialists}
-            details
-          />
-        </Reveal>
-        <Reveal className="mt-14">
-          <SroDocs details wide />
-        </Reveal>
+        <DocInventory />
       </>
     )
   }
