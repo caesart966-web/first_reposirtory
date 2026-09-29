@@ -62,6 +62,13 @@ for (const f of files) {
   const p = (m) => problems.push(`${url}: ${m}`)
   const w = (m) => warnings.push(`${url}: ${m}`)
 
+  // ── Комментарии из исходников ──
+  // Их снимает шаг сборки в astro.config.mjs (заметки для правки сайта
+  // весили 13 % HTML и были видны в «Просмотре кода»). Если шаг пропадёт,
+  // первая же сборка упадёт здесь.
+  const comment = html.replace(/<script\b[\s\S]*?<\/script>|<style\b[\s\S]*?<\/style>/g, '').match(/<!--[\s\S]{0,60}/)
+  if (comment) p(`в странице остался HTML-комментарий: «${comment[0].replace(/\s+/g, ' ')}…»`)
+
   // ── Каркас документа ──
   if (!/<html[^>]+lang="ru"/.test(html)) p('нет lang="ru" у <html>')
   if (!/<meta charset="utf-8"/i.test(html)) p('нет <meta charset>')
