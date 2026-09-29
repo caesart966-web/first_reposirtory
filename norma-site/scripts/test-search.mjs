@@ -86,6 +86,7 @@ const QUERIES = [
   ['охрана труда', '/uslugi/ohrana-truda/'],
   ['лицензия МЧС', '/uslugi/licenzii/'],
   ['как вступить в сро', '/baza-znaniy/kak-vstupit-v-sro/'],
+  ['капремонт многоквартирного дома', '/baza-znaniy/kapremont-mkd-bez-poroga/'],
 ]
 
 for (const [q, want] of QUERIES) {

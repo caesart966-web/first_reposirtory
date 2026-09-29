@@ -59,6 +59,30 @@ const cases = [
     expectText: 'нужна СРО изыскателей',
   },
   {
+    // С 29.09.2026: у капремонта МКД своё правило (ч. 7 ст. 166 ЖК РФ),
+    // суммы калькулятор не спрашивает — до этого он отвечал «до 10 млн —
+    // не нужна», а с 1 сентября 2024 года для МКД это неверно.
+    name: 'Капремонт МКД по прямому договору: нужна при любой сумме',
+    picks: ['Капремонт многоквартирного дома', 'С заказчиком капремонта'],
+    expectKind: 'v-yes',
+    expectText: 'при любой сумме договора',
+    expectLaw: 'ч. 7 ст. 166 ЖК',
+    // Взносы строителей, а не проектировщиков: целевой — в НОСТРОЙ.
+    expectCosts: 'НОСТРОЙ',
+  },
+  {
+    name: 'Капремонт МКД, субподрядчик: не нужна',
+    picks: ['Капремонт многоквартирного дома', 'С подрядчиком'],
+    expectKind: 'v-no',
+    expectText: '8622-ОГ/08',
+  },
+  {
+    name: 'Строитель до 10 млн: предупреждение про капремонт МКД',
+    picks: ['Строительство, реконструкция, капитальный ремонт', 'С застройщиком', 'До 10 млн'],
+    expectKind: 'v-no',
+    expectText: 'ч. 7 ст. 166 ЖК РФ',
+  },
+  {
     name: 'Снос до 1 млн: не нужна',
     picks: ['Снос объектов', 'С застройщиком', 'До 1 млн'],
     expectKind: 'v-no',
@@ -97,6 +121,10 @@ for (const c of cases) {
   if (c.expectKind && !kind.includes(c.expectKind)) problems.push(`вердикт ${kind}, ждали ${c.expectKind}`)
   if (c.expectText && !text.includes(c.expectText)) problems.push(`нет текста «${c.expectText}»`)
   if (c.expectLaw && !text.includes(c.expectLaw)) problems.push(`нет нормы «${c.expectLaw}»`)
+  if (c.expectCosts) {
+    const costs = await page.evaluate(() => document.querySelector('.verdict .v-costs')?.textContent || '')
+    if (!costs.includes(c.expectCosts)) problems.push(`в блоке расходов нет «${c.expectCosts}»`)
+  }
 
   // Счётчик шагов должен быть согласован: «Вопрос N из M», N ≤ M
   steps.forEach((s) => {
