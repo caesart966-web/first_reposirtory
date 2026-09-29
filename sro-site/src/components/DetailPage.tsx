@@ -1,4 +1,3 @@
-import { ArrowRight } from 'lucide-react'
 import type { SroDetail } from '../content/sroDetails'
 import { DOCS_LAW, DOCS_SPECIALISTS, FUNDS_CONFIRMED, LAW } from '../content/sroDetails'
 import { home, page } from '../lib/site'
@@ -10,6 +9,7 @@ import { PageExtras } from './PageExtras'
 import { PageHero } from './PageHero'
 import { MobileBar } from './MobileBar'
 import { DocColumn, Head, Law, Part, SroDocs, StepsGrid } from './PageParts'
+import { NavPill } from './ui/NavPill'
 import { Reveal } from './ui/Reveal'
 
 // ─── Страница вида СРО ───────────────────────────────────────────────────
@@ -301,16 +301,17 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
             />
             <SroDocs />
           </Reveal>
+          {/* Переход к описи с пояснениями — строкой с кнопкой, как в «С чем
+              обычно обращаются»: строка говорит, что там, кнопка — куда. */}
           <Reveal>
             <a
               href={page('uslugi/dokumenty')}
-              className="group mt-8 inline-flex items-center gap-2 text-[15px] font-medium text-accent-700 transition-colors hover:text-accent-800"
+              className="group mt-12 grid gap-4 border-y border-neutral-300 py-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-10"
             >
-              Что входит в каждый документ
-              <ArrowRight
-                className="h-4 w-4 transition-transform duration-500 ease-silk group-hover:translate-x-1"
-                aria-hidden="true"
-              />
+              <span className="font-display text-[1.4rem] font-medium leading-snug text-neutral-950 transition-colors duration-700 ease-silk group-hover:text-accent-700 sm:text-[1.6rem]">
+                {nbsp('Что входит в каждый документ и как проходит подготовка')}
+              </span>
+              <NavPill className="sm:w-[17rem] sm:justify-self-end">Подготовка документов</NavPill>
             </a>
           </Reveal>
         </Part>
