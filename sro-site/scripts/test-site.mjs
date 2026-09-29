@@ -313,6 +313,10 @@ for (const [width, height, need] of [[390, 780, 'all'], [360, 740, 'all'], [390,
   await p.evaluate(() => scrollTo({ top: 2000, behavior: 'instant' }))
   await p.waitForTimeout(700)
   check('телефон: нижняя панель появилась после прокрутки', (await bar.getAttribute('aria-hidden')) === 'false')
+  // У «Связаться» панель уходит: там те же номер и мессенджеры крупно.
+  await p.evaluate(() => document.getElementById('contacts').scrollIntoView({ block: 'start', behavior: 'instant' }))
+  await p.waitForTimeout(700)
+  check('телефон: у «Связаться» нижняя панель уходит', (await bar.getAttribute('aria-hidden')) === 'true')
   await p.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }))
   await p.locator('header button[aria-label="Открыть меню"]').click()
   await p.waitForTimeout(600)

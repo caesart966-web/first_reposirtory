@@ -36,11 +36,23 @@ const GRID_BY_COUNT: Record<number, string> = {
 export function MobileBar() {
   const [visible, setVisible] = useState(false)
 
+  // Прячется и в конце страницы (29.09.2026): как только на экран
+  // въезжает раздел «Связаться», панель повторяла бы его — тот же номер и
+  // те же мессенджеры крупно прямо над ней, — а ниже закрывала бы
+  // реквизиты и оговорку в подвале.
   useEffect(() => {
-    const onScroll = () => setVisible(window.scrollY > window.innerHeight * 0.8)
+    const onScroll = () => {
+      const contacts = document.getElementById('contacts')
+      const atContacts = contacts ? contacts.getBoundingClientRect().top < window.innerHeight : false
+      setVisible(window.scrollY > window.innerHeight * 0.8 && !atContacts)
+    }
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
+    window.addEventListener('resize', onScroll)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+    }
   }, [])
 
   return (
