@@ -53,7 +53,7 @@ const formHref = path === href('/') ? '#zayavka' : href('/kontakty/#form')
         {/* Название — не <b>: жирным его делают стили, а тег «важный текст»
             на каждой странице дважды (шапка и подвал) проверки SEO считают
             переспамом одного слова. */}
-        <span class="logo-name">{SITE.brand}</span>
+        <span class="logo-name">{SITE.brand}</span>{' '}
         <small>{SITE.brandTag}</small>
       </span>
     </a>
@@ -93,8 +93,8 @@ const formHref = path === href('/') ? '#zayavka' : href('/kontakty/#form')
       <a class="btn btn--acc btn--sm hdr-cta" href={formHref}>Оставить заявку</a>
       <!-- Номер и в шапке: сюда смотрят первым, а нижняя панель
            на планшете уже не показывается. -->
-      <a class="icon-phone" href={SITE.phoneHref} aria-label={`Позвонить ${SITE.phone}`} data-goal="click_phone">
-        <Icon name="phone" size={19} />
+      <a class="icon-phone" href={SITE.phoneHref} data-goal="click_phone">
+        <Icon name="phone" size={19} /><span class="vh">Позвонить: {SITE.phone}</span>
       </a>
       <button class="burger" type="button" aria-label="Меню" aria-expanded="false" aria-controls="mobile-menu">
         <span class="burger-open"><Icon name="menu" size={22} /></span>

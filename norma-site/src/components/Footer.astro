@@ -3,20 +3,43 @@ import { SITE, REGISTRIES, href } from '../config/site'
 import { SERVICES } from '../config/services'
 import { REGIONS } from '../config/regions'
 import LogoMark from './LogoMark.astro'
+import ShareLinks from './ShareLinks.astro'
+
+interface Props {
+  /** Название страницы — для ссылок «Поделиться». */
+  title?: string
+  /**
+   * Строка «Поделиться страницей» внизу. У статей её нет: там своя, заметная,
+   * сразу под текстом, и вторая такая же в подвале была бы повтором.
+   * У 404 и поиска тоже нет — делиться там нечем.
+   */
+  share?: boolean
+}
+const { title = SITE.brand, share = true } = Astro.props
+const pageUrl = new URL(Astro.url.pathname, Astro.site).toString()
 
 // Список услуг берётся из config/services.ts, а не переписан здесь руками:
 // раньше он был копией и при добавлении услуги подвал молча отставал.
-const services = SERVICES.map((s) => ({ label: s.short, url: href(`/uslugi/${s.slug}/`) }))
+// У трёх видов СРО — полное название («Вступление в СРО строителей»), а не
+// короткое: короткие стоят заголовками карточек на главной, и одинаковый
+// текст двух ссылок второй аудит 28.09.2026 отметил повтором. Полное к тому
+// же совпадает с H1 страницы, на которую ведёт. У остальных услуг полные
+// названия длинные («Промышленная, пожарная безопасность и…») и разорвали
+// бы колонку — у них повтора нет.
+const services = SERVICES.map((s) => ({ label: s.dirIcon ? s.title : s.short, url: href(`/uslugi/${s.slug}/`) }))
 
 const pages = [
   { label: 'Кому нужна СРО, а кому нет', url: href('/komu-nuzhna-sro/') },
   { label: 'Какие документы нужны', url: href('/dokumenty/') },
   { label: 'Как проверить СРО', url: href('/proverit-sro/') },
-  { label: 'Стоимость', url: href('/stoimost/') },
-  { label: 'База знаний', url: href('/baza-znaniy/') },
+  // Подписи длиннее, чем в меню шапки, нарочно: одинаковый текст ссылки
+  // дважды на странице аудит 28.09.2026 отметил повтором, а поисковику
+  // «Стоимость вступления в СРО» говорит о странице больше, чем «Стоимость».
+  { label: 'Стоимость вступления в СРО', url: href('/stoimost/') },
+  { label: 'База знаний о СРО', url: href('/baza-znaniy/') },
   { label: 'Вступление в СРО по городам', url: href('/sro/') },
   { label: 'Обо мне: как я работаю', url: href('/obo-mne/') },
-  { label: 'Контакты', url: href('/kontakty/') },
+  { label: 'Контакты и реквизиты', url: href('/kontakty/') },
   { label: 'Политика обработки данных', url: href('/politika/') },
 ]
 
@@ -29,7 +52,7 @@ const year = new Date().getFullYear()
       <div class="brand-col">
         <div class="logo">
           <LogoMark size={28} class="logo-mark" />
-          <span class="logo-text"><span class="logo-name">{SITE.brand}</span><small>{SITE.brandTag}</small></span>
+          <span class="logo-text"><span class="logo-name">{SITE.brand}</span>{' '}<small>{SITE.brandTag}</small></span>
         </div>
         <p class="tagline">
           Помощь во вступлении в СРО, внесении специалистов в НРС, прохождении НОК
@@ -78,8 +101,11 @@ const year = new Date().getFullYear()
          на любой странице, не заставляя никуда ходить. -->
     <nav class="cities" aria-label="Города, где есть партнёрские СРО">
       <a class="cities-label" href={href('/partnery/')}>Партнёрские СРО:</a>
+      {/* «в Москве», а не «Москва»: те же названия стоят заголовками
+          карточек городов на главной, и одинаковый текст двух ссылок аудит
+          отмечает повтором. «Партнёрские СРО: в Москве» и читается так. */}
       {REGIONS.map((r) => (
-        <a href={href(`/sro/${r.slug}/`)}>{r.city}</a>
+        <a href={href(`/sro/${r.slug}/`)}>{r.inCity}</a>
       ))}
       <a class="cities-all" href={href('/sro/')}>остальные регионы →</a>
     </nav>
@@ -95,6 +121,7 @@ const year = new Date().getFullYear()
         Информация на сайте сверена с действующей редакцией Градостроительного кодекса РФ
         {' '}{SITE.checkedDate}.
       </p>
+      {share && <ShareLinks url={pageUrl} title={title} tone="dark" />}
       <p class="copy">© {year} {SITE.brand}</p>
     </div>
   </div>

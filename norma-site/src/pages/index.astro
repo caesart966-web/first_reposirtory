@@ -10,8 +10,8 @@ import { SITE, href } from '../config/site'
 import { dirIconOf } from '../config/services'
 import { REGIONS } from '../config/regions'
 import { partnersOf } from '../config/partners'
-import { LAW, TERMS, FUNDS } from '../config/facts'
-import { FEES, FEES_NOTE, money, type FeeSet } from '../config/fees'
+import { LAW, TERMS } from '../config/facts'
+import { FEES, money } from '../config/fees'
 
 // ГЛАВНАЯ — ПЯТЬ РАЗДЕЛОВ, А НЕ ДВЕНАДЦАТЬ.
 //
@@ -50,7 +50,7 @@ import { FEES, FEES_NOTE, money, type FeeSet } from '../config/fees'
 //
 // Номер шага — не украшение: шаги действительно идут по порядку, и оплата
 // не раньше документов. Текст шага уходит в микроразметку HowTo как есть.
-const steps: { t: string; d: string; law?: string }[] = [
+const steps: { t: string; d: string; law?: string; more?: { label: string; url: string } }[] = [
   {
     t: 'Консультация',
     d: 'По телефону или в мессенджере, бесплатно. Разберу ситуацию и скажу, нужна ли вам СРО вообще, — если нет, на этом всё.',
@@ -65,9 +65,27 @@ const steps: { t: string; d: string; law?: string }[] = [
   },
   {
     t: 'Приём в члены СРО',
-    d: 'Сведения о компании вносятся в единый реестр членов СРО — НОСТРОЙ или НОПРИЗ, — и вы получаете выписку из реестра.',
+    // Последняя фраза — с сайта СРО «СОМ» (прислал заказчик 28.09.2026):
+    // у них четвёртый шаг кончается «зайдите в реестр НОСТРОЙ, внесите ИНН
+    // и убедитесь, что вы состоите». Для этого сайта это главный довод
+    // целиком — «проверьте меня», — поэтому ссылка ведёт в разбор того,
+    // что должно появиться в реестре, а не просто на реестр.
+    d: 'Сведения о компании вносятся в единый реестр членов СРО — НОСТРОЙ или НОПРИЗ, — и вы получаете выписку из реестра. Реестр открытый: запись о компании вы проверите сами, по\u00a0ИНН.',
     law: LAW.membership,
+    more: { label: 'Что проверить в реестре', url: '/proverit-sro/#posle' },
   },
+]
+
+// Что человек получит в ответ на заявку — список у формы. Идея — с сайта
+// СРО «СОМ» («расчёт до рубля», «проверка специалистов», «анализ рисков
+// отказа»); каждый пункт здесь — обещание, которое сайт уже даёт: ответ
+// «не нужна» со ссылкой на норму (калькулятор), условия СРО с номером
+// в реестре до подписи (раздел «География»), проверка специалистов
+// по образованию и стажу (услуга НРС).
+const formPoints = [
+  { b: 'Нужна ли вам СРО', t: 'ответ со ссылкой на норму закона. Если не нужна, так и скажу.' },
+  { b: 'Суммы по конкретной СРО', t: 'с её номером в реестре, до того как вы что-то подпишете.' },
+  { b: 'Проверку специалистов', t: 'подходят ли они для национального реестра по образованию и стажу.' },
 ]
 // «4 шага», «5 шагов» — числом из списка, а не словом в тексте.
 const stepsWord = (n: number) =>
@@ -107,40 +125,19 @@ const dirs = [
   },
 ]
 
-// Цена первого года — коротко; полная разбивка по уровням на «Стоимости».
-//
-// Раньше здесь стояла таблица из семи строк, и на телефоне каждая строка
-// разворачивалась в карточку: 2,7 экрана. Отличаются у строителей
-// и проектировщиков только компенсационный фонд и итог — их и видно
-// рядом, крупно; всё, что у обоих одинаково, сказано один раз.
-//
-// Руками не вписано ни одного числа: всё считается из FUNDS (размеры
-// фондов в законе) и FEES (взносы СРО, закон их не устанавливает).
-// Если суммы у строителей и проектировщиков разойдутся, строка сама
-// назовёт обе.
-const firstYear = (f: FeeSet, fund: number) => fund + f.entry + f.memberMonth * 12 + f.target
-const b = FEES.build
-const d = FEES.design
-const totals = [
-  { who: 'Строителям', fund: FUNDS.buildHarm[0], total: firstYear(b, FUNDS.buildHarm[0].amountNum) },
-  { who: 'Проектировщикам и изыскателям', fund: FUNDS.designHarm[0], total: firstYear(d, FUNDS.designHarm[0].amountNum) },
-]
-const both = (x: number, y: number, tail = '') =>
-  x === y ? `${money(x)}${tail}` : `${money(x)}${tail} строителям, ${money(y)}${tail} проектировщикам`
-const insurance = b.insuranceFirstYear || d.insuranceFirstYear
-const common: { t: string; s?: string; v: string; free: boolean }[] = [
-  { t: 'Членские взносы', s: both(b.memberMonth, d.memberMonth, ' в месяц'), v: both(b.memberMonth * 12, d.memberMonth * 12), free: false },
-  { t: `Целевой взнос в ${b.union} или ${d.union}`, v: both(b.target, d.target), free: false },
-  { t: 'Вступительный взнос', v: both(b.entry, d.entry), free: b.entry === 0 && d.entry === 0 },
-  { t: 'Страхование в первый год', v: insurance ? 'по ставке страховщика' : money(0), free: !insurance },
-  { t: 'Мои услуги: документы и сопровождение', v: money(0), free: true },
-]
-
 // Сколько городов с партнёрскими СРО — словом, но из данных: «двадцать
 // четыре разбора» на странице 404 однажды уже разошлись с сайтом.
 const partnerCities = REGIONS.filter((r) => partnersOf(r.slug).length > 0).length
 const IN_N = ['', 'одном', 'двух', 'трёх', 'четырёх', 'пяти', 'шести', 'семи', 'восьми', 'девяти', 'десяти']
 const inCities = `в ${IN_N[partnerCities] ?? partnerCities} ${partnerCities === 1 ? 'городе' : 'городах'}`
+
+// Членские первого года для ответа в вопросах — из FEES, не словами: блока
+// «Сколько стоит первый год», где это число стояло, на главной больше нет
+// (убран по просьбе заказчика 28.09.2026, разбивка — на «Стоимости»).
+const memberFirst =
+  FEES.build.memberMonth === FEES.design.memberMonth
+    ? `${money(FEES.build.memberMonth)} в месяц`
+    : `${money(FEES.build.memberMonth)} в месяц строителям и ${money(FEES.design.memberMonth)} проектировщикам`
 
 const faq = [
   {
@@ -161,7 +158,7 @@ const faq = [
   },
   {
     q: 'Какие взносы придётся платить и когда?',
-    a: `При вступлении — взнос в компенсационный фонд возмещения вреда (обязателен всем) и вступительный взнос СРО. Для участия в конкурентных закупках дополнительно нужен взнос в компенсационный фонд обеспечения договорных обязательств. Дальше идут членские взносы — в первый год ${both(b.memberMonth, d.memberMonth, ' в месяц')}, платить можно за месяц, квартал, полгода или год. Со второго года они не исчезают, это регулярный платёж, и я говорю об этом сразу. Полная разбивка со ссылками на нормы — на странице «Стоимость».`,
+    a: `При вступлении — взнос в компенсационный фонд возмещения вреда (обязателен всем) и вступительный взнос СРО. Для участия в конкурентных закупках дополнительно нужен взнос в компенсационный фонд обеспечения договорных обязательств. Дальше идут членские взносы — в первый год ${memberFirst}, платить можно за месяц, квартал, полгода или год. Со второго года они не исчезают, это регулярный платёж, и я говорю об этом сразу. Полная разбивка со ссылками на нормы — на странице «Стоимость».`,
   },
   {
     q: 'У меня нет двух специалистов для НРС. Что делать?',
@@ -169,7 +166,7 @@ const faq = [
   },
   {
     q: 'Чем вы отличаетесь от других?',
-    a: 'Тем, что говорю «вам это не нужно», когда это действительно так, и показываю норму, на которую опираюсь. И тем, что все нормы на этом сайте сверены с действующей редакцией Градостроительного кодекса — дата сверки указана внизу каждой страницы.',
+    a: 'Тем, что говорю «вам это не нужно», когда это действительно так, и показываю норму, на которую опираюсь. И тем, что устаревших норм на этом сайте нет: все нормы сверены с действующей редакцией Градостроительного кодекса — дата сверки указана внизу каждой страницы.',
   },
 ]
 
@@ -208,15 +205,15 @@ const howToSchema = {
       <ul class="dirs">
         {dirs.map((d) => (
           <li class="dir rv">
-            <a class="dir-in" href={href(`/uslugi/${d.slug}/`)}>
+            <div class="dir-in stretch">
               <span class="dir-ico"><DirIcon name={d.icon} /></span>
-              <h2 class="dir-t">{d.t}</h2>
+              <h2 class="dir-t"><a class="stretch-link" href={href(`/uslugi/${d.slug}/`)}>{d.t}</a></h2>
               <ul class="dir-works">
                 {d.works.map((w) => <li><Icon name="check" size={15} />{w}</li>)}
               </ul>
               <p class="dir-note">{d.note}</p>
-              <span class="dir-go">Подробнее <Icon name="arrow" size={15} /></span>
-            </a>
+              <span class="dir-go" aria-hidden="true">Подробнее <Icon name="arrow" size={15} /></span>
+            </div>
           </li>
         ))}
       </ul>
@@ -224,55 +221,6 @@ const howToSchema = {
   </section>
 
   <Calculator />
-
-  <!-- Цена первого года -->
-  <section class="section section--split" id="stoimost-teaser" data-anchor>
-    <div class="wrap">
-      <div class="s-head rv">
-        <span class="eyebrow">Стоимость</span>
-        <h2>Сколько стоит <em>первый год</em></h2>
-        <p>Мои услуги — 0 ₽. Взносы вы переводите напрямую в СРО, минуя меня.</p>
-      </div>
-
-      <div class="sbody">
-        <ul class="price-tot rv">
-          {totals.map((t) => (
-            <li>
-              <span class="pt-who">{t.who}</span>
-              <b class="pt-sum">{money(t.total)}</b>
-              <span class="pt-sub">за первый год, договоры {t.fund.limit}</span>
-              <span class="pt-fund">из них <b>{t.fund.amount}</b> — компенсационный фонд, размер по закону</span>
-            </li>
-          ))}
-        </ul>
-
-        <p class="price-cap rv">Остальное у всех одинаково</p>
-        <ul class="price-list rv">
-          {common.map((c) => (
-            <li>
-              <span>{c.t}{c.s && <small>{c.s}</small>}</span>
-              <b class:list={[c.free && 'free']}>{c.v}</b>
-            </li>
-          ))}
-        </ul>
-
-        {/* КФ ОДО — отдельной строкой, а не мелким шрифтом: именно о нём
-            молчат сайты с обещанием «без скрытых платежей». В итог выше
-            он не входит нарочно: нужен только тем, кто идёт на торги. */}
-        <p class="price-odo rv">
-          <b>Идёте на торги?</b> Нужен второй взнос — в компенсационный фонд обеспечения
-          договорных обязательств: {FUNDS.buildContract[0].amount} строителям
-          и {FUNDS.designContract[0].amount} проектировщикам и изыскателям, сверх суммы выше.
-        </p>
-
-        <p class="fees-note rv">{FEES_NOTE}</p>
-
-        <a class="btn btn--ghost price-go rv" href={href('/stoimost/#kalkulyator')}>
-          Посчитать для своего уровня <Icon name="arrow" size={16} />
-        </a>
-      </div>
-    </div>
-  </section>
 
   <!-- Четыре шага вступления -->
   <section class="section" id="process" data-anchor>
@@ -296,11 +244,23 @@ const howToSchema = {
             <h3>{s.t}</h3>
             <p>{s.d}</p>
             {s.law && <span class="law">{s.law}</span>}
+            {s.more && (
+              <a class="s4-link" href={href(s.more.url)}>
+                {s.more.label} <Icon name="arrow" size={14} />
+              </a>
+            )}
           </li>
         ))}
       </ol>
+      {/* Ссылка на полный разбор пути — статью «Как вступить в СРО».
+          Четыре шага здесь — что происходит с заявкой; статья — что
+          решаете вы на каждом шаге, со статьями кодекса. Она же отвечает
+          на запрос «как вступить в СРО», и ссылка с главной — её вес. */}
       <div class="s4-cta rv">
-        <a class="btn btn--acc btn--lg" href="#zayavka">Оставить заявку</a>
+        <a class="btn btn--acc btn--lg" href="#zayavka">Начать с консультации</a>
+        <a class="s4-more" href={href('/baza-znaniy/kak-vstupit-v-sro/')}>
+          Как вступить в СРО: подробная инструкция <Icon name="arrow" size={15} class="s4-arrow" />
+        </a>
       </div>
     </div>
   </section>
@@ -309,7 +269,11 @@ const howToSchema = {
   <section class="section section--paper apply" id="zayavka" data-anchor>
     <div class="wrap apply-one">
       <div class="apply-form rv">
-        <LeadForm who />
+        <LeadForm
+          who
+          subtitle="Достаточно имени и телефона — остальное спрошу сам. В ответ вы получите:"
+          points={formPoints}
+        />
         {/* Прямые каналы — строкой под формой, а не отдельной карточкой:
             на телефоне те же каналы и так стоят столбиком справа, а почты
             там нет. */}
@@ -376,15 +340,15 @@ const howToSchema = {
           {REGIONS.map((r) => {
             const n = partnersOf(r.slug).length
             return (
-              <li>
-                <a href={href(`/sro/${r.slug}/`)}>
-                  <span class="gc-city">{r.city}</span>
+              <li class="stretch">
+                <div class="gc">
+                  <a class="gc-city stretch-link" href={href(`/sro/${r.slug}/`)}>{r.city}</a>
                   <span class="gc-sub">{r.subject} · код {r.code}</span>
                   <span class="gc-n">
                     {n} {n === 1 ? 'партнёрская СРО' : n < 5 ? 'партнёрские СРО' : 'партнёрских СРО'}
                   </span>
-                  <span class="gc-go">Разбор по городу →</span>
-                </a>
+                  <span class="gc-go" aria-hidden="true">Разбор по городу →</span>
+                </div>
               </li>
             )
           })}
@@ -409,98 +373,6 @@ const howToSchema = {
 </Base>
 
 <style>
-  /* ── Цена первого года ──
-     Два итога рядом — единственное, что у строителей и проектировщиков
-     различается, — и один список того, что одинаково. Сравнить суммы
-     можно одним взглядом и на телефоне: колонки остаются рядом. */
-  .price-tot {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: var(--r-m);
-  }
-  /* subgrid: строки двух карточек выравниваются между собой. Иначе
-     «Проектировщикам и изыскателям» на телефоне шло в две строки и сдвигало
-     свою сумму ниже соседней — сравнивать было неудобно ровно то, ради
-     чего суммы и поставлены рядом. */
-  .price-tot { grid-template-rows: repeat(4, auto); }
-  .price-tot li {
-    padding: 20px 22px 18px;
-    display: grid;
-    grid-row: span 4;
-    grid-template-rows: subgrid;
-    row-gap: 4px;
-    align-content: start;
-  }
-  .price-tot li + li { border-left: 1px solid var(--line); }
-  .pt-who { font-size: 14px; font-weight: 600; line-height: 1.35; }
-  .pt-sum {
-    font-family: var(--font-head);
-    font-size: clamp(28px, 3.2vw, 36px);
-    font-weight: 700;
-    line-height: 1.1;
-    letter-spacing: -0.02em;
-    color: var(--acc-deep);
-    font-variant-numeric: lining-nums tabular-nums;
-    white-space: nowrap;
-  }
-  .pt-sub, .pt-fund { font-size: 13px; line-height: 1.45; color: var(--muted); }
-  .pt-fund { margin-top: 8px; padding-top: 9px; border-top: 1px solid var(--line); }
-  .pt-fund b { color: var(--ink); font-weight: 600; white-space: nowrap; }
-
-  .price-cap {
-    margin-top: 24px;
-    font-family: var(--font-mono);
-    font-size: 12px;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-  .price-list { list-style: none; margin: 8px 0 0; padding: 0; border-top: 1px solid var(--line); }
-  .price-list li {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 4px 16px;
-    align-items: baseline;
-    padding: 11px 0;
-    border-bottom: 1px solid var(--line);
-    font-size: 15px;
-  }
-  .price-list small { display: block; margin-top: 1px; font-size: 12.5px; color: var(--muted); }
-  .price-list b { font-weight: 600; white-space: nowrap; font-variant-numeric: lining-nums tabular-nums; }
-  .price-list .free { color: var(--good); }
-
-  .price-odo {
-    margin-top: 20px;
-    padding: 15px 18px;
-    background: var(--paper-2);
-    border-left: 3px solid var(--acc);
-    border-radius: 0 var(--r-s) var(--r-s) 0;
-    font-size: 14.5px;
-    line-height: 1.6;
-    color: var(--muted);
-  }
-  .price-odo b { color: var(--ink); }
-  /* Оговорка под ценами: обязательна везде, где показаны суммы СРО. */
-  .fees-note { margin-top: 16px; max-width: 82ch; font-size: 13px; line-height: 1.6; color: var(--muted); }
-  .price-go { margin-top: 20px; }
-
-  @media (max-width: 599px) {
-    .price-tot li { padding: 16px 14px 14px; }
-    .pt-sum { font-size: 25px; }
-    .price-list li { font-size: 14.5px; }
-  }
-  /* Самый узкий телефон: «170 000 ₽» крупным кеглем в половину экрана
-     не входит — итоги встают друг под другом. */
-  @media (max-width: 359px) {
-    .price-tot { grid-template-columns: 1fr; }
-    .price-tot li + li { border-left: 0; border-top: 1px solid var(--line); }
-  }
-
   /* ── Заявка ──
      Одна колонка: шаги вступления стоят над формой отдельной секцией
      и отвечают на вопрос «что будет, когда я нажму кнопку» до неё. */
@@ -573,8 +445,29 @@ const howToSchema = {
   .steps4 h3 { margin: 0; font-size: 18px; }
   .steps4 p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.6; max-width: 40ch; }
   .steps4 .law { justify-self: start; margin-top: 4px; }
+  /* Высота не меньше 32 px: строка в 22 px — мелкая цель для пальца,
+     и test-a11y её роняет. Ссылка короткая и в одну строку, поэтому
+     flex здесь безопасен (у .s4-more ниже — наоборот, см. комментарий). */
+  .s4-link {
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 32px;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--acc-deep);
+    text-decoration: none;
+  }
+  .s4-link:hover { text-decoration: underline; }
   .s4-tel { font-weight: 600; white-space: nowrap; }
-  .s4-cta { margin-top: 34px; }
+  .s4-cta { margin-top: 34px; display: flex; flex-wrap: wrap; align-items: center; gap: 14px 28px; }
+  /* Строчный текст, а не flex: на телефоне ссылка переносится на две
+     строки, и во flex-ряду стрелка уезжала к правому краю экрана,
+     отдельно от слов. В строке она идёт сразу за последним словом. */
+  .s4-more { font-weight: 600; line-height: 1.5; color: var(--acc-deep); text-decoration: none; }
+  .s4-more:hover { text-decoration: underline; }
+  .s4-more :global(.s4-arrow) { display: inline-block; vertical-align: -2px; margin-left: 4px; }
   /* На телефоне цифра встаёт слева от текста, а не над ним: шаг занимает
      вдвое меньше высоты, и форма заявки под шагами не уезжает вниз.
      Линия к следующему шагу здесь не нужна — шаги и так идут столбиком. */
@@ -584,7 +477,7 @@ const howToSchema = {
     .s4-head { grid-row: 1 / span 3; margin: 0; align-items: flex-start; }
     .s4-line { display: none; }
     .s4-num { font-size: 46px; }
-    .steps4 h3, .steps4 p, .steps4 .law { grid-column: 2; }
+    .steps4 h3, .steps4 p, .steps4 .law, .steps4 .s4-link { grid-column: 2; }
   }
 
   /* ── Три направления ──
@@ -616,7 +509,6 @@ const howToSchema = {
     transition: border-color var(--t-fast) var(--ease);
   }
   .dir-in:hover { border-color: var(--acc); }
-  .dir-in:focus-visible { outline: 2px solid var(--acc); outline-offset: 3px; }
   .dir-ico { color: var(--acc); display: inline-flex; }
   .dir-t { margin: 0; font-size: 22px; }
   /* align-content: start — иначе строка сетки карточки растягивает список,
@@ -716,7 +608,7 @@ const howToSchema = {
   }
   .geo-cards li { border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); }
   .geo-cards li:last-child { border-right: 0; }
-  .geo-cards a {
+  .geo-cards .gc {
     display: grid;
     align-content: start;
     gap: 3px;
@@ -725,7 +617,7 @@ const howToSchema = {
     color: var(--ink);
     height: 100%;
   }
-  .geo-cards li:not(:first-child) a { padding-left: 20px; }
+  .geo-cards li:not(:first-child) .gc { padding-left: 20px; }
   .gc-city { font-family: var(--font-head); font-size: 21px; line-height: 1.15; }
   .gc-sub { font-size: 13px; color: var(--muted); }
   .gc-n {
@@ -736,7 +628,7 @@ const howToSchema = {
     color: var(--acc-deep);
   }
   .gc-go { margin-top: 10px; font-size: 13.5px; font-weight: 600; color: var(--acc-deep); }
-  .geo-cards a:hover .gc-go { text-decoration: underline; }
+  .geo-cards li:hover .gc-go { text-decoration: underline; }
 
   /* Рейка заголовка — сетка, и чип без этого растягивался во всю её ширину. */
   #goroda .s-head .law { justify-self: start; }
@@ -756,11 +648,10 @@ const howToSchema = {
 
   @media (max-width: 599px) {
     .geo-cards li { border-right: 0; }
-    .geo-cards a, .geo-cards li:not(:first-child) a { padding: 15px 0; }
+    .geo-cards .gc, .geo-cards li:not(:first-child) .gc { padding: 15px 0; }
   }
 
   @media (max-width: 640px) {
-    .price-go { width: 100%; }
     .s4-cta .btn { width: 100%; }
   }
 </style>

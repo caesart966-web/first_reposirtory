@@ -43,7 +43,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const out = join(root, 'release/yandex')
 mkdirSync(out, { recursive: true })
 
-const { OFFER, GIFTS, GIFT_TAG } = await import('../src/config/offer.ts')
+const { OFFER, GIFTS, GIFT_TAG, offerLine } = await import('../src/config/offer.ts')
 const { TERMS, LAW, THRESHOLD_BUILD, FUNDS } = await import('../src/config/facts.ts')
 const { SERVICES, GROUP_LABELS } = await import('../src/config/services.ts')
 const { FEES, FEES_NOTE, money } = await import('../src/config/fees.ts')
@@ -159,9 +159,10 @@ ${style}
 // ═══════════════════ ТЕКСТЫ ДЛЯ «ТОВАРОВ И УСЛУГ» ═══════════════════════
 // Карточка услуги в Яндекс Бизнесе: название, категория, цена, описание
 // до 3000 знаков, ссылка, фото. Яндекс не показывает в Картах услугу без
-// цены, поэтому у трёх видов СРО цена — все платежи первого года, как
-// в блоке «Сколько стоит первый год» на главной (та же формула: фонд
-// первого уровня + вступительный + членские за 12 месяцев + целевой).
+// цены, поэтому у трёх видов СРО цена — все платежи первого года той же
+// формулой, что стояла в блоке «Сколько стоит первый год» на главной (блок
+// убран 28.09.2026): фонд первого уровня + вступительный + членские
+// за 12 месяцев + целевой.
 // Не «0 ₽ — мои услуги»: в строке с ценой это читалось бы как «вступление
 // бесплатно», а сайт весь держится на том, что цена названа целиком.
 // У остальных услуг цен на сайте нет (их не назвал заказчик) — и здесь
@@ -277,6 +278,10 @@ const cardStyle = `
 .tx { display: grid; gap: 24px; justify-items: center; }
 h1 { font: 700 84px/1.06 ${HEAD}; letter-spacing: -.015em; text-wrap: balance; max-width: 1150px; }
 p { font: 400 40px/1.4 ${BODY}; color: ${C.muted}; text-wrap: balance; max-width: 1060px; }
+.more { display: grid; gap: 24px; justify-items: center; }
+/* Короткий вариант: значок и название, без абзаца и статьи. */
+.short .more { display: none; }
+.short h1 { font-size: 92px; }
 `
 
 for (const s of SERVICES) {
@@ -292,8 +297,10 @@ for (const s of SERVICES) {
        <div class="ic">${serviceIcon(s)}</div>
        <div class="tx">
          <h1>${nbsp(s.title)}</h1>
-         <p>${nbsp(firstSentence(s.excerpt))}</p>
-         ${law ? chip(law, 30) : ''}
+         <div class="more">
+           <p>${nbsp(firstSentence(s.excerpt))}</p>
+           ${law ? chip(law, 30) : ''}
+         </div>
        </div>
      </div>`,
   )
@@ -311,8 +318,24 @@ for (const s of SERVICES) {
   if (over) throw new Error(`«${s.title}»: текст не помещается в безопасную полосу 1200×900`)
   const file = join(out, `usluga-${s.slug}.jpg`)
   await p.screenshot({ path: file, type: 'jpeg', quality: 92 })
-  await p.close()
   made.push(file)
+
+  // КОРОТКИЙ ВАРИАНТ — значок и название, без абзаца и статьи. 28.09.2026
+  // из девяти полных картинок модерация Яндекса пропустила три
+  // (проектировщики, промбезопасность, сайт) и отклонила шесть без
+  // объяснения причины; закономерности по тексту не видно. Короткий
+  // вариант меньше похож на рекламный баннер — его пробуют повторно
+  // вместо отклонённой полной, а не заливают ту же картинку ещё раз.
+  await p.evaluate(() => document.body.classList.add('short'))
+  const shortFile = join(out, `usluga-${s.slug}-korotko.jpg`)
+  await p.screenshot({ path: shortFile, type: 'jpeg', quality: 92 })
+  made.push(shortFile)
+  await p.close()
+}
+if (process.env.YX_ONLY === 'images') {
+  await browser.close()
+  console.log(made.map((f) => '  ' + f.replace(root + '/', '')).join('\n'))
+  process.exit(0)
 }
 
 // ═════════════════════════════ РОЛИК ═══════════════════════════════════════
@@ -470,7 +493,7 @@ ${scene(
     <div class="st" style="margin-top:22px;${at('offer', 0.3)}">Первый год — <em>только обязательные взносы</em></div>
     <div class="card" style="${at('offer', 0.5)}">
       <ul class="two">
-        ${OFFER.map((o, i) => `<li style="${at('offer', 0.8 + i * 0.3)}">${check(40)}<span>${o.short}</span></li>`).join('')}
+        ${OFFER.map((o, i) => `<li style="${at('offer', 0.8 + i * 0.3)}">${check(40)}<span>${offerLine(o)}</span></li>`).join('')}
       </ul>
     </div>
     <p class="note" style="${at('offer', 2.4, 'fade', 0.8)}">${nbsp('Точный набор условий зависит от подобранной СРО — назову его до подачи документов.')}</p>

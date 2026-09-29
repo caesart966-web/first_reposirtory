@@ -156,13 +156,13 @@ const serviceSchema = {
       <h2>Другие услуги</h2>
       <div class="grid-3">
         {others.map((s) => (
-          <a class="card oc" href={href(`/uslugi/${s.slug}/`)}>
+          <div class="card card--link oc">
             {s.dirIcon
               ? <span class="dic"><DirIcon name={s.dirIcon} size={48} /></span>
               : <span class="ic"><Icon name={s.icon} size={19} /></span>}
-            <h3>{s.short}</h3>
+            <h3><a class="stretch-link" href={href(`/uslugi/${s.slug}/`)}>{s.short}</a></h3>
             <p>{s.excerpt}</p>
-          </a>
+          </div>
         ))}
       </div>
     </div>

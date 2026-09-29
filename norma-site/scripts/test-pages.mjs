@@ -109,11 +109,14 @@ for (const [screen, width, height] of [['телефон', 320, 720], ['комп�
           (el.querySelector('img')?.getAttribute('alt') || '').trim() ||
           (el.querySelector('title')?.textContent || '').trim()
         if (!name) out.nameless.push(el.outerHTML.slice(0, 70))
-        const r = el.getBoundingClientRect()
+        // У растянутой ссылки (.stretch-link, global.css) цель — вся карточка:
+        // невидимый слой ::after накрывает её целиком, и нажимается именно она.
+        const card = el.classList.contains('stretch-link') ? el.closest('.stretch, .card--link') : null
+        const r = (card || el).getBoundingClientRect()
         // Ссылка внутри строки текста — не тап-цель: она и не должна быть
         // 44 px высотой, иначе абзац развалится. Считаем только те,
         // что стоят отдельно: кнопки и ссылки-блоки.
-        const inline = getComputedStyle(el).display === 'inline'
+        const inline = !card && getComputedStyle(el).display === 'inline'
         if (!inline && (r.width < 24 || r.height < 24)) {
           out.small.push(`${el.tagName.toLowerCase()} «${name.slice(0, 24)}» ${Math.round(r.width)}×${Math.round(r.height)}`)
         } else if (!inline && (r.width < 44 || r.height < 44)) {

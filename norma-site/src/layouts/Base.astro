@@ -253,7 +253,7 @@ const graph = {
     <main id="main">
       <slot />
     </main>
-    <Footer />
+    <Footer title={title} share={!article && !noindexProp} />
 
     <!-- Кнопки связи на телефоне: столбик круглых значков у правого края.
          Видны сразу, с первого экрана, все четыре канала — у многих клиентов
@@ -273,20 +273,22 @@ const graph = {
          Порядок в разметке — телефон первым, как и раньше: так их читает
          экранный диктор. На экране столбик собран снизу вверх, и телефон
          оказывается внизу, ближе всего к большому пальцу. Подписей
-         на экране нет, поэтому у каждой ссылки есть aria-label. -->
+         на экране нет, поэтому у каждой ссылки есть текст, видный только
+         голосом (.vh). Раньше это было aria-label без текста — для
+         поисковика такие ссылки пустые (аудит 28.09.2026). -->
     <nav class="contact-rail" aria-label="Быстрая связь">
-      <a href={SITE.phoneHref} data-goal="click_phone" aria-label={`Позвонить: ${SITE.phone}`}>
-        <BrandIcon name="phone" size={46} />
+      <a href={SITE.phoneHref} data-goal="click_phone">
+        <BrandIcon name="phone" size={46} /><span class="vh">Позвонить: {SITE.phone}</span>
       </a>
-      <a href={SITE.whatsapp} target="_blank" rel="noopener noreferrer" data-goal="click_whatsapp" aria-label="Написать в WhatsApp">
-        <BrandIcon name="whatsapp" size={46} />
+      <a href={SITE.whatsapp} target="_blank" rel="noopener noreferrer" data-goal="click_whatsapp">
+        <BrandIcon name="whatsapp" size={46} /><span class="vh">Написать в WhatsApp</span>
       </a>
-      <a href={SITE.telegram} target="_blank" rel="noopener noreferrer" data-goal="click_telegram" aria-label="Написать в Telegram">
-        <BrandIcon name="telegram" size={46} />
+      <a href={SITE.telegram} target="_blank" rel="noopener noreferrer" data-goal="click_telegram">
+        <BrandIcon name="telegram" size={46} /><span class="vh">Написать в Telegram</span>
       </a>
       {SITE.maxLink && (
-        <a href={SITE.maxLink} target="_blank" rel="noopener noreferrer" data-goal="click_max" aria-label="Написать в MAX">
-          <BrandIcon name="max" size={46} />
+        <a href={SITE.maxLink} target="_blank" rel="noopener noreferrer" data-goal="click_max">
+          <BrandIcon name="max" size={46} /><span class="vh">Написать в MAX</span>
         </a>
       )}
     </nav>

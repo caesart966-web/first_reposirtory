@@ -124,31 +124,31 @@ const flags = [
       </div>
 
       <div class="grid-2">
-        <a class="card rcard rv" href={REGISTRIES.nostroy} target="_blank" rel="noopener noreferrer">
+        <div class="card card--link rcard rv">
           <div class="rc-top">
             <Icon name="search" size={20} />
             <span class="host">reestr.nostroy.ru</span>
           </div>
-          <h3>Строителям — реестр НОСТРОЙ</h3>
+          <h3><a class="stretch-link" href={REGISTRIES.nostroy} target="_blank" rel="noopener noreferrer">Строителям — реестр НОСТРОЙ</a></h3>
           <p>
             Единый реестр членов СРО в строительстве и национальный реестр
             специалистов. Здесь же видно, действует ли сама СРО.
           </p>
-          <span class="go">Открыть реестр <Icon name="arrow" size={16} /></span>
-        </a>
+          <span class="go" aria-hidden="true">Открыть реестр <Icon name="arrow" size={16} /></span>
+        </div>
 
-        <a class="card rcard rv" href={REGISTRIES.nopriz} target="_blank" rel="noopener noreferrer">
+        <div class="card card--link rcard rv">
           <div class="rc-top">
             <Icon name="search" size={20} />
             <span class="host">nopriz.ru</span>
           </div>
-          <h3>Проектировщикам и изыскателям — НОПРИЗ</h3>
+          <h3><a class="stretch-link" href={REGISTRIES.nopriz} target="_blank" rel="noopener noreferrer">Проектировщикам и изыскателям — НОПРИЗ</a></h3>
           <p>
             Национальное объединение изыскателей и проектировщиков: реестр членов
             СРО и реестр специалистов для проектных компаний.
           </p>
-          <span class="go">Открыть реестр <Icon name="arrow" size={16} /></span>
-        </a>
+          <span class="go" aria-hidden="true">Открыть реестр <Icon name="arrow" size={16} /></span>
+        </div>
       </div>
 
       <p class="mixnote rv">
@@ -186,8 +186,9 @@ const flags = [
     </div>
   </section>
 
-  <!-- После вступления -->
-  <section class="section">
+  <!-- После вступления. Якорь #posle — на него ведёт четвёртый шаг
+       на главной («запись о компании вы проверите сами, по ИНН»). -->
+  <section class="section" id="posle">
     <div class="wrap">
       <div class="after rv">
         <div>
@@ -196,7 +197,7 @@ const flags = [
           <p class="alead">
             Выписка на руках — это ещё не всё. Сведения о вас должны быть видны
             в реестре любому, включая заказчика, который будет проверять вас перед
-            заключением договора. Проверьте сами, что там появилось:
+            заключением договора. Найдите компанию по ИНН и проверьте, что там появилось:
           </p>
         </div>
         <ul class="alist">

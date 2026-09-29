@@ -48,7 +48,11 @@ const check = (ok, name, detail = '') => {
     const info = await page.evaluate(() => {
       const el = document.activeElement
       if (!el || el === document.body) return null
-      const s = getComputedStyle(el)
+      // У растянутой ссылки (.stretch-link) рамку рисует карточка целиком
+      // (:has(.stretch-link:focus-visible) в global.css): фокус стоит
+      // на ссылке, а нажимается и обводится вся карточка.
+      const card = el.classList.contains('stretch-link') ? el.closest('.stretch, .card--link') : null
+      const s = getComputedStyle(card || el)
       const ring =
         (s.outlineStyle !== 'none' && parseFloat(s.outlineWidth) > 0) || s.boxShadow !== 'none'
       return { ring, name: (el.textContent || el.getAttribute('aria-label') || el.tagName).trim().slice(0, 30) }
@@ -145,7 +149,9 @@ const check = (ok, name, detail = '') => {
     const inParagraph = (el) => !!el.closest('p, li:not(:has(> a:only-child)), .prose, .doc, summary')
     const bad = []
     document.querySelectorAll('a[href], button').forEach((el) => {
-      const r = el.getBoundingClientRect()
+      // Растянутая ссылка (.stretch-link) нажимается всей карточкой.
+      const card = el.classList.contains('stretch-link') ? el.closest('.stretch, .card--link') : null
+      const r = (card || el).getBoundingClientRect()
       if (r.width === 0 || r.height === 0) return
       if (inParagraph(el)) return
       if (r.height < 24) bad.push((el.textContent || el.getAttribute('aria-label') || '?').trim().slice(0, 30))

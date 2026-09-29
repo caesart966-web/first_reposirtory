@@ -82,14 +82,14 @@ const itemList = {
         {list.map((r) => {
           const k = partnersOf(r.slug).length
           return (
-            <a class="card ccard rv" href={href(`/sro/${r.slug}/`)}>
-              <h3>{r.city}</h3>
+            <div class="card card--link ccard rv">
+              <h3><a class="stretch-link" href={href(`/sro/${r.slug}/`)}>{r.city}</a></h3>
               <span class="csub">{r.subject}</span>
               <span class="ccode">код {r.code}</span>
               <span class="cn">
                 {k} {k === 1 ? 'партнёрская СРО' : k < 5 ? 'партнёрские СРО' : 'партнёрских СРО'}
               </span>
-            </a>
+            </div>
           )
         })}
       </div>

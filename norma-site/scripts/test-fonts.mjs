@@ -30,8 +30,10 @@ const CASES = [
   { path: '/', sel: '.hero .page-title', font: 'Literata', what: 'заголовок первого экрана (пробелы — из латинской части)' },
   { path: '/', sel: '.steps4 .s4-num', font: 'Literata', what: 'номера шагов' },
   { path: '/kontakty/', sel: '.k-phone', font: 'Golos Text', what: 'номер телефона на «Контактах»' },
-  { path: '/', sel: '.ho-list li', font: 'Golos Text', what: 'условия на первом экране — цифры и «₽»' },
-  { path: '/', sel: '.pt-sum', font: 'Literata', what: 'суммы первого года — «₽» в антикве' },
+  { path: '/', sel: '.ho-list dd', font: 'Golos Text', what: 'условия на первом экране — цифры и «₽»' },
+  // «₽» в антикве. Здесь стояли суммы первого года на главной (.pt-sum) —
+  // блок убран 28.09.2026, и ближайшие цифры с «₽» антиквой — в шапке услуги.
+  { path: '/uslugi/sro-stroiteley/', sel: '.fv', font: 'Literata', what: 'цифры в шапке услуги — «₽» в антикве' },
 ]
 
 let problems = 0

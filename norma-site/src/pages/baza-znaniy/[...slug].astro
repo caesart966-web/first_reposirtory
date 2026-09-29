@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro'
 import Icon from '../../components/Icon.astro'
+import ShareLinks from '../../components/ShareLinks.astro'
 import { getCollection, render } from 'astro:content'
 import { href, SITE } from '../../config/site'
 import { SEO } from '../../config/seo'
@@ -12,6 +13,8 @@ export async function getStaticPaths() {
 
 const { article } = Astro.props
 const { Content } = await render(article)
+// Тот же адрес, что в canonical (Base.astro), — его и отдают «Поделиться».
+const canonicalUrl = new URL(Astro.url.pathname, Astro.site).toString()
 
 // Ссылки внутри текста статьи чинятся здесь, а не в самих статьях.
 //
@@ -173,8 +176,14 @@ const articleSchema = {
     </header>
 
     <div class="wrap art-body">
-      <div class="prose">
-        {rendered ? <Fragment set:html={withLabels(withBase(rendered))} /> : <Content />}
+      <div class="art-main">
+        <div class="prose">
+          {rendered ? <Fragment set:html={withLabels(withBase(rendered))} /> : <Content />}
+        </div>
+        {/* Разбор пересылают бухгалтеру или партнёру — адрес уходит вместе
+            с названием. В подвале у статей этой строки нет: вторая такая же
+            внизу страницы была бы повтором (Footer.astro, проп share). */}
+        <ShareLinks url={canonicalUrl} title={article.data.title} label="Поделиться разбором" />
       </div>
 
       <aside class="art-side" data-nosearch>
@@ -215,11 +224,11 @@ const articleSchema = {
           <h2>Читайте дальше</h2>
           <div class="grid-2">
             {others.map((a) => (
-              <a class="card next-card" href={href(`/baza-znaniy/${a.id}/`)}>
+              <div class="card card--link next-card">
                 <span class="nc-date">{fmt(a.data.updated ?? a.data.published)}</span>
-                <h3>{a.data.title}</h3>
+                <h3><a class="stretch-link" href={href(`/baza-znaniy/${a.id}/`)}>{a.data.title}</a></h3>
                 <p>{a.data.excerpt}</p>
-              </a>
+              </div>
             ))}
           </div>
         </div>
@@ -247,6 +256,8 @@ const articleSchema = {
   .upd { display: inline-flex; align-items: center; gap: 6px; color: var(--acc-bright); }
 
   .art-body { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 40px; padding-top: 40px; padding-bottom: 20px; align-items: start; }
+  .art-main { display: grid; gap: 28px; min-width: 0; }
+  .art-main :global(.share) { padding-top: 18px; border-top: 1px solid var(--line); }
 
   /* Статья набирается антиквой: её читают целиком, а не просматривают. */
   .prose {

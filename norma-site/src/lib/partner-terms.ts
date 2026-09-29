@@ -15,18 +15,25 @@
 import { FEES, money } from '../config/fees'
 import { partnerFeeKind, partnerKindWord, regDate, type Partner } from '../config/partners'
 
-export type PartnerRow = { label: string; value: string; other: boolean }
+/**
+ * good — значение-льгота (0 ₽, «не требуется»): в карточке оно зелёное,
+ * как на первом экране. Цвет — только подсказка глазу: отличие от
+ * предложения по-прежнему называет звёздочка, и красная пометка отличия
+ * важнее зелёной (шаблон красит зелёным только строки без отличия).
+ */
+export type PartnerRow = { label: string; value: string; other: boolean; good: boolean }
 
 export const partnerTerms = (p: Partner) => {
   const base = FEES[partnerFeeKind(p.reg)]
   const entry = p.fees?.entry ?? base.entry
   const member = p.fees?.memberMonth ?? base.memberMonth
   const target = p.fees?.target ?? base.target
+  const insurance = p.insurance ?? 'не требуется в первый год'
   const rows: PartnerRow[] = [
-    { label: 'Вступительный взнос', value: money(entry), other: entry !== base.entry },
-    { label: 'Членский взнос', value: `${money(member)} в месяц`, other: member !== base.memberMonth },
-    { label: `Целевой взнос в ${base.union}`, value: money(target), other: target !== base.target },
-    { label: 'Страхование', value: p.insurance ?? 'не требуется в первый год', other: !!p.insurance },
+    { label: 'Вступительный взнос', value: money(entry), other: entry !== base.entry, good: entry === 0 },
+    { label: 'Членский взнос', value: `${money(member)} в месяц`, other: member !== base.memberMonth, good: member === 0 },
+    { label: `Целевой взнос в ${base.union}`, value: money(target), other: target !== base.target, good: target === 0 },
+    { label: 'Страхование', value: insurance, other: !!p.insurance, good: insurance.startsWith('не требуется') },
   ]
   return { p, kindWord: partnerKindWord(p.reg), since: regDate(p.reg), rows }
 }

@@ -11,8 +11,21 @@
 // набора. Номер набран моноширинным начертанием — его будут переносить в поиск
 // по реестру глазами и руками, и в моноширинном цифры не сливаются.
 import PartnerDiffNote from './PartnerDiffNote.astro'
+import Icon from './Icon.astro'
 import { anyDiffers, partnerTerms } from '../lib/partner-terms'
-import type { Partner } from '../config/partners'
+import { partnerKind, type Partner } from '../config/partners'
+import { REGISTRIES } from '../config/site'
+
+// Номер плашкой со ссылкой в реестр — по образцу сайта СРО «СОМ»
+// (28.09.2026): у них номер в госреестре стоит отдельной строкой с подписью
+// и в рамке. Ссылка ведёт в реестр того объединения, где эту СРО искать:
+// строительные — НОСТРОЙ, проектные и изыскательские — НОПРИЗ. Галочки
+// в плашке, как у образца, нет: она значила бы «проверено», а номер взят
+// из КП заказчика — проверяет его посетитель, по этой самой ссылке.
+const registryOf = (reg: string) =>
+  partnerKind(reg) === 'build'
+    ? { url: REGISTRIES.nostroy, name: 'НОСТРОЙ' }
+    : { url: REGISTRIES.nopriz, name: 'НОПРИЗ' }
 
 interface Props {
   partners: readonly Partner[]
@@ -34,15 +47,26 @@ const terms = partners.map(partnerTerms)
         <span class="pc-kind">{t.kindWord} СРО</span>
         <h3>{t.p.short}</h3>
         <p class="pc-full">{t.p.name}</p>
-        <p class="pc-reg">{t.p.reg}</p>
-        <p class="pc-since">в реестре с {t.since}</p>
+        <div class="pc-regbox">
+          <span class="pc-lbl">Номер в госреестре</span>
+          <a
+            class="pc-reg"
+            href={registryOf(t.p.reg).url}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={`Проверить в реестре ${registryOf(t.p.reg).name}`}
+          >
+            <Icon name="search" size={14} /> {t.p.reg}
+          </a>
+          <span class="pc-since">в реестре с {t.since}</span>
+        </div>
       </header>
       <p class="pc-note">{t.p.note}</p>
       <dl class="pc-fees">
         {t.rows.map((row) => (
           <div class={row.other ? 'pc-row pc-row--other' : 'pc-row'}>
             <dt>{row.label}{row.other && <span class="pc-star">*</span>}</dt>
-            <dd>{row.value}</dd>
+            <dd class={row.good && !row.other ? 'good' : undefined}>{row.value}</dd>
           </div>
         ))}
       </dl>
@@ -56,16 +80,18 @@ const terms = partners.map(partnerTerms)
   .prt {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
-    gap: 18px;
-    margin-top: 8px;
+    /* Сверху бирки выступают над кромкой на полвысоты — место под них. */
+    gap: 30px 18px;
+    margin-top: 20px;
   }
   /* Одна карточка во всю ширину экрана выглядит растянутой: строки взносов
      разъезжаются на 1100 px, подпись слева, сумма у правого края. */
   .prt--one { max-width: 620px; }
   .pcard {
+    position: relative;
     border: 1px solid var(--dark-line);
     border-radius: var(--r-m);
-    padding: 22px 20px;
+    padding: 28px 20px 22px;
     display: grid;
     /* Шапка — по содержимому, описание тянется, взносы прижаты к низу:
        так строки взносов у соседних карточек стоят на одной высоте,
@@ -74,22 +100,52 @@ const terms = partners.map(partnerTerms)
     gap: 14px;
   }
   .pc-top { display: grid; gap: 6px; }
+  /* Вид СРО — биркой на верхней кромке, как «Условия вступления»
+     и «Подарок на выбор» на первом экране. */
   .pc-kind {
-    font-size: 11.5px;
+    position: absolute;
+    top: 0;
+    left: 16px;
+    transform: translateY(-50%);
+    padding: 4px 11px;
+    border-radius: 999px;
+    background: var(--acc-btn);
+    color: #fff;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--acc-bright);
+    white-space: nowrap;
   }
   .pcard h3 { margin: 0; font-size: 22px; color: var(--on-dark); }
   .pc-full { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--on-dark-muted); }
+  .pc-regbox { display: grid; justify-items: start; gap: 6px; margin-top: 8px; }
+  .pc-lbl {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--on-dark-muted);
+  }
   .pc-reg {
-    margin: 4px 0 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 32px;
+    padding: 5px 13px;
+    border: 1px solid color-mix(in srgb, var(--on-dark) 32%, transparent);
+    border-radius: 999px;
     font-family: var(--font-mono);
     font-size: 13.5px;
     letter-spacing: 0.02em;
     color: var(--on-dark);
+    text-decoration: none;
+    transition: border-color var(--t-fast) var(--ease);
   }
-  .pc-since { margin: 0; font-size: 13px; color: var(--on-dark-muted); }
+  .pc-reg:hover { border-color: var(--acc-bright); }
+  .pc-reg :global(svg) { color: var(--on-dark-muted); }
+  .pc-since { font-size: 13px; color: var(--on-dark-muted); }
   .pc-note { margin: 0; font-size: 15px; line-height: 1.6; color: var(--on-dark); }
 
   .pc-fees { margin: 0; display: grid; gap: 0; }
@@ -111,5 +167,6 @@ const terms = partners.map(partnerTerms)
     text-align: right;
   }
   .pc-star { color: var(--acc-bright); }
+  .pc-row dd.good { color: var(--good-bright); }
   .pc-row--other dd { color: var(--acc-bright); }
 </style>
