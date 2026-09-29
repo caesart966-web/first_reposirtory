@@ -55,7 +55,7 @@ export function Part({
 // Кегль — по самому длинному слову заголовков («Компенсационные»): на 320 px
 // оно обязано влезать (test-site.mjs, «заголовки не шире своей колонки»).
 export const H2 =
-  'font-display text-[1.9rem] font-medium leading-[1.04] tracking-[-0.01em] text-neutral-950 min-[380px]:text-[2.2rem] sm:text-[2.7rem] lg:text-[3.1rem]'
+  'font-display text-[1.9rem] font-medium leading-[1.04] tracking-[-0.01em] text-balance text-neutral-950 min-[380px]:text-[2.2rem] sm:text-[2.7rem] lg:text-[3.1rem]'
 
 export function Head({ title, lead }: { title: string; lead?: string }) {
   return (
