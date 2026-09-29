@@ -33,6 +33,9 @@ import HeadPhoto from '../components/HeadPhoto.astro'
 // где нужно дотянуться до чужого компонента, стоит :global() внутри
 // селектора страницы — за её пределы такие правила не выходят.
 
+// Имя в Telegram, если ссылка ведёт по имени, а не по номеру.
+const tgName = SITE.telegram.match(/t\.me\/([A-Za-z][A-Za-z0-9_]{3,})\/?$/)?.[1]
+
 const CHANNELS = [
   {
     icon: 'phone',
@@ -57,7 +60,9 @@ const CHANNELS = [
   {
     icon: 'telegram',
     name: 'Telegram',
-    value: 'на тот же номер',
+    // Из самой ссылки: t.me/имя → «@имя», t.me/+7… → «на тот же номер».
+    // Записанная рядом подпись разошлась бы со ссылкой при первой замене.
+    value: tgName ? `@${tgName}` : 'на тот же номер',
     url: SITE.telegram,
     goal: 'click_telegram',
     why: 'То же самое, что WhatsApp. Пишите туда, чем пользуетесь сами, — разницы для меня нет.',
