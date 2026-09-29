@@ -87,6 +87,9 @@ const QUERIES = [
   ['лицензия МЧС', '/uslugi/licenzii/'],
   ['как вступить в сро', '/baza-znaniy/kak-vstupit-v-sro/'],
   ['капремонт многоквартирного дома', '/baza-znaniy/kapremont-mkd-bez-poroga/'],
+  // «рабочих дня» уведомлений по 309-ФЗ делят с ней основу «рабоч» —
+  // запрос проверяет, что ранжирование их различает.
+  ['рабочая документация', '/baza-znaniy/rabochaya-dokumentaciya-sro/'],
 ]
 
 for (const [q, want] of QUERIES) {
