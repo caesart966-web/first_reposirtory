@@ -69,6 +69,14 @@ for (const f of files) {
   const comment = html.replace(/<script\b[\s\S]*?<\/script>|<style\b[\s\S]*?<\/style>/g, '').match(/<!--[\s\S]{0,60}/)
   if (comment) p(`в странице остался HTML-комментарий: «${comment[0].replace(/\s+/g, ' ')}…»`)
 
+  // ── Заголовок со строчной буквы ──
+  // Подставленное «в Москве» открывало заголовок раздела на трёх страницах
+  // городов («в Москве не дороже…»), и заметил это только обход сборки.
+  for (const m of html.replace(/<script\b[\s\S]*?<\/script>|<style\b[\s\S]*?<\/style>/g, '').matchAll(/<(h[1-4])\b[^>]*>([\s\S]*?)<\/\1>/g)) {
+    const text = m[2].replace(/<[^>]+>/g, ' ').replace(/&[a-z]+;|&#\d+;/g, ' ').replace(/\s+/g, ' ').trim()
+    if (/^[a-zа-яё]/.test(text)) p(`заголовок ${m[1]} начинается со строчной: «${text.slice(0, 60)}»`)
+  }
+
   // ── Каркас документа ──
   if (!/<html[^>]+lang="ru"/.test(html)) p('нет lang="ru" у <html>')
   if (!/<meta charset="utf-8"/i.test(html)) p('нет <meta charset>')
