@@ -176,7 +176,11 @@ console.log('\nЧисла из конфигурации')
 const CHECKS = [
   { label: 'срок действия свидетельства НОК', value: num(cfg, 'nokValidity'), pages: ['/uslugi/nrs/'] },
   { label: 'срок рассмотрения заявления', value: num(cfg, 'law'), pages: ['/', '/uslugi/sro-stroiteley/'] },
-  { label: 'срок до выписки', value: num(cfg, 'extract'), pages: ['/', '/stoimost/'] },
+  // Статьи пишутся markdown и TERMS не импортируют: срок в них записан
+  // словами. Поменяется TERMS — эти страницы должны упасть здесь,
+  // а не разойтись с сайтом молча.
+  { label: 'срок до выписки', value: num(cfg, 'extract'), pages: ['/', '/stoimost/', '/baza-znaniy/sroki-vstupleniya/', '/baza-znaniy/kak-vstupit-v-sro/'] },
+  { label: 'срочный срок до выписки', value: num(cfg, 'extractRush'), pages: ['/baza-znaniy/sroki-vstupleniya/', '/uslugi/sro-stroiteley/'] },
   { label: 'вступительный взнос строителям', value: num(fees, 'entry'), pages: ['/stoimost/'] },
 ]
 for (const c of CHECKS) {
