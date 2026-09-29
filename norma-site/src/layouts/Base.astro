@@ -355,8 +355,12 @@ const graph = {
       // Плавное появление блоков при прокрутке.
       const reveal = () => {
         const items = Array.from(document.querySelectorAll<HTMLElement>('.rv'))
+        const show = (el: Element) => {
+          el.classList.remove('rv-wait')
+          el.classList.add('in')
+        }
         if (!('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-          items.forEach((el) => el.classList.add('in'))
+          items.forEach(show)
           return
         }
 
@@ -374,11 +378,24 @@ const graph = {
           el.style.setProperty('--rv-i', String(Math.min(twins.indexOf(el), 6)))
         }
 
+        // Прячем только то, что ниже экрана. Что видно сейчас (и что выше,
+        // если страница открылась прокрученной), остаётся как есть: блоки
+        // первого экрана не ждут ни скрипта, ни анимации. Прячем уже после
+        // отрисовки, но за краем экрана — этого не видно.
+        const later = items.filter((el) => {
+          if (el.getBoundingClientRect().top < window.innerHeight) {
+            show(el)
+            return false
+          }
+          el.classList.add('rv-wait')
+          return true
+        })
+
         const io = new IntersectionObserver(
           (entries) => {
             entries.forEach((entry) => {
               if (entry.isIntersecting) {
-                entry.target.classList.add('in')
+                show(entry.target)
                 io.unobserve(entry.target)
               }
             })
@@ -392,11 +409,11 @@ const graph = {
           // когда блок виден целиком, он уже на месте.
           { rootMargin: '0px 0px 12% 0px' },
         )
-        items.forEach((el) => io.observe(el))
+        later.forEach((el) => io.observe(el))
 
         // Страховка: если наблюдатель почему-то не сработал, через 3 секунды
         // показываем всё принудительно. Невидимый текст хуже отсутствия анимации.
-        setTimeout(() => items.forEach((el) => el.classList.add('in')), 3000)
+        setTimeout(() => later.forEach(show), 3000)
       }
       reveal()
 

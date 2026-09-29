@@ -158,6 +158,38 @@ for (const [screen, width, height] of [['телефон', 320, 720], ['комп�
   else console.log('✓ Наведение на ссылку запрашивает страницу заранее (Sec-Purpose: prefetch)')
   await ctx.close()
 }
+// ── Первый экран не ждёт анимации ──
+// До 30.09.2026 .rv прятал блоки до скрипта: список статей в базе знаний,
+// разбивка на «Стоимости» и карточки городов появлялись примерно через
+// секунду после первой отрисовки (телефон, медленный 4G, сервер 1,5 с).
+// Теперь прячется только то, что ниже экрана. Проверяется сразу после
+// загрузки, до прокрутки: в кадре нет ни одного спрятанного блока,
+// а ниже кадра они есть, то есть появление при прокрутке не отключено.
+{
+  let below = 0
+  for (const [screen, width, height] of [['телефон', 390, 844], ['компьютер', 1280, 900]]) {
+    const ctx = await browser.newContext({ viewport: { width, height } })
+    const page = await ctx.newPage()
+    for (const url of ['/', '/baza-znaniy/', '/stoimost/', '/sro/moskva/', '/uslugi/sro-stroiteley/', '/baza-znaniy/kak-vstupit-v-sro/']) {
+      await page.goto(BASE + url, { waitUntil: 'domcontentloaded' })
+      await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))))
+      const r = await page.evaluate(() => {
+        const vh = innerHeight
+        const rv = [...document.querySelectorAll('.rv')]
+        const inView = rv.filter((e) => { const b = e.getBoundingClientRect(); return b.height > 0 && b.top < vh && b.bottom > 0 })
+        return {
+          hidden: inView.filter((e) => e.classList.contains('rv-wait') || getComputedStyle(e).opacity !== '1').map((e) => e.className.slice(0, 40)),
+          below: rv.filter((e) => e.getBoundingClientRect().top >= vh && e.classList.contains('rv-wait')).length,
+        }
+      })
+      below += r.below
+      for (const h of r.hidden) problems.push(`${url} ${screen}: на первом экране блок спрятан до анимации → ${h}`)
+    }
+    await ctx.close()
+  }
+  if (below === 0) problems.push('ни одного блока ниже экрана не ждёт прокрутки — появление при прокрутке отключилось')
+  else console.log(`✓ Первый экран виден сразу, появление при прокрутке — только ниже экрана (${below} блоков ждут)`)
+}
 await browser.close()
 
 if (tight.size) {

@@ -724,18 +724,22 @@ table.data td.strong { font-weight: 600; }
 .checks--no li::before { content: '—'; color: var(--good); }
 
 /* ── Появление при прокрутке ──
-   Прятать блоки можно ТОЛЬКО когда скрипт точно работает: класс .js ставится
-   встроенным скриптом в <head>. Иначе при любой осечке JavaScript посетитель
-   увидел бы пустую страницу — а это худшее, что может случиться с сайтом. */
+   Прячется ТОЛЬКО то, чего на момент загрузки не видно: скрипт в Base.astro
+   ставит .rv-wait блокам ниже первого экрана и снимает его, когда до них
+   докручивают. Первый экран не ждёт ни скрипта, ни анимации.
+   До 30.09.2026 правило было .js .rv { opacity: 0 }: прятало всё сразу,
+   до скрипта. Список статей в базе знаний, разбивка на «Стоимости»
+   и карточки на страницах городов появлялись примерно через секунду после
+   первой отрисовки. Замер: телефон, медленный 4G, сервер 1,5 с — заказчик
+   видел это как «разделы грузятся долго». Без JavaScript класса .rv-wait
+   нет, и страница видна целиком. */
 
 .js .rv {
-  opacity: 0;
-  transform: translateY(18px);
   transition:
     opacity var(--t-slow) var(--ease),
     transform var(--t-slow) var(--ease);
 }
-.js .rv.in { opacity: 1; transform: none; }
+.js .rv.rv-wait { opacity: 0; transform: translateY(18px); transition: none; }
 
 /* Ступенчатая задержка внутри одного блока: карточки в ряду выходят
    не разом, а одна за другой. Задержку ставит скрипт в Base.astro —
@@ -748,7 +752,7 @@ table.data td.strong { font-weight: 600; }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .js .rv { opacity: 1; transform: none; transition: none; }
+  .js .rv, .js .rv.rv-wait { opacity: 1; transform: none; transition: none; }
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
