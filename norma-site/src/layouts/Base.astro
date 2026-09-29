@@ -9,6 +9,7 @@ import BrandIcon from '../components/BrandIcon.astro'
 import CookieBanner from '../components/CookieBanner.astro'
 import { SITE, href } from '../config/site'
 import { SEO } from '../config/seo'
+import { ABOUT } from '../config/about'
 
 interface Props {
   title: string
@@ -72,10 +73,14 @@ const orgSchema = {
   email: SITE.email,
   founder: { '@type': 'Person', name: 'Багишев Алихан Ахадович' },
   taxID: SITE.inn,
-  // Работа дистанционная по всей стране. Конкретные города в разметке
-  // сузили бы выдачу: поисковик решил бы, что это местная фирма.
+  // Работа дистанционная по всей стране — это areaServed. Город в адресе
+  // появился 29.09.2026: регион сайта в Вебмастере — Санкт-Петербург
+  // (решение заказчика: ИП зарегистрирован там, 78 в ОГРНИП, там 5 из 8
+  // партнёрских СРО). Раньше здесь стоял один код страны, «чтобы выдача
+  // не сузилась», — заказчик выбрал прибавку по Петербургу. Улицы нет
+  // нарочно: адрес домашний, он стоит только в политике.
   areaServed: { '@type': 'Country', name: 'Россия' },
-  address: { '@type': 'PostalAddress', addressCountry: 'RU' },
+  address: { '@type': 'PostalAddress', addressCountry: 'RU', addressLocality: ABOUT.city },
   sameAs: [SITE.whatsapp, SITE.telegram, SITE.maxLink].filter(Boolean),
   // Знак и картинка-превью. Без logo поисковик не покажет фирменный знак
   // ни рядом с сайтом в выдаче, ни в карточке организации.
