@@ -33,3 +33,6 @@ pto-site/dist/assets/config.js
 
 # master-site: журнал заявок, если письмо не ушло (создаётся на хостинге)
 master-site/leads.log
+
+# pto-site: собранный промо-ролик (пересобирается tools/make-video.py)
+pto-site/promo-video.mp4

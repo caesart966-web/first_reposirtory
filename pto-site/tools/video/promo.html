@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>X-PTO — ролик</title>
+<!--
+  Промо-ролик X-PTO: 1080×1920, ~55 секунд.
+
+  Это обычная страница с CSS-анимацией: в браузере её можно просто открыть
+  и посмотреть. В видео её превращает tools/make-video.py — останавливает
+  все анимации и снимает кадр за кадром, выставляя время вручную, поэтому
+  ни один кадр не зависит от скорости компьютера.
+
+  Хронология задаётся числами: у сцены --t0 (появление) и --t1 (уход),
+  у элемента внутри — --d (задержка от появления сцены). Все тексты —
+  с сайта (data/site.json), ни одного факта сверх него.
+-->
+<style>
+  @font-face { font-family: "Display"; src: url("../../assets/fonts/geologica-cyrillic.woff2") format("woff2"); font-weight: 300 800; unicode-range: U+0400-04FF; }
+  @font-face { font-family: "Display"; src: url("../../assets/fonts/geologica-latin.woff2") format("woff2"); font-weight: 300 800; unicode-range: U+0000-03FF, U+2000-206F; }
+  @font-face { font-family: "Text"; src: url("../../assets/fonts/inter-cyrillic.woff2") format("woff2"); font-weight: 300 800; unicode-range: U+0400-04FF; }
+  @font-face { font-family: "Text"; src: url("../../assets/fonts/inter-latin.woff2") format("woff2"); font-weight: 300 800; unicode-range: U+0000-03FF, U+2000-206F; }
+  @font-face { font-family: "Mono"; src: url("../../assets/fonts/mono-cyrillic.woff2") format("woff2"); font-weight: 300 800; unicode-range: U+0400-04FF; }
+  @font-face { font-family: "Mono"; src: url("../../assets/fonts/mono-latin.woff2") format("woff2"); font-weight: 300 800; unicode-range: U+0000-03FF, U+2000-206F; }
+
+  :root {
+    --navy: #0d1c30;
+    --deep: #07111f;
+    --accent: #1f6feb;
+    --accent-300: #7fb0ff;
+    --muted: #b9c7d9;
+    --line: rgba(127, 176, 255, 0.14);
+    --ease: cubic-bezier(.16, 1, .3, 1);      /* быстрый старт, долгое мягкое торможение */
+    --ease-in: cubic-bezier(.7, 0, .84, 0);
+    --ease-io: cubic-bezier(.65, 0, .35, 1);
+    --total: 55;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--deep); }
+  body { font-family: "Text", sans-serif; color: #fff; -webkit-font-smoothing: antialiased; }
+
+  .stage { position: relative; width: 1080px; height: 1920px; overflow: hidden;
+           background: radial-gradient(120% 70% at 80% 0%, #15335e 0%, var(--navy) 45%, var(--deep) 100%); }
+
+  /* ---------- фон, общий для всех сцен ---------- */
+  .grid { position: absolute; inset: -300px; opacity: .55;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px),
+      linear-gradient(rgba(127,176,255,.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(127,176,255,.07) 1px, transparent 1px);
+    background-size: 300px 300px, 300px 300px, 60px 60px, 60px 60px;
+    animation: drift calc(var(--total) * 1s) linear both; }
+  @keyframes drift { to { transform: translate(-240px, -420px); } }
+
+  .glow { position: absolute; width: 1400px; height: 1400px; left: -200px; top: -500px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(31,111,235,.34) 0%, rgba(31,111,235,0) 60%);
+    animation: glow calc(var(--total) * 1s) var(--ease-io) both; }
+  @keyframes glow {
+    0% { transform: translate(300px, 0); } 25% { transform: translate(-300px, 500px); }
+    50% { transform: translate(250px, 900px); } 75% { transform: translate(-200px, 400px); }
+    100% { transform: translate(200px, 1100px); } }
+
+  .watermark { position: absolute; width: 1500px; height: 1500px; right: -620px; bottom: -380px; opacity: .05; color: #fff;
+    animation: spin calc(var(--total) * 1s) linear both; }
+  @keyframes spin { to { transform: rotate(40deg); } }
+
+  /* мерная шкала сверху — как под цифрами на сайте; заполняется по ходу ролика */
+  .ruler { position: absolute; left: 80px; right: 80px; top: 92px; height: 14px;
+    background-image: repeating-linear-gradient(90deg, rgba(255,255,255,.35) 0 1px, transparent 1px 18px); }
+  .ruler__fill { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; transform-origin: 0 50%;
+    background-image: repeating-linear-gradient(90deg, var(--accent-300) 0 2px, transparent 2px 18px);
+    animation: fill calc(var(--total) * 1s) linear both; }
+  @keyframes fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  .brand-top { position: absolute; left: 80px; top: 130px; display: flex; align-items: center; gap: 18px;
+    font-family: "Mono"; font-size: 22px; letter-spacing: .18em; color: var(--muted); }
+  .brand-top svg { width: 44px; height: 44px; color: #fff; }
+  .site-top { position: absolute; right: 80px; top: 138px; font-family: "Mono"; font-size: 22px; letter-spacing: .1em; color: var(--muted); }
+
+  /* уголки чертёжной рамки */
+  .corner { position: absolute; width: 60px; height: 60px; border-color: rgba(127,176,255,.45); border-style: solid; }
+  .corner.tl { left: 40px; top: 40px; border-width: 2px 0 0 2px; }
+  .corner.tr { right: 40px; top: 40px; border-width: 2px 2px 0 0; }
+  .corner.bl { left: 40px; bottom: 40px; border-width: 0 0 2px 2px; }
+  .corner.br { right: 40px; bottom: 40px; border-width: 0 2px 2px 0; }
+
+  /* сканирующая линия — проходит сверху вниз на каждой смене сцены */
+  .scan { position: absolute; left: 0; right: 0; height: 3px; top: -10px; z-index: 5;
+    background: linear-gradient(90deg, transparent, var(--accent-300) 30%, #fff 50%, var(--accent-300) 70%, transparent);
+    box-shadow: 0 0 40px 8px rgba(127,176,255,.45);
+    animation: scan 1s var(--ease-io) both; animation-delay: calc(var(--at) * 1s); }
+  @keyframes scan { 0% { transform: translateY(0); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; }
+                    100% { transform: translateY(1940px); opacity: 0; } }
+
+  /* ---------- сцены ---------- */
+  /* Уход сцены короткий, а следующая появляется на 0,4 с позже её ухода:
+     при одновременной смене старый и новый текст ложились друг на друга. */
+  .scene { position: absolute; inset: 0; padding: 220px 80px 160px;
+    animation: sceneOut .5s var(--ease-io) both; animation-delay: calc(var(--t1) * 1s); }
+  .scene > .in { position: relative; height: 100%; display: flex; flex-direction: column; justify-content: center;
+    animation: sceneIn .6s var(--ease) both; animation-delay: calc(var(--t0) * 1s); }
+  @keyframes sceneIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes sceneOut { from { opacity: 1; transform: none; filter: none; }
+                        to { opacity: 0; transform: translateY(-120px) scale(.97); filter: blur(14px); } }
+
+  .rise, .wipe, .pop, .slide, .fade { animation-duration: 1.1s; animation-timing-function: var(--ease);
+    animation-fill-mode: both; animation-delay: calc((var(--t0) + var(--d, 0)) * 1s); }
+  .rise { animation-name: rise; }
+  @keyframes rise { from { opacity: 0; transform: translateY(70px); filter: blur(10px); } to { opacity: 1; transform: none; filter: none; } }
+  .wipe { animation-name: wipe; }
+  @keyframes wipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+  .pop { animation-name: pop; }
+  @keyframes pop { from { opacity: 0; transform: scale(.7); } to { opacity: 1; transform: none; } }
+  .slide { animation-name: slide; }
+  @keyframes slide { from { opacity: 0; transform: translateX(160px); } to { opacity: 1; transform: none; } }
+  .fade { animation-name: fade; }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+  /* слова, появляющиеся по одному (разбивает скрипт внизу) */
+  .w { display: inline-block; white-space: pre; animation: word .9s var(--ease) both;
+       animation-delay: calc((var(--t0) + var(--d, 0)) * 1s); }
+  @keyframes word { from { opacity: 0; transform: translateY(0.6em) rotate(3deg); filter: blur(8px); } to { opacity: 1; transform: none; filter: none; } }
+
+  .eyebrow { display: flex; align-items: center; gap: 22px; font-family: "Mono"; font-size: 26px;
+    letter-spacing: .16em; text-transform: uppercase; color: var(--accent-300); }
+  .eyebrow::before { content: ""; width: 70px; height: 2px; background: var(--accent); flex: none; }
+  .h1 { font-family: "Display"; font-weight: 750; font-size: 108px; line-height: 1.02; letter-spacing: -.01em; }
+  .h2 { font-family: "Display"; font-weight: 750; font-size: 84px; line-height: 1.05; }
+  .lead { font-size: 40px; line-height: 1.45; color: var(--muted); }
+  .accent { color: var(--accent-300); }
+  .underline { position: relative; display: inline-block; }
+  .underline::after { content: ""; position: absolute; left: 0; right: 0; bottom: -6px; height: 10px; border-radius: 5px;
+    background: var(--accent); transform-origin: 0 50%; animation: grow .9s var(--ease) both;
+    animation-delay: calc((var(--t0) + var(--u, 1)) * 1s); }
+  @keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+  /* 1. заставка */
+  .intro { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; text-align: center; }
+  .intro .mark { width: 330px; height: 330px; color: #fff; }
+  .intro .mark path { animation: ray 1.2s var(--ease) both; }
+  .intro .mark path:nth-of-type(1) { animation-delay: calc((var(--t0) + .5) * 1s); }
+  .intro .mark path:nth-of-type(2) { animation-delay: calc((var(--t0) + .3) * 1s); }
+  .intro .mark path:nth-of-type(3) { animation-delay: calc((var(--t0) + .1) * 1s); }
+  @keyframes ray { from { opacity: 0; transform: translate(-40px, 40px); } to { opacity: 1; transform: none; } }
+  .intro .name { margin-top: 60px; font-family: "Display"; font-weight: 750; font-size: 190px; letter-spacing: .02em; line-height: 1; }
+  .intro .tag { margin-top: 36px; font-family: "Mono"; font-size: 30px; letter-spacing: .2em; color: var(--muted); }
+  .intro .bar { margin: 60px auto 0; width: 520px; height: 3px; background: var(--accent); transform-origin: 50% 50%;
+    animation: grow 1.2s var(--ease) both; animation-delay: calc((var(--t0) + 1.4) * 1s); }
+
+  /* 2. главный тезис — поверх приглушённого кадра с первого экрана сайта */
+  .poster { position: absolute; left: -80px; right: -80px; top: -260px; height: 1920px; opacity: .28;
+    background: url("../../assets/media/hero-poster.webp") center / cover; filter: grayscale(.3);
+    animation: kb 7s linear both; animation-delay: calc(var(--t0) * 1s);
+    mask-image: linear-gradient(180deg, transparent 0%, #000 30%, #000 60%, transparent 100%); }
+  @keyframes kb { from { transform: scale(1.15); } to { transform: scale(1); } }
+  .points { margin-top: 70px; display: grid; gap: 30px; }
+  .point { display: flex; gap: 26px; align-items: flex-start; font-size: 44px; line-height: 1.35; }
+  .tick { flex: none; width: 52px; height: 52px; border-radius: 50%; background: rgba(31,111,235,.18);
+    border: 2px solid var(--accent); display: grid; place-items: center; margin-top: -4px; }
+  .tick svg { width: 26px; height: 26px; }
+  .tick path { stroke: #fff; stroke-width: 3.5; fill: none; stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 40; stroke-dashoffset: 40; animation: draw .6s var(--ease) forwards;
+    animation-delay: calc((var(--t0) + var(--d, 0) + .35) * 1s); }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+
+  /* 3. что мы делаем */
+  .chips { margin-top: 80px; display: flex; flex-wrap: wrap; gap: 22px; }
+  .chip { padding: 24px 38px; border-radius: 60px; border: 2px solid rgba(127,176,255,.5);
+    background: rgba(13,28,48,.7); font-family: "Display"; font-weight: 650; font-size: 42px; }
+  .chip.hot { background: var(--accent); border-color: var(--accent); }
+  .outsrc { margin-top: 70px; padding: 46px 50px; border-left: 6px solid var(--accent);
+    background: linear-gradient(90deg, rgba(31,111,235,.18), rgba(31,111,235,0)); font-size: 46px; line-height: 1.45; }
+
+  /* 4. направления */
+  .dirs { margin-top: 50px; display: grid; gap: 22px; }
+  .dir { position: relative; padding: 32px 40px 32px 140px; border-radius: 18px;
+    background: rgba(13,28,48,.78); border: 1px solid rgba(127,176,255,.28); overflow: hidden; }
+  .dir::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: var(--accent); }
+  .dir__n { position: absolute; left: 40px; top: 28px; font-family: "Mono"; font-weight: 700; font-size: 48px; color: var(--accent-300); }
+  .dir__t { font-family: "Display"; font-weight: 700; font-size: 50px; line-height: 1.15; }
+  .dir__s { margin-top: 14px; font-size: 32px; line-height: 1.4; color: var(--muted); }
+
+  /* 5. цифры */
+  .stats { margin-top: 90px; display: grid; gap: 70px; }
+  .stat { display: grid; grid-template-columns: 330px 1fr; align-items: center; gap: 40px; padding-bottom: 60px;
+    border-bottom: 1px solid rgba(127,176,255,.25); }
+  .stat__v { font-family: "Display"; font-weight: 800; font-size: 200px; line-height: .9; letter-spacing: -.03em; }
+  .stat__v small { font-size: 52px; color: var(--accent-300); margin-left: 8px; letter-spacing: 0; }
+  .stat__l { font-size: 44px; line-height: 1.35; color: var(--muted); }
+  .stat__l b { color: #fff; font-weight: 650; }
+
+  /* 6. объекты */
+  .shots { position: relative; margin-top: 70px; height: 1180px; }
+  /* shotOut только forwards: с both его начальное состояние (видимый кадр)
+     действовало до задержки, и все пять кадров лежали друг на друге */
+  .shot { position: absolute; inset: 0; animation: shotIn .9s var(--ease) both, shotOut .45s var(--ease-io) forwards;
+    animation-delay: calc((var(--t0) + var(--d)) * 1s), calc((var(--t0) + var(--d) + var(--len)) * 1s); }
+  .shot:last-child { animation: shotIn .9s var(--ease) both; animation-delay: calc((var(--t0) + var(--d)) * 1s); }
+  @keyframes shotIn { from { opacity: 0; clip-path: inset(8% 8% 8% 8% round 30px); } to { opacity: 1; clip-path: inset(0 0 0 0 round 22px); } }
+  @keyframes shotOut { from { opacity: 1; } to { opacity: 0; } }
+  .shot__img { position: absolute; left: 0; right: 0; top: 0; height: 800px; border-radius: 22px; overflow: hidden; }
+  .shot__img img { width: 100%; height: 100%; object-fit: cover; animation: kb 3.4s linear both;
+    animation-delay: calc((var(--t0) + var(--d)) * 1s); }
+  .shot__img::after { content: ""; position: absolute; inset: 0; border-radius: 22px; border: 1px solid rgba(255,255,255,.18); }
+  /* подпись выплывает после того, как ушла предыдущая, — иначе на полсекунды
+     две подписи лежат друг на друге */
+  .shot__cap { position: absolute; left: 0; right: 0; top: 860px;
+    animation: rise .9s var(--ease) both; animation-delay: calc((var(--t0) + var(--d) + .45) * 1s); }
+  .shot__city { font-family: "Mono"; font-size: 28px; letter-spacing: .18em; text-transform: uppercase; color: var(--accent-300); }
+  .shot__name { margin-top: 18px; font-family: "Display"; font-weight: 700; font-size: 64px; line-height: 1.1; }
+  .shot__num { position: absolute; right: 30px; top: 30px; padding: 10px 20px; border-radius: 40px; background: rgba(7,17,31,.75);
+    font-family: "Mono"; font-size: 26px; letter-spacing: .1em; }
+
+  /* 7. порядок работы */
+  .steps { position: relative; margin-top: 70px; padding-left: 110px; }
+  .steps::before { content: ""; position: absolute; left: 34px; top: 20px; bottom: 60px; width: 3px;
+    background: linear-gradient(var(--accent), var(--accent-300)); transform-origin: 50% 0;
+    animation: growY 4s var(--ease-io) both; animation-delay: calc((var(--t0) + .4) * 1s); }
+  @keyframes growY { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+  .step { position: relative; margin-bottom: 64px; }
+  .step::before { content: attr(data-n); position: absolute; left: -110px; top: -4px; width: 72px; height: 72px; border-radius: 50%;
+    display: grid; place-items: center; background: var(--navy); border: 3px solid var(--accent);
+    font-family: "Mono"; font-weight: 700; font-size: 30px; color: #fff;
+    animation: dot .7s var(--ease) both; animation-delay: calc((var(--t0) + var(--d)) * 1s); }
+  @keyframes dot { from { transform: scale(0); background: var(--accent); } 60% { background: var(--accent); } to { transform: none; } }
+  .step__t { font-family: "Display"; font-weight: 700; font-size: 58px; line-height: 1.1; }
+  .step__s { margin-top: 10px; font-size: 36px; color: var(--muted); }
+
+  /* 8. доверие */
+  .trust { margin-top: 60px; display: grid; gap: 30px; }
+  .sro { margin-top: 60px; display: flex; gap: 36px; align-items: center; padding: 36px 40px; border-radius: 22px;
+    background: rgba(13,28,48,.85); border: 1px solid rgba(127,176,255,.35); }
+  .sro__logo { flex: none; background: #fff; border-radius: 14px; padding: 18px 22px; }
+  .sro__logo img { display: block; height: 110px; }
+  .sro__t { font-family: "Display"; font-weight: 700; font-size: 42px; line-height: 1.2; }
+  .sro__r { margin-top: 12px; font-family: "Mono"; font-size: 26px; color: var(--accent-300); }
+  .letters { position: relative; margin-top: 80px; height: 600px; }
+  .letter { position: absolute; top: 0; width: 380px; left: 50%; margin-left: -190px; border-radius: 10px; overflow: hidden;
+    box-shadow: 0 30px 70px rgba(0,0,0,.55); background: #fff;
+    animation: letter 1.1s var(--ease) both; animation-delay: calc((var(--t0) + var(--d)) * 1s); }
+  .letter img { display: block; width: 100%; }
+  @keyframes letter { from { opacity: 0; transform: translateY(260px) rotate(0deg); }
+                      to { opacity: 1; transform: translateX(var(--x)) rotate(var(--r)); } }
+  .letters__cap { position: absolute; left: 0; right: 0; bottom: -20px; text-align: center; font-family: "Mono";
+    font-size: 26px; letter-spacing: .12em; color: var(--muted); }
+
+  /* 9. призыв */
+  .cta { display: flex; flex-direction: column; height: 100%; justify-content: center; }
+  .btn { display: inline-flex; align-self: flex-start; margin-top: 70px; padding: 38px 64px; border-radius: 16px;
+    background: var(--accent); font-family: "Display"; font-weight: 700; font-size: 48px;
+    box-shadow: 0 0 0 0 rgba(31,111,235,.6); animation: pop 1s var(--ease) both, pulse 1.6s ease-out 4 both;
+    animation-delay: calc((var(--t0) + 1.2) * 1s), calc((var(--t0) + 2.2) * 1s); }
+  @keyframes pulse { from { box-shadow: 0 0 0 0 rgba(31,111,235,.65); } to { box-shadow: 0 0 0 46px rgba(31,111,235,0); } }
+  .contacts { margin-top: 90px; display: grid; gap: 34px; }
+  .contact { display: flex; align-items: baseline; gap: 30px; padding-bottom: 30px; border-bottom: 1px solid rgba(127,176,255,.25); }
+  .contact__k { width: 230px; flex: none; font-family: "Mono"; font-size: 26px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent-300); }
+  .contact__v { font-family: "Display"; font-weight: 700; font-size: 58px; }
+  .final-mark { position: absolute; left: 0; bottom: 0; display: flex; align-items: center; gap: 26px; }
+  .final-mark svg { width: 90px; height: 90px; color: #fff; }
+  .final-mark span { font-family: "Display"; font-weight: 750; font-size: 64px; }
+  .final-mark em { display: block; font-style: normal; font-family: "Mono"; font-size: 22px; letter-spacing: .16em; color: var(--muted); margin-top: 6px; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="glow"></div>
+  <div class="grid"></div>
+  <svg class="watermark" viewBox="0 0 64 64"><use href="#x"/></svg>
+  <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+  <div class="ruler"><div class="ruler__fill"></div></div>
+  <div class="brand-top"><svg viewBox="0 0 64 64"><use href="#x"/></svg>X-PTO</div>
+  <div class="site-top">x-pto.ru</div>
+
+  <!-- 1. Заставка -->
+  <section class="scene" style="--t0:0; --t1:4.2">
+    <div class="in intro">
+      <svg class="mark" viewBox="0 0 64 64">
+        <path fill="#1f6feb" fill-rule="evenodd" d="M27 32 H37 L16 56 H6 Z M30 32 H34 L17.375 51 H13.375 Z"/>
+        <path fill="currentColor" fill-rule="evenodd" d="M48 8 H58 L37 32 H27 Z M46.625 13 H50.625 L34 32 H30 Z"/>
+        <path fill="currentColor" fill-rule="evenodd" d="M6 8 H16 L58 56 H48 Z M13.375 13 H17.375 L50.625 51 H46.625 Z"/>
+      </svg>
+      <div class="name rise" style="--d:.8">X-PTO</div>
+      <div class="tag rise" style="--d:1.2">ДОКУМЕНТАЛЬНОЕ СОПРОВОЖДЕНИЕ<br>СТРОИТЕЛЬСТВА</div>
+      <div class="bar"></div>
+    </div>
+  </section>
+
+  <!-- 2. Главный тезис -->
+  <section class="scene" style="--t0:4.6; --t1:10.4">
+    <div class="poster"></div>
+    <div class="in">
+      <div class="eyebrow wipe" style="--d:.2">Проектная, исполнительная<br>и сдаточная документация</div>
+      <h1 class="h1" style="margin-top:60px" data-words="0.5 0.09">Документация по&nbsp;объекту — под&nbsp;ключ,</h1>
+      <div class="h1 accent rise" style="--d:1.35; --u:2.1"><span class="underline">по всей России</span></div>
+      <div class="points">
+        <div class="point rise" style="--d:2.3"><span class="tick"><svg viewBox="0 0 26 26"><path d="M5 13.5l5 5 11-12"/></svg></span>Сдача без возвратов и замечаний</div>
+        <div class="point rise" style="--d:2.6"><span class="tick"><svg viewBox="0 0 26 26"><path d="M5 13.5l5 5 11-12"/></svg></span>Штат инженеров ПТО — берёмся за самые сложные объекты</div>
+        <div class="point rise" style="--d:2.9"><span class="tick"><svg viewBox="0 0 26 26"><path d="M5 13.5l5 5 11-12"/></svg></span>Подключаемся к объекту, где сдача уже горит</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Что мы делаем -->
+  <section class="scene" style="--t0:10.8; --t1:16.4">
+    <div class="in">
+      <div class="eyebrow wipe" style="--d:.1">Что мы делаем</div>
+      <h2 class="h2" style="margin-top:50px" data-words="0.3 0.08">Производственно-<br>технический отдел</h2>
+      <div class="h2 accent rise" style="--d:.9">на аутсорсе</div>
+      <div class="outsrc rise" style="--d:1.4">Строительная компания строит — мы&nbsp;закрываем всё, что связано с&nbsp;бумагами.</div>
+      <div class="chips">
+        <span class="chip pop" style="--d:2.0">Проект</span>
+        <span class="chip pop" style="--d:2.15">Сметы</span>
+        <span class="chip pop" style="--d:2.3">Исполнительная</span>
+        <span class="chip pop" style="--d:2.45">Акты КС-2 и КС-3</span>
+        <span class="chip pop" style="--d:2.6">Объёмы</span>
+        <span class="chip pop" style="--d:2.75">Геодезия</span>
+        <span class="chip hot pop" style="--d:2.95">ЗОС</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Четыре направления -->
+  <section class="scene" style="--t0:16.8; --t1:23.4">
+    <div class="in">
+      <div class="eyebrow wipe" style="--d:.1">Услуги</div>
+      <h2 class="h2" style="margin-top:50px" data-words="0.25 0.1">Четыре направления</h2>
+      <div class="dirs">
+        <div class="dir slide" style="--d:.9"><span class="dir__n">01</span><div class="dir__t">Проектирование и&nbsp;легализация изменений</div><div class="dir__s">Проектная документация, White Label, госэкспертиза</div></div>
+        <div class="dir slide" style="--d:1.25"><span class="dir__n">02</span><div class="dir__t">Исполнительная документация</div><div class="dir__s">По Минстрою и ГОСТ, регламенты заказчиков, ИСУП, сметы, ППР</div></div>
+        <div class="dir slide" style="--d:1.6"><span class="dir__n">03</span><div class="dir__t">Инжиниринг и&nbsp;полевой контроль</div><div class="dir__s">Геодезия, обмеры, защита выполненных объёмов</div></div>
+        <div class="dir slide" style="--d:1.95"><span class="dir__n">04</span><div class="dir__t">Сдача объекта и&nbsp;ввод в&nbsp;эксплуатацию</div><div class="dir__s">Ростехнадзор, подключение сетей, ЗОС</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Цифры -->
+  <section class="scene" style="--t0:23.8; --t1:29">
+    <div class="in">
+      <div class="eyebrow wipe" style="--d:.1">В цифрах</div>
+      <div class="stats">
+        <div class="stat rise" style="--d:.3"><div class="stat__v" data-count="14" data-at="0.4"></div><div class="stat__l"><b>направлений документации</b> — от стадии «П» до ЗОС</div></div>
+        <div class="stat rise" style="--d:.8"><div class="stat__v"><span data-count="89" data-at="0.9"></span><small>РФ</small></div><div class="stat__l"><b>субъектов РФ</b> — работаем удалённо, география не ограничена</div></div>
+        <div class="stat rise" style="--d:1.3"><div class="stat__v"><span data-count="1" data-at="1.4"></span><small>день</small></div><div class="stat__l"><b>на оценку</b> объёма работ и стоимости</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Объекты: у каждого кадра --d (начало от сцены) и --len (сколько держится) -->
+  <section class="scene" style="--t0:29.4; --t1:40.2">
+    <div class="in">
+      <div class="eyebrow wipe" style="--d:.1">Наши объекты</div>
+      <div class="shots">
+        <div class="shot" style="--d:.3; --len:2.2">
+          <div class="shot__img"><img src="../../assets/img/objects/detskaya-bolnica-tver.webp" alt=""><span class="shot__num">01 / 10</span></div>
+          <div class="shot__cap"><div class="shot__city">Тверь</div><div class="shot__name">Детская областная клиническая больница</div></div>
+        </div>
+        <div class="shot" style="--d:2.5; --len:2.2">
+          <div class="shot__img"><img src="../../assets/img/objects/bauman-kampus-moskva.webp" alt=""><span class="shot__num">02 / 10</span></div>
+          <div class="shot__cap"><div class="shot__city">Москва</div><div class="shot__name">Новый кампус МГТУ им.&nbsp;Н.&nbsp;Э.&nbsp;Баумана</div></div>
+        </div>
+        <div class="shot" style="--d:4.7; --len:2.2">
+          <div class="shot__img"><img src="../../assets/img/objects/teatr-kamala-kazan.webp" alt=""><span class="shot__num">03 / 10</span></div>
+          <div class="shot__cap"><div class="shot__city">Казань</div><div class="shot__name">Театр им.&nbsp;Г.&nbsp;Камала, новое здание</div></div>
+        </div>
+        <div class="shot" style="--d:6.9; --len:2.2">
+          <div class="shot__img"><img src="../../assets/img/objects/moskino-metmash.webp" alt=""><span class="shot__num">04 / 10</span></div>
+          <div class="shot__cap"><div class="shot__city">Москва</div><div class="shot__name">Кинокластер «Москино» и&nbsp;«МЕТМАШ»</div></div>
+        </div>
+        <div class="shot" style="--d:9.1">
+          <div class="shot__img"><img src="../../assets/img/objects/dispetcherskaya-bashnya-simferopol.webp" alt=""><span class="shot__num">05 / 10</span></div>
+          <div class="shot__cap"><div class="shot__city">Симферополь</div><div class="shot__name">Диспетчерская башня аэропорта</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. Как мы работаем -->
+  <section class="scene" style="--t0:40.6; --t1:46.4">
+    <div class="in">
+      <div class="eyebrow wipe" style="--d:.1">Как мы работаем</div>
+      <div class="steps">
+        <div class="step rise" data-n="1" style="--d:.5"><div class="step__t">Заявка</div><div class="step__s">Ответим в течение рабочего дня</div></div>
+        <div class="step rise" data-n="2" style="--d:1.1"><div class="step__t">Аудит исходных данных</div><div class="step__s">Покажем, чего не хватает</div></div>
+        <div class="step rise" data-n="3" style="--d:1.7"><div class="step__t">Смета и сроки</div><div class="step__s">Стоимость и график по этапам</div></div>
+        <div class="step rise" data-n="4" style="--d:2.3"><div class="step__t">Работа</div><div class="step__s">Комплекты — по мере готовности</div></div>
+        <div class="step rise" data-n="5" style="--d:2.9"><div class="step__t">Согласование</div><div class="step__s">Замечания отрабатываем до снятия</div></div>
+        <div class="step rise" data-n="6" style="--d:3.5"><div class="step__t">Передача</div><div class="step__s">Бумага, PDF с подписями, ИСУП</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. Почему нам доверяют -->
+  <section class="scene" style="--t0:46.8; --t1:52">
+    <div class="in">
+      <div class="eyebrow wipe" style="--d:.1">Почему к нам</div>
+      <div class="trust">
+        <div class="point rise" style="--d:.3"><span class="tick"><svg viewBox="0 0 26 26"><path d="M5 13.5l5 5 11-12"/></svg></span>Сдача без возвратов и замечаний</div>
+        <div class="point rise" style="--d:.55"><span class="tick"><svg viewBox="0 0 26 26"><path d="M5 13.5l5 5 11-12"/></svg></span>Штат инженеров, а не один человек</div>
+        <div class="point rise" style="--d:.8"><span class="tick"><svg viewBox="0 0 26 26"><path d="M5 13.5l5 5 11-12"/></svg></span>Собственное поверенное оборудование</div>
+      </div>
+      <div class="sro rise" style="--d:1.2">
+        <div class="sro__logo"><img src="../../assets/img/sro-logo.png" alt=""></div>
+        <div><div class="sro__t">Член СРО проектировщиков «ЯРД»</div><div class="sro__r">рег. № СРО-П-116-18012010</div></div>
+      </div>
+      <div class="letters">
+        <div class="letter" style="--d:1.8; --x:-250px; --r:-8deg"><img src="../../assets/docs/rekomendaciya-antares-480.webp" alt=""></div>
+        <div class="letter" style="--d:2.0; --x:250px; --r:8deg"><img src="../../assets/docs/rekomendaciya-monarh-480.webp" alt=""></div>
+        <div class="letter" style="--d:2.2; --x:0px; --r:0deg"><img src="../../assets/docs/blagodarnost-minstroy-tatarstan-480.webp" alt=""></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9. Призыв -->
+  <section class="scene" style="--t0:52.4; --t1:999">
+    <div class="in cta">
+      <div class="eyebrow wipe" style="--d:.1">Опишите объект</div>
+      <h2 class="h2" style="margin-top:50px" data-words="0.3 0.08">Оценим объём и&nbsp;стоимость</h2>
+      <div class="h2 accent rise" style="--d:.8; --u:1.5"><span class="underline">за 1 день</span></div>
+      <div class="btn">Оставить заявку</div>
+      <div class="contacts">
+        <div class="contact rise" style="--d:1.6"><span class="contact__k">Телефон</span><span class="contact__v">+7 (920) 685-13-77</span></div>
+        <div class="contact rise" style="--d:1.85"><span class="contact__k">Сайт</span><span class="contact__v">x-pto.ru</span></div>
+        <div class="contact rise" style="--d:2.1"><span class="contact__k">Telegram</span><span class="contact__v">@ptotver</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- сканирующие линии на сменах сцен -->
+  <div class="scan" style="--at:4.1"></div>
+  <div class="scan" style="--at:10.3"></div>
+  <div class="scan" style="--at:16.3"></div>
+  <div class="scan" style="--at:23.3"></div>
+  <div class="scan" style="--at:28.9"></div>
+  <div class="scan" style="--at:40.1"></div>
+  <div class="scan" style="--at:46.3"></div>
+  <div class="scan" style="--at:51.9"></div>
+</div>
+
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="x" viewBox="0 0 64 64">
+    <path fill="#1f6feb" fill-rule="evenodd" d="M27 32 H37 L16 56 H6 Z M30 32 H34 L17.375 51 H13.375 Z"/>
+    <path fill="currentColor" fill-rule="evenodd" d="M48 8 H58 L37 32 H27 Z M46.625 13 H50.625 L34 32 H30 Z"/>
+    <path fill="currentColor" fill-rule="evenodd" d="M6 8 H16 L58 56 H48 Z M13.375 13 H17.375 L50.625 51 H46.625 Z"/>
+  </symbol>
+</svg>
+
+<script>
+  // Слова заголовков появляются по одному: data-words="старт шаг" (в секундах от начала сцены).
+  document.querySelectorAll('[data-words]').forEach(function (el) {
+    var p = el.getAttribute('data-words').split(' ').map(Number);
+    var parts = el.innerHTML.split(/(\s+|<br>)/);
+    var i = 0;
+    el.innerHTML = parts.map(function (w) {
+      if (!w.trim() || w === '<br>') return w;
+      var html = '<span class="w" style="--d:' + (p[0] + i * p[1]).toFixed(2) + '">' + w + '</span>';
+      i++;
+      return html;
+    }).join('');
+  });
+
+  // Счётчики: время в секундах от начала своей сцены.
+  var counters = [].map.call(document.querySelectorAll('[data-count]'), function (el) {
+    var scene = el.closest('.scene');
+    var t0 = parseFloat(getComputedStyle(scene).getPropertyValue('--t0'));
+    return { el: el, to: +el.dataset.count, at: t0 + parseFloat(el.dataset.at) };
+  });
+  function ease(x) { return 1 - Math.pow(1 - x, 4); }
+  window.tick = function (t) {
+    counters.forEach(function (c) {
+      var p = Math.min(1, Math.max(0, (t - c.at) / 1.6));
+      c.el.textContent = Math.round(ease(p) * c.to);
+    });
+  };
+  // Кадр в момент t: все анимации на паузе и выставлены вручную.
+  window.seek = function (t) {
+    document.getAnimations().forEach(function (a) { a.pause(); a.currentTime = t * 1000; });
+    window.tick(t);
+  };
+  // Просто открытая в браузере страница проигрывает ролик сама.
+  if (!/[?&]capture/.test(location.search)) {
+    var start = performance.now();
+    (function loop() { window.tick((performance.now() - start) / 1000); requestAnimationFrame(loop); })();
+  }
+</script>
+</body>
+</html>
