@@ -205,7 +205,7 @@ function Fund({
           <tbody>
             {rows.map((row, index) => (
               <tr key={row.limit} className="border-b border-neutral-200">
-                <td className="py-2.5 tabular-nums text-neutral-500">{index + 1}</td>
+                <td className="py-2.5 tabular-nums text-neutral-600">{index + 1}</td>
                 <td className="py-2.5 pr-3 text-neutral-700">{row.limit}</td>
                 <td className="whitespace-nowrap py-2.5 text-right font-semibold tabular-nums text-neutral-950">
                   {row.amount}
@@ -364,7 +364,6 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
         />
       </main>
       <Footer />
-      <div className="md:hidden" style={{ height: 'calc(4rem + env(safe-area-inset-bottom))' }} aria-hidden="true" />
       <MobileBar />
     </div>
   )

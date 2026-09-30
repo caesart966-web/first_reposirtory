@@ -39,8 +39,10 @@ export function Specialists() {
           Норма — крупной цитатой с латунной чертой: это текст закона, и
           выглядеть он должен иначе, чем мои советы под ним. */}
       <Reveal className="mt-16">
-        <blockquote className="border-l-2 border-accent-500 pl-6 sm:pl-10">
-          <p className="text-balance font-display text-[1.55rem] font-medium leading-snug text-neutral-950 sm:text-[2rem]">
+        {/* На телефоне цитата на ступень мельче: в 1,55rem она шла восемью
+            строками и занимала весь экран. */}
+        <blockquote className="border-l-2 border-accent-500 pl-5 sm:pl-10">
+          <p className="text-balance font-display text-[1.3rem] font-medium leading-snug text-neutral-950 min-[380px]:text-[1.4rem] sm:text-[2rem]">
             В штате члена СРО по основному месту работы должно быть не менее двух специалистов
             по организации работ, сведения о которых внесены в национальный реестр
             специалистов (НРС).
@@ -57,7 +59,7 @@ export function Specialists() {
         {WAYS.map((way, index) => (
           <li key={way.title} className="border-t border-neutral-300 pt-6">
             <Reveal delay={index * 90}>
-              <p className="text-sm tabular-nums text-neutral-500">Вариант {index + 1}</p>
+              <p className="text-sm tabular-nums text-neutral-600">Вариант {index + 1}</p>
               <h3 className="mt-4 font-display text-[1.65rem] font-medium leading-tight text-neutral-950">
                 {way.title}
               </h3>

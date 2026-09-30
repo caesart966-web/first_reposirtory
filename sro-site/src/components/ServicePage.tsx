@@ -291,7 +291,6 @@ export function ServicePage({ service }: { service: ServicePageData }) {
         />
       </main>
       <Footer />
-      <div className="md:hidden" style={{ height: 'calc(4rem + env(safe-area-inset-bottom))' }} aria-hidden="true" />
       <MobileBar />
     </div>
   )

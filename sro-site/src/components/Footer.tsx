@@ -81,7 +81,9 @@ function Group({ id, title, items, columns = false }: { id: string; title: strin
 export function Footer() {
   return (
     <footer className="bg-neutral-950 text-neutral-300">
-      <div className="mx-auto w-full max-w-6xl px-4 pb-10 pt-14 sm:px-6 sm:pt-16 lg:px-8">
+      {/* Запас снизу под полоску «домой» у iPhone: отступа-заглушки под
+          нижней панелью больше нет, подвал идёт до самого края. */}
+      <div className="mx-auto w-full max-w-6xl px-4 pb-[calc(2.5rem+env(safe-area-inset-bottom))] pt-14 sm:px-6 sm:pt-16 lg:px-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-10">
           <div className="flex items-center gap-3">
             <ScalesMark className="h-8 w-auto shrink-0 text-accent-300" />

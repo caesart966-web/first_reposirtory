@@ -45,12 +45,9 @@ export default function App() {
         <Contact />
       </main>
       <Footer />
-      {/* Отступ под фиксированную мобильную панель быстрых контактов */}
-      <div
-        className="md:hidden"
-        style={{ height: 'calc(4rem + env(safe-area-inset-bottom))' }}
-        aria-hidden="true"
-      />
+      {/* Отступа под нижней панелью связи нет (30.09.2026): панель уходит,
+          как только на экран въезжает «Связаться», и под подвалом отступ
+          оставлял светлую полосу на телефоне. */}
       <MobileBar />
     </div>
   )
