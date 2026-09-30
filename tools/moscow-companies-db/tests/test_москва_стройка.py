@@ -281,5 +281,17 @@ class TestСкачиваниеСРО(unittest.TestCase):
     def test_нет_адреса(self):
         self.assertEqual(мс._адрес_записи({"inn": "7700000001", "sro": {"address": "СПб"}}), "")
 
+
+class TestCheckoАдрес(unittest.TestCase):
+    def test_организация_и_ип_по_разным_адресам(self):
+        self.assertTrue(мс.адрес_checko("7702148410").endswith("/company"))
+        self.assertTrue(мс.адрес_checko("190902824870").endswith("/entrepreneur"))
+
+    def test_ип_без_юр_адреса(self):
+        # у ИП есть регион, а полного юридического адреса может не быть
+        r = мс.разобрать_checko({"ОКВЭД": {"Код": "43.21"}, "Регион": {"Код": "77"},
+                                 "Статус": {"Наим": "Действует"}})
+        self.assertEqual(мс.оценить(r)[0], "подходит")
+
 if __name__ == "__main__":
     unittest.main()

@@ -1205,7 +1205,7 @@ def разобрать_checko(data: dict) -> dict | None:
     адрес = ""
     юр = data.get("ЮрАдрес")
     if isinstance(юр, dict):
-        адрес = str(юр.get("АдресРФ") or "").strip()
+        адрес = str(юр.get("АдресРФ") or юр.get("НасПункт") or "").strip()
     статус = data.get("Статус")
     статус = str(статус.get("Наим") if isinstance(статус, dict) else статус or "")
     return {"region_code": регион, "address": адрес, "okved_main": main,
@@ -1214,9 +1214,17 @@ def разобрать_checko(data: dict) -> dict | None:
             "источник": "Checko"}
 
 
+def адрес_checko(инн: str) -> str:
+    """У Checko организации и ИП спрашиваются по разным адресам. Спросив ИП
+    как организацию, получаешь «не найдена» — так 16 предпринимателей из
+    реестров остались непроверенными."""
+    вид = "entrepreneur" if len(инн) == 12 else "company"
+    return f"https://api.checko.ru/v2/{вид}"
+
+
 def спросить_checko(session, инн: str, ключ: str) -> tuple[dict | None, str]:
     try:
-        resp = session.get("https://api.checko.ru/v2/company",
+        resp = session.get(адрес_checko(инн),
                            params={"key": ключ, "inn": инн}, timeout=60)
     except requests.RequestException as exc:
         return None, f"Checko: сеть ({type(exc).__name__})"
