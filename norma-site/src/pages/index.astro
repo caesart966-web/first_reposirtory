@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro'
 import { getCollection } from 'astro:content'
 import Hero from '../components/Hero.astro'
+import PartnerLogos from '../components/PartnerLogos.astro'
 import Calculator from '../components/Calculator.astro'
 import LeadForm from '../components/LeadForm.astro'
 import Icon from '../components/Icon.astro'
@@ -276,6 +277,11 @@ const howToSchema = {
   schema={[faqSchema, howToSchema]}
 >
   <Hero />
+
+  {/* Лента логотипов СРО-партнёров (просьба заказчика 30.09.2026) — сразу
+      под первым экраном: с кем я работаю, видно до всяких подробностей.
+      Логика и оговорки — в самом компоненте. */}
+  <PartnerLogos />
 
   <!-- Три направления: строители, проектировщики, изыскатели -->
   <section class="section section--paper dirs-sec" id="napravleniya" data-anchor>
