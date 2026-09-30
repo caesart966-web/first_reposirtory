@@ -347,6 +347,47 @@ console.log(`\n  Всего разных ссылок на нормы: ${laws.si
 const sorted = [...laws.entries()].sort((a, b) => b[1] - a[1])
 for (const [k, n] of sorted.slice(0, 12)) console.log(`      ${String(n).padStart(3)}× ${k}`)
 
+// ── 3а. Свежие разборы на главной ───────────────────────────────────────
+// Раздел «Свежие разборы» (с 30.09.2026) обещает ровно одно — что это
+// последние статьи. Сломать это можно молча: поменять сортировку на порядок
+// в разделах, взять не тот срез, — и главная будет месяцами показывать
+// «свежими» старые разборы, а число в ссылке «Вся база знаний — N» разойдётся
+// с базой. Даты берутся со страниц самих статей (article:published_time
+// и article:modified_time), а не из исходников: сверяется то, что собралось.
+const before3a = problems
+console.log('\nСвежие разборы на главной')
+{
+  const home = readFileSync(join(DIST, 'index.html'), 'utf8')
+  const sec = home.match(/<section\b[^>]*\bid="razbory"[\s\S]*?<\/section>/)?.[0]
+  if (!sec) {
+    fail('на главной нет раздела «Свежие разборы» (#razbory)')
+  } else {
+    const shown = [...sec.matchAll(/<li class="fr[^"]*"[\s\S]*?href="[^"]*\/baza-znaniy\/([^/"]+)\/"/g)].map((m) => m[1])
+    const artDir = join(DIST, 'baza-znaniy')
+    const arts = readdirSync(artDir, { withFileTypes: true })
+      .filter((e) => e.isDirectory() && existsSync(join(artDir, e.name, 'index.html')))
+      .map((e) => {
+        const h = readFileSync(join(artDir, e.name, 'index.html'), 'utf8')
+        const meta = (k) => h.match(new RegExp(`<meta property="article:${k}" content="([^"]+)"`))?.[1] ?? ''
+        return { id: e.name, pub: meta('published_time'), mod: meta('modified_time') }
+      })
+      .filter((a) => a.pub)
+    const want = [...arts]
+      .sort((a, b) => b.pub.localeCompare(a.pub) || b.mod.localeCompare(a.mod) || a.id.localeCompare(b.id))
+      .slice(0, 3)
+      .map((a) => a.id)
+    if (shown.join() !== want.join()) {
+      fail(`на главной не три последние статьи: показаны ${shown.join(', ') || 'никакие'}, а последние — ${want.join(', ')}`)
+    }
+    const n = Number(text(join(DIST, 'index.html')).match(/Вся база знаний — (\d+)/)?.[1])
+    if (n !== arts.length) fail(`ссылка на базу знаний говорит «${n || '?'}», а статей ${arts.length}`)
+    if (!/<section\b[^>]*\bid="razbory"[^>]*\bdata-nosearch/.test(home)) {
+      fail('раздел «Свежие разборы» не помечен data-nosearch — главная найдётся поиском на запросы чужих статей')
+    }
+    if (problems === before3a) console.log(`  ✓ три последние из ${arts.length}: ${want.join(', ')}`)
+  }
+}
+
 // ── 4. Персональные данные ──────────────────────────────────────────────
 //
 // Политика ПДн — единственный документ на сайте, где неправда стоит дороже,
