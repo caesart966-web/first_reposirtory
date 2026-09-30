@@ -8,6 +8,7 @@ import { FUNDS, LAW, TERMS } from '../config/facts'
 import { href, SITE } from '../config/site'
 import { FEES, FEES_NOTE, money } from '../config/fees'
 import HeadPhoto from '../components/HeadPhoto.astro'
+import PageNav from '../components/PageNav.astro'
 
 const faq = [
   {
@@ -58,6 +59,18 @@ const faqSchema = {
         <span class="stamp">Суммы сверены · {SITE.checkedDate}</span>
         <span class="law law--dark">{LAW.funds}</span>
       </div>
+      {/* Страница длинная — двадцать два экрана телефона, — а приходят сюда
+          с одним вопросом. Оглавление ведёт к ответу, не заставляя листать. */}
+      <PageNav
+        items={[
+          { href: '#kalkulyator', label: 'Калькулятор' },
+          { href: '#predlozhenie', label: 'Пять условий' },
+          { href: '#sostav', label: 'Из чего складывается' },
+          { href: '#tablicy', label: 'Фонды по уровням' },
+          { href: '#primer', label: 'Пример с торгами' },
+          { href: '#voprosy', label: 'Вопросы' },
+        ]}
+      />
     </div>
   </section>
 
@@ -66,7 +79,7 @@ const faqSchema = {
   <SpecialOffer />
 
   <!-- Из чего складывается -->
-  <section class="section">
+  <section class="section" id="sostav" data-anchor>
     <div class="wrap">
       <div class="s-head rv">
         <span class="eyebrow">Состав расходов</span>
@@ -160,9 +173,9 @@ const faqSchema = {
             <p>
               Целевой взнос идёт в НОСТРОЙ у строителей (<b>{money(FEES.build.target)}</b>)
               или в НОПРИЗ у проектировщиков и изыскателей (<b>{money(FEES.design.target)}</b>).
-              Страхование гражданской ответственности требуется большинством СРО и продлевается
-              ежегодно — но <b>в первый год оно не требуется</b>, это одно из условий вступления
-              через меня.
+              Страхование гражданской ответственности СРО вправе требовать своими документами,
+              и продлевается оно ежегодно, — но <b>в первый год оно не требуется</b>, это одно
+              из условий вступления через меня.
             </p>
           </div>
           <div class="p-tag">ежегодно</div>
@@ -293,7 +306,7 @@ const faqSchema = {
   </section>
 
   <!-- Пример расчёта -->
-  <section class="section">
+  <section class="section" id="primer" data-anchor>
     <div class="wrap">
       <div class="s-head rv">
         <span class="eyebrow">Как это считается</span>
@@ -353,7 +366,7 @@ const faqSchema = {
   </section>
 
   <!-- FAQ -->
-  <section class="section section--tight">
+  <section class="section section--tight" id="voprosy" data-anchor>
     <div class="wrap">
       <div class="s-head rv">
         <h2>Вопросы <em>про деньги</em></h2>

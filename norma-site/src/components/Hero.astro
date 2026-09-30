@@ -668,6 +668,7 @@ import { GIFT_TAG, GIFTS, OFFER } from '../config/offer'
   .ho-list { margin: 0; display: grid; }
   .ho-row {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: baseline;
     gap: 4px 14px;
@@ -676,8 +677,12 @@ import { GIFT_TAG, GIFTS, OFFER } from '../config/offer'
   }
   .ho-row:last-child { border-bottom: 1px solid var(--line); }
   .ho-row dt { font-size: 15px; color: var(--ink); }
+  /* Не помещается в строку — сумма уходит под подпись, к правому краю,
+     а не распирает карточку: на 320 px с полем под кнопки связи строка
+     «Специалисты НРС — после вступления» выдавливала весь первый экран
+     вбок на 21 px (поймал test-pages). */
   .ho-row dd {
-    margin: 0;
+    margin: 0 0 0 auto;
     font-size: 15px;
     font-weight: 600;
     color: var(--ink);
@@ -707,6 +712,15 @@ import { GIFT_TAG, GIFTS, OFFER } from '../config/offer'
     .hero-offer { padding: 24px 18px 14px; gap: 11px; }
     .ho-title { font-size: 23px; }
     .ho-row { padding: 7px 0; }
+  }
+  /* Пока на телефоне открыт первый экран, у правого края стоит столбик
+     кнопок связи (Base.astro), и он ложился ровно на суммы: «0 ₽»
+     и «5 000 ₽ в месяц» читались наполовину. Поле справа отодвигает
+     суммы из-под значков; линейки между строками остаются во всю ширину.
+     Порог тот же, что у самого столбика. Правило после основных —
+     та же сила, побеждает последнее. */
+  @media (max-width: 767px) {
+    .ho-row { padding-right: 28px; }
   }
 
   /* ── Окошко «Подарок на выбор» ──

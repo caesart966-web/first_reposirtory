@@ -1,0 +1,60 @@
+---
+// «На этой странице» — оглавление длинной страницы в тёмной шапке.
+//
+// Зачем (30.09.2026, просьба заказчика: «чтобы клиент не запутался»).
+// «Стоимость» на телефоне — двадцать два экрана, база знаний — шестнадцать.
+// Человек приходит с одним вопросом: «сколько весят фонды по уровням»,
+// «что там про деньги». Без оглавления ответ лежит на двенадцатом экране,
+// и узнать об этом можно, только долистав. Ссылки ведут на якоря той же
+// страницы; отступ под липкую шапку даёт общее правило в global.css
+// (section[id], h2[id]), и его стережёт test-anchors.mjs.
+//
+// Кнопки, а не строка текста: каждая — цель для пальца высотой 40 px.
+// Фон у кнопки свой, сплошной: шапка лежит на фотографии, и светлый текст
+// не должен зависеть от того, что под ним окажется.
+interface Props {
+  items: readonly { href: string; label: string }[]
+  label?: string
+}
+const { items, label = 'На этой странице' } = Astro.props
+---
+
+<nav class="pnav" aria-label={label} data-nosearch>
+  <span class="pnav-t">{label}:</span>
+  {items.map((i) => <a href={i.href}>{i.label}</a>)}
+</nav>
+
+<style>
+  .pnav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 22px;
+    position: relative;
+  }
+  .pnav-t {
+    font-size: 13.5px;
+    color: var(--on-dark-muted);
+    margin-right: 4px;
+  }
+  .pnav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 8px 14px;
+    border: 1px solid var(--dark-line);
+    border-radius: 999px;
+    background: var(--dark);
+    color: var(--on-dark);
+    font-size: 14.5px;
+    line-height: 1.2;
+    text-decoration: none;
+    transition: border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+  }
+  .pnav a:hover { border-color: var(--acc-bright); color: #fff; }
+  .pnav a:focus-visible { outline: 2px solid var(--acc-bright); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) {
+    .pnav a { transition: none; }
+  }
+</style>

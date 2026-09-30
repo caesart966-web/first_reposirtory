@@ -5,7 +5,9 @@
 // Зачем. Столбик лежит ПОВЕРХ страницы, и всё, что делает его терпимым,
 // держится на условиях, которые ломаются молча: он поднимается над полосой
 // про cookie (высоту сообщает скрипт полосы), прячется при открытом меню,
-// при наборе текста в форме и в конце страницы. Сломайся любое — сайт
+// при наборе текста в форме, в конце страницы и пока человек листает вниз
+// (с 30.09.2026), а суммы карточки условий и плюсы вопросов отодвинуты
+// из-под него. Сломайся любое — сайт
 // соберётся и будет выглядеть рабочим, а на телефоне значки лягут поверх
 // кнопок полосы, пунктов меню или поля, в которое человек печатает.
 //
@@ -73,6 +75,14 @@ await ctx.addInitScript(() => { try { localStorage.setItem('norma-cookie', 'need
 const page = await ctx.newPage()
 await page.goto(BASE + '/', { waitUntil: 'networkidle' })
 
+// Прокрутка шагами, как пальцем: каждый шаг короче экрана.
+const step = (dy, n) => page.evaluate(async ([dy, n]) => {
+  for (let i = 0; i < n; i++) {
+    window.scrollBy({ top: dy, behavior: 'instant' })
+    await new Promise((r) => setTimeout(r, 60))
+  }
+}, [dy, n])
+
 // ── Первый экран: видно, всё на месте ────────────────────────────────────
 {
   const r = await rail(page)
@@ -86,13 +96,61 @@ await page.goto(BASE + '/', { waitUntil: 'networkidle' })
     check(!unnamed.length, 'У каждой ссылки есть название для экранного диктора и поисковика', `без названия: ${unnamed.length}`)
     const lowest = r.links.reduce((a, b) => (b.top > a.top ? b : a))
     check(lowest.tel, 'Телефон внизу, ближе всего к большому пальцу')
+
+    // Суммы в карточке условий — главное на первом экране. До 30.09.2026
+    // столбик ложился ровно на них: «0 ₽» и «5 000 ₽ в месяц» читались
+    // наполовину. Меряется правый край каждой суммы против левого края
+    // столбика — на тех строках, мимо которых он проходит по высоте.
+    const covered = await page.evaluate((rl) => {
+      const out = []
+      for (const dd of document.querySelectorAll('.ho-row dd')) {
+        const b = dd.getBoundingClientRect()
+        if (b.bottom > rl.top && b.top < rl.bottom && b.right > rl.left) out.push(`${dd.textContent.trim()} (${Math.round(b.right)} > ${Math.round(rl.left)})`)
+      }
+      return out
+    }, { top: r.top, bottom: r.bottom, left: r.left })
+    check(!covered.length, 'Суммы в карточке условий не под значками', covered.join(', '))
   }
+}
+
+// ── Листает вниз — уходит, листает вверх — возвращается ──────────────────
+// Человек, листающий вниз, читает, и столбик закрывал бы концы строк.
+// Листнул вверх — ищет, где написать: значки на месте. Шаги короче экрана:
+// скачок больше экрана — это переход по ссылке, а не чтение.
+{
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
+  await page.waitForTimeout(150)
+  await step(160, 8)
+  await page.waitForTimeout(200)
+  check(!(await rail(page)).shown, 'Уходит, пока человек листает вниз, — не закрывает текст')
+  await step(-60, 2)
+  await page.waitForTimeout(200)
+  check((await rail(page)).shown, 'Возвращается, как только листнули вверх')
+
+  // «Плюс» у вопросов: по нему нажимают, и под столбиком палец попадал
+  // в мессенджер вместо ответа. Правый край плюса — левее столбика.
+  await page.evaluate(() => document.querySelector('#faq').scrollIntoView({ behavior: 'instant' }))
+  await step(-60, 2)
+  await page.waitForTimeout(200)
+  const r = await rail(page)
+  const plus = await page.evaluate(() => [...document.querySelectorAll('#faq summary')].map((s) => {
+    const b = s.getBoundingClientRect()
+    return { top: b.top, bottom: b.bottom, right: b.right - parseFloat(getComputedStyle(s).paddingRight) }
+  }))
+  const under = plus.filter((p) => p.bottom > r.top && p.top < r.bottom && p.right > r.left)
+  check(r.shown && !under.length, 'Плюсы у вопросов не под значками', under.length ? `под столбиком ${under.length} из ${plus.length}` : r.shown ? '' : 'столбик не показался')
 }
 
 // ── Поле формы в фокусе — прячется; флажок — нет ─────────────────────────
 {
   await page.locator('#zayavka input[type="tel"]').first().focus()
   check(!(await rail(page)).shown, 'Прячется, пока человек печатает в поле формы')
+  await page.evaluate(() => document.activeElement?.blur())
+  // Флажок нажимают, когда он уже на экране: ставим его в середину экрана
+  // и листаем чуть вверх, чтобы столбик показался, — и только потом фокус.
+  // Иначе фокус сам прокрутил бы страницу вниз, и столбик ушёл бы от этого.
+  await page.evaluate(() => document.querySelector('#zayavka input[type="checkbox"]').scrollIntoView({ block: 'center', behavior: 'instant' }))
+  await step(-60, 2)
   await page.locator('#zayavka input[type="checkbox"]').first().focus()
   check((await rail(page)).shown, 'Не прячется от флажка согласия — иначе мигал бы при каждом нажатии')
   await page.evaluate(() => document.activeElement?.blur())
