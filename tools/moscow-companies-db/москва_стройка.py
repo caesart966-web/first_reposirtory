@@ -39,6 +39,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import os
 import random
 import re
 import sqlite3
@@ -722,11 +723,13 @@ def _лист_компаний(wb, имя: str, заголовок: str, поя�
     if строки:
         буквы = get_column_letter(len(КОЛОНКИ_ЛИСТА))
         ws.auto_filter.ref = f"A3:{буквы}{последняя}"
-        кол_сро = get_column_letter([к for к, _ in КОЛОНКИ_ЛИСТА].index("В СРО") + 1)
+        имена = [к for к, _ in КОЛОНКИ_ЛИСТА]
+        статус = next((к for к in ("В СРО", "В строительной СРО") if к in имена), None)
+        кол_сро = get_column_letter(имена.index(статус) + 1) if статус else None
         диапазон = f"{кол_сро}4:{кол_сро}{последняя}"
-        for значение, фон, цвет in (("Да", "C6EFCE", "006100"),
-                                    ("Нет", "FFC7CE", "9C0006"),
-                                    ("Исключена", "FFEB9C", "9C5700")):
+        for значение, фон, цвет in ((("Да", "C6EFCE", "006100"),
+                                     ("Нет", "FFC7CE", "9C0006"),
+                                     ("Исключена", "FFEB9C", "9C5700")) if статус else ()):
             ws.conditional_formatting.add(диапазон, FormulaRule(
                 formula=[f'${кол_сро}4="{значение}"'],
                 fill=PatternFill("solid", fgColor=фон),
@@ -977,6 +980,423 @@ def cmd_таблица(args) -> int:
     return 0
 
 
+# -- команда «реестры»: члены заданных СРО -> Москва, ОКВЭД 41–43, СРО --------
+
+# Реестры, о которых просил заказчик. Сравнение по началу названия: «СФЕРА
+# проект» ловит и «СФЕРА проектировщиков», а строительная «СИС» (все 374 её
+# члена — Петербург) НЕ ловится «СИС проект» — их путать нельзя
+РЕЕСТРЫ_ПО_УМОЛЧАНИЮ = ("СФЕРА изыскатели", "СФЕРА проект", "СИС проект", "ЯРД")
+
+ОКВЭД.update({
+    "71.11": "Деятельность в области архитектуры",
+    "71.12": "Деятельность в области инженерных изысканий, инженерно-технического "
+             "проектирования, управления проектами строительства, строительного "
+             "контроля и авторского надзора",
+})
+
+
+def _норм_текст(value: Any) -> str:
+    text = str(value or "").lower().replace("ё", "е")
+    text = re.sub(r"[«»\"'`]", "", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def реестр_подходит(тип: Any, нужные: Iterable[str]) -> str | None:
+    t = _норм_текст(тип)
+    if not t:
+        return None
+    for n in нужные:
+        if t.startswith(_норм_текст(n)):
+            return str(тип).strip()
+    return None
+
+
+def читать_реестр(путь: Path, нужные: Iterable[str]) -> tuple[list[dict], Counter]:
+    """Строки файла-реестра: ИНН, название, реестр, статус, регион по файлу.
+
+    Понимает два вида файлов. Выгрузка из вашей базы с колонкой «Тип
+    организации» — берутся только строки нужных реестров. Файл одного
+    реестра без такой колонки — берутся все строки, а реестром считается
+    имя файла.
+    """
+    from openpyxl import load_workbook
+    wb = load_workbook(путь, read_only=True, data_only=True)
+    строки, типы = [], Counter()
+    for ws in wb.worksheets:
+        rows = ws.iter_rows(values_only=True)
+        шапка, кол = None, {}
+        for _ in range(15):
+            row = next(rows, None)
+            if row is None:
+                break
+            имена = [_норм_текст(x) for x in row]
+            if any(x == "инн" or x.startswith("инн ") for x in имена):
+                шапка = имена
+                break
+        if шапка is None:
+            continue
+        for n, x in enumerate(шапка):
+            for ключ, признак in (("инн", lambda x: x == "инн" or x.startswith("инн ")),
+                                  ("имя", lambda x: x.startswith("наименован") or x == "название"),
+                                  ("тип", lambda x: x.startswith("тип организац")),
+                                  ("статус", lambda x: x.startswith("статус")),
+                                  ("регион", lambda x: x.startswith("регион"))):
+                if ключ not in кол and признак(x):
+                    кол[ключ] = n
+        for row in rows:
+            if not row or кол["инн"] >= len(row):
+                continue
+            инн = норм_инн(row[кол["инн"]])
+            if len(инн) not in (10, 12):
+                continue
+            get = lambda k: row[кол[k]] if k in кол and кол[k] < len(row) else None
+            if "тип" in кол:
+                типы[str(get("тип") or "").strip()] += 1
+                реестр = реестр_подходит(get("тип"), нужные)
+                if not реестр:
+                    continue
+            else:
+                реестр = путь.stem
+            строки.append({"inn": инн, "имя": str(get("имя") or "").strip(),
+                           "реестр": реестр, "статус": str(get("статус") or "").strip(),
+                           "регион": str(get("регион") or "").strip()})
+    wb.close()
+    return строки, типы
+
+
+def строки_базы_по_инн(путь: Path, инны: set[str]) -> dict[str, dict]:
+    if not путь.exists():
+        return {}
+    con = sqlite3.connect(f"file:{путь}?mode=ro", uri=True)
+    con.row_factory = sqlite3.Row
+    найдено, список = {}, sorted(инны)
+    for i in range(0, len(список), 500):
+        часть = список[i:i + 500]
+        q = f"SELECT * FROM companies WHERE inn IN ({','.join('?' * len(часть))})"
+        for row in con.execute(q, часть):
+            c = dict(row)
+            c["okved_add"] = _json_list(c.get("okved_add"))
+            найдено[норм_инн(c["inn"])] = c
+    con.close()
+    return найдено
+
+
+def _оквэд_checko(value: Any) -> str:
+    if isinstance(value, dict):
+        return str(value.get("Код") or "").strip()
+    return str(value or "").strip()
+
+
+def разобрать_checko(data: dict) -> dict | None:
+    """Регион, адрес, ОКВЭД и статус из ответа Checko /company.
+
+    Форма ответа снята с настоящего: «Регион»: {"Код": "77"}, «ЮрАдрес»:
+    {"АдресРФ": …}, «ОКВЭД»: {"Код": …}, «Статус»: {"Наим": "Действует"};
+    дополнительные ОКВЭД — список в «ОКВЭДДоп». Без основного ОКВЭД ответ
+    считается неразобранным: гадать нельзя.
+    """
+    main = _оквэд_checko(data.get("ОКВЭД"))
+    if not main:
+        return None
+    доп = []
+    for key, value in data.items():
+        if key.startswith("ОКВЭДДоп") and isinstance(value, list):
+            доп += [x for x in (_оквэд_checko(v) for v in value) if x]
+    регион = data.get("Регион")
+    регион = str(регион.get("Код") if isinstance(регион, dict) else регион or "").strip()
+    адрес = ""
+    юр = data.get("ЮрАдрес")
+    if isinstance(юр, dict):
+        адрес = str(юр.get("АдресРФ") or "").strip()
+    статус = data.get("Статус")
+    статус = str(статус.get("Наим") if isinstance(статус, dict) else статус or "")
+    return {"region_code": регион, "address": адрес, "okved_main": main,
+            "okved_add": доп, "is_active": 0 if re.search(r"ликвид|прекращ|исключ",
+                                                          статус.lower()) else 1,
+            "источник": "Checko"}
+
+
+def спросить_checko(session, инн: str, ключ: str) -> tuple[dict | None, str]:
+    try:
+        resp = session.get("https://api.checko.ru/v2/company",
+                           params={"key": ключ, "inn": инн}, timeout=60)
+    except requests.RequestException as exc:
+        return None, f"Checko: сеть ({type(exc).__name__})"
+    if resp.status_code != 200:
+        return None, f"Checko: HTTP {resp.status_code}"
+    try:
+        payload = resp.json()
+    except ValueError:
+        return None, "Checko: ответ не разобрался"
+    meta = payload.get("meta") if isinstance(payload, dict) else None
+    if isinstance(meta, dict) and str(meta.get("status", "")).lower() == "error":
+        return None, f"Checko: {meta.get('message') or 'ошибка'}"
+    data = payload.get("data") if isinstance(payload, dict) else None
+    if not isinstance(data, dict) or not data:
+        return None, "Checko: компания не найдена"
+    разбор = разобрать_checko(data)
+    if разбор is None:
+        print(f"[реестры] Checko по ИНН {инн}: не нашёл ОКВЭД в ответе. Ключи ответа: "
+              f"{sorted(data)[:30]}", file=sys.stderr)
+        return None, "Checko: в ответе нет ОКВЭД"
+    return разбор, ""
+
+
+def оценить(c: dict | None) -> tuple[str, str, str]:
+    """(вердикт, строительный ОКВЭД, как) для данных о компании.
+
+    вердикт: «подходит» или причина, по которой не подходит.
+    """
+    if c is None:
+        return "нет данных", "", ""
+    if c.get("is_active") == 0:
+        return "ликвидирована или в ликвидации", "", ""
+    регион = str(c.get("region_code") or "").strip()
+    if регион and регион != "77":
+        return f"юр. адрес не в Москве (код региона {регион})", "", ""
+    if not москва_по_адресу(c.get("address")):
+        return "юр. адрес не в Москве (по адресу)", "", ""
+    if not регион and not re.search(r"москв", (c.get("address") or "").lower()):
+        return "регион не определён", "", ""
+    main = (c.get("okved_main") or "").strip()
+    if раздел_оквэд(main):
+        return "подходит", main, "основной"
+    доп = next((x for x in c.get("okved_add") or [] if раздел_оквэд(x)), "")
+    if доп:
+        return "подходит", доп, "дополнительный"
+    return f"нет ОКВЭД 41–43 (основной {main or '—'})", "", ""
+
+
+def проверить_сро(session, инн: str) -> dict | None:
+    payload = запрос(session, тело(1, 50, инн), f"ИНН {инн}")
+    if payload is None:
+        return None
+    свои = [сжать(r) for r in записи_ответа(payload) if норм_инн(r.get("inn")) == инн]
+    return свести(свои)
+
+
+КОЛОНКИ_РЕЕСТРЫ = [
+    ("№", 6), ("Наименование", 46), ("ИНН", 13), ("Реестр и статус в нём", 40),
+    ("Юр. адрес", 48), ("Основной ОКВЭД", 11), ("Строительный ОКВЭД", 11),
+    ("41–43 основной или доп.", 14), ("Вид деятельности (строительный ОКВЭД)", 46),
+    ("В строительной СРО", 13), ("Строительная СРО", 46), ("Исключена из СРО", 12),
+    ("Откуда ОКВЭД и адрес", 18),
+]
+
+
+def cmd_реестры(args) -> int:
+    from openpyxl import Workbook
+    файлы = [Path(f) for f in args.файлы]
+    нет = [str(f) for f in файлы if not f.exists()]
+    if нет:
+        print(f"Не найдены файлы: {', '.join(нет)}", file=sys.stderr)
+        return 1
+
+    # 1. члены заданных реестров
+    по_инн: dict[str, dict] = {}
+    for f in файлы:
+        строки, типы = читать_реестр(f, args.реестры)
+        if типы:
+            print(f"[реестры] {f.name}: реестры в файле — "
+                  + "; ".join(f"{т or '(пусто)'}: {n}" for т, n in типы.most_common()))
+        взяты = Counter(s["реестр"] for s in строки)
+        print(f"[реестры] {f.name}: взято строк {len(строки)} — "
+              + ("; ".join(f"{т}: {n}" for т, n in взяты.most_common()) or "ни одной"))
+        for s in строки:
+            d = по_инн.setdefault(s["inn"], {"inn": s["inn"], "имя": s["имя"],
+                                             "реестры": [], "регион": s["регион"]})
+            d["имя"] = d["имя"] or s["имя"]
+            d["регион"] = d["регион"] or s["регион"]
+            метка = f"{s['реестр']} ({s['статус'].lower()})" if s["статус"] else s["реестр"]
+            if метка not in d["реестры"]:
+                d["реестры"].append(метка)
+    for нужный in args.реестры:
+        if not any(_норм_текст(r).startswith(_норм_текст(нужный))
+                   for d in по_инн.values() for r in d["реестры"]):
+            print(f"[реестры] ВНИМАНИЕ: реестра «{нужный}» нет ни в одном файле",
+                  file=sys.stderr)
+    print(f"[реестры] уникальных компаний: {len(по_инн)}", flush=True)
+
+    # 2. регион и ОКВЭД: база mosstroybase (реестр МСП ФНС), остальным — Checko
+    база = строки_базы_по_инн(Path(args.db), set(по_инн))
+    print(f"[реестры] нашлись в базе mosstroybase (Москва, ОКВЭД 41–43): {len(база)}")
+    ключ = args.checko_key or os.environ.get("CHECKO_API_KEY", "")
+    почему_без_checko = "нет ключа Checko (set CHECKO_API_KEY=ключ)"
+    session = сессия()
+    checko_сделано = checko_осечки = 0
+    for инн, d in по_инн.items():
+        c = база.get(инн)
+        if c is not None and not (c.get("okved_main") or c.get("okved_add")):
+            c = None   # добавлена списком ИНН без данных реестра МСП — ОКВЭД неизвестен
+        if c is not None:
+            c["источник"] = "реестр МСП ФНС"
+            d["данные"], d["вердикт"] = c, оценить(c)
+            continue
+        # В базе все московские компании с 41–43 из реестра МСП. Нет в базе —
+        # значит у компании нет 41–43, или она не в Москве, или не входит
+        # в реестр МСП (крупная). Последнее и проверяем через Checko,
+        # но только тем, кого ваша база числит в Москве или без региона
+        регион = _норм_текст(d["регион"])
+        if регион and "москва" not in регион:
+            d["данные"], d["вердикт"] = None, (
+                f"нет в реестре МСП среди московских с 41–43; по вашей базе регион: "
+                f"{d['регион']}", "", "")
+            continue
+        if not ключ:
+            d["данные"], d["вердикт"] = None, (f"не проверено: {почему_без_checko}", "", "")
+            continue
+        data, ошибка = спросить_checko(session, инн, ключ)
+        checko_сделано += 1
+        if data is None:
+            checko_осечки += 1
+            d["данные"], d["вердикт"] = None, (f"не проверено — {ошибка}", "", "")
+            if re.search(r"лимит|limit|429|402", ошибка.lower()):
+                ключ = ""   # дальше спрашивать бесполезно
+                почему_без_checko = ("лимит Checko на сегодня исчерпан — "
+                                     "повторите команду завтра")
+        else:
+            d["данные"], d["вердикт"] = data, оценить(data)
+        time.sleep(args.пауза)
+    if checko_сделано:
+        print(f"[реестры] Checko: запросов {checko_сделано}, не получилось {checko_осечки}")
+
+    итог = [d for d in по_инн.values() if d["вердикт"][0] == "подходит"]
+    проверить = [d for d in по_инн.values() if d["вердикт"][0].startswith("не проверено")]
+    мимо = [d for d in по_инн.values()
+            if d["вердикт"][0] != "подходит" and d not in проверить]
+    print(f"[реестры] Москва + ОКВЭД 41–43: {len(итог)}; не подошли: {len(мимо)}; "
+          f"не удалось проверить: {len(проверить)}", flush=True)
+
+    # 3. строительная СРО — каждой итоговой компании поиском по ИНН
+    дамп = Path(args.дамп)
+    из_дампа = {}
+    if дамп.exists():
+        из_дампа, _ = членства_по_инн(дамп, {d["inn"] for d in итог})
+    расхождений = 0
+    for n, d in enumerate(итог, 1):
+        сро = проверить_сро(session, d["inn"])
+        if сро is None:
+            сро = свести(из_дампа.get(d["inn"], [])) if дамп.exists() else None
+            d["сро_как"] = "по выгрузке реестра" if сро else "не проверено"
+        else:
+            d["сро_как"] = "поиск по ИНН"
+            if дамп.exists() and свести(из_дампа.get(d["inn"], []))["В СРО"] != сро["В СРО"]:
+                расхождений += 1
+        d["сро"] = сро or {"В СРО": "Не проверено", "СРО": "", "Исключена": None}
+        if n % 25 == 0:
+            print(f"[реестры] СРО проверено {n}/{len(итог)}", flush=True)
+        time.sleep(args.пауза)
+    if дамп.exists() and итог:
+        print(f"[реестры] выгрузка НОСТРОЙ разошлась с поиском по ИНН в {расхождений} "
+              f"из {len(итог)} случаев")
+
+    # 4. Excel
+    def ряд(d, вердикт_колонкой=False):
+        c = d.get("данные") or {}
+        вердикт, код, как = d["вердикт"]
+        сро = d.get("сро") or {}
+        адрес = c.get("address") or ("г. Москва" if str(c.get("region_code")) == "77" else "")
+        return {"Наименование": c.get("name_short") or c.get("name") or d["имя"],
+                "ИНН": d["inn"], "Реестр и статус в нём": "; ".join(d["реестры"]),
+                "Юр. адрес": адрес, "Основной ОКВЭД": c.get("okved_main") or "",
+                "Строительный ОКВЭД": код, "41–43 основной или доп.": как,
+                "Вид деятельности (строительный ОКВЭД)": название_оквэд(код),
+                "В строительной СРО": сро.get("В СРО", ""),
+                "Строительная СРО": сро.get("СРО", ""),
+                "Исключена из СРО": разобрать_дату(сро.get("Исключена")),
+                "Откуда ОКВЭД и адрес": c.get("источник", "") + (
+                    f"; СРО: {d['сро_как']}" if d.get("сро_как") else ""),
+                "Почему не подошла": вердикт, "Регион по вашей базе": d["регион"]}
+
+    строки_итог = sorted((ряд(d) for d in итог),
+                         key=lambda s: (s["41–43 основной или доп."] != "основной",
+                                        s["Наименование"].lower()))
+    стили = _стили()
+    wb = Workbook(write_only=True)
+
+    ws = wb.create_sheet("Сводка")
+    from openpyxl.cell import WriteOnlyCell
+    ws.column_dimensions["A"].width = 70
+    ws.column_dimensions["B"].width = 12
+
+    def w(текст, число=None, стиль=None):
+        a = WriteOnlyCell(ws, value=текст)
+        if стиль:
+            a.font = стили[стиль]
+        ws.append([a] if число is None else [a, число])
+
+    по_сро = Counter(s["В строительной СРО"] for s in строки_итог)
+    w("Члены СФЕРА изыскатели, СФЕРА проект, СИС проект, ЯРД: Москва, ОКВЭД 41–43, "
+      "строительная СРО", стиль="заголовок")
+    w(f"Сформировано {date.today():%d.%m.%Y}.", стиль="подзаголовок")
+    w("")
+    w("Реестры, из которых взяты компании", стиль="раздел")
+    for реестр, n in Counter(r.split(" (")[0] for d in по_инн.values()
+                             for r in d["реестры"]).most_common():
+        w(реестр, n)
+    for нужный in args.реестры:
+        if not any(_норм_текст(r).startswith(_норм_текст(нужный))
+                   for d in по_инн.values() for r in d["реестры"]):
+            w(f"«{нужный}» — списка этого реестра нет, компании из него не проверялись",
+              стиль="красный")
+    w("")
+    w("Итог", стиль="раздел")
+    w("Уникальных компаний во взятых реестрах", len(по_инн))
+    w("Юр. адрес в Москве и ОКВЭД 41–43", len(строки_итог), "жирный")
+    w("   из них 41–43 — основной ОКВЭД",
+      sum(1 for s in строки_итог if s["41–43 основной или доп."] == "основной"))
+    w("   из них 41–43 — только в дополнительных",
+      sum(1 for s in строки_итог if s["41–43 основной или доп."] == "дополнительный"))
+    for метка, ключ_ in (("   состоят в строительной СРО", "Да"),
+                         ("   не состоят в строительной СРО", "Нет"),
+                         ("   были в строительной СРО, исключены", "Исключена"),
+                         ("   СРО не проверена", "Не проверено")):
+        if по_сро.get(ключ_):
+            w(метка, по_сро[ключ_])
+    w("Не подошли (причина — на листе «Не подошли»)", len(мимо))
+    if проверить:
+        w("Не удалось проверить — лист «Проверить»", len(проверить), "красный")
+    w("")
+    w("Как проверялось", стиль="раздел")
+    for t in (
+            "Юр. адрес и ОКВЭД — по реестру МСП ФНС (база mosstroybase). Москва — "
+            "код региона 77, Московская область (50) не входит.",
+            "Кого нет в реестре МСП (крупные компании), но ваша база числит в Москве "
+            "или без региона — проверены через Checko.",
+            "Строительная СРО — каждая компания из итога проверена поиском по ИНН "
+            "в реестре НОСТРОЙ.",
+            "«Исключена» — была в строительной СРО, сейчас не состоит."):
+        w(t, стиль="серый")
+
+    _лист_компаний(wb, f"Компании ({len(строки_итог)})",
+                   "Москва, ОКВЭД 41–43 — члены заданных реестров",
+                   "Сначала — у кого 41–43 основной ОКВЭД, затем — у кого только "
+                   "в дополнительных. «В строительной СРО» — по реестру НОСТРОЙ.",
+                   строки_итог, стили, КОЛОНКИ_РЕЕСТРЫ)
+    if проверить:
+        _лист_компаний(wb, f"Проверить ({len(проверить)})", "Не удалось проверить",
+                       "Ваша база числит их в Москве, но в реестре МСП их нет, а Checko "
+                       "не ответил. Проверьте ОКВЭД и адрес вручную.",
+                       [ряд(d) for d in проверить], стили, КОЛОНКИ_МИМО)
+    _лист_компаний(wb, f"Не подошли ({len(мимо)})", "Не подошли — и почему",
+                   "Для проверки, что никто не потерялся: у каждой компании указана причина.",
+                   sorted((ряд(d) for d in мимо), key=lambda s: s["Почему не подошла"]),
+                   стили, КОЛОНКИ_МИМО)
+    out = Path(args.out or f"Реестры_Москва_41-43_СРО_{date.today():%d.%m.%Y}.xlsx")
+    wb.save(out)
+    print(f"[реестры] готово: {out}")
+    print(f"[реестры]   Москва + 41–43: {len(строки_итог)} — в СРО {по_сро.get('Да', 0)}, "
+          f"не в СРО {по_сро.get('Нет', 0)}, исключены {по_сро.get('Исключена', 0)}"
+          + (f", не проверено {по_сро['Не проверено']}" if по_сро.get("Не проверено") else ""))
+    return 0
+
+
+КОЛОНКИ_МИМО = [("№", 6), ("Наименование", 46), ("ИНН", 13),
+                ("Реестр и статус в нём", 40), ("Почему не подошла", 60),
+                ("Регион по вашей базе", 22), ("Основной ОКВЭД", 11),
+                ("Юр. адрес", 48), ("Откуда ОКВЭД и адрес", 18)]
+
+
 def cmd_всё(args) -> int:
     for шаг in (cmd_нострой, cmd_выборка, cmd_таблица):
         код = шаг(args)
@@ -1007,11 +1427,21 @@ def main(argv: list[str] | None = None) -> int:
             ("выборка", cmd_выборка, "перепроверить случайные «Нет» поиском по ИНН"),
             ("таблица", cmd_таблица, "собрать Excel")):
         sub.add_parser(имя, parents=[общие], help=справка).set_defaults(func=func)
+    p = sub.add_parser("реестры", parents=[общие],
+                       help="члены заданных СРО: Москва, ОКВЭД 41–43, строительная СРО")
+    p.add_argument("--файлы", nargs="+", required=True,
+                   help="выгрузки реестров (xlsx): ваша база с колонкой «Тип "
+                        "организации» и/или списки отдельных СРО")
+    p.add_argument("--реестры", nargs="+", default=list(РЕЕСТРЫ_ПО_УМОЛЧАНИЮ),
+                   help="какие реестры брать из колонки «Тип организации»")
+    p.add_argument("--checko-key", dest="checko_key", default=None,
+                   help="ключ Checko (или переменная CHECKO_API_KEY)")
+    p.set_defaults(func=cmd_реестры)
     args = parser.parse_args(argv)
     if not getattr(args, "func", None):
         parser.print_help()
         return 1
-    if requests is None and args.команда in ("всё", "нострой", "выборка"):
+    if requests is None and args.команда in ("всё", "нострой", "выборка", "реестры"):
         print("Нужен requests: pip install requests", file=sys.stderr)
         return 1
     return args.func(args)
