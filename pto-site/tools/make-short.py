@@ -135,6 +135,18 @@ def synth(text: str, out: Path, ff: str) -> np.ndarray:
     return read_wav(out)
 
 
+def prepare_live(src: Path, out: Path, ff: str) -> np.ndarray:
+    """Живая запись: без тишины по краям, без гула, ровная громкость, мягкие края."""
+    subprocess.run([ff, "-y", "-loglevel", "error", "-i", str(src), "-af",
+                    "silenceremove=start_periods=1:start_threshold=-45dB,areverse,"
+                    "silenceremove=start_periods=1:start_threshold=-45dB,areverse,"
+                    "highpass=f=80,afftdn=nr=10,"
+                    "acompressor=threshold=-20dB:ratio=2.5:attack=20:release=250:makeup=2,"
+                    "afade=t=in:d=0.02,areverse,afade=t=in:d=0.08,areverse",
+                    "-ar", str(SR), "-ac", "1", str(out)], check=True)
+    return read_wav(out)
+
+
 def load_music_module():
     spec = importlib.util.spec_from_file_location("make_music", TOOLS / "make-music.py")
     mod = importlib.util.module_from_spec(spec)
@@ -206,16 +218,30 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--out", default=str(ROOT / "promo-short.mp4"))
     ap.add_argument("--audio-only", action="store_true", help="только звук и хронология, без съёмки кадров")
+    ap.add_argument("--no-voice", action="store_true",
+                    help="без голоса: текст на экране и музыка, фразы держатся по скорости чтения")
+    ap.add_argument("--voice-dir", metavar="ПАПКА",
+                    help="живая озвучка: файлы 1.*, 2.* … 9.* (mp3, wav, m4a, ogg) — по одному на фразу")
     args = ap.parse_args()
     ff = ffmpeg_bin()
-    if not PIPER_MODEL.exists():
+    if not args.no_voice and not args.voice_dir and not PIPER_MODEL.exists():
         sys.exit(f"Нет модели голоса {PIPER_MODEL} — как скачать, в README («Шортс с озвучкой»)")
 
     tmp = Path(tempfile.mkdtemp(prefix="xpto-short-"))
     voices, timeline = [], []
     t = START
     for i, (spoken, shown) in enumerate(LINES):
-        v = synth(spoken, tmp / f"l{i}.wav", ff)
+        if args.no_voice:
+            # Без голоса фраза держится столько, сколько её спокойно читают:
+            # ~0,3 с на слово плюс секунда на то, чтобы глаз нашёл строку.
+            v = np.zeros(int(max(2.4, 1.0 + 0.3 * len(shown.split())) * SR))
+        elif args.voice_dir:
+            src = sorted(Path(args.voice_dir).glob(f"{i + 1}.*"))
+            if not src:
+                sys.exit(f"В {args.voice_dir} нет файла для фразы {i + 1}: {shown}")
+            v = prepare_live(src[0], tmp / f"l{i}.wav", ff)
+        else:
+            v = synth(spoken, tmp / f"l{i}.wav", ff)
         dur = len(v) / SR
         timeline.append({"s": round(t, 3), "e": round(t + dur, 3), "text": shown})
         voices.append((t, v))
@@ -235,7 +261,9 @@ def main() -> int:
         voice[i:i + len(v)] += v[: n - i]
     voice *= 0.9 / (np.max(np.abs(voice)) + 1e-9)
     mm = load_music_module()
-    voice = mm.reverb(voice, secs=1.1, mix=0.14, seed=21)   # мягкий «зал», без эха
+    live = bool(args.voice_dir)
+    if not live:                                  # живой записи своя акустика уже дана
+        voice = mm.reverb(voice, secs=1.1, mix=0.14, seed=21)   # мягкий «зал», без эха
 
     # Музыка приглушается под голосом: огибающая голоса, сглаженная на 0,25 с
     cuts = [max(0.0, seg["s"] - 0.3) for seg in timeline[1:]]
@@ -244,6 +272,8 @@ def main() -> int:
     env = np.convolve(np.abs(voice), np.ones(int(0.25 * SR)) / int(0.25 * SR), mode="same")
     env = np.clip(env / (np.max(env) + 1e-9) * 3, 0, 1)
     duck = 0.5 - 0.35 * env                        # под голосом музыка тише в ~3 раза
+    if args.no_voice:
+        duck = np.full(n, 0.9)                     # без голоса музыка звучит в полную силу
     tt = np.arange(n) / SR
     fade = np.clip(tt / 0.3, 0, 1) * np.clip((total - tt) / 1.8, 0, 1)
     mix = music * duck * fade + np.vstack((voice, voice))
