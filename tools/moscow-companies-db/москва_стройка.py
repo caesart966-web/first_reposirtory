@@ -46,7 +46,7 @@ import sqlite3
 import sys
 import time
 from collections import Counter, defaultdict
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -1576,7 +1576,16 @@ def cmd_реестры(args) -> int:
 
     # 5. Excel
     out = Path(args.out or f"Реестры_Москва_41-43_СРО_{date.today():%d.%m.%Y}.xlsx")
-    записать_книгу_реестров(out, по_инн, без_инн, итог, проверить, из_базы, args.реестры)
+    try:
+        записать_книгу_реестров(out, по_инн, без_инн, итог, проверить, из_базы, args.реестры)
+    except PermissionError:
+        # Файл открыт в Excel — Windows не даёт его перезаписать. Раньше
+        # запуск падал в самом конце, и полчаса проверок пропадали зря
+        запасной = out.with_name(f"{out.stem}_{datetime.now():%H-%M}{out.suffix}")
+        записать_книгу_реестров(запасной, по_инн, без_инн, итог, проверить, из_базы,
+                                args.реестры)
+        print(f"[реестры] {out.name} открыт в Excel — сохранил как {запасной.name}")
+        out = запасной
     print(f"[реестры] готово: {out}")
     return 0
 
