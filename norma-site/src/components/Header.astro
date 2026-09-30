@@ -2,6 +2,7 @@
 import { SITE, href } from '../config/site'
 import Icon from './Icon.astro'
 import LogoMark from './LogoMark.astro'
+import BrandIcon from './BrandIcon.astro'
 
 // ШЕСТЬ ПУНКТОВ — ПОТОЛОК, И ЭТО ЗАМЕРЕНО, А НЕ УГАДАНО.
 // Седьмой пункт даёт горизонтальную прокрутку до 1170 px, а вместе
@@ -157,6 +158,24 @@ const formHref = path === href('/') ? '#zayavka' : href('/kontakty/#form')
           Без неё в меню путь к форме лежал через «Контакты» и прокрутку. */}
       <a class="btn btn--ghost-dark mm-cta mm-cta--2" href={formHref}>Оставить заявку</a>
       <a class="mm-phone" href={SITE.phoneHref}>{SITE.phone}</a>
+      {/* Мессенджеры в меню. Столбик значков справа на время меню уходит
+          (он лёг бы поверх пунктов), а меню — первое место, где ищут, как
+          связаться. До 30.09.2026 здесь был только номер: кто хотел
+          написать, закрывал меню и искал значки. Круги те же, что в строках
+          «Или напрямую» (BrandIcon.astro), со своей приставкой id. */}
+      <p class="mm-direct">
+        <a href={SITE.whatsapp} target="_blank" rel="noopener noreferrer" data-goal="click_whatsapp">
+          <BrandIcon name="whatsapp" size={18} idp="menu" /> WhatsApp
+        </a>
+        <a href={SITE.telegram} target="_blank" rel="noopener noreferrer" data-goal="click_telegram">
+          <BrandIcon name="telegram" size={18} idp="menu" /> Telegram
+        </a>
+        {SITE.maxLink && (
+          <a href={SITE.maxLink} target="_blank" rel="noopener noreferrer" data-goal="click_max">
+            <BrandIcon name="max" size={18} idp="menu" /> MAX
+          </a>
+        )}
+      </p>
     </div>
   </div>
 </header>
@@ -531,6 +550,26 @@ const formHref = path === href('/') ? '#zayavka' : href('/kontakty/#form')
     color: var(--acc-bright);
     text-decoration: none;
   }
+  .mm-direct {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px 20px;
+    margin-top: 10px;
+  }
+  .mm-direct a {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--on-dark);
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+    /* Поле нажатия выше строки: цель не меньше 44 px по высоте. */
+    padding-block: 13px;
+  }
+  .mm-direct a:hover { color: var(--acc-bright); }
+  .mm-direct :global(svg) { flex: none; }
 
   /* На узком телефоне кнопки поиска в шапке нет: знак, поиск, телефон
      и меню в один ряд при 320 px не помещаются — ряд вылезал за правый

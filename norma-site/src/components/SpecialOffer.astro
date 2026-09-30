@@ -47,12 +47,18 @@ import Icon from './Icon.astro'
       <div class="ohead">
         <span class="otag"><Icon name="star" size={15} /> Разбор предложения</span>
         <h2>Те же пять условий — <em>по порядку и с цифрами</em></h2>
+        {/* Блок стоит только на «Стоимости» (карточка «Условия вступления» —
+            на главной, её ссылка «Все пять условий» ведёт сюда). До 30.09.2026
+            текст писал «карточка в начале страницы» и «полная разбивка —
+            в разделе „Стоимость“»: так было, пока блок стоял на главной.
+            Переехав, он стал отсылать человека на ту страницу, где тот уже
+            находится, и к карточке, которой на ней нет. */}
         <p class="olead">
-          Что стоит за каждым пунктом карточки в начале страницы. Сверх
-          компенсационного фонда, размер которого установлен законом,
+          Что стоит за каждым пунктом карточки «Условия вступления» с главной.
+          Сверх компенсационного фонда, размер которого установлен законом,
           за первый год набегает {money(firstYearExtra)}{extraDiffers ? ' у строителей' : ''} —
-          и это все платежи, а не «от». Полная разбивка до рубля —
-          в разделе «Стоимость».
+          и это все платежи, а не «от». Разбивка до рубля —{' '}
+          <a href="#sostav">сразу под этим блоком</a>.
         </p>
       </div>
 
@@ -189,14 +195,16 @@ import Icon from './Icon.astro'
     color: #fff;
   }
   .ogift :global(svg) { flex: none; margin-top: 4px; }
-  .ogift a {
+  .ogift a,
+  .olead a {
     color: #fff;
     font-weight: 600;
     text-decoration: underline;
     text-decoration-color: rgba(255, 255, 255, 0.55);
     text-underline-offset: 3px;
   }
-  .ogift a:hover { text-decoration-color: #fff; }
+  .ogift a:hover,
+  .olead a:hover { text-decoration-color: #fff; }
 
   @media print {
     .obox { background: none; color: #000; border: 1px solid #000; box-shadow: none; }

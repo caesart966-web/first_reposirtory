@@ -12,7 +12,18 @@ export async function getStaticPaths() {
 }
 
 const { article } = Astro.props
-const { Content } = await render(article)
+const { Content, headings } = await render(article)
+
+// Содержание разбора — из подзаголовков второго уровня самой статьи
+// (30.09.2026, «чтобы клиент не запутался»). Статья на телефоне — до десяти
+// экранов, а приходят с одним вопросом; по оглавлению видно, есть ли
+// ответ и где он. Короче четырёх разделов оглавление не нужно — такая
+// статья видна целиком за пару экранов. Якоря — те же id, что markdown
+// ставит заголовкам; их сверяет check-html, отступ под шапку даёт h2[id]
+// в global.css.
+const toc = headings.filter((h) => h.depth === 2)
+const razdelov = (n: number) =>
+  n % 10 === 1 && n % 100 !== 11 ? 'раздел' : [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? 'раздела' : 'разделов'
 // Тот же адрес, что в canonical (Base.astro), — его и отдают «Поделиться».
 const canonicalUrl = new URL(Astro.url.pathname, Astro.site).toString()
 
@@ -177,6 +188,14 @@ const articleSchema = {
 
     <div class="wrap art-body">
       <div class="art-main">
+        {toc.length >= 4 && (
+          <details class="toc" open data-nosearch>
+            <summary>Содержание · {toc.length} {razdelov(toc.length)}</summary>
+            <ul>
+              {toc.map((h) => <li><a href={`#${h.slug}`}>{h.text}</a></li>)}
+            </ul>
+          </details>
+        )}
         <div class="prose">
           {rendered ? <Fragment set:html={withLabels(withBase(rendered))} /> : <Content />}
         </div>
@@ -257,6 +276,51 @@ const articleSchema = {
 
   .art-body { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 40px; padding-top: 40px; padding-bottom: 20px; align-items: start; }
   .art-main { display: grid; gap: 28px; min-width: 0; }
+  .toc {
+    border: 1px solid var(--line);
+    border-radius: var(--r-m);
+    background: var(--paper-2);
+    padding: 4px 20px;
+  }
+  /* Знак «плюс/минус» — тот же, что у вопросов на главной: у раскрывающихся
+     блоков сайта один приём, а не системный треугольник браузера. */
+  .toc summary {
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 0;
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--ink);
+  }
+  .toc summary::-webkit-details-marker { display: none; }
+  .toc summary::after {
+    content: '';
+    width: 14px;
+    height: 14px;
+    flex: none;
+    background-image:
+      linear-gradient(var(--acc-deep), var(--acc-deep)),
+      linear-gradient(var(--acc-deep), var(--acc-deep));
+    background-position: center, center;
+    background-repeat: no-repeat;
+    background-size: 14px 1.5px, 1.5px 14px;
+  }
+  .toc[open] summary::after { background-size: 14px 1.5px, 1.5px 0; }
+  .toc ul { list-style: none; margin: 0 0 12px; padding: 0; display: grid; }
+  .toc li + li { border-top: 1px solid var(--line); }
+  .toc a {
+    display: block;
+    padding: 9px 0;
+    color: var(--acc-deep);
+    font-size: 15px;
+    line-height: 1.4;
+    text-decoration: none;
+  }
+  .toc a:hover { text-decoration: underline; }
   .art-main :global(.share) { padding-top: 18px; border-top: 1px solid var(--line); }
 
   /* Статья набирается антиквой: её читают целиком, а не просматривают. */
