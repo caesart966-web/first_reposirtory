@@ -1073,8 +1073,11 @@ def читать_реестр(путь: Path, нужные: Iterable[str]) -> tu
             ("инн", lambda x: x == "инн" or x.startswith("инн ")),
             ("кратко", lambda x: x.startswith("сокращенное наименование")),
             ("полно", lambda x: x.startswith("полное наименование")),
+            # не «наименование страховой компании» из подстрок о страховании
             ("имя", lambda x: (x.startswith("наименован") or x == "название")
-                              and "саморегулируем" not in x),
+                              and "саморегулируем" not in x and "страхов" not in x),
+            ("номер", lambda x: x in ("n п/п", "№ п/п", "№", "n") or x.startswith("n п/п")
+                                or x.startswith("№ п/п")),
             ("тип", lambda x: x.startswith("тип организац")),
             ("статус", lambda x: x.startswith("статус") and "прав" not in x),
             ("регион", lambda x: x.startswith("регион")),
@@ -1102,6 +1105,12 @@ def читать_реестр(путь: Path, нужные: Iterable[str]) -> tu
 
         for row in все[i_шапки + 1:]:
             get = lambda k: row[кол[k]] if k in кол and кол[k] < len(row) else None
+            # В выгрузке с сайта под строкой члена идут подстроки — договоры
+            # страхования, проверки. У них пусто в «N п/п» и в ИНН, зато
+            # заполнено, например, название страховой компании: без этой
+            # проверки 832 подстроки СИС записались бы членами без ИНН
+            if "номер" in кол and not str(get("номер") or "").strip().isdigit():
+                continue
             имя = next((str(v).strip() for v in (get("кратко"), get("полно"), get("имя"))
                         if v is not None and str(v).strip()), "")
             if "тип" in кол:
