@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Шортс X-PTO с озвучкой: голос → хронология → музыка → видео.
 
-1. Каждая фраза озвучивается отдельно синтезатором RHVoice (голос
-   aleksandr-hq), тишина по краям обрезается.
+1. Каждая фраза озвучивается отдельно нейросетевым синтезатором Piper
+   (женский голос «Ирина»), тишина по краям обрезается.
 2. По настоящей длине фраз строится хронология и пишется в
    tools/video/short-timeline.js — сцены ролика встают ровно под голос.
 3. Сочиняется своя музыка (инструменты из make-music.py, но другая
@@ -13,7 +13,7 @@
 для голоса они расписаны по буквам («пэ пэ эр»), а в субтитрах — как
 положено («ППР»). Поменяли фразу — меняйте обе колонки.
 
-Нужны: RHVoice с русскими голосами (apt install rhvoice rhvoice-russian),
+Нужны: piper-tts (pip install piper-tts) и файл голоса (см. README),
 numpy, ffmpeg (переменная FFMPEG или PATH), playwright.
 
     python3 tools/make-short.py                 # → promo-short.mp4
@@ -34,10 +34,14 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 TOOLS = ROOT / "tools"
 SR = 44100
-VOICE = "aleksandr-hq"
-RATE = "108"
+# Голос — нейросетевой синтезатор Piper, женский голос «Ирина».
+# Файл модели (63 МБ) в репозиторий не кладётся — см. README, «Шортс с озвучкой».
+PIPER_MODEL = Path(os.environ.get("PIPER_MODEL", TOOLS / "voices" / "ru-irinia-medium.onnx"))
+LENGTH_SCALE = "1.07"   # чуть медленнее обычного — спокойнее и певучее
+NOISE_SCALE = "0.72"    # живость интонации: выше — мелодичнее, но может «плыть»
+NOISE_W = "0.85"        # разброс длительностей — речь не звучит по метроному
 START = 0.5      # первая фраза звучит сразу: у шортса полсекунды на то, чтобы зацепить
-GAP = 0.35       # пауза между фразами
+GAP = 0.45       # пауза между фразами
 TAIL = 2.4       # финальный кадр держится после последней фразы
 
 # (что говорит голос, что написано в субтитрах)
@@ -80,13 +84,20 @@ def read_wav(path: Path) -> np.ndarray:
 
 def synth(text: str, out: Path, ff: str) -> np.ndarray:
     raw = out.with_suffix(".raw.wav")
-    subprocess.run(["RHVoice-test", "-p", VOICE, "-r", RATE, "-o", str(raw)],
+    subprocess.run([sys.executable, "-m", "piper", "-m", str(PIPER_MODEL), "-f", str(raw),
+                    "--length-scale", LENGTH_SCALE, "--noise-scale", NOISE_SCALE,
+                    "--noise-w-scale", NOISE_W],
                    input=text.encode("utf-8"), check=True, capture_output=True)
-    # тишина по краям — прочь, частота — как у музыки, 44,1 кГц моно
+    # Тишина по краям — прочь; мягкая обработка: убрать гул, чуть тепла в нижней
+    # середине, пологий компрессор (быстрый давал «дыхание» между слогами),
+    # короткие плавные края без щелчков, лёгкий воздух комнаты.
     subprocess.run([ff, "-y", "-loglevel", "error", "-i", str(raw), "-af",
-                    "silenceremove=start_periods=1:start_threshold=-45dB,areverse,"
-                    "silenceremove=start_periods=1:start_threshold=-45dB,areverse,"
-                    "highpass=f=70,acompressor=threshold=-18dB:ratio=3:attack=5:release=80",
+                    "silenceremove=start_periods=1:start_threshold=-50dB,areverse,"
+                    "silenceremove=start_periods=1:start_threshold=-50dB,areverse,"
+                    "highpass=f=80,equalizer=f=220:t=q:w=1:g=1.5,equalizer=f=6500:t=q:w=1.5:g=-2,"
+                    "acompressor=threshold=-20dB:ratio=2:attack=25:release=300:makeup=2,"
+                    "afade=t=in:d=0.02,areverse,afade=t=in:d=0.08,areverse,"
+                    "aecho=0.8:0.35:28|43:0.12|0.08",
                     "-ar", str(SR), "-ac", "1", str(out)], check=True)
     return read_wav(out)
 
@@ -137,9 +148,8 @@ def compose_music(mm, total: float, cuts: list) -> np.ndarray:
     t = 0.0
     while t < total - TAIL:
         if t >= 1.0:
-            mm.put(beat_bus, mm.kick(), t, 0.42)
-            if i % 2 == 1:
-                mm.put(beat_bus, mm.clap(), t, 0.25)
+            if i % 2 == 0:                          # мягкий пульс через долю, без хлопков
+                mm.put(beat_bus, mm.kick(), t, 0.30)
             mm.put(beat_bus, mm.hat(), t + beat / 2, 0.08, pan=0.3)
             _, root = chords[int(t // bar) % 4]
             mm.put(bass, mm.bass_note(root, beat * 0.9), t, 0.16)
@@ -165,8 +175,8 @@ def main() -> int:
     ap.add_argument("--audio-only", action="store_true", help="только звук и хронология, без съёмки кадров")
     args = ap.parse_args()
     ff = ffmpeg_bin()
-    if not shutil.which("RHVoice-test"):
-        sys.exit("Нет RHVoice: apt install rhvoice rhvoice-russian")
+    if not PIPER_MODEL.exists():
+        sys.exit(f"Нет модели голоса {PIPER_MODEL} — как скачать, в README («Шортс с озвучкой»)")
 
     tmp = Path(tempfile.mkdtemp(prefix="xpto-short-"))
     voices, timeline = [], []

@@ -758,9 +758,21 @@ python3 tools/make-video.py --music promo-music.wav  # ролик сразу с 
 
 ### Шортс с озвучкой (Reels, ВК-клипы)
 
-Второй ролик, ~40 секунд, с голосом и субтитрами: `tools/video/short.html`
-и `tools/make-short.py`. Голос — синтезатор RHVoice (`aleksandr-hq`),
-ставится командой `apt install rhvoice rhvoice-russian`. Текст реплик лежит
+Второй ролик, ~48 секунд, с голосом и субтитрами: `tools/video/short.html`
+и `tools/make-short.py`. Голос — нейросетевой синтезатор Piper, женский голос
+«Ирина». Ставится так:
+
+```
+pip install piper-tts
+mkdir -p tools/voices && cd tools/voices
+curl -LO https://github.com/rhasspy/piper/releases/download/v0.0.2/voice-ru-irinia-medium.tar.gz
+tar xzf voice-ru-irinia-medium.tar.gz
+```
+
+Файл голоса весит 63 МБ и в репозиторий не кладётся (папка `tools/voices/`
+в `.gitignore`). Первая версия ролика озвучивалась RHVoice — заказчик забраковал
+голос как прерывистый: RHVoice склеивает речь из кусочков, а на повышенной
+скорости это слышно. Текст реплик лежит
 в `LINES` в `make-short.py` двумя колонками: что говорит голос (аббревиатуры
 по буквам — «пэ пэ эр», иначе синтезатор читает их словом) и что написано
 в субтитрах. Сцены встают под голос сами: скрипт меряет длину каждой фразы
