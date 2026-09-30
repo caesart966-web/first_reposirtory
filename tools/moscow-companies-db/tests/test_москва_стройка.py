@@ -188,7 +188,7 @@ class TestРеестры(unittest.TestCase):
     def test_оценка(self):
         self.assertEqual(мс.оценить({"region_code": "77", "okved_main": "41.20"})[0],
                          "подходит")
-        self.assertIn("не в Москве", мс.оценить({"region_code": "50",
+        self.assertEqual("Московская область", мс.оценить({"region_code": "50",
                                                   "okved_main": "41.20"})[0])
         self.assertIn("нет ОКВЭД 41–43", мс.оценить({"region_code": "77",
                                                       "okved_main": "71.12"})[0])
