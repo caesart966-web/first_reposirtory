@@ -86,10 +86,15 @@ for (const [screen, width, height] of [['телефон', 320, 720], ['комп�
         }
         return false
       }
+      // Лента логотипов партнёров (PartnerLogos.astro) шире экрана нарочно:
+      // она едет и обрезана своим контейнером .pl-view. Исключение узкое,
+      // по одному классу, а не «всё внутри overflow: hidden» — общее правило
+      // пропустило бы настоящий обрезанный текст. Ленту меряет test-logos.
+      const marquee = (el) => el.closest('.pl-view') !== null
       for (const el of document.querySelectorAll('body *')) {
         const cs = getComputedStyle(el)
         if (cs.display === 'none' || cs.visibility === 'hidden' || cs.position === 'fixed') continue
-        if (decorative(el) || clipped(el)) continue
+        if (decorative(el) || clipped(el) || marquee(el)) continue
         const r = el.getBoundingClientRect()
         if (r.width === 0 || r.height === 0) continue
         if (r.right > vw + 1 && cs.overflowX !== 'auto' && cs.overflowX !== 'scroll') {

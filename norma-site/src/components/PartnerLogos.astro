@@ -1,0 +1,217 @@
+---
+// ЛЕНТА ЛОГОТИПОВ СРО-ПАРТНЁРОВ — на главной, сразу под первым экраном.
+//
+// Просьба заказчика 30.09.2026: логотипы партнёров «стоят в линию
+// и двигаются в сторону не очень быстро». Логотипы — его, в своих цветах
+// («в цвете, как прислали» — его выбор). Это второе исключение из правила
+// «синего на сайте нет» после значков мессенджеров: синие плашка СИС
+// и знак «СФЕРЫ проектировщиков» — чужие товарные знаки, палитры сайта
+// они не меняют. Фон картинок убран (scripts/prepare-partner-logos.py),
+// иначе девять прямоугольников разного оттенка читались бы наклейками.
+//
+// Кто в ленте — решает partners.ts: организация с подтверждённым номером
+// в реестре и с логотипом. Без номера организации нет нигде на сайте,
+// без логотипа — нет только здесь (карточка на «Партнёрах» остаётся).
+//
+// РАЗМЕР — ПО ПЛОЩАДИ, А НЕ ПО ВЫСОТЕ. Одной высоты у всех было бы
+// нечестно к знакам: вытянутое «СРО ОРС» выходило вчетверо заметнее
+// круглого знака СССС. Высота каждого — √(площадь / пропорции),
+// в пределах MIN_H…MAX_H.
+//
+// ДВИЖЕНИЕ. Набор повторён дважды, лента сдвигается на половину своей
+// ширины и начинает сначала — шва не видно. Промежуток между знаками —
+// отступ справа у каждого, а не gap: с gap половина ленты короче периода
+// на полпромежутка, и на стыке знаки дёргались бы. Скорость одна
+// на любой ширине: длительность считается из ширины набора.
+// Останавливается наведением (где оно есть) и кнопкой — движение дольше
+// пяти секунд обязано останавливаться (WCAG 2.2.2), а на телефоне
+// наведения нет. При «уменьшить движение» лента стоит, повтор скрыт,
+// ряд листается пальцем.
+import { PARTNERS } from '../config/partners'
+import LOGOS from '../config/partner-logos.json'
+import { href } from '../config/site'
+import Icon from './Icon.astro'
+
+const AREA = 5600
+const MIN_H = 30
+const MAX_H = 60
+const GAP = 56
+const SPEED = 36 // px в секунду: «не очень быстро»
+
+type Logo = { file: string; w: number; h: number; tile?: boolean }
+const table = LOGOS as Record<string, Logo>
+
+const items = PARTNERS.filter((p) => p.reg && p.logo).map((p) => {
+  const l = table[p.logo!]
+  if (!l) throw new Error(`Нет логотипа «${p.logo}» в partner-logos.json — запустите python3 scripts/prepare-partner-logos.py`)
+  const ratio = l.w / l.h
+  const h = Math.round(Math.min(MAX_H, Math.max(MIN_H, Math.sqrt(AREA / ratio))))
+  return { name: p.name, src: href(`/${l.file}`), w: l.w, h: l.h, dh: h, dw: Math.round(h * ratio), tile: !!l.tile }
+})
+const setWidth = items.reduce((sum, i) => sum + i.dw + GAP, 0)
+const duration = `${(setWidth / SPEED).toFixed(1)}s`
+---
+
+{items.length > 0 && (
+  <section class="plogos" aria-labelledby="plogos-t" data-nosearch style={`--pl-dur: ${duration}; --pl-gap: ${GAP}px`}>
+    <div class="wrap pl-head">
+      <h2 class="pl-t" id="plogos-t">СРО, с которыми я работаю</h2>
+      <a class="pl-more" href={href('/partnery/')}>Номера в реестре и условия <Icon name="arrow" size={14} /></a>
+      {/* Подпись — aria-label, а не span.vh, как у ссылок: span.vh нужен
+          ссылкам ради поисковика (ссылка без текста для него пустая),
+          кнопку поисковик не читает, а 1-пиксельный span с текстом
+          test-widths при раздутом шрифте принимает за вылезший текст. */}
+      <button class="pl-btn" type="button" aria-pressed="false" aria-controls="plogos-track" aria-label="Остановить ленту логотипов">
+        <svg class="pl-ico pl-ico--pause" viewBox="0 0 16 16" aria-hidden="true"><rect x="3.5" y="2.5" width="3" height="11" rx="1" /><rect x="9.5" y="2.5" width="3" height="11" rx="1" /></svg>
+        <svg class="pl-ico pl-ico--play" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4a.8.8 0 0 0 1.2.7l8.3-5.2a.8.8 0 0 0 0-1.4L5.7 2.1a.8.8 0 0 0-1.2.7z" /></svg>
+      </button>
+    </div>
+    <div class="pl-view">
+      <ul class="pl-track" id="plogos-track" role="list">
+        {items.map((i) => (
+          <li><img src={i.src} alt={i.name} width={i.w} height={i.h} style={`--h: ${i.dh}px`} class:list={[i.tile && 'tile']} loading="lazy" decoding="async" /></li>
+        ))}
+        {items.map((i) => (
+          <li class="dup" aria-hidden="true"><img src={i.src} alt="" width={i.w} height={i.h} style={`--h: ${i.dh}px`} class:list={[i.tile && 'tile']} loading="lazy" decoding="async" /></li>
+        ))}
+      </ul>
+    </div>
+  </section>
+)}
+
+<script>
+  // Кнопка «остановить»: aria-pressed — для экранного диктора, класс — для CSS.
+  // Подпись кнопки не меняется: у кнопки-переключателя состояние говорит
+  // aria-pressed, а не новый текст.
+  //
+  // Загрузка. Логотипы lazy, но отложенная загрузка считает видимость
+  // с учётом обрезки: знак за краем ленты (overflow: hidden) для браузера
+  // «не виден», и грузился бы, только въехав в кадр, — на медленной сети
+  // пустое место и знак, возникающий посреди ленты. Поэтому, когда лента
+  // подходит к экрану, все её картинки переводятся в eager разом.
+  const near = new IntersectionObserver(
+    (entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue
+        for (const img of e.target.querySelectorAll<HTMLImageElement>('img[loading="lazy"]')) img.loading = 'eager'
+        near.unobserve(e.target)
+      }
+    },
+    { rootMargin: '600px 0px' },
+  )
+  for (const band of document.querySelectorAll<HTMLElement>('.plogos')) {
+    near.observe(band)
+    const btn = band.querySelector<HTMLButtonElement>('.pl-btn')
+    btn?.addEventListener('click', () => {
+      const paused = btn.getAttribute('aria-pressed') !== 'true'
+      btn.setAttribute('aria-pressed', String(paused))
+      band.classList.toggle('is-paused', paused)
+    })
+  }
+</script>
+
+<style>
+  .plogos {
+    background: #fff;
+    border-block: 1px solid var(--line);
+    padding: 18px 0 20px;
+    overflow: hidden;
+  }
+  .pl-head {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    margin-bottom: 12px;
+  }
+  .pl-t {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .pl-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 32px;
+    margin-left: auto;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--acc-deep);
+    text-decoration: none;
+  }
+  .pl-more:hover { text-decoration: underline; }
+  .pl-btn {
+    display: inline-grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: #fff;
+    color: var(--ink);
+    cursor: pointer;
+    transition: border-color var(--t-fast) var(--ease);
+  }
+  .pl-btn:hover { border-color: var(--acc); }
+  .pl-btn:focus-visible { outline: 2px solid var(--acc-btn); outline-offset: 2px; }
+  .pl-ico { width: 14px; height: 14px; fill: currentColor; }
+  .pl-ico--play,
+  .is-paused .pl-ico--pause { display: none; }
+  .is-paused .pl-ico--play { display: block; }
+
+  /* Края гаснут — знак появляется и уходит, а не обрезается ножом. */
+  .pl-view {
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+  }
+  .pl-track {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    width: max-content;
+    animation: pl-run var(--pl-dur) linear infinite;
+    will-change: transform;
+  }
+  .pl-track li {
+    display: flex;
+    align-items: center;
+    height: 64px;
+    padding-inline-end: var(--pl-gap);
+  }
+  .pl-track img { display: block; height: var(--h); width: auto; }
+  .pl-track img.tile { border-radius: 6px; }
+  @keyframes pl-run { to { transform: translateX(-50%); } }
+
+  .is-paused .pl-track { animation-play-state: paused; }
+  @media (hover: hover) {
+    .pl-view:hover .pl-track { animation-play-state: paused; }
+  }
+
+  /* На телефоне у правого края стоит столбик кнопок связи (Base.astro):
+     кнопка паузы уходит к заголовку, чтобы её не спутать с мессенджером
+     и не накрыть значком, а ссылка — второй строкой. */
+  @media (max-width: 599px) {
+    .plogos { padding: 14px 0 16px; }
+    .pl-head { margin-bottom: 8px; column-gap: 10px; }
+    .pl-more { order: 3; flex-basis: 100%; margin-left: 0; }
+    .pl-track li { height: 52px; padding-inline-end: calc(var(--pl-gap) * 0.72); }
+    .pl-track img { height: calc(var(--h) * 0.8); }
+  }
+
+  /* Без движения: лента стоит, повтор не нужен, ряд листается пальцем. */
+  @media (prefers-reduced-motion: reduce) {
+    .pl-track { animation: none; }
+    .pl-track .dup { display: none; }
+    .pl-btn { display: none; }
+    .pl-view { overflow-x: auto; -webkit-mask-image: none; mask-image: none; }
+    .pl-track { padding-inline: 20px; }
+  }
+</style>
