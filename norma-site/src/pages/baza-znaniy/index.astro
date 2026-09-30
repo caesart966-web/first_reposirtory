@@ -4,6 +4,7 @@ import Icon from '../../components/Icon.astro'
 import { getCollection } from 'astro:content'
 import { href, SITE } from '../../config/site'
 import HeadPhoto from '../../components/HeadPhoto.astro'
+import PageNav from '../../components/PageNav.astro'
 
 // Список разложен по разделам, а не по дате.
 //
@@ -16,11 +17,13 @@ import HeadPhoto from '../../components/HeadPhoto.astro'
 //
 // Даты со страниц никуда не делись: они стоят у каждой статьи и работают
 // как знак свежести. Но порядок задаёт польза, а не хронология.
+// anchor — якорь раздела в адресе (#dengi): оглавление в шапке ведёт
+// прямо к разделу. id — группа статьи в content.config.ts, её не трогать.
 const GROUPS = [
-  { id: 'need', t: 'Нужна ли вам СРО', d: 'С этого стоит начать: членство нужно не всем.' },
-  { id: 'money', t: 'Деньги', d: 'Взносы, уровни ответственности и то, что нельзя вернуть.' },
-  { id: 'membership', t: 'Членство', d: 'Приём, отказ, выход, исключение — и что из этого следует.' },
-  { id: 'check', t: 'Проверяемость', d: 'Что видно в реестрах и как проверить себя и подрядчика.' },
+  { id: 'need', anchor: 'nuzhna-li', t: 'Нужна ли вам СРО', d: 'С этого стоит начать: членство нужно не всем.' },
+  { id: 'money', anchor: 'dengi', t: 'Деньги', d: 'Взносы, уровни ответственности и то, что нельзя вернуть.' },
+  { id: 'membership', anchor: 'chlenstvo', t: 'Членство', d: 'Приём, отказ, выход, исключение — и что из этого следует.' },
+  { id: 'check', anchor: 'proverka', t: 'Проверяемость', d: 'Что видно в реестрах и как проверить себя и подрядчика.' },
 ] as const
 
 const all = await getCollection('articles')
@@ -30,6 +33,10 @@ const grouped = GROUPS.map((g) => ({
     .filter((a) => a.data.group === g.id)
     .sort((a, b) => a.data.order - b.data.order),
 })).filter((g) => g.items.length > 0)
+
+// Разбор, с которого начинают вступающие впервые, — ссылкой в шапке.
+// Название берётся из самой статьи: переписанное руками разошлось бы с ней.
+const start = all.find((a) => a.id === 'kak-vstupit-v-sro')
 
 const fmt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
 
@@ -75,6 +82,17 @@ const articlesList = {
             материала — значит, общий штамп не должен говорить за них. */}
         <span class="stamp">Нормы сверены · {SITE.checkedDate}</span>
       </div>
+      {/* Тридцать статей — шестнадцать экранов телефона. «Как вступить
+          в СРО» стоит в третьем разделе, на восьмом экране, а с него
+          и начинают те, кто вступает впервые, — поэтому ссылка на него
+          отдельной строкой, а разделы — оглавлением. */}
+      <PageNav label="Разделы" items={grouped.map((g) => ({ href: `#${g.anchor}`, label: `${g.t} · ${g.items.length}` }))} />
+      {start && (
+        <p class="start">
+          Вступаете впервые? Начните с разбора{' '}
+          <a href={href(`/baza-znaniy/${start.id}/`)}>«{start.data.title}»</a>.
+        </p>
+      )}
     </div>
   </section>
 
@@ -83,7 +101,7 @@ const articlesList = {
       {grouped.map((g) => (
       <div class="grp">
         <div class="grp-head rv">
-          <h2>{g.t}</h2>
+          <h2 id={g.anchor}>{g.t}</h2>
           <p>{g.d}</p>
         </div>
       <div class="list">
@@ -138,6 +156,9 @@ const articlesList = {
   .page-head .lead { color: var(--on-dark-muted); }
   .page-head .lead b { color: #fff; }
   .stamp-row { margin-top: 22px; }
+  .start { margin-top: 18px; color: var(--on-dark-muted); font-size: 15.5px; }
+  .start a { color: #fff; }
+  .start a:hover { color: var(--acc-bright); }
 
   .list { display: grid; }
   /* Раздел списка. Заголовок стоит в собственной строке над своими

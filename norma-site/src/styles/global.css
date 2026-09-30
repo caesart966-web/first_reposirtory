@@ -854,9 +854,13 @@ table.data td.strong { font-weight: 600; }
    Флажки и переключатели калькулятора сюда не входят: на них фокус
    встаёт от простого нажатия, и значки мигали бы при каждом ответе.
    Конец страницы (html.at-page-end, скрипт в Base.astro): дальше подвала
-   не прокрутить, и значки навсегда закрыли бы правый край его строк. */
+   не прокрутить, и значки навсегда закрыли бы правый край его строк.
+   Прокрутка вниз (html.rail-away, там же): человек читает, и столбик
+   закрывал бы концы строк. Возвращается при прокрутке вверх и у начала
+   страницы. */
 html.menu-open .contact-rail,
 html.at-page-end .contact-rail,
+html.rail-away .contact-rail,
 html:has(:is(textarea, select, input:not([type='checkbox'], [type='radio'], [type='range'], [type='submit'], [type='button'])):focus) .contact-rail {
   opacity: 0;
   visibility: hidden;
