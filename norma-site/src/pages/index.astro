@@ -10,7 +10,7 @@ import { SITE, href } from '../config/site'
 import { dirIconOf } from '../config/services'
 import { REGIONS } from '../config/regions'
 import { PARTNERS, partnerFeeKind, partnersOf } from '../config/partners'
-import { LAW, TERMS } from '../config/facts'
+import { FUNDS, LAW, TERMS } from '../config/facts'
 import { FEES, money } from '../config/fees'
 
 // ГЛАВНАЯ — ПЯТЬ РАЗДЕЛОВ, А НЕ ДВЕНАДЦАТЬ.
@@ -106,6 +106,20 @@ const stepsWord = (n: number) =>
 // в подписи стояли одни 10 млн, карточка обещала их и для сноса: сайт
 // спорил сам с собой, и это заметил аудит 29.09.2026. Тогда же добавлен
 // капремонт многоквартирного дома — при любой сумме (ч. 7 ст. 166 ЖК РФ).
+//
+// КОМПЕНСАЦИОННЫЙ ФОНД — В КАЖДОЙ КАРТОЧКЕ (30.09.2026). Заказчик прислал
+// сайт конкурента (gramata.consulting) и спросил, что у него стоит взять.
+// Взято одно: сумма компфонда по видам СРО видна сразу — у них в первом
+// экране и в таблице «СРО строителей — 100 000 ₽». На нашей главной суммы
+// фонда не было вовсе: первый экран называет 0 ₽, 0 ₽ и 5 000 ₽ в месяц,
+// а самый крупный обязательный платёж находился только на «Стоимости».
+// Для сайта, который держится на «все платежи, а не „от“», конкурент
+// оказался честнее нас ровно в этом месте.
+// Сумма — минимальная (первый уровень ответственности), поэтому «от»;
+// берётся из FUNDS, а не пишется словами. Фонд — норма закона, и чип
+// со статьёй стоит здесь, в карточке направления, а не у пяти условий
+// первого экрана: там чипов быть не должно. Второй фонд, для торгов, —
+// отдельной строкой: КФ ОДО на сайте всегда называется отдельно.
 const dirs = [
   {
     slug: 'sro-stroiteley',
@@ -113,6 +127,7 @@ const dirs = [
     t: 'СРО строителей',
     works: ['строительство', 'реконструкция', 'капитальный ремонт', 'снос объектов капитального строительства', 'функции технического заказчика'],
     note: 'Нужна, если по прямому договору больше 10 млн ₽, по договору на снос — больше 1 млн ₽, на капремонте многоквартирного дома — при любой сумме. СРО — вашего субъекта РФ.',
+    fund: { harm: FUNDS.buildHarm[0].amount, contract: FUNDS.buildContract[0].amount },
   },
   {
     slug: 'sro-proektirovshchikov',
@@ -120,6 +135,7 @@ const dirs = [
     t: 'СРО проектировщиков',
     works: ['проектная и рабочая документация', 'архитектурно-строительное проектирование'],
     note: 'Нужна при любой сумме прямого договора. Регион не важен: СРО — любого субъекта.',
+    fund: { harm: FUNDS.designHarm[0].amount, contract: FUNDS.designContract[0].amount },
   },
   {
     slug: 'sro-izyskateley',
@@ -127,6 +143,7 @@ const dirs = [
     t: 'СРО изыскателей',
     works: ['инженерно-геодезические изыскания', 'инженерно-геологические', 'инженерно-гидрометеорологические', 'инженерно-экологические', 'инженерно-геотехнические'],
     note: 'Нужна при любой сумме прямого договора. Регион не важен: СРО — любого субъекта.',
+    fund: { harm: FUNDS.designHarm[0].amount, contract: FUNDS.designContract[0].amount },
   },
 ]
 
@@ -242,6 +259,13 @@ const howToSchema = {
                 {d.works.map((w) => <li><Icon name="check" size={15} />{w}</li>)}
               </ul>
               <p class="dir-note">{d.note}</p>
+              <div class="dir-fund">
+                <dl>
+                  <div class="df-row"><dt>Компенсационный фонд</dt><dd>от&nbsp;{d.fund.harm}</dd></div>
+                  <div class="df-row df-row--sub"><dt>Для торгов — второй фонд</dt><dd>от&nbsp;{d.fund.contract}</dd></div>
+                </dl>
+                <span class="law">{LAW.funds}</span>
+              </div>
               <span class="dir-go" aria-hidden="true">Подробнее <Icon name="arrow" size={15} /></span>
             </div>
           </li>
@@ -537,7 +561,7 @@ const howToSchema = {
   .dir-in {
     height: 100%;
     display: grid;
-    grid-template-rows: auto auto 1fr auto auto;
+    grid-template-rows: auto auto 1fr auto auto auto;
     gap: 12px;
     padding: 24px 22px 20px;
     background: var(--card, var(--paper));
@@ -559,6 +583,20 @@ const howToSchema = {
   .dir-works li { display: grid; grid-template-columns: 15px minmax(0, 1fr); gap: 9px; align-items: start; font-size: 15px; line-height: 1.45; hyphens: auto; overflow-wrap: anywhere; }
   .dir-works :global(svg) { margin-top: 3px; color: var(--good, var(--acc)); }
   .dir-note { margin: 4px 0 0; padding-top: 12px; border-top: 1px solid var(--line); font-size: 14px; line-height: 1.55; color: var(--muted); }
+  /* Строки как в карточке условий первого экрана: подпись слева, сумма
+     справа. Не помещается — сумма уходит под подпись, к правому краю. */
+  .dir-fund { display: grid; gap: 10px; justify-items: start; padding-top: 12px; border-top: 1px solid var(--line); }
+  .dir-fund dl { margin: 0; display: grid; gap: 6px; width: 100%; }
+  .df-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 2px 12px; }
+  .df-row dt { font-size: 14.5px; color: var(--ink); }
+  .df-row dd { margin: 0 0 0 auto; font-size: 15px; font-weight: 600; color: var(--ink); white-space: nowrap; font-variant-numeric: lining-nums tabular-nums; }
+  .df-row--sub dt, .df-row--sub dd { font-size: 14px; font-weight: 400; color: var(--muted); }
+  /* Суммы у правого края — там же, где на телефоне столбик кнопок связи
+     (Base.astro): тот же отступ, что у строк карточки условий в Hero. */
+  @media (max-width: 767px) {
+    .df-row { padding-right: 28px; column-gap: 8px; }
+    .df-row dt { font-size: 14px; }
+  }
   .dir-go { display: inline-flex; align-items: center; gap: 6px; font-size: 14.5px; font-weight: 600; color: var(--acc-deep); }
   .dir-in:hover .dir-go { text-decoration: underline; }
   /* На телефоне виды работ идут строкой, а не столбиком: три карточки
