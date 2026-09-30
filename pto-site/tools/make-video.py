@@ -10,6 +10,8 @@
     python3 tools/make-video.py                      # весь ролик → promo-video.mp4
     python3 tools/make-video.py --frames 2 10.5 33   # только контрольные кадры в PNG
     python3 tools/make-video.py --out ~/rolik.mp4
+    python3 tools/make-video.py --music promo-music.wav          # ролик сразу с музыкой
+    python3 tools/make-video.py --mux-only ролик.mp4 --music promo-music.wav --out итог.mp4
 
 Нужны playwright (как для make-og.py) и ffmpeg с кодеком libx264.
 ffmpeg ищется в переменной FFMPEG, затем в PATH.
@@ -56,7 +58,16 @@ def main() -> int:
     ap.add_argument("--fps", type=int, default=30)
     ap.add_argument("--duration", type=float, default=58.0, help="длина ролика, секунд")
     ap.add_argument("--frames", type=float, nargs="*", help="снять только эти моменты (секунды) в PNG")
+    ap.add_argument("--music", help="WAV с музыкой (tools/make-music.py) — наложить на ролик")
+    ap.add_argument("--mux-only", metavar="VIDEO",
+                    help="не снимать кадры заново, а только наложить --music на готовое видео")
     args = ap.parse_args()
+
+    if args.mux_only:
+        ffmpeg = os.environ.get("FFMPEG") or shutil.which("ffmpeg")
+        if not ffmpeg or not args.music:
+            return print("Нужны ffmpeg и --music") or 1
+        return mux(ffmpeg, args.mux_only, args.music, args.out)
 
     ffmpeg = os.environ.get("FFMPEG") or shutil.which("ffmpeg")
     if args.frames is None and not ffmpeg:
@@ -101,8 +112,24 @@ def main() -> int:
         enc.wait()
         browser.close()
     srv.shutdown()
+    if args.music and enc.returncode == 0:
+        silent = args.out + ".silent.mp4"
+        os.replace(args.out, silent)
+        code = mux(ffmpeg, silent, args.music, args.out)
+        os.remove(silent)
+        return code
     print(f"\nГотово: {args.out}")
     return enc.returncode
+
+
+def mux(ffmpeg: str, video: str, music: str, out: str) -> int:
+    """Музыка поверх готового видео: картинка копируется без пережатия."""
+    code = subprocess.run(
+        [ffmpeg, "-y", "-loglevel", "error", "-i", video, "-i", music,
+         "-map", "0:v:0", "-map", "1:a:0", "-c:v", "copy",
+         "-c:a", "aac", "-b:a", "192k", "-shortest", "-movflags", "+faststart", out]).returncode
+    print(f"\nГотово: {out} (с музыкой)")
+    return code
 
 
 if __name__ == "__main__":
