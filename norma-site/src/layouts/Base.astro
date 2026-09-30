@@ -9,6 +9,7 @@ import BrandIcon from '../components/BrandIcon.astro'
 import CookieBanner from '../components/CookieBanner.astro'
 import { SITE, href } from '../config/site'
 import { SEO } from '../config/seo'
+import { ABOUT } from '../config/about'
 
 interface Props {
   title: string
@@ -72,10 +73,14 @@ const orgSchema = {
   email: SITE.email,
   founder: { '@type': 'Person', name: 'Багишев Алихан Ахадович' },
   taxID: SITE.inn,
-  // Работа дистанционная по всей стране. Конкретные города в разметке
-  // сузили бы выдачу: поисковик решил бы, что это местная фирма.
+  // Работа дистанционная по всей стране — это areaServed. Город в адресе
+  // появился 29.09.2026: регион сайта в Вебмастере — Санкт-Петербург
+  // (решение заказчика: ИП зарегистрирован там, 78 в ОГРНИП, там 5 из 8
+  // партнёрских СРО). Раньше здесь стоял один код страны, «чтобы выдача
+  // не сузилась», — заказчик выбрал прибавку по Петербургу. Улицы нет
+  // нарочно: адрес домашний, он стоит только в политике.
   areaServed: { '@type': 'Country', name: 'Россия' },
-  address: { '@type': 'PostalAddress', addressCountry: 'RU' },
+  address: { '@type': 'PostalAddress', addressCountry: 'RU', addressLocality: ABOUT.city },
   sameAs: [SITE.whatsapp, SITE.telegram, SITE.maxLink].filter(Boolean),
   // Знак и картинка-превью. Без logo поисковик не покажет фирменный знак
   // ни рядом с сайтом в выдаче, ни в карточке организации.
@@ -242,6 +247,35 @@ const graph = {
 
     <script type="application/ld+json" set:html={JSON.stringify(graph)} />
 
+    {/* Предзагрузка страниц по наведению — правила для браузера, без скрипта.
+        Хостинг отвечает на запрос страницы за 1,5–4,4 с (Seobility и Вебмастер,
+        29.09.2026), а та же сборка на Apache с нашим .htaccess — за 2–4 мс:
+        ждёт сервер, не сайт. Навёл курсор на ссылку — браузер запрашивает
+        страницу, пока рука идёт к клику, и ожидание проходит заранее.
+        Только prefetch, не prerender: страница скачивается, но не выполняется,
+        поэтому Метрика не считает визит, которого не было. Chrome, Edge
+        и Яндекс Браузер понимают правила, остальные браузеры их пропускают.
+        Стережёт test-pages: наведение даёт запрос с Sec-Purpose: prefetch. */}
+    <script
+      is:inline
+      type="speculationrules"
+      set:html={JSON.stringify({
+        prefetch: [
+          {
+            source: 'document',
+            where: {
+              and: [
+                { href_matches: `${import.meta.env.BASE_URL}*` },
+                { not: { href_matches: `${import.meta.env.BASE_URL}api/*` } },
+                { not: { selector_matches: '[download], [target=_blank]' } },
+              ],
+            },
+            eagerness: 'moderate',
+          },
+        ],
+      })}
+    />
+
     <!-- Прятать блоки под анимацию можно только когда скрипт точно работает.
          Ставим класс до отрисовки, чтобы не было мигания. -->
     <script is:inline>document.documentElement.classList.add('js')</script>
@@ -321,8 +355,12 @@ const graph = {
       // Плавное появление блоков при прокрутке.
       const reveal = () => {
         const items = Array.from(document.querySelectorAll<HTMLElement>('.rv'))
+        const show = (el: Element) => {
+          el.classList.remove('rv-wait')
+          el.classList.add('in')
+        }
         if (!('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-          items.forEach((el) => el.classList.add('in'))
+          items.forEach(show)
           return
         }
 
@@ -340,11 +378,24 @@ const graph = {
           el.style.setProperty('--rv-i', String(Math.min(twins.indexOf(el), 6)))
         }
 
+        // Прячем только то, что ниже экрана. Что видно сейчас (и что выше,
+        // если страница открылась прокрученной), остаётся как есть: блоки
+        // первого экрана не ждут ни скрипта, ни анимации. Прячем уже после
+        // отрисовки, но за краем экрана — этого не видно.
+        const later = items.filter((el) => {
+          if (el.getBoundingClientRect().top < window.innerHeight) {
+            show(el)
+            return false
+          }
+          el.classList.add('rv-wait')
+          return true
+        })
+
         const io = new IntersectionObserver(
           (entries) => {
             entries.forEach((entry) => {
               if (entry.isIntersecting) {
-                entry.target.classList.add('in')
+                show(entry.target)
                 io.unobserve(entry.target)
               }
             })
@@ -358,11 +409,11 @@ const graph = {
           // когда блок виден целиком, он уже на месте.
           { rootMargin: '0px 0px 12% 0px' },
         )
-        items.forEach((el) => io.observe(el))
+        later.forEach((el) => io.observe(el))
 
         // Страховка: если наблюдатель почему-то не сработал, через 3 секунды
         // показываем всё принудительно. Невидимый текст хуже отсутствия анимации.
-        setTimeout(() => items.forEach((el) => el.classList.add('in')), 3000)
+        setTimeout(() => later.forEach(show), 3000)
       }
       reveal()
 

@@ -138,6 +138,58 @@ for (const [screen, width, height] of [['телефон', 320, 720], ['комп�
   }
   await ctx.close()
 }
+
+// ── Предзагрузка по наведению ──
+// Хостинг отвечает на запрос страницы 1,5–4,4 с (29.09.2026). Правила
+// speculationrules в Base.astro запрашивают страницу, пока курсор идёт
+// к клику. Проверяется поведение: наведение на ссылку даёт запрос
+// с Sec-Purpose: prefetch, а не просто наличие тега в разметке.
+{
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } })
+  const page = await ctx.newPage()
+  let prefetched = false
+  page.on('request', (r) => {
+    if (/prefetch/.test(r.headers()['sec-purpose'] || '') && new URL(r.url()).pathname.endsWith('/stoimost/')) prefetched = true
+  })
+  await page.goto(BASE + '/', { waitUntil: 'networkidle' })
+  await page.hover('header a[href$="/stoimost/"]')
+  for (let i = 0; i < 20 && !prefetched; i++) await page.waitForTimeout(100)
+  if (!prefetched) problems.push('наведение на «Стоимость» в шапке не запросило страницу заранее (speculationrules в Base.astro)')
+  else console.log('✓ Наведение на ссылку запрашивает страницу заранее (Sec-Purpose: prefetch)')
+  await ctx.close()
+}
+// ── Первый экран не ждёт анимации ──
+// До 30.09.2026 .rv прятал блоки до скрипта: список статей в базе знаний,
+// разбивка на «Стоимости» и карточки городов появлялись примерно через
+// секунду после первой отрисовки (телефон, медленный 4G, сервер 1,5 с).
+// Теперь прячется только то, что ниже экрана. Проверяется сразу после
+// загрузки, до прокрутки: в кадре нет ни одного спрятанного блока,
+// а ниже кадра они есть, то есть появление при прокрутке не отключено.
+{
+  let below = 0
+  for (const [screen, width, height] of [['телефон', 390, 844], ['компьютер', 1280, 900]]) {
+    const ctx = await browser.newContext({ viewport: { width, height } })
+    const page = await ctx.newPage()
+    for (const url of ['/', '/baza-znaniy/', '/stoimost/', '/sro/moskva/', '/uslugi/sro-stroiteley/', '/baza-znaniy/kak-vstupit-v-sro/']) {
+      await page.goto(BASE + url, { waitUntil: 'domcontentloaded' })
+      await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))))
+      const r = await page.evaluate(() => {
+        const vh = innerHeight
+        const rv = [...document.querySelectorAll('.rv')]
+        const inView = rv.filter((e) => { const b = e.getBoundingClientRect(); return b.height > 0 && b.top < vh && b.bottom > 0 })
+        return {
+          hidden: inView.filter((e) => e.classList.contains('rv-wait') || getComputedStyle(e).opacity !== '1').map((e) => e.className.slice(0, 40)),
+          below: rv.filter((e) => e.getBoundingClientRect().top >= vh && e.classList.contains('rv-wait')).length,
+        }
+      })
+      below += r.below
+      for (const h of r.hidden) problems.push(`${url} ${screen}: на первом экране блок спрятан до анимации → ${h}`)
+    }
+    await ctx.close()
+  }
+  if (below === 0) problems.push('ни одного блока ниже экрана не ждёт прокрутки — появление при прокрутке отключилось')
+  else console.log(`✓ Первый экран виден сразу, появление при прокрутке — только ниже экрана (${below} блоков ждут)`)
+}
 await browser.close()
 
 if (tight.size) {

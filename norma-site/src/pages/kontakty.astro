@@ -4,6 +4,7 @@ import ConsultBlock from '../components/ConsultBlock.astro'
 import Seal from '../components/Seal.astro'
 import Icon from '../components/Icon.astro'
 import { href, SITE, REGISTRIES } from '../config/site'
+import { ABOUT } from '../config/about'
 import HeadPhoto from '../components/HeadPhoto.astro'
 
 // Страница контактов — карточка контрагента, а не футер с кружочками
@@ -107,7 +108,7 @@ const IDENT = [
 
 <Base
   title="Контакты — Алихан Багишев, помощь по СРО, НРС, НОК | НОРМА"
-  description="Телефон, WhatsApp, Telegram, MAX и почта для связи. ИП Багишев Алихан Ахадович, ИНН 470418675847. Работаю по всей России дистанционно."
+  description={`Телефон, WhatsApp, Telegram, MAX и почта для связи. ИП Багишев Алихан Ахадович, ИНН ${SITE.inn}, ${ABOUT.city}. Работаю по всей России дистанционно.`}
   breadcrumbs={[{ label: 'Главная', url: href('/') }, { label: 'Контакты' }]}
   pageType="ContactPage"
 >
@@ -162,7 +163,11 @@ const IDENT = [
         </div>
         <div>
           <dt>Откуда работаю</dt>
-          <dd>Дистанционно, по всей России</dd>
+          {/* Город — с 29.09.2026: регион сайта в Вебмастере — Санкт-Петербург
+              (решение заказчика), и модератор подтверждает его по этой
+              странице. Город — из ABOUT, как на «Обо мне»; улицы здесь нет
+              нарочно: адрес домашний, он стоит только в политике. */}
+          <dd>{ABOUT.city}, дистанционно по всей России</dd>
         </div>
       </dl>
     </div>

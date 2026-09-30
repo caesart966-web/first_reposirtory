@@ -84,7 +84,12 @@ console.log('\nНепроверяемые утверждения')
 const UNVERIFIABLE = [
   /половин\S*\s+(сайтов|обратившихся|отраслевых|площадок|клиентов|компаний)/i,
   /нет больше нигде/i,
-  /одн\S+ из самых частых ошибок/i,
+  /одн\S+ из (трёх |двух )?самых частых (ошибок|причин)/i,
+  // Срок «за сутки» — только словом «бывает» (TERMS.extractRush в facts.ts).
+  // «2–3 дня, а чаще всё укладывается в сутки» простояло на калькуляторе
+  // и «Кому нужна СРО» до 29.09.2026: фраза спорила сама с собой, а обычным
+  // сроком заказчик назвал 2–3 дня.
+  /(чаще|обычно|как правило)[^.<]{0,40}(в сутки|за сутки|за (один )?день)/i,
 ]
 const scripts = existsSync(join(DIST, '_astro'))
   ? readdirSync(join(DIST, '_astro')).filter((f) => f.endsWith('.js')).map((f) => ({ url: `_astro/${f}`, body: readFileSync(join(DIST, '_astro', f), 'utf8') }))
@@ -171,7 +176,11 @@ console.log('\nЧисла из конфигурации')
 const CHECKS = [
   { label: 'срок действия свидетельства НОК', value: num(cfg, 'nokValidity'), pages: ['/uslugi/nrs/'] },
   { label: 'срок рассмотрения заявления', value: num(cfg, 'law'), pages: ['/', '/uslugi/sro-stroiteley/'] },
-  { label: 'срок до выписки', value: num(cfg, 'extract'), pages: ['/', '/stoimost/'] },
+  // Статьи пишутся markdown и TERMS не импортируют: срок в них записан
+  // словами. Поменяется TERMS — эти страницы должны упасть здесь,
+  // а не разойтись с сайтом молча.
+  { label: 'срок до выписки', value: num(cfg, 'extract'), pages: ['/', '/stoimost/', '/baza-znaniy/sroki-vstupleniya/', '/baza-znaniy/kak-vstupit-v-sro/'] },
+  { label: 'срочный срок до выписки', value: num(cfg, 'extractRush'), pages: ['/baza-znaniy/sroki-vstupleniya/', '/uslugi/sro-stroiteley/'] },
   { label: 'вступительный взнос строителям', value: num(fees, 'entry'), pages: ['/stoimost/'] },
 ]
 for (const c of CHECKS) {
