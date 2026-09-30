@@ -270,5 +270,16 @@ class TestВыгрузкаРеестраСайта(unittest.TestCase):
         self.assertEqual([(b["имя"], b["инн_как_есть"]) for b in без],
                          [('АО "БАНКОМСВЯЗЬ"', "19353391")])
 
+
+class TestСкачиваниеСРО(unittest.TestCase):
+    def test_адрес_компании_а_не_сро(self):
+        r = {"inn": "7700000001",
+             "sro": {"address": "191187, г. Санкт-Петербург, ул. Шпалерная"},
+             "legal_address": "125466, г. Москва, ул. Родионовская"}
+        self.assertEqual(мс._адрес_записи(r), "125466, г. Москва, ул. Родионовская")
+
+    def test_нет_адреса(self):
+        self.assertEqual(мс._адрес_записи({"inn": "7700000001", "sro": {"address": "СПб"}}), "")
+
 if __name__ == "__main__":
     unittest.main()

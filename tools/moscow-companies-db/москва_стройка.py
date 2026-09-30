@@ -1370,6 +1370,14 @@ def cmd_реестры(args) -> int:
         if not похоже_на_москву(d["регион"]):
             d["данные"], d["вердикт"] = None, ("не Москва (по адресу в реестре)", "", "")
             continue
+        # Адреса нет (список, скачанный командой «сро», его может не дать).
+        # Тогда в Checko только тех, чей ИНН выдан в Москве (77, 97): остальных
+        # в базе ФНС среди московских строительных нет, а гонять через Checko
+        # всех — это сотни запросов и несколько дней лимита
+        if not d["регион"].strip() and not d["inn"].startswith(("77", "97")):
+            d["данные"], d["вердикт"] = None, (
+                "не Москва (адреса в реестре нет, ИНН выдан не в Москве)", "", "")
+            continue
         if инн in кэш:
             из_кэша += 1
             d["данные"], d["вердикт"] = кэш[инн], оценить(кэш[инн])
@@ -1538,6 +1546,171 @@ def cmd_реестры(args) -> int:
                 ("Реестр (статус)", 36), ("Причина", 52)]
 
 
+# -- команда «сро»: члены одной СРО прямо из реестра, когда кнопка выгрузки висит --
+
+РЕЕСТРЫ_САЙТЫ = {"ноприз": "https://reestr.nopriz.ru", "нострой": "https://reestr.nostroy.ru"}
+
+
+def _адрес_записи(obj: Any, путь: str = "") -> str:
+    """Адрес места нахождения члена — где бы он ни лежал в записи.
+
+    Ветку «sro» пропускаем: там адрес самой СРО, а не компании.
+    """
+    if isinstance(obj, dict):
+        for key, value in obj.items():
+            k = key.lower()
+            if k in ("sro", "sro_info"):
+                continue
+            if isinstance(value, str) and value.strip() and "address" in k \
+                    and "email" not in k and "site" not in k:
+                return value.strip()
+            if isinstance(value, (dict, list)):
+                найдено = _адрес_записи(value, k)
+                if найдено:
+                    return найдено
+    elif isinstance(obj, list):
+        for item in obj:
+            найдено = _адрес_записи(item, путь)
+            if найдено:
+                return найдено
+    return ""
+
+
+def _сро_записи(record: dict) -> tuple[str, str, str]:
+    sro = record.get("sro") if isinstance(record.get("sro"), dict) else {}
+    return (str(sro.get("id") or ""),
+            _строка(sro, "full_description", "title", "short_description", "name"),
+            _строка(sro, "registration_number"))
+
+
+def _страницы(session, url: str, что: str, размер: int, пауза_: float
+              ) -> tuple[list[dict], int | None]:
+    """Все записи постранично с защитой от молчаливой недокачки.
+
+    Размер страницы — по факту первого ответа; пустая страница посреди
+    списка — сбой, её переспрашиваем; не пришедшие страницы повторяем в
+    конце. Возвращает (записи, заявлено реестром).
+    """
+    def страница(n, size):
+        for attempt in range(1, 6):
+            status = None
+            try:
+                resp = session.post(url, json=тело(n, size), timeout=90)
+                if resp.status_code == 200:
+                    return resp.json()
+                status = resp.status_code
+                if status in (404, 405):
+                    return "нет пути"
+                print(f"[сро] {что}, страница {n}: HTTP {status} (попытка {attempt}/5)",
+                      flush=True)
+            except (requests.RequestException, ValueError) as exc:
+                print(f"[сро] {что}, страница {n}: {type(exc).__name__} "
+                      f"(попытка {attempt}/5)", flush=True)
+            time.sleep(пауза(status, attempt))
+        return None
+
+    первая = страница(1, размер)
+    if первая in (None, "нет пути") or not записи_ответа(первая):
+        return [], None
+    всего = всего_в_ответе(первая)
+    получено = записи_ответа(первая)
+    size = len(получено) if всего and len(получено) < min(размер, всего) else размер
+    страниц = math.ceil(всего / size) if всего else 1
+    print(f"[сро] {что}: заявлено {всего}, по {size} на странице — {страниц} стр.",
+          flush=True)
+    записи, провалы = list(получено), []
+    for n in range(2, страниц + 1):
+        payload = страница(n, size)
+        recs = записи_ответа(payload) if isinstance(payload, dict) else []
+        for _ in range(3):            # пустая посреди списка — сбой, а не конец
+            if recs:
+                break
+            time.sleep(3)
+            payload = страница(n, size)
+            recs = записи_ответа(payload) if isinstance(payload, dict) else []
+        if recs:
+            записи += recs
+        else:
+            провалы.append(n)
+        if n % 20 == 0:
+            print(f"[сро] {что}: страница {n}/{страниц}", flush=True)
+        time.sleep(пауза_)
+    for n in провалы[:]:
+        payload = страница(n, size)
+        recs = записи_ответа(payload) if isinstance(payload, dict) else []
+        if recs:
+            записи += recs
+            провалы.remove(n)
+    if провалы:
+        print(f"[сро] ВНИМАНИЕ: не пришли страницы {провалы}", file=sys.stderr)
+    return записи, всего
+
+
+def cmd_сро(args) -> int:
+    from openpyxl import Workbook
+    m = re.search(r"(?:/sro/)?(\d+)\s*/?$", args.id.strip())
+    if not m:
+        print("Нужен номер СРО из адреса страницы, например 397 "
+              "(из https://reestr.nopriz.ru/sro/397)", file=sys.stderr)
+        return 1
+    ид = m.group(1)
+    сайт = РЕЕСТРЫ_САЙТЫ["нострой" if "nostroy" in args.id or args.нострой else "ноприз"]
+    session = сессия()
+
+    # быстрый путь — список одной СРО; если его нет — весь реестр и отбор
+    записи, заявлено = _страницы(session, f"{сайт}/api/sro/{ид}/member/list",
+                                 f"СРО {ид}", args.размер, args.пауза)
+    чужие = [r for r in записи if _сро_записи(r)[0] not in ("", ид)]
+    if записи and чужие:
+        print(f"[сро] список СРО {ид} вернул и чужих ({len(чужие)}) — путь не тот, "
+              f"иду через весь реестр", flush=True)
+        записи = []
+    if not записи:
+        print("[сро] прохожу весь реестр и отбираю членов этой СРО "
+              "(это дольше — десятки минут) …", flush=True)
+        все, заявлено_всего = _страницы(session, f"{сайт}/api/sro/all/member/list",
+                                        "весь реестр", args.размер, args.пауза)
+        if заявлено_всего and len(все) < заявлено_всего * 0.99:
+            print(f"[сро] ВНИМАНИЕ: реестр отдал {len(все)} из {заявлено_всего} — "
+                  f"список СРО может быть неполным", file=sys.stderr)
+        записи = [r for r in все if _сро_записи(r)[0] == ид]
+        заявлено = None
+    if not записи:
+        print(f"[сро] членов СРО {ид} не нашлось. Пришлите этот вывод.", file=sys.stderr)
+        return 1
+
+    # одна запись — одна строка; дубли (после повторов страниц) схлопываем
+    уникальные = {}
+    for r in записи:
+        уникальные.setdefault(r.get("id") or (r.get("inn"), r.get("registry_registration_date")), r)
+    записи = list(уникальные.values())
+    _ид, имя_сро, номер_сро = _сро_записи(записи[0])
+
+    с_адресом = sum(1 for r in записи if _адрес_записи(r))
+    print(f"[сро] {имя_сро} ({номер_сро}): членов {len(записи)}"
+          + (f" из заявленных {заявлено}" if заявлено else "")
+          + f"; с адресом {с_адресом}", flush=True)
+    if заявлено and len(записи) < заявлено:
+        print(f"[сро] ВНИМАНИЕ: получено меньше заявленного", file=sys.stderr)
+
+    wb = Workbook()
+    ws = wb.active
+    ws.append(["Сведения о СРО", "Сведения о члене саморегулируемой организации"])
+    ws.append(["Сведения о СРО", "N п/п", "Сокращенное наименование", "Полное наименование",
+               "Статус (члена СРО", "Дата вступления", "Дата прекращения членства",
+               "ИНН", "ОГРН", "Адрес места нахождения юридического лица"])
+    ws.append([f"{имя_сро};\n{номер_сро}"])
+    for n, r in enumerate(записи, 1):
+        z = сжать(r)
+        ws.append([None, str(n), _строка(r, "short_description"), _строка(r, "full_description"),
+                   статус_члена(r), z["start"], z["stop"], str(r.get("inn") or ""),
+                   _строка(r, "ogrnip", "ogrn"), _адрес_записи(r)])
+    out = Path(args.out or f"сро_{ид}.xlsx")
+    wb.save(out)
+    print(f"[сро] готово: {out} — добавьте его в --файлы команды «реестры»")
+    return 0
+
+
 def cmd_всё(args) -> int:
     for шаг in (cmd_нострой, cmd_выборка, cmd_таблица):
         код = шаг(args)
@@ -1580,11 +1753,17 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--checko-кэш", dest="checko_кэш", default="checko_реестры.json",
                    help="где хранить ответы Checko между запусками")
     p.set_defaults(func=cmd_реестры)
+    p = sub.add_parser("сро", parents=[общие],
+                       help="скачать членов одной СРО из реестра (номер из адреса страницы)")
+    p.add_argument("--id", required=True,
+                   help="номер СРО или адрес страницы: https://reestr.nopriz.ru/sro/397")
+    p.add_argument("--нострой", action="store_true", help="СРО из реестра НОСТРОЙ")
+    p.set_defaults(func=cmd_сро)
     args = parser.parse_args(argv)
     if not getattr(args, "func", None):
         parser.print_help()
         return 1
-    if requests is None and args.команда in ("всё", "нострой", "выборка", "реестры"):
+    if requests is None and args.команда in ("всё", "нострой", "выборка", "реестры", "сро"):
         print("Нужен requests: pip install requests", file=sys.stderr)
         return 1
     return args.func(args)
