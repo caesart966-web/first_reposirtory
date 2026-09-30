@@ -763,7 +763,7 @@ python3 tools/make-video.py --music promo-music.wav  # ролик сразу с 
 «Ирина». Ставится так:
 
 ```
-pip install piper-tts
+pip install piper-tts pyworld
 mkdir -p tools/voices && cd tools/voices
 curl -LO https://github.com/rhasspy/piper/releases/download/v0.0.2/voice-ru-irinia-medium.tar.gz
 tar xzf voice-ru-irinia-medium.tar.gz
