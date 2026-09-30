@@ -1,0 +1,229 @@
+#!/usr/bin/env python3
+"""Шортс X-PTO с озвучкой: голос → хронология → музыка → видео.
+
+1. Каждая фраза озвучивается отдельно синтезатором RHVoice (голос
+   aleksandr-hq), тишина по краям обрезается.
+2. По настоящей длине фраз строится хронология и пишется в
+   tools/video/short-timeline.js — сцены ролика встают ровно под голос.
+3. Сочиняется своя музыка (инструменты из make-music.py, но другая
+   тональность и темп) и приглушается там, где звучит голос.
+4. tools/make-video.py снимает tools/video/short.html и накладывает звук.
+
+Произношение: синтезатор читает аббревиатуры как слова, поэтому в тексте
+для голоса они расписаны по буквам («пэ пэ эр»), а в субтитрах — как
+положено («ППР»). Поменяли фразу — меняйте обе колонки.
+
+Нужны: RHVoice с русскими голосами (apt install rhvoice rhvoice-russian),
+numpy, ffmpeg (переменная FFMPEG или PATH), playwright.
+
+    python3 tools/make-short.py                 # → promo-short.mp4
+"""
+import argparse
+import importlib.util
+import json
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+import wave
+from pathlib import Path
+
+import numpy as np
+
+ROOT = Path(__file__).resolve().parent.parent
+TOOLS = ROOT / "tools"
+SR = 44100
+VOICE = "aleksandr-hq"
+RATE = "108"
+START = 0.5      # первая фраза звучит сразу: у шортса полсекунды на то, чтобы зацепить
+GAP = 0.35       # пауза между фразами
+TAIL = 2.4       # финальный кадр держится после последней фразы
+
+# (что говорит голос, что написано в субтитрах)
+LINES = [
+    ("Сдача объекта уже горит, а документации нет?",
+     "Сдача объекта уже горит, а документации нет?"),
+    ("Икс пэ тэ о — производственно-технический отдел на аутсорсе.",
+     "X-PTO — производственно-технический отдел на аутсорсе."),
+    ("Исполнительная документация, сметы и пэ пэ эр.",
+     "Исполнительная документация, сметы и ППР."),
+    ("Геодезия, обмеры и защита объёмов в ка эс два.",
+     "Геодезия, обмеры и защита объёмов в КС-2."),
+    ("Доводим объект до заключения о соответствии — без возвратов и замечаний.",
+     "Доводим объект до заключения о соответствии — без возвратов и замечаний."),
+    ("Работаем удалённо по всей России: школы, спортивные объекты, аквапарки, аэропорты.",
+     "Работаем удалённо по всей России: школы, спортивные объекты, аквапарки, аэропорты."),
+    ("Мы — член эс эр о проектировщиков.",
+     "Мы — член СРО проектировщиков."),
+    ("Оценим объём и стоимость работ за один день.",
+     "Оценим объём и стоимость работ за один день."),
+    ("Оставьте заявку на сайте — ссылка в профиле.",
+     "Оставьте заявку на сайте — ссылка в профиле."),
+]
+
+
+def ffmpeg_bin() -> str:
+    f = os.environ.get("FFMPEG") or shutil.which("ffmpeg")
+    if not f:
+        sys.exit("Не найден ffmpeg: укажите путь в переменной FFMPEG")
+    return f
+
+
+def read_wav(path: Path) -> np.ndarray:
+    with wave.open(str(path)) as w:
+        data = np.frombuffer(w.readframes(w.getnframes()), dtype="<i2").astype(np.float64) / 32768
+        if w.getnchannels() == 2:
+            data = data.reshape(-1, 2).mean(axis=1)
+    return data
+
+
+def synth(text: str, out: Path, ff: str) -> np.ndarray:
+    raw = out.with_suffix(".raw.wav")
+    subprocess.run(["RHVoice-test", "-p", VOICE, "-r", RATE, "-o", str(raw)],
+                   input=text.encode("utf-8"), check=True, capture_output=True)
+    # тишина по краям — прочь, частота — как у музыки, 44,1 кГц моно
+    subprocess.run([ff, "-y", "-loglevel", "error", "-i", str(raw), "-af",
+                    "silenceremove=start_periods=1:start_threshold=-45dB,areverse,"
+                    "silenceremove=start_periods=1:start_threshold=-45dB,areverse,"
+                    "highpass=f=70,acompressor=threshold=-18dB:ratio=3:attack=5:release=80",
+                    "-ar", str(SR), "-ac", "1", str(out)], check=True)
+    return read_wav(out)
+
+
+def load_music_module():
+    spec = importlib.util.spec_from_file_location("make_music", TOOLS / "make-music.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def compose_music(mm, total: float, cuts: list) -> np.ndarray:
+    """Своя музыка: ре мажор, 116 ударов в минуту, светлее и подвижнее первой."""
+    bpm = 116
+    beat = 60 / bpm
+    bar = beat * 4
+    n = int((total + 3) * SR)
+    mm.N = n                                       # инструменты кладут звук в шину этой длины
+    chords = [([62, 66, 69, 74], 50),              # D
+              ([61, 64, 69, 73], 45),              # A/C#
+              ([59, 62, 66, 71], 47),              # Bm
+              ([55, 59, 62, 67], 43)]              # G
+    pads = np.zeros((2, n)); melo = np.zeros((2, n)); beat_bus = np.zeros((2, n))
+    bass = np.zeros((2, n)); fx = np.zeros((2, n))
+
+    t = 0.0
+    b = 0
+    while t < total:
+        notes, _ = chords[b % 4]
+        length = min(bar + 1.0, total - t + 2)
+        for i, m in enumerate(notes):
+            mm.put(pads, mm.pad_note(m, length), t, 0.11, pan=-0.4 + i * 0.27)
+        t += bar
+        b += 1
+
+    # арпеджио шестнадцатыми через одну — «тикающий» пульс
+    pattern = [0, 2, 1, 3, 2, 1, 3, 2]
+    k = 0
+    t = 0.0
+    while t < total - 1.2:
+        notes, _ = chords[int(t // bar) % 4]
+        mm.put(melo, mm.pluck(notes[pattern[k % 8] % len(notes)] + 12, 0.5), t, 0.075,
+               pan=0.5 if k % 2 else -0.5)
+        k += 1
+        t += beat / 2
+
+    i = 0
+    t = 0.0
+    while t < total - TAIL:
+        if t >= 1.0:
+            mm.put(beat_bus, mm.kick(), t, 0.42)
+            if i % 2 == 1:
+                mm.put(beat_bus, mm.clap(), t, 0.25)
+            mm.put(beat_bus, mm.hat(), t + beat / 2, 0.08, pan=0.3)
+            _, root = chords[int(t // bar) % 4]
+            mm.put(bass, mm.bass_note(root, beat * 0.9), t, 0.16)
+        i += 1
+        t += beat
+
+    for c in cuts:                                  # «вжух» на каждом вскрытии сцены
+        s, at = mm.whoosh(c)
+        mm.put(fx, s, max(0, at), 0.55)
+    mm.put(fx, mm.impact(), total - TAIL - 0.2, 0.35)
+    mm.put(fx, mm.bell(81, 4), total - TAIL - 0.2, 0.08)
+
+    mix = np.vstack((mm.reverb(pads[0], mix=0.35, seed=11), mm.reverb(pads[1], mix=0.35, seed=12)))
+    mix += np.vstack((mm.reverb(melo[0], mix=0.25, seed=13), mm.reverb(melo[1], mix=0.25, seed=14)))
+    mix += np.vstack((mm.reverb(fx[0], mix=0.3, seed=15), mm.reverb(fx[1], mix=0.3, seed=16)))
+    mix += beat_bus + bass
+    return mix[:, : int(total * SR)]
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--out", default=str(ROOT / "promo-short.mp4"))
+    ap.add_argument("--audio-only", action="store_true", help="только звук и хронология, без съёмки кадров")
+    args = ap.parse_args()
+    ff = ffmpeg_bin()
+    if not shutil.which("RHVoice-test"):
+        sys.exit("Нет RHVoice: apt install rhvoice rhvoice-russian")
+
+    tmp = Path(tempfile.mkdtemp(prefix="xpto-short-"))
+    voices, timeline = [], []
+    t = START
+    for i, (spoken, shown) in enumerate(LINES):
+        v = synth(spoken, tmp / f"l{i}.wav", ff)
+        dur = len(v) / SR
+        timeline.append({"s": round(t, 3), "e": round(t + dur, 3), "text": shown})
+        voices.append((t, v))
+        print(f"  {t:5.2f}–{t + dur:5.2f}  {shown}")
+        t += dur + GAP
+    total = round(timeline[-1]["e"] + TAIL, 2)
+
+    (TOOLS / "video" / "short-timeline.js").write_text(
+        "// Сгенерировано tools/make-short.py по длине озвучки. Руками не править.\n"
+        f"window.TL = {json.dumps(timeline, ensure_ascii=False, indent=1)};\n", encoding="utf-8")
+
+    # Голос
+    n = int(total * SR)
+    voice = np.zeros(n)
+    for start, v in voices:
+        i = int(start * SR)
+        voice[i:i + len(v)] += v[: n - i]
+    voice *= 0.9 / (np.max(np.abs(voice)) + 1e-9)
+
+    # Музыка приглушается под голосом: огибающая голоса, сглаженная на 0,25 с
+    cuts = [max(0.0, seg["s"] - 0.3) for seg in timeline[1:]]
+    music = compose_music(load_music_module(), total, cuts)
+    music /= np.max(np.abs(music)) + 1e-9
+    env = np.convolve(np.abs(voice), np.ones(int(0.25 * SR)) / int(0.25 * SR), mode="same")
+    env = np.clip(env / (np.max(env) + 1e-9) * 3, 0, 1)
+    duck = 0.5 - 0.35 * env                        # под голосом музыка тише в ~3 раза
+    tt = np.arange(n) / SR
+    fade = np.clip(tt / 0.3, 0, 1) * np.clip((total - tt) / 1.8, 0, 1)
+    mix = music * duck * fade + np.vstack((voice, voice))
+    mix /= np.max(np.abs(mix)) + 1e-9
+    mix *= 0.89
+
+    audio = tmp / "short-audio.wav"
+    with wave.open(str(audio), "wb") as w:
+        w.setnchannels(2); w.setsampwidth(2); w.setframerate(SR)
+        w.writeframes((mix.T * 32767).astype("<i2").tobytes())
+    # Громкость — по стандарту соцсетей (−14 LUFS): громче они всё равно приглушат сами
+    normed = tmp / "short-audio-14.wav"
+    subprocess.run([ff, "-y", "-loglevel", "error", "-i", str(audio), "-af",
+                    "loudnorm=I=-14:TP=-1.5:LRA=11", "-ar", str(SR), str(normed)], check=True)
+    audio = normed
+    print(f"Звук: {audio} ({total} с)")
+    if args.audio_only:
+        shutil.copy(audio, Path(args.out).with_suffix(".wav"))
+        return 0
+
+    return subprocess.run([sys.executable, str(TOOLS / "make-video.py"),
+                           "--page", "/tools/video/short.html?capture",
+                           "--duration", str(total), "--music", str(audio), "--out", args.out],
+                          env=os.environ).returncode
+
+
+if __name__ == "__main__":
+    sys.exit(main())
