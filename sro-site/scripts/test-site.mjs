@@ -489,6 +489,54 @@ for (const motion of ['no-preference', 'reduce']) {
   await ctx.close()
 }
 
+// Переход между страницами без рывка (01.10.2026, заказчик: «дёргается,
+// когда открываю раздел и когда выхожу»). Первый заход — со вступлением
+// (кадр проявляется, заголовок поднимается); страница, открытая со своей
+// страницы или кнопкой «Назад», стоит на месте сразу — её показывает смена
+// страниц, и вступление поверх смены читалось подёргиванием. Смена — новая
+// страница проступает поверх неподвижной прежней, без сдвига.
+{
+  const ctx = await b.newContext({ viewport: { width: 390, height: 780 }, isMobile: true, hasTouch: true })
+  const p = await ctx.newPage()
+  const intro = () => p.evaluate(() => ({
+    arrived: document.documentElement.classList.contains('arrived'),
+    running: document.getAnimations()
+      .filter((a) => a.timeline === document.timeline && a.playState === 'running')
+      .map((a) => a.animationName || a.transitionProperty || '?')
+      .filter((n) => ['develop', 'print-settle', 'rise', 'transform', 'opacity'].includes(n)).length,
+  }))
+  await p.goto(BASE, { waitUntil: 'domcontentloaded' })
+  const first = await intro()
+  check('первый заход: вступление первого экрана играет', !first.arrived && first.running > 0, JSON.stringify(first))
+  await p.waitForTimeout(1500)
+  await p.locator('[data-hero-cards] > li').nth(2).locator('a').tap()
+  await p.locator('[data-hero-cards] > li').nth(2).locator('a').tap()
+  await p.waitForURL(/sro-izyskateley\/$/)
+  await p.waitForLoadState('domcontentloaded')
+  const inner = await intro()
+  check('переход внутри сайта: страница вида без вступления', inner.arrived && inner.running === 0, JSON.stringify(inner))
+  await p.goBack()
+  await p.waitForLoadState('domcontentloaded')
+  const back = await intro()
+  check('«Назад» на главную: обложка не проявляется заново', back.arrived && back.running === 0, JSON.stringify(back))
+  const vt = await p.evaluate(() => {
+    const rules = [...document.styleSheets].flatMap((sh) => { try { return [...sh.cssRules] } catch { return [] } })
+    const flat = (list) => list.flatMap((r) => (r.cssRules ? [r, ...flat([...r.cssRules])] : [r]))
+    const all = flat(rules)
+    const old = all.find((r) => r.selectorText === '::view-transition-old(root)')
+    const nw = all.find((r) => r.selectorText === '::view-transition-new(root)')
+    const kf = all.find((r) => r.type === CSSRule.KEYFRAMES_RULE && r.name === 'vt-in')
+    return {
+      old: old && `${old.style.animationName || old.style.animation}|${old.style.mixBlendMode}`,
+      nw: nw && nw.style.mixBlendMode,
+      slide: kf ? /transform/.test(kf.cssText) : null,
+    }
+  })
+  check('смена страниц: прежняя стоит под новой, без вспышки и без сдвига',
+    vt.old === 'none|normal' && vt.nw === 'normal' && vt.slide === false, JSON.stringify(vt))
+  await ctx.close()
+}
+
 // Почта в «Связаться» (01.10.2026, вечер): нажатие на адрес открывает
 // почту (mailto), рядом значок копирования — слова «Скопировать» на экране
 // нет, после нажатия на значок адрес лежит в буфере и видна бирка

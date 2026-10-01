@@ -6,6 +6,7 @@ import '@fontsource-variable/brygada-1918'
 import './index.css'
 import { ServicePage } from './components/ServicePage'
 import { serviceBySlug } from './content/services'
+import { markArrival } from './lib/arrival'
 import { setSiteRoot } from './lib/site'
 
 // Точка входа страниц услуг (/uslugi/…). Какая именно страница — в её HTML
@@ -13,6 +14,9 @@ import { setSiteRoot } from './lib/site'
 // объявляет о себе сама, а не угадывается из адреса. Страницы услуг лежат на
 // два уровня ниже корня, поэтому по умолчанию '../../'.
 const mount = document.getElementById('root')!
+// Пришли со своей страницы — без вступления (lib/arrival.ts).
+markArrival()
+
 setSiteRoot(mount.dataset.root ?? '../../')
 
 const service = serviceBySlug(mount.dataset.service ?? '')

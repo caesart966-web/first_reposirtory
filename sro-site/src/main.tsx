@@ -5,9 +5,13 @@ import '@fontsource-variable/onest'
 import '@fontsource-variable/brygada-1918'
 import './index.css'
 import App from './App'
+import { markArrival } from './lib/arrival'
 import { setSiteRoot } from './lib/site'
 
 // Главная лежит в корне: префикса до корня у неё нет.
+// Пришли со своей страницы — без вступления (lib/arrival.ts).
+markArrival()
+
 setSiteRoot('')
 
 // Первая отрисовка — синхронно (flushSync), а сам скрипт в html помечен

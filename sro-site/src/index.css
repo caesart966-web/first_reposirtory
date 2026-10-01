@@ -397,21 +397,37 @@
   animation-duration: 0.42s;
   animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
 }
+/* Смена без рывка (01.10.2026, заказчик: «дёргается, когда открываю раздел
+   и когда выхожу»). Прежняя страница стоит под новой целиком, новая
+   проступает поверх неё — обычным наложением, не plus-lighter. Раньше
+   прежняя гасла, а новая проступала с задержкой и снизу на 10 px: в середине
+   обе были полупрозрачны, сквозь них светлел фон (на телефоне тёмная
+   обложка вспыхивала), а содержимое под неподвижной шапкой подпрыгивало.
+   Вступление страницы (проявление кадра, подъём заголовка) при переходе
+   внутри сайта не играет — lib/arrival.ts и правила html.arrived ниже. */
 ::view-transition-old(root) {
-  animation: 0.3s cubic-bezier(0.4, 0, 1, 1) both vt-out;
+  animation: none;
+  mix-blend-mode: normal;
 }
 ::view-transition-new(root) {
-  animation: 0.42s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both vt-in;
-}
-@keyframes vt-out {
-  to {
-    opacity: 0;
-  }
+  animation: 0.4s cubic-bezier(0.22, 1, 0.36, 1) both vt-in;
+  mix-blend-mode: normal;
 }
 
 @keyframes vt-in {
   from {
     opacity: 0;
-    transform: translateY(10px);
   }
+}
+
+/* Пришли со своей страницы или кнопкой «Назад» (lib/arrival.ts): первый
+   экран стоит на месте сразу, без вступления; блоки в кадре — без перехода. */
+html.arrived .hero-develop,
+html.arrived .hero-print,
+html.arrived .hero-rise {
+  animation: none;
+}
+html.arrived-settling .reveal,
+html.arrived-settling .reveal-words .w > span {
+  transition: none;
 }

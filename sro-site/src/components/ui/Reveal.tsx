@@ -7,6 +7,7 @@ import {
   type ElementType,
   type ReactNode,
 } from 'react'
+import { arrivedFromSite } from '../../lib/arrival'
 import { nbsp } from '../../lib/typo'
 
 // Появление при прокрутке: блок выплывает, заголовок поднимается по словам.
@@ -28,6 +29,15 @@ function useReveal<T extends HTMLElement>() {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       el.classList.add('is-visible')
       return
+    }
+    // Пришли со своей страницы: то, что уже в кадре, стоит на месте сразу,
+    // а не выплывает поверх смены страниц (lib/arrival.ts).
+    if (arrivedFromSite()) {
+      const r = el.getBoundingClientRect()
+      if (r.top < window.innerHeight * 0.9 && r.bottom > 0) {
+        el.classList.add('is-visible')
+        return
+      }
     }
     const observer = new IntersectionObserver(
       (entries) => {
