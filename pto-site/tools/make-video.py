@@ -56,6 +56,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--out", default=str(ROOT / "promo-video.mp4"))
     ap.add_argument("--fps", type=int, default=30)
+    ap.add_argument("--page", default=PAGE, help="страница с анимацией (от папки сайта)")
     ap.add_argument("--duration", type=float, default=58.0, help="длина ролика, секунд")
     ap.add_argument("--frames", type=float, nargs="*", help="снять только эти моменты (секунды) в PNG")
     ap.add_argument("--music", help="WAV с музыкой (tools/make-music.py) — наложить на ролик")
@@ -74,7 +75,7 @@ def main() -> int:
         return print("Не найден ffmpeg: укажите путь в переменной FFMPEG") or 1
 
     srv = serve()
-    url = f"http://127.0.0.1:{srv.server_address[1]}{PAGE}"
+    url = f"http://127.0.0.1:{srv.server_address[1]}{args.page}"
     chrome = find_chrome()
     with sync_playwright() as p:
         browser = p.chromium.launch(**({"executable_path": chrome} if chrome else {}))
