@@ -1,4 +1,4 @@
-import { ArrowUpRight, Check, FileText, Scale } from 'lucide-react'
+import { ArrowUpRight, Check, FileText } from 'lucide-react'
 import { useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react'
 import type { DocItem } from '../content/sroDetails'
 import { DOCS_IP, DOCS_LAW, DOCS_OOO, DOCS_SPECIALISTS, LAW, SRO_DETAILS, STEPS } from '../content/sroDetails'
@@ -19,12 +19,15 @@ import { Reveal } from './ui/Reveal'
 // Ссылка на норму. Не украшение: на странице есть суммы и пороги, и каждый
 // из них посетитель должен уметь проверить сам, не веря нам на слово.
 // Сноской, а не плашкой: серые плашки у каждого абзаца рябили сильнее
-// самого текста. Значок весов — латунью, номер статьи — мелким текстом,
-// как ссылка на источник в документе.
+// самого текста. Перед номером статьи — короткая латунная черта, как перед
+// подписью источника в документе. До 01.10.2026 там стоял значок весов, но
+// весы — знак компании: повторённый у каждой нормы (на странице вида их
+// полтора десятка), он превращался в маркер списка, а в 14 px его рисунок
+// сливался в пятно.
 export function Law({ children }: { children: string }) {
   return (
-    <span className="mt-2 flex items-center gap-1.5 text-xs font-medium text-neutral-600">
-      <Scale className="h-3.5 w-3.5 shrink-0 text-accent-500" aria-hidden="true" />
+    <span className="mt-2 flex items-center gap-2 text-xs font-medium tracking-[0.01em] text-neutral-600">
+      <span className="h-px w-4 shrink-0 bg-accent-500" aria-hidden="true" />
       {children}
     </span>
   )
@@ -66,33 +69,28 @@ export function Head({ title, lead }: { title: string; lead?: string }) {
   )
 }
 
-// Шаги вступления: номер, кто делает шаг, название, одна-две строки и норма.
+// Шаги вступления: номер, название, одна-две строки и норма.
 // Сеткой в три колонки, а не вертикальной лентой: шесть шагов ложатся
 // в две строки, а номер по-прежнему задаёт порядок чтения. Половину шагов
-// делает не кандидат — это видно по метке.
-const WHO_LABEL = { мы: 'делаю я', СРО: 'делает СРО', кандидат: 'от вас' } as const
-
+// делает не кандидат — это сказано в самом названии («Проверяю…»,
+// «Вы оплачиваете…», «СРО вносит…»), меток рядом нет (см. Step).
 export function StepsGrid() {
   return (
     <ol className="mt-10 grid border-t border-neutral-300 sm:grid-cols-2 sm:gap-x-10 lg:grid-cols-3">
       {STEPS.map((step, index) => (
         <li key={step.title} className="border-b border-neutral-300 py-6">
-          <Reveal delay={(index % 3) * 60}>
-            <div className="flex items-center justify-between gap-4">
-              <span className="font-display text-[2rem] font-medium leading-none tabular-nums text-accent-500">
-                {String(index + 1).padStart(2, '0')}
-              </span>
-              <span
-                className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                  step.who === 'мы' ? 'bg-accent-950 text-neutral-50' : 'border border-neutral-300 text-neutral-700'
-                }`}
-              >
-                {WHO_LABEL[step.who]}
-              </span>
+          {/* На телефоне номер слева от текста, как в «Как проходит работа»
+              на главной: отдельной строкой над заголовком он добавлял
+              к шести шагам почти полэкрана. */}
+          <Reveal delay={(index % 3) * 60} className="grid grid-cols-[3rem_minmax(0,1fr)] sm:block">
+            <span className="block font-display text-[1.75rem] font-medium leading-none tabular-nums text-accent-500 sm:text-[2rem]">
+              {String(index + 1).padStart(2, '0')}
+            </span>
+            <div>
+              <h3 className="text-[17px] font-semibold leading-snug text-neutral-950 sm:mt-4">{nbsp(step.title)}</h3>
+              <p className="mt-1.5 text-sm leading-relaxed text-neutral-600">{nbsp(step.detail)}</p>
+              {step.law && <Law>{step.law}</Law>}
             </div>
-            <h3 className="mt-4 text-[17px] font-semibold leading-snug text-neutral-950">{nbsp(step.title)}</h3>
-            <p className="mt-1.5 text-sm leading-relaxed text-neutral-600">{nbsp(step.detail)}</p>
-            {step.law && <Law>{step.law}</Law>}
           </Reveal>
         </li>
       ))}
