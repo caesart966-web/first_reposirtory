@@ -15,9 +15,12 @@ import type { ReactNode } from 'react'
 // Без подписи — одна стрелка (строки, где название и есть страница).
 // tone: ink — чернилами; muted — серым, при наведении чернилами
 // (подпись-подсказка рядом с крупным названием); light — на тёмной карточке.
+// muted — neutral-700, а не 600 (01.10.2026): на первом экране главной
+// подпись лежит у края кадра, и на 1920 px при наведении на соседний вид
+// кадр под ней темнее — neutral-600 давал 4,47:1 при норме 4,5.
 const TONE = {
   ink: 'text-neutral-950',
-  muted: 'text-neutral-600 group-hover:text-neutral-950',
+  muted: 'text-neutral-700 group-hover:text-neutral-950',
   light: 'text-neutral-50',
 } as const
 
