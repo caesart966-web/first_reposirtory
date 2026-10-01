@@ -468,7 +468,9 @@ for (const [label, opts] of [
   const href = await link.getAttribute('href')
   check(`${label}: адрес почты открывает почту`, /@/.test(email) && href === `mailto:${email}`, `${href}`)
   const box = await btn.boundingBox()
-  check(`${label}: значок копирования не меньше 44 px`, box && box.width >= 44 && box.height >= 44, box ? `${box.width}×${box.height}` : 'нет')
+  // До сотых: при дробном положении блока браузер отдаёт 43,99997 вместо 44.
+  const px = (v) => Math.round(v * 100) / 100
+  check(`${label}: значок копирования не меньше 44 px`, box && px(box.width) >= 44 && px(box.height) >= 44, box ? `${box.width}×${box.height}` : 'нет')
   if (opts.isMobile) await btn.tap()
   else await btn.click()
   await p.waitForTimeout(600)
