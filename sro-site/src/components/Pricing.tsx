@@ -3,8 +3,12 @@ import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
 
 // Строка цены есть у всех трёх форматов, а не только у бесплатного: карточка
-// без неё выглядела бы так, будто цену скрывают, и ряд разъезжался бы по высоте.
+// без неё выглядела бы так, будто цену скрывают.
 // Цифр здесь нет и быть не может — их называют после разбора задачи.
+// Крупно набрано одно «Бесплатно» (01.10.2026): «По задаче» тем же кеглем
+// стояло на месте цифры и читалось пустой ценой — два раза подряд.
+// У платных форматов строка мелкая, а место под крупную цену держит
+// блок одной высоты (lg:min-h), поэтому линейки списков стоят ровно.
 const PLANS = [
   {
     name: 'Консультация',
@@ -20,7 +24,7 @@ const PLANS = [
   },
   {
     name: 'Подготовка документов',
-    price: 'По задаче',
+    price: 'Стоимость — по задаче',
     priceNote: 'зависит от объёма и готовности документов',
     free: false,
     featured: false,
@@ -32,7 +36,7 @@ const PLANS = [
   },
   {
     name: 'Вступление в СРО под ключ',
-    price: 'По задаче',
+    price: 'Стоимость — по задаче',
     priceNote: 'зависит от вида СРО и состава работ',
     free: false,
     featured: true,
@@ -68,10 +72,16 @@ export function Pricing() {
                   «Консультация» в одну строку поднимала свою цену выше
                   соседних, и ряд цен шёл лесенкой. */}
               <h3 className="font-display text-[1.9rem] font-medium leading-tight lg:min-h-[2.5em]">{plan.name}</h3>
-              <p className="mt-8 font-display text-[2.6rem] font-medium leading-none lg:mt-6">{plan.price}</p>
-              <p className={`mt-3 text-sm ${plan.featured ? 'text-neutral-300' : 'text-neutral-600'}`}>
-                {plan.priceNote}
-              </p>
+              <div className="mt-8 lg:mt-6 lg:min-h-[6rem]">
+                {plan.free ? (
+                  <p className="font-display text-[2.6rem] font-medium leading-none">{plan.price}</p>
+                ) : (
+                  <p className="text-[15px] font-medium">{plan.price}</p>
+                )}
+                <p className={`text-sm ${plan.free ? 'mt-3' : 'mt-1'} ${plan.featured ? 'text-neutral-300' : 'text-neutral-600'}`}>
+                  {plan.priceNote}
+                </p>
+              </div>
               <ul
                 className={`mt-8 space-y-3 border-t pt-6 text-sm ${
                   plan.featured ? 'border-white/15 text-neutral-200' : 'border-neutral-300 text-neutral-700'

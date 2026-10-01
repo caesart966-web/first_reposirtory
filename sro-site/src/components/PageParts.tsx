@@ -56,17 +56,44 @@ export function Part({
 }
 
 // Заголовок раздела: слева заголовок, справа — одна строка пояснения.
+// Короткое пояснение («Три законных варианта.») стоит под заголовком
+// (01.10.2026): справа, напротив заголовка в две строки, оно висело
+// одиноким обрывком у правого края. Справа — пояснения длиннее SIDE_LEAD.
 // Кегль — по самому длинному слову заголовков («Компенсационные»): на 320 px
 // оно обязано влезать (test-site.mjs, «заголовки не шире своей колонки»).
 export const H2 =
   'font-display text-[1.9rem] font-medium leading-[1.04] tracking-[-0.01em] text-balance text-neutral-950 min-[380px]:text-[2.2rem] sm:text-[2.7rem] lg:text-[3.1rem]'
 
+const SIDE_LEAD = 50
+
 export function Head({ title, lead }: { title: string; lead?: string }) {
+  const side = lead !== undefined && lead.length > SIDE_LEAD
   return (
-    <Reveal className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:items-end lg:gap-16">
+    <Reveal
+      className={`grid gap-4 ${side ? 'lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:items-end lg:gap-16' : ''}`}
+    >
       <h2 className={H2}>{nbsp(title)}</h2>
-      {lead && <p className="text-[15px] leading-relaxed text-neutral-600 sm:text-base">{nbsp(lead)}</p>}
+      {lead && <p className="max-w-xl text-[15px] leading-relaxed text-neutral-600 sm:text-base">{nbsp(lead)}</p>}
     </Reveal>
+  )
+}
+
+// Строка-переход на страницу, где тема разобрана целиком: слева крупно —
+// что там, справа — куда (название страницы со стрелкой). На страницах
+// видов ею кончаются «Документы»; на главной (01.10.2026) — «Документы»
+// и «Специалисты НРС»: полный разбор живёт на страницах услуг, а главная
+// показывает суть и ведёт туда, не повторяя их дословно.
+export function PageLink({ href, text, to, className = '' }: { href: string; text: string; to: string; className?: string }) {
+  return (
+    <a
+      href={href}
+      className={`group grid gap-4 border-y border-neutral-300 py-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-10 ${className}`}
+    >
+      <span className="font-display text-[1.4rem] font-medium leading-snug text-neutral-950 transition-colors duration-700 ease-silk group-hover:text-accent-700 sm:text-[1.6rem]">
+        {nbsp(text)}
+      </span>
+      <GoTo className="text-base sm:justify-self-end sm:text-[17px]">{to}</GoTo>
+    </a>
   )
 }
 

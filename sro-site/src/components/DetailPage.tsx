@@ -8,8 +8,7 @@ import { Contact } from './Contact'
 import { PageExtras } from './PageExtras'
 import { PageHero } from './PageHero'
 import { MobileBar } from './MobileBar'
-import { DocColumn, Head, Law, Part, SroDocs, StepsGrid } from './PageParts'
-import { GoTo } from './ui/GoTo'
+import { DocColumn, Head, Law, PageLink, Part, SroDocs, StepsGrid } from './PageParts'
 import { Reveal } from './ui/Reveal'
 
 // ─── Страница вида СРО ───────────────────────────────────────────────────
@@ -340,15 +339,12 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
           {/* Переход к описи с пояснениями — строкой с подписью, как в «С чем
               обращаются»: строка говорит, что там, подпись со стрелкой — куда. */}
           <Reveal>
-            <a
+            <PageLink
               href={page('uslugi/dokumenty')}
-              className="group mt-12 grid gap-4 border-y border-neutral-300 py-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-10"
-            >
-              <span className="font-display text-[1.4rem] font-medium leading-snug text-neutral-950 transition-colors duration-700 ease-silk group-hover:text-accent-700 sm:text-[1.6rem]">
-                {nbsp('Что входит в каждый документ и как проходит подготовка')}
-              </span>
-              <GoTo className="text-base sm:justify-self-end sm:text-[17px]">Подготовка документов</GoTo>
-            </a>
+              text="Что входит в каждый документ и как проходит подготовка"
+              to="Подготовка документов"
+              className="mt-12"
+            />
           </Reveal>
         </Part>
 
