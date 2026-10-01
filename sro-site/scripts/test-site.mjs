@@ -329,6 +329,35 @@ for (const [width, height, need] of [[390, 780, 'all'], [360, 740, 'all'], [390,
   await ctx.close()
 }
 
+// Почта в «Связаться» копируется нажатием на сам адрес (01.10.2026): слова
+// «Скопировать» на экране нет, после нажатия адрес лежит в буфере
+// и видна бирка «Скопировано». На компьютере — щелчок, на телефоне — касание.
+for (const [label, opts] of [
+  ['компьютер', { viewport: { width: 1440, height: 900 } }],
+  ['телефон', { viewport: { width: 390, height: 780 }, isMobile: true, hasTouch: true }],
+]) {
+  const ctx = await b.newContext({ ...opts, permissions: ['clipboard-read', 'clipboard-write'] })
+  const p = await ctx.newPage()
+  await p.goto(BASE, { waitUntil: 'networkidle' })
+  const btn = p.locator('#contacts [data-copy="email"]')
+  await btn.scrollIntoViewIfNeeded()
+  await p.waitForTimeout(500)
+  const before = await p.evaluate(() => /Скопировать/.test(document.getElementById('contacts').innerText))
+  check(`${label}: в «Связаться» нет слова «Скопировать»`, !before)
+  const email = (await btn.innerText()).trim()
+  if (opts.isMobile) await btn.tap()
+  else await btn.click()
+  await p.waitForTimeout(600)
+  const clip = await p.evaluate(() => navigator.clipboard.readText())
+  check(`${label}: нажатие на адрес копирует почту`, /@/.test(email) && clip === email, `в буфере «${clip}», на экране «${email}»`)
+  const tag = await p.evaluate(() => {
+    const el = [...document.querySelectorAll('#contacts span')].find((s) => s.textContent === 'Скопировано')
+    return el ? Number(getComputedStyle(el).opacity) : -1
+  })
+  check(`${label}: после нажатия видно «Скопировано»`, tag > 0.9, String(tag))
+  await ctx.close()
+}
+
 await b.close()
 console.log(bad.join('\n'))
 console.log(`\n${ok.length} ок, ${bad.length} не прошло`)

@@ -1,5 +1,5 @@
 import { Check, Copy, Mail, MapPin } from 'lucide-react'
-import { useState, type CSSProperties } from 'react'
+import { useRef, useState, type CSSProperties } from 'react'
 import { CONFIGURED, CONTACTS, LINKS } from '../content/contacts'
 import { REQUISITES } from '../content/facts'
 import { MESSENGERS } from './messengers'
@@ -56,7 +56,7 @@ export function Contact({
               </a>
             )}
             <Channels />
-            {CONFIGURED.email && <EmailLine />}
+            {CONFIGURED.email && <EmailCopy />}
             <div className="mt-10 border-t border-white/10 pt-8 text-sm text-neutral-300">
               <p className="flex items-start gap-3">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-accent-300" aria-hidden="true" />
@@ -84,7 +84,7 @@ export function Contact({
 // Почты среди кружков нет (решение заказчика 30.09.2026): кружок «Почта»
 // и адрес строкой ниже повторяли друг друга, а адрес нужнее — его
 // переписывают и вставляют в веб-почту. Поэтому почта — одной строкой
-// с адресом (EmailLine).
+// с адресом (EmailCopy).
 const PILL =
   'group flex flex-col items-center gap-2 focus-visible:outline-none sm:relative sm:isolate sm:flex-row sm:gap-0 sm:overflow-hidden sm:rounded-full sm:pr-5 sm:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)] sm:focus-visible:ring-2 sm:focus-visible:ring-accent-300'
 
@@ -120,46 +120,87 @@ function Channels() {
   )
 }
 
-// Почта — адресом, крупно, и кнопка «Скопировать»: у многих на компьютере
-// ссылка mailto не открывает ничего — почтовая программа не настроена,
-// а адрес нужно вставить в веб-почту.
-function EmailLine() {
+// Почта — адресом, крупно; нажатие на адрес копирует его (01.10.2026,
+// заказчик: «убери слово „Скопировать“, но чтобы почту можно было
+// по нажатию скопировать»). Копирование, а не mailto: у многих
+// на компьютере ссылка mailto не открывает ничего — почтовая программа
+// не настроена, а адрес нужно вставить в веб-почту.
+// Что адрес копируется, видно по отклику: значок письма сменяется
+// галочкой, над адресом на 2 с встаёт «Скопировано» — бирка лежит поверх
+// отступа, строка не прыгает. С 640 px при наведении справа от адреса
+// проступает значок копирования. Не скопировалось (старый браузер,
+// запрет буфера) — открывается mailto, чтобы нажатие не пропало зря.
+function EmailCopy() {
   const [copied, setCopied] = useState(false)
+  const timer = useRef(0)
   const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(CONTACTS.email)
-      setCopied(true)
-      window.setTimeout(() => setCopied(false), 2000)
-    } catch {
+    if (!(await copyText(CONTACTS.email))) {
       window.location.href = LINKS.mail
+      return
     }
+    setCopied(true)
+    window.clearTimeout(timer.current)
+    timer.current = window.setTimeout(() => setCopied(false), 2000)
   }
   return (
-    // Значок — отдельно от строки: на телефоне кнопка уходит под адрес
-    // и встаёт ровно под его первой буквой, как адрес под значком ниже.
-    <div className="mt-8 flex gap-3">
-      <span className="flex h-10 shrink-0 items-center">
-        <Mail className="h-5 w-5 text-accent-300 sm:h-6 sm:w-6" strokeWidth={1.8} aria-hidden="true" />
+    <div className="relative mt-8">
+      <span
+        className={`pointer-events-none absolute -top-7 left-9 inline-flex items-center gap-1 rounded-full bg-neutral-50 px-2.5 py-0.5 text-xs font-medium text-neutral-950 transition-[opacity,transform] duration-300 ease-silk ${
+          copied ? 'translate-y-0 opacity-100' : 'translate-y-1 opacity-0'
+        }`}
+        aria-hidden="true"
+      >
+        Скопировано
       </span>
-      <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2">
-        <a
-          href={LINKS.mail}
-          className="group flex min-h-10 min-w-0 items-center text-xl font-medium text-neutral-50 sm:text-2xl"
-        >
-          <span className="break-all bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-left-bottom bg-no-repeat pb-0.5 transition-[background-size] duration-700 ease-silk group-hover:bg-[length:100%_1px]">
-            {CONTACTS.email}
-          </span>
-        </a>
-        <button
-          type="button"
-          onClick={copy}
-          className="inline-flex min-h-10 items-center gap-1.5 rounded-full border border-white/20 px-4 text-sm font-medium text-neutral-200 transition-colors duration-300 hover:border-white/60 hover:text-neutral-50"
-        >
-          {copied ? <Check className="h-4 w-4" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
-          <span aria-live="polite">{copied ? 'Скопировано' : 'Скопировать'}</span>
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={copy}
+        aria-label={`${CONTACTS.email} — скопировать адрес почты`}
+        data-copy="email"
+        className="group flex min-h-11 max-w-full items-center gap-3 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-300 focus-visible:ring-offset-4 focus-visible:ring-offset-accent-950"
+      >
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center text-accent-300">
+          {copied ? (
+            <Check className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={1.8} aria-hidden="true" />
+          ) : (
+            <Mail className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={1.8} aria-hidden="true" />
+          )}
+        </span>
+        <span className="min-w-0 break-all bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-left-bottom bg-no-repeat pb-0.5 text-xl font-medium text-neutral-50 transition-[background-size] duration-700 ease-silk group-hover:bg-[length:100%_1px] sm:text-2xl">
+          {CONTACTS.email}
+        </span>
+        <Copy
+          className="hidden h-4 w-4 shrink-0 text-neutral-400 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100 sm:block"
+          aria-hidden="true"
+        />
+      </button>
+      <span className="sr-only" aria-live="polite">
+        {copied ? 'Адрес почты скопирован' : ''}
+      </span>
     </div>
   )
 }
 
+// Буфер обмена: сначала современный способ, затем старый через
+// выделение текста — он работает и там, где navigator.clipboard нет
+// (страница не по https, старый Safari).
+async function copyText(text: string) {
+  try {
+    await navigator.clipboard.writeText(text)
+    return true
+  } catch {
+    try {
+      const area = document.createElement('textarea')
+      area.value = text
+      area.setAttribute('readonly', '')
+      area.style.cssText = 'position:fixed;top:0;left:0;opacity:0'
+      document.body.append(area)
+      area.select()
+      const ok = document.execCommand('copy')
+      area.remove()
+      return ok
+    } catch {
+      return false
+    }
+  }
+}
