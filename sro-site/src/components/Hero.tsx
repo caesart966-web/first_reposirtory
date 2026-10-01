@@ -1,4 +1,4 @@
-import { Phone } from 'lucide-react'
+import { ArrowRight, ChevronRight, DraftingCompass, HardHat, Mountain, Phone } from 'lucide-react'
 import { useEffect, useState, type CSSProperties } from 'react'
 import { LINKS } from '../content/contacts'
 import { IMAGES } from '../content/images'
@@ -15,9 +15,10 @@ import { RevealText } from './ui/Reveal'
 //
 // До этого здесь стоял слайдер: три кадра по семь секунд, и в каждый момент
 // видна была треть предложения — на телефоне только «СРО строителей».
-// Теперь все три вида стоят списком сразу, а кадр нужен один. Списком,
-// а не карточками, и без номеров: номера на сайте остались там, где есть
-// порядок (шаги работы, опись документов), а три вида СРО — не очередь.
+// Теперь все три вида стоят списком сразу, а кадр нужен один. Без номеров:
+// номера на сайте остались там, где есть порядок (шаги работы, опись
+// документов), а три вида СРО — не очередь. На компьютере — строками,
+// на телефоне и планшете с 01.10.2026 — карточками (см. «Телефон и планшет»).
 // Название вида и адрес — из SRO_DETAILS, тех же данных, что страницы видов
 // и меню «Виды СРО»: разойтись с шапкой они не могут.
 //
@@ -49,20 +50,25 @@ import { RevealText } from './ui/Reveal'
 // свободен, и только там, где есть наведение и окно шире телефона:
 // на телефоне кадр — узкая полоса, а наведения нет вовсе.
 //
-// ТЕЛЕФОН. Первый экран обязан показать, что это, для кого и как связаться:
+// ТЕЛЕФОН И ПЛАНШЕТ (до 1024 px) — «обложка» (01.10.2026, заказчик: «красивее
+// и профессиональнее», из трёх вариантов выбран этот). Заголовок стоит белым
+// на кадре, под ним — затемнение снизу вверх (COVER_SHADE), ниже на бумаге
+// строка, кнопки и три вида СРО карточками (TypeCards): значок, занятие,
+// вид СРО мелко. Нажатие на карточку меняет кадр обложки на кадр этого вида
+// (заказчик: «чтобы и там картинка менялась, когда кликаешь на тип СРО»),
+// выбранная карточка выделена и показывает «Открыть →» — второе нажатие
+// ведёт на страницу вида. Сразу выбрано строительство: на первом кадре кран.
+// Списком строками остаётся компьютер — там кадр меняется наведением.
+// Первый экран обязан показать, что это, для кого и как связаться:
 // заголовок, обе кнопки и все три вида — без прокрутки при видимой высоте
-// окна 780 px (стережёт test-site.mjs). Поэтому там кадр — невысокая полоса
-// сверху, подзаголовок «Для строительных, проектных…» снят (его повторяет
-// список видов прямо под кнопками), а строки плотнее: занятие и под ним
-// вид СРО мелко.
-// Расположение подписи одно на весь список (01.10.2026, снимок заказчика
-// с телефона): до 768 px вид СРО всегда под занятием, шире — всегда справа.
-// Раньше строка переносилась сама (flex-wrap), и где короткое
-// «Проектирование» влезало в строку с подписью, а длинные — нет, подпись
-// стояла то справа, то снизу: на 375, 412–480, 640 и 1024–1100 px.
-// Справа подпись не переносится (whitespace-nowrap), переносится само
-// занятие; с 1024 до 1279 px оно мельче (1,375rem) — колонка там узкая,
-// и «Строительство, капремонт, снос» иначе уходило на две строки.
+// окна 780 px (стережёт test-site.mjs). Поэтому подзаголовок «Для
+// строительных, проектных…» на телефоне снят (его повторяют карточки видов),
+// а высота обложки подобрана под это окно.
+// Строки компьютера (с 1024 px): подпись вида СРО у всех трёх справа
+// и не переносится (whitespace-nowrap). Раньше строка переносилась сама
+// (flex-wrap), и подпись стояла то справа, то снизу (01.10.2026, снимок
+// заказчика). С 1024 до 1279 px занятие мельче (1,375rem) — колонка там
+// узкая, и «Строительство, капремонт, снос» иначе уходило на две строки.
 
 // Ступенька появления: задержка анимации .hero-rise.
 const delay = (ms: number) => ({ '--d': `${ms}ms` }) as CSSProperties
@@ -128,16 +134,154 @@ function useHoverFrame() {
   return { shown, ready, show }
 }
 
+// Значки видов СРО в карточках телефона.
+const TYPE_ICON: Record<string, typeof HardHat> = {
+  construction: HardHat,
+  design: DraftingCompass,
+  survey: Mountain,
+}
+
+// Какую часть кадра показывать в обложке телефона: она широкая и невысокая.
+const COVER_FRAME: Record<string, string> = {
+  construction: 'object-[60%_30%]',
+  design: 'object-[50%_45%]',
+  survey: 'object-[50%_30%]',
+}
+
+// Затемнение обложки снизу вверх. Белый заголовок обязан держать 4,5:1
+// над самым светлым местом кадра (кадры сняты светлым ключом, у плана
+// этажа светлый почти весь лист), поэтому под строками заголовка тон
+// не светлее ~55 %. Меряет по пикселям scripts/test-hero-contrast.mjs.
+const COVER_SHADE =
+  'bg-[linear-gradient(to_top,rgba(20,17,15,0.94)_0%,rgba(20,17,15,0.82)_38%,rgba(20,17,15,0.5)_66%,rgba(20,17,15,0.08)_100%)]'
+
+// Кадры обложки. Кран — сразу; два других кадра телефон грузит после
+// загрузки страницы, когда браузер свободен, чтобы смена по нажатию шла
+// без ожидания; нажали раньше — грузится сразу. На компьютере обложки нет,
+// и лишние кадры туда не грузятся.
+function CoverPhotos({ active }: { active: string }) {
+  const [all, setAll] = useState(false)
+  useEffect(() => {
+    if (!matchMedia('(max-width: 1023px)').matches) return
+    let handle = 0
+    const start = () => {
+      handle = idle
+        ? requestIdleCallback(() => setAll(true), { timeout: 3000 })
+        : window.setTimeout(() => setAll(true), 1200)
+    }
+    if (document.readyState === 'complete') start()
+    else addEventListener('load', start, { once: true })
+    return () => {
+      removeEventListener('load', start)
+      if (idle) cancelIdleCallback(handle)
+      else clearTimeout(handle)
+    }
+  }, [])
+  return (
+    <div className="hero-print absolute inset-0 lg:hidden" aria-hidden="true">
+      {TYPES.map((type) =>
+        type.slug === 'construction' || all || active === type.slug ? (
+          <picture
+            key={type.slug}
+            className={`absolute inset-0 transition-[opacity,transform] duration-700 ease-silk ${
+              active === type.slug ? 'opacity-100' : 'opacity-0 motion-safe:scale-[1.04]'
+            }`}
+          >
+            {type.image.srcAvif && <source type="image/avif" srcSet={asset(type.image.srcAvif)} />}
+            <img
+              src={asset(type.image.src)}
+              alt=""
+              width={type.image.width}
+              height={type.image.height}
+              loading="eager"
+              decoding="async"
+              className={`h-full w-full object-cover ${COVER_FRAME[type.slug] ?? ''}`}
+            />
+          </picture>
+        ) : null,
+      )}
+    </div>
+  )
+}
+
+// Три вида СРО карточками — телефон и планшет. Выбранная карточка — ссылка
+// на страницу вида, остальные — кнопки выбора кадра. Кружка со стрелкой
+// здесь нет нарочно: он только у кнопок «Связаться» (ui/GoTo.tsx).
+function TypeCards({ active, onSelect }: { active: string; onSelect: (slug: string) => void }) {
+  return (
+    <ul aria-labelledby="hero-types" data-hero-cards className="mt-2.5 grid gap-2 sm:max-w-xl lg:hidden">
+      {TYPES.map((type) => {
+        const Icon = TYPE_ICON[type.slug] ?? HardHat
+        const on = active === type.slug
+        const card =
+          'flex w-full items-center gap-3 rounded-2xl border py-2.5 pl-2.5 pr-3 text-left transition-[border-color,box-shadow,background-color] duration-500 ease-silk focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-50'
+        const body = (
+          <>
+            <span
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset transition-colors duration-500 ${
+                on ? 'bg-accent-600 text-neutral-50 ring-accent-600' : 'bg-accent-50 text-accent-700 ring-accent-200/70'
+              }`}
+            >
+              <Icon className="h-5 w-5" strokeWidth={1.6} aria-hidden="true" />
+            </span>
+            {/* «Открыть →» — во второй строке, рядом с видом СРО: справа
+                от занятия оно отнимало ширину, и «Строительство, капремонт,
+                снос» у выбранной карточки уходило на две строки. */}
+            <span className="min-w-0 flex-1">
+              <span className="block text-[0.9375rem] font-semibold leading-snug text-neutral-950 min-[380px]:text-base">
+                {type.activity}
+              </span>
+              <span className="flex items-center justify-between gap-3 text-[0.8125rem] leading-snug">
+                <span className="text-neutral-600">{type.title}</span>
+                {on && (
+                  <span className="flex shrink-0 items-center gap-1 font-semibold text-accent-700">
+                    Открыть
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </span>
+                )}
+              </span>
+            </span>
+            {!on && <ChevronRight className="h-5 w-5 shrink-0 text-neutral-500" aria-hidden="true" />}
+          </>
+        )
+        return (
+          <li key={type.href}>
+            {on ? (
+              <a
+                href={type.href}
+                className={`${card} border-accent-500 bg-white shadow-[0_6px_18px_-8px_rgba(107,76,38,0.35)] ring-1 ring-accent-500`}
+              >
+                {body}
+              </a>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onSelect(type.slug)}
+                aria-label={`${type.activity} — ${type.title}: показать`}
+                className={`${card} border-neutral-200 bg-white/80 shadow-[0_1px_2px_rgba(20,17,15,0.05)]`}
+              >
+                {body}
+              </button>
+            )}
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
 export function Hero() {
   const image = IMAGES.construction
   const frame = useHoverFrame()
+  const [active, setActive] = useState('construction')
   return (
     <section className="relative isolate overflow-hidden bg-neutral-50 text-neutral-950" aria-labelledby="hero-title">
-      {/* Кадр: на телефоне и планшете — полоса над текстом, с 1024px — правая
-          часть раздела во всю высоту, край к краю экрана; растворяется
-          к тексту. Лист поверх (.hero-develop) — для «проявления». */}
+      {/* Кадр компьютера (с 1024 px): правая часть раздела во всю высоту,
+          край к краю экрана; растворяется к тексту. Лист поверх
+          (.hero-develop) — для «проявления». На телефоне и планшете кадр —
+          обложка под заголовком (CoverPhotos ниже). */}
       <div
-        className="hero-photo relative h-28 overflow-hidden min-[380px]:h-32 sm:h-72 lg:absolute lg:inset-y-0 lg:left-[46%] lg:right-0 lg:h-auto min-[1800px]:left-[calc(50%-5.625rem)] min-[1800px]:right-[max(0px,calc(50%-56.25rem))]"
+        className="hero-photo relative hidden overflow-hidden lg:absolute lg:block lg:inset-y-0 lg:left-[46%] lg:right-0 lg:h-auto min-[1800px]:left-[calc(50%-5.625rem)] min-[1800px]:right-[max(0px,calc(50%-56.25rem))]"
         aria-hidden="true"
       >
         <picture className="hero-print block h-full w-full">
@@ -179,17 +323,25 @@ export function Hero() {
 
       <div className="mx-auto flex w-full max-w-6xl min-[1800px]:max-w-7xl flex-col px-4 pb-10 pt-5 sm:px-6 sm:pb-14 sm:pt-10 lg:min-h-[min(53.75rem,calc(100svh-4rem))] lg:px-8 lg:pb-12 lg:pt-12">
         <div className="lg:w-[56%]">
-          <p data-hero-text className="hero-rise hidden items-center gap-3 text-sm text-neutral-600 sm:flex" style={delay(0)}>
+          <p data-hero-text className="hero-rise hidden items-center gap-3 text-sm text-neutral-600 lg:flex" style={delay(0)}>
             <span className="h-px w-8 bg-accent-500" aria-hidden="true" />
             Для строительных, проектных и изыскательских организаций
           </p>
-          <RevealText
-            as="h1"
-            id="hero-title"
-            text={'Вступление в СРО под\u00a0ключ'}
-            className="font-display text-[2.9rem] font-medium leading-[0.95] tracking-[-0.015em] min-[380px]:text-[3.2rem] sm:mt-6 sm:text-7xl lg:text-[4.75rem] xl:text-[5.25rem]"
-          />
-          <p className="hero-rise mt-4 max-w-xl text-[1.0625rem] leading-relaxed text-neutral-600 sm:mt-7 sm:text-lg lg:mt-6" style={delay(380)}>
+          {/* Обложка телефона и планшета: кадр во всю ширину, затемнение
+              и заголовок белым поверх. С 1024 px обёртка исчезает
+              (lg:contents) — заголовок снова обычный, на бумаге. */}
+          <div className="relative -mx-4 -mt-5 overflow-hidden px-4 pb-6 pt-[8rem] text-neutral-50 min-[380px]:pt-[9rem] sm:-mx-6 sm:-mt-10 sm:px-6 sm:pb-8 sm:pt-[15rem] lg:contents lg:text-neutral-950">
+            <CoverPhotos active={active} />
+            <span className={`absolute inset-0 lg:hidden ${COVER_SHADE}`} aria-hidden="true" />
+            <span className="hero-develop absolute inset-0 bg-neutral-950 lg:hidden" aria-hidden="true" />
+            <RevealText
+              as="h1"
+              id="hero-title"
+              text={'Вступление в СРО под\u00a0ключ'}
+              className="relative font-display text-[2.6rem] font-medium leading-[0.95] tracking-[-0.015em] min-[380px]:text-[2.85rem] sm:text-7xl lg:mt-6 lg:text-[4.75rem] xl:text-[5.25rem]"
+            />
+          </div>
+          <p className="hero-rise mt-5 max-w-xl text-[1.0625rem] leading-relaxed text-neutral-600 sm:mt-7 sm:text-lg lg:mt-6" style={delay(380)}>
             <span data-hero-text>
               {nbsp('Подберу подходящую СРО, подготовлю документы и сопровожу до внесения в реестр членов.')}
             </span>
@@ -213,7 +365,7 @@ export function Hero() {
           </p>
           <ul
             aria-labelledby="hero-types"
-            className="mt-2 border-b border-neutral-300 sm:mt-3"
+            className="mt-3 hidden border-b border-neutral-300 lg:block"
             onMouseLeave={() => frame.show(null)}
           >
             {TYPES.map((type) => (
@@ -238,6 +390,7 @@ export function Hero() {
               </li>
             ))}
           </ul>
+          <TypeCards active={active} onSelect={setActive} />
         </div>
       </div>
     </section>

@@ -27,6 +27,9 @@ const NORM = 4.5
 const SHOTS = [
   { path: '' },
   { path: '', hover: 1 }, { path: '', hover: 2 },
+  // Телефон и планшет: заголовок белым на обложке — и после смены кадра
+  // нажатием на карточку вида (план этажа почти весь светлый).
+  { path: '', tap: 1 }, { path: '', tap: 2 },
   { path: 'sro-stroiteley/' }, { path: 'sro-proektirovshchikov/' }, { path: 'sro-izyskateley/' }, { path: 'uslugi/nok/' },
   { path: 'uslugi/dokumenty/' },
   // Шапки остальных услуг — с кадрами с 29.09.2026.
@@ -54,6 +57,7 @@ const rows = []
 for (const [dev, vp, mob] of DEVICES) {
   for (const s of SHOTS) {
     if (s.hover !== undefined && mob) continue
+    if (s.tap !== undefined && !mob) continue
     const ctx = await b.newContext({ viewport: vp, hasTouch: mob, isMobile: mob, reducedMotion: 'reduce', deviceScaleFactor: 1 })
     const p = await ctx.newPage()
     await p.goto(BASE + s.path, { waitUntil: 'networkidle' })
@@ -72,6 +76,10 @@ for (const [dev, vp, mob] of DEVICES) {
       const shown = await p.evaluate(() => [...document.querySelectorAll('.hero-photo picture')]
         .filter((el) => getComputedStyle(el).opacity === '1').length)
       if (shown < 2) throw new Error(`наведение на вид ${s.hover}: кадр не сменился`)
+    }
+    if (s.tap !== undefined) {
+      await p.locator('[data-hero-cards] > li').nth(s.tap).locator('button').tap()
+      await p.waitForTimeout(1200)
     }
     await p.waitForTimeout(900)
     // Меряется не прямоугольник элемента, а строки самого текста (прямоугольники
@@ -121,7 +129,7 @@ for (const [dev, vp, mob] of DEVICES) {
         return { text: bx.text, worst: min }
       })
     }, { png, boxes })
-    const name = `${s.path || '/'}${s.section ? ` #${s.section}` : ''}${s.hover !== undefined ? ` наведение ${s.hover}` : ''} @${dev}`
+    const name = `${s.path || '/'}${s.section ? ` #${s.section}` : ''}${s.hover !== undefined ? ` наведение ${s.hover}` : ''}${s.tap !== undefined ? ` нажатие ${s.tap}` : ''} @${dev}`
     // Надпись в несколько строк даёт несколько прямоугольников — в отчёт идёт худший.
     const byText = new Map()
     for (const r of worst) if (!byText.has(r.text) || r.worst < byText.get(r.text).worst) byText.set(r.text, r)

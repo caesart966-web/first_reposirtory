@@ -184,11 +184,14 @@ const heroGeometry = (p) => p.evaluate(async (sel) => {
     .map((a) => a.finished.catch(() => {})))
   const hero = document.querySelector(sel)
   const rect = (el) => el.getBoundingClientRect()
-  const links = [...hero.querySelectorAll('#hero-types + ul a')]
+  // Видимый список видов: с 1024 px — строками, на телефоне и планшете —
+  // карточками (там у невыбранных карточек кнопка, а не ссылка).
+  const list = [...hero.querySelectorAll('ul[aria-labelledby="hero-types"]')].find((u) => u.getClientRects().length)
+  const links = [...list.querySelectorAll('a, button')]
   const buttons = [...hero.querySelectorAll('a[href="#contacts"], a[href^="tel:"]')]
   const photo = hero.querySelector('img')
   return {
-    hrefs: links.map((a) => a.getAttribute('href')),
+    hrefs: links.map((a) => a.getAttribute('href')).filter(Boolean),
     rows: links.map((a) => Math.round(rect(a).height)),
     lastLink: Math.round(Math.max(...links.map((a) => rect(a).bottom))),
     buttonsBottom: Math.round(Math.max(...buttons.map((a) => rect(a).bottom))),
@@ -362,32 +365,71 @@ for (const [width, height, need] of [[390, 780, 'all'], [360, 740, 'all'], [390,
   await ctx.close()
 }
 
-// Список видов на первом экране (01.10.2026, снимок заказчика с телефона):
-// подпись вида СРО у всех трёх строк стоит одинаково — до 768 px под
-// занятием, шире справа, — и занятие справа от подписи не уходит на две
-// строки. Раньше строки переносились сами, и на 375, 412–480, 640
-// и 1024–1100 px подпись стояла то справа, то снизу.
+// Список видов на первом экране. С 1024 px — строками, подпись вида СРО
+// у всех трёх строк справа, занятие в одну строку (01.10.2026: строки
+// переносились сами, и подпись стояла то справа, то снизу). До 1024 px —
+// карточками одной высоты, занятие в одну строку.
 {
   const ctx = await b.newContext()
   const p = await ctx.newPage()
-  for (const w of [320, 375, 412, 480, 640, 767, 768, 1024, 1100, 1280, 1440]) {
+  for (const w of [320, 375, 412, 480, 640, 768, 1023, 1024, 1100, 1280, 1440]) {
     await p.setViewportSize({ width: w, height: 900 })
     await p.goto(BASE, { waitUntil: 'networkidle' })
     await p.evaluate(() => document.fonts.ready)
-    const rows = await p.evaluate(() =>
-      [...document.querySelectorAll('ul[aria-labelledby="hero-types"] a')].map((a) => {
-        const [t, h] = [a.children[0].getBoundingClientRect(), a.children[1].getBoundingClientRect()]
-        const lines = Math.round(t.height / parseFloat(getComputedStyle(a.children[0]).lineHeight))
-        return { below: h.top >= t.bottom - 2, lines }
-      }),
-    )
-    const want = w < 768
-    check(
-      `первый экран ${w}: подпись вида СРО у всех строк ${want ? 'под занятием' : 'справа'}`,
-      rows.length === 3 && rows.every((r) => r.below === want),
-      rows.map((r) => (r.below ? 'под' : 'справа')).join(' / '),
-    )
-    if (!want) check(`первый экран ${w}: занятие в одну строку`, rows.every((r) => r.lines === 1), rows.map((r) => r.lines).join(' / '))
+    const r = await p.evaluate(() => {
+      const list = [...document.querySelectorAll('ul[aria-labelledby="hero-types"]')].find((u) => u.getClientRects().length)
+      const cards = list.hasAttribute('data-hero-cards')
+      const items = [...list.querySelectorAll(':scope > li > a, :scope > li > button')]
+      return {
+        cards,
+        rows: items.map((a) => {
+          const title = cards ? a.querySelector('.font-semibold') : a.children[0]
+          const t = title.getBoundingClientRect()
+          const lines = Math.round(t.height / parseFloat(getComputedStyle(title).lineHeight))
+          const h = cards ? null : a.children[1].getBoundingClientRect()
+          return { lines, height: Math.round(a.getBoundingClientRect().height), right: h ? h.top < t.bottom - 2 : null }
+        }),
+      }
+    })
+    const ok3 = r.rows.length === 3
+    if (w < 1024) {
+      check(`первый экран ${w}: виды СРО — карточками`, r.cards && ok3)
+      check(`первый экран ${w}: карточки одной высоты`, ok3 && r.rows.every((x) => Math.abs(x.height - r.rows[0].height) <= 1), r.rows.map((x) => x.height).join(' / '))
+    } else {
+      check(`первый экран ${w}: подпись вида СРО у всех строк справа`, !r.cards && ok3 && r.rows.every((x) => x.right), r.rows.map((x) => (x.right ? 'справа' : 'под')).join(' / '))
+    }
+    check(`первый экран ${w}: занятие в одну строку`, ok3 && r.rows.every((x) => x.lines === 1), r.rows.map((x) => x.lines).join(' / '))
+  }
+  await ctx.close()
+}
+
+// Телефон: нажатие на карточку вида меняет кадр обложки на кадр этого вида,
+// выбранная карточка становится ссылкой на страницу вида и показывает
+// «Открыть». Сразу выбрано строительство — на первом кадре кран.
+{
+  const ctx = await b.newContext({ viewport: { width: 390, height: 780 }, isMobile: true, hasTouch: true })
+  const p = await ctx.newPage()
+  await p.goto(BASE, { waitUntil: 'networkidle' })
+  const state = () => p.evaluate(() => {
+    const items = [...document.querySelectorAll('[data-hero-cards] > li > *')]
+    const shown = [...document.querySelectorAll('section[aria-labelledby="hero-title"] .lg\\:hidden picture')]
+      .filter((el) => getComputedStyle(el).opacity === '1')
+      .map((el) => el.querySelector('img').getAttribute('src').replace(/\?.*$/, '').split('/').pop())
+    return {
+      links: items.map((el) => (el.tagName === 'A' ? el.getAttribute('href') : null)),
+      open: items.map((el) => /Открыть/.test(el.textContent)),
+      shown,
+    }
+  })
+  const s0 = await state()
+  check('телефон: сразу выбрано строительство', s0.links[0]?.endsWith('sro-stroiteley/') && !s0.links[1] && !s0.links[2] && s0.open[0], JSON.stringify(s0.links))
+  check('телефон: на обложке кран', s0.shown.length === 1 && /hero-day/.test(s0.shown[0]), s0.shown.join(' '))
+  for (const [i, slug, file] of [[1, 'sro-proektirovshchikov/', 'slide-design'], [2, 'sro-izyskateley/', 'slide-survey']]) {
+    await p.locator('[data-hero-cards] > li').nth(i).locator('button').tap()
+    await p.waitForTimeout(1100)
+    const st = await state()
+    check(`телефон: нажатие на «${slug}» меняет кадр обложки`, st.shown.length === 1 && st.shown[0].startsWith(file), st.shown.join(' '))
+    check(`телефон: выбранная карточка ведёт на ${slug} и показывает «Открыть»`, st.links[i]?.endsWith(slug) && st.open[i] && st.links.filter(Boolean).length === 1, JSON.stringify(st.links))
   }
   await ctx.close()
 }
