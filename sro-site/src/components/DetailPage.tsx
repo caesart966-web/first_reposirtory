@@ -109,52 +109,97 @@ function KeyFacts({ detail }: { detail: SroDetail }) {
   )
 }
 
-// Метка ответа в таблице «Кому нужно членство».
-const TONE = {
-  yes: 'bg-accent-950 text-neutral-50',
-  no: 'border border-neutral-300 bg-neutral-50 text-neutral-800',
-  note: 'bg-accent-100 text-accent-800',
+// «Кому нужно членство» (переделано 01.10.2026, заказчик: «красиво
+// и эстетично, но главное не по-ИИ-шному»). Было: семь строк с метками-
+// пилюлями пяти видов (чёрная, с рамкой, три бежевых), и в одном столбце
+// смешались ответы «нужно / не нужно» и правила другого рода — второй
+// фонд, регион. Метки-пилюли — примета шаблона, а смешанный столбец
+// заставлял гадать, на какой вопрос отвечает строка.
+// Стало как в справочнике: таблица отвечает на один вопрос — нужно ли
+// членство, — и ответ набран словом, антиквой, как заголовки; «Нужно» —
+// чернилами, «Не нужно» — серым, «Есть исключения» — латунью. Общие
+// правила (закупки, регион, допуски) — строкой из трёх пунктов под ней.
+const ANSWER_TONE = {
+  yes: 'text-neutral-950',
+  no: 'text-neutral-600',
+  note: 'text-accent-700',
 } as const
 
-type Case = SroDetail['cases'][number]
-
 function Cases({ detail }: { detail: SroDetail }) {
-  // Строка про регион — общая для трёх видов, различается только ответом.
-  const rows: Case[] = [
-    ...detail.cases,
+  return (
+    <div className="mt-10">
+      {/* Шапка колонок — только с 640 px: на телефоне ответ стоит прямо
+          под ситуацией и в подписи не нуждается. */}
+      <div
+        className="hidden gap-x-10 pb-3 text-xs font-medium text-neutral-600 sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(0,17rem)] lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]"
+        aria-hidden="true"
+      >
+        <span>Ситуация</span>
+        <span>Членство в СРО</span>
+      </div>
+      <ul className="border-t border-neutral-950/80">
+        {detail.cases.map((row) => (
+          <li
+            key={row.situation}
+            // Вторая строка сетки (норма) забирает лишнюю высоту: когда ответ
+            // выше ситуации, норма остаётся прямо под ситуацией, а не
+            // сползает вниз.
+            className="grid gap-y-2 border-b border-neutral-200 py-5 sm:grid-cols-[minmax(0,1fr)_minmax(0,17rem)] sm:grid-rows-[auto_1fr] sm:gap-x-10 sm:gap-y-0 sm:py-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]"
+          >
+            <p className="max-w-2xl text-base font-medium leading-snug text-neutral-950 sm:text-[17px]">
+              {nbsp(row.situation)}
+            </p>
+            <p className="flex flex-col items-start gap-y-1 pt-1 sm:col-start-2 sm:pt-0 sm:row-span-2 sm:row-start-1 sm:gap-y-1.5">
+              <span className={`font-display text-xl font-medium leading-none sm:text-[1.375rem] ${ANSWER_TONE[row.tone]}`}>
+                {row.answer}
+              </span>
+              {row.note && <span className="text-sm leading-snug text-neutral-600">{nbsp(row.note)}</span>}
+            </p>
+            <div className="sm:col-start-1 sm:row-start-2">
+              <Law>{row.law}</Law>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+// Общие правила под таблицей — одинаковые по смыслу у трёх видов, кроме
+// региона: региональный принцип действует только для строителей.
+// «Допусков нет» — на каждой странице вида: «допуск СРО» до сих пор ищут
+// в поиске, и пришедший за ним должен сразу понять, что искать другое.
+function Rules({ detail }: { detail: SroDetail }) {
+  const rules = [
+    {
+      title: 'Договоры через конкурентные закупки',
+      text: 'Нужен взнос во второй фонд — обеспечения договорных обязательств.',
+      law: LAW.rights,
+    },
     detail.regional
       ? {
-          situation: 'В какую СРО вступать',
-          answer: 'Только своего региона',
-          tone: 'note',
-          note: 'зарегистрированную в том же субъекте РФ, что и компания',
+          title: 'В какую СРО вступать',
+          text: 'Только в СРО своего региона — зарегистрированную в том же субъекте РФ, что и компания.',
           law: LAW.membership,
         }
       : {
-          situation: 'В какую СРО вступать',
-          answer: 'Любого региона',
-          tone: 'note',
-          note: 'региональный принцип действует только для строителей',
+          title: 'В какую СРО вступать',
+          text: 'В СРО любого региона: региональный принцип действует только для строителей.',
           law: LAW.membership,
         },
+    {
+      title: 'Допусков СРО нет с 1 июля 2017 года',
+      text: 'Право выполнять работы подтверждает выписка из реестра членов СРО; предложения «купить допуск» закону не соответствуют.',
+      law: LAW.noAdmission,
+    },
   ]
   return (
-    <ul className="mt-10 border-t border-neutral-300">
-      {rows.map((row) => (
-        <li
-          key={row.situation}
-          className="grid gap-x-10 gap-y-2.5 border-b border-neutral-200 py-5 sm:grid-cols-[minmax(0,1fr)_minmax(0,17rem)] sm:items-start lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]"
-        >
-          <div className="min-w-0">
-            <p className="text-base font-medium leading-snug text-neutral-950">{nbsp(row.situation)}</p>
-            <Law>{row.law}</Law>
-          </div>
-          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1.5 sm:flex-col sm:items-start">
-            <span className={`inline-flex rounded-full px-3 py-1 text-sm font-medium ${TONE[row.tone]}`}>
-              {row.answer}
-            </span>
-            {row.note && <span className="text-sm leading-snug text-neutral-600">{nbsp(row.note)}</span>}
-          </div>
+    <ul className="mt-12 grid gap-8 md:grid-cols-3 md:gap-10">
+      {rules.map((rule) => (
+        <li key={rule.title} className="border-t border-neutral-300 pt-5">
+          <h3 className="text-base font-semibold leading-snug text-neutral-950">{nbsp(rule.title)}</h3>
+          <p className="mt-2 text-sm leading-relaxed text-neutral-600">{nbsp(rule.text)}</p>
+          <Law>{rule.law}</Law>
         </li>
       ))}
     </ul>
@@ -262,15 +307,7 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
           />
           <Reveal>
             <Cases detail={detail} />
-            {/* На каждой странице: «допуск СРО» до сих пор ищут в поиске,
-                и пришедший за ним должен сразу понять, что искать другое. */}
-            <p className="mt-6 max-w-3xl text-sm leading-relaxed text-neutral-600">
-              <strong className="font-semibold text-neutral-950">Допусков СРО нет с 1 июля 2017 года.</strong>{' '}
-              {nbsp(
-                'Право выполнять работы подтверждает выписка из реестра членов СРО; предложения «купить допуск» закону не соответствуют.',
-              )}
-            </p>
-            <Law>{LAW.noAdmission}</Law>
+            <Rules detail={detail} />
           </Reveal>
         </Part>
 
