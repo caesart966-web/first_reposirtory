@@ -129,7 +129,7 @@ export function Hero() {
           часть раздела во всю высоту, край к краю экрана; растворяется
           к тексту. Лист поверх (.hero-develop) — для «проявления». */}
       <div
-        className="hero-photo relative h-28 overflow-hidden min-[380px]:h-32 sm:h-72 lg:absolute lg:inset-y-0 lg:left-[46%] lg:right-0 lg:h-auto [@media(min-width:1440px)_and_(min-aspect-ratio:5/2)]:left-[calc(50%-5.625rem)] [@media(min-width:1440px)_and_(min-aspect-ratio:5/2)]:right-[max(0px,calc(50%-56.25rem))]"
+        className="hero-photo relative h-28 overflow-hidden min-[380px]:h-32 sm:h-72 lg:absolute lg:inset-y-0 lg:left-[46%] lg:right-0 lg:h-auto min-[1800px]:left-[calc(50%-5.625rem)] min-[1800px]:right-[max(0px,calc(50%-56.25rem))]"
         aria-hidden="true"
       >
         <picture className="hero-print block h-full w-full">
@@ -169,7 +169,7 @@ export function Hero() {
         <span className="hero-develop absolute inset-0 bg-neutral-50" aria-hidden="true" />
       </div>
 
-      <div className="mx-auto flex w-full max-w-6xl flex-col px-4 pb-10 pt-5 sm:px-6 sm:pb-14 sm:pt-10 lg:min-h-[min(53.75rem,calc(100svh-4rem))] lg:px-8 lg:pb-12 lg:pt-12">
+      <div className="mx-auto flex w-full max-w-6xl min-[1800px]:max-w-7xl flex-col px-4 pb-10 pt-5 sm:px-6 sm:pb-14 sm:pt-10 lg:min-h-[min(53.75rem,calc(100svh-4rem))] lg:px-8 lg:pb-12 lg:pt-12">
         <div className="lg:w-[56%]">
           <p data-hero-text className="hero-rise hidden items-center gap-3 text-sm text-neutral-600 sm:flex" style={delay(0)}>
             <span className="h-px w-8 bg-accent-500" aria-hidden="true" />

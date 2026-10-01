@@ -195,7 +195,7 @@ export function Header() {
           : 'border-transparent bg-neutral-50/80'
       }`}
     >
-      <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-16 w-full max-w-6xl min-[1800px]:max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Знак aria-hidden: имя рядом уже озвучено, второй раз объяснять
             картинку скринридеру нечем. */}
         {/* На 320px имя в 15px не помещалось рядом с двумя круглыми кнопками
@@ -271,7 +271,7 @@ export function Header() {
 
       {open && (
         <div id="mobile-menu" className="max-h-[calc(100dvh-4rem)] overflow-y-auto border-t border-neutral-200 bg-neutral-50 lg:hidden">
-          <nav className="mx-auto flex w-full max-w-6xl flex-col px-4 py-3 sm:px-6" aria-label="Мобильная навигация">
+          <nav className="mx-auto flex w-full max-w-6xl min-[1800px]:max-w-7xl flex-col px-4 py-3 sm:px-6" aria-label="Мобильная навигация">
             {/* Группы в мобильном меню не сворачиваются: два лишних тапа ради
                 трёх строк — плохой размен. Заголовок группы набран как
                 подпись, пункты под ним с отступом. Всё меню, включая

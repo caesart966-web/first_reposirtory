@@ -72,7 +72,7 @@ function KeyFacts({ detail }: { detail: SroDetail }) {
   ]
   return (
     <section aria-label="Коротко" className="border-b border-neutral-200 bg-neutral-100">
-      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-6xl min-[1800px]:max-w-7xl px-4 sm:px-6 lg:px-8">
         <dl className="grid grid-cols-2 lg:grid-cols-4">
           {facts.map((fact, index) => (
             <Reveal

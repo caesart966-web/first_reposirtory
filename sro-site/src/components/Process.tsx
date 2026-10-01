@@ -41,7 +41,7 @@ const STEPS = [
 export function Process() {
   return (
     <section id="process" className="relative isolate bg-accent-950 py-20 text-neutral-50 sm:py-32">
-      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-6xl min-[1800px]:max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeading dark title="Как проходит работа" />
         {/* Телефон — столбик, номер слева от текста (30.09.2026: номер
             отдельной строкой над заголовком растягивал четыре коротких шага

@@ -18,7 +18,7 @@ const PAGES = ['', 'sro-stroiteley/', 'sro-proektirovshchikov/', 'sro-izyskatele
   'uslugi/vstuplenie-v-sro/', 'uslugi/podbor-i-proverka-sro/', 'uslugi/dokumenty/',
   'uslugi/specialisty-nrs/', 'uslugi/nok/', 'uslugi/uroven-otvetstvennosti/',
   'uslugi/soprovozhdenie-proverok/']
-// 1920 — макет, увеличенный целиком (корневой кегль растёт шире 1440 px, index.css).
+// 1920 — колонка текста шире (80rem с 1800 px, index.css).
 const WIDTHS = [320, 390, 768, 1024, 1440, 1920]
 
 const ok = []
@@ -224,14 +224,13 @@ const heroGeometry = (p) => p.evaluate(async (sel) => {
   await rctx.close()
 }
 
-// Широкий экран, 01.10.2026: шире 1440 px макет растёт целиком — корневой
-// кегль min(100vw / 90, 100vh / 45), не меньше 100 % (index.css). Колонка
-// текста — те же 80 % окна, что на 1440, и на мониторе 1920, и в браузере,
-// уменьшенном до 25 % (5760 × 3200 — это 1440 × 800 при 25 %). Предел —
-// высота окна: на мониторе 21:9 (3440 × 1300) кегль растёт по высоте,
-// по бокам остаётся поле.
-for (const [W, H] of [[1440, 900], [1920, 1000], [2560, 1300], [5760, 3200], [3440, 1300]]) {
-  const rootPx = Math.max(16, Math.min(W / 90, H / 45))
+// Широкий экран, 01.10.2026. Корневой кегль — обычные 16 px на любой ширине:
+// днём макет рос вместе с окном, и заказчик вернул обратно («даже отдаляя —
+// не отдаляется»): рост от ширины окна отменяет уменьшение браузера.
+// 5760 × 3200 — это 1440 × 800 при масштабе 25 %: там кегль тоже 16 px,
+// то есть уменьшение работает. С 1800 px колонка текста 80rem вместо 72rem.
+for (const [W, H] of [[1440, 900], [1920, 1000], [2560, 1300], [5760, 3200]]) {
+  const colPx = W >= 1800 ? 1280 : 1152
   const ctx = await b.newContext({ viewport: { width: W, height: H } })
   const p = await ctx.newPage()
   await p.goto(BASE, { waitUntil: 'networkidle' })
@@ -241,25 +240,23 @@ for (const [W, H] of [[1440, 900], [1920, 1000], [2560, 1300], [5760, 3200], [34
     hscroll: document.documentElement.scrollWidth - document.documentElement.clientWidth,
   }))
   const tag = `широкий экран ${W}×${H}`
-  check(`${tag}: корневой кегль ${rootPx.toFixed(1)} px`, Math.abs(r.root - rootPx) < 0.1, `${r.root} px`)
-  check(`${tag}: колонка 72rem`, Math.abs(r.col - 72 * rootPx) < 2, `${Math.round(r.col)} px`)
-  if (W / H < 2) check(`${tag}: колонка — 80 % окна, как на 1440`, Math.abs(r.col / W - 0.8) < 0.01, `${Math.round((r.col / W) * 100)} %`)
+  check(`${tag}: корневой кегль 16 px`, r.root === 16, `${r.root} px`)
+  check(`${tag}: колонка ${colPx} px`, Math.abs(r.col - colPx) < 1, `${Math.round(r.col)} px`)
   check(`${tag}: без горизонтальной прокрутки`, r.hscroll <= 1, `${r.hscroll}px`)
   await ctx.close()
 }
 
-// Монитор 21:9 (окно шире 5:2): рост упёрся в высоту окна, по бокам поле,
-// и кадры первого экрана, «Документов» и «О нас» держатся у колонки
-// текста — не дальше 56,25rem от центра. Без этого кадр уезжал к краю окна
-// и отрывался от текста. Проверяется поведение, а не классы: правила
-// Tailwind для ширин идут в конце файла стилей и уже один раз молча
-// перебили такую привязку.
+// Шире 1800 px кадры первого экрана, «Документов» и «О нас» держатся
+// у колонки текста — не дальше 900 px от центра. Без этого кадр уезжал
+// к краю окна и отрывался от текста. Проверяется поведение, а не классы:
+// правила Tailwind для ширин идут в конце файла стилей и уже один раз
+// молча перебили такую привязку.
 {
-  const W = 3440
+  const W = 2560
+  const reach = 900
   const ctx = await b.newContext({ viewport: { width: W, height: 1300 } })
   const p = await ctx.newPage()
   await p.goto(BASE, { waitUntil: 'networkidle' })
-  const reach = await p.evaluate(() => 56.25 * parseFloat(getComputedStyle(document.documentElement).fontSize))
   // По раскладке (offset*), а не по getBoundingClientRect: у кадров есть
   // движение по прокрутке (scale), и увеличенный на 12 % кадр выглядел бы
   // вылезшим за границу, хотя стоит на месте. Родитель у всех трёх — раздел

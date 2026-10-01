@@ -27,7 +27,7 @@ export function Section({
 }) {
   return (
     <section id={id} className={`${PADDING[size]} ${className}`}>
-      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">{children}</div>
+      <div className="mx-auto w-full max-w-6xl min-[1800px]:max-w-7xl px-4 sm:px-6 lg:px-8">{children}</div>
     </section>
   )
 }

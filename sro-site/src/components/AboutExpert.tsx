@@ -52,10 +52,10 @@ export function AboutExpert() {
           height={1024}
           loading="lazy"
           decoding="async"
-          className="about-photo scroll-settle pointer-events-none absolute inset-x-0 top-0 -z-10 h-[26rem] w-full select-none object-cover object-[50%_12%] sm:h-[34rem] lg:inset-x-auto lg:right-0 lg:h-full lg:w-[46%] lg:object-[55%_20%] [@media(min-width:1440px)_and_(min-aspect-ratio:5/2)]:right-[max(0px,calc(50%-56.25rem))] [@media(min-width:1440px)_and_(min-aspect-ratio:5/2)]:w-[51.875rem]"
+          className="about-photo scroll-settle pointer-events-none absolute inset-x-0 top-0 -z-10 h-[26rem] w-full select-none object-cover object-[50%_12%] sm:h-[34rem] lg:inset-x-auto lg:right-0 lg:h-full lg:w-[46%] lg:object-[55%_20%] min-[1800px]:right-[max(0px,calc(50%-56.25rem))] min-[1800px]:w-[51.875rem]"
         />
       </picture>
-      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-6xl min-[1800px]:max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="lg:max-w-[56%]">
           <SectionHeading dark title="О компании" />
           <Reveal delay={120}>

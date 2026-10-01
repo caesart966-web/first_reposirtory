@@ -50,7 +50,7 @@ export function Part({
 }) {
   return (
     <section id={id} className={`${compact ? 'py-10 sm:py-14' : 'py-14 sm:py-20'} ${tint ? 'bg-neutral-100' : ''}`}>
-      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">{children}</div>
+      <div className="mx-auto w-full max-w-6xl min-[1800px]:max-w-7xl px-4 sm:px-6 lg:px-8">{children}</div>
     </section>
   )
 }
