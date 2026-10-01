@@ -9,6 +9,8 @@ import { Section, SectionHeading } from './ui/Section'
 // стояло на месте цифры и читалось пустой ценой — два раза подряд.
 // У платных форматов строка мелкая, а место под крупную цену держит
 // блок одной высоты (lg:min-h), поэтому линейки списков стоят ровно.
+// Строка цены прижата к низу этого блока (justify-end): у верха между ней
+// и линейкой списка оставалась пустая полоса, похожая на пропущенную строку.
 const PLANS = [
   {
     name: 'Консультация',
@@ -72,7 +74,7 @@ export function Pricing() {
                   «Консультация» в одну строку поднимала свою цену выше
                   соседних, и ряд цен шёл лесенкой. */}
               <h3 className="font-display text-[1.9rem] font-medium leading-tight lg:min-h-[2.5em]">{plan.name}</h3>
-              <div className="mt-8 lg:mt-6 lg:min-h-[6rem]">
+              <div className="mt-8 lg:mt-6 lg:flex lg:min-h-[6rem] lg:flex-col lg:justify-end">
                 {plan.free ? (
                   <p className="font-display text-[2.6rem] font-medium leading-none">{plan.price}</p>
                 ) : (

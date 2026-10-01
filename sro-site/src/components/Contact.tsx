@@ -20,15 +20,13 @@ import { Reveal, RevealText } from './ui/Reveal'
 // Ни формы, ни полей: сайт не собирает данные посетителей, и политика
 // обработки персональных данных на нём больше не нужна (ч. 2 ст. 18.1
 // 152-ФЗ касается данных, собираемых через сайт).
-/**
- * lead — своя строка под заголовком у страниц видов и услуг
- * («Отвечу на вопросы по СРО строителей…»); на главной — общая.
- */
-export function Contact({
-  lead = 'Консультация бесплатная — и первая, и все следующие. Работаю дистанционно, личный визит не нужен.',
-}: {
-  lead?: string
-}) {
+//
+// Строка под заголовком одна на все страницы (01.10.2026). У страниц видов
+// и услуг была своя — «Отвечу на вопросы по теме «…», разберу вашу
+// ситуацию…», — и на десяти страницах она отличалась одним названием.
+const LEAD = 'Консультация бесплатная — и первая, и все следующие. Работаю дистанционно, личный визит не нужен.'
+
+export function Contact() {
   return (
     <section id="contacts" className="bg-accent-950 py-20 text-neutral-50 sm:py-32">
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
@@ -39,7 +37,7 @@ export function Contact({
               className="font-display text-[2.6rem] font-medium leading-[1.02] sm:text-5xl lg:text-[3.6rem]"
             />
             <Reveal delay={150}>
-              <p className="mt-6 max-w-md text-lg leading-relaxed text-neutral-300">{lead}</p>
+              <p className="mt-6 max-w-md text-lg leading-relaxed text-neutral-300">{LEAD}</p>
             </Reveal>
           </div>
 
