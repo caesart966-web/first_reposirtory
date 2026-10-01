@@ -1,23 +1,33 @@
 import { IMAGES } from '../content/images'
+import { LAW } from '../content/sroDetails'
 import { asset, page } from '../lib/site'
 import { nbsp } from '../lib/typo'
-import { PageLink } from './PageParts'
+import { Law, PageLink } from './PageParts'
 import { ButtonLink } from './ui/Button'
 import { Reveal } from './ui/Reveal'
 import { SectionHeading } from './ui/Section'
 
-// Опись на главной — только названия (01.10.2026): пояснения к каждому
-// документу и подготовка по шагам — на странице «Подготовка документов»,
-// куда ведёт строка под описью. С пояснениями раздел занимал полтора
-// экрана компьютера и повторял ту страницу.
-const DOCUMENTS = [
-  'Заявление',
-  'Регистрационные документы',
-  'Документы организации',
-  'Документы специалистов',
-  'Документы НРС',
-  'Сведения о квалификации',
-  'Дополнительные документы',
+// Опись на главной — название и короткая строка «что это» (01.10.2026).
+// Днём по разбору дизайнера здесь оставались одни названия, и заказчик
+// спросил: «что подразумевается под „Дополнительными документами“?» —
+// без пояснения пункт ничего не сообщал. Пояснения — те, что стояли здесь
+// до разбора, по одной строке; седьмой пункт назван по сути: это то, что
+// СРО запрашивает по своим требованиям, — закон отсылает к ним в перечне
+// ст. 55.6 ГрК РФ (DOCS_LAW, «Документы о соответствии требованиям СРО»).
+// Подробности о каждом документе — на странице «Подготовка документов»,
+// куда ведёт строка под описью.
+const DOCUMENTS: { title: string; text: string; law?: string }[] = [
+  { title: 'Заявление', text: 'По форме выбранной СРО' },
+  { title: 'Регистрационные документы', text: 'ОГРН или ОГРНИП, ИНН, устав' },
+  { title: 'Документы организации', text: 'Сведения о компании и руководителе' },
+  { title: 'Документы специалистов', text: 'Дипломы, подтверждение стажа' },
+  { title: 'Документы НРС', text: 'Подтверждение включения специалистов в реестр' },
+  { title: 'Сведения о квалификации', text: 'Удостоверения о повышении квалификации, НОК' },
+  {
+    title: 'Документы по требованиям СРО',
+    text: 'Свои у каждой СРО — например, договор аренды',
+    law: LAW.membership,
+  },
 ]
 const DOCS_PAGE = 'uslugi/dokumenty'
 
@@ -63,21 +73,28 @@ export function Documents() {
           {/* Перечень — строками с тонкими линейками, как опись в деле, а не
               галочками в карточке: галочки означают «сделано», а это список
               того, что войдёт в пакет. С 1024 px — в две колонки, номера
-              идут сверху вниз по колонке (grid-flow-col).
+              идут сверху вниз по колонке (grid-flow-col). Ряды — по своему
+              содержимому (auto), а не равные: с равными все строки
+              вытягивались до самой высокой, седьмой, и между ними стояли
+              пустоты.
               Строка подсвечивается (.doc-row в index.css), но это не ссылка:
               на компьютере — при наведении, на телефоне — когда проходит
               середину экрана, ведь наведения там нет. */}
           <Reveal>
             <p className="mt-14 text-sm text-neutral-600">Что войдёт в пакет</p>
           </Reveal>
-          <ol className="mt-5 grid border-t border-neutral-300 lg:grid-flow-col lg:grid-rows-4 lg:gap-x-10">
-            {DOCUMENTS.map((title, index) => (
-              <li key={title} className="doc-row border-b border-neutral-300">
+          <ol className="mt-5 grid border-t border-neutral-300 lg:grid-flow-col lg:grid-rows-[repeat(4,auto)] lg:gap-x-10">
+            {DOCUMENTS.map((doc, index) => (
+              <li key={doc.title} className="doc-row border-b border-neutral-300">
                 <Reveal delay={index * 50} className="grid grid-cols-[2.5rem_minmax(0,1fr)] gap-2 py-4">
                   <span className="doc-num pt-0.5 text-sm tabular-nums text-neutral-500">
                     {String(index + 1).padStart(2, '0')}
                   </span>
-                  <p className="doc-text font-medium text-neutral-950">{title}</p>
+                  <div className="doc-text">
+                    <p className="font-medium text-neutral-950">{nbsp(doc.title)}</p>
+                    <p className="mt-1 text-sm leading-snug text-neutral-600">{nbsp(doc.text)}</p>
+                    {doc.law && <Law>{doc.law}</Law>}
+                  </div>
                 </Reveal>
               </li>
             ))}
