@@ -1,5 +1,4 @@
 import { ArrowLeft } from 'lucide-react'
-import type { CSSProperties } from 'react'
 import type { PageImage } from '../content/images'
 import { asset } from '../lib/site'
 import { nbsp } from '../lib/typo'
@@ -10,9 +9,9 @@ import { Reveal, RevealText } from './ui/Reveal'
 //
 // Тёмный графит, заголовок антиквой, кнопка-пилюля со стрелкой. У страниц
 // видов под плёнкой лежит кадр своего вида (у строителей — тот же кран, что
-// на первом экране главной). При переходе с главной сюда перетекает миниатюра
-// вида из списка первого экрана: у обоих одно имя перехода (transitionName,
-// «sro-<вид>»). С 29.09.2026 кадр есть и у каждой услуги (заказчик:
+// на первом экране главной). До 01.10.2026 сюда при переходе с главной
+// перетекала миниатюра вида из списка первого экрана; миниатюр там больше
+// нет, и имя перехода снято. С 29.09.2026 кадр есть и у каждой услуги (заказчик:
 // «там чёрный фон — надо фотографии»): снимки заказчика из assets-src,
 // каждый под смысл страницы — scripts/prepare-service-photos.py. До того
 // кадр был только у «Подготовки документов» (папки).
@@ -30,7 +29,6 @@ export function PageHero({
   title,
   lead,
   image,
-  transitionName,
   toc = [],
 }: {
   backHref: string
@@ -38,18 +36,12 @@ export function PageHero({
   title: string
   lead: string
   image?: PageImage
-  /** Имя для плавного перехода между страницами (view-transition-name). */
-  transitionName?: string
   toc?: TocItem[]
 }) {
   return (
     <section className="relative isolate overflow-hidden bg-accent-950 text-neutral-50">
       {image && (
-        <div
-          className="absolute inset-0 -z-10"
-          style={transitionName ? ({ viewTransitionName: transitionName } as CSSProperties) : undefined}
-          aria-hidden="true"
-        >
+        <div className="absolute inset-0 -z-10" aria-hidden="true">
           <picture>
             {image.srcAvif && <source type="image/avif" srcSet={asset(image.srcAvif)} />}
             <img

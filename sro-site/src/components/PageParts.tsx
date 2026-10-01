@@ -1,10 +1,11 @@
-import { ArrowUpRight, Check, FileText } from 'lucide-react'
-import { useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react'
+import { Check, FileText } from 'lucide-react'
+import { useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import type { DocItem } from '../content/sroDetails'
 import { DOCS_IP, DOCS_LAW, DOCS_OOO, DOCS_SPECIALISTS, LAW, SRO_DETAILS, STEPS } from '../content/sroDetails'
 import { TYPES_GROUP } from '../content/nav'
-import { asset, page } from '../lib/site'
+import { page } from '../lib/site'
 import { nbsp } from '../lib/typo'
+import { GoTo } from './ui/GoTo'
 import { Reveal } from './ui/Reveal'
 
 // Общие части внутренних страниц — видов СРО и услуг (с 28.09.2026).
@@ -313,51 +314,25 @@ export function DocInventory() {
   )
 }
 
-// Три вида СРО строками — как список на первом экране главной: миниатюра
-// своего кадра, название, подсказка из меню и кружок со стрелкой.
+// Три вида СРО строками — как список на первом экране главной: название,
+// подсказка из меню и стрелка (ui/GoTo.tsx). До 01.10.2026 у строки были
+// миниатюра кадра 48 px и кружок со стрелкой — миниатюра в монохроме
+// не читалась, а кружок с 01.10 только у кнопок «Связаться».
 export function TypeRows() {
   return (
     <ul className="mt-10 border-b border-neutral-300">
       {SRO_DETAILS.map((detail) => {
-        const image = detail.card.image
         const hint = TYPES_GROUP.items.find((item) => item.href === detail.path)?.hint
         return (
           <li key={detail.slug} className="border-t border-neutral-300">
-            <a
-              href={page(detail.path)}
-              className="group -mx-2 flex min-h-16 items-center gap-4 rounded-2xl px-2 py-3 transition-colors duration-500 ease-silk hover:bg-neutral-50 sm:gap-6 sm:py-4"
-            >
-              {image.thumb && (
-                <span
-                  className="block h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-neutral-200 sm:h-14 sm:w-14"
-                  style={{ viewTransitionName: `sro-${detail.slug}` } as CSSProperties}
-                >
-                  <picture>
-                    {image.thumbAvif && <source type="image/avif" srcSet={asset(image.thumbAvif)} />}
-                    <img
-                      src={asset(image.thumb)}
-                      alt=""
-                      width={160}
-                      height={160}
-                      loading="lazy"
-                      decoding="async"
-                      className="h-full w-full object-cover transition-transform duration-700 ease-silk group-hover:scale-110"
-                    />
-                  </picture>
-                </span>
-              )}
+            <a href={page(detail.path)} className="group flex min-h-16 items-center gap-6 py-4 sm:py-5">
               <span className="min-w-0 flex-1">
-                <span className="block font-display text-[1.3rem] font-medium leading-tight text-neutral-950 sm:text-2xl">
+                <span className="block font-display text-[1.3rem] font-medium leading-tight text-neutral-950 transition-colors duration-700 ease-silk group-hover:text-accent-700 sm:text-2xl">
                   {detail.card.title}
                 </span>
                 {hint && <span className="mt-1 block text-sm leading-snug text-neutral-600">{hint}</span>}
               </span>
-              <span
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-neutral-300 text-neutral-950 transition-all duration-700 ease-silk group-hover:rotate-45 group-hover:border-neutral-950 group-hover:bg-neutral-950 group-hover:text-neutral-50"
-                aria-hidden="true"
-              >
-                <ArrowUpRight className="h-5 w-5" />
-              </span>
+              <GoTo />
             </a>
           </li>
         )

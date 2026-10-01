@@ -1,7 +1,7 @@
-import { ArrowUpRight } from 'lucide-react'
 import { serviceBySlug } from '../content/services'
 import { page } from '../lib/site'
 import { nbsp } from '../lib/typo'
+import { GoTo } from './ui/GoTo'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
 
@@ -42,19 +42,16 @@ const CARD =
   'group relative flex h-full flex-col rounded-3xl p-6 transition-colors duration-700 ease-silk focus-visible:outline-none sm:min-h-[13rem] sm:p-7 lg:min-h-[14.5rem]'
 
 // Стрелка: на компьютере — внизу справа под текстом; на телефоне — в углу
-// рядом с подсказкой, чтобы карточка не росла на лишнюю строку.
+// рядом с подсказкой, чтобы карточка не росла на лишнюю строку. С 01.10.2026
+// без кружка (правило кружков — ui/GoTo.tsx): карточка и так нажимается
+// целиком и темнеет при наведении, а стрелка за ней светлеет.
 function Arrow({ dark = false }: { dark?: boolean }) {
   return (
     <span className="absolute bottom-6 right-6 sm:static sm:mt-auto sm:flex sm:justify-end sm:pt-6">
-      <span
-        className={`flex h-11 w-11 items-center justify-center rounded-full border transition-all duration-700 ease-silk group-hover:rotate-45 ${
-          dark
-            ? 'border-white/30 text-neutral-50 group-hover:border-neutral-50 group-hover:bg-neutral-50 group-hover:text-neutral-950'
-            : 'border-neutral-300 text-neutral-950 group-hover:border-neutral-50 group-hover:bg-neutral-50 group-focus-visible:border-neutral-50 group-focus-visible:bg-neutral-50'
-        }`}
-      >
-        <ArrowUpRight className="h-5 w-5" aria-hidden="true" />
-      </span>
+      <GoTo
+        tone={dark ? 'light' : 'ink'}
+        className={dark ? '' : 'group-hover:text-neutral-50 group-focus-visible:text-neutral-50'}
+      />
     </span>
   )
 }
@@ -89,7 +86,7 @@ export function Services() {
                     <h4 className="font-display text-[1.6rem] font-medium leading-[1.1] text-neutral-950 transition-colors duration-700 ease-silk group-hover:text-neutral-50 group-focus-visible:text-neutral-50 lg:text-[1.45rem] xl:text-[1.6rem]">
                       {nbsp(service.short)}
                     </h4>
-                    <p className="mt-3 pr-14 text-sm leading-relaxed text-neutral-600 transition-colors sm:pr-0 duration-700 group-hover:text-neutral-300 group-focus-visible:text-neutral-300">
+                    <p className="mt-3 pr-10 text-sm leading-relaxed text-neutral-600 transition-colors sm:pr-0 duration-700 group-hover:text-neutral-300 group-focus-visible:text-neutral-300">
                       {nbsp(service.hint)}
                     </p>
                     <Arrow />
@@ -105,7 +102,7 @@ export function Services() {
                     <h4 className="font-display text-[1.6rem] font-medium leading-[1.1] text-neutral-50 lg:text-[1.45rem] xl:text-[1.6rem]">
                       Бесплатная консультация
                     </h4>
-                    <p className="mt-3 pr-14 text-sm leading-relaxed text-neutral-300 sm:pr-0">
+                    <p className="mt-3 pr-10 text-sm leading-relaxed text-neutral-300 sm:pr-0">
                       {nbsp('Разберу вашу ситуацию и скажу, с какой услуги начать.')}
                     </p>
                     <Arrow dark />

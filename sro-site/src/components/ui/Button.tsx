@@ -10,7 +10,10 @@ import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from 'reac
 //
 // arrow — кружок со стрелкой справа внутри кнопки (приём из LeonHome и
 // woodland). Ставится только на главное действие: стрелка в каждой кнопке
-// перестаёт что-либо значить.
+// перестаёт что-либо значить. С 01.10.2026 кружок на сайте только здесь
+// и только у кнопок, ведущих в «Связаться»: он значит «написать мне».
+// Переход на другую страницу — простая стрелка (ui/GoTo.tsx); правило
+// стережёт test-site.mjs («кружок со стрелкой только у «Связаться»»).
 export type ButtonVariant = 'primary' | 'secondary' | 'inverse' | 'outlineInverse'
 export type ButtonSize = 'md' | 'lg'
 

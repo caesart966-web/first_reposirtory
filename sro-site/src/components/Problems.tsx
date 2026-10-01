@@ -1,7 +1,7 @@
 import { serviceBySlug } from '../content/services'
 import { page } from '../lib/site'
 import { nbsp } from '../lib/typo'
-import { NavPill } from './ui/NavPill'
+import { GoTo } from './ui/GoTo'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
 
@@ -64,11 +64,14 @@ export function Problems() {
                   {nbsp(scenario.text)}
                 </span>
               </span>
-              {/* Кнопка-пилюля с названием страницы (ui/NavPill.tsx). Все три
-                  одной ширины — стрелки стоят в одну линию. До 29.09.2026
-                  здесь была подпись мелким шрифтом у кружка 44 px — заказчик
-                  попросил «чуть больше и профессиональнее». */}
-              <NavPill className="sm:w-[17rem] sm:justify-self-end">{scenario.action}</NavPill>
+              {/* Название страницы, куда ведёт строка, и стрелка (ui/GoTo.tsx).
+                  До 29.09.2026 здесь была подпись мелким шрифтом у кружка
+                  44 px — заказчик попросил «чуть больше и профессиональнее»;
+                  с 29.09 — пилюля с кружком, с 01.10.2026 — подпись в кегль
+                  текста, без рамки: кружок со стрелкой остался только
+                  у кнопок «Связаться». Прижата вправо — стрелки трёх строк
+                  стоят в одну линию. */}
+              <GoTo className="text-base sm:justify-self-end sm:text-[17px]">{scenario.action}</GoTo>
             </a>
           </Reveal>
         ))}

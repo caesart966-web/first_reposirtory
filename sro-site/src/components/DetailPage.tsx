@@ -9,7 +9,7 @@ import { PageExtras } from './PageExtras'
 import { PageHero } from './PageHero'
 import { MobileBar } from './MobileBar'
 import { DocColumn, Head, Law, Part, SroDocs, StepsGrid } from './PageParts'
-import { NavPill } from './ui/NavPill'
+import { GoTo } from './ui/GoTo'
 import { Reveal } from './ui/Reveal'
 
 // ─── Страница вида СРО ───────────────────────────────────────────────────
@@ -292,7 +292,6 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
           title={detail.title}
           lead={detail.lead}
           image={detail.card.image}
-          transitionName={`sro-${detail.slug}`}
           toc={DETAIL_TOC}
         />
 
@@ -338,8 +337,8 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
             />
             <SroDocs />
           </Reveal>
-          {/* Переход к описи с пояснениями — строкой с кнопкой, как в «С чем
-              обращаются»: строка говорит, что там, кнопка — куда. */}
+          {/* Переход к описи с пояснениями — строкой с подписью, как в «С чем
+              обращаются»: строка говорит, что там, подпись со стрелкой — куда. */}
           <Reveal>
             <a
               href={page('uslugi/dokumenty')}
@@ -348,7 +347,7 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
               <span className="font-display text-[1.4rem] font-medium leading-snug text-neutral-950 transition-colors duration-700 ease-silk group-hover:text-accent-700 sm:text-[1.6rem]">
                 {nbsp('Что входит в каждый документ и как проходит подготовка')}
               </span>
-              <NavPill className="sm:w-[17rem] sm:justify-self-end">Подготовка документов</NavPill>
+              <GoTo className="text-base sm:justify-self-end sm:text-[17px]">Подготовка документов</GoTo>
             </a>
           </Reveal>
         </Part>

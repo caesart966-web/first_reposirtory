@@ -121,6 +121,14 @@ for (const path of PAGES) {
           .map((dd) => dd.textContent),
         // Шрифт заголовков действительно загрузился, а не подменился Georgia.
         displayFont: document.fonts.check('500 40px "Brygada 1918 Variable"', 'Вступление'),
+        // Кружок со стрелкой (↗) — только в кнопках «Связаться» (01.10.2026,
+        // ui/GoTo.tsx): переход на другую страницу показывает простая
+        // стрелка →. Кружок, ведущий не в «Связаться», — вернувшаяся
+        // примета шаблона.
+        strayCircles: [...document.querySelectorAll('svg.lucide-arrow-up-right')]
+          .map((svg) => svg.closest('a, button'))
+          .filter((el) => !el || el.getAttribute('href') !== '#contacts')
+          .map((el) => (el ? el.getAttribute('href') ?? el.textContent.trim() : 'без ссылки')),
       }
     })
     check(`${tag}: без горизонтальной прокрутки`, r.hscroll <= 1, `${r.hscroll}px`)
@@ -138,6 +146,7 @@ for (const path of PAGES) {
     check(`${tag}: заголовки не шире своей колонки`, r.wideHeads.length === 0, r.wideHeads.join(' | '))
     check(`${tag}: ключевые цифры помещаются в плитки`, r.wideFacts.length === 0, r.wideFacts.join(' | '))
     check(`${tag}: шрифт заголовков загружен`, r.displayFont)
+    check(`${tag}: кружок со стрелкой только у «Связаться»`, r.strayCircles.length === 0, r.strayCircles.join(' '))
     check(`${tag}: без ошибок в консоли`, errs.length === 0, errs[0]?.slice(0, 140) ?? '')
     check(`${tag}: без битых запросов`, failed.length === 0, failed.join(' '))
     if (W === 1440) r.hrefs.forEach((h) => linkTargets.add(h.split('#')[0]))

@@ -1,12 +1,12 @@
-import { ArrowUpRight, Phone } from 'lucide-react'
+import { Phone } from 'lucide-react'
 import { useEffect, useState, type CSSProperties } from 'react'
 import { LINKS } from '../content/contacts'
 import { IMAGES } from '../content/images'
-import { TYPES_GROUP } from '../content/nav'
 import { SRO_DETAILS } from '../content/sroDetails'
 import { asset, page } from '../lib/site'
 import { nbsp } from '../lib/typo'
 import { ButtonLink } from './ui/Button'
+import { GoTo } from './ui/GoTo'
 import { RevealText } from './ui/Reveal'
 
 // Первый экран — «лист и окно» (с 26.09.2026): слева светлая бумага
@@ -18,18 +18,24 @@ import { RevealText } from './ui/Reveal'
 // Теперь все три вида стоят списком сразу, а кадр нужен один. Списком,
 // а не карточками, и без номеров: номера на сайте остались там, где есть
 // порядок (шаги работы, опись документов), а три вида СРО — не очередь.
-// Название и подсказка — тот же набор данных, что выпадающее меню «Виды СРО»
-// (TYPES_GROUP): разойтись с шапкой они не могут.
+// Название вида и адрес — из SRO_DETAILS, тех же данных, что страницы видов
+// и меню «Виды СРО»: разойтись с шапкой они не могут.
 //
 // Кадр — в тёплом монохроме, как все фотографии сайта, и снят «светлым
 // ключом»: небо уходит в бумагу, поэтому кадр растворяется в листе без рамки
 // и без серой полосы (маска .hero-photo в index.css). При загрузке он
 // «проявляется», как отпечаток, текст выплывает ступенькой (.hero-rise, --d).
-// У каждого вида СРО в списке — миниатюра своего кадра из той же серии
-// (sro-thumb-*, 160 px, 2–5 КБ). У миниатюры и шапки страницы вида одно имя
-// перехода, «sro-<вид>»: нажали вид — миниатюра разворачивается в шапку.
-// При наведении строка ложится на лист, миниатюра чуть приближается,
-// кружок со стрелкой темнеет и поворачивается.
+//
+// ВЫБОР ВИДА — «от задачи клиента» (01.10.2026, вариант В из трёх, выбор
+// заказчика). Над списком вопрос «Чем занимается ваша компания?», строка —
+// занятие словами клиента («Строительство, капремонт, снос»), вид СРО —
+// подписью справа со стрелкой. Человек знает, чем занимается, но не всегда
+// знает, какая СРО ему нужна: переводить «я строю» в «СРО строителей» ему
+// больше не надо. «Капремонт», а не «ремонт»: для текущего ремонта членство
+// не требуется, и слово «ремонт» обещало бы лишнее.
+// До этого у строки были миниатюра кадра 48 px и кружок со стрелкой:
+// миниатюра в монохроме не читалась, а три кружка спорили с кружком
+// кнопки «Связаться» (правило кружков — ui/GoTo.tsx).
 //
 // СМЕНА КАДРА (с 28.09.2026). Наведение на вид СРО (или фокус с клавиатуры)
 // меняет кадр в окне на кадр этого вида: план этажа для проектировщиков,
@@ -47,16 +53,25 @@ import { RevealText } from './ui/Reveal'
 // заголовок, обе кнопки и все три вида — без прокрутки при видимой высоте
 // окна 780 px (стережёт test-site.mjs). Поэтому там кадр — невысокая полоса
 // сверху, подзаголовок «Для строительных, проектных…» снят (его повторяет
-// список видов прямо под кнопками), а у видов — только названия: подсказки
-// в две строки растягивали список за край экрана.
+// список видов прямо под кнопками), а строки плотнее: занятие и под ним
+// вид СРО мелко.
 
 // Ступенька появления: задержка анимации .hero-rise.
 const delay = (ms: number) => ({ '--d': `${ms}ms` }) as CSSProperties
 
+// Занятие словами клиента — по виду СРО. Короче подсказки из меню
+// «Виды СРО»: строка первого экрана должна уложиться в одну строку
+// на телефоне.
+const ACTIVITY: Record<string, string> = {
+  construction: 'Строительство, капремонт, снос',
+  design: 'Проектирование',
+  survey: 'Инженерные изыскания',
+}
+
 const TYPES = SRO_DETAILS.map((detail) => ({
   slug: detail.slug,
   title: detail.card.title,
-  hint: TYPES_GROUP.items.find((item) => item.href === detail.path)?.hint,
+  activity: ACTIVITY[detail.slug] ?? detail.card.title,
   href: page(detail.path),
   image: detail.card.image,
 }))
@@ -184,9 +199,9 @@ export function Hero() {
           </div>
         </div>
 
-        <div className="hero-rise mt-6 sm:mt-12 lg:mt-auto lg:w-[56%] lg:pt-8 xl:w-[62%]" style={delay(600)}>
+        <div className="hero-rise mt-6 sm:mt-12 lg:mt-auto lg:w-[56%] lg:pt-8 xl:w-[60%]" style={delay(600)}>
           <p id="hero-types" data-hero-text className="text-sm font-medium text-neutral-600">
-            Выберите вид СРО
+            Чем занимается ваша компания?
           </p>
           <ul
             aria-labelledby="hero-types"
@@ -200,43 +215,17 @@ export function Hero() {
                   onMouseEnter={() => frame.show(type.slug)}
                   onFocus={() => frame.show(type.slug)}
                   onBlur={() => frame.show(null)}
-                  className="group -mx-2 flex min-h-14 items-center gap-3 rounded-2xl px-2 py-1.5 transition-colors duration-500 ease-silk hover:bg-neutral-100 sm:gap-5 sm:py-3 lg:gap-4 lg:py-2.5"
+                  className="group flex min-h-14 flex-wrap items-baseline justify-between gap-x-6 py-1.5 focus-visible:outline-none sm:py-4"
                 >
-                  {type.image.thumb && (
-                    <span
-                      className="block h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-neutral-200 sm:h-14 sm:w-14 lg:h-12 lg:w-12"
-                      style={{ viewTransitionName: `sro-${type.slug}` } as CSSProperties}
-                    >
-                      <picture>
-                        {type.image.thumbAvif && <source type="image/avif" srcSet={asset(type.image.thumbAvif)} />}
-                        <img
-                          src={asset(type.image.thumb)}
-                          alt=""
-                          width={160}
-                          height={160}
-                          loading="eager"
-                          decoding="async"
-                          className="h-full w-full object-cover transition-transform duration-700 ease-silk group-hover:scale-110"
-                        />
-                      </picture>
-                    </span>
-                  )}
-                  <span className="min-w-0 flex-1">
-                    <span data-hero-text className="block font-display text-[1.2rem] font-medium leading-tight min-[380px]:text-[1.3rem] sm:text-2xl">
-                      {type.title}
-                    </span>
-                    {type.hint && (
-                      <span data-hero-text className="mt-1 hidden text-sm leading-snug text-neutral-600 sm:block">
-                        {type.hint}
-                      </span>
-                    )}
-                  </span>
                   <span
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-neutral-300 text-neutral-950 transition-all duration-700 ease-silk group-hover:rotate-45 group-hover:border-neutral-950 group-hover:bg-neutral-950 group-hover:text-neutral-50 sm:h-11 sm:w-11"
-                    aria-hidden="true"
+                    data-hero-text
+                    className="font-display text-[1.1rem] font-medium leading-tight min-[380px]:text-[1.25rem] sm:text-[1.75rem]"
                   >
-                    <ArrowUpRight className="h-5 w-5" />
+                    {type.activity}
                   </span>
+                  <GoTo tone="muted" className="text-[13px] leading-snug sm:text-[15px] sm:leading-normal">
+                    <span data-hero-text>{type.title}</span>
+                  </GoTo>
                 </a>
               </li>
             ))}
