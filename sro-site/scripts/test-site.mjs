@@ -185,7 +185,7 @@ const heroGeometry = (p) => p.evaluate(async (sel) => {
   const hero = document.querySelector(sel)
   const rect = (el) => el.getBoundingClientRect()
   // Видимый список видов: с 1024 px — строками, на телефоне и планшете —
-  // карточками (там у невыбранных карточек кнопка, а не ссылка).
+  // карточками (каждая карточка — ссылка на страницу своего вида).
   const list = [...hero.querySelectorAll('ul[aria-labelledby="hero-types"]')].find((u) => u.getClientRects().length)
   const links = [...list.querySelectorAll('a, button')]
   const buttons = [...hero.querySelectorAll('a[href="#contacts"], a[href^="tel:"]')]
@@ -398,7 +398,7 @@ for (const [width, height, need] of [[390, 780, 'all'], [360, 740, 'all'], [390,
       // И после выбора другого вида: у выбранной карточки «Открыть →»,
       // и обе строки любой карточки обязаны остаться в одну строку.
       for (const i of [1, 2]) {
-        await p.locator('[data-hero-cards] > li').nth(i).locator('button').click()
+        await p.locator('[data-hero-cards] > li').nth(i).locator('a').click()
         const hs = await p.evaluate(() => [...document.querySelectorAll('[data-hero-cards] > li > *')].map((a) => {
           const t = a.querySelector('.font-semibold')
           const two = t.getBoundingClientRect().height > parseFloat(getComputedStyle(t).lineHeight) * 1.5
@@ -417,33 +417,75 @@ for (const [width, height, need] of [[390, 780, 'all'], [360, 740, 'all'], [390,
 }
 
 // Телефон: нажатие на карточку вида меняет кадр обложки на кадр этого вида,
-// выбранная карточка становится ссылкой на страницу вида и показывает
-// «Открыть». Сразу выбрано строительство — на первом кадре кран.
+// выбранная карточка показывает «Открыть», второе нажатие ведёт на страницу.
+// Сразу выбрано строительство — на первом кадре кран.
+// Смена без рывка (01.10.2026): карточки при выборе не пересоздаются
+// (иначе рамка и «Открыть» возникали скачком, без перехода), а прежний
+// кадр держится под новым, пока тот проступает (иначе на середине смены
+// сквозь оба полупрозрачных кадра мигал тёмный фон).
 {
   const ctx = await b.newContext({ viewport: { width: 390, height: 780 }, isMobile: true, hasTouch: true })
   const p = await ctx.newPage()
   await p.goto(BASE, { waitUntil: 'networkidle' })
-  const state = () => p.evaluate(() => {
+  // Кадры других видов грузятся, когда браузер свободен, — дождаться их.
+  await p.waitForFunction(() => document.querySelectorAll('section[aria-labelledby="hero-title"] .lg\\:hidden picture img').length === 3)
+  await p.evaluate(() => document.querySelectorAll('[data-hero-cards] > li > a').forEach((a, i) => { a.dataset.mark = String(i) }))
+  const pictures = 'section[aria-labelledby="hero-title"] .lg\\:hidden picture'
+  const state = () => p.evaluate((sel) => {
     const items = [...document.querySelectorAll('[data-hero-cards] > li > *')]
-    const shown = [...document.querySelectorAll('section[aria-labelledby="hero-title"] .lg\\:hidden picture')]
-      .filter((el) => getComputedStyle(el).opacity === '1')
-      .map((el) => el.querySelector('img').getAttribute('src').replace(/\?.*$/, '').split('/').pop())
+    const file = (el) => el.querySelector('img').getAttribute('src').replace(/\?.*$/, '').split('/').pop()
     return {
-      links: items.map((el) => (el.tagName === 'A' ? el.getAttribute('href') : null)),
-      open: items.map((el) => /Открыть/.test(el.textContent)),
-      shown,
+      tags: items.map((el) => el.tagName).join(','),
+      marks: items.map((el) => el.dataset.mark).join(','),
+      selected: items.map((el) => (el.hasAttribute('data-selected') ? el.getAttribute('href') : null)),
+      open: items.map((el) => getComputedStyle(el.querySelector('[aria-hidden="true"].text-accent-700')).opacity === '1'),
+      shown: [...document.querySelectorAll(sel)].filter((el) => getComputedStyle(el).opacity === '1').map(file),
+      top: [...document.querySelectorAll(sel)].filter((el) => el.hasAttribute('data-shown')).map(file),
     }
-  })
+  }, pictures)
   const s0 = await state()
-  check('телефон: сразу выбрано строительство', s0.links[0]?.endsWith('sro-stroiteley/') && !s0.links[1] && !s0.links[2] && s0.open[0], JSON.stringify(s0.links))
+  check('телефон: каждая карточка вида — ссылка', s0.tags === 'A,A,A', s0.tags)
+  check('телефон: сразу выбрано строительство', s0.selected[0]?.endsWith('sro-stroiteley/') && !s0.selected[1] && !s0.selected[2] && s0.open[0] && !s0.open[1], JSON.stringify(s0.selected))
   check('телефон: на обложке кран', s0.shown.length === 1 && /hero-day/.test(s0.shown[0]), s0.shown.join(' '))
   for (const [i, slug, file] of [[1, 'sro-proektirovshchikov/', 'slide-design'], [2, 'sro-izyskateley/', 'slide-survey']]) {
-    await p.locator('[data-hero-cards] > li').nth(i).locator('button').tap()
-    await p.waitForTimeout(1100)
+    await p.locator('[data-hero-cards] > li').nth(i).locator('a').tap()
+    // Середина смены: новый кадр сверху проступает, прежний под ним целиком.
+    await p.waitForTimeout(250)
+    const mid = await p.evaluate((sel) => [...document.querySelectorAll(sel)].map((el) => ({ top: el.hasAttribute('data-shown'), o: Number(getComputedStyle(el).opacity) })), pictures)
+    const rising = mid.find((x) => x.top)
+    check(`телефон: смена на «${slug}» без мигания — прежний кадр держится под новым`,
+      rising && rising.o > 0 && rising.o < 1 && mid.some((x) => !x.top && x.o === 1), JSON.stringify(mid))
+    await p.waitForTimeout(1300)
     const st = await state()
-    check(`телефон: нажатие на «${slug}» меняет кадр обложки`, st.shown.length === 1 && st.shown[0].startsWith(file), st.shown.join(' '))
-    check(`телефон: выбранная карточка ведёт на ${slug} и показывает «Открыть»`, st.links[i]?.endsWith(slug) && st.open[i] && st.links.filter(Boolean).length === 1, JSON.stringify(st.links))
+    check(`телефон: нажатие на «${slug}» меняет кадр обложки, страница та же`, p.url() === BASE && st.top[0]?.startsWith(file) && st.shown.length === 1 && st.shown[0].startsWith(file), `${p.url()} ${st.shown.join(' ')}`)
+    check(`телефон: выбрана «${slug}», у неё «Открыть»`, st.selected[i]?.endsWith(slug) && st.open[i] && st.open.filter(Boolean).length === 1 && st.selected.filter(Boolean).length === 1, JSON.stringify(st.selected))
+    check(`телефон: карточки при выборе не пересоздаются`, st.marks === '0,1,2', st.marks)
   }
+  // Второе нажатие на выбранную — переход на страницу вида.
+  await p.locator('[data-hero-cards] > li').nth(2).locator('a').tap()
+  await p.waitForURL(/sro-izyskateley\/$/, { timeout: 5000 }).catch(() => {})
+  check('телефон: нажатие на выбранную карточку открывает страницу вида', /sro-izyskateley\/$/.test(p.url()), p.url())
+  await ctx.close()
+}
+
+// Заголовок обложки — поверх кадра при любой настройке движения и после
+// смены кадра: при «уменьшить движение» у обложки нет анимации, а с ней
+// и своего контекста наложения, и кадр со z-index ложился на заголовок.
+for (const motion of ['no-preference', 'reduce']) {
+  const ctx = await b.newContext({ viewport: { width: 390, height: 780 }, isMobile: true, hasTouch: true, reducedMotion: motion })
+  const p = await ctx.newPage()
+  await p.goto(BASE, { waitUntil: 'networkidle' })
+  await p.locator('[data-hero-cards] > li').nth(1).locator('a').tap()
+  await p.waitForTimeout(1600)
+  // Касание прокрутило бы к карточке — заголовок меряется с верха страницы.
+  const top = await p.evaluate(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' })
+    const h = document.getElementById('hero-title')
+    const r = h.getBoundingClientRect()
+    const el = document.elementFromPoint(r.left + 20, r.top + r.height / 2)
+    return h.contains(el) ? 'заголовок' : `${el?.tagName}.${el?.className}`.slice(0, 80)
+  })
+  check(`телефон (${motion}): заголовок обложки поверх кадра`, top === 'заголовок', top)
   await ctx.close()
 }
 

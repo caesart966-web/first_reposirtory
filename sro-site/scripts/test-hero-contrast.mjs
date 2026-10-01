@@ -78,8 +78,9 @@ for (const [dev, vp, mob] of DEVICES) {
       if (shown < 2) throw new Error(`наведение на вид ${s.hover}: кадр не сменился`)
     }
     if (s.tap !== undefined) {
-      await p.locator('[data-hero-cards] > li').nth(s.tap).locator('button').tap()
-      await p.waitForTimeout(1200)
+      await p.waitForFunction(() => document.querySelectorAll('[data-hero-cards]').length && document.querySelectorAll('section[aria-labelledby="hero-title"] .lg\\:hidden picture img').length === 3)
+      await p.locator('[data-hero-cards] > li').nth(s.tap).locator('a').tap()
+      await p.waitForTimeout(1800)
     }
     await p.waitForTimeout(900)
     // Меряется не прямоугольник элемента, а строки самого текста (прямоугольники
