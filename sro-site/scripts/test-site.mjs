@@ -395,6 +395,19 @@ for (const [width, height, need] of [[390, 780, 'all'], [360, 740, 'all'], [390,
     if (w < 1024) {
       check(`первый экран ${w}: виды СРО — карточками`, r.cards && ok3)
       check(`первый экран ${w}: карточки одной высоты`, ok3 && r.rows.every((x) => Math.abs(x.height - r.rows[0].height) <= 1), r.rows.map((x) => x.height).join(' / '))
+      // И после выбора другого вида: у выбранной карточки «Открыть →»,
+      // и обе строки любой карточки обязаны остаться в одну строку.
+      for (const i of [1, 2]) {
+        await p.locator('[data-hero-cards] > li').nth(i).locator('button').click()
+        const hs = await p.evaluate(() => [...document.querySelectorAll('[data-hero-cards] > li > *')].map((a) => {
+          const t = a.querySelector('.font-semibold')
+          const two = t.getBoundingClientRect().height > parseFloat(getComputedStyle(t).lineHeight) * 1.5
+          const sub = t.nextElementSibling.getBoundingClientRect().height > parseFloat(getComputedStyle(t.nextElementSibling).lineHeight) * 1.5
+          return { h: Math.round(a.getBoundingClientRect().height), two: two || sub }
+        }))
+        check(`первый экран ${w}: выбран вид ${i + 1} — карточки одной высоты, строки не переносятся`,
+          hs.every((x) => !x.two && Math.abs(x.h - hs[0].h) <= 1), hs.map((x) => x.h + (x.two ? '*' : '')).join(' / '))
+      }
     } else {
       check(`первый экран ${w}: подпись вида СРО у всех строк справа`, !r.cards && ok3 && r.rows.every((x) => x.right), r.rows.map((x) => (x.right ? 'справа' : 'под')).join(' / '))
     }

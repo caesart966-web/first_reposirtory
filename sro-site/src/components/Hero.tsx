@@ -1,4 +1,4 @@
-import { ArrowRight, ChevronRight, DraftingCompass, HardHat, Mountain, Phone } from 'lucide-react'
+import { ArrowRight, DraftingCompass, HardHat, Mountain, Phone } from 'lucide-react'
 import { useEffect, useState, type CSSProperties } from 'react'
 import { LINKS } from '../content/contacts'
 import { IMAGES } from '../content/images'
@@ -214,11 +214,11 @@ function TypeCards({ active, onSelect }: { active: string; onSelect: (slug: stri
         const Icon = TYPE_ICON[type.slug] ?? HardHat
         const on = active === type.slug
         const card =
-          'flex w-full items-center gap-3 rounded-2xl border py-2.5 pl-2.5 pr-3 text-left transition-[border-color,box-shadow,background-color] duration-500 ease-silk focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-50'
+          'flex w-full items-center gap-3 rounded-2xl border py-2.5 pl-2.5 pr-3 text-left max-[359px]:gap-2.5 max-[359px]:pl-2 max-[359px]:pr-2.5 transition-[border-color,box-shadow,background-color] duration-500 ease-silk focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-50'
         const body = (
           <>
             <span
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset transition-colors duration-500 ${
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset transition-colors duration-500 max-[359px]:h-9 max-[359px]:w-9 ${
                 on ? 'bg-accent-600 text-neutral-50 ring-accent-600' : 'bg-accent-50 text-accent-700 ring-accent-200/70'
               }`}
             >
@@ -226,12 +226,17 @@ function TypeCards({ active, onSelect }: { active: string; onSelect: (slug: stri
             </span>
             {/* «Открыть →» — во второй строке, рядом с видом СРО: справа
                 от занятия оно отнимало ширину, и «Строительство, капремонт,
-                снос» у выбранной карточки уходило на две строки. */}
+                снос» у выбранной карточки уходило на две строки. Стрелки «>»
+                у невыбранных карточек нет: они не ведут на страницу, а меняют
+                кадр, и стрелка обещала бы переход (и отнимала ту же ширину).
+                Уже 360 px
+                значок и поля карточки чуть меньше, занятие 13,5 px, вторая строка
+                12 px — иначе на 320 px строки не помещались. */}
             <span className="min-w-0 flex-1">
-              <span className="block text-[0.9375rem] font-semibold leading-snug text-neutral-950 min-[380px]:text-base">
+              <span className="block text-[0.9375rem] font-semibold leading-snug text-neutral-950 max-[359px]:text-[0.84375rem] min-[380px]:text-base">
                 {type.activity}
               </span>
-              <span className="flex items-center justify-between gap-3 text-[0.8125rem] leading-snug">
+              <span className="flex items-center justify-between gap-3 text-[0.8125rem] leading-snug max-[359px]:gap-2 max-[359px]:text-xs">
                 <span className="text-neutral-600">{type.title}</span>
                 {on && (
                   <span className="flex shrink-0 items-center gap-1 font-semibold text-accent-700">
@@ -241,7 +246,6 @@ function TypeCards({ active, onSelect }: { active: string; onSelect: (slug: stri
                 )}
               </span>
             </span>
-            {!on && <ChevronRight className="h-5 w-5 shrink-0 text-neutral-500" aria-hidden="true" />}
           </>
         )
         return (
