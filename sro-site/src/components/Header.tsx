@@ -179,6 +179,10 @@ function NavThumb({ thumb, load = true }: { thumb: NonNullable<NavLink['thumb']>
 export function Header() {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
+  // Миниатюры видов в меню телефона грузятся заранее, когда браузер
+  // свободен: иначе при первом открытии они проступали бы уже в открытом
+  // меню, по одной.
+  const [thumbs, setThumbs] = useState(false)
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8)
@@ -186,6 +190,29 @@ export function Header() {
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
+
+  useEffect(() => {
+    if (!matchMedia('(max-width: 1023px)').matches) return
+    const start = () => window.setTimeout(() => setThumbs(true), 1500)
+    if (document.readyState === 'complete') start()
+    else addEventListener('load', start, { once: true })
+    return () => removeEventListener('load', start)
+  }, [])
+
+  // Меню закрывается Escape и само — если окно стало шире телефона.
+  useEffect(() => {
+    if (!open) return
+    setThumbs(true)
+    const onKey = (event: KeyboardEvent) => event.key === 'Escape' && setOpen(false)
+    const wide = matchMedia('(min-width: 1024px)')
+    const onWide = () => wide.matches && setOpen(false)
+    addEventListener('keydown', onKey)
+    wide.addEventListener('change', onWide)
+    return () => {
+      removeEventListener('keydown', onKey)
+      wide.removeEventListener('change', onWide)
+    }
+  }, [open])
 
   return (
     <header
@@ -259,18 +286,45 @@ export function Header() {
           <button
             type="button"
             onClick={() => setOpen((value) => !value)}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-neutral-300 text-neutral-950 transition hover:border-neutral-950"
+            className="relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-neutral-300 text-neutral-950 transition [-webkit-tap-highlight-color:transparent] hover:border-neutral-950"
             aria-expanded={open}
-            aria-controls={open ? 'mobile-menu' : undefined}
+            aria-controls="mobile-menu"
             aria-label={open ? 'Закрыть меню' : 'Открыть меню'}
           >
-            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {/* Значки сменяют друг друга поворотом, а не подменой. */}
+            <Menu
+              className={`absolute h-5 w-5 transition-[opacity,transform] duration-300 ease-silk ${open ? 'rotate-90 opacity-0' : 'opacity-100'}`}
+              aria-hidden="true"
+            />
+            <X
+              className={`absolute h-5 w-5 transition-[opacity,transform] duration-300 ease-silk ${open ? 'opacity-100' : '-rotate-90 opacity-0'}`}
+              aria-hidden="true"
+            />
           </button>
         </div>
       </div>
 
-      {open && (
-        <div id="mobile-menu" className="max-h-[calc(100dvh-4rem)] overflow-y-auto border-t border-neutral-200 bg-neutral-50 lg:hidden">
+      {/* Меню телефона (01.10.2026, заказчик: «дёргается при открытии»).
+          Раньше меню стояло в потоке внутри липкой шапки и появлялось
+          мгновенно: шапка вырастала на высоту меню и сталкивала всю
+          страницу вниз, а при закрытии страница прыгала обратно. Теперь
+          меню — лист поверх страницы под шапкой: выезжает и гаснет за
+          0,35 с, страница под ним стоит на месте и притемняется; касание
+          по тени закрывает меню. Закрытое меню скрыто visibility —
+          до его ссылок не дойти ни табом, ни экранным диктором. */}
+      <div
+        className={`absolute inset-x-0 top-full h-[100dvh] bg-neutral-950/30 transition-[opacity,visibility] duration-300 ease-silk [touch-action:none] lg:hidden ${
+          open ? 'visible opacity-100' : 'invisible opacity-0'
+        }`}
+        onClick={() => setOpen(false)}
+        aria-hidden="true"
+      />
+      <div
+        id="mobile-menu"
+        className={`absolute inset-x-0 top-full max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain border-t border-neutral-200 bg-neutral-50 shadow-[0_18px_40px_-20px_rgba(20,17,15,0.45)] transition-[opacity,transform,visibility] duration-[350ms] ease-silk lg:hidden ${
+          open ? 'visible translate-y-0 opacity-100' : 'invisible -translate-y-3 opacity-0'
+        }`}
+      >
           <nav className="mx-auto flex w-full max-w-6xl min-[1800px]:max-w-7xl flex-col px-4 py-3 sm:px-6" aria-label="Мобильная навигация">
             {/* Группы в мобильном меню не сворачиваются: два лишних тапа ради
                 трёх строк — плохой размен. Заголовок группы набран как
@@ -289,7 +343,7 @@ export function Header() {
                       onClick={() => setOpen(false)}
                       className="flex items-center gap-3 rounded-xl px-2 py-2.5 transition hover:bg-neutral-100"
                     >
-                      {link.thumb && <NavThumb thumb={link.thumb} />}
+                      {link.thumb && <NavThumb thumb={link.thumb} load={thumbs} />}
                       <span className="min-w-0">
                         <span className="block text-base font-medium text-neutral-800">{link.label}</span>
                         {link.hint && <span className="block text-sm text-neutral-600">{link.hint}</span>}
@@ -312,8 +366,7 @@ export function Header() {
               Связаться
             </ButtonLink>
           </nav>
-        </div>
-      )}
+      </div>
     </header>
   )
 }

@@ -537,6 +537,38 @@ for (const motion of ['no-preference', 'reduce']) {
   await ctx.close()
 }
 
+// Меню телефона и группы подвала — плавно, без рывка (01.10.2026, заказчик:
+// «чтобы всё плавно открывалось и закрывалось»). Меню — лист поверх
+// страницы: страница под ним не сдвигается (раньше меню стояло в потоке
+// липкой шапки и сталкивало её вниз), закрытое — недоступно, касание
+// по тени закрывает. Группа подвала раскрывается по высоте, а не скачком.
+{
+  const ctx = await b.newContext({ viewport: { width: 390, height: 780 }, isMobile: true, hasTouch: true })
+  const p = await ctx.newPage()
+  await p.goto(BASE + 'sro-izyskateley/', { waitUntil: 'networkidle' })
+  const h1 = () => p.evaluate(() => Math.round(document.querySelector('h1').getBoundingClientRect().top))
+  const closedLinks = await p.locator('#mobile-menu a:visible').count()
+  check('телефон: закрытое меню недоступно', closedLinks === 0, String(closedLinks))
+  const y0 = await h1()
+  await p.locator('header button[aria-label="Открыть меню"]').tap()
+  const mid = await p.evaluate(() => Number(getComputedStyle(document.getElementById('mobile-menu')).opacity))
+  await p.waitForTimeout(600)
+  const y1 = await h1()
+  check('телефон: меню проступает плавно, страница под ним не сдвигается', mid < 1 && y0 === y1, `прозрачность в начале ${mid}, заголовок ${y0} → ${y1}`)
+  await p.mouse.click(195, 770)
+  await p.waitForTimeout(600)
+  check('телефон: касание мимо меню закрывает его', !(await p.locator('#mobile-menu').isVisible()))
+  await p.evaluate(() => document.querySelector('footer').scrollIntoView({ behavior: 'instant' }))
+  const group = p.locator('footer button[aria-expanded]').first()
+  await group.tap()
+  await p.waitForTimeout(150)
+  const half = await p.evaluate((id) => document.getElementById(id).parentElement.getBoundingClientRect().height, await group.getAttribute('aria-controls'))
+  await p.waitForTimeout(800)
+  const full = await p.evaluate((id) => document.getElementById(id).parentElement.getBoundingClientRect().height, await group.getAttribute('aria-controls'))
+  check('телефон: группа подвала раскрывается плавно', half > 0 && half < full - 1 && full > 40, `${Math.round(half)} → ${Math.round(full)}`)
+  await ctx.close()
+}
+
 // Почта в «Связаться» (01.10.2026, вечер): нажатие на адрес открывает
 // почту (mailto), рядом значок копирования — слова «Скопировать» на экране
 // нет, после нажатия на значок адрес лежит в буфере и видна бирка

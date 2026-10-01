@@ -56,20 +56,31 @@ function Group({ id, title, items, columns = false }: { id: string; title: strin
         </button>
         <span className="hidden sm:block">{title}</span>
       </h2>
-      <ul
-        id={listId}
-        className={`${open ? 'block' : 'hidden'} space-y-3 pb-6 text-[0.9375rem] text-neutral-200 sm:mt-5 sm:block sm:pb-0 sm:text-sm ${
-          columns ? 'lg:grid lg:grid-flow-col lg:grid-rows-4 lg:gap-x-8 lg:gap-y-3 lg:space-y-0' : ''
+      {/* На телефоне группа раскрывается плавно, по высоте (grid 0fr → 1fr),
+          а не появляется скачком — 01.10.2026, «чтобы всё плавно
+          открывалось и закрывалось». С 640 px открыта всегда. */}
+      <div
+        className={`grid transition-[grid-template-rows,opacity,visibility] duration-500 ease-silk sm:block ${
+          open ? 'visible grid-rows-[1fr] opacity-100' : 'invisible grid-rows-[0fr] opacity-0 sm:visible sm:opacity-100'
         }`}
       >
-        {items.map((item) => (
-          <li key={item.href}>
-            <a href={navHref(item)} className="transition-colors duration-500 hover:text-accent-200">
-              {item.label}
-            </a>
-          </li>
-        ))}
-      </ul>
+        <div className="overflow-hidden sm:overflow-visible">
+          <ul
+            id={listId}
+            className={`space-y-3 pb-6 text-[0.9375rem] text-neutral-200 sm:mt-5 sm:pb-0 sm:text-sm ${
+              columns ? 'lg:grid lg:grid-flow-col lg:grid-rows-4 lg:gap-x-8 lg:gap-y-3 lg:space-y-0' : ''
+            }`}
+          >
+            {items.map((item) => (
+              <li key={item.href}>
+                <a href={navHref(item)} className="transition-colors duration-500 hover:text-accent-200">
+                  {item.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
     </div>
   )
 }
