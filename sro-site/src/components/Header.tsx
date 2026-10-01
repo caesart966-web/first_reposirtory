@@ -2,6 +2,7 @@ import { ArrowRight, ChevronDown, Menu, Phone, X } from 'lucide-react'
 import { useEffect, useRef, useState, type FocusEvent } from 'react'
 import { CONFIGURED, CONTACTS, LINKS } from '../content/contacts'
 import { HEADER_NAV, MENU, isGroup, navHref, type NavGroup, type NavLink } from '../content/nav'
+import { fadeIn } from '../lib/fade'
 import { asset, home } from '../lib/site'
 import { ScalesMark } from './illustrations'
 import { ButtonLink } from './ui/Button'
@@ -168,6 +169,7 @@ function NavThumb({ thumb, load = true }: { thumb: NonNullable<NavLink['thumb']>
             width={160}
             height={160}
             decoding="async"
+            ref={fadeIn}
             className="h-full w-full object-cover"
           />
         </picture>

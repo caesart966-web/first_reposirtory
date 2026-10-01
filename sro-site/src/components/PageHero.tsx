@@ -1,5 +1,6 @@
 import { ArrowLeft } from 'lucide-react'
 import type { PageImage } from '../content/images'
+import { fadeIn } from '../lib/fade'
 import { asset } from '../lib/site'
 import { nbsp } from '../lib/typo'
 import { ButtonLink } from './ui/Button'
@@ -56,6 +57,7 @@ export function PageHero({
               height={image.height}
               loading="eager"
               decoding="async"
+              ref={fadeIn}
               className="scroll-drift h-full w-full object-cover"
               style={{ objectPosition: image.position }}
             />

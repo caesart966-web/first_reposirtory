@@ -169,7 +169,7 @@ for (const path of PAGES) {
 // Первый экран главной: три вида СРО списком, кадр справа.
 //
 // Главное, что здесь стережётся, — что видно БЕЗ прокрутки: заголовок,
-// обе кнопки и все три вида. До 26.09.2026 тут стоял слайдер, и в каждый
+// кнопка «Связаться» и все три вида. До 26.09.2026 тут стоял слайдер, и в каждый
 // момент на экране была треть предложения. Высоты телефона взяты не по
 // размеру экрана, а по видимой части окна браузера: адресная строка
 // и панель вкладок съедают 60–180 px, и 390 × 844 на деле — 390 × 664…780.
@@ -333,7 +333,8 @@ for (const [width, height, need] of [[390, 780, 'all'], [360, 740, 'all'], [390,
   await p.goto(BASE, { waitUntil: 'networkidle' })
   await p.evaluate(() => document.fonts.ready)
   const g = await heroGeometry(p)
-  check(`телефон ${width} × ${height}: обе кнопки связи видны без прокрутки`, g.buttons === 2 && g.buttonsBottom <= height, `низ кнопок ${g.buttonsBottom}`)
+  // Кнопка одна (01.10.2026): «Позвонить» повторяла значок телефона в шапке.
+  check(`телефон ${width} × ${height}: «Связаться» видна без прокрутки, «Позвонить» не повторяет шапку`, g.buttons === 1 && g.buttonsBottom <= height, `кнопок ${g.buttons}, низ ${g.buttonsBottom}`)
   if (need === 'all') check(`телефон ${width} × ${height}: все три вида видны без прокрутки`, g.lastLink <= height, `низ списка ${g.lastLink}`)
   check(`телефон ${width}: строки видов не ниже 44px и в одну строку`, g.rows.every((h) => h >= 44 && h < 70), g.rows.join(','))
   await ctx.close()
@@ -566,6 +567,38 @@ for (const motion of ['no-preference', 'reduce']) {
   await p.waitForTimeout(800)
   const full = await p.evaluate((id) => document.getElementById(id).parentElement.getBoundingClientRect().height, await group.getAttribute('aria-controls'))
   check('телефон: группа подвала раскрывается плавно', half > 0 && half < full - 1 && full > 40, `${Math.round(half)} → ${Math.round(full)}`)
+  await ctx.close()
+}
+
+// Фотография, которая ещё грузится, проступает, а не возникает рывком
+// (lib/fade.ts); пришедшая быстро — сразу. Кадр шапки
+// страницы вида отдаётся с задержкой, как на медленной связи.
+{
+  const ctx = await b.newContext({ viewport: { width: 390, height: 780 }, isMobile: true, hasTouch: true })
+  const p = await ctx.newPage()
+  await p.route(/\/img\/.*slide-survey/, async (route) => { await new Promise((r) => setTimeout(r, 900)); await route.continue() })
+  await p.goto(BASE + 'sro-izyskateley/', { waitUntil: 'domcontentloaded' })
+  const img = p.locator('main img').first()
+  await p.waitForTimeout(300)
+  const before = await img.evaluate((el) => ({ wait: el.dataset.fade, o: getComputedStyle(el).opacity }))
+  await p.waitForLoadState('networkidle')
+  await p.waitForTimeout(900)
+  const after = await img.evaluate((el) => ({ fade: el.dataset.fade, o: getComputedStyle(el).opacity }))
+  check('кадр, который ещё грузится, проступает плавно', before.wait === 'wait' && before.o === '0' && after.fade === 'done' && after.o === '1', JSON.stringify({ before, after }))
+  await p.unroute(/\/img\//)
+  await p.reload({ waitUntil: 'networkidle' })
+  await p.waitForTimeout(900)
+  const again = await img.evaluate((el) => getComputedStyle(el).opacity)
+  check('повторный заход: кадр виден', again === '1', again)
+  // Обложка главной на телефоне: пока кадр грузится и проступает, под ним
+  // графит, а не бумага — иначе обложка на миг светлела бы (вспышка).
+  await p.goto(BASE, { waitUntil: 'domcontentloaded' })
+  const under = await p.evaluate(() => {
+    const box = document.querySelector('section[aria-labelledby="hero-title"] .lg\\:hidden picture')?.parentElement
+    const [r, g, bl] = (box ? getComputedStyle(box).backgroundColor : '').match(/\d+/g)?.map(Number) ?? [255, 255, 255]
+    return Math.round(0.2126 * r + 0.7152 * g + 0.0722 * bl)
+  })
+  check('обложка телефона: под кадром тёмный фон, без вспышки при загрузке', under < 60, String(under))
   await ctx.close()
 }
 

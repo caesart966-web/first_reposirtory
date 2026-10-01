@@ -1,8 +1,8 @@
-import { ArrowRight, DraftingCompass, HardHat, Mountain, Phone } from 'lucide-react'
+import { ArrowRight, DraftingCompass, HardHat, Mountain } from 'lucide-react'
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
-import { LINKS } from '../content/contacts'
 import { IMAGES } from '../content/images'
 import { SRO_DETAILS } from '../content/sroDetails'
+import { fadeIn } from '../lib/fade'
 import { asset, page } from '../lib/site'
 import { nbsp } from '../lib/typo'
 import { ButtonLink } from './ui/Button'
@@ -226,7 +226,9 @@ function CoverPhotos({ active }: { active: string }) {
     // isolate — порядок слоёв (z-[1], z-[2]) живёт внутри обложки: без него
     // при «уменьшить движение» (нет анимации .hero-print, нет и своего
     // контекста наложения) кадр ложился поверх затемнения и заголовка.
-    <div className="hero-print absolute inset-0 isolate lg:hidden" aria-hidden="true">
+    // Фон под кадрами тёмный: пока кадр грузится, белый заголовок стоит
+    // на графите, а не на бумаге (lib/fade.ts — кадр проступает поверх).
+    <div className="hero-print absolute inset-0 isolate bg-neutral-900 lg:hidden" aria-hidden="true">
       {TYPES.map((type) =>
         type.slug === 'construction' || all || active === type.slug ? (
           <picture
@@ -244,6 +246,7 @@ function CoverPhotos({ active }: { active: string }) {
             <img
               ref={(el) => {
                 imgs.current[type.slug] = el
+                fadeIn(el)
               }}
               src={asset(type.image.src)}
               alt=""
@@ -357,6 +360,7 @@ export function Hero() {
             height={image.height}
             loading="eager"
             decoding="async"
+            ref={fadeIn}
             className={`scroll-drift h-full w-full object-cover ${FRAME.construction}`}
           />
         </picture>
@@ -410,15 +414,14 @@ export function Hero() {
               {nbsp('Подберу подходящую СРО, подготовлю документы и сопровожу до внесения в реестр членов.')}
             </span>
           </p>
-          {/* На телефоне кнопки делят строку поровну: две кнопки разной
-              ширины у левого края выглядели случайно брошенными. */}
-          <div className="hero-rise mt-6 flex gap-3 sm:mt-9 sm:flex-wrap lg:mt-8" style={delay(480)}>
+          {/* Кнопка одна — «Связаться» (01.10.2026, заказчик: «лишние,
+              повторяющиеся элементы»). «Позвонить» повторяла значок телефона
+              в шапке, который виден на любой ширине, а «Связаться» ведёт
+              ко всем способам сразу: номер, мессенджеры, почта. На телефоне
+              кнопка во всю строку — под большой палец. */}
+          <div className="hero-rise mt-6 flex sm:mt-9 lg:mt-8" style={delay(480)}>
             <ButtonLink href="#contacts" size="lg" arrow className="flex-1 sm:flex-none">
               Связаться
-            </ButtonLink>
-            <ButtonLink href={LINKS.tel} variant="secondary" size="lg" className="flex-1 px-5 sm:flex-none sm:px-7">
-              <Phone className="h-4 w-4" aria-hidden="true" />
-              Позвонить
             </ButtonLink>
           </div>
         </div>
