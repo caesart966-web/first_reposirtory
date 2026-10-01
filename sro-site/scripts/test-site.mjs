@@ -362,9 +362,10 @@ for (const [width, height, need] of [[390, 780, 'all'], [360, 740, 'all'], [390,
   await ctx.close()
 }
 
-// Почта в «Связаться» копируется нажатием на сам адрес (01.10.2026): слова
-// «Скопировать» на экране нет, после нажатия адрес лежит в буфере
-// и видна бирка «Скопировано». На компьютере — щелчок, на телефоне — касание.
+// Почта в «Связаться» (01.10.2026, вечер): нажатие на адрес открывает
+// почту (mailto), рядом значок копирования — слова «Скопировать» на экране
+// нет, после нажатия на значок адрес лежит в буфере и видна бирка
+// «Скопировано». На компьютере — щелчок, на телефоне — касание.
 for (const [label, opts] of [
   ['компьютер', { viewport: { width: 1440, height: 900 } }],
   ['телефон', { viewport: { width: 390, height: 780 }, isMobile: true, hasTouch: true }],
@@ -372,17 +373,22 @@ for (const [label, opts] of [
   const ctx = await b.newContext({ ...opts, permissions: ['clipboard-read', 'clipboard-write'] })
   const p = await ctx.newPage()
   await p.goto(BASE, { waitUntil: 'networkidle' })
+  const link = p.locator('#contacts [data-email="link"]')
   const btn = p.locator('#contacts [data-copy="email"]')
-  await btn.scrollIntoViewIfNeeded()
+  await link.scrollIntoViewIfNeeded()
   await p.waitForTimeout(500)
   const before = await p.evaluate(() => /Скопировать/.test(document.getElementById('contacts').innerText))
   check(`${label}: в «Связаться» нет слова «Скопировать»`, !before)
-  const email = (await btn.innerText()).trim()
+  const email = (await link.innerText()).trim()
+  const href = await link.getAttribute('href')
+  check(`${label}: адрес почты открывает почту`, /@/.test(email) && href === `mailto:${email}`, `${href}`)
+  const box = await btn.boundingBox()
+  check(`${label}: значок копирования не меньше 44 px`, box && box.width >= 44 && box.height >= 44, box ? `${box.width}×${box.height}` : 'нет')
   if (opts.isMobile) await btn.tap()
   else await btn.click()
   await p.waitForTimeout(600)
   const clip = await p.evaluate(() => navigator.clipboard.readText())
-  check(`${label}: нажатие на адрес копирует почту`, /@/.test(email) && clip === email, `в буфере «${clip}», на экране «${email}»`)
+  check(`${label}: значок копирует почту`, clip === email, `в буфере «${clip}», на экране «${email}»`)
   const tag = await p.evaluate(() => {
     const el = [...document.querySelectorAll('#contacts span')].find((s) => s.textContent === 'Скопировано')
     return el ? Number(getComputedStyle(el).opacity) : -1
