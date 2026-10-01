@@ -55,6 +55,14 @@ import { RevealText } from './ui/Reveal'
 // сверху, подзаголовок «Для строительных, проектных…» снят (его повторяет
 // список видов прямо под кнопками), а строки плотнее: занятие и под ним
 // вид СРО мелко.
+// Расположение подписи одно на весь список (01.10.2026, снимок заказчика
+// с телефона): до 768 px вид СРО всегда под занятием, шире — всегда справа.
+// Раньше строка переносилась сама (flex-wrap), и где короткое
+// «Проектирование» влезало в строку с подписью, а длинные — нет, подпись
+// стояла то справа, то снизу: на 375, 412–480, 640 и 1024–1100 px.
+// Справа подпись не переносится (whitespace-nowrap), переносится само
+// занятие; с 1024 до 1279 px оно мельче (1,375rem) — колонка там узкая,
+// и «Строительство, капремонт, снос» иначе уходило на две строки.
 
 // Ступенька появления: задержка анимации .hero-rise.
 const delay = (ms: number) => ({ '--d': `${ms}ms` }) as CSSProperties
@@ -215,15 +223,15 @@ export function Hero() {
                   onMouseEnter={() => frame.show(type.slug)}
                   onFocus={() => frame.show(type.slug)}
                   onBlur={() => frame.show(null)}
-                  className="group flex min-h-14 flex-wrap items-baseline justify-between gap-x-6 py-1.5 focus-visible:outline-none sm:py-4"
+                  className="group flex min-h-14 flex-col justify-center gap-0.5 py-1.5 focus-visible:outline-none sm:py-4 md:flex-row md:items-baseline md:justify-between md:gap-6"
                 >
                   <span
                     data-hero-text
-                    className="font-display text-[1.1rem] font-medium leading-tight min-[380px]:text-[1.25rem] sm:text-[1.75rem]"
+                    className="min-w-0 font-display text-[1.1rem] font-medium leading-tight min-[380px]:text-[1.25rem] sm:text-[1.75rem] lg:text-[1.375rem] xl:text-[1.75rem]"
                   >
                     {type.activity}
                   </span>
-                  <GoTo tone="muted" className="text-[0.8125rem] leading-snug sm:text-[0.9375rem] sm:leading-normal">
+                  <GoTo tone="muted" className="shrink-0 whitespace-nowrap text-[0.8125rem] leading-snug sm:text-[0.9375rem] sm:leading-normal">
                     <span data-hero-text>{type.title}</span>
                   </GoTo>
                 </a>

@@ -362,6 +362,36 @@ for (const [width, height, need] of [[390, 780, 'all'], [360, 740, 'all'], [390,
   await ctx.close()
 }
 
+// Список видов на первом экране (01.10.2026, снимок заказчика с телефона):
+// подпись вида СРО у всех трёх строк стоит одинаково — до 768 px под
+// занятием, шире справа, — и занятие справа от подписи не уходит на две
+// строки. Раньше строки переносились сами, и на 375, 412–480, 640
+// и 1024–1100 px подпись стояла то справа, то снизу.
+{
+  const ctx = await b.newContext()
+  const p = await ctx.newPage()
+  for (const w of [320, 375, 412, 480, 640, 767, 768, 1024, 1100, 1280, 1440]) {
+    await p.setViewportSize({ width: w, height: 900 })
+    await p.goto(BASE, { waitUntil: 'networkidle' })
+    await p.evaluate(() => document.fonts.ready)
+    const rows = await p.evaluate(() =>
+      [...document.querySelectorAll('ul[aria-labelledby="hero-types"] a')].map((a) => {
+        const [t, h] = [a.children[0].getBoundingClientRect(), a.children[1].getBoundingClientRect()]
+        const lines = Math.round(t.height / parseFloat(getComputedStyle(a.children[0]).lineHeight))
+        return { below: h.top >= t.bottom - 2, lines }
+      }),
+    )
+    const want = w < 768
+    check(
+      `первый экран ${w}: подпись вида СРО у всех строк ${want ? 'под занятием' : 'справа'}`,
+      rows.length === 3 && rows.every((r) => r.below === want),
+      rows.map((r) => (r.below ? 'под' : 'справа')).join(' / '),
+    )
+    if (!want) check(`первый экран ${w}: занятие в одну строку`, rows.every((r) => r.lines === 1), rows.map((r) => r.lines).join(' / '))
+  }
+  await ctx.close()
+}
+
 // Почта в «Связаться» (01.10.2026, вечер): нажатие на адрес открывает
 // почту (mailto), рядом значок копирования — слова «Скопировать» на экране
 // нет, после нажатия на значок адрес лежит в буфере и видна бирка
