@@ -82,10 +82,14 @@ export function Pricing() {
                   {plan.priceNote}
                 </p>
               </div>
+              {/* У платных форматов на телефоне списка нет (01.10.2026): что
+                  входит, говорит само название, а три списка подряд тянули
+                  раздел почти на два экрана. У консультации список остаётся —
+                  он объясняет, что дают бесплатно. */}
               <ul
                 className={`mt-8 space-y-3 border-t pt-6 text-sm ${
                   plan.featured ? 'border-white/15 text-neutral-200' : 'border-neutral-300 text-neutral-700'
-                }`}
+                } ${plan.free ? '' : 'hidden sm:block'}`}
               >
                 {plan.items.map((item) => (
                   <li key={item} className="flex gap-3">

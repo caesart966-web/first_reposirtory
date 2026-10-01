@@ -7,7 +7,6 @@ import { Header } from './components/Header'
 import { Hero } from './components/Hero'
 import { MobileBar } from './components/MobileBar'
 import { Pricing } from './components/Pricing'
-import { Problems } from './components/Problems'
 import { Process } from './components/Process'
 import { Regions } from './components/Regions'
 import { Services } from './components/Services'
@@ -26,12 +25,15 @@ export default function App() {
         {/* Порядок с 24.09.2026. Первый экран (с 26.09.2026 — «лист и окно»)
             сам показывает три вида СРО списком, поэтому сетки карточек видов
             под ним нет. Дальше —
-            от «с чем приходят» к «как работаю» и «сколько стоит». Квиза
+            от услуг к «как работаю» и «сколько стоит». Квиза
             больше нет: сайт рекламный, заявки — звонком и в мессенджерах,
             и страница заканчивается разделом «Связаться». */}
         <Hero />
         <Trust />
-        <Problems />
+        {/* «С чем обращаются» (три типовые ситуации) снят 01.10.2026:
+            документы и специалисты НРС — те же темы, что карточки услуг,
+            разделы «Документы» и «Специалисты НРС» ниже и вопрос в FAQ.
+            Главная говорила о них по три-четыре раза. */}
         <Services />
         {/* Тёмный раздел с Фемидой — середина страницы, пауза между
             светлыми блоками. */}

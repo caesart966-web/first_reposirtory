@@ -176,19 +176,27 @@ function Blocks({ block }: { block: ServiceBlock }) {
         <ol className={`mt-10 grid border-t border-neutral-300 sm:grid-cols-2 sm:gap-x-10 ${wide}`}>
           {block.items.map((item, index) => (
             <li key={item.title} className="border-b border-neutral-300 py-6">
-              <Reveal delay={(index % 3) * 60}>
-                {/* Номер — только у этапов; у простого перечня вместо него
-                    короткая латунная черта: пункт отмечен, но не пронумерован. */}
+              {/* Номер — только у этапов; у простого перечня вместо него
+                  короткая латунная черта: пункт отмечен, но не пронумерован.
+                  На телефоне номер слева от текста, как в шагах вступления
+                  (StepsGrid): отдельной строкой над заголовком он добавлял
+                  к каждому этапу по строке. */}
+              <Reveal
+                delay={(index % 3) * 60}
+                className={block.ordered ? 'grid grid-cols-[3rem_minmax(0,1fr)] sm:block' : ''}
+              >
                 {block.ordered ? (
-                  <span className="mb-4 block font-display text-[2rem] font-medium leading-none tabular-nums text-accent-500">
+                  <span className="block font-display text-[1.75rem] font-medium leading-none tabular-nums text-accent-500 sm:mb-4 sm:text-[2rem]">
                     {String(index + 1).padStart(2, '0')}
                   </span>
                 ) : (
                   <span className="mb-5 block h-0.5 w-8 bg-accent-400" aria-hidden="true" />
                 )}
-                <h3 className="text-[17px] font-semibold leading-snug text-neutral-950">{nbsp(item.title)}</h3>
-                <p className="mt-1.5 text-[15px] leading-relaxed text-neutral-600">{nbsp(item.text)}</p>
-                {item.law && <Law>{item.law}</Law>}
+                <div>
+                  <h3 className="text-[17px] font-semibold leading-snug text-neutral-950">{nbsp(item.title)}</h3>
+                  <p className="mt-1.5 text-[15px] leading-relaxed text-neutral-600">{nbsp(item.text)}</p>
+                  {item.law && <Law>{item.law}</Law>}
+                </div>
               </Reveal>
             </li>
           ))}
@@ -251,15 +259,15 @@ function Blocks({ block }: { block: ServiceBlock }) {
 
 // Якорь раздела: «razdel-2». По нему ведёт строка «На этой странице»
 // в шапке. Оговорки (note) в оглавление не идут — это вставки, а не разделы.
+// «Что делаю я» (actions) и «Сколько стоит» — тоже нет (01.10.2026): они
+// есть на каждой странице и в оглавлении ничего не сообщали, а на телефоне
+// удлиняли его.
 const blockId = (index: number) => `razdel-${index + 1}`
 
 export function ServicePage({ service }: { service: ServicePageData }) {
-  const toc = [
-    ...service.blocks.flatMap((block, index) =>
-      block.kind === 'note' ? [] : [{ id: blockId(index), title: block.title }],
-    ),
-    { id: 'stoimost', title: 'Сколько стоит' },
-  ]
+  const toc = service.blocks.flatMap((block, index) =>
+    block.kind === 'note' || block.kind === 'actions' ? [] : [{ id: blockId(index), title: block.title }],
+  )
   return (
     <div id="top">
       <Header />

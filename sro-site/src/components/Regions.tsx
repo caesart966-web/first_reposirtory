@@ -165,39 +165,45 @@ export function Regions() {
       </Reveal>
 
       <Reveal delay={80} className="mt-8">
-        {/* Три колонки на компьютере, две на планшете. На телефоне — в поток,
-            как слова в строке: в один столбик пятнадцать строк тянулись
-            на полтора экрана, а в колонки длинные названия («Свердловская
-            область, Екатеринбург») рвались на обрезки. */}
-        <ul className="mx-auto flex max-w-4xl flex-wrap gap-x-1 gap-y-0 sm:grid sm:grid-cols-2 sm:gap-1 lg:grid-cols-3">
+        {/* Строка — субъект, справа серым — город, если заказчик его назвал
+            (content/regions.ts). На линейках, как перечни на всём сайте:
+            на телефоне — столбцом, с 640 px — в две колонки, с 1024 — в три.
+            До 01.10.2026 названия шли в поток, как слова в строке, — так
+            помещалось больше, но вразнобой записанный список читался
+            сплошной кашей. */}
+        <ul className="grid border-t border-neutral-300 sm:grid-cols-2 sm:gap-x-10 lg:grid-cols-3">
           {REGIONS.map((region) => {
             const on = active === region.point
             return (
-              <li key={region.name}>
+              <li key={region.name} className="border-b border-neutral-300">
                 {/* Строка не кликается — это перечень, а не меню. Отклик
                     всё равно нужен: он связывает строку с регионом на карте. */}
                 <div
                   onMouseEnter={() => setActive(region.point)}
                   onMouseLeave={() => setActive(null)}
-                  className={`flex items-center gap-2 rounded-xl px-2 py-1.5 text-sm transition-colors duration-150 sm:gap-2.5 sm:px-3 sm:py-2 ${
-                    on ? 'bg-accent-50 text-accent-800' : 'text-neutral-700'
+                  className={`flex items-baseline gap-2.5 py-3 text-[15px] transition-colors duration-150 ${
+                    on ? 'text-accent-800' : 'text-neutral-900'
                   }`}
                 >
-                  {/* Кружок цвета региона на карте: булавка в каждой
-                      из пятнадцати строк рябила сильнее самой карты. */}
+                  {/* Кружок цвета региона на карте — та же латунь. */}
                   <span
-                    className={`h-2 w-2 shrink-0 rounded-full transition-colors duration-150 ${
+                    className={`h-2 w-2 shrink-0 -translate-y-px rounded-full transition-colors duration-150 ${
                       on ? 'bg-accent-800' : 'bg-accent-500'
                     }`}
                     aria-hidden="true"
                   />
-                  <span className="min-w-0">{region.name}</span>
+                  <span className="min-w-0 flex-1">{region.name}</span>
+                  {region.city && (
+                    <span className="shrink-0 text-sm text-neutral-600">{region.city}</span>
+                  )}
                 </div>
               </li>
             )
           })}
         </ul>
-        <p className="mx-auto mt-6 max-w-2xl px-3 text-center text-sm text-neutral-600">
+        {/* По левому краю, как весь текст сайта: по центру под списком
+            на линейках приписка выглядела отдельной плашкой. */}
+        <p className="mt-6 max-w-2xl text-sm leading-relaxed text-neutral-600">
           Вашего региона нет в списке?{' '}
           <a
             href="#contacts"

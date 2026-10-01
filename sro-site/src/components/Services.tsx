@@ -38,19 +38,32 @@ const serviceOf = (slug: string) => {
 // консультация: для того, кто не знает, какая из семи услуг его.
 // Подсказка стоит сразу под названием, стрелка — внизу: раньше подсказку
 // прижимало к низу рядом со стрелкой, и между ней и названием зияла пустота.
+//
+// На телефоне (до 640 px) с 01.10.2026 не карточки, а строки на линейках,
+// как «Услуги по теме» внизу внутренних страниц: восемь карточек шли
+// два экрана. Тёмная «Бесплатная консультация» остаётся карточкой — это
+// приглашение, а не ещё одна услуга. Затемнение при наведении — только
+// с 640 px: на телефоне наведение «залипает» после касания, и строка
+// без фона получила бы белый текст на светлом листе.
 const CARD =
-  'group relative flex h-full flex-col rounded-3xl p-6 transition-colors duration-700 ease-silk focus-visible:outline-none sm:min-h-[13rem] sm:p-7 lg:min-h-[14.5rem]'
+  'group relative flex flex-col border-b border-neutral-300 py-5 pr-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 sm:h-full sm:min-h-[13rem] sm:rounded-3xl sm:border-0 sm:bg-neutral-50 sm:p-7 sm:transition-colors sm:duration-700 sm:ease-silk sm:hover:bg-neutral-950 sm:focus-visible:bg-neutral-950 sm:focus-visible:ring-0 lg:min-h-[14.5rem]'
+const CARD_DARK =
+  'group relative mt-4 flex h-full flex-col rounded-3xl bg-accent-950 p-6 pr-14 transition-colors duration-700 ease-silk hover:bg-neutral-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 sm:mt-0 sm:min-h-[13rem] sm:p-7 lg:min-h-[14.5rem]'
 
-// Стрелка: на компьютере — внизу справа под текстом; на телефоне — в углу
-// рядом с подсказкой, чтобы карточка не росла на лишнюю строку. С 01.10.2026
-// без кружка (правило кружков — ui/GoTo.tsx): карточка и так нажимается
-// целиком и темнеет при наведении, а стрелка за ней светлеет.
+// Стрелка: на компьютере — внизу справа под текстом; на телефоне — справа
+// от строки, по центру. С 01.10.2026 без кружка (правило кружков —
+// ui/GoTo.tsx): карточка и так нажимается целиком и темнеет при наведении,
+// а стрелка за ней светлеет.
 function Arrow({ dark = false }: { dark?: boolean }) {
   return (
-    <span className="absolute bottom-6 right-6 sm:static sm:mt-auto sm:flex sm:justify-end sm:pt-6">
+    <span
+      className={`absolute top-1/2 -translate-y-1/2 sm:static sm:mt-auto sm:flex sm:translate-y-0 sm:justify-end sm:pt-6 ${
+        dark ? 'right-6' : 'right-0'
+      }`}
+    >
       <GoTo
         tone={dark ? 'light' : 'ink'}
-        className={dark ? '' : 'group-hover:text-neutral-50 group-focus-visible:text-neutral-50'}
+        className={dark ? '' : 'sm:group-hover:text-neutral-50 sm:group-focus-visible:text-neutral-50'}
       />
     </span>
   )
@@ -64,7 +77,7 @@ export function Services() {
         subtitle="Можно поручить одну задачу или всё вступление целиком."
       />
 
-      <div className="mt-16 space-y-14">
+      <div className="mt-12 space-y-10 sm:mt-16 sm:space-y-14">
         {GROUPS.map((group, groupIndex) => (
           <div key={group.title}>
             <Reveal>
@@ -74,19 +87,16 @@ export function Services() {
                 до графита, стрелка поворачивается — приём из ролика заказчика.
                 Описание видно всегда: спрятанное до наведения, оно оставляло
                 пустые карточки, а на телефоне не читалось бы вовсе. */}
-            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-3 grid border-t border-neutral-300 sm:mt-5 sm:grid-cols-2 sm:gap-3 sm:border-t-0 lg:grid-cols-4">
               {group.slugs.map(serviceOf).map((service, index) => (
                 <Reveal key={service.slug} delay={(index % 4) * 90} className="h-full">
-                  <a
-                    href={page(service.path)}
-                    className={`${CARD} bg-neutral-50 hover:bg-neutral-950 focus-visible:bg-neutral-950`}
-                  >
+                  <a href={page(service.path)} className={CARD}>
                     {/* На 1024–1279px кегль на ступень меньше: колонка там уже
                         всего, и «Сопровождение» не помещалось в строку. */}
-                    <h4 className="font-display text-[1.6rem] font-medium leading-[1.1] text-neutral-950 transition-colors duration-700 ease-silk group-hover:text-neutral-50 group-focus-visible:text-neutral-50 lg:text-[1.45rem] xl:text-[1.6rem]">
+                    <h4 className="font-display text-[1.4rem] font-medium leading-[1.1] text-neutral-950 sm:text-[1.6rem] sm:transition-colors sm:duration-700 sm:ease-silk sm:group-hover:text-neutral-50 sm:group-focus-visible:text-neutral-50 lg:text-[1.45rem] xl:text-[1.6rem]">
                       {nbsp(service.short)}
                     </h4>
-                    <p className="mt-3 pr-10 text-sm leading-relaxed text-neutral-600 transition-colors sm:pr-0 duration-700 group-hover:text-neutral-300 group-focus-visible:text-neutral-300">
+                    <p className="mt-1.5 text-sm leading-relaxed text-neutral-600 sm:mt-3 sm:transition-colors sm:duration-700 sm:group-hover:text-neutral-300 sm:group-focus-visible:text-neutral-300">
                       {nbsp(service.hint)}
                     </p>
                     <Arrow />
@@ -95,14 +105,11 @@ export function Services() {
               ))}
               {groupIndex === GROUPS.length - 1 && (
                 <Reveal delay={group.slugs.length * 90} className="h-full">
-                  <a
-                    href="#contacts"
-                    className={`${CARD} bg-accent-950 hover:bg-neutral-950 focus-visible:ring-2 focus-visible:ring-accent-400`}
-                  >
-                    <h4 className="font-display text-[1.6rem] font-medium leading-[1.1] text-neutral-50 lg:text-[1.45rem] xl:text-[1.6rem]">
+                  <a href="#contacts" className={CARD_DARK}>
+                    <h4 className="font-display text-[1.4rem] font-medium leading-[1.1] text-neutral-50 sm:text-[1.6rem] lg:text-[1.45rem] xl:text-[1.6rem]">
                       Бесплатная консультация
                     </h4>
-                    <p className="mt-3 pr-10 text-sm leading-relaxed text-neutral-300 sm:pr-0">
+                    <p className="mt-1.5 text-sm leading-relaxed text-neutral-300 sm:mt-3">
                       {nbsp('Разберу вашу ситуацию и скажу, с какой услуги начать.')}
                     </p>
                     <Arrow dark />

@@ -59,7 +59,10 @@ export function AboutExpert() {
         <div className="lg:max-w-[56%]">
           <SectionHeading dark title="О компании" />
           <Reveal delay={120}>
-            <p className="mt-8 font-display text-[1.45rem] font-medium leading-snug text-neutral-50 sm:text-[1.75rem]">
+            {/* На телефоне — обычным шрифтом (01.10.2026): антиквой в 1,45rem
+                абзац шёл семью строками и спорил с заголовком раздела.
+                С 640 px — крупно антиквой, как было: там он в три строки. */}
+            <p className="mt-8 text-lg leading-relaxed text-neutral-50 sm:font-display sm:text-[1.75rem] sm:font-medium sm:leading-snug">
               {FACTS_READY ? (
                 <>
                   {REQUISITES.legalName} занимается вступлением в СРО {FACTS.yearsOfPractice} лет;

@@ -21,6 +21,11 @@ import { Reveal, RevealText } from './ui/Reveal'
 // не пролистывая всю страницу. Текст пилюль помечен data-hero-text: на
 // страницах видов они лежат поверх кадра, и их контраст меряет
 // scripts/test-hero-contrast.mjs.
+// На телефоне (до 640 px) с 01.10.2026 пилюли идут одним рядом и листаются
+// вбок: в три ряда они занимали 210 px, и первый экран кончался шапкой,
+// не дойдя до содержания. Ряд выходит к краям экрана — срезанная крайняя
+// пилюля сама показывает, что дальше есть ещё. «Что делаю я» и «Сколько
+// стоит» в оглавление не входят: эти разделы есть на каждой странице.
 export type TocItem = { id: string; title: string }
 
 export function PageHero({
@@ -97,16 +102,16 @@ export function PageHero({
         </div>
         {toc.length > 0 && (
           <Reveal delay={320}>
-            <nav aria-label="На этой странице" className="mt-14 border-t border-white/15 pt-6">
+            <nav aria-label="На этой странице" className="mt-10 border-t border-white/15 pt-6 sm:mt-14">
               <p className="text-sm text-neutral-300">
                 <span data-hero-text>На этой странице</span>
               </p>
-              <ul className="mt-4 flex flex-wrap gap-2">
+              <ul className="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden">
                 {toc.map((item) => (
-                  <li key={item.id}>
+                  <li key={item.id} className="shrink-0">
                     <a
                       href={`#${item.id}`}
-                      className="inline-flex min-h-11 items-center rounded-full border border-white/25 bg-accent-950/40 px-4 text-sm text-neutral-100 transition-colors duration-500 ease-silk hover:border-white/70 hover:text-neutral-50"
+                      className="inline-flex min-h-11 items-center whitespace-nowrap rounded-full border border-white/25 bg-accent-950/40 px-4 text-sm text-neutral-100 transition-colors duration-500 ease-silk hover:border-white/70 hover:text-neutral-50"
                     >
                       <span data-hero-text>{item.title}</span>
                     </a>

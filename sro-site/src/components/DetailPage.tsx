@@ -92,17 +92,12 @@ function KeyFacts({ detail }: { detail: SroDetail }) {
             </Reveal>
           ))}
         </dl>
-        <div className="flex flex-wrap items-center gap-2 border-t border-neutral-300 py-5">
-          <span className="mr-2 text-sm text-neutral-600">Виды работ</span>
-          {detail.scope.map((item) => (
-            <span
-              key={item}
-              className="rounded-full border border-neutral-300 bg-neutral-50 px-3.5 py-1.5 text-sm text-neutral-800"
-            >
-              {item}
-            </span>
-          ))}
-        </div>
+        {/* Виды работ — строкой через точку (01.10.2026). Пилюлями в рамке
+            они выглядели кнопками, как оглавление в шапке, но не нажимались. */}
+        <p className="border-t border-neutral-300 py-5 text-sm leading-relaxed text-neutral-800">
+          <span className="mr-3 text-neutral-600">Виды работ</span>
+          {detail.scope.join('\u00A0· ')}
+        </p>
       </div>
     </section>
   )
@@ -192,10 +187,16 @@ function Rules({ detail }: { detail: SroDetail }) {
       law: LAW.noAdmission,
     },
   ]
+  // На телефоне правила идут строками под таблицей, разделитель — линейка
+  // снизу: с линейкой сверху у первого правила под последней строкой
+  // таблицы вставали две линейки с пустой полосой между ними.
   return (
-    <ul className="mt-12 grid gap-8 md:grid-cols-3 md:gap-10">
+    <ul className="mt-10 grid md:mt-12 md:grid-cols-3 md:gap-10">
       {rules.map((rule) => (
-        <li key={rule.title} className="border-t border-neutral-300 pt-5">
+        <li
+          key={rule.title}
+          className="border-b border-neutral-200 py-5 first:pt-0 md:border-b-0 md:border-t md:border-neutral-300 md:py-0 md:pt-5 md:first:pt-5"
+        >
           <h3 className="text-base font-semibold leading-snug text-neutral-950">{nbsp(rule.title)}</h3>
           <p className="mt-2 text-sm leading-relaxed text-neutral-600">{nbsp(rule.text)}</p>
           <Law>{rule.law}</Law>
@@ -274,7 +275,6 @@ const DETAIL_TOC = [
   { id: 'poryadok', title: 'Порядок вступления' },
   { id: 'dokumenty', title: 'Документы' },
   { id: 'vznosy', title: 'Компенсационные фонды' },
-  { id: 'stoimost', title: 'Сколько стоит' },
 ]
 const DETAIL_RELATED = ['podbor', 'dokumenty', 'nrs']
 

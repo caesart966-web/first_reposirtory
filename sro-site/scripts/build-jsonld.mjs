@@ -46,7 +46,9 @@ const legalName = one(facts, /legalName: '([^']+)'/, 'legalName')
 const inn = one(facts, /inn: '([^']+)'/, 'inn')
 const address = one(facts, /address:\s*'([^']+)'/, 'address')
 // Список регионов — тот же, что в блоке «География работы» на странице.
-const regions = [...regionsSrc.matchAll(/name: '([^']+)', point:/g)].map((m) => m[1])
+// Строка списка — субъект; у части строк за ним идёт город (city), поэтому
+// ищется только начало записи.
+const regions = [...regionsSrc.matchAll(/\{ name: '([^']+)'/g)].map((m) => m[1])
 if (regions.length === 0) throw new Error('не нашёл список регионов')
 
 // «Ростовская область, г. Ростов-на-Дону, ул. Социалистическая, зд. 74, офис 406/19»
