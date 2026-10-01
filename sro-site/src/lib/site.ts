@@ -20,8 +20,14 @@ export function setSiteRoot(value: string) {
   root = value
 }
 
-/** Путь к файлу из public/: asset('./img/desk.webp'). */
-export const asset = (path: string) => root + path.replace(/^\.\//, '')
+/** Путь к файлу из public/: asset('./img/desk.webp'). К картинке дописывается
+ *  отпечаток содержимого (?v=…, vite.config.ts): после замены кадра браузер
+ *  берёт новый файл, а не сохранённую копию под тем же именем. */
+export const asset = (path: string) => {
+  const file = path.replace(/^\.\//, '')
+  const version = __ASSET_VERSIONS__[file]
+  return root + file + (version ? `?v=${version}` : '')
+}
 
 /** Ссылка на секцию главной: anchor('#services'). */
 export const anchor = (hash: string) => root + hash

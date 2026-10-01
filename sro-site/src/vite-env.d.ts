@@ -10,3 +10,6 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
+
+/** Отпечатки картинок из public/img: 'img/hero-day.webp' → 'a1b2c3d4' (vite.config.ts). */
+declare const __ASSET_VERSIONS__: Record<string, string>

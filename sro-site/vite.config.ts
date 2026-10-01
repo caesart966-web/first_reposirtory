@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto'
+import { readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
@@ -15,6 +17,22 @@ const renderBlockingEntry = {
   },
 }
 
+// Отпечатки картинок из public/img (01.10.2026). Картинки лежат под
+// постоянными именами, и браузер, однажды скачав hero-day.webp, показывал
+// сохранённую копию и после заливки новой: у заказчика на первом экране
+// стоял дневной кадр от 17.09 вместо нынешнего крана. asset() дописывает
+// к адресу ?v=<первые 8 знаков md5 содержимого> — поменялся файл, поменялся
+// и адрес, а неизменённые кадры остаются в кеше.
+const imgDir = resolve(__dirname, 'public/img')
+const assetVersions = Object.fromEntries(
+  readdirSync(imgDir)
+    .filter((name) => /\.(avif|webp|png|jpe?g|svg)$/i.test(name))
+    .map((name) => [
+      `img/${name}`,
+      createHash('md5').update(readFileSync(resolve(imgDir, name))).digest('hex').slice(0, 8),
+    ]),
+)
+
 // base: './' — собранный сайт работает из любого подкаталога (хостинг, GitHub Pages).
 //
 // Точек входа одиннадцать: главная, три страницы видов СРО и семь страниц услуг. Каждая — обычный
@@ -26,6 +44,7 @@ const renderBlockingEntry = {
 export default defineConfig({
   plugins: [react(), renderBlockingEntry],
   base: './',
+  define: { __ASSET_VERSIONS__: JSON.stringify(assetVersions) },
   build: {
     rollupOptions: {
       input: {
