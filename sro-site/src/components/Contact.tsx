@@ -2,6 +2,7 @@ import { Check, Copy, Mail, MapPin } from 'lucide-react'
 import { useRef, useState, type CSSProperties } from 'react'
 import { CONFIGURED, CONTACTS, LINKS } from '../content/contacts'
 import { REQUISITES } from '../content/facts'
+import { nbsp } from '../lib/typo'
 import { MESSENGERS } from './messengers'
 import { MessengerLink } from './MessengerLink'
 import { Reveal, RevealText } from './ui/Reveal'
@@ -37,7 +38,7 @@ export function Contact() {
               className="font-display text-[2.6rem] font-medium leading-[1.02] sm:text-5xl lg:text-[3.6rem]"
             />
             <Reveal delay={150}>
-              <p className="mt-6 max-w-md text-lg leading-relaxed text-neutral-300">{LEAD}</p>
+              <p className="mt-6 max-w-md text-lg leading-relaxed text-neutral-300">{nbsp(LEAD)}</p>
             </Reveal>
           </div>
 
@@ -58,7 +59,9 @@ export function Contact() {
             <div className="mt-10 border-t border-white/10 pt-8 text-sm text-neutral-300">
               <p className="flex items-start gap-3">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-accent-300" aria-hidden="true" />
-                <span>{REQUISITES.address}</span>
+                {/* «г.», «ул.», «зд.» и «офис» не отрываются от своего слова:
+                    на телефоне «ул.» оставалось в конце строки. */}
+                <span>{REQUISITES.address.replace(/(г\.|ул\.|зд\.|офис) /g, '$1\u00a0')}</span>
               </p>
             </div>
           </Reveal>

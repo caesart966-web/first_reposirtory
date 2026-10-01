@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { CONTACTS } from '../content/contacts'
 import { REQUISITES, isPlaceholder } from '../content/facts'
 import { MENU, SERVICES_GROUP, TYPES_GROUP, isGroup, navHref, type NavLink } from '../content/nav'
+import { nbsp } from '../lib/typo'
 import { ScalesMark } from './illustrations'
 
 // Подвал с 24.09.2026.
@@ -122,7 +123,7 @@ export function Footer() {
             </p>
           </div>
           <p className="mt-3 max-w-2xl">
-            Информация на сайте носит справочный характер и не является публичной офертой (п. 2 ст. 437 ГК РФ).
+            {nbsp('Информация на сайте носит справочный характер и не является публичной офертой (п. 2 ст. 437 ГК РФ).')}
           </p>
         </div>
       </div>

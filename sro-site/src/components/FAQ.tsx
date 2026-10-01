@@ -1,5 +1,6 @@
 import { Plus } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
+import { nbsp } from '../lib/typo'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
 
@@ -28,11 +29,9 @@ const ITEMS: { id: string; q: string; a: ReactNode }[] = [
     // непониманием. Варианты разобраны отдельной секцией, отсюда ссылка.
     a: (
       <>
-        Нет. Не менее двух специалистов, включённых в национальный реестр и работающих по
-        основному месту работы, — обязательное требование к члену СРО. Если таких сотрудников
-        пока нет, есть три законных варианта: проверить действующих сотрудников, включить
-        своего специалиста в реестр или принять в штат специалиста, уже состоящего в нём.
-        Подробнее в разделе{' '}
+        {nbsp(
+          'Нет. Не менее двух специалистов, включённых в национальный реестр и работающих по основному месту работы, — обязательное требование к члену СРО. Если таких сотрудников пока нет, есть три законных варианта: проверить действующих сотрудников, включить своего специалиста в реестр или принять в штат специалиста, уже состоящего в нём. Подробнее в разделе',
+        )}{' '}
         <a href="#nrs" className="font-medium text-accent-700 underline underline-offset-2">
           «Специалисты НРС»
         </a>
@@ -48,9 +47,9 @@ const ITEMS: { id: string; q: string; a: ReactNode }[] = [
     // из «Стоимости») и ведёт вперёд — к квизу, а не против течения страницы.
     a: (
       <>
-        Консультации бесплатны на любом этапе. Оплачивается только работа: подготовка
-        документов и сопровождение. Стоимость зависит от вида СРО и объёма работы и
-        согласовывается письменно до начала. Назову её после короткого разговора —{' '}
+        {nbsp(
+          'Консультации бесплатны на любом этапе. Оплачивается только работа: подготовка документов и сопровождение. Стоимость зависит от вида СРО и объёма работы и согласовывается письменно до начала. Назову её после короткого разговора —',
+        )}{' '}
         <a href="#contacts" className="font-medium text-accent-700 underline underline-offset-2">
           позвоните или напишите
         </a>
@@ -128,7 +127,7 @@ export function FAQ() {
                     className="group flex w-full items-center justify-between gap-6 py-6 text-left"
                   >
                     <span className="font-display text-[1.45rem] font-medium leading-snug text-neutral-950 transition-colors duration-500 group-hover:text-accent-700 sm:text-[1.6rem]">
-                      {item.q}
+                      {nbsp(item.q)}
                     </span>
                     <Plus
                       className={`h-5 w-5 shrink-0 text-neutral-950 transition-transform duration-700 ease-silk ${
@@ -148,7 +147,7 @@ export function FAQ() {
                   }`}
                 >
                   <div className="overflow-hidden">
-                    <p className="max-w-2xl pb-7 leading-relaxed text-neutral-600">{item.a}</p>
+                    <p className="max-w-2xl pb-7 leading-relaxed text-neutral-600">{typeof item.a === 'string' ? nbsp(item.a) : item.a}</p>
                   </div>
                 </div>
               </div>

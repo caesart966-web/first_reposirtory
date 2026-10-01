@@ -1,3 +1,4 @@
+import { nbsp } from '../lib/typo'
 import { ButtonLink } from './ui/Button'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
@@ -81,7 +82,7 @@ export function Pricing() {
                   <p className="text-[0.9375rem] font-medium">{plan.price}</p>
                 )}
                 <p className={`text-sm ${plan.free ? 'mt-3' : 'mt-1'} ${plan.featured ? 'text-neutral-300' : 'text-neutral-600'}`}>
-                  {plan.priceNote}
+                  {nbsp(plan.priceNote)}
                 </p>
               </div>
               {/* У платных форматов на телефоне списка нет (01.10.2026): что
