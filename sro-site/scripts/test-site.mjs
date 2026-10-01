@@ -225,10 +225,14 @@ const heroGeometry = (p) => p.evaluate(async (sel) => {
 }
 
 // Широкий экран, 01.10.2026: шире 1440 px макет растёт целиком — корневой
-// кегль 100vw / 90, предел 150 % (index.css). На 1920 колонка текста — те же
-// 80 % окна, что на 1440, а не 1152 px посреди пустого листа.
-for (const [W, rootPx] of [[1440, 16], [1920, 1920 / 90], [2560, 24]]) {
-  const ctx = await b.newContext({ viewport: { width: W, height: 1000 } })
+// кегль min(100vw / 90, 100vh / 45), не меньше 100 % (index.css). Колонка
+// текста — те же 80 % окна, что на 1440, и на мониторе 1920, и в браузере,
+// уменьшенном до 25 % (5760 × 3200 — это 1440 × 800 при 25 %). Предел —
+// высота окна: на мониторе 21:9 (3440 × 1300) кегль растёт по высоте,
+// по бокам остаётся поле.
+for (const [W, H] of [[1440, 900], [1920, 1000], [2560, 1300], [5760, 3200], [3440, 1300]]) {
+  const rootPx = Math.max(16, Math.min(W / 90, H / 45))
+  const ctx = await b.newContext({ viewport: { width: W, height: H } })
   const p = await ctx.newPage()
   await p.goto(BASE, { waitUntil: 'networkidle' })
   const r = await p.evaluate(() => ({
@@ -236,21 +240,23 @@ for (const [W, rootPx] of [[1440, 16], [1920, 1920 / 90], [2560, 24]]) {
     col: document.querySelector('header .max-w-6xl').getBoundingClientRect().width,
     hscroll: document.documentElement.scrollWidth - document.documentElement.clientWidth,
   }))
-  check(`широкий экран ${W}: корневой кегль ${rootPx.toFixed(1)} px`, Math.abs(r.root - rootPx) < 0.1, `${r.root} px`)
-  check(`широкий экран ${W}: колонка 72rem`, Math.abs(r.col - 72 * rootPx) < 2, `${Math.round(r.col)} px`)
-  check(`широкий экран ${W}: без горизонтальной прокрутки`, r.hscroll <= 1, `${r.hscroll}px`)
+  const tag = `широкий экран ${W}×${H}`
+  check(`${tag}: корневой кегль ${rootPx.toFixed(1)} px`, Math.abs(r.root - rootPx) < 0.1, `${r.root} px`)
+  check(`${tag}: колонка 72rem`, Math.abs(r.col - 72 * rootPx) < 2, `${Math.round(r.col)} px`)
+  if (W / H < 2) check(`${tag}: колонка — 80 % окна, как на 1440`, Math.abs(r.col / W - 0.8) < 0.01, `${Math.round((r.col / W) * 100)} %`)
+  check(`${tag}: без горизонтальной прокрутки`, r.hscroll <= 1, `${r.hscroll}px`)
   await ctx.close()
 }
 
-// Очень широкий экран (шире предела масштаба): кадры первого экрана,
-// «Документов» и «О нас» держатся у колонки текста — не дальше 56,25rem
-// от центра. Без этого на мониторе шире 2700 px (и в сильно уменьшенном
-// браузере) кадр уезжал к краю окна и отрывался от текста. Проверяется
-// поведение, а не классы: правила Tailwind для ширин идут в конце файла
-// стилей и уже один раз молча перебили такую привязку.
+// Монитор 21:9 (окно шире 5:2): рост упёрся в высоту окна, по бокам поле,
+// и кадры первого экрана, «Документов» и «О нас» держатся у колонки
+// текста — не дальше 56,25rem от центра. Без этого кадр уезжал к краю окна
+// и отрывался от текста. Проверяется поведение, а не классы: правила
+// Tailwind для ширин идут в конце файла стилей и уже один раз молча
+// перебили такую привязку.
 {
-  const W = 3200
-  const ctx = await b.newContext({ viewport: { width: W, height: 1600 } })
+  const W = 3440
+  const ctx = await b.newContext({ viewport: { width: W, height: 1300 } })
   const p = await ctx.newPage()
   await p.goto(BASE, { waitUntil: 'networkidle' })
   const reach = await p.evaluate(() => 56.25 * parseFloat(getComputedStyle(document.documentElement).fontSize))

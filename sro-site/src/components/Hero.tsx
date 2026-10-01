@@ -129,7 +129,7 @@ export function Hero() {
           часть раздела во всю высоту, край к краю экрана; растворяется
           к тексту. Лист поверх (.hero-develop) — для «проявления». */}
       <div
-        className="hero-photo relative h-28 overflow-hidden min-[380px]:h-32 sm:h-72 lg:absolute lg:inset-y-0 lg:left-[46%] lg:right-0 lg:h-auto min-[2700px]:left-[calc(50%-5.625rem)] min-[2700px]:right-[max(0px,calc(50%-56.25rem))]"
+        className="hero-photo relative h-28 overflow-hidden min-[380px]:h-32 sm:h-72 lg:absolute lg:inset-y-0 lg:left-[46%] lg:right-0 lg:h-auto [@media(min-width:1440px)_and_(min-aspect-ratio:5/2)]:left-[calc(50%-5.625rem)] [@media(min-width:1440px)_and_(min-aspect-ratio:5/2)]:right-[max(0px,calc(50%-56.25rem))]"
         aria-hidden="true"
       >
         <picture className="hero-print block h-full w-full">
