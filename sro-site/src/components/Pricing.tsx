@@ -78,7 +78,7 @@ export function Pricing() {
                 {plan.free ? (
                   <p className="font-display text-[2.6rem] font-medium leading-none">{plan.price}</p>
                 ) : (
-                  <p className="text-[15px] font-medium">{plan.price}</p>
+                  <p className="text-[0.9375rem] font-medium">{plan.price}</p>
                 )}
                 <p className={`text-sm ${plan.free ? 'mt-3' : 'mt-1'} ${plan.featured ? 'text-neutral-300' : 'text-neutral-600'}`}>
                   {plan.priceNote}

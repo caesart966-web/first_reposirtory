@@ -37,13 +37,13 @@ const ARROW: Record<ButtonVariant, string> = {
 
 const SIZES: Record<ButtonSize, string> = {
   md: 'h-11 px-5 text-sm',
-  lg: 'h-14 px-7 text-[15px]',
+  lg: 'h-14 px-7 text-[0.9375rem]',
 }
 
 // С кружком справа отступ меньше: кружок сам работает полем.
 const SIZES_ARROW: Record<ButtonSize, string> = {
   md: 'h-11 pl-5 pr-1.5 text-sm',
-  lg: 'h-14 pl-7 pr-2 text-[15px]',
+  lg: 'h-14 pl-7 pr-2 text-[0.9375rem]',
 }
 
 export function buttonClasses(

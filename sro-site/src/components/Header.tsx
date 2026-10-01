@@ -204,7 +204,7 @@ export function Header() {
         <a href={home()} className="flex min-w-0 items-center gap-2 min-[360px]:gap-2.5">
           <ScalesMark className="h-6 w-auto shrink-0 text-accent-600 min-[360px]:h-7" />
           <span className="flex flex-col leading-tight">
-            <span className="whitespace-nowrap text-[13px] font-bold tracking-tight text-neutral-950 min-[360px]:text-[15px]">{CONTACTS.brand}</span>
+            <span className="whitespace-nowrap text-[0.8125rem] font-bold tracking-tight text-neutral-950 min-[360px]:text-[0.9375rem]">{CONTACTS.brand}</span>
             {/* neutral-600, а не 500: тёплая нейтральная шкала темнее прежней серой
                 по цвету, но светлее по контрасту, и на 500 подпись давала
                 4.46:1 при норме 4.5. Замерено на странице. */}

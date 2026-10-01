@@ -39,13 +39,13 @@ function Group({ id, title, items, columns = false }: { id: string; title: strin
   const listId = `footer-${id}`
   return (
     <div className="border-b border-white/10 sm:border-0">
-      <h2 className="text-[13px] font-medium text-neutral-400">
+      <h2 className="text-[0.8125rem] font-medium text-neutral-400">
         <button
           type="button"
           aria-expanded={open}
           aria-controls={listId}
           onClick={() => setOpen((value) => !value)}
-          className="flex min-h-14 w-full items-center justify-between gap-4 text-left text-[15px] text-neutral-100 sm:hidden"
+          className="flex min-h-14 w-full items-center justify-between gap-4 text-left text-[0.9375rem] text-neutral-100 sm:hidden"
         >
           {title}
           <ChevronDown
@@ -57,7 +57,7 @@ function Group({ id, title, items, columns = false }: { id: string; title: strin
       </h2>
       <ul
         id={listId}
-        className={`${open ? 'block' : 'hidden'} space-y-3 pb-6 text-[15px] text-neutral-200 sm:mt-5 sm:block sm:pb-0 sm:text-sm ${
+        className={`${open ? 'block' : 'hidden'} space-y-3 pb-6 text-[0.9375rem] text-neutral-200 sm:mt-5 sm:block sm:pb-0 sm:text-sm ${
           columns ? 'lg:grid lg:grid-flow-col lg:grid-rows-4 lg:gap-x-8 lg:gap-y-3 lg:space-y-0' : ''
         }`}
       >

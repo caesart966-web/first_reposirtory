@@ -129,7 +129,7 @@ export function Hero() {
           часть раздела во всю высоту, край к краю экрана; растворяется
           к тексту. Лист поверх (.hero-develop) — для «проявления». */}
       <div
-        className="hero-photo relative h-28 overflow-hidden min-[380px]:h-32 sm:h-72 lg:absolute lg:inset-y-0 lg:left-[46%] lg:right-0 lg:h-auto min-[1800px]:left-[calc(50%-90px)] min-[1800px]:right-[max(0px,calc(50%-900px))]"
+        className="hero-photo relative h-28 overflow-hidden min-[380px]:h-32 sm:h-72 lg:absolute lg:inset-y-0 lg:left-[46%] lg:right-0 lg:h-auto min-[2700px]:left-[calc(50%-5.625rem)] min-[2700px]:right-[max(0px,calc(50%-56.25rem))]"
         aria-hidden="true"
       >
         <picture className="hero-print block h-full w-full">
@@ -169,7 +169,7 @@ export function Hero() {
         <span className="hero-develop absolute inset-0 bg-neutral-50" aria-hidden="true" />
       </div>
 
-      <div className="mx-auto flex w-full max-w-6xl flex-col px-4 pb-10 pt-5 sm:px-6 sm:pb-14 sm:pt-10 lg:min-h-[min(860px,calc(100svh-64px))] lg:px-8 lg:pb-12 lg:pt-12">
+      <div className="mx-auto flex w-full max-w-6xl flex-col px-4 pb-10 pt-5 sm:px-6 sm:pb-14 sm:pt-10 lg:min-h-[min(53.75rem,calc(100svh-4rem))] lg:px-8 lg:pb-12 lg:pt-12">
         <div className="lg:w-[56%]">
           <p data-hero-text className="hero-rise hidden items-center gap-3 text-sm text-neutral-600 sm:flex" style={delay(0)}>
             <span className="h-px w-8 bg-accent-500" aria-hidden="true" />
@@ -181,7 +181,7 @@ export function Hero() {
             text={'Вступление в СРО под\u00a0ключ'}
             className="font-display text-[2.9rem] font-medium leading-[0.95] tracking-[-0.015em] min-[380px]:text-[3.2rem] sm:mt-6 sm:text-7xl lg:text-[4.75rem] xl:text-[5.25rem]"
           />
-          <p className="hero-rise mt-4 max-w-xl text-[17px] leading-relaxed text-neutral-600 sm:mt-7 sm:text-lg lg:mt-6" style={delay(380)}>
+          <p className="hero-rise mt-4 max-w-xl text-[1.0625rem] leading-relaxed text-neutral-600 sm:mt-7 sm:text-lg lg:mt-6" style={delay(380)}>
             <span data-hero-text>
               {nbsp('Подберу подходящую СРО, подготовлю документы и сопровожу до внесения в реестр членов.')}
             </span>
@@ -223,7 +223,7 @@ export function Hero() {
                   >
                     {type.activity}
                   </span>
-                  <GoTo tone="muted" className="text-[13px] leading-snug sm:text-[15px] sm:leading-normal">
+                  <GoTo tone="muted" className="text-[0.8125rem] leading-snug sm:text-[0.9375rem] sm:leading-normal">
                     <span data-hero-text>{type.title}</span>
                   </GoTo>
                 </a>

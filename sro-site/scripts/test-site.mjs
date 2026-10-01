@@ -18,7 +18,8 @@ const PAGES = ['', 'sro-stroiteley/', 'sro-proektirovshchikov/', 'sro-izyskatele
   'uslugi/vstuplenie-v-sro/', 'uslugi/podbor-i-proverka-sro/', 'uslugi/dokumenty/',
   'uslugi/specialisty-nrs/', 'uslugi/nok/', 'uslugi/uroven-otvetstvennosti/',
   'uslugi/soprovozhdenie-proverok/']
-const WIDTHS = [320, 390, 768, 1024, 1440]
+// 1920 — макет, увеличенный целиком (корневой кегль растёт шире 1440 px, index.css).
+const WIDTHS = [320, 390, 768, 1024, 1440, 1920]
 
 const ok = []
 const bad = []
@@ -223,16 +224,36 @@ const heroGeometry = (p) => p.evaluate(async (sel) => {
   await rctx.close()
 }
 
-// Широкий экран: кадры первого экрана, «Документов» и «О нас» держатся
-// у колонки текста — не дальше 900 px от центра. Без этого на мониторе шире
-// 1800 px (и в уменьшенном браузере) кадр уезжал к краю окна и отрывался
-// от текста. Проверяется поведение, а не классы: правила Tailwind для ширин
-// идут в конце файла стилей и уже один раз молча перебили такую привязку.
-{
-  const W = 2560
-  const ctx = await b.newContext({ viewport: { width: W, height: 1300 } })
+// Широкий экран, 01.10.2026: шире 1440 px макет растёт целиком — корневой
+// кегль 100vw / 90, предел 150 % (index.css). На 1920 колонка текста — те же
+// 80 % окна, что на 1440, а не 1152 px посреди пустого листа.
+for (const [W, rootPx] of [[1440, 16], [1920, 1920 / 90], [2560, 24]]) {
+  const ctx = await b.newContext({ viewport: { width: W, height: 1000 } })
   const p = await ctx.newPage()
   await p.goto(BASE, { waitUntil: 'networkidle' })
+  const r = await p.evaluate(() => ({
+    root: parseFloat(getComputedStyle(document.documentElement).fontSize),
+    col: document.querySelector('header .max-w-6xl').getBoundingClientRect().width,
+    hscroll: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  }))
+  check(`широкий экран ${W}: корневой кегль ${rootPx.toFixed(1)} px`, Math.abs(r.root - rootPx) < 0.1, `${r.root} px`)
+  check(`широкий экран ${W}: колонка 72rem`, Math.abs(r.col - 72 * rootPx) < 2, `${Math.round(r.col)} px`)
+  check(`широкий экран ${W}: без горизонтальной прокрутки`, r.hscroll <= 1, `${r.hscroll}px`)
+  await ctx.close()
+}
+
+// Очень широкий экран (шире предела масштаба): кадры первого экрана,
+// «Документов» и «О нас» держатся у колонки текста — не дальше 56,25rem
+// от центра. Без этого на мониторе шире 2700 px (и в сильно уменьшенном
+// браузере) кадр уезжал к краю окна и отрывался от текста. Проверяется
+// поведение, а не классы: правила Tailwind для ширин идут в конце файла
+// стилей и уже один раз молча перебили такую привязку.
+{
+  const W = 3200
+  const ctx = await b.newContext({ viewport: { width: W, height: 1600 } })
+  const p = await ctx.newPage()
+  await p.goto(BASE, { waitUntil: 'networkidle' })
+  const reach = await p.evaluate(() => 56.25 * parseFloat(getComputedStyle(document.documentElement).fontSize))
   // По раскладке (offset*), а не по getBoundingClientRect: у кадров есть
   // движение по прокрутке (scale), и увеличенный на 12 % кадр выглядел бы
   // вылезшим за границу, хотя стоит на месте. Родитель у всех трёх — раздел
@@ -242,9 +263,9 @@ const heroGeometry = (p) => p.evaluate(async (sel) => {
     const right = (e) => e.offsetLeft + e.offsetWidth
     return { hero: right(el('.hero-photo')), docs: el('.docs-photo').offsetLeft, about: right(el('.about-photo')) }
   })
-  check(`широкий экран ${W}: кадр первого экрана у колонки текста`, edges.hero <= W / 2 + 901, `правый край ${Math.round(edges.hero)}`)
-  check(`широкий экран ${W}: кадр «Документов» у колонки текста`, edges.docs >= W / 2 - 901, `левый край ${Math.round(edges.docs)}`)
-  check(`широкий экран ${W}: кадр «О нас» у колонки текста`, edges.about <= W / 2 + 901, `правый край ${Math.round(edges.about)}`)
+  check(`широкий экран ${W}: кадр первого экрана у колонки текста`, edges.hero <= W / 2 + reach + 1, `правый край ${Math.round(edges.hero)}`)
+  check(`широкий экран ${W}: кадр «Документов» у колонки текста`, edges.docs >= W / 2 - reach - 1, `левый край ${Math.round(edges.docs)}`)
+  check(`широкий экран ${W}: кадр «О нас» у колонки текста`, edges.about <= W / 2 + reach + 1, `правый край ${Math.round(edges.about)}`)
 
   // Карта: у каждого выделенного региона есть контур, и наведение на строку
   // списка зажигает его регион (связь списка и карты в обе стороны).

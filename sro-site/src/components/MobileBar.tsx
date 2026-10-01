@@ -4,7 +4,7 @@ import { LINKS } from '../content/contacts'
 import { MESSENGERS } from './messengers'
 
 const itemClasses =
-  'flex min-h-[56px] flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-neutral-700 transition-colors active:bg-neutral-100'
+  'flex min-h-[3.5rem] flex-col items-center justify-center gap-0.5 text-[0.6875rem] font-medium text-neutral-700 transition-colors active:bg-neutral-100'
 
 type Channel = {
   label: string

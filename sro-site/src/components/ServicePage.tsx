@@ -41,7 +41,7 @@ function RowsBlock({ block }: { block: Of<'rows'> }) {
               key={item.label}
               className="grid gap-1.5 border-b border-neutral-200 py-5 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] sm:gap-10 lg:grid-cols-[minmax(0,19rem)_minmax(0,1fr)]"
             >
-              <dt className="text-[17px] font-semibold leading-snug text-neutral-950">{nbsp(item.label)}</dt>
+              <dt className="text-[1.0625rem] font-semibold leading-snug text-neutral-950">{nbsp(item.label)}</dt>
               <dd className="text-base leading-relaxed text-neutral-700">
                 {nbsp(item.text)}
                 {item.law && <Law>{item.law}</Law>}
@@ -65,7 +65,7 @@ function StatementBlock({ block }: { block: Of<'statement'> }) {
         <p className="max-w-4xl font-display text-[1.55rem] font-medium leading-snug text-balance text-neutral-950 sm:text-[2rem] lg:text-[2.3rem]">
           {nbsp(block.quote)}
         </p>
-        {block.text && <p className="mt-5 max-w-3xl text-[17px] leading-relaxed text-neutral-600">{nbsp(block.text)}</p>}
+        {block.text && <p className="mt-5 max-w-3xl text-[1.0625rem] leading-relaxed text-neutral-600">{nbsp(block.text)}</p>}
         {block.law && <Law>{block.law}</Law>}
       </Reveal>
     </>
@@ -85,20 +85,20 @@ function ScaleBlock({ block }: { block: Of<'scale'> }) {
         <ol className="relative mt-12 grid gap-8 sm:grid-cols-4 sm:gap-6">
           <span
             aria-hidden="true"
-            className="absolute bottom-2 left-[7px] top-2 w-px bg-neutral-300 sm:bottom-auto sm:left-0 sm:right-0 sm:top-[7px] sm:h-px sm:w-auto"
+            className="absolute bottom-2 left-[0.4375rem] top-2 w-px bg-neutral-300 sm:bottom-auto sm:left-0 sm:right-0 sm:top-[0.4375rem] sm:h-px sm:w-auto"
           />
           {block.items.map((item, index) => (
             <li key={item} className="relative pl-9 sm:pl-0 sm:pt-10">
               <span
                 aria-hidden="true"
-                className={`absolute left-0 top-1 h-[15px] w-[15px] rounded-full sm:top-0 ${SHADES[Math.min(index, SHADES.length - 1)]}`}
+                className={`absolute left-0 top-1 h-[0.9375rem] w-[0.9375rem] rounded-full sm:top-0 ${SHADES[Math.min(index, SHADES.length - 1)]}`}
               />
-              <span className="block text-[17px] font-semibold leading-snug text-neutral-950">{nbsp(item)}</span>
+              <span className="block text-[1.0625rem] font-semibold leading-snug text-neutral-950">{nbsp(item)}</span>
             </li>
           ))}
         </ol>
         {block.note && (
-          <p className="mt-10 max-w-3xl border-l-2 border-accent-400 pl-5 text-[15px] leading-relaxed text-neutral-700">
+          <p className="mt-10 max-w-3xl border-l-2 border-accent-400 pl-5 text-[0.9375rem] leading-relaxed text-neutral-700">
             {nbsp(block.note)}
           </p>
         )}
@@ -114,7 +114,7 @@ function ActionList({ items, muted = false }: { items: string[]; muted?: boolean
   return (
     <ul className="border-t border-neutral-300">
       {items.map((item) => (
-        <li key={item} className="flex gap-3 border-b border-neutral-200 py-3.5 text-[17px] leading-snug text-neutral-900">
+        <li key={item} className="flex gap-3 border-b border-neutral-200 py-3.5 text-[1.0625rem] leading-snug text-neutral-900">
           <Check className={`mt-1 h-4 w-4 shrink-0 ${muted ? 'text-neutral-400' : 'text-accent-500'}`} aria-hidden="true" />
           <span className="min-w-0">{nbsp(item)}</span>
         </li>
@@ -136,7 +136,7 @@ function ActionsBlock({ block }: { block: Of<'actions'> }) {
             заголовком «Что делаю я» повторяла его слово в слово. */}
         {block.yours && (
           <div className="mt-8 grid gap-3 sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-6">
-            <h3 className="pt-3.5 text-[15px] font-semibold text-neutral-950">От вас</h3>
+            <h3 className="pt-3.5 text-[0.9375rem] font-semibold text-neutral-950">От вас</h3>
             <ActionList items={block.yours} muted />
           </div>
         )}
@@ -156,7 +156,7 @@ function Blocks({ block }: { block: ServiceBlock }) {
       <Reveal className="max-w-3xl border-l-2 border-accent-400 pl-6 sm:pl-8">
         <h2 className="text-xl font-semibold leading-snug text-neutral-950">{nbsp(block.title)}</h2>
         {block.paragraphs.map((text) => (
-          <p key={text} className="mt-2.5 text-[15px] leading-relaxed text-neutral-700">
+          <p key={text} className="mt-2.5 text-[0.9375rem] leading-relaxed text-neutral-700">
             {nbsp(text)}
           </p>
         ))}
@@ -193,8 +193,8 @@ function Blocks({ block }: { block: ServiceBlock }) {
                   <span className="mb-5 block h-0.5 w-8 bg-accent-400" aria-hidden="true" />
                 )}
                 <div>
-                  <h3 className="text-[17px] font-semibold leading-snug text-neutral-950">{nbsp(item.title)}</h3>
-                  <p className="mt-1.5 text-[15px] leading-relaxed text-neutral-600">{nbsp(item.text)}</p>
+                  <h3 className="text-[1.0625rem] font-semibold leading-snug text-neutral-950">{nbsp(item.title)}</h3>
+                  <p className="mt-1.5 text-[0.9375rem] leading-relaxed text-neutral-600">{nbsp(item.text)}</p>
                   {item.law && <Law>{item.law}</Law>}
                 </div>
               </Reveal>
@@ -203,7 +203,7 @@ function Blocks({ block }: { block: ServiceBlock }) {
         </ol>
         {block.aside && (
           <Reveal className="mt-8 max-w-3xl border-l-2 border-accent-400 pl-5">
-            <p className="text-[15px] leading-relaxed text-neutral-700">{nbsp(block.aside.text)}</p>
+            <p className="text-[0.9375rem] leading-relaxed text-neutral-700">{nbsp(block.aside.text)}</p>
             {block.aside.law && <Law>{block.aside.law}</Law>}
           </Reveal>
         )}

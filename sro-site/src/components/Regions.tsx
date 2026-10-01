@@ -154,7 +154,7 @@ export function Regions() {
                   x={box.x}
                   y={box.y + 25}
                   textAnchor="middle"
-                  className="fill-white text-[19px] font-semibold"
+                  className="fill-white text-[1.1875rem] font-semibold"
                 >
                   {box.text}
                 </text>
@@ -181,7 +181,7 @@ export function Regions() {
                 <div
                   onMouseEnter={() => setActive(region.point)}
                   onMouseLeave={() => setActive(null)}
-                  className={`flex items-baseline gap-2.5 py-3 text-[15px] transition-colors duration-150 ${
+                  className={`flex items-baseline gap-2.5 py-3 text-[0.9375rem] transition-colors duration-150 ${
                     on ? 'text-accent-800' : 'text-neutral-900'
                   }`}
                 >

@@ -73,7 +73,7 @@ export function Head({ title, lead }: { title: string; lead?: string }) {
       className={`grid gap-4 ${side ? 'lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:items-end lg:gap-16' : ''}`}
     >
       <h2 className={H2}>{nbsp(title)}</h2>
-      {lead && <p className="max-w-xl text-[15px] leading-relaxed text-neutral-600 sm:text-base">{nbsp(lead)}</p>}
+      {lead && <p className="max-w-xl text-[0.9375rem] leading-relaxed text-neutral-600 sm:text-base">{nbsp(lead)}</p>}
     </Reveal>
   )
 }
@@ -92,7 +92,7 @@ export function PageLink({ href, text, to, className = '' }: { href: string; tex
       <span className="font-display text-[1.4rem] font-medium leading-snug text-neutral-950 transition-colors duration-700 ease-silk group-hover:text-accent-700 sm:text-[1.6rem]">
         {nbsp(text)}
       </span>
-      <GoTo className="text-base sm:justify-self-end sm:text-[17px]">{to}</GoTo>
+      <GoTo className="text-base sm:justify-self-end sm:text-[1.0625rem]">{to}</GoTo>
     </a>
   )
 }
@@ -115,7 +115,7 @@ export function StepsGrid() {
               {String(index + 1).padStart(2, '0')}
             </span>
             <div>
-              <h3 className="text-[17px] font-semibold leading-snug text-neutral-950 sm:mt-4">{nbsp(step.title)}</h3>
+              <h3 className="text-[1.0625rem] font-semibold leading-snug text-neutral-950 sm:mt-4">{nbsp(step.title)}</h3>
               <p className="mt-1.5 text-sm leading-relaxed text-neutral-600">{nbsp(step.detail)}</p>
               {step.law && <Law>{step.law}</Law>}
             </div>
@@ -144,8 +144,8 @@ export function DocRow({
 }) {
   const Icon = icon === 'check' ? Check : FileText
   return (
-    <li className="flex gap-3 border-b border-neutral-200 py-3.5 text-[15px] leading-snug text-neutral-900">
-      <Icon className="mt-[3px] h-4 w-4 shrink-0 text-accent-500" aria-hidden="true" />
+    <li className="flex gap-3 border-b border-neutral-200 py-3.5 text-[0.9375rem] leading-snug text-neutral-900">
+      <Icon className="mt-[0.1875rem] h-4 w-4 shrink-0 text-accent-500" aria-hidden="true" />
       <span className="min-w-0">
         <span className={details ? 'font-medium' : undefined}>{item.title}</span>
         {details && item.detail && (
@@ -287,7 +287,7 @@ function DocGroup({
     <Reveal className="grid gap-6 border-t border-neutral-400 pt-8 pb-12 last:pb-0 lg:grid-cols-[minmax(0,19rem)_minmax(0,1fr)] lg:gap-16 lg:pt-10">
       <div>
         <h3 className="font-display text-[1.6rem] font-medium leading-tight text-neutral-950 sm:text-[1.85rem]">{title}</h3>
-        <p className="mt-2 text-[15px] leading-relaxed text-neutral-600">{nbsp(hint)}</p>
+        <p className="mt-2 text-[0.9375rem] leading-relaxed text-neutral-600">{nbsp(hint)}</p>
         {law && <Law>{law}</Law>}
         {control && <div className="mt-5">{control}</div>}
       </div>
@@ -306,9 +306,9 @@ function DocGroup({
               {String(index + 1).padStart(2, '0')}
             </span>
             <span className="min-w-0">
-              <span className="block text-[17px] font-medium leading-snug text-neutral-950">{keepHyphens(item.title)}</span>
+              <span className="block text-[1.0625rem] font-medium leading-snug text-neutral-950">{keepHyphens(item.title)}</span>
               {item.detail && (
-                <span className="mt-1 block text-[15px] leading-relaxed text-neutral-600">{nbsp(item.detail)}</span>
+                <span className="mt-1 block text-[0.9375rem] leading-relaxed text-neutral-600">{nbsp(item.detail)}</span>
               )}
               {item.law && item.law !== law && <Law>{item.law}</Law>}
             </span>

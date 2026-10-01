@@ -37,6 +37,7 @@ const SHOTS = [
   { path: '', section: 'documents', selector: '#documents h2, #documents p' },
 ]
 const DEVICES = [
+  ['1920', { width: 1920, height: 1080 }, false],
   ['1440', { width: 1440, height: 900 }, false],
   ['1024', { width: 1024, height: 900 }, false],
   ['820', { width: 820, height: 1180 }, true],

@@ -108,7 +108,7 @@ function Channels() {
             <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-neutral-50 text-neutral-950 transition-transform duration-300 ease-silk group-active:scale-95 sm:bg-transparent">
               <Icon className="h-6 w-6" />
             </span>
-            <span className="text-[13px] font-medium text-neutral-300 sm:ml-2 sm:text-[15px] sm:text-neutral-50 sm:transition-colors sm:duration-500 sm:group-hover:text-neutral-950 sm:group-focus-visible:text-neutral-950">
+            <span className="text-[0.8125rem] font-medium text-neutral-300 sm:ml-2 sm:text-[0.9375rem] sm:text-neutral-50 sm:transition-colors sm:duration-500 sm:group-hover:text-neutral-950 sm:group-focus-visible:text-neutral-950">
               {label}
             </span>
           </MessengerLink>

@@ -140,7 +140,7 @@ function Cases({ detail }: { detail: SroDetail }) {
             // сползает вниз.
             className="grid gap-y-2 border-b border-neutral-200 py-5 sm:grid-cols-[minmax(0,1fr)_minmax(0,17rem)] sm:grid-rows-[auto_1fr] sm:gap-x-10 sm:gap-y-0 sm:py-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]"
           >
-            <p className="max-w-2xl text-base font-medium leading-snug text-neutral-950 sm:text-[17px]">
+            <p className="max-w-2xl text-base font-medium leading-snug text-neutral-950 sm:text-[1.0625rem]">
               {nbsp(row.situation)}
             </p>
             <p className="flex flex-col items-start gap-y-1 pt-1 sm:col-start-2 sm:pt-0 sm:row-span-2 sm:row-start-1 sm:gap-y-1.5">
