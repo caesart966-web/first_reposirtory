@@ -884,13 +884,16 @@ def cookie_bar(site: Site) -> str:
     использует cookie» была бы ровно тем враньём мелким шрифтом, против
     которого написана вся политика.
 
+    Полоса — <section> с подписью, то есть область страницы: иначе проверка
+    доступности ругается, что содержимое лежит вне областей.
+
     Выбор хранится в localStorage, а не в cookie: хранить согласие
     на cookie в cookie до получения согласия — замкнутый круг."""
     mid = site.raw.get("seo", {}).get("metrika_id", "").strip()
     if not mid:
         return ""
     policy = site.url(site.legal.get("policy", {}).get("slug", "/politika/"))
-    return f'''<div class="cookie" id="cookie-bar" hidden data-metrika="{esc(mid)}">
+    return f'''<section class="cookie" id="cookie-bar" hidden data-metrika="{esc(mid)}" aria-label="Согласие на файлы cookie">
   <p class="cookie__text">Мы считаем посещения страниц, чтобы понимать, какие из них
     полезны. Для этого нужны файлы cookie. Подробности —
     <a href="{policy}#razdel-15">в политике обработки данных</a>.</p>
@@ -898,7 +901,7 @@ def cookie_bar(site: Site) -> str:
     <button class="btn btn--primary btn--sm" type="button" data-cookie="all">Принять</button>
     <button class="btn btn--ghost btn--sm" type="button" data-cookie="none">Только необходимые</button>
   </div>
-</div>'''
+</section>'''
 
 
 # Короткие слова, после которых строка обрываться не должна. Предлог
