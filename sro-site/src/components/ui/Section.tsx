@@ -48,14 +48,18 @@ export function Section({
 //
 // Подзаголовок на широком экране уходит вправо от заголовка, в свою
 // колонку: так раздел начинается одной строкой, а не столбиком из трёх.
+// titleClassName — поправка кегля для одного раздела: «и сертификация»
+// склеено неразрывным пробелом и на 320 px шире колонки (02.10.2026).
 export function SectionHeading({
   title,
   subtitle,
   dark = false,
+  titleClassName = '',
 }: {
   title: string
   subtitle?: string
   dark?: boolean
+  titleClassName?: string
 }) {
   // Без подзаголовка колонок нет: иначе заголовок в узкой колонке раздела
   // (документы, «О нас») делил её ещё раз и рассыпался на шесть строк.
@@ -70,7 +74,7 @@ export function SectionHeading({
           text={title}
           className={`font-display text-[2.6rem] font-medium leading-[1.02] tracking-[-0.01em] sm:text-5xl lg:text-[3.6rem] ${
             dark ? 'text-neutral-50' : 'text-neutral-950'
-          }`}
+          } ${titleClassName}`}
         />
       </div>
       {subtitle && (

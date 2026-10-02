@@ -7,6 +7,7 @@
 // главной её нет. Разница важна для helpers из lib/site.ts: с вложенной
 // страницы якорь надо предварять '../', а адрес страницы — собирать целиком.
 import { anchor, page } from '../lib/site'
+import { EXTRA_ID, EXTRA_NAV } from './extra'
 import { SERVICE_PAGES } from './services'
 import { SRO_DETAILS } from './sroDetails'
 
@@ -57,15 +58,23 @@ export const TYPES_GROUP: NavGroup = {
   })),
 }
 
-/** Что делаем — семь страниц услуг под /uslugi/. */
+/** Что делаем — семь страниц услуг под /uslugi/ и восьмым пунктом
+ *  раздел главной «Лицензии, обучение и сертификация» (02.10.2026): своих
+ *  страниц у этих услуг нет, а в меню их должно быть видно. Восьмой пункт
+ *  закрыл пустое место в сетке две колонки по четыре — в меню и в подвале. */
 export const SERVICES_GROUP: NavGroup = {
   label: 'Услуги',
-  items: SERVICE_PAGES.map((service) => ({
-    label: service.short,
-    href: service.path,
-    kind: 'page',
-    hint: service.hint,
-  })),
+  items: [
+    ...SERVICE_PAGES.map(
+      (service): NavLink => ({
+        label: service.short,
+        href: service.path,
+        kind: 'page',
+        hint: service.hint,
+      }),
+    ),
+    { label: EXTRA_NAV.label, href: `#${EXTRA_ID}`, kind: 'anchor', hint: EXTRA_NAV.hint },
+  ],
 }
 
 // Порядок — как разделы идут на странице. В шапке на 1024-1279px места

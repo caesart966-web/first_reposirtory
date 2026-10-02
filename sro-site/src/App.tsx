@@ -5,6 +5,7 @@ import { FAQ } from './components/FAQ'
 import { Footer } from './components/Footer'
 import { Header } from './components/Header'
 import { Hero } from './components/Hero'
+import { Licenses } from './components/Licenses'
 import { MobileBar } from './components/MobileBar'
 import { Pricing } from './components/Pricing'
 import { Process } from './components/Process'
@@ -41,6 +42,9 @@ export default function App() {
         <Documents />
         <Specialists />
         <Pricing />
+        {/* Лицензии, обучение сотрудников, ISO 9001 (02.10.2026) — после
+            всего, что сказано про СРО, и перед «О компании». */}
+        <Licenses />
         <AboutExpert />
         <FAQ />
         <Regions />
