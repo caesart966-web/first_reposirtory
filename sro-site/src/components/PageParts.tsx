@@ -25,11 +25,23 @@ import { Reveal } from './ui/Reveal'
 // весы — знак компании: повторённый у каждой нормы (на странице вида их
 // полтора десятка), он превращался в маркер списка, а в 14 px его рисунок
 // сливался в пятно.
+//
+// Номер закона («№ 99-ФЗ») не рвётся по дефису (02.10.2026): в узкой
+// колонке строка уходила на «№ 99-» и «ФЗ», а неразрывного дефиса в шрифте
+// нет — поэтому хвост с «№» набран неразрывным куском.
 export function Law({ children }: { children: string }) {
+  const at = children.lastIndexOf('№')
   return (
     <span className="mt-2 flex items-center gap-2 text-xs font-medium tracking-[0.01em] text-neutral-600">
       <span className="h-px w-4 shrink-0 bg-accent-500" aria-hidden="true" />
-      {children}
+      {at < 0 ? (
+        children
+      ) : (
+        <span>
+          {children.slice(0, at)}
+          <span className="whitespace-nowrap">{children.slice(at)}</span>
+        </span>
+      )}
     </span>
   )
 }
