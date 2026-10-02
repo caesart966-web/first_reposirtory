@@ -1,5 +1,5 @@
-import { Award, Factory, FireExtinguisher, GraduationCap, HardHat, Landmark, ScrollText, Wrench, Zap } from 'lucide-react'
-import { EXTRA_GROUPS, EXTRA_ID, type ExtraIcon } from '../content/extra'
+import { Award, GraduationCap, ScrollText } from 'lucide-react'
+import { EXTRA_GROUPS, EXTRA_ID } from '../content/extra'
 import { nbsp } from '../lib/typo'
 import { Law } from './PageParts'
 import { ButtonLink } from './ui/Button'
@@ -12,7 +12,10 @@ import { Section, SectionHeading } from './ui/Section'
 // Оформление — «три листа» (вариант Б, выбор заказчика из трёх макетов
 // 02.10.2026; отклонены «строки по группам» и «плитки»). Каждая группа —
 // свой лист: значок группы, название, строка о том, что я делаю, и пункты
-// на линейках — значок, название, две строки, норма. Идея листов-направлений
+// на линейках — название, две строки, норма. Мелких значков у пунктов нет
+// (решение заказчика 02.10.2026): в 20 px огнетушитель, завод и ключ
+// не различались и читались точками перед строкой, а значок группы уже
+// делит раздел на листы. Идея листов-направлений
 // — из образца заказчика 24.09.2026 (блок «Practice Areas»); синие плитки,
 // отзывы и счётчики образца не взяты.
 //
@@ -30,16 +33,6 @@ import { Section, SectionHeading } from './ui/Section'
 // специалисты → стоимость».
 const GROUP_ICONS = [ScrollText, GraduationCap, Award]
 
-const ICONS: Record<ExtraIcon, typeof Award> = {
-  fire: FireExtinguisher,
-  heritage: Landmark,
-  labor: HardHat,
-  electric: Zap,
-  industrial: Factory,
-  trade: Wrench,
-  quality: Award,
-}
-
 // Место листа в сетке с 1024 px: обучение — справа на две строки.
 const PLACE = ['lg:col-start-1 lg:row-start-1', 'lg:col-start-2 lg:row-span-2 lg:row-start-1', 'lg:col-start-1 lg:row-start-2']
 
@@ -49,7 +42,7 @@ export function Licenses() {
       <SectionHeading
         title="Лицензии, обучение и сертификация"
         titleClassName="max-[379px]:text-[2.2rem]"
-        subtitle="Для строительных, проектных и изыскательских компаний — вместе со вступлением в СРО или отдельно."
+        subtitle={'Для строительных, проектных и изыскательских компаний — вместе со вступлением в СРО или\u00A0отдельно.'}
       />
 
       <div className="mt-12 grid gap-3 sm:mt-16 lg:grid-cols-2 lg:grid-rows-[auto_auto]">
@@ -62,25 +55,19 @@ export function Licenses() {
                   <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent-600 text-neutral-50 sm:h-12 sm:w-12">
                     <GroupIcon className="h-[1.375rem] w-[1.375rem] sm:h-6 sm:w-6" strokeWidth={1.6} aria-hidden="true" />
                   </span>
-                  <h3 className="font-display text-[1.65rem] font-medium leading-tight text-neutral-950 sm:text-[1.9rem]">
+                  <h3 className="font-display text-[1.65rem] font-medium leading-tight text-neutral-950 sm:text-[1.9rem] lg:max-xl:text-[1.8rem]">
                     {group.title}
                   </h3>
                 </div>
                 <p className="mt-4 text-[0.9375rem] leading-relaxed text-neutral-600">{nbsp(group.lead)}</p>
                 <ul className="mt-5 border-t border-neutral-300 sm:mt-6">
-                  {group.items.map((item) => {
-                    const Icon = ICONS[item.icon]
-                    return (
-                      <li key={item.title} className="flex gap-3.5 border-b border-neutral-200 py-4 last:border-b-0 last:pb-0 sm:py-5">
-                        <Icon className="mt-0.5 h-5 w-5 shrink-0 text-accent-700" strokeWidth={1.6} aria-hidden="true" />
-                        <div className="min-w-0">
-                          <h4 className="text-lg font-semibold leading-snug text-neutral-950">{item.title}</h4>
-                          <p className="mt-1 text-[0.9375rem] leading-relaxed text-neutral-700">{nbsp(item.text)}</p>
-                          <Law>{item.law}</Law>
-                        </div>
-                      </li>
-                    )
-                  })}
+                  {group.items.map((item) => (
+                    <li key={item.title} className="border-b border-neutral-200 py-4 last:border-b-0 last:pb-0 sm:py-5">
+                      <h4 className="text-lg font-semibold leading-snug text-neutral-950">{item.title}</h4>
+                      <p className="mt-1 text-[0.9375rem] leading-relaxed text-neutral-700">{nbsp(item.text)}</p>
+                      <Law>{item.law}</Law>
+                    </li>
+                  ))}
                 </ul>
               </article>
             </Reveal>
