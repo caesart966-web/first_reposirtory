@@ -1,0 +1,1407 @@
+<title>Брендбук «НОРМА»</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400..800;1,7..72,400..700&family=Golos+Text:wght@400..700&display=swap">
+<style>
+/* Раскладка: лист документа. Заголовок статьи стоит в левом поле и держится
+   при прокрутке, текст идёт справа; между статьями — размерная линия
+   с засечками, как на чертеже. Одна тема: цвета бренда не перекрашиваются. */
+:root {
+  --paper: #FFFFFF;
+  --sheet: #F6F3EC;
+  --ink: #16130F;
+  --muted: #6B6459;
+  --line: #E5E0D5;
+  --graphite: #171310;
+  --graphite-2: #221C17;
+  --on-dark: #F5F1EA;
+  --on-dark-muted: #B3A99C;
+  --dark-line: rgba(255, 255, 255, 0.12);
+  --wax: #B0202B;
+  --wax-deep: #8E1A23;
+  --wax-soft: #FBEDEB;
+  --wax-bright: #E8635E;
+  --good: #2C6B41;
+  --good-bright: #4FA46F;
+  --good-bg: #ECF3EC;
+
+  --serif: 'Literata', Georgia, 'Times New Roman', serif;
+  --sans: 'Golos Text', 'Segoe UI', system-ui, -apple-system, sans-serif;
+
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --t-fast: 0.18s;
+  --t-mid: 0.34s;
+  --t-slow: 0.62s;
+
+  --gut: clamp(16px, 4vw, 56px);
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; overflow-x: clip; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 16.5px/1.65 var(--sans);
+  font-variant-numeric: lining-nums;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4 { margin: 0; font-family: var(--serif); font-weight: 700; line-height: 1.12; letter-spacing: -0.015em; text-wrap: balance; }
+p { margin: 0; }
+a { color: var(--wax-deep); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+::selection { background: var(--wax-soft); }
+:focus-visible { outline: 2px solid var(--wax); outline-offset: 3px; border-radius: 4px; }
+.dark :focus-visible { outline-color: var(--wax-bright); }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+.wrap { width: 100%; max-width: 1280px; margin-inline: auto; padding-inline: var(--gut); }
+
+.kicker {
+  font: 600 12px/1.3 var(--sans);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.dark .kicker { color: var(--on-dark-muted); }
+
+/* ── Обложка ───────────────────────────────────────── */
+.cover {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(90% 70% at 100% 0%, rgba(176, 32, 43, 0.06), transparent 60%),
+    radial-gradient(60% 60% at 0% 100%, rgba(22, 19, 15, 0.05), transparent 70%),
+    var(--paper);
+  border-bottom: 1px solid var(--line);
+}
+.cover::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.55;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.09  0 0 0 0 0.07  0 0 0 0 0.05  0 0 0 0.07 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+.rosette { color: var(--ink); pointer-events: none; }
+.cover .rosette {
+  position: absolute;
+  z-index: -1;
+  width: min(980px, 120vw);
+  aspect-ratio: 1;
+  right: -22%;
+  top: 50%;
+  translate: 0 -50%;
+  opacity: 0.08;
+  -webkit-mask-image: radial-gradient(closest-side, #000 55%, transparent 100%);
+  mask-image: radial-gradient(closest-side, #000 55%, transparent 100%);
+}
+.cover-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 24px;
+  padding-block: 22px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--muted);
+}
+.cover-top .lockup { color: var(--ink); }
+.cover-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: clamp(32px, 6vw, 96px);
+  align-items: center;
+  padding-block: clamp(48px, 9vw, 128px) clamp(56px, 8vw, 112px);
+}
+.cover h1 {
+  font-size: clamp(56px, 8.6vw, 136px);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 0.92;
+  margin: 18px 0 0 -0.04em;
+}
+.cover-sub {
+  font: italic 400 clamp(24px, 3vw, 38px)/1.2 var(--serif);
+  color: var(--wax-deep);
+  margin-top: 18px;
+}
+.cover-lead { max-width: 33em; margin-top: 28px; font-size: 18px; color: var(--ink); }
+.cover-meta {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 24px;
+  margin: 36px 0 0;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  max-width: 34em;
+  font-size: 14px;
+}
+.cover-meta dt { color: var(--muted); }
+.cover-meta dd { margin: 0; }
+.cover-figure { margin: 0; justify-self: center; width: min(100%, 460px); }
+.cover-figure svg { display: block; width: 100%; height: auto; overflow: visible; }
+
+/* ── Знак и логотип ────────────────────────────────── */
+.mk { display: block; flex: none; fill: currentColor; }
+.lockup { display: inline-flex; align-items: center; gap: 0.7em; text-decoration: none; color: inherit; }
+.lockup .mk { width: 1.6em; height: 1.6em; color: var(--wax); }
+.lockup-name { font: 800 1em/1 var(--serif); letter-spacing: 0.08em; }
+.lockup-tag { display: block; font: 400 0.65em/1.2 var(--sans); letter-spacing: 0.01em; color: var(--muted); margin-top: 0.25em; }
+.dark .lockup .mk, .lockup.on-dark .mk { color: var(--wax-bright); }
+.dark .format-view.paper .lockup .mk { color: var(--wax); }
+.dark .format-view.paper .lockup-tag { color: var(--muted); }
+.dark .lockup-tag, .lockup.on-dark .lockup-tag { color: var(--on-dark-muted); }
+
+/* ── Оглавление ────────────────────────────────────── */
+.toc { padding-block: clamp(48px, 7vw, 88px); }
+.toc-grid { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 2fr); gap: 24px clamp(32px, 6vw, 96px); }
+.toc h2 { font-size: clamp(28px, 3.4vw, 40px); }
+.toc ol { list-style: none; margin: 0; padding: 0; columns: 2 300px; column-gap: 48px; }
+.toc li { break-inside: avoid; }
+.toc a {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  text-decoration: none;
+  transition: color var(--t-fast) var(--ease);
+}
+.toc a:hover { color: var(--wax-deep); }
+.toc-no { font: 600 12px/1 var(--sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); width: 74px; flex: none; }
+.toc-name { font: 600 19px/1.3 var(--serif); }
+.toc-dots { flex: 1; min-width: 16px; border-bottom: 1.5px dotted #C9C1B2; translate: 0 -5px; }
+.toc-what { font-size: 13px; color: var(--muted); text-align: right; }
+
+/* ── Размерная линия между статьями ───────────────── */
+.dim { position: relative; height: 1px; }
+.dim::before {
+  content: "";
+  position: absolute;
+  left: var(--gut);
+  right: var(--gut);
+  top: 0;
+  border-top: 1px solid #CFC7B8;
+}
+.dim::after {
+  content: "";
+  position: absolute;
+  left: var(--gut);
+  right: var(--gut);
+  top: -7px;
+  height: 14px;
+  background:
+    linear-gradient(135deg, transparent 45%, var(--ink) 45% 55%, transparent 55%) left center / 14px 14px no-repeat,
+    linear-gradient(135deg, transparent 45%, var(--ink) 45% 55%, transparent 55%) right center / 14px 14px no-repeat;
+  opacity: 0.55;
+}
+.dim.on-dark::before { border-color: rgba(255,255,255,0.18); }
+
+/* ── Статья ────────────────────────────────────────── */
+.art { padding-block: clamp(64px, 9vw, 128px); }
+.art--sheet { background: var(--sheet); }
+.dark { background: var(--graphite); color: var(--on-dark); }
+.art-grid { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 2fr); gap: 32px clamp(32px, 6vw, 96px); align-items: start; }
+.art-head { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 28px); }
+.art-no {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font: 600 12px/1 var(--sans);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--wax-deep);
+}
+.art-no::before { content: ""; width: 28px; height: 1px; background: currentColor; }
+.dark .art-no { color: var(--wax-bright); }
+.art-head h2 { font-size: clamp(34px, 4.4vw, 56px); margin-top: 16px; }
+.art-lead { margin-top: 18px; color: var(--muted); max-width: 26em; }
+.dark .art-lead { color: var(--on-dark-muted); }
+.art-body { display: grid; gap: clamp(40px, 5vw, 64px); min-width: 0; }
+.block { display: grid; gap: 18px; min-width: 0; }
+.block > h3 { font: 600 20px/1.3 var(--sans); letter-spacing: -0.005em; }
+.prose { max-width: 40em; display: grid; gap: 14px; }
+.prose p { text-wrap: pretty; }
+.dark .prose p { color: var(--on-dark); }
+.small { font-size: 14px; color: var(--muted); }
+.dark .small { color: var(--on-dark-muted); }
+
+/* Чип нормы закона — как на сайте */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 9px 3px;
+  border: 1px solid rgba(176, 32, 43, 0.35);
+  border-radius: 999px;
+  background: var(--wax-soft);
+  color: var(--wax-deep);
+  font: 600 12.5px/1.5 var(--sans);
+  white-space: nowrap;
+  vertical-align: 0.1em;
+}
+.chip::before { content: "§"; font-family: var(--serif); font-weight: 700; }
+
+/* ── Идея ──────────────────────────────────────────── */
+.quote {
+  font: 400 clamp(26px, 3.2vw, 40px)/1.3 var(--serif);
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+  max-width: 22em;
+}
+.quote em { color: var(--wax-deep); font-style: italic; }
+.pillars { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border-top: 1px solid var(--line); }
+.pillar { padding: 28px 28px 28px 0; display: grid; gap: 10px; align-content: start; }
+.pillar + .pillar { padding-left: 28px; border-left: 1px solid var(--line); }
+.pillar h3 { font: 700 24px/1.2 var(--serif); }
+.pillar p { color: var(--muted); }
+.versus { width: 100%; border-collapse: collapse; font-size: 15px; }
+.versus th { text-align: left; font: 600 12px/1.3 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); padding: 0 16px 12px 0; border-bottom: 1px solid var(--ink); }
+.versus td { padding: 14px 16px 14px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+.versus td:first-child { color: var(--muted); text-decoration: line-through; text-decoration-color: rgba(176,32,43,0.55); text-decoration-thickness: 1.5px; }
+.versus td:last-child { font-weight: 500; }
+
+/* ── Знак: построение ──────────────────────────────── */
+.build { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 32px; align-items: center; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: clamp(20px, 3vw, 36px); }
+.build svg { width: 100%; height: auto; display: block; overflow: visible; }
+.legend { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; counter-reset: k; }
+.legend li { display: grid; grid-template-columns: 28px 1fr; gap: 12px; align-items: start; font-size: 15px; }
+.legend li::before {
+  counter-increment: k;
+  content: counter(k);
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--wax);
+  color: var(--wax-deep);
+  font: 600 12px/1 var(--sans);
+}
+.legend b { display: block; font-weight: 600; }
+.legend span { color: var(--muted); }
+
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.tile { margin: 0; border-radius: 10px; aspect-ratio: 4 / 5; display: grid; grid-template-rows: 1fr auto; justify-items: center; align-items: center; padding: 16px 14px 14px; border: 1px solid var(--line); }
+.tile .mk { width: 42%; height: auto; aspect-ratio: 1; }
+.tile figcaption { justify-self: stretch; font-size: 12.5px; line-height: 1.35; }
+.tile--paper { background: var(--paper); color: var(--wax); }
+.tile--paper figcaption { color: var(--muted); }
+.tile--sheet { background: var(--sheet); color: var(--wax); }
+.tile--sheet figcaption { color: var(--muted); }
+.tile--dark { background: var(--graphite); color: var(--wax-bright); border-color: var(--graphite); }
+.tile--dark figcaption { color: var(--on-dark-muted); }
+.tile--mono { background: var(--paper); color: var(--ink); }
+.tile--mono figcaption { color: var(--muted); }
+
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.panel { border: 1px solid var(--line); border-radius: 12px; background: var(--paper); padding: 24px; display: grid; gap: 16px; align-content: start; }
+.panel h4 { font: 600 15px/1.3 var(--sans); }
+.clear { display: grid; place-items: center; padding: 12px 0; }
+.clear svg { width: min(100%, 260px); height: auto; overflow: visible; }
+.sizes { display: flex; align-items: flex-end; gap: 22px; flex-wrap: wrap; color: var(--wax); }
+.sizes figure { margin: 0; display: grid; gap: 8px; justify-items: start; }
+.sizes figcaption { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.fav { width: 16px; height: 16px; border-radius: 4px; background: var(--graphite); color: var(--wax-bright); display: grid; place-items: center; }
+.fav .mk { width: 11px; height: 11px; }
+
+/* ── Логотип ───────────────────────────────────────── */
+.logo-stage {
+  border-radius: 14px;
+  background: var(--graphite-2);
+  border: 1px solid var(--dark-line);
+  padding: clamp(40px, 7vw, 88px) clamp(20px, 4vw, 48px);
+  display: grid;
+  place-items: center;
+  font-size: clamp(26px, 4.4vw, 48px);
+  background-image:
+    linear-gradient(var(--dark-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--dark-line) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: center;
+}
+.logo-stage .lockup { color: var(--on-dark); gap: 0.55em; }
+.spec { display: flex; flex-wrap: wrap; gap: 8px 28px; font-size: 13px; color: var(--on-dark-muted); font-variant-numeric: tabular-nums; }
+.spec b { color: var(--on-dark); font-weight: 600; }
+.formats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.format { border-radius: 12px; overflow: hidden; border: 1px solid var(--dark-line); background: var(--graphite-2); display: grid; grid-template-rows: auto 1fr; }
+.format-view { aspect-ratio: 4 / 3; display: grid; place-items: center; }
+.format-view.paper { background: var(--paper); color: var(--ink); }
+.format-view.sheet { background: var(--sheet); color: var(--ink); }
+.format-text { padding: 16px 18px 18px; display: grid; gap: 4px; font-size: 14px; }
+.format-text b { font-weight: 600; color: var(--on-dark); }
+.format-text span { color: var(--on-dark-muted); }
+.avatar { width: 36%; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; background: var(--graphite); color: var(--wax-bright); box-shadow: 0 0 0 1px var(--dark-line); }
+.avatar.light { background: var(--sheet); color: var(--wax); box-shadow: 0 0 0 1px var(--line); }
+.avatar .mk { width: 33.3%; height: auto; aspect-ratio: 1; }
+.avatars { display: flex; gap: 8%; width: 100%; justify-content: center; }
+.square { width: 52%; aspect-ratio: 1; background: var(--graphite); color: var(--on-dark); display: grid; place-content: center; justify-items: center; gap: 6%; border-radius: 4px; }
+.square .mk { width: 34%; height: auto; aspect-ratio: 1; color: var(--wax-bright); }
+.square span { font: 600 clamp(7px, 1vw, 11px)/1.2 var(--sans); letter-spacing: 0.02em; color: var(--on-dark); }
+
+.donts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.dont { margin: 0; border-radius: 12px; background: var(--graphite-2); border: 1px solid var(--dark-line); overflow: hidden; }
+.dont-view { aspect-ratio: 16 / 10; display: grid; place-items: center; background: var(--paper); position: relative; color: var(--wax); }
+.dont-view::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top right, transparent calc(50% - 1px), rgba(176, 32, 43, 0.7) 50%, transparent calc(50% + 1px));
+}
+.dont-view .mk { width: 26%; height: auto; aspect-ratio: 1; }
+.dont figcaption { padding: 12px 16px 14px; font-size: 14px; color: var(--on-dark); }
+.dont figcaption span { display: block; font-size: 12.5px; color: var(--on-dark-muted); margin-top: 2px; }
+
+/* ── Цвет ──────────────────────────────────────────── */
+.swatches { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+.sw {
+  appearance: none;
+  font: inherit;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper);
+  padding: 0;
+  overflow: hidden;
+  cursor: copy;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  color: var(--ink);
+  transition: transform var(--t-mid) var(--ease), box-shadow var(--t-mid) var(--ease);
+}
+.sw:hover { transform: translateY(-3px); box-shadow: 0 18px 44px -30px rgba(22, 19, 15, 0.5); }
+.sw-chip { aspect-ratio: 4 / 3; background: var(--c); border-bottom: 1px solid var(--line); }
+.sw-info { padding: 12px 14px 14px; display: grid; gap: 2px; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.sw-info b { font: 600 15px/1.3 var(--sans); color: var(--ink); }
+.sw-info code { font: 600 13px/1.4 var(--sans); color: var(--ink); }
+.sw--wide { grid-column: span 2; }
+.sw--main { grid-column: span 2; }
+.sw--wide .sw-chip { aspect-ratio: auto; height: 88px; }
+.sw--main .sw-chip { aspect-ratio: auto; height: 180px; display: flex; align-items: flex-end; padding: 16px; }
+.sw--main .sw-chip span { font: 700 44px/1 var(--serif); color: var(--paper); letter-spacing: -0.02em; }
+.ratio { display: flex; height: 64px; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
+.ratio div { flex: var(--f) 1 0; background: var(--c); display: flex; align-items: flex-end; padding: 8px 10px; font-size: 12px; color: var(--muted); white-space: nowrap; min-width: 0; overflow: hidden; }
+.ratio .on-dark-t { color: var(--on-dark-muted); }
+.ratio .on-wax { color: #FFE9E6; }
+.contrast { width: 100%; border-collapse: collapse; font-size: 14.5px; font-variant-numeric: tabular-nums; }
+.contrast th { text-align: left; font: 600 12px/1.3 var(--sans); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 0 12px 10px 0; border-bottom: 1px solid var(--ink); }
+.contrast td { padding: 10px 12px 10px 0; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.cx-sample { display: inline-grid; place-items: center; width: 64px; height: 36px; border-radius: 6px; font: 700 17px/1 var(--serif); border: 1px solid var(--line); }
+.cx-ratio { font-weight: 600; }
+.cx-pass { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--good-bg); color: var(--good); }
+.cx-pass.fail { background: var(--wax-soft); color: var(--wax-deep); }
+.cx-pass.large { background: #FBF3DE; color: #8A5D00; }
+.table-scroll { overflow-x: auto; }
+.note {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  padding: 18px 20px;
+  border-radius: 10px;
+  background: var(--sheet);
+  border: 1px solid var(--line);
+  font-size: 15px;
+}
+.note::before { content: "§"; font: 700 26px/1 var(--serif); color: var(--wax); }
+
+/* ── Шрифты ────────────────────────────────────────── */
+.faces { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.face { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: clamp(20px, 3vw, 32px); display: grid; gap: 18px; align-content: start; min-width: 0; }
+.face-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.face-aa { font-size: clamp(88px, 11vw, 148px); line-height: 0.85; letter-spacing: -0.03em; }
+.face--serif .face-aa { font-family: var(--serif); font-weight: 700; }
+.face--sans .face-aa { font-family: var(--sans); font-weight: 600; }
+.face-name { text-align: right; display: grid; gap: 4px; }
+.face-name b { font: 600 18px/1.2 var(--sans); }
+.face-name span { font-size: 13px; color: var(--muted); }
+.face-glyphs { font-size: 17px; line-height: 1.55; color: var(--ink); overflow-wrap: anywhere; letter-spacing: 0.02em; }
+.face--serif .face-glyphs { font-family: var(--serif); }
+.face-weights { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 22px; padding-top: 14px; border-top: 1px solid var(--line); }
+.face--serif .face-weights { font-family: var(--serif); }
+.face-weights span { white-space: nowrap; }
+.scale { display: grid; border-top: 1px solid var(--ink); }
+.scale-row { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 20px; padding: 18px 0; border-bottom: 1px solid var(--line); align-items: baseline; }
+.scale-meta { font-size: 12.5px; color: var(--muted); line-height: 1.45; font-variant-numeric: tabular-nums; }
+.scale-meta b { display: block; color: var(--ink); font-weight: 600; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
+.s-h1 { font: 700 clamp(30px, 4vw, 52px)/1.12 var(--serif); letter-spacing: -0.015em; }
+.s-h2 { font: 700 clamp(24px, 3vw, 38px)/1.12 var(--serif); letter-spacing: -0.015em; }
+.s-h3 { font: 600 19px/1.3 var(--sans); }
+.s-body { font: 400 16.5px/1.65 var(--sans); max-width: 36em; }
+.s-cap { font: 600 12px/1.3 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.rules { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.rule { border-top: 2px solid var(--ink); padding-top: 14px; display: grid; gap: 8px; align-content: start; }
+.rule b { font-weight: 600; }
+.rule p { font-size: 14.5px; color: var(--muted); }
+.rule .ex { font-family: var(--serif); font-size: 20px; color: var(--ink); line-height: 1.25; }
+.rule .ex s { display: block; font-size: 15px; color: var(--muted); text-decoration-color: var(--wax); margin-top: 4px; }
+
+/* ── Графика ───────────────────────────────────────── */
+.seal-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: clamp(24px, 4vw, 48px); align-items: center; }
+.seal { width: clamp(150px, 18vw, 200px); color: var(--wax); transform: rotate(-9deg); opacity: 0.92; }
+.seal svg { display: block; width: 100%; height: auto; overflow: visible; }
+.seal-text { font-family: var(--sans); fill: currentColor; }
+.elements { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.el { border: 1px solid var(--line); border-radius: 12px; background: var(--paper); overflow: hidden; display: grid; grid-template-rows: auto 1fr; }
+.el-view { min-height: 180px; display: grid; place-items: center; padding: 24px; position: relative; overflow: hidden; background: var(--paper); }
+.el-view.sheet { background: var(--sheet); }
+.el-text { padding: 16px 20px 20px; border-top: 1px solid var(--line); display: grid; gap: 6px; }
+.el-text b { font-weight: 600; }
+.el-text p { font-size: 14.5px; color: var(--muted); }
+.dimdemo { width: 100%; color: var(--ink); }
+.dimdemo svg { width: 100%; height: auto; display: block; overflow: visible; }
+.el-view .rosette { width: 240px; height: 240px; opacity: 0.35; }
+.draft { width: min(100%, 300px); color: var(--ink); }
+.draft svg { display: block; width: 100%; height: auto; }
+.draft .crane { color: var(--wax); }
+.chipline { font-size: 17px; line-height: 1.9; text-align: center; max-width: 22em; }
+
+/* ── Движение ──────────────────────────────────────── */
+.motion { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.mo { border-radius: 12px; border: 1px solid var(--dark-line); background: var(--graphite-2); display: grid; grid-template-rows: 220px auto; overflow: hidden; }
+.mo-view { display: grid; place-items: center; position: relative; background: var(--paper); color: var(--ink); overflow: hidden; }
+.mo-text { padding: 16px 18px 18px; display: grid; gap: 10px; align-content: start; }
+.mo-text b { font-weight: 600; }
+.mo-text p { font-size: 14px; color: var(--on-dark-muted); }
+.btn {
+  appearance: none;
+  font: 600 14px/1 var(--sans);
+  border-radius: 8px;
+  padding: 11px 16px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  justify-self: start;
+  transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
+}
+.btn--wax { background: var(--wax); color: #fff; }
+.btn--wax:hover { background: var(--wax-deep); }
+.btn--line { background: transparent; color: var(--on-dark); border-color: rgba(255,255,255,0.28); }
+.btn--line:hover { border-color: var(--on-dark); }
+.mo .seal { width: 140px; }
+.mo .seal.play { animation: stamp 0.85s cubic-bezier(0.2, 1.5, 0.4, 1) both; }
+@keyframes stamp {
+  0% { opacity: 0; transform: rotate(-24deg) scale(1.5); }
+  35% { opacity: 0.92; }
+  100% { opacity: 0.92; transform: rotate(-9deg) scale(1); }
+}
+.mo .draft path { stroke-dasharray: 1; stroke-dashoffset: 0; }
+.mo .draft.play path { animation: draw 0.9s var(--ease) both; animation-delay: calc(var(--i) * 0.14s); }
+@keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+.cards3 { display: grid; gap: 10px; width: 78%; }
+.cards3 i { display: block; height: 34px; border-radius: 6px; border: 1px solid var(--line); background: var(--sheet); }
+.cards3 i:nth-child(2) { width: 82%; }
+.cards3 i:nth-child(3) { width: 64%; }
+.cards3.play i { animation: rise var(--t-slow) var(--ease) both; animation-delay: calc(var(--i) * 55ms); }
+@keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+.curves { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 24px; align-items: center; padding: 24px; border-radius: 12px; border: 1px solid var(--dark-line); background: var(--graphite-2); }
+.curves svg { width: 100%; max-width: 280px; height: auto; display: block; overflow: visible; }
+.durations { display: grid; gap: 12px; }
+.dur { display: grid; grid-template-columns: 92px 1fr 64px; gap: 14px; align-items: center; font-size: 14px; font-variant-numeric: tabular-nums; }
+.dur code { font: 500 13px/1 var(--sans); color: var(--on-dark-muted); }
+.dur-bar { height: 6px; border-radius: 3px; background: rgba(255,255,255,0.1); position: relative; overflow: hidden; }
+.dur-bar::after { content: ""; position: absolute; inset: 0; width: var(--w); background: var(--wax-bright); border-radius: 3px; }
+.dur span:last-child { text-align: right; color: var(--on-dark); }
+
+/* ── Фотография ────────────────────────────────────── */
+.photos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.ph { margin: 0; display: grid; gap: 10px; }
+.ph-frame { aspect-ratio: 4 / 3; border-radius: 10px; overflow: hidden; position: relative; border: 1px solid var(--line); }
+.ph-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ph-frame.on-paper { background: var(--paper); }
+.ph-frame.on-paper img {
+  filter: saturate(0.4) contrast(0.55) brightness(1.65);
+  opacity: 0.7;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 55%), linear-gradient(180deg, transparent 0%, #000 22%, #000 78%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 55%), linear-gradient(180deg, transparent 0%, #000 22%, #000 78%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+.ph-frame.on-dark { background: var(--graphite); border-color: var(--graphite); }
+.ph-frame.on-dark img {
+  filter: saturate(0.6) brightness(0.55);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 60%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 60%);
+}
+.ph-over { position: absolute; left: 16px; top: 50%; translate: 0 -50%; width: 52%; display: grid; gap: 6px; }
+.ph-over i { display: block; height: 9px; border-radius: 2px; background: var(--ink); opacity: 0.85; }
+.ph-over i:first-child { height: 16px; width: 92%; }
+.ph-over i:nth-child(3) { width: 70%; }
+.on-dark .ph-over i { background: var(--on-dark); }
+.ph figcaption { font-size: 13.5px; color: var(--muted); }
+.ph figcaption b { color: var(--ink); font-weight: 600; display: block; }
+.checks { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 32px; }
+.checks li { display: grid; grid-template-columns: 22px 1fr; gap: 10px; font-size: 15px; }
+.checks li::before { content: ""; width: 14px; height: 14px; margin-top: 5px; border-radius: 50%; border: 1.5px solid var(--good); background: radial-gradient(circle, var(--good) 0 3px, transparent 3.5px); }
+.checks li.no::before { border-color: var(--wax); background: linear-gradient(45deg, transparent 45%, var(--wax) 45% 55%, transparent 55%), linear-gradient(-45deg, transparent 45%, var(--wax) 45% 55%, transparent 55%); }
+
+/* ── Голос ─────────────────────────────────────────── */
+.maxim { font: italic 400 clamp(26px, 3.4vw, 42px)/1.25 var(--serif); text-wrap: balance; padding-left: 24px; border-left: 3px solid var(--wax); }
+.voice { display: grid; gap: 12px; }
+.vrow { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--paper); }
+.vcell { padding: 18px 20px; display: grid; gap: 8px; align-content: start; }
+.vcell + .vcell { border-left: 1px solid var(--line); }
+.vtag { font: 600 11.5px/1 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; }
+.vcell.bad .vtag { color: var(--wax-deep); }
+.vcell.bad p { color: var(--muted); }
+.vcell.good .vtag { color: var(--good); }
+.vcell.good p { font-family: var(--serif); font-size: 18px; line-height: 1.45; }
+.vwhy { grid-column: 1 / -1; padding: 10px 20px 12px; border-top: 1px dashed var(--line); font-size: 13.5px; color: var(--muted); background: #FCFBF8; }
+.stoplist { display: flex; flex-wrap: wrap; gap: 8px; }
+.stoplist span { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--paper); font-size: 14px; color: var(--muted); text-decoration: line-through; text-decoration-color: var(--wax); }
+
+/* ── Носители ──────────────────────────────────────── */
+.carriers { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; }
+.carrier { margin: 0; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.carrier figcaption { font-size: 13.5px; color: var(--muted); }
+.carrier figcaption b { color: var(--ink); font-weight: 600; }
+.c-cards { grid-column: span 7; }
+.c-letter { grid-column: span 5; }
+.c-mail { grid-column: span 12; }
+.desk {
+  border-radius: 14px;
+  padding: clamp(18px, 3vw, 40px);
+  height: 100%;
+  background:
+    radial-gradient(80% 80% at 30% 20%, #EFEAE0, transparent 70%),
+    #E6E0D4;
+  display: grid;
+  place-items: center;
+  gap: 18px;
+}
+.bcards { display: grid; gap: 18px; width: min(100%, 440px); }
+.bslot { container-type: inline-size; }
+.bcard {
+  aspect-ratio: 90 / 50;
+  border-radius: 6px;
+  box-shadow: 0 1px 1px rgba(22,19,15,0.08), 0 22px 40px -24px rgba(22,19,15,0.55);
+  position: relative;
+  overflow: hidden;
+}
+.bcard--front { background: var(--graphite); color: var(--on-dark); display: grid; place-items: center; transform: rotate(-3deg); }
+.bcard--front .lockup { font-size: 6.4cqi; color: var(--on-dark); }
+.bcard--front .rosette { position: absolute; width: 90cqi; height: 90cqi; left: -30cqi; top: -20cqi; color: #fff; opacity: 0.06; }
+.bcard--back { background: var(--paper); color: var(--ink); padding: 7cqi 7.5cqi 5.5cqi; display: grid; grid-template-rows: auto 1fr auto; transform: rotate(1.5deg) translateX(3%); }
+.bcard--back .who { font: 700 6.2cqi/1.1 var(--serif); }
+.bcard--back .role { font-size: 3.6cqi; color: var(--muted); margin-top: 1.5cqi; }
+.bcard--back .reach { font-size: 3.7cqi; line-height: 1.5; align-self: end; font-variant-numeric: tabular-nums; }
+.bcard--back .reach b { font-weight: 600; font-size: 4.6cqi; }
+.bcard--back .bmk { position: absolute; right: 7cqi; top: 7cqi; width: 8cqi; height: 8cqi; color: var(--wax); }
+.bcard--back .req { font-size: 2.6cqi; color: var(--muted); border-top: 1px solid var(--line); padding-top: 2cqi; margin-top: 3cqi; }
+.letter {
+  aspect-ratio: 210 / 297;
+  background: var(--paper);
+  border-radius: 3px;
+  box-shadow: 0 1px 1px rgba(22,19,15,0.08), 0 30px 50px -30px rgba(22,19,15,0.5);
+  padding: 9cqi 9cqi 7cqi;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap: 5cqi;
+  width: 100%;
+}
+.letter-wrap { container-type: inline-size; width: min(100%, 340px); }
+.letter-head { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 3.5cqi; border-bottom: 1px solid var(--ink); }
+.letter-head .lockup { font-size: 4.6cqi; }
+.letter-head .addr { font-size: 2.4cqi; line-height: 1.5; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+.letter-ref { font-size: 2.5cqi; color: var(--muted); display: flex; justify-content: space-between; }
+.letter-body { display: grid; gap: 2.4cqi; align-content: start; }
+.letter-body .t { font: 700 4.2cqi/1.2 var(--serif); margin-bottom: 1.5cqi; }
+.letter-body i { display: block; height: 1.3cqi; border-radius: 1px; background: #E9E4DA; }
+.letter-body i.s { width: 62%; }
+.letter-body i.gap { background: none; height: 1.2cqi; }
+.letter-foot { display: flex; justify-content: space-between; align-items: flex-end; font-size: 2.3cqi; color: var(--muted); border-top: 1px solid var(--line); padding-top: 2.6cqi; }
+.letter-foot .sign { font: italic 3.4cqi/1 var(--serif); color: var(--ink); }
+.mailhead { width: 100%; max-width: 600px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 1px rgba(22,19,15,0.08), 0 22px 40px -28px rgba(22,19,15,0.5); container-type: inline-size; }
+.mailhead-top { background: var(--graphite); color: var(--on-dark); padding: 4.4cqi 5cqi; display: flex; justify-content: space-between; align-items: center; gap: 4cqi; }
+.mailhead-top .lockup { font-size: 4.2cqi; color: var(--on-dark); }
+.mailhead-top .mh-ph { font: 600 3.2cqi/1.3 var(--sans); text-align: right; font-variant-numeric: tabular-nums; }
+.mailhead-top .mh-ph span { display: block; font-weight: 400; font-size: 2.4cqi; color: var(--on-dark-muted); }
+.mailhead-row { background: var(--paper); padding: 2.4cqi 5cqi; font-size: 2.05cqi; color: var(--muted); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.6cqi 2cqi; border-top: 3px solid var(--wax); }
+
+/* ── Выходные данные ───────────────────────────────── */
+.colophon { padding-block: clamp(56px, 8vw, 96px); }
+.colo-grid { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 32px; align-items: end; }
+.colophon .lockup { font-size: clamp(28px, 4vw, 44px); color: var(--on-dark); }
+.colophon p { color: var(--on-dark-muted); max-width: 40em; margin-top: 22px; font-size: 15px; }
+.colo-meta { font-size: 13px; color: var(--on-dark-muted); text-align: right; display: grid; gap: 4px; font-variant-numeric: tabular-nums; }
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
+  translate: -50% 20px;
+  opacity: 0;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  pointer-events: none;
+  transition: opacity var(--t-mid) var(--ease), translate var(--t-mid) var(--ease);
+  z-index: 10;
+}
+.toast.show { opacity: 1; translate: -50% 0; }
+
+/* ── Адаптив ───────────────────────────────────────── */
+@media (max-width: 1080px) {
+  .swatches { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .motion { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .c-cards, .c-mail { grid-column: span 12; }
+  .c-letter { grid-column: span 12; grid-row: auto; }
+}
+@media (max-width: 900px) {
+  .cover-main, .art-grid, .toc-grid { grid-template-columns: minmax(0, 1fr); }
+  .cover-figure { width: min(100%, 360px); justify-self: start; }
+  .art-head { position: static; }
+  .build { grid-template-columns: minmax(0, 1fr); }
+  .formats, .donts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rules { grid-template-columns: minmax(0, 1fr); }
+  .photos { grid-template-columns: minmax(0, 1fr); }
+  .curves { grid-template-columns: minmax(0, 1fr); }
+  .toc-what { display: none; }
+}
+@media (max-width: 640px) {
+  body { font-size: 16px; }
+  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pillars, .faces, .pair, .elements, .motion, .checks, .vrow, .seal-row { grid-template-columns: minmax(0, 1fr); }
+  .pillar + .pillar { padding-left: 0; border-left: 0; border-top: 1px solid var(--line); }
+  .pillar { padding-right: 0; }
+  .vcell + .vcell { border-left: 0; border-top: 1px solid var(--line); }
+  .swatches { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .formats, .donts { grid-template-columns: minmax(0, 1fr); }
+  .scale-row { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .colo-grid { grid-template-columns: minmax(0, 1fr); }
+  .colo-meta { text-align: left; }
+  .ratio div span { display: none; }
+  .cover-top span:nth-child(2) { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .mo .seal.play, .mo .draft.play path, .cards3.play i { animation: none; }
+  .sw, .sw:hover { transition: none; transform: none; }
+}
+</style>
+
+<!-- Знак — те же контуры, что в norma-site/src/components/LogoMark.astro.
+     Сверяет brandbooks/build.mjs: разошлись — сборка падает. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="mark" viewBox="0 0 100 100">
+      <path d="M0 0h31.3v2.8l-9.9 2v90.4l21.1 1.8V100H0.4v-3l9.2-1.8V4.8L0 2.8z" />
+      <path d="M31.8 46.5 42.5 57.2V98h-10.7z" />
+      <path d="M31.8 19.5 69.5 57v16.3L31.8 36z" />
+      <path d="M68.7 0h30.9v2.8l-9.8 2v90.4l9.3 1.8V100H68.7v-3l9.3-1.8V4.8l-9.3-2z" />
+    </symbol>
+    <linearGradient id="bad-grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E8635E" />
+      <stop offset="1" stop-color="#3B1A6B" />
+    </linearGradient>
+    <pattern id="hatch" width="2.4" height="2.4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="2.4" stroke="#16130F" stroke-width="0.5" opacity="0.5" />
+    </pattern>
+  </defs>
+</svg>
+
+<header class="cover">
+  <svg class="rosette js-rosette" viewBox="-260 -260 520 520" aria-hidden="true"></svg>
+  <div class="wrap cover-top">
+    <span class="lockup"><svg class="mk" aria-hidden="true"><use href="#mark" /></svg><span class="lockup-name">НОРМА</span></span>
+    <span>Руководство по фирменному стилю</span>
+    <span>Редакция 1.0 · 2 октября 2026</span>
+  </div>
+  <div class="wrap cover-main">
+    <div>
+      <p class="kicker">Брендбук</p>
+      <h1>НОРМА</h1>
+      <p class="cover-sub">Печать и бумага</p>
+      <p class="cover-lead">Фирменный стиль сервиса по вступлению в СРО для строителей, проектировщиков и изыскателей. Оформление выведено из самой работы: она состоит из документов. Белый лист, тёплая линейка, антиква и одно яркое пятно — сургучная печать.</p>
+      <dl class="cover-meta">
+        <dt>Владелец</dt><dd>ИП Багишев Алихан Ахадович</dd>
+        <dt>Сайт</dt><dd>norma-sro.ru</dd>
+        <dt>Редакция</dt><dd>1.0 от 2 октября 2026 года</dd>
+      </dl>
+    </div>
+    <figure class="cover-figure" aria-label="Знак НОРМА с размерными линиями">
+      <svg viewBox="-26 -26 152 152" role="img" aria-label="Монограмма Н с размерными линиями модуля 100">
+        <g fill="none" stroke="#16130F" stroke-width="0.35" opacity="0.55">
+          <path d="M0 -12H99.6M0 -15V-9M99.6 -15V-9" />
+          <path d="M-1.5 -13.5 1.5 -10.5M98.1 -13.5 101.1 -10.5" stroke-width="0.6" />
+          <path d="M-12 0V100M-15 0H-9M-15 100H-9" />
+          <path d="M-13.5 -1.5-10.5 1.5M-13.5 98.5-10.5 101.5" stroke-width="0.6" />
+          <path d="M0 -4V-17M99.6 -4V-17M-4 0H-17M-4 100H-17" stroke-dasharray="1 1.2" />
+        </g>
+        <g fill="#6B6459" font-family="Golos Text, sans-serif" font-size="4.2" text-anchor="middle">
+          <text x="49.8" y="-14.5">100</text>
+          <text x="-14.5" y="51.5" transform="rotate(-90 -14.5 50)">100</text>
+        </g>
+        <use href="#mark" width="100" height="100" fill="#B0202B" />
+      </svg>
+    </figure>
+  </div>
+</header>
+
+<nav class="toc" aria-labelledby="toc-h">
+  <div class="wrap toc-grid">
+    <div>
+      <p class="kicker">Оглавление</p>
+      <h2 id="toc-h" style="margin-top:14px">Десять статей о том, как выглядит НОРМА</h2>
+    </div>
+    <ol>
+      <li><a href="#ideya"><span class="toc-no">Статья 1</span><span class="toc-name">Идея</span><span class="toc-dots"></span><span class="toc-what">отстройка</span></a></li>
+      <li><a href="#znak"><span class="toc-no">Статья 2</span><span class="toc-name">Знак</span><span class="toc-dots"></span><span class="toc-what">построение</span></a></li>
+      <li><a href="#logotip"><span class="toc-no">Статья 3</span><span class="toc-name">Логотип</span><span class="toc-dots"></span><span class="toc-what">форматы</span></a></li>
+      <li><a href="#cvet"><span class="toc-no">Статья 4</span><span class="toc-name">Цвет</span><span class="toc-dots"></span><span class="toc-what">контраст</span></a></li>
+      <li><a href="#shrifty"><span class="toc-no">Статья 5</span><span class="toc-name">Шрифты</span><span class="toc-dots"></span><span class="toc-what">шкала</span></a></li>
+      <li><a href="#grafika"><span class="toc-no">Статья 6</span><span class="toc-name">Графика</span><span class="toc-dots"></span><span class="toc-what">печать и линии</span></a></li>
+      <li><a href="#dvizhenie"><span class="toc-no">Статья 7</span><span class="toc-name">Движение</span><span class="toc-dots"></span><span class="toc-what">кривая</span></a></li>
+      <li><a href="#foto"><span class="toc-no">Статья 8</span><span class="toc-name">Фотография</span><span class="toc-dots"></span><span class="toc-what">обработка</span></a></li>
+      <li><a href="#golos"><span class="toc-no">Статья 9</span><span class="toc-name">Голос</span><span class="toc-dots"></span><span class="toc-what">тексты</span></a></li>
+      <li><a href="#nositeli"><span class="toc-no">Статья 10</span><span class="toc-name">Носители</span><span class="toc-dots"></span><span class="toc-what">визитка, бланк</span></a></li>
+    </ol>
+  </div>
+</nav>
+
+<div class="dim" aria-hidden="true"></div>
+
+<main>
+  <section class="art" id="ideya" aria-labelledby="h-ideya">
+    <div class="wrap art-grid">
+      <header class="art-head">
+        <p class="art-no">Статья 1</p>
+        <h2 id="h-ideya">Идея</h2>
+        <p class="art-lead">Почему бренд выглядит как документ и на чём он держится.</p>
+      </header>
+      <div class="art-body">
+        <p class="quote">Вступление в СРО — это бумага. Поэтому у бренда белый лист, тонкая линейка, антиква и <em>одна красная печать.</em></p>
+        <div class="pillars">
+          <div class="pillar">
+            <p class="kicker">Принцип первый</p>
+            <h3>Эталонная точность</h3>
+            <p>У каждого факта есть статья закона, у каждой страницы — дата сверки. Цифра без источника на носители бренда не попадает.</p>
+          </div>
+          <div class="pillar">
+            <p class="kicker">Принцип второй</p>
+            <h3>Честность</h3>
+            <p>Калькулятор умеет ответить «вам не нужна СРО» и показать норму. Бренд говорит это до оплаты, а не после.</p>
+          </div>
+        </div>
+        <div class="block">
+          <h3>Отстройка от рынка</h3>
+          <div class="table-scroll">
+            <table class="versus">
+              <thead><tr><th scope="col">Как у всех</th><th scope="col">Как у НОРМЫ</th></tr></thead>
+              <tbody>
+                <tr><td>Синий градиент на весь экран</td><td>Белый лист и сургучный красный</td></tr>
+                <tr><td>Рубленый шрифт капсом</td><td>Антиква обычным регистром</td></tr>
+                <tr><td>Стоковые фотографии людей в касках</td><td>Линии чертежа и фотография как фактура листа</td></tr>
+                <tr><td>«Допуск СРО за один день»</td><td>Статья закона рядом с каждым утверждением</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="dim" aria-hidden="true"></div>
+
+  <section class="art art--sheet" id="znak" aria-labelledby="h-znak">
+    <div class="wrap art-grid">
+      <header class="art-head">
+        <p class="art-no">Статья 2</p>
+        <h2 id="h-znak">Знак</h2>
+        <p class="art-lead">Монограмма «Н», в которой одновременно читается латинская N. Выбрана владельцем из собственного набора.</p>
+      </header>
+      <div class="art-body">
+        <div class="build">
+          <svg viewBox="-14 -10 128 126" role="img" aria-label="Построение монограммы на сетке 100 на 100">
+            <g stroke="#E5E0D5" stroke-width="0.3" fill="none">
+              <path d="M0 0V100M10 0V100M20 0V100M30 0V100M40 0V100M50 0V100M60 0V100M70 0V100M80 0V100M90 0V100M100 0V100" />
+              <path d="M0 0H100M0 10H100M0 20H100M0 30H100M0 40H100M0 50H100M0 60H100M0 70H100M0 80H100M0 90H100M0 100H100" />
+            </g>
+            <use href="#mark" width="100" height="100" fill="#B0202B" />
+            <path d="M31.8 36.2 42.5 46.8V57.2L31.8 46.5Z" fill="url(#hatch)" stroke="#16130F" stroke-width="0.3" stroke-dasharray="0.8 0.8" />
+            <g fill="none" stroke="#16130F" stroke-width="0.35">
+              <path d="M9.6 106H21.4M9.6 103.5V108.5M21.4 103.5V108.5" />
+              <path d="M8.4 107.2 10.8 104.8M20.2 107.2 22.6 104.8" stroke-width="0.55" />
+              <path d="M31.8 19.5H47" stroke-dasharray="1 1" opacity="0.7" />
+              <path d="M40.8 19.5A9 9 0 0 1 38.16 25.86" />
+            </g>
+            <g font-family="Golos Text, sans-serif" font-size="3.6" fill="#6B6459">
+              <text x="15.5" y="113" text-anchor="middle">11,8</text>
+              <text x="42.4" y="25.6">45°</text>
+            </g>
+            <g font-family="Golos Text, sans-serif" font-size="3.4" font-weight="600" text-anchor="middle">
+              <circle cx="-6" cy="12" r="3.6" fill="#FFFFFF" stroke="#B0202B" stroke-width="0.4" /><text x="-6" y="13.2" fill="#8E1A23">1</text>
+              <circle cx="58" cy="30" r="3.6" fill="#FFFFFF" stroke="#B0202B" stroke-width="0.4" /><text x="58" y="31.2" fill="#8E1A23">2</text>
+              <circle cx="49" cy="63" r="3.6" fill="#FFFFFF" stroke="#B0202B" stroke-width="0.4" /><text x="49" y="64.2" fill="#8E1A23">3</text>
+              <circle cx="32" cy="106" r="3.6" fill="#FFFFFF" stroke="#B0202B" stroke-width="0.4" /><text x="32" y="107.2" fill="#8E1A23">4</text>
+            </g>
+          </svg>
+          <ol class="legend">
+            <li><span><b>Стойки с засечками</b>Ширина стойки 11,8 модуля — она же мера охранного поля.</span></li>
+            <li><span><b>Диагональ под 45°</b>Средняя стойка срезана под тем же углом.</span></li>
+            <li><span><b>Просвет</b>Диагональ не касается стоек. Этот воздух делает из двух литер одну монограмму.</span></li>
+            <li><span><b>Общая засечка</b>Нижняя засечка левой стойки доходит до средней и связывает знак в целое.</span></li>
+          </ol>
+        </div>
+
+        <div class="block">
+          <h3>Цветовые версии</h3>
+          <div class="tiles">
+            <figure class="tile tile--paper"><svg class="mk" aria-hidden="true"><use href="#mark" /></svg><figcaption>Основная: сургуч на бумаге</figcaption></figure>
+            <figure class="tile tile--sheet"><svg class="mk" aria-hidden="true"><use href="#mark" /></svg><figcaption>На тёплом листе</figcaption></figure>
+            <figure class="tile tile--dark"><svg class="mk" aria-hidden="true"><use href="#mark" /></svg><figcaption>На графите: светлый сургуч</figcaption></figure>
+            <figure class="tile tile--mono"><svg class="mk" aria-hidden="true"><use href="#mark" /></svg><figcaption>Одним цветом: печать, факс, гравировка</figcaption></figure>
+          </div>
+        </div>
+
+        <div class="pair">
+          <div class="panel">
+            <h4>Охранное поле</h4>
+            <div class="clear">
+              <svg viewBox="-20 -20 140 140" role="img" aria-label="Охранное поле равно ширине стойки со всех сторон">
+                <rect x="-11.8" y="-11.8" width="123.4" height="123.6" fill="url(#hatch)" opacity="0.6" />
+                <rect x="0" y="0" width="99.6" height="100" fill="#F6F3EC" />
+                <rect x="-11.8" y="-11.8" width="123.4" height="123.6" fill="none" stroke="#B0202B" stroke-width="0.5" stroke-dasharray="2 1.5" />
+                <use href="#mark" width="100" height="100" fill="#B0202B" />
+                <g font-family="Golos Text, sans-serif" font-size="6" fill="#16130F" text-anchor="middle" font-style="italic">
+                  <text x="-5.9" y="52">x</text>
+                  <text x="49.8" y="-4">x</text>
+                  <text x="105.7" y="52">x</text>
+                  <text x="49.8" y="108.5">x</text>
+                </g>
+              </svg>
+            </div>
+            <p class="small">Со всех сторон знака остаётся поле <i>x</i>, равное ширине стойки. Внутрь поля не заходят текст, края носителя и чужие знаки.</p>
+          </div>
+          <div class="panel">
+            <h4>Минимальный размер</h4>
+            <div class="sizes">
+              <figure><span class="fav"><svg class="mk" aria-hidden="true"><use href="#mark" /></svg></span><figcaption>16 px</figcaption></figure>
+              <figure><svg class="mk" width="20" height="20" aria-hidden="true"><use href="#mark" /></svg><figcaption>20 px</figcaption></figure>
+              <figure><svg class="mk" width="27" height="27" aria-hidden="true"><use href="#mark" /></svg><figcaption>27 px</figcaption></figure>
+              <figure><svg class="mk" width="48" height="48" aria-hidden="true"><use href="#mark" /></svg><figcaption>48 px</figcaption></figure>
+              <figure><svg class="mk" width="72" height="72" aria-hidden="true"><use href="#mark" /></svg><figcaption>72 px</figcaption></figure>
+            </div>
+            <p class="small">16 px — только на графитовой плашке значка вкладки, с минимальными полями. Без плашки знак ставится от 20 px; в шапке сайта он 27 px. В печати — от 6 мм: тоньше засечки сливаются.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="art dark" id="logotip" aria-labelledby="h-logotip">
+    <div class="wrap art-grid">
+      <header class="art-head">
+        <p class="art-no">Статья 3</p>
+        <h2 id="h-logotip">Логотип</h2>
+        <p class="art-lead">Знак, название антиквой с разрядкой и подпись о предмете работы. Само слово «норма» о предмете не говорит, поэтому подпись обязательна.</p>
+      </header>
+      <div class="art-body">
+        <div class="logo-stage">
+          <span class="lockup on-dark"><svg class="mk" aria-hidden="true"><use href="#mark" /></svg><span><span class="lockup-name">НОРМА</span><span class="lockup-tag">вступление в СРО</span></span></span>
+        </div>
+        <p class="spec"><span>Знак <b>27</b></span><span>Название <b>17</b>, Literata 800, разрядка <b>0,08 em</b></span><span>Подпись <b>11</b>, Golos Text</span><span>Зазор <b>12</b></span><span>пропорции шапки сайта, в пикселях</span></p>
+
+        <div class="block">
+          <h3>Форматы</h3>
+          <div class="formats">
+            <figure class="format" style="margin:0">
+              <div class="format-view paper"><span class="lockup" style="font-size:clamp(15px,1.9vw,22px)"><svg class="mk" aria-hidden="true"><use href="#mark" /></svg><span><span class="lockup-name">НОРМА</span><span class="lockup-tag">вступление в СРО</span></span></span></div>
+              <figcaption class="format-text"><b>Горизонтальный</b><span>Сайт, документы, подписи. Основной формат.</span></figcaption>
+            </figure>
+            <figure class="format" style="margin:0">
+              <div class="format-view sheet"><div class="avatars"><span class="avatar"><svg class="mk" aria-hidden="true"><use href="#mark" /></svg></span><span class="avatar light"><svg class="mk" aria-hidden="true"><use href="#mark" /></svg></span></div></div>
+              <figcaption class="format-text"><b>Аватар</b><span>Знак занимает треть круга: мессенджеры обрезают картинку в круг, и крупный знак теряет засечки.</span></figcaption>
+            </figure>
+            <figure class="format" style="margin:0">
+              <div class="format-view paper"><div class="square"><svg class="mk" aria-hidden="true"><use href="#mark" /></svg><span>Вступление в СРО</span></div></div>
+              <figcaption class="format-text"><b>Квадрат с подписью</b><span>Каталоги организаций вроде Яндекс Бизнеса: рядом с названием «Норма» подпись объясняет, о чём речь.</span></figcaption>
+            </figure>
+          </div>
+        </div>
+
+        <div class="block">
+          <h3>Так делать нельзя</h3>
+          <div class="donts">
+            <figure class="dont"><div class="dont-view" style="color:#1F5FBF"><svg class="mk" aria-hidden="true"><use href="#mark" /></svg></div><figcaption>Перекрашивать в синий<span>Синего у бренда нет ни в одном элементе.</span></figcaption></figure>
+            <figure class="dont"><div class="dont-view"><svg class="mk" aria-hidden="true" style="transform:scaleX(1.45)"><use href="#mark" /></svg></div><figcaption>Растягивать и сжимать<span>Пропорции знака — квадрат.</span></figcaption></figure>
+            <figure class="dont"><div class="dont-view"><svg class="mk" aria-hidden="true" style="transform:rotate(-18deg)"><use href="#mark" /></svg></div><figcaption>Поворачивать<span>Наклон есть только у печати.</span></figcaption></figure>
+            <figure class="dont"><div class="dont-view"><svg class="mk" aria-hidden="true" style="filter:drop-shadow(3px 4px 2px rgba(0,0,0,.45));stroke:#16130F;stroke-width:2"><use href="#mark" /></svg></div><figcaption>Обводка и тень<span>Знак плоский, как оттиск на бумаге.</span></figcaption></figure>
+            <figure class="dont"><div class="dont-view"><svg class="mk" aria-hidden="true" style="fill:url(#bad-grad)"><use href="#mark" /></svg></div><figcaption>Градиент<span>Только сплошной цвет из палитры.</span></figcaption></figure>
+            <figure class="dont"><div class="dont-view"><span style="display:inline-flex;align-items:center;gap:10px;color:#16130F"><svg class="mk" aria-hidden="true" style="width:34px;height:34px;color:#B0202B"><use href="#mark" /></svg><span style="font:900 26px/1 Arial Black, Impact, sans-serif;letter-spacing:-0.02em">НОРМА</span></span></div><figcaption>Название рубленым шрифтом<span>Название набирается только Literata.</span></figcaption></figure>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="art" id="cvet" aria-labelledby="h-cvet">
+    <div class="wrap art-grid">
+      <header class="art-head">
+        <p class="art-no">Статья 4</p>
+        <h2 id="h-cvet">Цвет</h2>
+        <p class="art-lead">Сургучный красный — цвет печати на документе. Всё остальное — бумага и чернила. Нажмите на образец, чтобы скопировать код.</p>
+      </header>
+      <div class="art-body">
+        <div class="swatches">
+          <button class="sw sw--main" type="button" data-hex="#B0202B" style="--c:#B0202B"><span class="sw-chip"><span>Сургуч</span></span><span class="sw-info"><b>Сургуч</b><code>#B0202B</code><span>RGB 176 32 43 · кнопки, печать, знак</span></span></button>
+          <button class="sw sw--main" type="button" data-hex="#171310" style="--c:#171310"><span class="sw-chip"><span>Графит</span></span><span class="sw-info"><b>Графит</b><code>#171310</code><span>RGB 23 19 16 · тёмные разделы, шапка</span></span></button>
+          <button class="sw sw--main" type="button" data-hex="#F6F3EC" style="--c:#F6F3EC"><span class="sw-chip"><span style="color:#16130F">Лист</span></span><span class="sw-info"><b>Тёплый лист</b><code>#F6F3EC</code><span>RGB 246 243 236 · чередование разделов</span></span></button>
+          <button class="sw" type="button" data-hex="#FFFFFF" style="--c:#FFFFFF"><span class="sw-chip"></span><span class="sw-info"><b>Бумага</b><code>#FFFFFF</code><span>основной фон</span></span></button>
+          <button class="sw" type="button" data-hex="#16130F" style="--c:#16130F"><span class="sw-chip"></span><span class="sw-info"><b>Чернила</b><code>#16130F</code><span>текст</span></span></button>
+          <button class="sw" type="button" data-hex="#6B6459" style="--c:#6B6459"><span class="sw-chip"></span><span class="sw-info"><b>Вторичный</b><code>#6B6459</code><span>подписи</span></span></button>
+          <button class="sw" type="button" data-hex="#E5E0D5" style="--c:#E5E0D5"><span class="sw-chip"></span><span class="sw-info"><b>Линейка</b><code>#E5E0D5</code><span>рамки, линии</span></span></button>
+          <button class="sw" type="button" data-hex="#8E1A23" style="--c:#8E1A23"><span class="sw-chip"></span><span class="sw-info"><b>Сургуч тёмный</b><code>#8E1A23</code><span>ссылки на белом</span></span></button>
+          <button class="sw" type="button" data-hex="#E8635E" style="--c:#E8635E"><span class="sw-chip"></span><span class="sw-info"><b>Сургуч светлый</b><code>#E8635E</code><span>акцент на графите</span></span></button>
+          <button class="sw sw--wide" type="button" data-hex="#FBEDEB" style="--c:#FBEDEB"><span class="sw-chip"></span><span class="sw-info"><b>Сургуч бледный</b><code>#FBEDEB</code><span>подложки, чипы</span></span></button>
+          <button class="sw sw--wide" type="button" data-hex="#2C6B41" style="--c:#2C6B41"><span class="sw-chip"></span><span class="sw-info"><b>Сверено</b><code>#2C6B41</code><span>«СРО не нужна», штампы</span></span></button>
+          <button class="sw sw--wide" type="button" data-hex="#4FA46F" style="--c:#4FA46F"><span class="sw-chip"></span><span class="sw-info"><b>Сверено на тёмном</b><code>#4FA46F</code><span>зелёный на графите</span></span></button>
+        </div>
+
+        <div class="block">
+          <h3>Пропорция на странице</h3>
+          <div class="ratio" role="img" aria-label="Бумага около 60 процентов, тёплый лист 20, графит и чернила 16, сургуч 4">
+            <div style="--f:60;--c:#FFFFFF"><span>Бумага · 60 %</span></div>
+            <div style="--f:20;--c:#F6F3EC"><span>Лист · 20 %</span></div>
+            <div style="--f:16;--c:#171310" class="on-dark-t"><span>Графит · 16 %</span></div>
+            <div style="--f:4;--c:#B0202B" class="on-wax"></div>
+          </div>
+          <p class="small">Красного мало, и в этом его сила: на странице одна-две красные детали. Кнопка заявки, печать и знак в шапке уже исчерпывают норму.</p>
+        </div>
+
+        <div class="block">
+          <h3>Контраст пар</h3>
+          <div class="table-scroll">
+            <table class="contrast">
+              <thead><tr><th scope="col">Пара</th><th scope="col">Где</th><th scope="col">Контраст</th><th scope="col">WCAG</th></tr></thead>
+              <tbody id="cx-body"></tbody>
+            </table>
+          </div>
+          <p class="small">Числа считаются браузером по формуле WCAG 2.2 из тех же кодов, что в образцах выше. Норма для текста — 4,5 : 1, для крупного текста и значков — 3 : 1.</p>
+        </div>
+
+        <p class="note">Синего у бренда нет. Исключения — чужие товарные знаки: значки мессенджеров в кнопках связи и логотипы СРО-партнёров в ленте на главной. Их показывают в собственных цветах, в палитру бренда они не входят.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="dim" aria-hidden="true"></div>
+
+  <section class="art art--sheet" id="shrifty" aria-labelledby="h-shrifty">
+    <div class="wrap art-grid">
+      <header class="art-head">
+        <p class="art-no">Статья 5</p>
+        <h2 id="h-shrifty">Шрифты</h2>
+        <p class="art-lead">Два семейства. Антиква говорит о законе и документах, гротеск отвечает за интерфейс и цифры.</p>
+      </header>
+      <div class="art-body">
+        <div class="faces">
+          <div class="face face--serif">
+            <div class="face-top"><span class="face-aa">Аа</span><span class="face-name"><b>Literata</b><span>заголовки, текст статей</span></span></div>
+            <p class="face-glyphs">АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ абвгдеёжзийклмнопрстуфхцчшщъыьэюя <i>курсив только здесь</i></p>
+            <div class="face-weights"><span style="font-weight:400">Обычный</span><span style="font-weight:600">Полужирный</span><span style="font-weight:800">Чёрный</span></div>
+          </div>
+          <div class="face face--sans">
+            <div class="face-top"><span class="face-aa">Аа</span><span class="face-name"><b>Golos Text</b><span>интерфейс, таблицы, цифры</span></span></div>
+            <p class="face-glyphs">АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ 0123456789 · 100 000 ₽ · +7 931 969-86-64</p>
+            <div class="face-weights"><span style="font-weight:400">Обычный</span><span style="font-weight:500">Средний</span><span style="font-weight:600">Полужирный</span></div>
+          </div>
+        </div>
+
+        <div class="block">
+          <h3>Шкала</h3>
+          <div class="scale">
+            <div class="scale-row"><span class="scale-meta"><b>H1</b>Literata 700<br>52 / 1,12</span><span class="s-h1">Вступление в СРО без устаревших норм</span></div>
+            <div class="scale-row"><span class="scale-meta"><b>H2</b>Literata 700<br>38 / 1,12</span><span class="s-h2">Сколько стоит вступить в СРО</span></div>
+            <div class="scale-row"><span class="scale-meta"><b>H3</b>Golos 600<br>19 / 1,3</span><span class="s-h3">Компенсационный фонд возмещения вреда</span></div>
+            <div class="scale-row"><span class="scale-meta"><b>Текст</b>Golos 400<br>16,5 / 1,65</span><span class="s-body">Строителям, проектировщикам и изыскателям — по всей России. Если членство вам не нужно, скажу об этом до оплаты и покажу норму.</span></div>
+            <div class="scale-row"><span class="scale-meta"><b>Подпись</b>Golos 600, капс<br>12, разрядка 0,12 em</span><span class="s-cap">Нормы закона сверены</span></div>
+          </div>
+        </div>
+
+        <div class="rules">
+          <div class="rule"><b>Обычный регистр</b><p class="ex">Как вступить в СРО <s>КАК ВСТУПИТЬ В СРО</s></p><p>У антиквы капс читается надгробием. Капсом набираются только короткие подписи гротеском.</p></div>
+          <div class="rule"><b>Курсив только у Literata</b><p class="ex"><i>Печать и бумага</i></p><p>Курсивом выделяют мысль. У гротеска курсива в бренде нет.</p></div>
+          <div class="rule"><b>Цифры одной высоты</b><p class="ex" style="font-family:var(--sans);font-weight:600">10 000 000 ₽</p><p>Суммы и телефоны набираются гротеском: старостильные цифры антиквы в таблицах пляшут.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="art" id="grafika" aria-labelledby="h-grafika">
+    <div class="wrap art-grid">
+      <header class="art-head">
+        <p class="art-no">Статья 6</p>
+        <h2 id="h-grafika">Графика</h2>
+        <p class="art-lead">Строительная тема идёт линиями: чертёж, размерные линии, гильош. Фотографий касок нет.</p>
+      </header>
+      <div class="art-body">
+        <div class="seal-row">
+          <span class="seal">
+            <svg viewBox="0 0 120 120" role="img" aria-label="Печать «Сверено» с датой 8 сентября 2026">
+              <defs>
+                <path id="seal-top" d="M 16.5 60 A 43.5 43.5 0 0 1 103.5 60" />
+                <path id="seal-bot" d="M 11 60 A 49 49 0 0 0 109 60" />
+              </defs>
+              <circle cx="60" cy="60" r="50" fill="none" stroke="currentColor" stroke-width="2.4" />
+              <circle cx="60" cy="60" r="42" fill="none" stroke="currentColor" stroke-width="1" opacity="0.75" />
+              <text class="seal-text" font-size="6.6" font-weight="600" letter-spacing="0.2"><textPath href="#seal-top" startOffset="50%" text-anchor="middle">ГРАДОСТРОИТЕЛЬНЫЙ КОДЕКС</textPath></text>
+              <text class="seal-text" font-size="6.6" font-weight="600" letter-spacing="0.2"><textPath href="#seal-bot" startOffset="50%" text-anchor="middle">РОССИЙСКОЙ ФЕДЕРАЦИИ</textPath></text>
+              <line x1="38" y1="49" x2="82" y2="49" stroke="currentColor" stroke-width="1" opacity="0.6" />
+              <text class="seal-text" x="60" y="63" text-anchor="middle" font-size="12" font-weight="700" letter-spacing="1.4">СВЕРЕНО</text>
+              <line x1="38" y1="68" x2="82" y2="68" stroke="currentColor" stroke-width="1" opacity="0.6" />
+              <text class="seal-text" x="60" y="78" text-anchor="middle" font-size="6.8" font-weight="500" opacity="0.85">8 сентября 2026</text>
+            </svg>
+          </span>
+          <div class="prose">
+            <h3 style="font:700 28px/1.2 var(--serif)">Печать «Сверено»</h3>
+            <p>Фирменный знак проверки: круглый оттиск с датой последней сверки с законом. Ставится с наклоном −9° и прозрачностью 92 %: рукой печать ровно не ставят, краска ложится неплотно.</p>
+            <p><b>Печать означает «сверено с законом» и стоит только рядом с нормами.</b> Рядом с условиями вступления, ценами и подарками её быть не должно: эти условия назначает СРО, а не кодекс. Дату двигает человек, сверивший текст, а не скрипт.</p>
+          </div>
+        </div>
+
+        <div class="elements">
+          <div class="el">
+            <div class="el-view sheet"><p class="chipline">Порог для строителей — 10 млн ₽ <span class="chip">ч. 2.1 ст. 52 ГрК РФ</span> Требование о двух специалистах <span class="chip">ч. 6 ст. 55.5 ГрК РФ</span></p></div>
+            <div class="el-text"><b>Чип нормы</b><p>Ставится сразу за утверждением. Только для норм закона: у взносов СРО, условий и подарков чипа нет.</p></div>
+          </div>
+          <div class="el">
+            <div class="el-view">
+              <div class="dimdemo">
+                <svg viewBox="0 0 300 40" role="img" aria-label="Размерная линия с засечками">
+                  <g stroke="#16130F" fill="none" stroke-width="0.8">
+                    <path d="M10 20H290" opacity="0.6" />
+                    <path d="M10 10V30M290 10V30" opacity="0.35" />
+                    <path d="M6 24 14 16M286 24 294 16" stroke-width="1.4" />
+                  </g>
+                  <text x="150" y="15" text-anchor="middle" font-family="Literata, serif" font-size="11" fill="#6B6459">1280</text>
+                </svg>
+              </div>
+            </div>
+            <div class="el-text"><b>Размерная линия</b><p>Разделитель между разделами — цитата из чертежа. Засечки под 45°, как диагональ знака.</p></div>
+          </div>
+          <div class="el">
+            <div class="el-view sheet"><svg class="rosette js-rosette" viewBox="-260 -260 520 520" aria-hidden="true"></svg></div>
+            <div class="el-text"><b>Гильош</b><p>Розетка из окружностей, как на ценных бумагах. Уходит за край листа и не лежит под заголовком: под крупной антиквой частые линии рябят.</p></div>
+          </div>
+          <div class="el">
+            <div class="el-view">
+              <div class="draft">
+                <svg viewBox="40 60 470 350" fill="none" role="img" aria-label="Чертёж: дом в лесах и башенный кран">
+                  <g stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M60 400h420" /><path d="M120 400V190l120-64 120 64v210" /><path d="M120 190h240M120 244h240M120 298h240M120 352h240" /><path d="M180 244v108M240 190v210M300 244v108" /><path d="M240 126 120 190M240 126l120 64" />
+                  </g>
+                  <g class="crane" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M410 400V96h-14v304M396 96h96M492 96v34M492 96 396 76M410 96v-14" /><path d="M470 96v52m-10-52 10 52h-20l10-52" /><path d="M396 130l14-34M396 164l14-34M396 198l14-34" />
+                  </g>
+                </svg>
+              </div>
+            </div>
+            <div class="el-text"><b>Чертёж</b><p>Дом в лесах и башенный кран, кран — сургучом. Одна красная деталь превращает серый чертёж из водяного знака в рисунок.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="art dark" id="dvizhenie" aria-labelledby="h-dvizhenie">
+    <div class="wrap art-grid">
+      <header class="art-head">
+        <p class="art-no">Статья 7</p>
+        <h2 id="h-dvizhenie">Движение</h2>
+        <p class="art-lead">Одна кривая и три длительности на всё. При настройке «уменьшить движение» анимации выключаются целиком.</p>
+      </header>
+      <div class="art-body">
+        <div class="motion">
+          <div class="mo">
+            <div class="mo-view">
+              <span class="seal" id="demo-seal">
+                <svg viewBox="0 0 120 120" aria-hidden="true">
+                  <defs>
+                    <path id="seal2-top" d="M 16.5 60 A 43.5 43.5 0 0 1 103.5 60" />
+                    <path id="seal2-bot" d="M 11 60 A 49 49 0 0 0 109 60" />
+                  </defs>
+                  <circle cx="60" cy="60" r="50" fill="none" stroke="currentColor" stroke-width="2.4" />
+                  <circle cx="60" cy="60" r="42" fill="none" stroke="currentColor" stroke-width="1" opacity="0.75" />
+                  <text class="seal-text" font-size="6.6" font-weight="600" letter-spacing="0.2"><textPath href="#seal2-top" startOffset="50%" text-anchor="middle">ГРАДОСТРОИТЕЛЬНЫЙ КОДЕКС</textPath></text>
+                  <text class="seal-text" font-size="6.6" font-weight="600" letter-spacing="0.2"><textPath href="#seal2-bot" startOffset="50%" text-anchor="middle">РОССИЙСКОЙ ФЕДЕРАЦИИ</textPath></text>
+                  <line x1="38" y1="49" x2="82" y2="49" stroke="currentColor" stroke-width="1" opacity="0.6" />
+                  <text class="seal-text" x="60" y="63" text-anchor="middle" font-size="12" font-weight="700" letter-spacing="1.4">СВЕРЕНО</text>
+                  <line x1="38" y1="68" x2="82" y2="68" stroke="currentColor" stroke-width="1" opacity="0.6" />
+                  <text class="seal-text" x="60" y="78" text-anchor="middle" font-size="6.8" font-weight="500" opacity="0.85">8 сентября 2026</text>
+                </svg>
+              </span>
+            </div>
+            <div class="mo-text"><b>Печать прикладывается</b><p>Приходит крупнее и под углом −24°, садится на −9° с пружинистым ударом в конце.</p><button class="btn btn--wax" type="button" data-play="demo-seal">Приложить печать</button></div>
+          </div>
+          <div class="mo">
+            <div class="mo-view">
+              <div class="draft" id="demo-draft" style="width:78%">
+                <svg viewBox="40 60 470 350" fill="none" aria-hidden="true">
+                  <g stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <path pathLength="1" style="--i:0" d="M60 400h420" /><path pathLength="1" style="--i:1" d="M120 400V190l120-64 120 64v210" /><path pathLength="1" style="--i:2" d="M120 190h240M120 244h240M120 298h240M120 352h240" /><path pathLength="1" style="--i:3" d="M180 244v108M240 190v210M300 244v108" /><path pathLength="1" style="--i:4" d="M240 126 120 190M240 126l120 64" />
+                  </g>
+                  <g class="crane" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path pathLength="1" style="--i:5" d="M410 400V96h-14v304M396 96h96M492 96v34M492 96 396 76M410 96v-14" /><path pathLength="1" style="--i:6" d="M470 96v52m-10-52 10 52h-20l10-52" /><path pathLength="1" style="--i:7" d="M396 130l14-34M396 164l14-34M396 198l14-34" />
+                  </g>
+                </svg>
+              </div>
+            </div>
+            <div class="mo-text"><b>Чертёж рисуется</b><p>Линия за линией, по очереди: сначала земля, затем дом, последним — кран.</p><button class="btn btn--line" type="button" data-play="demo-draft">Начертить</button></div>
+          </div>
+          <div class="mo">
+            <div class="mo-view"><div class="cards3" id="demo-cards"><i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i></div></div>
+            <div class="mo-text"><b>Блоки выплывают</b><p>Ступенькой 55 мс, ещё до входа в кадр: при быстрой прокрутке содержимое не опаздывает.</p><button class="btn btn--line" type="button" data-play="demo-cards">Проявить</button></div>
+          </div>
+        </div>
+
+        <div class="curves">
+          <svg viewBox="-8 -8 116 116" role="img" aria-label="Кривая cubic-bezier 0.22, 0.61, 0.36, 1">
+            <rect x="0" y="0" width="100" height="100" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="0.6" />
+            <path d="M0 100 22 39M100 0 36 0" stroke="rgba(255,255,255,0.35)" stroke-width="0.6" stroke-dasharray="1.5 1.5" />
+            <path d="M0 100C22 39 36 0 100 0" fill="none" stroke="#E8635E" stroke-width="2" />
+            <circle cx="22" cy="39" r="2.4" fill="#171310" stroke="#F5F1EA" stroke-width="0.8" />
+            <circle cx="36" cy="0" r="2.4" fill="#171310" stroke="#F5F1EA" stroke-width="0.8" />
+            <text x="0" y="112" fill="#B3A99C" font-family="Golos Text, sans-serif" font-size="6">0.22, 0.61, 0.36, 1</text>
+          </svg>
+          <div class="durations">
+            <p class="kicker">Длительности</p>
+            <div class="dur"><code>--t-fast</code><span class="dur-bar" style="--w:29%"></span><span>0,18 с</span></div>
+            <div class="dur"><code>--t-mid</code><span class="dur-bar" style="--w:55%"></span><span>0,34 с</span></div>
+            <div class="dur"><code>--t-slow</code><span class="dur-bar" style="--w:100%"></span><span>0,62 с</span></div>
+            <p class="small">Наведение и цвет — быстро, раскрытие ответов — средне, появление блоков — медленно. По месту длительности не пишутся.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="art" id="foto" aria-labelledby="h-foto">
+    <div class="wrap art-grid">
+      <header class="art-head">
+        <p class="art-no">Статья 8</p>
+        <h2 id="h-foto">Фотография</h2>
+        <p class="art-lead">Снимок работает фактурой листа, а не заставкой. Один кадр на весь сайт, у каждой шапки свой сдвиг.</p>
+      </header>
+      <div class="art-body">
+        <div class="photos">
+          <figure class="ph">
+            <div class="ph-frame"><img src="{{img:norma-site/public/img/signing.webp}}" alt="Подписание документов за столом, рядом весы правосудия"></div>
+            <figcaption><b>Исходный кадр</b>Подписание документов. Бронза весов попадает в тёплый ряд сургуча.</figcaption>
+          </figure>
+          <figure class="ph">
+            <div class="ph-frame on-paper"><img src="{{img:norma-site/public/img/signing.webp}}" alt=""><div class="ph-over" aria-hidden="true"><i></i><i></i><i></i><i></i></div></div>
+            <figcaption><b>На бумаге</b>Цвет уведён, кадр гаснет слева под колонкой текста и растворяется сверху и снизу.</figcaption>
+          </figure>
+          <figure class="ph">
+            <div class="ph-frame on-dark"><img src="{{img:norma-site/public/img/signing.webp}}" alt=""><div class="ph-over" aria-hidden="true"><i></i><i></i><i></i><i></i></div></div>
+            <figcaption><b>На графите</b>Приглушён и притемнён: светлый текст не должен ложиться на светлые пятна.</figcaption>
+          </figure>
+        </div>
+        <ul class="checks">
+          <li>Текст поверх кадра — не ниже 4,5 : 1, замер по настоящим пикселям под каждой строкой</li>
+          <li>Кадр без видимого края: маска растворяет его в листе</li>
+          <li>Предметы работы: документы, подпись, весы, город</li>
+          <li class="no">Люди в касках и стоковые стройки: с каской бренд неотличим от соседей</li>
+          <li class="no">Пелена поверх кадра и тень под буквами</li>
+          <li class="no">Видео на первом экране</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <div class="dim" aria-hidden="true"></div>
+
+  <section class="art art--sheet" id="golos" aria-labelledby="h-golos">
+    <div class="wrap art-grid">
+      <header class="art-head">
+        <p class="art-no">Статья 9</p>
+        <h2 id="h-golos">Голос</h2>
+        <p class="art-lead">Говорит один человек, от первого лица. Спокойно, с нормой под рукой, без обещаний чужих решений.</p>
+      </header>
+      <div class="art-body">
+        <p class="maxim">Отсутствие факта дешевле факта, за который нельзя ответить.</p>
+        <div class="voice">
+          <div class="vrow">
+            <div class="vcell bad"><span class="vtag">Не так</span><p>Допуск СРО за один день. Гарантия 100 %.</p></div>
+            <div class="vcell good"><span class="vtag">Так</span><p>Выписка из реестра — 2–3 дня. Бывает и за один день, но это не обещание.</p></div>
+            <p class="vwhy">Свидетельств о допуске нет с 1 июля 2017 года, а решение о приёме принимает СРО.</p>
+          </div>
+          <div class="vrow">
+            <div class="vcell bad"><span class="vtag">Не так</span><p>Половина сайтов до сих пор пишет про 3 млн.</p></div>
+            <div class="vcell good"><span class="vtag">Так</span><p>Старая цифра до сих пор встречается на сайтах по теме. Порог для строителей — 10 млн ₽.</p></div>
+            <p class="vwhy">Долю никто не считал. Факт закона остаётся, выдуманная доля уходит.</p>
+          </div>
+          <div class="vrow">
+            <div class="vcell bad"><span class="vtag">Не так</span><p>Мы — лидеры рынка, нам доверяют тысячи компаний.</p></div>
+            <div class="vcell good"><span class="vtag">Так</span><p>Проверьте меня: ИНН 470418675847 открывается в реестре ФНС.</p></div>
+            <p class="vwhy">Бренд держится на том, что можно проверить. Отзывов и рейтингов, которых нет, на носителях нет.</p>
+          </div>
+        </div>
+        <div class="block">
+          <h3>Слова, которых у бренда нет</h3>
+          <div class="stoplist"><span>допуск СРО</span><span>гарантируем</span><span>многие</span><span>большинство</span><span>за 1 день</span><span>лидер рынка</span><span>100 % одобрение</span><span>эксперт по допускам</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="art" id="nositeli" aria-labelledby="h-nositeli">
+    <div class="wrap art-grid">
+      <header class="art-head">
+        <p class="art-no">Статья 10</p>
+        <h2 id="h-nositeli">Носители</h2>
+        <p class="art-lead">Визитка, бланк и шапка письма. Контакты на макетах — те же, что на сайте.</p>
+      </header>
+      <div class="art-body">
+        <div class="carriers">
+          <figure class="carrier c-cards">
+            <div class="desk">
+              <div class="bcards">
+                <div class="bslot"><div class="bcard bcard--front">
+                  <svg class="rosette js-rosette" viewBox="-260 -260 520 520" aria-hidden="true"></svg>
+                  <span class="lockup on-dark"><svg class="mk" aria-hidden="true"><use href="#mark" /></svg><span><span class="lockup-name">НОРМА</span><span class="lockup-tag">вступление в СРО</span></span></span>
+                </div></div>
+                <div class="bslot"><div class="bcard bcard--back">
+                  <svg class="bmk mk" aria-hidden="true"><use href="#mark" /></svg>
+                  <div><p class="who">Алихан Багишев</p><p class="role">Вступление в СРО</p></div>
+                  <p class="reach"><b>+7 931 969-86-64</b><br>info@norma-sro.ru · norma-sro.ru</p>
+                  <p class="req">ИП Багишев А. А. · ОГРНИП 326784700317132 · ИНН 470418675847</p>
+                </div></div>
+              </div>
+            </div>
+            <figcaption><b>Визитка 90 × 50 мм.</b> Лицо — графит со знаком светлым сургучом, оборот — белая бумага. Реквизиты мелко внизу: их можно проверить.</figcaption>
+          </figure>
+          <figure class="carrier c-letter">
+            <div class="desk">
+              <div class="letter-wrap">
+                <div class="letter">
+                  <div class="letter-head">
+                    <span class="lockup"><svg class="mk" aria-hidden="true"><use href="#mark" /></svg><span><span class="lockup-name">НОРМА</span><span class="lockup-tag">вступление в СРО</span></span></span>
+                    <span class="addr">+7 931 969-86-64<br>info@norma-sro.ru<br>norma-sro.ru</span>
+                  </div>
+                  <p class="letter-ref"><span>Исх. № ____</span><span>от «___» ________ 2026 г.</span></p>
+                  <div class="letter-body">
+                    <p class="t">О порядке вступления в СРО</p>
+                    <i></i><i></i><i></i><i class="s"></i><i class="gap"></i><i></i><i></i><i></i><i></i><i class="s"></i><i class="gap"></i><i></i><i></i><i class="s"></i>
+                  </div>
+                  <div class="letter-foot"><span>ИП Багишев А. А.<br>ОГРНИП 326784700317132</span><span class="sign">А. Багишев</span></div>
+                </div>
+              </div>
+            </div>
+            <figcaption><b>Бланк письма А4.</b> Линейка под шапкой — чернилами, текст — Literata. Печати «Сверено» на бланке нет: она только для норм закона.</figcaption>
+          </figure>
+          <figure class="carrier c-mail">
+            <div class="desk">
+              <div class="mailhead">
+                <div class="mailhead-top">
+                  <span class="lockup on-dark"><svg class="mk" aria-hidden="true"><use href="#mark" /></svg><span><span class="lockup-name">НОРМА</span><span class="lockup-tag">вступление в СРО</span></span></span>
+                  <span class="mh-ph">+7 931 969-86-64<span>info@norma-sro.ru · norma-sro.ru</span></span>
+                </div>
+                <div class="mailhead-row"><span>СРО строителей</span><span>СРО проектировщиков</span><span>СРО изыскателей</span><span>НОК и НРС</span><span>Проверка СРО</span></div>
+              </div>
+            </div>
+            <figcaption><b>Шапка письма 600 px.</b> Готовые файлы собирает <code>npm run brand</code> в папке сайта; там же текстовая подпись для почты.</figcaption>
+          </figure>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="colophon dark">
+  <div class="wrap colo-grid">
+    <div>
+      <span class="lockup on-dark"><svg class="mk" aria-hidden="true"><use href="#mark" /></svg><span><span class="lockup-name">НОРМА</span><span class="lockup-tag">вступление в СРО</span></span></span>
+      <p>Брендбук собран по исходникам сайта norma-sro.ru: контуры знака, коды цветов, дата печати и контакты взяты оттуда же, откуда их берёт сайт. Если на сайте что-то поменяли, брендбук пересобирается и показывает новое.</p>
+    </div>
+    <div class="colo-meta"><span>Редакция 1.0</span><span>2 октября 2026</span></div>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  // Гильош: 72 окружности по кругу плюс 48 внутри и двойной обод — как на сайте.
+  var NS = 'http://www.w3.org/2000/svg';
+  function ring(g, n, dist, r) {
+    for (var i = 0; i < n; i++) {
+      var a = (i / n) * Math.PI * 2, c = document.createElementNS(NS, 'circle');
+      c.setAttribute('cx', (Math.cos(a) * dist).toFixed(1));
+      c.setAttribute('cy', (Math.sin(a) * dist).toFixed(1));
+      c.setAttribute('r', r);
+      g.appendChild(c);
+    }
+  }
+  document.querySelectorAll('.js-rosette').forEach(function (svg) {
+    var a = document.createElementNS(NS, 'g');
+    a.setAttribute('fill', 'none'); a.setAttribute('stroke', 'currentColor'); a.setAttribute('stroke-width', '0.7');
+    ring(a, 72, 118, 126);
+    var b = a.cloneNode(false); b.setAttribute('opacity', '0.75');
+    ring(b, 48, 74, 78);
+    var c = a.cloneNode(false); c.setAttribute('stroke-width', '0.9');
+    ring(c, 1, 0, 246); ring(c, 1, 0, 238);
+    svg.append(a, b, c);
+  });
+
+  // Контраст по WCAG 2.2 — считается здесь же, из кодов цветов.
+  function lum(hex) {
+    var v = hex.replace('#', '').match(/../g).map(function (h) {
+      var s = parseInt(h, 16) / 255;
+      return s <= 0.04045 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2];
+  }
+  function ratio(a, b) { var x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); }
+  var pairs = [
+    ['#16130F', '#FFFFFF', 'Чернила на бумаге', 'весь текст'],
+    ['#6B6459', '#F6F3EC', 'Вторичный на тёплом листе', 'подписи'],
+    ['#8E1A23', '#FFFFFF', 'Сургуч тёмный на бумаге', 'ссылки'],
+    ['#FFFFFF', '#B0202B', 'Бумага на сургуче', 'кнопки'],
+    ['#F5F1EA', '#171310', 'Светлый на графите', 'тёмные разделы'],
+    ['#E8635E', '#171310', 'Сургуч светлый на графите', 'акцент, фокус'],
+    ['#2C6B41', '#FFFFFF', 'Зелёный «сверено» на бумаге', 'вердикт, штамп'],
+    ['#B0202B', '#171310', 'Сургуч на графите', 'не для текста']
+  ];
+  var body = document.getElementById('cx-body');
+  pairs.forEach(function (p) {
+    var r = ratio(p[0], p[1]);
+    var tr = document.createElement('tr');
+    var cls = r >= 4.5 ? '' : r >= 3 ? ' large' : ' fail';
+    var verdict = r >= 7 ? 'AAA' : r >= 4.5 ? 'AA' : r >= 3 ? 'крупный текст' : 'не для текста';
+    tr.innerHTML = '<td><span class="cx-sample" style="color:' + p[0] + ';background:' + p[1] + '">Аа</span> ' + p[2] + '</td>' +
+      '<td>' + p[3] + '</td><td class="cx-ratio">' + r.toFixed(2).replace('.', ',') + ' : 1</td>' +
+      '<td><span class="cx-pass' + cls + '">' + verdict + '</span></td>';
+    body.appendChild(tr);
+  });
+
+  // Образец цвета копирует код.
+  var toast = document.getElementById('toast'), timer;
+  function say(text) {
+    toast.textContent = text; toast.classList.add('show');
+    clearTimeout(timer); timer = setTimeout(function () { toast.classList.remove('show'); }, 1800);
+  }
+  document.querySelectorAll('.sw').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var hex = b.dataset.hex;
+      var done = function () { say('Скопировано: ' + hex); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(hex).then(done, function () { say(hex); });
+      } else { say(hex); }
+    });
+  });
+
+  // Демонстрации движения: класс снимается и ставится заново, анимация повторяется.
+  document.querySelectorAll('[data-play]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var el = document.getElementById(btn.dataset.play);
+      el.classList.remove('play'); void el.offsetWidth; el.classList.add('play');
+    });
+  });
+})();
+</script>

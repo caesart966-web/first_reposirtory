@@ -1,0 +1,1012 @@
+<title>Брендбук «БИЗНЕС-ГРУПП»</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brygada+1918:ital,wght@0,400..700;1,400..700&family=Onest:wght@300..700&display=swap">
+<style>
+/* Раскладка: монография. Заголовок раздела крупной антиквой, пояснение
+   под ним, ниже — материал во всю ширину колонки. Надзаголовков и номеров
+   разделов нет: у бренда это правило. Одна тема: цвета бренда не меняются. */
+:root {
+  --paper: #FBF9F5;
+  --cream: #F5F1EA;
+  --sand: #E9E2D7;
+  --line: #D6CDC1;
+  --muted: #5C534A;
+  --ink: #14110F;
+  --graphite: #1C1815;
+  --graphite-2: #26211D;
+  --graphite-3: #2E2924;
+  --brass: #C09A68;
+  --brass-light: #D2B186;
+  --brass-text: #86602F;
+  --brass-deep: #6B4C26;
+  --on-dark: #F5F1EA;
+  --on-dark-muted: #A79D91;
+  --dark-line: rgba(245, 241, 234, 0.12);
+
+  --display: 'Brygada 1918', Georgia, 'Times New Roman', serif;
+  --sans: 'Onest', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --silk: cubic-bezier(0.22, 1, 0.36, 1);
+  --gut: clamp(16px, 4.5vw, 64px);
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; overflow-x: clip; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 17px/1.65 var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4 { margin: 0; font-family: var(--display); font-weight: 500; line-height: 1.06; letter-spacing: -0.01em; text-wrap: balance; font-variant-numeric: lining-nums; }
+p { margin: 0; }
+a { color: inherit; }
+::selection { background: #E3CDA9; color: var(--ink); }
+:focus-visible { outline: 2px solid var(--brass); outline-offset: 3px; border-radius: 6px; }
+
+.wrap { width: 100%; max-width: 1360px; margin-inline: auto; padding-inline: var(--gut); }
+.small { font-size: 14px; color: var(--muted); }
+.dark { background: var(--graphite); color: var(--on-dark); }
+.dark .small { color: var(--on-dark-muted); }
+
+/* Фотографии — одним объявлением, чтобы кадр не повторялся в файле. */
+.ph-crane { background-image: url({{img:sro-site/public/img/hero-day.webp}}); }
+.ph-crane-src { background-image: url({{img:sro-site/assets-src/slide-construction-src.jpg}}); }
+.ph-themis { background-image: url({{img:sro-site/public/img/themis-photo.webp}}); }
+.ph-docs { background-image: url({{img:sro-site/public/img/documents-photo.webp}}); }
+.ph-section { background-image: url({{img:sro-site/public/img/svc-nok.webp}}); }
+.ph { background-size: cover; background-position: center; background-repeat: no-repeat; background-color: var(--sand); }
+
+/* ── Знак и подпись ────────────────────────────────── */
+.mark { display: block; flex: none; overflow: visible; }
+.lockup { display: inline-flex; align-items: center; gap: 0.65em; color: var(--ink); text-decoration: none; }
+.lockup .mark { height: 1.9em; width: auto; color: var(--brass-text); }
+.lockup-name { display: block; font: 700 1em/1.15 var(--sans); letter-spacing: -0.02em; white-space: nowrap; }
+.lockup-role { display: block; font: 400 0.8em/1.3 var(--sans); color: var(--muted); }
+.lockup.inv { color: var(--on-dark); }
+.lockup.inv .mark { color: var(--brass); }
+.lockup.inv .lockup-role { color: var(--on-dark-muted); }
+
+/* ── Обложка: лист и окно ─────────────────────────── */
+.cover { position: relative; isolation: isolate; background: var(--paper); overflow: hidden; }
+.cover-window {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 54%;
+  z-index: -1;
+  background-position: 62% 20%;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.55) 22%, #000 48%);
+  mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.55) 22%, #000 48%);
+  animation: develop 1.8s var(--silk) both;
+}
+@keyframes develop { from { opacity: 0; filter: blur(14px) brightness(1.25); transform: scale(1.04); } to { opacity: 1; filter: none; transform: none; } }
+.cover-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 32px; padding-block: 26px; font-size: 14px; color: var(--muted); }
+.cover-bar .lockup { font-size: 15px; }
+.cover-bar .meta { display: flex; gap: 24px; flex-wrap: wrap; }
+.cover-main { padding-block: clamp(56px, 10vw, 150px) clamp(48px, 8vw, 110px); display: grid; gap: 28px; max-width: 46rem; }
+.cover h1 { font-size: clamp(56px, 9vw, 138px); line-height: 0.96; letter-spacing: -0.025em; }
+.cover h1 em { font-style: italic; color: var(--brass-text); }
+.cover-lead { font-size: clamp(17px, 1.6vw, 20px); max-width: 32em; color: var(--ink); }
+.cover-spec { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; margin: 24px 0 0; max-width: 36rem; border-top: 1px solid var(--line); }
+.cover-spec div { padding: 16px 16px 16px 0; border-bottom: 1px solid var(--line); }
+.cover-spec dt { font-size: 13px; color: var(--muted); }
+.cover-spec dd { margin: 2px 0 0; font: 500 19px/1.3 var(--display); }
+
+.toc { border-block: 1px solid var(--line); background: var(--cream); }
+.toc ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 0; }
+.toc li { flex: 1 1 auto; }
+.toc a { display: block; padding: 18px 16px; text-align: center; text-decoration: none; font-size: 15px; color: var(--muted); transition: color 0.5s var(--silk), background 0.5s var(--silk); border-radius: 999px; }
+.toc a:hover { color: var(--ink); background: var(--sand); }
+
+/* ── Раздел ────────────────────────────────────────── */
+.sec { padding-block: clamp(72px, 10vw, 140px); }
+.sec--cream { background: var(--cream); }
+.head { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 20px clamp(32px, 6vw, 96px); align-items: end; margin-bottom: clamp(40px, 6vw, 72px); }
+.head h2 { font-size: clamp(44px, 6.4vw, 92px); letter-spacing: -0.02em; }
+.head p { font-size: clamp(17px, 1.5vw, 19px); color: var(--muted); max-width: 30em; padding-bottom: 0.6em; }
+.dark .head p { color: var(--on-dark-muted); }
+.stack { display: grid; gap: clamp(40px, 5vw, 64px); }
+.sub { font: 500 clamp(24px, 2.4vw, 32px)/1.15 var(--display); margin-bottom: 20px; }
+
+/* ── Основа ────────────────────────────────────────── */
+.principles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--line); }
+.pr { padding: 28px 28px 0 0; display: grid; gap: 12px; align-content: start; }
+.pr + .pr { padding-left: 28px; border-left: 1px solid var(--line); }
+.pr h3 { font-size: 26px; line-height: 1.12; }
+.pr p { font-size: 15.5px; color: var(--muted); }
+.pr-swatch { height: 6px; width: 56px; border-radius: 3px; }
+.voice-quote { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 32px clamp(32px, 6vw, 96px); align-items: center; }
+.voice-quote figure { margin: 0; aspect-ratio: 4 / 5; border-radius: 22px; overflow: hidden; }
+.voice-quote blockquote { margin: 0; font: italic 400 clamp(28px, 3.4vw, 46px)/1.2 var(--display); text-wrap: balance; }
+.voice-quote blockquote + p { margin-top: 24px; color: var(--muted); max-width: 32em; }
+
+/* ── Знак ──────────────────────────────────────────── */
+.mark-stage { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 32px; align-items: stretch; }
+.mark-board {
+  border-radius: 24px;
+  background:
+    radial-gradient(70% 70% at 40% 40%, rgba(192, 154, 104, 0.10), transparent 70%),
+    var(--graphite-2);
+  padding: clamp(24px, 4vw, 56px);
+  color: var(--brass);
+}
+.mark-board svg { width: 100%; height: auto; display: block; overflow: visible; }
+.parts { display: grid; align-content: center; gap: 0; border-top: 1px solid var(--dark-line); }
+.parts div { padding: 18px 0; border-bottom: 1px solid var(--dark-line); display: grid; gap: 4px; }
+.parts dt { font: 500 22px/1.2 var(--display); color: var(--on-dark); }
+.parts dd { margin: 0; font-size: 15px; color: var(--on-dark-muted); }
+.variants { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.variant { margin: 0; display: grid; gap: 12px; }
+.variant-view { aspect-ratio: 1; border-radius: 20px; display: grid; place-items: center; border: 1px solid var(--dark-line); }
+.variant-view .mark { width: 46%; height: auto; }
+.variant figcaption { font-size: 14px; color: var(--on-dark-muted); }
+.variant figcaption b { display: block; font-weight: 500; color: var(--on-dark); }
+.v-cream { background: var(--cream); color: var(--brass-text); }
+.v-graphite { background: var(--graphite-3); color: var(--brass); }
+.v-ink { background: var(--graphite-3); color: var(--on-dark); }
+.v-paper { background: var(--paper); color: var(--ink); }
+.v-fav { background: transparent; }
+.v-fav svg { width: 46%; height: auto; }
+.sizes-row { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 28px; color: var(--brass); }
+.sizes-row figure { margin: 0; display: grid; gap: 8px; justify-items: start; }
+.sizes-row figcaption { font-size: 13px; color: var(--on-dark-muted); font-variant-numeric: tabular-nums; }
+
+/* ── Логотип ───────────────────────────────────────── */
+.logo-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.logo-card { border-radius: 24px; padding: clamp(36px, 6vw, 80px) clamp(20px, 4vw, 48px); display: grid; place-items: center; font-size: clamp(17px, 2.1vw, 26px); min-height: 280px; position: relative; }
+.logo-card.light { background: var(--paper); border: 1px solid var(--line); }
+.logo-card.darkc { background: var(--graphite); }
+.logo-card .tag { position: absolute; left: 22px; bottom: 18px; font-size: 13px; color: var(--muted); }
+.logo-card.darkc .tag { color: var(--on-dark-muted); }
+.rules-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.rule { border-top: 1px solid var(--ink); padding-top: 16px; display: grid; gap: 8px; align-content: start; }
+.rule h4 { font-size: 22px; }
+.rule p { font-size: 15px; color: var(--muted); }
+.donts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.dont { margin: 0; display: grid; gap: 10px; }
+.dont-view { aspect-ratio: 5 / 4; border-radius: 18px; background: var(--paper); border: 1px solid var(--line); display: grid; place-items: center; position: relative; overflow: hidden; padding: 16px; }
+.dont-view::before, .dont-view::after { content: ""; position: absolute; top: 14px; right: 14px; width: 18px; height: 1.5px; background: var(--brass-text); border-radius: 1px; }
+.dont-view::before { transform: rotate(45deg); }
+.dont-view::after { transform: rotate(-45deg); }
+.dont figcaption { font-size: 14.5px; color: var(--muted); }
+.dont figcaption b { display: block; color: var(--ink); font-weight: 500; }
+.mono-bad { width: 64px; height: 64px; border-radius: 50%; border: 1.5px solid var(--brass-text); display: grid; place-items: center; font: 600 24px/1 var(--display); color: var(--brass-text); letter-spacing: -0.04em; }
+
+/* ── Цвет ──────────────────────────────────────────── */
+.roles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
+.role {
+  appearance: none;
+  font: inherit;
+  text-align: left;
+  cursor: copy;
+  border: 0;
+  padding: 0;
+  border-radius: 22px;
+  overflow: hidden;
+  background: var(--c);
+  color: var(--t);
+  min-height: 260px;
+  display: grid;
+  align-content: end;
+  box-shadow: inset 0 0 0 1px rgba(20, 17, 15, 0.08);
+  transition: transform 0.7s var(--silk);
+}
+.role:hover { transform: translateY(-4px); }
+.role span { display: block; padding: 0 20px; }
+.role .r-name { font: 500 28px/1.1 var(--display); padding-bottom: 6px; }
+.role .r-hex { font: 500 14px/1.4 var(--sans); font-variant-numeric: tabular-nums; }
+.role .r-use { font-size: 13.5px; opacity: 0.78; padding-bottom: 20px; padding-top: 2px; }
+.ramp-wrap { display: grid; gap: 10px; }
+.ramp-title { display: flex; justify-content: space-between; gap: 16px; align-items: baseline; }
+.ramp-title h4 { font-size: 24px; }
+.ramp { display: grid; grid-template-columns: repeat(11, minmax(0, 1fr)); border-radius: 16px; overflow: hidden; box-shadow: inset 0 0 0 1px rgba(20, 17, 15, 0.08); }
+.ramp button {
+  appearance: none;
+  border: 0;
+  font: inherit;
+  cursor: copy;
+  background: var(--c);
+  color: var(--t);
+  height: 120px;
+  padding: 10px 8px;
+  display: grid;
+  align-content: end;
+  gap: 2px;
+  text-align: left;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  min-width: 0;
+}
+.ramp button b { font-weight: 600; font-size: 13px; }
+.ramp button span { overflow-wrap: anywhere; opacity: 0.85; }
+.cx { width: 100%; border-collapse: collapse; font-size: 15px; font-variant-numeric: tabular-nums; }
+.cx th { text-align: left; font-weight: 500; font-size: 13px; color: var(--muted); padding: 0 12px 12px 0; border-bottom: 1px solid var(--ink); }
+.cx td { padding: 12px 12px 12px 0; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.cx-s { display: inline-grid; place-items: center; width: 64px; height: 38px; border-radius: 999px; font: 500 18px/1 var(--display); margin-right: 10px; box-shadow: inset 0 0 0 1px rgba(20, 17, 15, 0.1); vertical-align: middle; }
+.cx-v { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 500; background: var(--sand); }
+.cx-v.lo { background: transparent; box-shadow: inset 0 0 0 1px var(--line); color: var(--muted); }
+.table-scroll { overflow-x: auto; }
+.nobl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: center; padding: 20px 22px; border-radius: 18px; background: var(--cream); border: 1px solid var(--line); font-size: 15.5px; }
+.nobl i { width: 44px; height: 44px; border-radius: 50%; background: conic-gradient(var(--graphite) 0 33%, var(--cream) 0 66%, var(--brass) 0); box-shadow: inset 0 0 0 1px var(--line); }
+
+/* ── Шрифты ────────────────────────────────────────── */
+.type-hero { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 14px; }
+.spec { border-radius: 24px; padding: clamp(24px, 3.5vw, 44px); display: grid; gap: 20px; align-content: space-between; min-height: 420px; min-width: 0; }
+.spec.paper { background: var(--paper); border: 1px solid var(--line); }
+.spec.darks { background: var(--graphite); color: var(--on-dark); }
+.spec-top { display: flex; justify-content: space-between; gap: 16px; font-size: 14px; color: var(--muted); }
+.spec.darks .spec-top { color: var(--on-dark-muted); }
+.spec-top b { color: var(--ink); font-weight: 500; font-size: 16px; }
+.spec.darks .spec-top b { color: var(--on-dark); }
+.spec-big { font-size: clamp(96px, 13vw, 190px); line-height: 0.85; letter-spacing: -0.03em; }
+.spec.paper .spec-big { font-family: var(--display); font-weight: 500; }
+.spec.darks .spec-big { font-family: var(--sans); font-weight: 500; }
+.spec-glyphs { font-size: 17px; line-height: 1.6; overflow-wrap: anywhere; }
+.spec.paper .spec-glyphs { font-family: var(--display); }
+.spec.darks .spec-glyphs { color: var(--on-dark-muted); }
+.typeset { display: grid; border-top: 1px solid var(--ink); }
+.ts { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 24px; padding: 22px 0; border-bottom: 1px solid var(--line); align-items: baseline; }
+.ts-meta { font-size: 13px; color: var(--muted); line-height: 1.5; font-variant-numeric: tabular-nums; }
+.ts-meta b { display: block; color: var(--ink); font-weight: 500; font-size: 14px; }
+.t-h1 { font: 500 clamp(34px, 4.6vw, 60px)/1.05 var(--display); letter-spacing: -0.02em; }
+.t-h2 { font: 500 clamp(28px, 3.2vw, 43px)/1.08 var(--display); }
+.t-h3 { font: 500 clamp(22px, 2vw, 26px)/1.2 var(--display); }
+.t-body { font: 400 17px/1.65 var(--sans); max-width: 38em; }
+.t-small { font: 400 14px/1.5 var(--sans); color: var(--muted); }
+.rejected { display: flex; flex-wrap: wrap; gap: 10px; }
+.rejected span { padding: 8px 16px; border-radius: 999px; border: 1px solid var(--line); font-size: 15px; color: var(--muted); text-decoration: line-through; text-decoration-color: var(--brass-text); }
+
+/* ── Фотография ────────────────────────────────────── */
+.photo-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(28px, 5vw, 72px); align-items: center; }
+.compare { position: relative; border-radius: 26px; overflow: hidden; aspect-ratio: 4 / 5; background: var(--graphite); --pos: 50%; }
+.compare .layer { position: absolute; inset: 0; background-position: 50% 30%; }
+.compare .after { clip-path: inset(0 0 0 var(--pos)); }
+.compare .handle { position: absolute; top: 0; bottom: 0; left: var(--pos); width: 0; pointer-events: none; }
+.compare .handle::before { content: ""; position: absolute; top: 0; bottom: 0; left: -1px; width: 2px; background: var(--paper); opacity: 0.9; }
+.compare .handle::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -26px;
+  width: 52px;
+  height: 52px;
+  margin-top: -26px;
+  border-radius: 50%;
+  background: var(--paper) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231C1815' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><path d='M9 6 3 12l6 6M15 6l6 6-6 6'/></svg>") center / 22px no-repeat;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+.compare .lab { position: absolute; bottom: 18px; padding: 6px 14px; border-radius: 999px; font-size: 13px; background: rgba(28, 24, 21, 0.7); color: var(--on-dark); backdrop-filter: blur(6px); }
+.compare .lab.l { left: 18px; }
+.compare .lab.r { right: 18px; background: rgba(251, 249, 245, 0.85); color: var(--ink); }
+.compare input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: ew-resize; margin: 0; }
+.compare:has(input:focus-visible) .handle::after { outline: 2px solid var(--brass); outline-offset: 3px; }
+.ramp-photo { display: grid; gap: 10px; }
+.ramp-bar { height: 56px; border-radius: 999px; background: linear-gradient(90deg, rgb(28,24,21) 0%, rgb(118,105,92) 45%, rgb(205,194,179) 78%, rgb(251,249,245) 100%); box-shadow: inset 0 0 0 1px rgba(20, 17, 15, 0.1); position: relative; }
+.ramp-stops { position: relative; height: 62px; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ramp-stops span { position: absolute; top: 0; translate: -50% 0; text-align: center; white-space: nowrap; }
+.ramp-stops span:first-child { translate: 0 0; text-align: left; }
+.ramp-stops span:last-child { translate: -100% 0; text-align: right; }
+.ramp-stops span::before { content: ""; display: block; width: 1px; height: 8px; background: var(--line); margin: 0 auto 4px; }
+.ramp-stops span:first-child::before { margin-left: 0; }
+.ramp-stops span:last-child::before { margin-right: 0; }
+.ramp-stops span:nth-child(even)::before { height: 30px; }
+.film { background: #120F0D; border-radius: 22px; padding: 30px 18px; position: relative; }
+.film::before, .film::after {
+  content: "";
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  height: 10px;
+  background: repeating-linear-gradient(90deg, transparent 0 10px, rgba(245, 241, 234, 0.85) 10px 22px, transparent 22px 34px);
+  -webkit-mask-image: linear-gradient(#000, #000);
+  border-radius: 2px;
+  opacity: 0.55;
+}
+.film::before { top: 10px; }
+.film::after { bottom: 10px; }
+.film-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.frame { margin: 0; display: grid; gap: 8px; }
+.frame .ph { aspect-ratio: 3 / 4; border-radius: 4px; }
+.frame figcaption { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: #C9A46B; font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
+.frame figcaption span:last-child { color: var(--on-dark-muted); letter-spacing: 0; text-align: right; }
+.photo-rules { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+
+/* ── Движение ──────────────────────────────────────── */
+.motion-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+.panel { border-radius: 24px; padding: clamp(22px, 3vw, 36px); background: var(--graphite-2); border: 1px solid var(--dark-line); display: grid; gap: 20px; align-content: start; min-width: 0; }
+.panel h3 { font-size: 28px; }
+.panel p { font-size: 15px; color: var(--on-dark-muted); }
+.panel .btn { justify-self: start; height: 48px; padding: 0 22px; }
+.curve svg { width: 100%; max-width: 360px; height: auto; display: block; overflow: visible; }
+.track { position: relative; height: 54px; border-radius: 999px; background: rgba(245, 241, 234, 0.06); box-shadow: inset 0 0 0 1px var(--dark-line); }
+.track i { position: absolute; top: 7px; left: 7px; width: 40px; height: 40px; border-radius: 50%; }
+.track .silk { background: var(--brass); }
+.track .lin { background: var(--on-dark-muted); }
+.tracks { display: grid; gap: 10px; }
+.tracks.play .silk { animation: run 1.1s var(--silk) both; }
+.tracks.play .lin { animation: run 1.1s linear both; }
+@keyframes run { from { left: 7px; } to { left: calc(100% - 47px); } }
+.tracks-legend { display: flex; gap: 20px; flex-wrap: wrap; font-size: 13px; color: var(--on-dark-muted); }
+.tracks-legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; background: var(--brass); }
+.tracks-legend span + span::before { background: var(--on-dark-muted); }
+.timings { display: grid; gap: 0; border-top: 1px solid var(--dark-line); }
+.timings div { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--dark-line); font-size: 15px; }
+.timings b { font-weight: 500; font-variant-numeric: tabular-nums; color: var(--brass-light); }
+.reveal-demo { display: grid; gap: 10px; }
+.reveal-demo i { display: block; height: 44px; border-radius: 12px; background: rgba(245, 241, 234, 0.08); }
+.reveal-demo i:nth-child(2) { width: 84%; }
+.reveal-demo i:nth-child(3) { width: 66%; }
+.reveal-demo.play i { animation: rise 1.1s var(--silk) both; }
+.reveal-demo.play i:nth-child(2) { animation-delay: 0.12s; }
+.reveal-demo.play i:nth-child(3) { animation-delay: 0.24s; }
+@keyframes rise { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
+
+/* ── Кнопки и элементы ─────────────────────────────── */
+.btn { display: inline-flex; align-items: center; gap: 12px; height: 56px; padding: 0 28px; border-radius: 999px; font: 500 15px/1 var(--sans); text-decoration: none; border: 0; cursor: pointer; transition: background 0.5s var(--silk), color 0.5s var(--silk), border-color 0.5s var(--silk); }
+.btn--primary { background: var(--ink); color: var(--paper); }
+.btn--primary:hover { background: #2E2924; }
+.btn--secondary { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
+.btn--secondary:hover { box-shadow: inset 0 0 0 1px var(--ink); }
+.btn--inverse { background: var(--paper); color: var(--ink); }
+.btn--arrow { padding-right: 8px; }
+.btn .circ { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; transition: transform 0.7s var(--silk); }
+.btn--primary .circ { background: var(--paper); color: var(--ink); }
+.btn--inverse .circ { background: var(--ink); color: var(--paper); }
+.btn:hover .circ, .btn:focus-visible .circ { transform: rotate(45deg); }
+.btn svg { width: 16px; height: 16px; }
+.goto { display: inline-flex; align-items: center; gap: 10px; font: 500 17px/1.3 var(--sans); text-decoration: none; color: var(--ink); }
+.goto svg { width: 18px; height: 18px; transition: transform 0.7s var(--silk); }
+.goto:hover svg { transform: translateX(4px); }
+.ui-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.ui-card.wide { grid-column: 1 / -1; grid-template-rows: auto 1fr; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr); column-gap: clamp(28px, 5vw, 72px); align-items: start; }
+.ui-card.wide .cases { grid-row: span 2; }
+.ui-card { border-radius: 24px; padding: clamp(22px, 3vw, 36px); background: var(--paper); border: 1px solid var(--line); display: grid; gap: 22px; align-content: start; min-width: 0; }
+.ui-card.dk { background: var(--graphite); border-color: var(--graphite); color: var(--on-dark); }
+.ui-card h3 { font-size: 26px; }
+.ui-card p { font-size: 15px; color: var(--muted); }
+.ui-card.dk p { color: var(--on-dark-muted); }
+.ui-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.cases { width: 100%; border-collapse: collapse; }
+.cases td { padding: 16px 12px 16px 0; border-bottom: 1px solid var(--line); vertical-align: baseline; font-size: 15.5px; }
+.cases tr:first-child td { border-top: 1px solid var(--ink); }
+.cases td:last-child { font: 500 21px/1.2 var(--display); white-space: nowrap; text-align: right; padding-right: 0; }
+.steps { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.steps div { grid-template-columns: 48px minmax(0, 1fr) !important; align-items: baseline; }
+.steps div { display: grid; gap: 6px; align-content: start; }
+.steps b { font: 500 32px/1 var(--display); color: var(--brass); font-variant-numeric: tabular-nums; }
+.steps span { font-size: 14.5px; color: var(--on-dark-muted); }
+
+/* ── Тексты ────────────────────────────────────────── */
+.texts { position: relative; isolation: isolate; overflow: hidden; }
+.texts-bg { position: absolute; inset: 0 0 0 auto; width: 46%; z-index: -1; background-position: 50% 20%; opacity: 0.32; -webkit-mask-image: linear-gradient(90deg, transparent, #000 60%); mask-image: linear-gradient(90deg, transparent, #000 60%); }
+.markers { display: grid; gap: 0; border-top: 1px solid var(--dark-line); max-width: 980px; }
+.mk-row { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 1fr); gap: 24px; padding: 22px 0; border-bottom: 1px solid var(--dark-line); align-items: start; }
+.mk-row h4 { font-size: 22px; color: var(--on-dark); }
+.mk-row .was { font-size: 15px; color: var(--on-dark-muted); text-decoration: line-through; text-decoration-color: rgba(192, 154, 104, 0.8); }
+.mk-row .now { font-size: 15.5px; color: var(--on-dark); }
+.mk-row .was::before, .mk-row .now::before { display: block; font-size: 12px; text-decoration: none; margin-bottom: 4px; color: var(--brass); }
+.mk-row .was::before { content: "Было"; }
+.mk-row .now::before { content: "Стало"; }
+.speech { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; max-width: 980px; }
+.speech div { border-radius: 20px; background: rgba(245, 241, 234, 0.05); border: 1px solid var(--dark-line); padding: 22px; display: grid; gap: 8px; align-content: start; }
+.speech h4 { font-size: 22px; }
+.speech p { font-size: 15px; color: var(--on-dark-muted); }
+
+/* ── Носители ──────────────────────────────────────── */
+.carriers { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 14px; }
+.carrier { margin: 0; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.carrier figcaption { font-size: 14.5px; color: var(--muted); }
+.carrier figcaption b { color: var(--ink); font-weight: 500; }
+.c-6 { grid-column: span 6; }
+.c-cards { grid-column: span 6; grid-row: span 2; grid-template-rows: 1fr auto; }
+.table-top { border-radius: 24px; background: radial-gradient(80% 90% at 30% 20%, #EFE7DA, #E3D9C9); padding: clamp(24px, 4vw, 56px); display: grid; place-items: center; min-height: 100%; }
+.slot { container-type: inline-size; width: min(100%, 460px); }
+.card { aspect-ratio: 90 / 50; border-radius: 1.6cqi; position: relative; overflow: hidden; box-shadow: 0 2px 2px rgba(20, 17, 15, 0.08), 0 30px 50px -30px rgba(20, 17, 15, 0.6); }
+.card-front { background: var(--graphite); display: grid; place-items: center; transform: rotate(-2.5deg); }
+.card-front .mark { width: 26cqi; height: auto; color: var(--brass); }
+.card-front::after { content: ""; position: absolute; inset: 4cqi; border: 1px solid rgba(192, 154, 104, 0.35); border-radius: 0.8cqi; }
+.card-back { background: var(--paper); padding: 7cqi 7.5cqi; display: grid; grid-template-rows: auto 1fr auto; margin-top: 5cqi; transform: rotate(1.5deg) translateX(3%); }
+.card-back .lockup { font-size: 4.2cqi; }
+.card-back .reach { align-self: end; font-size: 3.8cqi; line-height: 1.55; font-variant-numeric: tabular-nums; }
+.card-back .reach b { display: block; font: 500 6.2cqi/1.2 var(--display); }
+.card-back .site { font-size: 3cqi; color: var(--brass-text); margin-top: 2.5cqi; letter-spacing: 0.02em; }
+.og-slot { container-type: inline-size; width: 100%; }
+.og { aspect-ratio: 1200 / 630; border-radius: 1.6cqi; overflow: hidden; position: relative; background: var(--paper); box-shadow: 0 2px 2px rgba(20, 17, 15, 0.08), 0 30px 50px -30px rgba(20, 17, 15, 0.55); }
+.og .ph { position: absolute; inset: 0 0 0 auto; width: 52%; background-position: 60% 25%; -webkit-mask-image: linear-gradient(90deg, transparent, #000 45%); mask-image: linear-gradient(90deg, transparent, #000 45%); }
+.og-in { position: absolute; inset: 0; padding: 6cqi; display: grid; align-content: space-between; width: 70%; }
+.og .lockup { font-size: 2.4cqi; }
+.og h3 { font-size: 6.4cqi; line-height: 1.04; letter-spacing: -0.02em; }
+.og p { font-size: 2.1cqi; color: var(--muted); }
+.icon-slot { display: flex; gap: clamp(16px, 3vw, 32px); align-items: flex-end; flex-wrap: wrap; }
+.app-icon { width: 104px; height: 104px; border-radius: 27px; background: var(--graphite); display: grid; place-items: center; box-shadow: 0 20px 40px -24px rgba(20, 17, 15, 0.7); }
+.app-icon svg { width: 72%; height: auto; }
+
+.colophon { padding-block: clamp(56px, 8vw, 104px); }
+.colo { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 32px; align-items: end; }
+.colophon .lockup { font-size: clamp(18px, 2.2vw, 26px); }
+.colophon p { margin-top: 24px; max-width: 42em; color: var(--on-dark-muted); font-size: 15px; }
+.colo-meta { text-align: right; font-size: 14px; color: var(--on-dark-muted); display: grid; gap: 4px; }
+
+.toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 20px); translate: -50% 16px; opacity: 0; background: var(--ink); color: var(--paper); padding: 11px 18px; border-radius: 999px; font-size: 14px; pointer-events: none; transition: opacity 0.6s var(--silk), translate 0.6s var(--silk); z-index: 10; }
+.toast.show { opacity: 1; translate: -50% 0; }
+
+/* ── Адаптив ───────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .principles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pr:nth-child(3) { padding-left: 0; border-left: 0; }
+  .pr { padding-bottom: 28px; }
+  .roles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .donts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .c-6 { grid-column: span 12; }
+  .c-cards { grid-column: span 12; grid-row: auto; }
+}
+@media (max-width: 900px) {
+  .cover-window { inset: 76px 0 auto 0; width: 100%; height: 340px; background-position: 60% 18%; -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 16%, #000 42%, transparent 100%); mask-image: linear-gradient(180deg, transparent 0%, #000 16%, #000 42%, transparent 100%); }
+  .cover-main { padding-top: 290px; }
+  .cover-bar .meta { display: none; }
+  .head, .voice-quote, .mark-stage, .type-hero, .motion-grid, .ui-grid, .photo-split, .ui-card.wide { grid-template-columns: minmax(0, 1fr); }
+  .ui-card.wide .cases { grid-row: auto; }
+  .variants { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rules-grid, .photo-rules { grid-template-columns: minmax(0, 1fr); }
+  .ramp { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .film-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mk-row { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .speech { grid-template-columns: minmax(0, 1fr); }
+  .texts-bg { width: 100%; opacity: 0.16; }
+  .voice-quote figure { aspect-ratio: 16 / 10; }
+  .toc a { padding: 12px 14px; }
+}
+@media (max-width: 640px) {
+  body { font-size: 16px; }
+  .principles { grid-template-columns: minmax(0, 1fr); }
+  .pr, .pr + .pr { padding-left: 0; border-left: 0; }
+  .pr + .pr { border-top: 1px solid var(--line); }
+  .roles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .role { min-height: 180px; }
+  .role .r-name { font-size: 22px; }
+  .logo-pair, .donts { grid-template-columns: minmax(0, 1fr); }
+  .ramp button { height: 96px; }
+  .ts { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .compare { aspect-ratio: 4 / 5; }
+  .steps { grid-template-columns: minmax(0, 1fr); }
+  .cover-spec { grid-template-columns: minmax(0, 1fr); }
+  .colo { grid-template-columns: minmax(0, 1fr); }
+  .colo-meta { text-align: left; }
+  .cx th:nth-child(2), .cx td:nth-child(2) { display: none; }
+  .toc li { flex: 1 1 40%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .cover-window { animation: none; }
+  .tracks.play .silk, .tracks.play .lin, .reveal-demo.play i { animation: none; }
+  .role, .btn .circ, .goto svg { transition: none; }
+  .role:hover { transform: none; }
+}
+</style>
+
+<!-- Знак — те же контуры, что ScalesMark в sro-site/src/components/illustrations.tsx.
+     Сверяет brandbooks/build.mjs: разошлись — сборка падает. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="scales" viewBox="-1 2 50 37.4">
+      <g fill="currentColor" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3.2 12.6 24 3.6l20.8 9Z" fill="none" stroke-width="2.2" />
+        <path d="M24 12.6v20" fill="none" stroke-width="2.4" />
+        <path d="M5.2 13.4.6 25.2m4.6-11.8 4.6 11.8m33-11.8-4.6 11.8m4.6-11.8 4.6 11.8" fill="none" stroke-width="1.4" />
+        <path d="M-.4 25.2h11.2q-5.6 7.2-11.2 0Zm37.6 0h11.2q-5.6 7.2-11.2 0Z" stroke="none" />
+        <path d="M20.4 32.4h7.2l2.2 4.2H18.2Z" stroke="none" />
+        <path d="M16.2 37.9h15.6" fill="none" stroke-width="1.6" />
+      </g>
+    </symbol>
+    <symbol id="scales-fav" viewBox="-1 2 50 37.4">
+      <g fill="currentColor" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3.2 12.6 24 3.6l20.8 9Z" fill="none" stroke-width="2.6" />
+        <path d="M24 12.6v20" fill="none" stroke-width="2.8" />
+        <path d="M5.2 13.4.6 25.2m4.6-11.8 4.6 11.8m33-11.8-4.6 11.8m4.6-11.8 4.6 11.8" fill="none" stroke-width="1.8" />
+        <path d="M-.4 25.2h11.2q-5.6 7.2-11.2 0Zm37.6 0h11.2q-5.6 7.2-11.2 0Z" stroke="none" />
+        <path d="M20.4 32.4h7.2l2.2 4.2H18.2Z" stroke="none" />
+        <path d="M16.2 37.9h15.6" fill="none" stroke-width="2" />
+      </g>
+    </symbol>
+    <symbol id="arrow-ur" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></symbol>
+    <symbol id="arrow-r" viewBox="0 0 24 24"><path d="M4 12h15M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" /></symbol>
+  </defs>
+</svg>
+
+<header class="cover">
+  <div class="cover-window ph ph-crane" role="img" aria-label="Башенный кран над городом в тёплом монохроме"></div>
+  <div class="wrap">
+    <div class="cover-bar">
+      <span class="lockup"><svg class="mark" viewBox="-1 2 50 37.4" aria-hidden="true"><use href="#scales" /></svg><span><span class="lockup-name">ООО «БИЗНЕС-ГРУПП»</span><span class="lockup-role">Вступление в СРО</span></span></span>
+      <span class="meta"><span>Брендбук, редакция 1.0</span><span>Октябрь 2026</span></span>
+    </div>
+    <div class="cover-main">
+      <h1>Фирменный <em>стиль</em></h1>
+      <p class="cover-lead">Сайт и носители компании, которая помогает строителям, проектировщикам и изыскателям вступить в СРО. Мало цвета, тёплые тёмные поверхности, крупная антиква и медленные переходы.</p>
+      <dl class="cover-spec">
+        <div><dt>Знак</dt><dd>Весы под фронтоном</dd></div>
+        <div><dt>Цвета</dt><dd>Графит, крем, латунь</dd></div>
+        <div><dt>Шрифты</dt><dd>Brygada 1918 и Onest</dd></div>
+        <div><dt>Фотографии</dt><dd>Тёплый монохром</dd></div>
+      </dl>
+    </div>
+  </div>
+</header>
+
+<nav class="toc" aria-label="Разделы брендбука">
+  <div class="wrap">
+    <ul>
+      <li><a href="#osnova">Основа</a></li>
+      <li><a href="#znak">Знак</a></li>
+      <li><a href="#logotip">Логотип</a></li>
+      <li><a href="#cvet">Цвет</a></li>
+      <li><a href="#shrifty">Шрифты</a></li>
+      <li><a href="#foto">Фотография</a></li>
+      <li><a href="#dvizhenie">Движение</a></li>
+      <li><a href="#elementy">Элементы</a></li>
+      <li><a href="#teksty">Тексты</a></li>
+      <li><a href="#nositeli">Носители</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main>
+  <section class="sec" id="osnova" aria-labelledby="h-osnova">
+    <div class="wrap stack">
+      <div class="head">
+        <h2 id="h-osnova">Основа</h2>
+        <p>Заказчик принёс три ориентира: Apple, LeonHome и woodland. Все три держатся на четырёх вещах, и бренд держится на них же.</p>
+      </div>
+      <div class="principles">
+        <div class="pr"><i class="pr-swatch" style="background:linear-gradient(90deg,#1C1815 0 33%,#F5F1EA 33% 66%,#C09A68 66%)"></i><h3>Мало цвета</h3><p>Графит, крем и латунь. Синего нет: вместе с синим тонированием фотографий сайт выглядел как тысяча шаблонов «под СРО».</p></div>
+        <div class="pr"><i class="pr-swatch" style="background:#1C1815"></i><h3>Тёплые тёмные поверхности</h3><p>Тёмные разделы — графит с коричневым подтоном. Чистого чёрного у бренда нет.</p></div>
+        <div class="pr"><i class="pr-swatch" style="background:#14110F;height:14px;width:14px;border-radius:50%"></i><h3>Крупная антиква</h3><p>Заголовки набраны плотной антиквой Brygada 1918 средней насыщенности, текст — гротеском Onest.</p></div>
+        <div class="pr"><i class="pr-swatch" style="background:linear-gradient(90deg,#C09A68,rgba(192,154,104,0))"></i><h3>Медленные переходы</h3><p>Быстрое начало и долгое мягкое торможение. Протяжность держится на хвосте кривой.</p></div>
+      </div>
+      <div class="voice-quote">
+        <figure class="ph ph-docs" role="img" aria-label="Стопка папок с документами"></figure>
+        <div>
+          <blockquote>Текст сайта — речь специалиста компании. Он говорит от первого лица и о том, что делает сам.</blockquote>
+          <p>Компания называет себя юридическим именем, как в реестре и в договоре. Лица и имени специалиста на сайте нет, цену компания называет по телефону.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec dark" id="znak" aria-labelledby="h-znak">
+    <div class="wrap stack">
+      <div class="head">
+        <h2 id="h-znak">Весы под фронтоном</h2>
+        <p>Фронтон — здание и стройка, весы — закон. Знак выбран заказчиком 25 сентября 2026 года и стоит одними координатами в четырёх местах сайта.</p>
+      </div>
+      <div class="mark-stage">
+        <div class="mark-board">
+          <svg viewBox="-12 -2 84 46" role="img" aria-label="Знак с осью симметрии и отметками уровней">
+            <g stroke="#A79D91" stroke-width="0.12" fill="none" opacity="0.7">
+              <path d="M24 0V42" stroke-dasharray="0.6 0.6" />
+              <path d="M-3 3.6H56M-3 12.6H56M-3 25.2H56M-3 32.4H56M-3 37.9H56" stroke-dasharray="0.3 0.9" />
+            </g>
+            <use href="#scales" x="-1" y="2" width="50" height="37.4" />
+            <g fill="#A79D91" font-family="Onest, sans-serif" font-size="1.8">
+              <g fill="none" stroke="#C09A68" stroke-width="0.18"><path d="M56 3.6l1-1.6h-2zM56 12.6l1-1.6h-2zM56 25.2l1-1.6h-2zM56 32.4l1-1.6h-2zM56 37.9l1-1.6h-2z" /></g>
+              <text x="58.6" y="3.2">вершина фронтона</text>
+              <text x="58.6" y="12.2">карниз, коромысло</text>
+              <text x="58.6" y="24.8">край чаш</text>
+              <text x="58.6" y="32">подставка</text>
+              <text x="58.6" y="37.5">черта основания</text>
+              <text x="24.6" y="-0.4">ось</text>
+            </g>
+          </svg>
+        </div>
+        <dl class="parts">
+          <div><dt>Фронтон</dt><dd>Треугольник здания. Его карниз работает коромыслом весов.</dd></div>
+          <div><dt>Стойка</dt><dd>Самая толстая линия знака, 2,4 единицы: на ней держится вся конструкция.</dd></div>
+          <div><dt>Подвесы и чаши</dt><dd>Тонкие нити в 1,4 и две чаши-полумесяца, залитые цветом.</dd></div>
+          <div><dt>Подставка</dt><dd>Трапеция и черта под ней — ступень, на которой стоит здание.</dd></div>
+        </dl>
+      </div>
+
+      <div>
+        <h3 class="sub">Цвет знака</h3>
+        <div class="variants">
+          <figure class="variant"><div class="variant-view v-cream"><svg class="mark" viewBox="-1 2 50 37.4" aria-hidden="true"><use href="#scales" /></svg></div><figcaption><b>Латунь на креме</b>Шапка сайта, accent-600</figcaption></figure>
+          <figure class="variant"><div class="variant-view v-graphite"><svg class="mark" viewBox="-1 2 50 37.4" aria-hidden="true"><use href="#scales" /></svg></div><figcaption><b>Латунь на графите</b>Тёмные разделы, accent-400</figcaption></figure>
+          <figure class="variant"><div class="variant-view v-ink"><svg class="mark" viewBox="-1 2 50 37.4" aria-hidden="true"><use href="#scales" /></svg></div><figcaption><b>Крем на графите</b>Подвал и одноцветные носители</figcaption></figure>
+          <figure class="variant"><div class="variant-view v-paper"><svg class="mark" viewBox="-1 2 50 37.4" aria-hidden="true"><use href="#scales" /></svg></div><figcaption><b>Графит на бумаге</b>Печать в один цвет, факс, штамп</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="mark-stage">
+        <div>
+          <h3 class="sub">Мелкий размер</h3>
+          <div class="sizes-row">
+            <figure><svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1C1815" stroke="rgba(245,241,234,0.22)" /><svg x="7" y="10" width="50" height="44" viewBox="-1 2 50 37.4" color="#C09A68"><use href="#scales-fav" /></svg></svg><figcaption>значок вкладки</figcaption></figure>
+            <figure><svg class="mark" style="height:28px;width:auto" viewBox="-1 2 50 37.4" aria-hidden="true"><use href="#scales" /></svg><figcaption>28 px, шапка</figcaption></figure>
+            <figure><svg class="mark" style="height:24px;width:auto" viewBox="-1 2 50 37.4" aria-hidden="true"><use href="#scales" /></svg><figcaption>24 px, до 360 px</figcaption></figure>
+            <figure><svg class="mark" style="height:16px;width:auto" viewBox="-1 2 50 37.4" aria-hidden="true"><use href="#scales-fav" /></svg><figcaption>16 px, толще</figcaption></figure>
+          </div>
+        </div>
+        <div class="parts" style="border:0">
+          <p class="small">На значке вкладки линии толще: стойка 2,8 вместо 2,4, подвесы 1,8 вместо 1,4. На 16 пикселях тонкие нити пропадают, а с ними и весы. Знак стоит одними координатами в четырёх местах: в разметке сайта, значке вкладки, странице 404 и обложке для соцсетей.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="logotip" aria-labelledby="h-logotip">
+    <div class="wrap stack">
+      <div class="head">
+        <h2 id="h-logotip">Логотип</h2>
+        <p>Знак и юридическое имя компании. Подпись «Вступление в СРО» объясняет, чем компания занимается.</p>
+      </div>
+      <div class="logo-pair">
+        <div class="logo-card light"><span class="lockup"><svg class="mark" viewBox="-1 2 50 37.4" aria-hidden="true"><use href="#scales" /></svg><span><span class="lockup-name">ООО «БИЗНЕС-ГРУПП»</span><span class="lockup-role">Вступление в СРО</span></span></span><span class="tag">На светлом</span></div>
+        <div class="logo-card darkc"><span class="lockup inv"><svg class="mark" viewBox="-1 2 50 37.4" aria-hidden="true"><use href="#scales" /></svg><span><span class="lockup-name">ООО «БИЗНЕС-ГРУПП»</span><span class="lockup-role">Вступление в СРО</span></span></span><span class="tag">На графите</span></div>
+      </div>
+      <div class="rules-grid">
+        <div class="rule"><h4>Одно написание</h4><p>ООО «БИЗНЕС-ГРУПП» — так же, как в реестре, в договоре и в реквизитах. Разнобой «бренд в шапке, ООО в подвале» читается как два разных лица.</p></div>
+        <div class="rule"><h4>Имя не переносится</h4><p>Имя стоит одной строкой. На узком экране меньше кегль и зазоры, перенос по дефису запрещён.</p></div>
+        <div class="rule"><h4>Весы остаются</h4><p>Монограмму вместо весов не предлагать: решение заказчика от 30 сентября 2026 года.</p></div>
+      </div>
+      <div class="donts">
+        <figure class="dont"><div class="dont-view"><span class="lockup" style="font-size:15px"><svg class="mark" viewBox="-1 2 50 37.4" aria-hidden="true"><use href="#scales" /></svg><span><span class="lockup-name" style="white-space:normal;max-width:6.5em">ООО «БИЗНЕС-<br>ГРУПП»</span></span></span></div><figcaption><b>Перенос по дефису</b>«БИЗНЕС- / ГРУПП» на узком экране</figcaption></figure>
+        <figure class="dont"><div class="dont-view"><span class="lockup" style="font-size:16px"><svg class="mark" viewBox="-1 2 50 37.4" aria-hidden="true"><use href="#scales" /></svg><span class="lockup-name" style="font-weight:600">Бизнес-Групп</span></span></div><figcaption><b>Короткое имя</b>Только юридическое написание</figcaption></figure>
+        <figure class="dont"><div class="dont-view"><span class="mono-bad">БГ</span></div><figcaption><b>Монограмма</b>Знак компании — весы</figcaption></figure>
+        <figure class="dont"><div class="dont-view"><span class="lockup" style="font-size:15px"><svg class="mark" viewBox="-1 2 50 37.4" aria-hidden="true" style="color:#2F6FD8"><use href="#scales" /></svg><span class="lockup-name" style="color:#1D3F7A">ООО «БИЗНЕС-ГРУПП»</span></span></div><figcaption><b>Синий</b>Синего у бренда нет</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec sec--cream" id="cvet" aria-labelledby="h-cvet">
+    <div class="wrap stack">
+      <div class="head">
+        <h2 id="h-cvet">Цвет</h2>
+        <p>Две тёплые шкалы: латунь и нейтральная, от крема к графиту. Нажмите на цвет, чтобы скопировать код.</p>
+      </div>
+      <div class="roles">
+        <button class="role" type="button" data-hex="#1C1815" style="--c:#1C1815;--t:#F5F1EA"><span class="r-name">Графит</span><span class="r-hex">#1C1815 · accent-950</span><span class="r-use">Тёмные разделы, подвал</span></button>
+        <button class="role" type="button" data-hex="#F5F1EA" style="--c:#F5F1EA;--t:#14110F"><span class="r-name">Крем</span><span class="r-hex">#F5F1EA · neutral-100</span><span class="r-use">Фон разделов</span></button>
+        <button class="role" type="button" data-hex="#FBF9F5" style="--c:#FBF9F5;--t:#14110F"><span class="r-name">Бумага</span><span class="r-hex">#FBF9F5 · neutral-50</span><span class="r-use">Основной фон</span></button>
+        <button class="role" type="button" data-hex="#C09A68" style="--c:#C09A68;--t:#14110F"><span class="r-name">Латунь</span><span class="r-hex">#C09A68 · accent-400</span><span class="r-use">Линии, значки, знак на тёмном</span></button>
+        <button class="role" type="button" data-hex="#86602F" style="--c:#86602F;--t:#FBF9F5"><span class="r-name">Латунь текста</span><span class="r-hex">#86602F · accent-600</span><span class="r-use">Текст и знак на светлом</span></button>
+      </div>
+
+      <div class="ramp-wrap">
+        <div class="ramp-title"><h4>Латунь</h4><span class="small">верх шкалы, 900 и 950, — графит тёмных разделов</span></div>
+        <div class="ramp" id="ramp-accent"></div>
+      </div>
+      <div class="ramp-wrap">
+        <div class="ramp-title"><h4>Нейтральная</h4><span class="small">от крема к графиту</span></div>
+        <div class="ramp" id="ramp-neutral"></div>
+      </div>
+
+      <div>
+        <h3 class="sub">Контраст</h3>
+        <div class="table-scroll">
+          <table class="cx">
+            <thead><tr><th scope="col">Пара</th><th scope="col">Где</th><th scope="col">Контраст</th><th scope="col">Годится для</th></tr></thead>
+            <tbody id="cx-body"></tbody>
+          </table>
+        </div>
+        <p class="small" style="margin-top:14px">Числа считает браузер по формуле WCAG 2.2 из тех же кодов. Латунь как текст на светлом — только от 600 и темнее; 500 и светлее остаются для линий и значков. Мелкий текст — от neutral-600.</p>
+      </div>
+
+      <div class="nobl"><i aria-hidden="true"></i><p>Синего нет нигде, даже в значках мессенджеров: Telegram, WhatsApp и MAX нарисованы в цветах сайта. Синий Telegram выбился бы из палитры.</p></div>
+    </div>
+  </section>
+
+  <section class="sec" id="shrifty" aria-labelledby="h-shrifty">
+    <div class="wrap stack">
+      <div class="head">
+        <h2 id="h-shrifty">Шрифты</h2>
+        <p>Классическая антиква с хорошо нарисованной кириллицей и гротеск в духе шрифта Apple. Начертания средние: тонкое смотрится модным, жирное — громким.</p>
+      </div>
+      <div class="type-hero">
+        <div class="spec paper">
+          <div class="spec-top"><b>Brygada 1918</b><span>заголовки, крупные цифры</span></div>
+          <span class="spec-big">Аа</span>
+          <p class="spec-glyphs">АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ<br>абвгдеёжзийклмнопрстуфхцчшщъыьэюя <i>курсив для мысли</i> 0123456789</p>
+        </div>
+        <div class="spec darks">
+          <div class="spec-top"><b>Onest</b><span>текст, интерфейс, кнопки</span></div>
+          <span class="spec-big">Аа</span>
+          <p class="spec-glyphs">АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ абвгдеёжзийклмнопрстуфхцчшщъыьэюя 0123456789 +7 900 133-02-19</p>
+        </div>
+      </div>
+      <div class="typeset">
+        <div class="ts"><span class="ts-meta"><b>Первый экран</b>Brygada 500<br>до 60 px, интерлиньяж 1,05</span><span class="t-h1">Вступление в СРО строителей, проектировщиков и изыскателей</span></div>
+        <div class="ts"><span class="ts-meta"><b>Заголовок раздела</b>Brygada 500<br>до 43 px</span><span class="t-h2">Кому нужно членство</span></div>
+        <div class="ts"><span class="ts-meta"><b>Заголовок карточки</b>Brygada 500<br>22–26 px</span><span class="t-h3">Подготовка документов</span></div>
+        <div class="ts"><span class="ts-meta"><b>Текст</b>Onest 400<br>17 px, 1,65</span><span class="t-body">Проверю, нужно ли вам членство, подберу СРО в вашем регионе и сопровожу до выписки из реестра.</span></div>
+        <div class="ts"><span class="ts-meta"><b>Подпись</b>Onest 400<br>14 px, neutral-600</span><span class="t-small">ч. 6 ст. 55.5 Градостроительного кодекса РФ</span></div>
+      </div>
+      <div>
+        <h3 class="sub">Отброшены нарочно</h3>
+        <div class="rejected"><span>Playfair Display</span><span>Inter</span><span>Montserrat</span><span>Cormorant</span></div>
+        <p class="small" style="margin-top:14px">Первые три — шрифты по умолчанию у сайтов, собранных нейросетью. Cormorant стоял до 24 сентября 2026 года: заказчику он показался тонким и модным.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec sec--cream" id="foto" aria-labelledby="h-foto">
+    <div class="wrap stack">
+      <div class="head">
+        <h2 id="h-foto">Тёплый монохром</h2>
+        <p>Кадры присланы из разных мест и в разном свете. Монохром сводит их в одну серию, как отпечатки одной плёнки. Потяните ручку, чтобы сравнить.</p>
+      </div>
+      <div class="photo-split">
+      <div class="compare" id="compare">
+        <div class="layer ph ph-crane-src" role="img" aria-label="Исходный кадр: кран на лиловом закате"></div>
+        <div class="layer after ph ph-crane" role="img" aria-label="Тот же кадр в тёплом монохроме"></div>
+        <span class="handle" aria-hidden="true"></span>
+        <span class="lab l">Как прислали</span>
+        <span class="lab r">На сайте</span>
+        <label class="vh" for="cmp" style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)">Положение разделителя</label>
+        <input type="range" id="cmp" min="0" max="100" value="50">
+      </div>
+      <div class="ramp-photo">
+        <h3 class="sub" style="margin:0">Градиент яркости</h3>
+        <div class="ramp-bar" role="img" aria-label="Градиент от графита через серо-коричневый и песок к бумаге"></div>
+        <div class="ramp-stops"><span style="left:0">0 · графит</span><span style="left:45%">0,45 · серо-коричневый</span><span style="left:78%">0,78 · песок</span><span style="left:100%">1 · бумага</span></div>
+        <p class="small">Яркость пикселя переводится в цвет этой шкалы: тени уходят в графит разделов, света — в бумагу страницы. Цвет исходника значения больше не имеет, важны свет и тень.</p>
+        <p class="small">Кран снят светлым ключом: белая точка стоит на половине яркости, и небо уходит в бумагу. Поэтому на первом экране кадр растворяется в листе без серой полосы на стыке.</p>
+      </div>
+      </div>
+      <div class="film" role="group" aria-label="Серия кадров">
+        <div class="film-row">
+          <figure class="frame"><div class="ph ph-crane" style="background-position:62% 30%"></div><figcaption><span>1A</span><span>кран, светлый ключ</span></figcaption></figure>
+          <figure class="frame"><div class="ph ph-themis"></div><figcaption><span>2A</span><span>Фемида, фон «О нас»</span></figcaption></figure>
+          <figure class="frame"><div class="ph ph-docs"></div><figcaption><span>3A</span><span>папки, «Документы»</span></figcaption></figure>
+          <figure class="frame"><div class="ph ph-section"></div><figcaption><span>4A</span><span>разрез, услуга</span></figcaption></figure>
+        </div>
+      </div>
+      <div class="photo-rules">
+        <div class="rule"><h4>Свои уровни у кадра</h4><p>Чёрная и белая точки растягивают яркость, гамма меньше единицы высветляет. Уровни подбираются под каждый кадр отдельно.</p></div>
+        <div class="rule"><h4>Кадр проступает</h4><p>Фотография, которая грузится дольше 0,2 секунды, проявляется плавно, после декодирования. Под обложкой телефона, пока кадра нет, стоит графит.</p></div>
+        <div class="rule"><h4>Надпись поверх кадра</h4><p>Контраст текста на фотографии меряется по настоящим пикселям под каждой строкой, а не по цвету в стилях.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec dark" id="dvizhenie" aria-labelledby="h-dvizhenie">
+    <div class="wrap stack">
+      <div class="head">
+        <h2 id="h-dvizhenie">Движение</h2>
+        <p>Заказчик попросил переходы изящные и протяжные. Держатся они на длительности около секунды, шёлковой кривой и ступеньке между соседними элементами.</p>
+      </div>
+      <div class="motion-grid">
+        <div class="panel">
+          <h3>Шёлковая кривая</h3>
+          <div class="curve">
+            <svg viewBox="-6 -6 112 118" role="img" aria-label="Кривая cubic-bezier 0.22, 1, 0.36, 1">
+              <rect x="0" y="0" width="100" height="100" fill="none" stroke="rgba(245,241,234,0.14)" stroke-width="0.5" />
+              <path d="M0 100 22 0M100 0 36 0" stroke="rgba(245,241,234,0.4)" stroke-width="0.5" stroke-dasharray="1.5 1.5" />
+              <path d="M0 100C22 0 36 0 100 0" fill="none" stroke="#C09A68" stroke-width="2" />
+              <path d="M0 100 100 0" fill="none" stroke="rgba(245,241,234,0.25)" stroke-width="0.6" />
+              <circle cx="22" cy="0" r="2.4" fill="#26211D" stroke="#F5F1EA" stroke-width="0.7" />
+              <circle cx="36" cy="0" r="2.4" fill="#26211D" stroke="#F5F1EA" stroke-width="0.7" />
+              <text x="0" y="111" fill="#A79D91" font-family="Onest, sans-serif" font-size="5.5">cubic-bezier(0.22, 1, 0.36, 1)</text>
+            </svg>
+          </div>
+          <div class="tracks" id="tracks"><div class="track"><i class="silk"></i></div><div class="track"><i class="lin"></i></div></div>
+          <div class="tracks-legend"><span>шёлковая, 1,1 с</span><span>равномерная, 1,1 с</span></div>
+          <button class="btn btn--inverse" type="button" data-play="tracks">Запустить</button>
+        </div>
+        <div class="panel">
+          <h3>Длительности</h3>
+          <div class="timings">
+            <div><span>Блок выплывает снизу на 28 px</span><b>1,1 с</b></div>
+            <div><span>Наведение: цвет кнопки, ссылки</span><b>0,5–0,7 с</b></div>
+            <div><span>Переход между страницами</span><b>0,4 с</b></div>
+            <div><span>Кадр проступает, если грузился дольше</span><b>0,2 с</b></div>
+          </div>
+          <div class="reveal-demo" id="reveal"><i></i><i></i><i></i></div>
+          <button class="btn btn--inverse" type="button" data-play="reveal">Проявить блоки</button>
+          <p>При настройке «уменьшить движение» всё перечисленное выключается. Движение по прокрутке — только средствами CSS, сайт от него не тяжелеет.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="elementy" aria-labelledby="h-elementy">
+    <div class="wrap stack">
+      <div class="head">
+        <h2 id="h-elementy">Элементы</h2>
+        <p>Кнопки — пилюли, как у ориентиров заказчика. У каждой детали один смысл, и он не меняется от страницы к странице.</p>
+      </div>
+      <div class="ui-grid">
+        <div class="ui-card">
+          <h3>Кружок со стрелкой</h3>
+          <div class="ui-row">
+            <a class="btn btn--primary btn--arrow" href="#nositeli">Связаться<span class="circ"><svg aria-hidden="true"><use href="#arrow-ur" /></svg></span></a>
+            <a class="btn btn--secondary" href="#nositeli">Позвонить</a>
+          </div>
+          <p>Кружок значит «написать мне» и стоит только у кнопок «Связаться». При наведении поворачивается на 45° за 0,7 секунды. Кнопка на первом экране одна.</p>
+        </div>
+        <div class="ui-card">
+          <h3>Простая стрелка</h3>
+          <div class="ui-row"><a class="goto" href="#nositeli">Подготовка документов <svg aria-hidden="true"><use href="#arrow-r" /></svg></a></div>
+          <p>Переход на другую страницу — стрелкой без кружка. Если кружок стоит везде, он перестаёт что-либо значить.</p>
+        </div>
+        <div class="ui-card dk">
+          <h3>Номера — только для порядка</h3>
+          <div class="steps"><div><b>01</b><span>Проверяю, нужно ли членство</span></div><div><b>02</b><span>Подбираю СРО в вашем регионе</span></div><div><b>03</b><span>Сопровождаю до выписки из реестра</span></div></div>
+          <p>Номера стоят у шагов работы и в описи документов. У разделов, услуг и карточек их нет.</p>
+        </div>
+        <div class="ui-card wide">
+          <h3>Ситуация и ответ</h3>
+          <table class="cases">
+            <tr><td>Договор с застройщиком или техническим заказчиком дороже 10 млн ₽</td><td>Нужно</td></tr>
+            <tr><td>Такой же договор на 10 млн ₽ или меньше</td><td>Не нужно</td></tr>
+            <tr><td>Капитальный ремонт общего имущества многоквартирного дома, любая сумма</td><td>Нужно</td></tr>
+            <tr><td>Субподряд — договор с генеральным подрядчиком</td><td>Не нужно</td></tr>
+          </table>
+          <p>Ответ — одним словом антиквой, без цветных пилюль. Норма стоит сноской: ч. 2 и 2.1 ст. 52 ГрК РФ, ч. 7 ст. 166 ЖК РФ.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec dark texts" id="teksty" aria-labelledby="h-teksty">
+    <div class="texts-bg ph ph-themis" aria-hidden="true"></div>
+    <div class="wrap stack">
+      <div class="head">
+        <h2 id="h-teksty">Тексты без примет нейросети</h2>
+        <p>Заказчик попросил вычистить тексты и сохранить профессионализм. Новый текст пишется по тем же правилам.</p>
+      </div>
+      <div class="markers">
+        <div class="mk-row"><h4>Заголовок через двоеточие</h4><p class="was">Специалисты НРС: требование закона и варианты решения</p><p class="now">Специалисты НРС</p></div>
+        <div class="mk-row"><h4>Фраза-анонс</h4><p class="was">Ниже три законных варианта.</p><p class="now">Снята. Варианты идут сразу.</p></div>
+        <div class="mk-row"><h4>Общие слова</h4><p class="was">Контролирую процесс до результата и держу вас в курсе.</p><p class="now">Веду переписку с СРО до выписки из реестра.</p></div>
+        <div class="mk-row"><h4>Непроверяемая частота</h4><p class="was">Большинство замечаний устранимы.</p><p class="now">«Бывает» или ничего.</p></div>
+        <div class="mk-row"><h4>Приём «не X, а Y»</h4><p class="was">Решает не вид работ, а с кем заключён договор.</p><p class="now">Решает, с кем заключён договор.</p></div>
+        <div class="mk-row"><h4>Одинаковые рубрики</h4><p class="was">«Формат» над каждой карточкой цен</p><p class="now">У каждой карточки свой заголовок.</p></div>
+      </div>
+      <div class="speech">
+        <div><h4>От первого лица</h4><p>Говорит специалист: «подбираю», «готовлю», «веду». Имени и фотографии нет.</p></div>
+        <div><h4>Только проверяемое</h4><p>Никаких выдуманных фактов, цифр, цен и сроков. Нет данных — плейсхолдер вида [ЦЕНА], и на экран он не выходит.</p></div>
+        <div><h4>Норма рядом</h4><p>Статья закона стоит сноской. Цену компания называет по телефону.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="nositeli" aria-labelledby="h-nositeli">
+    <div class="wrap stack">
+      <div class="head">
+        <h2 id="h-nositeli">Носители</h2>
+        <p>Визитка, обложка для соцсетей и значок. Контакты на макетах — те же, что на сайте.</p>
+      </div>
+      <div class="carriers">
+        <figure class="carrier c-cards">
+          <div class="table-top">
+            <div class="slot">
+              <div class="card card-front"><svg class="mark" viewBox="-1 2 50 37.4" aria-hidden="true"><use href="#scales" /></svg></div>
+              <div class="card card-back">
+                <span class="lockup"><svg class="mark" viewBox="-1 2 50 37.4" aria-hidden="true"><use href="#scales" /></svg><span><span class="lockup-name">ООО «БИЗНЕС-ГРУПП»</span><span class="lockup-role">Вступление в СРО</span></span></span>
+                <span></span>
+                <p class="reach"><b>+7 900 133-02-19</b>9001330219@mail.ru<span class="site" style="display:block">biznesgrp.ru</span></p>
+              </div>
+            </div>
+          </div>
+          <figcaption><b>Визитка 90 × 50 мм.</b> Лицо — графит со знаком латунью в тонкой латунной рамке, оборот — бумага. Телефон — антиквой, крупно.</figcaption>
+        </figure>
+        <figure class="carrier c-6">
+          <div class="table-top">
+            <div class="og-slot">
+              <div class="og">
+                <div class="ph ph-crane"></div>
+                <div class="og-in">
+                  <span class="lockup"><svg class="mark" viewBox="-1 2 50 37.4" aria-hidden="true"><use href="#scales" /></svg><span><span class="lockup-name">ООО «БИЗНЕС-ГРУПП»</span><span class="lockup-role">Вступление в СРО</span></span></span>
+                  <h3>Вступление в СРО строителей, проектировщиков и изыскателей</h3>
+                  <p>biznesgrp.ru</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <figcaption><b>Обложка для соцсетей 1200 × 630.</b> Тот же приём, что на первом экране: лист слева, кадр справа растворяется в бумаге.</figcaption>
+        </figure>
+        <figure class="carrier c-6">
+          <div class="table-top">
+            <div class="icon-slot">
+              <span class="app-icon"><svg viewBox="-1 2 50 37.4" color="#C09A68" aria-hidden="true"><use href="#scales-fav" /></svg></span>
+              <span class="app-icon" style="width:76px;height:76px;border-radius:17px"><svg viewBox="-1 2 50 37.4" color="#C09A68" aria-hidden="true"><use href="#scales-fav" /></svg></span>
+              <span class="app-icon" style="width:48px;height:48px;border-radius:11px"><svg viewBox="-1 2 50 37.4" color="#C09A68" aria-hidden="true"><use href="#scales-fav" /></svg></span>
+              <span class="app-icon" style="width:104px;height:104px;border-radius:50%;background:#F5F1EA;box-shadow:inset 0 0 0 1px #D6CDC1"><svg viewBox="-1 2 50 37.4" color="#86602F" style="width:52%" aria-hidden="true"><use href="#scales" /></svg></span>
+            </div>
+          </div>
+          <figcaption><b>Значок и аватар.</b> На графитовой плашке — утолщённая версия знака, как во вкладке браузера. В круглом аватаре знак занимает половину ширины: углы круга его не срежут.</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="colophon dark">
+  <div class="wrap colo">
+    <div>
+      <span class="lockup inv"><svg class="mark" viewBox="-1 2 50 37.4" aria-hidden="true"><use href="#scales" /></svg><span><span class="lockup-name">ООО «БИЗНЕС-ГРУПП»</span><span class="lockup-role">Вступление в СРО · biznesgrp.ru</span></span></span>
+      <p>Брендбук собран по исходникам сайта: контуры знака, обе шкалы цвета и контакты взяты оттуда же, откуда их берёт сайт. Поменялось на сайте — брендбук пересобирается и показывает новое.</p>
+    </div>
+    <div class="colo-meta"><span>Редакция 1.0</span><span>Октябрь 2026</span></div>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  // Шкалы — значения из sro-site/tailwind.config.js (сверяет build.mjs).
+  var ACCENT = [['50', '#F7F1E8'], ['100', '#EFE3D1'], ['200', '#E3CDA9'], ['300', '#D2B186'], ['400', '#C09A68'], ['500', '#9D7443'], ['600', '#86602F'], ['700', '#6B4C26'], ['800', '#4D3A26'], ['900', '#26211D'], ['950', '#1C1815']];
+  var NEUTRAL = [['50', '#FBF9F5'], ['100', '#F5F1EA'], ['200', '#E9E2D7'], ['300', '#D6CDC1'], ['400', '#A79D91'], ['500', '#766C61'], ['600', '#5C534A'], ['700', '#453E37'], ['800', '#2E2924'], ['900', '#1F1B17'], ['950', '#14110F']];
+
+  function lum(hex) {
+    var v = hex.replace('#', '').match(/../g).map(function (h) {
+      var s = parseInt(h, 16) / 255;
+      return s <= 0.04045 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2];
+  }
+  function ratio(a, b) { var x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); }
+
+  function ramp(id, list, prefix) {
+    var box = document.getElementById(id);
+    list.forEach(function (c) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'swatch';
+      b.dataset.hex = c[1];
+      var t = lum(c[1]) > 0.3 ? '#14110F' : '#F5F1EA';
+      b.style.setProperty('--c', c[1]);
+      b.style.setProperty('--t', t);
+      b.setAttribute('aria-label', prefix + '-' + c[0] + ' ' + c[1]);
+      b.innerHTML = '<b>' + c[0] + '</b><span>' + c[1] + '</span>';
+      box.appendChild(b);
+    });
+  }
+  ramp('ramp-accent', ACCENT, 'accent');
+  ramp('ramp-neutral', NEUTRAL, 'neutral');
+
+  var pairs = [
+    ['#14110F', '#FBF9F5', 'Текст на бумаге', 'весь текст'],
+    ['#5C534A', '#F5F1EA', 'neutral-600 на креме', 'мелкий текст'],
+    ['#766C61', '#F5F1EA', 'neutral-500 на креме', 'крупные подписи'],
+    ['#86602F', '#F5F1EA', 'accent-600 на креме', 'латунный текст'],
+    ['#9D7443', '#F5F1EA', 'accent-500 на креме', 'линии, значки'],
+    ['#F5F1EA', '#1C1815', 'Крем на графите', 'тёмные разделы'],
+    ['#A79D91', '#1C1815', 'neutral-400 на графите', 'подписи на тёмном'],
+    ['#C09A68', '#1C1815', 'Латунь на графите', 'знак, акцент']
+  ];
+  var body = document.getElementById('cx-body');
+  pairs.forEach(function (p) {
+    var r = ratio(p[0], p[1]);
+    var v = r >= 7 ? 'любой текст, AAA' : r >= 4.5 ? 'текст, AA' : r >= 3 ? 'крупный текст и линии' : 'только декор';
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td><span class="cx-s" style="color:' + p[0] + ';background:' + p[1] + '">Аа</span>' + p[2] + '</td><td>' + p[3] + '</td><td><b style="font-weight:500">' + r.toFixed(2).replace('.', ',') + ' : 1</b></td><td><span class="cx-v' + (r < 4.5 ? ' lo' : '') + '">' + v + '</span></td>';
+    body.appendChild(tr);
+  });
+
+  var toast = document.getElementById('toast'), timer;
+  function say(t) { toast.textContent = t; toast.classList.add('show'); clearTimeout(timer); timer = setTimeout(function () { toast.classList.remove('show'); }, 1800); }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-hex]');
+    if (!b) return;
+    var hex = b.dataset.hex;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(hex).then(function () { say('Скопировано: ' + hex); }, function () { say(hex); });
+    } else { say(hex); }
+  });
+
+  var cmp = document.getElementById('compare'), input = document.getElementById('cmp');
+  function set() { cmp.style.setProperty('--pos', input.value + '%'); }
+  input.addEventListener('input', set); set();
+
+  document.querySelectorAll('[data-play]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var el = document.getElementById(btn.dataset.play);
+      el.classList.remove('play'); void el.offsetWidth; el.classList.add('play');
+    });
+  });
+})();
+</script>
