@@ -95,6 +95,9 @@ const QUERIES = [
   // перебивать страницу, где реестр — предмет работы.
   ['прорабы в нрс', '/baza-znaniy/inye-specialisty-v-nrs/'],
   ['иные специалисты', '/baza-znaniy/inye-specialisty-v-nrs/'],
+  // Один договор на несколько видов работ (статья 02.10.2026).
+  ['сколько сро нужно', '/baza-znaniy/pir-i-pod-klyuch-skolko-sro/'],
+  ['пир', '/baza-znaniy/pir-i-pod-klyuch-skolko-sro/'],
   // Запросы из Wordstat (29.09.2026): у каждого своя страница-ответ,
   // и поиск по сайту обязан приводить на неё, а не на соседнюю.
   ['вступить в сро срочно', '/baza-znaniy/sroki-vstupleniya/'],
