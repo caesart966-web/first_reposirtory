@@ -1,8 +1,6 @@
-import { EXTRA_ID } from '../content/extra'
 import { serviceBySlug } from '../content/services'
 import { page } from '../lib/site'
 import { nbsp } from '../lib/typo'
-import { PageLink } from './PageParts'
 import { GoTo } from './ui/GoTo'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
@@ -122,20 +120,6 @@ export function Services() {
           </div>
         ))}
       </div>
-
-      {/* Лицензии, обучение и ISO — не услуги по вступлению, поэтому не
-          в сетке (её заголовок стал бы неправдой, а карточки там ведут
-          на страницы услуг). Свой раздел у них ниже, после «Форматов
-          работы»; эта строка показывает их сразу, не удлиняя главную
-          (02.10.2026). */}
-      <Reveal>
-        <PageLink
-          href={`#${EXTRA_ID}`}
-          text={'Лицензии МЧС и Минкультуры, обучение сотрудников, ISO\u00A09001'}
-          to="Другие услуги"
-          className="mt-10 sm:mt-14"
-        />
-      </Reveal>
     </Section>
   )
 }
