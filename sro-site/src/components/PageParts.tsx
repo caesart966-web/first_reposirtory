@@ -185,7 +185,7 @@ const FORMS = [
   { key: 'ip', label: 'ИП', items: DOCS_IP },
 ] as const
 type FormKey = (typeof FORMS)[number]['key']
-const SRO_HINT = 'Обычный запрос сверх кодекса. У другой СРО список может отличаться.'
+const SRO_HINT = 'Типовой список сверх закона. У другой СРО он может отличаться.'
 
 function useForm() {
   const [form, setForm] = useState<FormKey>('ooo')
