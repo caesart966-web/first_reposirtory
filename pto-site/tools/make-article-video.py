@@ -127,6 +127,14 @@ def hook_fx(mm, visual, put):
     elif visual == "meter":
         put(buzz(mm), 1.0, .35)                     # стрелка пошла
         put(thump(mm), 2.4, .3)                     # молния
+    elif visual == "grid":
+        for i, m in enumerate((76, 81, 83)):
+            put(mm.pluck(m, .6), 1.6 + i * .55, .14)
+    elif visual == "office":
+        put(paper(mm, 61), .45, .35)
+        put(paper(mm, 62), .95, .35)
+        for k in range(3):
+            put(mm.pluck(84 + 3 * k, .4), 2.1 + k * .35, .08)
     elif visual == "crane":
         put(thump(mm), 3.6, .3)
 
