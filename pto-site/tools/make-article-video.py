@@ -99,6 +99,15 @@ def riser(mm, length=2.2):
     return s * (t / length) ** 2.2 * .5
 
 
+def buzz(mm, length=1.2):
+    """Электрический гул: 50 Гц с гармониками плюс треск, нарастает и гаснет."""
+    n = int(length * SR)
+    t = np.arange(n) / SR
+    hum = sum(np.sin(2 * np.pi * 50 * k * t) / k for k in (1, 2, 3, 5, 7))
+    crackle = mm.bandpass(noise(23, n), 2000, 9000) * (noise(29, n) > 1.6)
+    return (hum * .3 + crackle * .8) * np.sin(np.pi * t / length) ** 2
+
+
 # Звуки к анимации первой сцены — время от начала ролика (сцена 1 начинается с нуля)
 def hook_fx(mm, visual, put):
     if visual == "act":
@@ -115,6 +124,9 @@ def hook_fx(mm, visual, put):
     elif visual == "survey":
         for at in (1.6, 2.2, 2.8, 3.3):
             put(mm.pluck(88, .5), at + .1, .12)
+    elif visual == "meter":
+        put(buzz(mm), 1.0, .35)                     # стрелка пошла
+        put(thump(mm), 2.4, .3)                     # молния
     elif visual == "crane":
         put(thump(mm), 3.6, .3)
 

@@ -833,6 +833,11 @@ python3 tools/make-article-video.py --all --out-dir ролики            # в
 python3 tools/make-article-video.py --slug proverka-smety --out rolik.mp4
 ```
 
+Ролик можно сделать и про услугу, а не про статью: файл называется `usluga-<…>.json`,
+текст берётся из записи услуги в `data/services.json` (первый такой — `usluga-elektroizmereniya`,
+электроизмерения и техотчёт: прибор со стрелкой, тёмный лист «Своей аккредитации у нас
+нет — и мы говорим об этом прямо», как на странице услуги).
+
 Новая статья — новый файл сцен: проще всего скопировать похожий и поменять текст.
 Перед съёмкой проверьте кадры в конце каждой сцены
 (`python3 tools/make-video.py --page "/tools/video/article.html?capture&a=<адрес>" --frames …`):

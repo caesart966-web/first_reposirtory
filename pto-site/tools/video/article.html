@@ -10,8 +10,9 @@
   страница открывается как article.html?a=<адрес>. Там же длительности сцен и музыка —
   tools/make-article-video.py читает тот же файл, поэтому звук попадает в смены сцен сами.
 
-  Все формулировки берутся из статьи data/articles/<адрес>.md. Цифр, которых в статье нет,
-  в ролике быть не должно: строки акта и сметы в первой сцене нарочно без сумм.
+  Все формулировки берутся из статьи data/articles/<адрес>.md (или, если ролик про услугу,
+  из её записи в data/services.json — адрес такого файла начинается с «usluga-»). Цифр, которых
+  в источнике нет, в ролике быть не должно: строки акта и сметы в первой сцене нарочно без сумм.
   Телефон и Telegram в финале — из data/site.json, а не написаны здесь.
 
   Оформление: лист документа на тёмном столе. Листы входят по-разному (снизу, разворотом,
@@ -19,7 +20,9 @@
   (акт с красной ручкой, стопка документов, печать, кран, съёмка, смета под лупой).
   Нижние ~330 px и правый край в Reels и ВК закрывают кнопки — лист кончается выше.
 
-  Типы сцен: hook, cards, list (num | check), quote, steps, final — описаны в build() ниже.
+  Типы сцен: hook, cards, list (num | check), quote, steps, final — описаны в BUILD ниже.
+  У листа может быть "dark": true — тёмный лист для одной сцены-признания; "cap" меняет подпись
+  над листом (у роликов про услуги — «Услуга · x-pto.ru/uslugi»).
 -->
 <style>
   @font-face { font-family: "Display"; src: url("../../assets/fonts/geologica-cyrillic.woff2") format("woff2"); font-weight: 300 800; unicode-range: U+0400-04FF; }
@@ -216,6 +219,14 @@
   .legend span::before { content: ""; display: inline-block; width: 36px; height: 0; border-top: 5px dashed var(--accent); margin-right: 12px; vertical-align: middle; }
   .legend span.f::before { border-top: 5px solid var(--red); }
 
+  /* прибор: стрелка уходит вправо, перелетает и успокаивается */
+  .needle { transform-box: view-box; transform-origin: 356px 330px; animation: needle 1.8s var(--io) both;
+    animation-delay: calc((var(--t0) + var(--d)) * 1s); }
+  @keyframes needle { 0% { transform: rotate(-82deg); } 45% { transform: rotate(70deg); } 62% { transform: rotate(38deg); }
+    78% { transform: rotate(56deg); } 90% { transform: rotate(46deg); } 100% { transform: rotate(50deg); } }
+  .meter-cap { position: absolute; left: 0; right: 0; top: 380px; text-align: center; font: 700 30px/1 "Mono", monospace;
+    letter-spacing: .3em; text-transform: uppercase; color: var(--muted); }
+
   /* смета под лупой */
   .lens { position: absolute; left: 0; top: 0; width: 170px; height: 170px; animation: lens 3.2s var(--io) both;
     animation-delay: calc((var(--t0) + var(--d)) * 1s); }
@@ -275,6 +286,14 @@
   .finger { display: flex; gap: 22px; align-items: center; margin-top: 56px; padding: 26px 30px; border-radius: 14px;
     border: 3px dashed var(--red); color: var(--red); font: 700 44px/1.2 "Display", sans-serif; }
 
+  /* тёмный лист — для одной сцены-признания, чтобы ролик не шёл на одной ноте */
+  .sheet.dark { background: var(--ink); color: #fff; }
+  .sheet.dark .head { border-color: rgba(255, 255, 255, .5); color: var(--accent-300); }
+  .sheet.dark .head b { color: #fff; }
+  .sheet.dark mark { color: #ffd43b; --marker: rgba(255, 212, 59, .22); }
+  .sheet.dark .finger { border-color: #ff8a80; color: #ffb4ad; }
+  .sheet.dark .finger svg { stroke: #ff8a80; }
+
   /* ---------- шаги ---------- */
   .steps { position: relative; list-style: none; margin-top: 44px; }
   .steps::before { content: ""; position: absolute; left: 37px; top: 40px; bottom: 60px; width: 4px; background: var(--line); }
@@ -316,7 +335,7 @@
   <div class="glow g1"></div>
   <div class="glow g2"></div>
   <div class="grid"></div>
-  <div class="desk-cap"><span><b>Разбор статьи</b> · x-pto.ru/stati</span><span class="count" id="count"></span></div>
+  <div class="desk-cap"><span id="cap"><b>Разбор статьи</b> · x-pto.ru/stati</span><span class="count" id="count"></span></div>
   <div class="progress"><i></i></div>
   <div class="under u1"></div>
   <div class="under u2"></div>
@@ -429,6 +448,25 @@
       });
       v.appendChild(d(el('span', 'cross'), 1.0));
       v.appendChild(d(el('div', 'legend a fade', '<span>проект</span><span class="f">факт</span>'), 3.6));
+      return v;
+    },
+    meter: function () {
+      var v = el('div', 'vis');
+      var ticks = '';
+      for (var k = 0; k <= 20; k++) {
+        var ang = Math.PI * (1 - k / 20), r1 = k % 5 ? 214 : 196;
+        ticks += 'M' + r2(356 + 236 * Math.cos(ang)) + ' ' + r2(330 - 236 * Math.sin(ang)) +
+                 ' L' + r2(356 + r1 * Math.cos(ang)) + ' ' + r2(330 - r1 * Math.sin(ang)) + ' ';
+      }
+      v.innerHTML = '<svg class="draw" viewBox="0 0 712 470" width="712" height="470">' +
+        '<path class="ln" style="--d:.4; --len:760; --dur:1s" d="M116 330 A240 240 0 0 1 596 330" stroke="#0d1c30" stroke-width="8"/>' +
+        '<path class="ln" style="--d:1.75; --len:200; --dur:.6s" d="M500 136 A240 240 0 0 1 596 330" stroke="var(--hi)" stroke-width="16"/>' +
+        '<path class="a fade" style="--d:.9" d="' + ticks + '" stroke="#55677e" stroke-width="4"/>' +
+        '<g class="needle" style="--d:1"><path d="M356 330 L356 120" stroke="#d93025" stroke-width="8"/></g>' +
+        '<circle cx="356" cy="330" r="22" style="fill:#0d1c30" stroke="none"/>' +
+        '<path class="a pop" style="--d:2.4; fill:var(--hi); transform-box:fill-box; transform-origin:center" stroke="none" d="M626 40 L586 120 L616 120 L596 190 L656 96 L624 96 L646 40 Z"/>' +
+        '</svg>';
+      v.appendChild(d(el('div', 'meter-cap a fade', 'Измерение'), 1.2));
       return v;
     },
     estimate: function () {
@@ -548,6 +586,7 @@
     var V = res[0], C = res[1].contacts;
     document.title = 'X-PTO — ролик: ' + V.tag;
     if (V.accent) document.documentElement.style.setProperty('--hi', V.accent);
+    if (V.cap) document.getElementById('cap').innerHTML = V.cap;
     var stack = document.getElementById('stack');
     var total = V.scenes.reduce(function (a, s) { return a + s.dur; }, 0);
     document.documentElement.style.setProperty('--total', total);
@@ -563,6 +602,7 @@
       sheet.style.setProperty('--in', INS[(i - 1 + INS.length) % INS.length]);
       sheet.dataset.t1 = t1; sheet.dataset.t0 = t;
       if (s.tag) sheet.dataset.tag = s.tag;
+      if (s.dark) sheet.classList.add('dark');
       head(sheet, V, i + 1);
       var body = el('div', 'body' + (s.type === 'hook' || s.type === 'final' ? '' : ' breath'));
       sheet.appendChild(body);
