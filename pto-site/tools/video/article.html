@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>X-PTO — ролик по статье</title>
+<!--
+  Ролики по статьям: 1080×1920, ~60–70 секунд, без голоса — всё понятно по тексту.
+
+  Одна страница на все статьи: сцены каждого ролика лежат в tools/video/articles/<адрес>.json,
+  страница открывается как article.html?a=<адрес>. Там же длительности сцен и музыка —
+  tools/make-article-video.py читает тот же файл, поэтому звук попадает в смены сцен сами.
+
+  Все формулировки берутся из статьи data/articles/<адрес>.md. Цифр, которых в статье нет,
+  в ролике быть не должно: строки акта и сметы в первой сцене нарочно без сумм.
+  Телефон и Telegram в финале — из data/site.json, а не написаны здесь.
+
+  Оформление: лист документа на тёмном столе. Листы входят по-разному (снизу, разворотом,
+  из глубины), заголовки собираются по словам, у каждой статьи своя анимация первой сцены
+  (акт с красной ручкой, стопка документов, печать, кран, съёмка, смета под лупой).
+  Нижние ~330 px и правый край в Reels и ВК закрывают кнопки — лист кончается выше.
+
+  Типы сцен: hook, cards, list (num | check), quote, steps, final — описаны в build() ниже.
+-->
+<style>
+  @font-face { font-family: "Display"; src: url("../../assets/fonts/geologica-cyrillic.woff2") format("woff2"); font-weight: 300 800; unicode-range: U+0400-04FF; }
+  @font-face { font-family: "Display"; src: url("../../assets/fonts/geologica-latin.woff2") format("woff2"); font-weight: 300 800; unicode-range: U+0000-03FF, U+2000-206F; }
+  @font-face { font-family: "Text"; src: url("../../assets/fonts/inter-cyrillic.woff2") format("woff2"); font-weight: 300 800; unicode-range: U+0400-04FF; }
+  @font-face { font-family: "Text"; src: url("../../assets/fonts/inter-latin.woff2") format("woff2"); font-weight: 300 800; unicode-range: U+0000-03FF, U+2000-206F; }
+  @font-face { font-family: "Mono"; src: url("../../assets/fonts/mono-cyrillic.woff2") format("woff2"); font-weight: 300 800; unicode-range: U+0400-04FF; }
+  @font-face { font-family: "Mono"; src: url("../../assets/fonts/mono-latin.woff2") format("woff2"); font-weight: 300 800; unicode-range: U+0000-03FF, U+2000-206F; }
+
+  :root {
+    --desk: #0b1828; --ink: #0d1c30; --paper: #ffffff; --accent: #1f6feb; --accent-300: #7fb0ff;
+    --hi: #1f6feb;                       /* цвет статьи: номера, галочки, маркер рамок */
+    --muted: #55677e; --line: #dfe5ee; --red: #d93025; --marker: rgba(255, 214, 64, .75); --good: #1a8a4a;
+    --pop: cubic-bezier(.34, 1.56, .64, 1);
+    --snap: cubic-bezier(.16, 1, .3, 1);
+    --io: cubic-bezier(.76, 0, .24, 1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--desk); }
+  body { font-family: "Text", sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
+  .stage { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: var(--desk); }
+
+  /* ---------- стол: живой фон ---------- */
+  .glow { position: absolute; width: 1100px; height: 1100px; border-radius: 50%; filter: blur(120px); opacity: .55;
+    animation: drift linear both; animation-duration: calc(var(--total) * 1s); }
+  .glow.g1 { left: -300px; top: 100px; background: radial-gradient(circle, #1f6feb 0%, rgba(31, 111, 235, 0) 65%); }
+  .glow.g2 { right: -420px; top: 900px; background: radial-gradient(circle, var(--hi) 0%, rgba(0, 0, 0, 0) 65%);
+    opacity: .4; animation-direction: reverse; }
+  @keyframes drift { from { transform: translate(0, 0) scale(1); } 50% { transform: translate(220px, -260px) scale(1.15); }
+    to { transform: translate(-80px, 180px) scale(.95); } }
+  .grid { position: absolute; inset: -60px; background:
+      linear-gradient(rgba(127, 176, 255, .07) 1px, transparent 1px) 0 0 / 60px 60px,
+      linear-gradient(90deg, rgba(127, 176, 255, .07) 1px, transparent 1px) 0 0 / 60px 60px;
+    animation: grid linear both; animation-duration: calc(var(--total) * 1s); }
+  @keyframes grid { to { transform: translate(60px, -120px); } }
+
+  .desk-cap { position: absolute; left: 60px; right: 180px; top: 62px; display: flex; justify-content: space-between;
+    font: 600 26px/1 "Mono", monospace; letter-spacing: .08em; color: var(--accent-300); text-transform: uppercase; }
+  .desk-cap b { color: #fff; font-weight: 700; }
+  .count { color: #fff; }
+  .count span { display: inline-block; min-width: 1.3em; text-align: right; }
+  .progress { position: absolute; left: 60px; top: 110px; width: 840px; height: 6px; border-radius: 3px;
+    background: rgba(255, 255, 255, .12); overflow: hidden; }
+  .progress i { position: absolute; inset: 0; background: linear-gradient(90deg, var(--accent), var(--hi));
+    transform-origin: 0 50%; animation: progress linear both; animation-duration: calc(var(--total) * 1s); }
+  @keyframes progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+  .under { position: absolute; left: 60px; top: 170px; width: 840px; height: 1410px; border-radius: 14px;
+    background: #e9eef5; box-shadow: 0 30px 60px rgba(0, 0, 0, .35); }
+  .under.u1 { transform: rotate(2.2deg) translate(10px, 14px); background: #c4cfdc; }
+  .under.u2 { transform: rotate(-1.4deg) translate(-6px, 8px); background: #dbe3ed; }
+
+  /* ---------- листы: три способа войти ---------- */
+  .stack { position: absolute; inset: 0; perspective: 2400px; }
+  .sheet { position: absolute; left: 60px; top: 170px; width: 840px; height: 1410px; border-radius: 14px;
+    background: var(--paper); padding: 56px 64px 0; overflow: hidden;
+    box-shadow: 0 2px 0 rgba(0, 0, 0, .04), 0 40px 80px rgba(0, 0, 0, .45);
+    transform: rotate(var(--rot, 0deg)); transform-origin: 50% 50%;
+    animation: var(--in) 1s var(--snap) both, sheet-out .8s var(--io) forwards;
+    animation-delay: calc(var(--t0) * 1s), calc(var(--t1) * 1s); }
+  .sheet.first { animation: sheet-out .8s var(--io) forwards; animation-delay: calc(var(--t1) * 1s); }
+  .sheet.gone { visibility: hidden; }
+  .sheet::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 10px; background: linear-gradient(90deg, var(--accent), var(--hi)); }
+  @keyframes in-rise { from { transform: translateY(1900px) rotate(9deg); } to { transform: rotate(var(--rot, 0deg)); } }
+  @keyframes in-turn { from { transform: translateX(1100px) rotateY(-70deg) rotate(4deg); filter: brightness(.6); }
+    to { transform: rotate(var(--rot, 0deg)); filter: none; } }
+  @keyframes in-deep { from { transform: translateY(120px) scale(.55) rotate(-6deg); opacity: 0; filter: blur(14px); }
+    to { transform: rotate(var(--rot, 0deg)); opacity: 1; filter: none; } }
+  @keyframes sheet-out { from { transform: rotate(var(--rot, 0deg)); }
+    to { transform: translate(-60px, -2150px) rotate(-10deg); } }
+
+  .head { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 20px;
+    border-bottom: 2px solid var(--ink); font: 600 24px/1 "Mono", monospace; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--muted); }
+  .head b { color: var(--ink); font-weight: 700; }
+
+  h1, h2 { font-family: "Display", sans-serif; font-weight: 800; letter-spacing: -.02em; }
+  h1 { font-size: 96px; line-height: 1.02; margin-top: 56px; }
+  h2 { font-size: 80px; line-height: 1.05; margin-top: 52px; }
+  h1 em, h2 em { font-style: normal; color: var(--hi); }
+  h1 em.red, h2 em.red { color: var(--red); }
+  .lead { font-size: 44px; line-height: 1.3; color: var(--muted); margin-top: 52px; }
+  .lead b { color: var(--ink); }
+
+  /* ---------- анимации элементов: время от входа листа ---------- */
+  .a { animation-fill-mode: both; animation-delay: calc((var(--t0) + var(--d, 0)) * 1s); }
+  .a.up { animation: up .75s var(--snap) both; animation-delay: calc((var(--t0) + var(--d, 0)) * 1s); }
+  @keyframes up { from { opacity: 0; transform: translateY(60px); filter: blur(8px); } to { opacity: 1; transform: none; filter: none; } }
+  .a.left { animation: left .8s var(--snap) both; animation-delay: calc((var(--t0) + var(--d, 0)) * 1s); }
+  @keyframes left { from { opacity: 0; transform: translateX(-110px); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+  .a.pop { animation: pop .65s var(--pop) both; animation-delay: calc((var(--t0) + var(--d, 0)) * 1s); }
+  @keyframes pop { from { opacity: 0; transform: scale(0) rotate(-30deg); } to { opacity: 1; transform: none; } }
+  .a.stamp { animation: stamp .55s var(--pop) both; animation-delay: calc((var(--t0) + var(--d, 0)) * 1s); }
+  @keyframes stamp { from { opacity: 0; transform: scale(2.4) rotate(var(--sr, -8deg)); filter: blur(6px); }
+    to { opacity: 1; transform: rotate(var(--sr, -8deg)); filter: none; } }
+  .a.fade { animation: fade .6s ease both; animation-delay: calc((var(--t0) + var(--d, 0)) * 1s); }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+  .w { display: inline-block; animation: word .7s var(--snap) both;
+    animation-delay: calc((var(--t0) + var(--d, 0) + var(--i) * .08) * 1s); }
+  @keyframes word { from { opacity: 0; transform: translateY(70%) rotate(4deg); filter: blur(10px); }
+    to { opacity: 1; transform: none; filter: none; } }
+  mark, .mark { color: inherit; background: linear-gradient(var(--marker), var(--marker)) no-repeat 0 78% / 0% 42%;
+    animation: mark .7s var(--io) both; animation-delay: calc((var(--t0) + var(--d, 0)) * 1s);
+    -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+  @keyframes mark { to { background-size: 100% 42%; } }
+  /* лист, на котором всё сказано, чуть «дышит» — кадр не замирает */
+  .breath { animation: breath 6s ease-in-out both; animation-delay: calc((var(--t0) + 1) * 1s); }
+  @keyframes breath { from { transform: none; } to { transform: scale(1.025); } }
+  .body { transform-origin: 50% 0; }
+
+  /* ---------- крючок: общие детали ---------- */
+  .vis { position: relative; margin-top: 56px; height: 470px; }
+  .paper-mock { position: absolute; inset: 0; border: 2px solid var(--line); border-radius: 10px; background: #fff; }
+  .bar { position: absolute; height: 14px; border-radius: 7px; background: #cfd8e3; }
+  .tag { position: absolute; padding: 10px 22px; border: 5px solid var(--red); border-radius: 10px; --sr: -9deg;
+    font: 800 42px/1 "Display", sans-serif; color: var(--red); text-transform: uppercase; background: rgba(255, 255, 255, .92); }
+  svg.draw * { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .ln { stroke-dasharray: var(--len) var(--len); stroke-dashoffset: var(--len); animation: draw var(--dur, .8s) var(--io) both;
+    animation-delay: calc((var(--t0) + var(--d, 0)) * 1s); }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+
+  /* акт КС-2 и красная ручка */
+  .act { position: relative; margin-top: 64px; border: 2px solid var(--line); border-radius: 8px; height: 432px; }
+  .act__top { height: 110px; padding: 22px 28px 0; border-bottom: 2px solid var(--line);
+    font: 600 22px/1.35 "Mono", monospace; color: var(--muted); letter-spacing: .04em; }
+  .act__top b { display: block; color: var(--ink); font-size: 26px; }
+  .row { display: flex; align-items: center; gap: 22px; height: 64px; padding: 0 28px; border-bottom: 1px solid var(--line); }
+  .row:last-child { border-bottom: 0; }
+  .row .n { width: 34px; font: 600 24px/1 "Mono", monospace; color: var(--muted); }
+  .row .t { height: 14px; border-radius: 7px; background: #cfd8e3; }
+  .row .v { margin-left: auto; width: 110px; height: 14px; border-radius: 7px; background: #b7c3d2; }
+  .strike { position: absolute; left: 90px; width: 530px; height: 7px; margin-top: -3px; border-radius: 4px;
+    background: var(--red); transform-origin: 0 50%; animation: strike .48s linear both;
+    animation-delay: calc((var(--t0) + var(--d)) * 1s); }
+  @keyframes strike { from { transform: scaleX(0) rotate(-1.2deg); } to { transform: scaleX(1) rotate(-1.2deg); } }
+  .pen { position: absolute; left: 0; top: 0; width: 0; height: 0; animation: pen 2.4s linear both;
+    animation-delay: calc((var(--t0) + var(--d)) * 1s); }
+  .pen::before { content: ""; position: absolute; left: 0; top: -13px; width: 230px; height: 26px;
+    transform-origin: 0 50%; transform: rotate(-38deg); border-radius: 3px 13px 13px 3px;
+    background: linear-gradient(90deg, #444 0 16px, #c62a20 16px 150px, #7d1710 150px 160px, #c62a20 160px);
+    clip-path: polygon(0 50%, 18px 0, 100% 0, 100% 100%, 18px 100%); }
+  @keyframes pen {
+    0%   { transform: translate(90px, 206px); opacity: 0; }
+    5%   { opacity: 1; }
+    20%  { transform: translate(620px, 206px); }
+    28%  { transform: translate(90px, 270px); }
+    48%  { transform: translate(620px, 270px); }
+    56%  { transform: translate(90px, 398px); }
+    76%  { transform: translate(620px, 398px); opacity: 1; }
+    100% { transform: translate(760px, 300px); opacity: 0; } }
+
+  /* стопка документов */
+  .doc { position: absolute; left: 50%; top: 10px; width: 340px; height: 132px; margin-left: -170px; border-radius: 10px;
+    background: #fff; border: 2px solid var(--line); box-shadow: 0 16px 30px rgba(13, 28, 48, .16); padding: 20px 60px 0 24px;
+    animation: doc-in .7s var(--snap) both; animation-delay: calc((var(--t0) + var(--d)) * 1s);
+    transform: translate(var(--x), var(--y)) rotate(var(--r)); }
+  .doc b { display: block; font: 800 26px/1.12 "Display", sans-serif; }
+  .doc::before { content: ""; position: absolute; right: 18px; top: 18px; width: 30px; height: 30px; border-radius: 50%; background: var(--hi); opacity: .9; }
+  .doc i { display: block; height: 10px; border-radius: 5px; background: #dfe5ee; margin-top: 12px; }
+  .doc i:nth-of-type(2) { width: 80%; } .doc i:nth-of-type(3) { width: 60%; }
+  @keyframes doc-in { from { opacity: 0; transform: translate(var(--x), calc(var(--y) - 700px)) rotate(calc(var(--r) * -3)); }
+    to { opacity: 1; transform: translate(var(--x), var(--y)) rotate(var(--r)); } }
+
+  /* печать */
+  .seal-big { position: absolute; left: 50%; top: 50%; width: 330px; height: 330px; margin: -165px 0 0 -165px; border-radius: 50%;
+    border: 10px solid var(--red); color: var(--red); display: grid; place-items: center; text-align: center; --sr: -12deg;
+    font: 800 88px/1 "Display", sans-serif; background: rgba(255, 255, 255, .55); }
+  .seal-big::before { content: ""; position: absolute; inset: 16px; border-radius: 50%; border: 3px solid var(--red); }
+  .seal-big small { display: block; font: 700 22px/1.2 "Mono", monospace; letter-spacing: .06em; margin-top: 8px; }
+  .shake { animation: shake .45s linear both; animation-delay: calc((var(--t0) + var(--d)) * 1s); }
+  @keyframes shake { 0%, 100% { transform: none; } 20% { transform: translate(-10px, 6px); } 40% { transform: translate(8px, -6px); }
+    60% { transform: translate(-6px, 3px); } 80% { transform: translate(3px, -2px); } }
+
+  /* кран */
+  .zone { opacity: 0; transform-box: view-box; transform-origin: 200px 450px; animation: zone .9s var(--snap) both;
+    animation-delay: calc((var(--t0) + var(--d)) * 1s); }
+  @keyframes zone { from { opacity: 0; transform: scale(.2); } to { opacity: 1; transform: none; } }
+  .hook-load { animation: load 2.2s var(--io) both; animation-delay: calc((var(--t0) + var(--d)) * 1s); }
+  @keyframes load { from { transform: translateY(-160px); } to { transform: none; } }
+
+  /* съёмка */
+  .cross { position: absolute; left: 0; top: 0; width: 0; height: 0; animation: cross 3s var(--io) both;
+    animation-delay: calc((var(--t0) + var(--d)) * 1s); }
+  .cross::before, .cross::after { content: ""; position: absolute; background: var(--red); }
+  .cross::before { left: -40px; top: -2px; width: 80px; height: 4px; }
+  .cross::after { left: -2px; top: -40px; width: 4px; height: 80px; }
+  .cross i { position: absolute; left: -26px; top: -26px; width: 52px; height: 52px; border: 4px solid var(--red); border-radius: 50%; }
+  @keyframes cross { 0% { transform: translate(120px, 90px); opacity: 0; } 8% { opacity: 1; }
+    25% { transform: translate(120px, 90px); } 45% { transform: translate(600px, 110px); }
+    65% { transform: translate(590px, 380px); } 85% { transform: translate(140px, 360px); opacity: 1; } 100% { transform: translate(140px, 360px); opacity: 0; } }
+  .pt { position: absolute; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; background: var(--red);
+    box-shadow: 0 0 0 8px rgba(217, 48, 37, .18); }
+  .legend { position: absolute; left: 24px; bottom: 20px; display: flex; gap: 30px; font: 600 26px/1 "Mono", monospace; color: var(--muted); }
+  .legend span::before { content: ""; display: inline-block; width: 36px; height: 0; border-top: 5px dashed var(--accent); margin-right: 12px; vertical-align: middle; }
+  .legend span.f::before { border-top: 5px solid var(--red); }
+
+  /* смета под лупой */
+  .lens { position: absolute; left: 0; top: 0; width: 170px; height: 170px; animation: lens 3.2s var(--io) both;
+    animation-delay: calc((var(--t0) + var(--d)) * 1s); }
+  .lens::before { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 12px solid var(--ink);
+    background: rgba(127, 176, 255, .18); box-shadow: 0 16px 30px rgba(0, 0, 0, .2); }
+  .lens::after { content: ""; position: absolute; right: -58px; bottom: -40px; width: 90px; height: 26px; border-radius: 13px;
+    background: var(--ink); transform: rotate(45deg); }
+  @keyframes lens { 0% { transform: translate(520px, 80px); opacity: 0; } 10% { opacity: 1; } 35% { transform: translate(420px, 120px); }
+    60% { transform: translate(470px, 250px); } 90% { transform: translate(560px, 300px); opacity: 1; } 100% { transform: translate(620px, 330px); opacity: 0; } }
+  .ring { position: absolute; height: 60px; border: 5px solid var(--red); border-radius: 30px; transform-origin: 0 50%;
+    animation: ring .45s var(--snap) both; animation-delay: calc((var(--t0) + var(--d)) * 1s); }
+  @keyframes ring { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
+
+  /* ---------- карточки ---------- */
+  .form { display: grid; grid-template-columns: 160px 1fr; gap: 26px; align-items: start; margin-top: 34px;
+    padding: 28px 28px 30px; border: 2px solid var(--line); border-radius: 14px; }
+  .form.wide { grid-template-columns: 1fr; gap: 10px; }
+  .form.wide .form__code { font-size: 54px; }
+  .form__code { font: 800 64px/1.1 "Display", sans-serif; color: var(--hi); letter-spacing: -.02em; }
+  .form__name { font: 700 44px/1.18 "Display", sans-serif; }
+  .form__what { font-size: 36px; line-height: 1.3; color: var(--muted); margin-top: 12px; }
+  .law { display: flex; gap: 24px; align-items: center; margin-top: 36px; padding: 26px 30px;
+    background: #f1f5fb; border-left: 8px solid var(--hi); border-radius: 6px; font-size: 38px; line-height: 1.3; }
+  .law .ico { flex: none; width: 64px; height: 64px; }
+
+  /* ---------- списки ---------- */
+  .list { list-style: none; margin-top: 40px; }
+  .list li { display: grid; grid-template-columns: 76px 1fr; gap: 26px; align-items: start; padding: 24px 0;
+    border-bottom: 1px solid var(--line); }
+  .list li:last-child { border-bottom: 0; }
+  .num { width: 76px; height: 76px; border-radius: 50%; display: grid; place-items: center; background: var(--ink);
+    color: #fff; font: 800 38px/1 "Display", sans-serif; }
+  .list .txt { font-size: 44px; line-height: 1.25; padding-top: 10px; }
+  .list .txt b { font-weight: 700; }
+  .list .txt small { display: block; font-size: 34px; color: var(--muted); margin-top: 6px; }
+  .list.tight { margin-top: 30px; }
+  .tight li { padding: 13px 0; }
+  .tight .txt { font-size: 40px; padding-top: 6px; }
+  .tight .txt small { font-size: 31px; margin-top: 4px; }
+  .tight.x6 li { padding: 9px 0; }
+  .tight.x6 .txt { font-size: 37px; }
+  .tight.x6 .num, .tight.x6 .chk { width: 66px; height: 66px; }
+  .tight.x6 li { grid-template-columns: 66px 1fr; }
+  .note { margin-top: 26px; padding: 24px 30px; border-radius: 14px; background: var(--ink); color: #fff;
+    font: 700 42px/1.25 "Display", sans-serif; }
+  .note em { font-style: normal; color: var(--accent-300); }
+  .chk { width: 76px; height: 76px; }
+  .chk circle { fill: none; stroke: var(--good); stroke-width: 4; stroke-dasharray: 210; stroke-dashoffset: 210;
+    animation: draw .5s var(--io) both; animation-delay: calc((var(--t0) + var(--d)) * 1s); }
+  .chk path { fill: none; stroke: var(--good); stroke-width: 7; stroke-dasharray: 44; stroke-dashoffset: 44;
+    stroke-linecap: round; stroke-linejoin: round; animation: draw .35s var(--snap) both;
+    animation-delay: calc((var(--t0) + var(--d) + .3) * 1s); }
+
+  /* ---------- цитата ---------- */
+  .quote { margin-top: 70px; font: 800 84px/1.12 "Display", sans-serif; letter-spacing: -.02em; }
+  .qmark { font: 800 260px/.7 "Display", sans-serif; color: var(--hi); height: 150px; margin-top: 60px; }
+  .finger { display: flex; gap: 22px; align-items: center; margin-top: 56px; padding: 26px 30px; border-radius: 14px;
+    border: 3px dashed var(--red); color: var(--red); font: 700 44px/1.2 "Display", sans-serif; }
+
+  /* ---------- шаги ---------- */
+  .steps { position: relative; list-style: none; margin-top: 44px; }
+  .steps::before { content: ""; position: absolute; left: 37px; top: 40px; bottom: 60px; width: 4px; background: var(--line); }
+  .steps .rail { position: absolute; left: 37px; top: 40px; bottom: 60px; width: 4px; background: var(--hi);
+    transform-origin: 50% 0; animation: rail linear both; animation-duration: calc(var(--rail) * 1s);
+    animation-delay: calc((var(--t0) + var(--d)) * 1s); }
+  @keyframes rail { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+  .steps li { position: relative; display: grid; grid-template-columns: 78px 1fr; gap: 28px; padding-bottom: 46px; }
+  .steps .num { background: var(--hi); }
+  .steps li.last-red .num { background: var(--red); }
+  .steps .txt { font-size: 37px; line-height: 1.28; padding-top: 6px; }
+  .steps .txt b { display: block; font: 700 45px/1.16 "Display", sans-serif; margin-bottom: 8px; }
+  .warn { display: inline-block; margin-top: 12px; padding: 8px 16px; border-radius: 8px; background: #fdecea;
+    color: var(--red); font-weight: 700; font-size: 33px; }
+
+  /* ---------- финал ---------- */
+  .final h2 { font-size: 96px; }
+  .svc { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 36px; }
+  .svc span { padding: 14px 22px; border-radius: 40px; background: #eaf1fd; color: var(--accent);
+    font: 700 36px/1 "Display", sans-serif; }
+  .brand { display: flex; align-items: center; gap: 26px; margin-top: 52px; padding-top: 44px; border-top: 2px solid var(--line); }
+  .brand img { width: 140px; height: 140px; }
+  .brand .nm { font: 800 72px/1 "Display", sans-serif; letter-spacing: -.02em; }
+  .brand .url { font: 600 34px/1 "Mono", monospace; color: var(--accent); margin-top: 12px; }
+  .contacts { margin-top: 44px; font-size: 48px; line-height: 1.55; }
+  .contacts .m { font-family: "Mono", monospace; font-weight: 700; }
+  .readmore { margin-top: 36px; padding: 24px 30px; border-radius: 14px; background: var(--ink); color: #fff;
+    font: 700 40px/1.25 "Display", sans-serif; }
+  .readmore em { font-style: normal; color: var(--accent-300); }
+  .brand { position: relative; }
+  .seal { position: absolute; right: 0; top: 10px; --sr: 12deg; width: 190px; height: 190px; border-radius: 50%;
+    border: 6px solid var(--accent); display: grid; place-items: center; text-align: center; color: var(--accent);
+    font: 800 24px/1.1 "Display", sans-serif; text-transform: uppercase; }
+  .seal::before { content: ""; position: absolute; inset: 10px; border-radius: 50%; border: 2px solid var(--accent); }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="glow g1"></div>
+  <div class="glow g2"></div>
+  <div class="grid"></div>
+  <div class="desk-cap"><span><b>Разбор статьи</b> · x-pto.ru/stati</span><span class="count" id="count"></span></div>
+  <div class="progress"><i></i></div>
+  <div class="under u1"></div>
+  <div class="under u2"></div>
+  <div class="stack" id="stack"></div>
+</div>
+
+<script>
+(function () {
+  var slug = (location.search.match(/[?&]a=([\w-]+)/) || [])[1] || 'ks-2-ks-3-zashchita-obemov';
+
+  function el(tag, cls, html, style) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (html != null) e.innerHTML = html;
+    if (style) e.setAttribute('style', style);
+    return e;
+  }
+  function d(e, v) { e.style.setProperty('--d', (+v).toFixed(3)); return e; }
+  function r2(x) { return Math.round(x * 100) / 100; }
+
+  // Заголовок по словам: каждое слово поднимается со своей задержкой
+  function words(h, delay) {
+    var i = 0;
+    h.style.setProperty('--d', delay);
+    (function walk(node) {
+      [].slice.call(node.childNodes).forEach(function (c) {
+        if (c.nodeType === 3) {
+          var frag = document.createDocumentFragment();
+          c.textContent.split(/(\s+)/).forEach(function (part) {
+            if (!part) return;
+            if (/^\s+$/.test(part)) { frag.appendChild(document.createTextNode(part)); return; }
+            var s = el('span', 'w', null); s.style.setProperty('--i', i++); s.textContent = part;
+            frag.appendChild(s);
+          });
+          node.replaceChild(frag, c);
+        } else if (c.nodeType === 1 && c.tagName !== 'BR') walk(c);
+      });
+    })(h);
+    return i;
+  }
+
+  var CHECK = '<circle cx="38" cy="38" r="33"/><path d="M23 39l10 10 20-21"/>';
+
+  // ---------- первые сцены: своя картинка у каждой статьи ----------
+  var VIS = {
+    act: function () {
+      var v = el('div', 'act a up', '<div class="act__top"><b>АКТ О ПРИЁМКЕ ВЫПОЛНЕННЫХ РАБОТ</b>Форма № КС-2</div>');
+      d(v, .3);
+      [62, 48, 70, 40, 56].forEach(function (w, i) {
+        v.appendChild(el('div', 'row', '<span class="n">' + (i + 1) + '</span><span class="t" style="width:' + w + '%"></span><span class="v"></span>'));
+      });
+      [[206, 1.1], [270, 1.772], [398, 2.444]].forEach(function (s) { v.appendChild(d(el('span', 'strike', null, 'top:' + s[0] + 'px'), s[1])); });
+      v.appendChild(d(el('span', 'pen'), 1.1));
+      v.appendChild(d(el('span', 'tag a stamp', 'срезано', 'right:26px; top:128px'), 3.3));
+      return v;
+    },
+    docs: function (s) {
+      var v = el('div', 'vis');
+      var pos = [[-178, 0, -3], [178, 10, 2.5], [-170, 150, 2], [182, 160, -2.5], [-176, 300, -1.5], [176, 310, 3]];
+      (s.docs || []).forEach(function (t, i) {
+        var p = pos[i % pos.length];
+        var e = el('div', 'doc', '<b>' + t + '</b><i></i><i></i><i></i>',
+          '--x:' + p[0] + 'px; --y:' + p[1] + 'px; --r:' + p[2] + 'deg; z-index:' + (i + 1));
+        v.appendChild(d(e, .4 + i * .42));
+      });
+      return v;
+    },
+    stamp: function (s) {
+      var v = el('div', 'vis shake'); d(v, 2.25);
+      var m = el('div', 'paper-mock a up'); d(m, .3);
+      m.innerHTML = '<div style="padding:30px 36px; font:600 24px/1.4 Mono, monospace; color:#55677e; letter-spacing:.04em">' + (s.paper || '') + '</div>';
+      [[120, 70], [170, 82], [220, 64], [270, 76], [320, 58], [370, 70]].forEach(function (b) {
+        m.appendChild(el('span', 'bar', null, 'left:36px; top:' + b[0] + 'px; width:' + b[1] + '%'));
+      });
+      v.appendChild(m);
+      v.appendChild(d(el('div', 'seal-big a stamp', s.seal || 'ЗОС'), 1.9));
+      return v;
+    },
+    crane: function () {
+      var v = el('div', 'vis');
+      var L = function (dd, len, attrs, dur) {
+        return '<path class="ln" style="--d:' + dd + '; --len:' + len + '; --dur:' + (dur || .8) + 's" ' + attrs + '/>';
+      };
+      v.innerHTML = '<svg class="draw" viewBox="0 0 712 470" width="712" height="470">' +
+        L(.3, 720, 'd="M10 450 H700" stroke="#0d1c30" stroke-width="5"') +
+        L(.5, 420, 'd="M200 450 V40" stroke="#0d1c30" stroke-width="10"') +
+        L(.9, 560, 'd="M60 40 H620" stroke="#0d1c30" stroke-width="10"') +
+        L(1.2, 240, 'd="M200 40 L120 100 M200 40 L280 100 M200 40 L360 100 M200 40 L440 100" stroke="#0d1c30" stroke-width="3"', .6) +
+        L(1.3, 100, 'd="M60 40 V110 H130 V40" stroke="#0d1c30" stroke-width="5"', .5) +
+        '<circle class="zone" cx="200" cy="450" r="250" stroke="#d93025" stroke-width="5" stroke-dasharray="18 14" style="--d:1.9"/>' +
+        '<rect x="58" y="60" width="74" height="54" rx="4" style="fill:#55677e" stroke="none"/>' +
+        '<rect x="176" y="48" width="48" height="44" rx="4" style="fill:#0d1c30" stroke="none"/>' +
+        '<g class="hook-load" style="--d:1.5">' +
+        '<path d="M540 40 V250" stroke="#0d1c30" stroke-width="3"/>' +
+        '<rect x="490" y="250" width="100" height="70" rx="6" style="fill:var(--hi)" stroke="none"/></g>' +
+        '<rect x="600" y="300" width="100" height="150" style="fill:#dfe5ee" stroke="#b7c3d2" stroke-width="3"/>' +
+        '</svg>';
+      v.appendChild(d(el('div', 'tag a stamp', 'опасная зона', 'left:250px; top:370px; --sr:-6deg; font-size:34px'), 2.7));
+      return v;
+    },
+    survey: function () {
+      var v = el('div', 'vis');
+      var m = el('div', 'paper-mock a up'); d(m, .3); v.appendChild(m);
+      v.insertAdjacentHTML('beforeend', '<svg class="draw" viewBox="0 0 712 470" width="712" height="470" style="position:absolute; inset:0">' +
+        '<path class="ln" style="--d:.7; --len:1700; --dur:1s" d="M120 100 H600 V370 H130 Z" stroke="#1f6feb" stroke-width="5" stroke-dasharray="20 14"/>' +
+        '<path class="ln" style="--d:3.4; --len:1700; --dur:1s" d="M120 90 L600 110 L590 380 L140 360 Z" stroke="#d93025" stroke-width="6"/>' +
+        '</svg>');
+      [[120, 90, 1.6], [600, 110, 2.2], [590, 380, 2.8], [140, 360, 3.3]].forEach(function (p) {
+        v.appendChild(d(el('span', 'pt a pop', null, 'left:' + p[0] + 'px; top:' + p[1] + 'px'), p[2]));
+      });
+      v.appendChild(d(el('span', 'cross'), 1.0));
+      v.appendChild(d(el('div', 'legend a fade', '<span>проект</span><span class="f">факт</span>'), 3.6));
+      return v;
+    },
+    estimate: function () {
+      var v = el('div', 'act a up', '<div class="act__top"><b>ЛОКАЛЬНЫЙ СМЕТНЫЙ РАСЧЁТ</b>объёмы · расценки · коэффициенты</div>');
+      d(v, .3);
+      [58, 44, 66, 38, 52].forEach(function (w, i) {
+        v.appendChild(el('div', 'row', '<span class="n">' + (i + 1) + '</span><span class="t" style="width:' + w + '%"></span><span class="v"></span>'));
+      });
+      v.appendChild(d(el('span', 'ring', null, 'left:14px; top:144px; width:640px'), 1.7));
+      v.appendChild(d(el('span', 'ring', null, 'left:14px; top:336px; width:640px'), 2.6));
+      v.appendChild(d(el('span', 'lens'), 1.0));
+      v.appendChild(d(el('span', 'tag a stamp', 'ошибка', 'right:30px; top:236px'), 3.3));
+      return v;
+    }
+  };
+
+  // ---------- сцены ----------
+  function head(sheet, V, n) {
+    sheet.appendChild(el('div', 'head', '<b>' + (sheet.dataset.tag || V.tag) + '</b><span>Лист ' + n + '</span>'));
+  }
+  function title(body, html, tag, delay) {
+    var h = el(tag || 'h2', '', html);
+    body.appendChild(h);
+    return words(h, delay == null ? .55 : delay);
+  }
+  function stagger(n, dur, start, tail) {
+    return Math.max(.55, Math.min(1.15, (dur - start - tail) / Math.max(1, n)));
+  }
+
+  var BUILD = {
+    hook: function (s, body) {
+      var h = el('h1', '', s.title); body.appendChild(h);
+      if (s.size) h.style.fontSize = s.size + 'px';
+      if (s.anim) words(h, .25);
+      body.appendChild(VIS[s.visual](s));
+      if (s.lead) body.appendChild(d(el('p', 'lead a up', s.lead), s.leadAt || 3.9));
+    },
+    cards: function (s, body) {
+      title(body, s.title);
+      s.items.forEach(function (it, i) {
+        body.appendChild(d(el('div', 'form a left' + (it.code.length > 4 ? ' wide' : ''), '<div class="form__code">' + it.code + '</div><div><div class="form__name">' + it.name +
+          '</div><div class="form__what">' + it.text + '</div></div>'), 1.5 + i * 1.1));
+      });
+      if (s.note) body.appendChild(d(el('div', 'law a up',
+        '<svg class="ico" viewBox="0 0 64 64" fill="none" stroke="#1f6feb" stroke-width="4" stroke-linejoin="round"><path d="M16 6h24l12 12v40H16z"/><path d="M40 6v12h12M24 32h20M24 42h20M24 50h12"/></svg><span>' + s.note + '</span>'),
+        1.5 + s.items.length * 1.1 + .4));
+    },
+    list: function (s, body) {
+      title(body, s.title);
+      var n = s.items.length, marks = s.mark || [];
+      var tail = (marks.length ? 1.6 : 0) + (s.note ? 1.3 : 0) + .9;
+      var step = stagger(n, s.dur, 1.3, tail);
+      var ul = el('ul', 'list' + (s.tight || n > 4 ? ' tight' : '') + (n > 5 ? ' x6' : ''));
+      var last = 1.3 + (n - 1) * step + .6;
+      s.items.forEach(function (it, i) {
+        var at = 1.3 + i * step;
+        var txt = typeof it === 'string' ? it : '<b>' + it.b + '</b>' + (it.s ? '<small>' + it.s + '</small>' : '');
+        var mi = marks.indexOf(i);
+        if (mi >= 0) txt = '<span class="mark" style="--d:' + r2(last + mi * .4) + '">' + txt + '</span>';
+        var li = el('li');
+        if (s.style === 'check') {
+          var c = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          c.setAttribute('class', 'chk'); c.setAttribute('viewBox', '0 0 76 76'); c.innerHTML = CHECK; d(c, at);
+          li.appendChild(c);
+        } else li.appendChild(d(el('span', 'num a pop', String(i + 1)), at));
+        li.appendChild(d(el('span', 'txt a left', txt), at + .08));
+        ul.appendChild(li);
+      });
+      body.appendChild(ul);
+      if (s.note) body.appendChild(d(el('div', 'note a up', s.note), last + marks.length * .4 + .3));
+    },
+    quote: function (s, body) {
+      body.appendChild(d(el('div', 'qmark a pop', '«'), .6));
+      var q = el('p', 'quote a up', s.text); d(q, .9); body.appendChild(q);
+      [].forEach.call(q.querySelectorAll('mark'), function (m) { d(m, 2.4); });
+      if (s.sub) body.appendChild(d(el('div', 'finger a up',
+        '<svg width="60" height="60" viewBox="0 0 60 60" fill="none" stroke="#d93025" stroke-width="5" stroke-linecap="round"><circle cx="30" cy="30" r="25"/><path d="M30 17v16M30 42v1"/></svg><span>' + s.sub + '</span>'), 3.4));
+    },
+    steps: function (s, body) {
+      title(body, s.title);
+      var n = s.items.length, step = stagger(n, s.dur, 1.3, 2.2);
+      var ol = el('ol', 'steps');
+      var rail = d(el('span', 'rail'), 1.4); rail.style.setProperty('--rail', r2((n - 1) * step + .4));
+      ol.appendChild(rail);
+      s.items.forEach(function (it, i) {
+        var at = 1.3 + i * step;
+        var li = el('li', s.lastRed && i === n - 1 ? 'last-red' : '');
+        li.appendChild(d(el('span', 'num a pop', String(i + 1)), at));
+        li.appendChild(d(el('span', 'txt a left', '<b>' + it.b + '</b>' + (it.t || '') +
+          (it.warn ? '<span class="warn">' + it.warn + '</span>' : '')), at + .1));
+        ol.appendChild(li);
+      });
+      body.appendChild(ol);
+    },
+    final: function (s, body, sheet, C) {
+      sheet.classList.add('final');
+      title(body, s.title, 'h2', .5);
+      var svc = el('div', 'svc');
+      s.chips.forEach(function (c, i) { svc.appendChild(d(el('span', 'a pop', c), 1.3 + i * .2)); });
+      body.appendChild(svc);
+      var brand = d(el('div', 'brand a up', '<img src="../../assets/img/logo.svg" alt=""><div><div class="nm">X-PTO</div><div class="url">x-pto.ru</div></div>'), 2.6);
+      // печать — в строке со знаком: её место не зависит от того, в сколько строк лёг заголовок
+      if (s.stamp) brand.appendChild(d(el('span', 'seal a stamp', s.stamp), 2.2));
+      body.appendChild(brand);
+      body.appendChild(d(el('div', 'contacts a up', '<div class="m">' + C.phone_display + '</div><div>Telegram <span class="m">' + C.telegram_display + '</span></div>'), 3.1));
+      body.appendChild(d(el('div', 'readmore a up', s.readmore || 'Полная статья — на сайте, <em>раздел «Статьи»</em>'), 3.6));
+    }
+  };
+
+  var INS = ['in-rise', 'in-turn', 'in-deep'];
+  var ROT = [-.6, .7, -.8, .6, -.5, .8, -.7, 0, .5, -.4];
+
+  window.READY = Promise.all([
+    fetch('articles/' + slug + '.json').then(function (r) { return r.json(); }),
+    fetch('../../data/site.json').then(function (r) { return r.json(); })
+  ]).then(function (res) {
+    var V = res[0], C = res[1].contacts;
+    document.title = 'X-PTO — ролик: ' + V.tag;
+    if (V.accent) document.documentElement.style.setProperty('--hi', V.accent);
+    var stack = document.getElementById('stack');
+    var total = V.scenes.reduce(function (a, s) { return a + s.dur; }, 0);
+    document.documentElement.style.setProperty('--total', total);
+
+    var t = 0, sheets = [];
+    V.scenes.forEach(function (s, i) {
+      var last = i === V.scenes.length - 1;
+      var sheet = el('section', 'sheet' + (i === 0 ? ' first' : ''));
+      var t1 = last ? 999 : t + s.dur - .15;
+      sheet.style.setProperty('--t0', t.toFixed(3));
+      sheet.style.setProperty('--t1', t1.toFixed(3));
+      sheet.style.setProperty('--rot', (s.type === 'final' ? 0 : ROT[i % ROT.length]) + 'deg');
+      sheet.style.setProperty('--in', INS[(i - 1 + INS.length) % INS.length]);
+      sheet.dataset.t1 = t1; sheet.dataset.t0 = t;
+      if (s.tag) sheet.dataset.tag = s.tag;
+      head(sheet, V, i + 1);
+      var body = el('div', 'body' + (s.type === 'hook' || s.type === 'final' ? '' : ' breath'));
+      sheet.appendChild(body);
+      BUILD[s.type](s, body, sheet, C);
+      stack.appendChild(sheet);
+      sheets.push(sheet);
+      t += s.dur;
+    });
+
+    var count = document.getElementById('count');
+    var n = sheets.length, pad = function (x) { return (x < 10 ? '0' : '') + x; };
+    window.tick = function (t) {
+      var cur = 0;
+      sheets.forEach(function (sh, i) {
+        sh.classList.toggle('gone', t > +sh.dataset.t1 + 1);
+        if (t >= +sh.dataset.t0) cur = i;
+      });
+      count.innerHTML = '<span>' + pad(cur + 1) + '</span> / ' + pad(n);
+    };
+    window.tick(0);
+    window.VIDEO_TOTAL = total;
+  });
+
+  window.seek = function (t) {
+    document.getAnimations().forEach(function (a) { a.pause(); a.currentTime = t * 1000; });
+    if (window.tick) window.tick(t);
+  };
+  if (!/[?&]capture/.test(location.search)) {
+    window.READY.then(function () {
+      var start = performance.now();
+      (function loop() {
+        window.tick((performance.now() - start) / 1000); requestAnimationFrame(loop);
+      })();
+    });
+  }
+})();
+</script>
+</body>
+</html>
