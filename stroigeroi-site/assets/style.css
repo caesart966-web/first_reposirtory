@@ -793,8 +793,10 @@ body:has(.first-screen) .header-slogan {
   cursor: pointer;
 }
 
-/* «Наши магазины» — кнопкой в рамке, как в концепции заказчика */
+/* «Наши магазины» — кнопкой в рамке, как в концепции заказчика,
+   той же высоты, что красный «Каталог товаров» в начале строки */
 .header-nav .dropdown__toggle {
+  min-height: 44px;
   padding: 0 var(--sp-3);
   border: 1.5px solid rgba(255, 255, 255, 0.55);
   border-radius: var(--r-lg);
@@ -1062,7 +1064,7 @@ body:has(.first-screen) .header-slogan {
   }
 
   .header-nav .header-catalog {
-    height: 40px;
+    height: 44px;
     padding: 0 var(--sp-4);
     font-size: 14px;
   }
@@ -1373,10 +1375,16 @@ body:has(.first-screen) .header-slogan {
   color: #0a1583;
 }
 
+/* Четыре цифры - по ширине колонки текста, с равными промежутками
+   (space-between), а не колонками по содержимому: «Петропавловск
+   и Елизово» раньше растягивало свою колонку, и промежутки выходили
+   26, 56 и 28 px. Подпись магазинов - в две строки (<br>), значок
+   и жирная цифра у всех четырёх на одной линии сверху. */
 .first-screen__facts {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, auto));
-  gap: var(--sp-4) var(--sp-5);
+  grid-template-columns: repeat(4, max-content);
+  justify-content: space-between;
+  gap: var(--sp-4) var(--sp-4);
   margin: var(--sp-5) 0 var(--sp-6);
   padding: 0;
   list-style: none;
@@ -1384,7 +1392,7 @@ body:has(.first-screen) .header-slogan {
 
 .first-screen__facts li {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--sp-2);
   font-size: 12.5px;
   line-height: 1.25;
@@ -1405,10 +1413,15 @@ body:has(.first-screen) .header-slogan {
   white-space: nowrap;
 }
 
+/* Две кнопки одной ширины - вровень с колонкой текста и цифрами */
 .first-screen__actions {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--sp-3) var(--sp-4);
+}
+
+.first-screen__actions .btn {
+  justify-content: center;
 }
 
 .first-screen__btn {
@@ -1434,8 +1447,10 @@ body:has(.first-screen) .header-slogan {
 }
 
 /* ── Популярные категории ─────────────────────────────────────────────────── */
+/* Нижний отступ - как между остальными блоками главной (48 px):
+   ряд с калькулятором ниже своего верхнего отступа не имеет */
 .popular-cats {
-  padding-bottom: var(--sp-6);
+  padding-bottom: var(--sp-7);
 }
 
 .popular-cats__list {
@@ -1813,6 +1828,13 @@ body:has(.first-screen) .header-slogan {
 }
 
 /* ── Магазины строкой и карта ────────────────────────────────────────────── */
+/* Магазины - последний блок главной, дальше подвал со своим отступом
+   сверху (64 px): свой нижний отступ раздела дал бы вдвое больше,
+   чем между остальными блоками страницы */
+.section.stores-row {
+  padding-bottom: 0;
+}
+
 .stores-row__list {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1823,33 +1845,71 @@ body:has(.first-screen) .header-slogan {
 }
 
 .store-card {
-  display: flex;
-  gap: var(--sp-3);
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-content: start;
+  gap: 3px var(--sp-3);
   padding: var(--sp-4) var(--sp-5);
   border: 1px solid var(--sg-line);
   border-radius: var(--r-xl);
   background: var(--sg-white);
+  font-size: 13.5px;
+  line-height: 1.35;
 }
 
 .store-card__pin {
-  flex: none;
+  grid-column: 1;
+  grid-row: 1;
   color: var(--sg-red);
   line-height: 0;
 }
 
-.store-card__body {
+/* Когда четыре карточки стоят в один ряд, строки у них общие (subgrid):
+   телефон, часы и «Сейчас открыто» у всех трёх магазинов на одних
+   линиях, сколько бы строк ни заняли название и адрес у соседа
+   («Магазин на 50 лет Октября» - в две). Название с адресом - одна
+   строка ряда: разрыв, если он есть, встаёт перед телефоном, а не
+   посреди адреса. Промежуток между строками ряда - 0: иначе его 16 px
+   встали бы и внутрь карточек. Уже 1280 px карточки идут по две
+   и по одной - там строки свои. Браузер без subgrid ставит карточку
+   столбиком, как раньше. */
+@media (min-width: 1280px) {
+  .stores-row__list {
+    row-gap: 0;
+  }
+
+  .store-card {
+    grid-row: span 4;
+    grid-template-rows: subgrid;
+  }
+}
+
+/* align-content: start - строка ряда может быть выше этой шапки
+   (у соседа название в две строки), и без него растянулась бы
+   строка названия, а адрес уехал бы вниз */
+.store-card__head {
   display: grid;
-  gap: 3px;
   align-content: start;
+  gap: 3px;
+  margin-bottom: 4px;
+}
+
+/* Обёртка текста не рисуется: её строки - сами строки карточки */
+.store-card__body {
+  display: contents;
+}
+
+.store-card__body > * {
+  grid-column: 2;
   min-width: 0;
-  font-size: 13.5px;
-  line-height: 1.35;
 }
 
 .store-card__name {
   font-family: var(--font-head);
   font-size: 15px;
   font-weight: 800;
+  line-height: 1.25;
 }
 
 .store-card__addr {
@@ -1860,6 +1920,7 @@ body:has(.first-screen) .header-slogan {
   display: inline-flex;
   align-items: center;
   justify-self: start;
+  align-self: start;
   min-height: 28px;
   margin-top: 2px;
   font-family: var(--font-head);
@@ -1874,35 +1935,66 @@ body:has(.first-screen) .header-slogan {
 
 .store-card .shop-card__now {
   justify-self: start;
+  align-self: start;
   margin: 4px 0 0;
   font-size: 12px;
   white-space: normal;
 }
 
+/* Карточка-карта: те же строки, что у магазинов, - значок, заголовок,
+   подпись; ссылка - заголовок, а нажимается вся карточка (::after
+   на всю площадь). Контур полуострова - в правом нижнем углу, поверх
+   строк, а не в них: иначе он вытянул бы строки у всех трёх соседей. */
 .store-card--map {
-  padding: 0;
   overflow: hidden;
   border-color: transparent;
   background: var(--sg-blue-tint);
 }
 
-.store-map {
-  flex: 1 1 auto;
-  display: flex;
-  align-items: center;
-  gap: var(--sp-4);
-  padding: var(--sp-3) var(--sp-5);
+.store-card--map .store-card__pin {
+  color: var(--sg-blue);
+}
+
+.store-card--map .store-card__addr {
+  max-width: 13em;
+}
+
+.store-map__link {
+  min-height: 24px;
   color: var(--sg-ink);
 }
 
-.store-map:hover {
+.store-map__link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+.store-map__link:hover {
+  color: var(--sg-blue);
   text-decoration: none;
 }
 
+.store-map__link:focus-visible {
+  outline: none;
+}
+
+.store-map__link:focus-visible::after {
+  outline: 2px solid var(--sg-blue);
+  outline-offset: -2px;
+  border-radius: var(--r-xl);
+}
+
 .store-map__img {
-  flex: none;
-  width: 70px;
-  height: auto;
+  position: absolute;
+  right: 6%;
+  bottom: -14px;
+  width: auto;
+  height: 74%;
+  max-height: 150px;
+  pointer-events: none;
 }
 
 .store-map__img path {
@@ -1915,26 +2007,6 @@ body:has(.first-screen) .header-slogan {
   fill: var(--sg-red);
   stroke: #fff;
   stroke-width: 1.4;
-}
-
-.store-map__text {
-  display: grid;
-  gap: 4px;
-  font-size: 13px;
-  line-height: 1.35;
-  color: var(--sg-muted);
-}
-
-.store-map__text strong {
-  font-family: var(--font-head);
-  font-size: 16px;
-  font-weight: 800;
-  line-height: 1.2;
-  color: var(--sg-ink);
-}
-
-.store-map:hover .store-map__text strong {
-  color: var(--sg-blue);
 }
 
 /* ── Полоса «как мы работаем» ─────────────────────────────────────────────── */
@@ -1953,9 +2025,11 @@ body:has(.first-screen) .header-slogan {
   list-style: none;
 }
 
+/* Значки и заголовки четырёх пунктов - на одной линии сверху; крайние
+   пункты вровень с краями контейнера, как заголовки разделов */
 .perk {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--sp-3);
   padding: var(--sp-1) var(--sp-5);
 }
@@ -1966,6 +2040,10 @@ body:has(.first-screen) .header-slogan {
 
 .perk:first-child {
   padding-left: 0;
+}
+
+.perk:last-child {
+  padding-right: 0;
 }
 
 .perk__icon {
@@ -1995,8 +2073,12 @@ body:has(.first-screen) .header-slogan {
 
 /* ── Ширина ───────────────────────────────────────────────────────────────── */
 @media (max-width: 1279px) {
+  /* По две в ряд - прижаты влево: при space-between вторая колонка
+     уезжала к правому краю колонки текста, на картинку */
   .first-screen__facts {
     grid-template-columns: repeat(2, minmax(0, max-content));
+    justify-content: start;
+    column-gap: var(--sp-6);
   }
 
   .popular-cats__list {
@@ -2026,6 +2108,10 @@ body:has(.first-screen) .header-slogan {
   .perk:nth-child(3) {
     border-left: 0;
     padding-left: 0;
+  }
+
+  .perk:nth-child(2) {
+    padding-right: 0;
   }
 }
 
@@ -2071,7 +2157,11 @@ body:has(.first-screen) .header-slogan {
     max-width: 240px;
   }
 
+  /* width: 100% - в колонке flex контейнер с margin: auto сжимался
+     по содержимому (620 px) и вставал посередине: на 768 px текст
+     первого экрана начинался на 50 px правее заголовков ниже */
   .first-screen__inner {
+    width: 100%;
     min-height: 0;
     padding-bottom: var(--sp-5);
   }
@@ -2161,10 +2251,21 @@ body:has(.first-screen) .header-slogan {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  /* .perk + .perk - с той же специфичностью, что у правила с чертой:
+     одного .perk не хватало, и у пунктов 2-4 слева от значка оставалась
+     вертикальная черта */
   .perk,
-  .perk:nth-child(3) {
+  .perk + .perk {
     border-left: 0;
     padding: 0;
+  }
+
+  .store-card--map {
+    min-height: 124px;
+  }
+
+  .store-map__img {
+    height: 96px;
   }
 }
 
@@ -2176,6 +2277,10 @@ body:has(.first-screen) .header-slogan {
   .first-screen__facts {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     margin-bottom: var(--sp-5);
+  }
+
+  .first-screen__actions {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .first-screen__actions .btn {
@@ -3665,12 +3770,26 @@ html[data-theme="dark"] .shop-card__now--open {
   border-radius: 2px;
 }
 
+/* Нижний ряд подвала - по тем же колонкам, что верхний: «Связаться
+   с нами» под знаком, магазины - под колонками ссылок, каждый в своей.
+   Раньше ряд делился пополам, и «Магазины» начинались посреди второй
+   колонки ссылок, ни с чем не на одной линии. */
 .site-footer__contacts {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 2.15fr);
   gap: var(--sp-6);
   padding: var(--sp-5) 0;
   border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.footer-shops ul {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-3) var(--sp-5);
+}
+
+.footer-shops li + li {
+  margin-top: 0;
 }
 
 .footer-shops li span {
@@ -3679,9 +3798,25 @@ html[data-theme="dark"] .shop-card__now--open {
 }
 
 .footer-shops li em {
+  display: block;
   font-style: normal;
   font-size: 13px;
   color: rgba(255, 255, 255, 0.55);
+}
+
+/* Номер магазина - своей строкой под городом: город строчный <em>,
+   и номер вплотную за ним читался «Петропавловск-Камчатский8-963-…».
+   fit-content - чтобы подчёркивание шло под номером, а не на всю
+   колонку; высота 28 px - под палец. */
+.footer-shops__tel {
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 28px;
+  font-size: 14px;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
 }
 
 .site-footer__bottom {
@@ -4344,6 +4479,14 @@ html[data-theme="dark"] .site-footer {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .site-footer__contacts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .footer-shops ul {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .feature-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -4467,7 +4610,8 @@ html[data-theme="dark"] .site-footer {
   .catalog-menu__grid,
   .feature-grid,
   .footer-links,
-  .site-footer__contacts {
+  .site-footer__contacts,
+  .footer-shops ul {
     grid-template-columns: 1fr;
   }
 

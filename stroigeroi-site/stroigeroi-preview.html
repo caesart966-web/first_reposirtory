@@ -803,8 +803,10 @@ body:has(.first-screen) .header-slogan {
   cursor: pointer;
 }
 
-/* «Наши магазины» — кнопкой в рамке, как в концепции заказчика */
+/* «Наши магазины» — кнопкой в рамке, как в концепции заказчика,
+   той же высоты, что красный «Каталог товаров» в начале строки */
 .header-nav .dropdown__toggle {
+  min-height: 44px;
   padding: 0 var(--sp-3);
   border: 1.5px solid rgba(255, 255, 255, 0.55);
   border-radius: var(--r-lg);
@@ -1072,7 +1074,7 @@ body:has(.first-screen) .header-slogan {
   }
 
   .header-nav .header-catalog {
-    height: 40px;
+    height: 44px;
     padding: 0 var(--sp-4);
     font-size: 14px;
   }
@@ -1383,10 +1385,16 @@ body:has(.first-screen) .header-slogan {
   color: #0a1583;
 }
 
+/* Четыре цифры - по ширине колонки текста, с равными промежутками
+   (space-between), а не колонками по содержимому: «Петропавловск
+   и Елизово» раньше растягивало свою колонку, и промежутки выходили
+   26, 56 и 28 px. Подпись магазинов - в две строки (<br>), значок
+   и жирная цифра у всех четырёх на одной линии сверху. */
 .first-screen__facts {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, auto));
-  gap: var(--sp-4) var(--sp-5);
+  grid-template-columns: repeat(4, max-content);
+  justify-content: space-between;
+  gap: var(--sp-4) var(--sp-4);
   margin: var(--sp-5) 0 var(--sp-6);
   padding: 0;
   list-style: none;
@@ -1394,7 +1402,7 @@ body:has(.first-screen) .header-slogan {
 
 .first-screen__facts li {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--sp-2);
   font-size: 12.5px;
   line-height: 1.25;
@@ -1415,10 +1423,15 @@ body:has(.first-screen) .header-slogan {
   white-space: nowrap;
 }
 
+/* Две кнопки одной ширины - вровень с колонкой текста и цифрами */
 .first-screen__actions {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--sp-3) var(--sp-4);
+}
+
+.first-screen__actions .btn {
+  justify-content: center;
 }
 
 .first-screen__btn {
@@ -1444,8 +1457,10 @@ body:has(.first-screen) .header-slogan {
 }
 
 /* ── Популярные категории ─────────────────────────────────────────────────── */
+/* Нижний отступ - как между остальными блоками главной (48 px):
+   ряд с калькулятором ниже своего верхнего отступа не имеет */
 .popular-cats {
-  padding-bottom: var(--sp-6);
+  padding-bottom: var(--sp-7);
 }
 
 .popular-cats__list {
@@ -1823,6 +1838,13 @@ body:has(.first-screen) .header-slogan {
 }
 
 /* ── Магазины строкой и карта ────────────────────────────────────────────── */
+/* Магазины - последний блок главной, дальше подвал со своим отступом
+   сверху (64 px): свой нижний отступ раздела дал бы вдвое больше,
+   чем между остальными блоками страницы */
+.section.stores-row {
+  padding-bottom: 0;
+}
+
 .stores-row__list {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1833,33 +1855,71 @@ body:has(.first-screen) .header-slogan {
 }
 
 .store-card {
-  display: flex;
-  gap: var(--sp-3);
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-content: start;
+  gap: 3px var(--sp-3);
   padding: var(--sp-4) var(--sp-5);
   border: 1px solid var(--sg-line);
   border-radius: var(--r-xl);
   background: var(--sg-white);
+  font-size: 13.5px;
+  line-height: 1.35;
 }
 
 .store-card__pin {
-  flex: none;
+  grid-column: 1;
+  grid-row: 1;
   color: var(--sg-red);
   line-height: 0;
 }
 
-.store-card__body {
+/* Когда четыре карточки стоят в один ряд, строки у них общие (subgrid):
+   телефон, часы и «Сейчас открыто» у всех трёх магазинов на одних
+   линиях, сколько бы строк ни заняли название и адрес у соседа
+   («Магазин на 50 лет Октября» - в две). Название с адресом - одна
+   строка ряда: разрыв, если он есть, встаёт перед телефоном, а не
+   посреди адреса. Промежуток между строками ряда - 0: иначе его 16 px
+   встали бы и внутрь карточек. Уже 1280 px карточки идут по две
+   и по одной - там строки свои. Браузер без subgrid ставит карточку
+   столбиком, как раньше. */
+@media (min-width: 1280px) {
+  .stores-row__list {
+    row-gap: 0;
+  }
+
+  .store-card {
+    grid-row: span 4;
+    grid-template-rows: subgrid;
+  }
+}
+
+/* align-content: start - строка ряда может быть выше этой шапки
+   (у соседа название в две строки), и без него растянулась бы
+   строка названия, а адрес уехал бы вниз */
+.store-card__head {
   display: grid;
-  gap: 3px;
   align-content: start;
+  gap: 3px;
+  margin-bottom: 4px;
+}
+
+/* Обёртка текста не рисуется: её строки - сами строки карточки */
+.store-card__body {
+  display: contents;
+}
+
+.store-card__body > * {
+  grid-column: 2;
   min-width: 0;
-  font-size: 13.5px;
-  line-height: 1.35;
 }
 
 .store-card__name {
   font-family: var(--font-head);
   font-size: 15px;
   font-weight: 800;
+  line-height: 1.25;
 }
 
 .store-card__addr {
@@ -1870,6 +1930,7 @@ body:has(.first-screen) .header-slogan {
   display: inline-flex;
   align-items: center;
   justify-self: start;
+  align-self: start;
   min-height: 28px;
   margin-top: 2px;
   font-family: var(--font-head);
@@ -1884,35 +1945,66 @@ body:has(.first-screen) .header-slogan {
 
 .store-card .shop-card__now {
   justify-self: start;
+  align-self: start;
   margin: 4px 0 0;
   font-size: 12px;
   white-space: normal;
 }
 
+/* Карточка-карта: те же строки, что у магазинов, - значок, заголовок,
+   подпись; ссылка - заголовок, а нажимается вся карточка (::after
+   на всю площадь). Контур полуострова - в правом нижнем углу, поверх
+   строк, а не в них: иначе он вытянул бы строки у всех трёх соседей. */
 .store-card--map {
-  padding: 0;
   overflow: hidden;
   border-color: transparent;
   background: var(--sg-blue-tint);
 }
 
-.store-map {
-  flex: 1 1 auto;
-  display: flex;
-  align-items: center;
-  gap: var(--sp-4);
-  padding: var(--sp-3) var(--sp-5);
+.store-card--map .store-card__pin {
+  color: var(--sg-blue);
+}
+
+.store-card--map .store-card__addr {
+  max-width: 13em;
+}
+
+.store-map__link {
+  min-height: 24px;
   color: var(--sg-ink);
 }
 
-.store-map:hover {
+.store-map__link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+.store-map__link:hover {
+  color: var(--sg-blue);
   text-decoration: none;
 }
 
+.store-map__link:focus-visible {
+  outline: none;
+}
+
+.store-map__link:focus-visible::after {
+  outline: 2px solid var(--sg-blue);
+  outline-offset: -2px;
+  border-radius: var(--r-xl);
+}
+
 .store-map__img {
-  flex: none;
-  width: 70px;
-  height: auto;
+  position: absolute;
+  right: 6%;
+  bottom: -14px;
+  width: auto;
+  height: 74%;
+  max-height: 150px;
+  pointer-events: none;
 }
 
 .store-map__img path {
@@ -1925,26 +2017,6 @@ body:has(.first-screen) .header-slogan {
   fill: var(--sg-red);
   stroke: #fff;
   stroke-width: 1.4;
-}
-
-.store-map__text {
-  display: grid;
-  gap: 4px;
-  font-size: 13px;
-  line-height: 1.35;
-  color: var(--sg-muted);
-}
-
-.store-map__text strong {
-  font-family: var(--font-head);
-  font-size: 16px;
-  font-weight: 800;
-  line-height: 1.2;
-  color: var(--sg-ink);
-}
-
-.store-map:hover .store-map__text strong {
-  color: var(--sg-blue);
 }
 
 /* ── Полоса «как мы работаем» ─────────────────────────────────────────────── */
@@ -1963,9 +2035,11 @@ body:has(.first-screen) .header-slogan {
   list-style: none;
 }
 
+/* Значки и заголовки четырёх пунктов - на одной линии сверху; крайние
+   пункты вровень с краями контейнера, как заголовки разделов */
 .perk {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--sp-3);
   padding: var(--sp-1) var(--sp-5);
 }
@@ -1976,6 +2050,10 @@ body:has(.first-screen) .header-slogan {
 
 .perk:first-child {
   padding-left: 0;
+}
+
+.perk:last-child {
+  padding-right: 0;
 }
 
 .perk__icon {
@@ -2005,8 +2083,12 @@ body:has(.first-screen) .header-slogan {
 
 /* ── Ширина ───────────────────────────────────────────────────────────────── */
 @media (max-width: 1279px) {
+  /* По две в ряд - прижаты влево: при space-between вторая колонка
+     уезжала к правому краю колонки текста, на картинку */
   .first-screen__facts {
     grid-template-columns: repeat(2, minmax(0, max-content));
+    justify-content: start;
+    column-gap: var(--sp-6);
   }
 
   .popular-cats__list {
@@ -2036,6 +2118,10 @@ body:has(.first-screen) .header-slogan {
   .perk:nth-child(3) {
     border-left: 0;
     padding-left: 0;
+  }
+
+  .perk:nth-child(2) {
+    padding-right: 0;
   }
 }
 
@@ -2081,7 +2167,11 @@ body:has(.first-screen) .header-slogan {
     max-width: 240px;
   }
 
+  /* width: 100% - в колонке flex контейнер с margin: auto сжимался
+     по содержимому (620 px) и вставал посередине: на 768 px текст
+     первого экрана начинался на 50 px правее заголовков ниже */
   .first-screen__inner {
+    width: 100%;
     min-height: 0;
     padding-bottom: var(--sp-5);
   }
@@ -2171,10 +2261,21 @@ body:has(.first-screen) .header-slogan {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  /* .perk + .perk - с той же специфичностью, что у правила с чертой:
+     одного .perk не хватало, и у пунктов 2-4 слева от значка оставалась
+     вертикальная черта */
   .perk,
-  .perk:nth-child(3) {
+  .perk + .perk {
     border-left: 0;
     padding: 0;
+  }
+
+  .store-card--map {
+    min-height: 124px;
+  }
+
+  .store-map__img {
+    height: 96px;
   }
 }
 
@@ -2186,6 +2287,10 @@ body:has(.first-screen) .header-slogan {
   .first-screen__facts {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     margin-bottom: var(--sp-5);
+  }
+
+  .first-screen__actions {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .first-screen__actions .btn {
@@ -3675,12 +3780,26 @@ html[data-theme="dark"] .shop-card__now--open {
   border-radius: 2px;
 }
 
+/* Нижний ряд подвала - по тем же колонкам, что верхний: «Связаться
+   с нами» под знаком, магазины - под колонками ссылок, каждый в своей.
+   Раньше ряд делился пополам, и «Магазины» начинались посреди второй
+   колонки ссылок, ни с чем не на одной линии. */
 .site-footer__contacts {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 2.15fr);
   gap: var(--sp-6);
   padding: var(--sp-5) 0;
   border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.footer-shops ul {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-3) var(--sp-5);
+}
+
+.footer-shops li + li {
+  margin-top: 0;
 }
 
 .footer-shops li span {
@@ -3689,9 +3808,25 @@ html[data-theme="dark"] .shop-card__now--open {
 }
 
 .footer-shops li em {
+  display: block;
   font-style: normal;
   font-size: 13px;
   color: rgba(255, 255, 255, 0.55);
+}
+
+/* Номер магазина - своей строкой под городом: город строчный <em>,
+   и номер вплотную за ним читался «Петропавловск-Камчатский8-963-…».
+   fit-content - чтобы подчёркивание шло под номером, а не на всю
+   колонку; высота 28 px - под палец. */
+.footer-shops__tel {
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 28px;
+  font-size: 14px;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
 }
 
 .site-footer__bottom {
@@ -4354,6 +4489,14 @@ html[data-theme="dark"] .site-footer {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .site-footer__contacts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .footer-shops ul {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .feature-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -4477,7 +4620,8 @@ html[data-theme="dark"] .site-footer {
   .catalog-menu__grid,
   .feature-grid,
   .footer-links,
-  .site-footer__contacts {
+  .site-footer__contacts,
+  .footer-shops ul {
     grid-template-columns: 1fr;
   }
 
@@ -8318,7 +8462,7 @@ p a:not(.btn):hover,
       <p class="first-screen__lead"><strong>Всё для строительства, ремонта, дома и сада</strong> Больше 10 000 товаров в наличии и под заказ</p>
       <ul class="first-screen__facts">
         <li><svg width="34" height="34" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M223.68,66.15,135.68,18a15.88,15.88,0,0,0-15.36,0l-88,48.17a16,16,0,0,0-8.32,14v95.64a16,16,0,0,0,8.32,14l88,48.17a15.88,15.88,0,0,0,15.36,0l88-48.17a16,16,0,0,0,8.32-14V80.18A16,16,0,0,0,223.68,66.15ZM128,32l80.35,44L178.57,92.29l-80.35-44Zm0,88L47.65,76,81.56,57.43l80.35,44Zm88,55.85h0l-80,43.79V133.83l32-17.51V152a8,8,0,0,0,16,0V107.56l32-17.51v85.76Z"/></svg><span><strong>10 000+</strong> товаров</span></li>
-        <li><svg width="34" height="34" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M231.69,93.81,217.35,43.6A16.07,16.07,0,0,0,202,32H54A16.07,16.07,0,0,0,38.65,43.6L24.31,93.81A7.94,7.94,0,0,0,24,96v16a40,40,0,0,0,16,32v72a8,8,0,0,0,8,8H208a8,8,0,0,0,8-8V144a40,40,0,0,0,16-32V96A7.94,7.94,0,0,0,231.69,93.81ZM88,112a24,24,0,0,1-35.12,21.26,7.88,7.88,0,0,0-1.82-1.06A24,24,0,0,1,40,112v-8H88Zm64,0a24,24,0,0,1-48,0v-8h48Zm64,0a24,24,0,0,1-11.07,20.2,8.08,8.08,0,0,0-1.8,1.05A24,24,0,0,1,168,112v-8h48Z"/></svg><span><strong>3 магазина</strong> Петропавловск и Елизово</span></li>
+        <li><svg width="34" height="34" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M231.69,93.81,217.35,43.6A16.07,16.07,0,0,0,202,32H54A16.07,16.07,0,0,0,38.65,43.6L24.31,93.81A7.94,7.94,0,0,0,24,96v16a40,40,0,0,0,16,32v72a8,8,0,0,0,8,8H208a8,8,0,0,0,8-8V144a40,40,0,0,0,16-32V96A7.94,7.94,0,0,0,231.69,93.81ZM88,112a24,24,0,0,1-35.12,21.26,7.88,7.88,0,0,0-1.82-1.06A24,24,0,0,1,40,112v-8H88Zm64,0a24,24,0,0,1-48,0v-8h48Zm64,0a24,24,0,0,1-11.07,20.2,8.08,8.08,0,0,0-1.8,1.05A24,24,0,0,1,168,112v-8h48Z"/></svg><span><strong>3 магазина</strong> Петропавловск<br>и Елизово</span></li>
         <li><svg width="34" height="34" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M64.12,147.8a4,4,0,0,1-4,4.2H16a8,8,0,0,1-7.8-6.17,8.35,8.35,0,0,1,1.62-6.93A67.79,67.79,0,0,1,37,117.51a40,40,0,1,1,66.46-35.8,3.94,3.94,0,0,1-2.27,4.18A64.08,64.08,0,0,0,64,144C64,145.28,64,146.54,64.12,147.8Zm182-8.91A67.76,67.76,0,0,0,219,117.51a40,40,0,1,0-66.46-35.8,3.94,3.94,0,0,0,2.27,4.18A64.08,64.08,0,0,1,192,144c0,1.28,0,2.54-.12,3.8a4,4,0,0,0,4,4.2H240a8,8,0,0,0,7.8-6.17A8.33,8.33,0,0,0,246.17,138.89Zm-89,43.18a48,48,0,1,0-58.37,0A72.13,72.13,0,0,0,65.07,212,8,8,0,0,0,72,224H184a8,8,0,0,0,6.93-12A72.15,72.15,0,0,0,157.19,182.07Z"/></svg><span><strong>150 000</strong> клиентов в год</span></li>
         <li><svg width="34" height="34" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM169.66,133.66l-48,48a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L116,164.69l42.34-42.35a8,8,0,0,1,11.32,11.32ZM48,80V48H72v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80Z"/></svg><span><strong>С 2007 года</strong> на рынке</span></li>
       </ul>
@@ -8792,15 +8936,15 @@ p a:not(.btn):hover,
   <section class="perks" aria-label="Как мы работаем">
     <div class="container">
       <ul class="perks__list">
-        <li class="perk"><span class="perk__icon"><svg width="30" height="30" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M248,120v64a8,8,0,0,1-8,8H216a24,24,0,0,0-48,0H104a24,24,0,0,0-48,0H32a8,8,0,0,1-8-8V144H184V120Z" opacity="0.2"/><path d="M255.42,117l-14-35A15.93,15.93,0,0,0,226.58,72H192V64a8,8,0,0,0-8-8H32A16,16,0,0,0,16,72V184a16,16,0,0,0,16,16H49a32,32,0,0,0,62,0h50a32,32,0,0,0,62,0h17a16,16,0,0,0,16-16V120A7.94,7.94,0,0,0,255.42,117ZM192,88h34.58l9.6,24H192ZM32,72H176v64H32ZM80,208a16,16,0,1,1,16-16A16,16,0,0,1,80,208Zm81-24H111a32,32,0,0,0-62,0H32V152H176v12.31A32.11,32.11,0,0,0,161,184Zm31,24a16,16,0,1,1,16-16A16,16,0,0,1,192,208Zm48-24H223a32.06,32.06,0,0,0-31-24V128h48Z"/></svg></span><span class="perk__text"><strong>Доставка и самовывоз</strong>Заберите в любом из трёх магазинов, доставку уточняйте по телефону</span></li>
-        <li class="perk"><span class="perk__icon"><svg width="30" height="30" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M136,32V216H40V85.35a8,8,0,0,1,3.56-6.66l80-53.33A8,8,0,0,1,136,32Z" opacity="0.2"/><path d="M240,208H224V96a16,16,0,0,0-16-16H144V32a16,16,0,0,0-24.88-13.32L39.12,72A16,16,0,0,0,32,85.34V208H16a8,8,0,0,0,0,16H240a8,8,0,0,0,0-16ZM208,96V208H144V96ZM48,85.34,128,32V208H48ZM112,112v16a8,8,0,0,1-16,0V112a8,8,0,1,1,16,0Zm-32,0v16a8,8,0,0,1-16,0V112a8,8,0,1,1,16,0Zm0,56v16a8,8,0,0,1-16,0V168a8,8,0,0,1,16,0Zm32,0v16a8,8,0,0,1-16,0V168a8,8,0,0,1,16,0Z"/></svg></span><span class="perk__text"><strong>Частным лицам и организациям</strong>Снабжаем объекты под ключ, два склада отгрузки</span></li>
+        <li class="perk"><span class="perk__icon"><svg width="30" height="30" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M248,120v64a8,8,0,0,1-8,8H216a24,24,0,0,0-48,0H104a24,24,0,0,0-48,0H32a8,8,0,0,1-8-8V144H184V120Z" opacity="0.2"/><path d="M255.42,117l-14-35A15.93,15.93,0,0,0,226.58,72H192V64a8,8,0,0,0-8-8H32A16,16,0,0,0,16,72V184a16,16,0,0,0,16,16H49a32,32,0,0,0,62,0h50a32,32,0,0,0,62,0h17a16,16,0,0,0,16-16V120A7.94,7.94,0,0,0,255.42,117ZM192,88h34.58l9.6,24H192ZM32,72H176v64H32ZM80,208a16,16,0,1,1,16-16A16,16,0,0,1,80,208Zm81-24H111a32,32,0,0,0-62,0H32V152H176v12.31A32.11,32.11,0,0,0,161,184Zm31,24a16,16,0,1,1,16-16A16,16,0,0,1,192,208Zm48-24H223a32.06,32.06,0,0,0-31-24V128h48Z"/></svg></span><span class="perk__text"><strong>Доставка и самовывоз</strong>Самовывоз из трёх магазинов, доставку уточняйте по телефону</span></li>
+        <li class="perk"><span class="perk__icon"><svg width="30" height="30" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M136,32V216H40V85.35a8,8,0,0,1,3.56-6.66l80-53.33A8,8,0,0,1,136,32Z" opacity="0.2"/><path d="M240,208H224V96a16,16,0,0,0-16-16H144V32a16,16,0,0,0-24.88-13.32L39.12,72A16,16,0,0,0,32,85.34V208H16a8,8,0,0,0,0,16H240a8,8,0,0,0,0-16ZM208,96V208H144V96ZM48,85.34,128,32V208H48ZM112,112v16a8,8,0,0,1-16,0V112a8,8,0,1,1,16,0Zm-32,0v16a8,8,0,0,1-16,0V112a8,8,0,1,1,16,0Zm0,56v16a8,8,0,0,1-16,0V168a8,8,0,0,1,16,0Zm32,0v16a8,8,0,0,1-16,0V168a8,8,0,0,1,16,0Z"/></svg></span><span class="perk__text"><strong>Физлицам и юрлицам</strong>Снабжаем объекты под ключ, два склада отгрузки</span></li>
         <li class="perk"><span class="perk__icon"><svg width="30" height="30" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z"/></svg></span><span class="perk__text"><strong>Без выходных</strong>Пн–Пт 9:00–19:00, Сб–Вс до 18:00</span></li>
         <li class="perk"><span class="perk__icon"><svg width="30" height="30" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M80,144v40a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V128H64A16,16,0,0,1,80,144Zm112-16a16,16,0,0,0-16,16v40a16,16,0,0,0,16,16h32V128Z" opacity="0.2"/><path d="M201.89,54.66A104.08,104.08,0,0,0,24,128v56a24,24,0,0,0,24,24H64a24,24,0,0,0,24-24V144a24,24,0,0,0-24-24H40.36A88.12,88.12,0,0,1,190.54,65.93,87.39,87.39,0,0,1,215.65,120H192a24,24,0,0,0-24,24v40a24,24,0,0,0,24,24h24a24,24,0,0,1-24,24H136a8,8,0,0,0,0,16h56a40,40,0,0,0,40-40V128A103.41,103.41,0,0,0,201.89,54.66ZM64,136a8,8,0,0,1,8,8v40a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V136Zm128,56a8,8,0,0,1-8-8V144a8,8,0,0,1,8-8h24v56Z"/></svg></span><span class="perk__text"><strong>Поможем с выбором</strong>Подскажем по телефону и посчитаем, сколько нужно</span></li>
       </ul>
     </div>
   </section>
 
-  <section class="section section--tight" aria-labelledby="stores-row-title">
+  <section class="section section--tight stores-row" aria-labelledby="stores-row-title">
     <div class="container">
       <div class="section__head">
         <h2 class="section__title" id="stores-row-title">Наши магазины</h2>
@@ -8810,8 +8954,10 @@ p a:not(.btn):hover,
         <li class="store-card" data-hours-weekday="09:00-19:00" data-hours-weekend="10:00-18:00">
           <span class="store-card__pin"><svg width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,16a88.1,88.1,0,0,0-88,88c0,75.3,80,132.17,83.41,134.55a8,8,0,0,0,9.18,0C136,236.17,216,179.3,216,104A88.1,88.1,0,0,0,128,16Zm0,56a32,32,0,1,1-32,32A32,32,0,0,1,128,72Z"/></svg></span>
           <span class="store-card__body">
-            <strong class="store-card__name">Магазин на Чубарова</strong>
-            <span class="store-card__addr">Петропавловск-Камчатский, ул. Чубарова, 16, корп. 40</span>
+            <span class="store-card__head">
+              <strong class="store-card__name">Магазин на Чубарова</strong>
+              <span class="store-card__addr">Петропавловск-Камчатский, ул. Чубарова, 16, корп. 40</span>
+            </span>
             <a class="store-card__tel" href="tel:+79638319999">8-963-831-99-99</a>
             <span class="store-card__hours">Пн–Пт 9–19 · Сб–Вс 10–18</span>
             <span class="shop-card__now" data-hours-now></span>
@@ -8820,8 +8966,10 @@ p a:not(.btn):hover,
         <li class="store-card" data-hours-weekday="09:00-19:00" data-hours-weekend="09:00-18:00">
           <span class="store-card__pin"><svg width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,16a88.1,88.1,0,0,0-88,88c0,75.3,80,132.17,83.41,134.55a8,8,0,0,0,9.18,0C136,236.17,216,179.3,216,104A88.1,88.1,0,0,0,128,16Zm0,56a32,32,0,1,1-32,32A32,32,0,0,1,128,72Z"/></svg></span>
           <span class="store-card__body">
-            <strong class="store-card__name">Магазин на 50 лет Октября</strong>
-            <span class="store-card__addr">Петропавловск-Камчатский, просп. 50 лет Октября, 17А</span>
+            <span class="store-card__head">
+              <strong class="store-card__name">Магазин на 50 лет Октября</strong>
+              <span class="store-card__addr">Петропавловск-Камчатский, просп. 50 лет Октября, 17А</span>
+            </span>
             <a class="store-card__tel" href="tel:+79638300999">8-963-830-09-99</a>
             <span class="store-card__hours">Пн–Пт 9–19 · Сб–Вс 9–18</span>
             <span class="shop-card__now" data-hours-now></span>
@@ -8830,18 +8978,24 @@ p a:not(.btn):hover,
         <li class="store-card" data-hours-weekday="09:00-19:00" data-hours-weekend="09:00-18:00">
           <span class="store-card__pin"><svg width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,16a88.1,88.1,0,0,0-88,88c0,75.3,80,132.17,83.41,134.55a8,8,0,0,0,9.18,0C136,236.17,216,179.3,216,104A88.1,88.1,0,0,0,128,16Zm0,56a32,32,0,1,1-32,32A32,32,0,0,1,128,72Z"/></svg></span>
           <span class="store-card__body">
-            <strong class="store-card__name">Магазин в Елизово</strong>
-            <span class="store-card__addr">Елизово, Магистральная ул., 2/2</span>
+            <span class="store-card__head">
+              <strong class="store-card__name">Магазин в Елизово</strong>
+              <span class="store-card__addr">Елизово, Магистральная ул., 2/2</span>
+            </span>
             <a class="store-card__tel" href="tel:+79638300333">8-963-830-03-33</a>
             <span class="store-card__hours">Пн–Пт 9–19 · Сб–Вс 9–18</span>
             <span class="shop-card__now" data-hours-now></span>
           </span>
         </li>
         <li class="store-card store-card--map">
-          <a class="store-map" href="#p-contacts">
-            <svg class="store-map__img" width="66" height="120" viewBox="0 0 66 120" aria-hidden="true" focusable="false"><path d="M8.2 118.7 8.3 120.0 6.0 120.0 7.8 118.5 8.2 118.7ZM65.5 9.8 64.9 7.5 63.4 6.0 62.2 6.2 62.6 7.0 62.4 7.4 60.8 8.0 60.8 8.5 61.3 9.1 60.3 8.4 61.4 7.3 59.0 7.0 59.2 6.7 58.9 6.6 57.5 6.7 57.8 7.6 58.6 7.4 57.9 8.5 56.8 8.5 55.6 9.4 55.8 11.8 54.4 12.7 54.6 12.7 54.3 13.3 55.4 14.5 55.3 16.0 54.8 16.6 55.1 15.8 54.1 15.9 53.6 16.6 53.6 17.1 54.6 17.7 54.9 18.5 54.3 19.1 54.3 18.3 53.6 17.8 52.8 17.5 52.3 17.9 53.7 19.4 53.6 19.9 52.3 20.6 52.5 19.7 51.9 20.9 50.9 21.0 51.2 21.4 51.7 21.0 51.7 21.5 49.0 23.7 47.4 26.7 46.6 29.2 46.2 30.6 46.4 32.5 47.7 33.8 49.4 34.3 48.6 35.4 49.8 34.7 49.6 33.0 49.9 32.4 51.0 32.0 53.2 33.7 54.6 33.9 55.4 35.2 54.8 35.7 54.8 36.6 53.6 38.2 51.8 39.6 51.7 42.1 52.2 43.2 51.7 44.8 51.6 46.7 52.9 47.5 53.6 47.0 54.8 47.1 55.1 47.7 54.8 48.4 55.1 49.2 54.8 49.6 55.1 50.4 54.9 50.5 55.6 52.1 55.7 53.8 53.9 54.7 53.5 56.0 51.9 55.4 50.6 53.4 50.1 53.3 51.1 52.7 51.4 51.8 52.7 51.4 53.9 49.9 53.3 49.5 52.5 50.9 50.9 50.1 50.6 50.7 49.7 50.7 49.0 51.5 50.3 52.8 47.2 54.5 46.5 55.3 46.8 55.8 44.7 60.8 44.5 63.6 45.4 67.3 47.3 69.9 47.0 70.4 47.1 71.1 44.3 74.2 41.5 74.4 40.4 73.1 37.5 73.9 32.8 78.3 31.8 80.6 31.4 82.9 31.5 84.1 31.2 84.6 31.8 85.4 31.6 84.5 32.0 84.7 32.2 86.5 31.9 86.8 31.2 86.1 31.0 86.3 31.0 86.7 31.5 86.8 31.6 87.7 32.0 87.8 31.9 88.5 32.3 88.5 31.8 89.3 32.2 90.0 32.3 89.4 32.6 89.4 32.8 91.4 30.9 90.1 30.8 89.6 31.2 89.1 26.7 90.9 23.5 93.9 23.3 92.7 22.7 91.8 21.7 92.3 21.6 93.6 22.3 93.7 22.1 93.2 23.1 93.8 22.7 94.7 22.4 94.6 22.5 95.1 22.1 95.3 22.8 96.1 22.5 96.9 22.1 97.2 21.5 96.7 21.6 97.5 22.2 97.8 22.1 98.7 22.3 98.8 21.5 99.8 22.4 99.6 22.6 100.0 22.1 100.4 22.5 101.0 21.3 102.0 21.6 102.5 20.8 103.2 20.6 105.2 18.7 107.6 18.0 109.3 17.0 110.3 15.4 111.0 15.0 112.6 14.2 112.9 13.5 114.1 9.5 118.6 10.1 117.1 10.1 116.0 9.7 115.9 9.8 114.6 8.4 113.2 8.4 111.8 8.2 111.3 8.3 107.5 7.9 102.1 7.4 99.8 6.8 98.3 7.4 98.8 7.4 99.3 7.9 98.5 7.1 98.2 6.7 97.5 5.6 93.4 4.5 83.0 3.0 75.2 1.7 64.8 2.7 55.6 3.2 54.6 3.3 53.0 4.5 48.5 5.7 45.9 6.0 45.7 5.4 46.7 5.3 47.3 6.3 45.6 8.0 44.5 8.6 42.5 9.5 43.3 11.7 38.7 11.3 35.8 10.5 34.9 10.0 35.0 11.6 33.4 12.1 34.0 13.4 34.5 15.0 34.1 15.6 33.2 16.1 31.4 18.3 31.9 20.2 31.4 21.0 32.2 20.7 31.4 20.2 31.2 26.6 25.5 27.2 26.0 26.9 25.1 28.3 23.4 29.0 23.2 29.8 21.6 30.6 20.9 30.6 19.4 31.5 17.8 33.9 15.4 34.8 15.1 35.9 12.8 38.3 12.0 41.3 8.9 42.6 6.9 45.5 4.8 45.9 4.0 45.5 3.6 45.8 2.2 47.7 0.8 49.5 0.0 66.2 0.0 66.2 9.5 65.5 9.8ZM65.1 19.2 64.4 21.1 62.8 21.1 61.8 21.9 61.1 21.7 57.2 24.9 56.5 26.3 56.0 25.2 57.3 24.3 58.5 21.8 58.5 20.8 59.4 19.6 58.6 19.3 57.9 19.6 58.3 19.3 59.8 19.1 62.0 18.1 63.9 16.6 64.4 18.3 65.1 19.2Z"/><circle cx="23.1" cy="92.3" r="4.2"/></svg>
-            <span class="store-map__text"><strong>Три магазина рядом с вами</strong>Петропавловск-Камчатский и Елизово</span>
-          </a>
+          <span class="store-card__pin"><svg width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M231.69,93.81,217.35,43.6A16.07,16.07,0,0,0,202,32H54A16.07,16.07,0,0,0,38.65,43.6L24.31,93.81A7.94,7.94,0,0,0,24,96v16a40,40,0,0,0,16,32v72a8,8,0,0,0,8,8H208a8,8,0,0,0,8-8V144a40,40,0,0,0,16-32V96A7.94,7.94,0,0,0,231.69,93.81ZM88,112a24,24,0,0,1-35.12,21.26,7.88,7.88,0,0,0-1.82-1.06A24,24,0,0,1,40,112v-8H88Zm64,0a24,24,0,0,1-48,0v-8h48Zm64,0a24,24,0,0,1-11.07,20.2,8.08,8.08,0,0,0-1.8,1.05A24,24,0,0,1,168,112v-8h48Z"/></svg></span>
+          <span class="store-card__body">
+            <span class="store-card__head">
+              <a class="store-card__name store-map__link" href="#p-contacts">Три магазина рядом с вами</a>
+              <span class="store-card__addr">Петропавловск-Камчатский и Елизово</span>
+            </span>
+          </span>
+          <svg class="store-map__img" width="66" height="120" viewBox="0 0 66 120" aria-hidden="true" focusable="false"><path d="M8.2 118.7 8.3 120.0 6.0 120.0 7.8 118.5 8.2 118.7ZM65.5 9.8 64.9 7.5 63.4 6.0 62.2 6.2 62.6 7.0 62.4 7.4 60.8 8.0 60.8 8.5 61.3 9.1 60.3 8.4 61.4 7.3 59.0 7.0 59.2 6.7 58.9 6.6 57.5 6.7 57.8 7.6 58.6 7.4 57.9 8.5 56.8 8.5 55.6 9.4 55.8 11.8 54.4 12.7 54.6 12.7 54.3 13.3 55.4 14.5 55.3 16.0 54.8 16.6 55.1 15.8 54.1 15.9 53.6 16.6 53.6 17.1 54.6 17.7 54.9 18.5 54.3 19.1 54.3 18.3 53.6 17.8 52.8 17.5 52.3 17.9 53.7 19.4 53.6 19.9 52.3 20.6 52.5 19.7 51.9 20.9 50.9 21.0 51.2 21.4 51.7 21.0 51.7 21.5 49.0 23.7 47.4 26.7 46.6 29.2 46.2 30.6 46.4 32.5 47.7 33.8 49.4 34.3 48.6 35.4 49.8 34.7 49.6 33.0 49.9 32.4 51.0 32.0 53.2 33.7 54.6 33.9 55.4 35.2 54.8 35.7 54.8 36.6 53.6 38.2 51.8 39.6 51.7 42.1 52.2 43.2 51.7 44.8 51.6 46.7 52.9 47.5 53.6 47.0 54.8 47.1 55.1 47.7 54.8 48.4 55.1 49.2 54.8 49.6 55.1 50.4 54.9 50.5 55.6 52.1 55.7 53.8 53.9 54.7 53.5 56.0 51.9 55.4 50.6 53.4 50.1 53.3 51.1 52.7 51.4 51.8 52.7 51.4 53.9 49.9 53.3 49.5 52.5 50.9 50.9 50.1 50.6 50.7 49.7 50.7 49.0 51.5 50.3 52.8 47.2 54.5 46.5 55.3 46.8 55.8 44.7 60.8 44.5 63.6 45.4 67.3 47.3 69.9 47.0 70.4 47.1 71.1 44.3 74.2 41.5 74.4 40.4 73.1 37.5 73.9 32.8 78.3 31.8 80.6 31.4 82.9 31.5 84.1 31.2 84.6 31.8 85.4 31.6 84.5 32.0 84.7 32.2 86.5 31.9 86.8 31.2 86.1 31.0 86.3 31.0 86.7 31.5 86.8 31.6 87.7 32.0 87.8 31.9 88.5 32.3 88.5 31.8 89.3 32.2 90.0 32.3 89.4 32.6 89.4 32.8 91.4 30.9 90.1 30.8 89.6 31.2 89.1 26.7 90.9 23.5 93.9 23.3 92.7 22.7 91.8 21.7 92.3 21.6 93.6 22.3 93.7 22.1 93.2 23.1 93.8 22.7 94.7 22.4 94.6 22.5 95.1 22.1 95.3 22.8 96.1 22.5 96.9 22.1 97.2 21.5 96.7 21.6 97.5 22.2 97.8 22.1 98.7 22.3 98.8 21.5 99.8 22.4 99.6 22.6 100.0 22.1 100.4 22.5 101.0 21.3 102.0 21.6 102.5 20.8 103.2 20.6 105.2 18.7 107.6 18.0 109.3 17.0 110.3 15.4 111.0 15.0 112.6 14.2 112.9 13.5 114.1 9.5 118.6 10.1 117.1 10.1 116.0 9.7 115.9 9.8 114.6 8.4 113.2 8.4 111.8 8.2 111.3 8.3 107.5 7.9 102.1 7.4 99.8 6.8 98.3 7.4 98.8 7.4 99.3 7.9 98.5 7.1 98.2 6.7 97.5 5.6 93.4 4.5 83.0 3.0 75.2 1.7 64.8 2.7 55.6 3.2 54.6 3.3 53.0 4.5 48.5 5.7 45.9 6.0 45.7 5.4 46.7 5.3 47.3 6.3 45.6 8.0 44.5 8.6 42.5 9.5 43.3 11.7 38.7 11.3 35.8 10.5 34.9 10.0 35.0 11.6 33.4 12.1 34.0 13.4 34.5 15.0 34.1 15.6 33.2 16.1 31.4 18.3 31.9 20.2 31.4 21.0 32.2 20.7 31.4 20.2 31.2 26.6 25.5 27.2 26.0 26.9 25.1 28.3 23.4 29.0 23.2 29.8 21.6 30.6 20.9 30.6 19.4 31.5 17.8 33.9 15.4 34.8 15.1 35.9 12.8 38.3 12.0 41.3 8.9 42.6 6.9 45.5 4.8 45.9 4.0 45.5 3.6 45.8 2.2 47.7 0.8 49.5 0.0 66.2 0.0 66.2 9.5 65.5 9.8ZM65.1 19.2 64.4 21.1 62.8 21.1 61.8 21.9 61.1 21.7 57.2 24.9 56.5 26.3 56.0 25.2 57.3 24.3 58.5 21.8 58.5 20.8 59.4 19.6 58.6 19.3 57.9 19.6 58.3 19.3 59.8 19.1 62.0 18.1 63.9 16.6 64.4 18.3 65.1 19.2Z"/><circle cx="23.1" cy="92.3" r="4.2"/></svg>
         </li>
       </ul>
     </div>
@@ -10349,7 +10503,7 @@ p a:not(.btn):hover,
         </div>
 
         <div class="footer-group">
-          <p class="footer-group__label">Юридическая информация</p>
+          <p class="footer-group__label">Документы</p>
           <ul>
             <li><a href="#p-policy">Политика конфиденциальности</a></li>
             <li><a href="#p-policy">Согласие на обработку данных</a></li>
@@ -10364,13 +10518,14 @@ p a:not(.btn):hover,
       <div class="footer-contacts">
         <p class="footer-group__label">Связаться с нами</p>
         <ul>
-          <li><a href="tel:+79638319999">8-963-831-99-99</a> — один телефон на все магазины</li>
+          <li><a href="tel:+79638319999">8-963-831-99-99</a> — основной номер</li>
+          <li><a href="tel:+79638300177">8-963-830-01-77</a> — отдел рекламы</li>
           <li><a href="mailto:stroigeroi41@mail.ru">stroigeroi41@mail.ru</a> — почта для заявок</li>
         </ul>
       </div>
       <div class="footer-shops">
         <p class="footer-group__label">Магазины</p>
-        <ul><li><span>ул. Чубарова, 16, корп. 40</span><em>Петропавловск-Камчатский</em></li><li><span>просп. 50 лет Октября, 17А</span><em>Петропавловск-Камчатский</em></li><li><span>Магистральная ул., 2/2</span><em>Елизово</em></li></ul>
+        <ul><li><span>ул. Чубарова, 16, корп. 40</span><em>Петропавловск-Камчатский</em><a class="footer-shops__tel" href="tel:+79638319999">8-963-831-99-99</a></li><li><span>просп. 50 лет Октября, 17А</span><em>Петропавловск-Камчатский</em><a class="footer-shops__tel" href="tel:+79638300999">8-963-830-09-99</a></li><li><span>Магистральная ул., 2/2</span><em>Елизово</em><a class="footer-shops__tel" href="tel:+79638300333">8-963-830-03-33</a></li></ul>
       </div>
     </div>
 
