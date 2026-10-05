@@ -175,6 +175,10 @@ export type Doc = {
   u: string
   /** Заголовок H1 */
   t: string
+  /** Заголовок окна (title) без названия сайта. Его пишут под поисковый
+      запрос, поэтому он весит как описание. Необязателен: индекс
+      из старой сборки работает и без него. */
+  m?: string
   /** Описание для поисковиков */
   d: string
   /** Заголовки разделов */
@@ -195,15 +199,16 @@ export type Hit = {
  * страница «Стоимость» по запросу «стоимость» должна стоять выше
  * статьи, где это слово встретилось в третьем абзаце.
  */
-const WEIGHT = { title: 12, heading: 5, description: 4, body: 1 }
+const WEIGHT = { title: 12, heading: 5, meta: 4, description: 4, body: 1 }
 
-type Prepared = Doc & { _t: string[]; _h: string[]; _d: string[]; _b: string[] }
+type Prepared = Doc & { _t: string[]; _m: string[]; _h: string[]; _d: string[]; _b: string[] }
 
 /** Разбор индекса на основы. Делается один раз, результат переиспользуется. */
 export const prepare = (docs: Doc[]): Prepared[] =>
   docs.map((d) => ({
     ...d,
     _t: tokens(d.t),
+    _m: tokens(d.m ?? ''),
     _h: tokens(d.h.join(' ')),
     _d: tokens(d.d),
     _b: tokens(d.b),
@@ -286,6 +291,7 @@ export const search = (docs: Prepared[], query: string, limit = 30): Hit[] => {
   const stats = docs.map((doc) =>
     q.map((term) => ({
       t: freq(doc._t, term),
+      m: freq(doc._m, term),
       h: freq(doc._h, term),
       d: freq(doc._d, term),
       b: freq(doc._b, term),
@@ -293,7 +299,7 @@ export const search = (docs: Prepared[], query: string, limit = 30): Hit[] => {
   )
 
   const idf = q.map((_, i) => {
-    const df = stats.filter((s) => s[i].t + s[i].h + s[i].d + s[i].b > 0).length
+    const df = stats.filter((s) => s[i].t + s[i].m + s[i].h + s[i].d + s[i].b > 0).length
     return Math.log(1 + (docs.length - df + 0.5) / (df + 0.5))
   })
 
@@ -302,13 +308,14 @@ export const search = (docs: Prepared[], query: string, limit = 30): Hit[] => {
     let score = 0
     for (let i = 0; i < q.length; i++) {
       const s = stats[di][i]
-      if (s.t + s.h + s.d + s.b === 0) return
+      if (s.t + s.m + s.h + s.d + s.b === 0) return
       const norm = 0.3 + 0.7 * (doc._b.length / avg)
       const sat = (n: number, weight: number, ln: number) =>
         n === 0 ? 0 : (weight * n * (K + 1)) / (n + K * ln)
       score +=
         idf[i] *
         (sat(s.t, WEIGHT.title, 1) +
+          sat(s.m, WEIGHT.meta, 1) +
           sat(s.h, WEIGHT.heading, 1) +
           sat(s.d, WEIGHT.description, 1) +
           sat(s.b, WEIGHT.body, norm))

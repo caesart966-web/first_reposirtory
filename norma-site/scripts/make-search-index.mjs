@@ -96,6 +96,14 @@ for (const file of walk(root).filter((f) => f.endsWith('.html'))) {
     .map((m) => text(m[1]))
     .filter(Boolean)
   const description = html.match(/<meta name="description" content="([^"]*)"/)?.[1] ?? ''
+  // Заголовок окна пишется под поисковый запрос («Какие документы нужны
+  // для вступления в СРО»), а H1 на той же странице бывает короче
+  // («Какие документы собрать»). Без него поиск по сайту решал запрос
+  // «документы для вступления» по сотым долям: главная и «Документы»
+  // шли вровень, и 5 октября 2026 года новая статья — 58-я страница
+  // индекса — поставила главную первой. Название сайта в конце отрезается:
+  // оно стоит у всех страниц и ничего не различает.
+  const metaTitle = (html.match(/<title>([\s\S]*?)<\/title>/)?.[1] ?? '').replace(/\s*\|[^|]*$/, '')
 
   const body = text(main)
   if (!h1 || !body) {
@@ -103,7 +111,7 @@ for (const file of walk(root).filter((f) => f.endsWith('.html'))) {
     continue
   }
 
-  docs.push({ u: url, t: h1, d: text(description), h: headings, b: body })
+  docs.push({ u: url, t: h1, m: text(metaTitle), d: text(description), h: headings, b: body })
 }
 
 docs.sort((a, b) => a.u.localeCompare(b.u))
