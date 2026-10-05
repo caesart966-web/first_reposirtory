@@ -16,6 +16,7 @@ if (href.indexOf('tel:') === 0) window.xptoGoal('telefon');
 else if (href.indexOf('mailto:') === 0) window.xptoGoal('pochta');
 else if (href.indexOf('t.me/') > -1) window.xptoGoal('telegram');
 else if (href.indexOf('max.ru') > -1) window.xptoGoal('max');
+else if (href.indexOf('wa.me/') > -1) window.xptoGoal('whatsapp');
 });
 document.documentElement.classList.add('js');
 var calmMedia = window.matchMedia('(prefers-reduced-motion: reduce)');

@@ -627,6 +627,10 @@ def block_form(site: Site, preselect: str = "") -> str:
               <span class="contact-line__label">Telegram</span>
               <a class="contact-line__value" href="{esc(c["telegram_url"])}" rel="nofollow noopener" target="_blank">{esc(c["telegram_display"])}</a>
             </div>
+            <div class="contact-line">
+              <span class="contact-line__label">WhatsApp</span>
+              <a class="contact-line__value" href="{esc(c["whatsapp_url"])}" rel="nofollow noopener" target="_blank">{esc(c["whatsapp_display"])}</a>
+            </div>
             {max_line}
             <div class="contact-line">
               <span class="contact-line__label">Режим работы</span>
@@ -702,7 +706,8 @@ def icon(name: str) -> str:
 
 
 def contact_cards(site: Site) -> str:
-    """Четыре способа связи карточками — на странице контактов."""
+    """Способы связи карточками на странице контактов: шесть — сетка 3×2,
+    на планшете 2×3, на телефоне в столбик, без «осиротевшей» карточки."""
     c = site.contacts
     notes = site.raw["contacts_page"].get("notes", {})
     ext = ' rel="nofollow noopener" target="_blank"'
@@ -710,9 +715,11 @@ def contact_cards(site: Site) -> str:
         ("phone", "Телефон", c["phone_display"], f'tel:{c["phone_href"]}', "", " contact-card--phone"),
         ("mail", "Почта", c["email"], f'mailto:{c["email"]}', "", ""),
         ("chat", "Telegram", c["telegram_display"], c["telegram_url"], ext, ""),
+        ("chat", "WhatsApp", c["whatsapp_display"], c["whatsapp_url"], ext, ""),
         ("link", "MAX", c.get("max_display", "Канал"), c["max_url"], ext, ""),
+        ("link", "Яндекс Карты", "Карточка X-PTO", c["yandex_url"], ext, ""),
     ]
-    keys = ["phone", "email", "telegram", "max"]
+    keys = ["phone", "email", "telegram", "whatsapp", "max", "yandex"]
     cards = []
     for (ic, label, value, href, attrs, extra), key in zip(rows, keys):
         note = notes.get(key, "")
@@ -996,9 +1003,9 @@ def schema_organization(site: Site) -> dict:
         "logo": site.abs_url("/assets/img/logo.svg"),
         "image": site.abs_url(site.raw.get("og_image", "/assets/img/og-default.jpg")),
         # sameAs — официальные страницы компании в других сервисах. По ним
-        # поисковик связывает сайт, канал в Telegram и канал в MAX в одну
-        # карточку организации.
-        "sameAs": [u for u in (c.get("telegram_url"), c.get("max_url")) if u],
+        # поисковик связывает сайт, карточку в Яндекс Бизнесе, Telegram и MAX
+        # в одну организацию.
+        "sameAs": [u for u in (c.get("yandex_url"), c.get("telegram_url"), c.get("max_url")) if u],
         "email": c["email"],
         "telephone": c["phone_href"],
         "taxID": site.company.get("inn", ""),
@@ -1181,6 +1188,8 @@ class Renderer:
             "telegram_url": esc(c["telegram_url"]),
             "telegram_display": esc(c["telegram_display"]),
             "max_url": esc(c.get("max_url", "")),
+            "whatsapp_url": esc(c["whatsapp_url"]),
+            "whatsapp_display": esc(c["whatsapp_display"]),
             "max_display": esc(c.get("max_display", "")),
             "work_hours": esc(c["work_hours"]),
             "geo": esc(c["geo"]),
