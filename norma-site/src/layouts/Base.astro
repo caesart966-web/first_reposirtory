@@ -7,7 +7,7 @@ import Footer from '../components/Footer.astro'
 import Icon from '../components/Icon.astro'
 import BrandIcon from '../components/BrandIcon.astro'
 import CookieBanner from '../components/CookieBanner.astro'
-import { SITE, href } from '../config/site'
+import { SITE, YANDEX_ORG, href } from '../config/site'
 import { SEO } from '../config/seo'
 import { ABOUT } from '../config/about'
 
@@ -93,7 +93,10 @@ const orgSchema = {
   // нарочно: адрес домашний, он стоит только в политике.
   areaServed: { '@type': 'Country', name: 'Россия' },
   address: { '@type': 'PostalAddress', addressCountry: 'RU', addressLocality: ABOUT.city },
-  sameAs: [SITE.whatsapp, SITE.telegram, SITE.maxLink].filter(Boolean),
+  // Карточка на Яндекс Картах (с 05.10.2026) связывает сайт с организацией
+  // в Яндекс Бизнесе. Рейтинга отсюда в разметку не берём: aggregateRating
+  // без своих отзывов на странице — то, за что снимают расширенный вид.
+  sameAs: [SITE.whatsapp, SITE.telegram, SITE.maxLink, YANDEX_ORG?.card].filter(Boolean),
   // Знак и картинка-превью. Без logo поисковик не покажет фирменный знак
   // ни рядом с сайтом в выдаче, ни в карточке организации.
   logo: { '@type': 'ImageObject', '@id': `${home}#logo`, url: abs('/logo-512.png'), width: 512, height: 512 },

@@ -2,11 +2,17 @@
 // ПОЛОСА ПРО ФАЙЛЫ COOKIE — и заодно единственный выключатель Яндекс.Метрики.
 //
 // ПОЧЕМУ ПОЛОСА ПОКАЗЫВАЕТСЯ НЕ ВСЕГДА. Она выводится, только когда
-// в site.ts вписан номер счётчика. Без счётчика сайт не ставит ни одного
-// файла cookie — ни своего, ни чужого, — и сообщать было бы не о чем.
+// в site.ts вписан номер счётчика или номер организации на Яндекс Картах
+// (значок рейтинга, с 05.10.2026). Без них сайт не ставит ни одного файла
+// cookie — ни своего, ни чужого, — и сообщать было бы не о чем.
 // Полоса «сайт использует cookie» на сайте, который их не использует, —
 // это ровно то враньё мелким шрифтом, против которого здесь всё построено.
 // Впишете счётчик — полоса появится сама.
+//
+// «Принять» включает и значок рейтинга (YandexRating.astro): он грузится
+// с yandex.ru, и Яндекс ставит свои cookie. О выборе полоса сообщает
+// событием CONSENT_EVENT — значок на этой же странице появляется без
+// перезагрузки.
 //
 // ПОЧЕМУ ВЫБОР НАСТОЯЩИЙ. Кнопки две, и «Только необходимые» действительно
 // не грузит Метрику: счётчик подключается ИЗ этого скрипта после согласия,
@@ -20,27 +26,35 @@
 // СДВИГА ВЁРСТКИ НЕТ: полоса лежит position: fixed поверх страницы
 // и в поток не встаёт. Показатель CLS на сайте равен нулю, и уронить его
 // баннером было бы обидно.
-import { SITE, href } from '../config/site'
-
-/** Ключ в localStorage: 'all' — согласен на статистику, 'need' — только необходимые. */
-const KEY = 'norma-cookie'
+import { SITE, YANDEX_ORG, href } from '../config/site'
+import { CONSENT_KEY, CONSENT_EVENT } from '../config/consent'
 
 // Счётчик — только на сайте, открытом людям. Превью (PUBLIC_NOINDEX=1)
 // считать в той же Метрике нельзя: заходы владельца на черновик смешались
-// бы с настоящими, а Вебвизор записывал бы черновик. Без счётчика нет
-// и полосы — превью не ставит ни одного файла cookie.
-const metrikaId = import.meta.env.PUBLIC_NOINDEX === '1' ? '' : SITE.metrikaId
+// бы с настоящими, а Вебвизор записывал бы черновик. Без счётчика и значка
+// нет и полосы — превью не ставит ни одного файла cookie.
+const live = import.meta.env.PUBLIC_NOINDEX !== '1'
+const metrikaId = live ? SITE.metrikaId : ''
+const rating = live && YANDEX_ORG !== null
 ---
 
-{metrikaId && (
+{(metrikaId || rating) && (
   <div class="cookie" id="cookie-note" role="region" aria-label="Файлы cookie" hidden>
     <div class="wrap cookie-in">
       {/* Коротко нарочно. Прежний текст в четыре строки закрывал на телефоне
           четверть первого экрана — вместе с кнопкой «Узнать стоимость».
           Что именно собирается и зачем, по-прежнему расписано в политике,
           а выбор настоящий: «Только необходимые» Метрику не грузит. */}
+      {/* Что включает «Принять» — по тому, что подключено. С Метрикой
+          и значком рейтинга строка короче прежней нарочно: «…для статистики
+          посещений и значка рейтинга Яндекса» шла на 390 px в три строки,
+          а эта — в две, как прежняя (замер 05.10.2026). */}
       <p class="cookie-text">
-        Сайт использует cookie для статистики посещений.
+        {metrikaId && rating
+          ? 'Cookie — для статистики и рейтинга Яндекса.'
+          : metrikaId
+            ? 'Сайт использует cookie для статистики посещений.'
+            : 'Cookie — для значка рейтинга Яндекса.'}{' '}
         Подробнее — в <a href={href('/politika/')}>политике обработки данных</a>.
       </p>
       <div class="cookie-act">
@@ -52,7 +66,7 @@ const metrikaId = import.meta.env.PUBLIC_NOINDEX === '1' ? '' : SITE.metrikaId
     </div>
   </div>
 
-  <script is:inline define:vars={{ id: metrikaId, key: KEY }}>
+  <script is:inline define:vars={{ id: metrikaId, key: CONSENT_KEY, evt: CONSENT_EVENT }}>
     ;(function () {
       var note = document.getElementById('cookie-note')
 
@@ -82,7 +96,7 @@ const metrikaId = import.meta.env.PUBLIC_NOINDEX === '1' ? '' : SITE.metrikaId
       // Номер — числом, как в выданном коде: по window.__metrikaId шлются
       // все цели сайта, и ключ счётчика должен совпасть с тем, что в init.
       function loadMetrika() {
-        if (window.__metrikaId) return
+        if (!id || window.__metrikaId) return
         var num = Number(id)
         window.__metrikaId = num
         ;(function (m, e, t, r, i, k, a) {
@@ -140,6 +154,9 @@ const metrikaId = import.meta.env.PUBLIC_NOINDEX === '1' ? '' : SITE.metrikaId
           write(value)
           note.hidden = true
           if (value === 'all') loadMetrika()
+          // Значку рейтинга (YandexRating.astro): согласие получено сейчас,
+          // ждать следующей страницы не нужно.
+          document.dispatchEvent(new CustomEvent(evt, { detail: value }))
         })
       }
     })()
