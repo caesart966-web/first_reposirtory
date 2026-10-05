@@ -604,7 +604,7 @@ def block_form(site: Site, preselect: str = "") -> str:
     max_line = ""
     if c.get("max_url"):
         max_line = (f'''<div class="contact-line">
-              <span class="contact-line__label">MAX</span>
+              <span class="contact-line__label">{brand_icon(site, "max", 16)}MAX</span>
               <a class="contact-line__value" href="{esc(c["max_url"])}" rel="nofollow noopener" target="_blank">{esc(c.get("max_display", "Канал"))}</a>
             </div>''')
 
@@ -620,15 +620,15 @@ def block_form(site: Site, preselect: str = "") -> str:
               <a class="contact-line__value" href="tel:{esc(c["phone_href"])}">{esc(c["phone_display"])}</a>
             </div>
             <div class="contact-line">
-              <span class="contact-line__label">Почта</span>
+              <span class="contact-line__label">{brand_icon(site, "mail", 16)}Почта</span>
               <a class="contact-line__value" href="mailto:{esc(c["email"])}">{esc(c["email"])}</a>
             </div>
             <div class="contact-line">
-              <span class="contact-line__label">Telegram</span>
+              <span class="contact-line__label">{brand_icon(site, "telegram", 16)}Telegram</span>
               <a class="contact-line__value" href="{esc(c["telegram_url"])}" rel="nofollow noopener" target="_blank">{esc(c["telegram_display"])}</a>
             </div>
             <div class="contact-line">
-              <span class="contact-line__label">WhatsApp</span>
+              <span class="contact-line__label">{brand_icon(site, "whatsapp", 16)}WhatsApp</span>
               <a class="contact-line__value" href="{esc(c["whatsapp_url"])}" rel="nofollow noopener" target="_blank">{esc(c["whatsapp_display"])}</a>
             </div>
             {max_line}
@@ -705,6 +705,20 @@ def icon(name: str) -> str:
             f'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{ICONS[name]}</svg>')
 
 
+def brand_icon(site: Site, name: str, size: int = 20, css: str = "brand-ico") -> str:
+    """Значок сервиса (Telegram, WhatsApp, MAX, почта, Яндекс Карты) — PNG
+    из assets/img/icons/, нарисован в два раза крупнее, чтобы был чётким."""
+    return (f'<img class="{css}" src="{site.url("/assets/img/icons/" + name + ".png")}" '
+            f'width="{size}" height="{size}" alt="" loading="lazy">')
+
+
+def card_icon(site: Site, ic: str) -> str:
+    if ic.startswith("@"):
+        return (f'<span class="contact-card__icon contact-card__icon--img">'
+                f'{brand_icon(site, ic[1:], 38, "")}</span>')
+    return f'<span class="contact-card__icon">{icon(ic)}</span>'
+
+
 def contact_cards(site: Site) -> str:
     """Способы связи карточками на странице контактов: шесть — сетка 3×2,
     на планшете 2×3, на телефоне в столбик, без «осиротевшей» карточки."""
@@ -713,18 +727,18 @@ def contact_cards(site: Site) -> str:
     ext = ' rel="nofollow noopener" target="_blank"'
     rows = [
         ("phone", "Телефон", c["phone_display"], f'tel:{c["phone_href"]}', "", " contact-card--phone"),
-        ("mail", "Почта", c["email"], f'mailto:{c["email"]}', "", ""),
-        ("chat", "Telegram", c["telegram_display"], c["telegram_url"], ext, ""),
-        ("chat", "WhatsApp", c["whatsapp_display"], c["whatsapp_url"], ext, ""),
-        ("link", "MAX", c.get("max_display", "Канал"), c["max_url"], ext, ""),
-        ("link", "Яндекс Карты", "Карточка X-PTO", c["yandex_url"], ext, ""),
+        ("@mail", "Почта", c["email"], f'mailto:{c["email"]}', "", ""),
+        ("@telegram", "Telegram", c["telegram_display"], c["telegram_url"], ext, ""),
+        ("@whatsapp", "WhatsApp", c["whatsapp_display"], c["whatsapp_url"], ext, ""),
+        ("@max", "MAX", c.get("max_display", "Канал"), c["max_url"], ext, ""),
+        ("@yandex-maps", "Яндекс Карты", "Карточка X-PTO", c["yandex_url"], ext, ""),
     ]
     keys = ["phone", "email", "telegram", "whatsapp", "max", "yandex"]
     cards = []
     for (ic, label, value, href, attrs, extra), key in zip(rows, keys):
         note = notes.get(key, "")
         cards.append(f'''        <a class="contact-card{extra}" href="{esc(href)}"{attrs}>
-          <span class="contact-card__icon">{icon(ic)}</span>
+          {card_icon(site, ic)}
           <span class="contact-card__label">{esc(label)}</span>
           <span class="contact-card__value">{esc(value)}</span>
           {f'<span class="contact-card__note">{esc(note)}</span>' if note else ''}
@@ -892,7 +906,7 @@ def yandex_rating(site: Site) -> str:
     widget = c.get("yandex_rating_widget", "")
     attr = f' data-yrating="{esc(widget)}"' if widget else ""
     return (f'<div class="yrating"{attr}><a href="{esc(c["yandex_url"])}" rel="nofollow noopener" '
-            f'target="_blank">Отзывы о нас на Яндекс Картах</a></div>')
+            f'target="_blank">{brand_icon(site, "yandex-maps", 18)}Отзывы о нас на Яндекс Картах</a></div>')
 
 
 def cookie_bar(site: Site) -> str:
@@ -1203,6 +1217,10 @@ class Renderer:
             "telegram_display": esc(c["telegram_display"]),
             "max_url": esc(c.get("max_url", "")),
             "whatsapp_url": esc(c["whatsapp_url"]),
+            "ico_mail": brand_icon(site, "mail", 18),
+            "ico_telegram": brand_icon(site, "telegram", 18),
+            "ico_whatsapp": brand_icon(site, "whatsapp", 18),
+            "ico_max": brand_icon(site, "max", 18),
             "whatsapp_display": esc(c["whatsapp_display"]),
             "max_display": esc(c.get("max_display", "")),
             "work_hours": esc(c["work_hours"]),
