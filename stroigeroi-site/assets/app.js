@@ -1279,6 +1279,19 @@
       });
     });
 
+    /* Плитки «Популярные категории» на главной темы ведут по номеру
+       раздела (index.php?route=product/category&path=66): так они работают
+       и без javascript. Если в меню каталога есть раздел с тем же
+       названием, берём его адрес - на сайте с короткими адресами он
+       короче и совпадает с тем, что в меню. */
+    $$('[data-menu-name]').forEach(function (tile) {
+      var want = tile.getAttribute('data-menu-name').trim().toLowerCase();
+      var hit = catalogLinks.filter(function (link) {
+        return link.textContent.trim().toLowerCase() === want;
+      })[0];
+      if (hit) tile.setAttribute('href', hit.getAttribute('href'));
+    });
+
     $$('[data-fill-categories]').forEach(function (list) {
       var howMany = parseInt(list.getAttribute('data-fill-categories'), 10) || 4;
       var before = list.firstElementChild;

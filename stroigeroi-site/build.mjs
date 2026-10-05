@@ -17,7 +17,7 @@
  *   node build.mjs --check   только проверить, ничего не писать (для CI)
  */
 
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -165,6 +165,22 @@ function relink(html) {
    рядом с ним не будет. WebP — он вдвое легче, а Safari его понимает
    с 2020 года, отдельный JPEG для одного файла-просмотра не нужен. */
 const bannerData = `data:image/webp;base64,${readBin('assets/banner.webp').toString('base64')}`;
+
+/* Картинки и шрифты главной (assets/home, assets/fonts) тоже уезжают
+   в файл. <source> с AVIF в превью не нужны: остаётся одна картинка
+   <img>, и вместо JPEG сцены берётся WebP среднего размера — он легче. */
+const MIME = { webp: 'image/webp', png: 'image/png', jpg: 'image/jpeg', avif: 'image/avif', woff2: 'font/woff2' };
+const dataUri = (file) => `data:${MIME[file.split('.').pop()]};base64,${readBin(file).toString('base64')}`;
+const PREVIEW_SWAP = { 'assets/home/scene-1200.jpg': 'assets/home/scene-1600.webp' };
+function inlineAssets(html) {
+  return html
+    .replace(/<source[^>]*srcset="assets\/[^"]*"[^>]*>/g, '')
+    .replace(/<img\b([^>]*?)\ssrc="(assets\/[^"]+)"([^>]*)>/g, (m, before, src, after) => {
+      const attrs = (before + after).replace(/\s(?:srcset|sizes)="[^"]*"/g, '');
+      return `<img${attrs} src="${dataUri(PREVIEW_SWAP[src] || src)}">`;
+    });
+}
+const inlineFonts = (css) => css.replace(/url\("fonts\/([^"]+)"\)/g, (m, f) => `url("${dataUri('assets/fonts/' + f)}")`);
 const logoData = `data:image/png;base64,${readBin('assets/logo.png').toString('base64')}`;
 
 function inlineImages(html) {
@@ -182,6 +198,8 @@ function inlineImages(html) {
       .replace(/src="assets\/logo\.png"/g, `src="${logoData}"`)
   );
 }
+
+const inlineAll = (html) => inlineAssets(inlineImages(html));
 
 const indexHtml = read('index.html');
 
@@ -270,7 +288,7 @@ const sections = PAGES.map(([name]) => {
   return `<section class="preview-page" id="p-${name}" data-page>${body}</section>`;
 }).join('');
 
-const preview = inlineImages(
+const preview = inlineAll(
   relink(`<!DOCTYPE html>
 <html lang="ru" data-theme="light">
 <head>
@@ -281,7 +299,7 @@ const preview = inlineImages(
 <meta name="robots" content="noindex, nofollow">
 <script>(function(){try{var t=JSON.parse(localStorage.getItem('sg-theme'));if(t){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();</script>
 <style>
-${read('assets/style.css').trim()}
+${inlineFonts(read('assets/style.css').trim())}
 ${previewCss.trim()}
 </style>
 </head>
@@ -393,6 +411,26 @@ const COPIES = [
 
 for (const [from, to] of COPIES) {
   write(to, read(from));
+}
+
+/* Шрифты лежат рядом со стилями (url("fonts/…") в style.css), картинки
+   главной — в image/home темы. Копируются байт в байт, как есть. */
+const BINARY_DIRS = [
+  ['assets/fonts', `${THEME_DIR}/stylesheet/fonts`],
+  ['assets/home', `${THEME_DIR}/image/home`],
+];
+for (const [from, to] of BINARY_DIRS) {
+  mkdirSync(path.join(DIR, to), { recursive: true });
+  for (const f of readdirSync(path.join(DIR, from))) {
+    const src = path.join(DIR, from, f);
+    const dst = path.join(DIR, to, f);
+    const buf = readFileSync(src);
+    let same = false;
+    try { same = readFileSync(dst).equals(buf); } catch { /* файла ещё нет */ }
+    if (same) continue;
+    changed.push(`${to}/${f}`);
+    if (!CHECK_ONLY) writeFileSync(dst, buf);
+  }
 }
 
 /* Отпечаток один на все файлы темы: style.css, opencart.css, app.js

@@ -1,6 +1,6 @@
 <?php
 /*
-  Серверная часть правок 25-31: страницы. Команда из сообщения заказчику
+  Серверная часть правок 25-35: страницы. Команда из сообщения заказчику
   снимает curl'ом главную, раздел, товар, контакты, «Реквизиты»,
   «Юридическим лицам», корзину, вход, «Все разделы каталога» и калькулятор
   уже после правки и базы, а этот файл их читает. Только читает; через сайт
@@ -39,6 +39,11 @@
                 калькулятор прикладывает расчёт для менеджера. Сами расчёты
                 рисует скрипт в браузере, в снятой curl'ом странице их нет.
   -- filtr      есть ли на странице раздела фильтр OCFilter.
+  -- glavnaya   главная по концепции заказчика (правка 35): новый ли первый
+                экран, есть ли сцена, сколько плиток разделов (ждём 9)
+                и магазинов (3), какие страницы попали в синюю строку
+                шапки («О компании» и «Юрлицам» - если nav-ids.php нашёл
+                их номера, «Доставка и оплата» - когда появится страница).
 
   Первая версия (правка 23) печатала ещё разметку фильтра - по ней
   фильтр и оформлен; больше она не нужна.
@@ -76,7 +81,8 @@ foreach (array('glavnaya', 'razdel', 'tovar', 'kontakty', 'rekv', 'yurlicam', 'k
         echo "$name: страница не открылась\n";
         continue;
     }
-    $main = preg_match('/class="header-util__phone" href="tel:([^"]+)"/', $h, $mm) ? $mm[1] : 'нет';
+    // С правки 35 телефон в шапке - header-contact__phone (раньше header-util__phone).
+    $main = preg_match('/class="header-(?:contact|util)__phone" href="tel:([^"]+)"/', $h, $mm) ? $mm[1] : 'нет';
     $stores = 0;
     foreach ($STORES as $t) {
         $stores += strpos($h, 'href="tel:' . $t . '"') !== false ? 1 : 0;
@@ -188,11 +194,28 @@ if ($h === '') {
          ', «Возврат товара» ', strpos($x, '>Возврат товара<') !== false ? 'есть' : 'НЕТ', "\n";
 }
 
+echo "-- glavnaya\n";
+$h = $page('glavnaya');
+if ($h === '') {
+    echo "главная не открылась\n";
+} else {
+    $nav = array();
+    foreach (array('О компании', 'Юрлицам', 'Доставка и оплата') as $t) {
+        $nav[] = $t . (strpos($h, 'class="header-nav__link" href="') !== false
+            && preg_match('~class="header-nav__link" href="[^"]+">' . preg_quote($t, '~') . '<~u', $h) ? ' есть' : ' нет');
+    }
+    echo 'первый экран ', strpos($h, 'class="first-screen"') !== false ? 'новый' : 'СТАРЫЙ',
+         ', сцена ', strpos($h, 'image/home/scene-') !== false ? 'есть' : 'НЕТ',
+         ', разделов ', substr_count($h, 'class="cat-tile"'),
+         ', магазинов ', substr_count($h, 'class="store-line"'),
+         ', меню: ', implode(', ', $nav), "\n";
+}
+
 echo "-- zagolovok\n";
 $h = $page('glavnaya');
 if ($h === '') {
     echo "главная не открылась\n";
-} elseif (preg_match('~<h1 class="intro__title">(.*?)</h1>~s', $h, $mm)) {
+} elseif (preg_match('~<h1 class="(?:intro|first-screen)__title"[^>]*>(.*?)</h1>~s', $h, $mm)) {
     $t = html_entity_decode(strip_tags($mm[1]), ENT_QUOTES, 'UTF-8');
     $t = trim(preg_replace('/\s+/u', ' ', str_replace("\xc2\xa0", ' ', $t)));
     echo "главная: «{$t}»\n";

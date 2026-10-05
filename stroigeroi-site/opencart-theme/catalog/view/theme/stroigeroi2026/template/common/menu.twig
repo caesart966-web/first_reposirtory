@@ -3,10 +3,12 @@
   в шапку их не передают - поэтому все три блока с разделами живут здесь,
   а header.twig вставляет их одной строкой {{ menu }}.
 
-  Блоки идут ровно в том порядке, в каком стояли в макете:
-    1. header-quick   - полоса популярных разделов под шапкой
-    2. catalog-menu   - выпадающий список всех разделов
-    3. mobile-nav     - меню для телефона
+  Блоки идут ровно в том порядке, в каком стоят в макете:
+    1. catalog-menu   - выпадающий список всех разделов
+    2. mobile-nav     - меню для телефона
+  Полосы популярных разделов под шапкой больше нет (октябрь 2026): по
+  концепции заказчика шапка в две строки, а популярные разделы с картинками
+  стоят на главной.
 
   Значки отделов - те же, что в утверждённом макете (index.html, меню
   каталога). В макете они были привязаны к номерам разделов живой базы
@@ -28,22 +30,12 @@
 #}
 {% set id_delivery = 0 %}
 {% set url_delivery = id_delivery ? 'index.php?route=information/information&information_id=' ~ id_delivery : '' %}
+{% set id_about = 0 %}
+{% set url_about = id_about ? 'index.php?route=information/information&information_id=' ~ id_about : '' %}
+{% set id_b2b = 0 %}
+{% set url_b2b = id_b2b ? 'index.php?route=information/information&information_id=' ~ id_b2b : '' %}
 {% set url_calculator = 'index.php?route=information/calculator' %}
 {% set url_special = 'index.php?route=product/special' %}
-
-  <div class="header-quick">
-    <div class="container header-quick__inner">
-      <nav class="header-quick__nav" aria-label="Популярные разделы">
-        <a class="header-quick__link header-quick__link--accent" href="{{ url_special }}">Товары со скидкой</a>
-        {% for category in categories|slice(0, 6) %}<a class="header-quick__link" href="{{ category.href }}">{{ category.name }}</a>{% endfor %}
-      </nav>
-      {% if categories|length > 6 %}
-      <button class="header-quick__more" type="button" data-catalog-toggle aria-expanded="false" aria-controls="catalog-menu">
-        Ещё разделы <span class="icon-chevron"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></span>
-      </button>
-      {% endif %}
-    </div>
-  </div>
 
 {# Значки отделов из макета: ключ -> содержимое <svg>. #}
 {% set section_icons = {
@@ -98,6 +90,8 @@
       {% for category in categories %}<a class="mobile-nav__link" href="{{ category.href }}">{{ category.name }}</a>{% endfor %}
       <a class="mobile-nav__link" href="{{ url_special }}">Товары со скидкой</a>
       <a class="mobile-nav__link" href="{{ url_calculator }}">Строительный калькулятор</a>
+      {% if url_about %}<a class="mobile-nav__link" href="{{ url_about }}">О компании</a>{% endif %}
+      {% if url_b2b %}<a class="mobile-nav__link" href="{{ url_b2b }}">Юридическим лицам</a>{% endif %}
       {% if url_delivery %}<a class="mobile-nav__link" href="{{ url_delivery }}">Доставка и оплата</a>{% endif %}
       <a class="mobile-nav__link" href="index.php?route=information/contact">Контакты и магазины</a>
       <a class="mobile-nav__link" href="tel:+79638319999">8-963-831-99-99</a>

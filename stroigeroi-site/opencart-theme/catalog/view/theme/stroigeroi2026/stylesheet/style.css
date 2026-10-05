@@ -4,6 +4,35 @@
    чтобы потом подставить их в тему OpenCart.
    ========================================================================== */
 
+/* Шрифты лежат рядом со стилями: в макете assets/fonts/, в теме
+   stylesheet/fonts/ — путь от style.css один и тот же. Урезаны до латиницы,
+   кириллицы и нужных знаков (pyftsubset), поэтому весят по 14 КБ.
+   У Caveat оставлены только буквы слогана «Строим Камчатку вместе!»:
+   поменяется слоган — пересобрать файл (README, «Главная»). */
+@font-face {
+  font-family: "Montserrat";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("fonts/montserrat-600.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Montserrat";
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("fonts/montserrat-800.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Caveat";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("fonts/caveat-700-slogan.woff2") format("woff2");
+}
+
 :root {
   /* Фирменные цвета (сняты с логотипа) */
   --sg-blue: #010b87;
@@ -68,6 +97,10 @@
   /* Типографика и сетка */
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
     Arial, "Noto Sans", sans-serif;
+  /* Заголовки шапки и главной — Montserrat (SIL OFL 1.1), рукописный
+     слоган — Caveat (SIL OFL 1.1). Тексты лицензий — assets/fonts/. */
+  --font-head: "Montserrat", "Segoe UI", Roboto, Arial, sans-serif;
+  --font-hand: "Caveat", "Segoe Print", "Comic Sans MS", cursive;
   --container: 1280px;
   --header-h: 92px;
 
@@ -207,7 +240,7 @@ p {
 .header-action__count,
 .mobile-bar__count,
 .tel-inline,
-.header-util__phone {
+.header-contact__phone {
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum' 1;
 }
@@ -349,155 +382,54 @@ ul {
 }
 
 /* ==========================================================================
-   Шапка — три этажа: информационная полоса, основная строка, быстрые разделы
+   Шапка — две строки, по концепции заказчика (октябрь 2026)
+   Белая строка: знак, надпись «Строительные материалы», рукописный
+   слоган, поиск, телефон, сравнение и корзина. Синяя строка: красная
+   «Каталог товаров», ссылки на страницы и «Наши магазины».
+   При прокрутке (is-compact) синяя строка прячется, а «Каталог» переезжает
+   в белую — кнопка каталога остаётся под рукой всегда.
    ========================================================================== */
 
 .site-header {
   position: relative;
   z-index: 40;
   background: var(--sg-white);
+}
+
+/* ── Белая строка ─────────────────────────────────────────────────────────── */
+.header-main {
+  position: relative;
+  background: var(--sg-white);
   border-bottom: 1px solid var(--sg-line);
 }
 
-/* ── Первый этаж: тёмная информационная полоса ───────────────────────────── */
-.header-util {
-  background: var(--sg-blue);
-  color: rgba(255, 255, 255, 0.82);
-  font-size: 13px;
-}
-
-.header-util__inner {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-4);
-  min-height: 40px;
-}
-
-.header-util__nav {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-5);
-  min-width: 0;
-}
-
-.header-util__nav a {
-  color: inherit;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.header-util__nav a:hover {
-  color: var(--sg-on-dark);
-  text-decoration: none;
-}
-
-.header-util__side {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-}
-
-.header-util__phone {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--sg-on-dark);
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.header-util__phone:hover {
-  text-decoration: none;
-  opacity: 0.85;
-}
-
-/* Выпадающие списки в информационной полосе */
-.dropdown {
-  position: relative;
-}
-
-.dropdown__toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 36px;
-  padding: 0 var(--sp-2);
-  background: none;
-  border: 0;
-  color: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-.header-util .dropdown__toggle:hover {
-  color: var(--sg-on-dark);
-}
-
-.dropdown__toggle .icon-chevron {
-  display: inline-flex;
-  transition: transform 0.15s ease;
-}
-
-.dropdown__toggle[aria-expanded="true"] .icon-chevron {
-  transform: rotate(180deg);
-}
-
-.dropdown__panel {
+/* Фирменные полосы в левом верхнем углу — как на баннере и в концепции.
+   Треугольник, а не полоса во всю высоту: знак стоит поверх угла
+   и полосы не спорят с надписью рядом. */
+.header-main::before {
+  content: "";
   position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  z-index: 50;
-  min-width: 290px;
-  padding: var(--sp-4);
-  /* Цвет поверхности, а не «белый на тёмном»: текст панели - var(--sg-ink),
-     и в тёмной теме он светлый. С белой подложкой адреса магазинов
-     и график были почти не видны (найдено 24.09.2026). */
-  background: var(--sg-white);
-  border: 1px solid var(--sg-line);
-  border-radius: var(--r-lg);
-  box-shadow: var(--sh-md);
-  color: var(--sg-ink);
-  font-size: 14px;
-}
-
-.dropdown__panel[hidden] {
-  display: none;
-}
-
-.dropdown__item + .dropdown__item {
-  margin-top: var(--sp-3);
-  padding-top: var(--sp-3);
-  border-top: 1px solid var(--sg-line);
-}
-
-.dropdown__item strong {
-  display: block;
-  font-size: 15px;
-}
-
-.dropdown__item span {
-  display: block;
-  font-size: 13px;
-  color: var(--sg-muted);
-}
-
-/* ── Второй этаж: логотип, каталог, поиск, действия ──────────────────────── */
-.header-main {
-  background: var(--sg-white);
+  left: 0;
+  top: 0;
+  width: 118px;
+  height: 100%;
+  background-image: var(--sg-stripes);
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+  pointer-events: none;
 }
 
 .header-main__inner {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: var(--sp-4);
-  padding-top: var(--sp-3);
-  padding-bottom: var(--sp-3);
+  gap: var(--sp-5);
+  min-height: 88px;
+  padding-top: var(--sp-2);
+  padding-bottom: var(--sp-2);
 }
 
-/* Логотип всегда на белом фоне */
+/* Знак и подпись под ним — на белом поле и в тёмной теме: у знака
+   своя белая подложка */
 .site-logo {
   flex: none;
   display: inline-flex;
@@ -513,32 +445,78 @@ ul {
 .site-logo img {
   width: 64px;
   height: 64px;
+  border-radius: 50%;
+  background: #fff;
   /* Без перехода: ширина и высота пересчитывают раскладку каждый кадр,
      а знак стоит в липкой шапке - вместе с ним пересчитывается страница.
      Сжатие шапки происходит за один кадр, см. «Липкая шапка» ниже. */
 }
 
-.site-logo__word {
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: -0.01em;
+.site-logo__tagline {
+  display: grid;
+  gap: 3px;
+  font-family: var(--font-head);
+  line-height: 1.1;
+  text-transform: uppercase;
   white-space: nowrap;
 }
 
-/* Кнопка каталога — красная, как основное действие */
+.site-logo__line {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.site-logo__line--sub {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+/* Рукописный слоган с красным росчерком. Для диктора скрыт: это украшение,
+   его не нужно слышать на каждой странице. */
+.header-slogan {
+  flex: none;
+  width: 118px;
+  margin: 0;
+  font-family: var(--font-hand);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 0.95;
+  color: var(--sg-blue);
+  text-align: center;
+  transform: rotate(-6deg);
+}
+
+body:has(.first-screen) .header-slogan {
+  display: none;
+}
+
+.header-slogan__swash {
+  display: block;
+  width: 100%;
+  height: 10px;
+  margin-top: 3px;
+  color: var(--sg-red);
+}
+
+/* Каталог — красный, как основное действие. В синей строке он во всю её
+   высоту без полей; в белой появляется только в сжатой шапке. */
 .header-catalog {
   flex: none;
   display: inline-flex;
   align-items: center;
   gap: var(--sp-2);
-  height: 48px;
+  height: 44px;
   padding: 0 var(--sp-5);
   border: 0;
   border-radius: var(--r-lg);
   background: var(--sg-red);
-  color: var(--sg-white);
+  color: #fff;
+  font-family: var(--font-head);
   font-size: 15px;
   font-weight: 700;
+  white-space: nowrap;
   cursor: pointer;
 }
 
@@ -558,11 +536,26 @@ ul {
   display: block;
 }
 
+.header-catalog .icon-chevron {
+  display: inline-flex;
+  margin-left: var(--sp-1);
+  transition: transform 0.15s ease;
+}
+
+.header-catalog[aria-expanded="true"] .icon-chevron {
+  transform: rotate(180deg);
+}
+
+.header-catalog--compact {
+  display: none;
+}
+
 /* Поиск: поле и красная кнопка слиты в один блок */
 .search-form {
   flex: 1 1 auto;
   display: flex;
   min-width: 0;
+  max-width: 560px;
 }
 
 .search-form__input {
@@ -575,28 +568,29 @@ ul {
   border-radius: var(--r-lg) 0 0 var(--r-lg);
   font-size: 15px;
   color: var(--sg-ink);
-  background: var(--sg-white);
+  background: var(--sg-bg-soft);
 }
 
 .search-form__input::placeholder {
-  color: #8f8f9c;
+  color: #7d7d8a;
 }
 
 .search-form__input:focus {
   outline: none;
   border-color: var(--sg-blue);
+  background: var(--sg-white);
 }
 
 .search-form__submit {
   flex: none;
-  width: 62px;
+  width: 58px;
   height: 48px;
   display: grid;
   place-items: center;
   border: 0;
   border-radius: 0 var(--r-lg) var(--r-lg) 0;
   background: var(--sg-red);
-  color: var(--sg-white);
+  color: #fff;
   cursor: pointer;
 }
 
@@ -604,7 +598,56 @@ ul {
   background: var(--sg-red-dark);
 }
 
-/* Действия: иконка с подписью под ней */
+/* Телефон и «Заказать звонок» под ним */
+.header-contact {
+  flex: none;
+  display: grid;
+  gap: 2px;
+  justify-items: start;
+}
+
+.header-contact__phone {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--sg-blue);
+  font-family: var(--font-head);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.header-contact__phone:hover {
+  text-decoration: none;
+  color: var(--sg-red);
+}
+
+.header-contact__note {
+  margin: 0 0 0 30px;
+  font-size: 12.5px;
+  line-height: 1.3;
+  color: var(--sg-muted);
+  white-space: nowrap;
+}
+
+.header-contact__callback {
+  min-height: 24px;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px dashed currentColor;
+  background: none;
+  color: var(--sg-blue);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.header-contact__callback:hover {
+  color: var(--sg-red);
+}
+
+/* Действия: значок с подписью под ним */
 .header-actions {
   flex: none;
   display: flex;
@@ -617,6 +660,7 @@ ul {
   min-height: 48px;
   display: grid;
   justify-items: center;
+  align-content: center;
   gap: 2px;
   color: var(--sg-ink);
   text-align: center;
@@ -650,7 +694,7 @@ ul {
   place-items: center;
   border-radius: var(--r-pill);
   background: var(--sg-red);
-  color: var(--sg-white);
+  color: #fff;
   font-size: 11px;
   font-weight: 700;
   line-height: 1;
@@ -668,67 +712,150 @@ ul {
   cursor: pointer;
 }
 
-/* ── Третий этаж: быстрые ссылки на разделы ──────────────────────────────── */
-.header-quick {
-  border-top: 1px solid var(--sg-line);
+/* ── Синяя строка ─────────────────────────────────────────────────────────── */
+.header-nav {
+  background: var(--sg-blue);
+  color: #fff;
 }
 
-.header-quick__inner {
+.header-nav__inner {
   display: flex;
   align-items: center;
-  gap: var(--sp-4);
-  min-height: 46px;
+  gap: var(--sp-6);
+  min-height: 56px;
 }
 
-.header-quick__nav {
+.header-nav__links {
   flex: 1 1 auto;
   display: flex;
   align-items: center;
-  gap: var(--sp-5);
+  gap: var(--sp-6);
   min-width: 0;
-  overflow: hidden;
-  /* если разделы всё же не влезли, последний растворяется, а не режется */
-  mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent 100%);
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 
-.header-quick__link {
-  color: var(--sg-ink);
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 46px;
-  white-space: nowrap;
+.header-nav__links::-webkit-scrollbar {
+  display: none;
 }
 
-.header-quick__link:hover {
-  color: var(--sg-blue);
-  text-decoration: none;
-}
-
-.header-quick__link--accent {
-  color: var(--sg-red);
-}
-
-.header-quick__link--accent:hover {
-  color: var(--sg-red-dark);
-}
-
-.header-quick__more {
+.header-nav__link {
   flex: none;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  min-height: 36px;
+  min-height: 40px;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: var(--font-head);
+  font-size: 14.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.header-nav__link:hover {
+  color: #fff;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 6px;
+}
+
+.header-nav__side {
+  flex: none;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* Выпадающий список «Наши магазины» */
+.dropdown {
+  position: relative;
+}
+
+/* «Наши магазины» на телефоне сокращается до «Магазины»: заглавная «М»
+   отдельным кусочком, чтобы и диктор, и глаз видели одно слово */
+.dropdown__short {
+  display: none;
+}
+
+.dropdown__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
   padding: 0 var(--sp-2);
   background: none;
   border: 0;
-  color: var(--sg-blue);
-  font-size: 14px;
-  font-weight: 700;
+  color: inherit;
+  font-family: var(--font-head);
+  font-size: 14.5px;
+  font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
 }
 
-.header-quick__more:hover {
-  color: var(--sg-red);
+.header-nav .dropdown__toggle:hover {
+  color: #fff;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 6px;
+}
+
+.dropdown__toggle .icon-chevron {
+  display: inline-flex;
+  transition: transform 0.15s ease;
+}
+
+.dropdown__toggle[aria-expanded="true"] .icon-chevron {
+  transform: rotate(180deg);
+}
+
+.dropdown__panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 50;
+  min-width: 300px;
+  padding: var(--sp-4);
+  /* Цвет поверхности, а не «белый на тёмном»: текст панели - var(--sg-ink),
+     и в тёмной теме он светлый. С белой подложкой адреса магазинов
+     и график были почти не видны (найдено 24.09.2026). */
+  background: var(--sg-white);
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-md);
+  color: var(--sg-ink);
+  font-size: 14px;
+}
+
+.dropdown__panel[hidden] {
+  display: none;
+}
+
+.dropdown__item + .dropdown__item {
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--sg-line);
+}
+
+.dropdown__item strong {
+  display: block;
+  font-size: 15px;
+}
+
+.dropdown__item span {
+  display: block;
+  font-size: 13px;
+  color: var(--sg-muted);
+}
+
+.dropdown__tel {
+  display: inline-block;
+  margin-top: 2px;
+  font-weight: 700;
+}
+
+.dropdown__hours {
+  margin-top: 2px;
 }
 
 /* Меню каталога */
@@ -804,6 +931,199 @@ ul {
   color: var(--sg-ink);
   font-weight: 600;
 }
+
+/* ── Ширина: что уходит первым ──────────────────────────────────────────────
+   1279 — слоган (поиску нужнее место); 1100 — вторая строка подписи;
+   900 — бургер, поиск отдельной строкой; 640 — телефон в шапке
+   (на телефоне он в нижней панели), синяя строка (всё есть в бургере). */
+@media (max-width: 1279px) {
+  .header-slogan {
+    display: none;
+  }
+
+  .header-nav__links,
+  .header-nav__inner {
+    gap: var(--sp-5);
+  }
+
+  /* ссылок больше, чем места: последние растворяются, а не режутся,
+     и полосу можно пролистать */
+  .header-nav__links {
+    mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent 100%);
+  }
+}
+
+@media (max-width: 1100px) {
+  .site-logo__line--sub {
+    display: none;
+  }
+
+  .header-main__inner {
+    gap: var(--sp-4);
+  }
+}
+
+@media (max-width: 900px) {
+  .header-main__inner {
+    flex-wrap: wrap;
+    gap: var(--sp-3);
+    min-height: 0;
+    padding-top: var(--sp-3);
+    padding-bottom: var(--sp-3);
+  }
+
+  /* Первая строка — знак, телефон, действия; вторая — поиск.
+     Пустой элемент принудительно переносит строку. */
+  .header-main__inner::after {
+    content: "";
+    order: 2;
+    flex-basis: 100%;
+    height: 0;
+  }
+
+  .header-contact {
+    order: 1;
+    margin-left: auto;
+  }
+
+  .header-contact__note {
+    display: none;
+  }
+
+  .header-actions {
+    order: 1;
+    gap: var(--sp-3);
+  }
+
+  .header-burger {
+    display: grid;
+  }
+
+  .header-catalog--compact {
+    order: 3;
+  }
+
+  .search-form {
+    order: 4;
+    flex: 1 1 200px;
+    max-width: none;
+  }
+
+  .catalog-menu__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .mobile-nav {
+    display: block;
+  }
+}
+
+@media (max-width: 900px) {
+  .site-logo__tagline {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .header-main::before {
+    width: 78px;
+  }
+
+  .site-logo img {
+    width: 44px;
+    height: 44px;
+  }
+
+  .header-main__inner {
+    gap: var(--sp-2);
+    padding-top: var(--sp-2);
+    padding-bottom: var(--sp-2);
+  }
+
+  .header-contact,
+  .header-nav__links,
+  .header-action__label,
+  .header-action--compare {
+    display: none;
+  }
+
+  /* Синяя строка на телефоне — только «Каталог товаров», магазины
+     и переключатель темы: ссылки на страницы есть в бургере */
+  .header-nav__inner {
+    min-height: 52px;
+    gap: var(--sp-3);
+  }
+
+  .header-nav .header-catalog {
+    height: 40px;
+    padding: 0 var(--sp-4);
+    font-size: 14px;
+  }
+
+  .header-nav .dropdown__toggle {
+    min-height: 44px;
+    font-size: 14px;
+  }
+
+  .header-nav .theme-toggle {
+    width: 44px;
+    height: 44px;
+  }
+
+  /* «Наши магазины» → «Магазины»: на 390 px синяя строка с полной
+     подписью была на 84 px шире экрана */
+  .dropdown__more {
+    display: none;
+  }
+
+  .dropdown__short {
+    display: inline;
+  }
+
+  .header-nav__side {
+    gap: 0;
+  }
+
+  .header-actions {
+    margin-left: auto;
+  }
+
+  .header-action {
+    min-width: 44px;
+  }
+
+  .search-form {
+    flex-basis: 100%;
+  }
+
+  .search-form__input,
+  .search-form__submit {
+    height: 44px;
+  }
+
+  .search-form__submit {
+    width: 54px;
+  }
+
+  .header-burger {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+@media (max-width: 420px) {
+  .header-catalog__more {
+    display: none;
+  }
+}
+
+@media (max-width: 360px) {
+  .header-nav .dropdown__toggle > svg,
+  .header-nav .dropdown__toggle .icon-chevron {
+    display: none;
+  }
+}
+
 /* ==========================================================================
    Секции
    ========================================================================== */
@@ -857,6 +1177,891 @@ ul {
 .section__sub {
   color: var(--sg-muted);
   margin: calc(-1 * var(--sp-3)) 0 var(--sp-5);
+}
+
+/* ==========================================================================
+   Главная по концепции заказчика (октябрь 2026)
+   Первый экран: слева заголовок, четыре цифры и две кнопки, справа сцена —
+   Корякский вулкан над городом у бухты и стройка с краном (своя
+   трёхмерная съёмка, tools/render3d), герой с баннера заказчика и его
+   печать «Наши материалы — ваша уверенность». Ниже: популярные
+   разделы с предметами, три карточки (калькулятор, акции, магазины)
+   и полоса «как мы работаем». Цифры — со страниц «О компании» и «Юрлицам».
+   ========================================================================== */
+
+.first-screen {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  /* Небо слева — продолжение неба на картинке: сцена справа растворяется
+     в нём, и шов не виден на любой ширине. */
+  background: linear-gradient(180deg, #a9c3f0 0%, #c6d8f6 38%, #e3ecfb 72%, #f3f7fd 100%);
+  border-bottom: 1px solid var(--sg-line);
+}
+
+.first-screen__art {
+  position: absolute;
+  inset: 0 0 0 auto;
+  z-index: 0;
+  width: min(1240px, 88%);
+  pointer-events: none;
+}
+
+.first-screen__scene,
+.first-screen__scene img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.first-screen__scene img {
+  object-fit: cover;
+  object-position: 100% 100%;
+  /* Левая треть сцены уходит в небо — под заголовком нет города
+     и вулкана, о которые спотыкается взгляд при чтении. */
+  -webkit-mask-image: linear-gradient(to right, transparent 0, transparent 14%, rgba(0, 0, 0, 0.4) 30%, #000 48%);
+  mask-image: linear-gradient(to right, transparent 0, transparent 14%, rgba(0, 0, 0, 0.4) 30%, #000 48%);
+}
+
+/* Светлая дымка под колонкой текста: город и бухта на сцене не должны
+   спорить с мелкими подписями цифр. */
+.first-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(90deg, rgba(240, 245, 253, 0.92) 0, rgba(240, 245, 253, 0.75) 34%, rgba(240, 245, 253, 0) 54%);
+  pointer-events: none;
+}
+
+/* Фирменные полосы в правом верхнем углу, как на баннере */
+.first-screen__stripes {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 220px;
+  height: 150px;
+  background-image: var(--sg-stripes-lg);
+  clip-path: polygon(38% 0, 100% 0, 100% 82%);
+}
+
+.first-screen__hero {
+  position: absolute;
+  left: 39%;
+  bottom: 0;
+  height: 95%;
+  width: auto;
+}
+
+.first-screen__hero img {
+  display: block;
+  height: 100%;
+  width: auto;
+  filter: drop-shadow(0 18px 24px rgba(1, 11, 135, 0.22));
+}
+
+.first-screen__seal {
+  position: absolute;
+  right: 3%;
+  top: 9%;
+  width: clamp(150px, 15vw, 200px);
+  height: auto;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 10px 28px rgba(1, 11, 135, 0.25);
+  transform: rotate(-6deg);
+}
+
+.first-screen__slogan {
+  position: absolute;
+  left: 63%;
+  top: 7%;
+  width: 190px;
+  margin: 0;
+  font-family: var(--font-hand);
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 0.95;
+  color: #0b1a8c;
+  text-align: center;
+  transform: rotate(-8deg);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.first-screen__swash {
+  display: block;
+  width: 100%;
+  height: 14px;
+  margin-top: 4px;
+  color: var(--sg-red);
+}
+
+.first-screen__inner {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  min-height: 488px;
+  padding-top: var(--sp-5);
+  padding-bottom: var(--sp-7);
+}
+
+.first-screen__inner > * {
+  max-width: 620px;
+}
+
+.first-screen__note {
+  display: inline-block;
+  margin: 0 0 var(--sp-5);
+  padding: 6px 14px;
+  border: 1px solid #e7c96e;
+  border-radius: var(--r-pill);
+  background: #fff6d8;
+  color: #4d3a00;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.first-screen__note a {
+  color: inherit;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.first-screen__title {
+  margin: 0;
+  font-family: var(--font-head);
+  /* 8vw: на 320 px самое длинное слово «СТРОИТЕЛЬНЫЕ» должно влезть
+     в строку целиком - перенос посреди слова в заголовке хуже мелкого кегля */
+  font-size: clamp(26px, 8vw, 60px);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  color: #0a1583;
+}
+
+.first-screen__title span {
+  display: block;
+  color: var(--sg-red);
+}
+
+.first-screen__lead {
+  margin: var(--sp-4) 0 0;
+  font-size: 16px;
+  line-height: 1.45;
+  color: #3e4256;
+}
+
+.first-screen__lead strong {
+  display: block;
+  margin-bottom: 2px;
+  font-family: var(--font-head);
+  font-size: clamp(17px, 0.9rem + 0.5vw, 21px);
+  font-weight: 800;
+  color: #0a1583;
+}
+
+.first-screen__facts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, auto));
+  gap: var(--sp-4) var(--sp-5);
+  margin: var(--sp-5) 0 var(--sp-6);
+  padding: 0;
+  list-style: none;
+}
+
+.first-screen__facts li {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: 12.5px;
+  line-height: 1.25;
+  color: #3e4256;
+}
+
+.first-screen__facts svg {
+  flex: none;
+  color: var(--sg-red);
+}
+
+.first-screen__facts strong {
+  display: block;
+  font-family: var(--font-head);
+  font-size: 16px;
+  font-weight: 800;
+  color: #0a1583;
+  white-space: nowrap;
+}
+
+.first-screen__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3) var(--sp-4);
+}
+
+.first-screen__btn {
+  font-family: var(--font-head);
+  font-weight: 800;
+  box-shadow: 0 8px 20px rgba(1, 11, 135, 0.14);
+}
+
+/* Белая кнопка на цветном фоне: на первом экране и в красной карточке */
+.btn--light {
+  background: #fff;
+  color: #0a1583;
+  border-color: #fff;
+}
+
+.btn--light:hover {
+  background: #eef2fd;
+  border-color: #eef2fd;
+}
+
+.btn--light svg {
+  color: var(--sg-red);
+}
+
+/* ── Популярные категории ─────────────────────────────────────────────────── */
+.popular-cats {
+  padding-bottom: var(--sp-6);
+}
+
+.popular-cats__list {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cat-tile {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-xl);
+  background: var(--sg-white);
+  color: var(--sg-ink);
+  text-align: center;
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+
+.cat-tile:hover {
+  text-decoration: none;
+  border-color: transparent;
+  box-shadow: var(--sh-lg);
+  transform: translateY(-3px);
+}
+
+.cat-tile__media {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: #f1f3f8;
+}
+
+.cat-tile__media picture,
+.cat-tile__media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.cat-tile__media img {
+  object-fit: contain;
+  transform: scale(1.08);
+  transition: transform 0.25s ease;
+}
+
+.cat-tile:hover .cat-tile__media img {
+  transform: scale(1.16);
+}
+
+.cat-tile__name {
+  flex: 1 1 auto;
+  display: grid;
+  place-items: center;
+  min-height: 3.2em;
+  padding: var(--sp-2) 6px var(--sp-3);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  hyphens: auto;
+  overflow-wrap: anywhere;
+}
+
+.cat-tile--all .cat-tile__media {
+  background: var(--sg-blue-tint);
+  color: var(--sg-blue);
+}
+
+.cat-tile--all .cat-tile__name {
+  color: var(--sg-blue);
+}
+
+/* ── Три карточки: калькулятор, акции, магазины ───────────────────────────── */
+.promo-row {
+  padding-top: 0;
+}
+
+.promo-row__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.25fr);
+  gap: var(--sp-4);
+}
+
+.offer-card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  min-height: 236px;
+  padding: var(--sp-5);
+  border-radius: var(--r-xl);
+  color: #fff;
+}
+
+.offer-card--calc {
+  /* Сплошной цвет под градиентом: по нему проверка контраста меряет
+     белый текст, градиент она не видит */
+  background-color: #010b87;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.06) 0 1px, transparent 1px 22px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.06) 0 1px, transparent 1px 22px),
+    linear-gradient(135deg, #0c1ba8 0%, #010b87 55%, #01065c 100%);
+}
+
+.offer-card--sale {
+  background-color: #c2161d;
+  background-image:
+    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.05) 0 14px, transparent 14px 28px),
+    linear-gradient(135deg, #d81921 0%, #c2161d 55%, #9b1017 100%);
+}
+
+.offer-card__body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
+}
+
+.offer-card__title,
+.offer-card__text {
+  max-width: 74%;
+}
+
+.offer-card__title {
+  margin: 0;
+  font-family: var(--font-head);
+  font-size: clamp(18px, 0.85rem + 0.5vw, 21px);
+  font-weight: 800;
+  line-height: 1.18;
+  color: #fff;
+}
+
+.offer-card__text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #fff;
+}
+
+.offer-card__btn {
+  margin-top: auto;
+  white-space: nowrap;
+  min-height: 46px;
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 14.5px;
+}
+
+.offer-card__media {
+  position: absolute;
+  right: -20px;
+  bottom: -30px;
+  width: 46%;
+  max-width: 240px;
+}
+
+.offer-card__media img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.28));
+}
+
+.offer-card__badge {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--sg-red);
+  font-family: var(--font-head);
+  font-size: 26px;
+  font-weight: 800;
+  box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.25);
+  transform: rotate(-12deg);
+}
+
+.stores-box {
+  padding: var(--sp-4) var(--sp-5);
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-xl);
+  background: var(--sg-white);
+}
+
+.stores-box__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.stores-box__title {
+  margin: 0;
+  font-family: var(--font-head);
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.stores-box__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.stores-box__list {
+  margin: var(--sp-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.store-line {
+  display: flex;
+  gap: var(--sp-3);
+  padding: 10px 0;
+}
+
+.store-line + .store-line {
+  border-top: 1px solid var(--sg-line);
+}
+
+.store-line__pin {
+  flex: none;
+  color: var(--sg-red);
+  line-height: 0;
+  padding-top: 1px;
+}
+
+.store-line__body {
+  flex: 1 1 auto;
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.store-line__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0 var(--sp-3);
+}
+
+.store-line__name {
+  font-size: 14.5px;
+}
+
+.store-line__addr,
+.store-line__hours {
+  color: var(--sg-muted);
+}
+
+.store-line__tel {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  font-family: var(--font-head);
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.store-line__hours .shop-card__now {
+  margin-left: var(--sp-1);
+  font-size: 12px;
+}
+
+/* ── Полоса «как мы работаем» ─────────────────────────────────────────────── */
+.perks {
+  padding: var(--sp-5) 0;
+  background: var(--sg-bg-soft);
+  border-top: 1px solid var(--sg-line);
+  border-bottom: 1px solid var(--sg-line);
+}
+
+.perks__list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.perk {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-1) var(--sp-5);
+}
+
+.perk + .perk {
+  border-left: 1px solid var(--sg-line);
+}
+
+.perk:first-child {
+  padding-left: 0;
+}
+
+.perk__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--sg-white);
+  color: var(--sg-blue);
+  box-shadow: var(--sh-sm);
+}
+
+.perk__text {
+  display: grid;
+  gap: 2px;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--sg-muted);
+}
+
+.perk__text strong {
+  font-size: 15px;
+  color: var(--sg-ink);
+}
+
+/* ── Ширина ───────────────────────────────────────────────────────────────── */
+@media (max-width: 1279px) {
+  .first-screen__facts {
+    grid-template-columns: repeat(2, minmax(0, max-content));
+  }
+
+  .popular-cats__list {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .promo-row__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stores-box {
+    grid-column: 1 / -1;
+  }
+
+  .stores-box__list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--sp-4);
+  }
+
+  .store-line + .store-line {
+    border-top: 0;
+  }
+
+  .store-line .shop-card__now {
+    white-space: normal;
+  }
+
+  .perks__list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-4) 0;
+  }
+
+  .perk:nth-child(3) {
+    border-left: 0;
+    padding-left: 0;
+  }
+}
+
+/* 1024–1279: сцена уже, герой и печать меньше — иначе герой заходит
+   под колонку текста */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .first-screen__art {
+    width: 74%;
+  }
+
+  .first-screen__hero {
+    left: 42%;
+    height: 90%;
+  }
+
+  .first-screen__seal {
+    width: 128px;
+    top: 5%;
+    right: 2%;
+  }
+
+  /* слогану здесь места нет: он ложится на конец заголовка */
+  .first-screen__slogan {
+    display: none;
+  }
+}
+
+/* Планшет и телефон: сцена уходит под текст и становится своей полосой */
+@media (max-width: 1023px) {
+  .stores-box__list {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .store-line + .store-line {
+    border-top: 1px solid var(--sg-line);
+  }
+
+  .first-screen__inner {
+    min-height: 0;
+    padding-bottom: var(--sp-5);
+  }
+
+  .first-screen__art {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    height: clamp(300px, 52vw, 440px);
+  }
+
+  .first-screen {
+    display: flex;
+    flex-direction: column-reverse;
+  }
+
+  .first-screen__scene img {
+    object-position: 72% 100%;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 22%);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 22%);
+  }
+
+  .first-screen__hero {
+    left: 50%;
+    height: 98%;
+    transform: translateX(-50%);
+  }
+
+  .first-screen__slogan {
+    left: 3%;
+    top: 8%;
+  }
+
+  .first-screen__seal {
+    top: 10%;
+  }
+}
+
+@media (max-width: 767px) {
+  .popular-cats__list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .popular-cats__list > li:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .popular-cats__list > li:last-child .cat-tile {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: var(--sp-2) var(--sp-4);
+  }
+
+  .popular-cats__list > li:last-child .cat-tile__media {
+    aspect-ratio: auto;
+    background: none;
+  }
+
+  .popular-cats__list > li:last-child .cat-tile__name {
+    flex: none;
+    min-height: 0;
+    padding: 0;
+    font-size: 15px;
+  }
+
+  .promo-row__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .stores-box__list {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .store-line + .store-line {
+    border-top: 1px solid var(--sg-line);
+  }
+
+  .perks__list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .perk,
+  .perk:nth-child(3) {
+    border-left: 0;
+    padding: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .first-screen__inner {
+    padding-top: var(--sp-4);
+  }
+
+  .first-screen__facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-bottom: var(--sp-5);
+  }
+
+  .first-screen__actions .btn {
+    width: 100%;
+  }
+
+  .first-screen__art {
+    height: 300px;
+  }
+
+  .first-screen__seal {
+    width: 96px;
+    right: 3%;
+    top: 8%;
+  }
+
+  .first-screen__slogan {
+    width: 112px;
+    font-size: 21px;
+    left: 2%;
+    top: 7%;
+  }
+
+  .first-screen__hero {
+    left: 54%;
+  }
+
+  .first-screen__stripes {
+    display: none;
+  }
+
+  .cat-tile__name {
+    font-size: 12px;
+  }
+
+  .offer-card {
+    min-height: 220px;
+    padding: var(--sp-5);
+  }
+}
+
+/* ── Тёмная тема: вечер над бухтой ─────────────────────────────────────────── */
+html[data-theme="dark"] .first-screen {
+  background: linear-gradient(180deg, #0c1428 0%, #121c36 55%, #161f35 100%);
+}
+
+html[data-theme="dark"] .first-screen::before {
+  background: linear-gradient(90deg, rgba(11, 18, 36, 0.94) 0, rgba(11, 18, 36, 0.8) 34%, rgba(11, 18, 36, 0) 56%);
+}
+
+html[data-theme="dark"] .first-screen__scene img {
+  filter: brightness(0.62) saturate(0.85) hue-rotate(-6deg);
+}
+
+html[data-theme="dark"] .first-screen__title,
+html[data-theme="dark"] .first-screen__lead strong,
+html[data-theme="dark"] .first-screen__facts strong {
+  color: #e9ecff;
+}
+
+html[data-theme="dark"] .first-screen__title span {
+  color: #ff7d85;
+}
+
+html[data-theme="dark"] .first-screen__lead,
+html[data-theme="dark"] .first-screen__facts li {
+  color: #c3c9dc;
+}
+
+html[data-theme="dark"] .first-screen__facts svg {
+  color: #ff7d85;
+}
+
+html[data-theme="dark"] .first-screen__slogan {
+  color: #dbe3ff;
+  text-shadow: none;
+}
+
+html[data-theme="dark"] .first-screen__note {
+  border-color: #6b5a22;
+  background: #2b2512;
+  color: #f1e3b0;
+}
+
+html[data-theme="dark"] .cat-tile__media {
+  background: #1f2533;
+}
+
+html[data-theme="dark"] .offer-card--calc {
+  background-color: #0d1460;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 22px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 22px),
+    linear-gradient(135deg, #16207a 0%, #0d1460 60%, #090e44 100%);
+}
+
+html[data-theme="dark"] .offer-card--sale {
+  background-color: #84161c;
+  background-image:
+    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.04) 0 14px, transparent 14px 28px),
+    linear-gradient(135deg, #9e1d24 0%, #84161c 60%, #651015 100%);
+}
+
+html[data-theme="dark"] .btn--light {
+  background: #f1f3fb;
+  border-color: #f1f3fb;
+  color: #0a1583;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cat-tile,
+  .cat-tile__media img {
+    transition: none;
+  }
+
+  .cat-tile:hover {
+    transform: none;
+  }
+
+  .cat-tile:hover .cat-tile__media img {
+    transform: scale(1.08);
+  }
 }
 
 /* ==========================================================================
@@ -2257,7 +3462,7 @@ html[data-theme="dark"] .shop-card__now--open {
 
 /* В тёмной теме фирменный синий осветляется, поэтому тёмные поверхности
    шапки и подвала задаются отдельно — иначе они становятся светло-сиреневыми. */
-html[data-theme="dark"] .header-util,
+html[data-theme="dark"] .header-nav,
 html[data-theme="dark"] .site-footer {
   background: var(--sg-bg-soft);
 }
@@ -2853,9 +4058,6 @@ html[data-theme="dark"] .site-footer {
     flex-basis: calc((100% - var(--sp-4) * 2) / 3);
   }
 
-  .header-quick__nav {
-    gap: var(--sp-4);
-  }
 }
 
 /* Первый экран перестраивается раньше остальной сетки: в полосе
@@ -2942,66 +4144,6 @@ html[data-theme="dark"] .site-footer {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  /* На планшете служебные ссылки и строка разделов прячутся —
-     всё это есть в мобильном меню и в подвале */
-  .header-util__nav,
-  .header-util .dropdown,
-  .util-callback,
-  .header-quick {
-    display: none;
-  }
-
-  .header-util__inner {
-    gap: var(--sp-3);
-    font-size: 13px;
-  }
-
-  .header-util__side {
-    margin-left: 0;
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .header-burger {
-    display: grid;
-  }
-
-  .header-main__inner {
-    flex-wrap: wrap;
-    gap: var(--sp-3);
-  }
-
-  /* Первая строка — логотип и действия, вторая — «Каталог» и поиск.
-     Пустой элемент принудительно переносит строку. */
-  .header-main__inner::after {
-    content: "";
-    order: 2;
-    flex-basis: 100%;
-    height: 0;
-  }
-
-  .header-actions {
-    order: 1;
-    margin-left: auto;
-    gap: var(--sp-3);
-  }
-
-  .header-catalog {
-    order: 3;
-  }
-
-  .search-form {
-    order: 4;
-    flex: 1 1 200px;
-  }
-
-  .catalog-menu__grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .mobile-nav {
-    display: block;
-  }
 }
 
 @media (max-width: 640px) {
@@ -3032,68 +4174,6 @@ html[data-theme="dark"] .site-footer {
 
   .intro__actions .btn {
     width: 100%;
-  }
-
-  /* Шапка на телефоне: логотип и действия одной строкой, поиск — второй.
-     Красную кнопку «Каталог» убираем: тот же каталог открывают бургер
-     и нижняя панель, три одинаковых значка подряд только путают. */
-  .site-logo img {
-    width: 44px;
-    height: 44px;
-  }
-
-  .site-logo__word {
-    display: none;
-  }
-
-  .header-main__inner {
-    gap: var(--sp-2);
-    padding-top: var(--sp-2);
-    padding-bottom: var(--sp-2);
-  }
-
-  .header-util__phone {
-    min-height: 44px;
-    font-size: 15px;
-  }
-
-  .header-util__inner {
-    min-height: 44px;
-  }
-
-  .header-action__label {
-    display: none;
-  }
-
-  .header-actions .header-action:nth-child(1),
-  .header-actions .header-action:nth-child(2) {
-    display: none;
-  }
-
-  .header-action {
-    min-width: 44px;
-  }
-
-  .header-catalog {
-    display: none;
-  }
-
-  .search-form {
-    flex-basis: 100%;
-  }
-
-  .search-form__input,
-  .search-form__submit {
-    height: 44px;
-  }
-
-  .search-form__submit {
-    width: 54px;
-  }
-
-  .header-burger {
-    width: 44px;
-    height: 44px;
   }
 
   .intro__title {
@@ -3187,10 +4267,6 @@ html[data-theme="dark"] .site-footer {
     grid-template-columns: 1fr;
   }
 
-  .header-util__inner {
-    min-height: 42px;
-  }
-
   .gallery__thumbs {
     grid-template-columns: repeat(3, 1fr);
   }
@@ -3277,6 +4353,7 @@ html[data-theme="dark"] .search-form__submit,
 html[data-theme="dark"] .badge--sale,
 html[data-theme="dark"] .badge--hit,
 html[data-theme="dark"] .header-action__count,
+html[data-theme="dark"] .header-catalog,
 html[data-theme="dark"] .pagination .is-current {
   color: #0e1117;
 }
@@ -3372,29 +4449,41 @@ html {
    сжатия стоили двенадцати полных пересчётов подряд. Сжатие происходит
    мгновенно, за один кадр. */
 
-.site-header.is-compact .header-util {
-  height: 0;
-  overflow: hidden;
-  opacity: 0;
-  border-bottom: 0;
+/* Сжатая шапка: синяя строка уходит целиком, «Каталог» переезжает
+   в белую строку, подпись у знака, слоган и «Заказать звонок» прячутся.
+   Теряется 80 px на компьютере и 48–56 на планшете и телефоне - меньше
+   разницы порогов в app.js (140), поэтому переключение одно. */
+.site-header.is-compact .header-nav,
+.site-header.is-compact .header-slogan,
+.site-header.is-compact .site-logo__tagline,
+.site-header.is-compact .header-contact__note {
+  display: none;
 }
 
-.site-header.is-compact .stripe-band {
-  height: 5px;
+.site-header.is-compact .header-catalog--compact {
+  display: inline-flex;
 }
 
 .site-header.is-compact .header-main__inner {
+  min-height: 64px;
   padding-top: var(--sp-2);
   padding-bottom: var(--sp-2);
-}
-
-.site-header.is-compact .header-quick {
-  display: none;
 }
 
 .site-header.is-compact .site-logo img {
   width: 48px;
   height: 48px;
+}
+
+@media (max-width: 640px) {
+  .site-header.is-compact .header-catalog--compact {
+    display: none;
+  }
+
+  .site-header.is-compact .site-logo img {
+    width: 44px;
+    height: 44px;
+  }
 }
 
 /* Переключатель темы */
@@ -3430,24 +4519,6 @@ html[data-theme="dark"] .theme-toggle .icon-sun {
 
 html[data-theme="dark"] .theme-toggle .icon-moon {
   display: block;
-}
-
-/* Кнопка «Заказать звонок» в тёмной информационной полосе */
-.util-callback {
-  background: none;
-  border: 0;
-  padding: 0 var(--sp-2);
-  min-height: 36px;
-  color: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
-  cursor: pointer;
-  border-bottom: 1px dashed currentColor;
-}
-
-.util-callback:hover {
-  color: var(--sg-on-dark);
 }
 
 /* ==========================================================================
@@ -5623,9 +6694,58 @@ body:has(.demo-note:not([hidden])) .calc-peek {
   /* Селектор с двумя классами — иначе базовое правило .card-tool ниже
      по файлу перебивает этот блок при одинаковой специфичности. */
   .product-card__tools .card-tool,
-  .header-util .theme-toggle {
+  .header-nav .theme-toggle {
     width: 44px;
     height: 44px;
+  }
+
+  /* «Наши магазины» → «Магазины»: на 390 px синяя строка с полной
+     подписью была на 84 px шире экрана */
+  .dropdown__more {
+    display: none;
+  }
+
+  .header-nav__side {
+    gap: 0;
+  }
+
+  .header-actions {
+    margin-left: auto;
+  }
+
+  .header-action {
+    min-width: 44px;
+  }
+
+  .search-form {
+    flex-basis: 100%;
+  }
+
+  .search-form__input,
+  .search-form__submit {
+    height: 44px;
+  }
+
+  .search-form__submit {
+    width: 54px;
+  }
+
+  .header-burger {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+@media (max-width: 420px) {
+  .header-catalog__more {
+    display: none;
+  }
+}
+
+@media (max-width: 360px) {
+  .header-nav .dropdown__toggle > svg,
+  .header-nav .dropdown__toggle .icon-chevron {
+    display: none;
   }
 
   .action-link {
@@ -5938,8 +7058,8 @@ body:has(.demo-note:not([hidden])) .calc-peek {
    доставки. Всё, что на бумаге бесполезно, убираем, а адреса ссылок
    дописываем текстом — по экранной ссылке с листа не перейдёшь. */
 @media print {
-  .header-util,
-  .header-quick,
+  .header-nav,
+  .header-slogan,
   .catalog-menu,
   .mobile-nav,
   .mobile-bar,
@@ -6220,8 +7340,7 @@ html[data-theme='dark'] {
 .product-card__meta .ph,
 .category-card__count,
 .cat-list__link .ph,
-.catalog-toolbar__count,
-.header-quick .ph {
+.catalog-toolbar__count {
   padding: 0 1px;
   border: 0;
   border-bottom: 1px dashed var(--ph-line);

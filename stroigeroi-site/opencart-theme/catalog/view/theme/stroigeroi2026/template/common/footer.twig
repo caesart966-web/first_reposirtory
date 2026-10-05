@@ -19,7 +19,7 @@
   изменённые style.css или app.js, иначе у посетителей останутся старые
   из кеша браузера - и вы будете смотреть на исправленный сайт, а они нет.
 #}
-{% set asset_v = '0be7ed99' %}
+{% set asset_v = 'd5ccb017' %}
 {#
   Название магазина написано здесь словом, а не взято из настроек.
   Переменной name у подвала нет: движок рисует подвал отдельным вызовом
@@ -211,7 +211,7 @@
 #}
 <script type="speculationrules">
 {
-  "prefetch": [{"source": "document", "where": {"selector_matches": ".catalog-menu__link, .header-quick__link, .mobile-nav__link, .site-logo"}, "eagerness": "moderate"}]
+  "prefetch": [{"source": "document", "where": {"selector_matches": ".catalog-menu__link, .header-nav__link, .cat-tile, .mobile-nav__link, .site-logo"}, "eagerness": "moderate"}]
 }
 </script>
 </body>

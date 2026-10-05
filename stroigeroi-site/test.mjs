@@ -429,7 +429,7 @@ for (const name of ['index', 'catalog', 'checkout', 'contacts', 'login']) {
   });
 
   const chain =
-    (await walk('главная → каталог', () => page.click('.header-quick__link[href="catalog.html"]'), 'catalog.html')) &&
+    (await walk('главная → каталог', () => page.click('.first-screen a[href="catalog.html"]'), 'catalog.html')) &&
     (await walk('каталог → карточка', () => page.click('.product-card__title'), 'product.html')) &&
     (await walk('карточка → корзина', async () => {
       await page.click('[data-add="cart"]');
@@ -1920,8 +1920,8 @@ for (const width of [390, 768, 1280]) {
   if (up > 1) fail(`шапка (${width}px): при прокрутке вверх переключилась ${up} раз вместо одного`);
 
   const slow = await page.evaluate(() => {
-    const parts = ['.site-header', '.header-util', '.stripe-band', '.header-main',
-      '.header-main__inner', '.header-quick', '.site-logo img'];
+    const parts = ['.site-header', '.header-main', '.header-main__inner', '.header-nav',
+      '.header-nav__inner', '.site-logo img', '.header-catalog'];
     const heavy = /^(all|width|height|padding|margin|inset|top|left|right|bottom)/;
     const found = [];
     for (const sel of parts) {

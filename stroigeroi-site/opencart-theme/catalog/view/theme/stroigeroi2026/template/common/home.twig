@@ -1,209 +1,132 @@
 {{ header }}
-  {#
-    «Сайт находится в разработке» - по просьбе заказчика (23.09.2026):
-    каталог ещё наполняется, и цены с остатками из 1С могут расходиться
-    с тем, что лежит в магазине. Стоит над баннером и крупно - его должны
-    увидеть до того, как поедут за товаром по цене с сайта.
+{#
+  Главная по концепции заказчика (октябрь 2026). Слева заголовок, четыре
+  цифры и две кнопки, справа сцена: Корякский вулкан над городом у бухты
+  и стройка с краном (своя трёхмерная съёмка, tools/render3d), герой
+  с баннера заказчика и его печать. Ниже - популярные разделы с предметами,
+  калькулятор, акции, магазины и полоса «как мы работаем».
 
-    Когда сайт будет готов - поставить dev_notice = false (или удалить
-    блок целиком). Номер - тот же, что в шапке и подвале: один на все
-    три магазина.
+  Цифры - со страниц заказчика «О компании» и «Юридическим лицам»:
+  с 2007 года, 10 000+ товаров в наличии и под заказ, 150 000 клиентов
+  в год, два склада, снабжение объектов под ключ. Условия доставки
+  заказчик не давал - поэтому «уточняйте по телефону», как и раньше.
 
-    data-nosnippet - чтобы Google не взял эту строку описанием сайта
-    в выдаче; пометки noindex в HTML-комментариях - то же для Яндекса,
-    у него для этого своя пометка. Закрывающая пометка обязательна:
-    без неё Яндекс не индексирует всё, что ниже, - всю главную. Обе
-    стоят внутри if. Та же строка, только узкая, есть на страницах
-    товаров и разделов - у них свой флаг dev_notice в category.twig
-    и product.twig.
+  «Сайт находится в разработке» - по просьбе заказчика (23.09.2026):
+  каталог ещё наполняется, и цены с остатками из 1С могут расходиться
+  с тем, что лежит в магазине. Теперь это строка над заголовком, а не
+  красная плашка над баннером. Когда сайт будет готов - поставить
+  dev_notice = false. data-nosnippet - чтобы Google не взял строку
+  описанием сайта в выдаче; пометки noindex - то же для Яндекса,
+  закрывающая обязательна: без неё Яндекс не индексирует всё, что ниже.
+  Обе стоят внутри if.
 
-    Заголовком (h2) блок не сделан нарочно: главный заголовок
-    страницы (h1) ниже, и h2 перед ним ломал бы порядок для экранного
-    диктора. Значок «барьер» - Lucide (construction), ISC License,
-    Copyright (c) 2026 Lucide Icons and Contributors.
-  #}
-  {% set dev_notice = true %}
-  {% if dev_notice %}
-  <!--noindex-->
-  <div class="container">
-    <aside class="dev-notice" aria-label="Сайт в разработке" data-nosnippet>
-      <span class="dev-notice__icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2" y="6" width="20" height="8" rx="1"/><path d="M17 14v7"/><path d="M7 14v7"/><path d="M17 3v3"/><path d="M7 3v3"/><path d="M10 14 2.3 6.3"/><path d="m14 6 7.7 7.7"/><path d="m8 6 8 8"/></svg></span>
-      <div class="dev-notice__body">
-        <p class="dev-notice__title">Сайт находится в разработке</p>
-        <p class="dev-notice__text">Об актуальности цен и наличии товара узнавайте по телефону магазина</p>
+  Плитки разделов ведут по номеру раздела (path=66 и т. д. - номера
+  живой базы, как в меню каталога). app.js подменяет адрес на короткий
+  из меню каталога, если найдёт там раздел с тем же названием
+  (data-menu-name), - без javascript работает и длинный адрес.
+#}
+{% set dev_notice = true %}
+{% set url_catalog = 'index.php?route=information/sitemap' %}
+
+
+  <section class="first-screen" aria-labelledby="first-screen-title">
+    <div class="first-screen__art" aria-hidden="true">
+      <picture class="first-screen__scene">
+        <source type="image/avif" srcset="catalog/view/theme/stroigeroi2026/image/home/scene-800.avif 800w, catalog/view/theme/stroigeroi2026/image/home/scene-1200.avif 1200w, catalog/view/theme/stroigeroi2026/image/home/scene-1600.avif 1600w, catalog/view/theme/stroigeroi2026/image/home/scene-2400.avif 2400w" sizes="(min-width: 1024px) 1200px, 200vw">
+        <source type="image/webp" srcset="catalog/view/theme/stroigeroi2026/image/home/scene-800.webp 800w, catalog/view/theme/stroigeroi2026/image/home/scene-1200.webp 1200w, catalog/view/theme/stroigeroi2026/image/home/scene-1600.webp 1600w, catalog/view/theme/stroigeroi2026/image/home/scene-2400.webp 2400w" sizes="(min-width: 1024px) 1200px, 200vw">
+        <img src="catalog/view/theme/stroigeroi2026/image/home/scene-1200.jpg" alt="" width="2400" height="1000" fetchpriority="high" decoding="async">
+      </picture>
+      <span class="first-screen__stripes"></span>
+      <picture class="first-screen__hero">
+        <source type="image/avif" srcset="catalog/view/theme/stroigeroi2026/image/home/hero-470.avif 470w, catalog/view/theme/stroigeroi2026/image/home/hero-940.avif 940w" sizes="(min-width: 1024px) 470px, 300px">
+        <img src="catalog/view/theme/stroigeroi2026/image/home/hero-940.webp" srcset="catalog/view/theme/stroigeroi2026/image/home/hero-470.webp 470w, catalog/view/theme/stroigeroi2026/image/home/hero-940.webp 940w" sizes="(min-width: 1024px) 470px, 300px" alt="" width="940" height="976" decoding="async">
+      </picture>
+      <img class="first-screen__seal" src="catalog/view/theme/stroigeroi2026/image/logo.png" alt="" width="480" height="480" decoding="async">
+      <p class="first-screen__slogan">Строим Камчатку вместе!<svg class="first-screen__swash" width="150" height="14" viewBox="0 0 150 14" focusable="false"><path d="M3 10.5C42 4.4 96 2.6 147 6.2" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg></p>
+    </div>
+
+    <div class="container first-screen__inner">
+      {% if dev_notice %}
+      <!--noindex-->
+      <p class="first-screen__note" data-nosnippet><strong>Сайт находится в разработке.</strong> Цены и наличие уточняйте по телефону <a href="tel:+79638319999">8-963-831-99-99</a></p>
+      <!--/noindex-->
+      {% endif %}
+      <h1 class="first-screen__title" id="first-screen-title">Строительные материалы <span>на Камчатке</span></h1>
+      <p class="first-screen__lead"><strong>Всё для строительства, ремонта, дома и сада</strong> Больше 10 000 товаров в наличии и под заказ</p>
+      <ul class="first-screen__facts">
+        <li><svg width="34" height="34" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M223.68,66.15,135.68,18a15.88,15.88,0,0,0-15.36,0l-88,48.17a16,16,0,0,0-8.32,14v95.64a16,16,0,0,0,8.32,14l88,48.17a15.88,15.88,0,0,0,15.36,0l88-48.17a16,16,0,0,0,8.32-14V80.18A16,16,0,0,0,223.68,66.15ZM128,32l80.35,44L178.57,92.29l-80.35-44Zm0,88L47.65,76,81.56,57.43l80.35,44Zm88,55.85h0l-80,43.79V133.83l32-17.51V152a8,8,0,0,0,16,0V107.56l32-17.51v85.76Z"/></svg><span><strong>10 000+</strong> товаров</span></li>
+        <li><svg width="34" height="34" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M231.69,93.81,217.35,43.6A16.07,16.07,0,0,0,202,32H54A16.07,16.07,0,0,0,38.65,43.6L24.31,93.81A7.94,7.94,0,0,0,24,96v16a40,40,0,0,0,16,32v72a8,8,0,0,0,8,8H208a8,8,0,0,0,8-8V144a40,40,0,0,0,16-32V96A7.94,7.94,0,0,0,231.69,93.81ZM88,112a24,24,0,0,1-35.12,21.26,7.88,7.88,0,0,0-1.82-1.06A24,24,0,0,1,40,112v-8H88Zm64,0a24,24,0,0,1-48,0v-8h48Zm64,0a24,24,0,0,1-11.07,20.2,8.08,8.08,0,0,0-1.8,1.05A24,24,0,0,1,168,112v-8h48Z"/></svg><span><strong>3 магазина</strong> Петропавловск и Елизово</span></li>
+        <li><svg width="34" height="34" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M64.12,147.8a4,4,0,0,1-4,4.2H16a8,8,0,0,1-7.8-6.17,8.35,8.35,0,0,1,1.62-6.93A67.79,67.79,0,0,1,37,117.51a40,40,0,1,1,66.46-35.8,3.94,3.94,0,0,1-2.27,4.18A64.08,64.08,0,0,0,64,144C64,145.28,64,146.54,64.12,147.8Zm182-8.91A67.76,67.76,0,0,0,219,117.51a40,40,0,1,0-66.46-35.8,3.94,3.94,0,0,0,2.27,4.18A64.08,64.08,0,0,1,192,144c0,1.28,0,2.54-.12,3.8a4,4,0,0,0,4,4.2H240a8,8,0,0,0,7.8-6.17A8.33,8.33,0,0,0,246.17,138.89Zm-89,43.18a48,48,0,1,0-58.37,0A72.13,72.13,0,0,0,65.07,212,8,8,0,0,0,72,224H184a8,8,0,0,0,6.93-12A72.15,72.15,0,0,0,157.19,182.07Z"/></svg><span><strong>150 000</strong> клиентов в год</span></li>
+        <li><svg width="34" height="34" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM169.66,133.66l-48,48a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L116,164.69l42.34-42.35a8,8,0,0,1,11.32,11.32ZM48,80V48H72v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80Z"/></svg><span><strong>С 2007 года</strong> на рынке</span></li>
+      </ul>
+      <div class="first-screen__actions">
+        <a class="btn btn--action btn--lg first-screen__btn" href="{{ url_catalog }}">Перейти в каталог <svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224.49,136.49l-72,72a12,12,0,0,1-17-17L187,140H40a12,12,0,0,1,0-24H187L135.51,64.48a12,12,0,0,1,17-17l72,72A12,12,0,0,1,224.49,136.49Z"/></svg></a>
+        <button class="btn btn--light btn--lg first-screen__btn" type="button" data-modal-open="modal-callback"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M231.88,175.08A56.26,56.26,0,0,1,176,224C96.6,224,32,159.4,32,80A56.26,56.26,0,0,1,80.92,24.12a16,16,0,0,1,16.62,9.52l21.12,47.15,0,.12A16,16,0,0,1,117.39,96c-.18.27-.37.52-.57.77L96,121.45c7.49,15.22,23.41,31,38.83,38.51l24.34-20.71a8.12,8.12,0,0,1,.75-.56,16,16,0,0,1,15.17-1.4l.13.06,47.11,21.11A16,16,0,0,1,231.88,175.08Z"/></svg> Узнать наличие товара</button>
       </div>
-      <a class="dev-notice__phone" href="tel:+79638319999">8-963-831-99-99</a>
-    </aside>
-  </div>
-  <!--/noindex-->
-  {% endif %}
-  <section class="mainscreen">
-    <div class="container mainscreen__grid">
+    </div>
+  </section>
 
-      <div class="hero"><picture><source type="image/avif" srcset="catalog/view/theme/stroigeroi2026/image/banner-640.avif 640w, catalog/view/theme/stroigeroi2026/image/banner-960.avif 960w, catalog/view/theme/stroigeroi2026/image/banner-1280.avif 1280w, catalog/view/theme/stroigeroi2026/image/banner.avif 1920w" sizes="(min-width: 1600px) 888px, (min-width: 1201px) 785px, 96vw"><source type="image/webp" srcset="catalog/view/theme/stroigeroi2026/image/banner-640.webp 640w, catalog/view/theme/stroigeroi2026/image/banner-960.webp 960w, catalog/view/theme/stroigeroi2026/image/banner-1280.webp 1280w, catalog/view/theme/stroigeroi2026/image/banner.webp 1920w" sizes="(min-width: 1600px) 888px, (min-width: 1201px) 785px, 96vw"><img class="hero__banner" src="catalog/view/theme/stroigeroi2026/image/banner.jpg" srcset="catalog/view/theme/stroigeroi2026/image/banner-640.jpg 640w, catalog/view/theme/stroigeroi2026/image/banner-960.jpg 960w, catalog/view/theme/stroigeroi2026/image/banner-1280.jpg 1280w, catalog/view/theme/stroigeroi2026/image/banner.jpg 1920w" sizes="(min-width: 1600px) 888px, (min-width: 1201px) 785px, 96vw" width="1920" height="976" alt="Строй-Герой: наши материалы — ваша уверенность" fetchpriority="high"></picture></div>
-
-      {#
-        Доставка, оплата, возврат: в макете здесь стояли заготовки «- от
-        заказчика», и на живом сайте их видели покупатели, а Яндекс взял
-        одну в описание сайта. Условий заказчик пока не дал, выдумывать
-        их нельзя - поэтому «уточняйте по телефону». Дадут условия (или
-        страницы о них) - текст сюда, а плитку можно сделать ссылкой.
-      #}
-      <div class="tiles"><div class="tile reveal">
-          <span class="tile__icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 9h16v11H4z"/><path d="m4 9 1.5-5h13L20 9M4 9a2.5 2.5 0 0 0 4 1 2.5 2.5 0 0 0 4 0 2.5 2.5 0 0 0 4 0 2.5 2.5 0 0 0 4-1"/></svg></span>
-          <strong class="tile__title">Три магазина на Камчатке</strong>
-          <span class="tile__text">Две точки в Петропавловске-Камчатском и одна в Елизово</span>
-        </div><div class="tile reveal">
-          <span class="tile__icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 7h11v9H3z"/><path d="M14 10h3.5l3.5 3.5V16h-7z"/><circle cx="7.5" cy="18" r="1.7"/><circle cx="17" cy="18" r="1.7"/></svg></span>
-          <strong class="tile__title">Доставка</strong>
-          <span class="tile__text">Условия уточняйте по телефону магазина</span>
-        </div><div class="tile reveal">
-          <span class="tile__icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 15h3"/></svg></span>
-          <strong class="tile__title">Оплата</strong>
-          <span class="tile__text">Способы оплаты уточняйте по телефону</span>
-        </div><div class="tile reveal">
-          <span class="tile__icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3 7 3v5.5c0 4.4-3 8-7 9.5-4-1.5-7-5.1-7-9.5V6z"/><path d="m9 12 2 2 4-4"/></svg></span>
-          <strong class="tile__title">Гарантия и возврат</strong>
-          <span class="tile__text">Условия уточняйте по телефону магазина</span>
-        </div></div>
-
-      <div class="intro">
-        <div class="intro__copy">
-          <p class="intro__eyebrow">Три магазина на Камчатке</p>
-          <h1 class="intro__title">Материалы для стройки и ремонта</h1>
-          <p class="intro__text">Инструмент, электрика, сантехника, отделка, крепёж, сад и спецодежда. Приезжайте в магазин или позвоните — подскажем, сколько материала нужно на объект.</p>
-        </div>
-        <div class="intro__actions">
-          <a class="btn btn--action btn--lg" href="index.php?route=information/sitemap">Перейти в каталог</a>
-          <a class="btn btn--outline btn--lg" href="index.php?route=information/calculator"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01"/></svg> Посчитать материал</a>
-        </div>
+  <section class="section section--tight popular-cats" aria-labelledby="popular-cats-title">
+    <div class="container">
+      <div class="section__head">
+        <h2 class="section__title" id="popular-cats-title">Популярные категории</h2>
+        <a class="section__link" href="{{ url_catalog }}">Весь каталог</a>
       </div>
+      <ul class="popular-cats__list"><li><a class="cat-tile" href="index.php?route=product/category&amp;path=66" data-menu-name="Отделочные и стройматериалы"><span class="cat-tile__media"><picture><source type="image/avif" srcset="catalog/view/theme/stroigeroi2026/image/home/cat-bricks.avif"><img src="catalog/view/theme/stroigeroi2026/image/home/cat-bricks.webp" alt="" width="320" height="320" loading="lazy" decoding="async"></picture></span><span class="cat-tile__name">Строй&shy;материалы и&nbsp;отделка</span></a></li><li><a class="cat-tile" href="index.php?route=product/category&amp;path=59" data-menu-name="Инструменты"><span class="cat-tile__media"><picture><source type="image/avif" srcset="catalog/view/theme/stroigeroi2026/image/home/cat-drill.avif"><img src="catalog/view/theme/stroigeroi2026/image/home/cat-drill.webp" alt="" width="320" height="320" loading="lazy" decoding="async"></picture></span><span class="cat-tile__name">Инструменты</span></a></li><li><a class="cat-tile" href="index.php?route=product/category&amp;path=62" data-menu-name="Ручной инструмент"><span class="cat-tile__media"><picture><source type="image/avif" srcset="catalog/view/theme/stroigeroi2026/image/home/cat-hammer.avif"><img src="catalog/view/theme/stroigeroi2026/image/home/cat-hammer.webp" alt="" width="320" height="320" loading="lazy" decoding="async"></picture></span><span class="cat-tile__name">Ручной инструмент</span></a></li><li><a class="cat-tile" href="index.php?route=product/category&amp;path=60" data-menu-name="Электрика и свет"><span class="cat-tile__media"><picture><source type="image/avif" srcset="catalog/view/theme/stroigeroi2026/image/home/cat-socket.avif"><img src="catalog/view/theme/stroigeroi2026/image/home/cat-socket.webp" alt="" width="320" height="320" loading="lazy" decoding="async"></picture></span><span class="cat-tile__name">Электрика и свет</span></a></li><li><a class="cat-tile" href="index.php?route=product/category&amp;path=61" data-menu-name="Сантехника и инженерные системы"><span class="cat-tile__media"><picture><source type="image/avif" srcset="catalog/view/theme/stroigeroi2026/image/home/cat-faucet.avif"><img src="catalog/view/theme/stroigeroi2026/image/home/cat-faucet.webp" alt="" width="320" height="320" loading="lazy" decoding="async"></picture></span><span class="cat-tile__name">Сантехника</span></a></li><li><a class="cat-tile" href="index.php?route=product/category&amp;path=65" data-menu-name="Крепёж и фурнитура"><span class="cat-tile__media"><picture><source type="image/avif" srcset="catalog/view/theme/stroigeroi2026/image/home/cat-bolts.avif"><img src="catalog/view/theme/stroigeroi2026/image/home/cat-bolts.webp" alt="" width="320" height="320" loading="lazy" decoding="async"></picture></span><span class="cat-tile__name">Крепёж и фурнитура</span></a></li><li><a class="cat-tile" href="index.php?route=product/category&amp;path=70" data-menu-name="Климат, отопление и вентиляция"><span class="cat-tile__media"><picture><source type="image/avif" srcset="catalog/view/theme/stroigeroi2026/image/home/cat-radiator.avif"><img src="catalog/view/theme/stroigeroi2026/image/home/cat-radiator.webp" alt="" width="320" height="320" loading="lazy" decoding="async"></picture></span><span class="cat-tile__name">Отопление и климат</span></a></li><li><a class="cat-tile" href="index.php?route=product/category&amp;path=64" data-menu-name="Всё для сада"><span class="cat-tile__media"><picture><source type="image/avif" srcset="catalog/view/theme/stroigeroi2026/image/home/cat-wheelbarrow.avif"><img src="catalog/view/theme/stroigeroi2026/image/home/cat-wheelbarrow.webp" alt="" width="320" height="320" loading="lazy" decoding="async"></picture></span><span class="cat-tile__name">Всё для сада</span></a></li><li><a class="cat-tile" href="index.php?route=product/category&amp;path=74" data-menu-name="Расходка, спецодежда и СИЗ"><span class="cat-tile__media"><picture><source type="image/avif" srcset="catalog/view/theme/stroigeroi2026/image/home/cat-hardhat.avif"><img src="catalog/view/theme/stroigeroi2026/image/home/cat-hardhat.webp" alt="" width="320" height="320" loading="lazy" decoding="async"></picture></span><span class="cat-tile__name">Спецодежда и СИЗ</span></a></li><li><a class="cat-tile cat-tile--all" href="{{ url_catalog }}"><span class="cat-tile__media"><svg width="40" height="40" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M120,56v48a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V56A16,16,0,0,1,56,40h48A16,16,0,0,1,120,56Zm80-16H152a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V56A16,16,0,0,0,200,40Zm-96,96H56a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V152A16,16,0,0,0,104,136Zm96,0H152a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V152A16,16,0,0,0,200,136Z"/></svg></span><span class="cat-tile__name">Весь каталог</span></a></li></ul>
+    </div>
+  </section>
 
+  <section class="section section--tight promo-row" aria-label="Калькулятор, акции и магазины">
+    <div class="container promo-row__grid">
+      <article class="offer-card offer-card--calc">
+        <div class="offer-card__body">
+          <h2 class="offer-card__title">Не знаете, сколько материала нужно?</h2>
+          <p class="offer-card__text">Рассчитайте нужное количество в нашем калькуляторе: 14 расчётов — от гипсокартона до кровли.</p>
+          <a class="btn btn--action offer-card__btn" href="index.php?route=information/calculator">Открыть калькулятор <svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224.49,136.49l-72,72a12,12,0,0,1-17-17L187,140H40a12,12,0,0,1,0-24H187L135.51,64.48a12,12,0,0,1,17-17l72,72A12,12,0,0,1,224.49,136.49Z"/></svg></a>
+        </div>
+        <picture class="offer-card__media"><source type="image/avif" srcset="catalog/view/theme/stroigeroi2026/image/home/promo-calc.avif"><img src="catalog/view/theme/stroigeroi2026/image/home/promo-calc.webp" alt="" width="560" height="560" loading="lazy" decoding="async"></picture>
+      </article>
+
+      <article class="offer-card offer-card--sale">
+        <div class="offer-card__body">
+          <span class="offer-card__badge" aria-hidden="true">%</span>
+          <h2 class="offer-card__title">Акции и скидки</h2>
+          <p class="offer-card__text">Товары со скидкой собраны в отдельный раздел каталога.</p>
+          <a class="btn btn--light offer-card__btn" href="index.php?route=product/special">Смотреть акции <svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224.49,136.49l-72,72a12,12,0,0,1-17-17L187,140H40a12,12,0,0,1,0-24H187L135.51,64.48a12,12,0,0,1,17-17l72,72A12,12,0,0,1,224.49,136.49Z"/></svg></a>
+        </div>
+        <picture class="offer-card__media"><source type="image/avif" srcset="catalog/view/theme/stroigeroi2026/image/home/promo-paint.avif"><img src="catalog/view/theme/stroigeroi2026/image/home/promo-paint.webp" alt="" width="560" height="560" loading="lazy" decoding="async"></picture>
+      </article>
+
+      <section class="stores-box" aria-labelledby="stores-box-title">
+        <div class="stores-box__head">
+          <h2 class="stores-box__title" id="stores-box-title">Наши магазины</h2>
+          <a class="stores-box__link" href="index.php?route=information/contact">Все контакты</a>
+        </div>
+        <ul class="stores-box__list"><li class="store-line" data-hours-weekday="09:00-19:00" data-hours-weekend="10:00-18:00"><span class="store-line__pin"><svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,16a88.1,88.1,0,0,0-88,88c0,75.3,80,132.17,83.41,134.55a8,8,0,0,0,9.18,0C136,236.17,216,179.3,216,104A88.1,88.1,0,0,0,128,16Zm0,56a32,32,0,1,1-32,32A32,32,0,0,1,128,72Z"/></svg></span><span class="store-line__body"><span class="store-line__top"><strong class="store-line__name">Магазин на Чубарова</strong><a class="store-line__tel" href="tel:+79638319999">8-963-831-99-99</a></span><span class="store-line__addr">Петропавловск-Камчатский, ул. Чубарова, 16, корп. 40</span><span class="store-line__hours">Пн–Пт 9–19 · Сб–Вс 10–18 <span class="shop-card__now" data-hours-now></span></span></span></li><li class="store-line" data-hours-weekday="09:00-19:00" data-hours-weekend="09:00-18:00"><span class="store-line__pin"><svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,16a88.1,88.1,0,0,0-88,88c0,75.3,80,132.17,83.41,134.55a8,8,0,0,0,9.18,0C136,236.17,216,179.3,216,104A88.1,88.1,0,0,0,128,16Zm0,56a32,32,0,1,1-32,32A32,32,0,0,1,128,72Z"/></svg></span><span class="store-line__body"><span class="store-line__top"><strong class="store-line__name">Магазин на 50 лет Октября</strong><a class="store-line__tel" href="tel:+79638300999">8-963-830-09-99</a></span><span class="store-line__addr">Петропавловск-Камчатский, просп. 50 лет Октября, 17А</span><span class="store-line__hours">Пн–Пт 9–19 · Сб–Вс 9–18 <span class="shop-card__now" data-hours-now></span></span></span></li><li class="store-line" data-hours-weekday="09:00-19:00" data-hours-weekend="09:00-18:00"><span class="store-line__pin"><svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,16a88.1,88.1,0,0,0-88,88c0,75.3,80,132.17,83.41,134.55a8,8,0,0,0,9.18,0C136,236.17,216,179.3,216,104A88.1,88.1,0,0,0,128,16Zm0,56a32,32,0,1,1-32,32A32,32,0,0,1,128,72Z"/></svg></span><span class="store-line__body"><span class="store-line__top"><strong class="store-line__name">Магазин в Елизово</strong><a class="store-line__tel" href="tel:+79638300333">8-963-830-03-33</a></span><span class="store-line__addr">Елизово, Магистральная ул., 2/2</span><span class="store-line__hours">Пн–Пт 9–19 · Сб–Вс 9–18 <span class="shop-card__now" data-hours-now></span></span></span></li></ul>
+      </section>
+    </div>
+  </section>
+
+  <section class="perks" aria-label="Как мы работаем">
+    <div class="container">
+      <ul class="perks__list">
+        <li class="perk"><span class="perk__icon"><svg width="30" height="30" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M248,120v64a8,8,0,0,1-8,8H216a24,24,0,0,0-48,0H104a24,24,0,0,0-48,0H32a8,8,0,0,1-8-8V144H184V120Z" opacity="0.2"/><path d="M255.42,117l-14-35A15.93,15.93,0,0,0,226.58,72H192V64a8,8,0,0,0-8-8H32A16,16,0,0,0,16,72V184a16,16,0,0,0,16,16H49a32,32,0,0,0,62,0h50a32,32,0,0,0,62,0h17a16,16,0,0,0,16-16V120A7.94,7.94,0,0,0,255.42,117ZM192,88h34.58l9.6,24H192ZM32,72H176v64H32ZM80,208a16,16,0,1,1,16-16A16,16,0,0,1,80,208Zm81-24H111a32,32,0,0,0-62,0H32V152H176v12.31A32.11,32.11,0,0,0,161,184Zm31,24a16,16,0,1,1,16-16A16,16,0,0,1,192,208Zm48-24H223a32.06,32.06,0,0,0-31-24V128h48Z"/></svg></span><span class="perk__text"><strong>Доставка и самовывоз</strong>Заберите в любом из трёх магазинов, доставку уточняйте по телефону</span></li>
+        <li class="perk"><span class="perk__icon"><svg width="30" height="30" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M136,32V216H40V85.35a8,8,0,0,1,3.56-6.66l80-53.33A8,8,0,0,1,136,32Z" opacity="0.2"/><path d="M240,208H224V96a16,16,0,0,0-16-16H144V32a16,16,0,0,0-24.88-13.32L39.12,72A16,16,0,0,0,32,85.34V208H16a8,8,0,0,0,0,16H240a8,8,0,0,0,0-16ZM208,96V208H144V96ZM48,85.34,128,32V208H48ZM112,112v16a8,8,0,0,1-16,0V112a8,8,0,1,1,16,0Zm-32,0v16a8,8,0,0,1-16,0V112a8,8,0,1,1,16,0Zm0,56v16a8,8,0,0,1-16,0V168a8,8,0,0,1,16,0Zm32,0v16a8,8,0,0,1-16,0V168a8,8,0,0,1,16,0Z"/></svg></span><span class="perk__text"><strong>Частным лицам и организациям</strong>Снабжаем объекты под ключ, два склада отгрузки</span></li>
+        <li class="perk"><span class="perk__icon"><svg width="30" height="30" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z"/></svg></span><span class="perk__text"><strong>Без выходных</strong>Пн–Пт 9:00–19:00, Сб–Вс до 18:00</span></li>
+        <li class="perk"><span class="perk__icon"><svg width="30" height="30" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M80,144v40a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V128H64A16,16,0,0,1,80,144Zm112-16a16,16,0,0,0-16,16v40a16,16,0,0,0,16,16h32V128Z" opacity="0.2"/><path d="M201.89,54.66A104.08,104.08,0,0,0,24,128v56a24,24,0,0,0,24,24H64a24,24,0,0,0,24-24V144a24,24,0,0,0-24-24H40.36A88.12,88.12,0,0,1,190.54,65.93,87.39,87.39,0,0,1,215.65,120H192a24,24,0,0,0-24,24v40a24,24,0,0,0,24,24h24a24,24,0,0,1-24,24H136a8,8,0,0,0,0,16h56a40,40,0,0,0,40-40V128A103.41,103.41,0,0,0,201.89,54.66ZM64,136a8,8,0,0,1,8,8v40a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V136Zm128,56a8,8,0,0,1-8-8V144a8,8,0,0,1,8-8h24v56Z"/></svg></span><span class="perk__text"><strong>Поможем с выбором</strong>Подскажем по телефону и посчитаем, сколько нужно</span></li>
+      </ul>
     </div>
   </section>
 
   {#
-    Подборка товаров. В OpenCart наполнение главной приходит модулями:
+    Подборки товаров. В OpenCart наполнение главной приходит модулями:
     движок отдаёт этому шаблону всего шесть переменных, и товаров среди
     них нет. Здесь встанет то, что заказчик поставит в админке
-    (Дизайн -> Макеты -> Главная, позиция "Content Top") - обычно это
-    "Рекомендуемые" или "Хиты продаж". Разметку модуля рисует наш шаблон
-    extension/module/featured.twig, поэтому подборка выглядит как в макете,
-    а не по-бутстраповски.
+    (Дизайн -> Макеты -> Главная, позиции "Content Top" и "Content
+    Bottom") - обычно "Хиты продаж" и "Новинки". Разметку модуля рисует
+    наш шаблон extension/module/featured.twig, поэтому подборка выглядит
+    как в макете, а не по-бутстраповски.
   #}
   {{ content_top }}
-
-  <section class="section section--soft">
-    <div class="container">
-      <div class="section__head">
-        <h2 class="section__title">Разделы каталога</h2>
-        <a class="section__link" href="index.php?route=information/sitemap">Открыть каталог</a>
-      </div>
-      {#
-        Разделы подставляет app.js из меню каталога - оно уже есть
-        на каждой странице и приходит из базы. Переписывать разделы
-        сюда вторым списком нельзя: он разойдётся с настоящим меню.
-        Карточка ниже - не заглушка, а рабочая ссылка: без javascript
-        сетка не будет пустой, человек всё равно попадёт в каталог.
-      #}
-      <div class="category-grid" data-fill-cards>
-        <a class="category-card" href="index.php?route=information/sitemap">
-          <span class="category-card__icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/></svg></span>
-          <span class="category-card__title">Все разделы каталога</span>
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <section class="section section--tight">
-    <div class="container">
-      <div class="short-banners">
-
-        {#
-          Здесь в макете стоял баннер «Скидки месяца» с заготовкой «Нужны
-          данные - акции и проценты от заказчика». На живой сайт заготовка
-          уехала как есть; акций заказчик пока не дал, поэтому баннера нет.
-          Появится акция с датами - вернуть сюда article.banner (сетка на
-          два места; один баннер занимает всю ширину - правило
-          в opencart.css).
-        #}
-        <article class="banner reveal">
-          <span class="banner__stripe" aria-hidden="true"></span>
-          <span class="banner__label">Бесплатно</span>
-          <h2 class="banner__title">Расчёт материала</h2>
-          <p>Скажите площадь — посчитаем листы и мешки. Или прикиньте сами в калькуляторе.</p>
-          <a class="banner__link" href="index.php?route=information/calculator">Открыть калькулятор →</a>
-        </article>
-
-      </div>
-    </div>
-  </section>
-
-  {#
-    Вторая подборка - позиция "Content Bottom" того же макета.
-    Обычно "Новинки" (модуль latest) или "Акции" (модуль special).
-  #}
   {{ content_bottom }}
-
-  <section class="section section--tight">
-    <div class="container">
-      <a class="wide-banner reveal" href="index.php?route=information/sitemap">
-        <span class="wide-banner__stripe" aria-hidden="true"></span>
-        <span class="wide-banner__text">
-          <strong>18 разделов каталога</strong>
-          от крепежа и отделки до спецодежды и садового инвентаря
-        </span>
-        <span class="btn btn--action">Смотреть каталог</span>
-      </a>
-    </div>
-  </section>
-
-  <section class="section section--soft">
-    <div class="container">
-      <div class="section__head">
-        <h2 class="section__title">Три магазина</h2>
-        <a class="section__link" href="index.php?route=information/contact">Как доехать</a>
-      </div>
-      <div class="shop-grid"><article class="shop-card reveal">
-  <div class="shop-card__top" aria-hidden="true"></div>
-  <div class="shop-card__body">
-    <p class="shop-card__city">Петропавловск-Камчатский</p>
-    <h3 class="shop-card__addr">ул. Чубарова, 16, корп. 40</h3>
-    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><span class="shop-card__phones"><a href="tel:+79638319999">8-963-831-99-99</a><a href="tel:+74152319999">8 (4152) 31-99-99</a></span></p>
-    <p class="shop-card__row shop-card__hours" data-hours-weekday="09:00-19:00" data-hours-weekend="10:00-18:00"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Пн–Пт 9:00–19:00, Сб–Вс 10:00–18:00</span><span class="shop-card__now" data-hours-now hidden></span></p><a class="shop-card__route" href="https://yandex.ru/maps/?rtext=~%D0%9F%D0%B5%D1%82%D1%80%D0%BE%D0%BF%D0%B0%D0%B2%D0%BB%D0%BE%D0%B2%D1%81%D0%BA-%D0%9A%D0%B0%D0%BC%D1%87%D0%B0%D1%82%D1%81%D0%BA%D0%B8%D0%B9%2C%20%D1%83%D0%BB.%20%D0%A7%D1%83%D0%B1%D0%B0%D1%80%D0%BE%D0%B2%D0%B0%2C%2016%2C%20%D0%BA%D0%BE%D1%80%D0%BF.%2040&amp;rtt=auto" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Построить маршрут</span><span class="visually-hidden"> (в новой вкладке)</span></a>
-    
-  </div>
-</article><article class="shop-card reveal">
-  <div class="shop-card__top" aria-hidden="true"></div>
-  <div class="shop-card__body">
-    <p class="shop-card__city">Петропавловск-Камчатский</p>
-    <h3 class="shop-card__addr">просп. 50 лет Октября, 17А</h3>
-    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><span class="shop-card__phones"><a href="tel:+79638300999">8-963-830-09-99</a><a href="tel:+74152400999">8 (4152) 400-999</a></span></p>
-    <p class="shop-card__row shop-card__hours" data-hours-weekday="09:00-19:00" data-hours-weekend="09:00-18:00"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Пн–Пт 9:00–19:00, Сб–Вс 9:00–18:00</span><span class="shop-card__now" data-hours-now hidden></span></p><a class="shop-card__route" href="https://yandex.ru/maps/?rtext=~%D0%9F%D0%B5%D1%82%D1%80%D0%BE%D0%BF%D0%B0%D0%B2%D0%BB%D0%BE%D0%B2%D1%81%D0%BA-%D0%9A%D0%B0%D0%BC%D1%87%D0%B0%D1%82%D1%81%D0%BA%D0%B8%D0%B9%2C%20%D0%BF%D1%80%D0%BE%D1%81%D0%BF.%2050%20%D0%BB%D0%B5%D1%82%20%D0%9E%D0%BA%D1%82%D1%8F%D0%B1%D1%80%D1%8F%2C%2017%D0%90&amp;rtt=auto" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Построить маршрут</span><span class="visually-hidden"> (в новой вкладке)</span></a>
-    
-  </div>
-</article><article class="shop-card reveal">
-  <div class="shop-card__top" aria-hidden="true"></div>
-  <div class="shop-card__body">
-    <p class="shop-card__city">Елизово</p>
-    <h3 class="shop-card__addr">Магистральная ул., 2/2</h3>
-    <p class="shop-card__row"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg><span class="shop-card__phones"><a href="tel:+79638300333">8-963-830-03-33</a><a href="tel:+74152400333">8 (4152) 400-333</a></span></p>
-    <p class="shop-card__row shop-card__hours" data-hours-weekday="09:00-19:00" data-hours-weekend="09:00-18:00"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Пн–Пт 9:00–19:00, Сб–Вс 9:00–18:00</span><span class="shop-card__now" data-hours-now hidden></span></p><a class="shop-card__route" href="https://yandex.ru/maps/?rtext=~%D0%95%D0%BB%D0%B8%D0%B7%D0%BE%D0%B2%D0%BE%2C%20%D0%9C%D0%B0%D0%B3%D0%B8%D1%81%D1%82%D1%80%D0%B0%D0%BB%D1%8C%D0%BD%D0%B0%D1%8F%20%D1%83%D0%BB.%2C%202/2&amp;rtt=auto" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-10a6.5 6.5 0 0 1 13 0c0 4.4-6.5 10-6.5 10Z"/><circle cx="12" cy="10.5" r="2.4"/></svg><span>Построить маршрут</span><span class="visually-hidden"> (в новой вкладке)</span></a>
-    
-  </div>
-</article></div>
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="container">
-      <div class="calc-cta reveal">
-        <div>
-          <h2 class="gap-sm-below">Не знаете, сколько брать?</h2>
-          <p class="note-measure">14 калькуляторов: гипсокартон и перегородки, смеси, краска, обои, плитка, ламинат, потолок «Армстронг», кирпич, бетон, утеплитель, кровля и радиаторы. Считают по вашим размерам — и сразу складывают список покупок.</p>
-        </div>
-        <a class="btn btn--action btn--lg" href="index.php?route=information/calculator"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01"/></svg> Открыть калькулятор</a>
-      </div>
-    </div>
-  </section>
 {{ footer }}
