@@ -881,6 +881,20 @@ def sro_block(site: Site, dark: bool = True) -> str:
     </div>'''
 
 
+def yandex_rating(site: Site) -> str:
+    """Рейтинг из Яндекс Бизнеса в подвале. Сам виджет — чужой iframe, то есть
+    запрос к Яндексу, поэтому вставляет его скрипт полосы cookie и только после
+    «Принять» — как Метрику. До согласия и без JavaScript на его месте ссылка
+    на карточку: она полезна и сама по себе."""
+    c = site.contacts
+    if not c.get("yandex_url"):
+        return ""
+    widget = c.get("yandex_rating_widget", "")
+    attr = f' data-yrating="{esc(widget)}"' if widget else ""
+    return (f'<div class="yrating"{attr}><a href="{esc(c["yandex_url"])}" rel="nofollow noopener" '
+            f'target="_blank">Отзывы о нас на Яндекс Картах</a></div>')
+
+
 def cookie_bar(site: Site) -> str:
     """Полоса про cookie — и одновременно единственный выключатель Метрики.
 
@@ -1192,6 +1206,7 @@ class Renderer:
             "whatsapp_display": esc(c["whatsapp_display"]),
             "max_display": esc(c.get("max_display", "")),
             "work_hours": esc(c["work_hours"]),
+            "yandex_rating": yandex_rating(site),
             "geo": esc(c["geo"]),
             "year": str(date.today().year),
             "cookie_bar": cookie_bar(site),
