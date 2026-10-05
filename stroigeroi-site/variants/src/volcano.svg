@@ -1,0 +1,74 @@
+<svg class="v3-volcano" viewBox="0 0 1440 360" preserveAspectRatio="xMidYMax slice" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="vFar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b9c6f2"/>
+      <stop offset="1" stop-color="#8a9fe0"/>
+    </linearGradient>
+    <linearGradient id="vFar2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#cdd6f6"/>
+      <stop offset="1" stop-color="#a9b8ea"/>
+    </linearGradient>
+    <linearGradient id="vMid" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5c74c9"/>
+      <stop offset="1" stop-color="#3f57b4"/>
+    </linearGradient>
+    <linearGradient id="vSea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d9e6ff"/>
+      <stop offset="1" stop-color="#bcd2fb"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Облака в небе -->
+  <g fill="#fff">
+    <g class="v3-cloud v3-cloud--1" opacity=".9"><path d="M150 96c0-14 12-25 27-25 6-12 19-20 34-20 19 0 35 13 38 31 13 1 23 11 23 23 0 13-11 24-25 24H175c-14 0-25-9-25-21Z"/></g>
+    <g class="v3-cloud v3-cloud--2" opacity=".85"><path d="M560 120c0-11 10-20 22-20 5-10 15-16 27-16 16 0 28 11 30 25 11 1 19 9 19 19 0 11-9 19-20 19h-58c-11 0-20-8-20-18Z"/></g>
+  </g>
+
+  <!-- Вилючинский — дальний, слева -->
+  <path d="M-20 300C40 266 92 226 136 200Q150 191 164 200C206 228 252 266 316 300Z" fill="url(#vFar2)"/>
+  <path d="M112 216C122 208 130 203 136 200Q150 191 164 200C172 205 180 211 188 218L180 224 170 216 160 226 150 216 140 226 128 216 120 223Z" fill="#fff"/>
+
+  <!-- Корякский и Авачинский — справа, под карточкой магазинов -->
+  <g transform="translate(370 0)">
+    <g class="v3-steam" fill="#fff" opacity=".8"><path d="M558 44C552 32 560 22 572 20C578 10 592 6 604 10C614 4 630 6 636 16C646 14 656 20 654 28C644 26 634 30 628 34C618 40 604 38 598 32C590 38 576 40 568 46Z"/></g>
+    <path d="M240 304C372 232 470 124 547 49Q560 37 573 49C650 124 750 232 870 304Z" fill="url(#vFar)"/>
+    <path d="M467 130C497 98 527 66 547 49Q560 37 573 49C593 66 623 98 653 130L640 140 626 127 611 147 596 131 581 154 566 136 551 152 536 132 520 148 505 129 490 143 478 131Z" fill="#fff"/>
+    <path d="M560 40Q567 42 573 49C593 66 623 98 653 130L640 140 626 127 611 147 596 131 581 154 566 136Z" fill="#e2e8fb"/>
+    <path d="M548 150 566 136 581 154 596 131 611 147 626 127 640 140 653 130C700 180 760 236 830 282L818 286C760 246 690 190 640 152L626 166 611 160 596 170 582 166 566 172Z" fill="#7e93d6" opacity=".35"/>
+    <path d="M690 304C784 244 858 172 902 124L924 117Q945 109 966 114L988 120C1036 168 1118 238 1250 304Z" fill="url(#vFar)"/>
+    <path d="M926 117Q936 104 946 104Q956 104 964 114Z" fill="#c9d3f4"/>
+    <path d="M858 172C878 150 892 134 902 124L924 117Q945 109 966 114L988 120C1004 137 1018 153 1034 170L1020 179 1006 166 991 183 976 168 960 185 944 170 928 185 912 170 896 183 880 170 868 179Z" fill="#fff"/>
+    <path d="M966 114 988 120C1004 137 1018 153 1034 170L1020 179 1006 166 991 183 976 168 960 185Z" fill="#e2e8fb"/>
+  </g>
+
+  <!-- Полоса облаков у подножий -->
+  <path class="v3-cloudband" d="M560 262c40-14 90-10 120-2 30-16 80-18 110-4 34-12 84-10 108 4 40-10 96-8 124 6 30-12 84-12 110 2 36-10 92-8 118 6 34-12 90-10 116 4H560Z" fill="#fff" opacity=".75"/>
+
+  <!-- Сопки с лесом -->
+  <path d="M0 300C110 272 210 286 320 270C430 254 532 280 650 264C770 248 884 276 1004 260C1124 244 1262 270 1440 250V360H0Z" fill="url(#vMid)"/>
+  <path d="M0 318C140 300 260 312 380 302C520 290 640 310 780 300C920 290 1060 312 1200 300C1300 292 1380 298 1440 294V360H0Z" fill="#2e46a6"/>
+
+  <!-- Авачинская бухта -->
+  <path d="M0 326C200 318 420 324 640 320C860 316 1100 324 1440 318V360H0Z" fill="url(#vSea)"/>
+  <path d="M60 334h90M210 338h60M380 333h110M560 337h70M760 332h120M960 337h60M1110 333h100M1290 337h80" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".8"/>
+
+  <!-- Чайки -->
+  <g fill="none" stroke="#2e46a6" stroke-width="2.4" stroke-linecap="round" opacity=".55">
+    <path d="M300 120q8-8 16 0q8-8 16 0"/><path d="M338 104q6-6 12 0q6-6 12 0"/><path d="M760 150q7-7 14 0q7-7 14 0"/>
+  </g>
+
+  <!-- Город у воды: дома, два крана — стройка -->
+  <g fill="#0b1c8c">
+    <path d="M0 360V344h26v-16h18v10h22v-22h20v28h16v-14h24v24h18v-30h22v36h20v-18h26v18h16v-26h20v26h26v-12h22v12h18v-34h28v34h20v-20h18v20h24v-14h20v14h22v-28h24v28h18v-10h26v10h24v-22h18v22h22v-16h20v16h26v-30h22v30h20v-12h24v12h18v-24h22v24h26v-18h20v18h24v-32h22v32h18v-14h26v14h22v-20h18v20h24v-10h20v10h26v-26h22v26h20v-16h24v16h18v-28h22v28h26v-12h20v12h24v-22h18v22h22v-14h20v14h24v-30h22v30h20v-16h26v16h18v-20h22v20h24v-12h20v12h26v-24h18v24h22V360Z"/>
+  </g>
+  <g fill="none" stroke="#0b1c8c" stroke-width="3" stroke-linecap="round">
+    <path d="M292 344V262M292 266h64M292 266l-24 8M356 266v14"/>
+    <path d="M1108 344V250M1108 254h-70M1108 254l26 9M1040 254v16"/>
+  </g>
+  <g fill="#ffd25e">
+    <rect x="68" y="342" width="4" height="4"/><rect x="130" y="336" width="4" height="4"/><rect x="214" y="340" width="4" height="4"/>
+    <rect x="430" y="338" width="4" height="4"/><rect x="520" y="344" width="4" height="4"/><rect x="668" y="340" width="4" height="4"/>
+    <rect x="822" y="342" width="4" height="4"/><rect x="950" y="338" width="4" height="4"/><rect x="1180" y="342" width="4" height="4"/>
+    <rect x="1262" y="340" width="4" height="4"/><rect x="1352" y="344" width="4" height="4"/>
+  </g>
+</svg>

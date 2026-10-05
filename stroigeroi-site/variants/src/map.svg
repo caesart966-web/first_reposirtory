@@ -1,0 +1,35 @@
+<svg class="v3-map__svg" viewBox="0 0 520 440" role="img" aria-label="Схема: два магазина в Петропавловске-Камчатском и один в Елизово" xmlns="http://www.w3.org/2000/svg">
+  <rect width="520" height="440" rx="24" fill="#eef4ea"/>
+  <!-- Тихий океан и Авачинская бухта -->
+  <path d="M520 250C470 262 446 300 438 344C432 384 452 418 470 440H520Z" fill="#cfe1ff"/>
+  <path d="M96 440C80 392 92 334 140 300C188 266 252 262 300 282C346 302 372 330 404 336C424 340 432 346 436 360C440 380 452 412 470 440Z" fill="#cfe1ff"/>
+  <path d="M300 282C346 302 372 330 404 336C424 340 432 346 436 360" fill="none" stroke="#b5cdf7" stroke-width="3"/>
+  <!-- Река Авача -->
+  <path d="M74 64C110 104 132 150 150 196C164 232 178 262 208 276" fill="none" stroke="#a9c6f6" stroke-width="5" stroke-linecap="round"/>
+  <!-- Вулканы на горизонте -->
+  <g>
+    <path d="M300 74 338 18 376 74Z" fill="#a7b6e6"/>
+    <path d="M326 36 338 18 350 36 344 40 338 34 332 40Z" fill="#fff"/>
+    <path d="M372 80 406 34 440 80Z" fill="#b9c6ee"/>
+    <path d="M396 48 406 34 416 48 411 51 406 46 401 51Z" fill="#fff"/>
+  </g>
+  <!-- Дорога Елизово — Петропавловск -->
+  <path d="M96 118C150 150 196 168 246 182C300 198 338 214 370 240C392 258 404 276 410 300" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round"/>
+  <path d="M96 118C150 150 196 168 246 182C300 198 338 214 370 240C392 258 404 276 410 300" fill="none" stroke="#d6dbe6" stroke-width="2" stroke-dasharray="8 8"/>
+  <!-- Города -->
+  <circle cx="96" cy="118" r="34" fill="#dfe8d6"/>
+  <ellipse cx="384" cy="262" rx="70" ry="52" fill="#dfe8d6"/>
+  <text x="96" y="176" text-anchor="middle" font-size="17" font-weight="700" fill="#1b1b1f">Елизово</text>
+  <text x="384" y="336" text-anchor="middle" font-size="15" font-weight="700" fill="#1b1b1f">Петропавловск-</text>
+  <text x="384" y="354" text-anchor="middle" font-size="15" font-weight="700" fill="#1b1b1f">Камчатский</text>
+  <!-- Магазины -->
+  <g font-size="15" font-weight="700" text-anchor="middle" fill="#fff">
+    <path d="M370 222c-12 0-20 9-20 20 0 15 20 32 20 32s20-17 20-32c0-11-8-20-20-20Z" fill="#d81921"/>
+    <text x="370" y="248">1</text>
+    <path d="M412 246c-12 0-20 9-20 20 0 15 20 32 20 32s20-17 20-32c0-11-8-20-20-20Z" fill="#d81921"/>
+    <text x="412" y="272">2</text>
+    <path d="M96 74c-12 0-20 9-20 20 0 15 20 32 20 32s20-17 20-32c0-11-8-20-20-20Z" fill="#d81921"/>
+    <text x="96" y="100">3</text>
+  </g>
+  <text x="24" y="420" font-size="12" fill="#63636e">Схема, не в масштабе</text>
+</svg>

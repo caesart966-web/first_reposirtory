@@ -1,0 +1,86 @@
+  <!-- Вариант 2 — «Герой»: фирменный тёмно-синий, полосы с логотипа и герой
+       с баннера во весь рост. Заголовки — Russo One (OFL), значки —
+       Phosphor (MIT) белым по красному кругу, как значок на груди героя. -->
+  <section class="v2-hero">
+    <span class="v2-hero__stripes" aria-hidden="true"></span>
+    <div class="container v2-hero__grid">
+      <div class="v2-hero__copy">
+        <p class="v2-note" data-nosnippet>Сайт в разработке: цены и наличие уточняйте по телефону <a href="tel:+79638319999">8-963-831-99-99</a></p>
+        <p class="v2-hero__slogan">Наши материалы — ваша уверенность</p>
+        <h1 class="v2-hero__title">Материалы для стройки и ремонта</h1>
+        <p class="v2-hero__lead">Три магазина на Камчатке, больше 10 000 товаров. Работаем без выходных — приезжайте или звоните, подскажем, сколько брать.</p>
+        <form class="v2-search" action="../catalog.html" role="search">
+          <label class="visually-hidden" for="v2-q">Поиск по каталогу</label>
+          <input id="v2-q" type="search" name="search" placeholder="Цемент, гипсокартон, перфоратор…" autocomplete="off">
+          <button type="submit">{{ph magnifying-glass 22}}<span>Найти</span></button>
+        </form>
+        <div class="v2-hero__links">
+          <a href="../catalog.html">{{ph toolbox 20}}Каталог</a>
+          <a href="../calculator.html">{{ph calculator 20}}Калькулятор</a>
+          <a href="../contacts.html">{{ph map-pin 20}}Магазины</a>
+        </div>
+      </div>
+      <div class="v2-hero__art" aria-hidden="true">
+        <span class="v2-hero__ring"></span>
+        <img class="v2-hero__mascot" src="img/mascot.webp" alt="" width="940" height="976">
+        <span class="v2-bubble">Подскажу, сколько брать!</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="v2-powers">
+    <div class="container v2-powers__grid">
+      <div class="v2-power"><span class="v2-power__badge">{{ph storefront 26}}</span><strong>3 магазина</strong><span>2 в Петропавловске, 1 в Елизово</span></div>
+      <div class="v2-power"><span class="v2-power__badge">{{ph clock 26}}</span><strong>Без выходных</strong><span>Пн–Пт до 19:00, Сб–Вс до 18:00</span></div>
+      <div class="v2-power"><span class="v2-power__badge">{{ph calculator 26}}</span><strong>14 калькуляторов</strong><span>Посчитаем листы, мешки, рулоны</span></div>
+      <div class="v2-power"><span class="v2-power__badge">{{ph warehouse 26}}</span><strong>2 склада</strong><span>Товар в наличии и под заказ</span></div>
+    </div>
+  </section>
+
+  <section class="v2-section">
+    <div class="container">
+      <div class="v2-head">
+        <h2 class="v2-h2">Разделы каталога</h2>
+        <a class="v2-link" href="../catalog.html">Весь каталог</a>
+      </div>
+      {{cats-v2}}
+    </div>
+  </section>
+
+  {{products Хиты продаж}}
+
+  <section class="v2-section">
+    <div class="container">
+      <div class="v2-helper reveal">
+        <img class="v2-helper__mascot" src="img/mascot-bust.webp" alt="" width="940" height="660" loading="lazy">
+        <div class="v2-helper__copy">
+          <p class="v2-helper__bubble">Не знаете, сколько брать? Посчитаю!</p>
+          <h2 class="v2-h2 v2-h2--light">Строительный калькулятор</h2>
+          <p class="v2-helper__text">14 расчётов по вашим размерам — и сразу список покупок, который можно отправить менеджеру.</p>
+          <div class="v2-helper__chips">{{calcs v2-chip 8}}</div>
+          <a class="v2-btn v2-btn--red" href="../calculator.html">Открыть калькулятор</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="v2-numbers">
+    <div class="container v2-numbers__grid">
+      <div class="v2-number"><strong>с 2007</strong><span>года на рынке</span></div>
+      <div class="v2-number"><strong>10 000+</strong><span>товаров в наличии и под заказ</span></div>
+      <div class="v2-number"><strong>150 000</strong><span>клиентов в год</span></div>
+      <div class="v2-number"><strong>50+</strong><span>сотрудников в команде</span></div>
+    </div>
+  </section>
+
+  {{products Новинки}}
+
+  <section class="v2-section">
+    <div class="container">
+      <div class="v2-head">
+        <h2 class="v2-h2">Наши магазины</h2>
+        <a class="v2-link" href="../contacts.html">Все контакты</a>
+      </div>
+      {{stores-v2}}
+    </div>
+  </section>
