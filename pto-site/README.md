@@ -737,6 +737,7 @@ services: ispolnitelnaya-dokumentatsiya, zos
 | `pochta` | нажатие на адрес почты |
 | `telegram` | переход в Telegram |
 | `max` | переход в MAX |
+| `whatsapp` | переход в WhatsApp |
 
 Цель `zayavka` стоит отметить как основную — по ней Директ учится приводить заявки,
 а не клики. Посетители, отказавшиеся от cookie, в Метрику не попадают, поэтому

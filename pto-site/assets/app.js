@@ -32,6 +32,7 @@ window.xptoGoal = function (name) {
     else if (href.indexOf('mailto:') === 0) window.xptoGoal('pochta');
     else if (href.indexOf('t.me/') > -1) window.xptoGoal('telegram');
     else if (href.indexOf('max.ru') > -1) window.xptoGoal('max');
+    else if (href.indexOf('wa.me/') > -1) window.xptoGoal('whatsapp');
   });
 
   // Метка «скрипты работают». Всё, что прячет контент до анимации, висит
