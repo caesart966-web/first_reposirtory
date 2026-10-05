@@ -142,7 +142,8 @@ const articleSchema = {
   description: article.data.description,
   datePublished: published,
   dateModified: modified,
-  author: { '@type': 'Person', name: 'Багишев Алихан Ахадович' },
+  // Узел владельца объявлен в разметке организации (Base.astro, founder).
+  author: { '@id': new URL('/', Astro.site).toString() + '#person' },
   publisher: { '@id': new URL('/', Astro.site).toString() + '#org' },
   mainEntityOfPage: { '@id': `${pageUrl}#webpage` },
   isPartOf: { '@id': `${pageUrl}#webpage` },

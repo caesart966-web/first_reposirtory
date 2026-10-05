@@ -37,6 +37,9 @@ const grouped = GROUPS.map((g) => ({
 // Разбор, с которого начинают вступающие впервые, — ссылкой в шапке.
 // Название берётся из самой статьи: переписанное руками разошлось бы с ней.
 const start = all.find((a) => a.id === 'kak-vstupit-v-sro')
+// Перед ним — что такое СРО вообще (05.10.2026): головной запрос ниши,
+// и тому, кто вступает впервые, он нужен раньше шагов вступления.
+const basics = all.find((a) => a.id === 'chto-takoe-sro')
 
 const fmt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
 
@@ -89,7 +92,12 @@ const articlesList = {
       <PageNav label="Разделы" items={grouped.map((g) => ({ href: `#${g.anchor}`, label: `${g.t} · ${g.items.length}` }))} />
       {start && (
         <p class="start">
-          Вступаете впервые? Начните с разбора{' '}
+          Вступаете впервые? Начните с {basics ? 'разборов' : 'разбора'}{' '}
+          {basics && (
+            <>
+              <a href={href(`/baza-znaniy/${basics.id}/`)}>«{basics.data.title}»</a> и{' '}
+            </>
+          )}
           <a href={href(`/baza-znaniy/${start.id}/`)}>«{start.data.title}»</a>.
         </p>
       )}
