@@ -1315,6 +1315,7 @@ def page_home(r: Renderer) -> None:
           <span class="eyebrow">Коротко</span>
           <h2>{esc(offer["title"])}</h2>
           {paragraphs(offer["text"], "lead")}
+          <p><a class="section__more" href="{site.url("/pto-na-autsorse/")}">Как устроен ПТО на аутсорсе</a></p>
         </div>
         <aside class="panel panel--accent offer-card">
           <h3>Условия работы</h3>
@@ -1381,9 +1382,11 @@ def page_home(r: Renderer) -> None:
 
     r.render(
         path="/",
-        title=f'{site.company["name"]} — документальное сопровождение строительства по всей России',
-        description=("Проектирование, исполнительная документация, сметы, ППР, геодезия, защита объёмов "
-                     "КС-2 и КС-3, Ростехнадзор и ЗОС. Работаем удалённо по всей России, сдаём без возвратов."),
+        # Запрос впереди, бренд в конце: поисковик и человек читают заголовок
+        # слева направо, а «X-PTO» пока не ищет никто.
+        title=f'ПТО на аутсорсе и исполнительная документация — {site.company["name"]}',
+        description=("Производственно-технический отдел на аутсорсе: проектирование, исполнительная "
+                     "документация, сметы, ППР, геодезия, КС-2 и КС-3, Ростехнадзор и ЗОС. По всей России."),
         body=body,
         head_extra=head,
         priority="1.0",
@@ -1666,6 +1669,84 @@ def page_about(r: Renderer) -> None:
     ])
     r.render(path="/o-kompanii/", title=cfg["title"], description=cfg["description"],
              body=body, head_extra=head, priority="0.6")
+
+
+def page_pto(r: Renderer) -> None:
+    """/pto-na-autsorse/ — под запрос «ПТО на аутсорсе». Весь сайт об этом,
+    а страницы, которая отвечала бы на запрос прямо, не было. Факты — из тех же
+    блоков, что главная и «О компании» (site.json → pto_page, why, process)."""
+    site = r.site
+    cfg = site.raw["pto_page"]
+    why = site.raw["why"]
+    process = site.raw["process"]
+    path = "/pto-na-autsorse/"
+
+    why_cards = "\n".join(f'''        <div class="card">
+          <h3>{esc(w["title"])}</h3>
+          <p>{esc(w["text"])}</p>
+        </div>''' for w in why["items"])
+
+    body = f'''  <section class="page-head">
+    <div class="container">
+      <ul class="breadcrumbs">
+        <li><a href="{site.url('/')}">Главная</a></li>
+        <li>ПТО на аутсорсе</li>
+      </ul>
+      <h1>{esc(cfg["h1"])}</h1>
+      <p class="lead">{esc(cfg["lead"])}</p>
+      <div class="btn-row" style="margin-top:1.5rem">
+        <a class="btn btn--primary" href="#zayavka">Оставить заявку</a>
+        <a class="btn btn--ghost btn--on-dark" href="tel:{esc(site.contacts["phone_href"])}">{esc(site.contacts["phone_display"])}</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container split">
+      <div>
+        <h2>Что это такое</h2>
+        {paragraphs(cfg["what"])}
+      </div>
+      <aside>
+        <div class="panel panel--accent">
+          <h3>{esc(cfg["when_title"])}</h3>
+          {li_list(cfg["when"])}
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section section--alt">
+    <div class="container">
+      <div class="section__head"><h2>Что берём на себя</h2></div>
+{block_services_by_group(site)}
+    </div>
+  </section>
+
+  <section class="section section--dark">
+    <div class="container">
+      <div class="section__head"><h2>{esc(why["title"])}</h2></div>
+      <div class="grid grid--2">
+{why_cards}
+      </div>
+    </div>
+  </section>
+
+{block_steps(process["steps"], process["title"])}
+
+{block_faq(cfg["faq"])}
+
+{block_articles(site, site.articles[:3], "Статьи", more=True)}
+
+{block_form(site)}'''
+
+    head = "\n".join([
+        jsonld(schema_organization(site)),
+        jsonld(schema_faq(cfg["faq"])),
+        jsonld(schema_breadcrumbs(site, [("Главная", "/"), ("ПТО на аутсорсе", path)])),
+    ])
+    r.render(path=path, title=cfg["title"], description=cfg["description"],
+             body=body, head_extra=head, priority="0.9")
 
 
 # ---------- контакты ------------------------------------------------------
@@ -2017,6 +2098,20 @@ def articles_for(site: Site, service_slug: str, limit: int = 3) -> list:
     return [a for a in site.articles if service_slug in a["services"]][:limit]
 
 
+def related_articles(site: Site, a: dict, limit: int = 3) -> list:
+    """Статьи для «Читайте также»: сначала с общими услугами, при равенстве —
+    следующие по кругу за этой. Раньше здесь всегда стояли три последние
+    статьи, и старые не получали ни одной ссылки из других статей: на ППР
+    вели три страницы сайта, на ЗОС — четыре."""
+    arts = site.articles
+    me = arts.index(a)
+    others = [x for x in arts if x is not a]
+    def key(x):
+        shared = len(set(x["services"]) & set(a["services"]))
+        return (-shared, (arts.index(x) - me) % len(arts))
+    return sorted(others, key=key)[:limit]
+
+
 def schema_article(site: Site, a: dict, path: str) -> dict:
     org = {"@id": site.abs_url("/") + "#organization"}
     return {
@@ -2100,7 +2195,7 @@ def page_article(r: Renderer, a: dict) -> None:
     </div>
   </section>
 
-{block_articles(site, [x for x in site.articles if x["slug"] != a["slug"]][:3], "Читайте также")}
+{block_articles(site, related_articles(site, a), "Читайте также")}
 
 {block_form(site, preselect=services[0]["nav_title"] if services else "")}'''
 
@@ -2364,6 +2459,8 @@ def write_llms(site: Site) -> None:
         f"- [Все услуги]({site.abs_url('/uslugi/')}): список из "
         f"{len(site.services)} направлений документации.",
         f"- [Объекты]({site.abs_url('/obekty/')}): объекты, на которых велась документация.",
+        f"- [ПТО на аутсорсе]({site.abs_url('/pto-na-autsorse/')}): "
+        f"{site.raw['pto_page']['lead']}",
         f"- [О компании]({site.abs_url('/o-kompanii/')}): как устроена работа.",
         f"- [Контакты]({site.abs_url('/kontakty/')}): телефон, почта, мессенджеры.",
         f"- [Персональные данные]({site.abs_url('/politika/')}): политика обработки "
@@ -2521,6 +2618,7 @@ def build(regen_media: bool = False, base_path: str = None,
             page_service(r, service, city)
     page_objects(r)
     page_about(r)
+    page_pto(r)
     page_contacts(r)
     page_policy(r)
     page_articles_index(r)
