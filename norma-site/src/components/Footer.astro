@@ -1,9 +1,10 @@
 ---
-import { SITE, REGISTRIES, href } from '../config/site'
+import { SITE, REGISTRIES, YANDEX_ORG, href } from '../config/site'
 import { SERVICES } from '../config/services'
 import { REGIONS } from '../config/regions'
 import LogoMark from './LogoMark.astro'
 import ShareLinks from './ShareLinks.astro'
+import YandexRating from './YandexRating.astro'
 
 interface Props {
   /** Название страницы — для ссылок «Поделиться». */
@@ -65,6 +66,18 @@ const year = new Date().getFullYear()
           <a href={SITE.telegram} target="_blank" rel="noopener noreferrer">Telegram</a>
           {SITE.maxLink && <a href={SITE.maxLink} target="_blank" rel="noopener noreferrer" data-goal="click_max">MAX</a>}
         </div>
+        {/* Рейтинг на Яндекс Картах (с 05.10.2026): значок — только после
+            «Принять», до того ссылка на карточку того же размера
+            (YandexRating.astro). «Оставить отзыв» ведёт прямо в форму —
+            та же ссылка, что в QR на «Контактах». */}
+        {YANDEX_ORG && (
+          <div class="frate">
+            <YandexRating tone="dark" />
+            <a class="freview" href={SITE.reviewLink} target="_blank" rel="noopener noreferrer" data-goal="click_review">
+              Оставить отзыв
+            </a>
+          </div>
+        )}
       </div>
 
       <div>
@@ -180,6 +193,10 @@ const year = new Date().getFullYear()
      ссылок на раскладку подвала не влияет. */
   .msgs a { color: var(--acc-bright); text-decoration: none; font-size: 14px; padding: 8px 0; }
   .msgs a:hover { text-decoration: underline; }
+
+  .frate { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; margin-top: 6px; }
+  .freview { color: var(--acc-bright); text-decoration: none; font-size: 14px; padding: 8px 0; }
+  .freview:hover { text-decoration: underline; }
 
   /* Подписи колонок — h2, а не h3, и это не про размер шрифта.
      На странице 404 в теле нет ни одного h2: там заголовок, карточки

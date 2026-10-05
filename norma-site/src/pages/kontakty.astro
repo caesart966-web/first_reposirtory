@@ -3,9 +3,11 @@ import Base from '../layouts/Base.astro'
 import ConsultBlock from '../components/ConsultBlock.astro'
 import Seal from '../components/Seal.astro'
 import Icon from '../components/Icon.astro'
-import { href, SITE, REGISTRIES } from '../config/site'
+import { href, SITE, REGISTRIES, YANDEX_ORG } from '../config/site'
 import { ABOUT } from '../config/about'
 import HeadPhoto from '../components/HeadPhoto.astro'
+import YandexRating from '../components/YandexRating.astro'
+import ReviewQr from '../components/ReviewQr.astro'
 
 // Страница контактов — карточка контрагента, а не футер с кружочками
 // мессенджеров.
@@ -228,6 +230,41 @@ const IDENT = [
             <a href={href('/obo-mne/')}>Обо мне: что я обязуюсь делать и чего не делаю →</a>
           </p>
         </div>
+
+        {/* Отзывы — с 05.10.2026, просьба заказчика: значок рейтинга
+            и QR-код, который выдал Яндекс Бизнес. Значок — только после
+            «Принять» (YandexRating.astro), до того на его месте ссылка.
+            QR нужен тому, кто читает страницу с компьютера, а отзыв пишет
+            с телефона; на телефоне код не наведёшь сам на себя, и там
+            вместо него — ссылка ниже. Адрес раздела (#otzyvy) можно
+            отправлять клиентам. */}
+        {YANDEX_ORG && (
+          <>
+            <h2 class="k-h k-h--geo" id="otzyvy">Отзывы</h2>
+            <div class="k-rev">
+              <div class="k-rev-main">
+                <p class="k-geo-lead">
+                  Отзывы обо мне — на Яндекс Картах: их пишут клиенты, рейтинг считает Яндекс.
+                </p>
+                <YandexRating />
+                <p class="k-rev-ask">Работали со мной? Напишите, как прошло вступление.</p>
+                <a
+                  class="k-rev-go"
+                  href={SITE.reviewLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-goal="click_review"
+                >
+                  Оставить отзыв на Яндекс Картах <Icon name="arrow" size={14} />
+                </a>
+              </div>
+              <figure class="k-rev-qr">
+                <ReviewQr size={132} />
+                <figcaption>Наведите камеру телефона — откроется форма отзыва</figcaption>
+              </figure>
+            </div>
+          </>
+        )}
       </div>
 
       <aside class="k-side">
@@ -566,6 +603,39 @@ const IDENT = [
   }
   .k-about a:hover { text-decoration: underline; }
 
+  /* ── Отзывы ──
+     Те же линейки, что у списка «Географии»: строка бланка, без рамки.
+     Слева текст, значок и ссылка, справа QR. */
+  .k-rev {
+    display: grid;
+    gap: 24px;
+    margin-top: 24px;
+    padding: 20px 0;
+    border-block: 1px solid var(--line);
+  }
+  @media (min-width: 700px) {
+    .k-rev { grid-template-columns: minmax(0, 1fr) 150px; gap: 40px; align-items: start; }
+  }
+  .k-rev-main { display: grid; gap: 14px; justify-items: start; max-width: 60ch; }
+  .k-rev-ask { font-size: 15px; line-height: 1.62; color: var(--muted); }
+  .k-rev-go {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 44px;
+    color: var(--acc-deep);
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+    transition: gap var(--t-fast) var(--ease);
+  }
+  .k-rev-go:hover { gap: 11px; text-decoration: underline; }
+  .k-rev-qr { margin: 0; display: grid; gap: 10px; }
+  .k-rev-qr figcaption { font-size: 12.5px; line-height: 1.5; color: var(--muted); }
+  /* Ниже 700 px — телефон: навести его камеру на его же экран нельзя,
+     код только занимал бы место. Ссылка выше делает то же самое. */
+  @media (max-width: 699px) { .k-rev-qr { display: none; } }
+
   /* ── Реквизитная карта ──
      Единственная рамка на странице: это документ, и у документа есть край.
      Внутри — только линейки. */
@@ -704,7 +774,7 @@ const IDENT = [
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .k-phone, .k-ch-link, .k-ch-ic, .k-copy, .k-check a { transition: none; }
+    .k-phone, .k-ch-link, .k-ch-ic, .k-copy, .k-check a, .k-rev-go { transition: none; }
   }
 </style>
 
