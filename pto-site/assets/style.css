@@ -2909,6 +2909,18 @@ html {
 .link-list li:first-child { border-top: 0; }
 .link-list a { font-weight: 600; }
 
+/* ---------- 14г. Значки мессенджеров и сервисов ------------------------
+   Фирменные значки — картинки со своими цветами: не перекрашиваются ни при
+   наведении, ни в тёмной теме. Почта и Яндекс Карты нарисованы на белом —
+   на тёмном фоне подвала они так и остаются белыми кружком и квадратом. */
+.brand-ico { display: inline-block; width: 1.125rem; height: 1.125rem; margin-right: .5rem;
+  vertical-align: -0.25rem; flex: none; }
+.contact-line__label .brand-ico { width: 1rem; height: 1rem; margin-right: .375rem; vertical-align: -0.1875rem; }
+.contact-card__icon--img,
+.contact-card:hover .contact-card__icon--img { background: none; padding: 0; }
+.contact-card__icon--img img { width: 38px; height: 38px; display: block;
+  filter: drop-shadow(0 1px 2px rgba(13, 28, 48, .18)); }
+
 /* ---------- 14в. Рейтинг Яндекса в подвале -----------------------------
    iframe вставляет скрипт после согласия на cookie; до этого — ссылка. */
 .yrating { margin-top: var(--s-3, .75rem); }
