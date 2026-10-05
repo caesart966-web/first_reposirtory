@@ -164,6 +164,75 @@
   })();
 
   /* ======================================================================
+     «Популярные товары» на главной: подборки — вкладками.
+     В теме подборки — это модули движка в позиции Content Top главной
+     («Хиты продаж», «Акции», «Новинки» — что и в каком порядке поставили
+     в админке). Каждый модуль рисует свою подборку с заголовком; здесь
+     заголовки становятся вкладками, видна одна подборка. Первой открыта
+     первая по порядку в админке. Модуль без товаров движок не выводит —
+     и вкладки у него нет. Без javascript подборки идут одна под другой
+     со своими заголовками.
+     ====================================================================== */
+  $$('[data-top-products]').forEach(function (block, n) {
+    var tabs = $('[data-top-tabs]', block);
+    /* В Content Top могут поставить и баннер - он не подборка, и вкладки
+       из него не выйдет. Такие модули уходят под ряд с калькулятором,
+       в том же порядке, а в блоке остаются только товары. */
+    var row = block.closest('.section');
+    var ref = row;
+    Array.prototype.slice.call(block.children).forEach(function (part) {
+      if (part.matches('.top-products__head, .top-products__note') || $('.selection', part)) return;
+      if (!row || !row.parentNode) return;
+      row.parentNode.insertBefore(part, ref.nextSibling);
+      ref = part;
+    });
+    var lists = $$('.selection', block);
+    if (!tabs || !lists.length) return;
+    var panels = lists.map(function (list) {
+      return list.closest('.section') || list;
+    });
+    var buttons = lists.map(function (list, i) {
+      var title = $('.section__title', list);
+      var name = title && title.textContent.trim() ? title.textContent.trim() : 'Подборка ' + (i + 1);
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'top-products__tab';
+      button.id = 'top-tab-' + n + '-' + i;
+      button.setAttribute('role', 'tab');
+      button.textContent = name;
+      panels[i].id = panels[i].id || 'top-panel-' + n + '-' + i;
+      panels[i].setAttribute('role', 'tabpanel');
+      panels[i].setAttribute('aria-labelledby', button.id);
+      button.setAttribute('aria-controls', panels[i].id);
+      tabs.appendChild(button);
+      return button;
+    });
+    function show(index, focus) {
+      buttons.forEach(function (button, i) {
+        var on = i === index;
+        button.setAttribute('aria-selected', on ? 'true' : 'false');
+        button.tabIndex = on ? 0 : -1;
+        panels[i].hidden = !on;
+      });
+      if (focus) buttons[index].focus();
+      /* Карусель считает края по ширине ленты, а у скрытой ленты ширина 0 */
+      window.dispatchEvent(new Event('resize'));
+    }
+    buttons.forEach(function (button, i) {
+      button.addEventListener('click', function () { show(i, false); });
+      button.addEventListener('keydown', function (e) {
+        if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+        e.preventDefault();
+        var next = (i + (e.key === 'ArrowRight' ? 1 : -1) + buttons.length) % buttons.length;
+        show(next, true);
+      });
+    });
+    tabs.hidden = false;
+    block.classList.add('is-tabbed');
+    show(0, false);
+  });
+
+  /* ======================================================================
      Подборки товаров каруселью: стрелки листают на видимую ширину,
      на краях гаснут. Работает и обычной прокруткой пальцем.
      ====================================================================== */

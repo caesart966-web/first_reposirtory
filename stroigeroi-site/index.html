@@ -21,8 +21,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="assets/logo.png" type="image/png">
 <link rel="apple-touch-icon" href="assets/logo.png">
-<link rel="preload" href="assets/style.css?v=1cd2b4cb" as="style">
-<link rel="stylesheet" href="assets/style.css?v=1cd2b4cb">
+<link rel="preload" href="assets/style.css?v=47010842" as="style">
+<link rel="stylesheet" href="assets/style.css?v=47010842">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Store", "name": "Строй-Герой", "slogan": "Наши материалы — ваша уверенность", "url": "https://stroigeroi.ru/", "telephone": "+7-963-831-99-99", "email": "stroigeroi41@mail.ru", "legalName": "ИП Лиманова Виктория Васильевна", "taxID": "410109423040", "areaServed": "Камчатский край", "department": [{"@type": "Store", "name": "Строй-Герой — ул. Чубарова, 16, корп. 40", "telephone": "+7-963-831-99-99", "address": {"@type": "PostalAddress", "streetAddress": "ул. Чубарова, 16, корп. 40", "addressLocality": "Петропавловск-Камчатский", "addressRegion": "Камчатский край", "addressCountry": "RU"}, "openingHoursSpecification": [{"@type": "OpeningHoursSpecification", "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "opens": "09:00", "closes": "19:00"}, {"@type": "OpeningHoursSpecification", "dayOfWeek": ["Saturday", "Sunday"], "opens": "10:00", "closes": "18:00"}]}, {"@type": "Store", "name": "Строй-Герой — просп. 50 лет Октября, 17А", "telephone": "+7-963-831-99-99", "address": {"@type": "PostalAddress", "streetAddress": "просп. 50 лет Октября, 17А", "addressLocality": "Петропавловск-Камчатский", "addressRegion": "Камчатский край", "addressCountry": "RU"}, "openingHoursSpecification": [{"@type": "OpeningHoursSpecification", "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "opens": "09:00", "closes": "19:00"}, {"@type": "OpeningHoursSpecification", "dayOfWeek": ["Saturday", "Sunday"], "opens": "09:00", "closes": "18:00"}]}, {"@type": "Store", "name": "Строй-Герой — Магистральная ул., 2/2", "telephone": "+7-963-831-99-99", "address": {"@type": "PostalAddress", "streetAddress": "Магистральная ул., 2/2", "addressLocality": "Елизово", "addressRegion": "Камчатский край", "addressCountry": "RU"}, "openingHoursSpecification": [{"@type": "OpeningHoursSpecification", "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "opens": "09:00", "closes": "19:00"}, {"@type": "OpeningHoursSpecification", "dayOfWeek": ["Saturday", "Sunday"], "opens": "09:00", "closes": "18:00"}]}], "openingHoursSpecification": [{"@type": "OpeningHoursSpecification", "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "opens": "09:00", "closes": "19:00"}, {"@type": "OpeningHoursSpecification", "dayOfWeek": ["Saturday", "Sunday"], "opens": "09:00", "closes": "18:00"}]}</script>
 <script>
 /* Тема применяется до отрисовки, иначе при тёмной теме страница мигает белым.
@@ -162,64 +162,44 @@
     </div>
   </section>
 
-  <section class="section section--tight promo-row" aria-label="Калькулятор, акции и магазины">
-    <div class="container promo-row__grid">
+  <section class="section section--tight shop-row" aria-label="Калькулятор и популярные товары">
+    <div class="container shop-row__grid">
       <article class="offer-card offer-card--calc">
         <div class="offer-card__body">
           <h2 class="offer-card__title">Не знаете, сколько материала нужно?</h2>
           <p class="offer-card__text">Рассчитайте нужное количество в нашем калькуляторе: 14 расчётов — от гипсокартона до кровли.</p>
+          <ul class="offer-card__links">
+            <li><a href="calculator.html#gipsokarton">Гипсокартон</a></li>
+            <li><a href="calculator.html#plitka">Плитка</a></li>
+            <li><a href="calculator.html#laminat">Ламинат</a></li>
+            <li><a href="calculator.html#oboi">Обои</a></li>
+            <li><a href="calculator.html#kraska">Краска</a></li>
+            <li><a href="calculator.html#beton">Бетон</a></li>
+            <li><a href="calculator.html#krovlya">Кровля</a></li>
+          </ul>
           <a class="btn btn--action offer-card__btn" href="calculator.html">Открыть калькулятор <svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224.49,136.49l-72,72a12,12,0,0,1-17-17L187,140H40a12,12,0,0,1,0-24H187L135.51,64.48a12,12,0,0,1,17-17l72,72A12,12,0,0,1,224.49,136.49Z"/></svg></a>
         </div>
         <picture class="offer-card__media"><source type="image/avif" srcset="assets/home/promo-calc.avif"><img src="assets/home/promo-calc.webp" alt="" width="560" height="560" loading="lazy" decoding="async"></picture>
       </article>
 
-      <article class="offer-card offer-card--sale">
-        <div class="offer-card__body">
-          <span class="offer-card__badge" aria-hidden="true">%</span>
-          <h2 class="offer-card__title">Акции и скидки</h2>
-          <p class="offer-card__text">Товары со скидкой собраны в отдельный раздел каталога.</p>
-          <a class="btn btn--light offer-card__btn" href="catalog.html" data-oc-route="product/special">Смотреть акции <svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224.49,136.49l-72,72a12,12,0,0,1-17-17L187,140H40a12,12,0,0,1,0-24H187L135.51,64.48a12,12,0,0,1,17-17l72,72A12,12,0,0,1,224.49,136.49Z"/></svg></a>
+      <div class="top-products" data-top-products>
+        <div class="top-products__head">
+          <h2 class="top-products__title">Популярные товары</h2>
+          <div class="top-products__tabs" role="tablist" aria-label="Подборки товаров" data-top-tabs hidden></div>
+          <a class="top-products__all" href="catalog.html">Все товары</a>
         </div>
-        <picture class="offer-card__media"><source type="image/avif" srcset="assets/home/promo-paint.avif"><img src="assets/home/promo-paint.webp" alt="" width="560" height="560" loading="lazy" decoding="async"></picture>
-      </article>
-
-      <section class="stores-box" aria-labelledby="stores-box-title">
-        <div class="stores-box__head">
-          <h2 class="stores-box__title" id="stores-box-title">Наши магазины</h2>
-          <a class="stores-box__link" href="contacts.html">Все контакты</a>
-        </div>
-        <ul class="stores-box__list"><li class="store-line" data-hours-weekday="09:00-19:00" data-hours-weekend="10:00-18:00"><span class="store-line__pin"><svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,16a88.1,88.1,0,0,0-88,88c0,75.3,80,132.17,83.41,134.55a8,8,0,0,0,9.18,0C136,236.17,216,179.3,216,104A88.1,88.1,0,0,0,128,16Zm0,56a32,32,0,1,1-32,32A32,32,0,0,1,128,72Z"/></svg></span><span class="store-line__body"><span class="store-line__top"><strong class="store-line__name">Магазин на Чубарова</strong><a class="store-line__tel" href="tel:+79638319999">8-963-831-99-99</a></span><span class="store-line__addr">Петропавловск-Камчатский, ул. Чубарова, 16, корп. 40</span><span class="store-line__hours">Пн–Пт 9–19 · Сб–Вс 10–18 <span class="shop-card__now" data-hours-now></span></span></span></li><li class="store-line" data-hours-weekday="09:00-19:00" data-hours-weekend="09:00-18:00"><span class="store-line__pin"><svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,16a88.1,88.1,0,0,0-88,88c0,75.3,80,132.17,83.41,134.55a8,8,0,0,0,9.18,0C136,236.17,216,179.3,216,104A88.1,88.1,0,0,0,128,16Zm0,56a32,32,0,1,1-32,32A32,32,0,0,1,128,72Z"/></svg></span><span class="store-line__body"><span class="store-line__top"><strong class="store-line__name">Магазин на 50 лет Октября</strong><a class="store-line__tel" href="tel:+79638300999">8-963-830-09-99</a></span><span class="store-line__addr">Петропавловск-Камчатский, просп. 50 лет Октября, 17А</span><span class="store-line__hours">Пн–Пт 9–19 · Сб–Вс 9–18 <span class="shop-card__now" data-hours-now></span></span></span></li><li class="store-line" data-hours-weekday="09:00-19:00" data-hours-weekend="09:00-18:00"><span class="store-line__pin"><svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,16a88.1,88.1,0,0,0-88,88c0,75.3,80,132.17,83.41,134.55a8,8,0,0,0,9.18,0C136,236.17,216,179.3,216,104A88.1,88.1,0,0,0,128,16Zm0,56a32,32,0,1,1-32,32A32,32,0,0,1,128,72Z"/></svg></span><span class="store-line__body"><span class="store-line__top"><strong class="store-line__name">Магазин в Елизово</strong><a class="store-line__tel" href="tel:+79638300333">8-963-830-03-33</a></span><span class="store-line__addr">Елизово, Магистральная ул., 2/2</span><span class="store-line__hours">Пн–Пт 9–19 · Сб–Вс 9–18 <span class="shop-card__now" data-hours-now></span></span></span></li></ul>
-      </section>
-    </div>
-  </section>
-
-  <section class="perks" aria-label="Как мы работаем">
-    <div class="container">
-      <ul class="perks__list">
-        <li class="perk"><span class="perk__icon"><svg width="30" height="30" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M248,120v64a8,8,0,0,1-8,8H216a24,24,0,0,0-48,0H104a24,24,0,0,0-48,0H32a8,8,0,0,1-8-8V144H184V120Z" opacity="0.2"/><path d="M255.42,117l-14-35A15.93,15.93,0,0,0,226.58,72H192V64a8,8,0,0,0-8-8H32A16,16,0,0,0,16,72V184a16,16,0,0,0,16,16H49a32,32,0,0,0,62,0h50a32,32,0,0,0,62,0h17a16,16,0,0,0,16-16V120A7.94,7.94,0,0,0,255.42,117ZM192,88h34.58l9.6,24H192ZM32,72H176v64H32ZM80,208a16,16,0,1,1,16-16A16,16,0,0,1,80,208Zm81-24H111a32,32,0,0,0-62,0H32V152H176v12.31A32.11,32.11,0,0,0,161,184Zm31,24a16,16,0,1,1,16-16A16,16,0,0,1,192,208Zm48-24H223a32.06,32.06,0,0,0-31-24V128h48Z"/></svg></span><span class="perk__text"><strong>Доставка и самовывоз</strong>Заберите в любом из трёх магазинов, доставку уточняйте по телефону</span></li>
-        <li class="perk"><span class="perk__icon"><svg width="30" height="30" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M136,32V216H40V85.35a8,8,0,0,1,3.56-6.66l80-53.33A8,8,0,0,1,136,32Z" opacity="0.2"/><path d="M240,208H224V96a16,16,0,0,0-16-16H144V32a16,16,0,0,0-24.88-13.32L39.12,72A16,16,0,0,0,32,85.34V208H16a8,8,0,0,0,0,16H240a8,8,0,0,0,0-16ZM208,96V208H144V96ZM48,85.34,128,32V208H48ZM112,112v16a8,8,0,0,1-16,0V112a8,8,0,1,1,16,0Zm-32,0v16a8,8,0,0,1-16,0V112a8,8,0,1,1,16,0Zm0,56v16a8,8,0,0,1-16,0V168a8,8,0,0,1,16,0Zm32,0v16a8,8,0,0,1-16,0V168a8,8,0,0,1,16,0Z"/></svg></span><span class="perk__text"><strong>Частным лицам и организациям</strong>Снабжаем объекты под ключ, два склада отгрузки</span></li>
-        <li class="perk"><span class="perk__icon"><svg width="30" height="30" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z"/></svg></span><span class="perk__text"><strong>Без выходных</strong>Пн–Пт 9:00–19:00, Сб–Вс до 18:00</span></li>
-        <li class="perk"><span class="perk__icon"><svg width="30" height="30" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M80,144v40a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V128H64A16,16,0,0,1,80,144Zm112-16a16,16,0,0,0-16,16v40a16,16,0,0,0,16,16h32V128Z" opacity="0.2"/><path d="M201.89,54.66A104.08,104.08,0,0,0,24,128v56a24,24,0,0,0,24,24H64a24,24,0,0,0,24-24V144a24,24,0,0,0-24-24H40.36A88.12,88.12,0,0,1,190.54,65.93,87.39,87.39,0,0,1,215.65,120H192a24,24,0,0,0-24,24v40a24,24,0,0,0,24,24h24a24,24,0,0,1-24,24H136a8,8,0,0,0,0,16h56a40,40,0,0,0,40-40V128A103.41,103.41,0,0,0,201.89,54.66ZM64,136a8,8,0,0,1,8,8v40a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V136Zm128,56a8,8,0,0,1-8-8V144a8,8,0,0,1,8-8h24v56Z"/></svg></span><span class="perk__text"><strong>Поможем с выбором</strong>Подскажем по телефону и посчитаем, сколько нужно</span></li>
-      </ul>
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="container">
-      <div class="data-notice">
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 11.5v5M12 8h.01"/></svg>
-  <p><strong>Здесь встанут 18 позиций из прайса.</strong> Файл прайса к заданию не приложен, поэтому названия, цены, бренды и фасовки оставлены пустыми местами — выдуманные товары в макет не ставим. Пришлите прайс, и карточки заполнятся реальными данными.</p>
-</div>
-      <div class="selection" data-slider>
-        <div class="selection__head">
-          <h2 class="section__title">Хиты продаж</h2>
-          <div class="selection__nav">
-            <a class="section__link" href="catalog.html">Смотреть все</a>
+        <p class="top-products__note" data-nosnippet>Подборки «Хиты продаж», «Акции» и «Новинки» включаются в админке; товары и цены в них — из каталога. Фото в выгрузке 1С нет ни у одного товара: пришлите фото — и карточки оживут.</p>
+        <section class="section">
+          <div class="container">
+            <div class="selection" data-slider>
+              <div class="selection__head">
+                <h2 class="section__title">Хиты продаж</h2>
+                <div class="selection__nav">
             <button class="slider-btn" type="button" data-slider-prev aria-label="Предыдущие товары"><svg class="icon-prev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></button>
             <button class="slider-btn" type="button" data-slider-next aria-label="Следующие товары"><svg class="icon-next" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></button>
           </div>
-        </div>
-        <div class="selection__line" data-slider-line tabindex="0" role="group" aria-label="Хиты продаж">
+              </div>
+              <div class="selection__line" data-slider-line tabindex="0" role="group" aria-label="Хиты продаж">
 <article class="product-card">
   <div class="product-card__media">
     
@@ -242,7 +222,7 @@
 </article>
 <article class="product-card">
   <div class="product-card__media">
-    <div class="product-card__badges"><span class="badge badge--hit">Хит</span></div>
+    
     <span class="ph--photo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.4"/><path d="m5 17.5 4.5-4.5 3 3L16 12l3 3"/></svg><br>фото из прайса</span>
     <div class="product-card__tools">
       <button class="card-tool" type="button" data-add="fav" aria-label="В избранное"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20s-7-4.4-7-9.4A3.9 3.9 0 0 1 12 7.2 3.9 3.9 0 0 1 19 10.6c0 5-7 9.4-7 9.4Z"/></svg></button>
@@ -262,6 +242,102 @@
 </article>
 <article class="product-card">
   <div class="product-card__media">
+    
+    <span class="ph--photo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.4"/><path d="m5 17.5 4.5-4.5 3 3L16 12l3 3"/></svg><br>фото из прайса</span>
+    <div class="product-card__tools">
+      <button class="card-tool" type="button" data-add="fav" aria-label="В избранное"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20s-7-4.4-7-9.4A3.9 3.9 0 0 1 12 7.2 3.9 3.9 0 0 1 19 10.6c0 5-7 9.4-7 9.4Z"/></svg></button>
+      <button class="card-tool" type="button" data-add="compare" aria-label="К сравнению"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 20V11M12 20V4M18 20v-6"/></svg></button>
+      <button class="card-tool" type="button" data-modal-open="modal-quick" aria-label="Быстрый просмотр"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+    </div>
+  </div>
+  <div class="product-card__body">
+    <p class="product-card__art"><span class="ph ph--inline">артикул</span></p>
+    <a class="product-card__title" href="product.html">Название товара из прайса заказчика</a>
+    <p class="product-card__meta"><span class="ph ph--inline">фасовка</span> <span class="ph ph--inline">остаток</span></p>
+  </div>
+  <div class="product-card__bottom">
+    <span class="price ph ph--inline">цена, ₽</span>
+    <button class="btn btn--action product-card__buy" type="button" data-add="cart" aria-label="В корзину"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9.5" cy="19.5" r="1.6"/><circle cx="17" cy="19.5" r="1.6"/><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L20 8H6"/></svg><span>В корзину</span></button>
+  </div>
+</article>
+<article class="product-card">
+  <div class="product-card__media">
+    
+    <span class="ph--photo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.4"/><path d="m5 17.5 4.5-4.5 3 3L16 12l3 3"/></svg><br>фото из прайса</span>
+    <div class="product-card__tools">
+      <button class="card-tool" type="button" data-add="fav" aria-label="В избранное"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20s-7-4.4-7-9.4A3.9 3.9 0 0 1 12 7.2 3.9 3.9 0 0 1 19 10.6c0 5-7 9.4-7 9.4Z"/></svg></button>
+      <button class="card-tool" type="button" data-add="compare" aria-label="К сравнению"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 20V11M12 20V4M18 20v-6"/></svg></button>
+      <button class="card-tool" type="button" data-modal-open="modal-quick" aria-label="Быстрый просмотр"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+    </div>
+  </div>
+  <div class="product-card__body">
+    <p class="product-card__art"><span class="ph ph--inline">артикул</span></p>
+    <a class="product-card__title" href="product.html">Название товара из прайса заказчика</a>
+    <p class="product-card__meta"><span class="ph ph--inline">фасовка</span> <span class="ph ph--inline">остаток</span></p>
+  </div>
+  <div class="product-card__bottom">
+    <span class="price ph ph--inline">цена, ₽</span>
+    <button class="btn btn--action product-card__buy" type="button" data-add="cart" aria-label="В корзину"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9.5" cy="19.5" r="1.6"/><circle cx="17" cy="19.5" r="1.6"/><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L20 8H6"/></svg><span>В корзину</span></button>
+  </div>
+</article>
+<article class="product-card">
+  <div class="product-card__media">
+    
+    <span class="ph--photo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.4"/><path d="m5 17.5 4.5-4.5 3 3L16 12l3 3"/></svg><br>фото из прайса</span>
+    <div class="product-card__tools">
+      <button class="card-tool" type="button" data-add="fav" aria-label="В избранное"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20s-7-4.4-7-9.4A3.9 3.9 0 0 1 12 7.2 3.9 3.9 0 0 1 19 10.6c0 5-7 9.4-7 9.4Z"/></svg></button>
+      <button class="card-tool" type="button" data-add="compare" aria-label="К сравнению"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 20V11M12 20V4M18 20v-6"/></svg></button>
+      <button class="card-tool" type="button" data-modal-open="modal-quick" aria-label="Быстрый просмотр"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+    </div>
+  </div>
+  <div class="product-card__body">
+    <p class="product-card__art"><span class="ph ph--inline">артикул</span></p>
+    <a class="product-card__title" href="product.html">Название товара из прайса заказчика</a>
+    <p class="product-card__meta"><span class="ph ph--inline">фасовка</span> <span class="ph ph--inline">остаток</span></p>
+  </div>
+  <div class="product-card__bottom">
+    <span class="price ph ph--inline">цена, ₽</span>
+    <button class="btn btn--action product-card__buy" type="button" data-add="cart" aria-label="В корзину"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9.5" cy="19.5" r="1.6"/><circle cx="17" cy="19.5" r="1.6"/><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L20 8H6"/></svg><span>В корзину</span></button>
+  </div>
+</article>
+<article class="product-card">
+  <div class="product-card__media">
+    
+    <span class="ph--photo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.4"/><path d="m5 17.5 4.5-4.5 3 3L16 12l3 3"/></svg><br>фото из прайса</span>
+    <div class="product-card__tools">
+      <button class="card-tool" type="button" data-add="fav" aria-label="В избранное"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20s-7-4.4-7-9.4A3.9 3.9 0 0 1 12 7.2 3.9 3.9 0 0 1 19 10.6c0 5-7 9.4-7 9.4Z"/></svg></button>
+      <button class="card-tool" type="button" data-add="compare" aria-label="К сравнению"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 20V11M12 20V4M18 20v-6"/></svg></button>
+      <button class="card-tool" type="button" data-modal-open="modal-quick" aria-label="Быстрый просмотр"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+    </div>
+  </div>
+  <div class="product-card__body">
+    <p class="product-card__art"><span class="ph ph--inline">артикул</span></p>
+    <a class="product-card__title" href="product.html">Название товара из прайса заказчика</a>
+    <p class="product-card__meta"><span class="ph ph--inline">фасовка</span> <span class="ph ph--inline">остаток</span></p>
+  </div>
+  <div class="product-card__bottom">
+    <span class="price ph ph--inline">цена, ₽</span>
+    <button class="btn btn--action product-card__buy" type="button" data-add="cart" aria-label="В корзину"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9.5" cy="19.5" r="1.6"/><circle cx="17" cy="19.5" r="1.6"/><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L20 8H6"/></svg><span>В корзину</span></button>
+  </div>
+</article>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section class="section">
+          <div class="container">
+            <div class="selection" data-slider>
+              <div class="selection__head">
+                <h2 class="section__title">Акции</h2>
+                <div class="selection__nav">
+            <button class="slider-btn" type="button" data-slider-prev aria-label="Предыдущие товары"><svg class="icon-prev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></button>
+            <button class="slider-btn" type="button" data-slider-next aria-label="Следующие товары"><svg class="icon-next" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></button>
+          </div>
+              </div>
+              <div class="selection__line" data-slider-line tabindex="0" role="group" aria-label="Акции">
+<article class="product-card">
+  <div class="product-card__media">
+    <div class="product-card__badges"><span class="badge badge--sale">Скидка</span></div>
     
     <span class="ph--photo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.4"/><path d="m5 17.5 4.5-4.5 3 3L16 12l3 3"/></svg><br>фото из прайса</span>
     <div class="product-card__tools">
@@ -283,6 +359,7 @@
 <article class="product-card">
   <div class="product-card__media">
     <div class="product-card__badges"><span class="badge badge--sale">Скидка</span></div>
+    
     <span class="ph--photo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.4"/><path d="m5 17.5 4.5-4.5 3 3L16 12l3 3"/></svg><br>фото из прайса</span>
     <div class="product-card__tools">
       <button class="card-tool" type="button" data-add="fav" aria-label="В избранное"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20s-7-4.4-7-9.4A3.9 3.9 0 0 1 12 7.2 3.9 3.9 0 0 1 19 10.6c0 5-7 9.4-7 9.4Z"/></svg></button>
@@ -302,6 +379,106 @@
 </article>
 <article class="product-card">
   <div class="product-card__media">
+    <div class="product-card__badges"><span class="badge badge--sale">Скидка</span></div>
+    
+    <span class="ph--photo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.4"/><path d="m5 17.5 4.5-4.5 3 3L16 12l3 3"/></svg><br>фото из прайса</span>
+    <div class="product-card__tools">
+      <button class="card-tool" type="button" data-add="fav" aria-label="В избранное"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20s-7-4.4-7-9.4A3.9 3.9 0 0 1 12 7.2 3.9 3.9 0 0 1 19 10.6c0 5-7 9.4-7 9.4Z"/></svg></button>
+      <button class="card-tool" type="button" data-add="compare" aria-label="К сравнению"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 20V11M12 20V4M18 20v-6"/></svg></button>
+      <button class="card-tool" type="button" data-modal-open="modal-quick" aria-label="Быстрый просмотр"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+    </div>
+  </div>
+  <div class="product-card__body">
+    <p class="product-card__art"><span class="ph ph--inline">артикул</span></p>
+    <a class="product-card__title" href="product.html">Название товара из прайса заказчика</a>
+    <p class="product-card__meta"><span class="ph ph--inline">фасовка</span> <span class="ph ph--inline">остаток</span></p>
+  </div>
+  <div class="product-card__bottom">
+    <span class="price ph ph--inline">цена, ₽</span>
+    <button class="btn btn--action product-card__buy" type="button" data-add="cart" aria-label="В корзину"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9.5" cy="19.5" r="1.6"/><circle cx="17" cy="19.5" r="1.6"/><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L20 8H6"/></svg><span>В корзину</span></button>
+  </div>
+</article>
+<article class="product-card">
+  <div class="product-card__media">
+    <div class="product-card__badges"><span class="badge badge--sale">Скидка</span></div>
+    
+    <span class="ph--photo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.4"/><path d="m5 17.5 4.5-4.5 3 3L16 12l3 3"/></svg><br>фото из прайса</span>
+    <div class="product-card__tools">
+      <button class="card-tool" type="button" data-add="fav" aria-label="В избранное"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20s-7-4.4-7-9.4A3.9 3.9 0 0 1 12 7.2 3.9 3.9 0 0 1 19 10.6c0 5-7 9.4-7 9.4Z"/></svg></button>
+      <button class="card-tool" type="button" data-add="compare" aria-label="К сравнению"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 20V11M12 20V4M18 20v-6"/></svg></button>
+      <button class="card-tool" type="button" data-modal-open="modal-quick" aria-label="Быстрый просмотр"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+    </div>
+  </div>
+  <div class="product-card__body">
+    <p class="product-card__art"><span class="ph ph--inline">артикул</span></p>
+    <a class="product-card__title" href="product.html">Название товара из прайса заказчика</a>
+    <p class="product-card__meta"><span class="ph ph--inline">фасовка</span> <span class="ph ph--inline">остаток</span></p>
+  </div>
+  <div class="product-card__bottom">
+    <span class="price ph ph--inline">цена, ₽</span>
+    <button class="btn btn--action product-card__buy" type="button" data-add="cart" aria-label="В корзину"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9.5" cy="19.5" r="1.6"/><circle cx="17" cy="19.5" r="1.6"/><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L20 8H6"/></svg><span>В корзину</span></button>
+  </div>
+</article>
+<article class="product-card">
+  <div class="product-card__media">
+    <div class="product-card__badges"><span class="badge badge--sale">Скидка</span></div>
+    
+    <span class="ph--photo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.4"/><path d="m5 17.5 4.5-4.5 3 3L16 12l3 3"/></svg><br>фото из прайса</span>
+    <div class="product-card__tools">
+      <button class="card-tool" type="button" data-add="fav" aria-label="В избранное"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20s-7-4.4-7-9.4A3.9 3.9 0 0 1 12 7.2 3.9 3.9 0 0 1 19 10.6c0 5-7 9.4-7 9.4Z"/></svg></button>
+      <button class="card-tool" type="button" data-add="compare" aria-label="К сравнению"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 20V11M12 20V4M18 20v-6"/></svg></button>
+      <button class="card-tool" type="button" data-modal-open="modal-quick" aria-label="Быстрый просмотр"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+    </div>
+  </div>
+  <div class="product-card__body">
+    <p class="product-card__art"><span class="ph ph--inline">артикул</span></p>
+    <a class="product-card__title" href="product.html">Название товара из прайса заказчика</a>
+    <p class="product-card__meta"><span class="ph ph--inline">фасовка</span> <span class="ph ph--inline">остаток</span></p>
+  </div>
+  <div class="product-card__bottom">
+    <span class="price ph ph--inline">цена, ₽</span>
+    <button class="btn btn--action product-card__buy" type="button" data-add="cart" aria-label="В корзину"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9.5" cy="19.5" r="1.6"/><circle cx="17" cy="19.5" r="1.6"/><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L20 8H6"/></svg><span>В корзину</span></button>
+  </div>
+</article>
+<article class="product-card">
+  <div class="product-card__media">
+    <div class="product-card__badges"><span class="badge badge--sale">Скидка</span></div>
+    
+    <span class="ph--photo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.4"/><path d="m5 17.5 4.5-4.5 3 3L16 12l3 3"/></svg><br>фото из прайса</span>
+    <div class="product-card__tools">
+      <button class="card-tool" type="button" data-add="fav" aria-label="В избранное"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20s-7-4.4-7-9.4A3.9 3.9 0 0 1 12 7.2 3.9 3.9 0 0 1 19 10.6c0 5-7 9.4-7 9.4Z"/></svg></button>
+      <button class="card-tool" type="button" data-add="compare" aria-label="К сравнению"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 20V11M12 20V4M18 20v-6"/></svg></button>
+      <button class="card-tool" type="button" data-modal-open="modal-quick" aria-label="Быстрый просмотр"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+    </div>
+  </div>
+  <div class="product-card__body">
+    <p class="product-card__art"><span class="ph ph--inline">артикул</span></p>
+    <a class="product-card__title" href="product.html">Название товара из прайса заказчика</a>
+    <p class="product-card__meta"><span class="ph ph--inline">фасовка</span> <span class="ph ph--inline">остаток</span></p>
+  </div>
+  <div class="product-card__bottom">
+    <span class="price ph ph--inline">цена, ₽</span>
+    <button class="btn btn--action product-card__buy" type="button" data-add="cart" aria-label="В корзину"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9.5" cy="19.5" r="1.6"/><circle cx="17" cy="19.5" r="1.6"/><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L20 8H6"/></svg><span>В корзину</span></button>
+  </div>
+</article>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section class="section">
+          <div class="container">
+            <div class="selection" data-slider>
+              <div class="selection__head">
+                <h2 class="section__title">Новинки</h2>
+                <div class="selection__nav">
+            <button class="slider-btn" type="button" data-slider-prev aria-label="Предыдущие товары"><svg class="icon-prev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></button>
+            <button class="slider-btn" type="button" data-slider-next aria-label="Следующие товары"><svg class="icon-next" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></button>
+          </div>
+              </div>
+              <div class="selection__line" data-slider-line tabindex="0" role="group" aria-label="Новинки">
+<article class="product-card">
+  <div class="product-card__media">
+    <div class="product-card__badges"><span class="badge badge--new">Новинка</span></div>
     
     <span class="ph--photo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.4"/><path d="m5 17.5 4.5-4.5 3 3L16 12l3 3"/></svg><br>фото из прайса</span>
     <div class="product-card__tools">
@@ -323,25 +500,6 @@
 <article class="product-card">
   <div class="product-card__media">
     <div class="product-card__badges"><span class="badge badge--new">Новинка</span></div>
-    <span class="ph--photo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.4"/><path d="m5 17.5 4.5-4.5 3 3L16 12l3 3"/></svg><br>фото из прайса</span>
-    <div class="product-card__tools">
-      <button class="card-tool" type="button" data-add="fav" aria-label="В избранное"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20s-7-4.4-7-9.4A3.9 3.9 0 0 1 12 7.2 3.9 3.9 0 0 1 19 10.6c0 5-7 9.4-7 9.4Z"/></svg></button>
-      <button class="card-tool" type="button" data-add="compare" aria-label="К сравнению"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 20V11M12 20V4M18 20v-6"/></svg></button>
-      <button class="card-tool" type="button" data-modal-open="modal-quick" aria-label="Быстрый просмотр"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>
-    </div>
-  </div>
-  <div class="product-card__body">
-    <p class="product-card__art"><span class="ph ph--inline">артикул</span></p>
-    <a class="product-card__title" href="product.html">Название товара из прайса заказчика</a>
-    <p class="product-card__meta"><span class="ph ph--inline">фасовка</span> <span class="ph ph--inline">остаток</span></p>
-  </div>
-  <div class="product-card__bottom">
-    <span class="price ph ph--inline">цена, ₽</span>
-    <button class="btn btn--action product-card__buy" type="button" data-add="cart" aria-label="В корзину"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9.5" cy="19.5" r="1.6"/><circle cx="17" cy="19.5" r="1.6"/><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L20 8H6"/></svg><span>В корзину</span></button>
-  </div>
-</article>
-<article class="product-card">
-  <div class="product-card__media">
     
     <span class="ph--photo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.4"/><path d="m5 17.5 4.5-4.5 3 3L16 12l3 3"/></svg><br>фото из прайса</span>
     <div class="product-card__tools">
@@ -362,6 +520,7 @@
 </article>
 <article class="product-card">
   <div class="product-card__media">
+    <div class="product-card__badges"><span class="badge badge--new">Новинка</span></div>
     
     <span class="ph--photo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.4"/><path d="m5 17.5 4.5-4.5 3 3L16 12l3 3"/></svg><br>фото из прайса</span>
     <div class="product-card__tools">
@@ -382,7 +541,8 @@
 </article>
 <article class="product-card">
   <div class="product-card__media">
-    <div class="product-card__badges"><span class="badge badge--hit">Хит</span></div>
+    <div class="product-card__badges"><span class="badge badge--new">Новинка</span></div>
+    
     <span class="ph--photo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.4"/><path d="m5 17.5 4.5-4.5 3 3L16 12l3 3"/></svg><br>фото из прайса</span>
     <div class="product-card__tools">
       <button class="card-tool" type="button" data-add="fav" aria-label="В избранное"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20s-7-4.4-7-9.4A3.9 3.9 0 0 1 12 7.2 3.9 3.9 0 0 1 19 10.6c0 5-7 9.4-7 9.4Z"/></svg></button>
@@ -402,6 +562,7 @@
 </article>
 <article class="product-card">
   <div class="product-card__media">
+    <div class="product-card__badges"><span class="badge badge--new">Новинка</span></div>
     
     <span class="ph--photo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.4"/><path d="m5 17.5 4.5-4.5 3 3L16 12l3 3"/></svg><br>фото из прайса</span>
     <div class="product-card__tools">
@@ -420,8 +581,92 @@
     <button class="btn btn--action product-card__buy" type="button" data-add="cart" aria-label="В корзину"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9.5" cy="19.5" r="1.6"/><circle cx="17" cy="19.5" r="1.6"/><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L20 8H6"/></svg><span>В корзину</span></button>
   </div>
 </article>
-        </div>
+<article class="product-card">
+  <div class="product-card__media">
+    <div class="product-card__badges"><span class="badge badge--new">Новинка</span></div>
+    
+    <span class="ph--photo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.4"/><path d="m5 17.5 4.5-4.5 3 3L16 12l3 3"/></svg><br>фото из прайса</span>
+    <div class="product-card__tools">
+      <button class="card-tool" type="button" data-add="fav" aria-label="В избранное"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20s-7-4.4-7-9.4A3.9 3.9 0 0 1 12 7.2 3.9 3.9 0 0 1 19 10.6c0 5-7 9.4-7 9.4Z"/></svg></button>
+      <button class="card-tool" type="button" data-add="compare" aria-label="К сравнению"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 20V11M12 20V4M18 20v-6"/></svg></button>
+      <button class="card-tool" type="button" data-modal-open="modal-quick" aria-label="Быстрый просмотр"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+    </div>
+  </div>
+  <div class="product-card__body">
+    <p class="product-card__art"><span class="ph ph--inline">артикул</span></p>
+    <a class="product-card__title" href="product.html">Название товара из прайса заказчика</a>
+    <p class="product-card__meta"><span class="ph ph--inline">фасовка</span> <span class="ph ph--inline">остаток</span></p>
+  </div>
+  <div class="product-card__bottom">
+    <span class="price ph ph--inline">цена, ₽</span>
+    <button class="btn btn--action product-card__buy" type="button" data-add="cart" aria-label="В корзину"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9.5" cy="19.5" r="1.6"/><circle cx="17" cy="19.5" r="1.6"/><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L20 8H6"/></svg><span>В корзину</span></button>
+  </div>
+</article>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
+    </div>
+  </section>
+
+
+
+  <section class="perks" aria-label="Как мы работаем">
+    <div class="container">
+      <ul class="perks__list">
+        <li class="perk"><span class="perk__icon"><svg width="30" height="30" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M248,120v64a8,8,0,0,1-8,8H216a24,24,0,0,0-48,0H104a24,24,0,0,0-48,0H32a8,8,0,0,1-8-8V144H184V120Z" opacity="0.2"/><path d="M255.42,117l-14-35A15.93,15.93,0,0,0,226.58,72H192V64a8,8,0,0,0-8-8H32A16,16,0,0,0,16,72V184a16,16,0,0,0,16,16H49a32,32,0,0,0,62,0h50a32,32,0,0,0,62,0h17a16,16,0,0,0,16-16V120A7.94,7.94,0,0,0,255.42,117ZM192,88h34.58l9.6,24H192ZM32,72H176v64H32ZM80,208a16,16,0,1,1,16-16A16,16,0,0,1,80,208Zm81-24H111a32,32,0,0,0-62,0H32V152H176v12.31A32.11,32.11,0,0,0,161,184Zm31,24a16,16,0,1,1,16-16A16,16,0,0,1,192,208Zm48-24H223a32.06,32.06,0,0,0-31-24V128h48Z"/></svg></span><span class="perk__text"><strong>Доставка и самовывоз</strong>Заберите в любом из трёх магазинов, доставку уточняйте по телефону</span></li>
+        <li class="perk"><span class="perk__icon"><svg width="30" height="30" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M136,32V216H40V85.35a8,8,0,0,1,3.56-6.66l80-53.33A8,8,0,0,1,136,32Z" opacity="0.2"/><path d="M240,208H224V96a16,16,0,0,0-16-16H144V32a16,16,0,0,0-24.88-13.32L39.12,72A16,16,0,0,0,32,85.34V208H16a8,8,0,0,0,0,16H240a8,8,0,0,0,0-16ZM208,96V208H144V96ZM48,85.34,128,32V208H48ZM112,112v16a8,8,0,0,1-16,0V112a8,8,0,1,1,16,0Zm-32,0v16a8,8,0,0,1-16,0V112a8,8,0,1,1,16,0Zm0,56v16a8,8,0,0,1-16,0V168a8,8,0,0,1,16,0Zm32,0v16a8,8,0,0,1-16,0V168a8,8,0,0,1,16,0Z"/></svg></span><span class="perk__text"><strong>Частным лицам и организациям</strong>Снабжаем объекты под ключ, два склада отгрузки</span></li>
+        <li class="perk"><span class="perk__icon"><svg width="30" height="30" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z"/></svg></span><span class="perk__text"><strong>Без выходных</strong>Пн–Пт 9:00–19:00, Сб–Вс до 18:00</span></li>
+        <li class="perk"><span class="perk__icon"><svg width="30" height="30" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M80,144v40a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V128H64A16,16,0,0,1,80,144Zm112-16a16,16,0,0,0-16,16v40a16,16,0,0,0,16,16h32V128Z" opacity="0.2"/><path d="M201.89,54.66A104.08,104.08,0,0,0,24,128v56a24,24,0,0,0,24,24H64a24,24,0,0,0,24-24V144a24,24,0,0,0-24-24H40.36A88.12,88.12,0,0,1,190.54,65.93,87.39,87.39,0,0,1,215.65,120H192a24,24,0,0,0-24,24v40a24,24,0,0,0,24,24h24a24,24,0,0,1-24,24H136a8,8,0,0,0,0,16h56a40,40,0,0,0,40-40V128A103.41,103.41,0,0,0,201.89,54.66ZM64,136a8,8,0,0,1,8,8v40a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V136Zm128,56a8,8,0,0,1-8-8V144a8,8,0,0,1,8-8h24v56Z"/></svg></span><span class="perk__text"><strong>Поможем с выбором</strong>Подскажем по телефону и посчитаем, сколько нужно</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section section--tight" aria-labelledby="stores-row-title">
+    <div class="container">
+      <div class="section__head">
+        <h2 class="section__title" id="stores-row-title">Наши магазины</h2>
+        <a class="section__link" href="contacts.html">Все контакты</a>
+      </div>
+      <ul class="stores-row__list">
+        <li class="store-card" data-hours-weekday="09:00-19:00" data-hours-weekend="10:00-18:00">
+          <span class="store-card__pin"><svg width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,16a88.1,88.1,0,0,0-88,88c0,75.3,80,132.17,83.41,134.55a8,8,0,0,0,9.18,0C136,236.17,216,179.3,216,104A88.1,88.1,0,0,0,128,16Zm0,56a32,32,0,1,1-32,32A32,32,0,0,1,128,72Z"/></svg></span>
+          <span class="store-card__body">
+            <strong class="store-card__name">Магазин на Чубарова</strong>
+            <span class="store-card__addr">Петропавловск-Камчатский, ул. Чубарова, 16, корп. 40</span>
+            <a class="store-card__tel" href="tel:+79638319999">8-963-831-99-99</a>
+            <span class="store-card__hours">Пн–Пт 9–19 · Сб–Вс 10–18</span>
+            <span class="shop-card__now" data-hours-now></span>
+          </span>
+        </li>
+        <li class="store-card" data-hours-weekday="09:00-19:00" data-hours-weekend="09:00-18:00">
+          <span class="store-card__pin"><svg width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,16a88.1,88.1,0,0,0-88,88c0,75.3,80,132.17,83.41,134.55a8,8,0,0,0,9.18,0C136,236.17,216,179.3,216,104A88.1,88.1,0,0,0,128,16Zm0,56a32,32,0,1,1-32,32A32,32,0,0,1,128,72Z"/></svg></span>
+          <span class="store-card__body">
+            <strong class="store-card__name">Магазин на 50 лет Октября</strong>
+            <span class="store-card__addr">Петропавловск-Камчатский, просп. 50 лет Октября, 17А</span>
+            <a class="store-card__tel" href="tel:+79638300999">8-963-830-09-99</a>
+            <span class="store-card__hours">Пн–Пт 9–19 · Сб–Вс 9–18</span>
+            <span class="shop-card__now" data-hours-now></span>
+          </span>
+        </li>
+        <li class="store-card" data-hours-weekday="09:00-19:00" data-hours-weekend="09:00-18:00">
+          <span class="store-card__pin"><svg width="24" height="24" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,16a88.1,88.1,0,0,0-88,88c0,75.3,80,132.17,83.41,134.55a8,8,0,0,0,9.18,0C136,236.17,216,179.3,216,104A88.1,88.1,0,0,0,128,16Zm0,56a32,32,0,1,1-32,32A32,32,0,0,1,128,72Z"/></svg></span>
+          <span class="store-card__body">
+            <strong class="store-card__name">Магазин в Елизово</strong>
+            <span class="store-card__addr">Елизово, Магистральная ул., 2/2</span>
+            <a class="store-card__tel" href="tel:+79638300333">8-963-830-03-33</a>
+            <span class="store-card__hours">Пн–Пт 9–19 · Сб–Вс 9–18</span>
+            <span class="shop-card__now" data-hours-now></span>
+          </span>
+        </li>
+        <li class="store-card store-card--map">
+          <a class="store-map" href="contacts.html">
+            <svg class="store-map__img" width="66" height="120" viewBox="0 0 66 120" aria-hidden="true" focusable="false"><path d="M8.2 118.7 8.3 120.0 6.0 120.0 7.8 118.5 8.2 118.7ZM65.5 9.8 64.9 7.5 63.4 6.0 62.2 6.2 62.6 7.0 62.4 7.4 60.8 8.0 60.8 8.5 61.3 9.1 60.3 8.4 61.4 7.3 59.0 7.0 59.2 6.7 58.9 6.6 57.5 6.7 57.8 7.6 58.6 7.4 57.9 8.5 56.8 8.5 55.6 9.4 55.8 11.8 54.4 12.7 54.6 12.7 54.3 13.3 55.4 14.5 55.3 16.0 54.8 16.6 55.1 15.8 54.1 15.9 53.6 16.6 53.6 17.1 54.6 17.7 54.9 18.5 54.3 19.1 54.3 18.3 53.6 17.8 52.8 17.5 52.3 17.9 53.7 19.4 53.6 19.9 52.3 20.6 52.5 19.7 51.9 20.9 50.9 21.0 51.2 21.4 51.7 21.0 51.7 21.5 49.0 23.7 47.4 26.7 46.6 29.2 46.2 30.6 46.4 32.5 47.7 33.8 49.4 34.3 48.6 35.4 49.8 34.7 49.6 33.0 49.9 32.4 51.0 32.0 53.2 33.7 54.6 33.9 55.4 35.2 54.8 35.7 54.8 36.6 53.6 38.2 51.8 39.6 51.7 42.1 52.2 43.2 51.7 44.8 51.6 46.7 52.9 47.5 53.6 47.0 54.8 47.1 55.1 47.7 54.8 48.4 55.1 49.2 54.8 49.6 55.1 50.4 54.9 50.5 55.6 52.1 55.7 53.8 53.9 54.7 53.5 56.0 51.9 55.4 50.6 53.4 50.1 53.3 51.1 52.7 51.4 51.8 52.7 51.4 53.9 49.9 53.3 49.5 52.5 50.9 50.9 50.1 50.6 50.7 49.7 50.7 49.0 51.5 50.3 52.8 47.2 54.5 46.5 55.3 46.8 55.8 44.7 60.8 44.5 63.6 45.4 67.3 47.3 69.9 47.0 70.4 47.1 71.1 44.3 74.2 41.5 74.4 40.4 73.1 37.5 73.9 32.8 78.3 31.8 80.6 31.4 82.9 31.5 84.1 31.2 84.6 31.8 85.4 31.6 84.5 32.0 84.7 32.2 86.5 31.9 86.8 31.2 86.1 31.0 86.3 31.0 86.7 31.5 86.8 31.6 87.7 32.0 87.8 31.9 88.5 32.3 88.5 31.8 89.3 32.2 90.0 32.3 89.4 32.6 89.4 32.8 91.4 30.9 90.1 30.8 89.6 31.2 89.1 26.7 90.9 23.5 93.9 23.3 92.7 22.7 91.8 21.7 92.3 21.6 93.6 22.3 93.7 22.1 93.2 23.1 93.8 22.7 94.7 22.4 94.6 22.5 95.1 22.1 95.3 22.8 96.1 22.5 96.9 22.1 97.2 21.5 96.7 21.6 97.5 22.2 97.8 22.1 98.7 22.3 98.8 21.5 99.8 22.4 99.6 22.6 100.0 22.1 100.4 22.5 101.0 21.3 102.0 21.6 102.5 20.8 103.2 20.6 105.2 18.7 107.6 18.0 109.3 17.0 110.3 15.4 111.0 15.0 112.6 14.2 112.9 13.5 114.1 9.5 118.6 10.1 117.1 10.1 116.0 9.7 115.9 9.8 114.6 8.4 113.2 8.4 111.8 8.2 111.3 8.3 107.5 7.9 102.1 7.4 99.8 6.8 98.3 7.4 98.8 7.4 99.3 7.9 98.5 7.1 98.2 6.7 97.5 5.6 93.4 4.5 83.0 3.0 75.2 1.7 64.8 2.7 55.6 3.2 54.6 3.3 53.0 4.5 48.5 5.7 45.9 6.0 45.7 5.4 46.7 5.3 47.3 6.3 45.6 8.0 44.5 8.6 42.5 9.5 43.3 11.7 38.7 11.3 35.8 10.5 34.9 10.0 35.0 11.6 33.4 12.1 34.0 13.4 34.5 15.0 34.1 15.6 33.2 16.1 31.4 18.3 31.9 20.2 31.4 21.0 32.2 20.7 31.4 20.2 31.2 26.6 25.5 27.2 26.0 26.9 25.1 28.3 23.4 29.0 23.2 29.8 21.6 30.6 20.9 30.6 19.4 31.5 17.8 33.9 15.4 34.8 15.1 35.9 12.8 38.3 12.0 41.3 8.9 42.6 6.9 45.5 4.8 45.9 4.0 45.5 3.6 45.8 2.2 47.7 0.8 49.5 0.0 66.2 0.0 66.2 9.5 65.5 9.8ZM65.1 19.2 64.4 21.1 62.8 21.1 61.8 21.9 61.1 21.7 57.2 24.9 56.5 26.3 56.0 25.2 57.3 24.3 58.5 21.8 58.5 20.8 59.4 19.6 58.6 19.3 57.9 19.6 58.3 19.3 59.8 19.1 62.0 18.1 63.9 16.6 64.4 18.3 65.1 19.2Z"/><circle cx="23.1" cy="92.3" r="4.2"/></svg>
+            <span class="store-map__text"><strong>Три магазина рядом с вами</strong>Петропавловск-Камчатский и Елизово</span>
+          </a>
+        </li>
+      </ul>
     </div>
   </section>
 
@@ -566,7 +811,7 @@
 </dialog>
 
 
-<script src="assets/app.js?v=8be8ecb7"></script>
+<script src="assets/app.js?v=31606831"></script>
 <script type="speculationrules">
 {
   "prefetch": [{"source": "document", "where": {"selector_matches": "a[href$='.html']"}, "eagerness": "moderate"}],

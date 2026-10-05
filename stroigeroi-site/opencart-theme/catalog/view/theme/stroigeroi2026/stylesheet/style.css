@@ -793,11 +793,18 @@ body:has(.first-screen) .header-slogan {
   cursor: pointer;
 }
 
-.header-nav .dropdown__toggle:hover {
+/* «Наши магазины» — кнопкой в рамке, как в концепции заказчика */
+.header-nav .dropdown__toggle {
+  padding: 0 var(--sp-3);
+  border: 1.5px solid rgba(255, 255, 255, 0.55);
+  border-radius: var(--r-lg);
+}
+
+.header-nav .dropdown__toggle:hover,
+.header-nav .dropdown__toggle[aria-expanded="true"] {
+  border-color: #fff;
+  background: rgba(255, 255, 255, 0.1);
   color: #fff;
-  text-decoration: underline;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 6px;
 }
 
 .dropdown__toggle .icon-chevron {
@@ -1060,8 +1067,11 @@ body:has(.first-screen) .header-slogan {
     font-size: 14px;
   }
 
+  /* Рамка у «Магазинов» прибавила ширины: с прежними полями синяя
+     строка на 320 px выходила за экран на 1 px */
   .header-nav .dropdown__toggle {
     min-height: 44px;
+    padding: 0 var(--sp-2);
     font-size: 14px;
   }
 
@@ -1504,15 +1514,18 @@ body:has(.first-screen) .header-slogan {
   color: var(--sg-blue);
 }
 
-/* ── Три карточки: калькулятор, акции, магазины ───────────────────────────── */
-.promo-row {
+/* ── Калькулятор и «Популярные товары» ──────────────────────────────────── */
+/* Два класса, а не один: правило .section для экранов уже 900 px стоит
+   ниже по файлу и иначе возвращало отступ в 48 px */
+.section.shop-row {
   padding-top: 0;
 }
 
-.promo-row__grid {
+.shop-row__grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.25fr);
+  grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
   gap: var(--sp-4);
+  align-items: stretch;
 }
 
 .offer-card {
@@ -1533,13 +1546,6 @@ body:has(.first-screen) .header-slogan {
     repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.06) 0 1px, transparent 1px 22px),
     repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.06) 0 1px, transparent 1px 22px),
     linear-gradient(135deg, #0c1ba8 0%, #010b87 55%, #01065c 100%);
-}
-
-.offer-card--sale {
-  background-color: #c2161d;
-  background-image:
-    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.05) 0 14px, transparent 14px 28px),
-    linear-gradient(135deg, #d81921 0%, #c2161d 55%, #9b1017 100%);
 }
 
 .offer-card__body {
@@ -1596,114 +1602,339 @@ body:has(.first-screen) .header-slogan {
   filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.28));
 }
 
-.offer-card__badge {
-  display: grid;
-  place-items: center;
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
-  background: #fff;
-  color: var(--sg-red);
-  font-family: var(--font-head);
-  font-size: 26px;
-  font-weight: 800;
-  box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.25);
-  transform: rotate(-12deg);
+/* Без подборок калькулятор один и встаёт во всю ширину. В теме так
+   будет, пока в админке не включён ни один модуль товаров на главной */
+.shop-row__grid > :only-child {
+  grid-column: 1 / -1;
 }
 
-.stores-box {
+/* Сразу на нужный расчёт: калькулятор открывается на вкладке по адресу
+   с решёткой, как и из своего меню */
+.offer-card__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.offer-card__links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 var(--sp-3);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: var(--r-pill);
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.offer-card__links a:hover {
+  border-color: #fff;
+  background-color: rgba(255, 255, 255, 0.16);
+  text-decoration: none;
+}
+
+/* Рядом с подборками колонка узкая и высокая: картинка не за кнопкой,
+   а под ней - встаёт снизу и уходит за край карточки */
+@media (min-width: 1024px) {
+  .shop-row__grid > .offer-card:not(:only-child) {
+    flex-direction: column;
+    padding-bottom: 0;
+  }
+
+  .shop-row__grid > .offer-card:not(:only-child) .offer-card__title,
+  .shop-row__grid > .offer-card:not(:only-child) .offer-card__text {
+    max-width: none;
+  }
+
+  .shop-row__grid > .offer-card:not(:only-child) .offer-card__btn {
+    margin-top: var(--sp-2);
+  }
+
+  /* Картинка занимает только остаток высоты (flex-basis 0) и не растит
+     карточку: высоту ряда задаёт блок товаров, а у него она своя -
+     смотря сколько строк в названиях */
+  .shop-row__grid > .offer-card:not(:only-child) .offer-card__media {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    flex: 1 1 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    width: auto;
+    max-width: none;
+    min-height: 96px;
+    margin: 0 0 calc(-1 * var(--sp-3));
+    padding-top: var(--sp-3);
+  }
+
+  .shop-row__grid > .offer-card:not(:only-child) .offer-card__media img {
+    width: auto;
+    max-width: min(76%, 230px);
+    max-height: 100%;
+  }
+}
+
+.top-products {
+  min-width: 0;
+  padding: var(--sp-4) var(--sp-5) var(--sp-5);
+  border: 1px solid var(--sg-line);
+  border-radius: var(--r-xl);
+  background: var(--sg-white);
+}
+
+.top-products__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-5);
+}
+
+.top-products__title {
+  margin: 0;
+  font-family: var(--font-head);
+  font-size: clamp(19px, 0.9rem + 0.6vw, 23px);
+  font-weight: 800;
+}
+
+.top-products__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--sp-4);
+}
+
+.top-products__tabs[hidden] {
+  display: none;
+}
+
+.top-products__tab {
+  min-height: 40px;
+  padding: 0 2px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--sg-muted);
+  font-family: var(--font-head);
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.top-products__tab:hover {
+  color: var(--sg-ink);
+}
+
+.top-products__tab[aria-selected="true"] {
+  border-bottom-color: var(--sg-red);
+  color: var(--sg-ink);
+}
+
+.top-products__all {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  margin-left: auto;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.top-products__note {
+  margin: var(--sp-2) 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--sg-muted);
+}
+
+/* Модули движка приходят со своими .section и .container: внутри
+   блока они не должны давать ни отступов, ни второй ширины */
+.top-products .section {
+  padding: var(--sp-3) 0 0;
+  content-visibility: visible;
+}
+
+.top-products .container {
+  max-width: none;
+  padding: 0;
+}
+
+.top-products .selection__head {
+  margin-bottom: var(--sp-3);
+}
+
+/* Заголовки подборок стали вкладками — внутри панелей они лишние.
+   Без javascript вкладок нет, и заголовки остаются на месте. */
+.top-products.is-tabbed .selection .section__title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.top-products.is-tabbed .selection__head {
+  margin: 0;
+}
+
+.top-products.is-tabbed .selection {
+  position: relative;
+}
+
+/* Стрелки - по краям ленты, а не в строке заголовка: там вкладки
+   и «Все товары». На краю ленты стрелка гаснет совсем */
+.top-products.is-tabbed .selection__nav {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: calc(-1 * var(--sp-5) + 2px);
+  right: calc(-1 * var(--sp-5) + 2px);
+  justify-content: space-between;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.top-products.is-tabbed .slider-btn {
+  pointer-events: auto;
+  box-shadow: 0 4px 14px rgba(1, 11, 135, 0.16);
+}
+
+.top-products.is-tabbed .slider-btn:disabled {
+  visibility: hidden;
+}
+
+.top-products .selection__line .product-card {
+  flex-basis: calc((100% - var(--sp-4) * 3) / 4);
+}
+
+/* ── Магазины строкой и карта ────────────────────────────────────────────── */
+.stores-row__list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.store-card {
+  display: flex;
+  gap: var(--sp-3);
   padding: var(--sp-4) var(--sp-5);
   border: 1px solid var(--sg-line);
   border-radius: var(--r-xl);
   background: var(--sg-white);
 }
 
-.stores-box__head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--sp-3);
-}
-
-.stores-box__title {
-  margin: 0;
-  font-family: var(--font-head);
-  font-size: 20px;
-  font-weight: 800;
-}
-
-.stores-box__link {
-  display: inline-flex;
-  align-items: center;
-  min-height: 32px;
-  font-size: 14px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.stores-box__list {
-  margin: var(--sp-2) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.store-line {
-  display: flex;
-  gap: var(--sp-3);
-  padding: 10px 0;
-}
-
-.store-line + .store-line {
-  border-top: 1px solid var(--sg-line);
-}
-
-.store-line__pin {
+.store-card__pin {
   flex: none;
   color: var(--sg-red);
   line-height: 0;
-  padding-top: 1px;
 }
 
-.store-line__body {
-  flex: 1 1 auto;
+.store-card__body {
   display: grid;
-  gap: 1px;
+  gap: 3px;
+  align-content: start;
   min-width: 0;
-  font-size: 13px;
+  font-size: 13.5px;
   line-height: 1.35;
 }
 
-.store-line__top {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0 var(--sp-3);
+.store-card__name {
+  font-family: var(--font-head);
+  font-size: 15px;
+  font-weight: 800;
 }
 
-.store-line__name {
-  font-size: 14.5px;
-}
-
-.store-line__addr,
-.store-line__hours {
+.store-card__addr {
   color: var(--sg-muted);
 }
 
-.store-line__tel {
-  justify-self: start;
+.store-card__tel {
   display: inline-flex;
   align-items: center;
+  justify-self: start;
   min-height: 28px;
+  margin-top: 2px;
   font-family: var(--font-head);
   font-size: 15px;
   font-weight: 800;
   white-space: nowrap;
 }
 
-.store-line__hours .shop-card__now {
-  margin-left: var(--sp-1);
+.store-card__hours {
+  color: var(--sg-muted);
+}
+
+.store-card .shop-card__now {
+  justify-self: start;
+  margin: 4px 0 0;
   font-size: 12px;
+  white-space: normal;
+}
+
+.store-card--map {
+  padding: 0;
+  overflow: hidden;
+  border-color: transparent;
+  background: var(--sg-blue-tint);
+}
+
+.store-map {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-3) var(--sp-5);
+  color: var(--sg-ink);
+}
+
+.store-map:hover {
+  text-decoration: none;
+}
+
+.store-map__img {
+  flex: none;
+  width: 70px;
+  height: auto;
+}
+
+.store-map__img path {
+  fill: #b9c6ea;
+  stroke: #8fa3d8;
+  stroke-width: 0.6;
+}
+
+.store-map__img circle {
+  fill: var(--sg-red);
+  stroke: #fff;
+  stroke-width: 1.4;
+}
+
+.store-map__text {
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--sg-muted);
+}
+
+.store-map__text strong {
+  font-family: var(--font-head);
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--sg-ink);
+}
+
+.store-map:hover .store-map__text strong {
+  color: var(--sg-blue);
 }
 
 /* ── Полоса «как мы работаем» ─────────────────────────────────────────────── */
@@ -1772,26 +2003,19 @@ body:has(.first-screen) .header-slogan {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 
-  .promo-row__grid {
+  .top-products .selection__line .product-card {
+    flex-basis: calc((100% - var(--sp-4) * 2) / 3);
+  }
+
+  /* Заголовок, вкладки и «Все товары» в одну строку не помещаются:
+     «Все товары» - к заголовку, вкладки - строкой ниже */
+  .top-products__tabs {
+    order: 1;
+    flex-basis: 100%;
+  }
+
+  .stores-row__list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .stores-box {
-    grid-column: 1 / -1;
-  }
-
-  .stores-box__list {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--sp-4);
-  }
-
-  .store-line + .store-line {
-    border-top: 0;
-  }
-
-  .store-line .shop-card__now {
-    white-space: normal;
   }
 
   .perks__list {
@@ -1831,13 +2055,20 @@ body:has(.first-screen) .header-slogan {
 
 /* Планшет и телефон: сцена уходит под текст и становится своей полосой */
 @media (max-width: 1023px) {
-  .stores-box__list {
+  /* калькулятор над подборками: в узкой колонке рядом не помещаются */
+  .shop-row__grid {
     grid-template-columns: minmax(0, 1fr);
-    gap: 0;
   }
 
-  .store-line + .store-line {
-    border-top: 1px solid var(--sg-line);
+  .shop-row .offer-card__title,
+  .shop-row .offer-card__text,
+  .shop-row .offer-card__links {
+    max-width: 62%;
+  }
+
+  .shop-row .offer-card__media {
+    width: 40%;
+    max-width: 240px;
   }
 
   .first-screen__inner {
@@ -1908,18 +2139,23 @@ body:has(.first-screen) .header-slogan {
     font-size: 15px;
   }
 
-  .promo-row__grid {
+  .stores-row__list {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .stores-box__list {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0;
+  .top-products .selection__line .product-card {
+    flex-basis: calc((100% - var(--sp-3)) / 2);
   }
 
-  .store-line + .store-line {
-    border-top: 1px solid var(--sg-line);
+  .top-products {
+    padding: var(--sp-4);
   }
+
+  .top-products.is-tabbed .selection__nav {
+    left: calc(-1 * var(--sp-4) + 2px);
+    right: calc(-1 * var(--sp-4) + 2px);
+  }
+
 
   .perks__list {
     grid-template-columns: minmax(0, 1fr);
@@ -1979,6 +2215,20 @@ body:has(.first-screen) .header-slogan {
     min-height: 220px;
     padding: var(--sp-5);
   }
+
+  /* На телефоне картинка калькулятора - в правый верхний угол, рядом
+     с текстом: внизу она уходила под кнопку */
+  .shop-row .offer-card__media {
+    top: -6px;
+    right: -18px;
+    bottom: auto;
+    width: 36%;
+    max-width: 150px;
+  }
+
+  .shop-row .offer-card__links {
+    max-width: none;
+  }
 }
 
 /* ── Тёмная тема: вечер над бухтой ─────────────────────────────────────────── */
@@ -2036,11 +2286,13 @@ html[data-theme="dark"] .offer-card--calc {
     linear-gradient(135deg, #16207a 0%, #0d1460 60%, #090e44 100%);
 }
 
-html[data-theme="dark"] .offer-card--sale {
-  background-color: #84161c;
-  background-image:
-    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.04) 0 14px, transparent 14px 28px),
-    linear-gradient(135deg, #9e1d24 0%, #84161c 60%, #651015 100%);
+html[data-theme="dark"] .store-map__img path {
+  fill: #2f3b73;
+  stroke: #56679f;
+}
+
+html[data-theme="dark"] .store-map__img circle {
+  stroke: #1c2240;
 }
 
 html[data-theme="dark"] .btn--light {
