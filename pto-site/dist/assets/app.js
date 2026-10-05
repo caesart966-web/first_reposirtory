@@ -462,8 +462,20 @@ accurateTrackBounce: true,
 webvisor: false
 });
 }
+function startWidgets() {
+[].forEach.call(document.querySelectorAll('[data-yrating]'), function (el) {
+if (el.querySelector('iframe')) return;
+var f = document.createElement('iframe');
+f.src = el.getAttribute('data-yrating');
+f.width = 150; f.height = 50;
+f.title = 'Рейтинг на Яндексе';
+f.loading = 'lazy';
+f.setAttribute('frameborder', '0');
+el.appendChild(f);
+});
+}
 var choice = saved();
-if (choice === 'all') { startMetrika(); return; }
+if (choice === 'all') { startMetrika(); startWidgets(); return; }
 if (choice === 'none') return;
 bar.hidden = false;
 bar.addEventListener('click', function (e) {
@@ -472,6 +484,6 @@ if (!btn) return;
 var value = btn.getAttribute('data-cookie');
 remember(value);
 bar.hidden = true;
-if (value === 'all') startMetrika();
+if (value === 'all') { startMetrika(); startWidgets(); }
 });
 })();
