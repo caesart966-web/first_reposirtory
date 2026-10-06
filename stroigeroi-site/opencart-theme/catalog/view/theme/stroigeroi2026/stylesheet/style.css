@@ -1053,8 +1053,11 @@ body:has(.first-screen) .header-slogan {
 }
 
 @media (max-width: 640px) {
+  /* Полосы - только в строке со знаком: при высоте во всю шапку их
+     обрезок торчал слева от поля поиска */
   .header-main::before {
     width: 78px;
+    height: 58px;
   }
 
   .site-logo img {
@@ -1230,11 +1233,15 @@ body:has(.first-screen) .header-slogan {
   border-bottom: 1px solid var(--sg-line);
 }
 
+/* Фон первого экрана - фотография Петропавловска с Корякским вулканом
+   (прислана 06.10.2026) на всю ширину. Контейнер размеров
+   (container-type) нужен слогану: он встаёт над вершиной вулкана,
+   а где вершина - зависит от высоты и ширины блока (см. ниже). */
 .first-screen__art {
   position: absolute;
-  inset: 0 0 0 auto;
+  inset: 0;
   z-index: 0;
-  width: min(1240px, 88%);
+  container-type: size;
   pointer-events: none;
 }
 
@@ -1246,13 +1253,30 @@ body:has(.first-screen) .header-slogan {
   height: 100%;
 }
 
+/* Снимок прижат к правому краю: вершина вулкана на нём в 700 px
+   от правого края (из 1920), и с героем, прижатым туда же, она всегда
+   видна слева от его плеча, на любой ширине. По вертикали 20 % - на
+   очень широком экране снимок режется сверху и снизу, и вершина
+   не должна уйти за верхний край. */
 .first-screen__scene img {
   object-fit: cover;
-  object-position: 100% 100%;
-  /* Левая треть сцены уходит в небо — под заголовком нет города
-     и вулкана, о которые спотыкается взгляд при чтении. */
-  -webkit-mask-image: linear-gradient(to right, transparent 0, transparent 14%, rgba(0, 0, 0, 0.4) 30%, #000 48%);
-  mask-image: linear-gradient(to right, transparent 0, transparent 14%, rgba(0, 0, 0, 0.4) 30%, #000 48%);
+  object-position: 100% 20%;
+}
+
+/* Светлая дымка под колонкой текста - поверх снимка, но под героем
+   (она внутри <picture>, а герой - следующий слой). Граница дымки
+   считается от правого края колонки текста: 620 px от начала
+   контейнера, а контейнер начинается с поля 24 px или с середины. */
+.first-screen__scene::after {
+  --text-end: calc(max(24px, (100% - 1232px) / 2) + 620px);
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg,
+    rgba(240, 245, 253, 0.94) 0,
+    rgba(240, 245, 253, 0.88) calc(var(--text-end) - 60px),
+    rgba(240, 245, 253, 0.5) calc(var(--text-end) + 10px),
+    rgba(240, 245, 253, 0) calc(var(--text-end) + 110px));
 }
 
 /* Светлая дымка под колонкой текста: город и бухта на сцене не должны
@@ -1277,26 +1301,34 @@ body:has(.first-screen) .header-slogan {
   clip-path: polygon(38% 0, 100% 0, 100% 82%);
 }
 
+/* width: max-content и max-width: none - не мелочь. Блок стоит
+   абсолютно, с left в процентах, и ширину ему браузер даёт не больше,
+   чем осталось до правого края; общее правило img { max-width: 100% }
+   сжимало героя до этой ширины, а высоту оставляло - на телефоне он
+   выходил уже настоящего на треть (на 320 px - вдвое), на 1024 -
+   на 15 %. Заказчик увидел сразу: «картинка вытянута». */
 .first-screen__hero {
   position: absolute;
-  left: 39%;
+  right: 2%;
   bottom: 0;
   height: 95%;
-  width: auto;
+  width: max-content;
 }
 
 .first-screen__hero img {
   display: block;
   height: 100%;
   width: auto;
+  max-width: none;
   filter: drop-shadow(0 18px 24px rgba(1, 11, 135, 0.22));
 }
 
+/* Печать - в правом верхнем углу, на полосах: правее каски героя */
 .first-screen__seal {
   position: absolute;
-  right: 3%;
-  top: 9%;
-  width: clamp(150px, 15vw, 200px);
+  right: 1.5%;
+  top: 3%;
+  width: clamp(120px, 9vw, 150px);
   height: auto;
   border-radius: 50%;
   background: #fff;
@@ -1304,10 +1336,14 @@ body:has(.first-screen) .header-slogan {
   transform: rotate(-6deg);
 }
 
+/* Слоган - в небе над вершиной вулкана. Вершина в 700 px от правого
+   края снимка, а снимок масштабируется по высоте или по ширине -
+   смотря что больше: 700/705 высоты (99.3cqh) или 700/1920 ширины
+   (36.46cqw). Половина ширины слогана (95 px) - чтобы встал по центру. */
 .first-screen__slogan {
   position: absolute;
-  left: 63%;
-  top: 7%;
+  right: calc(max(99.3cqh, 36.46cqw) - 95px);
+  top: 2%;
   width: 190px;
   margin: 0;
   font-family: var(--font-hand);
@@ -1441,6 +1477,47 @@ body:has(.first-screen) .header-slogan {
 
 .first-screen__actions .btn {
   justify-content: center;
+}
+
+/* Калькулятор на первом экране - только на телефоне. На компьютере
+   и планшете он в синей строке шапки, а на телефоне там места нет,
+   и до синей карточки калькулятора было три экрана прокрутки: заказчик
+   открыл сайт с телефона и написал «нет калькулятора». */
+.first-screen__calc {
+  display: none;
+}
+
+.first-screen__calc-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--sg-blue);
+  color: #fff;
+}
+
+.first-screen__calc-text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  font-size: 12.5px;
+  line-height: 1.3;
+  color: #3e4256;
+}
+
+.first-screen__calc-text strong {
+  font-family: var(--font-head);
+  font-size: 15px;
+  font-weight: 800;
+  color: #0a1583;
+}
+
+.first-screen__calc-arrow {
+  flex: none;
+  margin-left: auto;
+  color: var(--sg-red);
 }
 
 .first-screen__btn {
@@ -2137,13 +2214,11 @@ body:has(.first-screen) .header-slogan {
 /* 1024–1279: сцена уже, герой и печать меньше — иначе герой заходит
    под колонку текста */
 @media (min-width: 1024px) and (max-width: 1279px) {
-  .first-screen__art {
-    width: 74%;
-  }
-
+  /* Герой ниже: рядом с колонкой текста в 620 px места мало,
+     а с настоящими пропорциями он шире, чем был сжатым */
   .first-screen__hero {
-    left: 42%;
-    height: 90%;
+    right: 1%;
+    height: 74%;
   }
 
   .first-screen__seal {
@@ -2198,24 +2273,36 @@ body:has(.first-screen) .header-slogan {
   }
 
   .first-screen__scene img {
-    object-position: 72% 100%;
+    object-position: 100% 20%;
     -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 22%);
     mask-image: linear-gradient(to bottom, transparent 0, #000 22%);
   }
 
+  /* Сцена отдельной полосой под текстом: дымка под текст не нужна */
+  .first-screen__scene::after {
+    display: none;
+  }
+
   .first-screen__hero {
-    left: 50%;
+    right: 2%;
     height: 98%;
-    transform: translateX(-50%);
   }
 
+  /* В две строки - иначе нижняя заходит на вершину; min() не даёт
+     слогану уйти за левый край, когда вершина у самого края */
   .first-screen__slogan {
-    left: 3%;
-    top: 8%;
+    right: min(calc(max(99.3cqh, 36.46cqw) - 115px), calc(100cqw - 234px));
+    top: 2%;
+    width: 230px;
+    font-size: 30px;
   }
 
+  /* Печать - слева, в небе: справа стоит герой */
   .first-screen__seal {
+    right: auto;
+    left: 3%;
     top: 10%;
+    width: 120px;
   }
 }
 
@@ -2302,6 +2389,23 @@ body:has(.first-screen) .header-slogan {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .first-screen__calc {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    margin-top: var(--sp-3);
+    padding: var(--sp-3) var(--sp-4);
+    border: 1.5px solid rgba(1, 11, 135, 0.16);
+    border-radius: var(--r-lg);
+    background-color: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 8px 20px rgba(1, 11, 135, 0.1);
+  }
+
+  .first-screen__calc:hover {
+    text-decoration: none;
+    border-color: var(--sg-blue);
+  }
+
   .first-screen__actions .btn {
     width: 100%;
   }
@@ -2310,21 +2414,18 @@ body:has(.first-screen) .header-slogan {
     height: 300px;
   }
 
+  /* Печати здесь места нет (вершина вулкана у левого края),
+     а знак и так над ней, в шапке */
   .first-screen__seal {
-    width: 96px;
-    right: 3%;
-    top: 8%;
+    display: none;
   }
 
+  /* Слоган в две строки - над вершиной, ниже не опускаясь */
   .first-screen__slogan {
-    width: 112px;
-    font-size: 21px;
-    left: 2%;
-    top: 7%;
-  }
-
-  .first-screen__hero {
-    left: 54%;
+    right: min(calc(max(99.3cqh, 36.46cqw) - 75px), calc(100cqw - 154px));
+    top: 1%;
+    width: 150px;
+    font-size: 20px;
   }
 
   .first-screen__stripes {
@@ -2355,6 +2456,23 @@ body:has(.first-screen) .header-slogan {
   }
 }
 
+/* Самые узкие телефоны: герой чуть ниже - каска не заходит под слоган,
+   а цифры первого экрана мельче - «С 2007 года» не упирается в край */
+@media (max-width: 360px) {
+  .first-screen__hero {
+    height: 90%;
+  }
+
+  .first-screen__facts strong {
+    font-size: 14.5px;
+  }
+
+  .first-screen__facts svg {
+    width: 28px;
+    height: 28px;
+  }
+}
+
 /* ── Тёмная тема: вечер над бухтой ─────────────────────────────────────────── */
 html[data-theme="dark"] .first-screen {
   background: linear-gradient(180deg, #0c1428 0%, #121c36 55%, #161f35 100%);
@@ -2368,10 +2486,35 @@ html[data-theme="dark"] .first-screen__scene img {
   filter: brightness(0.62) saturate(0.85) hue-rotate(-6deg);
 }
 
+html[data-theme="dark"] .first-screen__scene::after {
+  background: linear-gradient(90deg,
+    rgba(11, 18, 36, 0.94) 0,
+    rgba(11, 18, 36, 0.86) calc(var(--text-end) - 60px),
+    rgba(11, 18, 36, 0.5) calc(var(--text-end) + 10px),
+    rgba(11, 18, 36, 0) calc(var(--text-end) + 110px));
+}
+
 html[data-theme="dark"] .first-screen__title,
 html[data-theme="dark"] .first-screen__lead strong,
 html[data-theme="dark"] .first-screen__facts strong {
   color: #e9ecff;
+}
+
+html[data-theme="dark"] .first-screen__calc {
+  border-color: rgba(233, 236, 255, 0.18);
+  background-color: rgba(18, 26, 52, 0.92);
+}
+
+html[data-theme="dark"] .first-screen__calc-text {
+  color: #c3c8e0;
+}
+
+html[data-theme="dark"] .first-screen__calc-text strong {
+  color: #e9ecff;
+}
+
+html[data-theme="dark"] .first-screen__calc-icon {
+  background: #3d4fd6;
 }
 
 html[data-theme="dark"] .first-screen__title span {

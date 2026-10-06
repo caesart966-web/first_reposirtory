@@ -1363,8 +1363,21 @@
 
     $$('[data-fill-categories]').forEach(function (list) {
       var howMany = parseInt(list.getAttribute('data-fill-categories'), 10) || 4;
+      /* Сначала - разделы по точному названию из data-fill-prefer (те же,
+         что в плитках главной). Первые по порядку в меню у заказчика -
+         «А1 САНТЕХНИКА» и «Товар», названия из 1С, и в подвале каждой
+         страницы они выглядели поломкой. Не нашлось ни одного из списка -
+         берутся первые по порядку, как раньше. */
+      var prefer = (list.getAttribute('data-fill-prefer') || '').split('|').filter(Boolean);
+      var picked = [];
+      prefer.forEach(function (name) {
+        catalogLinks.forEach(function (link) {
+          if (picked.length < howMany && picked.indexOf(link) < 0 && link.textContent.trim() === name) picked.push(link);
+        });
+      });
+      if (!picked.length) picked = catalogLinks.slice(0, howMany);
       var before = list.firstElementChild;
-      catalogLinks.slice(0, howMany).forEach(function (source) {
+      picked.forEach(function (source) {
         var row = document.createElement('li');
         var link = document.createElement('a');
         link.href = source.getAttribute('href');
