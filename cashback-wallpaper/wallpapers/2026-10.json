@@ -1,0 +1,14 @@
+{
+  "background": "../backgrounds/fon.jpg",
+  "title": "Кэшбэк · октябрь",
+  "phrase": null,
+  "duplicates": "keep",
+  "banks": [
+    { "name": "ОТП Банк", "categories": [
+      { "name": "Такси", "percent": 5 },
+      { "name": "Продуктовые магазины", "percent": 2 },
+      { "name": "Здоровье и медицина", "percent": 5 },
+      { "name": "ЖКХ", "percent": 3 }
+    ]}
+  ]
+}
