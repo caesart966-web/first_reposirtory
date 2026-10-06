@@ -31,7 +31,9 @@ for stream in (sys.stdout, sys.stderr):
     except Exception:  # noqa: BLE001
         pass
 
-OUT = sys.argv[1] if len(sys.argv) > 1 else 'result.xlsx'
+ARGS = [a for a in sys.argv[1:] if not a.startswith('--')]
+OUT = ARGS[0] if ARGS else 'result.xlsx'
+SIMPLE = '--simple' in sys.argv   # один лист с главными столбцами (просьба заказчика)
 
 
 def load(path):
@@ -79,6 +81,7 @@ for x in src:
         d = x.get('Дата прекращения членства', '')
         m = f'прекращено {d}' if d else 'член СРО'
     where = f'файл {file_}, № {x["N п/п"]}'
+    member = 'Да' if m == 'член СРО' else 'Приостановлено' if m == 'приостановлено' else 'Нет'
     extra = dict(  # остальные столбцы исходных файлов — переносятся как есть
         full=x.get('Полное наименование', ''), sro_reg=x.get('Регистрационный номер в реестре СРО', ''),
         sro_date=x.get('Дата регистрации в реестре СРО', ''), gos_date=x.get('Дата государственной регистрации', ''),
@@ -87,6 +90,8 @@ for x in src:
     if inn in rows:  # компания есть в обоих файлах — различающиеся значения через «; »
         rows[inn]['where'] += '; ' + where
         rows[inn]['sro'] += '; ' + m
+        rank = ['Нет', 'Приостановлено', 'Да']
+        rows[inn]['member'] = max(rows[inn]['member'], member, key=rank.index)
         for k, v in extra.items():
             if v and v not in rows[inn][k].split('; '):
                 rows[inn][k] = f'{rows[inn][k]}; {v}' if rows[inn][k] else v
@@ -97,7 +102,7 @@ for x in src:
         phone=x.get('Контактные телефоны', ''),
         addr=x.get('юр адрес') or x.get('Адрес места нахождения юридического лица', ''),
         head=x.get('ФИО') or x.get('Фамилия, имя, отчество (при наличии) для ИП', ''),
-        sro=m, where=where, **extra,
+        sro=m, where=where, member=member, **extra,
     )
 
 
@@ -410,6 +415,103 @@ for r in recs:
     r['email1'], r['email_rest'] = first, '; '.join(rest)
     if not r['via'] == 'Checko' and r['via']:
         r['note'] = '; '.join(x for x in (r['note'], 'статус по поиску в интернете') if x)
+
+SIMPLE_STATUS = {'Действует': 'Действует', 'Банкротство': 'Банкрот', 'В процессе ликвидации': 'Закрывается',
+                 'Предстоящее исключение': 'Закрывается'}
+SIMPLE_FILL = {'Действует': 'E2F0D9', 'Банкрот': 'F8D7DA', 'Закрывается': 'FFF2CC', 'Не действует': 'E7E6E6',
+               'Нет данных': 'FFFFFF'}
+
+
+def simple_status(r):
+    if r['group'] == 'Не существует':
+        return 'Не действует'
+    return SIMPLE_STATUS.get(r['status'], 'Нет данных')
+
+
+def build_simple(path):
+    """Один лист: статус, №, компания, ИНН, почта, телефон, сайт, руководитель, адрес, член СРО."""
+    from openpyxl.comments import Comment
+    from openpyxl.formatting.rule import CellIsRule
+    from openpyxl.worksheet.datavalidation import DataValidation
+    order = list(SIMPLE_FILL)
+    items = sorted(recs, key=lambda r: (order.index(simple_status(r)), plain(r['name']) or r['name']))
+    cols = [('Статус', 15, 'st'), ('№', 6, None), ('Компания', 40, 'name'), ('ИНН', 13, 'inn'),
+            ('Электронная почта', 34, 'email_main'), ('Телефон', 28, 'all_phones'), ('Сайт', 24, 'site'),
+            ('Руководитель', 34, 'head'), ('Адрес', 50, 'addr'), ('Член СРО', 14, 'member')]
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'Компании'
+    ws.sheet_view.showGridLines = False
+    last = get_column_letter(len(cols))
+    top, first = 3, 4                      # строка шапки и первая строка данных
+    end = first + len(items) - 1
+    ws.merge_cells(f'A1:{last}1')
+    ws['A1'] = f'Строительные компании Ростовской области — {len(items)} компаний (реестр Союза «Строители Ростовской области»), октябрь 2026'
+    ws['A1'].font = Font(name='Arial', size=14, bold=True, color=INK)
+    ws['A1'].alignment = Alignment(vertical='center')
+    ws.row_dimensions[1].height = 26
+    ws.merge_cells(f'A2:{last}2')
+    rng = f'$A${first}:$A${end}'
+    ws['A2'] = ('="Действует — "&COUNTIF({0},"Действует")&"     Банкрот — "&COUNTIF({0},"Банкрот")'
+                '&"     Закрывается — "&COUNTIF({0},"Закрывается")&"     Не действует — "&COUNTIF({0},"Не действует")'
+                '&"     С почтой — "&COUNTIF($E${1}:$E${2},"?*")'
+                '&"          Отбор и сортировка — стрелка в заголовке столбца (например, «Статус» → «Действует»)"'
+                ).format(rng, first, end)
+    ws['A2'].font = Font(name='Arial', size=10, bold=True, color=INK2)
+    ws['A2'].alignment = Alignment(vertical='center')
+    ws.row_dimensions[2].height = 22
+    for j, (h, w, _) in enumerate(cols, 1):
+        c = ws.cell(top, j, h)
+        c.font, c.fill, c.border = FH, HFILL, BRD
+        c.alignment = Alignment(wrap_text=True, vertical='center', horizontal='center')
+        ws.column_dimensions[get_column_letter(j)].width = w
+    ws.row_dimensions[top].height = 26
+    ws.cell(top, 1).comment = Comment('Статус по реестру налоговой (ЕГРЮЛ/ЕГРИП) через Checko, октябрь 2026.\n'
+                                      'Действует — работает. Банкрот — идёт банкротство. Закрывается — ликвидация '
+                                      'или налоговая готовит исключение. Не действует — уже закрыта.', 'Claude')
+    ws.cell(top, len(cols)).comment = Comment('По выгрузкам реестра Союза «Строители Ростовской области».', 'Claude')
+    for i, r in enumerate(items, 1):
+        row = top + i
+        vals = {'st': simple_status(r)}
+        for j, (_, w, k) in enumerate(cols, 1):
+            c = ws.cell(row, j, i if k is None else vals.get(k, r.get(k, '')))
+            c.font, c.border = F, BRD
+            c.alignment = Alignment(wrap_text=True, vertical='top')
+            if k == 'inn':
+                c.number_format = '@'
+            elif k == 'site' and r['site']:
+                c.hyperlink, c.font = url_of(r['site']), FL
+            elif k in ('st', 'member'):
+                c.alignment = Alignment(horizontal='center', vertical='top')
+            if k == 'st':
+                c.font = FB
+        lines = max(lines_for(ws.cell(row, j).value, w) for j, (_, w, _) in enumerate(cols, 1))
+        ws.row_dimensions[row].height = 13.5 * min(lines, 5) + 3
+    # статус — выбор из списка, цвет идёт за значением (меняется, если выбрать другой)
+    dv = DataValidation(type='list', formula1='"Действует,Банкрот,Закрывается,Не действует"', allow_blank=True)
+    dv.add(f'A{first}:A{end}')
+    ws.add_data_validation(dv)
+    for val, color in SIMPLE_FILL.items():
+        if val != 'Нет данных':
+            ws.conditional_formatting.add(f'A{first}:A{end}', CellIsRule(
+                operator='equal', formula=[f'"{val}"'], fill=PatternFill('solid', fgColor=color)))
+    dm = DataValidation(type='list', formula1='"Да,Нет,Приостановлено"', allow_blank=True)
+    dm.add(f'{last}{first}:{last}{end}')
+    ws.add_data_validation(dm)
+    ws.freeze_panes = f'C{first}'
+    ws.auto_filter.ref = f'A{top}:{last}{end}'
+    ws.page_setup.orientation = 'landscape'
+    ws.page_setup.fitToWidth, ws.page_setup.fitToHeight = 1, 0
+    ws.sheet_properties.pageSetUpPr = PageSetupProperties(fitToPage=True)
+    ws.print_title_rows = f'{top}:{top}'
+    wb.save(path)
+    print('Простая таблица:', path, '|', dict(collections.Counter(simple_status(r) for r in recs)),
+          '| с почтой:', sum(1 for r in recs if r['email_main']))
+
+
+if SIMPLE:
+    build_simple(OUT)
+    sys.exit(0)
 
 by = collections.defaultdict(list)
 for r in recs:
