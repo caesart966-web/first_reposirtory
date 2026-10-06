@@ -36,7 +36,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-VERSION = '06.10.2026, сборка 7'
+VERSION = '06.10.2026, сборка 8'
 HERE = os.path.dirname(os.path.abspath(__file__))
 API = os.environ.get('CHECKO_API_URL', 'https://api.checko.ru/v2').rstrip('/')
 CACHE = os.path.join(HERE, 'checko_cache')

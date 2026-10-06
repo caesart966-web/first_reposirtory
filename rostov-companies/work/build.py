@@ -76,9 +76,17 @@ for x in src:
         d = x.get('Дата прекращения членства', '')
         m = f'прекращено {d}' if d else 'член СРО'
     where = f'файл {file_}, № {x["N п/п"]}'
-    if inn in rows:
+    extra = dict(  # остальные столбцы исходных файлов — переносятся как есть
+        full=x.get('Полное наименование', ''), sro_reg=x.get('Регистрационный номер в реестре СРО', ''),
+        sro_date=x.get('Дата регистрации в реестре СРО', ''), gos_date=x.get('Дата государственной регистрации', ''),
+        kf=x.get('КФ', ''), decision=x.get('Решение', ''), file_email=x.get('электронная почта', ''),
+    )
+    if inn in rows:  # компания есть в обоих файлах — различающиеся значения через «; »
         rows[inn]['where'] += '; ' + where
         rows[inn]['sro'] += '; ' + m
+        for k, v in extra.items():
+            if v and v not in rows[inn][k].split('; '):
+                rows[inn][k] = f'{rows[inn][k]}; {v}' if rows[inn][k] else v
         continue
     rows[inn] = dict(
         inn=inn, ogrn=x['ОГРН/ОГРНИП'],
@@ -86,7 +94,7 @@ for x in src:
         phone=x.get('Контактные телефоны', ''),
         addr=x.get('юр адрес') or x.get('Адрес места нахождения юридического лица', ''),
         head=x.get('ФИО') or x.get('Фамилия, имя, отчество (при наличии) для ИП', ''),
-        sro=m, where=where,
+        sro=m, where=where, **extra,
     )
 
 
@@ -126,7 +134,8 @@ for inn, r in rows.items():
             recheck = 'да'
     sources = [x.get('source', '') for x in (c, s) if x and x.get('source')]
     recs.append(dict(r, group=GROUP[st], status=st, date=main.get('status_date', ''), recheck=recheck,
-                     email=emails_of(c, s), phones=(c or {}).get('phones', ''), site=(c or {}).get('site', ''),
+                     email=emails_of(c, s, {'email': r['file_email']}),
+                     phones=(c or {}).get('phones', ''), site=(c or {}).get('site', ''),
                      cur=main.get('current_name', '') or (s or {}).get('current_name', ''),
                      detail=det, source=' '.join(sources), via=via))
 recs.sort(key=lambda r: (ORDER.index(r['group']), r['email'] == '', r['name'].lower()))
@@ -138,7 +147,10 @@ COLS = [  # заголовок, ширина, поле
     ('Наименование (из файла)', 38, 'name'), ('Текущее наименование', 26, 'cur'),
     ('ИНН', 13, 'inn'), ('ОГРН / ОГРНИП', 16, 'ogrn'), ('Телефон (из файла)', 20, 'phone'),
     ('Адрес (из файла)', 50, 'addr'), ('Руководитель (из файла)', 38, 'head'),
-    ('Членство в СРО (по файлу)', 20, 'sro'), ('Где в исходных файлах', 20, 'where'),
+    ('Членство в СРО (по файлу)', 20, 'sro'), ('Рег. номер в реестре СРО', 12, 'sro_reg'),
+    ('Дата вступления в СРО', 13, 'sro_date'), ('Решение СРО (по файлу)', 40, 'decision'),
+    ('Взнос в КФ (по файлу)', 12, 'kf'), ('Дата гос. регистрации', 13, 'gos_date'),
+    ('Полное наименование (из файла)', 50, 'full'), ('Где в исходных файлах', 20, 'where'),
     ('Откуда статус', 12, 'via'), ('Что сказано в источнике', 60, 'detail'), ('Источник', 45, 'source'),
     ('Перепроверить', 14, 'recheck'), ('Проверить самому', 16, None),
 ]
