@@ -165,6 +165,11 @@ const articleSchema = {
   ]}
 >
   <article class="art">
+    {/* Полоса прочитанного — тонкая красная линия по верхнему краю окна
+        (06.10.2026, «живой» сайт). Чистый CSS, без скрипта: анимация
+        привязана к прокрутке страницы. Где браузер так не умеет
+        (Firefox), полосы нет вовсе — ничего не ломается. */}
+    <div class="read-bar" aria-hidden="true"></div>
     <header class="art-head">
       <div class="wrap">
         <nav class="crumbs" aria-label="Хлебные крошки" data-nosearch>
@@ -324,6 +329,36 @@ const articleSchema = {
   .toc a:hover { text-decoration: underline; }
   .art-main :global(.share) { padding-top: 18px; border-top: 1px solid var(--line); }
 
+  .read-bar { display: none; }
+  @supports (animation-timeline: scroll()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .read-bar {
+        display: block;
+        position: fixed;
+        inset: 0 0 auto 0;
+        height: 3px;
+        /* Над шапкой (у неё 50): полоса лежит по её верхней кромке. */
+        z-index: 60;
+        background: var(--acc-btn);
+        transform-origin: 0 50%;
+        transform: scaleX(0);
+        animation: read-bar linear both;
+        pointer-events: none;
+      }
+      /* Шкала времени — отдельным правилом, и это не прихоть. Сборщик
+         (lightningcss) склеивает animation и animation-timeline одного
+         правила в одно сокращение «animation: … scroll(root)», а Chrome
+         такое сокращение не принимает и выбрасывает целиком: полоса
+         стояла на нуле. Отдельное правило с селектором посильнее
+         не склеивается и перебивает сброс шкалы из сокращения. */
+      .art .read-bar {
+        animation-timeline: scroll(root block);
+        animation-duration: auto;
+      }
+    }
+  }
+  @keyframes read-bar { to { transform: scaleX(1); } }
+
   /* Статья набирается антиквой: её читают целиком, а не просматривают. */
   .prose {
     max-width: 68ch;
@@ -333,6 +368,18 @@ const articleSchema = {
     line-height: 1.7;
   }
   .prose :global(p) { margin: 0 0 20px; }
+  /* Буквица — первая буква разбора крупно, сургучом, на три строки:
+     так открывают главу в книге и раздел в старом своде законов
+     (06.10.2026, «красивый, живой»). Только у абзаца, с которого
+     статья начинается: у таблицы или списка буквицы не бывает. */
+  .prose > :global(p:first-child)::first-letter {
+    float: left;
+    font-size: 3.55em;
+    line-height: 0.8;
+    font-weight: 700;
+    margin: 0.07em 0.1em 0 0;
+    color: var(--acc-deep);
+  }
   .prose :global(h2) { font-size: 25px; margin: 36px 0 14px; }
   .prose :global(h3) { font-size: 19px; margin: 28px 0 10px; }
   .prose :global(ul), .prose :global(ol) { margin: 0 0 20px; padding-left: 24px; display: grid; gap: 8px; }

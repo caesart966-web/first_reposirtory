@@ -68,7 +68,14 @@ const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
     {who && SITE.photo && (
       <div class="lf-who">
         <img src={href(`/img/${SITE.photo}`)} width="72" height="72" alt={SITE.shortName} loading="lazy" />
-        <p><b>{SITE.shortName}</b><span>Вступление в СРО, НРС, НОК и лицензии</span></p>
+        <p>
+          <b>{SITE.shortName}</b><span>Вступление в СРО, НРС, НОК и лицензии</span>
+          {/* Что сейчас быстрее — та же строка, что под кнопками первого
+              экрана (lib/presence.ts, скрипт в Base.astro). */}
+          <span class="lf-state" data-presence>
+            <i aria-hidden="true"></i><span class="pr-state-text">Круглосуточно, без выходных</span>
+          </span>
+        </p>
       </div>
     )}
     <h2>{title}</h2>
@@ -286,6 +293,8 @@ const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
   .lf-who p { margin: 0; max-width: none; }
   .lf-who b { display: block; font-size: 16.5px; color: var(--ink); }
   .lf-who span { display: block; color: var(--muted); font-size: 14px; line-height: 1.45; margin-top: 2px; }
+  .lf-who .lf-state { display: flex; font-size: 13px; margin-top: 5px; }
+  .lf-who .lf-state .pr-state-text { margin: 0; font-size: inherit; }
   .lf-head p { color: var(--muted); font-size: 15.5px; max-width: 60ch; }
   .lf-points { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 8px; max-width: 64ch; }
   .lf-points li {

@@ -567,6 +567,19 @@ const howToSchema = {
   .s4-line::before { left: 0; }
   .s4-line::after { right: 0; }
   .steps4 li:last-child .s4-line { display: none; }
+  /* Размерная линия между шагами вычерчивается, когда шаг выезжает
+     (06.10.2026, «живой» сайт): сначала цифра, потом линия к следующей,
+     как по рейсшине. Пока шаг ждёт прокрутки (.rv-wait), линия сжата
+     в точку у своей цифры. Без скрипта и при «уменьшить движение»
+     класса .rv-wait нет — линия стоит сразу. */
+  :global(.js) .s4-line {
+    transform-origin: 0 50%;
+    transition: transform 0.9s var(--ease) calc(var(--rv-i, 0) * 55ms + 0.3s);
+  }
+  :global(.js) .steps4 .rv-wait .s4-line { transform: scaleX(0); transition: none; }
+  @media (prefers-reduced-motion: reduce) {
+    :global(.js) .steps4 .rv-wait .s4-line { transform: none; }
+  }
   .steps4 h3 { margin: 0; font-size: 18px; }
   .steps4 p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.6; max-width: 40ch; }
   .steps4 .law { justify-self: start; margin-top: 4px; }
