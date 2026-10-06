@@ -1,0 +1,26 @@
+{
+  "_comment": "Демо: категории и проценты выдуманы, только чтобы показать вид",
+  "background": "../backgrounds/demo-light.jpg",
+  "title": "Кэшбэк · октябрь",
+  "phrase": "Здесь будет ваша фраза",
+  "duplicates": "keep",
+  "banks": [
+    { "name": "Т-Банк", "categories": [
+      { "name": "Рестораны", "percent": 5 },
+      { "name": "Кафе", "percent": 5 },
+      { "name": "Аптеки", "percent": 3 },
+      { "name": "Такси", "percent": 3 },
+      { "name": "Цветы", "percent": 7 }
+    ]},
+    { "name": "Альфа-Банк", "categories": [
+      { "name": "Супермаркеты", "percent": 5 },
+      { "name": "Топливо и АЗС", "percent": 3 },
+      { "name": "Кино", "percent": 10 }
+    ]},
+    { "name": "СберБанк", "categories": [
+      { "name": "Одежда и обувь", "percent": 7 },
+      { "name": "Спорттовары", "percent": 5 },
+      { "name": "Животные", "percent": 3 }
+    ]}
+  ]
+}

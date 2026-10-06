@@ -1,0 +1,7 @@
+node_modules/
+out/
+# Фоны пользователя — личные фото, в git не идут
+backgrounds/*
+!backgrounds/.gitkeep
+# Скриншоты из банков — исходники, в git не идут
+screens/
