@@ -4,11 +4,43 @@
   "phrase": null,
   "duplicates": "keep",
   "banks": [
-    { "name": "ОТП Банк", "categories": [
-      { "name": "Такси", "percent": 5 },
-      { "name": "Продуктовые магазины", "percent": 2 },
-      { "name": "Здоровье и медицина", "percent": 5 },
-      { "name": "ЖКХ", "percent": 3 }
-    ]}
+    {
+      "name": "ОТП Банк",
+      "categories": [
+        {
+          "name": "Такси",
+          "percent": 5
+        },
+        {
+          "name": "Продуктовые магазины",
+          "percent": 2
+        },
+        {
+          "name": "Здоровье и медицина",
+          "percent": 5
+        },
+        {
+          "name": "ЖКХ",
+          "percent": 3
+        }
+      ]
+    },
+    {
+      "name": "Сбербанк",
+      "categories": [
+        {
+          "name": "Супермаркеты",
+          "percent": 2
+        },
+        {
+          "name": "Такси",
+          "percent": 3
+        },
+        {
+          "name": "Транспорт",
+          "percent": 15
+        }
+      ]
+    }
   ]
 }
