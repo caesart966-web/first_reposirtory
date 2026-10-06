@@ -1225,6 +1225,7 @@ class Renderer:
             "max_display": esc(c.get("max_display", "")),
             "work_hours": esc(c["work_hours"]),
             "yandex_rating": yandex_rating(site),
+            "chat_fab": chat_fab(site),
             "geo": esc(c["geo"]),
             "year": str(date.today().year),
             "cookie_bar": cookie_bar(site),
@@ -1251,6 +1252,84 @@ class Renderer:
 
 
 # ---------- главная -------------------------------------------------------
+
+def hero_status(site: Site) -> str:
+    """Строка «Сейчас на связи» под кнопками первого экрана. Считается
+    в браузере по московскому времени из contacts.hours — тем же часам,
+    что в карточке Яндекса. Индикатор, который горит всегда, ничего не значит,
+    поэтому вне рабочих часов он честно гаснет и говорит, когда ответим.
+    Без JavaScript строки нет вовсе (hidden), а не висит неверной."""
+    hrs = site.contacts.get("hours")
+    if not hrs:
+        return ""
+    days = ",".join(str(x) for x in hrs["days"])
+    return (f'        <p class="hero__status" data-status data-days="{days}" '
+            f'data-from="{hrs["from"]}" data-to="{hrs["to"]}" hidden>'
+            f'<span class="hero__status-dot" aria-hidden="true"></span>'
+            f'<span data-status-text></span></p>')
+
+
+def objects_strip(site: Site) -> str:
+    """Лента настоящих объектов под первым экраном: фото и название плывут
+    по кругу и ведут в «Объекты». Без выдумок — только то, что лежит
+    в portfolio, и только объекты с фотографией. Список выводится дважды,
+    чтобы лента шла без шва; второй экземпляр скрыт от экранных дикторов.
+    При «уменьшить движение» лента стоит и переносится по строкам."""
+    items = []
+    for o in site.raw.get("portfolio", {}).get("items", []):
+        slug = o.get("slug")
+        thumb = ""
+        for cand in (f"/assets/img/objects/{slug}-480.webp", f"/assets/img/objects/{slug}.webp"):
+            if slug and asset_exists(cand):
+                thumb = cand
+                break
+        if not thumb:
+            continue
+        items.append(f'''<a class="ostrip__item" href="{site.url("/obekty/")}">
+          <img src="{site.url(thumb)}" width="64" height="44" alt="" loading="lazy" decoding="async">
+          <span><b>{esc(o["name"])}</b><small>{esc(o["city"])}</small></span>
+        </a>''')
+    if len(items) < 3:
+        return ""
+    row = "\n        ".join(items)
+    return f'''  <section class="ostrip" aria-label="Объекты, где мы вели документацию">
+    <div class="container ostrip__head"><span class="eyebrow">Объекты, где мы вели документацию</span></div>
+    <div class="ostrip__viewport">
+      <div class="ostrip__track" style="--dur: {len(items) * 4}s">
+        <div class="ostrip__row">
+        {row}
+        </div>
+        <div class="ostrip__row" aria-hidden="true" inert>
+        {row}
+        </div>
+      </div>
+    </div>
+  </section>'''
+
+
+def chat_fab(site: Site) -> str:
+    """Кнопка «Написать» в углу экрана на компьютере: раскрывает Telegram,
+    WhatsApp и MAX. На телефоне её нет — там снизу своя панель связи."""
+    c = site.contacts
+    links = []
+    for name, label, url in (("telegram", "Telegram", c.get("telegram_url")),
+                             ("whatsapp", "WhatsApp", c.get("whatsapp_url")),
+                             ("max", "MAX", c.get("max_url"))):
+        if url:
+            links.append(f'<a class="fab__link" href="{esc(url)}" rel="nofollow noopener" target="_blank">'
+                         f'{brand_icon(site, name, 28, "")}<span>{label}</span></a>')
+    if not links:
+        return ""
+    return f'''<div class="fab" data-fab>
+  <div class="fab__menu" id="fab-menu" hidden>
+    <div class="fab__title">Напишите нам</div>
+    {"".join(links)}
+  </div>
+  <button class="fab__btn" type="button" aria-expanded="false" aria-controls="fab-menu">
+    {icon("chat")}<span>Написать</span>
+  </button>
+</div>'''
+
 
 def page_home(r: Renderer) -> None:
     site = r.site
@@ -1340,6 +1419,7 @@ def page_home(r: Renderer) -> None:
           <a class="btn btn--primary" href="#zayavka">{esc(h["cta_primary"])}</a>
           <a class="btn btn--on-dark" href="{site.url('/uslugi/')}">{esc(h["cta_secondary"])}</a>
         </div>
+{hero_status(site)}
         <div class="hero__spec">
 {chr(10).join(spec)}
         </div>
@@ -1349,6 +1429,8 @@ def page_home(r: Renderer) -> None:
   </section>'''
 
     body = f'''{hero}
+
+{objects_strip(site)}
 
   <section class="section section--surface">
     <div class="container">
