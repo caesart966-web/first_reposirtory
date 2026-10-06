@@ -93,25 +93,28 @@ export function normalize(s) {
     .trim();
 }
 
-// → { name, icon, key, known }. key — то, по чему склеиваются дубли.
-// Если строка попала в две разные категории («Игры и подписки», «Фастфуд
-// и кофейни»), название остаётся банковским: каноническое съело бы половину.
+// → { name, icon, key, canonical, known }.
+// name — подпись в таблице, ровно как у банка на скрине (решение
+// пользователя: «всё точь-в-точь, ничего не придумывай»). Словарь даёт
+// только иконку и key — по нему находятся дубли: «Медицинские услуги»
+// у одного банка и «Здоровье и медицина» у другого — одна категория,
+// но каждая остаётся со своей банковской подписью.
+// Если строка попала в две разные категории («Игры и подписки», «Театры
+// и кино»), key — сама строка: с одной из половин она не дубль.
 export function resolveCategory(raw, override = {}) {
   const n = normalize(raw);
   const hits = CATEGORIES.filter((c) => c.match.some((re) => re.test(n)));
   const named = new Set(hits.filter((c) => c.name).map((c) => c.name));
   const c = hits[0];
-  if (c && named.size <= 1) {
-    const name = override.label ?? c.name ?? tidy(raw);
-    return { name, icon: override.icon ?? c.icon, key: c.name ? normalize(c.name) : n, known: true };
-  }
   const name = override.label ?? tidy(raw);
-  return { name, icon: override.icon ?? c?.icon ?? FALLBACK_ICON, key: n, known: Boolean(c || override.icon) };
+  if (c && named.size <= 1) {
+    return { name, icon: override.icon ?? c.icon, key: c.name ? normalize(c.name) : n, canonical: c.name, known: true };
+  }
+  return { name, icon: override.icon ?? c?.icon ?? FALLBACK_ICON, key: n, canonical: null, known: Boolean(c || override.icon) };
 }
 
-// «СУПЕРМАРКЕТЫ» со скрина → «Супермаркеты»; «Ozon» оставить как есть.
+// Подпись — как на скрине: регистр не трогается («ЖКХ» остаётся «ЖКХ»),
+// убираются только лишние пробелы.
 function tidy(raw) {
-  const s = String(raw).trim().replace(/\s+/g, ' ');
-  if (s === s.toUpperCase() && /[а-яё]{3}/i.test(s)) return s[0] + s.slice(1).toLowerCase();
-  return s;
+  return String(raw).trim().replace(/\s+/g, ' ');
 }

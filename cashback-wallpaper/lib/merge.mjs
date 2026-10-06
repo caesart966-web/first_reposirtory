@@ -1,9 +1,11 @@
 // Сводит данные со скринов в разделы таблицы.
 //
-// Дубли склеиваются в три шага:
-// 1. один банк на нескольких скринах (или под разными подписями) — один раздел;
-// 2. одна категория внутри банка — одна строка («Кафе» + «Рестораны»,
-//    повтор на двух скринах); если проценты разные, остаётся больший;
+// Подписи — как на скринах: и банки, и категории. Дубли склеиваются в три шага:
+// 1. один банк на нескольких скринах (или под разными подписями) — один раздел
+//    под первой подписью;
+// 2. одна категория внутри банка — одна строка (повтор на двух скринах);
+//    если проценты разные, остаётся больший; если подписи разные
+//    («Кафе» + «Рестораны»), строка получает общее название из словаря;
 // 3. одна категория у разных банков — по `duplicates`:
 //    "keep" — остаётся у каждого банка, с одинаковым названием и иконкой;
 //    "best" — только у банка, где процент выше (при равенстве — у обоих).
@@ -25,10 +27,11 @@ export function buildSections(cfg) {
   const notes = [];
   const banks = new Map();
   for (const b of cfg.banks) {
-    const name = resolveBank(b.name);
-    if (!banks.has(name)) banks.set(name, { name, note: b.note ?? null, rows: new Map() });
-    else notes.push(`Банк «${name}» встретился дважды — разделы склеены`);
-    const bank = banks.get(name);
+    const bankKey = resolveBank(b.name);
+    if (!banks.has(bankKey)) banks.set(bankKey, { name: String(b.name).trim(), note: b.note ?? null, rows: new Map() });
+    else notes.push(`Банк «${b.name}» встретился дважды — разделы склеены`);
+    const bank = banks.get(bankKey);
+    const name = bank.name;
     for (const item of b.categories) {
       const raw = typeof item === 'string' ? item : item.name;
       const percent = parsePercent(item.percent);
@@ -40,6 +43,7 @@ export function buildSections(cfg) {
           (prev.percent !== percent ? ` (было ${prev.percent}% и ${percent}%, оставлено ${Math.max(prev.percent, percent)}%)` : ''));
         prev.percent = Math.max(prev.percent, percent);
         prev.sources.push(raw);
+        if (cat.name !== prev.name && !item.label) prev.name = cat.canonical ?? prev.name;
       } else {
         bank.rows.set(cat.key, { ...cat, percent, sources: [raw] });
       }

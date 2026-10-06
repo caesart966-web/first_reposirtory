@@ -77,7 +77,7 @@
       ]
     },
     {
-      "name": "Тинькофф",
+      "name": "Т-Банк",
       "categories": [
         {
           "name": "Ж/д билеты",
@@ -95,6 +95,32 @@
           "name": "Подарки и творчество",
           "percent": 5,
           "icon": "gift"
+        }
+      ]
+    },
+    {
+      "name": "Ozon Банк",
+      "categories": [
+        {
+          "name": "Косметика",
+          "percent": 5
+        },
+        {
+          "name": "Развлечения",
+          "percent": 5
+        },
+        {
+          "name": "Hoff",
+          "percent": 10,
+          "icon": "sofa"
+        },
+        {
+          "name": "Перекрёсток Доставка",
+          "percent": 10
+        },
+        {
+          "name": "Дикси",
+          "percent": 12
         }
       ]
     }
