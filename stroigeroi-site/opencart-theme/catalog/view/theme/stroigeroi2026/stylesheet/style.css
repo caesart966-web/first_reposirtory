@@ -442,7 +442,9 @@ ul {
   text-decoration: none;
 }
 
-.site-logo img {
+/* > img - только круглый знак: внутри ссылки есть и вторая картинка,
+   фирменная надпись, и правило без > делало её кругом 64 x 64 */
+.site-logo > img {
   width: 64px;
   height: 64px;
   border-radius: 50%;
@@ -471,6 +473,34 @@ ul {
   font-size: 11.5px;
   font-weight: 600;
   letter-spacing: 0.08em;
+}
+
+/* Фирменная надпись «СТРОЙ★ГЕРОЙ» и «Строительные материалы» под ней -
+   на телефоне и планшете, где подписи из концепции нет места (уже 901 px).
+   Без них строка со знаком стояла пустой: знак слева, корзина справа -
+   заказчик обвёл это место на снимке (06.10.2026). Надпись и подпись
+   одной ширины: размер подписи считается от ширины блока (cqi), а блок
+   занимает свободное место строки, но не больше 180-190 px. */
+.site-logo__brand {
+  display: none;
+}
+
+.site-logo__mark img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* 14.06 - ширина «Строительные материалы» в кеглях Montserrat 600:
+   при таком кегле подпись ровно во всю ширину надписи */
+.site-logo__note {
+  overflow: hidden;
+  font-family: var(--font-head);
+  font-size: 11px;
+  font-size: calc(100cqi / 14.06);
+  font-weight: 600;
+  line-height: 1.15;
+  white-space: nowrap;
 }
 
 /* Рукописный слоган с красным росчерком. Для диктора скрыт: это украшение,
@@ -1050,6 +1080,43 @@ body:has(.first-screen) .header-slogan {
   .site-logo__tagline {
     display: none;
   }
+
+  /* Полосы - только в строке со знаком, как на телефоне: во всю высоту
+     шапки их обрезок торчал слева от поля поиска */
+  .header-main::before {
+    height: 88px;
+  }
+
+  .site-header.is-compact .header-main::before {
+    height: 64px;
+  }
+
+  /* flex-basis 0: знак с надписью не переносит строку на узком экране,
+     а сжимается в свободное место (строка с переносом, см. выше) */
+  .site-logo {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: calc(64px + var(--sp-3) + 190px);
+  }
+
+  .site-logo > img {
+    flex: none;
+  }
+
+  .site-logo__brand {
+    flex: 0 1 190px;
+    min-width: 0;
+    display: grid;
+    gap: 4px;
+    container-type: inline-size;
+  }
+
+  /* Уже 140 px подпись была бы мельче 10 px - остаётся одна надпись */
+  @container (max-width: 139px) {
+    .site-logo__note {
+      display: none;
+    }
+  }
 }
 
 @media (max-width: 640px) {
@@ -1060,9 +1127,19 @@ body:has(.first-screen) .header-slogan {
     height: 58px;
   }
 
-  .site-logo img {
+  .site-logo > img {
     width: 44px;
     height: 44px;
+  }
+
+  .site-logo {
+    gap: 10px;
+    max-width: calc(44px + 10px + 180px);
+  }
+
+  .site-logo__brand {
+    flex-basis: 180px;
+    gap: 3px;
   }
 
   .header-main__inner {
@@ -5028,7 +5105,7 @@ html {
   padding-bottom: var(--sp-2);
 }
 
-.site-header.is-compact .site-logo img {
+.site-header.is-compact .site-logo > img {
   width: 48px;
   height: 48px;
 }
@@ -5038,7 +5115,7 @@ html {
     display: none;
   }
 
-  .site-header.is-compact .site-logo img {
+  .site-header.is-compact .site-logo > img {
     width: 44px;
     height: 44px;
   }

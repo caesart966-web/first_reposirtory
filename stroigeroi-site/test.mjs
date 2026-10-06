@@ -1921,7 +1921,7 @@ for (const width of [390, 768, 1280]) {
 
   const slow = await page.evaluate(() => {
     const parts = ['.site-header', '.header-main', '.header-main__inner', '.header-nav',
-      '.header-nav__inner', '.site-logo img', '.header-catalog'];
+      '.header-nav__inner', '.site-logo > img', '.header-catalog'];
     const heavy = /^(all|width|height|padding|margin|inset|top|left|right|bottom)/;
     const found = [];
     for (const sel of parts) {

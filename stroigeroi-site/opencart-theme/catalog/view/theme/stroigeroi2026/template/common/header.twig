@@ -240,7 +240,7 @@
   Число одно на все три файла: обновился любой - адрес меняется у всех,
   зато нельзя забыть какой-то из них.
 #}
-{% set asset_v = '5b6f14d9' %}
+{% set asset_v = 'd6f84ccf' %}
 {#
   Стили расширений идут ПЕРВЫМИ, наши - последними, и порядок здесь
   важнее, чем кажется. Оформление заказа рисует модуль Simple, со своим
@@ -307,10 +307,15 @@
         {#
           Подпись у знака — как в концепции заказчика (октябрь 2026):
           что продаём, а не название ещё раз. Название магазина есть
-          в самом знаке и в alt. Фирменная надпись «СТРОЙ★ГЕРОЙ» осталась
-          в подвале.
+          в самом знаке и в alt.
+          На телефоне и планшете (уже 901 px) подписи нет места, и строка
+          со знаком стояла пустой - заказчик обвёл её на снимке (06.10.2026).
+          Там вместо подписи - фирменная надпись «СТРОЙ★ГЕРОЙ» (та же,
+          что в подвале, файл из кеша) и «Строительные материалы» под ней.
+          Для диктора скрыта: название уже в alt знака.
         #}
         <span class="site-logo__tagline"><span class="site-logo__line">Строительные материалы</span><span class="site-logo__line site-logo__line--sub">Инструмент · ремонт · дом · сад</span></span>
+        <span class="site-logo__brand" aria-hidden="true"><picture class="site-logo__mark"><source type="image/avif" srcset="catalog/view/theme/stroigeroi2026/image/wordmark.avif"><source type="image/webp" srcset="catalog/view/theme/stroigeroi2026/image/wordmark.webp"><img src="catalog/view/theme/stroigeroi2026/image/wordmark.png" width="700" height="103" alt="" decoding="async"></picture><span class="site-logo__note">Строительные материалы</span></span>
       </a>
 
       <p class="header-slogan" aria-hidden="true">Строим Камчатку вместе!<svg class="header-slogan__swash" width="120" height="10" viewBox="0 0 120 10" aria-hidden="true" focusable="false"><path d="M2 7.5C30 3.2 72 1.6 118 4.2" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></p>
