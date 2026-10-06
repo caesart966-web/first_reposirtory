@@ -1,5 +1,5 @@
 ---
-import { SITE, href } from '../config/site'
+import { SITE, REGISTRIES, href } from '../config/site'
 import Icon from './Icon.astro'
 import BrandIcon from './BrandIcon.astro'
 import Seal from './Seal.astro'
@@ -128,10 +128,29 @@ import { GIFT_TAG, GIFTS, OFFER } from '../config/offer'
         <a class="btn btn--lg cta-calc" href="#calc">Проверить, нужна ли СРО</a>
         <a class="btn btn--ghost btn--lg on-wide" href={href('/stoimost/')}>Узнать стоимость</a>
       </div>
-      <p class="note">
-        <span class="on-phone">Достаточно имени и телефона · отвечаю лично</span>
-        <span class="on-wide">2 минуты · 4 вопроса · ответ со ссылкой на закон</span>
-      </p>
+      <p class="note on-wide">2 минуты · 4 вопроса · ответ со ссылкой на закон</p>
+
+      {/* Кто ответит — лицом и именем, на первом экране (06.10.2026,
+          просьба заказчика: «сделай сайт живым и доверительным»). До этого
+          фотография стояла только над формой, на шестом экране телефона.
+          Строка под именем — что сейчас быстрее, позвонить или написать,
+          по московскому времени: та же функция, что у «Сейчас на связи»
+          на «Контактах» (lib/presence.ts). Без скрипта — режим из бланка
+          контактов. Точка не мигает: мигающая точка — приём службы
+          поддержки, а не документа. Фото квадратом, как над формой:
+          заказчик просил, чтобы кадр был виден целиком.
+          Ведёт на «Обо мне»: кто это и что он обязуется делать. */}
+      <a class="presence" href={href('/obo-mne/')}>
+        {SITE.photo && (
+          <img class="pr-photo" src={href(`/img/${SITE.photo}`)} width="44" height="44" alt="" decoding="async" />
+        )}
+        <span class="pr-txt">
+          <span class="pr-name">{SITE.shortName} — отвечаю лично</span>
+          <span class="pr-state" data-presence>
+            <i aria-hidden="true"></i><span class="pr-state-text">Круглосуточно, без выходных</span>
+          </span>
+        </span>
+      </a>
 
       {/* Прямые каналы — в первом экране, а не только на «Контактах»
           и в подвале: кто уже решил, тому калькулятор не нужен, ему нужно
@@ -249,10 +268,19 @@ import { GIFT_TAG, GIFTS, OFFER } from '../config/offer'
       <span class="v-seal"><Seal size={104} /></span>
       {/* «Нормы», а не «все цифры»: взносы СРО законом не установлены,
           статьи у них нет и быть не должно (config/fees.ts). */}
-      <p>
-        Нормы закона на сайте сверены с Градостроительным кодексом,
-        у каждой — статья, устаревших норм нет. Дата сверки — на печати.
-      </p>
+      <div class="v-txt">
+        <p>
+          Нормы закона на сайте сверены с Градостроительным кодексом,
+          у каждой — статья, устаревших норм нет. Дата сверки — на печати.
+        </p>
+        {/* Проверяемость владельца — тоже на первом экране: ИНН и ссылка
+            в ЕГРИП, как в бланке «Контактов». Сайт держится на «проверьте
+            меня», и проверить можно за минуту, не уходя дальше первого экрана. */}
+        <p class="v-id">
+          Работаю как ИП: ИНН <span class="v-inn">{SITE.inn}</span> —{' '}
+          <a href={REGISTRIES.egrip} target="_blank" rel="noopener noreferrer">проверить в ЕГРИП</a>
+        </p>
+      </div>
     </div>
   </div>
 </section>
@@ -381,6 +409,16 @@ import { GIFT_TAG, GIFTS, OFFER } from '../config/offer'
     mask-composite: intersect;
     -webkit-mask-composite: source-in;
     pointer-events: none;
+    /* Кадр «дышит»: медленно приближается и отходит, полминуты в одну
+       сторону (06.10.2026, «чтобы сайт был живой»). Двигается слой
+       целиком, вместе с маской: увеличение до 6 % сдвигает края маски
+       на пикселы, текст слева остаётся на чистой бумаге. Раз фильтр
+       и маска неподвижны относительно слоя, браузер рисует кадр один
+       раз и дальше только масштабирует его — прокрутку это не тормозит.
+       При «уменьшить движение» анимацию гасит общее правило global.css. */
+    transform-origin: 74% 48%;
+    animation: breathe 30s ease-in-out infinite alternate;
+    will-change: transform;
   }
   /* Когда фотография есть, чертёж уходит: два рисунка на одном фоне
      спорят друг с другом. */
@@ -402,6 +440,7 @@ import { GIFT_TAG, GIFTS, OFFER } from '../config/offer'
       bottom: auto;
       height: 400px;
       background-position: 84% 26%;
+      transform-origin: 84% 30%;
       opacity: 0.46;
       mask-image:
         linear-gradient(90deg, transparent 0%, transparent 22%, rgba(0, 0, 0, 0.4) 52%, #000 82%),
@@ -572,6 +611,32 @@ import { GIFT_TAG, GIFTS, OFFER } from '../config/offer'
   }
   .note { font-size: 13px; color: var(--muted); margin-top: 15px; }
 
+  /* Кто ответит: фото и две строки, как контакт в мессенджере. */
+  .presence {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: fit-content;
+    max-width: 100%;
+    margin-top: 22px;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .pr-photo {
+    width: 44px;
+    height: 44px;
+    flex: none;
+    object-fit: cover;
+    border-radius: var(--r-s);
+    border: 1px solid var(--line);
+    background: var(--paper-2);
+  }
+  .pr-txt { display: grid; gap: 3px; line-height: 1.3; min-width: 0; }
+  .pr-name { font-size: 15px; font-weight: 600; transition: color var(--t-fast) var(--ease); }
+  .presence:hover .pr-name { color: var(--acc-deep); text-decoration: underline; }
+  /* Точка статуса — общее правило в global.css ([data-presence]). */
+  .pr-state { font-size: 13px; color: var(--muted); }
+
   .direct {
     display: flex;
     flex-wrap: wrap;
@@ -615,6 +680,9 @@ import { GIFT_TAG, GIFTS, OFFER } from '../config/offer'
     .cta { margin-top: 20px; gap: 10px; }
     .btn--lg { min-height: 50px; padding: 13px 20px; }
     .note { margin-top: 10px; }
+    .presence { margin-top: 14px; gap: 10px; }
+    .pr-photo { width: 40px; height: 40px; }
+    .pr-name { font-size: 14.5px; }
   }
   /* Самые узкие телефоны: плашка «по всей России · выписка…» — в одну строку. */
   @media (max-width: 380px) {
@@ -642,6 +710,18 @@ import { GIFT_TAG, GIFTS, OFFER } from '../config/offer'
     .v-seal :global(.seal) { --seal-size: 82px; }
   }
   .verify p { font-size: 14px; line-height: 1.6; color: var(--muted); }
+  .v-txt { display: grid; gap: 8px; }
+  .verify .v-id { font-size: 13.5px; }
+  .v-inn { font-family: var(--font-mono); font-variant-numeric: lining-nums tabular-nums; color: var(--ink); }
+  .v-id a {
+    color: var(--acc-deep);
+    font-weight: 600;
+    white-space: nowrap;
+    /* Поле нажатия выше строки — как у ссылок в подвале. */
+    padding-block: 5px;
+    margin-block: -5px;
+  }
+  .v-id a:hover { text-decoration: underline; }
 
   /* ── Предложение как бланк ── */
 

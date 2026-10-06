@@ -368,6 +368,20 @@ const graph = {
     </style>
 
     <script>
+      // «На связи» рядом с фотографией владельца: первый экран главной
+      // и форма заявки. Что сейчас быстрее — позвонить или написать,
+      // по московскому времени; решает lib/presence.ts, та же функция
+      // ведёт строку «Сейчас на связи» на «Контактах».
+      import { presence } from '../lib/presence'
+      {
+        const now = presence()
+        document.querySelectorAll<HTMLElement>('[data-presence]').forEach((el) => {
+          el.dataset.state = now.state
+          const text = el.querySelector('.pr-state-text')
+          if (text) text.textContent = now.short
+        })
+      }
+
       // Плавное появление блоков при прокрутке.
       const reveal = () => {
         const items = Array.from(document.querySelectorAll<HTMLElement>('.rv'))

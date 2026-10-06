@@ -781,42 +781,16 @@ const IDENT = [
 <script>
   // ── Живой статус доступности ──
   //
-  // Режим круглосуточный, поэтому строка не сообщает «открыто/закрыто» —
-  // такой индикатор всегда горел бы зелёным и читался бы как наклейка
-  // «мы всегда онлайн», которой никто не верит. Вместо этого она
-  // сообщает то, что действительно меняется в течение суток: днём
-  // быстрее дозвониться, ночью быстрее написать.
-  //
-  // Время считается по Москве независимо от часового пояса посетителя:
-  // клиенту из Иркутска важно, который час у того, кому он звонит.
+  // Что сейчас быстрее — позвонить или написать, по московскому времени.
+  // Решение считает src/lib/presence.ts: та же функция ведёт строку
+  // под кнопками первого экрана, и сказать разное они не могут.
+  import { presence } from '../lib/presence'
+
   const box = document.getElementById('k-status')
   if (box) {
+    const { state, long } = presence()
     const text = box.querySelector('.k-status-text')
-    const parts = Object.fromEntries(
-      new Intl.DateTimeFormat('en-US', {
-        timeZone: 'Europe/Moscow',
-        weekday: 'short',
-        hour: 'numeric',
-        hour12: false,
-      })
-        .formatToParts(new Date())
-        .map((p) => [p.type, p.value]),
-    )
-    // hour12: false в полночь отдаёт «24» — приводим к нулю.
-    const hour = Number(parts.hour) % 24
-    const weekend = parts.weekday === 'Sat' || parts.weekday === 'Sun'
-
-    let state = 'on'
-    let phrase = 'Сейчас на связи, отвечу сразу'
-    if (hour < 8 || hour >= 22) {
-      state = 'night'
-      phrase = 'Ночь в Москве — быстрее всего написать в мессенджер'
-    } else if (weekend) {
-      state = 'on'
-      phrase = 'Выходной, но на связи — звоните или пишите'
-    }
-
-    if (text) text.textContent = phrase
+    if (text) text.textContent = long
     box.dataset.state = state
     box.hidden = false
   }

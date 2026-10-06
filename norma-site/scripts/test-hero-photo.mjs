@@ -49,6 +49,7 @@ const HEADS = [
   '/dokumenty/',
   '/proverit-sro/',
   '/baza-znaniy/',
+  '/slovar/',
   '/politika/',
   '/kontakty/',
   '/obo-mne/',
@@ -85,7 +86,9 @@ const TARGETS = [
     hide: '.hero .hero-offer, .hero .hero-gift, .hero .cta, .hero svg, .hero .law',
     // .direct — строка «Или напишите напрямую» с мессенджерами. На телефоне
     // её нет (там каналы в нижней панели), и замер там пропускается сам.
-    texts: ['.geo', '.page-title', '.hero-lead', '.note span', '.direct span', '.direct a', '.verify p'],
+    // .presence — фото, имя и «на связи» под кнопками (06.10.2026),
+    // .v-id — ИНН у печати. На телефоне .note нет (только с 768 px).
+    texts: ['.geo', '.page-title', '.hero-lead', '.note', '.pr-name', '.pr-state-text', '.direct span', '.direct a', '.verify p', '.v-id a'],
   },
   ...HEADS.map((url) => ({
     url,
