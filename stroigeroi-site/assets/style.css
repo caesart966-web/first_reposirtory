@@ -50,22 +50,29 @@
   --sg-red-tint: #fdf1f2;
   --sg-bg-soft: #f7f7fa;
 
-  /* Фирменные диагональные полоски — рисуются кодом, картинка не нужна */
+  /* Фирменные диагональные полоски — рисуются кодом, картинка не нужна.
+     Между цветами - переход в 0,8 px, а не жёсткая граница: косую
+     жёсткую границу Chrome рисует лесенкой из пикселей, и на обычном
+     мониторе края полос выглядели рваными («полоски кривые»). Период
+     начинается красным - тем же цветом, которым кончается: на стыке
+     периодов перехода нет, а с красного на белый - внутри периода. */
   --sg-stripes: repeating-linear-gradient(
     -45deg,
-    #ffffff 0 18px,
-    var(--sg-blue) 18px 31px,
-    #ffffff 31px 49px,
-    var(--sg-red) 49px 62px
+    var(--sg-red) 0,
+    #ffffff 0.8px 18px,
+    var(--sg-blue) 18.8px 31px,
+    #ffffff 31.8px 49px,
+    var(--sg-red) 49.8px 62px
   );
 
   /* Та же раскладка полос, но крупнее — для больших плоскостей */
   --sg-stripes-lg: repeating-linear-gradient(
     -45deg,
-    #ffffff 0 34px,
-    var(--sg-blue) 34px 58px,
-    #ffffff 58px 92px,
-    var(--sg-red) 92px 116px
+    var(--sg-red) 0,
+    #ffffff 0.8px 34px,
+    var(--sg-blue) 34.8px 58px,
+    #ffffff 58.8px 92px,
+    var(--sg-red) 92.8px 116px
   );
 
   /* Отступы */
@@ -405,16 +412,31 @@ ul {
 
 /* Фирменные полосы в левом верхнем углу — как на баннере и в концепции.
    Треугольник, а не полоса во всю высоту: знак стоит поверх угла
-   и полосы не спорят с надписью рядом. */
+   и полосы не спорят с надписью рядом.
+
+   Угол квадратный (--corner на --corner) и срезан ровно по границе
+   полосы: красная, синяя, красная - каждая целиком, срез параллелен
+   полосам. Раньше угол был 118 x 88 и резался clip-path под другим
+   углом, чем шли полосы: крайняя полоса сходила на клин - заказчик
+   («полоски кривые») и пользователь обвели именно его. Полосы считаются
+   от самого угла (135deg) в долях диагонали квадрата: 50 % - срез.
+   Между полосами не белый, а прозрачный - фон шапки, поэтому в тёмной
+   теме угол не нужно перекрашивать. */
 .header-main::before {
+  --corner: 88px;
   content: "";
   position: absolute;
   left: 0;
   top: 0;
-  width: 118px;
-  height: 100%;
-  background-image: var(--sg-stripes);
-  clip-path: polygon(0 0, 100% 0, 0 100%);
+  width: var(--corner);
+  height: var(--corner);
+  background-image: linear-gradient(135deg,
+    var(--sg-red) 0 10%,
+    transparent 10.8% 19.4%,
+    var(--sg-blue) 20.2% 29.8%,
+    transparent 30.6% 39.2%,
+    var(--sg-red) 40% 49.6%,
+    transparent 50%);
   pointer-events: none;
 }
 
@@ -1081,16 +1103,6 @@ body:has(.first-screen) .header-slogan {
     display: none;
   }
 
-  /* Полосы - только в строке со знаком, как на телефоне: во всю высоту
-     шапки их обрезок торчал слева от поля поиска */
-  .header-main::before {
-    height: 88px;
-  }
-
-  .site-header.is-compact .header-main::before {
-    height: 64px;
-  }
-
   /* flex-basis 0: знак с надписью не переносит строку на узком экране,
      а сжимается в свободное место (строка с переносом, см. выше) */
   .site-logo {
@@ -1120,11 +1132,10 @@ body:has(.first-screen) .header-slogan {
 }
 
 @media (max-width: 640px) {
-  /* Полосы - только в строке со знаком: при высоте во всю шапку их
+  /* Угол - только в строке со знаком: при высоте во всю шапку его
      обрезок торчал слева от поля поиска */
   .header-main::before {
-    width: 78px;
-    height: 58px;
+    --corner: 58px;
   }
 
   .site-logo > img {
@@ -1156,24 +1167,49 @@ body:has(.first-screen) .header-slogan {
   }
 
   /* Синяя строка на телефоне — только «Каталог товаров», магазины
-     и переключатель темы: ссылки на страницы есть в бургере */
+     и переключатель темы: ссылки на страницы есть в бургере.
+     «Каталог» и «Магазины» - две равные кнопки, надписи по центру:
+     раньше красная кнопка стояла по своей ширине слева, «Магазины» -
+     по своей справа, и между ними зияла дыра разной ширины на разных
+     телефонах. Сетка из трёх колонок; обёртка «Магазинов» и темы
+     (header-nav__side) не рисуется, её кнопки встают в колонки сами. */
   .header-nav__inner {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 44px;
+    gap: var(--sp-2);
     min-height: 52px;
-    gap: var(--sp-3);
+  }
+
+  .header-nav__side {
+    display: contents;
   }
 
   .header-nav .header-catalog {
+    justify-content: center;
     height: 44px;
-    padding: 0 var(--sp-4);
+    padding: 0 var(--sp-2);
     font-size: 14px;
   }
 
-  /* Рамка у «Магазинов» прибавила ширины: с прежними полями синяя
-     строка на 320 px выходила за экран на 1 px */
   .header-nav .dropdown__toggle {
+    width: 100%;
+    justify-content: center;
     min-height: 44px;
     padding: 0 var(--sp-2);
     font-size: 14px;
+  }
+
+  /* Список магазинов - во всю ширину экрана под синей строкой, а не от
+     правого края кнопки: в 300 px он уходил за левый край на 320 px */
+  .header-nav .dropdown {
+    position: static;
+  }
+
+  .header-nav .dropdown__panel {
+    left: var(--sp-4);
+    right: var(--sp-4);
+    min-width: 0;
   }
 
   .header-nav .theme-toggle {
@@ -1228,8 +1264,10 @@ body:has(.first-screen) .header-slogan {
   }
 }
 
+/* Самые узкие телефоны: стрелки вниз уходят у обеих кнопок, значки
+   остаются у обеих - кнопки одинаковые */
 @media (max-width: 360px) {
-  .header-nav .dropdown__toggle > svg,
+  .header-nav .header-catalog .icon-chevron,
   .header-nav .dropdown__toggle .icon-chevron {
     display: none;
   }
@@ -1265,19 +1303,18 @@ body:has(.first-screen) .header-slogan {
   padding-left: var(--sp-4);
 }
 
+/* Засечка - синяя сверху, красная снизу. Здесь были фирменные полоски,
+   ужатые в 6 px: в такой ширине от них оставались синий брусок и белый
+   косой срез, и засечка у каждого заголовка выглядела надломленной. */
 .section__title::before {
   content: "";
   position: absolute;
   left: 0;
-  top: 2px;
-  bottom: 2px;
-  width: 6px;
-  border-radius: var(--r-sm);
-  background-image: var(--sg-stripes);
-  background-size: 24px 24px;
-  /* Рамка съедала два пикселя из шести, и фирменные полоски внутри
-     превращались в грязное пятно. Метка держится на самих полосках. */
-  box-shadow: inset 0 0 0 1px rgba(1, 11, 135, 0.08);
+  top: 3px;
+  bottom: 3px;
+  width: 5px;
+  border-radius: 3px;
+  background: linear-gradient(var(--sg-blue) 0 50%, var(--sg-red) 50% 100%);
 }
 
 .section__link {
@@ -1368,14 +1405,17 @@ body:has(.first-screen) .header-slogan {
 }
 
 /* Фирменные полосы в правом верхнем углу, как на баннере */
+/* Квадрат, срезанный ровно по диагонали (45 градусов): срез поперёк
+   полос, и каждая кончается прямым торцом. Был прямоугольник 220 x 150
+   со срезом под 42 градуса - торцы полос выходили скошенными. */
 .first-screen__stripes {
   position: absolute;
   top: 0;
   right: 0;
-  width: 220px;
+  width: 150px;
   height: 150px;
   background-image: var(--sg-stripes-lg);
-  clip-path: polygon(38% 0, 100% 0, 100% 82%);
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
 }
 
 /* width: max-content и max-width: none - не мелочь. Блок стоит
@@ -2464,6 +2504,15 @@ body:has(.first-screen) .header-slogan {
 
   .first-screen__actions {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* В две-три строки «таблетка» с круглыми торцами превращалась
+     в кляксу: дуги срезали углы, и начало первой строки упиралось
+     в рамку. На телефоне - прямоугольник со скруглёнными углами. */
+  .first-screen__note {
+    display: block;
+    padding: 8px 12px;
+    border-radius: var(--r-lg);
   }
 
   .first-screen__calc {
@@ -4961,17 +5010,19 @@ html[data-theme="dark"] {
   /* В полосках белый заменяется цветом фона, иначе они «горят» */
   --sg-stripes: repeating-linear-gradient(
     -45deg,
-    #0e1117 0 18px,
-    var(--sg-blue) 18px 31px,
-    #0e1117 31px 49px,
-    var(--sg-red) 49px 62px
+    var(--sg-red) 0,
+    #0e1117 0.8px 18px,
+    var(--sg-blue) 18.8px 31px,
+    #0e1117 31.8px 49px,
+    var(--sg-red) 49.8px 62px
   );
   --sg-stripes-lg: repeating-linear-gradient(
     -45deg,
-    #0e1117 0 34px,
-    var(--sg-blue) 34px 58px,
-    #0e1117 58px 92px,
-    var(--sg-red) 92px 116px
+    var(--sg-red) 0,
+    #0e1117 0.8px 34px,
+    var(--sg-blue) 34.8px 58px,
+    #0e1117 58.8px 92px,
+    var(--sg-red) 92.8px 116px
   );
 
   color-scheme: dark;
@@ -5099,6 +5150,10 @@ html {
   display: inline-flex;
 }
 
+.site-header.is-compact .header-main::before {
+  --corner: 64px;
+}
+
 .site-header.is-compact .header-main__inner {
   min-height: 64px;
   padding-top: var(--sp-2);
@@ -5113,6 +5168,11 @@ html {
 @media (max-width: 640px) {
   .site-header.is-compact .header-catalog--compact {
     display: none;
+  }
+
+  /* Строка со знаком на телефоне в сжатой шапке та же, что в обычной */
+  .site-header.is-compact .header-main::before {
+    --corner: 58px;
   }
 
   .site-header.is-compact .site-logo > img {
@@ -7378,11 +7438,6 @@ body:has(.demo-note:not([hidden])) .calc-peek {
 }
 
 @media (max-width: 360px) {
-  .header-nav .dropdown__toggle > svg,
-  .header-nav .dropdown__toggle .icon-chevron {
-    display: none;
-  }
-
   .action-link {
     min-height: 44px;
   }
