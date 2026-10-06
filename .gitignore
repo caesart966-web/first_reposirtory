@@ -40,3 +40,7 @@ pto-site/promo-music.wav
 pto-site/promo-short.mp4
 pto-site/promo-short.wav
 pto-site/tools/voices/
+
+# rostov-companies: ключ Checko и сырые ответы API (большие, пересобираются запуском)
+rostov-companies/**/checko_key.txt
+rostov-companies/**/checko_cache/
