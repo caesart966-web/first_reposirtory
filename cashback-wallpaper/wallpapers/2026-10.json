@@ -75,6 +75,28 @@
           "percent": 5
         }
       ]
+    },
+    {
+      "name": "Тинькофф",
+      "categories": [
+        {
+          "name": "Ж/д билеты",
+          "percent": 5
+        },
+        {
+          "name": "Кино",
+          "percent": 5
+        },
+        {
+          "name": "Спорттовары",
+          "percent": 5
+        },
+        {
+          "name": "Подарки и творчество",
+          "percent": 5,
+          "icon": "gift"
+        }
+      ]
     }
   ]
 }
