@@ -2926,6 +2926,177 @@ html {
 .yrating { margin-top: var(--s-3, .75rem); }
 .yrating iframe { display: block; margin-top: .5rem; border: 0; border-radius: 6px; }
 
+/* ---------- 14д. «Живые» элементы ---------------------------------------
+   Всё, что здесь движется, движется ради смысла: статус показывает, на связи
+   ли мы прямо сейчас, лента — настоящие объекты, линия этапа — ход работы.
+   При «уменьшить движение» всё стоит, содержимое остаётся. */
+
+/* Строка «Сейчас на связи» на первом экране */
+.hero__status {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin: var(--s-4) 0 0;
+  font-size: 1rem;
+  line-height: 1.45;
+  color: var(--ink-inverse-muted);
+}
+.hero__status-dot {
+  position: relative;
+  flex: none;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #3ddc84;
+  box-shadow: 0 0 0 3px rgba(61, 220, 132, .18);
+}
+.hero__status.is-off .hero__status-dot { background: #8fa3bd; box-shadow: 0 0 0 3px rgba(143, 163, 189, .18); }
+@media (prefers-reduced-motion: no-preference) {
+  .hero__inner > .hero__status { animation-delay: 270ms; }
+  .hero__status:not(.is-off) .hero__status-dot { animation: statusPing 2.4s var(--ease) infinite; }
+}
+/* Пульс — тенью, а не увеличенным кружком: тень не выходит за рамку
+   элемента и не даёт ложного «обрезанного текста» в проверке вёрстки. */
+@keyframes statusPing {
+  0%   { box-shadow: 0 0 0 0 rgba(61, 220, 132, .55); }
+  70%, 100% { box-shadow: 0 0 0 10px rgba(61, 220, 132, 0); }
+}
+
+/* Лента объектов под первым экраном */
+.ostrip {
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  padding: var(--s-5) 0 var(--s-5);
+}
+.ostrip__head .eyebrow { margin-bottom: var(--s-3); }
+.ostrip__viewport {
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+.ostrip__track { display: flex; width: max-content; }
+.ostrip__row { display: flex; gap: var(--s-3); padding-right: var(--s-3); }
+.ostrip__item {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-4) var(--s-2) var(--s-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--bg);
+  color: var(--ink);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color var(--t-mid), transform var(--t-mid), box-shadow var(--t-mid);
+}
+.ostrip__item:hover { border-color: var(--accent); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.ostrip__item img {
+  width: 64px; height: 44px;
+  object-fit: cover;
+  border-radius: var(--radius);
+  flex: none;
+}
+.ostrip__item b { display: block; font-size: 1rem; font-weight: 600; line-height: 1.3; }
+.ostrip__item small { display: block; font-size: .875rem; color: var(--ink-soft); line-height: 1.3; }
+@media (prefers-reduced-motion: no-preference) {
+  .ostrip__track { animation: ostrip var(--dur, 80s) linear infinite; }
+  .ostrip__viewport:hover .ostrip__track,
+  .ostrip__viewport:focus-within .ostrip__track { animation-play-state: paused; }
+}
+@keyframes ostrip { to { transform: translateX(-50%); } }
+/* Без движения лента стоит и листается пальцем или колёсиком сама,
+   второй экземпляр не нужен. Список по строкам на телефоне вышел бы
+   в шестнадцать экранов. */
+@media (prefers-reduced-motion: reduce) {
+  .ostrip__viewport { overflow-x: auto; mask-image: none; scroll-snap-type: x proximity;
+    padding: 0 var(--s-4) var(--s-2); }
+  .ostrip__item { scroll-snap-align: start; }
+  .ostrip__row + .ostrip__row { display: none; }
+}
+
+/* Прорисовка линии этапа: при появлении отрезок пробегает весь шаг
+   и возвращается к короткой метке — шкала «заполняется» на глазах. */
+.can-reveal .step.reveal.is-in::after {
+  animation: stepDraw 1100ms var(--ease) backwards;
+  animation-delay: calc(var(--rd, 0ms) + 200ms);
+}
+.can-reveal .step.reveal:not(.is-in)::after { width: 0; }
+@keyframes stepDraw {
+  0%   { width: 0; }
+  55%  { width: 100%; }
+  100% { width: 32px; }
+}
+
+/* Кнопка «Написать» в углу — только на компьютере: на телефоне снизу своя
+   панель связи. Пока висит полоса про cookie (в том же углу), кнопки нет. */
+.fab { display: none; }
+@media (min-width: 61.25em) {
+  .fab {
+    display: block;
+    position: fixed;
+    right: var(--s-5);
+    bottom: var(--s-5);
+    z-index: 55;
+  }
+  .cookie:not([hidden]) ~ .fab { display: none; }
+}
+.fab__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 52px;
+  padding: 0 var(--s-5) 0 var(--s-4);
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font: 600 1rem/1 var(--font);
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(31, 111, 235, .35);
+  transition: background var(--t-mid), transform var(--t-mid);
+}
+.fab__btn:hover { background: var(--accent-700); transform: translateY(-2px); }
+.fab__btn:focus-visible { border-radius: 999px; }
+.fab__btn svg { width: 22px; height: 22px; }
+@media (prefers-reduced-motion: no-preference) {
+  .fab__btn { animation: fabIn 600ms var(--ease) 1.2s both; }
+}
+@keyframes fabIn {
+  from { opacity: 0; transform: translateY(16px) scale(.9); }
+  to   { opacity: 1; transform: none; }
+}
+.fab__menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + var(--s-3));
+  min-width: 15rem;
+  padding: var(--s-3);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+.fab__title {
+  padding: var(--s-1) var(--s-2) var(--s-2);
+  font-family: var(--font-mono);
+  font-size: .75rem;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.fab__link {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: var(--tap);
+  padding: var(--s-2);
+  border-radius: var(--radius);
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: none;
+}
+.fab__link:hover { background: var(--surface-alt); }
+.fab__link img { width: 28px; height: 28px; flex: none; }
+
 /* ---------- 15. Тёмная тема ---------------------------------------------
    Включается сама, если в системе телефона или компьютера выбрана тёмная
    тема. Переопределяются ТОЛЬКО цвета — вся вёрстка общая, поэтому правки
