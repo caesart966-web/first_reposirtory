@@ -218,8 +218,29 @@ def parse(inn, company, payload):
 
 # ---------------------------------------------------------------- запросы
 
+# «key1=…», «ключ 2: …», «API key = …» — подпись перед ключом отбрасывается
+LABEL = re.compile(r'^(?:(?:checko|чекко|мой|my)[ _-]?)?(?:api[ _-]?)?(?:key|ключ|token|токен)'
+                   r'\s*(?:№|#)?\s*\d*\s*[:=]\s*', re.I)
+KEY_SHAPE = re.compile(r'[A-Za-z0-9_.+/-]{8,}={0,2}')
+
+
 def split_keys(text):
-    return [k for k in re.split(r'[\s,;]+', text or '') if k]
+    """Ключи из текста: по строкам, в строке — через пробел, запятую или «;».
+
+    Пропускаются пустые строки, комментарии (#), подписи вида «key1=» и всё,
+    что на ключ не похоже (кириллица, короткие слова): Блокнот и человек
+    добавляют такое охотно, а неверный «ключ» Checko просто отвергнет.
+    """
+    keys = []
+    for line in (text or '').splitlines():
+        line = line.strip().lstrip('\ufeff')
+        if not line or line.startswith('#'):
+            continue
+        for token in re.split(r'[\s,;]+', LABEL.sub('', line)):
+            token = LABEL.sub('', token.strip('"\'«»`'))
+            if KEY_SHAPE.fullmatch(token):
+                keys.append(token)
+    return keys
 
 
 def mask(key):
@@ -229,11 +250,15 @@ def mask(key):
 
 def get_keys(args):
     keys = split_keys(args.key) + split_keys(os.environ.get('CHECKO_API_KEY', ''))
-    if not keys and os.path.exists(KEY_FILE):
-        with open(KEY_FILE, encoding='utf-8') as f:
-            for line in f:
-                if line.strip() and not line.strip().startswith('#'):
-                    keys += split_keys(line)
+    if not keys:
+        # checko_key.txt, а заодно «checko_key.txt.txt» — Windows прячет расширения,
+        # и Блокнот охотно дописывает второе .txt
+        for path in sorted(glob.glob(os.path.join(HERE, 'checko_key*.txt'))):
+            with open(path, encoding='utf-8-sig', errors='replace') as f:
+                found = split_keys(f.read())
+            if found:
+                print(f'Ключи из {os.path.basename(path)}: {len(found)} шт.')
+            keys += found
     if keys:
         return list(dict.fromkeys(keys))
     print('Нужен API-ключ Checko (checko.ru -> API -> ключ). Ввод не отображается на экране.')
