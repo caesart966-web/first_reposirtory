@@ -215,7 +215,8 @@ if ($h === '') {
          ', сцена ', strpos($h, 'image/home/scene-') !== false ? 'есть' : 'НЕТ',
          ', разделов ', substr_count($h, 'class="cat-tile"'),
          ', магазинов ', substr_count($h, 'class="store-card"'),
-         ', карта ', strpos($h, 'class="store-map"') !== false ? 'есть' : 'нет',
+         // С правки 37 карта - карточка в ряду магазинов (store-card--map)
+         ', карта ', strpos($h, 'store-card--map') !== false ? 'есть' : 'нет',
          ', меню: ', implode(', ', $nav), "\n";
 
     // Подборки: каждая начинается с <div class="selection" data-slider>.

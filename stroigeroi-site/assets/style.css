@@ -962,6 +962,25 @@ body:has(.first-screen) .header-slogan {
   }
 }
 
+/* 901–1099 px, бургера ещё нет: на живом сайте в синей строке пять
+   ссылок («О компании» и «Юрлицам» вместо одной «Доставки и оплаты»),
+   и на 1024 px «Контакты» уходили под «Наши магазины». Подпись
+   сокращается до «Магазины», как на телефоне, промежутки между
+   ссылками - 16 px: всё помещается с запасом в 37 px. */
+@media (max-width: 1099px) {
+  .header-nav__links {
+    gap: var(--sp-4);
+  }
+
+  .dropdown__more {
+    display: none;
+  }
+
+  .dropdown__short {
+    display: inline;
+  }
+}
+
 @media (max-width: 1100px) {
   .site-logo__line--sub {
     display: none;

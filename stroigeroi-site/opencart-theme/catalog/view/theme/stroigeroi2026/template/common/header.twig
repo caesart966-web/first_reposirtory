@@ -32,12 +32,13 @@
 {% set url_delivery = id_delivery ? 'index.php?route=information/information&information_id=' ~ id_delivery : '' %}
 {#
   «О компании» и «Юридическим лицам» - страницы в базе с этими заголовками.
-  Номера ставит tools/server/nav-ids.php при установке правки (ищет
-  страницу по точному заголовку); 0 - страница не найдена, пункта нет.
+  Номера живой базы: 4 и 8 (tools/server/nav-ids.php, 06.10.2026). Скрипт
+  запускается при каждой установке правки и переписывает эти строки -
+  ищет страницу по точному заголовку; не нашлась ровно одна - 0, пункта нет.
 #}
-{% set id_about = 0 %}
+{% set id_about = 4 %}
 {% set url_about = id_about ? 'index.php?route=information/information&information_id=' ~ id_about : '' %}
-{% set id_b2b = 0 %}
+{% set id_b2b = 8 %}
 {% set url_b2b = id_b2b ? 'index.php?route=information/information&information_id=' ~ id_b2b : '' %}
 {% set url_calculator = 'index.php?route=information/calculator' %}
 {% set url_compare = 'index.php?route=product/compare' %}
@@ -239,7 +240,7 @@
   Число одно на все три файла: обновился любой - адрес меняется у всех,
   зато нельзя забыть какой-то из них.
 #}
-{% set asset_v = '51a77576' %}
+{% set asset_v = '466f05ca' %}
 {#
   Стили расширений идут ПЕРВЫМИ, наши - последними, и порядок здесь
   важнее, чем кажется. Оформление заказа рисует модуль Simple, со своим
