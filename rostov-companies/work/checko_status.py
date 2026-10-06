@@ -248,19 +248,35 @@ def mask(key):
     return f'…{key[-4:]}' if len(key) > 8 else '…'
 
 
+def key_files():
+    """Текстовые файлы с ключами рядом с программой: checko_key.txt, ключи.txt, keys.txt, api.txt…
+
+    Берётся любой .txt (или файл без расширения), в имени которого есть
+    key / ключ / checko / api, — человек называет список как ему удобно.
+    «ключи.txt.txt» тоже подходит: Windows прячет расширения, и Блокнот
+    охотно дописывает второе .txt. README и файлы программы не читаются.
+    """
+    out = []
+    for name in sorted(os.listdir(HERE), key=lambda n: (n.lower() != 'checko_key.txt', n.lower())):
+        low = name.lower()
+        path = os.path.join(HERE, name)
+        if (os.path.isfile(path) and re.search(r'key|ключ|checko|api', low) and 'readme' not in low
+                and (low.endswith('.txt') or '.' not in low) and os.path.getsize(path) < 1_000_000):
+            out.append(path)
+    return out
+
+
 def get_keys(args):
     keys = split_keys(args.key) + split_keys(os.environ.get('CHECKO_API_KEY', ''))
     if not keys:
-        # checko_key.txt, а заодно «checko_key.txt.txt» — Windows прячет расширения,
-        # и Блокнот охотно дописывает второе .txt
-        for path in sorted(glob.glob(os.path.join(HERE, 'checko_key*.txt'))):
+        for path in key_files():
             with open(path, encoding='utf-8-sig', errors='replace') as f:
                 found = split_keys(f.read())
-            if found:
-                print(f'Ключи из {os.path.basename(path)}: {len(found)} шт.')
+            print(f'Ключи из «{os.path.basename(path)}»: {len(found)} шт.')
             keys += found
     if keys:
         return list(dict.fromkeys(keys))
+    print('Файла с ключами рядом с программой нет (например, ключи.txt — по одному ключу в строке).')
     print('Нужен API-ключ Checko (checko.ru -> API -> ключ).')
     print('Вставьте ключ правой кнопкой мыши или Ctrl+V и нажмите Enter — символы на экране')
     print('не появятся, так и должно быть. Ключей несколько — вставляйте по одному.')

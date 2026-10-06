@@ -43,4 +43,7 @@ pto-site/tools/voices/
 
 # rostov-companies: ключ Checko и сырые ответы API (большие, пересобираются запуском)
 rostov-companies/**/checko_key.txt
+rostov-companies/**/*[Kk][Ee][Yy]*.txt
+rostov-companies/**/*[Кк]люч*.txt
+rostov-companies/**/*[Aa][Pp][Ii]*.txt
 rostov-companies/**/checko_cache/
