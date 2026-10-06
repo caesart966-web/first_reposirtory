@@ -140,7 +140,188 @@ for inn, r in rows.items():
                      detail=det, source=' '.join(sources), via=via))
 recs.sort(key=lambda r: (ORDER.index(r['group']), r['email'] == '', r['name'].lower()))
 
-COLS = [  # заголовок, ширина, поле
+
+# ---------------------------------------------------------------- понятные поля для рабочих листов
+
+def phones_merged(*parts):
+    """Телефоны из файла и из Checko одной строкой, без повторов (сверка по последним 10 цифрам)."""
+    out, seen = [], set()
+    for part in parts:
+        for p in re.split(r'[;,]\s*', part or ''):
+            p = p.strip()
+            digits = re.sub(r'\D', '', p)
+            if len(digits) < 6 or digits[-10:] in seen:
+                continue
+            seen.add(digits[-10:])
+            out.append(p)
+    return ', '.join(out)
+
+
+LATIN_LOOKALIKE = str.maketrans('ABCEHKMOPTXY', 'АВСЕНКМОРТХУ')
+
+
+def plain(name):
+    """Название без формы, кавычек и регистра — чтобы заметить настоящую смену названия."""
+    t = re.sub(r'[^0-9A-ZА-ЯЁ ]', ' ', (name or '').upper().translate(LATIN_LOOKALIKE))
+    t = re.sub(r'\b(ООО|ОАО|ЗАО|АО|ПАО|НАО|ИП|МУП|МКУ|МБУ|МУ|ГУП|ФГУП|ГБУ|СЗ|ТД|СК|ФИРМА|'
+               r'ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ|СПЕЦИАЛИЗИРОВАННЫЙ ЗАСТРОЙЩИК)\b', ' ', t)
+    return re.sub(r'\s+', '', t)
+
+
+def same_name(a, b):
+    """Одно ли это название: реестр пишет его сокращённо («Донская Строительная Компания» —
+    «ДСК», «ТехГазМонтаж» — «ТГМ»), иногда с опечаткой или в скобках после полного."""
+    pa, pb = plain(a), plain(b)
+    if not pa or not pb or pa == pb or pa in pb or pb in pa or edits(pa, pb) <= 2:
+        return True
+    short, long_ = sorted((pa, pb), key=len)
+    rest = iter(long_)
+    return short[0] == long_[0] and all(ch in rest for ch in short)   # сокращение: буквы по порядку
+
+
+def what_happens(r):
+    """Человеческое описание статуса: что с компанией."""
+    d, st = r['detail'].lower(), r['status']
+    if st == 'Банкротство':
+        if 'наблюдени' in d:
+            return 'Банкротство: наблюдение'
+        if 'конкурсн' in d:
+            return 'Банкротство: конкурсное производство'
+        return 'Дело о банкротстве'
+    if st == 'В процессе ликвидации':
+        return 'Ликвидируется'
+    if st == 'Предстоящее исключение':
+        return 'Налоговая готовит исключение из реестра' + (' (недостоверные сведения)' if 'недостовер' in d else '')
+    if st == 'Исключена ФНС':
+        if 'недостовер' in d:
+            return 'Исключена налоговой: недостоверные сведения'
+        if 'недейств' in d:
+            return 'Исключена налоговой как недействующая'
+        return 'Исключена налоговой'
+    if st == 'Реорганизована':
+        for k, v in (('присоедин', 'присоединена к другой компании'), ('слияни', 'слияние с другой компанией'),
+                     ('преобраз', 'преобразована в другую форму'), ('разделен', 'разделена')):
+            if k in d:
+                return f'Реорганизована: {v}'
+        return 'Реорганизована'
+    if st == 'Ликвидирована':
+        return 'Ликвидирована после банкротства' if 'конкурсного производства' in d else 'Ликвидирована'
+    if st == 'ИП прекратил деятельность':
+        return 'ИП закрыт'
+    return st
+
+
+def note_of(r):
+    d, notes = r['detail'], []
+    if 'в процессе реорганизации' in d or 'находится в процессе реорганизации' in d.lower():
+        notes.append('идёт реорганизация')
+    if 'места нахождения' in d:
+        notes.append('меняет адрес')
+    if 'ОГРНИП сменился' in d:
+        notes.append('ИП перерегистрирован (новый ОГРНИП)')
+    if 'косвенно' in d:
+        notes.append('статус по косвенным признакам')
+    if r['cur'] and not same_name(r['cur'], r['name']):
+        notes.append(f'сейчас называется: {r["cur"]}')
+    if r['recheck'] and r['via'] == 'поиск':
+        notes.append('перепроверить по ссылке')
+    return '; '.join(notes)
+
+
+def edits(a, b):
+    """Расстояние Левенштейна (сколько букв поправить, чтобы из a получить b)."""
+    prev = list(range(len(b) + 1))
+    for i, ca in enumerate(a, 1):
+        cur = [i]
+        for j, cb in enumerate(b, 1):
+            cur.append(min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (ca != cb)))
+        prev = cur
+    return prev[-1]
+
+
+def main_emails(emails, site='', limit=3):
+    """Почты без опечаток: похожие адреса (до 2 букв разницы) — одна группа, из неё один адрес.
+
+    В госзакупках адрес компании переписывают руками, и Checko собирает все
+    варианты: office@…, ofice@…, officce@…. Верный — тот, от которого остальные
+    отличаются меньше всего (центр группы); первыми идут самые большие группы:
+    адрес, который писали чаще, скорее всего и есть рабочий. Ещё раньше — адреса
+    на домене сайта компании: это её собственная почта.
+    """
+    dom = re.sub(r'^(https?://)?(www\.)?', '', (site or '').lower()).split('/')[0]
+    own = lambda e: bool(dom) and (e.split('@')[-1] == dom or e.split('@')[-1].endswith('.' + dom))  # noqa: E731
+    left = [e for e in emails.split('; ') if e]
+    groups = []
+    while left:
+        seed = left.pop(0)
+        group = [seed] + [e for e in left if edits(seed, e) <= 2]
+        left = [e for e in left if e not in group]
+        groups.append(min(group, key=lambda e: (sum(edits(e, o) for o in group), group.index(e))))
+        groups[-1] = (groups[-1], len(group))
+    groups.sort(key=lambda g: (not own(g[0]), -g[1]))
+    best = [g[0] for g in groups[:limit]]
+    return '; '.join(best), len(emails.split('; ')) - len(best) if emails else 0
+
+
+VIA = {'Checko': 'ЕГРЮЛ (Checko)', 'поиск': 'поиск в интернете', '': '—'}
+for r in recs:
+    r['email_main'], hidden = main_emails(r['email'], r['site'])
+    r['all_phones'] = phones_merged(r['phone'], r['phones'])
+    r['what'] = what_happens(r)
+    r['note'] = note_of(r)
+    if hidden:
+        r['note'] = '; '.join(x for x in (r['note'], f'ещё адресов: {hidden} — лист «Все данные»') if x)
+    r['via_h'] = VIA.get(r['via'], r['via'])
+    if r['via'] == 'Checko':
+        r['why'] = 'в реестре по этому ИНН не найдена — проверить по ссылке'
+    elif r['group'] == 'Не найдено':
+        r['why'] = 'поиск статус не нашёл, через Checko ещё не проверялась — проверится при следующем запуске'
+    else:
+        r['why'] = 'не хватило лимита ключей — проверится при следующем запуске программы'
+
+# ---------------------------------------------------------------- оформление
+F = Font(name='Arial', size=10)
+FB = Font(name='Arial', size=10, bold=True)
+FL = Font(name='Arial', size=10, color='0563C1', underline='single')
+FH = Font(name='Arial', size=10, bold=True, color='FFFFFF')
+HFILL = PatternFill('solid', fgColor='404040')
+thin = Side(style='thin', color='BFBFBF')
+BRD = Border(left=thin, right=thin, top=thin, bottom=thin)
+WRAP = Alignment(wrap_text=True, vertical='top')
+LINK = 'Открыть'
+
+
+def table(ws, cols, items, colored=None, freeze='C2'):
+    """cols: (заголовок, ширина, поле | None для №, 'LINK' для ссылки на карточку)."""
+    ws.append([h for h, _, _ in cols])
+    for c in ws[1]:
+        c.font, c.fill, c.border = FH, HFILL, BRD
+        c.alignment = Alignment(wrap_text=True, vertical='center', horizontal='center')
+    for i, r in enumerate(items, 1):
+        ws.append([i if k is None else (LINK if k == 'LINK' else r[k]) for _, _, k in cols])
+        row = ws.max_row
+        for j, (h, _, k) in enumerate(cols, 1):
+            c = ws.cell(row, j)
+            c.font, c.alignment, c.border = F, WRAP, BRD
+            if k == 'LINK':
+                c.hyperlink = f'https://www.rusprofile.ru/search?query={r["inn"]}'
+                c.font = FL
+            elif k in ('inn', 'ogrn'):
+                c.number_format = '@'
+            elif k == 'recheck' and r['recheck']:
+                c.font = Font(name='Arial', size=10, bold=True, color='C00000')
+        if colored:
+            for k in colored:
+                j = next(j for j, (_, _, kk) in enumerate(cols, 1) if kk == k)
+                ws.cell(row, j).fill = PatternFill('solid', fgColor=FILL[r['group']])
+    for j, (_, w, _) in enumerate(cols, 1):
+        ws.column_dimensions[get_column_letter(j)].width = w
+    ws.freeze_panes = freeze
+    ws.auto_filter.ref = f'A1:{get_column_letter(len(cols))}{max(ws.max_row, 2)}'
+    ws.row_dimensions[1].height = 30
+
+
+ALL = [  # полная таблица: Итог — B, Статус — C, Почта — E (на них стоят формулы «Сводки»)
     ('№', 6, None), ('Итог', 15, 'group'), ('Статус в ЕГРЮЛ / ЕГРИП', 24, 'status'),
     ('Дата события', 13, 'date'), ('Электронная почта', 32, 'email'),
     ('Телефоны (Checko)', 22, 'phones'), ('Сайт (Checko)', 20, 'site'),
@@ -152,88 +333,69 @@ COLS = [  # заголовок, ширина, поле
     ('Взнос в КФ (по файлу)', 12, 'kf'), ('Дата гос. регистрации', 13, 'gos_date'),
     ('Полное наименование (из файла)', 50, 'full'), ('Где в исходных файлах', 20, 'where'),
     ('Откуда статус', 12, 'via'), ('Что сказано в источнике', 60, 'detail'), ('Источник', 45, 'source'),
-    ('Перепроверить', 14, 'recheck'), ('Проверить самому', 16, None),
+    ('Перепроверить', 14, 'recheck'), ('Проверить самому', 12, 'LINK'),
 ]
-COL = {h: i for i, (h, _, _) in enumerate(COLS, 1)}
-F = Font(name='Arial', size=10)
-FB = Font(name='Arial', size=10, bold=True)
-FL = Font(name='Arial', size=10, color='0563C1', underline='single')
-FH = Font(name='Arial', size=10, bold=True, color='FFFFFF')
-HFILL = PatternFill('solid', fgColor='404040')
-thin = Side(style='thin', color='BFBFBF')
-BRD = Border(left=thin, right=thin, top=thin, bottom=thin)
-WRAP = Alignment(wrap_text=True, vertical='top')
-
-
-def sheet(ws, items):
-    ws.append([h for h, _, _ in COLS])
-    for c in ws[1]:
-        c.font = FH
-        c.fill = HFILL
-        c.alignment = Alignment(wrap_text=True, vertical='center', horizontal='center')
-        c.border = BRD
-    for i, r in enumerate(items, 1):
-        ws.append([i] + [r[k] if k else '' for _, _, k in COLS[1:-1]] + ['Rusprofile'])
-        row = ws.max_row
-        fill = PatternFill('solid', fgColor=FILL[r['group']])
-        for c in ws[row]:
-            c.font = F
-            c.alignment = WRAP
-            c.border = BRD
-        for h in ('Итог', 'Статус в ЕГРЮЛ / ЕГРИП', 'Дата события'):
-            ws.cell(row, COL[h]).fill = fill
-        ws.cell(row, COL['Итог']).font = FB
-        link = ws.cell(row, COL['Проверить самому'])
-        link.hyperlink = f'https://www.rusprofile.ru/search?query={r["inn"]}'
-        link.font = FL
-        if r['recheck']:
-            ws.cell(row, COL['Перепроверить']).font = Font(name='Arial', size=10, bold=True, color='C00000')
-        for h in ('ИНН', 'ОГРН / ОГРНИП'):
-            ws.cell(row, COL[h]).number_format = '@'
-    for i, (_, w, _) in enumerate(COLS, 1):
-        ws.column_dimensions[get_column_letter(i)].width = w
-    ws.freeze_panes = ws.cell(2, COL['Наименование (из файла)'])
-    ws.auto_filter.ref = f'A1:{get_column_letter(len(COLS))}{max(ws.max_row, 2)}'
-    ws.row_dimensions[1].height = 32
-
+ACTIVE = [
+    ('№', 6, None), ('Компания', 36, 'name'), ('ИНН', 13, 'inn'), ('Электронная почта', 34, 'email_main'),
+    ('Телефоны', 30, 'all_phones'), ('Сайт', 22, 'site'), ('Руководитель (по файлу)', 32, 'head'),
+    ('Адрес (по файлу)', 46, 'addr'), ('Членство в СРО', 16, 'sro'), ('Статус проверен', 16, 'via_h'),
+    ('Примечание', 30, 'note'), ('Карточка', 10, 'LINK'),
+]
+CLOSING = [
+    ('№', 6, None), ('Компания', 36, 'name'), ('ИНН', 13, 'inn'), ('Что происходит', 34, 'what'),
+    ('С какой даты', 12, 'date'), ('Электронная почта', 30, 'email_main'), ('Телефоны', 28, 'all_phones'),
+    ('Руководитель (по файлу)', 30, 'head'), ('Статус проверен', 16, 'via_h'), ('Карточка', 10, 'LINK'),
+]
+GONE = [
+    ('№', 6, None), ('Компания', 36, 'name'), ('ИНН', 13, 'inn'), ('Как прекратила работу', 40, 'what'),
+    ('Дата', 12, 'date'), ('Членство в СРО', 16, 'sro'), ('Статус проверен', 16, 'via_h'), ('Карточка', 10, 'LINK'),
+]
+LEFT = [
+    ('№', 6, None), ('Компания', 36, 'name'), ('ИНН', 13, 'inn'), ('Почему нет статуса', 40, 'why'),
+    ('Электронная почта', 30, 'email_main'), ('Телефоны', 28, 'all_phones'), ('Карточка', 10, 'LINK'),
+]
 
 wb = Workbook()
 sv = wb.active
 sv.title = 'Сводка'
-wa = wb.create_sheet('Все компании')
-sheet(wa, recs)
-names = {'Действует': 'Действуют', 'Закрывается': 'Закрываются', 'Не существует': 'Не существуют',
-         'Не найдено': 'Не найдены', 'Не проверялась': 'Ещё не проверены'}
-for g in ORDER:
-    sheet(wb.create_sheet(names[g]), [r for r in recs if r['group'] == g])
+by = collections.defaultdict(list)
+for r in recs:
+    by[r['group']].append(r)
+table(wb.create_sheet('Действующие'), ACTIVE, by['Действует'])
+table(wb.create_sheet('Закрываются'), CLOSING, by['Закрывается'])
+table(wb.create_sheet('Не существуют'), GONE, sorted(by['Не существует'], key=lambda r: (r['what'], r['name'].lower())))
+table(wb.create_sheet('Не проверены'), LEFT, by['Не найдено'] + by['Не проверялась'])
+wa = wb.create_sheet('Все данные')
+table(wa, ALL, recs, colored=('group', 'status', 'date'), freeze='I2')
 
-# --- Сводка: формулы по листу «Все компании» (Итог — B, Статус — C, Почта — E)
+# ---------------------------------------------------------------- «Сводка» — формулы по «Все данные»
+COL = {h: j for j, (h, _, _) in enumerate(ALL, 1)}
 assert (COL['Итог'], COL['Статус в ЕГРЮЛ / ЕГРИП'], COL['Электронная почта']) == (2, 3, 5)
 N = wa.max_row
-A = f"'Все компании'!$B$2:$B${N}"
-S = f"'Все компании'!$C$2:$C${N}"
-E = f"'Все компании'!$E$2:$E${N}"
-by_via = collections.Counter(r['via'] for r in recs if r['group'] != 'Не проверялась')
-sv['A1'] = 'Строительные компании Ростовской области: статус и электронная почта'
+A = f"'Все данные'!$B$2:$B${N}"
+S = f"'Все данные'!$C$2:$C${N}"
+E = f"'Все данные'!$E$2:$E${N}"
+V = f"'Все данные'!${get_column_letter(COL['Откуда статус'])}$2:${get_column_letter(COL['Откуда статус'])}${N}"
+
+sv['A1'] = 'Строительные компании Ростовской области: работают ли и как с ними связаться'
 sv['A1'].font = Font(name='Arial', size=14, bold=True)
-sv['A2'] = ('Исходные файлы: register-1-500.xlsx и register-501-988.xlsx (реестр Союза «Строители Ростовской '
-            f'области»), {len(recs)} компаний. Статус взят из ЕГРЮЛ/ЕГРИП через API Checko — '
-            f'{by_via.get("Checko", 0)} компаний; по выдаче веб-поиска по ИНН (Rusprofile, Checko, List-org, '
-            f'ЗаЧестныйБизнес, РБК Компании, Audit-it и др.) — {by_via.get("поиск", 0)}. Проверка — октябрь 2026.')
+sv['A2'] = (f'{len(recs)} компаний из двух выгрузок реестра Союза «Строители Ростовской области». '
+            'Статус — по реестру налоговой (ЕГРЮЛ/ЕГРИП) через Checko, у остальных — по поиску в интернете. '
+            'Проверка — октябрь 2026.')
 sv['A2'].font = F
 sv['A2'].alignment = WRAP
 sv.merge_cells('A2:E2')
-sv.row_dimensions[2].height = 66
+sv.row_dimensions[2].height = 44
 
-for i, h in enumerate(['Итог', 'Что это значит', 'Компаний', 'Из них с почтой', 'Доля от всех'], 1):
+for i, h in enumerate(['Итог', 'Что это значит', 'Компаний', 'Из них с почтой', 'Доля'], 1):
     c = sv.cell(4, i, h)
     c.font, c.fill, c.border, c.alignment = FH, HFILL, BRD, WRAP
 MEAN = {
-    'Действует': 'Компания работает, в реестре налоговой значится действующей',
-    'Закрывается': 'Ещё в реестре, но идёт ликвидация, банкротство или налоговая готовит исключение',
-    'Не существует': 'Ликвидирована, исключена налоговой как недействующая, присоединена к другой или ИП закрыт',
-    'Не найдено': 'Сведений о статусе по этому ИНН не нашлось — проверить вручную по ссылке в последнем столбце',
-    'Не проверялась': 'До компании ещё не дошла очередь (ни поиск, ни Checko)',
+    'Действует': 'Работает. Список с почтами и телефонами — лист «Действующие».',
+    'Закрывается': 'Ещё в реестре, но ликвидируется, банкротится или налоговая готовит исключение — лист «Закрываются».',
+    'Не существует': 'Уже закрыта: ликвидирована, исключена налоговой, присоединена к другой, ИП закрыт — лист «Не существуют».',
+    'Не найдено': 'Статус пока не нашёлся — лист «Не проверены». Проверятся через Checko при следующем запуске.',
+    'Не проверялась': 'Не хватило лимита Checko — проверится при следующем запуске программы.',
 }
 r0 = 5
 rt = r0 + len(ORDER)
@@ -241,27 +403,38 @@ for k, g in enumerate(ORDER):
     r = r0 + k
     sv.cell(r, 1, g).font = FB
     sv.cell(r, 1).fill = PatternFill('solid', fgColor=FILL[g])
-    sv.cell(r, 2, MEAN[g]).font = F
+    sv.cell(r, 2, MEAN[g])
     sv.cell(r, 3, f'=COUNTIF({A},A{r})')
     sv.cell(r, 4, f'=COUNTIFS({A},A{r},{E},"?*")')
     sv.cell(r, 5, f'=IF($C${rt}=0,0,C{r}/$C${rt})')
-    sv.cell(r, 5).number_format = '0.0%'
+    sv.cell(r, 5).number_format = '0%'
     for col in range(1, 6):
-        sv.cell(r, col).border = BRD
-        sv.cell(r, col).alignment = WRAP
-        if col > 2:
-            sv.cell(r, col).font = F
+        c = sv.cell(r, col)
+        c.border, c.alignment = BRD, WRAP
+        if col > 1:
+            c.font = F
+    sv.row_dimensions[r].height = 30
 sv.cell(rt, 1, 'Всего').font = FB
-sv.cell(rt, 3, f'=SUM(C{r0}:C{rt - 1})').font = FB
-sv.cell(rt, 4, f'=SUM(D{r0}:D{rt - 1})').font = FB
-sv.cell(rt, 5, f'=IF(C{rt}=0,0,C{rt}/C{rt})').font = FB
-sv.cell(rt, 5).number_format = '0.0%'
+for col, f in ((3, f'=SUM(C{r0}:C{rt - 1})'), (4, f'=SUM(D{r0}:D{rt - 1})'), (5, f'=IF(C{rt}=0,0,C{rt}/C{rt})')):
+    sv.cell(rt, col, f).font = FB
+sv.cell(rt, 5).number_format = '0%'
 for col in range(1, 6):
     sv.cell(rt, col).border = BRD
 
-rd = rt + 2
+rv = rt + 2
+sv.cell(rv, 1, 'Откуда статус').font = Font(name='Arial', size=11, bold=True)
+for k, (key, label) in enumerate((('Checko', 'По реестру налоговой (Checko) — надёжно'),
+                                  ('поиск', 'По поиску в интернете — стоит перепроверить по ссылке'))):
+    r = rv + 1 + k
+    sv.cell(r, 1, key).font = F
+    sv.cell(r, 2, label).font = F
+    sv.cell(r, 3, f'=COUNTIF({V},A{r})').font = F
+    for col in range(1, 4):
+        sv.cell(r, col).border = BRD
+
+rd = rv + 4
 sv.cell(rd, 1, 'Подробно по статусам').font = Font(name='Arial', size=11, bold=True)
-for i, h in enumerate(['Статус в ЕГРЮЛ / ЕГРИП', 'Итог', 'Компаний', 'Из них с почтой'], 1):
+for i, h in enumerate(['Статус в реестре', 'Итог', 'Компаний', 'Из них с почтой'], 1):
     c = sv.cell(rd + 1, i, h)
     c.font, c.fill, c.border = FH, HFILL, BRD
 for k, st in enumerate(GROUP):
@@ -276,15 +449,12 @@ for k, st in enumerate(GROUP):
 
 rn = rd + 2 + len(GROUP) + 1
 notes = [
-    'Как читать:',
-    '• «Итог» — главное: действует компания или её уже нет. «Членство в СРО» — отдельная вещь: компания могла выйти из СРО и продолжать работать.',
-    '• «Откуда статус»: Checko — выписка из ЕГРЮЛ/ЕГРИП через API Checko (надёжнее); поиск — пересказ выдачи поисковика по ИНН.',
-    '• Почта — из блока контактов Checko и со страниц справочников (ЕГРЮЛ, госзакупки, реестр СРО), только с совпадением ИНН. У многих компаний почта нигде не опубликована.',
-    '• В листах компании отсортированы: сначала с почтой, затем по названию. Фильтр стоит на каждом листе.',
-    '• «Не найдено» не значит «не существует»: сведений нет в источниках. Ссылка «Rusprofile» в последнем столбце открывает карточку по ИНН.',
-    '• «Перепроверить = да» — статус взят из одного источника без даты, косвенно (по выручке) или компания в процессе реорганизации.',
-    '• «Дата события» — дата ликвидации, исключения, начала банкротства или ликвидации, если источник её назвал.',
-    '• Перед рассылкой проверьте почту выборочно: справочники обновляются с задержкой, адрес мог смениться.',
+    'Как пользоваться:',
+    '• Для связи — лист «Действующие»: сверху компании с почтой. В «Телефонах» — номер из реестра СРО и номера из Checko, без повторов.',
+    '• Членство в СРО и работа компании — разные вещи: многие вышли из Союза, но работают.',
+    '• Руководитель и адрес — из файлов реестра, могли смениться. «Карточка» открывает компанию по ИНН на Rusprofile.',
+    '• Почта и телефоны — из ЕГРЮЛ, госзакупок и справочников. Перед рассылкой проверьте выборочно: адреса меняются.',
+    '• Все столбцы обоих файлов (номер и дата вступления в СРО, решение, взнос в КФ и др.) — на листе «Все данные».',
 ]
 for k, t in enumerate(notes):
     c = sv.cell(rn + k, 1, t)
@@ -292,10 +462,11 @@ for k, t in enumerate(notes):
     sv.merge_cells(start_row=rn + k, start_column=1, end_row=rn + k, end_column=5)
     c.alignment = WRAP
     sv.row_dimensions[rn + k].height = 30 if k else 16
-for col, w in zip('ABCDE', [26, 70, 12, 16, 13]):
+for col, w in zip('ABCDE', [24, 74, 12, 15, 9]):
     sv.column_dimensions[col].width = w
 
 wb.save(OUT)
+by_via = collections.Counter(r['via'] for r in recs if r['group'] != 'Не проверялась')
 print('Таблица:', OUT, '| компаний:', len(recs), '| с почтой:', sum(1 for r in recs if r['email']))
 print(' ', dict(collections.Counter(r['group'] for r in recs)), '| статус из Checko:', by_via.get('Checko', 0),
       '| из поиска:', by_via.get('поиск', 0))

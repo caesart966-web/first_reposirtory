@@ -14,6 +14,7 @@
 import csv
 import json
 import os
+import re
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -21,7 +22,19 @@ STATUSES = {'Действует', 'В процессе ликвидации', '�
             'Исключена ФНС', 'Реорганизована', 'ИП прекратил деятельность', 'Не установлено'}
 
 
+def reclassify(status, detail):
+    """«Не установлено» из старой версии пакета — разобрать исходный текст статуса заново."""
+    m = re.search(r'Checko\): «([^»]*)»', detail or '')
+    if status != 'Не установлено' or not m:
+        return status
+    sys.path.insert(0, HERE)
+    import checko_status
+    new, _, _ = checko_status.classify({'Статус': m.group(1)}, False)
+    return new
+
+
 def record(inn, status, date, email, phones, site, name, detail):
+    status = reclassify(status, detail)
     return {'inn': inn, 'status': status, 'status_date': date or '', 'status_detail': detail or '',
             'email': email or '', 'current_name': name or '', 'phones': phones or '', 'site': site or '',
             'source': f'Checko API (ЕГРЮЛ/ЕГРИП), https://checko.ru/search?query={inn}',
@@ -44,7 +57,8 @@ def from_csv(path):
 
 def from_xlsx(path):
     from openpyxl import load_workbook
-    ws = load_workbook(path, read_only=True, data_only=True)['Все компании']
+    wb = load_workbook(path, read_only=True, data_only=True)
+    ws = wb['Все данные'] if 'Все данные' in wb.sheetnames else wb['Все компании']
     rows = list(ws.iter_rows(values_only=True))
     ix = {h: i for i, h in enumerate(rows[0])}
     out = []
