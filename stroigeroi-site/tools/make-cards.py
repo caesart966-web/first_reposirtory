@@ -63,7 +63,7 @@ CARD = """          <article class="product-card reveal">
             </div>
             <div class="product-card__bottom">
               {% if product.special %}<span class="price">{{ product.special }}</span><s class="price--old">{{ product.price }}</s>{% else %}<span class="price">{{ product.price }}</span>{% endif %}
-              <button class="btn btn--action product-card__buy" type="button" data-add="cart" data-product-id="{{ product.product_id }}" aria-label="В корзину">""" + ICON_CART + """<span>В корзину</span></button>
+              <button class="btn btn--action product-card__buy" type="button" data-add="cart" data-product-id="{{ product.product_id }}" aria-label="В корзину">""" + ICON_CART + """<span>В\u00a0корзину</span></button>
             </div>
           </article>
 """

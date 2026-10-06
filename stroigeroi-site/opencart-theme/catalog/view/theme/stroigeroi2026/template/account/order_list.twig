@@ -47,7 +47,7 @@
               <td data-label="Статус">{{ order.status }}</td>
               <td data-label="Товаров" class="orders__num">{{ order.products }}</td>
               <td data-label="Сумма" class="orders__num">{{ order.total }}</td>
-              <td class="orders__action"><a class="btn btn--outline btn--sm" href="{{ order.view }}">Подробнее<span class="visually-hidden"> о заказе №&nbsp;{{ order.order_id }}</span></a></td>
+              <td class="orders__action"><a class="btn btn--outline btn--sm" href="{{ order.view }}">Подробнее<span class="visually-hidden"> о заказе №&nbsp;{{ order.order_id }}</span></a></td>
             </tr>
             {% endfor %}
           </tbody>
@@ -58,15 +58,15 @@
         <div class="empty empty-state">
           <span class="empty-state__icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><polyline points="3.29 7 12 12 20.71 7"/><path d="m7.5 4.27 9 5.15"/></svg></span>
           <h2>Заказов пока нет</h2>
-          <p>Здесь появятся заказы, оформленные на сайте.</p>
+          <p>Здесь появятся заказы, оформленные на сайте.</p>
           <p class="row-actions">
-            <a class="btn btn--action" href="index.php?route=information/sitemap">В каталог</a>
+            <a class="btn btn--action" href="index.php?route=information/sitemap">В каталог</a>
           </p>
         </div>
         {% endif %}
 
         <p class="row-actions">
-          <a class="btn btn--outline" href="{{ continue }}">В личный кабинет</a>
+          <a class="btn btn--outline" href="{{ continue }}">В личный кабинет</a>
         </p>
 
         {{ content_bottom }}

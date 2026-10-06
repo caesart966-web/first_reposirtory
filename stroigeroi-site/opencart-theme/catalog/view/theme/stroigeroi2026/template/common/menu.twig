@@ -81,19 +81,19 @@
         {%- elseif 'клад' in n %}{% set icon = 'shelves' -%}
         {%- else %}{% set icon = 'box' %}{% endif -%}
         <a class="catalog-menu__link" href="{{ category.href }}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">{{ section_icons[icon]|raw }}</svg><span>{{ category.name }}</span></a>
-        {%- endfor %}<a class="catalog-menu__link catalog-menu__link--special" href="{{ url_special }}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 18 12-12"/><circle cx="7.5" cy="7.5" r="2"/><circle cx="16.5" cy="16.5" r="2"/></svg><span>Товары со скидкой</span></a></div>
+        {%- endfor %}<a class="catalog-menu__link catalog-menu__link--special" href="{{ url_special }}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 18 12-12"/><circle cx="7.5" cy="7.5" r="2"/><circle cx="16.5" cy="16.5" r="2"/></svg><span>Товары со скидкой</span></a></div>
     </div>
   </div>
 
   <div class="container">
     <nav class="mobile-nav" id="mobile-nav" data-mobile-nav hidden aria-label="Мобильное меню">
       {% for category in categories %}<a class="mobile-nav__link" href="{{ category.href }}">{{ category.name }}</a>{% endfor %}
-      <a class="mobile-nav__link" href="{{ url_special }}">Товары со скидкой</a>
+      <a class="mobile-nav__link" href="{{ url_special }}">Товары со скидкой</a>
       <a class="mobile-nav__link" href="{{ url_calculator }}">Строительный калькулятор</a>
-      {% if url_about %}<a class="mobile-nav__link" href="{{ url_about }}">О компании</a>{% endif %}
+      {% if url_about %}<a class="mobile-nav__link" href="{{ url_about }}">О компании</a>{% endif %}
       {% if url_b2b %}<a class="mobile-nav__link" href="{{ url_b2b }}">Юридическим лицам</a>{% endif %}
-      {% if url_delivery %}<a class="mobile-nav__link" href="{{ url_delivery }}">Доставка и оплата</a>{% endif %}
-      <a class="mobile-nav__link" href="index.php?route=information/contact">Контакты и магазины</a>
+      {% if url_delivery %}<a class="mobile-nav__link" href="{{ url_delivery }}">Доставка и оплата</a>{% endif %}
+      <a class="mobile-nav__link" href="index.php?route=information/contact">Контакты и магазины</a>
       <a class="mobile-nav__link" href="tel:+79638319999">8-963-831-99-99</a>
     </nav>
   </div>

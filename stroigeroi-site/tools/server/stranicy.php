@@ -76,9 +76,12 @@ if ($site !== '' && is_file($tpl) && preg_match("/\{% set asset_v = '([^']*)' %\
     $want = $mm[1];
 }
 
+// С правки 42 текст шаблонов проходит типографику: короткие слова
+// связаны неразрывным пробелом («О\u00a0компании», «Без\u00a0кабинета»).
+// Фразы ниже ищутся по тексту, который видит человек, - пробелы любые.
 $page = function ($name) use ($dir) {
     $f = "$dir/$name.html";
-    return is_file($f) ? file_get_contents($f) : '';
+    return is_file($f) ? str_replace(array("\xc2\xa0", '&nbsp;', '&#160;'), ' ', file_get_contents($f)) : '';
 };
 
 echo "-- check\n";

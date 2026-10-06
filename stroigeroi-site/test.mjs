@@ -1755,7 +1755,7 @@ for (const name of ['index', 'catalog', 'contacts']) {
       fail(`режим работы (${when}, выходные ${weekend}): «${got.text}», а должно быть ` +
            (shouldBeOpen ? 'открыто' : 'закрыто'));
     }
-    if (!got.text.includes(expect)) {
+    if (!got.text.replace(/\u00a0/g, ' ').includes(expect)) {
       fail(`режим работы (${when}, выходные ${weekend}): «${got.text}», ожидалось «${expect}»`);
     }
   }

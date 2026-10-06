@@ -27,8 +27,8 @@
     {% endif %}
 
     <div class="page-head">
-      <h1>Вход в личный кабинет</h1>
-      <p>Для тех, у кого кабинет уже есть. Чтобы купить, кабинет не нужен: заказ оформляется в корзине.</p>
+      <h1>Вход в личный кабинет</h1>
+      <p>Для тех, у кого кабинет уже есть. Чтобы купить, кабинет не нужен: заказ оформляется в корзине.</p>
     </div>
 
     {{ content_top }}
@@ -39,7 +39,7 @@
     <div class="contacts-grid">
 
       <form class="form" action="{{ action }}" method="post">
-        <h2 class="gap-md-below">У меня есть кабинет</h2>
+        <h2 class="gap-md-below">У меня есть кабинет</h2>
         <div class="form__row">
           <label for="input-email">Электронная почта</label>
           <input id="input-email" name="email" type="email" value="{{ email }}" required autocomplete="email">
@@ -50,16 +50,16 @@
         </div>
         {% if redirect %}<input type="hidden" name="redirect" value="{{ redirect }}">{% endif %}
         <button class="btn btn--action btn--block btn--lg" type="submit">Войти</button>
-        <p class="form__hint">Не помните пароль — оформите заказ без кабинета, в корзине.</p>
+        <p class="form__hint">Не помните пароль — оформите заказ без кабинета, в корзине.</p>
       </form>
 
       <div>
-        <h2 class="gap-md-below">Без кабинета</h2>
-        <p>Регистрироваться не нужно: заказ оформляется в корзине, без кабинета.</p>
-        <p>А проще всего позвонить: <a class="tel-inline" href="tel:+79638319999">8-963-831-99-99</a>. Подскажем, есть ли товар, сколько стоит и когда забирать.</p>
+        <h2 class="gap-md-below">Без кабинета</h2>
+        <p>Регистрироваться не нужно: заказ оформляется в корзине, без кабинета.</p>
+        <p>А проще всего позвонить: <a class="tel-inline" href="tel:+79638319999">8-963-831-99-99</a>. Подскажем, есть ли товар, сколько стоит и когда забирать.</p>
         <p class="row-actions">
-          <a class="btn btn--action" href="index.php?route=checkout/cart">В корзину</a>
-          <a class="btn btn--outline" href="index.php?route=information/sitemap">В каталог</a>
+          <a class="btn btn--action" href="index.php?route=checkout/cart">В корзину</a>
+          <a class="btn btn--outline" href="index.php?route=information/sitemap">В каталог</a>
         </p>
       </div>
 

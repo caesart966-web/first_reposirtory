@@ -22,7 +22,7 @@
 
     <div class="page-head">
       <h1>Избранное</h1>
-      {% if products %}<p>Отложенные товары. Можно распечатать список и приехать с ним в магазин.</p>{% endif %}
+      {% if products %}<p>Отложенные товары. Можно распечатать список и приехать с ним в магазин.</p>{% endif %}
     </div>
 
     {{ content_top }}
@@ -44,7 +44,7 @@
             </div>
             <div class="product-card__bottom">
               {% if product.special %}<span class="price">{{ product.special }}</span><s class="price--old">{{ product.price }}</s>{% else %}<span class="price">{{ product.price }}</span>{% endif %}
-              <button class="btn btn--action product-card__buy" type="button" data-add="cart" data-product-id="{{ product.product_id }}" aria-label="В корзину"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9.5" cy="19.5" r="1.6"/><circle cx="17" cy="19.5" r="1.6"/><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L20 8H6"/></svg><span>В корзину</span></button>
+              <button class="btn btn--action product-card__buy" type="button" data-add="cart" data-product-id="{{ product.product_id }}" aria-label="В корзину"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9.5" cy="19.5" r="1.6"/><circle cx="17" cy="19.5" r="1.6"/><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L20 8H6"/></svg><span>В корзину</span></button>
             </div>
           </article>
 {# КАРТОЧКА: конец #}
@@ -54,11 +54,11 @@
     <div class="empty empty-state">
       <span class="empty-state__icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20s-7-4.35-7-9.5A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 7 3.5c0 5.15-7 9.5-7 9.5Z"/></svg></span>
       <h2>Здесь пока пусто</h2>
-      <p>Нажмите на сердечко у товара — он появится тут.</p>
-      <p>Если вы не вошли в кабинет, список хранится только до закрытия браузера.</p>
+      <p>Нажмите на сердечко у товара — он появится тут.</p>
+      <p>Если вы не вошли в кабинет, список хранится только до закрытия браузера.</p>
       <p class="row-actions">
-        <a class="btn btn--action" href="{{ continue }}">В каталог</a>
-        <a class="btn btn--outline" href="index.php?route=account/login">Войти в кабинет</a>
+        <a class="btn btn--action" href="{{ continue }}">В каталог</a>
+        <a class="btn btn--outline" href="index.php?route=account/login">Войти в кабинет</a>
       </p>
     </div>
     {% endif %}

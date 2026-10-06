@@ -70,7 +70,7 @@
             <th scope="row"><span class="visually-hidden">Действия</span></th>
             {% for product in products %}
             <td>
-              <button class="btn btn--action" type="button" data-add="cart" data-product-id="{{ product.product_id }}">В корзину</button>
+              <button class="btn btn--action" type="button" data-add="cart" data-product-id="{{ product.product_id }}">В корзину</button>
               <a class="action-link" href="{{ product.remove }}">Убрать</a>
             </td>
             {% endfor %}
@@ -82,8 +82,8 @@
     <div class="empty empty-state">
       <span class="empty-state__icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 20V10M12 20V4M18 20v-6"/></svg></span>
       <h2>Сравнивать пока нечего</h2>
-      <p>Нажмите значок сравнения у двух-трёх товаров — здесь появится таблица с их отличиями.</p>
-      <p class="row-actions"><a class="btn btn--action" href="{{ continue }}">В каталог</a></p>
+      <p>Нажмите значок сравнения у двух-трёх товаров — здесь появится таблица с их отличиями.</p>
+      <p class="row-actions"><a class="btn btn--action" href="{{ continue }}">В каталог</a></p>
     </div>
     {% endif %}
 

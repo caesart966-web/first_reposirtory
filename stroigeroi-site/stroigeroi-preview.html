@@ -1846,6 +1846,21 @@ body:has(.first-screen) .header-slogan {
   grid-column: 1 / -1;
 }
 
+/* Калькулятор во всю ширину (подборок товаров на главной нет): картинка
+   справа целиком и по центру по высоте. Внизу у края, как в узкой
+   карточке, она обрезалась краем карточки и висела в углу огромного
+   синего поля - «падала» с карточки. */
+@media (min-width: 1024px) {
+  .shop-row__grid > .offer-card:only-child .offer-card__media {
+    top: 50%;
+    right: 5%;
+    bottom: auto;
+    width: 27%;
+    max-width: 280px;
+    transform: translateY(-50%);
+  }
+}
+
 /* Сразу на нужный расчёт: калькулятор открывается на вкладке по адресу
    с решёткой, как и из своего меню */
 .offer-card__links {
@@ -2156,10 +2171,13 @@ body:has(.first-screen) .header-slogan {
   color: var(--sg-muted);
 }
 
+/* Радиус 12, а не «таблетка»: если подпись всё же перенесётся (узкая
+   карточка), плашка останется прямоугольником, а не кляксой */
 .store-card .shop-card__now {
   justify-self: start;
   align-self: start;
   margin: 4px 0 0;
+  border-radius: 12px;
   font-size: 12px;
   white-space: normal;
 }
@@ -2588,6 +2606,21 @@ body:has(.first-screen) .header-slogan {
   }
 
   .shop-row .offer-card__links {
+    max-width: none;
+  }
+}
+
+/* Узкий телефон: картинке калькулятора места нет. Справа вверху она
+   сжимала заголовок до 60 % ширины - «Не знаете, / сколько / материала /
+   нужно?» в четыре строки по слову, - а внизу ложилась под кнопку.
+   Без неё заголовок в две строки, текст во всю ширину. */
+@media (max-width: 480px) {
+  .shop-row .offer-card__media {
+    display: none;
+  }
+
+  .shop-row .offer-card__title,
+  .shop-row .offer-card__text {
     max-width: none;
   }
 }
@@ -7469,6 +7502,12 @@ body:has(.demo-note:not([hidden])) .calc-peek {
   .footer-group__button {
     min-height: 44px;
   }
+
+  /* Строка ссылки и так 44 px - промежуток в 8 px сверху растягивал
+     колонки подвала до 52 px на ссылку, и они висели врассыпную */
+  .footer-group li + li {
+    margin-top: 0;
+  }
 }
 
 .card-tool {
@@ -9252,7 +9291,7 @@ p a:not(.btn):hover,
           <span class="store-card__body">
             <span class="store-card__head">
               <strong class="store-card__name">Магазин на Чубарова</strong>
-              <span class="store-card__addr">Петропавловск-Камчатский, ул. Чубарова, 16, корп. 40</span>
+              <span class="store-card__addr">Петропавловск-Камчатский, ул. Чубарова, 16, корп. 40</span>
             </span>
             <a class="store-card__tel" href="tel:+79638319999">8-963-831-99-99</a>
             <span class="store-card__hours">Пн–Пт 9–19 · Сб–Вс 10–18</span>
@@ -9264,7 +9303,7 @@ p a:not(.btn):hover,
           <span class="store-card__body">
             <span class="store-card__head">
               <strong class="store-card__name">Магазин на 50 лет Октября</strong>
-              <span class="store-card__addr">Петропавловск-Камчатский, просп. 50 лет Октября, 17А</span>
+              <span class="store-card__addr">Петропавловск-Камчатский, просп. 50 лет Октября, 17А</span>
             </span>
             <a class="store-card__tel" href="tel:+79638300999">8-963-830-09-99</a>
             <span class="store-card__hours">Пн–Пт 9–19 · Сб–Вс 9–18</span>
@@ -11922,7 +11961,7 @@ p a:not(.btn):hover,
   }
 
   /* ======================================================================
-     «Сейчас открыто» у карточек магазинов
+     «Открыто до 19:00» у карточек магазинов
      ======================================================================
 
      Считаем по времени Камчатки, а не по часам устройства: магазины
@@ -11957,7 +11996,11 @@ p a:not(.btn):hover,
   }
 
   /* Возвращает готовую подпись для карточки. Вынесено отдельно, чтобы
-     проверка могла прогнать её на заданном времени, а не ждать субботы. */
+     проверка могла прогнать её на заданном времени, а не ждать субботы.
+     Подпись короткая («Закрыто, завтра с 9:00», без «Сейчас»): в карточке
+     магазина на главной ей отведено 212 px, и длинная переносилась
+     в две строки внутри круглой плашки. Время - через неразрывный
+     пробел: «с» не остаётся в конце строки без «9:00». */
   function shopState(weekday, weekend, now) {
     var isWeekend = function (d) { return d === 0 || d === 6; };
     var todays = (isWeekend(now.day) ? weekend : weekday).split('-');
@@ -11965,14 +12008,14 @@ p a:not(.btn):hover,
     var closes = toMinutes(todays[1]);
 
     if (now.minutes >= opens && now.minutes < closes) {
-      return { open: true, text: 'Сейчас открыто, до ' + trimHour(todays[1]) };
+      return { open: true, text: 'Открыто до\u00a0' + trimHour(todays[1]) };
     }
     if (now.minutes < opens) {
-      return { open: false, text: 'Сейчас закрыто, откроется в ' + trimHour(todays[0]) };
+      return { open: false, text: 'Закрыто, откроется в\u00a0' + trimHour(todays[0]) };
     }
     var tomorrow = (now.day + 1) % 7;
     var next = (isWeekend(tomorrow) ? weekend : weekday).split('-');
-    return { open: false, text: 'Сейчас закрыто, завтра с ' + trimHour(next[0]) };
+    return { open: false, text: 'Закрыто, завтра с\u00a0' + trimHour(next[0]) };
   }
 
   $$('[data-hours-weekday]').forEach(function (row) {

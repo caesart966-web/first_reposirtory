@@ -218,6 +218,10 @@ echo 'Разметок ld+json в шапке: ' . count($m[1]) . "\n";
    с ними свёрнута, и «пусто» - единственное, что он увидит. */
 
 $cat = $twig->load('product/category.twig');
+/* Текст шаблонов с правки 42 проходит типографику build.mjs: короткие слова
+   связаны со следующим неразрывным пробелом («В\u00a0этом разделе»).
+   Фразы ниже ищутся по тексту, который видит человек, - пробелы любые. */
+$plain = function ($html) { return str_replace(["\xc2\xa0", '&nbsp;'], ' ', $html); };
 $EMPTY = 'В этом разделе пока пусто';
 $subs = [
     ['name' => 'Дрели, шуруповёрты, перфораторы', 'href' => 'index.php?route=product/category&path=59_90'],
@@ -225,7 +229,7 @@ $subs = [
 ];
 
 $dept = $cat->render(['heading_title' => 'Инструменты', 'products' => [], 'categories' => $subs]);
-if (strpos($dept, $EMPTY) !== false) {
+if (strpos($plain($dept), $EMPTY) !== false) {
     echo "category.twig: раздел с подразделами и без своих товаров пишет «{$EMPTY}»\n";
     $bad++;
 }
@@ -238,7 +242,7 @@ foreach ($subs as $sub) {
 }
 
 $none = $cat->render(['heading_title' => 'Сантехника', 'products' => [], 'categories' => []]);
-if (strpos($none, $EMPTY) === false) {
+if (strpos($plain($none), $EMPTY) === false) {
     echo "category.twig: совсем пустой раздел не говорит «{$EMPTY}» и не даёт телефон\n";
     $bad++;
 }
@@ -247,7 +251,7 @@ $full = $cat->render(['heading_title' => 'Дрели', 'categories' => [], 'prod
     'product_id' => 1, 'thumb' => 'image/a.jpg', 'name' => 'Дрель', 'href' => '#',
     'price' => '4 320,00 руб', 'special' => '', 'description' => '', 'rating' => 0,
 ]]]);
-if (strpos($full, $EMPTY) !== false || strpos($full, 'class="category-card"') !== false) {
+if (strpos($plain($full), $EMPTY) !== false || strpos($full, 'class="category-card"') !== false) {
     echo "category.twig: раздел с товарами показывает «пусто» или плитки подразделов вместо товаров\n";
     $bad++;
 }
@@ -366,7 +370,7 @@ foreach ($noticePages as $name => $vars) {
         $seq = '';
         foreach ($mk[1] as $c) $seq .= $c[0] === '/' ? ')' : '(';
         if ($state === 'false') {
-            if (strpos($html, $DEV) !== false || $seq !== '') {
+            if (strpos($plain($html), $DEV) !== false || $seq !== '') {
                 echo "$name: при dev_notice = false на странице остаются предупреждение или пометки noindex\n";
                 $bad++;
             }
@@ -379,7 +383,7 @@ foreach ($noticePages as $name => $vars) {
         }
         $from = $mk[0][0][1];
         $inside = substr($html, $from, $mk[0][1][1] - $from);
-        if (strpos($inside, $DEV) === false) {
+        if (strpos($plain($inside), $DEV) === false) {
             echo "$name: предупреждение «{$DEV}» стоит вне пометок noindex\n";
             $bad++;
         }

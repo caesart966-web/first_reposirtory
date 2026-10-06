@@ -1023,7 +1023,7 @@
   }
 
   /* ======================================================================
-     «Сейчас открыто» у карточек магазинов
+     «Открыто до 19:00» у карточек магазинов
      ======================================================================
 
      Считаем по времени Камчатки, а не по часам устройства: магазины
@@ -1058,7 +1058,11 @@
   }
 
   /* Возвращает готовую подпись для карточки. Вынесено отдельно, чтобы
-     проверка могла прогнать её на заданном времени, а не ждать субботы. */
+     проверка могла прогнать её на заданном времени, а не ждать субботы.
+     Подпись короткая («Закрыто, завтра с 9:00», без «Сейчас»): в карточке
+     магазина на главной ей отведено 212 px, и длинная переносилась
+     в две строки внутри круглой плашки. Время - через неразрывный
+     пробел: «с» не остаётся в конце строки без «9:00». */
   function shopState(weekday, weekend, now) {
     var isWeekend = function (d) { return d === 0 || d === 6; };
     var todays = (isWeekend(now.day) ? weekend : weekday).split('-');
@@ -1066,14 +1070,14 @@
     var closes = toMinutes(todays[1]);
 
     if (now.minutes >= opens && now.minutes < closes) {
-      return { open: true, text: 'Сейчас открыто, до ' + trimHour(todays[1]) };
+      return { open: true, text: 'Открыто до\u00a0' + trimHour(todays[1]) };
     }
     if (now.minutes < opens) {
-      return { open: false, text: 'Сейчас закрыто, откроется в ' + trimHour(todays[0]) };
+      return { open: false, text: 'Закрыто, откроется в\u00a0' + trimHour(todays[0]) };
     }
     var tomorrow = (now.day + 1) % 7;
     var next = (isWeekend(tomorrow) ? weekend : weekday).split('-');
-    return { open: false, text: 'Сейчас закрыто, завтра с ' + trimHour(next[0]) };
+    return { open: false, text: 'Закрыто, завтра с\u00a0' + trimHour(next[0]) };
   }
 
   $$('[data-hours-weekday]').forEach(function (row) {

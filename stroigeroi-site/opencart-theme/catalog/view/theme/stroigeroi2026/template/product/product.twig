@@ -44,7 +44,7 @@
   {% set dev_notice = true %}
   <div class="container">
     {% if dev_notice %}
-    <!--noindex--><p class="dev-strip" data-nosnippet><span class="dev-strip__icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2" y="6" width="20" height="8" rx="1"/><path d="M17 14v7"/><path d="M7 14v7"/><path d="M17 3v3"/><path d="M7 3v3"/><path d="M10 14 2.3 6.3"/><path d="m14 6 7.7 7.7"/><path d="m8 6 8 8"/></svg></span><span class="dev-strip__text"><strong>Сайт находится в разработке.</strong> Об актуальности цен и наличии товара узнавайте по телефону магазина <a class="dev-strip__phone" href="tel:+79638319999">8-963-831-99-99</a></span></p><!--/noindex-->
+    <!--noindex--><p class="dev-strip" data-nosnippet><span class="dev-strip__icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2" y="6" width="20" height="8" rx="1"/><path d="M17 14v7"/><path d="M7 14v7"/><path d="M17 3v3"/><path d="M7 3v3"/><path d="M10 14 2.3 6.3"/><path d="m14 6 7.7 7.7"/><path d="m8 6 8 8"/></svg></span><span class="dev-strip__text"><strong>Сайт находится в разработке.</strong> Об актуальности цен и наличии товара узнавайте по телефону магазина <a class="dev-strip__phone" href="tel:+79638319999">8-963-831-99-99</a></span></p><!--/noindex-->
     {% endif %}
 
     {% if breadcrumbs %}
@@ -88,7 +88,7 @@
           {% if price %}
           <div>
             {% if special %}<span class="price">{{ special }}</span><s class="price--old">{{ price }}</s>{% else %}<span class="price">{{ price }}</span>{% endif %}
-            {% if tax %}<div class="price__unit gap-xs">Без налога: {{ tax }}</div>{% endif %}
+            {% if tax %}<div class="price__unit gap-xs">Без налога: {{ tax }}</div>{% endif %}
           </div>
           {% endif %}
 
@@ -147,7 +147,7 @@
               <label for="option-{{ option.product_option_id }}">{{ option.name }}</label>
               {% if option.type == 'select' %}
               <select class="select" id="option-{{ option.product_option_id }}" name="option[{{ option.product_option_id }}]">
-                <option value="">— выберите —</option>
+                <option value="">— выберите —</option>
                 {% for option_value in option.product_option_value %}
                 <option value="{{ option_value.product_option_value_id }}">{{ option_value.name }}{% if option_value.price %} ({{ option_value.price_prefix }}{{ option_value.price }}){% endif %}</option>
                 {% endfor %}
@@ -177,7 +177,7 @@
             <input id="qty" name="quantity" type="text" inputmode="numeric" value="{{ minimum }}" autocomplete="off">
             <button type="button" data-qty-step="1" aria-label="Увеличить количество">+</button>
           </div>
-          <button class="btn btn--action btn--lg" type="submit">В корзину</button>
+          <button class="btn btn--action btn--lg" type="submit">В корзину</button>
           {% if minimum > 1 %}<p class="calc__hint">{{ text_minimum }}</p>{% endif %}
         </form>
 
@@ -232,8 +232,8 @@
         {% endif %}
 
         <div class="product-actions">
-          <button class="action-link" type="button" data-add="compare" data-product-id="{{ product_id }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 20V11M12 20V4M18 20v-6"/></svg>К сравнению</button>
-          <button class="action-link" type="button" data-modal-open="modal-callback"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg>Спросить о товаре</button>
+          <button class="action-link" type="button" data-add="compare" data-product-id="{{ product_id }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 20V11M12 20V4M18 20v-6"/></svg>К сравнению</button>
+          <button class="action-link" type="button" data-modal-open="modal-callback"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"/></svg>Спросить о товаре</button>
         </div>
       </div>
 
@@ -243,11 +243,11 @@
       <div class="tabs__list" role="tablist">
         <button class="tabs__btn" type="button" role="tab" data-tab="tab-desc" aria-selected="true" aria-controls="tab-desc">Описание</button>
         {% if attribute_groups %}<button class="tabs__btn" type="button" role="tab" data-tab="tab-specs" aria-selected="false" aria-controls="tab-specs">Характеристики</button>{% endif %}
-        <button class="tabs__btn" type="button" role="tab" data-tab="tab-delivery" aria-selected="false" aria-controls="tab-delivery">Доставка и оплата</button>
+        <button class="tabs__btn" type="button" role="tab" data-tab="tab-delivery" aria-selected="false" aria-controls="tab-delivery">Доставка и оплата</button>
       </div>
 
       <div class="tabs__panel" id="tab-desc" role="tabpanel">
-        {% if description %}{{ description|raw }}{% else %}<p>Описание этого товара ещё не заполнено в учётной системе. Позвоните <a class="tel-inline" href="tel:+79638319999">8-963-831-99-99</a> — расскажем о товаре и подскажем, подойдёт ли он для вашей задачи.</p>{% endif %}
+        {% if description %}{{ description|raw }}{% else %}<p>Описание этого товара ещё не заполнено в учётной системе. Позвоните <a class="tel-inline" href="tel:+79638319999">8-963-831-99-99</a> — расскажем о товаре и подскажем, подойдёт ли он для вашей задачи.</p>{% endif %}
       </div>
 
       {% if attribute_groups %}
@@ -266,8 +266,8 @@
       {% endif %}
 
       <div class="tabs__panel" id="tab-delivery" role="tabpanel" hidden>
-        <p>Забрать товар можно в любом из трёх магазинов: два в Петропавловске-Камчатском и один в Елизово. Адреса и время работы — на странице <a href="index.php?route=information/contact">контактов</a>.</p>
-        <p>Про доставку и способы оплаты спрашивайте по телефону <a class="tel-inline" href="tel:+79638319999">8-963-831-99-99</a>.</p>
+        <p>Забрать товар можно в любом из трёх магазинов: два в Петропавловске-Камчатском и один в Елизово. Адреса и время работы — на странице <a href="index.php?route=information/contact">контактов</a>.</p>
+        <p>Про доставку и способы оплаты спрашивайте по телефону <a class="tel-inline" href="tel:+79638319999">8-963-831-99-99</a>.</p>
       </div>
     </div>
 
@@ -298,7 +298,7 @@
             </div>
             <div class="product-card__bottom">
               {% if product.special %}<span class="price">{{ product.special }}</span><s class="price--old">{{ product.price }}</s>{% else %}<span class="price">{{ product.price }}</span>{% endif %}
-              <button class="btn btn--action product-card__buy" type="button" data-add="cart" data-product-id="{{ product.product_id }}" aria-label="В корзину"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9.5" cy="19.5" r="1.6"/><circle cx="17" cy="19.5" r="1.6"/><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L20 8H6"/></svg><span>В корзину</span></button>
+              <button class="btn btn--action product-card__buy" type="button" data-add="cart" data-product-id="{{ product.product_id }}" aria-label="В корзину"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9.5" cy="19.5" r="1.6"/><circle cx="17" cy="19.5" r="1.6"/><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L20 8H6"/></svg><span>В корзину</span></button>
             </div>
           </article>
 {# КАРТОЧКА: конец #}

@@ -19,7 +19,7 @@
   изменённые style.css или app.js, иначе у посетителей останутся старые
   из кеша браузера - и вы будете смотреть на исправленный сайт, а они нет.
 #}
-{% set asset_v = '439ed695' %}
+{% set asset_v = '7088c51a' %}
 {#
   Название магазина написано здесь словом, а не взято из настроек.
   Переменной name у подвала нет: движок рисует подвал отдельным вызовом
@@ -63,8 +63,8 @@
           alt здесь же.
         #}
         <a class="footer-brand__word footer-brand__word--mark" href="index.php?route=common/home"><picture class="footer-brand__mark"><source type="image/avif" srcset="catalog/view/theme/stroigeroi2026/image/wordmark.avif"><source type="image/webp" srcset="catalog/view/theme/stroigeroi2026/image/wordmark.webp"><img src="catalog/view/theme/stroigeroi2026/image/wordmark.png" width="700" height="103" alt="Строй-Герой" decoding="async"></picture></a>
-        <p class="footer-brand__slogan">Наши материалы — ваша уверенность</p>
-        <p class="footer-brand__note">Магазины строительных материалов, инструмента и хозтоваров на Камчатке: две точки в Петропавловске-Камчатском и одна в Елизово.</p>
+        <p class="footer-brand__slogan">Наши материалы — ваша уверенность</p>
+        <p class="footer-brand__note">Магазины строительных материалов, инструмента и хозтоваров на Камчатке: две точки в Петропавловске-Камчатском и одна в Елизово.</p>
         {#
           Продавец - по реквизитам от заказчика (24.09.2026). С кем
           заключается договор, покупатель должен видеть на любой странице,
@@ -90,7 +90,7 @@
             нет: брендов выгрузка из 1С не передаёт, и страница была пустой.
           #}
           <ul data-fill-categories="4" data-fill-prefer="Отделочные и стройматериалы|Инструменты|Сантехника и инженерные системы|Электрика и свет">
-            <li><a href="{{ special }}">Товары со скидкой</a></li>
+            <li><a href="{{ special }}">Товары со скидкой</a></li>
             <li><a href="{{ sitemap }}">Все разделы каталога</a></li>
           </ul>
         </div>
@@ -101,7 +101,7 @@
             {% for information in informations %}
             <li><a href="{{ information.href }}">{{ information.title }}</a></li>
             {% endfor %}
-            <li><a href="{{ contact }}">Контакты и магазины</a></li>
+            <li><a href="{{ contact }}">Контакты и магазины</a></li>
           </ul>
         </div>
 
@@ -121,11 +121,11 @@
 
     <div class="site-footer__contacts">
       <div class="footer-contacts">
-        <p class="footer-group__label">Связаться с нами</p>
+        <p class="footer-group__label">Связаться с нами</p>
         <ul>
           <li><a href="tel:+79638319999">8-963-831-99-99</a> — основной номер</li>
           <li><a href="tel:+79638300177">8-963-830-01-77</a> — отдел рекламы</li>
-          <li><a href="mailto:stroigeroi41@mail.ru">stroigeroi41@mail.ru</a> — почта для заявок</li>
+          <li><a href="mailto:stroigeroi41@mail.ru">stroigeroi41@mail.ru</a> — почта для заявок</li>
         </ul>
       </div>
       <div class="footer-shops">
@@ -135,8 +135,8 @@
     </div>
 
     <div class="site-footer__bottom">
-      <p>© {{ shop }} — строительные материалы на Камчатке</p>
-      <p class="site-footer__disclaimer">Вся информация на сайте носит справочный характер и не является публичной офертой. Цены и наличие уточняйте в магазине.</p>
+      <p>© {{ shop }} — строительные материалы на Камчатке</p>
+      <p class="site-footer__disclaimer">Вся информация на сайте носит справочный характер и не является публичной офертой. Цены и наличие уточняйте в магазине.</p>
     </div>
   </div>
 </footer>
@@ -146,8 +146,8 @@
 <button class="to-top" type="button" data-to-top aria-label="Наверх"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 14 6-6 6 6"/></svg></button>
 
 <section class="cookie" data-cookie hidden aria-label="Использование cookie">
-  <p>Сайт сохраняет в памяти браузера тему оформления, вид списка и содержимое корзины. Эти данные остаются на вашем устройстве.
-  {% if url_policy %}Подробности — в <a href="{{ url_policy }}">политике</a>.{% endif %}</p>
+  <p>Сайт сохраняет в памяти браузера тему оформления, вид списка и содержимое корзины. Эти данные остаются на вашем устройстве.
+  {% if url_policy %}Подробности — в <a href="{{ url_policy }}">политике</a>.{% endif %}</p>
   <button class="btn btn--primary" type="button" data-cookie-ok>Хорошо</button>
 </section>
 
@@ -159,7 +159,7 @@
     <button class="modal__close" type="button" data-modal-close aria-label="Закрыть"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
   </div>
   <div class="modal__body">
-    <p>Оставьте телефон — перезвоним и поможем подобрать материал или посчитать объём.</p>
+    <p>Оставьте телефон — перезвоним и поможем подобрать материал или посчитать объём.</p>
     <form class="form form--bare" data-validate data-callback-form action="index.php?route=information/callback/send" method="post" novalidate>
       {#
         Ловушка для роботов. Человек этого поля не видит и не может в него
@@ -183,11 +183,11 @@
       </div>
       <label class="consent">
         <input type="checkbox" name="consent" value="1" required>
-        <span>{% if url_policy %}Согласен на <a href="{{ url_policy }}#soglasie">обработку персональных данных</a> и с <a href="{{ url_policy }}">политикой конфиденциальности</a>.{% else %}Согласен на обработку персональных данных.{% endif %}</span>
-        <span class="form__error">Без согласия отправить нельзя</span>
+        <span>{% if url_policy %}Согласен на <a href="{{ url_policy }}#soglasie">обработку персональных данных</a> и с <a href="{{ url_policy }}">политикой конфиденциальности</a>.{% else %}Согласен на обработку персональных данных.{% endif %}</span>
+        <span class="form__error">Без согласия отправить нельзя</span>
       </label>
       <button class="btn btn--action btn--block btn--lg" type="submit">Жду звонка</button>
-      <p class="form__success"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m5 13 4 4 10-10"/></svg> Заявка принята — мы перезвоним.</p>
+      <p class="form__success"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m5 13 4 4 10-10"/></svg> Заявка принята — мы перезвоним.</p>
     </form>
   </div>
 </dialog>

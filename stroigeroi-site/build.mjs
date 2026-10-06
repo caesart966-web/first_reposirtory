@@ -145,6 +145,34 @@ for (const [name] of PAGES) {
   write(file, applyTypography(read(file)));
 }
 
+/* Тот же проход - по шаблонам темы OpenCart. Живой сайт собран из них,
+   а не из макета, и до правки 42 висячих предлогов на нём было сколько
+   угодно: «калькуляторе: 14» / «расчётов», «просп. 50» / «лет Октября»,
+   «рядом с» / «вами» - заказчик называл это «ляпами».
+   В шаблоне кроме разметки есть Twig: {{ … }}, {% … %}, {# … #}, и в них
+   ничего трогать нельзя - строка вроде {% if stock == 'Нет в наличии' %}
+   с неразрывным пробелом перестала бы совпадать. Поэтому Twig и HTML-
+   комментарии на время прохода заменяются заглушками из символов
+   частной зоны Юникода (ни буквой, ни тегом они не считаются), потом
+   возвращаются как были. Шаблоны модулей (extension/module) собирает
+   tools/make-cards.py - у них свой источник, текст в нём уже связан. */
+function twigTypography(src) {
+  const saved = [];
+  const masked = src.replace(/\{#[\s\S]*?#\}|\{\{[\s\S]*?\}\}|\{%[\s\S]*?%\}|<!--[\s\S]*?-->/g, (m) => {
+    saved.push(m);
+    return `\uE000${saved.length - 1}\uE001`;
+  });
+  return applyTypography(masked).replace(/\uE000(\d+)\uE001/g, (_, i) => saved[+i]);
+}
+
+const TEMPLATE_DIR = 'opencart-theme/catalog/view/theme/stroigeroi2026/template';
+const twigFiles = (dir) => readdirSync(path.join(DIR, dir), { withFileTypes: true }).flatMap((e) =>
+  e.isDirectory() ? twigFiles(`${dir}/${e.name}`) : e.name.endsWith('.twig') ? [`${dir}/${e.name}`] : []);
+for (const file of twigFiles(TEMPLATE_DIR)) {
+  if (file.includes('/extension/module/')) continue;
+  write(file, twigTypography(read(file)));
+}
+
 /* ==========================================================================
    2. Превью одним файлом
    ========================================================================== */
