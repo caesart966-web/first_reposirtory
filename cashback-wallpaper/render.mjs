@@ -22,6 +22,7 @@ const args = process.argv.slice(2);
 const opt = (name) => { const i = args.indexOf(name); return i >= 0 ? args.splice(i, 2)[1] : undefined; };
 const outArg = opt('--out');
 const deviceArg = opt('--device');
+const placementArg = opt('--placement');
 const cfgPath = args[0];
 if (!cfgPath) {
   console.error('Использование: node render.mjs <обои.json> [--device ' + Object.keys(DEVICES).join('|') + '] [--out файл.png]');
@@ -35,7 +36,18 @@ if (!device) throw new Error(`Нет такого экрана: ${deviceKey}. Е
 
 const TEXT_TARGET = 4.5; // WCAG AA для обычного текста
 const ICON_TARGET = 3; // для значков
-const ZONE = { top: 0.29, bottom: 0.86, maxH: 0.42 }; // доли высоты экрана
+// Доли высоты экрана: таблица не заходит выше часов (top) и ниже кнопок
+// (bottom), не выше maxH и стоит центром на center.
+// under-clock — для крупных часов iOS 26: они опускаются почти до середины
+// экрана (на снимке пользователя низ цифр — 49,5 % высоты), и таблица
+// по центру легла бы на цифры.
+const PLACEMENTS = {
+  center: { top: 0.29, bottom: 0.86, maxH: 0.42, center: 0.5 },
+  'under-clock': { top: 0.505, bottom: 0.865, maxH: 0.36, center: 0.685 },
+};
+const placement = placementArg ?? cfg.placement ?? 'center';
+if (!PLACEMENTS[placement]) throw new Error(`Нет такого размещения: ${placement}. Есть: ${Object.keys(PLACEMENTS).join(', ')}`);
+const ZONE = { ...PLACEMENTS[placement], ...(cfg.zone ?? {}) };
 
 // ---------- данные ----------
 const { sections, notes } = buildSections(cfg);
@@ -114,8 +126,15 @@ function arrange({ zone }) {
   const phrase = document.getElementById('phrase');
   const banks = [...document.querySelectorAll('.bank')];
   const tries = [];
-  for (const s of [1, 0.94]) tries.push({ cols: 1, s, tw: 0.64 });
-  for (const s of [1, 0.94, 0.88, 0.82, 0.76]) tries.push({ cols: 2, s, tw: 0.9 });
+  const one = { cols: 1, tw: 0.64, row: 27, pad: 18, cg: 20 };
+  const two = { cols: 2, tw: 0.9, row: 27, pad: 18, cg: 20 };
+  // Плотнее строки и уже поля — раньше, чем мельче буквы: кегль дороже воздуха.
+  // На узком экране (393 pt) длинные названия («Перекрёсток Доставка»)
+  // упираются в ширину колонки, а не в высоту.
+  const tight = { cols: 2, tw: 0.95, row: 23, pad: 12, cg: 12 };
+  for (const s of [1, 0.94]) tries.push({ ...one, s });
+  for (const s of [1, 0.94, 0.88]) tries.push({ ...two, s });
+  for (const s of [0.94, 0.88, 0.84, 0.8, 0.76, 0.72]) tries.push({ ...tight, s });
 
   const build = (cols) => {
     colsEl.innerHTML = '';
@@ -144,6 +163,9 @@ function arrange({ zone }) {
   for (const t of tries) {
     root.style.setProperty('--s', t.s);
     root.style.setProperty('--tw', `${Math.round(W * t.tw)}px`);
+    root.style.setProperty('--row', `${t.row}px`);
+    root.style.setProperty('--pad', `${t.pad}px`);
+    root.style.setProperty('--cg', `${t.cg}px`);
     build(t.cols);
     const overflow = [...document.querySelectorAll('.nm')].some((n) => n.scrollWidth > n.clientWidth + 0.5);
     if (!overflow && glass.offsetHeight <= H * zone.maxH) { chosen = t; break; }
@@ -154,7 +176,7 @@ function arrange({ zone }) {
   // По центру экрана; если не помещается между часами и кнопками — сдвиг.
   const gh = glass.offsetHeight;
   const ph = phrase ? phrase.offsetHeight + parseFloat(getComputedStyle(phrase).marginTop) : 0;
-  let top = H * 0.5 - gh / 2;
+  let top = H * zone.center - gh / 2;
   top = Math.max(top, H * zone.top);
   top = Math.min(top, H * zone.bottom - gh - ph);
   stage.style.top = `${Math.round(top)}px`;
