@@ -10,6 +10,10 @@
 продолжает с места остановки (бесплатный тариф Checko — 100 запросов в сутки:
 запускайте раз в день, пока не скажет «все компании получены»).
 
+Ключей может быть несколько — в checko_key.txt по одному в строке (или через
+запятую в CHECKO_API_KEY). Когда у ключа кончается лимит или баланс, программа
+сама берёт следующий и повторяет ту же компанию; кэш общий, ключ на него не влияет.
+
 Первыми идут компании, по которым поиск ничего не дал, затем — без почты,
 затем остальные: если лимит кончится на середине, самое нужное уже будет.
 
@@ -18,6 +22,7 @@
 Стандартная библиотека Python 3.8+, без сторонних пакетов.
 """
 import argparse
+import collections
 import csv
 import getpass
 import glob
@@ -42,6 +47,8 @@ EMAIL = re.compile(r'[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}')
 # Ошибки, после которых дальше спрашивать бессмысленно: ключ, лимит, деньги.
 FATAL = re.compile(r'ключ|key|лимит|limit|баланс|balance|средств|тариф|оплат|доступ|access|forbidden|превыш', re.I)
 NOT_FOUND = re.compile(r'не найден|not found|отсутств|нет данных', re.I)
+# «Слишком часто» — подождать и повторить тем же ключом, а не выбрасывать ключ.
+RATE = re.compile(r'в секунд|в минуту|per second|per minute|слишком част|too many|частот', re.I)
 
 for stream in (sys.stdout, sys.stderr):
     try:
@@ -211,18 +218,36 @@ def parse(inn, company, payload):
 
 # ---------------------------------------------------------------- запросы
 
-def get_key(args):
-    key = args.key or os.environ.get('CHECKO_API_KEY', '').strip()
-    if not key and os.path.exists(KEY_FILE):
-        key = open(KEY_FILE, encoding='utf-8').read().strip()
-    if key:
-        return key
+def split_keys(text):
+    return [k for k in re.split(r'[\s,;]+', text or '') if k]
+
+
+def mask(key):
+    """В вывод ключ попадает только последними четырьмя знаками."""
+    return f'…{key[-4:]}' if len(key) > 8 else '…'
+
+
+def get_keys(args):
+    keys = split_keys(args.key) + split_keys(os.environ.get('CHECKO_API_KEY', ''))
+    if not keys and os.path.exists(KEY_FILE):
+        with open(KEY_FILE, encoding='utf-8') as f:
+            for line in f:
+                if line.strip() and not line.strip().startswith('#'):
+                    keys += split_keys(line)
+    if keys:
+        return list(dict.fromkeys(keys))
     print('Нужен API-ключ Checko (checko.ru -> API -> ключ). Ввод не отображается на экране.')
-    key = getpass.getpass('Ключ: ').strip()
-    if key and input('Сохранить ключ в checko_key.txt, чтобы завтра не вводить? [Д/н]: ').strip().lower() in ('', 'д', 'да', 'y', 'yes'):
+    print('Если ключей несколько — вводите по одному, пустой ввод (Enter) — закончить.')
+    while True:
+        k = getpass.getpass(f'Ключ №{len(keys) + 1}: ').strip()
+        if not k:
+            break
+        keys += split_keys(k)
+    keys = list(dict.fromkeys(keys))
+    if keys and input('Сохранить ключи в checko_key.txt, чтобы завтра не вводить? [Д/н]: ').strip().lower() in ('', 'д', 'да', 'y', 'yes'):
         with open(KEY_FILE, 'w', encoding='utf-8') as f:
-            f.write(key)
-    return key
+            f.write('\n'.join(keys) + '\n')
+    return keys
 
 
 def fetch(inn, key):
@@ -280,7 +305,7 @@ def order(companies):
 
 def main():
     ap = argparse.ArgumentParser(description='Статус и контакты компаний через API Checko')
-    ap.add_argument('--key', help='API-ключ (лучше через CHECKO_API_KEY или checko_key.txt)')
+    ap.add_argument('--key', help='API-ключ, несколько — через запятую (лучше через checko_key.txt)')
     ap.add_argument('--limit', type=int, default=0, help='не больше N запросов за запуск')
     ap.add_argument('--delay', type=float, default=0.4, help='пауза между запросами, с')
     ap.add_argument('--only', default='', help='только эти ИНН через запятую')
@@ -304,16 +329,45 @@ def main():
 
     stop = ''
     if todo and not args.offline:
-        key = get_key(args)
-        if not key:
+        keys = get_keys(args)
+        if not keys:
             sys.exit('Ключ не введён — выхожу.')
-        done = errors = 0
-        meta = {}
+        if len(keys) > 1:
+            print(f'Ключей: {len(keys)} — когда у ключа кончится лимит, перейду к следующему.')
+        ki = done = errors = 0
+        used = collections.Counter()
+        metas = {}
+        refused = {}   # ключи, которые Checko не принял (не лимит), — для подсказки в конце
         for c in todo:
             if args.limit and done >= args.limit:
                 stop = f'достигнут --limit {args.limit}'
                 break
-            payload, err = fetch(c['inn'], key)
+            waits = 0
+            while True:
+                payload, err = fetch(c['inn'], keys[ki])
+                m = (payload or {}).get('meta') or {}
+                msg = str(m.get('message') or '')
+                if 'today_request_count' in m:
+                    metas[ki] = m
+                if payload is None or m.get('status') != 'error' or NOT_FOUND.search(msg):
+                    break
+                if RATE.search(msg) and waits < 3:      # слишком часто — подождать тем же ключом
+                    waits += 1
+                    time.sleep(5 * waits)
+                    continue
+                if not FATAL.search(msg):
+                    break
+                # ключ выбыл (лимит, баланс, неверный) — та же компания следующим ключом
+                print(f'  Ключ №{ki + 1} ({mask(keys[ki])}): {msg}')
+                if not re.search(r'лимит|limit|превыш|баланс|balance|средств|оплат|тариф', msg, re.I):
+                    refused[ki] = msg
+                if ki + 1 >= len(keys):
+                    stop = f'Checko: {msg}' + (' — у всех ключей' if len(keys) > 1 else '')
+                    break
+                ki += 1
+                print(f'  Переключаюсь на ключ №{ki + 1} ({mask(keys[ki])}) и продолжаю с той же компании.')
+            if stop:
+                break
             done += 1
             if payload is None:
                 errors += 1
@@ -322,14 +376,7 @@ def main():
                     stop = 'пять ошибок подряд — проверьте интернет и попробуйте позже'
                     break
                 continue
-            m = payload.get('meta') or {}
-            msg = str(m.get('message') or '')
-            if 'today_request_count' in m:
-                meta = m
             if m.get('status') == 'error' and not NOT_FOUND.search(msg):
-                if FATAL.search(msg):
-                    stop = f'Checko: {msg}'
-                    break
                 errors += 1
                 print(f'  [{done}] {c["inn"]} — Checko: {msg}')
                 if errors >= 5:
@@ -337,14 +384,19 @@ def main():
                     break
                 continue
             errors = 0
+            used[ki] += 1
             with open(os.path.join(CACHE, f'{c["inn"]}.json'), 'w', encoding='utf-8') as f:
                 json.dump(payload, f, ensure_ascii=False)
             r = parse(c['inn'], c, payload)
             print(f'  [{done}/{len(todo)}] {c["inn"]} {c["name"][:38]:<38} {r["status"]:<24} {r["email"][:40]}')
             time.sleep(args.delay)
-        if meta:
-            print(f'Запросов сегодня по счётчику Checko: {meta.get("today_request_count", "?")}, '
-                  f'баланс: {meta.get("balance", "?")}')
+        for i in sorted(set(used) | set(metas)):
+            meta = metas.get(i, {})
+            print(f'Ключ №{i + 1} ({mask(keys[i])}): получено за этот запуск {used[i]}, '
+                  f'по счётчику Checko сегодня {meta.get("today_request_count", "?")}, баланс {meta.get("balance", "?")}')
+        for i, msg in refused.items():
+            print(f'Ключ №{i + 1} ({mask(keys[i])}) Checko не принял: {msg}. Проверьте его в личном кабинете '
+                  'или уберите из checko_key.txt (там по одному ключу в строке).')
 
     # разбор всего кэша заново — так правка разбора не требует новых запросов
     results = []
@@ -367,9 +419,6 @@ def main():
     print('Все компании получены.' if not left else f'Осталось {left} — запустите снова (завтра, если кончился суточный лимит).')
     if stop:
         print(f'Остановлено: {stop}')
-        if re.search(r'ключ|key', stop, re.I):
-            print('Проверьте ключ в личном кабинете Checko. Если он был сохранён неверно — '
-                  'удалите файл checko_key.txt и запустите снова.')
 
     try:
         import openpyxl  # noqa: F401
