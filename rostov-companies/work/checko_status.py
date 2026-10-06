@@ -261,15 +261,26 @@ def get_keys(args):
             keys += found
     if keys:
         return list(dict.fromkeys(keys))
-    print('Нужен API-ключ Checko (checko.ru -> API -> ключ). Ввод не отображается на экране.')
-    print('Если ключей несколько — вводите по одному, пустой ввод (Enter) — закончить.')
+    print('Нужен API-ключ Checko (checko.ru -> API -> ключ).')
+    print('Вставьте ключ правой кнопкой мыши или Ctrl+V и нажмите Enter — символы на экране')
+    print('не появятся, так и должно быть. Ключей несколько — вставляйте по одному.')
+    print('Когда ключи кончатся, просто нажмите Enter.')
     while True:
         k = getpass.getpass(f'Ключ №{len(keys) + 1}: ').strip()
         if not k:
-            break
-        keys += split_keys(k)
-    keys = list(dict.fromkeys(keys))
-    if keys and input('Сохранить ключи в checko_key.txt, чтобы завтра не вводить? [Д/н]: ').strip().lower() in ('', 'д', 'да', 'y', 'yes'):
+            if keys:
+                break
+            print('  Нужен хотя бы один ключ.')
+            if input('  Выйти без проверки? [д/Н]: ').strip().lower() in ('д', 'да', 'y', 'yes'):
+                break
+            continue
+        got = [x for x in split_keys(k) if x not in keys]
+        if not got:
+            print('  Это не похоже на ключ (или он уже введён) — вставьте ещё раз или нажмите Enter.')
+            continue
+        keys += got
+        print('  Принят: ' + ', '.join(mask(x) for x in got))
+    if keys and input('Сохранить ключи, чтобы завтра не вводить заново? [Д/н]: ').strip().lower() in ('', 'д', 'да', 'y', 'yes'):
         with open(KEY_FILE, 'w', encoding='utf-8') as f:
             f.write('\n'.join(keys) + '\n')
     return keys
