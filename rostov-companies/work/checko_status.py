@@ -36,6 +36,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+VERSION = '06.10.2026, сборка 7'
 HERE = os.path.dirname(os.path.abspath(__file__))
 API = os.environ.get('CHECKO_API_URL', 'https://api.checko.ru/v2').rstrip('/')
 CACHE = os.path.join(HERE, 'checko_cache')
@@ -276,18 +277,33 @@ def get_keys(args):
             keys += found
     if keys:
         return list(dict.fromkeys(keys))
-    print('Файла с ключами рядом с программой нет (например, ключи.txt — по одному ключу в строке).')
+    print('Файла с ключами рядом с программой нет. Положите его в эту папку:')
+    print(f'    {HERE}')
+    print('  имя — любое со словом «ключ», «key» или «api» (например, ключи.txt), по одному ключу в строке.')
+    up = os.path.dirname(HERE)
+    near = [n for n in os.listdir(up) if re.search(r'key|ключ|checko|api', n.lower())
+            and n.lower().endswith('.txt') and os.path.isfile(os.path.join(up, n))]
+    if near:
+        print(f'  Похожий файл лежит на папку выше: «{near[0]}» — перенесите его сюда и запустите снова.')
     print('Нужен API-ключ Checko (checko.ru -> API -> ключ).')
     print('Вставьте ключ правой кнопкой мыши или Ctrl+V и нажмите Enter — символы на экране')
     print('не появятся, так и должно быть. Ключей несколько — вставляйте по одному.')
     print('Когда ключи кончатся, просто нажмите Enter.')
     while True:
-        k = getpass.getpass(f'Ключ №{len(keys) + 1}: ').strip()
+        try:
+            k = getpass.getpass(f'Ключ №{len(keys) + 1}: ').strip()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            break
         if not k:
             if keys:
                 break
             print('  Нужен хотя бы один ключ.')
-            if input('  Выйти без проверки? [д/Н]: ').strip().lower() in ('д', 'да', 'y', 'yes'):
+            try:
+                leave = input('  Выйти без проверки? [д/Н]: ').strip().lower() in ('д', 'да', 'y', 'yes')
+            except (EOFError, KeyboardInterrupt):
+                leave = True
+            if leave:
                 break
             continue
         got = [x for x in split_keys(k) if x not in keys]
@@ -296,7 +312,11 @@ def get_keys(args):
             continue
         keys += got
         print('  Принят: ' + ', '.join(mask(x) for x in got))
-    if keys and input('Сохранить ключи, чтобы завтра не вводить заново? [Д/н]: ').strip().lower() in ('', 'д', 'да', 'y', 'yes'):
+    try:
+        save = keys and input('Сохранить ключи, чтобы завтра не вводить заново? [Д/н]: ').strip().lower() in ('', 'д', 'да', 'y', 'yes')
+    except (EOFError, KeyboardInterrupt):
+        save = False
+    if save:
         with open(KEY_FILE, 'w', encoding='utf-8') as f:
             f.write('\n'.join(keys) + '\n')
     return keys
@@ -365,6 +385,7 @@ def main():
     args = ap.parse_args()
     os.chdir(HERE)
     os.makedirs(CACHE, exist_ok=True)
+    print(f'Проверка через Checko, версия {VERSION}')
 
     seen, companies = set(), []
     for x in json.load(open('all.json', encoding='utf-8')):
