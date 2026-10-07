@@ -6,6 +6,7 @@ import Seal from './Seal.astro'
 import GiftIcon from './GiftIcon.astro'
 import { GIFT_TAG, GIFTS, OFFER } from '../config/offer'
 import { imageSize } from '../lib/image-size'
+import { ABOUT } from '../config/about'
 
 // Первый экран.
 //
@@ -28,18 +29,26 @@ import { imageSize } from '../lib/image-size'
 // над карточкой, из-под неё видны 76 px).
 //
 // Строки чисел под первым экраном по-прежнему нет: четыре числа в ней
-// повторяли соседей. Полоса доверия ниже — не числа, а три обещания
-// о том, как устроена работа, и каждое уже сказано на сайте подробно:
-// статья у каждой нормы, взносы на счёт СРО (шаг 3 «4 шагов»), документы
-// электронные (раздел «География»).
+// повторяли соседей. Полоса доверия ниже — три пункта, и каждый уже сказан
+// на сайте: сколько компаниям помог вступить (ABOUT.companies, то же число
+// на «Обо мне»; 112 — слова заказчика 07.10.2026), статья у каждой нормы,
+// взносы на счёт СРО (шаг 3 «4 шагов»). «Без поездок» отсюда ушло ради
+// числа компаний: «по всей России» стоит в плашке над заголовком,
+// «документы электронные» — в «Географии».
 
 // Размер кадра — из самого файла: пропорция нужна браузеру до загрузки.
 const photoSize = SITE.heroPhoto ? imageSize(`public/img/${SITE.heroPhoto}`) : null
 
-const TRUST = [
+// «Помог вступить 112 компаниям», но «21 компании»: число управляет падежом.
+const n = ABOUT.companies
+const companiesWord = n % 10 === 1 && n % 100 !== 11 ? 'компании' : 'компаниям'
+
+// Число — отдельной частью строки: переносится целиком («Помог вступить /
+// 112 компаниям») и выделено цветом, а текст строки остаётся одной фразой.
+const TRUST: { icon: string; t: string; n?: string; d: string }[] = [
+  { icon: 'building', t: 'Помог вступить', n: `${n} ${companiesWord}`, d: 'в СРО строителей, проектировщиков и изыскателей' },
   { icon: 'scales', t: 'Ответ со ссылкой на закон', d: 'у каждой нормы — статья кодекса' },
   { icon: 'wallet', t: 'Взносы — напрямую в СРО', d: 'на её счёт, не через меня' },
-  { icon: 'monitor', t: 'Без поездок', d: 'документы электронные' },
 ]
 ---
 
@@ -247,7 +256,7 @@ const TRUST = [
         <li>
           <span class="tr-ic"><Icon name={x.icon} size={20} /></span>
           <span class="tr-txt">
-            <span class="tr-t">{x.t}</span>
+            <span class="tr-t">{x.t}{x.n && <>{' '}<span class="tr-n">{x.n}</span></>}</span>
             <span class="tr-d">{x.d}</span>
           </span>
         </li>
@@ -604,6 +613,7 @@ const TRUST = [
   }
   .tr-txt { display: grid; gap: 3px; padding-top: 1px; }
   .tr-t { font-size: 14.5px; font-weight: 700; line-height: 1.3; }
+  .tr-n { color: var(--acc-deep); white-space: nowrap; }
   .tr-d { font-size: 13px; line-height: 1.45; color: var(--muted); }
   @media (min-width: 1024px) {
     .trust { padding-top: 26px; border-top: 1px solid var(--line); }
