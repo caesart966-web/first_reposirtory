@@ -62,8 +62,8 @@
     s += orgBox({ x: lx + 290, y: ly + 62, w: 230, h: 36, label: 'Орг. единица', kind: 'unit' });
     s += `<rect x="${lx + 440}" y="${ly + 46}" width="40" height="32" rx="16" fill="#FFF3B5" stroke="${C.impr}" stroke-width="3"/>`;
     s += tb(lx + 490, ly + 62, 'объект\nисследования', { size: 13, anchor: 'start', nowrap: true }).svg;
-    s += tb(lx + 16, ly + 112, 'Численность — 41 человек. Линии — прямое подчинение.', { size: 14, anchor: 'start', nowrap: true }).svg;
-    s += tb(lx + 16, ly + 136, 'В скобках — число сотрудников.', { size: 14, anchor: 'start', nowrap: true, fill: C.muted }).svg;
+    s += tb(lx + 16, ly + 112, 'Численность: 41 человек. Линии показывают прямое подчинение.', { size: 14, anchor: 'start', nowrap: true }).svg;
+    s += tb(lx + 16, ly + 136, 'В скобках указано число сотрудников.', { size: 14, anchor: 'start', nowrap: true, fill: C.muted }).svg;
     return { svg: wrapSvg(W, H, s), w: W, h: H };
   };
 
@@ -93,7 +93,7 @@
     s += tb(130 + 177 + 86, 352, 'объект исследования', { size: 14, weight: 'bold', fill: C.impr, nowrap: true }).svg;
     s += tb(560, 380, 'Клиенты: строительные и монтажные организации, магазины строительных товаров, маркетплейсы', { size: 13.5, fill: C.muted, nowrap: true, italic: true }).svg;
     s += band(430, 166, 'Обеспечивающие процессы');
-    const S = [['П1', 'Бухгалтерский учёт и валютный контроль'], ['П2', 'Подтверждение соответствия (сертификация)'], ['П3', 'Управление персоналом'], ['П4', 'ИТ-обеспечение (1С, связь)'], ['П5', 'Правовое сопровождение (договоры, претензии)'], ['П6', 'Административно-хозяйственное обеспечение']];
+    const S = [['П1', 'Бухгалтерский учет и валютный контроль'], ['П2', 'Подтверждение соответствия (сертификация)'], ['П3', 'Управление персоналом'], ['П4', 'ИТ-обеспечение (1С, связь)'], ['П5', 'Правовое сопровождение (договоры, претензии)'], ['П6', 'Административно-хозяйственное обеспечение']];
     S.forEach(([c, n], i) => (s += chev(30 + i * 177, 474, 173, 100, c, n, '#F1E8D6', i === 0)));
     const blockArrow = (x, y1, y2) => {
       const d = y2 > y1 ? 1 : -1;
@@ -113,7 +113,7 @@
     const lab = (x, y, t, anchor = 'start', maxW = 350) => tb(x, y, t, { size: 14, anchor, maxW, valign: 'bottom', halo: 3 }).svg;
     s += `<rect x="${bx1}" y="${by1}" width="${bx2 - bx1}" height="${by2 - by1}" fill="#E4F2DA" stroke="${C.taskS}" stroke-width="2.4"/>`;
     s += tb((bx1 + bx2) / 2, (by1 + by2) / 2 - 10, 'Импортная закупка товара', { size: 19, weight: 'bold', maxW: 280 }).svg;
-    s += tb((bx1 + bx2) / 2, (by1 + by2) / 2 + 28, 'от утверждённого плана закупок до оприходования товара', { size: 14, maxW: 270, fill: C.muted }).svg;
+    s += tb((bx1 + bx2) / 2, (by1 + by2) / 2 + 28, 'от утвержденного плана закупок до оприходования товара', { size: 14, maxW: 270, fill: C.muted }).svg;
     s += tb(bx2 - 10, by2 - 10, 'А0', { size: 13, weight: 'bold', anchor: 'end', nowrap: true }).svg;
     // входы
     const ins = ['Потребность в товаре (план закупок)', 'Коммерческие предложения поставщиков', 'Денежные средства на оплату', 'Товар у поставщика (КНР)'];
@@ -124,7 +124,7 @@
     // управление (сверху)
     const ctlL = [['Таможенный кодекс ЕАЭС, закон № 289-ФЗ', 530], ['Закон № 173-ФЗ, Инструкция Банка России № 181-И (валютный контроль)', 480], ['Технические регламенты ЕАЭС (подтверждение соответствия)', 430]];
     ctlL.forEach(([t, x], i) => { const y = 62 + i * 52; s += ln([[30, y], [x, y], [x, by1]]) + lab(36, y - 5, t, 'start', 430); });
-    const ctlR = [['Условия контракта, Инкотермс 2020', 600], ['Регламенты компании: лимиты, учётная политика', 660]];
+    const ctlR = [['Условия контракта, Инкотермс 2020', 600], ['Регламенты компании: лимиты, учетная политика', 660]];
     ctlR.forEach(([t, x], i) => { const y = 62 + i * 52; s += ln([[W - 24, y], [x, y], [x, by1]]) + lab(W - 30, y - 5, t, 'end', 380); });
     // механизмы (снизу)
     const mL = [['Отдел закупок и ВЭД', 430], ['Финансовая служба', 480], ['Отдел логистики и склад', 530]];
@@ -146,14 +146,14 @@
       ['2', 'Выбор поставщика и согласование условий', 'Отдел закупок и ВЭД, коммерческий директор'],
       ['3', 'Заключение контракта, валютный контроль', 'Отдел закупок и ВЭД, финансовая служба'],
       ['4', 'Оплата аванса', 'Финансовая служба'],
-      ['5', 'Производство у поставщика', 'Поставщик; контроль — отдел закупок и ВЭД'],
+      ['5', 'Производство у поставщика', 'Поставщик (контроль: отдел закупок и ВЭД)'],
       ['6', 'Оплата остатка и отгрузка', 'Финансовая служба, отдел логистики'],
-      ['7', 'Международная перевозка', 'Экспедитор; контроль — отдел логистики'],
+      ['7', 'Международная перевозка', 'Экспедитор (контроль: отдел логистики)'],
       ['8', 'Таможенное оформление, подтверждение соответствия', 'Отдел закупок и ВЭД, таможенный представитель'],
-      ['9', 'Доставка на склад и приёмка', 'Отдел логистики, склад'],
-      ['10', 'Оприходование и расчёт себестоимости', 'Финансовая служба'],
+      ['9', 'Доставка на склад и приемка', 'Отдел логистики, склад'],
+      ['10', 'Оприходование и расчет себестоимости', 'Финансовая служба'],
     ];
-    s += tb(20, 24, 'Начало: утверждён план закупок  →  …  →  Окончание: товар доступен к продаже', { size: 15, anchor: 'start', nowrap: true, weight: 'bold', fill: '#2B3440' }).svg;
+    s += tb(20, 24, 'Начало: утвержден план закупок. Окончание: товар доступен к продаже.', { size: 15, anchor: 'start', nowrap: true, weight: 'bold', fill: '#2B3440' }).svg;
     st.forEach(([n, name, own], i) => {
       const row = Math.floor(i / 5), k = i % 5;
       const x = 20 + k * 216, y = 50 + row * 180;
@@ -167,7 +167,7 @@
       s += `<ellipse cx="${x + 102}" cy="${y + 126}" rx="104" ry="29" fill="#FFF3B5" stroke="#A88400" stroke-width="1"/>`;
       s += tb(x + 100, y + 124, own, { size: 12.3, maxW: 168 }).svg;
     });
-    s += tb(20, 410, 'Серым — этапы внешних участников (компания их контролирует). Жёлтым — исполнители этапа.', { size: 13.5, anchor: 'start', nowrap: true, fill: C.muted, italic: true }).svg;
+    s += tb(20, 410, 'Серым выделены этапы внешних участников, желтым показаны исполнители этапов.', { size: 13.5, anchor: 'start', nowrap: true, fill: C.muted, italic: true }).svg;
     return { svg: wrapSvg(W, H, s), w: W, h: H };
   };
 
@@ -195,7 +195,7 @@
       return b + txt(x + 72, y + 19, label);
     };
     s += box(0, 1, 'task', 'Задача (выполняет сотрудник)');
-    // сервисная задача — с шестерёнкой
+    // сервисная задача, с шестеренкой
     {
       const [x, y] = cell(1, 1);
       const n = { type: 'svc', label: '', x: x + 30, y: y + 19, boxW: 60 };
@@ -206,7 +206,7 @@
       const [x, y] = cell(2, 1);
       const n = { type: 'sub', label: '', x: x + 30, y: y + 19, boxW: 60 };
       sizeNode(n); n.h = 38;
-      s += drawNode(n) + txt(x + 72, y + 19, 'Свёрнутый подпроцесс');
+      s += drawNode(n) + txt(x + 72, y + 19, 'Свернутый подпроцесс');
     }
     const gw = (type, c, r, label) => {
       const [x, y] = cell(c, r);
@@ -234,7 +234,7 @@
     }
     {
       const [x, y] = cell(4, 2);
-      s += `<rect x="${x}" y="${y + 2}" width="60" height="34" fill="${C.ext}" stroke="${C.extS}" stroke-width="1.3"/>` + txt(x + 72, y + 19, 'Свёрнутый пул внешнего участника');
+      s += `<rect x="${x}" y="${y + 2}" width="60" height="34" fill="${C.ext}" stroke="${C.extS}" stroke-width="1.3"/>` + txt(x + 72, y + 19, 'Свернутый пул внешнего участника');
     }
     return { svg: wrapSvg(W, H, s), w: W, h: H };
   };
@@ -245,10 +245,10 @@
     lanes: [{ id: 'cd', name: CD, h: 130 }, { id: 'ved', name: V, h: 150 }],
     top: [{ name: SUP, from: 0, to: 99 }],
     nodes: [
-      { id: 's1', type: 'start', lane: 'ved', col: 0, label: 'Утверждён план закупок на месяц' },
+      { id: 's1', type: 'start', lane: 'ved', col: 0, label: 'Утвержден план закупок на месяц' },
       { id: 'a1', type: 'task', lane: 'ved', col: 1, label: 'Сверить остатки в 1С и сформировать заказ в Excel', dur: '2 дн.', badge: 'П1' },
       { id: 'a2', type: 'task', lane: 'ved', col: 2, label: 'Разослать запрос цен поставщикам (почта, WeChat)', badge: 'П2' },
-      { id: 'e1', type: 'msg', lane: 'ved', col: 3, label: 'КП получены (≈5 дн.)' },
+      { id: 'e1', type: 'msg', lane: 'ved', col: 3, label: 'КП получены (5 дн.)' },
       { id: 'a3', type: 'task', lane: 'ved', col: 4, label: 'Сравнить КП вручную, подготовить служебную записку', dur: '1 дн.', badge: 'П2' },
       { id: 'a4', type: 'task', lane: 'cd', col: 5, label: 'Рассмотреть выбор поставщика и условия', dur: '2 дн.', badge: 'П3' },
       { id: 'g1', type: 'xor', lane: 'cd', col: 6, label: 'Согласовано?', lpos: 'bottom' },
@@ -260,7 +260,7 @@
     flows: [
       ['s1', 'a1'], ['a1', 'a2'], ['a2', 'e1'], ['e1', 'a3'], ['a3', 'a4'], ['a4', 'g1'],
       ['g1', 'a5', { fa: 'R', ta: 'L', label: 'да', mx: (P) => P.a5.x - 76 }],
-      ['g1', 'a3', { fa: 'T', ta: 'T', label: 'нет (≈30 %)', via: (P) => [[P.g1.x, P.laneTop('cd') + 13], [P.a3.x, P.laneTop('cd') + 13]] }],
+      ['g1', 'a3', { fa: 'T', ta: 'T', label: 'нет (30%)', via: (P) => [[P.g1.x, P.laneTop('cd') + 13], [P.a3.x, P.laneTop('cd') + 13]] }],
       ['a5', 'a6'], ['a6', 'a7'], ['a7', 'L1'],
     ],
     msgs: [
@@ -282,15 +282,15 @@
     nodes: [
       { id: 'L2', type: 'linkIn', lane: 'ved', col: 0, label: 'Из части 1 (А)' },
       { id: 'b1', type: 'task', lane: 'ved', col: 1, label: 'Оформить служебную записку на оплату аванса', dur: '1 дн.', badge: 'П3' },
-      { id: 'b2', type: 'task', lane: 'fin', col: 2, label: 'Поставить контракт на учёт в банке', dur: '2 дн.', badge: 'П4' },
-      { id: 'b3', type: 'task', lane: 'fin', col: 3, label: 'Оплатить аванс 30 % (исполнение платежа банком)', dur: '10 дн.', badge: 'П5' },
-      { id: 'e2', type: 'msg', lane: 'ved', col: 4, label: 'Товар готов (производство ≈30 дн.)' },
+      { id: 'b2', type: 'task', lane: 'fin', col: 2, label: 'Поставить контракт на учет в банке', dur: '2 дн.', badge: 'П4' },
+      { id: 'b3', type: 'task', lane: 'fin', col: 3, label: 'Оплатить аванс 30% (исполнение платежа банком)', dur: '10 дн.', badge: 'П5' },
+      { id: 'e2', type: 'msg', lane: 'ved', col: 4, label: 'Товар готов (производство 30 дн.)' },
       { id: 'g2', type: 'and', lane: 'ved', col: 5 },
       { id: 'b4', type: 'task', lane: 'ved', col: 6, label: 'Оформить служебную записку на оплату остатка', dur: '1 дн.', badge: 'П3' },
-      { id: 'b5', type: 'task', lane: 'fin', col: 7, label: 'Оплатить остаток 70 % до отгрузки', dur: '10 дн.', badge: 'П5' },
+      { id: 'b5', type: 'task', lane: 'fin', col: 7, label: 'Оплатить остаток 70% до отгрузки', dur: '10 дн.', badge: 'П5' },
       { id: 'b6', type: 'task', lane: 'log', col: 8, label: 'Запросить ставки и забронировать контейнер', dur: '7 дн.', badge: 'П6' },
       { id: 'g3', type: 'and', lane: 'fin', col: 9 },
-      { id: 'e3', type: 'msg', lane: 'ved', col: 10, label: 'Товар отгружен (≈3 дн.)' },
+      { id: 'e3', type: 'msg', lane: 'ved', col: 10, label: 'Товар отгружен (3 дн.)' },
       { id: 'L3', type: 'linkOut', lane: 'ved', col: 11, label: 'Переход к части 3 (Б)' },
     ],
     flows: [
@@ -299,9 +299,9 @@
     ],
     msgs: [
       { node: 'b2', pool: BANK, dir: 'out', label: 'Сведения о контракте', lw: 90 },
-      { node: 'b3', pool: BANK, dir: 'out', label: 'Платёж (аванс)', lw: 90 },
+      { node: 'b3', pool: BANK, dir: 'out', label: 'Платеж (аванс)', lw: 90 },
       { node: 'e2', pool: SUP, dir: 'in', label: 'Уведомление о готовности', lw: 100 },
-      { node: 'b5', pool: BANK, dir: 'out', side: 'l', label: 'Платёж (остаток)', lw: 90 },
+      { node: 'b5', pool: BANK, dir: 'out', side: 'l', label: 'Платеж (остаток)', lw: 90 },
       { node: 'b6', pool: FWD, dx: -16, dir: 'out', label: 'Запрос ставок, заявка', lw: 90 },
       { node: 'b6', pool: FWD, dx: 16, dir: 'in', label: 'Ставка, бронь', lw: 90 },
       { node: 'e3', pool: SUP, dir: 'in', label: 'Инвойс, упаковочный лист, коносамент', lw: 120 },
@@ -318,23 +318,23 @@
     nodes: [
       { id: 'L4', type: 'linkIn', lane: 'log', col: 0, label: 'Из части 2 (Б)' },
       { id: 'd1', type: 'task', lane: 'log', col: 1, label: 'Отслеживать груз: звонки и письма экспедитору', dur: '45 дн. в пути', badge: 'П6' },
-      { id: 'e4', type: 'msg', lane: 'log', col: 2, label: 'Груз прибыл, размещён на СВХ', lpos: 'top' },
+      { id: 'e4', type: 'msg', lane: 'log', col: 2, label: 'Груз прибыл, размещен на СВХ', lpos: 'top' },
       { id: 'd2', type: 'task', lane: 'ved', dy: MAIN, col: 3, label: 'Передать документы таможенному представителю', dur: '2 дн.', badge: 'П7' },
       { id: 'g4', type: 'xor', lane: 'ved', dy: MAIN, col: 4, label: 'Замечания к документам?', lpos: 'bottom' },
       { id: 'd3', type: 'task', lane: 'ved', dy: UP, col: 5, label: 'Запросить исправленные документы у поставщика', dur: '4 дн.', badge: 'П7' },
       { id: 'g5', type: 'xor', lane: 'ved', dy: MAIN, col: 6, label: 'Декларации соответствия есть на все товары?', lpos: 'bottom', lw: 120 },
-      { id: 'd4', type: 'task', lane: 'ved', dy: UP, col: 7, label: 'Оформить декларацию соответствия (груз ждёт на СВХ)', dur: '14 дн.', badge: 'П8' },
+      { id: 'd4', type: 'task', lane: 'ved', dy: UP, col: 7, label: 'Оформить декларацию соответствия (груз ждет на СВХ)', dur: '14 дн.', badge: 'П8' },
       { id: 'g6', type: 'xor', lane: 'ved', dy: MAIN, col: 8 },
       { id: 'd5', type: 'task', lane: 'fin', col: 9, label: 'Оплатить таможенные платежи по запросу брокера', dur: '2 дн.' },
-      { id: 'e5', type: 'msg', lane: 'ved', dy: MAIN, col: 10, label: 'Товар выпущен (≈1 дн.)', lpos: 'top' },
+      { id: 'e5', type: 'msg', lane: 'ved', dy: MAIN, col: 10, label: 'Товар выпущен (1 дн.)', lpos: 'top' },
       { id: 'L5', type: 'linkOut', lane: 'ved', dy: MAIN, col: 11, label: 'Переход к части 4 (В)' },
     ],
     flows: [
       ['L4', 'd1'], ['d1', 'e4'], ['e4', 'd2'], ['d2', 'g4'],
-      ['g4', 'd3', { label: 'да (≈40 %)' }],
+      ['g4', 'd3', { label: 'да (40%)' }],
       ['d3', 'd2', { fa: 'T', ta: 'T', fdx: -30, via: (P) => [[P.d3.x - 30, P.laneTop('ved') + 12], [P.d2.x, P.laneTop('ved') + 12]] }],
       ['g4', 'g5', { label: 'нет' }],
-      ['g5', 'd4', { label: 'нет (≈30 %)' }],
+      ['g5', 'd4', { label: 'нет (30%)' }],
       ['g5', 'g6', { label: 'да' }],
       ['d4', 'g6'], ['g6', 'd5'], ['d5', 'e5'], ['e5', 'L5'],
     ],
@@ -362,14 +362,14 @@
       { id: 'f1', type: 'task', lane: 'log', col: 1, label: 'Заказать машину и вывезти контейнер со СВХ на склад', dur: '2 дн.' },
       { id: 'f2', type: 'task', lane: 'wh', col: 2, label: 'Пересчитать товар вручную, сверить с упаковочным листом', dur: '2 дн.', badge: 'П9' },
       { id: 'g7', type: 'xor', lane: 'wh', col: 3, label: 'Расхождения есть?', lpos: 'bottom' },
-      { id: 'f3', type: 'task', lane: 'ved', col: 4, label: 'Составить акт и претензию поставщику', dur: '≈7 дн.', badge: 'П9' },
+      { id: 'f3', type: 'task', lane: 'ved', col: 4, label: 'Составить акт и претензию поставщику', dur: '7 дн.', badge: 'П9' },
       { id: 'g8', type: 'xor', lane: 'wh', col: 5 },
       { id: 'f4', type: 'task', lane: 'fin', col: 6, label: 'Дождаться ДТ и счетов, оприходовать товар в 1С', dur: '2 дн.', badge: 'П10' },
       { id: 'f5', type: 'task', lane: 'fin', col: 7, label: 'Рассчитать себестоимость партии в Excel', dur: '2 дн.', badge: 'П10' },
       { id: 'end1', type: 'end', lane: 'fin', col: 8, label: 'Товар оприходован и доступен к продаже' },
     ],
     flows: [
-      ['L6', 'f1'], ['f1', 'f2'], ['f2', 'g7'], ['g7', 'f3', { label: 'да (≈15 %)' }], ['g7', 'g8', { label: 'нет' }],
+      ['L6', 'f1'], ['f1', 'f2'], ['f2', 'g7'], ['g7', 'f3', { label: 'да (15%)' }], ['g7', 'g8', { label: 'нет' }],
       ['f3', 'g8'], ['g8', 'f4', { fa: 'R', ta: 'L' }], ['f4', 'f5'], ['f5', 'end1'],
     ],
     msgs: [{ node: 'f3', pool: SUP, dir: 'out', label: 'Акт, претензия', lw: 90 }],
@@ -397,7 +397,7 @@
     ],
     flows: [
       ['s2', 'h1'], ['h1', 'h2'], ['h2', 'g9'],
-      ['g9', 'h3', { label: 'да (≈20 %)' }], ['g9', 'g10', { label: 'нет' }], ['h3', 'g10'],
+      ['g9', 'h3', { label: 'да (20%)' }], ['g9', 'g10', { label: 'нет' }], ['h3', 'g10'],
       ['g10', 'h4'], ['h4', 'g11'],
       ['g11', 'h5', { label: 'да' }], ['g11', 'h6', { label: 'нет' }],
       ['h5', 'g12'], ['h6', 'g12'], ['g12', 'h7'], ['h7', 'L7'],
@@ -421,11 +421,11 @@
       { id: 'L8', type: 'linkIn', lane: 'ved', dy: MAIN, col: 0, label: 'Из части 1 (А)' },
       { id: 'g13', type: 'and', lane: 'ved', dy: MAIN, col: 1 },
       { id: 'k2', type: 'task', lane: 'ved', dy: MAIN, col: 2, label: 'Новые позиции: оформить декларацию соответствия', dur: '14 дн.', badge: 'И7' },
-      { id: 'k1', type: 'svc', lane: 'fin', col: 2, label: 'Оплатить аванс по платёжному календарю', dur: '5 дн.', badge: 'И4' },
+      { id: 'k1', type: 'svc', lane: 'fin', col: 2, label: 'Оплатить аванс по платежному календарю', dur: '5 дн.', badge: 'И4' },
       { id: 'k3', type: 'task', lane: 'ved', dy: MAIN, col: 3, label: 'Согласовать коды ТН ВЭД и шаблоны документов с брокером', dur: '1 дн.', badge: 'И6' },
       { id: 'k4', type: 'task', lane: 'log', col: 3, label: 'Забронировать контейнер на плановую дату готовности', dur: '1 дн.', badge: 'И5' },
       { id: 'g14', type: 'and', lane: 'fin', col: 4 },
-      { id: 'e6', type: 'msg', lane: 'ved', dy: MAIN, col: 5, label: 'Товар готов (≈30 дн.), проекты документов получены' },
+      { id: 'e6', type: 'msg', lane: 'ved', dy: MAIN, col: 5, label: 'Товар готов (30 дн.), проекты документов получены' },
       { id: 'k5', type: 'task', lane: 'ved', dy: MAIN, col: 6, label: 'Проверить проекты инвойса и упаковочного листа по чек-листу', dur: '1 дн.', badge: 'И6' },
       { id: 'g15', type: 'xor', lane: 'ved', dy: MAIN, col: 7, label: 'Есть замечания?', lpos: 'bottom' },
       { id: 'k6', type: 'task', lane: 'ved', dy: UP, col: 8, label: 'Исправить документы с поставщиком до отгрузки', dur: '1 дн.', badge: 'И6' },
@@ -437,7 +437,7 @@
       ['L8', 'g13'], ['g13', 'k2'], ['g13', 'k1'], ['g13', 'k4'],
       ['k2', 'k3'], ['k3', 'g14'], ['k1', 'g14'], ['k4', 'g14'],
       ['g14', 'e6', { fa: 'R', ta: 'L' }], ['e6', 'k5'], ['k5', 'g15'],
-      ['g15', 'k6', { label: 'да (≈10 %)' }],
+      ['g15', 'k6', { label: 'да (10%)' }],
       ['k6', 'k5', { fa: 'T', ta: 'T', fdx: -30, via: (P) => [[P.k6.x - 30, P.laneTop('ved') + 12], [P.k5.x, P.laneTop('ved') + 12]] }],
       ['g15', 'k7', { fa: 'R', ta: 'L', label: 'нет', mx: (P) => P.k7.x - 76 }], ['k7', 'e7'], ['e7', 'L9'],
     ],
@@ -446,7 +446,7 @@
       { node: 'k2', pool: CERT, dx: 16, dir: 'in', label: 'Декларация соответствия', lw: 84, ly: -14 },
       { node: 'k3', pool: BROKER, dx: -16, dir: 'out', label: 'Проекты документов', lw: 80, ly: 14 },
       { node: 'k3', pool: BROKER, dx: 16, dir: 'in', label: 'Коды ТН ВЭД', lw: 80 },
-      { node: 'k1', pool: BANK, dir: 'out', side: 'l', label: 'Платёж (аванс)', lw: 90 },
+      { node: 'k1', pool: BANK, dir: 'out', side: 'l', label: 'Платеж (аванс)', lw: 90 },
       { node: 'k4', pool: FWD, dx: -16, dir: 'out', label: 'Бронь', lw: 70 },
       { node: 'k4', pool: FWD, dx: 16, dir: 'in', label: 'Подтверждение брони', lw: 90 },
       { node: 'e6', pool: SUP, dir: 'in', label: 'Уведомление, проекты документов', lw: 104 },
@@ -465,17 +465,17 @@
     bottom: [{ name: BANK, from: 0, to: 2 }, { name: CUST, from: 3, to: 99 }],
     nodes: [
       { id: 'L10', type: 'linkIn', lane: 'fin', col: 0, label: 'Из части 2 (Б)' },
-      { id: 'm1', type: 'svc', lane: 'fin', col: 1, label: 'Оплатить остаток 70 % против копии коносамента', dur: '5 дн., в пути', badge: 'И4' },
+      { id: 'm1', type: 'svc', lane: 'fin', col: 1, label: 'Оплатить остаток 70% против копии коносамента', dur: '5 дн., в пути', badge: 'И4' },
       { id: 'm2', type: 'task', lane: 'ved', col: 2, label: 'Передать документы брокеру для предварительного декларирования', dur: '1 дн., в пути', badge: 'И8' },
       { id: 'm3', type: 'task', lane: 'fin', col: 3, label: 'Внести авансовые таможенные платежи', dur: '1 дн., в пути', badge: 'И8' },
       { id: 'm4', type: 'task', lane: 'log', col: 4, label: 'Отслеживать ETA в 1С, заказать транспорт к прибытию', dur: '45 дн. в пути', badge: 'И5' },
       { id: 'e8', type: 'msg', lane: 'log', col: 5, label: 'Груз прибыл в порт' },
-      { id: 'e9', type: 'msg', lane: 'ved', col: 6, label: 'Товар выпущен (≈1 дн.)', lpos: 'top' },
+      { id: 'e9', type: 'msg', lane: 'ved', col: 6, label: 'Товар выпущен (1 дн.)', lpos: 'top' },
       { id: 'L11', type: 'linkOut', lane: 'ved', col: 7, label: 'Переход к части 4 (В)' },
     ],
     flows: [['L10', 'm1'], ['m1', 'm2'], ['m2', 'm3'], ['m3', 'm4'], ['m4', 'e8'], ['e8', 'e9'], ['e9', 'L11']],
     msgs: [
-      { node: 'm1', pool: BANK, dir: 'out', label: 'Платёж (остаток)', lw: 90 },
+      { node: 'm1', pool: BANK, dir: 'out', label: 'Платеж (остаток)', lw: 90 },
       { node: 'm2', pool: BROKER, dir: 'out', label: 'Документы для предварительной ДТ', lw: 110 },
       { node: 'm3', pool: CUST, dir: 'out', label: 'Авансовые платежи', lw: 90 },
       { node: 'm4', pool: FWD, dx: -16, dir: 'in', label: 'Статус и ETA', lw: 80 },
@@ -495,10 +495,10 @@
       { id: 'n1', type: 'task', lane: 'log', col: 1, label: 'Вывезти товар из порта на склад (транспорт заказан заранее)', dur: '1 дн.' },
       { id: 'n2', type: 'task', lane: 'wh', col: 2, label: 'Принять товар со сканированием (ТСД), расхождения сразу в 1С', dur: '1 дн.', badge: 'И9' },
       { id: 'g17', type: 'xor', lane: 'wh', col: 3, label: 'Расхождения есть?', lpos: 'bottom' },
-      { id: 'n3', type: 'task', lane: 'ved', col: 4, label: 'Направить претензию поставщику по шаблону в день приёмки', dur: '≤1 дн.', badge: 'И9' },
+      { id: 'n3', type: 'task', lane: 'ved', col: 4, label: 'Направить претензию поставщику по шаблону в день приемки', dur: 'до 1 дн.', badge: 'И9' },
       { id: 'g18', type: 'xor', lane: 'wh', col: 5 },
       { id: 'n4', type: 'svc', lane: 'fin', col: 6, label: 'Провести поступление в 1С, распределить доп. расходы на себестоимость', dur: '0,5 дн.', badge: 'И10', boxW: 128, slot: 150 },
-      { id: 'end2', type: 'end', lane: 'fin', col: 7, label: 'Товар оприходован и доступен к продаже в день приёмки' },
+      { id: 'end2', type: 'end', lane: 'fin', col: 7, label: 'Товар оприходован и доступен к продаже в день приемки' },
     ],
     flows: [
       ['L12', 'n1'], ['n1', 'n2'], ['n2', 'g17'], ['g17', 'n3', { label: 'да' }], ['g17', 'g18', { label: 'нет' }],

@@ -1,4 +1,4 @@
-// Столбчатая диаграмма: длительность этапов AS-IS и TO-BE (данные — data.json).
+// Столбчатая диаграмма: длительность этапов AS-IS и TO-BE (данные из data.json).
 (function () {
   const { tb, wrapSvg } = window.D;
   const INK = '#1B1F23', INK2 = '#52514E', GRID = '#E4E4E1';
