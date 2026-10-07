@@ -82,7 +82,7 @@ class D:
         else:
             self.l(x, y + 1.6, x + 14, y + 1.6, 'ПТ_текст'); self.t(x + 0.5, y + 2.2, s, h)
     def title(self, x, y, s, h=3.5, scale=None):
-        self.t(x, y, s + (f'  М {scale}' if scale else ''), h, 'BC', style='ПТ_Ж')
+        self.t(x, y, s + (f'  М {scale}' if scale else ''), h, 'BC', style='ПТ_загл')
         w = len(s + (f'  М {scale}' if scale else '')) * h * 0.55
         self.l(x - w / 2, y - 1.2, x + w / 2, y - 1.2, 'ПТ_контур', lw=35)
     # --- двухлинейная труба (для узлов) вдоль оси

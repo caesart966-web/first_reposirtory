@@ -95,6 +95,6 @@ def iso_sheet(doc, msp, ox, oy, fmt, k, sel, title, head, sheet_no, sheets_total
         X, Y = P(x, y, z, bx, by, zs)
         ins(msp, 'ELEV', X, Y, k, layer='ПТ_текст')
         txt(msp, X + 1.5 * k, Y + 2.2 * k, s, 2.0, k)
-    txt(msp, ox + 420 * k if fmt == 'A0' else ox + 300 * k, oy + (800 if fmt == 'A0' else 560) * k, head, 5, k, align='BC', style='ПТ_Ж')
+    txt(msp, ox + 420 * k if fmt == 'A0' else ox + 300 * k, oy + (800 if fmt == 'A0' else 560) * k, head, 5, k, align='BC', style='ПТ_загл')
     mtxt(msp, ox + 30 * k, oy + 140 * k if fmt == 'A0' else oy + 110 * k, '\\P'.join(f'{i + 1}. {n}' for i, n in enumerate(notes)), 2.5, 600, k, attach=1)
     return bx, by

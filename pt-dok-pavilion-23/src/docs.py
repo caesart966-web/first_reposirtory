@@ -10,9 +10,25 @@ from reportlab.pdfbase.pdfmetrics import stringWidth
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, '..', 'out')
-pdfmetrics.registerFont(TTFont('F', '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf'))
-pdfmetrics.registerFont(TTFont('FB', '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf'))
-pdfmetrics.registerFont(TTFont('FI', '/usr/share/fonts/truetype/liberation/LiberationSans-Italic.ttf'))
+from ru import ru
+from stamp import NAMES, DATE
+from meta import clean_pdf, clean_xlsx
+import zipfile, re
+_FONTS = os.path.join(HERE, '..', 'fonts')
+pdfmetrics.registerFont(TTFont('F', os.path.join(_FONTS, 'osifont-lgpl3fe.ttf')))
+pdfmetrics.registerFont(TTFont('FB', os.path.join(_FONTS, 'osifont-lgpl3fe.ttf')))
+pdfmetrics.registerFont(TTFont('FI', os.path.join(_FONTS, 'osifont-lgpl3fe.ttf')))
+
+
+class RuCanvas(canvas.Canvas):
+    def drawString(self, x, y, text, *a, **kw):
+        return super().drawString(x, y, ru(text), *a, **kw)
+
+    def drawCentredString(self, x, y, text, *a, **kw):
+        return super().drawCentredString(x, y, ru(text), *a, **kw)
+
+    def drawRightString(self, x, y, text, *a, **kw):
+        return super().drawRightString(x, y, ru(text), *a, **kw)
 SHIFR = 'ОПР-01/24/2024-ДП1-ПТ'
 OBJ = '«Современный коммерческий оптово-продовольственный рынок (ОПР) по адресу: Донецкая область, г. Макеевка, Горняцкий район»'
 BLD = 'Док-павильон №23, №23.2 Рыба-Мясо. Пожаротушение (ВПВ, АУПТ, АУПП ВРУ)'
@@ -20,7 +36,7 @@ ORG = 'ООО «Технология»'
 
 def wrap(text, font, size, width):
     out = []
-    for para in str(text).split('\n'):
+    for para in ru(str(text)).split('\n'):
         words = para.split(' ')
         line = ''
         for w in words:
@@ -44,7 +60,8 @@ class Doc:
     def __init__(self, path, code, title, pagesize='A3L'):
         self.ps = landscape(A3) if pagesize == 'A3L' else A4
         self.W, self.H = self.ps[0] / mm, self.ps[1] / mm
-        self.c = canvas.Canvas(path, pagesize=self.ps)
+        self.c = RuCanvas(path, pagesize=self.ps)
+        self.path = path
         self.code, self.title = code, title
         self.page = 0
         self.pages_total = None
@@ -83,6 +100,9 @@ class Doc:
             c.drawCentredString((x + cx + w / 2) * mm, (y + 26.5) * mm, s)
         for i, s in enumerate(['Разраб.', 'Пров.', '', 'Н.контр.', 'ГИП']):
             c.drawString((x + 1) * mm, (y + 21.5 - i * 5) * mm, s)
+            if NAMES.get(s):
+                c.drawString((x + 21) * mm, (y + 21.5 - i * 5) * mm, NAMES[s])
+                c.drawCentredString((x + 60) * mm, (y + 21.5 - i * 5) * mm, DATE)
         c.setFont('FB', 13); c.drawCentredString((x + 125) * mm, (y + 45.5) * mm, self.code)
         c.setFont('F', 6.3)
         for i, l in enumerate(wrap(OBJ, 'F', 6.3, 116 * mm)):
@@ -198,6 +218,7 @@ class Doc:
         return self.y
     def save(self):
         self.c.save()
+        clean_pdf(self.path, f'{self.code}. {self.title}')
 
 def two_pass(build_fn):
     """Сначала считаем страницы, затем пишем «Листов»."""
@@ -232,6 +253,8 @@ def spec_xlsx():
     wb = openpyxl.Workbook(); ws = wb.active; ws.title = 'Спецификация'
     hdr = ['Поз.', 'Наименование и техническая характеристика', 'Тип, марка, обозначение документа, опросного листа', 'Код продукции',
            'Поставщик', 'Ед. изм.', 'Кол.', 'Масса ед., кг', 'Примечание']
+    def put(ws_, vals):
+        ws_.append([ru(v) if isinstance(v, str) else v for v in vals])
     ws.append([SHIFR + '.С — Спецификация оборудования, изделий и материалов (ГОСТ 21.110-2013)'])
     ws.append([])
     ws.append(hdr)
@@ -246,7 +269,7 @@ def spec_xlsx():
             ws[ws.max_row][1].font = Font(bold=True)
             ws[ws.max_row][1].fill = PatternFill('solid', fgColor='EEEEEE')
         else:
-            ws.append([r['pos'], r['name'], r['type'] + ((', ' + r['code']) if r['code'] else ''), '', r['maker'], r['unit'], r['qty'],
+            put(ws, [r['pos'], r['name'], r['type'] + ((', ' + r['code']) if r['code'] else ''), '', r['maker'], r['unit'], r['qty'],
                        r['mass'] if r['mass'] != '' else None, r['note']])
         for cell in ws[ws.max_row]:
             cell.alignment = Alignment(wrap_text=True, vertical='top'); cell.border = B
@@ -254,24 +277,35 @@ def spec_xlsx():
     ws.freeze_panes = 'A4'
     # лист: трубы по системам
     B_ = json.load(open(os.path.join(HERE, 'bom.json')))
-    ws2 = wb.create_sheet('Трубопроводы (модель)')
-    ws2.append(['Система', 'Ду', 'Длина по модели, м', 'С запасом 5 %, м'])
+    ws2 = wb.create_sheet('Трубопроводы')
+    ws2.append(['Система', 'Ду', 'Длина, м', 'С запасом 5 %, м'])
     for k, v in B_['length'].items():
         s, dn = k.split('|'); ws2.append([s, int(dn), v, math.ceil(v * 1.05)])
     ws3 = wb.create_sheet('Кабели')
     ws3.append(['№', 'Откуда', 'Куда', 'Марка', 'Длина, м', 'Прим.'])
     for c in json.load(open(os.path.join(HERE, 'cables.json'))):
-        ws3.append([c['n'], c['frm'], c['to'], c['mark'], c['L'], c['note']])
+        put(ws3, [c['n'], c['frm'], c['to'], c['mark'], c['L'], c['note']])
     for w_, col in zip([8, 45, 55, 30, 10, 30], 'ABCDEF'):
         ws3.column_dimensions[col].width = w_
-    wb.save(os.path.join(OUT, f'{SHIFR.replace("/", "_")}.С_спецификация.xlsx'))
+    clean_xlsx(wb, SHIFR + '.С. Спецификация оборудования, изделий и материалов')
+    xp = os.path.join(OUT, f'{SHIFR.replace("/", "_")}.С_спецификация.xlsx')
+    wb.save(xp)
+    # в docProps/app.xml библиотека пишет своё имя — убираем
+    with zipfile.ZipFile(xp) as z:
+        items = [(i, z.read(i.filename)) for i in z.infolist()]
+    with zipfile.ZipFile(xp + '.tmp', 'w', zipfile.ZIP_DEFLATED) as z:
+        for i, data in items:
+            if i.filename == 'docProps/app.xml':
+                data = re.sub(rb'<Application>.*?</Application>|<AppVersion>.*?</AppVersion>', b'', data)
+            z.writestr(i, data)
+    os.replace(xp + '.tmp', xp)
 
 def vt_pdf():
     """Ведомость трубопроводов, арматуры и оборудования (по системам)."""
     S = json.load(open(os.path.join(HERE, 'spec.json')))
     B_ = json.load(open(os.path.join(HERE, 'bom.json')))
     P = S['POS']
-    rows = [dict(group='Трубопроводы (длины — по модели, без запаса)')]
+    rows = [dict(group='Трубопроводы (длины без запаса)')]
     names = {'В2': 'В2 — ВПВ', 'В21': 'В21 — АУПТ, секция 1', 'В22': 'В22 — АУПТ, секция 2'}
     from spec_data import DN_SZ, PIPE_NAME
     for k, v in B_['length'].items():

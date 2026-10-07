@@ -10,6 +10,16 @@ from ezdxf.addons.drawing.matplotlib import MatplotlibBackend
 from ezdxf.addons.drawing.config import Configuration, BackgroundPolicy, ColorPolicy, LineweightPolicy
 from ezdxf import bbox as ezbbox
 from dxfkit import FORMATS
+import os, shutil, tempfile, ezdxf
+from ezdxf.fonts import fonts as ezfonts
+
+# стиль текста в DXF — isocpeur.ttf (есть в AutoCAD); для вывода PDF его заменяет osifont того же начертания
+_FD = tempfile.mkdtemp(prefix='ptfonts_')
+shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'fonts', 'osifont-lgpl3fe.ttf'),
+            os.path.join(_FD, 'isocpeur.ttf'))
+ezdxf.options.support_dirs = list(ezdxf.options.support_dirs) + [_FD]
+ezfonts.font_manager.clear()
+ezfonts.font_manager.build()
 
 def sheet_pdf(doc, ox, oy, fmt, k, path, mono=False):
     W, H = FORMATS[fmt]

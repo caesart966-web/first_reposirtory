@@ -4,6 +4,8 @@ import ezdxf
 from ezdxf.addons.importer import Importer
 from ezdxf.enums import TextEntityAlignment as TA
 from ezdxf import bbox as ezbbox
+from ru import ru
+from stamp import NAMES, DATE
 
 FORMATS = {'A0': (1189, 841), 'A1': (841, 594), 'A2': (594, 420), 'A3': (420, 297), 'A4': (210, 297), 'A3x3': (891, 420)}
 SHIFR = 'ОПР-01/24/2024-ДП1-ПТ'
@@ -23,8 +25,8 @@ def make_doc():
     doc = ezdxf.new('R2013', setup=True, units=4)
     for name, (color, lw) in LAYERS.items():
         doc.layers.add(name, color=color, lineweight=lw)
-    st = doc.styles.add('ПТ', font='arial.ttf'); st.dxf.width = 0.85
-    st2 = doc.styles.add('ПТ_Ж', font='arialbd.ttf'); st2.dxf.width = 0.85
+    doc.styles.add('ПТ', font='isocpeur.ttf')
+    doc.styles.add('ПТ_загл', font='isocpeur.ttf')
     if 'DASHED' not in doc.linetypes:
         doc.linetypes.add('DASHED', pattern=[0.6, 0.4, -0.2])
     doc.linetypes.add('ПТ_ШТРИХ', pattern=[6.0, 4.0, -2.0], description='штрих 4-2')
@@ -128,7 +130,10 @@ def _blocks(doc):
     b.add_lwpolyline([(-1.2, -0.8), (1.2, -0.8), (1.2, 0.8), (-1.2, 0.8)], close=True); b.add_line((-1.2, -0.8), (1.2, 0.8))
 
 # ------------------------------------------------------------------ примитивы
+GOST_H = {1.6: 1.8, 2.2: 2.5, 3.0: 3.5}     # высоты шрифта — из ряда ГОСТ 2.304
+
 def txt(msp, x, y, s, h, k=1, layer='ПТ_текст', align='BL', rot=0, style='ПТ', color=None):
+    s, h = ru(s), GOST_H.get(h, h)
     al = {'BL': TA.BOTTOM_LEFT, 'BC': TA.BOTTOM_CENTER, 'BR': TA.BOTTOM_RIGHT, 'ML': TA.MIDDLE_LEFT, 'MC': TA.MIDDLE_CENTER,
           'MR': TA.MIDDLE_RIGHT, 'TL': TA.TOP_LEFT, 'TC': TA.TOP_CENTER, 'TR': TA.TOP_RIGHT}[align]
     a = {'height': h * k, 'style': style, 'layer': layer, 'rotation': rot}
@@ -139,6 +144,9 @@ def txt(msp, x, y, s, h, k=1, layer='ПТ_текст', align='BL', rot=0, style=
     return t
 
 def mtxt(msp, x, y, s, h, width, k=1, layer='ПТ_текст', style='ПТ', attach=1, spacing=1.0):
+    s, h = ru(s), GOST_H.get(h, h)
+    # пробел перед \P: без него отрисовщик ezdxf склеивает абзац со следующим, если последнее слово перенеслось
+    s = s.replace(' \\P', '\\P').replace('\\P', ' \\P')
     m = msp.add_mtext(s, dxfattribs={'char_height': h * k, 'style': style, 'layer': layer, 'width': width * k,
                                     'attachment_point': attach, 'line_spacing_factor': spacing})
     m.set_location((x, y))
@@ -234,11 +242,14 @@ def stamp3(msp, x, y, k, title, sheet, sheets, stage, subtitle):
     roles = ['Разраб.', 'Пров.', '', 'Н.контр.', 'ГИП']
     for i, s in enumerate(roles):
         txt(msp, x + 1 * k, y + (22.5 - i * 5) * k, s, 1.8, k, align='ML', layer=T)
+        if NAMES.get(s):
+            txt(msp, x + 21 * k, y + (22.5 - i * 5) * k, NAMES[s], 1.8, k, align='ML', layer=T)
+            txt(msp, x + 60 * k, y + (22.5 - i * 5) * k, DATE, 1.8, k, align='MC', layer=T)
     # правая часть
     ln((65, 40), (185, 40), 70); ln((65, 30), (185, 30), 50); ln((65, 15), (185, 15), 70)
     ln((135, 0), (135, 30), 70); ln((135, 25), (185, 25), 50)
     ln((150, 15), (150, 30), 50); ln((165, 15), (165, 30), 50)
-    txt(msp, x + 125 * k, y + 47.5 * k, SHIFR, 5, k, align='MC', layer=T, style='ПТ_Ж')
+    txt(msp, x + 125 * k, y + 47.5 * k, SHIFR, 5, k, align='MC', layer=T, style='ПТ_загл')
     mtxt(msp, x + 125 * k, y + 35 * k, OBJ, 1.9, 116, k, attach=5, layer=T)
     mtxt(msp, x + 100 * k, y + 22.5 * k, BLD, 2.2, 66, k, attach=5, layer=T)
     for s, cx, w in [('Стадия', 135, 15), ('Лист', 150, 15), ('Листов', 165, 20)]:

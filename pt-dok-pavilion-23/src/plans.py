@@ -20,7 +20,7 @@ def setup_dimstyle(doc):
     ds = doc.dimstyles.new('ПТ100')
     ds.dxf.dimtxsty = 'ПТ'
     ds.dxf.dimscale = 100
-    ds.dxf.dimtxt = 2.2
+    ds.dxf.dimtxt = 2.5
     ds.dxf.dimasz = 1.2
     ds.dxf.dimtsz = 1.2          # засечки вместо стрелок
     ds.dxf.dimexe = 1.0
@@ -97,7 +97,7 @@ def plan_sheet(doc, msp, ox, oy, floor, sheet_no, sheets_total, title, notes, le
                   drop_layers=('Отделочный', 'Мебель и', 'Технолог'), clip=(-4800, -17000, 103500, 53000))
     msp.add_blockref(bname, S.p(0, 0), dxfattribs={'layer': 'АР_подоснова'})
     lvl_name = {0: 'отм. −2,200', 1: 'отм. 0,000', 2: 'отм. +3,700'}[floor]
-    txt(msp, *S.p(46000, 55500), (head or title) + '. М 1:100', 5, K, align='BC', style='ПТ_Ж')
+    txt(msp, *S.p(46000, 55500), (head or title) + '. М 1:100', 5, K, align='BC', style='ПТ_загл')
     # марки осей рядов (у подосновы они за пределами листа и обрезаны)
     for name, y in AX_Y.items():
         msp.add_circle(S.p(-5200, y), 400, dxfattribs={'layer': 'ПТ_оси', 'color': 7})
@@ -235,7 +235,7 @@ def plan_sheet(doc, msp, ox, oy, floor, sheet_no, sheets_total, title, notes, le
 
     # ---- примечания и условные обозначения (справа)
     nx = ox + 1072 * K; ny = oy + 812 * K
-    txt(msp, nx, ny, 'Условные обозначения', 2.5, K, style='ПТ_Ж')
+    txt(msp, nx, ny, 'Условные обозначения', 2.5, K, style='ПТ_загл')
     yy = ny - 6 * K
     for blk, lab, lay in legend_rows:
         if blk.startswith('LINE:'):
@@ -251,6 +251,6 @@ def plan_sheet(doc, msp, ox, oy, floor, sheet_no, sheets_total, title, notes, le
         mtxt(msp, nx + 13 * K, yy + 2.5 * K, lab, 2.0, 95, K, attach=1)
         yy -= 9 * K
     yy -= 4 * K
-    txt(msp, nx, yy, 'Примечания', 2.5, K, style='ПТ_Ж')
+    txt(msp, nx, yy, 'Примечания', 2.5, K, style='ПТ_загл')
     mtxt(msp, nx, yy - 3 * K, '\\P'.join(f'{i + 1}. {n}' for i, n in enumerate(notes)), 2.0, 108, K, attach=1, spacing=1.0)
     return S
