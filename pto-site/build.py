@@ -23,6 +23,7 @@
 """
 
 import argparse
+import hashlib
 import html
 import json
 import re
@@ -111,6 +112,20 @@ class Site:
 # =========================================================================
 # 2. Блоки страницы
 # =========================================================================
+
+def asset_version(name: str) -> str:
+    """Метка версии для ссылки на стиль и скрипт: первые 8 знаков хеша файла.
+
+    Хостинг отдаёт CSS и JS с кешем на 7 дней (server/.htaccess), а имя файла
+    не меняется. Без метки после обновления сайта браузер брал новую разметку
+    со старыми стилями: лента объектов на главной вышла голым списком ссылок
+    во всю высоту экрана. Метка меняется вместе с содержимым файла — и только
+    тогда, поэтому кеш продолжает работать между обновлениями."""
+    path = ASSETS_DIR / name
+    if not path.exists():
+        return ""
+    return hashlib.md5(path.read_bytes()).hexdigest()[:8]
+
 
 def asset_exists(rel: str) -> bool:
     """Есть ли файл в папке assets/. Путь вида /assets/media/hero.mp4."""
@@ -1200,6 +1215,8 @@ class Renderer:
             "robots": robots,
             "head_extra": head_extra,
             "base": site.base_path,
+            "css_v": asset_version("style.css"),
+            "js_v": asset_version("app.js"),
             "body": body,
             "nav_links": self.nav_links(path),
             "footer_services_1": f1,
