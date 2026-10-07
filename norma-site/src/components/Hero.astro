@@ -333,6 +333,25 @@ const TRUST: { icon: string; t: string; n?: string; d: string }[] = [
   @media (max-width: 1023px) {
     .rosette { display: none; }
   }
+  /* С 1440 px поле слева от колонки — 120–240 px (до 07.10.2026 было
+     до 420 px пустого листа). Гильош встаёт в это поле напротив кадра
+     справа: виден сильнее и гаснет ровно к краю колонки, под заголовок
+     не заходит на любой ширине. */
+  @media (min-width: 1440px) {
+    .rosette {
+      left: calc((100vw - var(--wrap)) / 2 - 560px);
+      top: -30px;
+      opacity: 0.13;
+      /* В центре розетки все окружности сходятся в одну точку — там
+         светлое пятно, похожее на блик; середина маски его гасит. */
+      mask-image:
+        radial-gradient(58% 58% at 50% 50%, transparent 0, #000 18%, #000 34%, transparent 80%),
+        linear-gradient(90deg, #000 0%, #000 52%, transparent 72%);
+      -webkit-mask-image:
+        radial-gradient(58% 58% at 50% 50%, transparent 0, #000 18%, #000 34%, transparent 80%),
+        linear-gradient(90deg, #000 0%, #000 52%, transparent 72%);
+    }
+  }
 
   /* ── Кадр ──
      Чёткий, без обесцвечивания: он больше не лежит под текстом, текст
@@ -374,7 +393,7 @@ const TRUST: { icon: string; t: string; n?: string; d: string }[] = [
       top: -66px;
       bottom: 0;
       left: -40px;
-      right: min(-20px, calc((1080px - 100vw) / 2));
+      right: min(-20px, calc((var(--wrap) - 100vw) / 2));
       mask-image: linear-gradient(90deg, transparent 0, #000 150px);
       -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 150px);
     }
@@ -468,6 +487,16 @@ const TRUST: { icon: string; t: string; n?: string; d: string }[] = [
     .verify { grid-column: 1; grid-row: 3; }
     .hero-side { grid-column: 2; grid-row: 1 / span 3; }
     .hero-gift { grid-column: 1 / -1; grid-row: 4; margin-top: 10px; }
+  }
+  /* С 1440 px первый экран — пополам: слева текст, справа кадр
+     с карточками, кадр занимает правую половину окна до края
+     (07.10.2026, «левая сторона бедновато смотрится — сделать
+     симметричной»). Колонка сайта там шире (--wrap в global.css),
+     и тексту хватает половины. Карточка условий остаётся прежней
+     ширины и встаёт на левую часть кадра; правая часть — Фемиде. */
+  @media (min-width: 1440px) {
+    .hero-in { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    .hero-offer { justify-self: start; width: min(100%, 400px); }
   }
 
   .geo {
