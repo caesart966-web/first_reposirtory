@@ -10,6 +10,7 @@ import CookieBanner from '../components/CookieBanner.astro'
 import { SITE, YANDEX_ORG, href } from '../config/site'
 import { SEO } from '../config/seo'
 import { ABOUT } from '../config/about'
+import { withVersion } from '../lib/asset-version'
 
 interface Props {
   title: string
@@ -59,7 +60,9 @@ const noindex = import.meta.env.PUBLIC_NOINDEX === '1' || noindexProp
 
 const abs = (path: string) => new URL(href(path), Astro.site).toString()
 const home = new URL('/', Astro.site).toString()
-const ogImage = abs(SEO.ogImage)
+// Превью и значки — с меткой версии (lib/asset-version.ts): иначе после
+// смены картинки браузеры и мессенджеры показывают прежнюю из кеша.
+const ogImage = abs(withVersion(SEO.ogImage))
 
 // Организация — базовый блок разметки, есть на каждой странице.
 const orgSchema = {
@@ -99,7 +102,7 @@ const orgSchema = {
   sameAs: [SITE.whatsapp, SITE.telegram, SITE.maxLink, YANDEX_ORG?.card].filter(Boolean),
   // Знак и картинка-превью. Без logo поисковик не покажет фирменный знак
   // ни рядом с сайтом в выдаче, ни в карточке организации.
-  logo: { '@type': 'ImageObject', '@id': `${home}#logo`, url: abs('/logo-512.png'), width: 512, height: 512 },
+  logo: { '@type': 'ImageObject', '@id': `${home}#logo`, url: abs(withVersion('/logo-512.png')), width: 512, height: 512 },
   image: { '@id': `${home}#logo` },
 }
 
@@ -204,10 +207,10 @@ const graph = {
          в выдаче берёт растр, а телефоны — apple-touch-icon: значок сайта
          виден в результатах поиска и на домашнем экране, и его отсутствие
          заметнее, чем кажется. Манифест даёт Андроиду название и цвет. -->
-    <link rel="icon" type="image/svg+xml" href={href('/favicon.svg')} />
-    <link rel="icon" type="image/png" sizes="32x32" href={href('/favicon-32.png')} />
-    <link rel="apple-touch-icon" sizes="180x180" href={href('/apple-touch-icon.png')} />
-    <link rel="manifest" href={href('/site.webmanifest')} />
+    <link rel="icon" type="image/svg+xml" href={href(withVersion('/favicon.svg'))} />
+    <link rel="icon" type="image/png" sizes="32x32" href={href(withVersion('/favicon-32.png'))} />
+    <link rel="apple-touch-icon" sizes="180x180" href={href(withVersion('/apple-touch-icon.png'))} />
+    <link rel="manifest" href={href(withVersion('/site.webmanifest'))} />
     <meta name="theme-color" content="#FFFFFF" />
 
     <!-- Карта сайта и лента статей. Робот находит их и по robots.txt,
