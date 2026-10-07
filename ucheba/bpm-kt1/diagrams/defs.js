@@ -1,106 +1,114 @@
 // Определения всех схем работы (Fix Price, импорт товаров из Китая).
-// Каждая функция возвращает { svg, w, h }.
+// Каждая функция возвращает { svg, w, h }. Оформление в стиле ARIS Express — в lib.js.
 (function () {
-  const { C, tb, wrapSvg, bpmn, orgBox, chevron, drawNode, sizeNode, badge, durTag } = window.D;
+  const { C, tb, wrapSvg, bpmn, orgBox, vchev, hexEvent, box, conn, drawNode, sizeNode, badge, iconFunc, iconGears } = window.D;
   const KM = 'Категорийный\nменеджер', RK = 'Руководитель\nкатегории', IMP = 'Отдел\nимпорта', KK = 'Контроль\nкачества',
     F = 'Финансовая\nслужба', LG = 'Транспортная\nлогистика', DC = 'Распредели-\nтельный центр';
   const POOL = 'Fix Price (ООО «Бэст Прайс»)';
   const AG = 'Торговый агент и фабрика (КНР)', LAB = 'Испытательная лаборатория', BANK = 'Уполномоченный банк',
     FWD = 'Экспедитор', BROKER = 'Таможенный представитель', CUST = 'Таможенный орган', GIS = 'ГИС МТ «Честный знак»';
   const MAIN = 40, UP = -58; // строки внутри высокой дорожки
+  const LINE = '#4A4A4A';
 
   const DIAGRAMS = {};
 
-  // ---------- 1. Организационная структура (укрупненно, по открытым данным) ----------
+  // ---------- 1. Организационная структура (ARIS Organizational Chart, укрупненно) ----------
   DIAGRAMS.org = () => {
-    const W = 1120, H = 680;
+    const W = 1150, H = 690;
     let s = '';
-    const line = (pts) => `<polyline points="${pts.map((p) => p.join(',')).join(' ')}" fill="none" stroke="#6B6B6B" stroke-width="1.5"/>`;
+    const line = (pts) => conn(pts, { r: 6, color: LINE, sw: 1.4 });
     const boxes = [];
-    boxes.push({ x: 560, y: 40, w: 420, h: 44, label: 'ПАО «Фикс Прайс» (материнская компания группы)', kind: 'unit', bold: true });
-    boxes.push({ x: 560, y: 112, w: 420, h: 44, label: 'Генеральный директор ООО «Бэст Прайс»', kind: 'pos', bold: true });
-    s += line([[560, 62], [560, 90]]) + line([[560, 134], [560, 168]]);
-    s += line([[160, 168], [854, 168]]);
-    const com = { x: 160, y: 210, w: 280, h: 44, label: 'Коммерческая дирекция', kind: 'pos', bold: true };
-    const log = { x: 450, y: 210, w: 260, h: 44, label: 'Дирекция по логистике', kind: 'pos', bold: true };
+    boxes.push({ x: 570, y: 40, w: 470, h: 46, label: 'ПАО «Фикс Прайс» (материнская компания группы)', kind: 'unit', size: 12.5 });
+    boxes.push({ x: 570, y: 118, w: 470, h: 46, label: 'Генеральный директор ООО «Бэст Прайс»', kind: 'pos', size: 12.5 });
+    s += line([[570, 63], [570, 95]]) + line([[570, 141], [570, 172]]);
+    s += line([[160, 172], [874, 172]]);
+    const com = { x: 165, y: 214, w: 290, h: 46, label: 'Коммерческая дирекция', kind: 'pos', size: 12.5 };
+    const log = { x: 455, y: 214, w: 260, h: 46, label: 'Дирекция по логистике', kind: 'pos', size: 12.5 };
     boxes.push(com, log);
-    s += line([[160, 168], [160, 188]]) + line([[450, 168], [450, 188]]);
+    s += line([[160, 172], [160, 191]]) + line([[455, 172], [455, 191]]);
     const comKids = ['Категорийный менеджмент', 'Отдел импорта', 'Закупки у российских поставщиков', 'Контроль качества и сертификация', 'Собственные торговые марки'];
     comKids.forEach((t, j) => {
-      const y = 276 + j * 54;
+      const y = 284 + j * 58;
       s += line([[40, y], [58, y]]);
-      boxes.push({ x: 188, y, w: 260, h: 42, label: t, kind: 'unit', hl: j === 1, size: 13.5 });
+      boxes.push({ x: 192, y, w: 268, h: 44, label: t, kind: 'unit', hl: j === 1, size: 11.5 });
     });
-    s += line([[40, 232], [40, 276 + 4 * 54]]);
-    const logKids = ['Распределительные центры', 'Транспортная логистика'];
-    logKids.forEach((t, j) => {
-      const y = 276 + j * 54;
-      s += line([[338, y], [356, y]]);
-      boxes.push({ x: 468, y, w: 220, h: 42, label: t, kind: 'unit', size: 13.5 });
+    s += line([[40, 237], [40, 284 + 4 * 58]]);
+    ['Распределительные центры', 'Транспортная логистика'].forEach((t, j) => {
+      const y = 284 + j * 58;
+      s += line([[342, y], [360, y]]);
+      boxes.push({ x: 471, y, w: 222, h: 44, label: t, kind: 'unit', size: 11.5 });
     });
-    s += line([[338, 232], [338, 276 + 54]]);
+    s += line([[342, 237], [342, 284 + 58]]);
     const cols = [
-      { x: 720, items: ['Операционная дирекция (магазины)', 'Финансовая дирекция', 'Дирекция по персоналу', 'Дирекция по ИТ'] },
-      { x: 990, items: ['Развитие сети и недвижимость', 'Маркетинг и лояльность', 'Франчайзинг и зарубежные рынки', 'Юридическая служба'] },
+      { x: 742, items: ['Операционная дирекция (магазины)', 'Финансовая дирекция', 'Дирекция по персоналу', 'Дирекция по ИТ'] },
+      { x: 1012, items: ['Развитие сети и недвижимость', 'Маркетинг и лояльность', 'Франчайзинг и зарубежные рынки', 'Юридическая служба'] },
     ];
     for (const c of cols) {
-      const comb = c.x - 136;
-      s += line([[comb, 168], [comb, 210 + 3 * 54]]);
+      const comb = c.x - 138;
+      s += line([[comb, 172], [comb, 214 + 3 * 58]]);
       c.items.forEach((t, j) => {
-        const y = 210 + j * 54;
+        const y = 214 + j * 58;
         s += line([[comb, y], [c.x - 125, y]]);
-        boxes.push({ x: c.x, y, w: 250, h: 42, label: t, kind: 'pos', size: 13.5 });
+        boxes.push({ x: c.x, y, w: 250, h: 44, label: t, kind: 'pos', size: 11.5 });
       });
     }
     for (const b of boxes) s += orgBox(b);
-    const lx = 400, ly = 500;
-    s += `<rect x="${lx}" y="${ly}" width="700" height="160" rx="6" fill="#FAFAFA" stroke="#C9C9C9"/>`;
-    s += tb(lx + 16, ly + 22, 'Условные обозначения (ARIS, Organizational Chart)', { size: 14, weight: 'bold', anchor: 'start', nowrap: true }).svg;
-    s += orgBox({ x: lx + 100, y: ly + 62, w: 170, h: 36, label: 'Руководитель', kind: 'pos' });
-    s += orgBox({ x: lx + 310, y: ly + 62, w: 210, h: 36, label: 'Подразделение', kind: 'unit' });
-    s += `<rect x="${lx + 450}" y="${ly + 46}" width="40" height="32" rx="16" fill="#FFF3B5" stroke="${C.impr}" stroke-width="3"/>`;
-    s += tb(lx + 500, ly + 62, 'объект\nисследования', { size: 13, anchor: 'start', nowrap: true }).svg;
-    s += tb(lx + 16, ly + 112, 'Численность группы: более 49 тыс. человек (2025 г.).', { size: 14, anchor: 'start', nowrap: true }).svg;
-    s += tb(lx + 16, ly + 138, 'Структура укрупненная, составлена по открытым данным.', { size: 14, anchor: 'start', nowrap: true, fill: C.muted }).svg;
+    const lx = 420, ly = 505;
+    s += `<rect x="${lx}" y="${ly}" width="712" height="168" rx="4" fill="#FAFAFA" stroke="#B9BEC3"/>`;
+    s += tb(lx + 16, ly + 22, 'Условные обозначения (ARIS, Organizational Chart)', { size: 12.5, weight: 'bold', anchor: 'start', nowrap: true }).svg;
+    s += orgBox({ x: lx + 110, y: ly + 64, w: 190, h: 40, label: 'Должность', kind: 'pos', size: 11.5 });
+    s += orgBox({ x: lx + 335, y: ly + 64, w: 230, h: 40, label: 'Организационная единица', kind: 'unit', size: 11.5 });
+    s += `<rect x="${lx + 480}" y="${ly + 48}" width="44" height="32" rx="6" fill="none" stroke="${C.impr}" stroke-width="3"/>`;
+    s += tb(lx + 534, ly + 64, 'объект\nисследования', { size: 11.5, anchor: 'start', nowrap: true }).svg;
+    s += tb(lx + 16, ly + 116, 'Численность группы: более 49 тыс. человек (2025 г.).', { size: 12, anchor: 'start', nowrap: true }).svg;
+    s += tb(lx + 16, ly + 142, 'Структура укрупненная, составлена по открытым данным.', { size: 12, anchor: 'start', nowrap: true, fill: C.muted }).svg;
     return { svg: wrapSvg(W, H, s), w: W, h: H };
   };
 
-  // ---------- 2. Процессы верхнего уровня (VAD) ----------
+  // ---------- 2. Процессы верхнего уровня (ARIS VAD) ----------
   DIAGRAMS.vad = () => {
-    const W = 1120, H = 640;
+    const W = 1150, H = 676;
     let s = '';
-    const band = (y, h, title) => `<rect x="14" y="${y}" width="${W - 28}" height="${h}" rx="8" fill="#F7F8FA" stroke="#C5CBD3"/>` + tb(30, y + 18, title, { size: 15, weight: 'bold', anchor: 'start', nowrap: true, fill: '#2B3440' }).svg;
-    const chev = (x, y, w, h, code, name, fill, first, hl, size = 13.6) => {
-      let r = chevron(x, y, w, h, fill, hl ? C.impr : '#4F6B3F', hl ? 3.2 : 1.3, first);
-      const cx = x + (first ? (w - 18) / 2 : w / 2 + 2);
-      const t = tb(cx, 0, name, { size, maxW: w - 44 });
-      const top = y + h / 2 - (17 + t.h) / 2;
-      r += tb(cx, top, code, { size: 14, weight: 'bold', valign: 'top', nowrap: true }).svg;
-      r += tb(cx, top + 17, name, { size, maxW: w - 44, valign: 'top' }).svg;
+    const band = (y, h, title) => `<rect x="14" y="${y}" width="${W - 28}" height="${h}" rx="4" fill="#F7F8FA" stroke="#B9BEC3"/>` + tb(30, y + 18, title, { size: 13.5, weight: 'bold', anchor: 'start', nowrap: true }).svg;
+    const chev = (x, y, w, h, code, name, o = {}) => {
+      let r = vchev(x, y, w, h, o);
+      const size = o.size || 11.2;
+      const d = o.first ? 0 : Math.min(22, h * 0.28);
+      const cx = x + d / 2 + (w - d) / 2 - 6;
+      const mw = w - d - 34;
+      const t = tb(cx, 0, name, { size, maxW: mw, weight: 'bold' });
+      const top = y + 18 + (h - 18 - (16 + t.h)) / 2;
+      r += tb(cx, top, code, { size: 12.5, weight: 'bold', valign: 'top', nowrap: true }).svg;
+      r += tb(cx, top + 16, name, { size, maxW: mw, valign: 'top', weight: 'bold' }).svg;
       return r;
     };
-    s += band(14, 136, 'Процессы управления');
+    s += band(14, 148, 'Процессы управления');
     const U = [['У1', 'Стратегическое управление и развитие сети'], ['У2', 'Финансовое управление и бюджетирование'], ['У3', 'Управление ассортиментом и ценовыми точками'], ['У4', 'Управление качеством и соответствием требованиям ЕАЭС']];
-    U.forEach(([c, n], i) => (s += chev(30 + i * 266, 54, 258, 76, c, n, '#DCE7F4', i === 0)));
-    s += band(180, 250, 'Основные процессы (цепочка создания ценности)');
-    s += `<rect x="28" y="262" width="92" height="86" rx="8" fill="#fff" stroke="#8A96A3"/>` + tb(74, 305, 'Запросы\nпокупателей', { size: 13.5, nowrap: true }).svg;
-    s += chev(130, 258, 173, 94, 'О1', 'Планирование ассортимента и закупок', '#D3EAC4', false, false);
-    s += chev(307, 216, 173, 86, 'О2', 'Импорт товаров из КНР', '#D3EAC4', false, true);
-    s += chev(307, 310, 173, 86, 'О2а', 'Закупки у российских поставщиков', '#D3EAC4', false, false, 12.6);
-    s += chev(484, 258, 173, 94, 'О3', 'Логистика: распредели­тельные центры', '#D3EAC4', false, false);
-    s += chev(661, 258, 173, 94, 'О4', 'Продажи: магазины сети и франчайзи', '#D3EAC4', false, false);
-    s += chev(838, 258, 173, 94, 'О5', 'Работа с покупателями, лояльность', '#D3EAC4', false, false);
-    s += `<rect x="1018" y="262" width="86" height="86" rx="8" fill="#fff" stroke="#8A96A3"/>` + tb(1061, 305, 'Товар\nу покупателя', { size: 13.5, nowrap: true }).svg;
-    s += tb(393, 412, 'объект исследования: О2', { size: 13.5, weight: 'bold', fill: C.impr, nowrap: true }).svg;
-    s += band(460, 166, 'Обеспечивающие процессы');
+    U.forEach(([c, n], i) => (s += chev(30 + i * 274, 50, 268, 92, c, n, { first: i === 0 })));
+    s += band(184, 270, 'Основные процессы (цепочка создания ценности)');
+    const io = (x, w, text) => {
+      let r = hexEvent(x, 274, w, 94);
+      r += tb(x + w / 2, 327, text, { size: 11, weight: 'bold', maxW: w - 26 }).svg;
+      return r;
+    };
+    s += io(24, 110, 'Запросы покупателей');
+    s += chev(142, 274, 170, 94, 'О1', 'Планирование ассортимента и закупок');
+    s += chev(316, 226, 170, 86, 'О2', 'Импорт товаров из КНР', { hl: true });
+    s += chev(316, 324, 170, 86, 'О2а', 'Закупки у российских поставщиков', { size: 10.6 });
+    s += chev(498, 274, 170, 94, 'О3', 'Логистика: распредели­тельные центры');
+    s += chev(672, 274, 170, 94, 'О4', 'Продажи: магазины сети и франчайзи');
+    s += chev(846, 274, 170, 94, 'О5', 'Работа с покупателями, лояльность');
+    s += io(1022, 106, 'Товар у покупателя');
+    s += tb(401, 436, 'объект исследования: О2', { size: 12, weight: 'bold', fill: C.impr, nowrap: true }).svg;
+    s += band(486, 176, 'Обеспечивающие процессы');
     const S = [['В1', 'Бухгалтерский учет и валютный контроль'], ['В2', 'Контроль качества и сертификация'], ['В3', 'Управление персоналом'], ['В4', 'ИТ-обеспечение (Fix Price IT)'], ['В5', 'Развитие сети и недвижимость'], ['В6', 'Правовое сопровождение']];
-    S.forEach(([c, n], i) => (s += chev(30 + i * 177, 504, 173, 100, c, n, '#F1E8D6', i === 0)));
+    S.forEach(([c, n], i) => (s += chev(30 + i * 182, 526, 176, 108, c, n, { first: i === 0 })));
     const blockArrow = (x, y1, y2) => {
       const d = y2 > y1 ? 1 : -1;
       return `<path d="M${x - 9},${y1} L${x + 9},${y1} L${x + 9},${y2 - d * 10} L${x + 17},${y2 - d * 10} L${x},${y2} L${x - 17},${y2 - d * 10} L${x - 9},${y2 - d * 10} z" fill="#B8C2CE"/>`;
     };
-    s += blockArrow(220, 152, 178) + blockArrow(900, 152, 178);
-    s += blockArrow(220, 458, 432) + blockArrow(900, 458, 432);
+    s += blockArrow(220, 164, 182) + blockArrow(900, 164, 182);
+    s += blockArrow(220, 484, 456) + blockArrow(900, 484, 456);
     return { svg: wrapSvg(W, H, s), w: W, h: H };
   };
 
@@ -109,12 +117,12 @@
     const W = 1120, H = 650;
     let s = '';
     const bx1 = 400, bx2 = 720, by1 = 262, by2 = 432;
-    const ln = (pts) => `<polyline points="${pts.map((p) => p.join(',')).join(' ')}" fill="none" stroke="${C.flow}" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#arr)"/>`;
-    const lab = (x, y, t, anchor = 'start', maxW = 350) => tb(x, y, t, { size: 14, anchor, maxW, valign: 'bottom', halo: 3 }).svg;
-    s += `<rect x="${bx1}" y="${by1}" width="${bx2 - bx1}" height="${by2 - by1}" fill="#E4F2DA" stroke="${C.taskS}" stroke-width="2.4"/>`;
-    s += tb((bx1 + bx2) / 2, (by1 + by2) / 2 - 12, 'Импорт товаров из КНР', { size: 19, weight: 'bold', maxW: 290 }).svg;
-    s += tb((bx1 + bx2) / 2, (by1 + by2) / 2 + 28, 'от плана закупок до готовности товара к отгрузке в магазины', { size: 14, maxW: 280, fill: C.muted }).svg;
-    s += tb(bx2 - 10, by2 - 10, 'А0', { size: 13, weight: 'bold', anchor: 'end', nowrap: true }).svg;
+    const ln = (pts) => conn(pts, { arrow: true, r: 7 });
+    const lab = (x, y, t, anchor = 'start', maxW = 350) => tb(x, y, t, { size: 12.5, anchor, maxW, valign: 'bottom', halo: 3 }).svg;
+    s += box(bx1, by1, bx2 - bx1, by2 - by1, 'func', { r: 5 }) + iconFunc(bx1 + 10, by1 + 9, 1.1);
+    s += tb((bx1 + bx2) / 2, (by1 + by2) / 2 - 10, 'Импорт товаров из КНР', { size: 17, weight: 'bold', maxW: 290 }).svg;
+    s += tb((bx1 + bx2) / 2, (by1 + by2) / 2 + 30, 'от плана закупок до готовности товара к отгрузке в магазины', { size: 12, weight: 'bold', maxW: 270, fill: '#24420A' }).svg;
+    s += tb(bx2 - 10, by2 - 12, 'А0', { size: 12.5, weight: 'bold', anchor: 'end', nowrap: true }).svg;
     const ins = ['План закупок импортных товаров', 'Предложения фабрик через агентов', 'Денежные средства (юани)', 'Товар фабрики в КНР'];
     ins.forEach((t, i) => { const y = 290 + i * 40; s += ln([[30, y], [bx1, y]]) + lab(36, y - 5, t); });
     const outs = ['Товар на РЦ, готов к отгрузке', 'Себестоимость партии', 'ДТ, декларации, коды маркировки', 'Претензия агенту'];
@@ -127,14 +135,14 @@
     mL.forEach(([t, x], i) => { const y = 490 + i * 50; s += ln([[30, y], [x, y], [x, by2]]) + lab(36, y - 5, t); });
     const mR = [['ИТ-сервис для поставщиков КНР, LEAD WMS', 660], ['Агенты, банк, экспедитор, брокер', 600]];
     mR.forEach(([t, x], i) => { const y = 490 + i * 50; s += ln([[W - 24, y], [x, y], [x, by2]]) + lab(W - 30, y - 5, t, 'end', 380); });
-    const side = (x, y, t, a = 'start') => tb(x, y, t, { size: 13, weight: 'bold', fill: C.impr, anchor: a, nowrap: true }).svg;
+    const side = (x, y, t, a = 'start') => tb(x, y, t, { size: 12, weight: 'bold', fill: '#3A3F45', anchor: a, nowrap: true }).svg;
     s += side(30, 20, 'УПРАВЛЕНИЕ (нормы и правила)') + side(30, 250, 'ВХОДЫ') + side(W - 24, 250, 'ВЫХОДЫ', 'end') + side(30, 636, 'МЕХАНИЗМЫ (исполнители и ресурсы)');
     return { svg: wrapSvg(W, H, s), w: W, h: H };
   };
 
   // ---------- 4. Декомпозиция процесса О2 (VAD 2-го уровня) ----------
   DIAGRAMS.decomp = () => {
-    const W = 1120, H = 430;
+    const W = 1120, H = 452;
     let s = '';
     const st = [
       ['1', 'Формирование заказа', 'Категорийный менеджер'],
@@ -148,85 +156,75 @@
       ['9', 'Доставка на РЦ и приемка', 'Транспортная логистика, РЦ'],
       ['10', 'Распределение по магазинам', 'Категорийный менеджер, РЦ'],
     ];
-    s += tb(20, 24, 'Начало: утвержден план закупок. Окончание: товар на РЦ готов к отгрузке в магазины.', { size: 15, anchor: 'start', nowrap: true, weight: 'bold', fill: '#2B3440' }).svg;
+    s += tb(20, 22, 'Начало: утвержден план закупок. Окончание: товар на РЦ готов к отгрузке в магазины.', { size: 13, anchor: 'start', nowrap: true, weight: 'bold' }).svg;
     st.forEach(([n, name, own], i) => {
       const row = Math.floor(i / 5), k = i % 5;
-      const x = 20 + k * 216, y = 50 + row * 180;
+      const x = 20 + k * 216, y = 46 + row * 196;
       const ext = i === 4 || i === 6;
-      s += chevron(x, y, 210, 92, ext ? '#EEF1F4' : '#D3EAC4', ext ? '#7D8894' : '#4F6B3F', 1.3, k === 0 && row === 0);
-      const cx = x + 107;
-      const t = tb(cx, 0, name, { size: 14, maxW: 156 });
-      const top = y + 46 - (17 + t.h) / 2;
-      s += tb(cx, top, n, { size: 15, weight: 'bold', valign: 'top', nowrap: true }).svg;
-      s += tb(cx, top + 18, name, { size: 14, maxW: 156, valign: 'top' }).svg;
-      s += `<ellipse cx="${x + 102}" cy="${y + 126}" rx="104" ry="29" fill="#FFF3B5" stroke="#A88400" stroke-width="1"/>`;
-      s += tb(x + 100, y + 126, own, { size: 12.3, maxW: 168 }).svg;
+      const first = k === 0 && row === 0;
+      s += conn([[x + 104, y + 92], [x + 104, y + 114]], { color: LINE, sw: 1.3 });
+      s += vchev(x, y, 206, 92, { first, kind: ext ? 'doc' : 'func' });
+      const cx = x + (first ? 103 : 112) - 4;
+      const t = tb(cx, 0, name, { size: 11.2, maxW: 150, weight: 'bold' });
+      const top = y + 16 + (92 - 16 - (17 + t.h)) / 2;
+      s += tb(cx, top, n, { size: 13, weight: 'bold', valign: 'top', nowrap: true }).svg;
+      s += tb(cx, top + 17, name, { size: 11.2, maxW: 150, valign: 'top', weight: 'bold' }).svg;
+      s += orgBox({ x: x + 104, y: y + 140, w: 200, h: 52, label: own, kind: 'unit', size: 10.4 });
     });
-    s += tb(20, 418, 'Серым выделены этапы внешних участников, желтым показаны исполнители этапов.', { size: 13.5, anchor: 'start', nowrap: true, fill: C.muted, italic: true }).svg;
+    s += tb(20, 440, 'Серым выделены этапы внешних участников, под этапами показаны исполнители (организационные единицы).', { size: 12, anchor: 'start', nowrap: true, fill: C.muted }).svg;
     return { svg: wrapSvg(W, H, s), w: W, h: H };
   };
 
   // ---------- 5. Условные обозначения BPMN ----------
   DIAGRAMS.legend = () => {
-    const W = 1680, H = 250;
+    const W = 1680, H = 258;
     let s = '';
-    const colW = 336, rowH = 74;
-    const cell = (c, r) => [20 + c * colW, 28 + r * rowH];
-    const txt = (x, y, t) => tb(x, y, t, { size: 12.5, anchor: 'start', maxW: 250 }).svg;
-    const ev = (type, c, r, label) => {
+    const colW = 336, rowH = 80;
+    const cell = (c, r) => [20 + c * colW, 26 + r * rowH];
+    const txt = (x, y, t) => tb(x, y, t, { size: 12, anchor: 'start', maxW: 240 }).svg;
+    const node = (type, c, r, label, dx = 24) => {
       const [x, y] = cell(c, r);
-      const n = { type, x: x + 22, y: y + 18 };
+      const n = { type, x: x + dx, y: y + 22 };
       sizeNode(n);
-      return drawNode(n) + txt(x + 52, y + 18, label);
+      return drawNode(n) + txt(x + dx + 34, y + 22, label);
     };
-    s += ev('start', 0, 0, 'Стартовое событие');
-    s += ev('timer', 1, 0, 'Стартовое событие «таймер»');
-    s += ev('msg', 2, 0, 'Промежуточное событие: получено сообщение');
-    s += ev('linkOut', 3, 0, 'Событие-ссылка: переход к следующей части схемы');
-    s += ev('end', 4, 0, 'Конечное событие');
+    s += node('start', 0, 0, 'Стартовое событие');
+    s += node('msg', 1, 0, 'Промежуточное событие: получено сообщение');
+    s += node('linkOut', 2, 0, 'Событие-ссылка: переход к другой части схемы');
+    s += node('end', 3, 0, 'Конечное событие');
+    {
+      const [x, y] = cell(4, 0);
+      s += box(x, y + 4, 64, 36, 'ext', { r: 2 }) + txt(x + 78, y + 22, 'Свернутый пул внешнего участника');
+    }
     {
       const [x, y] = cell(0, 1);
-      s += `<rect x="${x}" y="${y}" width="60" height="38" rx="8" fill="${C.task}" stroke="${C.taskS}" stroke-width="1.4"/>` + txt(x + 72, y + 19, 'Задача (выполняет сотрудник)');
+      s += box(x, y, 70, 46, 'func') + iconFunc(x + 6, y + 5, 0.75) + txt(x + 84, y + 23, 'Задача (выполняет сотрудник)');
     }
     {
       const [x, y] = cell(1, 1);
-      const n = { type: 'svc', label: '', x: x + 30, y: y + 19, boxW: 60 };
-      sizeNode(n); n.h = 38;
-      s += drawNode(n) + txt(x + 72, y + 19, 'Сервисная задача (выполняется в ИТ-системе)');
+      s += box(x, y, 70, 46, 'func') + iconGears(x + 6, y + 4, 0.8) + txt(x + 84, y + 23, 'Сервисная задача (выполняется в ИТ-системе)');
     }
+    s += node('xor', 2, 1, 'Исключающий шлюз (выбор одной ветви)', 28);
+    s += node('and', 3, 1, 'Параллельный шлюз (все ветви одновременно)', 28);
     {
-      const [x, y] = cell(2, 1);
-      const n = { type: 'sub', label: '', x: x + 30, y: y + 19, boxW: 60 };
-      sizeNode(n); n.h = 38;
-      s += drawNode(n) + txt(x + 72, y + 19, 'Свернутый подпроцесс');
+      const [x, y] = cell(4, 1);
+      s += `<rect x="${x}" y="${y}" width="64" height="44" fill="#fff" stroke="${C.laneS}"/><rect x="${x}" y="${y}" width="9" height="44" fill="url(#g_hdr)" stroke="${C.laneS}"/><rect x="${x + 9}" y="${y}" width="12" height="44" fill="url(#g_hdr)" stroke="${C.laneS}"/><line x1="${x + 9}" y1="${y + 22}" x2="${x + 64}" y2="${y + 22}" stroke="${C.laneS}"/>` + txt(x + 78, y + 22, 'Пул компании, разделенный на дорожки');
     }
-    const gw = (type, c, r, label) => {
-      const [x, y] = cell(c, r);
-      const n = { type, x: x + 26, y: y + 19 };
-      sizeNode(n);
-      return drawNode(n) + txt(x + 60, y + 19, label);
-    };
-    s += gw('xor', 3, 1, 'Исключающий шлюз (выбор одной ветви)');
-    s += gw('and', 4, 1, 'Параллельный шлюз (все ветви одновременно)');
     {
       const [x, y] = cell(0, 2);
-      s += `<line x1="${x}" y1="${y + 19}" x2="${x + 58}" y2="${y + 19}" stroke="${C.flow}" stroke-width="1.5" marker-end="url(#seq)"/>` + txt(x + 72, y + 19, 'Поток управления');
+      s += conn([[x, y + 22], [x + 62, y + 22]], { arrow: true }) + txt(x + 78, y + 22, 'Поток управления');
     }
     {
       const [x, y] = cell(1, 2);
-      s += `<line x1="${x + 4}" y1="${y + 19}" x2="${x + 58}" y2="${y + 19}" stroke="${C.msg}" stroke-width="1.3" stroke-dasharray="6 4" marker-start="url(#msgStart)" marker-end="url(#msgEnd)"/>` + txt(x + 72, y + 19, 'Поток сообщений (обмен с внешним участником)');
+      s += `<line x1="${x + 4}" y1="${y + 22}" x2="${x + 62}" y2="${y + 22}" stroke="${C.msg}" stroke-width="1.2" stroke-dasharray="6 4" marker-start="url(#msgStart)" marker-end="url(#msgEnd)"/>` + txt(x + 78, y + 22, 'Поток сообщений (обмен с внешним участником)');
     }
     {
       const [x, y] = cell(2, 2);
-      s += badge(x + 14, y + 19, 'П1', C.prob) + badge(x + 44, y + 19, 'И1', C.impr) + txt(x + 72, y + 19, 'Номер проблемы (п. 10) и изменения (п. 11)');
+      s += badge(x + 30, y + 14, 'П1', C.prob) + badge(x + 66, y + 14, 'И1', C.impr) + txt(x + 78, y + 22, 'Номер проблемы (п. 10) и изменения (п. 11)');
     }
     {
       const [x, y] = cell(3, 2);
-      s += durTag(x + 56, y + 19, '2 дн.') + txt(x + 72, y + 19, 'Длительность этапа (оценка)');
-    }
-    {
-      const [x, y] = cell(4, 2);
-      s += `<rect x="${x}" y="${y + 2}" width="60" height="34" fill="${C.ext}" stroke="${C.extS}" stroke-width="1.3"/>` + txt(x + 72, y + 19, 'Свернутый пул внешнего участника');
+      s += tb(x + 62, y + 22, '3 дн.', { size: 11, anchor: 'end', nowrap: true, fill: '#20380A' }).svg + txt(x + 78, y + 22, 'Длительность (оценка), внизу справа в задаче');
     }
     return { svg: wrapSvg(W, H, s), w: W, h: H };
   };
@@ -276,7 +274,7 @@
     nodes: [
       { id: 'L2', type: 'linkIn', lane: 'imp', col: 0, label: 'Из части 1 (А)' },
       { id: 'gA', type: 'xor', lane: 'kk', dy: MAIN, col: 1, label: 'Есть действующая декларация?', lpos: 'bottom', lw: 120 },
-      { id: 'b2', type: 'task', lane: 'kk', dy: UP, col: 2, label: 'Провести испытания и оформить декларацию соответствия', dur: '21 дн.', badge: 'П2', boxW: 128, slot: 150 },
+      { id: 'b2', type: 'task', lane: 'kk', dy: UP, col: 2, label: 'Провести испытания и оформить декларацию соответствия', dur: '21 дн.', badge: 'П2', boxW: 150, slot: 172 },
       { id: 'gB', type: 'xor', lane: 'kk', dy: MAIN, col: 3 },
       { id: 'b5', type: 'task', lane: 'imp', col: 4, label: 'Заказать коды маркировки и передать фабрике через ИТ-сервис' },
       { id: 'b3', type: 'task', lane: 'imp', col: 5, label: 'Оформить служебную записку на аванс', dur: '1 дн.', badge: 'П4' },
@@ -366,7 +364,7 @@
       { id: 'd4', type: 'task', lane: 'imp', col: 5, label: 'Направить претензию агенту', dur: '5 дн.' },
       { id: 'g5', type: 'xor', lane: 'dc', col: 6 },
       { id: 'd5', type: 'task', lane: 'km', col: 7, label: 'Рассчитать распределение товара по магазинам', dur: '3 дн.', badge: 'П8' },
-      { id: 'end1', type: 'end', lane: 'dc', col: 8, label: 'Товар готов к отгрузке в магазины' },
+      { id: 'end1', type: 'end', lane: 'dc', col: 8, label: 'Товар готов к отгрузке в магазины', lw: 140, slot: 156 },
     ],
     flows: [
       ['L6', 'd1'], ['d1', 'd2'], ['d2', 'd3'], ['d3', 'g4'],
@@ -416,8 +414,8 @@
       { id: 'L8', type: 'linkIn', lane: 'imp', col: 0, label: 'Из части 1 (А)' },
       { id: 'k3', type: 'svc', lane: 'fin', col: 1, label: 'Оплатить аванс по платежному календарю', dur: '3 дн.', badge: 'И4' },
       { id: 'g6', type: 'and', lane: 'kk', dy: MAIN, col: 2 },
-      { id: 'k1', type: 'task', lane: 'kk', dy: MAIN, col: 3, label: 'Оформить декларацию на новые позиции параллельно с производством', dur: '21 дн., параллельно', badge: 'И2', boxW: 128, slot: 150 },
-      { id: 'k7', type: 'task', lane: 'log', col: 3, label: 'Забронировать контейнер на плановую дату готовности', dur: '1 дн.', badge: 'И5', boxW: 128, slot: 150 },
+      { id: 'k1', type: 'task', lane: 'kk', dy: MAIN, col: 3, label: 'Оформить декларацию на новые позиции параллельно с производством', dur: '21 дн., параллельно', badge: 'И2', boxW: 150, slot: 172 },
+      { id: 'k7', type: 'task', lane: 'log', col: 3, label: 'Забронировать контейнер на плановую дату готовности', dur: '1 дн.', badge: 'И5', boxW: 150, slot: 172 },
       { id: 'k2', type: 'task', lane: 'imp', col: 4, label: 'Заказать коды маркировки и передать фабрике через ИТ-сервис' },
       { id: 'g7', type: 'and', lane: 'kk', dy: MAIN, col: 5 },
       { id: 'e6', type: 'msg', lane: 'imp', col: 6, label: 'Партия готова (35 дн.)' },
@@ -513,8 +511,8 @@
       { id: 'g9', type: 'xor', lane: 'dc', col: 3, label: 'Расхождения есть?', lpos: 'bottom' },
       { id: 'n3', type: 'task', lane: 'imp', col: 4, label: 'Направить претензию агенту в день приемки', dur: 'в тот же день' },
       { id: 'g10', type: 'xor', lane: 'dc', col: 5 },
-      { id: 'n4', type: 'svc', lane: 'dc', col: 6, label: 'Сформировать отгрузки по готовому распределению', dur: '0,5 дн.', badge: 'И8', boxW: 128, slot: 150 },
-      { id: 'end2', type: 'end', lane: 'dc', col: 7, label: 'Товар готов к отгрузке в магазины' },
+      { id: 'n4', type: 'svc', lane: 'dc', col: 6, label: 'Сформировать отгрузки по готовому распределению', dur: '0,5 дн.', badge: 'И8', boxW: 150, slot: 172 },
+      { id: 'end2', type: 'end', lane: 'dc', col: 7, label: 'Товар готов к отгрузке в магазины', lw: 140, slot: 156 },
     ],
     flows: [
       ['L12', 'n1'], ['n1', 'n2'], ['n2', 'g9'], ['g9', 'n3', { label: 'да (20%)' }], ['g9', 'g10', { label: 'нет' }],
