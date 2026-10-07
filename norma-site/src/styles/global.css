@@ -329,11 +329,24 @@ section[id], main[id], h2[id], h3[id], [data-anchor] { scroll-margin-top: 84px; 
    (Base.astro) страница в альбомной ориентации заходит под «чёлку» iPhone,
    и без max() первые буквы строк прятались бы под ней. */
 .wrap {
-  max-width: 1120px;
+  max-width: calc(var(--wrap) + 40px);
   margin: 0 auto;
   padding-block: 0;
   padding-inline: max(20px, env(safe-area-inset-left, 0px)) max(20px, env(safe-area-inset-right, 0px));
 }
+
+/* Ширина колонки содержимого. До 07.10.2026 она была 1080 px на любом
+   экране, и на мониторе 1920 по бокам оставалось по 420 px пустого
+   листа; заказчик: «левая сторона бедновато смотрится, сделать
+   симметричной». С 1440 px колонка шире — ступенями, а не долей окна:
+   колонка, растущая вместе с окном (vw), съедала бы уменьшение масштаба
+   в браузере — на sro-site заказчик это уже отклонил («даже отдаляя —
+   не отдаляется»). По --wrap же считаются кадр первого экрана
+   (Hero.astro) и размерные линии между разделами. */
+:root { --wrap: 1080px; }
+@media (min-width: 1440px) { :root { --wrap: 1200px; } }
+@media (min-width: 1600px) { :root { --wrap: 1320px; } }
+@media (min-width: 1800px) { :root { --wrap: 1440px; } }
 
 /* ── Типографические роли ── */
 
@@ -392,8 +405,8 @@ section[id], main[id], h2[id], h3[id], [data-anchor] { scroll-margin-top: 84px; 
 @media (min-width: 1160px) {
   .section:not(.section--dark):not(.section--paper):not(.page-head) + .section:not(.section--dark):not(.section--paper)::before,
   .section--paper + .section--paper::before {
-    left: calc(50% - 560px);
-    right: calc(50% - 560px);
+    left: calc(50% - var(--wrap) / 2 - 20px);
+    right: calc(50% - var(--wrap) / 2 - 20px);
   }
 }
 

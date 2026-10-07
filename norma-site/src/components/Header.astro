@@ -627,6 +627,14 @@ const formHref = path === href('/') ? '#zayavka' : href('/kontakty/#form')
   @media (min-width: 1100px) and (max-width: 1279px) {
     .phone small { display: none; }
   }
+  /* С 1440 px колонка сайта шире (--wrap в global.css), и между меню
+     и правой группой остаётся пустое место — до 230 px на 1920. Меню
+     встаёт посередине этого места, а не прижимается к знаку: шапка
+     над первым экраном «пополам» читается ровной. */
+  @media (min-width: 1440px) {
+    .nav { margin-inline: auto; }
+    .hdr-right { margin-left: 0; }
+  }
 </style>
 
 <script>
