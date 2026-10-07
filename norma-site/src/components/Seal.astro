@@ -101,21 +101,29 @@ const rBot = 49
   /* Печать ставится: приходит крупнее и вбок, потом «прикладывается».
      Пружинистая кривая в конце — это и есть тот самый удар; без неё
      движение читается как обычное всплытие карточки.
-     Запускается по классу .in — его вешает общий наблюдатель прокрутки. */
-  :global(.js) .seal {
+
+     Прячется печать ТОЛЬКО пока блок с ней ждёт своей очереди ниже
+     экрана (.rv-wait — общий наблюдатель прокрутки в Base.astro); блок
+     подходит, класс снимается — и печать «прикладывается». Сама по себе
+     она не прячется никогда. До 07.10.2026 было наоборот: под .js печать
+     ждала класса .in на себе, а наблюдатель вешает его только блокам .rv,
+     печать к ним не относится — и с 5 сентября её не видел никто, кроме
+     тех, у кого включено «уменьшить движение». Ровно так шли все снимки
+     и проверки; заметил заказчик по пустому месту рядом с ИНН.
+     Стережёт test-pages («Печать „Сверено“ видна»). */
+  .seal {
+    transition:
+      opacity 0.3s ease-out 0.15s,
+      transform 0.55s cubic-bezier(0.2, 1.5, 0.4, 1) 0.15s;
+  }
+  :global(.js .rv-wait) .seal {
     opacity: 0;
     transform: rotate(-24deg) scale(1.5);
+    transition: none;
   }
-  :global(.js) .seal.in {
-    opacity: 0.92;
-    transform: rotate(-9deg) scale(1);
-    transition:
-      opacity 0.3s ease-out,
-      transform 0.55s cubic-bezier(0.2, 1.5, 0.4, 1);
-  }
-  :global(.js) .seal--dark.in { opacity: 0.9; }
 
   @media (prefers-reduced-motion: reduce) {
-    :global(.js) .seal { opacity: 0.92; transform: rotate(-9deg); }
+    .seal { transition: none; }
+    :global(.js .rv-wait) .seal { opacity: 0.92; transform: rotate(-9deg); }
   }
 </style>
