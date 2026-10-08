@@ -1,32 +1,37 @@
-// Отрисовка схем в SVG в стиле ARIS Express: объемные фигуры с градиентом,
-// бликом и тенью, белые значки в левом верхнем углу, жирный шрифт, тонкие
-// линии со скругленными углами и открытыми стрелками.
+// Отрисовка схем в SVG один в один с ARIS Express. Все величины сняты
+// с образца владельца (скриншот модели ARIS Express, 179×125 px на функцию):
+// шрифт Tahoma Bold, вертикальный градиент фигуры, блик в верхней части,
+// усиливающийся слева направо, светлая кромка сверху и слева, темная снизу
+// и справа, жесткая серая тень #9F9F9F со сдвигом 6 px, белый значок типа
+// объекта в левом верхнем углу, линии #333 толщиной 2 px с открытой стрелкой.
 // Что рисует: BPMN 2.0 (пулы, дорожки, задачи, события, шлюзы, потоки управления
 // и сообщений), оргструктуру, цепочки процессов (VAD), контекстную диаграмму IDEF0.
 // Работает в браузере: перенос строк меряется настоящим шрифтом через canvas.
+// Tahoma подключает render.mjs из build/fonts (скачивает get-fonts.sh).
 (function () {
-  // Шрифт фигур в ARIS Express похож на Tahoma Bold; ближайший из доступных — DejaVu Sans.
-  const FONT = "'DejaVu Sans', Tahoma, Verdana, sans-serif";
+  const FONT = "Tahoma, 'DejaVu Sans', sans-serif";
   const C = {
     text: '#000000', muted: '#4A4F55',
     flow: '#333333', msg: '#555555',
     laneS: '#6F7A82',
     prob: '#C0141B', impr: '#1F5FA8',
     // для совместимости со старыми вызовами
-    taskS: '#46A010', ext: '#E9EDEF', extS: '#7E888F', inter: '#C46400', start: '#2F7F0E', end: '#8E140C',
+    taskS: '#4BBC00', ext: '#E9EDEF', extS: '#6F777B', inter: '#C67213', start: '#2E8B00', end: '#8E140C',
   };
-  // Цвета фигур ARIS Express: верх и низ градиента, обводка.
+  // Цвета ARIS Express (замер по пикселям образца): верх и низ градиента,
+  // обводка, светлая кромка (сверху и слева) и темная кромка (снизу и справа).
   const KIND = {
-    func: { top: '#73EC2E', bot: '#CDF900', edge: '#46A010' }, // функция, задача, процесс VAD
-    event: { top: '#FF8A00', bot: '#FFD41F', edge: '#C46400' }, // событие
-    org: { top: '#FFC600', bot: '#FFF900', edge: '#C79F00' }, // орг. единица, должность
-    doc: { top: '#8F9898', bot: '#D5DADA', edge: '#6A7373' }, // документ, внешний участник
-    gw: { top: '#585858', bot: '#ABABAB', edge: '#3A3A3A' }, // шлюз (правило)
-    ext: { top: '#BFC8CE', bot: '#EEF1F3', edge: '#7E888F' }, // свернутый пул
-    start: { top: '#3FCB1E', bot: '#BDF23C', edge: '#2F7F0E' },
-    end: { top: '#D9241A', bot: '#FF8355', edge: '#8E140C' },
-    hdr: { top: '#D3D9DE', bot: '#F3F5F6', edge: '#77828A' }, // заголовки пулов и дорожек
+    func: { top: '#62FF00', bot: '#CCFF00', edge: '#4BBC00', lite: '#85FF33', dark: '#57D900' }, // функция, задача, процесс VAD
+    event: { top: '#FF8807', bot: '#FFD707', edge: '#C67213', lite: '#FFA43A', dark: '#D97706' }, // событие
+    org: { top: '#FFC900', bot: '#FFFF00', edge: '#B38F00', lite: '#FFD633', dark: '#D9AD00' }, // орг. единица, должность
+    doc: { top: '#8A978E', bot: '#CACBCB', edge: '#404843', lite: '#C7C7C7', dark: '#636E66' }, // документ, внешний этап
+    gw: { top: '#666666', bot: '#B4B4B4', edge: '#333333', lite: '#999999', dark: '#404040' }, // правило (шлюз)
+    ext: { top: '#C2C9CC', bot: '#ECEEEF', edge: '#5F676B', lite: '#EEF0F1', dark: '#99A0A4' }, // свернутый пул
+    start: { top: '#3FD400', bot: '#B6F500', edge: '#2E8B00', lite: '#7CFF40', dark: '#3AA800' },
+    end: { top: '#E8261A', bot: '#FF8A5C', edge: '#8E140C', lite: '#FF7B6B', dark: '#B71C10' },
+    hdr: { top: '#D9DEE1', bot: '#F4F6F7', edge: '#77828A', lite: '#F7F8F9', dark: '#B9C0C5' }, // заголовки пулов и дорожек
   };
+  const SHADOW = '#9F9F9F';
   const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const f1 = (v) => (Math.round(v * 10) / 10).toString();
   const ctx = document.createElement('canvas').getContext('2d');
@@ -86,14 +91,14 @@
     return `<text transform="translate(${f1(cx)},${f1(cy)}) rotate(-90)" font-family="${FONT}" font-size="${size}" font-weight="${o.weight || 'bold'}" fill="${o.fill || C.text}" text-anchor="middle">${tsp}</text>`;
   }
 
-  // ---------- общие определения: градиенты, блик, тень, стрелки ----------
+  // ---------- общие определения: градиенты, блик, стрелки ----------
   const grad = Object.entries(KIND).map(([k, v]) =>
-    `<linearGradient id="g_${k}" x1="0" y1="0" x2="0.25" y2="1"><stop offset="0" stop-color="${v.top}"/><stop offset="1" stop-color="${v.bot}"/></linearGradient>`).join('');
+    `<linearGradient id="g_${k}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${v.top}"/><stop offset="1" stop-color="${v.bot}"/></linearGradient>`).join('');
+  // Наконечник ARIS: открытая «галочка» с широко разведенными усами (около 53° к линии).
   const defs = `<defs>${grad}
-    <linearGradient id="gloss" x1="1" y1="0" x2="0.15" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0.92"/><stop offset="0.45" stop-color="#fff" stop-opacity="0.5"/><stop offset="1" stop-color="#fff" stop-opacity="0.22"/></linearGradient>
-    <filter id="sh" x="-20%" y="-20%" width="150%" height="160%"><feGaussianBlur stdDeviation="1.4"/></filter>
-    <marker id="seq" viewBox="0 0 10 10" refX="9.6" refY="5" markerWidth="10" markerHeight="10" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M1.2,0.9 L9.6,5 L1.2,9.1" fill="none" stroke="${C.flow}" stroke-width="1.4" stroke-linejoin="miter"/></marker>
-    <marker id="arr" viewBox="0 0 10 10" refX="9.6" refY="5" markerWidth="10" markerHeight="10" orient="auto" markerUnits="userSpaceOnUse"><path d="M1.2,0.9 L9.6,5 L1.2,9.1" fill="none" stroke="${C.flow}" stroke-width="1.4"/></marker>
+    <linearGradient id="gloss" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="0.2" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity="0.47"/></linearGradient>
+    <marker id="seq" viewBox="0 0 10 14" refX="9" refY="7" markerWidth="10" markerHeight="14" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M3.4,0.8 L9,7 L3.4,13.2" fill="none" stroke="${C.flow}" stroke-width="1.7" stroke-linejoin="miter"/></marker>
+    <marker id="arr" viewBox="0 0 10 14" refX="9" refY="7" markerWidth="10" markerHeight="14" orient="auto" markerUnits="userSpaceOnUse"><path d="M3.4,0.8 L9,7 L3.4,13.2" fill="none" stroke="${C.flow}" stroke-width="1.7"/></marker>
     <marker id="msgEnd" viewBox="0 0 10 10" refX="9.5" refY="5" markerWidth="10" markerHeight="10" orient="auto" markerUnits="userSpaceOnUse"><path d="M0.8,1 L9.5,5 L0.8,9 z" fill="#fff" stroke="${C.msg}" stroke-width="1.1"/></marker>
     <marker id="msgStart" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="8" markerHeight="8" orient="auto" markerUnits="userSpaceOnUse"><circle cx="5" cy="5" r="3.6" fill="#fff" stroke="${C.msg}" stroke-width="1.1"/></marker>
   </defs>`;
@@ -125,78 +130,90 @@
       : [[x, y], [x + w - d, y], [x + w, y + h / 2], [x + w - d, y + h], [x, y + h], [x + d, y + h / 2]];
   };
 
-  // Объемная фигура ARIS: тень, градиент, блик, светлая кромка внутри, обводка.
+  // Фигура ARIS: жесткая тень, вертикальный градиент, блик сверху (сильнее справа),
+  // светлая кромка сверху и слева, темная снизу и справа, тонкая обводка.
   let clipN = 0;
-  function gloss(d, box, kind, o = {}) {
+  function gloss(d, bx, kind, o = {}) {
     const K = KIND[kind];
-    const { x, y, w, h } = box;
-    const id = `cp${++clipN}`;
-    const sw = o.sw || 1.5;
+    const { x, y, w, h } = bx;
+    const n = ++clipN, id = `cp${n}`;
+    const band = o.band ?? 3.6, sh = o.sh ?? 5;
     let s = '';
-    if (!o.noShadow) s += `<path d="${d}" transform="translate(3.6,3.6)" fill="#6E6E6E" fill-opacity="0.55" filter="url(#sh)"/>`;
-    s += `<clipPath id="${id}"><path d="${d}"/></clipPath>`;
+    if (!o.noShadow) s += `<path d="${d}" transform="translate(${sh},${sh})" fill="${SHADOW}"/>`;
+    // полуплоскости по диагонали рамки: сверху-слева светлая кромка, снизу-справа темная
+    const P1 = [x + 1.5 * w, y - 0.5 * h], P2 = [x - 0.5 * w, y + 1.5 * h];
+    const tl = `M${f1(P1[0])},${f1(P1[1])} L${f1(P2[0])},${f1(P2[1])} L${f1(x - 0.5 * w)},${f1(y - 0.5 * h)} Z`;
+    const br = `M${f1(P1[0])},${f1(P1[1])} L${f1(P2[0])},${f1(P2[1])} L${f1(x + 1.5 * w)},${f1(y + 1.5 * h)} Z`;
+    s += `<clipPath id="${id}"><path d="${d}"/></clipPath><clipPath id="${id}a"><path d="${tl}"/></clipPath><clipPath id="${id}b"><path d="${br}"/></clipPath>`;
     s += `<path d="${d}" fill="url(#g_${kind})"/>`;
-    s += `<path clip-path="url(#${id})" d="M${f1(x - 3)},${f1(y - 3)} H${f1(x + w + 3)} V${f1(y + h * 0.34)} C${f1(x + w * 0.68)},${f1(y + h * 0.5)} ${f1(x + w * 0.3)},${f1(y + h * 0.53)} ${f1(x - 3)},${f1(y + h * 0.47)} Z" fill="url(#gloss)"/>`;
-    s += `<path clip-path="url(#${id})" d="${d}" fill="none" stroke="#fff" stroke-opacity="0.5" stroke-width="4"/>`;
-    s += `<path d="${d}" fill="none" stroke="${K.edge}" stroke-width="${sw}" stroke-linejoin="round"/>`;
-    if (o.hl) s += `<path d="${o.hlPath || d}" fill="none" stroke="${C.impr}" stroke-width="3.2" stroke-linejoin="round" transform="${o.hlT || ''}"/>`;
+    s += `<g clip-path="url(#${id})">`;
+    if (!o.noGloss) s += `<path d="M${f1(x - 2)},${f1(y - 2)} H${f1(x + w + 2)} V${f1(y + h * 0.33)} C${f1(x + w * 0.85)},${f1(y + h * 0.45)} ${f1(x + w * 0.55)},${f1(y + h * 0.47)} ${f1(x - 2)},${f1(y + h * 0.47)} Z" fill="url(#gloss)"/>`;
+    s += `<path d="${d}" fill="none" stroke="${K.lite}" stroke-width="${2 * band}" clip-path="url(#${id}a)"/>`;
+    s += `<path d="${d}" fill="none" stroke="${K.dark}" stroke-width="${2 * band}" clip-path="url(#${id}b)"/>`;
+    s += `</g>`;
+    s += `<path d="${d}" fill="none" stroke="${K.edge}" stroke-width="${o.sw || 1}" stroke-linejoin="round"/>`;
+    if (o.hl) s += `<path d="${o.hlPath || d}" fill="none" stroke="${C.impr}" stroke-width="3.2" stroke-linejoin="round"/>`;
     return s;
   }
-  const box = (x, y, w, h, kind, o = {}) => gloss(rrect(x, y, w, h, o.r ?? 5), { x, y, w, h }, kind, o);
+  const box = (x, y, w, h, kind, o = {}) => gloss(rrect(x, y, w, h, o.r ?? 4), { x, y, w, h }, kind, o);
 
   // ---------- белые значки ARIS (левый верхний угол фигуры) ----------
-  const ICON_STROKE = 'stroke="#000" stroke-opacity="0.22" stroke-width="0.7"';
-  // Функция: стрелка с вырезом и шестеренка.
+  // Функция: широкая стрелка с вырезом в хвосте входит в шестеренку-кольцо с острыми зубцами.
+  // Размер при k = 1: 49 × 24.
   function iconFunc(x, y, k = 1) {
     const p = (a, b) => `${f1(x + a * k)},${f1(y + b * k)}`;
-    let s = `<path d="M${p(0, 4)} L${p(13, 4)} L${p(13, 0)} L${p(22, 9)} L${p(13, 18)} L${p(13, 14)} L${p(0, 14)} L${p(4.5, 9)} Z" fill="#fff" ${ICON_STROKE}/>`;
-    const cx = x + 29 * k, cy = y + 9 * k;
+    let s = `<path d="M${p(0, 5.5)} L${p(19, 5.5)} L${p(19, 0.5)} L${p(30.5, 12)} L${p(19, 23.5)} L${p(19, 18.5)} L${p(0, 18.5)} L${p(5, 12)} Z" fill="#fff"/>`;
+    const cx = x + 37.5 * k, cy = y + 12 * k;
     let teeth = '';
-    for (let i = 0; i < 10; i++) {
-      const a = (i * Math.PI) / 5;
-      teeth += `M${f1(cx + 6.2 * k * Math.cos(a))},${f1(cy + 6.2 * k * Math.sin(a))} L${f1(cx + 9 * k * Math.cos(a))},${f1(cy + 9 * k * Math.sin(a))} `;
+    for (let i = 0; i < 16; i++) {
+      const a = (i * Math.PI) / 8 + 0.1, da = 0.13;
+      const P = (r, t) => `${f1(cx + r * k * Math.cos(t))},${f1(cy + r * k * Math.sin(t))}`;
+      teeth += `M${P(8, a - da)} L${P(11.6, a)} L${P(8, a + da)} Z `;
     }
-    s += `<path d="${teeth}" stroke="#fff" stroke-width="${f1(2.2 * k)}" stroke-linecap="butt"/>`;
-    s += `<circle cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(5.2 * k)}" fill="none" stroke="#fff" stroke-width="${f1(2.6 * k)}"/>`;
+    s += `<path d="${teeth}" fill="#fff"/>`;
+    s += `<circle cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(6.3 * k)}" fill="none" stroke="#fff" stroke-width="${f1(3.6 * k)}"/>`;
     return s;
   }
   // Сервисная задача: две шестеренки.
   function iconGears(x, y, k = 1) {
     const g = (cx, cy, r) => {
       let t = '';
-      for (let i = 0; i < 8; i++) {
-        const a = (i * Math.PI) / 4 + 0.2;
-        t += `M${f1(cx + r * 0.7 * Math.cos(a))},${f1(cy + r * 0.7 * Math.sin(a))} L${f1(cx + r * Math.cos(a))},${f1(cy + r * Math.sin(a))} `;
+      for (let i = 0; i < 10; i++) {
+        const a = (i * Math.PI) / 5 + 0.2, da = 0.18;
+        const P = (rr, tt) => `${f1(cx + rr * Math.cos(tt))},${f1(cy + rr * Math.sin(tt))}`;
+        t += `M${P(r * 0.68, a - da)} L${P(r, a)} L${P(r * 0.68, a + da)} Z `;
       }
-      return `<path d="${t}" stroke="#fff" stroke-width="${f1(2.3 * k)}"/><circle cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(r * 0.6)}" fill="none" stroke="#fff" stroke-width="${f1(2.4 * k)}"/>`;
+      return `<path d="${t}" fill="#fff"/><circle cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(r * 0.56)}" fill="none" stroke="#fff" stroke-width="${f1(r * 0.3)}"/>`;
     };
-    return g(x + 8 * k, y + 8 * k, 8 * k) + g(x + 19 * k, y + 13 * k, 6 * k);
+    return g(x + 10 * k, y + 10 * k, 10 * k) + g(x + 24 * k, y + 15 * k, 7.5 * k);
   }
-  // Событие: кружок и стрелка.
-  function iconEvent(x, y, k = 1) {
+  // Событие: кружок, за ним стрелка. Размер при k = 1: 38 × 16.
+  function iconEvent(x, y, k = 1, ring = KIND.event.lite) {
     const p = (a, b) => `${f1(x + a * k)},${f1(y + b * k)}`;
-    return `<circle cx="${f1(x + 4.5 * k)}" cy="${f1(y + 7 * k)}" r="${f1(4.5 * k)}" fill="#fff" ${ICON_STROKE}/>` +
-      `<path d="M${p(9, 4.5)} L${p(19, 4.5)} L${p(19, 0)} L${p(27, 7)} L${p(19, 14)} L${p(19, 9.5)} L${p(9, 9.5)} Z" fill="#fff" ${ICON_STROKE}/>`;
+    return `<path d="M${p(8, 4.6)} L${p(28, 4.6)} L${p(28, 0)} L${p(38, 8)} L${p(28, 16)} L${p(28, 11.4)} L${p(8, 11.4)} Z" fill="#fff"/>` +
+      `<circle cx="${f1(x + 7 * k)}" cy="${f1(y + 8 * k)}" r="${f1(6.8 * k)}" fill="#fff" stroke="${ring}" stroke-width="${f1(1.6 * k)}"/>`;
   }
-  // Должность: один человек.
-  function person(cx, y, k = 1) {
-    return `<circle cx="${f1(cx)}" cy="${f1(y + 4.5 * k)}" r="${f1(4.3 * k)}" fill="#fff" ${ICON_STROKE}/>` +
-      `<path d="M${f1(cx - 7.5 * k)},${f1(y + 19 * k)} L${f1(cx - 7.5 * k)},${f1(y + 14.5 * k)} Q${f1(cx - 7.5 * k)},${f1(y + 9.5 * k)} ${f1(cx)},${f1(y + 9.5 * k)} Q${f1(cx + 7.5 * k)},${f1(y + 9.5 * k)} ${f1(cx + 7.5 * k)},${f1(y + 14.5 * k)} L${f1(cx + 7.5 * k)},${f1(y + 19 * k)} Z" fill="#fff" ${ICON_STROKE}/>`;
+  // Человек: голова и туловище со скругленными плечами. Высота при k = 1: 27.
+  function person(cx, yb, k = 1) {
+    const P = (a, b) => `${f1(cx + a * k)},${f1(yb + b * k)}`;
+    return `<circle cx="${f1(cx)}" cy="${f1(yb - 21 * k)}" r="${f1(5.6 * k)}" fill="#fff"/>` +
+      `<path d="M${P(-9, 0)} L${P(-9, -8.5)} Q${P(-9, -14.5)} ${P(-3, -14.5)} L${P(3, -14.5)} Q${P(9, -14.5)} ${P(9, -8.5)} L${P(9, 0)} Z" fill="#fff"/>`;
   }
-  const iconPos = (x, y, k = 1) => person(x + 8 * k, y, k);
-  // Организационная единица: группа людей.
-  const iconOrg = (x, y, k = 1) => person(x + 7 * k, y + 3 * k, k * 0.8) + person(x + 15 * k, y + 1.5 * k, k * 0.88) + person(x + 24 * k, y, k);
-  // Документ: лист с загнутым углом и строками.
+  // Должность: один человек (19 × 27 при k = 1).
+  const iconPos = (x, y, k = 1) => person(x + 9.5 * k, y + 27 * k, k);
+  // Организационная единица: трое людей, слева направо меньше-больше (36 × 27 при k = 1).
+  const iconOrg = (x, y, k = 1) => person(x + 6 * k, y + 27 * k, k * 0.6) + person(x + 15.5 * k, y + 27 * k, k * 0.78) + person(x + 27 * k, y + 27 * k, k);
+  // Документ: лист с загнутым углом и серыми строками (18 × 22 при k = 1).
   function iconDoc(x, y, k = 1) {
     const p = (a, b) => `${f1(x + a * k)},${f1(y + b * k)}`;
-    let s = `<path d="M${p(0, 0)} L${p(11, 0)} L${p(16, 5)} L${p(16, 20)} L${p(0, 20)} Z" fill="#fff" ${ICON_STROKE}/>`;
-    for (let i = 0; i < 4; i++) s += `<path d="M${p(3, 7 + i * 3.4)} L${p(13, 7 + i * 3.4)}" stroke="#8F9898" stroke-width="${f1(1.1 * k)}"/>`;
+    let s = `<path d="M${p(0, 0)} L${p(12, 0)} L${p(18, 6)} L${p(18, 22)} L${p(0, 22)} Z" fill="#fff"/><path d="M${p(12, 0)} L${p(12, 6)} L${p(18, 6)}" fill="#E4E7E5"/>`;
+    for (let i = 0; i < 4; i++) s += `<rect x="${f1(x + 2.5 * k)}" y="${f1(y + (8 + i * 3.4) * k)}" width="${f1(13 * k)}" height="${f1(2.2 * k)}" fill="#8F9A93"/>`;
     return s;
   }
 
   // ---------- соединения ----------
   // Ломаная со скругленными углами (как линии ARIS Express).
-  function roundPath(ptsIn, r = 7) {
+  function roundPath(ptsIn, r = 6) {
     const pts = ptsIn.filter((p, i) => i === 0 || Math.hypot(p[0] - ptsIn[i - 1][0], p[1] - ptsIn[i - 1][1]) > 0.3);
     let d = `M${f1(pts[0][0])},${f1(pts[0][1])}`;
     for (let i = 1; i < pts.length - 1; i++) {
@@ -210,29 +227,29 @@
     const last = pts[pts.length - 1];
     return d + ` L${f1(last[0])},${f1(last[1])}`;
   }
-  const conn = (pts, o = {}) => `<path d="${roundPath(pts, o.r ?? 7)}" fill="none" stroke="${o.color || C.flow}" stroke-width="${o.sw || 1.4}"${o.arrow ? ' marker-end="url(#seq)"' : ''}${o.dash ? ` stroke-dasharray="${o.dash}"` : ''}/>`;
+  const conn = (pts, o = {}) => `<path d="${roundPath(pts, o.r ?? 6)}" fill="none" stroke="${o.color || C.flow}" stroke-width="${o.sw || 1.7}"${o.arrow ? ' marker-end="url(#seq)"' : ''}${o.dash ? ` stroke-dasharray="${o.dash}"` : ''}/>`;
 
   // ---------- пометки на задачах ----------
   function badge(xr, yt, t, color) {
-    const w = measure(t, 9.5, 'bold') + 9;
-    return `<g><rect x="${f1(xr - w)}" y="${f1(yt)}" width="${f1(w)}" height="15" rx="3" fill="#fff" fill-opacity="0.92" stroke="${color}" stroke-width="1.1"/>${tb(xr - w / 2, yt + 7.5, t, { size: 9.5, weight: 'bold', fill: color, nowrap: true }).svg}</g>`;
+    const w = measure(t, 9.6, 'bold') + 9;
+    return `<g><rect x="${f1(xr - w)}" y="${f1(yt)}" width="${f1(w)}" height="15" rx="3" fill="#fff" fill-opacity="0.94" stroke="${color}" stroke-width="1.1"/>${tb(xr - w / 2, yt + 7.5, t, { size: 9.6, weight: 'bold', fill: color, nowrap: true }).svg}</g>`;
   }
-  const durTag = (xr, yb, t) => tb(xr, yb, t, { size: 9.4, fill: '#20380A', nowrap: true, anchor: 'end', valign: 'bottom' }).svg;
+  const durTag = (xr, yb, t) => tb(xr, yb, t, { size: 9.6, fill: '#1E3600', nowrap: true, anchor: 'end', valign: 'bottom' }).svg;
 
   // ---------- элементы BPMN ----------
   const isGw = (n) => n.type === 'xor' || n.type === 'and';
   const isEv = (n) => ['start', 'timer', 'end', 'msg', 'linkIn', 'linkOut'].includes(n.type);
-  const SLOT = { task: 162, svc: 162, sub: 162, gw: 100, ev: 106 };
+  const SLOT = { task: 164, svc: 164, sub: 164, gw: 100, ev: 106 };
   const slotOf = (n) => n.slot || (isGw(n) ? SLOT.gw : isEv(n) ? SLOT.ev : SLOT.task);
-  const TS = 11; // кегль подписи в задаче
-  const ICON_ROW = 24;
+  const TS = 11.6; // кегль подписи в задаче: в ARIS 15 px на фигуру шириной 179 px
+  const ICON_ROW = 29;
 
   function sizeNode(n) {
-    if (isGw(n)) { n.w = n.h = 50; return; }
+    if (isGw(n)) { n.w = n.h = 52; return; }
     if (isEv(n)) { n.w = n.h = 38; return; }
-    n.w = n.boxW || 140;
-    const t = tb(0, 0, n.label, { size: TS, weight: 'bold', maxW: n.w - 14 });
-    n.h = Math.max(70, ICON_ROW + t.h + (n.dur ? 16 : 8) + 4);
+    n.w = n.boxW || 142;
+    const t = tb(0, 0, n.label, { size: TS, weight: 'bold', maxW: n.w - 16 });
+    n.h = Math.max(94, ICON_ROW + t.h + (n.dur ? 17 : 10) + 2);
   }
 
   function drawNode(n) {
@@ -241,27 +258,27 @@
     if (n.type === 'task' || n.type === 'svc' || n.type === 'sub') {
       const x0 = x - n.w / 2, y0 = y - n.h / 2;
       s += box(x0, y0, n.w, n.h, 'func', { hl: n.hl });
-      s += n.type === 'svc' ? iconGears(x0 + 7, y0 + 4, 1.05) : iconFunc(x0 + 7, y0 + 5, 1.02);
-      const top = y0 + ICON_ROW, bot = y0 + n.h - (n.dur ? 15 : 6);
-      s += tb(x, (top + bot) / 2, n.label, { size: TS, weight: 'bold', maxW: n.w - 14 }).svg;
-      if (n.dur) s += durTag(x0 + n.w - 7, y0 + n.h - 5, n.dur);
-      if (n.badge) s += badge(x0 + n.w - 6, y0 + 5, n.badge, n.badge.startsWith('П') ? C.prob : C.impr);
+      s += n.type === 'svc' ? iconGears(x0 + 6, y0 + 5, 0.95) : iconFunc(x0 + 6, y0 + 5, 0.9);
+      const top = y0 + ICON_ROW, bot = y0 + n.h - (n.dur ? 16 : 8);
+      s += tb(x, (top + bot) / 2, n.label, { size: TS, weight: 'bold', maxW: n.w - 16 }).svg;
+      if (n.dur) s += durTag(x0 + n.w - 7, y0 + n.h - 5.5, n.dur);
+      if (n.badge) s += badge(x0 + n.w - 7, y0 + 6, n.badge, n.badge.startsWith('П') ? C.prob : C.impr);
     } else if (isGw(n)) {
-      const r = 25;
-      s += gloss(roundPoly([[x, y - r], [x + r, y], [x, y + r], [x - r, y]], 5), { x: x - r, y: y - r, w: 2 * r, h: 2 * r }, 'gw');
+      const r = 26;
+      s += gloss(roundPoly([[x, y - r], [x + r, y], [x, y + r], [x - r, y]], 6), { x: x - r, y: y - r, w: 2 * r, h: 2 * r }, 'gw', { band: 3.2, sh: 5 });
       const m = n.type === 'xor'
-        ? `M${x - 7.5},${y - 7.5} L${x + 7.5},${y + 7.5} M${x + 7.5},${y - 7.5} L${x - 7.5},${y + 7.5}`
-        : `M${x - 10},${y} L${x + 10},${y} M${x},${y - 10} L${x},${y + 10}`;
-      s += `<path d="${m}" stroke="#2A2A2A" stroke-opacity="0.45" stroke-width="7" stroke-linecap="round"/><path d="${m}" stroke="#fff" stroke-width="4.6" stroke-linecap="round"/>`;
+        ? `M${x - 8},${y - 8} L${x + 8},${y + 8} M${x + 8},${y - 8} L${x - 8},${y + 8}`
+        : `M${x - 11},${y} L${x + 11},${y} M${x},${y - 11} L${x},${y + 11}`;
+      s += `<path d="${m}" stroke="#5A5A5A" stroke-opacity="0.6" stroke-width="7.4" stroke-linecap="butt"/><path d="${m}" stroke="#F2F2F2" stroke-width="4.4" stroke-linecap="butt"/>`;
       if (n.label) {
         const below = n.lpos === 'bottom';
-        s += tb(x + (n.ldx || 0), below ? y + 31 : y - 31, n.label, { size: 10.6, maxW: n.lw || 116, valign: below ? 'top' : 'bottom', halo: 3 }).svg;
+        s += tb(x + (n.ldx || 0), below ? y + 33 : y - 31, n.label, { size: 10.8, maxW: n.lw || 116, valign: below ? 'top' : 'bottom', halo: 3 }).svg;
       }
     } else {
       const r = 19;
       const kind = n.type === 'start' || n.type === 'timer' ? 'start' : n.type === 'end' ? 'end' : 'event';
-      s += gloss(circlePath(x, y, r), { x: x - r, y: y - r, w: 2 * r, h: 2 * r }, kind, { sw: n.type === 'end' ? 3.6 : 1.5 });
-      if (kind === 'event') s += `<circle cx="${x}" cy="${y}" r="${r - 4}" fill="none" stroke="${KIND.event.edge}" stroke-width="1.3"/>`;
+      s += gloss(circlePath(x, y, r), { x: x - r, y: y - r, w: 2 * r, h: 2 * r }, kind, { sw: n.type === 'end' ? 3.4 : 1.2, band: 2.6, sh: 4 });
+      if (kind === 'event') s += `<circle cx="${x}" cy="${y}" r="${r - 4.5}" fill="none" stroke="${KIND.event.edge}" stroke-width="1.2"/>`;
       if (n.type === 'msg') {
         s += `<rect x="${x - 8}" y="${y - 5.5}" width="16" height="11" fill="#fff" stroke="${KIND.event.edge}" stroke-width="1"/><path d="M${x - 8},${y - 5.5} L${x},${y + 1} L${x + 8},${y - 5.5}" fill="none" stroke="${KIND.event.edge}" stroke-width="1"/>`;
       } else if (n.type === 'linkIn' || n.type === 'linkOut') {
@@ -270,7 +287,7 @@
       }
       if (n.label) {
         const above = n.lpos === 'top';
-        s += tb(x, above ? y - 24 : y + 24, n.label, { size: 10.6, maxW: n.lw || 112, valign: above ? 'bottom' : 'top', halo: 3 }).svg;
+        s += tb(x, above ? y - 25 : y + 25, n.label, { size: 10.8, maxW: n.lw || 112, valign: above ? 'bottom' : 'top', halo: 3 }).svg;
       }
     }
     return s;
@@ -321,7 +338,6 @@
     let bg = '', fl = '', ms = '', nd = '', lb = '';
     // пул компании и дорожки
     const PW = W - 2 * POOL_L - 4;
-    bg += `<rect x="${POOL_L + 3.6}" y="${mainTop + 3.6}" width="${PW}" height="${mainBot - mainTop}" fill="#6E6E6E" fill-opacity="0.35" filter="url(#sh)"/>`;
     bg += `<rect x="${POOL_L}" y="${mainTop}" width="${PW}" height="${mainBot - mainTop}" fill="#fff"/>`;
     bg += `<rect x="${POOL_L}" y="${mainTop}" width="${POOL_HDR}" height="${mainBot - mainTop}" fill="url(#g_hdr)" stroke="${C.laneS}" stroke-width="1.2"/>`;
     bg += vtext(POOL_L + POOL_HDR / 2, (mainTop + mainBot) / 2, def.pool, { size: 12.5 });
@@ -361,7 +377,7 @@
       fl += conn([p1, ...mid, p2], { arrow: true });
       if (o.label) {
         const [dx, dyl] = o.lp || ('TB'.includes(fa) ? [7, fa === 'T' ? -12 : 14] : [6, -10]);
-        lb += tb(p1[0] + dx, p1[1] + dyl, o.label, { size: 10.4, anchor: o.la || 'start', nowrap: true, halo: 3.5 }).svg;
+        lb += tb(p1[0] + dx, p1[1] + dyl, o.label, { size: 10.8, anchor: o.la || 'start', nowrap: true, halo: 3.5 }).svg;
       }
     }
     // потоки сообщений
@@ -380,7 +396,7 @@
       if (m.label) {
         const gy = (pool.where === 'top' ? pool.y + pool.h + GAP / 2 : pool.y - GAP / 2) + (m.ly || 0);
         const side = m.side || ((m.dx || 0) < 0 ? 'l' : 'r');
-        lb += tb(side === 'r' ? x + 6 : x - 6, gy, m.label, { size: 9.8, maxW: m.lw || 132, anchor: side === 'r' ? 'start' : 'end', fill: '#333', halo: 3 }).svg;
+        lb += tb(side === 'r' ? x + 6 : x - 6, gy, m.label, { size: 10.2, maxW: m.lw || 132, anchor: side === 'r' ? 'start' : 'end', fill: '#333', halo: 3 }).svg;
       }
     }
     for (const n of nodes) nd += drawNode(n);
@@ -393,8 +409,10 @@
     const x = b.x - b.w / 2, y = b.y - b.h / 2;
     let s = box(x, y, b.w, b.h, 'org', { r: 4 });
     if (b.hl) s += `<rect x="${x - 5}" y="${y - 5}" width="${b.w + 10}" height="${b.h + 10}" rx="7" fill="none" stroke="${C.impr}" stroke-width="3"/>`;
-    s += b.kind === 'pos' ? iconPos(x + 6, y + 4, Math.min(1.05, (b.h - 8) / 20)) : iconOrg(x + 5, y + 4, Math.min(1.05, (b.h - 8) / 21));
-    s += tb(b.x + 16, b.y, b.label, { size: b.size || 12, maxW: b.w - 56, weight: 'bold' }).svg;
+    const k = Math.min(1, (b.h - 12) / 27);
+    s += b.kind === 'pos' ? iconPos(x + 7, y + 6, k) : iconOrg(x + 6, y + 6, k);
+    const ic = (b.kind === 'pos' ? 19 : 36) * k + 10;
+    s += tb(b.x + ic / 2, b.y + 1, b.label, { size: b.size || 12, maxW: b.w - ic - 18, weight: 'bold' }).svg;
     return s;
   }
 
@@ -403,12 +421,12 @@
     const pts = chevPts(x, y, w, h, o.first);
     let s = gloss(roundPoly(pts, 3), { x, y, w, h }, o.kind || 'func');
     if (o.hl) s += `<path d="${roundPoly(chevPts(x - 5, y - 5, w + 10, h + 10, o.first), 4)}" fill="none" stroke="${C.impr}" stroke-width="3.2"/>`;
-    s += iconFunc(x + (o.first ? 8 : Math.min(22, h * 0.28) + 4), y + 6, 0.92);
+    s += iconFunc(x + (o.first ? 7 : Math.min(22, h * 0.28) + 3), y + 6, 0.9);
     return s;
   }
   // Событие ARIS (шестиугольник) и документ — для VAD и легенды.
-  const hexEvent = (x, y, w, h) => gloss(roundPoly(hexPts(x, y, w, h), 3), { x, y, w, h }, 'event') + iconEvent(x + Math.min(22, w * 0.14) + 2, y + 6, 0.8);
-  const docBox = (x, y, w, h) => box(x, y, w, h, 'doc') + iconDoc(x + 7, y + 5, 0.85);
+  const hexEvent = (x, y, w, h) => gloss(roundPoly(hexPts(x, y, w, h), 3), { x, y, w, h }, 'event') + iconEvent(x + Math.min(22, w * 0.14) + 1, y + 7, 0.85);
+  const docBox = (x, y, w, h) => box(x, y, w, h, 'doc') + iconDoc(x + 7, y + 6, 1);
 
   // для совместимости со старыми вызовами
   function chevron(x, y, w, h, fill, stroke, sw, first) { return vchev(x, y, w, h, { first }); }

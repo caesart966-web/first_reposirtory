@@ -2,7 +2,7 @@
 // Запуск: node render.mjs [имя схемы ...]
 import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -14,15 +14,26 @@ const out = join(here, 'build', 'img');
 mkdirSync(out, { recursive: true });
 
 const data = readFileSync(join(here, 'data.json'), 'utf8');
-const scripts = `<script>window.DATA = ${data};</script>` + ['diagrams/lib.js', 'diagrams/defs.js', 'diagrams/chart.js']
-  .map((f) => `<script>${readFileSync(join(here, f), 'utf8')}</script>`).join('\n');
-const html = `<!doctype html><html><head><meta charset="utf-8"><style>body{margin:0;background:#fff}</style></head><body><div id="c"></div>${scripts}</body></html>`;
+// Шрифт ARIS Express — Tahoma (обычный и жирный). Файлы кладет get-fonts.sh в build/fonts,
+// в страницу они встраиваются data:-адресом: setContent открывает about:blank, и file:// не грузится.
+const fontDir = join(here, 'build', 'fonts');
+const face = (file, weight) => {
+  const p = join(fontDir, file);
+  if (!existsSync(p)) throw new Error(`Нет шрифта ${p}. Запустите ./get-fonts.sh`);
+  return `@font-face{font-family:Tahoma;font-weight:${weight};src:url(data:font/ttf;base64,${readFileSync(p).toString('base64')}) format('truetype')}`;
+};
+const fonts = face('tahoma.ttf', 400) + face('tahomabd.ttf', 700);
+const html = `<!doctype html><html><head><meta charset="utf-8"><style>${fonts}body{margin:0;background:#fff}</style></head><body><div id="c"></div><script>document.fonts.load('400 12px Tahoma');document.fonts.load('700 12px Tahoma');</script></body></html>`;
 
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' }).catch(() => chromium.launch());
 const page = await browser.newPage({ deviceScaleFactor: 3, viewport: { width: 1800, height: 1200 } });
 page.on('pageerror', (e) => { console.error('Ошибка на странице:', e.message); process.exitCode = 1; });
 await page.setContent(html);
-await page.evaluate(() => document.fonts.ready);
+// сначала шрифт, потом скрипты схем: перенос строк меряется по Tahoma
+await page.evaluate(async () => { await document.fonts.load('400 12px Tahoma'); await document.fonts.load('700 12px Tahoma'); await document.fonts.ready; });
+if (!(await page.evaluate(() => document.fonts.check('700 12px Tahoma')))) throw new Error('Tahoma не загрузился');
+await page.addScriptTag({ content: `window.DATA = ${data};` });
+for (const f of ['diagrams/lib.js', 'diagrams/defs.js', 'diagrams/chart.js']) await page.addScriptTag({ content: readFileSync(join(here, f), 'utf8') });
 
 const names = process.argv.slice(2).length ? process.argv.slice(2) : await page.evaluate(() => Object.keys(window.DIAGRAMS));
 for (const name of names) {

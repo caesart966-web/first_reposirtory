@@ -7,7 +7,7 @@
   const POOL = 'Fix Price (ООО «Бэст Прайс»)';
   const AG = 'Торговый агент и фабрика (КНР)', LAB = 'Испытательная лаборатория', BANK = 'Уполномоченный банк',
     FWD = 'Экспедитор', BROKER = 'Таможенный представитель', CUST = 'Таможенный орган', GIS = 'ГИС МТ «Честный знак»';
-  const MAIN = 40, UP = -58; // строки внутри высокой дорожки
+  const MAIN = 42, UP = -64; // строки внутри высокой дорожки
   const LINE = '#4A4A4A';
 
   const DIAGRAMS = {};
@@ -233,7 +233,7 @@
   // Часть 1: выбор товара и размещение заказа
   DIAGRAMS.asis1 = () => bpmn({
     pool: POOL,
-    lanes: [{ id: 'rk', name: RK, h: 130 }, { id: 'km', name: KM, h: 186 }],
+    lanes: [{ id: 'rk', name: RK, h: 140 }, { id: 'km', name: KM, h: 204 }],
     top: [{ name: AG, from: 0, to: 99 }],
     nodes: [
       { id: 's1', type: 'start', lane: 'km', col: 0, label: 'Утвержден план закупок на сезон' },
@@ -268,7 +268,7 @@
   // Часть 2: сертификация, оплата и производство
   DIAGRAMS.asis2 = () => bpmn({
     pool: POOL,
-    lanes: [{ id: 'imp', name: IMP, h: 140 }, { id: 'kk', name: KK, h: 236 }, { id: 'fin', name: F, h: 130 }],
+    lanes: [{ id: 'imp', name: IMP, h: 140 }, { id: 'kk', name: KK, h: 262 }, { id: 'fin', name: F, h: 130 }],
     top: [{ name: LAB, from: 0, to: 3 }, { name: AG, from: 4, to: 99 }],
     bottom: [{ name: GIS, from: 0, to: 4 }, { name: BANK, from: 5, to: 99 }],
     nodes: [
@@ -293,7 +293,7 @@
       ['b2', 'gB'],
       ['gB', 'b5'], ['b5', 'b3'], ['b3', 'b4'], ['b4', 'e2'], ['e2', 'b6'], ['b6', 'g2'],
       ['g2', 'b7', { label: 'да (10%)' }],
-      ['b7', 'b6', { fa: 'T', ta: 'T', fdx: -30, via: (P) => [[P.b7.x - 30, P.laneTop('kk') + 12], [P.b6.x, P.laneTop('kk') + 12]] }],
+      ['b7', 'b6', { fa: 'T', ta: 'T', fdx: -30, via: (P) => [[P.b7.x - 30, P.laneTop('kk') + 7], [P.b6.x, P.laneTop('kk') + 7]] }],
       ['g2', 'b8', { fa: 'R', ta: 'L', label: 'нет', mx: (P) => P.b8.x - 76 }],
       ['b8', 'L3'],
     ],
@@ -313,7 +313,7 @@
   // Часть 3: отгрузка, перевозка и таможенное оформление
   DIAGRAMS.asis3 = () => bpmn({
     pool: POOL,
-    lanes: [{ id: 'imp', name: IMP, h: 236 }, { id: 'log', name: LG, h: 130 }, { id: 'fin', name: F, h: 130 }],
+    lanes: [{ id: 'imp', name: IMP, h: 262 }, { id: 'log', name: LG, h: 130 }, { id: 'fin', name: F, h: 130 }],
     top: [{ name: AG, from: 0, to: 99 }],
     bottom: [{ name: FWD, from: 0, to: 4 }, { name: BROKER, from: 5, to: 7 }, { name: CUST, from: 8, to: 99 }],
     nodes: [
@@ -332,7 +332,7 @@
     flows: [
       ['L4', 'c1'], ['c1', 'e3', { mx: (P) => P.e3.x - 62 }], ['e3', 'c2', { mx: (P) => P.e3.x + 62 }], ['c2', 'e4'], ['e4', 'c3'], ['c3', 'g3'],
       ['g3', 'c4', { label: 'да (30%)' }],
-      ['c4', 'c3', { fa: 'T', ta: 'T', fdx: -30, via: (P) => [[P.c4.x - 30, P.laneTop('imp') + 12], [P.c3.x, P.laneTop('imp') + 12]] }],
+      ['c4', 'c3', { fa: 'T', ta: 'T', fdx: -30, via: (P) => [[P.c4.x - 30, P.laneTop('imp') + 7], [P.c3.x, P.laneTop('imp') + 7]] }],
       ['g3', 'c5', { fa: 'R', ta: 'L', label: 'нет', mx: (P) => P.c5.x - 76 }],
       ['c5', 'e5'], ['e5', 'L5'],
     ],
@@ -378,7 +378,7 @@
   // Часть 1: выбор товара и размещение заказа
   DIAGRAMS.tobe1 = () => bpmn({
     pool: POOL,
-    lanes: [{ id: 'rk', name: RK, h: 130 }, { id: 'km', name: KM, h: 150 }],
+    lanes: [{ id: 'rk', name: RK, h: 140 }, { id: 'km', name: KM, h: 150 }],
     top: [{ name: AG, from: 0, to: 99 }],
     nodes: [
       { id: 's2', type: 'start', lane: 'km', col: 0, label: 'Утвержден план закупок на сезон' },
@@ -407,7 +407,7 @@
   // Часть 2: оплата, параллельная подготовка, производство, инспекция
   DIAGRAMS.tobe2 = () => bpmn({
     pool: POOL,
-    lanes: [{ id: 'imp', name: IMP, h: 140 }, { id: 'kk', name: KK, h: 236 }, { id: 'log', name: LG, h: 130 }, { id: 'fin', name: F, h: 130 }],
+    lanes: [{ id: 'imp', name: IMP, h: 140 }, { id: 'kk', name: KK, h: 262 }, { id: 'log', name: LG, h: 130 }, { id: 'fin', name: F, h: 130 }],
     top: [{ name: LAB, from: 0, to: 3 }, { name: AG, from: 4, to: 99 }],
     bottom: [{ name: BANK, from: 0, to: 2 }, { name: GIS, from: 3, to: 99 }],
     nodes: [
@@ -437,7 +437,7 @@
       ['g7', 'e6', { fa: 'R', ta: 'L' }],
       ['e6', 'k4'], ['k4', 'g8'],
       ['g8', 'k5', { label: 'да (10%)' }],
-      ['k5', 'k4', { fa: 'T', ta: 'T', fdx: -30, via: (P) => [[P.k5.x - 30, P.laneTop('kk') + 12], [P.k4.x, P.laneTop('kk') + 12]] }],
+      ['k5', 'k4', { fa: 'T', ta: 'T', fdx: -30, via: (P) => [[P.k5.x - 30, P.laneTop('kk') + 7], [P.k4.x, P.laneTop('kk') + 7]] }],
       ['g8', 'e7', { fa: 'R', ta: 'L', label: 'нет', mx: (P) => P.e7.x - 60 }],
       ['e7', 'L9'],
     ],
