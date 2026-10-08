@@ -14,24 +14,24 @@ const out = join(here, 'build', 'img');
 mkdirSync(out, { recursive: true });
 
 const data = readFileSync(join(here, 'data.json'), 'utf8');
-// Шрифт ARIS Express — Tahoma (обычный и жирный). Файлы кладет get-fonts.sh в build/fonts,
+// Шрифт схем ARIS — Arial (обычный и жирный). Файлы кладет get-fonts.sh в build/fonts,
 // в страницу они встраиваются data:-адресом: setContent открывает about:blank, и file:// не грузится.
 const fontDir = join(here, 'build', 'fonts');
 const face = (file, weight) => {
   const p = join(fontDir, file);
   if (!existsSync(p)) throw new Error(`Нет шрифта ${p}. Запустите ./get-fonts.sh`);
-  return `@font-face{font-family:Tahoma;font-weight:${weight};src:url(data:font/ttf;base64,${readFileSync(p).toString('base64')}) format('truetype')}`;
+  return `@font-face{font-family:Arial;font-weight:${weight};src:url(data:font/ttf;base64,${readFileSync(p).toString('base64')}) format('truetype')}`;
 };
-const fonts = face('tahoma.ttf', 400) + face('tahomabd.ttf', 700);
-const html = `<!doctype html><html><head><meta charset="utf-8"><style>${fonts}body{margin:0;background:#fff}</style></head><body><div id="c"></div><script>document.fonts.load('400 12px Tahoma');document.fonts.load('700 12px Tahoma');</script></body></html>`;
+const fonts = face('arial.ttf', 400) + face('arialbd.ttf', 700);
+const html = `<!doctype html><html><head><meta charset="utf-8"><style>${fonts}body{margin:0;background:#fff}</style></head><body><div id="c"></div></body></html>`;
 
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' }).catch(() => chromium.launch());
 const page = await browser.newPage({ deviceScaleFactor: 3, viewport: { width: 1800, height: 1200 } });
 page.on('pageerror', (e) => { console.error('Ошибка на странице:', e.message); process.exitCode = 1; });
 await page.setContent(html);
-// сначала шрифт, потом скрипты схем: перенос строк меряется по Tahoma
-await page.evaluate(async () => { await document.fonts.load('400 12px Tahoma'); await document.fonts.load('700 12px Tahoma'); await document.fonts.ready; });
-if (!(await page.evaluate(() => document.fonts.check('700 12px Tahoma')))) throw new Error('Tahoma не загрузился');
+// сначала шрифт, потом скрипты схем: перенос строк меряется по Arial
+await page.evaluate(async () => { await document.fonts.load('400 12px Arial'); await document.fonts.load('700 12px Arial'); await document.fonts.ready; });
+if (!(await page.evaluate(() => [...document.fonts].every((f) => f.status === 'loaded')))) throw new Error('Arial не загрузился');
 await page.addScriptTag({ content: `window.DATA = ${data};` });
 for (const f of ['diagrams/lib.js', 'diagrams/defs.js', 'diagrams/chart.js']) await page.addScriptTag({ content: readFileSync(join(here, f), 'utf8') });
 
