@@ -28,6 +28,14 @@ openpyxl (уже стоят в .venv).
 Файл сохраняется каждые 10 компаний, так что обрыв связи или Ctrl+C
 ничего не теряют.
 
+Если лимит кончился посреди прогона (Checko отвечает 403), скрипт
+останавливается, и компания, на которой он встал, пойдёт первой в следующий
+раз — пробитой она не считается. ИП (ИНН из 12 цифр) спрашиваются по своему
+адресу: до октября 2026 их спрашивали как организации и получали «не
+найдено» — такие строки скрипт переспросит сам. Одна компания, записанная
+в файле дважды (например, состояла в двух СРО), запрашивается один раз,
+вторая строка заполняется копией.
+
 Каждый прогон дополнительно кладёт рядом отдельный файл только со своей
 порцией — `спб_для_checko_прогон_2026-09-01_1522.xlsx`. Общий файл при этом
 продолжает пополняться: именно по нему скрипт понимает, кого уже пробил, и
@@ -48,7 +56,15 @@ from typing import Any, Iterator
 import requests
 
 CHECKO_URL = "https://api.checko.ru/v2/company"
+CHECKO_URL_IP = "https://api.checko.ru/v2/entrepreneur"
 API_KEY_ENV = "CHECKO_API_KEY"
+
+
+def адрес_checko(inn: str) -> str:
+    """Организации и ИП у Checko спрашиваются по разным адресам. ИП,
+    спрошенный как организация, приходит «Не найдено ни одной организации»
+    и раньше так и оставался: в ростовском файле — 55 предпринимателей."""
+    return CHECKO_URL_IP if len(re.sub(r"\D", "", inn)) == 12 else CHECKO_URL
 
 # Колонки, которые дописывает скрипт. Все с пометкой «(Checko)» там, где
 # имя может совпасть с колонкой исходного файла: в выгрузке из НОСТРОЯ уже
@@ -61,21 +77,49 @@ CONTACT_COLUMNS = [
     "Адрес (Checko)", "Статус (Checko)",
 ]
 # По этим колонкам определяется, обработана ли строка — только свои!
-_DONE_MARKERS = ("Телефоны (Checko)", "E-mail (Checko)", "Статус (Checko)")
+# «Есть телефон» ставится и при ответе без телефона и почты: без неё такая
+# компания считалась непробитой и запрашивалась каждый день заново
+_DONE_MARKERS = ("Телефоны (Checko)", "E-mail (Checko)", "Статус (Checko)", "Есть телефон")
+
+
+def _есть(value: Any) -> bool:
+    return bool(str(value if value is not None else "").strip())
+
+
+def пробита(row: dict) -> bool:
+    return any(_есть(row.get(c)) for c in _DONE_MARKERS)
 
 # Осечки, после которых компанию надо пробовать заново. Без этого списка
 # любой таймаут навсегда исключал бы компанию из работы: пометка о неудаче
 # ложится в «Статус (Checko)», а по нему строка считается обработанной.
+# HTTP 401/402/403 — тоже лимит или ключ: Checko отвечает 403, когда суточные
+# запросы кончились. Раньше строка с такой пометкой считалась готовой навсегда.
 _ВРЕМЕННЫЕ_ОСЕЧКИ = ("сеть:", "ответ не разобрался", "лимит запросов исчерпан",
-                     "HTTP 5", "HTTP 429")
+                     "HTTP 5", "HTTP 429", "HTTP 401", "HTTP 402", "HTTP 403")
+# Ответ «организация не найдена» на ИНН из 12 цифр — это ИП, спрошенный не по
+# тому адресу (так работали версии скрипта до октября 2026), а не ответ по
+# существу. Новые ответы по адресу ИП помечаются «ИП: …» и не повторяются.
+_ИП_НЕ_ТАМ = "Не найдено ни одной организации"
+# Отказ, который Checko присылает с кодом 200, — по тексту. «ключ» — с начала
+# слова: иначе «исключена» читалась бы как отказ по ключу
+_ПРО_ЛИМИТ = re.compile(r"лимит|limit|превыш|исчерпан|\bключ|key|тариф|оплат|баланс|доступ",
+                        re.I)
 
 
-def нужно_повторить(row: dict) -> bool:
+def нужно_повторить(row: dict, inn_column: str = "ИНН") -> bool:
     """Строка помечена неудачей, которая может пройти сама собой."""
     статус = (row.get("Статус (Checko)") or "").strip()
     if not статус:
         return False
+    if статус.startswith(_ИП_НЕ_ТАМ):
+        return len(re.sub(r"\D", "", row.get(inn_column) or "")) == 12
     return статус.startswith(_ВРЕМЕННЫЕ_ОСЕЧКИ)
+
+
+def лимит_кончился(note: str) -> bool:
+    """После такой осечки дальше идти бессмысленно — каждый следующий запрос
+    получит тот же отказ."""
+    return note.startswith(("лимит запросов исчерпан", "HTTP 401", "HTTP 402", "HTTP 403"))
 
 # Телефон РФ: код начинается с 3/4/8/9. Границы (?<!\d) и (?!\d) не дают
 # выхватить куски длинных номеров документов — на этом уже обжигались
@@ -183,6 +227,14 @@ def extract(data: dict) -> dict:
                 if isinstance(item.get("НаимДолжн"), str):
                     post = item["НаимДолжн"].strip().capitalize()
                 break
+    if not fio:
+        # У ИП руководителя нет — звонить самому предпринимателю
+        имя = data.get("ФИО")
+        if isinstance(имя, dict):
+            имя = " ".join(str(имя.get(k) or "").strip()
+                           for k in ("Фамилия", "Имя", "Отчество")).strip()
+        if isinstance(имя, str) and имя.strip():
+            fio, post = имя.strip(), "Индивидуальный предприниматель"
     info["Руководитель"] = fio
     info["Должность"] = post
 
@@ -216,8 +268,17 @@ def extract(data: dict) -> dict:
             break
     info["Адрес (Checko)"] = address
 
+    # Статус — как его пишет Checko в «Статус».«Наим», целиком. Отбор по словам
+    # «действ/ликвид/…» пропускал всё остальное: у 20 пробитых ростовских
+    # компаний статус остался пустым, и 15 из них — банкроты с конкурсным
+    # управляющим
     status = ""
-    for value in deep_find(data, ("Статус",)):
+    верхний = data.get("Статус")
+    if isinstance(верхний, dict):
+        верхний = верхний.get("Наим")
+    if isinstance(верхний, str) and верхний.strip():
+        status = верхний.strip()
+    for value in ([] if status else deep_find(data, ("Статус",))):
         for text in _strings(value):
             low = text.lower()
             if "действ" in low or "ликвид" in low or "прекра" in low or "исключ" in low:
@@ -230,40 +291,62 @@ def extract(data: dict) -> dict:
     return info
 
 
+def _причина(payload: Any) -> str:
+    """Checko кладёт причину отказа в message или meta.message."""
+    if isinstance(payload, dict):
+        for key in ("message", "meta", "error"):
+            value = payload.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+            if isinstance(value, dict):
+                inner = value.get("message")
+                if isinstance(inner, str) and inner.strip():
+                    return inner.strip()
+    return ""
+
+
+def запросов_за_сегодня(payload: Any) -> int | None:
+    """Сколько запросов по ключу уже сделано сегодня — Checko сообщает это
+    в meta каждого ответа."""
+    meta = payload.get("meta") if isinstance(payload, dict) else None
+    value = meta.get("today_request_count") if isinstance(meta, dict) else None
+    return value if isinstance(value, int) else None
+
+
 def fetch(inn: str, api_key: str, session: requests.Session,
-          timeout: int = 60) -> tuple[dict | None, str]:
+          timeout: int = 60, учёт: dict | None = None) -> tuple[dict | None, str]:
     """(данные, пометка). Пометка непустая — если запрос не удался."""
+    ип = адрес_checko(inn) == CHECKO_URL_IP
     try:
-        resp = session.get(CHECKO_URL, params={"key": api_key, "inn": inn},
+        resp = session.get(адрес_checko(inn), params={"key": api_key, "inn": inn},
                            timeout=timeout)
     except requests.RequestException as exc:
         return None, f"сеть: {type(exc).__name__}"
+    try:
+        payload = resp.json()
+    except ValueError:
+        payload = None
+    if учёт is not None and запросов_за_сегодня(payload) is not None:
+        учёт["за сегодня"] = запросов_за_сегодня(payload)
     if resp.status_code == 404:
         return None, "не найдено в Checko"
     if resp.status_code == 429:
         return None, "лимит запросов исчерпан"
+    if resp.status_code in (401, 402, 403):
+        # Чаще всего это кончившийся суточный лимит, реже — неверный ключ;
+        # строку в любом случае надо повторить, а прогон остановить
+        причина = _причина(payload)
+        return None, f"HTTP {resp.status_code}: лимит или ключ" + (f" ({причина})" if причина else "")
     if resp.status_code != 200:
         return None, f"HTTP {resp.status_code}"
-    try:
-        payload = resp.json()
-    except ValueError:
+    if payload is None:
         return None, "ответ не разобрался"
     data = payload.get("data") if isinstance(payload, dict) else None
     if not isinstance(data, dict) or not data:
-        # Checko кладёт причину отказа в meta/message
-        note = ""
-        if isinstance(payload, dict):
-            for key in ("message", "meta", "error"):
-                value = payload.get(key)
-                if isinstance(value, str) and value.strip():
-                    note = value.strip()
-                    break
-                if isinstance(value, dict):
-                    inner = value.get("message")
-                    if isinstance(inner, str) and inner.strip():
-                        note = inner.strip()
-                        break
-        return None, note or "пустой ответ"
+        note = _причина(payload) or "пустой ответ"
+        if _ПРО_ЛИМИТ.search(note):
+            return None, f"лимит запросов исчерпан ({note})"
+        return None, ("ИП: " + note) if ип else note
     return data, ""
 
 
@@ -305,6 +388,21 @@ def write_rows(path: Path, columns: list[str], rows: list[dict]) -> None:
         ws.append([row.get(c, "") for c in columns])
     ws.freeze_panes = "A2"
     wb.save(path)
+
+
+def осталось_пробить(rows: list[dict], inn_column: str = "ИНН") -> set[str]:
+    """ИНН, за которые ещё придётся заплатить запросом. Повтор уже пробитой
+    компании сюда не входит — он заполняется копией."""
+    нужны, готовы = set(), set()
+    for row in rows:
+        инн = re.sub(r"\D", "", row.get(inn_column) or "")
+        if not инн:
+            continue
+        if not пробита(row) or нужно_повторить(row, inn_column):
+            нужны.add(инн)
+        else:
+            готовы.add(инн)
+    return нужны - готовы
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -354,59 +452,93 @@ def main(argv: list[str] | None = None) -> int:
     columns = header + [c for c in CONTACT_COLUMNS if c not in header]
 
     # Что осталось сделать: строки без контактов (или все, если --redo)
+    def инн_строки(row: dict) -> str:
+        return re.sub(r"\D", "", row.get(args.inn_column) or "")
+
     todo = []
     for row in rows:
-        done = any((row.get(c) or "").strip() for c in _DONE_MARKERS)
-        if args.redo or not done or нужно_повторить(row):
-            inn = (row.get(args.inn_column) or "").strip()
-            if inn:
+        if args.redo or not пробита(row) or нужно_повторить(row, args.inn_column):
+            if инн_строки(row):
                 todo.append(row)
-    повторно = sum(1 for row in todo if нужно_повторить(row))
+    # Одна компания бывает в файле дважды — например, состояла в двух СРО.
+    # Второй раз за неё не платим: ответ копируется с уже пробитой строки
+    в_очереди = {id(row) for row in todo}
+    пробиты: dict[str, dict] = {}
+    for row in rows:
+        if id(row) not in в_очереди and инн_строки(row):
+            пробиты.setdefault(инн_строки(row), row)
+    к_запросу = len({инн_строки(r) for r in todo} - set(пробиты))
+    повторно = sum(1 for row in todo if нужно_повторить(row, args.inn_column))
     already = len(rows) - len(todo)
     if already:
         print(f"[checko] уже заполнено ранее: {already} (пропускаю)")
     if повторно:
-        print(f"[checko] повторю после прошлых осечек: {повторно}")
+        print(f"[checko] повторю после прошлых осечек и ИП, спрошенных как организации: "
+              f"{повторно}")
     if not todo:
         print("[checko] все строки уже заполнены — работа не нужна")
         return 0
 
-    plan = min(args.limit, len(todo)) if args.limit else len(todo)
-    print(f"[checko] к запросу: {plan} из {len(todo)} оставшихся "
+    plan = min(args.limit, к_запросу) if args.limit else к_запросу
+    print(f"[checko] осталось пробить компаний: {к_запросу}; за этот прогон — {plan} "
           f"(бесплатный тариф ~100/сутки — запускайте ежедневно, "
           "обработанные повторно не запрашиваются)")
+    if len(todo) > к_запросу:
+        print(f"[checko] строк-повторов одной компании: {len(todo) - к_запросу} — "
+              "заполню копией, без запроса")
 
     session = requests.Session()
     session.headers.update({"User-Agent": "mosstroybase/0.1 (+open-data harvester)"})
 
-    done = with_phone = failed = 0
+    done = with_phone = failed = подряд = скопировано = 0
+    учёт: dict = {}
     stop_reason = ""
     за_прогон: list[dict] = []
     try:
         for row in todo:
+            inn = инн_строки(row)
+            name = (row.get("Наименование") or "")[:40]
+            if inn in пробиты:
+                for c in CONTACT_COLUMNS:
+                    if _есть(пробиты[inn].get(c)) or c not in ("Руководитель", "Должность"):
+                        row[c] = пробиты[inn].get(c, "")
+                скопировано += 1
+                за_прогон.append(row)
+                continue
             if args.limit and done >= args.limit:
                 stop_reason = f"достигнут лимит прогона ({args.limit})"
                 break
-            inn = (row.get(args.inn_column) or "").strip()
-            name = (row.get("Наименование") or "")[:40]
-            data, note = fetch(inn, api_key, session)
+            data, note = fetch(inn, api_key, session, учёт=учёт)
             if data is None:
                 failed += 1
+                подряд += 1
                 row.setdefault("Телефоны (Checko)", "")
                 row["Статус (Checko)"] = note
                 print(f"[checko] {done + 1}/{plan} {inn} {name}: {note}", flush=True)
-                # Исчерпанный лимит/битый ключ — дальше идти бессмысленно
-                if note in ("лимит запросов исчерпан",) or note.startswith("HTTP 40"):
+                # Исчерпанный лимит/битый ключ — дальше идти бессмысленно.
+                # Строку не считаем пробитой: в следующий раз она пойдёт снова
+                if лимит_кончился(note):
                     stop_reason = note
                     break
-                if failed >= 10 and failed > done:
-                    stop_reason = "слишком много ошибок подряд"
+                if not нужно_повторить(row, args.inn_column):
+                    row["Есть телефон"] = "нет"     # ответ окончательный: номера нет
+                    пробиты[inn] = row
+                if подряд >= 10:
+                    stop_reason = "10 ошибок подряд — что-то не так со связью или с Checko"
+                    done += 1
+                    за_прогон.append(row)
                     break
             else:
+                подряд = 0
                 info = extract(data)
+                # Пустой ответ про руководителя не затирает того, что уже было
+                # в файле (руководитель из выгрузки СРО)
+                if not info["Руководитель"] and not info["Должность"]:
+                    for c in ("Руководитель", "Должность"):
+                        if _есть(row.get(c)):
+                            info.pop(c)
                 row.update(info)
-                if not info.get("Статус (Checko)"):
-                    row["Статус (Checko)"] = ""   # затираем прошлую осечку
+                пробиты[inn] = row
                 if info["Телефоны (Checko)"]:
                     with_phone += 1
                 print(f"[checko] {done + 1}/{plan} {inn} {name}: "
@@ -423,14 +555,18 @@ def main(argv: list[str] | None = None) -> int:
         print("\n[checko] прерываю, сохраняю собранное")
 
     write_rows(path, columns, rows)
-    left = len(todo) - done
-    print(f"\n[checko] готово: обработано {done}, с телефоном {with_phone}, "
-          f"неудач {failed}")
+    осталось = len(осталось_пробить(rows, args.inn_column))
+    print(f"\n[checko] готово: запросов {done}, с телефоном {with_phone}, "
+          f"неудач {failed}" + (f", повторов скопировано {скопировано}" if скопировано else ""))
+    if учёт.get("за сегодня") is not None:
+        print(f"[checko] по этому ключу сегодня сделано запросов: {учёт['за сегодня']}")
     if stop_reason:
         print(f"[checko] остановка: {stop_reason}")
-    if left > 0:
-        print(f"[checko] осталось на следующий раз: {left} — запустите ту же "
+    if осталось > 0:
+        print(f"[checko] осталось пробить компаний: {осталось} — запустите ту же "
               "команду завтра (или сегодня со вторым ключом: --key <второй>)")
+    else:
+        print("[checko] пробиты все компании файла")
     print(f"[checko] общий файл сохранён: {path}")
 
     if за_прогон and not args.без_порции:
