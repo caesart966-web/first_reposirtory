@@ -21,7 +21,14 @@ ezdxf.options.support_dirs = list(ezdxf.options.support_dirs) + [_FD]
 ezfonts.font_manager.clear()
 ezfonts.font_manager.build()
 
-def sheet_pdf(doc, ox, oy, fmt, k, path, mono=False):
+def _plot_mono(entity, props):
+    """Печать как с monochrome.ctb: цветное — чёрным, серое (подоснова АР, заливки) остаётся серым."""
+    c = props.color
+    if len(c) >= 7 and not (c[1:3] == c[3:5] == c[5:7]):
+        props.color = '#000000' + c[7:]
+
+
+def sheet_pdf(doc, ox, oy, fmt, k, path, mono=True):
     W, H = FORMATS[fmt]
     msp = doc.modelspace()
     box = (ox - 1, oy - 1, ox + W * k + 1, oy + H * k + 1)
@@ -37,11 +44,14 @@ def sheet_pdf(doc, ox, oy, fmt, k, path, mono=False):
     ax = fig.add_axes([0, 0, 1, 1])
     ax.set_axis_off()
     cfg = Configuration(background_policy=BackgroundPolicy.WHITE,
-                        color_policy=ColorPolicy.BLACK if mono else ColorPolicy.COLOR,
+                        color_policy=ColorPolicy.COLOR,
                         lineweight_policy=LineweightPolicy.ABSOLUTE,
                         lineweight_scaling=72 / 25.4, min_lineweight=0.13 * 72 / 25.4)  # мм -> пт (бэкенд берёт мм как пт)
     be = MatplotlibBackend(ax, adjust_figure=False)
-    Frontend(RenderContext(doc), be, config=cfg).draw_layout(msp, finalize=True, filter_func=inside)
+    fe = Frontend(RenderContext(doc), be, config=cfg)
+    if mono:
+        fe.push_property_override_function(_plot_mono)
+    fe.draw_layout(msp, finalize=True, filter_func=inside)
     ax.set_xlim(ox, ox + W * k); ax.set_ylim(oy, oy + H * k)
     ax.set_aspect('equal', adjustable='box')
     fig.savefig(path, format='pdf')

@@ -4,7 +4,7 @@ import ezdxf
 from ezdxf.addons.importer import Importer
 from ezdxf.enums import TextEntityAlignment as TA
 from ezdxf import bbox as ezbbox
-from ru import ru
+from ru import cad
 from stamp import NAMES, DATE
 
 FORMATS = {'A0': (1189, 841), 'A1': (841, 594), 'A2': (594, 420), 'A3': (420, 297), 'A4': (210, 297), 'A3x3': (891, 420)}
@@ -133,7 +133,7 @@ def _blocks(doc):
 GOST_H = {1.6: 1.8, 2.2: 2.5, 3.0: 3.5}     # высоты шрифта — из ряда ГОСТ 2.304
 
 def txt(msp, x, y, s, h, k=1, layer='ПТ_текст', align='BL', rot=0, style='ПТ', color=None):
-    s, h = ru(s), GOST_H.get(h, h)
+    s, h = cad(s), GOST_H.get(h, h)
     al = {'BL': TA.BOTTOM_LEFT, 'BC': TA.BOTTOM_CENTER, 'BR': TA.BOTTOM_RIGHT, 'ML': TA.MIDDLE_LEFT, 'MC': TA.MIDDLE_CENTER,
           'MR': TA.MIDDLE_RIGHT, 'TL': TA.TOP_LEFT, 'TC': TA.TOP_CENTER, 'TR': TA.TOP_RIGHT}[align]
     a = {'height': h * k, 'style': style, 'layer': layer, 'rotation': rot}
@@ -144,7 +144,7 @@ def txt(msp, x, y, s, h, k=1, layer='ПТ_текст', align='BL', rot=0, style=
     return t
 
 def mtxt(msp, x, y, s, h, width, k=1, layer='ПТ_текст', style='ПТ', attach=1, spacing=1.0):
-    s, h = ru(s), GOST_H.get(h, h)
+    s, h = cad(s), GOST_H.get(h, h)
     # пробел перед \P: без него отрисовщик ezdxf склеивает абзац со следующим, если последнее слово перенеслось
     s = s.replace(' \\P', '\\P').replace('\\P', ' \\P')
     m = msp.add_mtext(s, dxfattribs={'char_height': h * k, 'style': style, 'layer': layer, 'width': width * k,
@@ -174,7 +174,7 @@ def ins(msp, name, x, y, k=1, rot=0, layer='ПТ_арматура', color=None):
         a['color'] = color
     return msp.add_blockref(name, (x, y), dxfattribs=a)
 
-def table(msp, x0, y_top, cols, rows, k=1, h=2.5, row_h=8, header_h=None, layer='ПТ_рамка_тонк', tlayer='ПТ_текст', wrap=True, cw=0.62):
+def table(msp, x0, y_top, cols, rows, k=1, h=2.5, row_h=8, header_h=None, layer='ПТ_рамка_тонк', tlayer='ПТ_текст', wrap=True):
     """Таблица: cols — [(заголовок, ширина мм)], rows — список списков строк. Возвращает нижнюю y."""
     header_h = header_h or row_h * 1.5
     W = sum(w for _, w in cols)
@@ -192,7 +192,7 @@ def table(msp, x0, y_top, cols, rows, k=1, h=2.5, row_h=8, header_h=None, layer=
         # высота строки по числу переносов
         nl = 1
         for (title, w), cell in zip(cols, r):
-            cpl = max(1, int((w - 2) / (h * cw)))
+            cpl = max(1, int((w - 2) / (h * 0.62)))
             n = sum(max(1, math.ceil(len(part) / cpl)) for part in str(cell).split('\n'))
             nl = max(nl, n)
         rh = max(row_h, nl * h * 1.55 + 2.5)
@@ -201,7 +201,7 @@ def table(msp, x0, y_top, cols, rows, k=1, h=2.5, row_h=8, header_h=None, layer=
             line(msp, (xx, y), (xx, y - rh * k), layer=layer)
             s = str(cell)
             if s:
-                if len(s) * h * cw < w - 2 and '\n' not in s:
+                if len(s) * h * 0.62 < w - 2 and '\n' not in s:
                     txt(msp, xx + 1.2 * k, y - rh * k / 2, s, h, k, align='ML', layer=tlayer)
                 else:
                     mtxt(msp, xx + 1.2 * k, y - 1.2 * k, s.replace('\n', '\\P'), h, w - 2.4, k, attach=1, layer=tlayer)
