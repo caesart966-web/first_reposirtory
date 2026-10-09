@@ -97,7 +97,7 @@ class D:
     def wall(self, x0, y0, x1, y1, pattern='ANSI31', scale=0.6):
         self.r(x0, y0, x1, y1, 'ПТ_контур', 35)
         self.hatch([(x0, y0), (x1, y0), (x1, y1), (x0, y1)], pattern, scale)
-    def table(self, x, y_top, cols, rows, h=2.2, row_h=6, header_h=None):
+    def table(self, x, y_top, cols, rows, h=2.2, row_h=6, header_h=None, cw=0.62):
         from dxfkit import table as tb
-        yb = tb(self.m, self.ox + x * self.k, self.oy + y_top * self.k, cols, rows, k=self.k, h=h, row_h=row_h, header_h=header_h)
+        yb = tb(self.m, self.ox + x * self.k, self.oy + y_top * self.k, cols, rows, k=self.k, h=h, row_h=row_h, header_h=header_h, cw=cw)
         return (yb - self.oy) / self.k

@@ -174,7 +174,7 @@ def ins(msp, name, x, y, k=1, rot=0, layer='ПТ_арматура', color=None):
         a['color'] = color
     return msp.add_blockref(name, (x, y), dxfattribs=a)
 
-def table(msp, x0, y_top, cols, rows, k=1, h=2.5, row_h=8, header_h=None, layer='ПТ_рамка_тонк', tlayer='ПТ_текст', wrap=True):
+def table(msp, x0, y_top, cols, rows, k=1, h=2.5, row_h=8, header_h=None, layer='ПТ_рамка_тонк', tlayer='ПТ_текст', wrap=True, cw=0.62):
     """Таблица: cols — [(заголовок, ширина мм)], rows — список списков строк. Возвращает нижнюю y."""
     header_h = header_h or row_h * 1.5
     W = sum(w for _, w in cols)
@@ -192,7 +192,7 @@ def table(msp, x0, y_top, cols, rows, k=1, h=2.5, row_h=8, header_h=None, layer=
         # высота строки по числу переносов
         nl = 1
         for (title, w), cell in zip(cols, r):
-            cpl = max(1, int((w - 2) / (h * 0.62)))
+            cpl = max(1, int((w - 2) / (h * cw)))
             n = sum(max(1, math.ceil(len(part) / cpl)) for part in str(cell).split('\n'))
             nl = max(nl, n)
         rh = max(row_h, nl * h * 1.55 + 2.5)
@@ -201,7 +201,7 @@ def table(msp, x0, y_top, cols, rows, k=1, h=2.5, row_h=8, header_h=None, layer=
             line(msp, (xx, y), (xx, y - rh * k), layer=layer)
             s = str(cell)
             if s:
-                if len(s) * h * 0.62 < w - 2 and '\n' not in s:
+                if len(s) * h * cw < w - 2 and '\n' not in s:
                     txt(msp, xx + 1.2 * k, y - rh * k / 2, s, h, k, align='ML', layer=tlayer)
                 else:
                     mtxt(msp, xx + 1.2 * k, y - 1.2 * k, s.replace('\n', '\\P'), h, w - 2.4, k, attach=1, layer=tlayer)
