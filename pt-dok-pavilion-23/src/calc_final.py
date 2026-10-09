@@ -8,13 +8,16 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 rep = json.load(open(os.path.join(HERE, 'hydro_report.json')))
 MS = json.load(open(os.path.join(HERE, 'model_sized.json')))
 
-H_GUAR = 10.0          # гарантированный напор в сети В2 у колодца В2-7, м (ПРИНЯТО до получения ТУ)
-Z_WELL = -2.0          # ось трубы в колодце (≈1,4 м ниже планировки −0,57)
-Z_PUMP = 0.50          # ось насосов
+LV = M['levels']
+H_GUAR = 20.0          # ТУ от 08.10.2026: остаточное давление не менее 0,20 МПа при 40 л/с на вводе 23.1 (граница здания)
+Q_TU = 40.0            # выделенный расход по ТУ, л/с
+Z_WELL = -1.900        # ось вводов на границе здания (наружная грань стены подвала по оси 1), точка ТУ
+Z_PUMP = -1.750        # ось насосов и коллекторов (насосная в подвале, пол −2,200)
 Q_VPV = 2 * 5.2        # 2 струи по 5,2 л/с
 P_PK = 0.20            # требуемое давление у ПК Ду65 (ствол 19 мм, рукав 20 м, 5,2 л/с), МПа
 XI_UU = 0.0011         # потери в УУ Ду150: ΔH = ξ·Q², м/(л/с)²
-L_INPUT = 40.0         # длина ввода от колодца до насосов, м (до получения генплана НВК)
+L_INPUT = 6.0          # ввод от стены до всасывающего коллектора, м
+H_INPUT_LOC = 0.5      # затвор, сетчатый фильтр, переходы на вводе, м
 
 def dh(Q, dn, L):
     return LOCAL * Q * Q * L / PIPES[dn][2]
@@ -77,14 +80,16 @@ for sec in (1, 2):
 def vpv_paths(x_tap, ring_tap):
     """Возвращает длины и Ду двух путей от коллектора насосной до точки врезки стояка в кольцо."""
     # путь A: коллектор → стояк x=3500 (−0,7) → кольцо 1 на восток до x_tap (или через восток в кольцо 2)
-    LA_hdr = 1.0 + 1.7          # от коллектора (+1,0) вниз до кольца
-    LB_hdr = 1.6 + 4.4 + 1.2 + 1.8 + 3.3 + 2.0  # перемычка через тамбур 92 до кольца 2
-    L_e = 2.2 + 3.3 + 6.0 + 3.3 + 2.2          # восточная перемычка
+    zr, y1, y2 = LV['ZB_RING'], LV['Y_RING1'], LV['Y_RING2']
+    xt, x0, x1 = LV['X_VPV_TAP'], LV['X_R0'], LV['X_R1']
+    LA_hdr = (xt - LV['X_HDR']) / 1000 + (zr - LV['Z_HDR']) + (LV['Y_HDR'] - y1) / 1000   # коллектор → кольцо 1
+    LB_hdr = LA_hdr + (xt - x0) / 1000 + 2 * (2.6 - zr) + (y1 - 18600) / 1000 + 0.8 + 1.8 + (16800 - y2) / 1000
+    L_e = 2 * (2.6 - zr) + (y1 - y2) / 1000          # восточная перемычка
     if ring_tap == 1:
-        A = LA_hdr + (x_tap - 3500) / 1000
-        B = LB_hdr + (97400 - 4700) / 1000 + L_e + (97400 - x_tap) / 1000
+        A = LA_hdr + (x_tap - xt) / 1000
+        B = LB_hdr + (x1 - 4700) / 1000 + L_e + (x1 - x_tap) / 1000
     else:
-        A = LA_hdr + (97400 - 3500) / 1000 + L_e + (97400 - x_tap) / 1000
+        A = LA_hdr + (x1 - xt) / 1000 + L_e + (x1 - x_tap) / 1000
         B = LB_hdr + (x_tap - 4700) / 1000
     return A, B
 
@@ -102,9 +107,9 @@ for k in MS['pk']:
     QA, QB, h_ring = split(Q_VPV, LA, LB)
     # стояк Ду80: от кольца (−0,7) до клапана; отвод от кольца 2,5–5,4 м
     z_v = k['z']
-    L_riser = abs(z_v - (-0.7)) + abs((25200 if ring == 1 else 14800) - k['y']) / 1000 + 0.6
+    L_riser = abs(z_v - LV['ZB_RING']) + abs((LV['Y_RING1'] if ring == 1 else LV['Y_RING2']) - k['y']) / 1000 + 0.6
     h_riser = dh(Q_VPV, 80, L_riser)
-    H_hdr = P_PK * 100 + h_ring + h_riser + (z_v - 1.0)     # напор на коллекторе (+1,0), м
+    H_hdr = P_PK * 100 + h_ring + h_riser + (z_v - LV['Z_HDR'])     # напор на напорном коллекторе, м
     vpv.append(dict(name=k['name'], floor=k['floor'], x=k['x'], y=k['y'], z=z_v, LA=round(LA, 1), LB=round(LB, 1),
                     QA=round(QA, 2), QB=round(QB, 2), h_ring=round(h_ring, 2), h_riser=round(h_riser, 2), H_hdr=round(H_hdr, 2)))
 vpv_d = max(vpv, key=lambda r: r['H_hdr'])
@@ -116,11 +121,11 @@ H_aup = {}
 for sec in (1, 2):
     o = out[sec]
     h_uu = XI_UU * o['Qd'] ** 2
-    # выход УУ +1,20; коллектор насосов +1,00; потери в коллекторе и арматуре обвязки 1,5 м при Q_pump
-    H_aup[sec] = o['p_uu'] * 100 + o['extra_m'] + h_uu + (1.20 - Z_PUMP) + 1.5
-H_vpv = vpv_d['H_hdr'] + (1.0 - Z_PUMP) + 1.0
+    # выход УУ −0,600; ось насосов −1,750; потери в коллекторах и арматуре обвязки 1,5 м при Q_pump
+    H_aup[sec] = o['p_uu'] * 100 + o['extra_m'] + h_uu + (LV['Z_UU_OUT'] - Z_PUMP) + 1.5
+H_vpv = vpv_d['H_hdr'] + (LV['Z_HDR'] - Z_PUMP) + 1.0
 H_out = max(max(H_aup.values()), H_vpv)
-h_input = dh(Q_pump, 150, L_INPUT)          # весь расход по одному вводу (второй — в ремонте)
+h_input = dh(Q_pump, 150, L_INPUT) + H_INPUT_LOC     # весь расход по одному вводу (второй — в ремонте)
 H_in = H_GUAR - h_input - (Z_PUMP - Z_WELL)
 H_pump = H_out - H_in
 N_kw = 9.81 * Q_pump / 1000 * H_pump / 0.70
@@ -146,10 +151,23 @@ for r in vpv:
                 best = dmm; break
         d_or = best
     dia.append(dict(name=r['name'], floor=r['floor'], p_dyn=round(p_dyn, 3), p_static=round(p_st, 3), diaphragm=need, d_mm=d_or))
-res = dict(sections=out, vpv=vpv, vpv_dict=vpv_d, Q_aup=round(Q_aup, 2), Q_vpv=Q_VPV, Q_pump=round(Q_pump, 2),
+# подбор оборудования насосной
+MOTORS = [5.5, 7.5, 11, 15, 18.5, 22, 30, 37, 45]
+N_motor = min(m for m in MOTORS if m >= N_kw * 1.15)
+H_sel = math.ceil(H_pump + 2)
+I_nom = round(N_motor * 1000 / (math.sqrt(3) * 380 * 0.88 * 0.91))
+QF = min(a for a in (10, 16, 20, 25, 32, 40, 50, 63, 80, 100) if a >= 1.25 * I_nom)
+SEC_MM = min(sq for sq, i in ((2.5, 25), (4, 32), (6, 42), (10, 55), (16, 75), (25, 95)) if i >= 1.25 * I_nom)
+H_jockey = 5 * math.ceil((H_out + 5 - H_in) / 5) + 5
+pump = dict(Q_m3h=round(Q_pump * 3.6), H=H_sel, N=N_motor, I_nom=I_nom, I_start=7 * I_nom, QF=QF, sec=SEC_MM,
+            jockey=dict(Q_m3h=1.5, H=H_jockey, N=0.55, I_nom=1.4),
+            drain=dict(Q_m3h=10, H=10, N=0.75, I_nom=1.9, n=2),
+            p_jockey_on=round((H_out + 3) / 100, 2), p_jockey_off=round((H_out + 8) / 100, 2), p_main_start=round((H_out - 2) / 100, 2))
+res = dict(sections=out, pump=pump, vpv=vpv, vpv_dict=vpv_d, Q_aup=round(Q_aup, 2), Q_vpv=Q_VPV, Q_pump=round(Q_pump, 2),
            H_aup={k: round(v, 2) for k, v in H_aup.items()}, H_vpv=round(H_vpv, 2), H_out=round(H_out, 2),
            h_input=round(h_input, 2), H_in=round(H_in, 2), H_pump=round(H_pump, 2), N_kw=round(N_kw, 1),
-           H_guar=H_GUAR, P_shut=round(P_shut, 2), diaphragms=dia,
+           H_guar=H_GUAR, Q_tu=Q_TU, over_tu=round(Q_pump - Q_TU, 2), P_shut=round(P_shut, 2), diaphragms=dia,
+           z_pump=Z_PUMP, z_in=Z_WELL, L_input=L_INPUT,
            volume_m3=round(Q_pump * 3600 / 1000, 1))
 json.dump(res, open(os.path.join(HERE, 'calc_final.json'), 'w'), ensure_ascii=False, indent=1)
 for sec in (1, 2):
@@ -159,5 +177,6 @@ for sec in (1, 2):
 print('ВПВ диктующий', vpv_d)
 print(f"Насосы: Q={Q_pump:.1f} л/с ({Q_pump*3.6:.0f} м³/ч), H вых={H_out:.1f} м, H вх={H_in:.1f} м, H насоса={H_pump:.1f} м, N≈{N_kw:.1f} кВт")
 print('H по секциям', H_aup, 'H ВПВ', round(H_vpv, 2))
+print('Подбор:', pump, 'превышение ТУ, л/с:', round(Q_pump - Q_TU, 2))
 print('Диафрагмы:', [(d['name'], d['p_dyn'], d['d_mm']) for d in dia if d['diaphragm']][:40])
 print('Без диафрагм:', [(d['name'], d['p_dyn']) for d in dia if not d['diaphragm']])

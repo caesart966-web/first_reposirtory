@@ -2,26 +2,29 @@
 Координаты — мм в системе DWG АР (ось 1: x=0, ось А: y=0), отметки — м.
 """
 import json, math, os
-from geom import rooms, FREEZERS, z_roof_ceiling, GROUPS, bb, pip
+from geom import rooms, FREEZERS, z_roof_beam_top, GROUPS, bb, pip
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 F1 = rooms('f1'); F2 = rooms('f2')
 
 # ------------------------------------------------------------------ отметки
-Z1_BR = 3.250      # ось распределительных трубопроводов 1 этажа
-Z1_SPR = 3.150     # розетка оросителя (розеткой вниз), 0,215 м от низа плиты +3,365
+Z1_BR = 3.360      # ось распределительных трубопроводов 1 этажа — между балками, 0,11 м ниже профлиста +3,470
+Z1_SPR = 3.250     # розетка оросителя (розеткой вниз): 0,22 м от низа профлиста, на 0,05 м ниже низа балок +3,300
 Z1_MAIN = 2.900    # ось питающих трубопроводов 1 этажа (под балками)
-Z2_MAIN = 6.900    # ось питающих трубопроводов 2 этажа
-def z2_br(y):      # ось распределительного трубопровода 2 этажа (по уклону покрытия)
-    return round(z_roof_ceiling(y) - 0.30, 3)
-def z2_spr(y):     # розетка оросителя розеткой вверх, 0,20 м до низа профлиста
-    return round(z_roof_ceiling(y) - 0.20, 3)
-ZB_RING = -0.700   # кольцо ВПВ в техническом подвале
+Z2_MAIN = 6.850    # ось питающих трубопроводов 2 этажа (под балками покрытия, низ балок у питающих ≥ +7,02)
+def z2_br(y):      # ось распределительного трубопровода 2 этажа: под прогонами, по уклону покрытия
+    return round(z_roof_beam_top(y) - 0.06, 3)
+def z2_spr(y):     # розетка оросителя розеткой вверх: между прогонами, 0,18 м до низа профлиста
+    return round(z2_br(y) + 0.10, 3)
+ZB_RING = -0.450   # кольцо ВПВ в техническом подвале (под балками −0,248, вдоль стены коридора)
 Z_PK = 1.35        # ось клапана ПК над полом
 
 Y_MAIN_N1, Y_MAIN_S1 = 24600, 15400      # питающие 1 этажа (в зонах подготовки)
 Y_MAIN_N2, Y_MAIN_S2 = 27500, 12500      # питающие 2 этажа (в холлах)
-X_SRC = 2000                              # стояки от УУ в пом. 05
+X_SRC = 2000                              # стояк В21 от УУ-1 (насосная в подвале, проход в пом. 05)
+X_SRC2 = 3200                             # стояк В22 от УУ-2
+Y_SRC = 23000
+Z_UU_OUT = -0.600                         # выход узлов управления
 
 sprinklers = []   # dict(x,y,z,sec,room,floor,grp,kind)
 pipes = []        # dict(a:[x,y,z], b:[x,y,z], sys, sec, role)
@@ -241,7 +244,7 @@ for x in cols:
     pipe((x, 20000, Z1_BR), (x, 20000, Z1_SPR), 'В21', SEC1, 'спуск')
 
 # тамбуры 92 и 93: 2×2
-def tambour(xa, ya, xb, yb, feed, room):
+def tambour(xa, ya, xb, yb, feed, room, kind='тамбур'):
     cols, rows = grid_room(xa, ya, xb, yb, 4.0e3, 12e6)
     if len(cols) * len(rows) < 4 and ((xb - xa) / 2 > 2000 or (yb - ya) / 2 > 2000):
         cols = even(xa, xb, 2); rows = even(ya, yb, 2)
@@ -252,10 +255,12 @@ def tambour(xa, ya, xb, yb, feed, room):
     for x in cols:
         pipe((fx, ym, Z1_BR), (x, ym, Z1_BR), 'В21', SEC1, 'распределительный')
         for y in rows:
-            spr(x, y, SEC1, room, 1, 2, 'тамбур')
+            spr(x, y, SEC1, room, 1, 2, kind)
             pipe((x, ym, Z1_BR), (x, y, Z1_BR), 'В21', SEC1, 'распределительный')
             pipe((x, y, Z1_BR), (x, y, Z1_SPR), 'В21', SEC1, 'спуск')
 tambour(-125, 17875, 4125, 22125, (X_SRC, Y_MAIN_N1), '92')
+# пом. 05 (КУИ): насосная перенесена в подвал, помещение защищается АУПТ (группа 2), через него проходят стояки
+tambour(-125, 22225, 4125, 28125, (X_SRC, Y_MAIN_N1), '05', 'КУИ')
 tambour(93875, 17875, 98125, 22125, (96000, Y_MAIN_N1), '93')
 
 # ---- питающие трубопроводы секции 1 (по оси, сегменты строятся по точкам врезок)
@@ -280,9 +285,9 @@ def seg_main(y, xs, z, sys, sec):
 seg_main(Y_MAIN_N1, xs_n, Z1_MAIN, 'В21', SEC1)
 seg_main(Y_MAIN_S1, xs_s, Z1_MAIN, 'В21', SEC1)
 # стояк секции 1 от УУ-1 (отм. +1,200 — выход УУ) до питающего
-SRC1 = (X_SRC, 23400, 1.200)
-pipe(SRC1, (X_SRC, 23400, Z1_MAIN), 'В21', SEC1, 'стояк')
-pipe((X_SRC, 23400, Z1_MAIN), (X_SRC, Y_MAIN_N1, Z1_MAIN), 'В21', SEC1, 'питающий')
+SRC1 = (X_SRC, Y_SRC, Z_UU_OUT)
+pipe(SRC1, (X_SRC, Y_SRC, Z1_MAIN), 'В21', SEC1, 'стояк')
+pipe((X_SRC, Y_SRC, Z1_MAIN), (X_SRC, Y_MAIN_N1, Z1_MAIN), 'В21', SEC1, 'питающий')
 
 # ================================================================= 2 ЭТАЖ (секция 2)
 SEC2 = 2
@@ -379,15 +384,15 @@ for x in c_c:
 xs_n2 = [round(p['a'][0]) for p in pipes if p['sec'] == SEC2 and p['role'] == 'подъём' and abs(p['a'][1] - Y_MAIN_N2) < 1]
 xs_s2 = [round(p['a'][0]) for p in pipes if p['sec'] == SEC2 and p['role'] == 'подъём' and abs(p['a'][1] - Y_MAIN_S2) < 1]
 X_CROSS2 = 2400
-seg_main(Y_MAIN_N2, xs_n2 + [X_CROSS2, X_SRC + 900], Z2_MAIN, 'В22', SEC2)
+seg_main(Y_MAIN_N2, xs_n2 + [X_CROSS2, X_SRC2], Z2_MAIN, 'В22', SEC2)
 seg_main(Y_MAIN_S2, xs_s2 + [X_CROSS2], Z2_MAIN, 'В22', SEC2)
 pipe((X_CROSS2, Y_MAIN_N2, Z2_MAIN), (X_CROSS2, Y_MAIN_S2, Z2_MAIN), 'В22', SEC2, 'питающий')
-SRC2 = (X_SRC + 900, 23400, 1.200)
-pipe(SRC2, (X_SRC + 900, 23400, Z2_MAIN), 'В22', SEC2, 'стояк')
-pipe((X_SRC + 900, 23400, Z2_MAIN), (X_SRC + 900, Y_MAIN_N2, Z2_MAIN), 'В22', SEC2, 'питающий')
+SRC2 = (X_SRC2, Y_SRC, Z_UU_OUT)
+pipe(SRC2, (X_SRC2, Y_SRC, Z2_MAIN), 'В22', SEC2, 'стояк')
+pipe((X_SRC2, Y_SRC, Z2_MAIN), (X_SRC2, Y_MAIN_N2, Z2_MAIN), 'В22', SEC2, 'питающий')
 
 # ================================================================= ВПВ (В2)
-Y_RING1, Y_RING2 = 25200, 14800
+Y_RING1, Y_RING2 = 22750, 17250     # кольца у внутренних стен коридоров (коридоры y 22300–27700 и 12300–17700)
 PK_AX_1 = ['3', '5', '7', '9', '10', '12', '14', '16']
 PK_AX_2 = ['3', '7', '12', '16']
 PK_AX_B = [16000, 44000, 82000]
@@ -422,27 +427,27 @@ for x in PK_AX_B:
 for x in [16000, 54000, 82000]:
     add_pk(x, 17650, -2.2, 0, (x, 17650), 2, 'S')
 # кольца в коридорах и перемычки
-X_R0, X_R1 = 600, 97400
+X_R0, X_R1 = 3700, 97400          # кольцо 1 начинается в насосной (x 300–8300), кольцо 2 — у перемычки x=4700
+X_VPV_TAP = 5200                  # врезка кольца 1 в напорный коллектор насосной
+X_HDR, Y_HDR, Z_HDR = 4400, 23600, -1.750   # напорный коллектор (точка отбора на ВПВ)
 for ring, yr in ((1, Y_RING1), (2, Y_RING2)):
-    xs = sorted(set([X_R0, X_R1] + ring_taps[ring] + [7000, 28000, 49000, 70000, 91000]))
-    xs = sorted(set(xs + ([4700] if ring == 2 else [3500])))
+    x0 = X_R0 if ring == 1 else 4700
+    xs = sorted(set([x0, X_R1] + ring_taps[ring] + [7000, 28000, 49000, 70000, 91000] + ([X_VPV_TAP] if ring == 1 else [])))
     for i in range(len(xs) - 1):
         pipe((xs[i], yr, ZB_RING), (xs[i + 1], yr, ZB_RING), 'В2', 0, 'кольцо ВПВ')
-# ввод кольца А: из пом. 05 вниз в коридор 1 (x=3500)
-pipe((3500, 25200, 1.0), (3500, 25200, ZB_RING), 'В2', 0, 'стояк ВПВ')
-# кольцо Б: из пом. 05 через тамбур 92 и зал 97 в коридор 2
-path_b = [(3500, 23000, 1.0), (3500, 23000, 2.600), (3500, 18600, 2.600), (4700, 18600, 2.600), (4700, 16800, 2.600),
+# питание кольца от напорного коллектора насосной
+path_hdr = [(X_HDR, Y_HDR, Z_HDR), (X_VPV_TAP, Y_HDR, Z_HDR), (X_VPV_TAP, Y_HDR, ZB_RING), (X_VPV_TAP, Y_RING1, ZB_RING)]
+for a, b in zip(path_hdr, path_hdr[1:]):
+    pipe(a, b, 'В2', 0, 'перемычка ВПВ')
+# западная перемычка: из насосной вверх в пом. 05, через тамбур 92 и зал 97 вниз в коридор 2
+path_b = [(X_R0, Y_RING1, ZB_RING), (X_R0, Y_RING1, 2.600), (X_R0, 18600, 2.600), (4700, 18600, 2.600), (4700, 16800, 2.600),
           (4700, 16800, ZB_RING), (4700, Y_RING2, ZB_RING)]
 for a, b in zip(path_b, path_b[1:]):
     pipe(a, b, 'В2', 0, 'перемычка ВПВ')
 # восточная перемычка через СУ М (99), тамбур 93, СУ Ж (100)
-path_e = [(X_R1, Y_RING1, ZB_RING), (X_R1, 23000, ZB_RING), (X_R1, 23000, 2.600), (X_R1, 17000, 2.600),
-          (X_R1, 17000, ZB_RING), (X_R1, Y_RING2, ZB_RING)]
+path_e = [(X_R1, Y_RING1, ZB_RING), (X_R1, Y_RING1, 2.600), (X_R1, Y_RING2, 2.600), (X_R1, Y_RING2, ZB_RING)]
 for a, b in zip(path_e, path_e[1:]):
     pipe(a, b, 'В2', 0, 'перемычка ВПВ')
-# западный конец кольца 1 у x=600 соединён со стояком x=3500 по кольцу (x 600..3500 включены в сегменты)
-for ring, yr in ((1, Y_RING1),):
-    pass
 
 # ---- разбиение сегментов в точках врезок (Т-образные узлы)
 def split_tees(pipes):
@@ -491,7 +496,9 @@ pipes = _ded
 
 model = dict(sprinklers=sprinklers, pipes=pipes, pk=pk,
              src={'1': SRC1, '2': SRC2},
-             levels=dict(Z1_BR=Z1_BR, Z1_SPR=Z1_SPR, Z1_MAIN=Z1_MAIN, Z2_MAIN=Z2_MAIN, ZB_RING=ZB_RING))
+             levels=dict(Z1_BR=Z1_BR, Z1_SPR=Z1_SPR, Z1_MAIN=Z1_MAIN, Z2_MAIN=Z2_MAIN, ZB_RING=ZB_RING, Z_UU_OUT=Z_UU_OUT,
+                         Y_RING1=Y_RING1, Y_RING2=Y_RING2, X_R0=X_R0, X_R1=X_R1, X_VPV_TAP=X_VPV_TAP,
+                         X_HDR=X_HDR, Y_HDR=Y_HDR, Z_HDR=Z_HDR, X_SRC=X_SRC, X_SRC2=X_SRC2, Y_SRC=Y_SRC))
 json.dump(model, open(os.path.join(HERE, 'model.json'), 'w'), ensure_ascii=False)
 from collections import Counter
 print('оросители:', Counter(s['sec'] for s in sprinklers), 'всего', len(sprinklers))

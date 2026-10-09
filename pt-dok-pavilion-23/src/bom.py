@@ -65,17 +65,25 @@ def run():
         spr_outlets['DN' if s['floor'] == 1 else 'UP'] += 1
     # опоры: Ду≤50 — шаг 3 м, Ду65..100 — 4 м, Ду125..150 — 6 м (горизонтальные участки); стояки — 1 на этаж
     hangers = Counter()
-    for (sysn, dn), l in length.items():
-        pass
+    typed = Counter()        # (тип узла крепления, Ду) -> шт.
+    def htype(p):
+        z = max(p['a'][2], p['b'][2])
+        if p['sys'] == 'В22' and z > 6.0:
+            return 'прогон'          # к прогонам/балкам покрытия — струбцина
+        if p['sys'] == 'В2' and z < 0:
+            return 'подвал'          # к перекрытию над подвалом
+        return 'перекрытие'          # к монолитному перекрытию по профлисту
     for p in M['pipes']:
         l = L(p); dn = p['dn']
         if abs(p['a'][2] - p['b'][2]) > 0.05 and abs(p['a'][0] - p['b'][0]) < 1 and abs(p['a'][1] - p['b'][1]) < 1:
             if l > 1.0:
-                hangers[dn] += max(1, round(l / 3.0))
+                n = max(1, round(l / 3.0))
+                hangers[dn] += n; typed[('стояк', dn)] += n
             continue
         step = 3.0 if dn <= 50 else 4.0 if dn <= 100 else 6.0
-        hangers[dn] += l / step
+        hangers[dn] += l / step; typed[(htype(p), dn)] += l / step
     hangers = Counter({d: math.ceil(v) for d, v in hangers.items()})
+    typed = Counter({k: math.ceil(v) for k, v in typed.items()})
     # проходы через стены (смена помещения вдоль горизонтального участка) и перекрытия
     R1, R2 = rooms('f1'), rooms('f2')
     def room_at(x, y, fl):
@@ -103,7 +111,7 @@ def run():
                     prev = r
         else:
             z0, z1 = sorted((a[2], b[2]))
-            for zs in (-0.25, 3.5):
+            for zs in (-0.10, 3.55):
                 if z0 < zs < z1:
                     slabs[p['dn']] += 1
     out = dict(
@@ -113,6 +121,7 @@ def run():
         reducers={f'{s}|{a}x{b}': v for (s, a, b), v in sorted(reducers.items())},
         caps={f'{s}|{d}': v for (s, d), v in sorted(caps.items())},
         spr=dict(spr_outlets), hangers={str(d): v for d, v in sorted(hangers.items())},
+        hangers_typed={f'{t}|{d}': v for (t, d), v in sorted(typed.items(), key=lambda kv: (kv[0][0], kv[0][1]))},
         walls={str(d): v for d, v in sorted(walls.items())}, slabs={str(d): v for d, v in sorted(slabs.items())},
         pk=len(M['pk']), spr_by_sec=dict(Counter(str(s['sec']) for s in M['sprinklers'])),
         spr_by_floor_room=dict(Counter(f"{s['floor']}|{s['room']}" for s in M['sprinklers'])),

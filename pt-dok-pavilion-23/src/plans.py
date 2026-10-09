@@ -108,13 +108,13 @@ def plan_sheet(doc, msp, ox, oy, floor, sheet_no, sheets_total, title, notes, le
     if floor == 1:
         for f in FREEZERS:
             hatch_rect(msp, S, f[0], f[1], f[2], f[3])
-        for num, lab in (('05', 'Насосная станция\nпожаротушения\n(пом. 05)'), ('06', 'ВРУ — АУПП\nсм. лист 13'), ('99', 'СУ'), ('100', 'СУ')):
+        for num, lab in (('06', 'ВРУ — АУПП\nсм. лист 13'), ('99', 'СУ'), ('100', 'СУ')):
             x0, y0, x1, y1 = bb(R1[num]['poly'])
             hatch_rect(msp, S, x0, y0, x1, y1, 'ANSI37' if num == '06' else 'ANSI31', 80)
         x0, y0, x1, y1 = bb(R1['06']['poly'])
         mtxt(msp, *S.p((x0 + x1) / 2, (y0 + y1) / 2), 'ВРУ\\PАУПП\\Pсм. л. 13', 2.0, 30, K, attach=5)
         x0, y0, x1, y1 = bb(R1['05']['poly'])
-        mtxt(msp, *S.p(x0 + 200, y1 - 250), 'Насосная\\Pпожаро-\\Pтушения', 1.8, 12, K, attach=1)
+        mtxt(msp, *S.p(x0 + 200, y1 - 250), 'Пом. 05\\Pстояки из\\Pнасосной', 1.8, 14, K, attach=1)
     if floor == 2:
         R2 = rooms('f2')
         x0, y0, x1, y1 = bb(R2['35']['poly'])
@@ -190,7 +190,7 @@ def plan_sheet(doc, msp, ox, oy, floor, sheet_no, sheets_total, title, notes, le
     if floor == 2:
         sys_tags(27500, 3000, 96000, 'В22'); sys_tags(12500, 3000, 96000, 'В22')
     if floor == 0:
-        sys_tags(25200, 1000, 97000, 'В2'); sys_tags(14800, 5000, 97000, 'В2')
+        sys_tags(M['levels']['Y_RING1'], 9000, 97000, 'В2'); sys_tags(M['levels']['Y_RING2'], 5000, 97000, 'В2')
 
     # ---- отметки
     def elev(x, y, s):
@@ -202,12 +202,12 @@ def plan_sheet(doc, msp, ox, oy, floor, sheet_no, sheets_total, title, notes, le
             elev(x - 1500, 15400, '+2,900 (ось В21)')
     if floor == 2:
         for x in (12000, 60000, 92000):
-            elev(x, 27500, '+6,900 (ось В22)')
-            elev(x - 1500, 12500, '+6,900 (ось В22)')
+            elev(x, 27500, '+6,850 (ось В22)')
+            elev(x - 1500, 12500, '+6,850 (ось В22)')
     if floor == 0:
         for x in (12000, 60000):
-            elev(x, 25200, '−0,700 (ось В2)')
-            elev(x, 14800, '−0,700 (ось В2)')
+            elev(x, M['levels']['Y_RING1'] + 300, '−0,450 (ось В2)')
+            elev(x, M['levels']['Y_RING2'] - 900, '−0,450 (ось В2)')
 
     # ---- размерные цепочки: оси + колонки оросителей (по северу и югу), ряды (запад/восток)
     ax = sorted(AX_X.values())
@@ -230,8 +230,8 @@ def plan_sheet(doc, msp, ox, oy, floor, sheet_no, sheets_total, title, notes, le
         dim_chain(msp, [S.p(0, y)[1] for y in (27500, 28000)], S.p(30500, 0)[0], False)
         dim_chain(msp, [S.p(0, y)[1] for y in (12000, 12500)], S.p(30500, 0)[0], False)
     if floor == 0:
-        dim_chain(msp, [S.p(0, y)[1] for y in (22000, 25200, 28000)], S.p(30500, 0)[0], False)
-        dim_chain(msp, [S.p(0, y)[1] for y in (12000, 14800, 18000)], S.p(30500, 0)[0], False)
+        dim_chain(msp, [S.p(0, y)[1] for y in (22000, M['levels']['Y_RING1'])], S.p(30500, 0)[0], False)
+        dim_chain(msp, [S.p(0, y)[1] for y in (M['levels']['Y_RING2'], 18000)], S.p(30500, 0)[0], False)
 
     # ---- примечания и условные обозначения (справа)
     nx = ox + 1072 * K; ny = oy + 812 * K
