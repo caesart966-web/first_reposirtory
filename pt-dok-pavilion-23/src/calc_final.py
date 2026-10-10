@@ -10,7 +10,12 @@ MS = json.load(open(os.path.join(HERE, 'model_sized.json')))
 
 LV = M['levels']
 H_GUAR = 20.0          # ТУ от 08.10.2026: остаточное давление не менее 0,20 МПа при 40 л/с на вводе 23.1 (граница здания)
-Q_TU = 40.0            # выделенный расход по ТУ, л/с
+Q_TU = 41.0            # 40 л/с по ТУ, увеличение до 41 л/с согласовано заказчиком 10.10.2026
+P_IN_MAX = 0.60        # максимальное давление в точке 23.1 (заказчик, 10.10.2026), МПа
+P_PRV = 0.20           # уставка регуляторов давления «после себя» на вводах, МПа
+KV_PRV = 350.0         # Kv регулятора Ду150 в полностью открытом положении, м³/ч
+P_PK_MAX = 0.40        # предельное давление у клапана ПК при работе
+P_HYDRO_MAX = 0.90     # предельное гидростатическое давление у нижнего ПК
 Z_WELL = -1.900        # ось вводов на границе здания (наружная грань стены подвала по оси 1), точка ТУ
 Z_PUMP = -1.750        # ось насосов и коллекторов (насосная в подвале, пол −2,200)
 Q_VPV = 2 * 5.2        # 2 струи по 5,2 л/с
@@ -21,6 +26,10 @@ H_INPUT_LOC = 0.5      # затвор, сетчатый фильтр, перех
 
 def dh(Q, dn, L):
     return LOCAL * Q * Q * L / PIPES[dn][2]
+
+def h_prv(Q):
+    """потери в открытом регуляторе давления, м: ΔP = (Q/Kv)², бар"""
+    return (Q * 3.6 / KV_PRV) ** 2 * 10.2
 
 out = {}
 for sec in (1, 2):
@@ -126,35 +135,59 @@ for sec in (1, 2):
 H_vpv = vpv_d['H_hdr'] + (LV['Z_HDR'] - Z_PUMP) + 1.0
 H_out = max(max(H_aup.values()), H_vpv)
 h_input = dh(Q_pump, 150, L_INPUT) + H_INPUT_LOC     # весь расход по одному вводу (второй — в ремонте)
-H_in = H_GUAR - h_input - (Z_PUMP - Z_WELL)
+h_reg = h_prv(Q_pump)                              # регулятор открыт полностью при давлении на вводе 0,20 МПа
+H_in = H_GUAR - h_input - h_reg - (Z_PUMP - Z_WELL)
 H_pump = H_out - H_in
 N_kw = 9.81 * Q_pump / 1000 * H_pump / 0.70
-# давление у ПК при работе насосов на расчётном режиме и при нулевой подаче (запирание ~1,15·H)
-P_shut = (H_in + 1.15 * H_pump)
+H_sel = math.ceil(H_pump + 2)
+H0 = 1.15 * H_sel                                  # напор насоса при нулевой подаче
+def H_curve(Q):
+    return H0 - (H0 - H_sel) * (Q / Q_pump) ** 2
+def H_in_at(Q):
+    return H_GUAR - dh(Q, 150, L_INPUT) - H_INPUT_LOC * (Q / Q_pump) ** 2 - h_prv(Q) - (Z_PUMP - Z_WELL)
+# гидростатика: регулятор держит за собой не более 0,20 МПа, насос работает на закрытую задвижку
+P_shut = P_PRV * 100 - (Z_PUMP - Z_WELL) + H0
+# без регуляторов при 0,60 МПа на вводе — для обоснования
+P_shut_noprv = P_IN_MAX * 100 - (Z_PUMP - Z_WELL) + H0
+H_act = H_in + H_sel                               # напор за насосной на расчётном режиме (АУПТ + ВПВ)
+H_vpv_only = H_in_at(Q_VPV) + H_curve(Q_VPV) - 1.0 * (Q_VPV / Q_pump) ** 2   # работают только 2 струи ВПВ
+D = 0.065; V_PK = 5.2e-3 / (math.pi / 4 * D * D)
+def h_dia(dmm):
+    # ΔH = ζ·v²/2g, ζ диафрагмы (Идельчик) ≈ (1/(μ·m) − 1)², m=(d/D)², μ≈0,62
+    m = (dmm / 1000 / D) ** 2
+    return (1 / (0.62 * m) - 1) ** 2 * V_PK * V_PK / 19.62
 dia = []
 for r in vpv:
-    p_dyn = (H_out - (r['z'] - Z_PUMP) - r['h_ring'] - r['h_riser']) / 100
-    p_st = (P_shut - (r['z'] - Z_PUMP)) / 100
-    need = p_dyn > 0.40
-    # диаметр отверстия диафрагмы: гасит избыток (p_dyn − 0,20) при q=5,2 л/с на ПК Ду65
-    d_or = None
+    lift = r['z'] - Z_PUMP
+    p_dyn = (H_act - lift - r['h_ring'] - r['h_riser']) / 100
+    p_vpv = (H_vpv_only - lift - r['h_ring'] - r['h_riser']) / 100
+    p_st = (P_shut - lift) / 100
+    p_hi, p_lo = max(p_dyn, p_vpv), min(p_dyn, p_vpv)
+    need = p_hi > P_PK_MAX
+    d_or = h_d = None
     if need:
-        dH = (p_dyn - P_PK) * 100
-        # ΔH = ζ·v²/2g, ζ диафрагмы (Идельчик) ≈ (1/(μ·m) − 1)², m=(d/D)², μ≈0,62
-        D = 0.065; best = None
-        for dmm in range(10, 66):
-            m = (dmm / 1000 / D) ** 2
-            zeta = (1 / (0.62 * m) - 1) ** 2
-            v = 5.2e-3 / (math.pi / 4 * D * D)
-            h = zeta * v * v / 19.62
-            if h <= dH:
-                best = dmm; break
-        d_or = best
-    dia.append(dict(name=r['name'], floor=r['floor'], p_dyn=round(p_dyn, 3), p_static=round(p_st, 3), diaphragm=need, d_mm=d_or))
+        # диафрагма гасит избыток над 0,40 МПа с запасом 0,01 МПа; на расчётном режиме у клапана остаётся не менее 0,20 МПа
+        dH_min = (p_hi - P_PK_MAX) * 100 + 1.0
+        d_or = next(dmm for dmm in range(64, 9, -1) if h_dia(dmm) >= dH_min)
+        h_d = h_dia(d_or)
+        assert p_lo - h_d / 100 >= P_PK, (r['name'], p_lo, h_d)
+    dia.append(dict(name=r['name'], floor=r['floor'], z=r['z'], p_dyn=round(p_dyn, 3), p_vpv=round(p_vpv, 3),
+                    p_static=round(p_st, 3), p_static_noprv=round((P_shut_noprv - lift) / 100, 3),
+                    diaphragm=need, d_mm=d_or, h_dia=round(h_d, 2) if h_d else None,
+                    p_after=round((p_hi * 100 - h_d) / 100, 3) if h_d else round(p_hi, 3)))
+# на этаже — один диаметр отверстия (наименьший из требуемых), с проверкой каждого ПК на обоих режимах
+for fl in sorted({d['floor'] for d in dia if d['diaphragm']}):
+    grp = [d for d in dia if d['floor'] == fl and d['diaphragm']]
+    d_fl = min(d['d_mm'] for d in grp)
+    for d in grp:
+        h_d = h_dia(d_fl)
+        p_hi, p_lo = max(d['p_dyn'], d['p_vpv']), min(d['p_dyn'], d['p_vpv'])
+        assert p_lo - h_d / 100 >= P_PK and p_hi - h_d / 100 <= P_PK_MAX, (d['name'], d_fl)
+        d.update(d_mm=d_fl, h_dia=round(h_d, 2), p_after=round(p_hi - h_d / 100, 3), p_after_lo=round(p_lo - h_d / 100, 3))
+assert max(d['p_static'] for d in dia) <= P_HYDRO_MAX
 # подбор оборудования насосной
 MOTORS = [5.5, 7.5, 11, 15, 18.5, 22, 30, 37, 45]
 N_motor = min(m for m in MOTORS if m >= N_kw * 1.15)
-H_sel = math.ceil(H_pump + 2)
 I_nom = round(N_motor * 1000 / (math.sqrt(3) * 380 * 0.88 * 0.91))
 QF = min(a for a in (10, 16, 20, 25, 32, 40, 50, 63, 80, 100) if a >= 1.25 * I_nom)
 SEC_MM = min(sq for sq, i in ((2.5, 25), (4, 32), (6, 42), (10, 55), (16, 75), (25, 95)) if i >= 1.25 * I_nom)
@@ -165,8 +198,10 @@ pump = dict(Q_m3h=round(Q_pump * 3.6), H=H_sel, N=N_motor, I_nom=I_nom, I_start=
             p_jockey_on=round((H_out + 3) / 100, 2), p_jockey_off=round((H_out + 8) / 100, 2), p_main_start=round((H_out - 2) / 100, 2))
 res = dict(sections=out, pump=pump, vpv=vpv, vpv_dict=vpv_d, Q_aup=round(Q_aup, 2), Q_vpv=Q_VPV, Q_pump=round(Q_pump, 2),
            H_aup={k: round(v, 2) for k, v in H_aup.items()}, H_vpv=round(H_vpv, 2), H_out=round(H_out, 2),
-           h_input=round(h_input, 2), H_in=round(H_in, 2), H_pump=round(H_pump, 2), N_kw=round(N_kw, 1),
+           h_input=round(h_input, 2), h_prv=round(h_reg, 2), H_in=round(H_in, 2), H_pump=round(H_pump, 2), N_kw=round(N_kw, 1),
            H_guar=H_GUAR, Q_tu=Q_TU, over_tu=round(Q_pump - Q_TU, 2), P_shut=round(P_shut, 2), diaphragms=dia,
+           P_in_max=P_IN_MAX, P_prv=P_PRV, Kv_prv=KV_PRV, H0=round(H0, 2), H_act=round(H_act, 2), H_vpv_only=round(H_vpv_only, 2),
+           P_shut_noprv=round(P_shut_noprv, 2),
            z_pump=Z_PUMP, z_in=Z_WELL, L_input=L_INPUT,
            volume_m3=round(Q_pump * 3600 / 1000, 1))
 json.dump(res, open(os.path.join(HERE, 'calc_final.json'), 'w'), ensure_ascii=False, indent=1)
@@ -178,5 +213,7 @@ print('ВПВ диктующий', vpv_d)
 print(f"Насосы: Q={Q_pump:.1f} л/с ({Q_pump*3.6:.0f} м³/ч), H вых={H_out:.1f} м, H вх={H_in:.1f} м, H насоса={H_pump:.1f} м, N≈{N_kw:.1f} кВт")
 print('H по секциям', H_aup, 'H ВПВ', round(H_vpv, 2))
 print('Подбор:', pump, 'превышение ТУ, л/с:', round(Q_pump - Q_TU, 2))
-print('Диафрагмы:', [(d['name'], d['p_dyn'], d['d_mm']) for d in dia if d['diaphragm']][:40])
-print('Без диафрагм:', [(d['name'], d['p_dyn']) for d in dia if not d['diaphragm']])
+print(f"Регулятор: h={h_reg:.2f} м; H0={H0:.1f} м; напор за насосной: расч. {H_act:.1f} м, только ВПВ {H_vpv_only:.1f} м; "
+      f"гидростатика {P_shut:.1f} м (без регуляторов {P_shut_noprv:.1f} м)")
+print('Диафрагмы:', [(d['name'], d['p_dyn'], d['p_vpv'], d['d_mm'], d['p_after']) for d in dia if d['diaphragm']])
+print('Без диафрагм:', [(d['name'], d['p_dyn'], d['p_vpv']) for d in dia if not d['diaphragm']])

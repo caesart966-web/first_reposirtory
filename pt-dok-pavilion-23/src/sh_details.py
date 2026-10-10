@@ -6,8 +6,14 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SP = json.load(open(os.path.join(HERE, 'spec.json')))
 POS = SP['POS']
 CF = json.load(open(os.path.join(HERE, 'calc_final.json')))
-_pk = [x['p_dyn'] for x in CF['diaphragms']]
-PK_RANGE = f"{min(_pk):.2f}…{max(_pk):.2f}".replace('.', ',')
+_FL = {0: 'в подвале', 1: 'на 1 этаже', 2: 'на 2 этаже'}
+_dia = {}
+for x in CF['diaphragms']:
+    if x['diaphragm']:
+        _dia[x['floor']] = x['d_mm']
+DIA_TEXT = ('Между клапаном и соединительной головкой — диафрагма Ду65 (поз. %s): ' % ', '.join(str(POS[f'dia{v}']) for v in sorted(set(_dia.values()), reverse=True))
+            + ', '.join(f"{_FL[f]} d={v} мм" for f, v in sorted(_dia.items(), reverse=True))
+            + '; ' + ', '.join(_FL[f] for f in (0, 1, 2) if f not in _dia) + ' — без диафрагм. Давление у клапана — не более 0,40 МПа.')
 
 def sprinkler(d, x, y, sc, up=False):
     """ороситель (вид сбоку): штуцер, дужки, розетка; (x,y) — точка присоединения к бобышке"""
@@ -172,7 +178,7 @@ def details2(msp, ox, oy, sheet_no, total):
     d.b('DOORC', cx1 - 2, fl + 1800 / k, 1.0); d.t(cx1 + 10, fl + 1800 / k, 'ИО 102-20 — положение дверцы (поз. %d)' % POS['door'], 1.8, 'ML')
     d.mt(x0, y0 - 5, 'Клапаны КПЛМ 65-1 (поз. %d) — ось на высоте 1,35 м от пола; рукав Ду65 L=20 м (поз. %d) присоединён к клапану, '
          'ствол РС-70 (поз. %d). Головки клапанов и рукавов — одного типа. Шкафы — навесные, на колонне/стене со стороны прохода; '
-         f'дверца открывается на угол не менее 90°. Давление у ПК {PK_RANGE} МПа (≤0,40), диафрагмы не требуются.' % (POS['kpk'], POS['hose'], POS['nozzle']), 2.0, 240)
+         'дверца открывается на угол не менее 90°. ' % (POS['kpk'], POS['hose'], POS['nozzle']) + DIA_TEXT, 2.0, 240)
     # ---------------- Узел 8. Промывка и опорожнение М 1:10
     x0, y0 = 315, 360
     d.title(x0 + 100, 560, 'Узел 8. Промывка и опорожнение питающего трубопровода', 3.0, '1:10')

@@ -93,6 +93,13 @@ def _blocks(doc):
     b = doc.blocks.new('V_MOTOR')           # затвор с электроприводом
     b.add_lwpolyline([(-2, -1), (-2, 1), (2, -1), (2, 1)], close=True)
     b.add_line((0, 0), (0, 1.8)); b.add_circle((0, 2.6), 0.8); b.add_text('М', dxfattribs={'height': 0.9, 'style': 'ПТ'}).set_placement((0, 2.6), align=TA.MIDDLE_CENTER)
+    b = doc.blocks.new('V_PRV')             # клапан редукционный (регулятор давления «после себя»), импульс — за клапаном
+    b.add_lwpolyline([(-2, -1), (-2, 1), (2, -1), (2, 1)], close=True)
+    b.add_line((0, 0), (0, 1.8)); b.add_arc((0, 1.8), 1.2, 0, 180); b.add_line((-1.2, 1.8), (1.2, 1.8))
+    b.add_lwpolyline([(1.2, 2.4), (3.4, 2.4), (3.4, 0)])
+    b = doc.blocks.new('STRAINER')          # фильтр сетчатый
+    b.add_lwpolyline([(-2, 0), (0, 1.4), (2, 0), (0, -1.4)], close=True)
+    b.add_line((0, 1.4), (0, -1.4), dxfattribs={'linetype': 'DASHED'})
     b = doc.blocks.new('MANOM')             # манометр с краном
     b.add_line((0, 0), (0, 2)); b.add_circle((0, 3), 1.0); b.add_line((-0.5, 2.5), (0.6, 3.6))
     b = doc.blocks.new('PSW')               # сигнализатор давления
@@ -212,18 +219,18 @@ def table(msp, x0, y_top, cols, rows, k=1, h=2.5, row_h=8, header_h=None, layer=
     return y
 
 # ------------------------------------------------------------------ рамка и основная надпись
-def frame(msp, ox, oy, fmt, k, title, sheet, sheets=None, stage='Р', subtitle=None, first=False, extra_stamp=None):
+def frame(msp, ox, oy, fmt, k, title, sheet, sheets=None, stage='Р', subtitle=None, first=False, extra_stamp=None, shifr=None):
     W, H = FORMATS[fmt]
     rect(msp, ox, oy, ox + W * k, oy + H * k, layer='ПТ_рамка_тонк', lw=13)
     x0, y0, x1, y1 = ox + 20 * k, oy + 5 * k, ox + (W - 5) * k, oy + (H - 5) * k
     rect(msp, x0, y0, x1, y1, layer='ПТ_рамка', lw=70)
-    stamp3(msp, x1 - 185 * k, y0, k, title, sheet, sheets, stage, subtitle)
+    stamp3(msp, x1 - 185 * k, y0, k, title, sheet, sheets, stage, subtitle, shifr or SHIFR)
     side_stamp(msp, ox, oy, k)
     # формат
     txt(msp, x1 - 40 * k, oy + 1.2 * k, f'Формат {fmt}', 2.5, k, align='BL')
     return (x0, y0, x1, y1)
 
-def stamp3(msp, x, y, k, title, sheet, sheets, stage, subtitle):
+def stamp3(msp, x, y, k, title, sheet, sheets, stage, subtitle, shifr=SHIFR):
     L, T = 'ПТ_рамка', 'ПТ_текст'
     def ln(a, b, lw=50):
         line(msp, (x + a[0] * k, y + a[1] * k), (x + b[0] * k, y + b[1] * k), layer=L, lw=lw)
@@ -249,7 +256,7 @@ def stamp3(msp, x, y, k, title, sheet, sheets, stage, subtitle):
     ln((65, 40), (185, 40), 70); ln((65, 30), (185, 30), 50); ln((65, 15), (185, 15), 70)
     ln((135, 0), (135, 30), 70); ln((135, 25), (185, 25), 50)
     ln((150, 15), (150, 30), 50); ln((165, 15), (165, 30), 50)
-    txt(msp, x + 125 * k, y + 47.5 * k, SHIFR, 5, k, align='MC', layer=T, style='ПТ_загл')
+    txt(msp, x + 125 * k, y + 47.5 * k, shifr, 5, k, align='MC', layer=T, style='ПТ_загл')
     mtxt(msp, x + 125 * k, y + 35 * k, OBJ, 1.9, 116, k, attach=5, layer=T)
     mtxt(msp, x + 100 * k, y + 22.5 * k, BLD, 2.2, 66, k, attach=5, layer=T)
     for s, cx, w in [('Стадия', 135, 15), ('Лист', 150, 15), ('Листов', 165, 20)]:

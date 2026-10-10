@@ -16,8 +16,6 @@ SP = json.load(open(os.path.join(HERE, 'spec.json'))); POS = SP['POS']
 CF = json.load(open(os.path.join(HERE, 'calc_final.json')))
 _z2 = [p['a'][2] for p in M['pipes'] if p['sec'] == 2 and p['role'] == 'распределительный'] + [p['b'][2] for p in M['pipes'] if p['sec'] == 2 and p['role'] == 'распределительный']
 Z2_LO, Z2_HI = (f'+{min(_z2):.3f}'.replace('.', ','), f'+{max(_z2):.3f}'.replace('.', ','))
-_pk = [d['p_dyn'] for d in CF['diaphragms']]
-P_PK_LO, P_PK_HI = f'{min(_pk):.2f}'.replace('.', ','), f'{max(_pk):.2f}'.replace('.', ',')
 
 SHEETS = [
     (1, 'Общие данные (начало)', 'A1', 1),
@@ -152,7 +150,7 @@ def build():
             iso_sheet(doc, msp, ox, oy, 'A0', 100, lambda p: p['sys'] == 'В2', name, 'Схема системы В2', no, TOTAL,
                       ['Схема выполнена без соблюдения масштаба по вертикали.',
                        'Кольцевая сеть — Ду100 на отм. -0,450, стояки и подводки к шкафам — Ду80, клапаны ПК — Ду65 (узел 7).',
-                       f'Клапаны ПК: подвал — отм. -0,850, 1 этаж — +1,350, 2 этаж — +5,050. Давление у клапанов при работе насосов — {P_PK_LO}-{P_PK_HI} МПа.',
+                       'Клапаны ПК: подвал — отм. -0,850, 1 этаж — +1,350, 2 этаж — +5,050. ' + sh_details.DIA_TEXT,
                        'Планы — листы 4-6.'],
                       place=(30, 280), zs=3.0, pk_marks=True,
                       elev_pts=[(12000, M['levels']['Y_RING1'], -0.45, '−0,450'), (60000, M['levels']['Y_RING2'], -0.45, '−0,450')])
