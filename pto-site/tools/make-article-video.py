@@ -108,6 +108,16 @@ def buzz(mm, length=1.2):
     return (hum * .3 + crackle * .8) * np.sin(np.pi * t / length) ** 2
 
 
+def jet(mm, length=2.6):
+    """Пролёт самолёта: шум нарастает к середине и уходит, полоса частот плывёт вверх."""
+    n = int(length * SR)
+    t = np.arange(n) / SR
+    low = mm.bandpass(noise(31, n), 250, 2500)
+    high = mm.bandpass(noise(37, n), 2500, 8000)
+    k = t / length
+    return (low * (1 - k) + high * k) * np.sin(np.pi * k) ** 1.6 * .55
+
+
 # Звуки к анимации первой сцены — время от начала ролика (сцена 1 начинается с нуля)
 def hook_fx(mm, visual, put):
     if visual == "act":
@@ -137,6 +147,12 @@ def hook_fx(mm, visual, put):
             put(mm.pluck(84 + 3 * k, .4), 2.1 + k * .35, .08)
     elif visual == "crane":
         put(thump(mm), 3.6, .3)
+    elif visual == "plane":
+        put(jet(mm), 1.0, .5)                       # пролёт по дуге
+        put(thump(mm), 3.3, .3)                     # метка на объекте
+        for k in range(3):                          # встаёт команда
+            put(mm.pluck(79 + 4 * k, .4), 3.7 + k * .18, .1)
+        put(thump(mm), 4.45, .55)                   # штамп «на месте»
 
 
 def compose(mm, video, slug):
