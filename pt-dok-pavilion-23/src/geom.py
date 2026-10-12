@@ -54,3 +54,9 @@ GROUPS = {
     2: dict(q=0.12, S=120, t=60, Qmin=30.0, smax=4.0, Amax=12.0),
     5: dict(q=0.16, S=150, t=60, Qmin=None, smax=3.0, Amax=9.0),   # h складирования до 2 м
 }
+
+
+def zr_text():
+    """отметка оси кольца ВПВ в подвале — строкой «−0,400» (по model.json)"""
+    z = json.load(open(os.path.join(HERE, 'model.json')))['levels']['ZB_RING']
+    return f'{z:.3f}'.replace('.', ',').replace('-', '−')

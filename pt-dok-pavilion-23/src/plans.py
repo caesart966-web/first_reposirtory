@@ -169,8 +169,13 @@ def plan_sheet(doc, msp, ox, oy, floor, sheet_no, sheets_total, title, notes, le
             rot = {'S': 0, 'N': 180}[k['face']]
             ins(msp, 'PK2', *S.p(k['x'], k['y']), K, rot=rot, layer='ПТ_ПК')
             ty = k['y'] - 650 if k['face'] == 'S' else k['y'] + 650
-            txt(msp, *S.p(k['x'], ty), f"{k['name']} (2×Ду65)", 1.8, K, align='TC' if k['face'] == 'S' else 'BC')
-            if ry is not None:
+            if floor == 0:   # подвал: подводка к шкафу идёт поперёк коридора — подписи сбоку от неё
+                txt(msp, *S.p(k['x'] + 150, ty), f"{k['name']} (2×Ду65, 2×ШПК-310)", 1.8, K, align='TL' if k['face'] == 'S' else 'BL')
+                txt(msp, *S.p(rx - 250, ry + (-150 if k['face'] == 'S' else 150)), k['riser'], 1.8, K,
+                    align='TR' if k['face'] == 'S' else 'BR')
+            else:
+                txt(msp, *S.p(k['x'], ty), f"{k['name']} (2×Ду65)", 1.8, K, align='TC' if k['face'] == 'S' else 'BC')
+            if ry is not None and floor != 0:
                 txt(msp, *S.p(rx + 300, ry + (250 if k['face'] == 'S' else -250)), k['riser'], 1.8, K,
                     align='BL' if k['face'] == 'S' else 'TL')
     # ---- стояки АУПТ от УУ
@@ -205,9 +210,10 @@ def plan_sheet(doc, msp, ox, oy, floor, sheet_no, sheets_total, title, notes, le
             elev(x, 27500, '+6,850 (ось В22)')
             elev(x - 1500, 12500, '+6,850 (ось В22)')
     if floor == 0:
+        zr = f"{M['levels']['ZB_RING']:.3f}".replace('.', ',').replace('-', '−')
         for x in (12000, 60000):
-            elev(x, M['levels']['Y_RING1'] + 300, '−0,450 (ось В2)')
-            elev(x, M['levels']['Y_RING2'] - 900, '−0,450 (ось В2)')
+            elev(x, M['levels']['Y_RING1'] + 300, f'{zr} (ось В2)')
+            elev(x, M['levels']['Y_RING2'] - 900, f'{zr} (ось В2)')
 
     # ---- размерные цепочки: оси + колонки оросителей (по северу и югу), ряды (запад/восток)
     ax = sorted(AX_X.values())
@@ -240,7 +246,10 @@ def plan_sheet(doc, msp, ox, oy, floor, sheet_no, sheets_total, title, notes, le
     for blk, lab, lay in legend_rows:
         if blk.startswith('LINE:'):
             l = blk[5:]
-            msp.add_line((nx, yy + 1 * K), (nx + 10 * K, yy + 1 * K), dxfattribs={'layer': l})
+            att = {'layer': l}
+            if l == 'ПТ_смежные':
+                att.update(linetype='ПТ_ШТРИХ', ltscale=60)
+            msp.add_line((nx, yy + 1 * K), (nx + 10 * K, yy + 1 * K), dxfattribs=att)
         elif blk.startswith('HATCH:'):
             h = msp.add_hatch(color=8, dxfattribs={'layer': 'ПТ_штриховка'})
             h.paths.add_polyline_path([(nx, yy - 1 * K), (nx + 10 * K, yy - 1 * K), (nx + 10 * K, yy + 3 * K), (nx, yy + 3 * K)], is_closed=True)

@@ -123,7 +123,7 @@ def run():
         spr=dict(spr_outlets), hangers={str(d): v for d, v in sorted(hangers.items())},
         hangers_typed={f'{t}|{d}': v for (t, d), v in sorted(typed.items(), key=lambda kv: (kv[0][0], kv[0][1]))},
         walls={str(d): v for d, v in sorted(walls.items())}, slabs={str(d): v for d, v in sorted(slabs.items())},
-        pk=len(M['pk']), spr_by_sec=dict(Counter(str(s['sec']) for s in M['sprinklers'])),
+        pk=len(M['pk']), pk_b=sum(1 for k in M['pk'] if k['floor'] == 0), spr_by_sec=dict(Counter(str(s['sec']) for s in M['sprinklers'])),
         spr_by_floor_room=dict(Counter(f"{s['floor']}|{s['room']}" for s in M['sprinklers'])),
     )
     json.dump(M, open(os.path.join(HERE, 'model_sized.json'), 'w'), ensure_ascii=False)
