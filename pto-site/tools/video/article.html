@@ -266,6 +266,12 @@
   .team i::after { content: ""; position: absolute; left: 0; bottom: 0; width: 46px; height: 34px; border-radius: 23px 23px 6px 6px; background: var(--ink); }
   .team i:nth-child(2)::before, .team i:nth-child(2)::after { background: var(--hi); }
 
+  /* карточка-отказ: красный код, название зачёркивается после появления */
+  .form.no .form__code { color: var(--red); }
+  .form.no .form__name { display: inline; -webkit-box-decoration-break: clone; box-decoration-break: clone; background: linear-gradient(var(--red), var(--red)) no-repeat 0 55% / 0% 5px;
+    animation: strike-name .5s var(--io) both; animation-delay: calc((var(--t0) + var(--d, 0) + .8) * 1s); }
+  @keyframes strike-name { to { background-size: 100% 5px; } }
+
   /* смета под лупой */
   .lens { position: absolute; left: 0; top: 0; width: 170px; height: 170px; animation: lens 3.2s var(--io) both;
     animation-delay: calc((var(--t0) + var(--d)) * 1s); }
@@ -607,7 +613,7 @@
       // карточки одного листа — в одной раскладке: если хоть один код длинный, все идут в столбик
       var wide = s.items.some(function (it) { return it.code.length > 4; });
       s.items.forEach(function (it, i) {
-        body.appendChild(d(el('div', 'form a left' + (wide ? ' wide' : ''), '<div class="form__code">' + it.code + '</div><div><div class="form__name">' + it.name +
+        body.appendChild(d(el('div', 'form a left' + (wide ? ' wide' : '') + (it.no ? ' no' : ''), '<div class="form__code">' + it.code + '</div><div><div class="form__name">' + it.name +
           '</div><div class="form__what">' + it.text + '</div></div>'), 1.5 + i * 1.1));
       });
       if (s.note) body.appendChild(d(el('div', 'law a up',
