@@ -302,8 +302,9 @@ class Project:
             )
         return notes
 
-    def enabled_documents(self) -> list[DocumentSpec]:
-        return [d for d in self.documents if d.enabled]
+    def enabled_documents(self,
+                          entrepreneur: bool | None = None) -> list[DocumentSpec]:
+        return self.sro.enabled_documents(entrepreneur)
 
     def template_path(self, spec: DocumentSpec) -> Path:
         return self.templates_dir / spec.template
@@ -332,7 +333,10 @@ class Project:
 def check_readiness(project: Project, company: CompanyData,
                     documents: list[DocumentSpec] | None = None) -> list[Readiness]:
     """Каких обязательных данных не хватает для каждого документа."""
-    documents = documents if documents is not None else project.enabled_documents()
+    # Бланк берём под заявителя: у некоторых СРО заявления для юрлица
+    # и для предпринимателя — разные файлы.
+    documents = (documents if documents is not None
+                 else project.enabled_documents(company.is_entrepreneur))
     results: list[Readiness] = []
     if not documents:
         return results
@@ -467,7 +471,10 @@ def generate(project: Project, company_input: CompanyData,
     company = company_input.copy()
     result_notes = project.apply_applicant_defaults(company)
     result_notes += project.apply_auto_fill(company)
-    documents = documents if documents is not None else project.enabled_documents()
+    # Бланк берём под заявителя: у некоторых СРО заявления для юрлица
+    # и для предпринимателя — разные файлы.
+    documents = (documents if documents is not None
+                 else project.enabled_documents(company.is_entrepreneur))
     note = project.sro.readiness_note()
     if note:
         raise GeneratorError(note)

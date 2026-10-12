@@ -1304,8 +1304,15 @@ def _character_styles(archive) -> dict:
         if style.get(W + "type") not in ("character", "paragraph"):
             continue
         run_properties = style.find(W + "rPr")
-        if run_properties is not None:
-            found[style.get(W + "styleId")] = run_properties
+        if run_properties is None:
+            continue
+        found[style.get(W + "styleId")] = run_properties
+        # Абзац, которому стиль не назначен, берёт стиль ПО УМОЛЧАНИЮ.
+        # Храним его под отдельным ключом: по нему проверяются абзацы
+        # без w:pStyle — так же, как их разбирает сам Word.
+        if (style.get(W + "type") == "paragraph"
+                and style.get(W + "default") == "1"):
+            found[None] = run_properties
     return found
 
 
@@ -1333,10 +1340,11 @@ def _font_of(run, styles: dict) -> tuple[bool, bool]:
     # и напечатанный рядом, — а это и есть то, что проверяется.
     paragraph = run.getparent()
     paragraph_style = paragraph.find(W + "pPr/" + W + "pStyle")
-    if paragraph_style is not None:
-        from_style = styles.get(paragraph_style.get(W + "val"))
-        if from_style is not None:
-            sources.append(from_style)
+    name = (paragraph_style.get(W + "val")
+            if paragraph_style is not None else None)
+    from_style = styles.get(name)      # name=None → стиль по умолчанию
+    if from_style is not None:
+        sources.append(from_style)
     has_font = any(s.find(W + "rFonts") is not None for s in sources)
     has_size = any(s.find(W + "sz") is not None for s in sources)
     return has_font, has_size
@@ -1804,6 +1812,44 @@ class TestProjectConfig(unittest.TestCase):
         self.assertTrue(
             legal_entity_kept_quotes,
             "у юрлица кавычки вокруг наименования должны были сохраниться")
+
+    def test_nested_and_partial_quotes_in_name(self):
+        """Кавычки внутри наименования не теряются и не удваиваются.
+
+        Три разных случая, и все три встретились в одной таблице клиента:
+          «ООО «ГК «ОПОРА»»» — кавычки вложенные, жадная чистка съедала
+            внутреннюю закрывающую, и наименование выходило непарным;
+          «ООО НКЦ «ЭТАЛОНЪ»» — кавычки обрамляют ЧАСТЬ названия, и сборка
+            «форма + «название»» добавляла лишнюю пару;
+          «ООО "ЛЮПАСК"» — прямые кавычки, их надо привести к ёлочкам.
+        """
+        from src.company_parser import display_name
+
+        self.assertEqual(display_name("ООО «ГК «ОПОРА»»", full_form=False),
+                         "ООО «ГК «ОПОРА»»")
+        self.assertEqual(display_name("ООО НКЦ «ЭТАЛОНЪ»", full_form=False),
+                         "ООО НКЦ «ЭТАЛОНЪ»")
+        self.assertEqual(display_name('ООО "ЛЮПАСК"', full_form=False),
+                         "ООО «ЛЮПАСК»")
+        self.assertEqual(
+            display_name("ООО «Ромашка»"),
+            "Общество с ограниченной ответственностью «Ромашка»")
+        # Форма не распознана — наименование возвращается как есть.
+        self.assertEqual(display_name("АНО ИЦСРКР «Среда для жизни»"),
+                         "АНО ИЦСРКР «Среда для жизни»")
+
+        # То же самое в готовом документе, а не только в помощнике.
+        project = Project(ROOT)
+        project.use_sro("СССС", remember=False)
+        company = make_company(dict(
+            ALPHA, full_name="Общество с ограниченной ответственностью «ГК «ОПОРА»»",
+            short_name="ООО «ГК «ОПОРА»»"))
+        values = build_context(company, project.attorney(),
+                               sro=project.sro).values
+        self.assertEqual(values["company_short_display"], "ООО «ГК «ОПОРА»»")
+        self.assertEqual(values["company_short_display"].count("«"),
+                         values["company_short_display"].count("»"),
+                         "кавычки должны остаться парными")
 
     def test_entrepreneur_signature_is_compact(self):
         """В строке подписи у ИП — компактное «ИП Фамилия И.О.», не полное имя.

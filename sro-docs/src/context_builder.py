@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 from datetime import date
 
 from . import morphology
-from .company_parser import split_company_name
+from .company_parser import display_name, split_company_name
 from .models import CompanyData
 
 MARK = "V"
@@ -151,16 +151,12 @@ def build_context(company: CompanyData, attorney: dict[str, str],
         values["company_full_display"] = company.full_name
         values["company_short_display"] = company.short_name
     else:
-        values["company_full_display"] = (
-            f"{values['legal_form_full']} «{values['company_name_bare']}»"
-            if values["legal_form_full"] and values["company_name_bare"]
-            else company.full_name
-        )
-        values["company_short_display"] = (
-            f"{values['legal_form_short']} «{values['short_name_bare']}»"
-            if values["legal_form_short"] and values["short_name_bare"]
-            else company.short_name
-        )
+        # Кавычки ставит display_name — и только там, где в исходном
+        # наименовании они обрамляют название целиком. Собирать строку здесь
+        # нельзя: у «ООО НКЦ «ЭТАЛОНЪ»» получилось бы «ООО «НКЦ «ЭТАЛОНЪ»»».
+        values["company_full_display"] = display_name(company.full_name)
+        values["company_short_display"] = display_name(
+            company.short_name, full_form=False)
 
     # В бланке ОРС под наименование две линейки: верхняя для юридического
     # лица (подпись под ней — «правовая форма…»), нижняя для предпринимателя
@@ -287,6 +283,25 @@ def build_context(company: CompanyData, attorney: dict[str, str],
         company, "director_basis_genitive",
         morphology.basis_genitive(company.director_basis),
         "Основание полномочий в родительном падеже («на основании …»)", result)
+
+    # ------------------------------------------- доверитель в доверенности
+    # Бланк «Перспективы» написан под юридическое лицо: «Общество с
+    # ограниченной ответственностью … (далее – Общество) … в лице
+    # Генерального директора …, действующего на основании Устава».
+    # У предпринимателя нет ни директора, ни Устава, и называть его
+    # «Обществом» нельзя, поэтому обороты собираются здесь, а не в бланке.
+    if company.is_entrepreneur:
+        values["principal_word"] = "Доверитель"
+        values["principal_word_genitive"] = "Доверителя"
+        values["acting_clause"] = (
+            f"действующий на основании {values['director_basis_genitive']}, ")
+    else:
+        values["principal_word"] = "Общество"
+        values["principal_word_genitive"] = "Общества"
+        values["acting_clause"] = (
+            f"в лице {values['director_position_genitive']} – "
+            f"{values['director_full_name_genitive']}, действующего(ей) "
+            f"на основании {values['director_basis_genitive']}, ")
 
     # ---------------------------------------------------------- дата документа
     doc_date = _parse_date(company.doc_date) or (today or date.today())

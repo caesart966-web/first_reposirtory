@@ -200,12 +200,15 @@ def _field_for_label(label: str) -> str | None:
 
 
 # --------------------------------------------------------------- наименование
-def split_company_name(name: str) -> tuple[str, str, str]:
-    """«ООО «Ромашка»» → ('ООО', 'Общество с ограниченной ответственностью', 'Ромашка').
+#: Кавычки обрамляют название ЦЕЛИКОМ: «Ромашка», "ЛЮПАСК", «ГК «ОПОРА»».
+#: А вот у «НКЦ «ЭТАЛОНЪ»» — нет: кавычки стоят вокруг части названия.
+#: Различать обязательно, иначе при сборке наименования обратно появляется
+#: лишняя пара кавычек либо теряется закрывающая.
+_WRAPPED_RE = re.compile(r'^[«"\'`](.*)[»"\'`]$', re.DOTALL)
 
-    Возвращает (сокр. ОПФ, полная ОПФ, наименование без ОПФ и кавычек).
-    Если ОПФ не распознана — первые два значения пустые.
-    """
+
+def _split_form(name: str) -> tuple[str, str, str]:
+    """(сокр. ОПФ, полная ОПФ, остаток наименования КАК ЕСТЬ, с кавычками)."""
     text = _clean(name)
     if not text:
         return "", "", ""
@@ -232,10 +235,39 @@ def split_company_name(name: str) -> tuple[str, str, str]:
     if dup and form_short:
         rest = rest[dup.end():].strip()
 
-    bare = rest.strip().strip(",")
-    bare = re.sub(r'^[«"\'`]+', "", bare)
-    bare = re.sub(r'[»"\'`]+$', "", bare)
-    return form_short, form_full, bare.strip()
+    return form_short, form_full, rest.strip().strip(",")
+
+
+def split_company_name(name: str) -> tuple[str, str, str]:
+    """«ООО «Ромашка»» → ('ООО', 'Общество с ограниченной ответственностью', 'Ромашка').
+
+    Возвращает (сокр. ОПФ, полная ОПФ, наименование без ОПФ и кавычек).
+    Если ОПФ не распознана — первые два значения пустые.
+    """
+    form_short, form_full, rest = _split_form(name)
+    wrapped = _WRAPPED_RE.match(rest)
+    return form_short, form_full, (wrapped.group(1) if wrapped else rest).strip()
+
+
+def display_name(name: str, full_form: bool = True) -> str:
+    """Наименование «как в бланке»: правовая форма и название в ёлочках.
+
+    Кавычки приводятся к ёлочкам ТОЛЬКО там, где в исходном наименовании они
+    обрамляют название целиком. У «ООО НКЦ «ЭТАЛОНЪ»» кавычки стоят вокруг
+    части названия, и обернуть всё ещё раз значило бы написать
+    «ООО «НКЦ «ЭТАЛОНЪ»»» — такой пары в реестре нет.
+
+    Если правовая форма не распознана, наименование возвращается как есть:
+    выдумывать за пользователя нельзя.
+    """
+    form_short, form_full, rest = _split_form(name)
+    form = form_full if full_form else form_short
+    if not form or not rest:
+        return _clean(name)
+    wrapped = _WRAPPED_RE.match(rest)
+    if wrapped:
+        return f"{form} «{wrapped.group(1).strip()}»"
+    return f"{form} {rest}"
 
 
 def _compose_name(form: str, bare: str) -> str:

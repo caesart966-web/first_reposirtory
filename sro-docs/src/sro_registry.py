@@ -41,6 +41,17 @@ class DocumentSpec:
     template: str
     output_name: str
     enabled: bool = True
+    #: Кому предназначен бланк: "company" (юрлицо), "entrepreneur" (ИП)
+    #: или None — подходит обоим. У некоторых СРО заявления напечатаны
+    #: порознь: у юрлица ОГРН и юридический адрес, у предпринимателя
+    #: ОГРНИП и место жительства, и подставить одно вместо другого нельзя.
+    only_for: str | None = None
+
+    def suits(self, entrepreneur: bool) -> bool:
+        """Подходит ли бланк этому заявителю."""
+        if not self.only_for:
+            return True
+        return self.only_for == ("entrepreneur" if entrepreneur else "company")
 
 
 @dataclass
@@ -96,8 +107,18 @@ class SroProfile:
             return f"{self.name} — {self.city}"
         return self.name
 
-    def enabled_documents(self) -> list[DocumentSpec]:
-        return [d for d in self.documents if d.enabled]
+    def enabled_documents(self,
+                          entrepreneur: bool | None = None) -> list[DocumentSpec]:
+        """Включённые документы СРО.
+
+        `entrepreneur` отбирает бланки под заявителя: у некоторых СРО
+        заявление напечатано порознь для юрлица и для предпринимателя.
+        Без него возвращаются все — так проверяют комплектность настроек.
+        """
+        found = [d for d in self.documents if d.enabled]
+        if entrepreneur is None:
+            return found
+        return [d for d in found if d.suits(entrepreneur)]
 
     def missing_templates(self) -> list[str]:
         """Документы, описанные в настройках, но без файла бланка."""
@@ -175,6 +196,7 @@ def load_profile(folder: Path) -> SroProfile:
                 template=item["template"],
                 output_name=item.get("output_name", item["template"]),
                 enabled=bool(item.get("enabled", True)),
+                only_for=item.get("only_for") or None,
             ))
         except KeyError as exc:
             raise SroError(
