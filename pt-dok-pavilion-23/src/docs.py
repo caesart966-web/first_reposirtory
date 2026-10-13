@@ -102,7 +102,7 @@ class Doc:
             c.drawString((x + 1) * mm, (y + 21.5 - i * 5) * mm, s)
             if NAMES.get(s):
                 c.drawString((x + 21) * mm, (y + 21.5 - i * 5) * mm, NAMES[s])
-                c.drawCentredString((x + 60) * mm, (y + 21.5 - i * 5) * mm, DATE)
+                canvas.Canvas.drawCentredString(c, (x + 60) * mm, (y + 21.5 - i * 5) * mm, DATE)    # дата без ru(): «10.26» не дробь
         c.setFont('FB', 13); c.drawCentredString((x + 125) * mm, (y + 45.5) * mm, self.code)
         c.setFont('F', 6.3)
         for i, l in enumerate(wrap(OBJ, 'F', 6.3, 116 * mm)):

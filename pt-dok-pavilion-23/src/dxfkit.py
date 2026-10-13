@@ -139,8 +139,8 @@ def _blocks(doc):
 # ------------------------------------------------------------------ примитивы
 GOST_H = {1.6: 1.8, 2.2: 2.5, 3.0: 3.5}     # высоты шрифта — из ряда ГОСТ 2.304
 
-def txt(msp, x, y, s, h, k=1, layer='ПТ_текст', align='BL', rot=0, style='ПТ', color=None):
-    s, h = cad(s), GOST_H.get(h, h)
+def txt(msp, x, y, s, h, k=1, layer='ПТ_текст', align='BL', rot=0, style='ПТ', color=None, raw=False):
+    s, h = (s if raw else cad(s)), GOST_H.get(h, h)      # raw — как есть (дата «10.26» не дробь)
     al = {'BL': TA.BOTTOM_LEFT, 'BC': TA.BOTTOM_CENTER, 'BR': TA.BOTTOM_RIGHT, 'ML': TA.MIDDLE_LEFT, 'MC': TA.MIDDLE_CENTER,
           'MR': TA.MIDDLE_RIGHT, 'TL': TA.TOP_LEFT, 'TC': TA.TOP_CENTER, 'TR': TA.TOP_RIGHT}[align]
     a = {'height': h * k, 'style': style, 'layer': layer, 'rotation': rot}
@@ -251,7 +251,7 @@ def stamp3(msp, x, y, k, title, sheet, sheets, stage, subtitle, shifr=SHIFR):
         txt(msp, x + 1 * k, y + (22.5 - i * 5) * k, s, 1.8, k, align='ML', layer=T)
         if NAMES.get(s):
             txt(msp, x + 21 * k, y + (22.5 - i * 5) * k, NAMES[s], 1.8, k, align='ML', layer=T)
-            txt(msp, x + 60 * k, y + (22.5 - i * 5) * k, DATE, 1.8, k, align='MC', layer=T)
+            txt(msp, x + 60 * k, y + (22.5 - i * 5) * k, DATE, 1.8, k, align='MC', layer=T, raw=True)
     # правая часть
     ln((65, 40), (185, 40), 70); ln((65, 30), (185, 30), 50); ln((65, 15), (185, 15), 70)
     ln((135, 0), (135, 30), 70); ln((135, 25), (185, 25), 50)

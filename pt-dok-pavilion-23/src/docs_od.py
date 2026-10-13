@@ -1,7 +1,8 @@
-"""ПТ.ОД — титульный лист и пояснительная записка (текстовая часть общих данных), А4."""
+"""ПТ.ОД — пояснительная записка (текстовая часть общих данных), А4. Обложка и титульный лист — общие для тома
+(titles.py, build_volume.py)."""
 import json, os
 from reportlab.lib.units import mm
-from docs import Doc, OUT, SHIFR, OBJ, ORG, wrap
+from docs import Doc, OUT, SHIFR
 from geom import Z_F1_CEIL, Z_F1_BEAM, Z_RB_EAVE, Z_RB_RIDGE, zr_text
 HERE = os.path.dirname(os.path.abspath(__file__))
 C = json.load(open(os.path.join(HERE, 'calc_final.json')))
@@ -18,46 +19,10 @@ def n(v, k=1):
     return f'{v:.{k}f}'.replace('.', ',')
 
 
-def title_page(d):
-    c = d.c
-    W, H = d.W, d.H
-    c.setLineWidth(0.7); c.rect(20 * mm, 5 * mm, (W - 25) * mm, (H - 10) * mm)
-    cx = (20 + W - 5) / 2
-    y = H - 30
-    c.setFont('F', 11); c.drawCentredString(cx * mm, y * mm, ORG)
-    c.setFont('F', 9)
-    c.drawCentredString(cx * mm, (y - 6) * mm, 'Выписка из реестра членов СРО № ____________ от ____________')
-    y -= 40
-    c.setFont('F', 9)
-    for i, l in enumerate(wrap(OBJ, 'F', 9, 150 * mm)):
-        c.drawCentredString(cx * mm, (y - i * 5) * mm, l)
-    y -= 18
-    c.drawCentredString(cx * mm, y * mm, 'Док-павильон №23, №23.2 «Рыба-Мясо»')
-    y -= 30
-    c.setFont('FB', 18); c.drawCentredString(cx * mm, y * mm, 'РАБОЧАЯ ДОКУМЕНТАЦИЯ')
-    y -= 16
-    c.setFont('F', 12)
-    for i, l in enumerate(['Пожаротушение', 'Внутренний противопожарный водопровод,',
-                           'автоматическая установка водяного пожаротушения,',
-                           'установка порошкового пожаротушения ВРУ, насосная станция']):
-        c.drawCentredString(cx * mm, (y - i * 6.5) * mm, l)
-    y -= 40
-    c.setFont('FB', 14); c.drawCentredString(cx * mm, y * mm, SHIFR)
-    y -= 50
-    c.setFont('F', 10)
-    for i, (role, line) in enumerate([('Директор', '______________'), ('Главный инженер проекта', '______________')]):
-        c.drawString(35 * mm, (y - i * 12) * mm, role)
-        c.drawRightString((W - 25) * mm, (y - i * 12) * mm, line)
-    c.setFont('F', 10); c.drawCentredString(cx * mm, 18 * mm, '2026')
-    c.showPage()
-
-
 def build(total):
     d = Doc(os.path.join(OUT, f'{SHIFR.replace("/", "_")}.ОД_пояснительная_записка.pdf'), SHIFR + '.ОД',
             'Общие данные. Пояснительная записка', pagesize='A4')
     d.pages_total = total
-    title_page(d)
-    d.page = 1                                   # титульный лист — первый лист документа, номер не ставится
     d.y_bottom = d.frame(True); d.y = d.H - 8
     q_spr = B['spr']
     P = [
