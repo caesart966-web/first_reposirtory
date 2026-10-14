@@ -325,6 +325,11 @@ const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
     cursor: pointer;
   }
   .agree input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--acc-btn); }
+  /* Цель нажатия не меньше 24 px (test-a11y): строка 14 px даёт ссылке 20 px.
+     Пока текст согласия был короче, ссылка рвалась на две строки и проходила
+     проверку случайно — общей рамкой двух строк. Поля по вертикали строку
+     не раздвигают: у строчного элемента они не влияют на раскладку. */
+  .agree a { padding-block: 5px; }
   .agree-error { display: none; font-size: 13px; color: var(--err); margin-top: -8px; }
   .agree-error.show { display: block; }
 
