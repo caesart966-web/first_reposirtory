@@ -254,7 +254,11 @@ def compose(mm, video, slug):
 
     # звуки
     for s in starts[1:]:
-        mm.put(fx, paper(mm), s - .2, .5, pan=.2)
+        if video.get("cut_fx") == "whoosh":             # фото-рилс: смена кадра — «вжух», а не лист
+            sig, at = mm.whoosh(s)
+            mm.put(fx, sig, max(0, at), .55, pan=.15)
+        else:
+            mm.put(fx, paper(mm), s - .2, .5, pan=.2)
         mm.put(fx, mm.bell(chords[0][0][2] + 24, 2.5), s + .05, .035, pan=-.3)
     hook_fx(mm, video["scenes"][0].get("visual"), put(fx))
     mm.put(fx, riser(mm), final_at - 2.2, .5)
