@@ -278,6 +278,49 @@ npm run icons    # значки вкладки и телефона — из publ
 **После заливки** уведомление в Роскомнадзор (раздел 21) должно совпадать
 с формой: в согласии теперь прямо названы почта, город и сведения о задаче.
 
+**Архив — v51** (`release/norma-sro.ru-2026-10-14-v51.zip`): сверка
+14 октября. В нём всё, что было в v50, так что заливайте сразу его. Текст
+изменился на 62 страницах, но на половине из них — только дата сверки;
+эти страницы робот перечитает сам по карте сайта. **На переобход в Вебмастере**
+(«Индексирование» → «Переобход страниц») — страницы с правками по существу,
+по одному адресу в строке:
+
+```
+https://norma-sro.ru/
+https://norma-sro.ru/komu-nuzhna-sro/
+https://norma-sro.ru/stoimost/
+https://norma-sro.ru/dokumenty/
+https://norma-sro.ru/proverit-sro/
+https://norma-sro.ru/partnery/
+https://norma-sro.ru/politika/
+https://norma-sro.ru/uslugi/nrs/
+https://norma-sro.ru/uslugi/sro-stroiteley/
+https://norma-sro.ru/uslugi/sro-proektirovshchikov/
+https://norma-sro.ru/uslugi/sro-izyskateley/
+https://norma-sro.ru/uslugi/ohrana-truda/
+https://norma-sro.ru/uslugi/promyshlennaya-bezopasnost/
+https://norma-sro.ru/uslugi/licenzii/
+https://norma-sro.ru/baza-znaniy/porog-10-mln/
+https://norma-sro.ru/baza-znaniy/zastroyshchik-svoimi-silami/
+https://norma-sro.ru/baza-znaniy/kto-takoy-tehzakazchik/
+https://norma-sro.ru/baza-znaniy/dopuskov-sro-ne-sushchestvuet/
+https://norma-sro.ru/baza-znaniy/uvedomleniya-sro-309-fz/
+https://norma-sro.ru/baza-znaniy/reestr-chlenov-sro-2026/
+https://norma-sro.ru/baza-znaniy/inye-specialisty-v-nrs/
+https://norma-sro.ru/baza-znaniy/urovni-otvetstvennosti/
+https://norma-sro.ru/baza-znaniy/kontrol-sro-za-chlenami/
+https://norma-sro.ru/baza-znaniy/vznos-ne-vozvrashchaetsya/
+https://norma-sro.ru/baza-znaniy/kapremont-i-tekushchiy-remont/
+https://norma-sro.ru/baza-znaniy/isklyuchenie-iz-sro/
+https://norma-sro.ru/baza-znaniy/kak-vstupit-v-sro/
+https://norma-sro.ru/baza-znaniy/smena-urovnya-otvetstvennosti/
+https://norma-sro.ru/baza-znaniy/otkaz-na-torgah/
+https://norma-sro.ru/baza-znaniy/sro-po-vidam-rabot/
+```
+
+Если Вебмастер не примет все за день (у нового сайта лимит меньше), начните
+сверху: первые шесть — главная и разделы, на которые ведёт меню.
+
 **Архив — v50** (`release/norma-sro.ru-2026-10-14-v50.zip`): так же
 и на телефоне с планшетом — кадр фоном за текстом, текст белый (раздел 9).
 В нём всё, что было в v49, так что заливайте сразу его. Текст страниц
