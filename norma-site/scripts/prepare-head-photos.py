@@ -58,7 +58,10 @@ QUALITY = 78
 # crop — (left, top, right, bottom) в пикселях исходника; None — весь кадр.
 SPEC = {
     # Фемида справа на фоне книг в расфокусе — кадр уже горизонтальный.
-    'themis-books': {'crop': None},
+    # Он же — фон первого экрана главной на компьютере (с 14.10.2026):
+    # там кадр высотой с первый экран, около 2000 px в ширину, и файла
+    # в 1600 px мало — второй файл, -2400, берёт srcset в Hero.astro.
+    'themis-books': {'crop': None, 'wide': 2400},
     # Тёмная библиотека: полоса от весов до стола с бумагами.
     'themis-library': {'crop': (0, 280, 736, 880)},
     # Стол с Фемидой и молотком: голова, плечи и весы. Шапка «Обо мне»
@@ -119,6 +122,12 @@ def main() -> None:
         if spec.get('flip'):
             img = ImageOps.mirror(img)
         img = upscale(img, args.esrgan)
+        wide = spec.get('wide')
+        if wide and img.width >= wide:
+            big = img.resize((wide, round(img.height * wide / img.width)), Image.LANCZOS)
+            big_path = OUT / f'{name}-{wide}.webp'
+            big.save(big_path, 'WEBP', quality=QUALITY, method=6)
+            print(f'  {name + "-" + str(wide):16s} {big.width}×{big.height}  {big_path.stat().st_size / 1024:5.1f} КБ')
         if img.width > MAX_WIDTH:
             img = img.resize((MAX_WIDTH, round(img.height * MAX_WIDTH / img.width)), Image.LANCZOS)
         path = OUT / f'{name}.webp'
