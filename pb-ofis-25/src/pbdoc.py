@@ -61,6 +61,7 @@ class Vol:
         self.c.setProducer('')
         self.path, self.sheet, self.total, self.title = path, first_sheet - 1, total, title
         self.y = None
+        self.marks = {}
 
     # --- текст ---
     def text(self, x, y, s, size=BODY, color=INK, align='L', slant=True):
@@ -87,29 +88,7 @@ class Vol:
         self.sheet += 1
         L = self.line
         L(20, 5, 204.9, 5, THICK); L(20, 292, 204.9, 292, THICK); L(20, 5, 20, 292, THICK); L(204.9, 5, 204.9, 292, THICK)
-        L(20, 40, 204.9, 40, THICK); L(92, 5, 92, 40, THICK); L(92, 25, 204.9, 25, THICK); L(20, 25, 92, 25, THICK)
-        L(154.9, 5, 154.9, 25, THICK); L(154.9, 15, 204.9, 15, THICK); L(154.9, 20, 204.9, 20)
-        L(172.9, 15, 172.9, 25); L(187.9, 15, 187.9, 25)
-        for y in (10, 15, 20, 30, 35):
-            L(20, y, 92, y)
-        for x in (30, 54):
-            L(x, 25, x, 40)
-        for x in (43, 67, 82):
-            L(x, 5, x, 40)
-        T = self.text
-        for s, x in (('Изм.', 21.7), ('Кол. уч.', 31.0), ('Лист', 44.6), ('№ док.', 55.5), ('Подп.', 70.3), ('Дата', 83.2)):
-            T(x, 26.3, s, 10.2, GREY)
-        for s, y in (('Разработал', 21.3), ('Проверил', 16.3), ('ГИП', 11.3), ('Н.контр.', 6.3)):
-            T(21.5, y, s, 10.6, GREY)
-        T(44.5, 11.3, GIP, 10.2)
-        T(158.1, 21.3, 'Стадия', 10.6, GREY); T(176.5, 21.3, 'Лист', 10.6, GREY); T(190.7, 21.3, 'Листов', 10.6, GREY)
-        T(163.9, 16.3, STAGE, 11.0, align='C')
-        T(180.4, 16.3, f'{self.sheet:02d}', 11.0, align='C')
-        if self.total:
-            T(196.4, 16.3, str(self.total), 11.0, align='C')
-        T(148.5, 29.0, SHIFR, 29.9, align='C')
-        T(123.5, 12.5, self.title, 21.0, align='C')
-        T(179.9, 8.3, ORG, 15.0, align='C')
+        draw_stamp(self.text, L, 0, self.title, self.sheet, self.total)
 
     def new_page(self):
         if self.y is not None:
@@ -124,6 +103,43 @@ class Vol:
     def save(self):
         self.c.showPage()
         self.c.save()
+
+
+def draw_stamp(T, L, dx, title, sheet, total, sheet_text=None):
+    """Основная надпись 185×35 (как в исходном томе); dx — сдвиг вправо от положения на листе А4."""
+    def l(x1, y1, x2, y2, w=THIN):
+        L(x1 + dx, y1, x2 + dx, y2, w)
+
+    def t(x, y, s, size=BODY, color=INK, align='L'):
+        T(x + dx, y, s, size, color, align)
+    l(20, 40, 204.9, 40, THICK); l(20, 5, 20, 40, THICK); l(204.9, 5, 204.9, 40, THICK); l(20, 5, 204.9, 5, THICK)
+    l(92, 5, 92, 40, THICK); l(92, 25, 204.9, 25, THICK); l(20, 25, 92, 25, THICK)
+    l(154.9, 5, 154.9, 25, THICK); l(154.9, 15, 204.9, 15, THICK); l(154.9, 20, 204.9, 20)
+    l(172.9, 15, 172.9, 25); l(187.9, 15, 187.9, 25)
+    for y in (10, 15, 20, 30, 35):
+        l(20, y, 92, y)
+    for x in (30, 54):
+        l(x, 25, x, 40)
+    for x in (43, 67, 82):
+        l(x, 5, x, 40)
+    for s, x in (('Изм.', 21.7), ('Кол. уч.', 31.0), ('Лист', 44.6), ('№ док.', 55.5), ('Подп.', 70.3), ('Дата', 83.2)):
+        t(x, 26.3, s, 10.2, GREY)
+    for s, y in (('Разработал', 21.3), ('Проверил', 16.3), ('ГИП', 11.3), ('Н.контр.', 6.3)):
+        t(21.5, y, s, 10.6, GREY)
+    t(44.5, 11.3, GIP, 10.2)
+    t(158.1, 21.3, 'Стадия', 10.6, GREY); t(176.5, 21.3, 'Лист', 10.6, GREY); t(190.7, 21.3, 'Листов', 10.6, GREY)
+    t(163.9, 16.3, STAGE, 11.0, align='C')
+    t(180.4, 16.3, sheet_text or f'{sheet:02d}', 11.0, align='C')
+    if total:
+        t(196.4, 16.3, str(total), 11.0, align='C')
+    t(148.5, 29.0, SHIFR, 29.9, align='C')
+    lines = title.split('\n')
+    if len(lines) == 1:
+        t(123.5, 12.5, title, 21.0, align='C')
+    else:
+        for k, s in enumerate(lines):
+            t(123.5, 18.4 - k * 6.2, s, 15.0, align='C')
+    t(179.9, 8.3, ORG, 15.0, align='C')
 
 
 # ---------- разметка ----------
@@ -203,6 +219,7 @@ def render(v, blocks):
             pitch = 7.2 if k == 'h1' else 6.4
             ls = wrap(b[1], size, X_R - X_L - 6)
             v.need(4 + pitch * len(ls) + PITCH * 3)       # заголовок не остаётся внизу листа без текста
+            v.marks.setdefault(b[1], v.sheet)
             if v.y < Y_TOP:
                 v.y -= 4
             for l in ls:
@@ -212,6 +229,7 @@ def render(v, blocks):
         elif k == 'h3':
             ls = wrap(b[1], BODY, X_R - X_L)
             v.need(2 + PITCH * (len(ls) + 2))
+            v.marks.setdefault(b[1], v.sheet)
             v.y -= 1.5
             for l in ls:
                 v.y -= PITCH; T(X_L + INDENT, v.y, l)
@@ -253,7 +271,7 @@ def render(v, blocks):
         elif k == 'gap':
             v.y -= float(b[1] or 3)
         elif k == 'page':
-            v.y = None; v.need(1)
+            v.y = Y_BOT - 1; v.need(1)
         elif k == 'table':
             table(v, *b[1:])
         else:
@@ -333,4 +351,5 @@ def build(path, src, first_sheet, total, vars_=None, title='Текстовая �
     v = Vol(path, first_sheet, total, title)
     render(v, parse(src))
     v.save()
+    build.marks = v.marks
     return v.sheet
