@@ -6,7 +6,8 @@ import fs from 'fs';
 import path from 'path';
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
-const pkg = path.dirname(require.resolve('@mlightcad/libredwg-web/package.json'));
+// package.json пакет не экспортирует — каталог пакета берём от главного файла (dist/…)
+const pkg = path.dirname(path.dirname(require.resolve('@mlightcad/libredwg-web')));
 const { Dwg_File_Type, LibreDwg } = await import(path.join(pkg, 'dist', 'libredwg-web.js'));
 
 const [src, dst] = process.argv.slice(2);
