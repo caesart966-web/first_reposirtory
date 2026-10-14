@@ -57,7 +57,7 @@ export const GET: APIRoute = async ({ site }) => {
 
 ## Стоимость
 
-Компенсационные фонды установлены законом (${LAW.funds}) и одинаковы у всех СРО. Остальные взносы назначает сама СРО, законом они не установлены: у строителей вступительный ${FEES.build.entry.toLocaleString('ru-RU')} ₽, членский ${FEES.build.memberMonth.toLocaleString('ru-RU')} ₽ в месяц, целевой в НОСТРОЙ ${FEES.build.target.toLocaleString('ru-RU')} ₽; у проектировщиков и изыскателей ${FEES.design.entry.toLocaleString('ru-RU')} ₽ / ${FEES.design.memberMonth.toLocaleString('ru-RU')} ₽ в месяц / ${FEES.design.target.toLocaleString('ru-RU')} ₽ в НОПРИЗ. Разбивка с калькулятором — на странице «Стоимость».
+Минимальные взносы в компенсационные фонды установлены законом (${LAW.funds}) и одинаковы по стране. Остальные взносы назначает сама СРО, законом они не установлены: у строителей вступительный ${FEES.build.entry.toLocaleString('ru-RU')} ₽, членский ${FEES.build.memberMonth.toLocaleString('ru-RU')} ₽ в месяц, целевой в НОСТРОЙ ${FEES.build.target.toLocaleString('ru-RU')} ₽; у проектировщиков и изыскателей ${FEES.design.entry.toLocaleString('ru-RU')} ₽ / ${FEES.design.memberMonth.toLocaleString('ru-RU')} ₽ в месяц / ${FEES.design.target.toLocaleString('ru-RU')} ₽ в НОПРИЗ. Разбивка с калькулятором — на странице «Стоимость».
 
 ## Основные страницы
 
