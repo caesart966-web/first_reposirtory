@@ -171,25 +171,6 @@ def erase_inside(msp, idx, x0, y0, x1, y1, test=lambda e: True):
     return n
 
 
-def cut_h(msp, idx, y, x0, x1, tol=0.05):
-    """Разрезает горизонтальные линии на отметке y по промежутку [x0, x1] (проём в стене)."""
-    for e in idx.box(x0, y - 1, x1, y + 1):
-        if e.dxftype() != 'LINE':
-            continue
-        (a, b), (c, d) = pts_of(e)
-        if abs(b - y) > tol or abs(d - b) > tol:
-            continue
-        lo, hi = min(a, c), max(a, c)
-        if hi <= x0 or lo >= x1:
-            continue
-        attrs = {'layer': e.dxf.layer, 'color': e.dxf.color}
-        msp.delete_entity(e)
-        if lo < x0:
-            msp.add_line((lo, b), (x0, b), dxfattribs=attrs)
-        if hi > x1:
-            msp.add_line((x1, b), (hi, b), dxfattribs=attrs)
-
-
 def set_stamp(msp, idx, sheet, num, total):
     """Номер листа и общее число листов в основной надписи исходного листа."""
     ox, oy, W, H = SHEETS[sheet]
@@ -291,8 +272,9 @@ def plan48(msp, idx, d, seats_draw):
     # конференц-зал: убрать расстановку мебели АР, показать 200 мест по листу 48.1
     hx0, hy0, hx1, hy1 = P(F, 23.5, 10.3) + P(F, 40.1, 19.7)
     erase_inside(msp, idx, hx0, hy0, hx1, hy1, lambda e: e.dxf.color == 2)
-    for bx0, by0, bx1, by1 in ((24.3, 19.0, 39.8, 19.72), (24.3, 10.28, 39.8, 11.0), (23.5, 12.3, 24.25, 17.7)):
-        erase_inside(msp, idx, *P(F, bx0, by0), *P(F, bx1, by1))          # кресла АР вдоль стен зала
+    # кресла АР вдоль стен зала: полосы от граней стен (север 19,76, юг 10,25, запад 23,47) до края кресел
+    for bx0, by0, bx1, by1 in ((24.0, 19.18, 38.45, 19.76), (24.0, 10.265, 38.45, 10.8), (23.495, 11.7, 24.05, 18.2)):
+        erase_inside(msp, idx, *P(F, bx0, by0), *P(F, bx1, by1), lambda e: e.dxftype() != 'TEXT')
     seats_draw(d, lambda x, y: P(F, 23.47 + x, 10.25 + y), 1.0)
     # прежний выход Д1 в западной стене – заделать
     x0, y0 = P(F, 22.25, 18.25); x1, y1 = P(F, 23.42, 19.80)
@@ -314,11 +296,13 @@ def plan48(msp, idx, d, seats_draw):
     # дверь ВРУ: из зала – заделать, в коридор №28 – новая
     xa, ya = P(F, 28.45, 9.15); xb, yb = P(F, 29.62, 10.20)
     k = F[2]
-    def door_part(e):            # створка (вертикальные линии у x 28,53–28,57) и дуга открывания, без цифр номера помещения
+    def door_part(e):            # створка (контур у x 28,53–28,57) и дуга открывания, без цифр номера помещения
         p = pts_of(e)
-        if e.dxftype() == 'LWPOLYLINE' and len(p) >= 6:
+        if e.dxftype() == 'LWPOLYLINE':
             xs = [q[0] for q in p]; ys = [q[1] for q in p]
-            return max(xs) - min(xs) > 0.6 * k and max(ys) - min(ys) > 0.6 * k
+            if len(p) >= 6:
+                return max(xs) - min(xs) > 0.6 * k and max(ys) - min(ys) > 0.6 * k
+            return max(xs) - min(xs) < 0.1 * k and max(ys) - min(ys) > 0.6 * k
         if e.dxftype() == 'LINE':
             (a, b), (c, dd) = p
             return abs(a - c) < 0.02 and P(F, 28.48, 0)[0] <= a <= P(F, 28.62, 0)[0]
@@ -327,11 +311,14 @@ def plan48(msp, idx, d, seats_draw):
     for yy in (10.15, 10.25):
         d.line(P(F, 28.5, yy), P(F, 29.5, yy))
     d.pattern([P(F, 28.5, 10.15), P(F, 29.5, 10.15), P(F, 29.5, 10.25), P(F, 28.5, 10.25)], 'ANSI37', 0.08, BLACK)
+    # перегородка 7,968–8,067: грани – заливкой, штриховка – отрезками; проём закрывается маской
     xa, ya = P(F, 28.6, 7.95); xb, yb = P(F, 29.5, 8.2)
     erase_inside(msp, idx, xa, ya, xb, yb)
-    cut_h(msp, idx, P(F, 0, 8.07)[1], xa, xb)
-    hinge = P(F, 28.6, 8.13)
-    d.line(hinge, P(F, 28.6, 9.03)); d.arc(hinge, 0.9 * k, 0, 90)
+    d.mask([P(F, 28.6, 7.955), P(F, 29.5, 7.955), P(F, 29.5, 8.08), P(F, 28.6, 8.08)])
+    for xx in (28.6, 29.5):
+        d.line(P(F, xx, 7.968), P(F, xx, 8.067))
+    hinge = P(F, 28.6, 8.067)
+    d.line(hinge, P(F, 28.6, 8.967)); d.arc(hinge, 0.9 * k, 0, 90)
     # противопожарная стена по оси 6
     fire_wall(d, F, -0.15, 30.15)
     for code, (x, y, side) in EXT_POS.items():
@@ -345,8 +332,8 @@ def plan47(msp, idx, d):
     F = F2
     zone = [P(F, 31.9, 8.38), P(F, 37.68, 8.38), P(F, 37.68, 10.38), P(F, 31.9, 10.38)]
     d.pattern(zone, 'ANSI37', 1.2, BLUE)
-    d.fill([P(F, 33.4, 9.05), P(F, 36.2, 9.05), P(F, 36.2, 9.75), P(F, 33.4, 9.75)], 255)
-    d.text(*P(F, 34.8, 9.4), 'ПБЗ №33', 2.0, 'MC', BLUE)
+    d.fill([P(F, 35.2, 9.78), P(F, 37.5, 9.78), P(F, 37.5, 10.28), P(F, 35.2, 10.28)], 255)   # правее номера помещения
+    d.text(*P(F, 36.35, 10.03), 'ПБЗ №33', 2.0, 'MC', BLUE)
     fire_wall(d, F, -0.15, 30.15)
     for code, (x, y, side) in EXT_POS.items():
         if code.startswith('О2'):
@@ -364,22 +351,39 @@ def copy_frame(msp, idx, src, dst):
         if not p:
             continue
         frame = e.dxf.layer == '01_РАМКА'
-        in_stamp = all(sx + W - 190 <= x <= sx + W and sy <= y <= sy + 41 for x, y in p)
+        in_stamp = all(sx + W - 191 <= x <= sx + W + 1 and sy - 1 <= y <= sy + 42 for x, y in p)
         if frame or in_stamp:
             c = e.copy(); c.translate(dx, 0, 0); msp.add_entity(c)
 
 
+TITLES = {'44': ['План внутриплощадочных', 'дорог'], '45': ['Структурная схема СПС,', 'АУГПТ и УПА ВРУ'],
+          '46': ['Структурная схема', 'СОУЭ'], '47': ['План 2-го этажа.', 'Пути эвакуации,', 'огнетушители, зона МГН'],
+          '48': ['План 1-го этажа.', 'Пути эвакуации,', 'огнетушители'],
+          '48.1': ['Конференц-зал №36.', 'Схема расстановки мест'], '48.2': ['Серверная №31.', 'План АУГПТ']}
+
+
 def retitle(msp, idx, sheet, lines):
-    """Заменяет «Графический / лист NN» в основной надписи нового листа (по центру графы наименования)."""
+    """Наименование листа в основной надписи вместо «Графический / лист NN»: строки по центру графы,
+    высота шрифта – как у исходной надписи, но не шире графы (62 мм)."""
     ox, oy, W, H = SHEETS[sheet]
     texts = [e for e in idx.box(ox + W - 120, oy + 5, ox + W - 60, oy + 25)
              if e.dxftype() == 'TEXT' and ox + W - 120 <= e.dxf.insert.x <= ox + W - 60 and oy + 5 <= e.dxf.insert.y <= oy + 25]
+    assert len(texts) == 2, (sheet, [e.dxf.text for e in texts])
     texts.sort(key=lambda e: -e.dxf.insert.y)
+    y0, y1 = texts[0].dxf.insert.y, texts[1].dxf.insert.y
+    h0 = texts[0].dxf.height
+    attrs = {'layer': texts[0].dxf.layer, 'color': texts[0].dxf.color, 'style': texts[0].dxf.style}
+    for e in texts:
+        msp.delete_entity(e)
+    cyc = (y0 + y1) / 2 + h0 / 2                     # середина графы (5–25 мм) по исходной надписи
+    h = min(h0, 58.0 / (0.72 * max(len(s) for s in lines)), 4.0 if len(lines) > 2 else h0)
+    step = (y0 - y1) if len(lines) == 2 and h == h0 else 1.5 * h
     cx = ox + W - 5 - (204.9 - 123.5)
-    for e, s in zip(texts, lines):
-        y = e.dxf.insert.y
-        e.dxf.text = s
-        e.set_placement((cx, y), align=TA.CENTER)
+    for k, s in enumerate(lines):
+        y = cyc - h / 2 + step * ((len(lines) - 1) / 2 - k)
+        assert oy + 5.5 <= y and y + h <= oy + 24.5, (sheet, s, y - oy, h)
+        t = msp.add_text(s, height=h, dxfattribs=attrs)
+        t.set_placement((cx, y), align=TA.CENTER)
 
 
 def seats(d, T, k, labels=False):
@@ -446,7 +450,7 @@ def sheet481(msp, d):
     # огнетушители
     extinguisher(d, *T(0.25, 2.6), 'ОП-4(з)', 'О1-8', 'e', 4.0)
     extinguisher(d, *T(6.2, B + 0.5), 'ОП-4(з)', 'О1-7', 'n', 4.0)
-    d.text(ox + 25, oy + 279, 'Конференц-зал №36. Схема расстановки мест и путей эвакуации. М 1:50', 4.0, 'L')
+    d.text(ox + 25, oy + 279, 'Конференц-зал №36. Схема расстановки мест. М 1:50', 4.0, 'L')
     notes = ['1. Число мест – 200: ряды 1–12 по 15 мест (ряд 7 – 13 мест), ряды 13–14 по 11 мест.',
              '2. Место 500 мм, шаг рядов 900 мм, проход между рядами не менее 450 мм; кресла соединены в ряду',
              '   и крепятся к полу. Выход из каждого ряда – в обе стороны (проходы 1000 мм у стен).',
@@ -473,12 +477,12 @@ def sheet482(msp, d):
     # дверь в коридор №28
     d.mask([T(-t - 0.02, 6.4), T(0.02, 6.4), T(0.02, 7.4), T(-t - 0.02, 7.4)])
     d.line(T(-t, 6.4), T(-t - 1.0, 6.4)); d.arc(T(-t, 6.4), 1.0 * S, 90, 180)
-    d.text(*T(-0.3, 5.7), 'коридор №28', 2.5, 'R')
+    d.text(*T(-1.3, 6.75), 'коридор №28', 2.5, 'R')
     # модули, трубопроводы, насадки
     for k, ny in enumerate((7.6, 2.5)):
         mx = Lx - 0.32
         d.circle(T(mx, ny), 0.18 * S, RED)
-        d.text(*T(mx + 0.35, ny + 0.3), f'МГП-{k + 1}', 2.5, 'L', RED)
+        d.text(*T(mx, ny + 0.28), f'МГП-{k + 1}', 2.5, 'C', RED)
         d.line(T(mx - 0.18, ny), T(1.94, ny), RED, 50)
         d.circle(T(1.94, ny), 0.12 * S, RED)
         for a in range(0, 360, 45):
@@ -487,7 +491,7 @@ def sheet482(msp, d):
         d.text(*T(1.94, ny - 0.75), f'Н{k + 1}', 2.5, 'C', RED)
         d.rect(*T(mx - 0.6, ny - 0.08), *T(mx - 0.45, ny + 0.08), RED)
         d.text(*T(mx - 0.52, ny + 0.2), 'СДУ', 2.0, 'C', RED)
-        d.text(*T(2.8, ny + 0.12), 'Ду25', 2.2, 'C', RED)
+        d.text(*T(2.75, ny - 0.3), 'Ду25', 2.2, 'C', RED)
     # извещатели
     for lab, yy in (('1.35', 1.3), ('1.36', 3.8), ('1.62', 6.3), ('1.63', 8.8)):
         x, y = T(1.2, yy)
@@ -510,7 +514,7 @@ def sheet482(msp, d):
     d.dim(T(Lx + t, 0), T(Lx + t, Ly), -18, '10 050')
     d.dim(T(Lx + t, 0), T(Lx + t, 2.5), -9, '2 500', 2.2)
     d.dim(T(Lx + t, 2.5), T(Lx + t, 7.6), -9, '5 100', 2.2)
-    d.text(ox + 25, oy + 279, 'Серверная №31. АУГПТ: модули, трубопроводы, насадки, приборы. М 1:50', 4.0, 'L')
+    d.text(ox + 25, oy + 279, 'Серверная №31. План АУГПТ. М 1:50', 4.0, 'L')
     # таблицы справа
     R = calc.R
     x0, y0 = ox + 215, oy + 262
@@ -587,8 +591,8 @@ def build(src, first, total, log=print):
     for s in ('48.1', '48.2'):
         copy_frame(msp, idx, '48', s)
     idx = Index(msp)
-    retitle(msp, idx, '48.1', ['Конференц-зал', 'Схема мест'])
-    retitle(msp, idx, '48.2', ['Серверная', 'План АУГПТ'])
+    for s in ORDER:
+        retitle(msp, idx, s, TITLES[s])
     sheet481(msp, d)
     sheet482(msp, d)
     nums = {}
