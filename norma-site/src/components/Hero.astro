@@ -27,9 +27,10 @@ import { existsSync } from 'node:fs'
 // владельца в карточке «отвечаю лично» и Фемида на кадре.
 //
 // Карточка условий стоит на кадре, а не под ним; на 1366×768 она видна
-// целиком. На телефоне
-// 390×844 видны все пять строк (кадр там — полосой над карточкой,
-// из-под неё видны 76 px).
+// целиком. С 14.10.2026 кадр — фон за текстом на любой ширине, и на
+// телефоне тоже; там Фемида стоит за заголовком, а в окне между
+// кнопками и карточкой (76 px) видна без текста. На 390×844 видны все
+// пять строк условий.
 //
 // Строки чисел под первым экраном по-прежнему нет: четыре числа в ней
 // повторяли соседей. Полоса доверия ниже — три пункта, и каждый уже сказан
@@ -65,7 +66,7 @@ const TRUST: { icon: string; t: string; n?: string; d: string }[] = [
 ]
 ---
 
-<section class="hero">
+<section class:list={['hero', SITE.heroPhoto && 'hero--photo']}>
   <div class="hero-wash" aria-hidden="true"></div>
 
   <!-- Чертёж: дом в лесах и башенный кран. Рисуется, только когда
@@ -305,9 +306,8 @@ const TRUST: { icon: string; t: string; n?: string; d: string }[] = [
   }
 
   /* ── Кадр ──
-     Чёткий, без обесцвечивания: на компьютере — фон всего первого
-     экрана (ниже), на телефоне и планшете — полоса над карточкой
-     условий. Кадр «дышит» (global.css, @keyframes breathe): за полминуты
+     Чёткий, без обесцвечивания: фон первого экрана за текстом —
+     на компьютере (ниже) и с 14.10.2026 на планшете и телефоне. Кадр «дышит» (global.css, @keyframes breathe): за полминуты
      приближается на 6 % и обратно. */
   .photo {
     display: none;
@@ -364,27 +364,48 @@ const TRUST: { icon: string; t: string; n?: string; d: string }[] = [
       max-width: 360px;
     }
   }
-  /* Планшет и телефон: одна колонка, кадр — полосой во всю ширину
-     над карточкой условий, карточка наезжает на него. На телефоне
-     из-под карточки виден только верх кадра (76 px): больше — и пятая
-     строка условий уходит за первый экран 390×844 (сейчас низ — 832). */
+  /* Планшет и телефон — так же, как компьютер (14.10.2026, «сделай
+     так же на телефоне»): кадр — фон за заголовком и кнопками, от шапки
+     до низа карточки условий, карточка лежит на нём. До того здесь
+     кадр стоял полосой над карточкой, а текст — на белом листе.
+     Колонка одна, поэтому .hero-side на этих ширинах «растворяется»
+     (display: contents): кадр, карточка и «отвечаю лично» встают
+     прямо в сетку первого экрана, и кадр, позиционированный от .hero-in,
+     занимает её строки 1–2 — текст и карточку (у абсолютно
+     позиционированного элемента в сетке рамка — её область). Низ кадра растушёван
+     в фон: под карточкой он уходит в тёмное, и полоса доверия ниже
+     стоит на ровном фоне.
+     Зазор между кнопками и карточкой — окно, где кадр виден без текста;
+     на телефоне он прежний: больше — и пятая строка условий уходит
+     за первый экран 390×844. */
   @media (max-width: 1023px) {
+    .hero-in { position: relative; }
+    .hero-side { display: contents; }
     .photo {
       display: block;
-      top: 0;
-      left: -20px;
-      right: -20px;
-      height: 250px;
-      mask-image: linear-gradient(180deg, #000 72%, transparent);
-      -webkit-mask-image: linear-gradient(180deg, #000 72%, transparent);
+      /* Только строки: столбец не задан, и по горизонтали кадр отсчитывается
+         от краёв .hero-in, а не от столбца сетки (с grid-column: 1 Chrome
+         брал правый край по полю .hero-in, левый — по столбцу, и кадр
+         съезжал на 10 px вправо). */
+      grid-row: 1 / 3;
+      top: -46px;
+      bottom: 0;
+      left: calc((100% - 100vw) / 2);
+      right: calc((100% - 100vw) / 2);
+      background: var(--hero-bg);
+      z-index: -1;
+      mask-image: linear-gradient(180deg, #000 calc(100% - 220px), transparent);
+      -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 220px), transparent);
     }
-    .hero-offer { margin-top: 180px; }
+    .hero-offer { margin-top: 120px; }
+    /* Между карточкой и «отвечаю лично» — прежний зазор колонки, а не
+       зазор сетки первого экрана. */
+    .presence { margin-top: -12px; }
   }
   @media (min-width: 768px) and (max-width: 1023px) {
     .hero-offer { max-width: 520px; }
   }
   @media (max-width: 767px) {
-    .photo { height: 180px; }
     .hero-offer { margin-top: 76px; }
   }
 
@@ -818,7 +839,8 @@ const TRUST: { icon: string; t: string; n?: string; d: string }[] = [
     .cta { margin-top: 20px; gap: 10px; }
     .cta .btn { width: 100%; }
     .btn--lg { min-height: 50px; padding: 13px 20px; }
-    .hero-side { gap: 14px; }
+    .photo { top: -22px; }
+    .presence { margin-top: -10px; }
     .hero-offer { padding: 26px 18px 14px; gap: 11px; }
     .ho-title { font-size: 23px; }
     .ho-row { padding-block: 7px; }
@@ -830,25 +852,100 @@ const TRUST: { icon: string; t: string; n?: string; d: string }[] = [
     .geo { font-size: 11.5px; gap: 7px; padding: 4px 10px; }
   }
 
-  /* ── Компьютер: тёмный первый экран на фотографии ──
-     Кадр стоит фоном (выше, «Кадр»), и текст на нём светлый. Правила
-     стоят в конце файла нарочно: та же сила, что у основных, и они
-     должны их перебить. Карточки (условия, «отвечаю лично», печать
-     с ИНН, подарки) остаются светлыми — это листы, лежащие на кадре.
-     Под текстом слева — тёмная заливка: фотография тёмная, но корешки
-     книг в ней светлые, и белые буквы на них не читаются (замер —
-     test-hero-photo, норма 4.5:1). Справа, где Фемида, заливки нет. */
+  /* ── Тёмный первый экран на фотографии ──
+     Кадр стоит фоном (выше, «Кадр»), и текст на нём светлый — с 14.10.2026
+     на всех ширинах. Правила стоят в конце файла и привязаны к .hero--photo
+     (класс есть, только когда кадр задан; без кадра — светлый лист
+     с чертежом): так они сильнее основных и перебивают их. Карточки
+     (условия, «отвечаю лично», печать с ИНН, подарки) остаются светлыми —
+     это листы, лежащие на кадре. Под текстом — тёмная заливка
+     (.photo::after): фотография тёмная, но корешки книг в ней светлые,
+     и белые буквы на них не читаются (замер — test-hero-photo, норма
+     4.5:1). Там, где текста нет, заливки нет. */
   .hero { --hero-bg: #0c1220; }
+  .hero--photo { background: var(--hero-bg); }
+  .hero--photo .hero-wash { display: none; }
+  .hero--photo .photo::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .hero--photo .geo {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #dfe6f1;
+    box-shadow: none;
+  }
+  .hero--photo .geo i { background: var(--acc-bright); }
+  .hero--photo .page-title { color: #fff; }
+  .hero--photo .page-title em { color: var(--acc-bright); }
+  .hero--photo .hero-lead { color: #d3dceb; }
+  /* Светлая кнопка на кадре — стеклом: белая плашка спорила бы
+     с карточкой условий. На телефоне так выглядит «Проверить, нужна ли
+     СРО» (там она вторая), с 768 px — «Узнать стоимость». */
+  .hero--photo .cta .btn--ghost,
+  .hero--photo .cta-calc {
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.4);
+  }
+  .hero--photo .cta .btn--ghost:hover,
+  .hero--photo .cta-calc:hover { background: rgba(255, 255, 255, 0.14); border-color: #fff; color: #fff; }
+  .hero--photo .direct { color: #d3dceb; }
+  .hero--photo .direct a { color: #fff; }
+  .hero--photo .direct a:hover { color: var(--acc-bright); }
+  .hero--photo .tr-ic { background: rgba(141, 178, 255, 0.14); color: var(--acc-bright); }
+  .hero--photo .tr-t { color: #fff; }
+  .hero--photo .tr-n { color: var(--acc-bright); }
+  .hero--photo .tr-d { color: #d3dceb; }
+  .hero--photo .verify { background: var(--paper); border-color: transparent; box-shadow: var(--shadow-s); }
+  @media (min-width: 768px) {
+    /* С 768 px «Проверить, нужна ли СРО» — главная синяя кнопка. */
+    .hero--photo .cta-calc {
+      background: var(--acc-btn);
+      color: #fff;
+      border-color: transparent;
+    }
+    .hero--photo .cta-calc:hover { background: var(--acc-btn-hover); border-color: transparent; }
+  }
+
+  /* Телефон: текст во всю ширину, и Фемида стоит за ним — заливка
+     сверху вниз: ровная под заголовком и абзацем, к окну между кнопками
+     и карточкой сходит на нет (там кадр в полную яркость). Доли — от
+     высоты кадра (от шапки до низа карточки); подобраны замером
+     на 320–767 px, абзац — не хуже 5:1. */
+  @media (max-width: 767px) {
+    .hero--photo .photo::after {
+      background:
+        linear-gradient(180deg,
+          rgba(12, 18, 32, 0.66) 0,
+          rgba(12, 18, 32, 0.66) 34%,
+          rgba(12, 18, 32, 0.3) 48%,
+          rgba(12, 18, 32, 0) 62%);
+    }
+  }
+  /* Планшет: текст слева, справа от него место есть, и там Фемида —
+     заливка слева направо, как на компьютере. */
+  @media (min-width: 768px) and (max-width: 1023px) {
+    .hero--photo .photo::after {
+      background:
+        linear-gradient(90deg,
+          rgba(12, 18, 32, 0.62) 0%,
+          rgba(12, 18, 32, 0.55) 40%,
+          rgba(12, 18, 32, 0.3) 56%,
+          rgba(12, 18, 32, 0) 72%);
+    }
+  }
+
   @media (min-width: 1024px) {
-    .hero { background: var(--hero-bg); }
-    .hero-wash { display: none; }
     /* Кадр высотой во весь первый экран, ширина — по пропорции снимка;
        правым краем он заходит за окно, чтобы Фемида встала правее
        карточки условий. Насколько заходит — по ширине окна: на узких
        экранах справа от карточки места мало, и там видны голова
        и поднятые весы над карточкой. Слева от снимка на широких
        экранах остаётся фон --hero-bg под той же заливкой — шва не видно. */
-    .photo img {
+    .hero--photo .photo img {
       position: absolute;
       top: 0;
       right: -500px;
@@ -861,46 +958,17 @@ const TRUST: { icon: string; t: string; n?: string; d: string }[] = [
       mask-image: linear-gradient(90deg, transparent 0, #000 260px);
       -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 260px);
     }
-    .photo::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
+    .hero--photo .photo::after {
       background:
         linear-gradient(90deg,
-          rgba(12, 18, 32, var(--shade-a, 0.62)) 0%,
-          rgba(12, 18, 32, var(--shade-b, 0.55)) 32%,
-          rgba(12, 18, 32, var(--shade-c, 0.34)) 46%,
+          rgba(12, 18, 32, 0.62) 0%,
+          rgba(12, 18, 32, 0.55) 32%,
+          rgba(12, 18, 32, 0.34) 46%,
           rgba(12, 18, 32, 0.08) 58%,
           rgba(12, 18, 32, 0) 66%);
     }
-
-    .geo {
-      background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(255, 255, 255, 0.2);
-      color: #dfe6f1;
-      box-shadow: none;
-    }
-    .geo i { background: var(--acc-bright); }
-    .page-title { color: #fff; }
-    .page-title em { color: var(--acc-bright); }
-    .hero-lead { color: #d3dceb; }
-    .cta .btn--ghost {
-      background: rgba(255, 255, 255, 0.06);
-      color: #fff;
-      border-color: rgba(255, 255, 255, 0.4);
-    }
-    .cta .btn--ghost:hover { background: rgba(255, 255, 255, 0.14); border-color: #fff; color: #fff; }
-    .direct { color: #d3dceb; }
-    .direct a { color: #fff; }
-    .direct a:hover { color: var(--acc-bright); }
-    .trust { border-top-color: rgba(255, 255, 255, 0.18); }
-    .tr-ic { background: rgba(141, 178, 255, 0.14); color: var(--acc-bright); }
-    .tr-t { color: #fff; }
-    .tr-n { color: var(--acc-bright); }
-    .tr-d { color: #d3dceb; }
-    .verify { background: var(--paper); border-color: transparent; box-shadow: var(--shadow-s); }
+    .hero--photo .trust { border-top-color: rgba(255, 255, 255, 0.18); }
   }
-  @media (min-width: 1280px) { .photo img { right: -400px; } }
-  @media (min-width: 1600px) { .photo img { right: -260px; } }
+  @media (min-width: 1280px) { .hero--photo .photo img { right: -400px; } }
+  @media (min-width: 1600px) { .hero--photo .photo img { right: -260px; } }
 </style>
