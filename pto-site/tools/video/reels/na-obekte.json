@@ -1,0 +1,28 @@
+{
+ "title": "На объекте",
+ "source": "фото Андрея Яковлева (Doc1.docx); подписи — из его сообщения про полный цикл",
+ "music": {
+  "bpm": 104,
+  "prog": ["Em", "C", "G", "D"]
+ },
+ "bars": {"hook": 2, "shot": 1, "final": 3},
+ "shots": [
+  {"img": "fasad.jpg", "kind": "full", "pos": "50% 40%", "tag": "X-PTO · ПТО на аутсорсе", "title": "Полный цикл — <em>не на словах</em>"},
+  {"img": "dvor.jpg", "kind": "card", "tag": "Выезд", "title": "Выезжаем на объект <em>командой</em>"},
+  {"img": "komanda.jpg", "kind": "full", "pos": "50% 30%", "tag": "На месте", "title": "Работаем прямо <em>на объекте</em>"},
+  {"img": "zamery.jpg", "kind": "full", "pos": "28% 50%", "tag": "Замеры", "title": "Фактические замеры — <em>сами</em>"},
+  {"img": "seti.jpg", "kind": "full", "pos": "50% 30%", "tag": "Разделы", "title": "Каждый раздел — <em>своими глазами</em>"},
+  {"img": "inzhener.jpg", "kind": "full", "pos": "50% 40%", "tag": "Документация", "title": "Документы готовим <em>на месте</em>"},
+  {"img": "plan.jpg", "kind": "card", "tag": "Проектирование", "title": "Проектируем <em>все разделы</em>"},
+  {"img": "doska.jpg", "kind": "card", "tag": "Контроль", "title": "Каждый раздел — <em>под контролем</em>"},
+  {"img": "arhiv.jpg", "kind": "card", "tag": "Архивы", "title": "Паспорта найдём <em>в ваших архивах</em>"},
+  {"img": "komplekt.jpg", "kind": "full", "pos": "50% 35%", "tag": "Комплект", "title": "Собираем комплект <em>под ключ</em>"},
+  {"img": "bassein-stroyka.jpg", "kind": "card", "tag": "Стройка", "title": "От стройки…"},
+  {"img": "bassein-gotov.jpg", "kind": "card", "tag": "Сдача", "title": "…до <em>сдачи объекта</em>"}
+ ],
+ "final": {
+  "title": "Полный цикл <em>под ключ</em>",
+  "chips": ["Проектирование · СРО", "Выезд на объект", "Сдача под ключ"],
+  "stamp": "Сдано"
+ }
+}
