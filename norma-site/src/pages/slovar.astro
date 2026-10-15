@@ -1,0 +1,169 @@
+---
+// Словарь терминов СРО (06.10.2026, «продолжай работать над SEO»).
+//
+// Зачем отдельная страница, когда всё разобрано в базе знаний. Человек
+// ищет не «как вступить», а «НРС что это», «КФ ОДО расшифровка» — и
+// попадает на сайты, где ответ спрятан в третьем абзаце. Здесь ответ —
+// первой строкой под термином, а за подробностями ссылка в разбор.
+// Страница — узел перелинковки: с неё есть дорога в пятнадцать разборов.
+//
+// Данные — src/config/glossary.ts, суммы и нормы — из facts.ts. Печати
+// «Сверено» на странице нет нарочно: определения собраны из разборов
+// с разными датами сверки, и одна общая дата говорила бы за все.
+import Base from '../layouts/Base.astro'
+import HeadPhoto from '../components/HeadPhoto.astro'
+import Icon from '../components/Icon.astro'
+import { GLOSSARY } from '../config/glossary'
+import { href } from '../config/site'
+
+const pageUrl = new URL('/slovar/', Astro.site).toString()
+
+// Неразрывные пробелы там, где перенос рвёт смысл: «1 | июля 2017»,
+// «10 | млн ₽», «№ | 1880». В разметке страницы — да, в микроразметке —
+// нет: там поисковику нужен обычный текст.
+const MONTHS = 'января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря'
+const nb = (text: string) =>
+  text
+    .replace(new RegExp(`(\\d) (${MONTHS})`, 'g'), '$1\u00a0$2')
+    .replace(/(\d) (млн|млрд|₽)/g, '$1\u00a0$2')
+    .replace(/№ /g, '№\u00a0')
+
+// Микроразметка словаря: набор определённых терминов. Поисковик берёт
+// из неё определение для ответа на «что такое …» и связывает термин
+// с адресом на этой странице.
+const termSet = {
+  '@type': 'DefinedTermSet',
+  '@id': `${pageUrl}#terms`,
+  name: 'Словарь терминов СРО',
+  url: pageUrl,
+  hasDefinedTerm: GLOSSARY.map((t) => ({
+    '@type': 'DefinedTerm',
+    '@id': `${pageUrl}#${t.id}`,
+    name: t.term,
+    ...(t.full ? { alternateName: t.full } : {}),
+    description: t.def,
+    url: `${pageUrl}#${t.id}`,
+    inDefinedTermSet: { '@id': `${pageUrl}#terms` },
+  })),
+}
+---
+
+<Base
+  title="Словарь СРО: что такое НРС, НОК, КФ ВВ и КФ ОДО — расшифровка | НОРМА"
+  description="Термины саморегулирования в строительстве коротко и со ссылкой на норму: СРО, НОСТРОЙ, НОПРИЗ, НРС, НОК, КФ ВВ, КФ ОДО, уровень ответственности, региональный принцип, допуск СРО."
+  breadcrumbs={[
+    { label: 'Главная', url: href('/') },
+    { label: 'База знаний', url: href('/baza-znaniy/') },
+    { label: 'Словарь терминов' },
+  ]}
+  schema={[termSet]}
+>
+  <section class="section page-head">
+    <HeadPhoto src="themis-books.webp" position="64% 42%" />
+    <div class="wrap">
+      <span class="eyebrow">База знаний</span>
+      <h1>Словарь терминов <em>СРО</em></h1>
+      <p class="lead">
+        НРС, НОК, КФ ВВ, КФ ОДО — что значат сокращения, которыми говорят СРО и национальные
+        объединения. У каждого термина — короткий ответ, норма закона и ссылка на подробный разбор.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap gl">
+      {/* Оглавление: словарь не читают подряд, в нём ищут слово. */}
+      <nav class="gl-index" aria-label="Термины на странице" data-nosearch>
+        <ul>
+          {GLOSSARY.map((t) => (
+            <li><a href={`#${t.id}`}>{t.term}</a></li>
+          ))}
+        </ul>
+      </nav>
+
+      <div class="gl-list">
+        {GLOSSARY.map((t) => (
+          <article class="gl-term" id={t.id} data-anchor>
+            <h2>
+              {t.term}
+              {t.full && <span class="gl-full"> — {t.full}</span>}
+            </h2>
+            <p>{nb(t.def)}</p>
+            <div class="gl-foot">
+              {t.law && <span class="law">{t.law}</span>}
+              <a class="gl-more" href={href(t.more.url)}>
+                {t.more.label} <Icon name="arrow" size={14} />
+              </a>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* Слева — оглавление (липкое на широком экране), справа — термины
+     строками бланка: линейка сверху, без карточек. */
+  .gl { display: grid; gap: 32px; }
+  @media (min-width: 1000px) {
+    .gl { grid-template-columns: 250px minmax(0, 1fr); gap: 56px; align-items: start; }
+    .gl-index { position: sticky; top: 96px; }
+  }
+
+  .gl-index ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  @media (min-width: 1000px) {
+    .gl-index ul { display: grid; gap: 2px; }
+  }
+  .gl-index a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    padding: 4px 12px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--ink);
+    font-size: 14px;
+    text-decoration: none;
+    transition: border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+  }
+  @media (min-width: 1000px) {
+    .gl-index a { border: 0; border-radius: 0; padding: 4px 0; min-height: 30px; color: var(--muted); }
+  }
+  .gl-index a:hover { border-color: var(--acc-btn); color: var(--acc-deep); }
+
+  .gl-list { display: grid; }
+  .gl-term {
+    display: grid;
+    gap: 10px;
+    padding: 24px 0;
+    border-top: 1px solid var(--line);
+  }
+  .gl-term:last-child { border-bottom: 1px solid var(--line); }
+  .gl-term h2 { font-size: clamp(21px, 2.4vw, 25px); margin: 0; }
+  .gl-full { font-family: var(--font-body); font-size: 0.68em; font-weight: 500; color: var(--muted); }
+  .gl-term p { margin: 0; font-size: 16.5px; line-height: 1.65; max-width: 66ch; }
+  .gl-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+  .gl-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 30px;
+    color: var(--acc-deep);
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+  }
+  .gl-more:hover { text-decoration: underline; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .gl-index a { transition: none; }
+  }
+</style>

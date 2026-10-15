@@ -16,6 +16,7 @@ if (href.indexOf('tel:') === 0) window.xptoGoal('telefon');
 else if (href.indexOf('mailto:') === 0) window.xptoGoal('pochta');
 else if (href.indexOf('t.me/') > -1) window.xptoGoal('telegram');
 else if (href.indexOf('max.ru') > -1) window.xptoGoal('max');
+else if (href.indexOf('wa.me/') > -1) window.xptoGoal('whatsapp');
 });
 document.documentElement.classList.add('js');
 var calmMedia = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -63,6 +64,7 @@ if (!e.isIntersecting) return;
 var sibs = e.target.parentNode ? e.target.parentNode.children : [];
 var i = [].indexOf.call(sibs, e.target);
 e.target.style.transitionDelay = (Math.min(i, 5) * 60) + 'ms';
+e.target.style.setProperty('--rd', (Math.min(i, 5) * 60) + 'ms');
 e.target.classList.add('is-in');
 io.unobserve(e.target);
 });
@@ -86,6 +88,58 @@ if (k < 1) requestAnimationFrame(step);
 };
 el.firstChild.nodeValue = '0';
 window.setTimeout(function () { requestAnimationFrame(step); }, 320 + n * 90);
+});
+}
+var statusEl = document.querySelector('[data-status]');
+if (statusEl && window.Intl) {
+try {
+var days = statusEl.getAttribute('data-days').split(',').map(Number);
+var from = +statusEl.getAttribute('data-from');
+var to = +statusEl.getAttribute('data-to');
+var parts = new Intl.DateTimeFormat('en-GB', {
+timeZone: 'Europe/Moscow', weekday: 'short', hour: 'numeric', hour12: false
+}).formatToParts(new Date());
+var wd = 0, hr = 0;
+parts.forEach(function (p) {
+if (p.type === 'weekday') wd = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].indexOf(p.value) + 1;
+if (p.type === 'hour') hr = parseInt(p.value, 10) % 24;
+});
+var isOn = days.indexOf(wd) !== -1 && hr >= from && hr < to;
+var text;
+if (isOn) {
+text = 'Сейчас на связи — звоните или пишите';
+} else {
+var names = ['', 'в понедельник', 'во вторник', 'в среду', 'в четверг', 'в пятницу', 'в субботу', 'в воскресенье'];
+var when;
+if (days.indexOf(wd) !== -1 && hr < from) when = 'сегодня';
+else {
+for (var k = 1; k <= 7; k++) {
+var d = (wd - 1 + k) % 7 + 1;
+if (days.indexOf(d) !== -1) { when = k === 1 ? 'завтра' : names[d]; break; }
+}
+}
+text = 'Сейчас нерабочее время. Оставьте заявку — ответим ' + when + ' с ' + from + ':00 по Москве';
+}
+statusEl.querySelector('[data-status-text]').textContent = text;
+statusEl.classList.toggle('is-off', !isOn);
+statusEl.hidden = false;
+} catch (e) { /* без строки статуса страница ничего не теряет */ }
+}
+var fab = document.querySelector('[data-fab]');
+if (fab) {
+var fabBtn = fab.querySelector('.fab__btn');
+var fabMenu = fab.querySelector('.fab__menu');
+var setFab = function (open) {
+fabMenu.hidden = !open;
+fabBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+fab.classList.toggle('is-open', open);
+};
+fabBtn.addEventListener('click', function () { setFab(fabMenu.hidden); });
+document.addEventListener('click', function (e) {
+if (!fabMenu.hidden && !fab.contains(e.target)) setFab(false);
+});
+document.addEventListener('keydown', function (e) {
+if (e.key === 'Escape' && !fabMenu.hidden) { setFab(false); fabBtn.focus(); }
 });
 }
 if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
@@ -461,8 +515,20 @@ accurateTrackBounce: true,
 webvisor: false
 });
 }
+function startWidgets() {
+[].forEach.call(document.querySelectorAll('[data-yrating]'), function (el) {
+if (el.querySelector('iframe')) return;
+var f = document.createElement('iframe');
+f.src = el.getAttribute('data-yrating');
+f.width = 150; f.height = 50;
+f.title = 'Рейтинг на Яндексе';
+f.loading = 'lazy';
+f.setAttribute('frameborder', '0');
+el.appendChild(f);
+});
+}
 var choice = saved();
-if (choice === 'all') { startMetrika(); return; }
+if (choice === 'all') { startMetrika(); startWidgets(); return; }
 if (choice === 'none') return;
 bar.hidden = false;
 bar.addEventListener('click', function (e) {
@@ -471,6 +537,6 @@ if (!btn) return;
 var value = btn.getAttribute('data-cookie');
 remember(value);
 bar.hidden = true;
-if (value === 'all') startMetrika();
+if (value === 'all') { startMetrika(); startWidgets(); }
 });
 })();

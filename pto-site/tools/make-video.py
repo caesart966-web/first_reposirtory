@@ -83,6 +83,7 @@ def main() -> int:
         page.goto(url, wait_until="networkidle")
         # Шрифты и картинки должны быть готовы до первого кадра
         page.evaluate("""async () => {
+            await (window.READY || Promise.resolve());   // страница может собирать сцены из данных
             await document.fonts.ready;
             await Promise.all([...document.images].map(i => i.decode().catch(() => {})));
         }""")

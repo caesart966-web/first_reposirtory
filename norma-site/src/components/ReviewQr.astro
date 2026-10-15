@@ -1,0 +1,56 @@
+---
+// QR-код со ссылкой на форму отзыва на Яндекс Картах.
+//
+// Модули — из src/config/review-qr.json: scripts/prepare-review-qr.py
+// снимает их с картинки, которую выдал Яндекс Бизнес, и распознаёт код
+// так же, как телефон. Здесь код рисуется векторной картинкой прямо
+// в разметке: ни файла, ни запроса, края модулей резкие при любом
+// увеличении. Поле в четыре модуля вокруг — по стандарту QR: без него
+// камера телефона находит код хуже.
+import QR from '../config/review-qr.json'
+import { SITE } from '../config/site'
+
+interface Props {
+  /** Сторона в px. Кратная 33 (25 модулей + поле 2 × 4) — модули без полутонов. */
+  size?: number
+}
+const { size = 132 } = Astro.props
+
+// Ссылка в коде и ссылка рядом с кодом обязаны совпадать: человек
+// с телефоном и человек с мышью должны попасть в одно место. Разошлись —
+// сборка падает, а не публикует код, ведущий неизвестно куда.
+if (QR.text !== SITE.reviewLink) {
+  throw new Error(
+    `QR ведёт на ${QR.text}, а SITE.reviewLink — ${SITE.reviewLink}. ` +
+      'Замените assets-src/otzyv-qr.png и пересоберите код: python3 scripts/prepare-review-qr.py',
+  )
+}
+
+const QUIET = 4
+const full = QR.rows.length + QUIET * 2
+// Тёмные модули подряд в строке — один прямоугольник: путь вчетверо короче.
+let d = ''
+QR.rows.forEach((row, y) => {
+  for (const m of row.matchAll(/#+/g)) {
+    d += `M${(m.index ?? 0) + QUIET} ${y + QUIET}h${m[0].length}v1h-${m[0].length}z`
+  }
+})
+---
+
+<svg
+  class="qr"
+  viewBox={`0 0 ${full} ${full}`}
+  width={size}
+  height={size}
+  role="img"
+  aria-label="QR-код: форма отзыва на Яндекс Картах"
+  data-qr-text={QR.text}
+  shape-rendering="crispEdges"
+>
+  <rect width={full} height={full} fill="#fff" />
+  <path d={d} fill="#16130F" />
+</svg>
+
+<style>
+  .qr { display: block; flex: none; }
+</style>

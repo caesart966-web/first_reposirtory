@@ -135,7 +135,8 @@ for (const file of files) {
     }
     if (/^(https?:|mailto:|tel:|data:)/.test(raw) || raw.startsWith('#')) continue
 
-    const [pathPart] = raw.split('#')
+    // Метка версии (?v=…, lib/asset-version.ts) — не часть пути к файлу.
+    const [pathPart] = raw.split('#')[0].split('?')
     if (!pathPart) continue
 
     // Абсолютные внутренние адреса проверяем по файлам сборки.

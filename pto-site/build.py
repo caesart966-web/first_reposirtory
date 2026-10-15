@@ -23,6 +23,7 @@
 """
 
 import argparse
+import hashlib
 import html
 import json
 import re
@@ -111,6 +112,20 @@ class Site:
 # =========================================================================
 # 2. Блоки страницы
 # =========================================================================
+
+def asset_version(name: str) -> str:
+    """Метка версии для ссылки на стиль и скрипт: первые 8 знаков хеша файла.
+
+    Хостинг отдаёт CSS и JS с кешем на 7 дней (server/.htaccess), а имя файла
+    не меняется. Без метки после обновления сайта браузер брал новую разметку
+    со старыми стилями: лента объектов на главной вышла голым списком ссылок
+    во всю высоту экрана. Метка меняется вместе с содержимым файла — и только
+    тогда, поэтому кеш продолжает работать между обновлениями."""
+    path = ASSETS_DIR / name
+    if not path.exists():
+        return ""
+    return hashlib.md5(path.read_bytes()).hexdigest()[:8]
+
 
 def asset_exists(rel: str) -> bool:
     """Есть ли файл в папке assets/. Путь вида /assets/media/hero.mp4."""
@@ -604,7 +619,7 @@ def block_form(site: Site, preselect: str = "") -> str:
     max_line = ""
     if c.get("max_url"):
         max_line = (f'''<div class="contact-line">
-              <span class="contact-line__label">MAX</span>
+              <span class="contact-line__label">{brand_icon(site, "max", 16)}MAX</span>
               <a class="contact-line__value" href="{esc(c["max_url"])}" rel="nofollow noopener" target="_blank">{esc(c.get("max_display", "Канал"))}</a>
             </div>''')
 
@@ -620,12 +635,16 @@ def block_form(site: Site, preselect: str = "") -> str:
               <a class="contact-line__value" href="tel:{esc(c["phone_href"])}">{esc(c["phone_display"])}</a>
             </div>
             <div class="contact-line">
-              <span class="contact-line__label">Почта</span>
+              <span class="contact-line__label">{brand_icon(site, "mail", 16)}Почта</span>
               <a class="contact-line__value" href="mailto:{esc(c["email"])}">{esc(c["email"])}</a>
             </div>
             <div class="contact-line">
-              <span class="contact-line__label">Telegram</span>
+              <span class="contact-line__label">{brand_icon(site, "telegram", 16)}Telegram</span>
               <a class="contact-line__value" href="{esc(c["telegram_url"])}" rel="nofollow noopener" target="_blank">{esc(c["telegram_display"])}</a>
+            </div>
+            <div class="contact-line">
+              <span class="contact-line__label">{brand_icon(site, "whatsapp", 16)}WhatsApp</span>
+              <a class="contact-line__value" href="{esc(c["whatsapp_url"])}" rel="nofollow noopener" target="_blank">{esc(c["whatsapp_display"])}</a>
             </div>
             {max_line}
             <div class="contact-line">
@@ -701,23 +720,40 @@ def icon(name: str) -> str:
             f'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{ICONS[name]}</svg>')
 
 
+def brand_icon(site: Site, name: str, size: int = 20, css: str = "brand-ico") -> str:
+    """Значок сервиса (Telegram, WhatsApp, MAX, почта, Яндекс Карты) — PNG
+    из assets/img/icons/, нарисован в два раза крупнее, чтобы был чётким."""
+    return (f'<img class="{css}" src="{site.url("/assets/img/icons/" + name + ".png")}" '
+            f'width="{size}" height="{size}" alt="" loading="lazy">')
+
+
+def card_icon(site: Site, ic: str) -> str:
+    if ic.startswith("@"):
+        return (f'<span class="contact-card__icon contact-card__icon--img">'
+                f'{brand_icon(site, ic[1:], 38, "")}</span>')
+    return f'<span class="contact-card__icon">{icon(ic)}</span>'
+
+
 def contact_cards(site: Site) -> str:
-    """Четыре способа связи карточками — на странице контактов."""
+    """Способы связи карточками на странице контактов: шесть — сетка 3×2,
+    на планшете 2×3, на телефоне в столбик, без «осиротевшей» карточки."""
     c = site.contacts
     notes = site.raw["contacts_page"].get("notes", {})
     ext = ' rel="nofollow noopener" target="_blank"'
     rows = [
         ("phone", "Телефон", c["phone_display"], f'tel:{c["phone_href"]}', "", " contact-card--phone"),
-        ("mail", "Почта", c["email"], f'mailto:{c["email"]}', "", ""),
-        ("chat", "Telegram", c["telegram_display"], c["telegram_url"], ext, ""),
-        ("link", "MAX", c.get("max_display", "Канал"), c["max_url"], ext, ""),
+        ("@mail", "Почта", c["email"], f'mailto:{c["email"]}', "", ""),
+        ("@telegram", "Telegram", c["telegram_display"], c["telegram_url"], ext, ""),
+        ("@whatsapp", "WhatsApp", c["whatsapp_display"], c["whatsapp_url"], ext, ""),
+        ("@max", "MAX", c.get("max_display", "Канал"), c["max_url"], ext, ""),
+        ("@yandex-maps", "Яндекс Карты", "Карточка X-PTO", c["yandex_url"], ext, ""),
     ]
-    keys = ["phone", "email", "telegram", "max"]
+    keys = ["phone", "email", "telegram", "whatsapp", "max", "yandex"]
     cards = []
     for (ic, label, value, href, attrs, extra), key in zip(rows, keys):
         note = notes.get(key, "")
         cards.append(f'''        <a class="contact-card{extra}" href="{esc(href)}"{attrs}>
-          <span class="contact-card__icon">{icon(ic)}</span>
+          {card_icon(site, ic)}
           <span class="contact-card__label">{esc(label)}</span>
           <span class="contact-card__value">{esc(value)}</span>
           {f'<span class="contact-card__note">{esc(note)}</span>' if note else ''}
@@ -874,6 +910,20 @@ def sro_block(site: Site, dark: bool = True) -> str:
     </div>'''
 
 
+def yandex_rating(site: Site) -> str:
+    """Рейтинг из Яндекс Бизнеса в подвале. Сам виджет — чужой iframe, то есть
+    запрос к Яндексу, поэтому вставляет его скрипт полосы cookie и только после
+    «Принять» — как Метрику. До согласия и без JavaScript на его месте ссылка
+    на карточку: она полезна и сама по себе."""
+    c = site.contacts
+    if not c.get("yandex_url"):
+        return ""
+    widget = c.get("yandex_rating_widget", "")
+    attr = f' data-yrating="{esc(widget)}"' if widget else ""
+    return (f'<div class="yrating"{attr}><a href="{esc(c["yandex_url"])}" rel="nofollow noopener" '
+            f'target="_blank">{brand_icon(site, "yandex-maps", 18)}Отзывы о нас на Яндекс Картах</a></div>')
+
+
 def cookie_bar(site: Site) -> str:
     """Полоса про cookie — и одновременно единственный выключатель Метрики.
 
@@ -996,9 +1046,9 @@ def schema_organization(site: Site) -> dict:
         "logo": site.abs_url("/assets/img/logo.svg"),
         "image": site.abs_url(site.raw.get("og_image", "/assets/img/og-default.jpg")),
         # sameAs — официальные страницы компании в других сервисах. По ним
-        # поисковик связывает сайт, канал в Telegram и канал в MAX в одну
-        # карточку организации.
-        "sameAs": [u for u in (c.get("telegram_url"), c.get("max_url")) if u],
+        # поисковик связывает сайт, карточку в Яндекс Бизнесе, Telegram и MAX
+        # в одну организацию.
+        "sameAs": [u for u in (c.get("yandex_url"), c.get("telegram_url"), c.get("max_url")) if u],
         "email": c["email"],
         "telephone": c["phone_href"],
         "taxID": site.company.get("inn", ""),
@@ -1165,6 +1215,8 @@ class Renderer:
             "robots": robots,
             "head_extra": head_extra,
             "base": site.base_path,
+            "css_v": asset_version("style.css"),
+            "js_v": asset_version("app.js"),
             "body": body,
             "nav_links": self.nav_links(path),
             "footer_services_1": f1,
@@ -1181,8 +1233,16 @@ class Renderer:
             "telegram_url": esc(c["telegram_url"]),
             "telegram_display": esc(c["telegram_display"]),
             "max_url": esc(c.get("max_url", "")),
+            "whatsapp_url": esc(c["whatsapp_url"]),
+            "ico_mail": brand_icon(site, "mail", 18),
+            "ico_telegram": brand_icon(site, "telegram", 18),
+            "ico_whatsapp": brand_icon(site, "whatsapp", 18),
+            "ico_max": brand_icon(site, "max", 18),
+            "whatsapp_display": esc(c["whatsapp_display"]),
             "max_display": esc(c.get("max_display", "")),
             "work_hours": esc(c["work_hours"]),
+            "yandex_rating": yandex_rating(site),
+            "chat_fab": chat_fab(site),
             "geo": esc(c["geo"]),
             "year": str(date.today().year),
             "cookie_bar": cookie_bar(site),
@@ -1209,6 +1269,84 @@ class Renderer:
 
 
 # ---------- главная -------------------------------------------------------
+
+def hero_status(site: Site) -> str:
+    """Строка «Сейчас на связи» под кнопками первого экрана. Считается
+    в браузере по московскому времени из contacts.hours — тем же часам,
+    что в карточке Яндекса. Индикатор, который горит всегда, ничего не значит,
+    поэтому вне рабочих часов он честно гаснет и говорит, когда ответим.
+    Без JavaScript строки нет вовсе (hidden), а не висит неверной."""
+    hrs = site.contacts.get("hours")
+    if not hrs:
+        return ""
+    days = ",".join(str(x) for x in hrs["days"])
+    return (f'        <p class="hero__status" data-status data-days="{days}" '
+            f'data-from="{hrs["from"]}" data-to="{hrs["to"]}" hidden>'
+            f'<span class="hero__status-dot" aria-hidden="true"></span>'
+            f'<span data-status-text></span></p>')
+
+
+def objects_strip(site: Site) -> str:
+    """Лента настоящих объектов под первым экраном: фото и название плывут
+    по кругу и ведут в «Объекты». Без выдумок — только то, что лежит
+    в portfolio, и только объекты с фотографией. Список выводится дважды,
+    чтобы лента шла без шва; второй экземпляр скрыт от экранных дикторов.
+    При «уменьшить движение» лента стоит и переносится по строкам."""
+    items = []
+    for o in site.raw.get("portfolio", {}).get("items", []):
+        slug = o.get("slug")
+        thumb = ""
+        for cand in (f"/assets/img/objects/{slug}-480.webp", f"/assets/img/objects/{slug}.webp"):
+            if slug and asset_exists(cand):
+                thumb = cand
+                break
+        if not thumb:
+            continue
+        items.append(f'''<a class="ostrip__item" href="{site.url("/obekty/")}">
+          <img src="{site.url(thumb)}" width="64" height="44" alt="" loading="lazy" decoding="async">
+          <span><b>{esc(o["name"])}</b><small>{esc(o["city"])}</small></span>
+        </a>''')
+    if len(items) < 3:
+        return ""
+    row = "\n        ".join(items)
+    return f'''  <section class="ostrip" aria-label="Объекты, где мы вели документацию">
+    <div class="container ostrip__head"><span class="eyebrow">Объекты, где мы вели документацию</span></div>
+    <div class="ostrip__viewport">
+      <div class="ostrip__track" style="--dur: {len(items) * 4}s">
+        <div class="ostrip__row">
+        {row}
+        </div>
+        <div class="ostrip__row" aria-hidden="true" inert>
+        {row}
+        </div>
+      </div>
+    </div>
+  </section>'''
+
+
+def chat_fab(site: Site) -> str:
+    """Кнопка «Написать» в углу экрана на компьютере: раскрывает Telegram,
+    WhatsApp и MAX. На телефоне её нет — там снизу своя панель связи."""
+    c = site.contacts
+    links = []
+    for name, label, url in (("telegram", "Telegram", c.get("telegram_url")),
+                             ("whatsapp", "WhatsApp", c.get("whatsapp_url")),
+                             ("max", "MAX", c.get("max_url"))):
+        if url:
+            links.append(f'<a class="fab__link" href="{esc(url)}" rel="nofollow noopener" target="_blank">'
+                         f'{brand_icon(site, name, 28, "")}<span>{label}</span></a>')
+    if not links:
+        return ""
+    return f'''<div class="fab" data-fab>
+  <div class="fab__menu" id="fab-menu" hidden>
+    <div class="fab__title">Напишите нам</div>
+    {"".join(links)}
+  </div>
+  <button class="fab__btn" type="button" aria-expanded="false" aria-controls="fab-menu">
+    {icon("chat")}<span>Написать</span>
+  </button>
+</div>'''
+
 
 def page_home(r: Renderer) -> None:
     site = r.site
@@ -1298,6 +1436,7 @@ def page_home(r: Renderer) -> None:
           <a class="btn btn--primary" href="#zayavka">{esc(h["cta_primary"])}</a>
           <a class="btn btn--on-dark" href="{site.url('/uslugi/')}">{esc(h["cta_secondary"])}</a>
         </div>
+{hero_status(site)}
         <div class="hero__spec">
 {chr(10).join(spec)}
         </div>
@@ -1308,6 +1447,8 @@ def page_home(r: Renderer) -> None:
 
     body = f'''{hero}
 
+{objects_strip(site)}
+
   <section class="section section--surface">
     <div class="container">
       <div class="offer-grid">
@@ -1315,6 +1456,7 @@ def page_home(r: Renderer) -> None:
           <span class="eyebrow">Коротко</span>
           <h2>{esc(offer["title"])}</h2>
           {paragraphs(offer["text"], "lead")}
+          <p><a class="section__more" href="{site.url("/pto-na-autsorse/")}">Как устроен ПТО на аутсорсе</a></p>
         </div>
         <aside class="panel panel--accent offer-card">
           <h3>Условия работы</h3>
@@ -1381,9 +1523,11 @@ def page_home(r: Renderer) -> None:
 
     r.render(
         path="/",
-        title=f'{site.company["name"]} — документальное сопровождение строительства по всей России',
-        description=("Проектирование, исполнительная документация, сметы, ППР, геодезия, защита объёмов "
-                     "КС-2 и КС-3, Ростехнадзор и ЗОС. Работаем удалённо по всей России, сдаём без возвратов."),
+        # Запрос впереди, бренд в конце: поисковик и человек читают заголовок
+        # слева направо, а «X-PTO» пока не ищет никто.
+        title=f'ПТО на аутсорсе и исполнительная документация — {site.company["name"]}',
+        description=("Производственно-технический отдел на аутсорсе: проектирование, исполнительная "
+                     "документация, сметы, ППР, геодезия, КС-2 и КС-3, Ростехнадзор и ЗОС. По всей России."),
         body=body,
         head_extra=head,
         priority="1.0",
@@ -1666,6 +1810,84 @@ def page_about(r: Renderer) -> None:
     ])
     r.render(path="/o-kompanii/", title=cfg["title"], description=cfg["description"],
              body=body, head_extra=head, priority="0.6")
+
+
+def page_pto(r: Renderer) -> None:
+    """/pto-na-autsorse/ — под запрос «ПТО на аутсорсе». Весь сайт об этом,
+    а страницы, которая отвечала бы на запрос прямо, не было. Факты — из тех же
+    блоков, что главная и «О компании» (site.json → pto_page, why, process)."""
+    site = r.site
+    cfg = site.raw["pto_page"]
+    why = site.raw["why"]
+    process = site.raw["process"]
+    path = "/pto-na-autsorse/"
+
+    why_cards = "\n".join(f'''        <div class="card">
+          <h3>{esc(w["title"])}</h3>
+          <p>{esc(w["text"])}</p>
+        </div>''' for w in why["items"])
+
+    body = f'''  <section class="page-head">
+    <div class="container">
+      <ul class="breadcrumbs">
+        <li><a href="{site.url('/')}">Главная</a></li>
+        <li>ПТО на аутсорсе</li>
+      </ul>
+      <h1>{esc(cfg["h1"])}</h1>
+      <p class="lead">{esc(cfg["lead"])}</p>
+      <div class="btn-row" style="margin-top:1.5rem">
+        <a class="btn btn--primary" href="#zayavka">Оставить заявку</a>
+        <a class="btn btn--ghost btn--on-dark" href="tel:{esc(site.contacts["phone_href"])}">{esc(site.contacts["phone_display"])}</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container split">
+      <div>
+        <h2>Что это такое</h2>
+        {paragraphs(cfg["what"])}
+      </div>
+      <aside>
+        <div class="panel panel--accent">
+          <h3>{esc(cfg["when_title"])}</h3>
+          {li_list(cfg["when"])}
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section section--alt">
+    <div class="container">
+      <div class="section__head"><h2>Что берём на себя</h2></div>
+{block_services_by_group(site)}
+    </div>
+  </section>
+
+  <section class="section section--dark">
+    <div class="container">
+      <div class="section__head"><h2>{esc(why["title"])}</h2></div>
+      <div class="grid grid--2">
+{why_cards}
+      </div>
+    </div>
+  </section>
+
+{block_steps(process["steps"], process["title"])}
+
+{block_faq(cfg["faq"])}
+
+{block_articles(site, site.articles[:3], "Статьи", more=True)}
+
+{block_form(site)}'''
+
+    head = "\n".join([
+        jsonld(schema_organization(site)),
+        jsonld(schema_faq(cfg["faq"])),
+        jsonld(schema_breadcrumbs(site, [("Главная", "/"), ("ПТО на аутсорсе", path)])),
+    ])
+    r.render(path=path, title=cfg["title"], description=cfg["description"],
+             body=body, head_extra=head, priority="0.9")
 
 
 # ---------- контакты ------------------------------------------------------
@@ -2017,6 +2239,20 @@ def articles_for(site: Site, service_slug: str, limit: int = 3) -> list:
     return [a for a in site.articles if service_slug in a["services"]][:limit]
 
 
+def related_articles(site: Site, a: dict, limit: int = 3) -> list:
+    """Статьи для «Читайте также»: сначала с общими услугами, при равенстве —
+    следующие по кругу за этой. Раньше здесь всегда стояли три последние
+    статьи, и старые не получали ни одной ссылки из других статей: на ППР
+    вели три страницы сайта, на ЗОС — четыре."""
+    arts = site.articles
+    me = arts.index(a)
+    others = [x for x in arts if x is not a]
+    def key(x):
+        shared = len(set(x["services"]) & set(a["services"]))
+        return (-shared, (arts.index(x) - me) % len(arts))
+    return sorted(others, key=key)[:limit]
+
+
 def schema_article(site: Site, a: dict, path: str) -> dict:
     org = {"@id": site.abs_url("/") + "#organization"}
     return {
@@ -2100,7 +2336,7 @@ def page_article(r: Renderer, a: dict) -> None:
     </div>
   </section>
 
-{block_articles(site, [x for x in site.articles if x["slug"] != a["slug"]][:3], "Читайте также")}
+{block_articles(site, related_articles(site, a), "Читайте также")}
 
 {block_form(site, preselect=services[0]["nav_title"] if services else "")}'''
 
@@ -2364,6 +2600,8 @@ def write_llms(site: Site) -> None:
         f"- [Все услуги]({site.abs_url('/uslugi/')}): список из "
         f"{len(site.services)} направлений документации.",
         f"- [Объекты]({site.abs_url('/obekty/')}): объекты, на которых велась документация.",
+        f"- [ПТО на аутсорсе]({site.abs_url('/pto-na-autsorse/')}): "
+        f"{site.raw['pto_page']['lead']}",
         f"- [О компании]({site.abs_url('/o-kompanii/')}): как устроена работа.",
         f"- [Контакты]({site.abs_url('/kontakty/')}): телефон, почта, мессенджеры.",
         f"- [Персональные данные]({site.abs_url('/politika/')}): политика обработки "
@@ -2521,6 +2759,7 @@ def build(regen_media: bool = False, base_path: str = None,
             page_service(r, service, city)
     page_objects(r)
     page_about(r)
+    page_pto(r)
     page_contacts(r)
     page_policy(r)
     page_articles_index(r)

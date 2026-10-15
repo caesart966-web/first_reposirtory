@@ -37,6 +37,9 @@ const grouped = GROUPS.map((g) => ({
 // Разбор, с которого начинают вступающие впервые, — ссылкой в шапке.
 // Название берётся из самой статьи: переписанное руками разошлось бы с ней.
 const start = all.find((a) => a.id === 'kak-vstupit-v-sro')
+// Перед ним — что такое СРО вообще (05.10.2026): головной запрос ниши,
+// и тому, кто вступает впервые, он нужен раньше шагов вступления.
+const basics = all.find((a) => a.id === 'chto-takoe-sro')
 
 const fmt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
 
@@ -65,7 +68,7 @@ const articlesList = {
   schema={[articlesList]}
 >
   <section class="section page-head">
-    <HeadPhoto position="68% 62%" />
+    <HeadPhoto src="themis-books.webp" position="80% 30%" />
     <div class="wrap">
       <span class="eyebrow">База знаний</span>
       <h1>Разборы норм — с датами, а не «вообще»</h1>
@@ -89,10 +92,21 @@ const articlesList = {
       <PageNav label="Разделы" items={grouped.map((g) => ({ href: `#${g.anchor}`, label: `${g.t} · ${g.items.length}` }))} />
       {start && (
         <p class="start">
-          Вступаете впервые? Начните с разбора{' '}
+          Вступаете впервые? Начните с {basics ? 'разборов' : 'разбора'}{' '}
+          {basics && (
+            <>
+              <a href={href(`/baza-znaniy/${basics.id}/`)}>«{basics.data.title}»</a> и{' '}
+            </>
+          )}
           <a href={href(`/baza-znaniy/${start.id}/`)}>«{start.data.title}»</a>.
         </p>
       )}
+      {/* Словарь (06.10.2026): сокращения встречаются в каждом разборе,
+          а расшифровки нигде не стояли вместе. */}
+      <p class="start">
+        Сокращения — НРС, НОК, КФ ВВ, КФ ОДО — расшифрованы в{' '}
+        <a href={href('/slovar/')}>словаре терминов СРО</a>.
+      </p>
     </div>
   </section>
 

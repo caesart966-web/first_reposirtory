@@ -195,6 +195,72 @@ for (const [screen, width, height] of [['телефон', 320, 720], ['комп�
   if (below === 0) problems.push('ни одного блока ниже экрана не ждёт прокрутки — появление при прокрутке отключилось')
   else console.log(`✓ Первый экран виден сразу, появление при прокрутке — только ниже экрана (${below} блоков ждут)`)
 }
+// ── После прокрутки не осталось невидимок ──
+// До 07.10.2026 печать «Сверено» под .js ждала класса .in на себе, а его
+// вешает наблюдатель прокрутки только блокам .rv — и без «уменьшить
+// движение» печать не видел никто: ни на главной, ни на «Контактах».
+// Снимки и проверки шли с уменьшенным движением, у которого в стилях свой
+// путь, и пропускали это месяц; нашёл заказчик по пустому месту рядом
+// с ИНН. Здесь движение обычное: страница проматывается до конца, и после
+// этого прозрачным не должно остаться ничего, в чём есть текст или
+// картинка. Чистая декорация без текста (гильош первого экрана, 7 %
+// непрозрачности нарочно) помечена aria-hidden и в счёт не идёт.
+// Отдельно печать: видна и стоит на месте, а не висит крупной.
+{
+  const before = problems.length
+  let pages = 0
+  let seals = 0
+  for (const [screen, width, height] of [['телефон', 390, 844], ['компьютер', 1280, 900]]) {
+    const ctx = await browser.newContext({ viewport: { width, height } })
+    const page = await ctx.newPage()
+    for (const url of ['/', '/kontakty/', '/stoimost/', '/obo-mne/', '/uslugi/sro-stroiteley/', '/baza-znaniy/kak-vstupit-v-sro/']) {
+      await page.goto(BASE + url, { waitUntil: 'networkidle' })
+      const H = await page.evaluate(() => document.documentElement.scrollHeight)
+      for (let y = 0; y < H; y += Math.round(height * 0.6)) {
+        await page.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' }), y)
+        await page.waitForTimeout(100)
+      }
+      await page.waitForTimeout(1200)
+      const r = await page.evaluate(() => {
+        const faint = (e) => Number(getComputedStyle(e).opacity) <= 0.1
+        const ghosts = []
+        for (const el of document.querySelectorAll('body *')) {
+          const cs = getComputedStyle(el)
+          if (cs.display === 'none' || cs.visibility === 'hidden' || !faint(el)) continue
+          const b = el.getBoundingClientRect()
+          if (b.width < 8 || b.height < 8) continue
+          let up = el.parentElement
+          while (up && !faint(up) && getComputedStyle(up).visibility !== 'hidden') up = up.parentElement
+          if (up) continue
+          const text = (el.textContent || '').replace(/\s+/g, ' ').trim()
+          const pic = el.matches('img, svg') || el.querySelector('img, svg')
+          if (!text && (!pic || el.closest('[aria-hidden="true"]'))) continue
+          ghosts.push(`${el.tagName.toLowerCase()}.${String(el.className?.baseVal ?? el.className).split(' ')[0]} «${text.slice(0, 30)}»`)
+        }
+        const seals = [...document.querySelectorAll('.seal')].map((e) => {
+          const cs = getComputedStyle(e)
+          const m = cs.transform.match(/matrix\(([^)]+)\)/)
+          const [a, b] = m ? m[1].split(',').map(Number) : [1, 0]
+          return { op: Number(cs.opacity), scale: Math.hypot(a, b) }
+        })
+        return { ghosts, seals }
+      })
+      pages++
+      for (const g of r.ghosts) problems.push(`${url} ${screen}: после прокрутки до конца осталось невидимым → ${g}`)
+      if (['/', '/kontakty/'].includes(url) && r.seals.length === 0) problems.push(`${url} ${screen}: печати «Сверено» на странице нет`)
+      for (const s of r.seals) {
+        seals++
+        if (s.op < 0.85 || Math.abs(s.scale - 1) > 0.02) {
+          problems.push(`${url} ${screen}: печать «Сверено» не видна (непрозрачность ${s.op}, масштаб ${s.scale.toFixed(2)})`)
+        }
+      }
+    }
+    await ctx.close()
+  }
+  if (problems.length === before) {
+    console.log(`✓ С обычным движением после прокрутки видно всё: ${pages} страниц, печать «Сверено» — ${seals} замера`)
+  }
+}
 await browser.close()
 
 if (tight.size) {
