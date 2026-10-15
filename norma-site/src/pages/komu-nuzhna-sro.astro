@@ -175,6 +175,10 @@ const faqSchema = {
           </details>
         ))}
       </div>
+      <p class="faq-more rv">
+        Электромонтаж, вентиляция, кровля, отделка — нужна ли СРО на конкретный вид работ,
+        разобрано <a href={href('/baza-znaniy/sro-po-vidam-rabot/')}>в статье о видах работ</a>.
+      </p>
     </div>
   </section>
 
@@ -273,4 +277,6 @@ const faqSchema = {
     .cta-split { grid-template-columns: 1fr; }
     .rule { grid-template-columns: 1fr; }
   }
+  /* Строка под вопросами — вход в разбор по видам работ (перелинковка 15.10.2026). */
+  .faq-more { margin: 18px 0 0; max-width: 64ch; font-size: 15px; line-height: 1.6; color: var(--muted); }
 </style>

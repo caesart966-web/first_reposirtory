@@ -7,7 +7,7 @@
     "dev": "astro dev",
     "build": "astro build && node scripts/make-search-index.mjs",
     "preview": "astro preview",
-    "check": "node scripts/check-links.mjs dist && node scripts/check-html.mjs dist && node scripts/check-seo.mjs dist",
+    "check": "node scripts/check-links.mjs dist && node scripts/check-html.mjs dist && node scripts/check-seo.mjs dist && node scripts/check-inlinks.mjs dist",
     "test": "node scripts/run-tests.mjs",
     "og": "node scripts/make-og.mjs",
     "icons": "node scripts/make-icons.mjs",
