@@ -190,11 +190,16 @@ const serviceSchema = {
   .page-head .lead { color: var(--on-dark-muted); margin-top: 16px; }
   .page-head .lead :global(b) { color: #fff; }
 
-  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1px; background: var(--dark-line); border: 1px solid var(--dark-line); border-radius: var(--r-m); overflow: hidden; margin-top: 28px; }
+  /* Четыре цифры: в ряд с 1024 px, 2×2 на планшете, столбиком на телефоне.
+     По auto-fit на 768 px вставали четыре колонки по 180 px — «2 специалиста»
+     рвалось на две строки, «исключение» вставало вплотную к рамке. */
+  .facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--dark-line); border: 1px solid var(--dark-line); border-radius: var(--r-m); overflow: hidden; margin-top: 28px; }
   .fact { background: var(--dark); padding: 18px 20px; display: grid; gap: 4px; align-content: start; }
   .fv { font-family: var(--font-head); font-size: 22px; font-weight: 800; color: var(--acc-bright); font-variant-numeric: lining-nums tabular-nums; line-height: 1.15; }
   .fd { font-size: 13px; color: var(--on-dark-muted); line-height: 1.45; }
   .fact .law { justify-self: start; margin-top: 4px; }
+  @media (max-width: 1023px) { .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 559px) { .facts { grid-template-columns: minmax(0, 1fr); } }
 
   .svc-body { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 40px; align-items: start; }
 

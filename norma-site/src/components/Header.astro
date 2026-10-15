@@ -260,7 +260,9 @@ const formHref = path === href('/') ? '#zayavka' : href('/kontakty/#form')
      правило до него не достаёт: Astro привязывает стили к служебному атрибуту,
      которого у чужой разметки нет. Без этого знак остался бы белым. */
   .logo :global(.logo-mark) { color: var(--acc-bright); flex: none; display: block; }
-  .logo-text { display: grid; line-height: 1.15; }
+  /* 2 px между названием и подписью: без них низ «НОРМА» и верх подписи
+     сходились на 3,7 px — теснее, чем строки любого абзаца (test-spacing). */
+  .logo-text { display: grid; gap: 2px; line-height: 1.15; }
   .logo-name { font-family: var(--font-head); font-size: 17px; font-weight: 800; letter-spacing: 0.08em; }
   .logo-text small { font-size: 11px; letter-spacing: 0.01em; color: var(--on-dark-muted); }
 

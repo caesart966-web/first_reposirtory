@@ -30,6 +30,7 @@ const TESTS = [
   ['test-fonts.mjs', 'шрифты применены, а не только загружены'],
   ['test-widths.mjs', 'вёрстка на всех ширинах'],
   ['test-tables.mjs', 'таблицы'],
+  ['test-spacing.mjs', 'строки не сцепляются, текст не у линеек'],
   ['test-hero-photo.mjs', 'текст поверх фотографий'],
   ['test-search.mjs', 'поиск по сайту'],
   ['test-regions.mjs', 'городские страницы'],

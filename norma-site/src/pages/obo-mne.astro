@@ -430,14 +430,20 @@ const CHECK = [
     border-top: 1px solid var(--line);
     border-bottom: 1px solid var(--line);
   }
+  /* Поле с обеих сторон линейки. Было только справа (22px 22px 22px 0),
+     и цифры «112+» и «10» вставали вплотную к линейке соседа слева —
+     заметил заказчик по снимку 15.10.2026. Крайние колонки без поля
+     у края: там линейки нет, а текст должен стоять по краю колонки сайта. */
+  .fgrid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .fcard {
-    padding: 22px 22px 22px 0;
+    padding: 22px 26px;
     border-right: 1px solid var(--line);
     display: grid;
     align-content: start;
     gap: 4px;
   }
-  .fcard:last-child { border-right: 0; }
+  .fcard:first-child { padding-left: 0; }
+  .fcard:last-child { padding-right: 0; border-right: 0; }
   .fv {
     font-family: var(--font-head);
     font-size: clamp(30px, 3.4vw, 40px);
@@ -466,9 +472,18 @@ const CHECK = [
   }
   .fnote b { color: var(--ink); }
 
+  /* На планшете — 2×2: четыре колонки по 170 px рвали «Санкт-Петербург».
+     Линейка — только между колонками, строки разделены горизонтально. */
+  @media (min-width: 720px) and (max-width: 1023px) {
+    .fgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .fcard:nth-child(odd) { padding-left: 0; }
+    .fcard:nth-child(even) { padding-right: 0; border-right: 0; }
+    .fcard:nth-child(-n + 2) { border-bottom: 1px solid var(--line); }
+  }
   @media (max-width: 719px) {
-    /* В одну-две колонки правая линейка превращается в висящую черту
+    /* В одну колонку правая линейка превращается в висящую черту
        посреди блока — убираем её и разделяем строки горизонтально. */
+    .fgrid { grid-template-columns: minmax(0, 1fr); }
     .fcard { border-right: 0; border-bottom: 1px solid var(--line); padding: 18px 0; }
     .fcard:last-child { border-bottom: 0; }
   }
