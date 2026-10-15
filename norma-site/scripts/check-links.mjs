@@ -122,6 +122,18 @@ for (const file of files) {
   if (h1 === 0) problems.push(`${pageUrl}: нет <h1>`)
   if (h1 > 1) problems.push(`${pageUrl}: ${h1} заголовков <h1>, должен быть один`)
 
+  // Картинка без подписи. Пустой alt — верная пометка «украшение» для
+  // диктора, но аудит Seobility (15.10.2026) считает такую картинку
+  // неподписанной, а поисковик не узнаёт, что на ней. Поэтому подпись есть
+  // у каждой, а украшение скрывается от диктора aria-hidden — у самой
+  // картинки или у обёртки (кадр первого экрана, повтор ленты логотипов).
+  for (const m of html.matchAll(/<img\b[^>]*>/g)) {
+    if (!/\balt="[^"]*[^"\s][^"]*"/.test(m[0])) {
+      const src = m[0].match(/\bsrc="([^"]+)"/)?.[1] ?? '?'
+      problems.push(`${pageUrl}: картинка без alt → ${src} (украшение — подпись плюс aria-hidden, не пустой alt)`)
+    }
+  }
+
   if (title && title.length > 70) warnings.push(`${pageUrl}: title длиннее 70 знаков (${title.length})`)
   if (desc && desc.length > 200) warnings.push(`${pageUrl}: description длиннее 200 знаков (${desc.length})`)
 

@@ -151,7 +151,7 @@ const TRUST: { icon: string; t: string; n?: string; d: string }[] = [
             src={href(`/img/${SITE.heroPhoto}`)}
             srcset={photoSrcset}
             sizes={photoSrcset ? '(min-width: 1024px) 2000px, 100vw' : undefined}
-            alt=""
+            alt={SITE.heroPhotoAlt || ''}
             width={photoSize?.width}
             height={photoSize?.height}
             decoding="async"
@@ -186,11 +186,13 @@ const TRUST: { icon: string; t: string; n?: string; d: string }[] = [
           угла кадра; на телефоне — строкой под карточкой условий.
           Строка под именем — что сейчас быстрее, позвонить или написать,
           по московскому времени (lib/presence.ts). Без скрипта — режим
-          из бланка контактов. Точка не мигает. Фото квадратом: заказчик
+          из бланка контактов. Точка не мигает. У фото подпись-имя для
+          поисковика, а диктору оно скрыто: имя стоит рядом текстом
+          и звучало бы дважды. Фото квадратом: заказчик
           просил, чтобы кадр был виден целиком. */}
       <a class="presence" href={href('/obo-mne/')}>
         {SITE.photo && (
-          <img class="pr-photo" src={href(`/img/${SITE.photo}`)} width="44" height="44" alt="" decoding="async" />
+          <img class="pr-photo" src={href(`/img/${SITE.photo}`)} width="44" height="44" alt={SITE.shortName} aria-hidden="true" decoding="async" />
         )}
         <span class="pr-txt">
           <span class="pr-name">{SITE.shortName} — отвечаю лично</span>
