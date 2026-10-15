@@ -1,0 +1,43 @@
+# Робот сайта «НОРМА»: что Яндекс сейчас показывает в значке рейтинга.
+#
+# Значок в подвале и на «Контактах» — чужая страница в рамке 150×50.
+# Если вместо рейтинга видны обрезок текста и полосы прокрутки, запустите
+# робота: GitHub → Actions → «НОРМА: проверить значок рейтинга Яндекса» →
+# Run workflow. В журнале — куда ведёт адрес значка, что на странице и
+# помещается ли она в рамку; снимки — в разделе Artifacts запуска.
+# Из среды, где собирается сайт, yandex.ru закрыт, поэтому проверка здесь.
+name: 'НОРМА: проверить значок рейтинга Яндекса'
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Браузер
+        working-directory: norma-site
+        run: |
+          npm ci --no-audit --no-fund
+          npx playwright install --with-deps chromium
+
+      - name: Проверяем значок
+        working-directory: norma-site
+        run: node scripts/check-yandex-badge.mjs
+
+      - name: Снимки
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: znachok-yandex
+          path: norma-site/badge-*.png
+          if-no-files-found: ignore
