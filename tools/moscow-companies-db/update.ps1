@@ -58,7 +58,12 @@ $failed  = @()
 foreach ($folder in $folders) {
     $api = "https://api.github.com/repos/$owner/$repo/contents/$($folder.Remote)?ref=$branch"
     try {
-        $items = @(Invoke-RestMethod -Uri $api -Headers $agent -ErrorAction Stop)
+        # Windows PowerShell 5.1 отдаёт JSON-массив одним объектом, и
+        # @(Invoke-RestMethod ...) давал массив из ОДНОГО элемента — всего списка
+        # файлов сразу: «файлов в репозитории — 1» и ошибка Join-Path. Конвейер
+        # через ForEach-Object разворачивает список в отдельные файлы (в PS 7 тоже).
+        $response = Invoke-RestMethod -Uri $api -Headers $agent -ErrorAction Stop
+        $items = @($response | ForEach-Object { $_ })
     } catch {
         $failed += "$($folder.Remote) — $($_.Exception.Message)"
         Write-Host "не удалось прочитать $($folder.Remote): $($_.Exception.Message)" -ForegroundColor Red
