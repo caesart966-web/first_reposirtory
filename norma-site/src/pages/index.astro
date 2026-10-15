@@ -930,9 +930,11 @@ const howToSchema = {
   .geo-rest-more a { color: var(--acc-deep); text-decoration: none; }
   .geo-rest-more a:hover { text-decoration: underline; }
 
+  /* До 07.10.2026 города шли строками без рамок, и на телефоне у строки
+     снимались поля и правая линейка. Карточкам это правило оставляло
+     рамку, а текст прижимало к ней вплотную (test-spacing, 15.10.2026). */
   @media (max-width: 599px) {
-    .geo-cards li { border-right: 0; }
-    .geo-cards .gc, .geo-cards li:not(:first-child) .gc { padding: 15px 0; }
+    .geo-cards .gc { padding: 16px 18px; }
   }
 
   @media (max-width: 640px) {

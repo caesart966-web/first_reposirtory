@@ -169,7 +169,7 @@ const year = new Date().getFullYear()
      правило до него не достаёт: Astro привязывает стили к служебному атрибуту,
      которого у чужой разметки нет. Без этого знак остался бы белым. */
   .logo :global(.logo-mark) { color: var(--acc-bright); flex: none; display: block; }
-  .logo-text { display: grid; line-height: 1.15; }
+  .logo-text { display: grid; gap: 2px; line-height: 1.15; } /* как в шапке */
   .logo-name { font-family: var(--font-head); font-size: 17px; font-weight: 800; letter-spacing: 0.08em; }
   .logo-text small { font-size: 11px; color: var(--on-dark-muted); }
 
