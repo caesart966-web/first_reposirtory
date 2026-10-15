@@ -422,5 +422,42 @@ class TestЗапуск(unittest.TestCase):
         self.assertEqual(len(спрошены), 3)
 
 
+class TestФайлИзменений(unittest.TestCase):
+    """После каждого прогона — отдельный файл только со свежей порцией."""
+
+    def test_порция_только_из_этого_прогона(self):
+        from openpyxl import load_workbook
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            выгрузка(tmp / "register-1-3.xlsx", [
+                ("5903120756", "ООО «А»", "614094, г. Пермь, ул. Овчинникова, д. 19",
+                 "Директор Арапов Игорь Алексеевич", None),
+                ("5900000001", "ООО «Б»", "614000, г. Пермь, ул. Ленина, д. 5",
+                 "Директор Петров Пётр Петрович", None),
+            ])
+            out = tmp / "итог.xlsx"
+            аргументы = ["--файлы", str(tmp / "register-*.xlsx"), "--out", str(out), "--key", "к"]
+            with mock.patch.object(св.checko, "fetch", side_effect=lambda inn, *a, **k: TestЗапуск.егрюл(inn)), \
+                    mock.patch.object(св.time, "sleep"):
+                св.main(аргументы + ["--limit", "1"])            # день 1: одна компания
+                первый = sorted(tmp.glob("итог_изменения_*.xlsx"))
+                for f in первый:
+                    f.rename(tmp / ("день1_" + f.name))
+                св.main(аргументы)                               # день 2: вторая
+                второй = sorted(tmp.glob("итог_изменения_*.xlsx"))
+                for f in второй:
+                    f.rename(tmp / ("день2_" + f.name))
+                св.main(аргументы)                               # день 3: спрашивать некого
+                третий = sorted(tmp.glob("итог_изменения_*.xlsx"))
+
+            def инн(путь):
+                ws = load_workbook(путь)["Все"]
+                return [r[2] for r in ws.iter_rows(min_row=2, values_only=True)]
+            self.assertEqual((len(первый), len(второй), третий), (1, 1, []))
+            self.assertEqual(инн(tmp / ("день1_" + первый[0].name)), ["5903120756"])
+            self.assertEqual(инн(tmp / ("день2_" + второй[0].name)), ["5900000001"])
+            self.assertEqual(sorted(инн(out)), ["5900000001", "5903120756"])
+
+
 if __name__ == "__main__":
     unittest.main()

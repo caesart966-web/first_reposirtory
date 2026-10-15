@@ -36,6 +36,13 @@
     --ип         проверить и ИП (по умолчанию нет: адрес ИП в ЕГРИП закрыт,
                  руководитель — сам предприниматель, сверять нечего)
     --limit 100  не больше стольких запросов за один запуск
+
+ИЗМЕНЕНИЯ ЗА ПРОГОН
+
+Кроме общей таблицы, каждый прогон кладёт рядом отдельный файл только с теми
+компаниями, которые проверены в этот раз, — сфера_сверка_изменения_
+2026-10-16_0930.xlsx: свежая сотня сразу видна, искать её в общей таблице
+не нужно. --без-порции — не создавать.
 """
 
 from __future__ import annotations
@@ -48,7 +55,7 @@ import os
 import re
 import sys
 import time
-from datetime import date
+from datetime import date, datetime
 from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Any
@@ -739,6 +746,8 @@ def main(argv: list[str] | None = None) -> int:
                         "руководитель — он сам)")
     p.add_argument("--limit", type=int, default=0, help="не больше стольких запросов за запуск")
     p.add_argument("--delay", type=float, default=1.0, help="пауза между запросами, сек")
+    p.add_argument("--без-порции", dest="без_порции", action="store_true",
+                   help="не создавать отдельный файл с изменениями этого прогона")
     args = p.parse_args(argv)
 
     пути = sorted({Path(x) for маска in args.файлы for x in (glob.glob(маска) or [маска])})
@@ -782,6 +791,7 @@ def main(argv: list[str] | None = None) -> int:
         очередь = очередь[:args.limit]
     key = args.key or os.environ.get(API_KEY_ENV)
     стоп = ""
+    новые: set[str] = set()       # проверены в этот прогон — для файла изменений
     if очередь and not key:
         print(f"[checko] нет ключа ({API_KEY_ENV}) — строю таблицу по уже полученным ответам",
               flush=True)
@@ -797,6 +807,8 @@ def main(argv: list[str] | None = None) -> int:
                 break
             кэш[инн] = {"проверено": f"{date.today():%d.%m.%Y}",
                         "data": ужать(data) if data else {}, "ошибка": пометка}
+            if not пометка:
+                новые.add(инн)
             if n % 10 == 0:
                 кэш_путь.write_text(json.dumps(кэш, ensure_ascii=False), encoding="utf-8")
                 print(f"[checko] {n}/{len(очередь)}"
@@ -830,6 +842,16 @@ def main(argv: list[str] | None = None) -> int:
     уточнить = sum(1 for с in строки if расхождение(с)) - красных
     print(f"[сверка] проверено {len(строки)}: переезд или новый директор — {красных}, "
           f"уточнить — {уточнить}; не проверено {len(непроверенные)} → {out}", flush=True)
+
+    if новые and not args.без_порции:
+        порция = [с for с in строки if с["ИНН"] in новые]
+        путь = out.with_name(f"{out.stem}_изменения_{datetime.now():%Y-%m-%d_%H%M}.xlsx")
+        записать(путь, порция, свести(порция, []), [],
+                 [f"Только компании, проверенные в этом прогоне: {len(новые)}. "
+                  f"Все проверенные за всё время — в {out.name}."])
+        в_порции = sum(1 for с in порция if расхождение(с))
+        print(f"[сверка] изменения этого прогона: {len(новые)} компаний, строк с расхождениями "
+              f"{в_порции} → {путь}", flush=True)
     if стоп:
         print(f"[checko] остановка: {стоп} — похоже, кончился лимит; завтра та же команда "
               "продолжит", flush=True)
