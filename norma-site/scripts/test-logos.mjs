@@ -47,7 +47,13 @@ for (const vp of [{ width: 390, height: 844 }, { width: 1440, height: 900 }]) {
       n: first.length,
       nDup: dups.length,
       alts: first.map((li) => li.querySelector('img')?.getAttribute('alt') || ''),
-      dupHidden: dups.every((li) => li.getAttribute('aria-hidden') === 'true' && li.querySelector('img')?.getAttribute('alt') === ''),
+      // Повтор скрыт от диктора строкой (aria-hidden), а подписи у него
+      // те же, что у набора: пустой alt аудит считает картинкой без подписи.
+      dupHidden: dups.every(
+        (li, k) =>
+          li.getAttribute('aria-hidden') === 'true' &&
+          li.querySelector('img')?.getAttribute('alt') === first[k]?.querySelector('img')?.getAttribute('alt'),
+      ),
       half: track.scrollWidth / 2,
       setW,
       notLoaded: imgs.filter((i) => !(i.complete && i.naturalWidth > 0)).map((i) => i.getAttribute('src')),
@@ -58,7 +64,7 @@ for (const vp of [{ width: 390, height: 844 }, { width: 1440, height: 900 }]) {
   if (tag === 'телефон') {
     check(r.n === expected, `Знаков столько, сколько партнёров с номером и логотипом (${expected})`, `в ленте ${r.n}`)
     check(r.alts.every((a) => a.length > 3), 'У каждого знака подпись — название организации', r.alts.filter((a) => a.length <= 3).length + ' без подписи')
-    check(r.nDup === r.n && r.dupHidden, 'Повтор набора скрыт от диктора (aria-hidden, пустые подписи)')
+    check(r.nDup === r.n && r.dupHidden, 'Повтор набора скрыт от диктора (aria-hidden), подписи те же, что у набора')
   }
   check(Math.abs(r.half - r.setW) <= 1, `${tag}: половина ленты — ровно один набор, стык без рывка`, `половина ${r.half.toFixed(1)}, набор ${r.setW.toFixed(1)}`)
   check(!r.notLoaded.length, `${tag}: загружены все знаки, и те, что за краем ленты`, r.notLoaded.join(', '))

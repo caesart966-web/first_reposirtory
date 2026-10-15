@@ -27,6 +27,10 @@
 // пяти секунд обязано останавливаться (WCAG 2.2.2), а на телефоне
 // наведения нет. При «уменьшить движение» лента стоит, повтор скрыт,
 // ряд листается пальцем.
+//
+// ПОДПИСИ ПОВТОРА. У повтора те же alt, что у набора: диктор его не читает
+// (aria-hidden у строки), а пустые alt аудит Seobility 15.10.2026 считал
+// картинками без подписи — девять из одиннадцати на главной.
 import { PARTNERS } from '../config/partners'
 import LOGOS from '../config/partner-logos.json'
 import { href } from '../config/site'
@@ -72,7 +76,7 @@ const duration = `${(setWidth / SPEED).toFixed(1)}s`
           <li><img src={i.src} alt={i.name} width={i.w} height={i.h} style={`--h: ${i.dh}px`} class:list={[i.tile && 'tile']} loading="lazy" decoding="async" /></li>
         ))}
         {items.map((i) => (
-          <li class="dup" aria-hidden="true"><img src={i.src} alt="" width={i.w} height={i.h} style={`--h: ${i.dh}px`} class:list={[i.tile && 'tile']} loading="lazy" decoding="async" /></li>
+          <li class="dup" aria-hidden="true"><img src={i.src} alt={i.name} width={i.w} height={i.h} style={`--h: ${i.dh}px`} class:list={[i.tile && 'tile']} loading="lazy" decoding="async" /></li>
         ))}
       </ul>
     </div>
