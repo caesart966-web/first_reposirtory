@@ -727,7 +727,11 @@ def main(argv: list[str] | None = None) -> int:
     пути = sorted({Path(x) for маска in args.файлы for x in (glob.glob(маска) or [маска])})
     пути = [п for п in пути if п.exists() and п.suffix.lower() == ".xlsx"]
     if not пути:
-        print("Не нашёл ни одного .xlsx по --файлы", file=sys.stderr)
+        print(f"Не нашёл ни одного .xlsx по --файлы: {' '.join(args.файлы)}", file=sys.stderr)
+        здесь = sorted(п.name for п in Path.cwd().glob("*.xlsx"))
+        print(f"В папке {Path.cwd()} " + (f"есть: {', '.join(здесь)}" if здесь
+                                           else "нет ни одного .xlsx") +
+              ". Положите выгрузку сюда или укажите полный путь в кавычках.", file=sys.stderr)
         return 1
     out = Path(args.out)
     # итог прошлого запуска, лежащий в той же папке, — не выгрузка
