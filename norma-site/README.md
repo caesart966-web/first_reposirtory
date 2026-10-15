@@ -278,6 +278,34 @@ npm run icons    # значки вкладки и телефона — из publ
 **После заливки** уведомление в Роскомнадзор (раздел 21) должно совпадать
 с формой: в согласии теперь прямо названы почта, город и сведения о задаче.
 
+**Архив — v52** (`release/norma-sro.ru-2026-10-15-v52.zip`): статья
+о членских взносах, два термина в словаре, правки «Стоимости» и описаний
+городов, воздух вокруг текста (раздел 17, «SEO 15 октября»). В нём всё, что
+было в v51, так что заливайте сразу его.
+
+**После заливки — впервые кнопкой.** GitHub → Actions → «НОРМА: отправить
+изменённые страницы в IndexNow» → Run workflow. Список в роботе — от v50,
+63 страницы: если v51 вы ещё не заливали, её изменения тоже уйдут в Яндекс,
+а если заливали — повтор ничего не портит. Если робот не прошёл, по-старому
+в Вебмастер («Переобход страниц») — то, что изменилось с v51:
+
+```
+https://norma-sro.ru/baza-znaniy/chlenskie-vznosy-sro/
+https://norma-sro.ru/stoimost/
+https://norma-sro.ru/
+https://norma-sro.ru/slovar/
+https://norma-sro.ru/baza-znaniy/
+https://norma-sro.ru/baza-znaniy/isklyuchenie-iz-sro/
+https://norma-sro.ru/baza-znaniy/vznos-ne-vozvrashchaetsya/
+https://norma-sro.ru/baza-znaniy/smena-urovnya-otvetstvennosti/
+https://norma-sro.ru/sro/moskva/
+https://norma-sro.ru/sro/sankt-peterburg/
+https://norma-sro.ru/sro/rostov-na-donu/
+```
+
+плюс список v51 ниже, если он ещё не отправлен. В Google — новую статью
+через «Проверку URL».
+
 **Архив — v51** (`release/norma-sro.ru-2026-10-14-v51.zip`): сверка
 14 октября. В нём всё, что было в v50, так что заливайте сразу его. Текст
 изменился на 62 страницах, но на половине из них — только дата сверки;
