@@ -1,0 +1,63 @@
+# Робот сайта «НОРМА»: отправляет изменённые страницы в IndexNow —
+# Яндекс узнаёт о них в тот же день, а не когда сам дойдёт по карте сайта.
+#
+# КОГДА ЗАПУСКАТЬ. После того как архив залит на хостинг и сайт в инкогнито
+# показывает новую версию: GitHub → Actions → «НОРМА: отправить изменённые
+# страницы в IndexNow» → Run workflow. Список страниц уже лежит в репозитории
+# (norma-site/indexnow.txt, его пишет npm run changed при выпуске архива).
+#
+# ЧТО ОН ПРОВЕРЯЕТ, прежде чем отправить: что на сайте лежит именно тот
+# архив, из которого составлен список (карта сайта совпадает до байта),
+# что открывается файл ключа и что каждый адрес есть в карте сайта.
+# Не та версия — робот ничего не отправляет и пишет, что сделать.
+#
+# Google в IndexNow не участвует: для него — Search Console (README, раздел 17).
+name: 'НОРМА: отправить изменённые страницы в IndexNow'
+
+on:
+  workflow_dispatch:
+    inputs:
+      adresa:
+        description: 'Только эти адреса, через пробел (например /stoimost/ /uslugi/nrs/). Пусто — список из norma-site/indexnow.txt'
+        required: false
+        default: ''
+      vse:
+        description: 'Отправить все страницы сайта'
+        type: boolean
+        default: false
+      bez_proverki:
+        description: 'Без проверки версии (если карта сайта на хостинге отличается по другой причине)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: indexnow-norma
+  cancel-in-progress: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Ввод из формы идёт через переменные окружения, а не подстановкой
+      # в команду: так текст из поля не может стать частью команды.
+      - name: Отправляем
+        working-directory: norma-site
+        env:
+          ADRESA: ${{ inputs.adresa }}
+          VSE: ${{ inputs.vse }}
+          BEZ_PROVERKI: ${{ inputs.bez_proverki }}
+        run: |
+          set -f
+          opts=""
+          [ "$VSE" = "true" ] && opts="$opts --all"
+          [ "$BEZ_PROVERKI" = "true" ] && opts="$opts --no-check"
+          node scripts/indexnow-live.mjs $opts $ADRESA
