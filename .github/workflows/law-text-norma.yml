@@ -1,0 +1,53 @@
+# Робот сайта «НОРМА»: читает текст закона с правовых сайтов.
+#
+# Статьи сайта пишутся по тексту нормы, а Консультант, Гарант и зеркала
+# кодексов из среды, где пишется сайт, закрыты. У GitHub доступ есть:
+# робот открывает страницы, печатает текст в журнал запуска (вокруг
+# заданных фраз или начало страницы) и кладёт полные тексты в Artifacts.
+#
+# Запуск: GitHub → Actions → «НОРМА: прочитать текст закона» → Run workflow,
+# в поле — адреса страниц через пробел. Только правовые и государственные
+# сайты (список в norma-site/scripts/read-law.mjs). Робот только читает:
+# ничего не правит и не публикует.
+name: 'НОРМА: прочитать текст закона'
+
+on:
+  workflow_dispatch:
+    inputs:
+      adresa:
+        description: 'Адреса страниц через пробел (Консультант, Гарант, zakonrf, rulaws, pravo.gov.ru…)'
+        required: true
+      iskat:
+        description: 'Необязательно: фразы через «|» — вокруг каждой робот напечатает текст'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  read:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Ввод из формы — через переменные окружения, а не подстановкой
+      # в команду: текст из поля не может стать частью команды.
+      - name: Читаем
+        working-directory: norma-site
+        env:
+          ADRESA: ${{ inputs.adresa }}
+          ISKAT: ${{ inputs.iskat }}
+        run: node scripts/read-law.mjs
+
+      - name: Полные тексты
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: law-text
+          path: norma-site/law-text/
+          if-no-files-found: ignore
