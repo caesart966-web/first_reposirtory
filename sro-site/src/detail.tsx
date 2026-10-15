@@ -7,6 +7,7 @@ import './index.css'
 import { DetailPage } from './components/DetailPage'
 import { detailBySlug } from './content/sroDetails'
 import { markArrival } from './lib/arrival'
+import { markMounted } from './lib/mounted'
 import { setSiteRoot } from './lib/site'
 
 // Точка входа страниц видов СРО. Какая именно страница — написано в её HTML
@@ -32,4 +33,5 @@ if (!detail) {
       </React.StrictMode>,
     ),
   )
+  markMounted()
 }

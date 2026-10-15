@@ -104,7 +104,9 @@ const FRAME: Record<string, string> = {
 // только там, где есть наведение: на телефоне касание строки сразу ведёт
 // на страницу вида, и грузить ради него два кадра незачем.
 const canHover = () => matchMedia('(hover: hover) and (min-width: 640px)').matches
-const idle = 'requestIdleCallback' in window
+// typeof window — текст страницы собирается и при сборке, без браузера
+// (entry-server.tsx).
+const idle = typeof window !== 'undefined' && 'requestIdleCallback' in window
 
 function useHoverFrame() {
   const [shown, setShown] = useState<string | null>(null)

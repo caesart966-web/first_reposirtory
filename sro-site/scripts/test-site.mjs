@@ -166,6 +166,48 @@ for (const path of PAGES) {
   await ctx.close()
 }
 
+// Текст страниц в самом HTML (scripts/prerender.mjs, 15.10.2026): поисковик,
+// который не выполняет JavaScript, видит страницу целиком, а не пустой
+// <div id="root">. Без скрипта: текст на месте, h1 тот же, что собирает
+// браузер, и блоки, которые выплывают по прокрутке, видны (noscript в <head>).
+// Со скриптом: после первой отрисовки класс pre-wait снят (иначе страница
+// осталась бы прозрачной), а запасной pre-late (скрипт не пришёл за 4 с)
+// не включился.
+{
+  const off = await b.newContext({ javaScriptEnabled: false, viewport: { width: 1280, height: 900 } })
+  const on = await b.newContext({ viewport: { width: 1280, height: 900 } })
+  const heading = () => {
+    const h1 = document.querySelector('#root h1')
+    return h1?.getAttribute('aria-label') ?? h1?.textContent ?? ''
+  }
+  for (const path of PAGES) {
+    const tag = `${path || '/'} без JavaScript`
+    const p = await off.newPage()
+    await p.goto(BASE + path, { waitUntil: 'load' })
+    const raw = await p.evaluate(() => {
+      const root = document.getElementById('root')
+      const h1 = root.querySelector('h1')
+      return {
+        h1: h1?.getAttribute('aria-label') ?? h1?.textContent ?? '',
+        words: root.innerText.split(/\s+/).filter(Boolean).length,
+        hidden: [...root.querySelectorAll('.reveal')].filter((el) => getComputedStyle(el).opacity === '0').length,
+        opacity: getComputedStyle(root).opacity,
+      }
+    })
+    await p.close()
+    const q = await on.newPage()
+    await q.goto(BASE + path, { waitUntil: 'networkidle' })
+    const live = { h1: await q.evaluate(heading), cls: await q.evaluate(() => document.documentElement.className) }
+    await q.close()
+    check(`${tag}: текст страницы в HTML`, raw.words >= 300, `${raw.words} слов`)
+    check(`${tag}: h1 тот же, что в браузере`, raw.h1 !== '' && raw.h1 === live.h1, `«${raw.h1}» / «${live.h1}»`)
+    check(`${tag}: ничего не спрятано`, raw.hidden === 0 && raw.opacity === '1', `скрытых блоков ${raw.hidden}, прозрачность корня ${raw.opacity}`)
+    check(`${path || '/'}: после отрисовки готовый текст не спрятан`, !/\bpre-(wait|late)\b/.test(live.cls), live.cls)
+  }
+  await off.close()
+  await on.close()
+}
+
 // Первый экран главной: три вида СРО списком, кадр справа.
 //
 // Главное, что здесь стережётся, — что видно БЕЗ прокрутки: заголовок,
@@ -299,7 +341,11 @@ for (const motion of ['no-preference', 'reduce']) {
   await ctx.addInitScript(() => {
     addEventListener('pagereveal', (e) => {
       window.__vt = Boolean(e.viewTransition)
-      window.__rootEmpty = !document.getElementById('root')?.children.length
+      // С 15.10.2026 текст лежит в HTML готовым (scripts/prerender.mjs), но до
+      // первой отрисовки скриптом прозрачен (pre-wait): пустым считается и он.
+      window.__rootEmpty =
+        !document.getElementById('root')?.children.length ||
+        document.documentElement.classList.contains('pre-wait')
     })
   })
   const p = await ctx.newPage()

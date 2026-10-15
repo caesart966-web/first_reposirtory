@@ -7,6 +7,7 @@ import './index.css'
 import { ServicePage } from './components/ServicePage'
 import { serviceBySlug } from './content/services'
 import { markArrival } from './lib/arrival'
+import { markMounted } from './lib/mounted'
 import { setSiteRoot } from './lib/site'
 
 // Точка входа страниц услуг (/uslugi/…). Какая именно страница — в её HTML
@@ -33,4 +34,5 @@ if (!service) {
       </React.StrictMode>,
     ),
   )
+  markMounted()
 }
