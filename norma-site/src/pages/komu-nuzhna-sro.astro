@@ -59,7 +59,8 @@ const faq = [
   },
   {
     q: 'Что будет, если работать без членства, когда оно нужно?',
-    a: 'Договор, заключённый без необходимого членства, может быть оспорен, а результат работ — не принят. Отдельный практический риск: заказчик проверяет реестр перед оплатой.',
+    a: 'Административный штраф — от 40 000 до 50 000 ₽ (ч. 1 ст. 9.5.1 КоАП РФ). Суммы до миллиона, которые встречаются на сайтах по теме, — из другой статьи, о строительстве без разрешения. Кроме штрафа: договор, заключённый без необходимого членства, может быть оспорен, а заявку на торгах отклонят.',
+    more: { url: '/baza-znaniy/shtraf-za-rabotu-bez-sro/', label: 'Штраф за работу без СРО: разбор статьи КоАП' },
   },
 ]
 
@@ -171,7 +172,10 @@ const faqSchema = {
         {faq.map((f, i) => (
           <details name="komufaq" open={i === 0}>
             <summary>{f.q}</summary>
-            <div class="fa"><p>{f.a}</p></div>
+            <div class="fa">
+              <p>{f.a}</p>
+              {f.more && <a class="fa-more" href={href(f.more.url)}>{f.more.label} <Icon name="arrow" size={15} /></a>}
+            </div>
           </details>
         ))}
       </div>
@@ -256,6 +260,20 @@ const faqSchema = {
   .faq details[open] summary::after { content: '−'; }
   .faq .fa { padding: 0 22px 20px; }
   .faq .fa p { color: var(--muted); font-size: 15.5px; max-width: 76ch; }
+  /* Ссылка в полный разбор под ответом — как в вопросах на главной. */
+  .fa-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 12px;
+    color: var(--acc-deep);
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+    padding-block: 8px;
+    margin-block-end: -8px;
+  }
+  .fa-more:hover { text-decoration: underline; }
 
   .cta-split { display: grid; grid-template-columns: 0.75fr 1.25fr; gap: 20px; align-items: start; }
   .cs-calc {

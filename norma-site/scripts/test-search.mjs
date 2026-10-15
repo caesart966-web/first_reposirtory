@@ -120,6 +120,9 @@ const QUERIES = [
   // из платежей.
   ['членские взносы', '/baza-znaniy/chlenskie-vznosy-sro/'],
   ['неуплата членских взносов', '/baza-znaniy/chlenskie-vznosy-sro/'],
+  ['штраф за работу без сро', '/baza-znaniy/shtraf-za-rabotu-bez-sro/'],
+  ['работа без сро', '/baza-znaniy/shtraf-za-rabotu-bez-sro/'],
+  ['ответственность за работу без сро', '/baza-znaniy/shtraf-za-rabotu-bez-sro/'],
   // Запросы из Wordstat (29.09.2026): у каждого своя страница-ответ,
   // и поиск по сайту обязан приводить на неё, а не на соседнюю.
   ['вступить в сро срочно', '/baza-znaniy/sroki-vstupleniya/'],
