@@ -206,8 +206,12 @@ const graph = {
     <!-- Значок сайта. SVG понимают все современные браузеры, но Яндекс
          в выдаче берёт растр, а телефоны — apple-touch-icon: значок сайта
          виден в результатах поиска и на домашнем экране, и его отсутствие
-         заметнее, чем кажется. Манифест даёт Андроиду название и цвет. -->
+         заметнее, чем кажется. Манифест даёт Андроиду название и цвет.
+         192 × 192 — для Google: он берёт значок не меньше 48 px и кратный 48,
+         а из растров был объявлен только 32 × 32 (15.10.2026: в выдаче Google
+         всё ещё стоял прежний красный значок, хотя файлы на сайте синие). -->
     <link rel="icon" type="image/svg+xml" href={href(withVersion('/favicon.svg'))} />
+    <link rel="icon" type="image/png" sizes="192x192" href={href(withVersion('/favicon-192.png'))} />
     <link rel="icon" type="image/png" sizes="32x32" href={href(withVersion('/favicon-32.png'))} />
     <link rel="apple-touch-icon" sizes="180x180" href={href(withVersion('/apple-touch-icon.png'))} />
     <link rel="manifest" href={href(withVersion('/site.webmanifest'))} />
