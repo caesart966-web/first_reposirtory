@@ -60,9 +60,12 @@ function toText(html) {
     .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(+n))
     .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
     .replace(/&([a-z]+);/gi, (m, n) => ENT[n.toLowerCase()] ?? m)
-    .replace(/[ \t ]+/g, ' ')
-    .replace(/ *\n[ \n]*/g, '\n')
-    .trim()
+    .split('\n')
+    // Пустые строки и строки из одних невидимых знаков — вон: иначе журнал
+    // запуска на треть состоит из пустоты (у Гаранта — десятки подряд).
+    .map((s) => s.replace(/[\s​-‏﻿]+/g, ' ').trim())
+    .filter(Boolean)
+    .join('\n')
 }
 
 async function load(u) {
