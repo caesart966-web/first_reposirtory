@@ -19,6 +19,7 @@
 // на небо; статический расчёт по стилям этого не видит принципиально.
 //
 //   node scripts/test-hero-contrast.mjs     # BASE, PLAYWRIGHT, CHROMIUM — как в test-site.mjs
+import { existsSync, readdirSync } from 'node:fs'
 const pw = await import(process.env.PLAYWRIGHT || 'playwright-core')
 const { chromium } = pw.default ?? pw
 
@@ -36,6 +37,16 @@ const SHOTS = [
   { path: 'uslugi/vstuplenie-v-sro/' }, { path: 'uslugi/podbor-i-proverka-sro/' },
   { path: 'uslugi/specialisty-nrs/' }, { path: 'uslugi/uroven-otvetstvennosti/' },
   { path: 'uslugi/soprovozhdenie-proverok/' },
+  // Статьи (15.10.2026): список и каждая статья — шапка с кадром и строкой
+  // даты над заголовком. Обходом папки: статьи прибавляются каждую неделю.
+  ...(existsSync(new URL('../stati/', import.meta.url))
+    ? [
+        { path: 'stati/' },
+        ...readdirSync(new URL('../stati/', import.meta.url), { withFileTypes: true })
+          .filter((d) => d.isDirectory())
+          .map((d) => ({ path: `stati/${d.name}/` })),
+      ]
+    : []),
   { path: '', section: 'about', selector: '#about h2, #about p, #about li span:last-child' },
   { path: '', section: 'documents', selector: '#documents h2, #documents p' },
 ]

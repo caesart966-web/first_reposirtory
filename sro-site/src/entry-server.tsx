@@ -1,8 +1,11 @@
 import React from 'react'
 import { renderToString } from 'react-dom/server'
 import App from './App'
+import { ArticlePage } from './components/ArticlePage'
+import { ArticlesIndex } from './components/ArticlesIndex'
 import { DetailPage } from './components/DetailPage'
 import { ServicePage } from './components/ServicePage'
+import { ARTICLES, articleBySlug } from './content/articles'
 import { detailBySlug } from './content/sroDetails'
 import { serviceBySlug } from './content/services'
 import { setSiteRoot } from './lib/site'
@@ -19,12 +22,23 @@ import { setSiteRoot } from './lib/site'
 // Готовый текст до сборки спрятан (класс pre-wait, prerender.mjs), поэтому
 // посетитель видит сайт ровно таким, как раньше.
 
-export type Target = { root: string; sro?: string; service?: string }
+// page="stati" — список статей, article — сама статья (data-page
+// и data-article в HTML страницы, как data-sro и data-service).
+export type Target = { root: string; sro?: string; service?: string; page?: string; article?: string }
 
-export function render({ root, sro, service }: Target): string {
+/** Слаги статей — prerender.mjs сверяет с ними страницы в dist. */
+export const ARTICLE_SLUGS = ARTICLES.map((a) => a.slug)
+
+export function render({ root, sro, service, page, article }: Target): string {
   setSiteRoot(root)
   let tree: React.ReactNode
-  if (sro !== undefined) {
+  if (article !== undefined) {
+    const data = articleBySlug(article)
+    if (!data) throw new Error(`Нет статьи «${article}»`)
+    tree = <ArticlePage article={data} />
+  } else if (page === 'stati') {
+    tree = <ArticlesIndex />
+  } else if (sro !== undefined) {
     const detail = detailBySlug(sro)
     if (!detail) throw new Error(`Нет вида СРО «${sro}»`)
     tree = <DetailPage detail={detail} />

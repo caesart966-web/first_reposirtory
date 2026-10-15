@@ -27,7 +27,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 const site = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const dist = join(site, 'dist')
 const ssrDir = join(site, 'dist-ssr')
-const { render } = await import(pathToFileURL(join(ssrDir, 'entry-server.js')).href)
+const { render, ARTICLE_SLUGS } = await import(pathToFileURL(join(ssrDir, 'entry-server.js')).href)
 
 const HEAD =
   '<style>html.pre-wait #root{opacity:0}' +
@@ -48,6 +48,22 @@ walk(dist)
 
 const attr = (attrs, name) => attrs.match(new RegExp(`\\b${name}="([^"]*)"`))?.[1]
 
+// Сколько страниц ожидать — столько же index.html, сколько в исходниках
+// (каталоги, как в build-sitemap.mjs): пропавшая при сборке страница
+// роняет сборку, а не уходит на хостинг молча.
+const SKIP = new Set(['node_modules', 'dist', 'dist-ssr', 'public', 'src', 'scripts', 'assets-src'])
+const sources = []
+const walkSources = (dir) => {
+  for (const name of readdirSync(dir)) {
+    if (SKIP.has(name) || name.startsWith('.')) continue
+    const path = join(dir, name)
+    if (statSync(path).isDirectory()) walkSources(path)
+    else if (name === 'index.html') sources.push(path)
+  }
+}
+walkSources(site)
+
+const articlesSeen = new Set()
 let done = 0
 for (const file of pages) {
   const name = relative(dist, file)
@@ -59,9 +75,14 @@ for (const file of pages) {
 
   const sro = attr(attrs, 'data-sro')
   const service = attr(attrs, 'data-service')
-  // Глубина по умолчанию — та же, что в detail.tsx и service.tsx.
-  const root = attr(attrs, 'data-root') ?? (sro !== undefined ? '../' : service !== undefined ? '../../' : '')
-  const body = render({ root, sro, service })
+  const pageKind = attr(attrs, 'data-page')
+  const article = attr(attrs, 'data-article')
+  // Глубина по умолчанию — та же, что в detail.tsx, service.tsx и stati.tsx.
+  const root =
+    attr(attrs, 'data-root') ??
+    (sro !== undefined || pageKind !== undefined ? '../' : service !== undefined || article !== undefined ? '../../' : '')
+  const body = render({ root, sro, service, page: pageKind, article })
+  if (article !== undefined) articlesSeen.add(article)
   if (!/<h1[\s>]/.test(body)) throw new Error(`${name}: в собранной странице нет <h1>`)
 
   const viewport = html.match(/<meta name="viewport"[^>]*>/)
@@ -73,6 +94,16 @@ for (const file of pages) {
   console.log(`  ${name.padEnd(48)} ${(body.length / 1024).toFixed(0).padStart(4)} КБ текста`)
 }
 
-if (done !== 11) throw new Error(`Страниц ${done}, ожидалось 11 — новая страница? Поправьте число здесь.`)
+if (done !== sources.length) throw new Error(`Страниц в сборке ${done}, в исходниках ${sources.length}`)
+// Каждая статья из content/articles.ts должна иметь страницу, и наоборот:
+// иначе забыли `npm run articles` после правки списка.
+const missing = ARTICLE_SLUGS.filter((slug) => !articlesSeen.has(slug))
+const extra = [...articlesSeen].filter((slug) => !ARTICLE_SLUGS.includes(slug))
+if (missing.length || extra.length) {
+  throw new Error(
+    `Статьи и страницы разошлись (запустите npm run articles): без страницы — ${missing.join(', ') || 'нет'}; ` +
+      `страница без статьи — ${extra.join(', ') || 'нет'}`,
+  )
+}
 rmSync(ssrDir, { recursive: true, force: true })
 console.log(`prerender: текст вписан в ${done} страниц`)

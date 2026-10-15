@@ -1,4 +1,4 @@
-// Сквозная проверка сайта: все одиннадцать страниц на пяти ширинах, плюс
+// Сквозная проверка сайта: все страницы (одиннадцать и статьи) на шести ширинах, плюс
 // первый экран главной, меню и нижняя панель на телефоне.
 //
 // Живёт в репозитории, а не в рабочей папке сессии: 24.09.2026 рабочая
@@ -10,14 +10,21 @@
 //
 // Playwright в зависимостях сайта не нужен (см. build-og.mjs): модуль берётся
 // из переменной PLAYWRIGHT, если он лежит не рядом.
+import { existsSync, readdirSync } from 'node:fs'
 const pw = await import(process.env.PLAYWRIGHT || 'playwright-core')
 const { chromium } = pw.default ?? pw
 
 const BASE = process.env.BASE || 'http://localhost:4181/'
+// Статьи (15.10.2026) — обходом папки stati/: их число растёт каждую неделю,
+// и список, записанный руками, отстал бы от сайта.
+const STATI = new URL('../stati/', import.meta.url)
+const ARTICLE_PAGES = existsSync(STATI)
+  ? ['stati/', ...readdirSync(STATI, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => `stati/${d.name}/`)]
+  : []
 const PAGES = ['', 'sro-stroiteley/', 'sro-proektirovshchikov/', 'sro-izyskateley/',
   'uslugi/vstuplenie-v-sro/', 'uslugi/podbor-i-proverka-sro/', 'uslugi/dokumenty/',
   'uslugi/specialisty-nrs/', 'uslugi/nok/', 'uslugi/uroven-otvetstvennosti/',
-  'uslugi/soprovozhdenie-proverok/']
+  'uslugi/soprovozhdenie-proverok/', ...ARTICLE_PAGES]
 // 1920 — колонка текста шире (80rem с 1800 px, index.css).
 const WIDTHS = [320, 390, 768, 1024, 1440, 1920]
 
@@ -199,7 +206,10 @@ for (const path of PAGES) {
     await q.goto(BASE + path, { waitUntil: 'networkidle' })
     const live = { h1: await q.evaluate(heading), cls: await q.evaluate(() => document.documentElement.className) }
     await q.close()
-    check(`${tag}: текст страницы в HTML`, raw.words >= 300, `${raw.words} слов`)
+    // Список статей — оглавление: на нём заголовки и строки о сути, а не
+    // текст, поэтому порог ниже.
+    const minWords = path === 'stati/' ? 150 : 300
+    check(`${tag}: текст страницы в HTML`, raw.words >= minWords, `${raw.words} слов`)
     check(`${tag}: h1 тот же, что в браузере`, raw.h1 !== '' && raw.h1 === live.h1, `«${raw.h1}» / «${live.h1}»`)
     check(`${tag}: ничего не спрятано`, raw.hidden === 0 && raw.opacity === '1', `скрытых блоков ${raw.hidden}, прозрачность корня ${raw.opacity}`)
     check(`${path || '/'}: после отрисовки готовый текст не спрятан`, !/\bpre-(wait|late)\b/.test(live.cls), live.cls)

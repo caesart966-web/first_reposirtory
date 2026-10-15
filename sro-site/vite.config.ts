@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { readFileSync, readdirSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
@@ -33,6 +33,19 @@ const assetVersions = Object.fromEntries(
     ]),
 )
 
+// Раздел «Статьи» (15.10.2026): список stati/index.html и по папке на статью.
+// Папки пишет scripts/build-articles.mjs из content/articles.ts, поэтому
+// точки входа собираются обходом, а не списком: новая статья не требует
+// правки конфигурации.
+const statiDir = resolve(__dirname, 'stati')
+const articleInputs = existsSync(statiDir)
+  ? Object.fromEntries(
+      readdirSync(statiDir, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory() && existsSync(resolve(statiDir, entry.name, 'index.html')))
+        .map((entry) => [`statya-${entry.name}`, resolve(statiDir, entry.name, 'index.html')]),
+    )
+  : {}
+
 // base: './' — собранный сайт работает из любого подкаталога (хостинг, GitHub Pages).
 //
 // Точек входа одиннадцать: главная, три страницы видов СРО и семь страниц услуг. Каждая — обычный
@@ -60,6 +73,9 @@ export default defineConfig({
         usluga_nok: resolve(__dirname, 'uslugi/nok/index.html'),
         usluga_uroven: resolve(__dirname, 'uslugi/uroven-otvetstvennosti/index.html'),
         usluga_proverki: resolve(__dirname, 'uslugi/soprovozhdenie-proverok/index.html'),
+        // Статьи: список и сами статьи, точка входа src/stati.tsx.
+        ...(existsSync(resolve(statiDir, 'index.html')) ? { stati: resolve(statiDir, 'index.html') } : {}),
+        ...articleInputs,
       },
     },
   },

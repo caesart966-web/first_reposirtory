@@ -27,6 +27,10 @@ import { Reveal, RevealText } from './ui/Reveal'
 // не дойдя до содержания. Ряд выходит к краям экрана — срезанная крайняя
 // пилюля сама показывает, что дальше есть ещё. «Что делаю я» и «Сколько
 // стоит» в оглавление не входят: эти разделы есть на каждой странице.
+//
+// meta — строка над заголовком у статей (15.10.2026): дата сверки с законом
+// и время чтения. Дата стоит до заголовка нарочно: у статьи о законе
+// первым делом важно, насколько она свежая.
 export type TocItem = { id: string; title: string }
 
 export function PageHero({
@@ -36,6 +40,7 @@ export function PageHero({
   lead,
   image,
   toc = [],
+  meta,
 }: {
   backHref: string
   backLabel: string
@@ -43,6 +48,7 @@ export function PageHero({
   lead: string
   image?: PageImage
   toc?: TocItem[]
+  meta?: string
 }) {
   return (
     <section className="relative isolate overflow-hidden bg-accent-950 text-neutral-50">
@@ -88,10 +94,23 @@ export function PageHero({
               «проектировщиков», «ответственности». На 2,9rem они были шире
               экрана и обрезались краем шапки (до 28.09.2026 — незаметно:
               горизонтальной прокрутки при этом нет). */}
+          {meta && (
+            <Reveal>
+              <p className="mt-10 text-sm text-neutral-300">
+                <span data-hero-text>{meta}</span>
+              </p>
+            </Reveal>
+          )}
           <RevealText
             as="h1"
             text={title}
-            className="mt-10 font-display text-[1.95rem] font-medium leading-[1.02] tracking-[-0.01em] min-[380px]:text-[2.35rem] sm:text-6xl lg:text-[4.6rem]"
+            className={`font-display text-[1.95rem] font-medium tracking-[-0.01em] ${
+              // Заголовок статьи — вопрос в пять-восемь слов: кеглем страниц
+              // услуг он вставал в четыре строки на полэкрана.
+              meta
+                ? 'mt-4 leading-[1.06] min-[380px]:text-[2.15rem] sm:text-5xl lg:text-[3.6rem]'
+                : 'mt-10 leading-[1.02] min-[380px]:text-[2.35rem] sm:text-6xl lg:text-[4.6rem]'
+            }`}
           />
           <Reveal delay={200}>
             <p className="mt-7 max-w-2xl text-lg leading-relaxed text-neutral-200">
