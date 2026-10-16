@@ -1,4 +1,5 @@
 import { AboutExpert } from './components/AboutExpert'
+import { LatestArticles } from './components/Articles'
 import { Contact } from './components/Contact'
 import { Documents } from './components/Documents'
 import { FAQ } from './components/FAQ'
@@ -46,6 +47,10 @@ export default function App() {
             всего, что сказано про СРО, и перед «О компании». */}
         <Licenses />
         <AboutExpert />
+        {/* Три свежие статьи (15.10.2026): после тёмного «О компании»
+            на кремовом фоне, перед светлыми «Вопросами» — короткие ответы
+            и подробные разборы стоят рядом. */}
+        <LatestArticles />
         <FAQ />
         <Regions />
         <Contact />

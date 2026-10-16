@@ -124,6 +124,32 @@ export const IMAGES = {
     height: 1067,
     position: '65% 50%',
   },
+  // Шапки статей (16.10.2026) — снимки заказчика, scripts/prepare-article-photos.py,
+  // учёт — CREDITS.md, «Шапки статей 16.10.2026».
+  articleDogovor: {
+    src: './img/article-dogovor.webp',
+    srcAvif: './img/article-dogovor.avif',
+    alt: 'Подпись договора за тёмным столом',
+    width: 1020,
+    height: 933,
+    position: '60% 35%',
+  },
+  articleProverka: {
+    src: './img/article-proverka.webp',
+    srcAvif: './img/article-proverka.avif',
+    alt: 'Человек читает договор с ручкой в руке',
+    width: 1600,
+    height: 1066,
+    position: '60% 55%',
+  },
+  articleRegion: {
+    src: './img/article-region.webp',
+    srcAvif: './img/article-region.avif',
+    alt: 'Старинный глобус: Россия от Урала до Сибири',
+    width: 1010,
+    height: 1320,
+    position: '30% 40%',
+  },
   survey: {
     src: './img/slide-survey.webp',
     srcAvif: './img/slide-survey.avif',

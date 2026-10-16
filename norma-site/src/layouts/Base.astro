@@ -7,9 +7,10 @@ import Footer from '../components/Footer.astro'
 import Icon from '../components/Icon.astro'
 import BrandIcon from '../components/BrandIcon.astro'
 import CookieBanner from '../components/CookieBanner.astro'
-import { SITE, href } from '../config/site'
+import { SITE, YANDEX_ORG, href } from '../config/site'
 import { SEO } from '../config/seo'
 import { ABOUT } from '../config/about'
+import { withVersion } from '../lib/asset-version'
 
 interface Props {
   title: string
@@ -59,7 +60,9 @@ const noindex = import.meta.env.PUBLIC_NOINDEX === '1' || noindexProp
 
 const abs = (path: string) => new URL(href(path), Astro.site).toString()
 const home = new URL('/', Astro.site).toString()
-const ogImage = abs(SEO.ogImage)
+// Превью и значки — с меткой версии (lib/asset-version.ts): иначе после
+// смены картинки браузеры и мессенджеры показывают прежнюю из кеша.
+const ogImage = abs(withVersion(SEO.ogImage))
 
 // Организация — базовый блок разметки, есть на каждой странице.
 const orgSchema = {
@@ -71,7 +74,19 @@ const orgSchema = {
   url: new URL('/', Astro.site).toString(),
   telephone: SITE.phone,
   email: SITE.email,
-  founder: { '@type': 'Person', name: 'Багишев Алихан Ахадович' },
+  // Владелец — отдельный узел со своим @id: на него ссылается автор каждой
+  // статьи. Страница «Обо мне» и фотография связывают разборы базы знаний
+  // с живым человеком, который за них отвечает, — поисковики учитывают
+  // это у текстов о законе и деньгах. Род занятий — та же строка, что
+  // подписана под фотографией над формой (LeadForm).
+  founder: {
+    '@type': 'Person',
+    '@id': `${home}#person`,
+    name: 'Багишев Алихан Ахадович',
+    url: abs('/obo-mne/'),
+    description: 'Вступление в СРО, НРС, НОК и лицензии',
+    ...(SITE.photo ? { image: abs(`/img/${SITE.photo}`) } : {}),
+  },
   taxID: SITE.inn,
   // Работа дистанционная по всей стране — это areaServed. Город в адресе
   // появился 29.09.2026: регион сайта в Вебмастере — Санкт-Петербург
@@ -81,10 +96,13 @@ const orgSchema = {
   // нарочно: адрес домашний, он стоит только в политике.
   areaServed: { '@type': 'Country', name: 'Россия' },
   address: { '@type': 'PostalAddress', addressCountry: 'RU', addressLocality: ABOUT.city },
-  sameAs: [SITE.whatsapp, SITE.telegram, SITE.maxLink].filter(Boolean),
+  // Карточка на Яндекс Картах (с 05.10.2026) связывает сайт с организацией
+  // в Яндекс Бизнесе. Рейтинга отсюда в разметку не берём: aggregateRating
+  // без своих отзывов на странице — то, за что снимают расширенный вид.
+  sameAs: [SITE.whatsapp, SITE.telegram, SITE.maxLink, YANDEX_ORG?.card].filter(Boolean),
   // Знак и картинка-превью. Без logo поисковик не покажет фирменный знак
   // ни рядом с сайтом в выдаче, ни в карточке организации.
-  logo: { '@type': 'ImageObject', '@id': `${home}#logo`, url: abs('/logo-512.png'), width: 512, height: 512 },
+  logo: { '@type': 'ImageObject', '@id': `${home}#logo`, url: abs(withVersion('/logo-512.png')), width: 512, height: 512 },
   image: { '@id': `${home}#logo` },
 }
 
@@ -188,12 +206,16 @@ const graph = {
     <!-- Значок сайта. SVG понимают все современные браузеры, но Яндекс
          в выдаче берёт растр, а телефоны — apple-touch-icon: значок сайта
          виден в результатах поиска и на домашнем экране, и его отсутствие
-         заметнее, чем кажется. Манифест даёт Андроиду название и цвет. -->
-    <link rel="icon" type="image/svg+xml" href={href('/favicon.svg')} />
-    <link rel="icon" type="image/png" sizes="32x32" href={href('/favicon-32.png')} />
-    <link rel="apple-touch-icon" sizes="180x180" href={href('/apple-touch-icon.png')} />
-    <link rel="manifest" href={href('/site.webmanifest')} />
-    <meta name="theme-color" content="#171310" />
+         заметнее, чем кажется. Манифест даёт Андроиду название и цвет.
+         192 × 192 — для Google: он берёт значок не меньше 48 px и кратный 48,
+         а из растров был объявлен только 32 × 32 (15.10.2026: в выдаче Google
+         всё ещё стоял прежний красный значок, хотя файлы на сайте синие). -->
+    <link rel="icon" type="image/svg+xml" href={href(withVersion('/favicon.svg'))} />
+    <link rel="icon" type="image/png" sizes="192x192" href={href(withVersion('/favicon-192.png'))} />
+    <link rel="icon" type="image/png" sizes="32x32" href={href(withVersion('/favicon-32.png'))} />
+    <link rel="apple-touch-icon" sizes="180x180" href={href(withVersion('/apple-touch-icon.png'))} />
+    <link rel="manifest" href={href(withVersion('/site.webmanifest'))} />
+    <meta name="theme-color" content="#FFFFFF" />
 
     <!-- Карта сайта и лента статей. Робот находит их и по robots.txt,
          но ссылка со страницы — второй путь, а у ленты она единственный. -->
@@ -353,6 +375,20 @@ const graph = {
     </style>
 
     <script>
+      // «На связи» рядом с фотографией владельца: первый экран главной
+      // и форма заявки. Что сейчас быстрее — позвонить или написать,
+      // по московскому времени; решает lib/presence.ts, та же функция
+      // ведёт строку «Сейчас на связи» на «Контактах».
+      import { presence } from '../lib/presence'
+      {
+        const now = presence()
+        document.querySelectorAll<HTMLElement>('[data-presence]').forEach((el) => {
+          el.dataset.state = now.state
+          const text = el.querySelector('.pr-state-text')
+          if (text) text.textContent = now.short
+        })
+      }
+
       // Плавное появление блоков при прокрутке.
       const reveal = () => {
         const items = Array.from(document.querySelectorAll<HTMLElement>('.rv'))

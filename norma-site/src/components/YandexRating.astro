@@ -1,0 +1,113 @@
+---
+// Значок с рейтингом на Яндекс Картах — только после согласия на cookie.
+//
+// Значок — рамка (iframe) с yandex.ru, код выдал Яндекс Бизнес. Открывая
+// её, браузер обращается к серверу Яндекса, и Яндекс ставит свои cookie.
+// Политика сайта обещает, что до «Принять» к Яндексу не уходит ни одного
+// запроса, поэтому рамки в разметке нет: её вставляет скрипт ниже — когда
+// согласие уже записано (CONSENT_KEY) или когда посетитель нажимает
+// «Принять» на этой же странице (CONSENT_EVENT). По «Только необходимые»
+// значка нет никогда, и это не поломка, а выбор посетителя.
+//
+// До согласия на месте значка — ссылка на карточку организации того же
+// размера, 150×50. Рамка ложится поверх и проявляется, когда загрузилась:
+// страница не сдвигается, а пока Яндекс отвечает, место не пустое.
+//
+// На превью (PUBLIC_NOINDEX=1) полосы про cookie нет — значит, нет
+// и согласия: там всегда видна ссылка.
+//
+// Разметки рейтинга (aggregateRating) рядом нет и не будет: рейтинг
+// считает Яндекс, на страницу он приходит картинкой из рамки, и выдавать
+// его за данные сайта нельзя.
+import { YANDEX_ORG } from '../config/site'
+
+interface Props {
+  /** Тёмный подвал или белая страница — меняется только цвет ссылки. */
+  tone?: 'light' | 'dark'
+}
+const { tone = 'light' } = Astro.props
+---
+
+{YANDEX_ORG && (
+  <div class:list={['yr', `yr--${tone}`]} data-yr={YANDEX_ORG.badge}>
+    <a class="yr-link" href={YANDEX_ORG.card} target="_blank" rel="noopener noreferrer">
+      Рейтинг и отзывы на Яндекс Картах
+    </a>
+  </div>
+)}
+
+<script>
+  import { CONSENT_KEY, CONSENT_EVENT } from '../config/consent'
+
+  // localStorage бывает закрыт (приватное окно, запрет хранить данные
+  // сайта) — тогда согласия нет, и значок не грузится.
+  const agreed = () => {
+    try {
+      return localStorage.getItem(CONSENT_KEY) === 'all'
+    } catch {
+      return false
+    }
+  }
+
+  function mount() {
+    document.querySelectorAll<HTMLElement>('[data-yr]').forEach((box) => {
+      if (box.querySelector('iframe')) return
+      const frame = document.createElement('iframe')
+      frame.src = box.dataset.yr || ''
+      frame.width = '150'
+      frame.height = '50'
+      frame.title = 'Рейтинг на Яндекс Картах'
+      // Подвал далеко внизу: рамка грузится, когда до неё дошли.
+      frame.loading = 'lazy'
+      frame.setAttribute('frameborder', '0')
+      frame.addEventListener('load', () => (box.dataset.on = ''), { once: true })
+      box.append(frame)
+    })
+  }
+
+  if (agreed()) mount()
+  document.addEventListener(CONSENT_EVENT, (e) => {
+    if ((e as CustomEvent<string>).detail === 'all') mount()
+  })
+</script>
+
+<style>
+  .yr { position: relative; width: 150px; height: 50px; flex: none; }
+
+  /* Ссылка-заместитель: рамка в 1 px и подпись в две строки, как строка
+     бланка. Размер — ровно значка, чтобы тот встал на её место. */
+  .yr-link {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding: 0 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-s);
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--acc-deep);
+    text-decoration: none;
+    transition: border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+  }
+  .yr-link:hover { border-color: var(--acc-btn); text-decoration: underline; }
+  .yr--dark .yr-link { border-color: var(--dark-line); color: var(--on-dark); }
+  .yr--dark .yr-link:hover { border-color: var(--acc-bright); color: var(--acc-bright); }
+
+  .yr :global(iframe) {
+    position: absolute;
+    inset: 0;
+    display: block;
+    border: 0;
+    opacity: 0;
+    transition: opacity var(--t-mid) var(--ease);
+  }
+  .yr[data-on] :global(iframe) { opacity: 1; }
+  /* Под загруженным значком ссылка не нужна ни глазу, ни клавиатуре:
+     в самом значке своя ссылка на карточку. */
+  .yr[data-on] .yr-link { visibility: hidden; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .yr-link, .yr :global(iframe) { transition: none; }
+  }
+</style>

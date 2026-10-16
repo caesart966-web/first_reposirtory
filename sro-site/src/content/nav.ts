@@ -7,6 +7,7 @@
 // главной её нет. Разница важна для helpers из lib/site.ts: с вложенной
 // страницы якорь надо предварять '../', а адрес страницы — собирать целиком.
 import { anchor, page } from '../lib/site'
+import { ARTICLES_PATH } from './articles'
 import { EXTRA_ID, EXTRA_NAV } from './extra'
 import { SERVICE_PAGES } from './services'
 import { SRO_DETAILS } from './sroDetails'
@@ -86,6 +87,9 @@ export const MENU: NavItem[] = [
   { label: 'Стоимость', href: '#pricing', kind: 'anchor' },
   { label: 'О нас', href: '#about', kind: 'anchor' },
   { label: 'Вопросы', href: '#faq', kind: 'anchor' },
+  // Статьи (15.10.2026) — своя страница, в шапке после «Вопросов»: на 1024 px
+  // место есть (замер: между логотипом, меню и кнопкой оставалось по 81 px).
+  { label: 'Статьи', href: ARTICLES_PATH, kind: 'page' },
   // География — в подвале и мобильном меню; в шапке для неё нет места,
   // а из «Услуг» она ушла, когда там появились страницы услуг.
   { label: 'География работы', href: '#regions', kind: 'anchor', footerOnly: true },

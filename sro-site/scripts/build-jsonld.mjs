@@ -98,9 +98,12 @@ function pages(dir = root, prefix = '') {
 // адресов у них нет, поэтому в крошках стоят якоря. Страница с документами
 // о персональных данных не принадлежит ни одному разделу: её крошка — из
 // двух ступеней, «Главная → название».
+// Статьи (15.10.2026) — раздел со своим адресом: у статьи крошка ведёт
+// на список /stati/, у самого списка раздела нет.
 const section = (url) => {
   if (url.startsWith('uslugi/')) return { name: 'Услуги', url: `${ORIGIN}/#services` }
   if (url.startsWith('sro-')) return { name: 'Виды СРО', url: `${ORIGIN}/#types` }
+  if (/^stati\/[^/]+\/$/.test(url)) return { name: 'Статьи', url: `${ORIGIN}/stati/` }
   return null
 }
 
@@ -127,6 +130,26 @@ for (const page of pages()) {
       item: `${ORIGIN}/${page.url}`,
     })
     graph.push({ '@type': 'BreadcrumbList', itemListElement: trail })
+
+    // Статья: даты выхода и сверки — из meta article:*, которые пишет
+    // build-articles.mjs; автор и издатель — компания.
+    const published = src.match(/<meta property="article:published_time" content="([^"]+)"/)?.[1]
+    if (published) {
+      const modified = one(src, /<meta property="article:modified_time" content="([^"]+)"/, `modified_time в ${page.url}`)
+      const description = one(src, /<meta name="description" content="([^"]+)"/, `description в ${page.url}`)
+      graph.push({
+        '@type': 'Article',
+        headline: short,
+        description: description.replace(/&quot;/g, '"').replace(/&amp;/g, '&'),
+        datePublished: published,
+        dateModified: modified,
+        inLanguage: 'ru',
+        image: `${ORIGIN}/og.png`,
+        author: { '@id': `${ORIGIN}/#organization` },
+        publisher: { '@id': `${ORIGIN}/#organization` },
+        mainEntityOfPage: `${ORIGIN}/${page.url}`,
+      })
+    }
   }
 
   const json = JSON.stringify({ '@context': 'https://schema.org', '@graph': graph }, null, 2)

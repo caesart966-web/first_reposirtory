@@ -55,7 +55,11 @@ for (const path of list) {
     const lum = (css) => {
       const m = css.match(/[\d.]+/g)
       if (!m) return null
-      const [r, g, b, a = '1'] = m.map(Number)
+      let [r, g, b, a = '1'] = m.map(Number)
+      // color-mix() браузер отдаёт как color(srgb 0.95 0.96 0.98) — доли
+      // единицы, а не 0–255. Без пересчёта светлая подложка читалась
+      // почти чёрной, и проверка роняла сайт на тексте 5:1 (07.10.2026).
+      if (css.startsWith('color(srgb')) [r, g, b] = [r * 255, g * 255, b * 255]
       if (a < 1) return null // полупрозрачный — эффективный цвет не вычислить
       const f = (v) => {
         v /= 255

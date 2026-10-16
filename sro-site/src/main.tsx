@@ -6,6 +6,7 @@ import '@fontsource-variable/brygada-1918'
 import './index.css'
 import App from './App'
 import { markArrival } from './lib/arrival'
+import { markMounted } from './lib/mounted'
 import { setSiteRoot } from './lib/site'
 
 // Главная лежит в корне: префикса до корня у неё нет.
@@ -26,3 +27,4 @@ flushSync(() =>
     </React.StrictMode>,
   ),
 )
+markMounted()

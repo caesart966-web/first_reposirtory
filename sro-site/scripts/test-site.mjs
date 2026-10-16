@@ -1,4 +1,4 @@
-// Сквозная проверка сайта: все одиннадцать страниц на пяти ширинах, плюс
+// Сквозная проверка сайта: все страницы (одиннадцать и статьи) на шести ширинах, плюс
 // первый экран главной, меню и нижняя панель на телефоне.
 //
 // Живёт в репозитории, а не в рабочей папке сессии: 24.09.2026 рабочая
@@ -10,14 +10,21 @@
 //
 // Playwright в зависимостях сайта не нужен (см. build-og.mjs): модуль берётся
 // из переменной PLAYWRIGHT, если он лежит не рядом.
+import { existsSync, readdirSync } from 'node:fs'
 const pw = await import(process.env.PLAYWRIGHT || 'playwright-core')
 const { chromium } = pw.default ?? pw
 
 const BASE = process.env.BASE || 'http://localhost:4181/'
+// Статьи (15.10.2026) — обходом папки stati/: их число растёт каждую неделю,
+// и список, записанный руками, отстал бы от сайта.
+const STATI = new URL('../stati/', import.meta.url)
+const ARTICLE_PAGES = existsSync(STATI)
+  ? ['stati/', ...readdirSync(STATI, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => `stati/${d.name}/`)]
+  : []
 const PAGES = ['', 'sro-stroiteley/', 'sro-proektirovshchikov/', 'sro-izyskateley/',
   'uslugi/vstuplenie-v-sro/', 'uslugi/podbor-i-proverka-sro/', 'uslugi/dokumenty/',
   'uslugi/specialisty-nrs/', 'uslugi/nok/', 'uslugi/uroven-otvetstvennosti/',
-  'uslugi/soprovozhdenie-proverok/']
+  'uslugi/soprovozhdenie-proverok/', ...ARTICLE_PAGES]
 // 1920 — колонка текста шире (80rem с 1800 px, index.css).
 const WIDTHS = [320, 390, 768, 1024, 1440, 1920]
 
@@ -166,6 +173,51 @@ for (const path of PAGES) {
   await ctx.close()
 }
 
+// Текст страниц в самом HTML (scripts/prerender.mjs, 15.10.2026): поисковик,
+// который не выполняет JavaScript, видит страницу целиком, а не пустой
+// <div id="root">. Без скрипта: текст на месте, h1 тот же, что собирает
+// браузер, и блоки, которые выплывают по прокрутке, видны (noscript в <head>).
+// Со скриптом: после первой отрисовки класс pre-wait снят (иначе страница
+// осталась бы прозрачной), а запасной pre-late (скрипт не пришёл за 4 с)
+// не включился.
+{
+  const off = await b.newContext({ javaScriptEnabled: false, viewport: { width: 1280, height: 900 } })
+  const on = await b.newContext({ viewport: { width: 1280, height: 900 } })
+  const heading = () => {
+    const h1 = document.querySelector('#root h1')
+    return h1?.getAttribute('aria-label') ?? h1?.textContent ?? ''
+  }
+  for (const path of PAGES) {
+    const tag = `${path || '/'} без JavaScript`
+    const p = await off.newPage()
+    await p.goto(BASE + path, { waitUntil: 'load' })
+    const raw = await p.evaluate(() => {
+      const root = document.getElementById('root')
+      const h1 = root.querySelector('h1')
+      return {
+        h1: h1?.getAttribute('aria-label') ?? h1?.textContent ?? '',
+        words: root.innerText.split(/\s+/).filter(Boolean).length,
+        hidden: [...root.querySelectorAll('.reveal')].filter((el) => getComputedStyle(el).opacity === '0').length,
+        opacity: getComputedStyle(root).opacity,
+      }
+    })
+    await p.close()
+    const q = await on.newPage()
+    await q.goto(BASE + path, { waitUntil: 'networkidle' })
+    const live = { h1: await q.evaluate(heading), cls: await q.evaluate(() => document.documentElement.className) }
+    await q.close()
+    // Список статей — оглавление: на нём заголовки и строки о сути, а не
+    // текст, поэтому порог ниже.
+    const minWords = path === 'stati/' ? 150 : 300
+    check(`${tag}: текст страницы в HTML`, raw.words >= minWords, `${raw.words} слов`)
+    check(`${tag}: h1 тот же, что в браузере`, raw.h1 !== '' && raw.h1 === live.h1, `«${raw.h1}» / «${live.h1}»`)
+    check(`${tag}: ничего не спрятано`, raw.hidden === 0 && raw.opacity === '1', `скрытых блоков ${raw.hidden}, прозрачность корня ${raw.opacity}`)
+    check(`${path || '/'}: после отрисовки готовый текст не спрятан`, !/\bpre-(wait|late)\b/.test(live.cls), live.cls)
+  }
+  await off.close()
+  await on.close()
+}
+
 // Первый экран главной: три вида СРО списком, кадр справа.
 //
 // Главное, что здесь стережётся, — что видно БЕЗ прокрутки: заголовок,
@@ -299,7 +351,11 @@ for (const motion of ['no-preference', 'reduce']) {
   await ctx.addInitScript(() => {
     addEventListener('pagereveal', (e) => {
       window.__vt = Boolean(e.viewTransition)
-      window.__rootEmpty = !document.getElementById('root')?.children.length
+      // С 15.10.2026 текст лежит в HTML готовым (scripts/prerender.mjs), но до
+      // первой отрисовки скриптом прозрачен (pre-wait): пустым считается и он.
+      window.__rootEmpty =
+        !document.getElementById('root')?.children.length ||
+        document.documentElement.classList.contains('pre-wait')
     })
   })
   const p = await ctx.newPage()

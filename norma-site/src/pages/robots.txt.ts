@@ -12,6 +12,16 @@ export const GET: APIRoute = ({ site }) => {
     : [
         'User-agent: *',
         'Allow: /',
+        // Clean-param читает только Яндекс (Google строку пропускает).
+        // Метки рекламы и рассылок (utm_*, yclid из Директа, gclid),
+        // ysclid, который Яндекс дописывает к переходам из выдачи, и метки
+        // старых счётчиков (_openstat, from) не меняют содержимое страницы.
+        // Без этой строки каждый адрес с меткой Яндекс вправе считать
+        // отдельной страницей, и в «Диагностике» Вебмастера они всплывают
+        // дублями с GET-параметрами: с запуском Директа это сотни адресов.
+        // Директива межсекционная — действует, где бы ни стояла.
+        'Clean-param: utm_source&utm_medium&utm_campaign&utm_content&utm_term',
+        'Clean-param: yclid&ysclid&gclid&_openstat&from',
         '',
         `Sitemap: ${new URL('sitemap-index.xml', site).toString()}`,
         '',

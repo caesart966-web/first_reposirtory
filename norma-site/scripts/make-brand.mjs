@@ -37,6 +37,8 @@ const DARK = val(css, '--dark', /--dark:\s*(#[0-9A-Fa-f]{6})/)
 const LINE = val(css, '--line', /--line:\s*(#[0-9A-Fa-f]{6})/)
 const PAPER = val(css, '--paper', /--paper:\s*(#[0-9A-Fa-f]{6})/)
 const ON_DARK = val(css, '--on-dark', /--on-dark:\s*(#[0-9A-Fa-f]{6})/)
+const MUTED = val(css, '--muted', /--muted:\s*(#[0-9A-Fa-f]{6})/)
+const ON_DARK_MUTED = val(css, '--on-dark-muted', /--on-dark-muted:\s*(#[0-9A-Fa-f]{6})/)
 const DOMAIN = 'norma-sro.ru'
 
 // ── Строка услуг в шапке письма ───────────────────────────────────────────
@@ -192,8 +194,8 @@ const shot = async (name, w, h, body, { bg = 'transparent', scale = 2, pdf = fal
 await shot('znak', 512, 512, `<svg style="display:block" viewBox="-6 -6 112 112" width="512" height="512" fill="${ACC}">${PATHS.map((d) => `<path d="${d}"/>`).join('')}</svg>`)
 
 // 2. Горизонтальный логотип на прозрачном — тёмный и светлый.
-await shot('logotip', 460, 110, lockup(INK, ACC, '#6B6156'), { pdf: true, pad: 14 })
-await shot('logotip-belyy', 460, 110, lockup('#FFFFFF', ACC_BRIGHT, '#B3A99C'), { pad: 14 })
+await shot('logotip', 460, 110, lockup(INK, ACC, MUTED), { pdf: true, pad: 14 })
+await shot('logotip-belyy', 460, 110, lockup('#FFFFFF', ACC_BRIGHT, ON_DARK_MUTED), { pad: 14 })
 
 // 3. Аватар для мессенджеров и почты.
 //
@@ -268,7 +270,7 @@ await shot('oblozhka-svetlaya', COVER_W, COVER_H, cover(PAPER, ACC, INK), { bg: 
 const header = `
   <div style="width:600px;background:${PAPER};padding:20px 34px 13px;font-synthesis:none">
     <div style="display:flex;align-items:center;justify-content:space-between">
-      ${lockup(INK, ACC, '#6B6156', 0.78)}
+      ${lockup(INK, ACC, MUTED, 0.78)}
       <div style="text-align:right;display:grid;gap:5px">
         <div style="font-family:G;font-weight:700;font-size:20px;color:${INK};
                     font-variant-numeric:lining-nums tabular-nums;white-space:nowrap">${PHONE}</div>
@@ -279,7 +281,7 @@ const header = `
       <div style="position:absolute;left:0;top:-1px;width:46px;height:3px;background:${ACC}"></div>
     </div>
     <div id="uslugi" style="margin-top:11px;font-family:G;font-size:11.5px;
-                letter-spacing:.01em;color:#6B6156;white-space:nowrap">${SERVICE_LINE}</div>
+                letter-spacing:.01em;color:${MUTED};white-space:nowrap">${SERVICE_LINE}</div>
   </div>`
 await shot('pochta-shapka', 600, 200, header, { bg: PAPER, fits: '#uslugi' })
 
@@ -349,7 +351,7 @@ const sig = `<!doctype html><meta charset="utf-8">
 
     <div style="font-size:15px;color:${INK};line-height:1.4">
       <a href="tel:${PHONE.replace(/[^+\d]/g, '')}" style="color:${INK};text-decoration:none">${PHONE}</a>
-      <span style="color:#C9C2B6">&nbsp; · &nbsp;</span>
+      <span style="color:${LINE}">&nbsp; · &nbsp;</span>
       <a href="https://${DOMAIN}/" style="color:${ACC};text-decoration:none;font-weight:bold">${DOMAIN}</a>
     </div>
 
@@ -362,7 +364,7 @@ const sig = `<!doctype html><meta charset="utf-8">
 
     <div style="height:9px;${cell}">&nbsp;</div>
 
-    <div style="font-size:11.5px;color:#6B6156;line-height:1.5">${SERVICE_LINE}</div>
+    <div style="font-size:11.5px;color:${MUTED};line-height:1.5">${SERVICE_LINE}</div>
 
   </td>
 </tr>

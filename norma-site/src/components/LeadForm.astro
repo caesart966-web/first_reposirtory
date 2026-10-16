@@ -68,7 +68,14 @@ const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
     {who && SITE.photo && (
       <div class="lf-who">
         <img src={href(`/img/${SITE.photo}`)} width="72" height="72" alt={SITE.shortName} loading="lazy" />
-        <p><b>{SITE.shortName}</b><span>Вступление в СРО, НРС, НОК и лицензии</span></p>
+        <p>
+          <b>{SITE.shortName}</b><span>Вступление в СРО, НРС, НОК и лицензии</span>
+          {/* Что сейчас быстрее — та же строка, что под кнопками первого
+              экрана (lib/presence.ts, скрипт в Base.astro). */}
+          <span class="lf-state" data-presence>
+            <i aria-hidden="true"></i><span class="pr-state-text">Круглосуточно, без выходных</span>
+          </span>
+        </p>
       </div>
     )}
     <h2>{title}</h2>
@@ -210,8 +217,11 @@ const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
             никто не открывает, и согласие получается вслепую. Здесь
             и оператор назван по имени, и цель одна и понятная — ответить
             на эту заявку. Галочка не проставлена заранее: предпроставленная
-            галочка согласием не считается. */}
-        Согласен на обработку имени, телефона и текста обращения: {SITE.legalName}{' '}
+            галочка согласием не считается. Согласие предметное: названы все
+            поля формы, а не только имя и телефон (сверка 14.10.2026 — прежний
+            текст молчал о почте, городе и сведениях о задаче). */}
+        Согласен на обработку данных из этой формы — имени, телефона, а если укажу,
+        то и почты, города и сведений о задаче: {SITE.legalName}{' '}
         ответит на заявку. Подробнее — в{' '}
         <a href={href('/politika/')} target="_blank" rel="noopener">политике обработки данных</a>
       </span>
@@ -286,6 +296,8 @@ const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
   .lf-who p { margin: 0; max-width: none; }
   .lf-who b { display: block; font-size: 16.5px; color: var(--ink); }
   .lf-who span { display: block; color: var(--muted); font-size: 14px; line-height: 1.45; margin-top: 2px; }
+  .lf-who .lf-state { display: flex; font-size: 13px; margin-top: 5px; }
+  .lf-who .lf-state .pr-state-text { margin: 0; font-size: inherit; }
   .lf-head p { color: var(--muted); font-size: 15.5px; max-width: 60ch; }
   .lf-points { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 8px; max-width: 64ch; }
   .lf-points li {
@@ -313,7 +325,12 @@ const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
     cursor: pointer;
   }
   .agree input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--acc-btn); }
-  .agree-error { display: none; font-size: 13px; color: #B4231F; margin-top: -8px; }
+  /* Цель нажатия не меньше 24 px (test-a11y): строка 14 px даёт ссылке 20 px.
+     Пока текст согласия был короче, ссылка рвалась на две строки и проходила
+     проверку случайно — общей рамкой двух строк. Поля по вертикали строку
+     не раздвигают: у строчного элемента они не влияют на раскладку. */
+  .agree a { padding-block: 5px; }
+  .agree-error { display: none; font-size: 13px; color: var(--err); margin-top: -8px; }
   .agree-error.show { display: block; }
 
   .submit { justify-self: start; min-width: 220px; }
@@ -374,8 +391,8 @@ const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
   }
 
   /* Полоса с приложенным расчётом. Не «успех» зелёным и не «внимание»
-     красным: это спокойная пометка на бланке — тонкая линейка, красный
-     значок, кнопка «убрать» без рамки. */
+     красным: это спокойная пометка на бланке — тонкая линейка, значок
+     цвета акцента, кнопка «убрать» без рамки. */
   .calc-note {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
@@ -431,7 +448,7 @@ const token = import.meta.env.PUBLIC_LEAD_TOKEN || 'norma-lead'
   .state { display: grid; gap: 12px; justify-items: start; }
   .state-ic { width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center; }
   .state-ic.ok { background: var(--good-bg); color: var(--good); }
-  .state-ic.err { background: #FBEAE9; color: #B4231F; }
+  .state-ic.err { background: var(--err-bg); color: var(--err); }
   .state h3 { font-size: 22px; }
   .state p { color: var(--muted); font-size: 15.5px; max-width: 62ch; }
   .state p b { color: var(--ink); }

@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>X-PTO — фото-рилс</title>
+<!--
+  Фото-рилс: 1080×1920, кадры из tools/video/reels/<имя>/, сценарий — tools/video/reels/<имя>.json.
+  Страница открывается как photo-reel.html?r=<имя>; собирает tools/make-photo-reel.py.
+
+  Каждый кадр живёт один такт музыки (хук — два, финал — три): смена всегда попадает в сильную долю.
+  Вертикальные фото идут во весь экран («full»), горизонтальные — карточкой поверх размытой копии
+  самого кадра («card»): растянутая на вертикаль горизонталь вышла бы мыльной в два раза.
+  Камера всё время едет (медленный наезд или отъезд), входы чередуются: наезд со вспышкой,
+  шторка, круг, сдвиг снизу. Подписи — только то, что сказал заказчик; телефон в финале — из site.json.
+  Нижние ~330 px и правый край в Reels закрывают кнопки — подписи стоят выше.
+
+  Время везде абсолютное (задержки от начала ролика): make-video.py ставит анимации на паузу
+  и выставляет время кадра вручную.
+-->
+<style>
+  @font-face { font-family: "Display"; src: url("../../assets/fonts/geologica-cyrillic.woff2") format("woff2"); font-weight: 300 800; unicode-range: U+0400-04FF; }
+  @font-face { font-family: "Display"; src: url("../../assets/fonts/geologica-latin.woff2") format("woff2"); font-weight: 300 800; unicode-range: U+0000-03FF, U+2000-206F; }
+  @font-face { font-family: "Text"; src: url("../../assets/fonts/inter-cyrillic.woff2") format("woff2"); font-weight: 300 800; unicode-range: U+0400-04FF; }
+  @font-face { font-family: "Text"; src: url("../../assets/fonts/inter-latin.woff2") format("woff2"); font-weight: 300 800; unicode-range: U+0000-03FF, U+2000-206F; }
+  @font-face { font-family: "Mono"; src: url("../../assets/fonts/mono-cyrillic.woff2") format("woff2"); font-weight: 300 800; unicode-range: U+0400-04FF; }
+  @font-face { font-family: "Mono"; src: url("../../assets/fonts/mono-latin.woff2") format("woff2"); font-weight: 300 800; unicode-range: U+0000-03FF, U+2000-206F; }
+
+  :root { --navy: #0b1828; --ink: #0d1c30; --accent: #1f6feb; --accent-300: #7fb0ff; --red: #d93025;
+    --snap: cubic-bezier(.16, 1, .3, 1); --pop: cubic-bezier(.34, 1.56, .64, 1); --io: cubic-bezier(.76, 0, .24, 1); }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--navy); }
+  body { font-family: "Text", sans-serif; color: #fff; -webkit-font-smoothing: antialiased; }
+  .stage { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: var(--navy); }
+
+  /* ---------- кадр ---------- */
+  .shot { position: absolute; inset: 0; overflow: hidden; background: var(--navy);
+    animation: var(--in) .6s var(--snap) both; animation-delay: calc((var(--s) - .05) * 1s); }
+  .shot.gone { display: none; }
+  @keyframes in-zoom { from { transform: scale(1.35); opacity: 0; filter: blur(16px) brightness(1.6); } to { transform: none; opacity: 1; filter: none; } }
+  @keyframes in-wipe { from { clip-path: inset(0 0 0 100%); } to { clip-path: inset(0 0 0 0); } }
+  @keyframes in-circle { from { clip-path: circle(0% at 50% 58%); } to { clip-path: circle(120% at 50% 58%); } }
+  @keyframes in-up { from { transform: translateY(100%); } to { transform: none; } }
+
+  .ph { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+    animation: var(--kb) calc((var(--d) + .8) * 1s) linear both; animation-delay: calc(var(--s) * 1s); }
+  @keyframes kb-in { from { transform: scale(1.04); } to { transform: scale(1.16) translate(var(--kx, 0), var(--ky, -1.5%)); } }
+  @keyframes kb-out { from { transform: scale(1.18) translate(var(--kx, 1.5%), 0); } to { transform: scale(1.04); } }
+
+  /* карточка: горизонтальный кадр поверх своей размытой копии */
+  .blur { position: absolute; inset: -80px; background-size: cover; background-position: center;
+    filter: blur(46px) brightness(.45) saturate(1.2); transform: scale(1.1); }
+  .card { position: absolute; left: 40px; right: 40px; top: 300px; border-radius: 34px; overflow: hidden;
+    box-shadow: 0 40px 90px rgba(0, 0, 0, .55), 0 0 0 2px rgba(255, 255, 255, .12);
+    animation: card-in .9s var(--snap) both; animation-delay: calc((var(--s) + .05) * 1s); }
+  .card .ph { position: relative; display: block; height: auto; }
+  @keyframes card-in { from { transform: translateY(90px) rotate(-3deg) scale(.92); } to { transform: none; } }
+  .card.tall { left: 270px; right: 270px; top: 230px; }
+
+  /* затемнение под подписью */
+  .shade { position: absolute; left: 0; right: 0; bottom: 0; height: 1100px;
+    background: linear-gradient(to top, rgba(6, 14, 26, .94) 0%, rgba(6, 14, 26, .78) 38%, rgba(6, 14, 26, 0) 100%); }
+  .shot.card-kind .shade { height: 760px; }
+
+  /* подпись */
+  .cap { position: absolute; left: 72px; right: 150px; bottom: 380px; }
+  .tag { display: inline-flex; align-items: center; gap: 16px; font: 700 30px/1 "Mono", monospace; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--accent-300);
+    animation: tag-in .6s var(--snap) both; animation-delay: calc((var(--s) + .12) * 1s); }
+  .tag::before { content: ""; width: 54px; height: 6px; border-radius: 3px; background: var(--accent); }
+  @keyframes tag-in { from { opacity: 0; transform: translateX(-60px); } to { opacity: 1; transform: none; } }
+  h2 { margin-top: 26px; font: 800 86px/1.04 "Display", sans-serif; letter-spacing: -.02em; text-wrap: balance;
+    text-shadow: 0 4px 30px rgba(0, 0, 0, .35); }
+  h2.big { font-size: 104px; }
+  h2 em { font-style: normal; color: var(--accent-300); }
+  .w { display: inline-block; animation: word .7s var(--snap) both;
+    animation-delay: calc((var(--s) + .22 + var(--i) * .07) * 1s); }
+  @keyframes word { from { opacity: 0; transform: translateY(60%) rotate(3deg); filter: blur(10px); } to { opacity: 1; transform: none; filter: none; } }
+
+  /* вспышка на смене */
+  .flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none;
+    animation: flash .35s ease-out both; animation-delay: calc(var(--s) * 1s); }
+  @keyframes flash { 0% { opacity: .55; } 100% { opacity: 0; } }
+
+  /* ---------- поверх всех кадров: шкала и знак ---------- */
+  .hud { position: absolute; left: 0; right: 0; top: 0; z-index: 50; padding: 70px 72px 0; }
+  .bars { display: flex; gap: 10px; }
+  .bars i { flex: 1; height: 7px; border-radius: 4px; background: rgba(255, 255, 255, .25); overflow: hidden; position: relative; }
+  .bars i::after { content: ""; position: absolute; inset: 0; background: #fff; transform-origin: 0 50%;
+    animation: fill linear both; animation-duration: calc(var(--d) * 1s); animation-delay: calc(var(--s) * 1s); }
+  @keyframes fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  .brand { margin-top: 30px; display: inline-flex; align-items: center; gap: 14px; padding: 12px 22px 12px 14px;
+    border-radius: 999px; background: rgba(8, 18, 32, .5); backdrop-filter: blur(10px);
+    font: 800 34px/1 "Display", sans-serif; letter-spacing: .02em; }
+  .brand img { width: 44px; height: 44px; border-radius: 10px; background: #fff; padding: 6px; }
+  .hud { animation: fade .8s ease both; }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+  /* ---------- финал ---------- */
+  .final { position: absolute; inset: 0; z-index: 60; background: var(--navy); overflow: hidden;
+    animation: in-circle .8s var(--io) both; animation-delay: calc((var(--s) - .05) * 1s); }
+  .final .grid { position: absolute; inset: -60px; background:
+      linear-gradient(rgba(127, 176, 255, .08) 1px, transparent 1px) 0 0 / 60px 60px,
+      linear-gradient(90deg, rgba(127, 176, 255, .08) 1px, transparent 1px) 0 0 / 60px 60px;
+    animation: grid-move linear both; animation-duration: calc(var(--d) * 1s); animation-delay: calc(var(--s) * 1s); }
+  @keyframes grid-move { to { transform: translate(60px, -90px); } }
+  .final .glow { position: absolute; width: 1100px; height: 1100px; left: -200px; top: 300px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(31, 111, 235, .55), rgba(31, 111, 235, 0) 65%); filter: blur(60px); }
+  .sheet { position: absolute; left: 70px; right: 70px; top: 250px; padding: 64px 64px 56px; border-radius: 30px;
+    background: #fff; color: var(--ink); box-shadow: 0 50px 100px rgba(0, 0, 0, .5);
+    animation: sheet-in 1s var(--snap) both; animation-delay: calc((var(--s) + .25) * 1s); }
+  @keyframes sheet-in { from { transform: translateY(1400px) rotate(8deg); } to { transform: rotate(-1deg); } }
+  .sheet h2 { margin: 0; font-size: 92px; color: var(--ink); text-shadow: none; }
+  .sheet h2 em { color: var(--accent); }
+  .chips { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 40px; }
+  .chips span { padding: 14px 24px; border-radius: 999px; background: #eaf1fe; color: #1559c0; font: 700 32px/1.1 "Text", sans-serif; }
+  .pop { animation: pop .6s var(--pop) both; animation-delay: calc((var(--s) + var(--o)) * 1s); }
+  @keyframes pop { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: none; } }
+  .row { display: flex; align-items: center; gap: 24px; margin-top: 48px; padding-top: 40px; border-top: 2px solid #dfe5ee; }
+  .row img { width: 110px; height: 110px; }
+  .row .nm { font: 800 64px/1 "Display", sans-serif; }
+  .row .url { margin-top: 8px; font: 600 34px/1 "Mono", monospace; color: var(--accent); }
+  .seal { margin-left: auto; width: 170px; height: 170px; border-radius: 50%; border: 7px solid var(--accent);
+    display: grid; place-items: center; color: var(--accent); font: 800 36px/1 "Display", sans-serif; text-transform: uppercase;
+    transform: rotate(-12deg); box-shadow: inset 0 0 0 6px #fff, inset 0 0 0 9px var(--accent);
+    animation: stamp .55s var(--pop) both; animation-delay: calc((var(--s) + 1.6) * 1s); }
+  @keyframes stamp { from { opacity: 0; transform: scale(2.4) rotate(-12deg); filter: blur(6px); } to { opacity: 1; transform: rotate(-12deg); filter: none; } }
+  .contacts { margin-top: 40px; font: 700 50px/1.35 "Mono", monospace; }
+  .contacts small { display: block; font: 600 38px/1.4 "Text", sans-serif; color: #55677e; }
+  .up { animation: up .7s var(--snap) both; animation-delay: calc((var(--s) + var(--o)) * 1s); }
+  @keyframes up { from { opacity: 0; transform: translateY(50px); filter: blur(8px); } to { opacity: 1; transform: none; filter: none; } }
+</style>
+</head>
+<body>
+<div class="stage" id="stage"></div>
+<script>
+(function () {
+  var name = (location.search.match(/[?&]r=([\w-]+)/) || [, 'na-obekte'])[1];
+  var stage = document.getElementById('stage');
+  var IN = ['in-zoom', 'in-wipe', 'in-circle', 'in-up'];
+
+  function el(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+  function words(h) {
+    var i = 0;
+    (function walk(node) {
+      [].slice.call(node.childNodes).forEach(function (c) {
+        if (c.nodeType === 3) {
+          var frag = document.createDocumentFragment();
+          c.textContent.split(/(\s+)/).forEach(function (p) {
+            if (!p) return;
+            if (/^\s+$/.test(p)) { frag.appendChild(document.createTextNode(p)); return; }
+            var s = el('span', 'w'); s.textContent = p; s.style.setProperty('--i', i++); frag.appendChild(s);
+          });
+          node.replaceChild(frag, c);
+        } else walk(c);
+      });
+    })(h);
+    return h;
+  }
+  function loadImg(src) {
+    return new Promise(function (ok) { var im = new Image(); im.onload = im.onerror = function () { ok(im); }; im.src = src; });
+  }
+
+  window.READY = Promise.all([
+    fetch('reels/' + name + '.json').then(function (r) { return r.json(); }),
+    fetch('../../data/site.json').then(function (r) { return r.json(); })
+  ]).then(function (res) {
+    var R = res[0], C = res[1].contacts;
+    var bar = 60 / R.music.bpm * 4, B = R.bars;
+    var t = 0, list = [];
+    R.shots.forEach(function (s, i) {
+      var d = bar * (i === 0 ? B.hook : B.shot);
+      list.push({ s: t, d: d, shot: s, i: i }); t += d;
+    });
+    var finalAt = t, finalDur = bar * B.final, total = t + finalDur;
+    window.VIDEO_TOTAL = total;
+
+    var imgs = R.shots.map(function (s) { return loadImg('reels/' + name + '/' + s.img); });
+    return Promise.all(imgs).then(function (loaded) {
+      list.forEach(function (it, k) {
+        var s = it.shot, im = loaded[k];
+        var shot = el('section', 'shot ' + (s.kind === 'card' ? 'card-kind' : 'full-kind'));
+        shot.style.cssText = '--s:' + it.s.toFixed(3) + '; --d:' + it.d.toFixed(3) + '; --in:' + (k === 0 ? 'in-zoom' : IN[(k - 1) % IN.length]) + '; z-index:' + (k + 1);
+        var src = 'reels/' + name + '/' + s.img;
+        var kb = k % 2 ? 'kb-out' : 'kb-in';
+        if (s.kind === 'card') {
+          var b = el('div', 'blur'); b.style.backgroundImage = 'url(' + src + ')'; shot.appendChild(b);
+          var tall = im.naturalHeight > im.naturalWidth;
+          var card = el('div', 'card' + (tall ? ' tall' : ''));
+          var p = el('img', 'ph'); p.src = src; p.style.setProperty('--kb', kb); card.appendChild(p);
+          shot.appendChild(card);
+        } else {
+          var f = el('img', 'ph'); f.src = src; f.style.setProperty('--kb', kb);
+          if (s.pos) f.style.objectPosition = s.pos;
+          f.style.transformOrigin = s.pos || '50% 50%';
+          shot.appendChild(f);
+        }
+        shot.appendChild(el('div', 'shade'));
+        var cap = el('div', 'cap');
+        cap.appendChild(el('div', 'tag', (k === 0 ? '' : (k < 10 ? '0' : '') + k + ' · ') + s.tag));
+        var h = el('h2', k === 0 ? 'big' : '', s.title); cap.appendChild(words(h));
+        shot.appendChild(cap);
+        if (k > 0 && (k - 1) % IN.length === 0) shot.appendChild(el('div', 'flash'));
+        stage.appendChild(shot);
+        it.node = shot;
+      });
+
+      // шкала сверху: по полоске на кадр
+      var hud = el('div', 'hud'), bars = el('div', 'bars');
+      list.forEach(function (it) { var i = el('i'); i.style.cssText = '--s:' + it.s.toFixed(3) + '; --d:' + it.d.toFixed(3); bars.appendChild(i); });
+      hud.appendChild(bars);
+      hud.appendChild(el('div', 'brand', '<img src="../../assets/img/logo.svg" alt="">X-PTO'));
+      stage.appendChild(hud);
+
+      // финал
+      var F = R.final, fin = el('section', 'final');
+      fin.style.cssText = '--s:' + finalAt.toFixed(3) + '; --d:' + finalDur.toFixed(3);
+      fin.appendChild(el('div', 'grid')); fin.appendChild(el('div', 'glow'));
+      var sh = el('div', 'sheet');
+      sh.appendChild(el('h2', '', F.title));
+      var chips = el('div', 'chips');
+      F.chips.forEach(function (c, i) { var e = el('span', 'pop', c); e.style.setProperty('--o', (1.0 + i * .18).toFixed(2)); chips.appendChild(e); });
+      sh.appendChild(chips);
+      var row = el('div', 'row up', '<img src="../../assets/img/logo.svg" alt=""><div><div class="nm">X-PTO</div><div class="url">x-pto.ru</div></div>');
+      row.style.setProperty('--o', '1.3');
+      if (F.stamp) row.appendChild(el('div', 'seal', F.stamp));
+      sh.appendChild(row);
+      var ct = el('div', 'contacts up', C.phone_display + '<small>Telegram ' + C.telegram_display + '</small>');
+      ct.style.setProperty('--o', '1.9');
+      sh.appendChild(ct);
+      fin.appendChild(sh);
+      stage.appendChild(fin);
+
+      // прошедшие кадры убираем из отрисовки — съёмка идёт быстрее
+      window.tick = function (now) {
+        list.forEach(function (it, k) {
+          var next = list[k + 1] ? list[k + 1].s : finalAt;
+          it.node.classList.toggle('gone', now > next + 1 || now < it.s - .2);
+        });
+      };
+      window.tick(0);
+      return document.fonts.ready;
+    });
+  });
+
+  window.seek = function (t) {
+    if (window.tick) window.tick(t);
+    document.getAnimations().forEach(function (a) { a.pause(); a.currentTime = t * 1000; });
+  };
+  if (!/[?&]capture/.test(location.search)) {
+    window.READY.then(function () {
+      var start = performance.now();
+      (function loop() { window.tick((performance.now() - start) / 1000 % window.VIDEO_TOTAL); requestAnimationFrame(loop); })();
+    });
+  }
+})();
+</script>
+</body>
+</html>

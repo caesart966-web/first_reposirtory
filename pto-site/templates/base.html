@@ -59,7 +59,7 @@
 <script type="speculationrules">
 {"prefetch":[{"where":{"href_matches":"{{base}}/*"},"eagerness":"moderate"}]}
 </script>
-<link rel="stylesheet" href="{{base}}/assets/style.css">
+<link rel="stylesheet" href="{{base}}/assets/style.css?v={{css_v}}">
 {{head_extra}}
 </head>
 <body>
@@ -136,15 +136,18 @@
         <div class="footer__title">Контакты</div>
         <a class="footer__phone" href="tel:{{phone_href}}">{{phone_display}}</a>
         <ul class="footer__list">
-          <li><a href="mailto:{{email}}">{{email}}</a></li>
-          <li><a href="{{telegram_url}}" rel="nofollow noopener" target="_blank">Telegram: {{telegram_display}}</a></li>
-          <li><a href="{{max_url}}" rel="nofollow noopener" target="_blank">MAX: {{max_display}}</a></li>
+          <li><a href="mailto:{{email}}">{{ico_mail}}{{email}}</a></li>
+          <li><a href="{{telegram_url}}" rel="nofollow noopener" target="_blank">{{ico_telegram}}Telegram: {{telegram_display}}</a></li>
+          <li><a href="{{whatsapp_url}}" rel="nofollow noopener" target="_blank">{{ico_whatsapp}}WhatsApp: <span class="nowrap">{{whatsapp_display}}</span></a></li>
+          <li><a href="{{max_url}}" rel="nofollow noopener" target="_blank">{{ico_max}}MAX: {{max_display}}</a></li>
           <li>{{work_hours}}</li>
         </ul>
+        {{yandex_rating}}
         <ul class="footer__list" style="margin-top:1rem">
           <li><a href="{{base}}/o-kompanii/">О компании</a></li>
           <li><a href="{{base}}/kontakty/">Контакты</a></li>
           <li><a href="{{base}}/uslugi/">Все услуги</a></li>
+          <li><a href="{{base}}/pto-na-autsorse/">ПТО на аутсорсе</a></li>
           <li><a href="{{base}}/stati/">Статьи</a></li>
           <li><a href="{{base}}/politika/">Персональные данные</a></li>
         </ul>
@@ -161,6 +164,7 @@
 </footer>
 
 {{cookie_bar}}
+{{chat_fab}}
 
 <div class="call-bar">
   <a class="btn btn--primary" href="tel:{{phone_href}}">Позвонить</a>
@@ -168,6 +172,6 @@
 </div>
 
 <script src="{{base}}/assets/config.js"></script>
-<script src="{{base}}/assets/app.js" defer></script>
+<script src="{{base}}/assets/app.js?v={{js_v}}" defer></script>
 </body>
 </html>
