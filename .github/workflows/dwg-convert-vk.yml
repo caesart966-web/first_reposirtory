@@ -39,7 +39,8 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq xvfb file libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 \
             libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0 \
-            libxcb-shape0 libxcb-cursor0 libgl1 libegl1 libfontconfig1 libdbus-1-3 >/dev/null
+            libxcb-shape0 libxcb-cursor0 libxcb-xkb1 libgl1 libegl1 libopengl0 libglx0 libfontconfig1 \
+            libdbus-1-3 >/dev/null
           curl -sSL -A 'Mozilla/5.0' https://www.opendesign.com/guestfiles/oda_file_converter -o page.html
           echo '--- ссылки на конвертер на странице:'
           grep -oiE '(href|data-href)="[^"]*ODAFileConverter[^"]*"' page.html | sort -u || true
@@ -52,6 +53,8 @@ jobs:
           file oda.deb
           sudo apt-get install -y -qq ./oda.deb >/dev/null
           ls -la /usr/bin/ODAFileConverter*
+          echo '--- недостающие библиотеки (должно быть пусто):'
+          ldd /usr/bin/ODAFileConverter_*/ODAFileConverter | grep 'not found' || true
 
       - name: DXF → DWG (AutoCAD 2018) с аудитом, затем DWG → DXF для сверки
         run: |
