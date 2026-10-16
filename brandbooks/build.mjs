@@ -57,8 +57,16 @@ const BOOKS = [
       const css = read('norma-site/src/styles/global.css')
       const site = read('norma-site/src/config/site.ts')
       const f = (n) => field(site, n, 'norma-site/src/config/site.ts')
-      const colors = cssVars(css, ['paper-2', 'ink', 'muted', 'line', 'dark', 'dark-2', 'on-dark', 'on-dark-muted', 'acc', 'acc-deep', 'acc-soft', 'acc-bright', 'good', 'good-bright', 'good-bg'])
+      const about = read('norma-site/src/config/about.ts')
+      const colors = cssVars(css, ['paper-2', 'ink', 'muted', 'line', 'dark', 'dark-2', 'on-dark', 'on-dark-muted', 'acc', 'acc-deep', 'acc-soft', 'acc-bright', 'good', 'good-bright', 'good-bg', 'warn-bright', 'err'])
+      const companies = about.match(/\bcompanies:\s*(\d+)/)
+      if (!companies) throw new Error('в norma-site/src/config/about.ts нет поля companies')
       return [
+        // Фотографии ищутся в исходнике (в готовом файле они уже data URI):
+        // сменили кадр на сайте — брендбук показывал бы прежний.
+        ['фотография первого экрана SITE.heroPhoto', `norma-site/public/img/${f('heroPhoto').replace(/\.webp$/, '')}`, 'src'],
+        ['фотография шапок SITE.headPhoto', `norma-site/public/img/${f('headPhoto')}`, 'src'],
+        ['число компаний ABOUT.companies', `${companies[1]} компаниям`],
         ...paths(logo).map((d) => ['контур знака из LogoMark.astro', d]),
         ...Object.entries(colors).map(([n, v]) => [`цвет --${n} из global.css`, v]),
         ['дата печати SITE.checkedDate', f('checkedDate')],
@@ -132,6 +140,7 @@ for (const book of BOOKS) {
     continue
   }
   let html = readFileSync(srcPath, 'utf8')
+  const raw = norm(html)
 
   html = html.replace(/\{\{img:([^}]+)\}\}/g, (_, rel) => {
     const file = join(ROOT, rel.trim())
@@ -141,7 +150,7 @@ for (const book of BOOKS) {
   })
 
   const hay = norm(html)
-  const missing = book.checks().filter(([, needle]) => !hay.includes(norm(needle)))
+  const missing = book.checks().filter(([, needle, where]) => !(where === 'src' ? raw : hay).includes(norm(needle)))
   if (missing.length) {
     failed++
     console.error(`✗ ${book.id}: брендбук разошёлся с сайтом`)

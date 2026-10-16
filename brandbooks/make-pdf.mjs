@@ -83,6 +83,9 @@ for (const book of BOOKS) {
     const chunks = []
     for (const el of els) {
       const h = el.getBoundingClientRect().height
+      // Высота закрепляется в пикселях: при печати 100vh считается от листа,
+      // и первый экран «во всю высоту окна» вырастал бы на лишнюю страницу.
+      el.style.minHeight = `${h}px`
       if (h < mergeBelow && chunks.length) chunks[chunks.length - 1].push(el)
       else chunks.push([el])
     }

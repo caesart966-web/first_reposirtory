@@ -52,8 +52,8 @@ const THEMES = {
   norma: {
     name: 'Брендбук «НОРМА»',
     fonts: 'family=Literata:ital,opsz,wght@0,7..72,400..800;1,7..72,400..700&family=Golos+Text:wght@400..700',
-    css: `--bg:#EFEAE1;--fg:#16130F;--muted:#6B6459;--accent:#B0202B;--bar:#FFFFFF;--dot:#E5E0D5;--display:'Literata',Georgia,serif;--dw:700;--sans:'Golos Text',system-ui,sans-serif;--ls:-0.015em;`,
-    deco: 'radial-gradient(70% 60% at 100% 0%, rgba(176,32,43,.10), transparent 60%), radial-gradient(60% 60% at 0% 100%, rgba(22,19,15,.06), transparent 70%)',
+    css: `--bg:#EAF0F8;--fg:#0E1B2E;--muted:#52607A;--accent:#1F57D6;--bar:#FFFFFF;--dot:#DCE3EC;--display:'Literata',Georgia,serif;--dw:700;--sans:'Golos Text',system-ui,sans-serif;--ls:-0.015em;`,
+    deco: 'radial-gradient(70% 60% at 100% 0%, rgba(31,87,214,.14), transparent 60%), radial-gradient(60% 60% at 0% 100%, rgba(11,26,48,.07), transparent 70%)',
   },
   'biznes-grupp': {
     name: 'Брендбук ООО «БИЗНЕС-ГРУПП»',
