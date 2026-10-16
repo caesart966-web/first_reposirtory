@@ -142,6 +142,14 @@ export const IMAGES = {
     height: 1066,
     position: '60% 55%',
   },
+  articleRegion: {
+    src: './img/article-region.webp',
+    srcAvif: './img/article-region.avif',
+    alt: 'Старинный глобус: Россия от Урала до Сибири',
+    width: 1010,
+    height: 1320,
+    position: '30% 40%',
+  },
   survey: {
     src: './img/slide-survey.webp',
     srcAvif: './img/slide-survey.avif',
