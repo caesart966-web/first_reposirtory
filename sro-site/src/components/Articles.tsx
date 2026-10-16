@@ -46,23 +46,34 @@ export function ArticleRows({ articles }: { articles: Article[] }) {
 // Статьи колонками — на главной и внизу статьи («Другие статьи»). Строки
 // на широком экране оставляли пустой правую половину; три колонки ложатся
 // в ширину раздела, как карточки услуг (короткая латунная черта вместо
-// рамки, ссылкой вся колонка). На телефоне — одна под другой.
+// рамки, ссылкой вся колонка).
+// На телефоне (до 640 px) — короткие строки, как услуги на главной: дата,
+// название и стрелка справа, без строки о сути и «Читать» (16.10.2026,
+// заказчик согласился: три колонки друг под другом занимали почти полтора
+// экрана на и так длинной главной). Строка о сути остаётся в разметке.
 export function ArticleColumns({ articles }: { articles: Article[] }) {
   return (
     <ul className="grid border-t border-neutral-300 sm:grid-cols-2 sm:gap-x-10 lg:grid-cols-3">
       {articles.map((article, index) => (
         <li key={article.slug} className="border-b border-neutral-300">
           <Reveal delay={(index % 3) * 80} className="h-full">
-            <a href={page(`${ARTICLES_PATH}/${article.slug}`)} className="group flex h-full flex-col py-7 sm:py-8">
-              <span className="block h-0.5 w-8 bg-accent-400" aria-hidden="true" />
-              <span className="mt-5 text-sm text-neutral-600">
-                {formatDate(article.checked)}
+            <a
+              href={page(`${ARTICLES_PATH}/${article.slug}`)}
+              className="group flex h-full items-center justify-between gap-5 py-5 sm:flex-col sm:items-stretch sm:justify-start sm:gap-0 sm:py-8"
+            >
+              <span className="min-w-0 sm:flex sm:flex-1 sm:flex-col">
+                <span className="mb-5 hidden h-0.5 w-8 bg-accent-400 sm:block" aria-hidden="true" />
+                <span className="block text-sm text-neutral-600">{formatDate(article.checked)}</span>
+                <span className="mt-1 block font-display text-[1.3rem] font-medium leading-tight text-neutral-950 transition-colors duration-700 ease-silk group-hover:text-accent-700 sm:mt-2 sm:text-[1.6rem]">
+                  {nbsp(article.title)}
+                </span>
+                <span className="mt-3 hidden text-[0.9375rem] leading-relaxed text-neutral-600 sm:block">
+                  {nbsp(article.hint)}
+                </span>
+                <GoTo className="mt-auto hidden pt-6 text-[0.9375rem] sm:inline-flex">Читать</GoTo>
               </span>
-              <span className="mt-2 block font-display text-[1.45rem] font-medium leading-tight text-neutral-950 transition-colors duration-700 ease-silk group-hover:text-accent-700 sm:text-[1.6rem]">
-                {nbsp(article.title)}
-              </span>
-              <span className="mt-3 block text-[0.9375rem] leading-relaxed text-neutral-600">{nbsp(article.hint)}</span>
-              <GoTo className="mt-auto pt-6 text-[0.9375rem]">Читать</GoTo>
+              {/* На телефоне — одна стрелка справа, как в строках услуг. */}
+              <GoTo className="sm:hidden" />
             </a>
           </Reveal>
         </li>

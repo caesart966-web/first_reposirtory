@@ -27,7 +27,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 const site = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const dist = join(site, 'dist')
 const ssrDir = join(site, 'dist-ssr')
-const { render, ARTICLE_SLUGS } = await import(pathToFileURL(join(ssrDir, 'entry-server.js')).href)
+const { render, ARTICLE_SLUGS, checkArticlePlaces } = await import(pathToFileURL(join(ssrDir, 'entry-server.js')).href)
+checkArticlePlaces()
 
 const HEAD =
   '<style>html.pre-wait #root{opacity:0}' +

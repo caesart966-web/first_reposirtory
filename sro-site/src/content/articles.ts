@@ -64,6 +64,11 @@ export type Article = {
   sections: ArticleSection[]
   /** Услуги по теме (slug из services.ts) — внизу статьи. */
   related: string[]
+  /** Где ставить ссылку на статью в «Статьях по теме» (16.10.2026): slug
+   *  страниц видов СРО (construction, design, survey из sroDetails.ts)
+   *  и услуг (из services.ts). Неизвестный адрес роняет сборку
+   *  (checkArticlePlaces в entry-server.tsx). */
+  on: string[]
 }
 
 export const ARTICLES_PATH = 'stati'
@@ -206,6 +211,7 @@ export const ARTICLES: Article[] = [
       },
     ],
     related: ['vstuplenie', 'podbor'],
+    on: ['construction', 'design', 'survey', 'vstuplenie'],
   },
   {
     slug: 'kak-proverit-sro',
@@ -309,6 +315,7 @@ export const ARTICLES: Article[] = [
       },
     ],
     related: ['podbor', 'vstuplenie'],
+    on: ['construction', 'design', 'survey', 'podbor'],
   },
   {
     slug: 'sro-kakogo-regiona',
@@ -414,6 +421,7 @@ export const ARTICLES: Article[] = [
       },
     ],
     related: ['podbor', 'dokumenty'],
+    on: ['construction', 'design', 'survey', 'podbor'],
   },
 ]
 
@@ -423,6 +431,10 @@ export const ARTICLES_SORTED: Article[] = [...ARTICLES].sort(
 )
 
 export const articleBySlug = (slug: string) => ARTICLES.find((a) => a.slug === slug)
+
+/** «Статьи по теме» для страницы вида СРО или услуги: свежие первыми,
+ *  не больше трёх — дальше список перестаёт читаться как «по теме». */
+export const articlesFor = (place: string) => ARTICLES_SORTED.filter((a) => a.on.includes(place)).slice(0, 3)
 
 /** Нормы статьи по порядку появления, без повторов: столбец справа. */
 export function articleLaws(article: Article): string[] {

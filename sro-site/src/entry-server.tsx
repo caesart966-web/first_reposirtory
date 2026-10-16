@@ -6,8 +6,8 @@ import { ArticlesIndex } from './components/ArticlesIndex'
 import { DetailPage } from './components/DetailPage'
 import { ServicePage } from './components/ServicePage'
 import { ARTICLES, articleBySlug } from './content/articles'
-import { detailBySlug } from './content/sroDetails'
-import { serviceBySlug } from './content/services'
+import { SRO_DETAILS, detailBySlug } from './content/sroDetails'
+import { SERVICE_PAGES, serviceBySlug } from './content/services'
 import { setSiteRoot } from './lib/site'
 
 // Текст страниц прямо в HTML (15.10.2026). Собирается при сборке
@@ -28,6 +28,14 @@ export type Target = { root: string; sro?: string; service?: string; page?: stri
 
 /** Слаги статей — prerender.mjs сверяет с ними страницы в dist. */
 export const ARTICLE_SLUGS = ARTICLES.map((a) => a.slug)
+
+/** Опечатка в `on` у статьи молча убрала бы её из «Статей по теме»:
+ *  prerender.mjs вызывает проверку и роняет сборку. */
+export function checkArticlePlaces() {
+  const known = new Set([...SRO_DETAILS.map((d) => d.slug), ...SERVICE_PAGES.map((s) => s.slug)])
+  const wrong = ARTICLES.flatMap((a) => a.on.filter((place) => !known.has(place)).map((place) => `${a.slug}: «${place}»`))
+  if (wrong.length) throw new Error(`Неизвестные страницы в on у статей: ${wrong.join(', ')}`)
+}
 
 export function render({ root, sro, service, page, article }: Target): string {
   setSiteRoot(root)

@@ -292,7 +292,7 @@ export function ServicePage({ service }: { service: ServicePageData }) {
 
         {/* Фон — противоположный последнему блоку: они чередуются, и два
             соседних раздела одного цвета слились бы в один. */}
-        <PageExtras related={service.related} muted={service.blocks.length % 2 === 1} />
+        <PageExtras related={service.related} muted={service.blocks.length % 2 === 1} place={service.slug} />
 
         {/* Строка «Связаться» общая, как на главной: см. DetailPage. */}
         <Contact />

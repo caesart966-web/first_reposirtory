@@ -386,7 +386,7 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
           </Reveal>
         </Part>
 
-        <PageExtras related={DETAIL_RELATED} />
+        <PageExtras related={DETAIL_RELATED} place={detail.slug} />
 
         {/* «Связаться» — с общей строкой, как на главной (01.10.2026). Своя
             строка «Отвечу на вопросы по …, подберу организацию и назову
