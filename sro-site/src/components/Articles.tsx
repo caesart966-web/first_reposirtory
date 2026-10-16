@@ -10,8 +10,8 @@ import { Section, SectionHeading } from './ui/Section'
 // и опись документов: без карточек с тенями. Строка — дата сверки, название
 // антиквой, одна строка о сути; нажимается вся строка.
 //
-// Дата слева — дата сверки с законом (checked), а не выхода: читателю важно,
-// насколько свежа норма, а не когда текст впервые появился.
+// Дата слева — дата последней сверки статьи (checked): читателю важно,
+// насколько свежий текст, а не когда он впервые появился.
 export function ArticleRows({ articles }: { articles: Article[] }) {
   return (
     <ul className="border-t border-neutral-300">
@@ -23,7 +23,6 @@ export function ArticleRows({ articles }: { articles: Article[] }) {
               className="group grid gap-2 py-6 sm:grid-cols-[9.5rem_minmax(0,1fr)_auto] sm:items-baseline sm:gap-8 sm:py-7"
             >
               <span className="text-sm text-neutral-600">
-                <span className="sr-only">Проверено </span>
                 {formatDate(article.checked)}
               </span>
               <span className="min-w-0">
@@ -57,7 +56,6 @@ export function ArticleColumns({ articles }: { articles: Article[] }) {
             <a href={page(`${ARTICLES_PATH}/${article.slug}`)} className="group flex h-full flex-col py-7 sm:py-8">
               <span className="block h-0.5 w-8 bg-accent-400" aria-hidden="true" />
               <span className="mt-5 text-sm text-neutral-600">
-                <span className="sr-only">Проверено </span>
                 {formatDate(article.checked)}
               </span>
               <span className="mt-2 block font-display text-[1.45rem] font-medium leading-tight text-neutral-950 transition-colors duration-700 ease-silk group-hover:text-accent-700 sm:text-[1.6rem]">
@@ -83,7 +81,7 @@ export function LatestArticles() {
   if (ARTICLES_SORTED.length === 0) return null
   return (
     <Section id="articles" className="bg-neutral-100">
-      <SectionHeading title="Статьи" subtitle="Вопросы о вступлении в СРО, разобранные по закону, со ссылкой на каждую норму." />
+      <SectionHeading title="Статьи" subtitle="Подробные ответы на вопросы, которые задают перед вступлением в СРО." />
       <div className="mt-12 sm:mt-16">
         <ArticleColumns articles={ARTICLES_SORTED.slice(0, HOME_ARTICLES)} />
       </div>
