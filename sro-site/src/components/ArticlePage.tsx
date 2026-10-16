@@ -111,6 +111,7 @@ export function ArticlePage({ article }: { article: Article }) {
           image={IMAGES[article.image]}
           toc={toc}
           meta={`${formatDate(article.checked)} · ${minutes} ${plural(minutes, 'минута', 'минуты', 'минут')} чтения`}
+          bright
         />
 
         <section className="py-14 sm:py-20">

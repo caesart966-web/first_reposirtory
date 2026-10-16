@@ -31,6 +31,10 @@ import { Reveal, RevealText } from './ui/Reveal'
 // meta — строка над заголовком у статей (15.10.2026): дата и время чтения.
 // Дата стоит до заголовка нарочно: у статьи о законе первым делом важно,
 // насколько она свежая.
+//
+// bright — плёнка тоньше (статьи, 16.10.2026, заказчик: «картинки видно
+// плохо, чуть ярче»): на телефоне 0.7 вместо 0.78, на компьютере справа
+// кадр открыт целиком. Контраст перемерен test-hero-contrast.mjs.
 export type TocItem = { id: string; title: string }
 
 export function PageHero({
@@ -41,6 +45,7 @@ export function PageHero({
   image,
   toc = [],
   meta,
+  bright = false,
 }: {
   backHref: string
   backLabel: string
@@ -49,6 +54,7 @@ export function PageHero({
   image?: PageImage
   toc?: TocItem[]
   meta?: string
+  bright?: boolean
 }) {
   return (
     <section className="relative isolate overflow-hidden bg-accent-950 text-neutral-50">
@@ -75,8 +81,21 @@ export function PageHero({
               полутоновые и под прежней читались тёмным пятном. Текст стоит
               левее середины, над ним плотность прежняя; перемерено
               test-hero-contrast.mjs. */}
-          <div className="absolute inset-0 bg-[rgba(20,17,15,0.78)] lg:bg-[linear-gradient(90deg,rgba(20,17,15,0.9)_0%,rgba(20,17,15,0.7)_48%,rgba(20,17,15,0.1)_85%)]" />
-          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(0deg,rgba(20,17,15,0.85)_0%,rgba(20,17,15,0)_100%)]" />
+          {/* Классы целиком, а не склейкой: Tailwind ищет их в исходнике строкой. */}
+          <div
+            className={
+              bright
+                ? 'absolute inset-0 bg-[rgba(20,17,15,0.7)] lg:bg-[linear-gradient(90deg,rgba(20,17,15,0.88)_0%,rgba(20,17,15,0.6)_48%,rgba(20,17,15,0)_85%)]'
+                : 'absolute inset-0 bg-[rgba(20,17,15,0.78)] lg:bg-[linear-gradient(90deg,rgba(20,17,15,0.9)_0%,rgba(20,17,15,0.7)_48%,rgba(20,17,15,0.1)_85%)]'
+            }
+          />
+          <div
+            className={
+              bright
+                ? 'absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(0deg,rgba(20,17,15,0.75)_0%,rgba(20,17,15,0)_100%)]'
+                : 'absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(0deg,rgba(20,17,15,0.85)_0%,rgba(20,17,15,0)_100%)]'
+            }
+          />
         </div>
       )}
       <div className="mx-auto w-full max-w-6xl min-[1800px]:max-w-7xl px-4 pb-20 pt-14 sm:px-6 sm:pb-28 sm:pt-20 lg:px-8">
@@ -96,7 +115,7 @@ export function PageHero({
               горизонтальной прокрутки при этом нет). */}
           {meta && (
             <Reveal>
-              <p className="mt-10 text-sm text-neutral-300">
+              <p className="mt-10 text-sm text-neutral-200">
                 <span data-hero-text>{meta}</span>
               </p>
             </Reveal>

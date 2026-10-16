@@ -42,9 +42,9 @@ QUALITY = {"article-region": (66, 46)}
 # (исходник, имя, обрезка в пикселях исходника (left, top, right, bottom) или None,
 #  отразить по горизонтали, уровни)
 PHOTOS = [
-    ("article-dogovor-src.jpg", "article-dogovor", (860, 400, 1880, 1333), True, (0.04, 0.95, 0.85)),
+    ("article-dogovor-src.jpg", "article-dogovor", (860, 400, 1880, 1333), True, (0.02, 0.82, 0.75)),
     ("article-proverka-src.jpg", "article-proverka", None, False, (0.04, 0.96, 0.85)),
-    ("article-region-src.jpg", "article-region", (70, 0, 1080, 1320), False, (0.04, 0.93, 0.9)),
+    ("article-region-src.jpg", "article-region", (70, 0, 1080, 1320), False, (0.03, 0.88, 0.8)),
 ]
 
 
