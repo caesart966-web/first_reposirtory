@@ -493,7 +493,7 @@ $SKPOLY
   9
 $TDCREATE
  40
-2461330.9447685187
+2461331.288310185
   9
 $TDUCREATE
  40
@@ -501,7 +501,7 @@ $TDUCREATE
   9
 $TDUPDATE
  40
-2461330.9448032407
+2461331.288321759
   9
 $TDUUPDATE
  40
@@ -553,7 +553,7 @@ $SPLINESEGS
   9
 $HANDSEED
   5
-4FF24
+4FF2C
   9
 $SURFTAB1
  70
@@ -937,7 +937,7 @@ $FINGERPRINTGUID
   9
 $VERSIONGUID
   2
-{D344A5E7-49C5-43A5-9AEE-BB51C030E931}
+{4F399213-92BA-41F5-A879-FADE7923D686}
   9
 $EXTNAMES
 290
@@ -1975,9 +1975,9 @@ SCENEOE
   0
 CLASS
   1
-ACDBPLACEHOLDER
+LAYOUT
   2
-AcDbPlaceHolder
+AcDbLayout
   3
 ObjectDBX Classes
  90
@@ -1991,9 +1991,9 @@ ObjectDBX Classes
   0
 CLASS
   1
-LAYOUT
+ACDBPLACEHOLDER
   2
-AcDbLayout
+AcDbPlaceHolder
   3
 ObjectDBX Classes
  90
@@ -5811,7 +5811,7 @@ STYLE
 100
 AcDbSymbolTable
  70
-20
+21
   0
 STYLE
   5
@@ -6489,7 +6489,35 @@ isocpeur.ttf
   0
 STYLE
   5
-4FB9A
+4FB5B
+330
+3
+100
+AcDbSymbolTableRecord
+100
+AcDbTextStyleTableRecord
+  2
+GOST_I
+ 70
+0
+ 40
+0.0
+ 41
+0.8
+ 50
+0.0
+ 71
+0
+ 42
+2.5
+  3
+isocpeur.ttf
+  4
+
+  0
+STYLE
+  5
+4FBA2
 330
 3
 100
@@ -473697,7 +473725,7 @@ AcDbLine
   0
 LWPOLYLINE
   5
-4FB5B
+4FB5C
 330
 1F
 100
@@ -473729,40 +473757,6 @@ AcDbPolyline
   0
 LWPOLYLINE
   5
-4FB5C
-330
-1F
-100
-AcDbEntity
-  8
-Рамка
-370
-50
-100
-AcDbPolyline
- 90
-4
- 70
-1
- 10
-98192.0
- 20
--51114.5
- 10
-165512.0
- 20
--51114.5
- 10
-165512.0
- 20
--2934.5
- 10
-98192.0
- 20
--2934.5
-  0
-LWPOLYLINE
-  5
 4FB5D
 330
 1F
@@ -473779,25 +473773,77 @@ AcDbPolyline
  70
 1
  10
-97202.0
- 20
--51114.5
- 10
 98192.0
  20
 -51114.5
  10
+165512.0
+ 20
+-51114.5
+ 10
+165512.0
+ 20
+-2934.5
+ 10
 98192.0
  20
--49052.0
- 10
-97202.0
- 20
--49052.0
+-2934.5
   0
 LINE
   5
 4FB5E
+330
+1F
+100
+AcDbEntity
+  8
+Таблицы
+370
+50
+100
+AcDbLine
+ 10
+97202.0
+ 20
+-51114.5
+ 30
+0.0
+ 11
+98192.0
+ 21
+-51114.5
+ 31
+0.0
+  0
+LINE
+  5
+4FB5F
+330
+1F
+100
+AcDbEntity
+  8
+Таблицы
+370
+50
+100
+AcDbLine
+ 10
+97202.0
+ 20
+-51114.5
+ 30
+0.0
+ 11
+97202.0
+ 21
+-44102.0
+ 31
+0.0
+  0
+LINE
+  5
+4FB60
 330
 1F
 100
@@ -473815,81 +473861,9 @@ AcDbLine
  11
 97614.5
  21
--49052.0
+-44102.0
  31
 0.0
-  0
-TEXT
-  5
-4FB5F
-330
-1F
-100
-AcDbEntity
-  8
-Текст
-100
-AcDbText
- 10
-97408.25
- 20
--50083.25
- 30
-0.0
- 40
-165.0
-  1
-Инв. № подл.
- 50
-90.0
-  7
-GOST
- 72
-1
- 11
-97408.25
- 21
--50083.25
- 31
-0.0
-100
-AcDbText
- 73
-2
-  0
-LWPOLYLINE
-  5
-4FB60
-330
-1F
-100
-AcDbEntity
-  8
-Рамка
-370
-50
-100
-AcDbPolyline
- 90
-4
- 70
-1
- 10
-97202.0
- 20
--49052.0
- 10
-98192.0
- 20
--49052.0
- 10
-98192.0
- 20
--46164.5
- 10
-97202.0
- 20
--46164.5
   0
 LINE
   5
@@ -473903,93 +473877,21 @@ AcDbEntity
 100
 AcDbLine
  10
-97614.5
+97202.0
  20
 -49052.0
  30
 0.0
  11
-97614.5
+98192.0
  21
--46164.5
+-49052.0
  31
 0.0
-  0
-TEXT
-  5
-4FB62
-330
-1F
-100
-AcDbEntity
-  8
-Текст
-100
-AcDbText
- 10
-97408.25
- 20
--47608.25
- 30
-0.0
- 40
-165.0
-  1
-Подп. и дата
- 50
-90.0
-  7
-GOST
- 72
-1
- 11
-97408.25
- 21
--47608.25
- 31
-0.0
-100
-AcDbText
- 73
-2
-  0
-LWPOLYLINE
-  5
-4FB63
-330
-1F
-100
-AcDbEntity
-  8
-Рамка
-370
-50
-100
-AcDbPolyline
- 90
-4
- 70
-1
- 10
-97202.0
- 20
--46164.5
- 10
-98192.0
- 20
--46164.5
- 10
-98192.0
- 20
--44102.0
- 10
-97202.0
- 20
--44102.0
   0
 LINE
   5
-4FB64
+4FB62
 330
 1F
 100
@@ -473999,19 +473901,83 @@ AcDbEntity
 100
 AcDbLine
  10
-97614.5
+97202.0
  20
 -46164.5
  30
 0.0
  11
-97614.5
+98192.0
  21
--44102.0
+-46164.5
  31
 0.0
   0
-TEXT
+MTEXT
+  5
+4FB63
+330
+1F
+100
+AcDbEntity
+  8
+Текст
+100
+AcDbMText
+ 10
+97408.25
+ 20
+-50083.25
+ 30
+0.0
+ 40
+206.25
+ 71
+5
+  1
+{\W0.8;\Q15;Инв.№ подл.}
+  7
+GOST_I
+ 11
+5.051668046482832e-15
+ 21
+82.5
+ 31
+0.0
+  0
+MTEXT
+  5
+4FB64
+330
+1F
+100
+AcDbEntity
+  8
+Текст
+100
+AcDbMText
+ 10
+97408.25
+ 20
+-47608.25
+ 30
+0.0
+ 40
+206.25
+ 71
+5
+  1
+{\W0.8;\Q15;Подпись и дата}
+  7
+GOST_I
+ 11
+5.051668046482832e-15
+ 21
+82.5
+ 31
+0.0
+  0
+MTEXT
   5
 4FB65
 330
@@ -474021,7 +473987,7 @@ AcDbEntity
   8
 Текст
 100
-AcDbText
+AcDbMText
  10
 97408.25
  20
@@ -474029,27 +473995,21 @@ AcDbText
  30
 0.0
  40
-165.0
+206.25
+ 71
+5
   1
-Взам. инв. №
- 50
-90.0
+{\W0.8;\Q15;Взам.инв.№}
   7
-GOST
- 72
-1
+GOST_I
  11
-97408.25
+5.051668046482832e-15
  21
--45133.25
+82.5
  31
 0.0
-100
-AcDbText
- 73
-2
   0
-TEXT
+LINE
   5
 4FB66
 330
@@ -474057,35 +474017,25 @@ TEXT
 100
 AcDbEntity
   8
-Текст
+Таблицы
+370
+50
 100
-AcDbText
+AcDbLine
  10
-165512.0
+96542.0
  20
--51362.0
+-44102.0
  30
 0.0
- 40
-206.25
-  1
-Формат А1
-  7
-GOST
- 72
-2
  11
-165512.0
+98192.0
  21
--51362.0
+-44102.0
  31
 0.0
-100
-AcDbText
- 73
-2
   0
-TEXT
+LINE
   5
 4FB67
 330
@@ -474093,35 +474043,25 @@ TEXT
 100
 AcDbEntity
   8
-Текст
+Таблицы
+370
+50
 100
-AcDbText
+AcDbLine
  10
-159737.0
+96542.0
  20
--51362.0
+-38739.5
  30
 0.0
- 40
-206.25
-  1
-Копировал
-  7
-GOST
- 72
-1
  11
-159737.0
+98192.0
  21
--51362.0
+-38739.5
  31
 0.0
-100
-AcDbText
- 73
-2
   0
-LWPOLYLINE
+LINE
   5
 4FB68
 330
@@ -474129,31 +474069,21 @@ LWPOLYLINE
 100
 AcDbEntity
   8
-Рамка
-370
-50
+Таблицы
 100
-AcDbPolyline
- 90
-4
- 70
-1
+AcDbLine
  10
-150249.5
+96954.5
  20
--51114.5
- 10
-165512.0
- 20
--51114.5
- 10
-165512.0
- 20
--46577.0
- 10
-150249.5
- 20
--46577.0
+-44102.0
+ 30
+0.0
+ 11
+96954.5
+ 21
+-38739.5
+ 31
+0.0
   0
 LINE
   5
@@ -474164,20 +474094,18 @@ LINE
 AcDbEntity
   8
 Таблицы
-370
-18
 100
 AcDbLine
  10
-150249.5
+97367.0
  20
--50702.0
+-44102.0
  30
 0.0
  11
-155612.0
+97367.0
  21
--50702.0
+-38739.5
  31
 0.0
   0
@@ -474190,20 +474118,18 @@ LINE
 AcDbEntity
   8
 Таблицы
-370
-18
 100
 AcDbLine
  10
-150249.5
+97779.5
  20
--50289.5
+-44102.0
  30
 0.0
  11
-155612.0
+97779.5
  21
--50289.5
+-38739.5
  31
 0.0
   0
@@ -474216,20 +474142,18 @@ LINE
 AcDbEntity
   8
 Таблицы
-370
-18
 100
 AcDbLine
  10
-150249.5
+96954.5
  20
--49877.0
+-42452.0
  30
 0.0
  11
-155612.0
+98192.0
  21
--49877.0
+-42452.0
  31
 0.0
   0
@@ -474242,20 +474166,18 @@ LINE
 AcDbEntity
   8
 Таблицы
-370
-18
 100
 AcDbLine
  10
-150249.5
+96954.5
  20
--49464.5
+-40802.0
  30
 0.0
  11
-155612.0
+98192.0
  21
--49464.5
+-40802.0
  31
 0.0
   0
@@ -474268,24 +474190,22 @@ LINE
 AcDbEntity
   8
 Таблицы
-370
-50
 100
 AcDbLine
  10
-150249.5
+96954.5
  20
--49052.0
+-39564.5
  30
 0.0
  11
-155612.0
+98192.0
  21
--49052.0
+-39564.5
  31
 0.0
   0
-LINE
+MTEXT
   5
 4FB6E
 330
@@ -474293,25 +474213,31 @@ LINE
 100
 AcDbEntity
   8
-Таблицы
-370
-50
+Текст
 100
-AcDbLine
+AcDbMText
  10
-150249.5
+96748.25
  20
--48639.5
+-43112.0
  30
 0.0
+ 40
+206.25
+ 71
+5
+  1
+{\W0.8;\Q15;Согласовано}
+  7
+GOST_I
  11
-155612.0
+5.051668046482832e-15
  21
--48639.5
+82.5
  31
 0.0
   0
-LINE
+MTEXT
   5
 4FB6F
 330
@@ -474319,25 +474245,31 @@ LINE
 100
 AcDbEntity
   8
-Таблицы
-370
-18
+Текст
 100
-AcDbLine
+AcDbMText
  10
-150249.5
+165512.0
  20
--48227.0
+-51362.0
  30
 0.0
+ 40
+206.25
+ 71
+6
+  1
+{\W0.8;\Q15;Формат А1}
+  7
+GOST_I
  11
-155612.0
+82.5
  21
--48227.0
+0.0
  31
 0.0
   0
-LINE
+MTEXT
   5
 4FB70
 330
@@ -474345,25 +474277,31 @@ LINE
 100
 AcDbEntity
   8
-Таблицы
-370
-18
+Текст
 100
-AcDbLine
+AcDbMText
  10
-150249.5
+159737.0
  20
--47814.5
+-51362.0
  30
 0.0
+ 40
+206.25
+ 71
+5
+  1
+{\W0.8;\Q15;Копировал}
+  7
+GOST_I
  11
-155612.0
+82.5
  21
--47814.5
+0.0
  31
 0.0
   0
-LINE
+LWPOLYLINE
   5
 4FB71
 330
@@ -474371,23 +474309,31 @@ LINE
 100
 AcDbEntity
   8
-Таблицы
+Рамка
 370
-18
+50
 100
-AcDbLine
+AcDbPolyline
+ 90
+4
+ 70
+1
  10
 150249.5
  20
--47402.0
- 30
-0.0
- 11
-155612.0
- 21
--47402.0
- 31
-0.0
+-51114.5
+ 10
+165512.0
+ 20
+-51114.5
+ 10
+165512.0
+ 20
+-46577.0
+ 10
+150249.5
+ 20
+-46577.0
   0
 LINE
   5
@@ -474405,13 +474351,13 @@ AcDbLine
  10
 150249.5
  20
--46989.5
+-50702.0
  30
 0.0
  11
 155612.0
  21
--46989.5
+-50702.0
  31
 0.0
   0
@@ -474425,19 +474371,19 @@ AcDbEntity
   8
 Таблицы
 370
-50
+18
 100
 AcDbLine
  10
-151074.5
+150249.5
  20
--49052.0
+-50289.5
  30
 0.0
  11
-151074.5
+155612.0
  21
--46577.0
+-50289.5
  31
 0.0
   0
@@ -474451,19 +474397,19 @@ AcDbEntity
   8
 Таблицы
 370
-50
+18
 100
 AcDbLine
  10
-151899.5
+150249.5
  20
--51114.5
+-49877.0
  30
 0.0
  11
-151899.5
+155612.0
  21
--46577.0
+-49877.0
  31
 0.0
   0
@@ -474477,19 +474423,19 @@ AcDbEntity
   8
 Таблицы
 370
-50
+18
 100
 AcDbLine
  10
-152724.5
+150249.5
  20
--49052.0
+-49464.5
  30
 0.0
  11
-152724.5
+155612.0
  21
--46577.0
+-49464.5
  31
 0.0
   0
@@ -474503,19 +474449,19 @@ AcDbEntity
   8
 Таблицы
 370
-50
+18
 100
 AcDbLine
  10
-153549.5
+150249.5
  20
--51114.5
+-49052.0
  30
 0.0
  11
-153549.5
+155612.0
  21
--46577.0
+-49052.0
  31
 0.0
   0
@@ -474529,19 +474475,19 @@ AcDbEntity
   8
 Таблицы
 370
-50
+18
 100
 AcDbLine
  10
-154787.0
+150249.5
  20
--51114.5
+-47814.5
  30
 0.0
  11
-154787.0
+155612.0
  21
--46577.0
+-47814.5
  31
 0.0
   0
@@ -474555,6 +474501,188 @@ AcDbEntity
   8
 Таблицы
 370
+18
+100
+AcDbLine
+ 10
+150249.5
+ 20
+-47402.0
+ 30
+0.0
+ 11
+155612.0
+ 21
+-47402.0
+ 31
+0.0
+  0
+LINE
+  5
+4FB79
+330
+1F
+100
+AcDbEntity
+  8
+Таблицы
+370
+18
+100
+AcDbLine
+ 10
+150249.5
+ 20
+-46989.5
+ 30
+0.0
+ 11
+155612.0
+ 21
+-46989.5
+ 31
+0.0
+  0
+LINE
+  5
+4FB7A
+330
+1F
+100
+AcDbEntity
+  8
+Таблицы
+370
+50
+100
+AcDbLine
+ 10
+150249.5
+ 20
+-48639.5
+ 30
+0.0
+ 11
+165512.0
+ 21
+-48639.5
+ 31
+0.0
+  0
+LINE
+  5
+4FB7B
+330
+1F
+100
+AcDbEntity
+  8
+Таблицы
+370
+50
+100
+AcDbLine
+ 10
+150249.5
+ 20
+-48227.0
+ 30
+0.0
+ 11
+155612.0
+ 21
+-48227.0
+ 31
+0.0
+  0
+LINE
+  5
+4FB7C
+330
+1F
+100
+AcDbEntity
+  8
+Таблицы
+370
+50
+100
+AcDbLine
+ 10
+151899.5
+ 20
+-51114.5
+ 30
+0.0
+ 11
+151899.5
+ 21
+-46577.0
+ 31
+0.0
+  0
+LINE
+  5
+4FB7D
+330
+1F
+100
+AcDbEntity
+  8
+Таблицы
+370
+50
+100
+AcDbLine
+ 10
+153549.5
+ 20
+-51114.5
+ 30
+0.0
+ 11
+153549.5
+ 21
+-46577.0
+ 31
+0.0
+  0
+LINE
+  5
+4FB7E
+330
+1F
+100
+AcDbEntity
+  8
+Таблицы
+370
+50
+100
+AcDbLine
+ 10
+154787.0
+ 20
+-51114.5
+ 30
+0.0
+ 11
+154787.0
+ 21
+-46577.0
+ 31
+0.0
+  0
+LINE
+  5
+4FB7F
+330
+1F
+100
+AcDbEntity
+  8
+Таблицы
+370
 50
 100
 AcDbLine
@@ -474571,257 +474699,7 @@ AcDbLine
  31
 0.0
   0
-TEXT
-  5
-4FB79
-330
-1F
-100
-AcDbEntity
-  8
-Текст
-100
-AcDbText
- 10
-150662.0
- 20
--48845.75
- 30
-0.0
- 40
-165.0
-  1
-Изм.
-  7
-GOST
- 72
-1
- 11
-150662.0
- 21
--48845.75
- 31
-0.0
-100
-AcDbText
- 73
-2
-  0
-TEXT
-  5
-4FB7A
-330
-1F
-100
-AcDbEntity
-  8
-Текст
-100
-AcDbText
- 10
-151487.0
- 20
--48845.75
- 30
-0.0
- 40
-165.0
-  1
-Кол.уч
-  7
-GOST
- 72
-1
- 11
-151487.0
- 21
--48845.75
- 31
-0.0
-100
-AcDbText
- 73
-2
-  0
-TEXT
-  5
-4FB7B
-330
-1F
-100
-AcDbEntity
-  8
-Текст
-100
-AcDbText
- 10
-152312.0
- 20
--48845.75
- 30
-0.0
- 40
-165.0
-  1
-Лист
-  7
-GOST
- 72
-1
- 11
-152312.0
- 21
--48845.75
- 31
-0.0
-100
-AcDbText
- 73
-2
-  0
-TEXT
-  5
-4FB7C
-330
-1F
-100
-AcDbEntity
-  8
-Текст
-100
-AcDbText
- 10
-153137.0
- 20
--48845.75
- 30
-0.0
- 40
-165.0
-  1
-№ док.
-  7
-GOST
- 72
-1
- 11
-153137.0
- 21
--48845.75
- 31
-0.0
-100
-AcDbText
- 73
-2
-  0
-TEXT
-  5
-4FB7D
-330
-1F
-100
-AcDbEntity
-  8
-Текст
-100
-AcDbText
- 10
-154168.25
- 20
--48845.75
- 30
-0.0
- 40
-165.0
-  1
-Подп.
-  7
-GOST
- 72
-1
- 11
-154168.25
- 21
--48845.75
- 31
-0.0
-100
-AcDbText
- 73
-2
-  0
-TEXT
-  5
-4FB7E
-330
-1F
-100
-AcDbEntity
-  8
-Текст
-100
-AcDbText
- 10
-155199.5
- 20
--48845.75
- 30
-0.0
- 40
-165.0
-  1
-Дата
-  7
-GOST
- 72
-1
- 11
-155199.5
- 21
--48845.75
- 31
-0.0
-100
-AcDbText
- 73
-2
-  0
-TEXT
-  5
-4FB7F
-330
-1F
-100
-AcDbEntity
-  8
-Текст
-100
-AcDbText
- 10
-150332.0
- 20
--49258.25
- 30
-0.0
- 40
-165.0
-  1
-Разработал
-  7
-GOST
- 11
-150332.0
- 21
--49258.25
- 31
-0.0
-100
-AcDbText
- 73
-2
-  0
-TEXT
+LINE
   5
 4FB80
 330
@@ -474829,33 +474707,25 @@ TEXT
 100
 AcDbEntity
   8
-Текст
+Таблицы
+370
+50
 100
-AcDbText
+AcDbLine
  10
-151982.0
+151074.5
  20
--49258.25
+-48639.5
  30
 0.0
- 40
-165.0
-  1
-Захаров
-  7
-GOST
  11
-151982.0
+151074.5
  21
--49258.25
+-46577.0
  31
 0.0
-100
-AcDbText
- 73
-2
   0
-TEXT
+LINE
   5
 4FB81
 330
@@ -474863,35 +474733,25 @@ TEXT
 100
 AcDbEntity
   8
-Текст
+Таблицы
+370
+50
 100
-AcDbText
+AcDbLine
  10
-155199.5
+152724.5
  20
--49258.25
+-48639.5
  30
 0.0
- 40
-165.0
-  1
-10.26
-  7
-GOST
- 72
-1
  11
-155199.5
+152724.5
  21
--49258.25
+-46577.0
  31
 0.0
-100
-AcDbText
- 73
-2
   0
-TEXT
+MTEXT
   5
 4FB82
 330
@@ -474901,31 +474761,29 @@ AcDbEntity
   8
 Текст
 100
-AcDbText
+AcDbMText
  10
-150332.0
+150662.0
  20
--50083.25
+-48433.25
  30
 0.0
  40
-165.0
+206.25
+ 71
+5
   1
-Проверил
+{\W0.8;\Q15;Изм.}
   7
-GOST
+GOST_I
  11
-150332.0
+82.5
  21
--50083.25
+0.0
  31
 0.0
-100
-AcDbText
- 73
-2
   0
-TEXT
+MTEXT
   5
 4FB83
 330
@@ -474935,31 +474793,29 @@ AcDbEntity
   8
 Текст
 100
-AcDbText
+AcDbMText
  10
-151982.0
+151487.0
  20
--50083.25
+-48433.25
  30
 0.0
  40
-165.0
+206.25
+ 71
+5
   1
-Ковшов
+{\W0.8;\Q15;Кол.уч}
   7
-GOST
+GOST_I
  11
-151982.0
+82.5
  21
--50083.25
+0.0
  31
 0.0
-100
-AcDbText
- 73
-2
   0
-TEXT
+MTEXT
   5
 4FB84
 330
@@ -474969,33 +474825,29 @@ AcDbEntity
   8
 Текст
 100
-AcDbText
+AcDbMText
  10
-155199.5
+152312.0
  20
--50083.25
+-48433.25
  30
 0.0
  40
-165.0
+206.25
+ 71
+5
   1
-10.26
+{\W0.8;\Q15;Лист}
   7
-GOST
- 72
-1
+GOST_I
  11
-155199.5
+82.5
  21
--50083.25
+0.0
  31
 0.0
-100
-AcDbText
- 73
-2
   0
-TEXT
+MTEXT
   5
 4FB85
 330
@@ -475005,31 +474857,29 @@ AcDbEntity
   8
 Текст
 100
-AcDbText
+AcDbMText
  10
-150332.0
+153137.0
  20
--50908.25
+-48433.25
  30
 0.0
  40
-165.0
+206.25
+ 71
+5
   1
-ГИП
+{\W0.8;\Q15;№ док}
   7
-GOST
+GOST_I
  11
-150332.0
+82.5
  21
--50908.25
+0.0
  31
 0.0
-100
-AcDbText
- 73
-2
   0
-TEXT
+MTEXT
   5
 4FB86
 330
@@ -475039,31 +474889,29 @@ AcDbEntity
   8
 Текст
 100
-AcDbText
+AcDbMText
  10
-151982.0
+154168.25
  20
--50908.25
+-48433.25
  30
 0.0
  40
-165.0
+206.25
+ 71
+5
   1
-Ковшов
+{\W0.8;\Q15;Подп.}
   7
-GOST
+GOST_I
  11
-151982.0
+82.5
  21
--50908.25
+0.0
  31
 0.0
-100
-AcDbText
- 73
-2
   0
-TEXT
+MTEXT
   5
 4FB87
 330
@@ -475073,33 +474921,29 @@ AcDbEntity
   8
 Текст
 100
-AcDbText
+AcDbMText
  10
 155199.5
  20
--50908.25
+-48433.25
  30
 0.0
  40
-165.0
+206.25
+ 71
+5
   1
-10.26
+{\W0.8;\Q15;Дата}
   7
-GOST
- 72
-1
+GOST_I
  11
-155199.5
+82.5
  21
--50908.25
+0.0
  31
 0.0
-100
-AcDbText
- 73
-2
   0
-LINE
+MTEXT
   5
 4FB88
 330
@@ -475107,25 +474951,31 @@ LINE
 100
 AcDbEntity
   8
-Таблицы
-370
-50
+Текст
 100
-AcDbLine
+AcDbMText
  10
-155612.0
+150315.5
  20
--47814.5
+-48845.75
  30
 0.0
+ 40
+247.5
+ 71
+4
+  1
+{\W0.8;\Q15;Разработал}
+  7
+GOST_I
  11
-165512.0
+82.5
  21
--47814.5
+0.0
  31
 0.0
   0
-LINE
+MTEXT
   5
 4FB89
 330
@@ -475133,6 +474983,262 @@ LINE
 100
 AcDbEntity
   8
+Текст
+100
+AcDbMText
+ 10
+151965.5
+ 20
+-48845.75
+ 30
+0.0
+ 40
+247.5
+ 71
+4
+  1
+{\W0.8;\Q15;Захаров}
+  7
+GOST_I
+ 11
+82.5
+ 21
+0.0
+ 31
+0.0
+  0
+MTEXT
+  5
+4FB8A
+330
+1F
+100
+AcDbEntity
+  8
+Текст
+100
+AcDbMText
+ 10
+154836.5
+ 20
+-48845.75
+ 30
+0.0
+ 40
+247.5
+ 71
+4
+  1
+{\W0.8;\Q15;10.26}
+  7
+GOST_I
+ 11
+82.5
+ 21
+0.0
+ 31
+0.0
+  0
+MTEXT
+  5
+4FB8B
+330
+1F
+100
+AcDbEntity
+  8
+Текст
+100
+AcDbMText
+ 10
+150315.5
+ 20
+-49670.75
+ 30
+0.0
+ 40
+247.5
+ 71
+4
+  1
+{\W0.8;\Q15;Проверил}
+  7
+GOST_I
+ 11
+82.5
+ 21
+0.0
+ 31
+0.0
+  0
+MTEXT
+  5
+4FB8C
+330
+1F
+100
+AcDbEntity
+  8
+Текст
+100
+AcDbMText
+ 10
+151965.5
+ 20
+-49670.75
+ 30
+0.0
+ 40
+247.5
+ 71
+4
+  1
+{\W0.8;\Q15;Ковшов}
+  7
+GOST_I
+ 11
+82.5
+ 21
+0.0
+ 31
+0.0
+  0
+MTEXT
+  5
+4FB8D
+330
+1F
+100
+AcDbEntity
+  8
+Текст
+100
+AcDbMText
+ 10
+154836.5
+ 20
+-49670.75
+ 30
+0.0
+ 40
+247.5
+ 71
+4
+  1
+{\W0.8;\Q15;10.26}
+  7
+GOST_I
+ 11
+82.5
+ 21
+0.0
+ 31
+0.0
+  0
+MTEXT
+  5
+4FB8E
+330
+1F
+100
+AcDbEntity
+  8
+Текст
+100
+AcDbMText
+ 10
+150315.5
+ 20
+-50908.25
+ 30
+0.0
+ 40
+247.5
+ 71
+4
+  1
+{\W0.8;\Q15;ГИП}
+  7
+GOST_I
+ 11
+82.5
+ 21
+0.0
+ 31
+0.0
+  0
+MTEXT
+  5
+4FB8F
+330
+1F
+100
+AcDbEntity
+  8
+Текст
+100
+AcDbMText
+ 10
+151965.5
+ 20
+-50908.25
+ 30
+0.0
+ 40
+247.5
+ 71
+4
+  1
+{\W0.8;\Q15;Ковшов}
+  7
+GOST_I
+ 11
+82.5
+ 21
+0.0
+ 31
+0.0
+  0
+MTEXT
+  5
+4FB90
+330
+1F
+100
+AcDbEntity
+  8
+Текст
+100
+AcDbMText
+ 10
+154836.5
+ 20
+-50908.25
+ 30
+0.0
+ 40
+247.5
+ 71
+4
+  1
+{\W0.8;\Q15;10.26}
+  7
+GOST_I
+ 11
+82.5
+ 21
+0.0
+ 31
+0.0
+  0
+LINE
+  5
+4FB91
+330
+1F
+100
+AcDbEntity
+  8
 Таблицы
 370
 50
@@ -475141,19 +475247,19 @@ AcDbLine
  10
 155612.0
  20
--48639.5
+-47402.0
  30
 0.0
  11
 165512.0
  21
--48639.5
+-47402.0
  31
 0.0
   0
 LINE
   5
-4FB8A
+4FB92
 330
 1F
 100
@@ -475179,7 +475285,7 @@ AcDbLine
   0
 LINE
   5
-4FB8B
+4FB93
 330
 1F
 100
@@ -475205,7 +475311,7 @@ AcDbLine
   0
 LINE
   5
-4FB8C
+4FB94
 330
 1F
 100
@@ -475213,7 +475319,59 @@ AcDbEntity
   8
 Таблицы
 370
-18
+50
+100
+AcDbLine
+ 10
+162624.5
+ 20
+-49877.0
+ 30
+0.0
+ 11
+162624.5
+ 21
+-48639.5
+ 31
+0.0
+  0
+LINE
+  5
+4FB95
+330
+1F
+100
+AcDbEntity
+  8
+Таблицы
+370
+50
+100
+AcDbLine
+ 10
+163862.0
+ 20
+-49877.0
+ 30
+0.0
+ 11
+163862.0
+ 21
+-48639.5
+ 31
+0.0
+  0
+LINE
+  5
+4FB96
+330
+1F
+100
+AcDbEntity
+  8
+Таблицы
+370
+50
 100
 AcDbLine
  10
@@ -475229,97 +475387,9 @@ AcDbLine
  31
 0.0
   0
-LINE
-  5
-4FB8D
-330
-1F
-100
-AcDbEntity
-  8
-Таблицы
-370
-50
-100
-AcDbLine
- 10
-162624.5
- 20
--49877.0
- 30
-0.0
- 11
-162624.5
- 21
--48639.5
- 31
-0.0
-  0
-LINE
-  5
-4FB8E
-330
-1F
-100
-AcDbEntity
-  8
-Таблицы
-370
-50
-100
-AcDbLine
- 10
-163862.0
- 20
--49877.0
- 30
-0.0
- 11
-163862.0
- 21
--48639.5
- 31
-0.0
-  0
-TEXT
-  5
-4FB8F
-330
-1F
-100
-AcDbEntity
-  8
-Текст
-100
-AcDbText
- 10
-160562.0
- 20
--47195.75
- 30
-0.0
- 40
-412.5
-  1
-140-1/2026-ВК
-  7
-GOST
- 72
-1
- 11
-160562.0
- 21
--47195.75
- 31
-0.0
-100
-AcDbText
- 73
-2
-  0
 MTEXT
   5
-4FB90
+4FB97
 330
 1F
 100
@@ -475329,21 +475399,19 @@ AcDbEntity
 100
 AcDbMText
  10
-155777.0
+160562.0
  20
--47897.0
+-46989.5
  30
 0.0
  40
-148.5
- 41
-9570.0
+453.75
  71
-1
+5
   1
-Двухэтажное здание главного корпуса базы отдыха по адресу: Россия, 188767, Северо-западный ФО, Ленинградская область, Приозерский район, с/п Плодовое, поселок Кутузовское, территория базы отдыха, д. б/н, литера А
+{\W0.8;\Q15;140-1/2026-ВК}
   7
-GOST
+GOST_I
  11
 82.5
  21
@@ -475353,7 +475421,41 @@ GOST
   0
 MTEXT
   5
-4FB91
+4FB98
+330
+1F
+100
+AcDbEntity
+  8
+Текст
+100
+AcDbMText
+ 10
+160562.0
+ 20
+-48020.75
+ 30
+0.0
+ 40
+206.25
+ 41
+9570.0
+ 71
+5
+  1
+{\W0.8;\Q15;Двухэтажное здание главного корпуса базы отдыха по адресу: Россия, 188767, Северо-западный ФО, Ленинградская область, Приозерский район, с/п Плодовое, поселок Кутузовское, территория базы отдыха, д. б/н, литера А}
+  7
+GOST_I
+ 11
+82.5
+ 21
+0.0
+ 31
+0.0
+  0
+MTEXT
+  5
+4FB99
 330
 1F
 100
@@ -475369,15 +475471,15 @@ AcDbMText
  30
 0.0
  40
-206.25
+247.5
  41
 5445.0
  71
 5
   1
-Внутренние водопровод и канализация
+{\W0.8;\Q15;Внутренние водопровод и канализация}
   7
-GOST
+GOST_I
  11
 82.5
  21
@@ -475387,7 +475489,7 @@ GOST
   0
 MTEXT
   5
-4FB92
+4FB9A
 330
 1F
 100
@@ -475409,9 +475511,9 @@ AcDbMText
  71
 5
   1
-Система К1. Аксонометрическая схема
+{\W0.8;\Q15;Система К1. Аксонометрическая схема}
   7
-GOST
+GOST_I
  11
 82.5
  21
@@ -475419,9 +475521,9 @@ GOST
  31
 0.0
   0
-TEXT
+MTEXT
   5
-4FB93
+4FB9B
 330
 1F
 100
@@ -475429,215 +475531,191 @@ AcDbEntity
   8
 Текст
 100
-AcDbText
+AcDbMText
  10
 162005.75
  20
 -48845.75
- 30
-0.0
- 40
-165.0
-  1
-Стадия
-  7
-GOST
- 72
-1
- 11
-162005.75
- 21
--48845.75
- 31
-0.0
-100
-AcDbText
- 73
-2
-  0
-TEXT
-  5
-4FB94
-330
-1F
-100
-AcDbEntity
-  8
-Текст
-100
-AcDbText
- 10
-163243.25
- 20
--48845.75
- 30
-0.0
- 40
-165.0
-  1
-Лист
-  7
-GOST
- 72
-1
- 11
-163243.25
- 21
--48845.75
- 31
-0.0
-100
-AcDbText
- 73
-2
-  0
-TEXT
-  5
-4FB95
-330
-1F
-100
-AcDbEntity
-  8
-Текст
-100
-AcDbText
- 10
-164687.0
- 20
--48845.75
- 30
-0.0
- 40
-165.0
-  1
-Листов
-  7
-GOST
- 72
-1
- 11
-164687.0
- 21
--48845.75
- 31
-0.0
-100
-AcDbText
- 73
-2
-  0
-TEXT
-  5
-4FB96
-330
-1F
-100
-AcDbEntity
-  8
-Текст
-100
-AcDbText
- 10
-162005.75
- 20
--49464.5
  30
 0.0
  40
 247.5
-  1
-РД
-  7
-GOST
- 72
-1
- 11
-162005.75
- 21
--49464.5
- 31
-0.0
-100
-AcDbText
- 73
-2
-  0
-TEXT
-  5
-4FB97
-330
-1F
-100
-AcDbEntity
-  8
-Текст
-100
-AcDbText
- 10
-163243.25
- 20
--49464.5
- 30
-0.0
- 40
-247.5
-  1
+ 71
 5
-  7
-GOST
- 72
-1
- 11
-163243.25
- 21
--49464.5
- 31
-0.0
-100
-AcDbText
- 73
-2
-  0
-TEXT
-  5
-4FB98
-330
-1F
-100
-AcDbEntity
-  8
-Текст
-100
-AcDbText
- 10
-164687.0
- 20
--49464.5
- 30
-0.0
- 40
-247.5
   1
-
+{\W0.8;\Q15;Стадия}
   7
-GOST
- 72
-1
+GOST_I
  11
-164687.0
+82.5
  21
--49464.5
+0.0
  31
 0.0
-100
-AcDbText
- 73
-2
   0
 MTEXT
   5
-4FB99
+4FB9C
+330
+1F
+100
+AcDbEntity
+  8
+Текст
+100
+AcDbMText
+ 10
+163243.25
+ 20
+-48845.75
+ 30
+0.0
+ 40
+247.5
+ 71
+5
+  1
+{\W0.8;\Q15;Лист}
+  7
+GOST_I
+ 11
+82.5
+ 21
+0.0
+ 31
+0.0
+  0
+MTEXT
+  5
+4FB9D
+330
+1F
+100
+AcDbEntity
+  8
+Текст
+100
+AcDbMText
+ 10
+164687.0
+ 20
+-48845.75
+ 30
+0.0
+ 40
+247.5
+ 71
+5
+  1
+{\W0.8;\Q15;Листов}
+  7
+GOST_I
+ 11
+82.5
+ 21
+0.0
+ 31
+0.0
+  0
+MTEXT
+  5
+4FB9E
+330
+1F
+100
+AcDbEntity
+  8
+Текст
+100
+AcDbMText
+ 10
+162005.75
+ 20
+-49464.5
+ 30
+0.0
+ 40
+288.75
+ 71
+5
+  1
+{\W0.8;\Q15;РД}
+  7
+GOST_I
+ 11
+82.5
+ 21
+0.0
+ 31
+0.0
+  0
+MTEXT
+  5
+4FB9F
+330
+1F
+100
+AcDbEntity
+  8
+Текст
+100
+AcDbMText
+ 10
+163243.25
+ 20
+-49464.5
+ 30
+0.0
+ 40
+288.75
+ 71
+5
+  1
+{\W0.8;\Q15;5}
+  7
+GOST_I
+ 11
+82.5
+ 21
+0.0
+ 31
+0.0
+  0
+MTEXT
+  5
+4FBA0
+330
+1F
+100
+AcDbEntity
+  8
+Текст
+100
+AcDbMText
+ 10
+164687.0
+ 20
+-49464.5
+ 30
+0.0
+ 40
+288.75
+ 71
+5
+  1
+{\W0.8;\Q15;}
+  7
+GOST_I
+ 11
+82.5
+ 21
+0.0
+ 31
+0.0
+  0
+MTEXT
+  5
+4FBA1
 330
 1F
 100
@@ -475653,15 +475731,15 @@ AcDbMText
  30
 0.0
  40
-206.25
+230.99999999999997
  41
-3795.0
+3960.0
  71
 5
   1
-ООО «Петровская Архитектура»
+{\W0.8;\Q15;ООО"Петровская Архитектура"}
   7
-GOST
+GOST_I
  11
 82.5
  21
@@ -475671,7 +475749,7 @@ GOST
   0
 TEXT
   5
-4FB9B
+4FBA3
 330
 1F
 100
@@ -475697,7 +475775,7 @@ AcDbText
   0
 TEXT
   5
-4FB9C
+4FBA4
 330
 1F
 100
@@ -475723,7 +475801,7 @@ AcDbText
   0
 TEXT
   5
-4FB9D
+4FBA5
 330
 1F
 100
@@ -475749,7 +475827,7 @@ AcDbText
   0
 TEXT
   5
-4FB9E
+4FBA6
 330
 1F
 100
@@ -475775,7 +475853,7 @@ AcDbText
   0
 TEXT
   5
-4FB9F
+4FBA7
 330
 1F
 100
@@ -475801,7 +475879,7 @@ AcDbText
   0
 TEXT
   5
-4FBA0
+4FBA8
 330
 1F
 100
@@ -475827,7 +475905,7 @@ AcDbText
   0
 TEXT
   5
-4FBA1
+4FBA9
 330
 1F
 100
@@ -475853,7 +475931,7 @@ AcDbText
   0
 TEXT
   5
-4FBA2
+4FBAA
 330
 1F
 100
@@ -475879,7 +475957,7 @@ AcDbText
   0
 TEXT
   5
-4FBA3
+4FBAB
 330
 1F
 100
@@ -475905,7 +475983,7 @@ AcDbText
   0
 POLYLINE
   5
-4FBA4
+4FBAC
 330
 1F
 100
@@ -475927,9 +476005,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FBA5
+4FBAD
 330
-4FBA4
+4FBAC
 100
 AcDbEntity
   8
@@ -475949,9 +476027,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FBA6
+4FBAE
 330
-4FBA4
+4FBAC
 100
 AcDbEntity
   8
@@ -475971,9 +476049,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FBA7
+4FBAF
 330
-4FBA4
+4FBAC
 100
 AcDbEntity
   8
@@ -475981,7 +476059,7 @@ Text
   0
 POLYLINE
   5
-4FBA8
+4FBB0
 330
 1F
 100
@@ -476003,9 +476081,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FBA9
+4FBB1
 330
-4FBA8
+4FBB0
 100
 AcDbEntity
   8
@@ -476025,9 +476103,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FBAA
+4FBB2
 330
-4FBA8
+4FBB0
 100
 AcDbEntity
   8
@@ -476047,9 +476125,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FBAB
+4FBB3
 330
-4FBA8
+4FBB0
 100
 AcDbEntity
   8
@@ -476057,7 +476135,7 @@ Text
   0
 TEXT
   5
-4FBAC
+4FBB4
 330
 1F
 100
@@ -476085,7 +476163,7 @@ AcDbText
   0
 TEXT
   5
-4FBAD
+4FBB5
 330
 1F
 100
@@ -476113,7 +476191,7 @@ AcDbText
   0
 TEXT
   5
-4FBAE
+4FBB6
 330
 1F
 100
@@ -476141,7 +476219,7 @@ AcDbText
   0
 TEXT
   5
-4FBAF
+4FBB7
 330
 1F
 100
@@ -476169,7 +476247,7 @@ AcDbText
   0
 TEXT
   5
-4FBB0
+4FBB8
 330
 1F
 100
@@ -476197,7 +476275,7 @@ AcDbText
   0
 TEXT
   5
-4FBB1
+4FBB9
 330
 1F
 100
@@ -476225,7 +476303,7 @@ AcDbText
   0
 TEXT
   5
-4FBB2
+4FBBA
 330
 1F
 100
@@ -476251,7 +476329,7 @@ AcDbText
   0
 POLYLINE
   5
-4FBB3
+4FBBB
 330
 1F
 100
@@ -476273,9 +476351,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FBB4
+4FBBC
 330
-4FBB3
+4FBBB
 100
 AcDbEntity
   8
@@ -476295,9 +476373,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FBB5
+4FBBD
 330
-4FBB3
+4FBBB
 100
 AcDbEntity
   8
@@ -476317,9 +476395,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FBB6
+4FBBE
 330
-4FBB3
+4FBBB
 100
 AcDbEntity
   8
@@ -476327,7 +476405,7 @@ Text
   0
 POLYLINE
   5
-4FBB7
+4FBBF
 330
 1F
 100
@@ -476349,9 +476427,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FBB8
+4FBC0
 330
-4FBB7
+4FBBF
 100
 AcDbEntity
   8
@@ -476371,9 +476449,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FBB9
+4FBC1
 330
-4FBB7
+4FBBF
 100
 AcDbEntity
   8
@@ -476393,9 +476471,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FBBA
+4FBC2
 330
-4FBB7
+4FBBF
 100
 AcDbEntity
   8
@@ -476403,7 +476481,7 @@ Text
   0
 TEXT
   5
-4FBBB
+4FBC3
 330
 1F
 100
@@ -476431,7 +476509,7 @@ AcDbText
   0
 TEXT
   5
-4FBBC
+4FBC4
 330
 1F
 100
@@ -476459,7 +476537,7 @@ AcDbText
   0
 TEXT
   5
-4FBBD
+4FBC5
 330
 1F
 100
@@ -476487,7 +476565,7 @@ AcDbText
   0
 TEXT
   5
-4FBBE
+4FBC6
 330
 1F
 100
@@ -476513,7 +476591,7 @@ AcDbText
   0
 TEXT
   5
-4FBBF
+4FBC7
 330
 1F
 100
@@ -476539,7 +476617,7 @@ AcDbText
   0
 POLYLINE
   5
-4FBC0
+4FBC8
 330
 1F
 100
@@ -476561,9 +476639,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FBC1
+4FBC9
 330
-4FBC0
+4FBC8
 100
 AcDbEntity
   8
@@ -476583,9 +476661,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FBC2
+4FBCA
 330
-4FBC0
+4FBC8
 100
 AcDbEntity
   8
@@ -476605,9 +476683,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FBC3
+4FBCB
 330
-4FBC0
+4FBC8
 100
 AcDbEntity
   8
@@ -476615,7 +476693,7 @@ Text
   0
 POLYLINE
   5
-4FBC4
+4FBCC
 330
 1F
 100
@@ -476637,9 +476715,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FBC5
+4FBCD
 330
-4FBC4
+4FBCC
 100
 AcDbEntity
   8
@@ -476659,9 +476737,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FBC6
+4FBCE
 330
-4FBC4
+4FBCC
 100
 AcDbEntity
   8
@@ -476681,9 +476759,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FBC7
+4FBCF
 330
-4FBC4
+4FBCC
 100
 AcDbEntity
   8
@@ -476691,7 +476769,7 @@ Text
   0
 TEXT
   5
-4FBC8
+4FBD0
 330
 1F
 100
@@ -476717,7 +476795,7 @@ AcDbText
   0
 TEXT
   5
-4FBC9
+4FBD1
 330
 1F
 100
@@ -476743,7 +476821,7 @@ AcDbText
   0
 POLYLINE
   5
-4FBCA
+4FBD2
 330
 1F
 100
@@ -476765,9 +476843,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FBCB
+4FBD3
 330
-4FBCA
+4FBD2
 100
 AcDbEntity
   8
@@ -476787,9 +476865,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FBCC
+4FBD4
 330
-4FBCA
+4FBD2
 100
 AcDbEntity
   8
@@ -476809,9 +476887,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FBCD
+4FBD5
 330
-4FBCA
+4FBD2
 100
 AcDbEntity
   8
@@ -476819,7 +476897,7 @@ Text
   0
 POLYLINE
   5
-4FBCE
+4FBD6
 330
 1F
 100
@@ -476841,9 +476919,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FBCF
+4FBD7
 330
-4FBCE
+4FBD6
 100
 AcDbEntity
   8
@@ -476863,9 +476941,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FBD0
+4FBD8
 330
-4FBCE
+4FBD6
 100
 AcDbEntity
   8
@@ -476885,9 +476963,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FBD1
+4FBD9
 330
-4FBCE
+4FBD6
 100
 AcDbEntity
   8
@@ -476895,7 +476973,7 @@ Text
   0
 TEXT
   5
-4FBD2
+4FBDA
 330
 1F
 100
@@ -476923,7 +477001,7 @@ AcDbText
   0
 TEXT
   5
-4FBD3
+4FBDB
 330
 1F
 100
@@ -476949,7 +477027,7 @@ AcDbText
   0
 TEXT
   5
-4FBD4
+4FBDC
 330
 1F
 100
@@ -476975,7 +477053,7 @@ AcDbText
   0
 POLYLINE
   5
-4FBD5
+4FBDD
 330
 1F
 100
@@ -476997,9 +477075,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FBD6
+4FBDE
 330
-4FBD5
+4FBDD
 100
 AcDbEntity
   8
@@ -477019,9 +477097,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FBD7
+4FBDF
 330
-4FBD5
+4FBDD
 100
 AcDbEntity
   8
@@ -477041,9 +477119,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FBD8
+4FBE0
 330
-4FBD5
+4FBDD
 100
 AcDbEntity
   8
@@ -477051,7 +477129,7 @@ Text
   0
 POLYLINE
   5
-4FBD9
+4FBE1
 330
 1F
 100
@@ -477073,9 +477151,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FBDA
+4FBE2
 330
-4FBD9
+4FBE1
 100
 AcDbEntity
   8
@@ -477095,9 +477173,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FBDB
+4FBE3
 330
-4FBD9
+4FBE1
 100
 AcDbEntity
   8
@@ -477117,9 +477195,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FBDC
+4FBE4
 330
-4FBD9
+4FBE1
 100
 AcDbEntity
   8
@@ -477127,7 +477205,7 @@ Text
   0
 TEXT
   5
-4FBDD
+4FBE5
 330
 1F
 100
@@ -477153,7 +477231,7 @@ AcDbText
   0
 TEXT
   5
-4FBDE
+4FBE6
 330
 1F
 100
@@ -477179,7 +477257,7 @@ AcDbText
   0
 POLYLINE
   5
-4FBDF
+4FBE7
 330
 1F
 100
@@ -477201,9 +477279,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FBE0
+4FBE8
 330
-4FBDF
+4FBE7
 100
 AcDbEntity
   8
@@ -477223,9 +477301,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FBE1
+4FBE9
 330
-4FBDF
+4FBE7
 100
 AcDbEntity
   8
@@ -477245,9 +477323,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FBE2
+4FBEA
 330
-4FBDF
+4FBE7
 100
 AcDbEntity
   8
@@ -477255,7 +477333,7 @@ Text
   0
 POLYLINE
   5
-4FBE3
+4FBEB
 330
 1F
 100
@@ -477277,9 +477355,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FBE4
+4FBEC
 330
-4FBE3
+4FBEB
 100
 AcDbEntity
   8
@@ -477299,9 +477377,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FBE5
+4FBED
 330
-4FBE3
+4FBEB
 100
 AcDbEntity
   8
@@ -477321,9 +477399,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FBE6
+4FBEE
 330
-4FBE3
+4FBEB
 100
 AcDbEntity
   8
@@ -477331,7 +477409,7 @@ Text
   0
 TEXT
   5
-4FBE7
+4FBEF
 330
 1F
 100
@@ -477357,7 +477435,7 @@ AcDbText
   0
 TEXT
   5
-4FBE8
+4FBF0
 330
 1F
 100
@@ -477383,7 +477461,7 @@ AcDbText
   0
 POLYLINE
   5
-4FBE9
+4FBF1
 330
 1F
 100
@@ -477405,9 +477483,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FBEA
+4FBF2
 330
-4FBE9
+4FBF1
 100
 AcDbEntity
   8
@@ -477427,9 +477505,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FBEB
+4FBF3
 330
-4FBE9
+4FBF1
 100
 AcDbEntity
   8
@@ -477449,9 +477527,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FBEC
+4FBF4
 330
-4FBE9
+4FBF1
 100
 AcDbEntity
   8
@@ -477459,7 +477537,7 @@ Text
   0
 POLYLINE
   5
-4FBED
+4FBF5
 330
 1F
 100
@@ -477481,9 +477559,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FBEE
+4FBF6
 330
-4FBED
+4FBF5
 100
 AcDbEntity
   8
@@ -477503,9 +477581,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FBEF
+4FBF7
 330
-4FBED
+4FBF5
 100
 AcDbEntity
   8
@@ -477525,9 +477603,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FBF0
+4FBF8
 330
-4FBED
+4FBF5
 100
 AcDbEntity
   8
@@ -477535,7 +477613,7 @@ Text
   0
 TEXT
   5
-4FBF1
+4FBF9
 330
 1F
 100
@@ -477561,7 +477639,7 @@ AcDbText
   0
 TEXT
   5
-4FBF2
+4FBFA
 330
 1F
 100
@@ -477587,7 +477665,7 @@ AcDbText
   0
 POLYLINE
   5
-4FBF3
+4FBFB
 330
 1F
 100
@@ -477609,9 +477687,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FBF4
+4FBFC
 330
-4FBF3
+4FBFB
 100
 AcDbEntity
   8
@@ -477631,9 +477709,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FBF5
+4FBFD
 330
-4FBF3
+4FBFB
 100
 AcDbEntity
   8
@@ -477653,9 +477731,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FBF6
+4FBFE
 330
-4FBF3
+4FBFB
 100
 AcDbEntity
   8
@@ -477663,7 +477741,7 @@ Text
   0
 POLYLINE
   5
-4FBF7
+4FBFF
 330
 1F
 100
@@ -477685,9 +477763,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FBF8
+4FC00
 330
-4FBF7
+4FBFF
 100
 AcDbEntity
   8
@@ -477707,9 +477785,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FBF9
+4FC01
 330
-4FBF7
+4FBFF
 100
 AcDbEntity
   8
@@ -477729,9 +477807,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FBFA
+4FC02
 330
-4FBF7
+4FBFF
 100
 AcDbEntity
   8
@@ -477739,7 +477817,7 @@ Text
   0
 TEXT
   5
-4FBFB
+4FC03
 330
 1F
 100
@@ -477767,7 +477845,7 @@ AcDbText
   0
 TEXT
   5
-4FBFC
+4FC04
 330
 1F
 100
@@ -477795,7 +477873,7 @@ AcDbText
   0
 TEXT
   5
-4FBFD
+4FC05
 330
 1F
 100
@@ -477823,7 +477901,7 @@ AcDbText
   0
 TEXT
   5
-4FBFE
+4FC06
 330
 1F
 100
@@ -477851,7 +477929,7 @@ AcDbText
   0
 TEXT
   5
-4FBFF
+4FC07
 330
 1F
 100
@@ -477877,7 +477955,7 @@ AcDbText
   0
 POLYLINE
   5
-4FC00
+4FC08
 330
 1F
 100
@@ -477899,9 +477977,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FC01
+4FC09
 330
-4FC00
+4FC08
 100
 AcDbEntity
   8
@@ -477921,9 +477999,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FC02
+4FC0A
 330
-4FC00
+4FC08
 100
 AcDbEntity
   8
@@ -477943,9 +478021,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FC03
+4FC0B
 330
-4FC00
+4FC08
 100
 AcDbEntity
   8
@@ -477953,7 +478031,7 @@ Text
   0
 POLYLINE
   5
-4FC04
+4FC0C
 330
 1F
 100
@@ -477975,9 +478053,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FC05
+4FC0D
 330
-4FC04
+4FC0C
 100
 AcDbEntity
   8
@@ -477997,9 +478075,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FC06
+4FC0E
 330
-4FC04
+4FC0C
 100
 AcDbEntity
   8
@@ -478019,9 +478097,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FC07
+4FC0F
 330
-4FC04
+4FC0C
 100
 AcDbEntity
   8
@@ -478029,7 +478107,7 @@ Text
   0
 TEXT
   5
-4FC08
+4FC10
 330
 1F
 100
@@ -478057,7 +478135,7 @@ AcDbText
   0
 TEXT
   5
-4FC09
+4FC11
 330
 1F
 100
@@ -478085,7 +478163,7 @@ AcDbText
   0
 TEXT
   5
-4FC0A
+4FC12
 330
 1F
 100
@@ -478111,7 +478189,7 @@ AcDbText
   0
 POLYLINE
   5
-4FC0B
+4FC13
 330
 1F
 100
@@ -478133,9 +478211,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FC0C
+4FC14
 330
-4FC0B
+4FC13
 100
 AcDbEntity
   8
@@ -478155,9 +478233,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FC0D
+4FC15
 330
-4FC0B
+4FC13
 100
 AcDbEntity
   8
@@ -478177,9 +478255,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FC0E
+4FC16
 330
-4FC0B
+4FC13
 100
 AcDbEntity
   8
@@ -478187,7 +478265,7 @@ Text
   0
 POLYLINE
   5
-4FC0F
+4FC17
 330
 1F
 100
@@ -478209,9 +478287,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FC10
+4FC18
 330
-4FC0F
+4FC17
 100
 AcDbEntity
   8
@@ -478231,9 +478309,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FC11
+4FC19
 330
-4FC0F
+4FC17
 100
 AcDbEntity
   8
@@ -478253,9 +478331,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FC12
+4FC1A
 330
-4FC0F
+4FC17
 100
 AcDbEntity
   8
@@ -478263,7 +478341,7 @@ Text
   0
 TEXT
   5
-4FC13
+4FC1B
 330
 1F
 100
@@ -478291,7 +478369,7 @@ AcDbText
   0
 TEXT
   5
-4FC14
+4FC1C
 330
 1F
 100
@@ -478317,7 +478395,7 @@ AcDbText
   0
 POLYLINE
   5
-4FC15
+4FC1D
 330
 1F
 100
@@ -478339,9 +478417,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FC16
+4FC1E
 330
-4FC15
+4FC1D
 100
 AcDbEntity
   8
@@ -478361,9 +478439,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FC17
+4FC1F
 330
-4FC15
+4FC1D
 100
 AcDbEntity
   8
@@ -478383,9 +478461,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FC18
+4FC20
 330
-4FC15
+4FC1D
 100
 AcDbEntity
   8
@@ -478393,7 +478471,7 @@ Text
   0
 POLYLINE
   5
-4FC19
+4FC21
 330
 1F
 100
@@ -478415,9 +478493,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FC1A
+4FC22
 330
-4FC19
+4FC21
 100
 AcDbEntity
   8
@@ -478437,9 +478515,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FC1B
+4FC23
 330
-4FC19
+4FC21
 100
 AcDbEntity
   8
@@ -478459,9 +478537,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FC1C
+4FC24
 330
-4FC19
+4FC21
 100
 AcDbEntity
   8
@@ -478469,7 +478547,7 @@ Text
   0
 TEXT
   5
-4FC1D
+4FC25
 330
 1F
 100
@@ -478497,7 +478575,7 @@ AcDbText
   0
 TEXT
   5
-4FC1E
+4FC26
 330
 1F
 100
@@ -478525,7 +478603,7 @@ AcDbText
   0
 TEXT
   5
-4FC1F
+4FC27
 330
 1F
 100
@@ -478553,7 +478631,7 @@ AcDbText
   0
 TEXT
   5
-4FC20
+4FC28
 330
 1F
 100
@@ -478581,7 +478659,7 @@ AcDbText
   0
 TEXT
   5
-4FC21
+4FC29
 330
 1F
 100
@@ -478609,7 +478687,7 @@ AcDbText
   0
 TEXT
   5
-4FC22
+4FC2A
 330
 1F
 100
@@ -478637,7 +478715,7 @@ AcDbText
   0
 TEXT
   5
-4FC23
+4FC2B
 330
 1F
 100
@@ -478665,7 +478743,7 @@ AcDbText
   0
 TEXT
   5
-4FC24
+4FC2C
 330
 1F
 100
@@ -478693,7 +478771,7 @@ AcDbText
   0
 TEXT
   5
-4FC25
+4FC2D
 330
 1F
 100
@@ -478721,7 +478799,7 @@ AcDbText
   0
 TEXT
   5
-4FC26
+4FC2E
 330
 1F
 100
@@ -478749,7 +478827,7 @@ AcDbText
   0
 TEXT
   5
-4FC27
+4FC2F
 330
 1F
 100
@@ -478777,7 +478855,7 @@ AcDbText
   0
 TEXT
   5
-4FC28
+4FC30
 330
 1F
 100
@@ -478805,7 +478883,7 @@ AcDbText
   0
 TEXT
   5
-4FC29
+4FC31
 330
 1F
 100
@@ -478833,7 +478911,7 @@ AcDbText
   0
 TEXT
   5
-4FC2A
+4FC32
 330
 1F
 100
@@ -478861,7 +478939,7 @@ AcDbText
   0
 TEXT
   5
-4FC2B
+4FC33
 330
 1F
 100
@@ -478889,7 +478967,7 @@ AcDbText
   0
 TEXT
   5
-4FC2C
+4FC34
 330
 1F
 100
@@ -478917,7 +478995,7 @@ AcDbText
   0
 TEXT
   5
-4FC2D
+4FC35
 330
 1F
 100
@@ -478945,7 +479023,7 @@ AcDbText
   0
 TEXT
   5
-4FC2E
+4FC36
 330
 1F
 100
@@ -478973,7 +479051,7 @@ AcDbText
   0
 TEXT
   5
-4FC2F
+4FC37
 330
 1F
 100
@@ -478999,7 +479077,7 @@ AcDbText
   0
 POLYLINE
   5
-4FC30
+4FC38
 330
 1F
 100
@@ -479021,9 +479099,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FC31
+4FC39
 330
-4FC30
+4FC38
 100
 AcDbEntity
   8
@@ -479043,9 +479121,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FC32
+4FC3A
 330
-4FC30
+4FC38
 100
 AcDbEntity
   8
@@ -479065,9 +479143,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FC33
+4FC3B
 330
-4FC30
+4FC38
 100
 AcDbEntity
   8
@@ -479075,7 +479153,7 @@ Text
   0
 POLYLINE
   5
-4FC34
+4FC3C
 330
 1F
 100
@@ -479097,9 +479175,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FC35
+4FC3D
 330
-4FC34
+4FC3C
 100
 AcDbEntity
   8
@@ -479119,9 +479197,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FC36
+4FC3E
 330
-4FC34
+4FC3C
 100
 AcDbEntity
   8
@@ -479141,9 +479219,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FC37
+4FC3F
 330
-4FC34
+4FC3C
 100
 AcDbEntity
   8
@@ -479151,7 +479229,7 @@ Text
   0
 TEXT
   5
-4FC38
+4FC40
 330
 1F
 100
@@ -479179,7 +479257,7 @@ AcDbText
   0
 TEXT
   5
-4FC39
+4FC41
 330
 1F
 100
@@ -479207,7 +479285,7 @@ AcDbText
   0
 TEXT
   5
-4FC3A
+4FC42
 330
 1F
 100
@@ -479235,7 +479313,7 @@ AcDbText
   0
 TEXT
   5
-4FC3B
+4FC43
 330
 1F
 100
@@ -479263,7 +479341,7 @@ AcDbText
   0
 TEXT
   5
-4FC3C
+4FC44
 330
 1F
 100
@@ -479291,7 +479369,7 @@ AcDbText
   0
 TEXT
   5
-4FC3D
+4FC45
 330
 1F
 100
@@ -479319,7 +479397,7 @@ AcDbText
   0
 TEXT
   5
-4FC3E
+4FC46
 330
 1F
 100
@@ -479345,7 +479423,7 @@ AcDbText
   0
 POLYLINE
   5
-4FC3F
+4FC47
 330
 1F
 100
@@ -479367,9 +479445,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FC40
+4FC48
 330
-4FC3F
+4FC47
 100
 AcDbEntity
   8
@@ -479389,9 +479467,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FC41
+4FC49
 330
-4FC3F
+4FC47
 100
 AcDbEntity
   8
@@ -479411,9 +479489,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FC42
+4FC4A
 330
-4FC3F
+4FC47
 100
 AcDbEntity
   8
@@ -479421,7 +479499,7 @@ Text
   0
 POLYLINE
   5
-4FC43
+4FC4B
 330
 1F
 100
@@ -479443,9 +479521,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FC44
+4FC4C
 330
-4FC43
+4FC4B
 100
 AcDbEntity
   8
@@ -479465,9 +479543,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FC45
+4FC4D
 330
-4FC43
+4FC4B
 100
 AcDbEntity
   8
@@ -479487,9 +479565,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FC46
+4FC4E
 330
-4FC43
+4FC4B
 100
 AcDbEntity
   8
@@ -479497,7 +479575,7 @@ Text
   0
 TEXT
   5
-4FC47
+4FC4F
 330
 1F
 100
@@ -479523,7 +479601,7 @@ AcDbText
   0
 POLYLINE
   5
-4FC48
+4FC50
 330
 1F
 100
@@ -479545,9 +479623,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FC49
+4FC51
 330
-4FC48
+4FC50
 100
 AcDbEntity
   8
@@ -479567,9 +479645,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FC4A
+4FC52
 330
-4FC48
+4FC50
 100
 AcDbEntity
   8
@@ -479589,9 +479667,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FC4B
+4FC53
 330
-4FC48
+4FC50
 100
 AcDbEntity
   8
@@ -479599,7 +479677,7 @@ Text
   0
 POLYLINE
   5
-4FC4C
+4FC54
 330
 1F
 100
@@ -479621,9 +479699,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FC4D
+4FC55
 330
-4FC4C
+4FC54
 100
 AcDbEntity
   8
@@ -479643,9 +479721,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FC4E
+4FC56
 330
-4FC4C
+4FC54
 100
 AcDbEntity
   8
@@ -479665,9 +479743,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FC4F
+4FC57
 330
-4FC4C
+4FC54
 100
 AcDbEntity
   8
@@ -479675,7 +479753,7 @@ Text
   0
 TEXT
   5
-4FC50
+4FC58
 330
 1F
 100
@@ -479701,7 +479779,7 @@ AcDbText
   0
 POLYLINE
   5
-4FC51
+4FC59
 330
 1F
 100
@@ -479723,9 +479801,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FC52
+4FC5A
 330
-4FC51
+4FC59
 100
 AcDbEntity
   8
@@ -479745,9 +479823,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FC53
+4FC5B
 330
-4FC51
+4FC59
 100
 AcDbEntity
   8
@@ -479767,9 +479845,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FC54
+4FC5C
 330
-4FC51
+4FC59
 100
 AcDbEntity
   8
@@ -479777,7 +479855,7 @@ Text
   0
 POLYLINE
   5
-4FC55
+4FC5D
 330
 1F
 100
@@ -479799,9 +479877,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FC56
+4FC5E
 330
-4FC55
+4FC5D
 100
 AcDbEntity
   8
@@ -479821,9 +479899,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FC57
+4FC5F
 330
-4FC55
+4FC5D
 100
 AcDbEntity
   8
@@ -479843,9 +479921,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FC58
+4FC60
 330
-4FC55
+4FC5D
 100
 AcDbEntity
   8
@@ -479853,7 +479931,7 @@ Text
   0
 TEXT
   5
-4FC59
+4FC61
 330
 1F
 100
@@ -479876,158 +479954,6 @@ AcDbText
 ISOCPEUR
 100
 AcDbText
-  0
-POLYLINE
-  5
-4FC5A
-330
-1F
-100
-AcDbEntity
-  8
-Text
-100
-AcDb2dPolyline
- 66
-1
- 10
-0.0
- 20
-0.0
- 30
-0.0
- 70
-0
-  0
-VERTEX
-  5
-4FC5B
-330
-4FC5A
-100
-AcDbEntity
-  8
-Text
-100
-AcDbVertex
-100
-AcDb2dVertex
- 10
-106215.43301647391
- 20
--21670.162802693885
- 30
-0.0
- 70
-0
-  0
-VERTEX
-  5
-4FC5C
-330
-4FC5A
-100
-AcDbEntity
-  8
-Text
-100
-AcDbVertex
-100
-AcDb2dVertex
- 10
-108379.58277302171
- 20
--21670.162802693885
- 30
-0.0
- 70
-0
-  0
-SEQEND
-  5
-4FC5D
-330
-4FC5A
-100
-AcDbEntity
-  8
-Text
-  0
-POLYLINE
-  5
-4FC5E
-330
-1F
-100
-AcDbEntity
-  8
-Text
-100
-AcDb2dPolyline
- 66
-1
- 10
-0.0
- 20
-0.0
- 30
-0.0
- 70
-0
-  0
-VERTEX
-  5
-4FC5F
-330
-4FC5E
-100
-AcDbEntity
-  8
-Text
-100
-AcDbVertex
-100
-AcDb2dVertex
- 10
-106344.87064914465
- 20
--22780.11498300091
- 30
-0.0
- 70
-0
-  0
-VERTEX
-  5
-4FC60
-330
-4FC5E
-100
-AcDbEntity
-  8
-Text
-100
-AcDbVertex
-100
-AcDb2dVertex
- 10
-106215.43301647391
- 20
--21670.162802693885
- 30
-0.0
- 70
-0
-  0
-SEQEND
-  5
-4FC61
-330
-4FC5E
-100
-AcDbEntity
-  8
-Text
   0
 POLYLINE
   5
@@ -480065,9 +479991,9 @@ AcDbVertex
 100
 AcDb2dVertex
  10
-104993.04029291563
+106215.43301647391
  20
--22780.11498300091
+-21670.162802693885
  30
 0.0
  70
@@ -480087,7 +480013,7 @@ AcDbVertex
 100
 AcDb2dVertex
  10
-106215.43301647391
+108379.58277302171
  20
 -21670.162802693885
  30
@@ -480105,9 +480031,161 @@ AcDbEntity
   8
 Text
   0
-TEXT
+POLYLINE
   5
 4FC66
+330
+1F
+100
+AcDbEntity
+  8
+Text
+100
+AcDb2dPolyline
+ 66
+1
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 70
+0
+  0
+VERTEX
+  5
+4FC67
+330
+4FC66
+100
+AcDbEntity
+  8
+Text
+100
+AcDbVertex
+100
+AcDb2dVertex
+ 10
+106344.87064914465
+ 20
+-22780.11498300091
+ 30
+0.0
+ 70
+0
+  0
+VERTEX
+  5
+4FC68
+330
+4FC66
+100
+AcDbEntity
+  8
+Text
+100
+AcDbVertex
+100
+AcDb2dVertex
+ 10
+106215.43301647391
+ 20
+-21670.162802693885
+ 30
+0.0
+ 70
+0
+  0
+SEQEND
+  5
+4FC69
+330
+4FC66
+100
+AcDbEntity
+  8
+Text
+  0
+POLYLINE
+  5
+4FC6A
+330
+1F
+100
+AcDbEntity
+  8
+Text
+100
+AcDb2dPolyline
+ 66
+1
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 70
+0
+  0
+VERTEX
+  5
+4FC6B
+330
+4FC6A
+100
+AcDbEntity
+  8
+Text
+100
+AcDbVertex
+100
+AcDb2dVertex
+ 10
+104993.04029291563
+ 20
+-22780.11498300091
+ 30
+0.0
+ 70
+0
+  0
+VERTEX
+  5
+4FC6C
+330
+4FC6A
+100
+AcDbEntity
+  8
+Text
+100
+AcDbVertex
+100
+AcDb2dVertex
+ 10
+106215.43301647391
+ 20
+-21670.162802693885
+ 30
+0.0
+ 70
+0
+  0
+SEQEND
+  5
+4FC6D
+330
+4FC6A
+100
+AcDbEntity
+  8
+Text
+  0
+TEXT
+  5
+4FC6E
 330
 1F
 100
@@ -480133,7 +480211,7 @@ AcDbText
   0
 POLYLINE
   5
-4FC67
+4FC6F
 330
 1F
 100
@@ -480155,9 +480233,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FC68
+4FC70
 330
-4FC67
+4FC6F
 100
 AcDbEntity
   8
@@ -480177,9 +480255,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FC69
+4FC71
 330
-4FC67
+4FC6F
 100
 AcDbEntity
   8
@@ -480199,9 +480277,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FC6A
+4FC72
 330
-4FC67
+4FC6F
 100
 AcDbEntity
   8
@@ -480209,7 +480287,7 @@ Text
   0
 POLYLINE
   5
-4FC6B
+4FC73
 330
 1F
 100
@@ -480231,9 +480309,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FC6C
+4FC74
 330
-4FC6B
+4FC73
 100
 AcDbEntity
   8
@@ -480253,9 +480331,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FC6D
+4FC75
 330
-4FC6B
+4FC73
 100
 AcDbEntity
   8
@@ -480275,9 +480353,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FC6E
+4FC76
 330
-4FC6B
+4FC73
 100
 AcDbEntity
   8
@@ -480285,7 +480363,7 @@ Text
   0
 TEXT
   5
-4FC6F
+4FC77
 330
 1F
 100
@@ -480311,7 +480389,7 @@ AcDbText
   0
 POLYLINE
   5
-4FC70
+4FC78
 330
 1F
 100
@@ -480333,9 +480411,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FC71
+4FC79
 330
-4FC70
+4FC78
 100
 AcDbEntity
   8
@@ -480355,9 +480433,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FC72
+4FC7A
 330
-4FC70
+4FC78
 100
 AcDbEntity
   8
@@ -480377,9 +480455,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FC73
+4FC7B
 330
-4FC70
+4FC78
 100
 AcDbEntity
   8
@@ -480387,7 +480465,7 @@ Text
   0
 POLYLINE
   5
-4FC74
+4FC7C
 330
 1F
 100
@@ -480409,9 +480487,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FC75
+4FC7D
 330
-4FC74
+4FC7C
 100
 AcDbEntity
   8
@@ -480431,9 +480509,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FC76
+4FC7E
 330
-4FC74
+4FC7C
 100
 AcDbEntity
   8
@@ -480453,9 +480531,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FC77
+4FC7F
 330
-4FC74
+4FC7C
 100
 AcDbEntity
   8
@@ -480463,7 +480541,7 @@ Text
   0
 TEXT
   5
-4FC78
+4FC80
 330
 1F
 100
@@ -480489,7 +480567,7 @@ AcDbText
   0
 POLYLINE
   5
-4FC79
+4FC81
 330
 1F
 100
@@ -480511,9 +480589,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FC7A
+4FC82
 330
-4FC79
+4FC81
 100
 AcDbEntity
   8
@@ -480533,9 +480611,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FC7B
+4FC83
 330
-4FC79
+4FC81
 100
 AcDbEntity
   8
@@ -480555,9 +480633,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FC7C
+4FC84
 330
-4FC79
+4FC81
 100
 AcDbEntity
   8
@@ -480565,7 +480643,7 @@ Text
   0
 POLYLINE
   5
-4FC7D
+4FC85
 330
 1F
 100
@@ -480587,9 +480665,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FC7E
+4FC86
 330
-4FC7D
+4FC85
 100
 AcDbEntity
   8
@@ -480609,9 +480687,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FC7F
+4FC87
 330
-4FC7D
+4FC85
 100
 AcDbEntity
   8
@@ -480631,9 +480709,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FC80
+4FC88
 330
-4FC7D
+4FC85
 100
 AcDbEntity
   8
@@ -480641,7 +480719,7 @@ Text
   0
 TEXT
   5
-4FC81
+4FC89
 330
 1F
 100
@@ -480667,7 +480745,7 @@ AcDbText
   0
 POLYLINE
   5
-4FC82
+4FC8A
 330
 1F
 100
@@ -480689,9 +480767,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FC83
+4FC8B
 330
-4FC82
+4FC8A
 100
 AcDbEntity
   8
@@ -480711,9 +480789,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FC84
+4FC8C
 330
-4FC82
+4FC8A
 100
 AcDbEntity
   8
@@ -480733,9 +480811,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FC85
+4FC8D
 330
-4FC82
+4FC8A
 100
 AcDbEntity
   8
@@ -480743,7 +480821,7 @@ Text
   0
 POLYLINE
   5
-4FC86
+4FC8E
 330
 1F
 100
@@ -480765,9 +480843,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FC87
+4FC8F
 330
-4FC86
+4FC8E
 100
 AcDbEntity
   8
@@ -480787,9 +480865,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FC88
+4FC90
 330
-4FC86
+4FC8E
 100
 AcDbEntity
   8
@@ -480809,9 +480887,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FC89
+4FC91
 330
-4FC86
+4FC8E
 100
 AcDbEntity
   8
@@ -480819,7 +480897,7 @@ Text
   0
 TEXT
   5
-4FC8A
+4FC92
 330
 1F
 100
@@ -480845,7 +480923,7 @@ AcDbText
   0
 POLYLINE
   5
-4FC8B
+4FC93
 330
 1F
 100
@@ -480867,9 +480945,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FC8C
+4FC94
 330
-4FC8B
+4FC93
 100
 AcDbEntity
   8
@@ -480889,9 +480967,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FC8D
+4FC95
 330
-4FC8B
+4FC93
 100
 AcDbEntity
   8
@@ -480911,9 +480989,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FC8E
+4FC96
 330
-4FC8B
+4FC93
 100
 AcDbEntity
   8
@@ -480921,7 +480999,7 @@ Text
   0
 POLYLINE
   5
-4FC8F
+4FC97
 330
 1F
 100
@@ -480943,9 +481021,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FC90
+4FC98
 330
-4FC8F
+4FC97
 100
 AcDbEntity
   8
@@ -480965,9 +481043,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FC91
+4FC99
 330
-4FC8F
+4FC97
 100
 AcDbEntity
   8
@@ -480987,9 +481065,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FC92
+4FC9A
 330
-4FC8F
+4FC97
 100
 AcDbEntity
   8
@@ -480997,7 +481075,7 @@ Text
   0
 TEXT
   5
-4FC93
+4FC9B
 330
 1F
 100
@@ -481023,7 +481101,7 @@ AcDbText
   0
 POLYLINE
   5
-4FC94
+4FC9C
 330
 1F
 100
@@ -481045,9 +481123,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FC95
+4FC9D
 330
-4FC94
+4FC9C
 100
 AcDbEntity
   8
@@ -481067,9 +481145,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FC96
+4FC9E
 330
-4FC94
+4FC9C
 100
 AcDbEntity
   8
@@ -481089,9 +481167,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FC97
+4FC9F
 330
-4FC94
+4FC9C
 100
 AcDbEntity
   8
@@ -481099,7 +481177,7 @@ Text
   0
 POLYLINE
   5
-4FC98
+4FCA0
 330
 1F
 100
@@ -481121,9 +481199,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FC99
+4FCA1
 330
-4FC98
+4FCA0
 100
 AcDbEntity
   8
@@ -481143,9 +481221,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FC9A
+4FCA2
 330
-4FC98
+4FCA0
 100
 AcDbEntity
   8
@@ -481165,9 +481243,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FC9B
+4FCA3
 330
-4FC98
+4FCA0
 100
 AcDbEntity
   8
@@ -481175,7 +481253,7 @@ Text
   0
 TEXT
   5
-4FC9C
+4FCA4
 330
 1F
 100
@@ -481201,7 +481279,7 @@ AcDbText
   0
 POLYLINE
   5
-4FC9D
+4FCA5
 330
 1F
 100
@@ -481223,9 +481301,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FC9E
+4FCA6
 330
-4FC9D
+4FCA5
 100
 AcDbEntity
   8
@@ -481245,9 +481323,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FC9F
+4FCA7
 330
-4FC9D
+4FCA5
 100
 AcDbEntity
   8
@@ -481267,9 +481345,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FCA0
+4FCA8
 330
-4FC9D
+4FCA5
 100
 AcDbEntity
   8
@@ -481277,7 +481355,7 @@ Text
   0
 POLYLINE
   5
-4FCA1
+4FCA9
 330
 1F
 100
@@ -481299,9 +481377,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FCA2
+4FCAA
 330
-4FCA1
+4FCA9
 100
 AcDbEntity
   8
@@ -481321,9 +481399,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FCA3
+4FCAB
 330
-4FCA1
+4FCA9
 100
 AcDbEntity
   8
@@ -481343,9 +481421,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FCA4
+4FCAC
 330
-4FCA1
+4FCA9
 100
 AcDbEntity
   8
@@ -481353,7 +481431,7 @@ Text
   0
 TEXT
   5
-4FCA5
+4FCAD
 330
 1F
 100
@@ -481379,7 +481457,7 @@ AcDbText
   0
 POLYLINE
   5
-4FCA6
+4FCAE
 330
 1F
 100
@@ -481401,9 +481479,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FCA7
+4FCAF
 330
-4FCA6
+4FCAE
 100
 AcDbEntity
   8
@@ -481423,9 +481501,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FCA8
+4FCB0
 330
-4FCA6
+4FCAE
 100
 AcDbEntity
   8
@@ -481445,9 +481523,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FCA9
+4FCB1
 330
-4FCA6
+4FCAE
 100
 AcDbEntity
   8
@@ -481455,7 +481533,7 @@ Text
   0
 POLYLINE
   5
-4FCAA
+4FCB2
 330
 1F
 100
@@ -481477,9 +481555,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FCAB
+4FCB3
 330
-4FCAA
+4FCB2
 100
 AcDbEntity
   8
@@ -481499,9 +481577,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FCAC
+4FCB4
 330
-4FCAA
+4FCB2
 100
 AcDbEntity
   8
@@ -481521,9 +481599,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FCAD
+4FCB5
 330
-4FCAA
+4FCB2
 100
 AcDbEntity
   8
@@ -481531,7 +481609,7 @@ Text
   0
 TEXT
   5
-4FCAE
+4FCB6
 330
 1F
 100
@@ -481557,7 +481635,7 @@ AcDbText
   0
 POLYLINE
   5
-4FCAF
+4FCB7
 330
 1F
 100
@@ -481579,9 +481657,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FCB0
+4FCB8
 330
-4FCAF
+4FCB7
 100
 AcDbEntity
   8
@@ -481601,9 +481679,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FCB1
+4FCB9
 330
-4FCAF
+4FCB7
 100
 AcDbEntity
   8
@@ -481623,9 +481701,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FCB2
+4FCBA
 330
-4FCAF
+4FCB7
 100
 AcDbEntity
   8
@@ -481633,7 +481711,7 @@ Text
   0
 POLYLINE
   5
-4FCB3
+4FCBB
 330
 1F
 100
@@ -481655,9 +481733,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FCB4
+4FCBC
 330
-4FCB3
+4FCBB
 100
 AcDbEntity
   8
@@ -481677,9 +481755,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FCB5
+4FCBD
 330
-4FCB3
+4FCBB
 100
 AcDbEntity
   8
@@ -481699,9 +481777,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FCB6
+4FCBE
 330
-4FCB3
+4FCBB
 100
 AcDbEntity
   8
@@ -481709,7 +481787,7 @@ Text
   0
 TEXT
   5
-4FCB7
+4FCBF
 330
 1F
 100
@@ -481735,7 +481813,7 @@ AcDbText
   0
 POLYLINE
   5
-4FCB8
+4FCC0
 330
 1F
 100
@@ -481757,9 +481835,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FCB9
+4FCC1
 330
-4FCB8
+4FCC0
 100
 AcDbEntity
   8
@@ -481779,9 +481857,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FCBA
+4FCC2
 330
-4FCB8
+4FCC0
 100
 AcDbEntity
   8
@@ -481801,9 +481879,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FCBB
+4FCC3
 330
-4FCB8
+4FCC0
 100
 AcDbEntity
   8
@@ -481811,7 +481889,7 @@ Text
   0
 POLYLINE
   5
-4FCBC
+4FCC4
 330
 1F
 100
@@ -481833,9 +481911,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FCBD
+4FCC5
 330
-4FCBC
+4FCC4
 100
 AcDbEntity
   8
@@ -481855,9 +481933,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FCBE
+4FCC6
 330
-4FCBC
+4FCC4
 100
 AcDbEntity
   8
@@ -481877,9 +481955,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FCBF
+4FCC7
 330
-4FCBC
+4FCC4
 100
 AcDbEntity
   8
@@ -481887,7 +481965,7 @@ Text
   0
 TEXT
   5
-4FCC0
+4FCC8
 330
 1F
 100
@@ -481913,7 +481991,7 @@ AcDbText
   0
 POLYLINE
   5
-4FCC1
+4FCC9
 330
 1F
 100
@@ -481935,9 +482013,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FCC2
+4FCCA
 330
-4FCC1
+4FCC9
 100
 AcDbEntity
   8
@@ -481957,9 +482035,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FCC3
+4FCCB
 330
-4FCC1
+4FCC9
 100
 AcDbEntity
   8
@@ -481979,9 +482057,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FCC4
+4FCCC
 330
-4FCC1
+4FCC9
 100
 AcDbEntity
   8
@@ -481989,7 +482067,7 @@ Text
   0
 POLYLINE
   5
-4FCC5
+4FCCD
 330
 1F
 100
@@ -482011,9 +482089,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FCC6
+4FCCE
 330
-4FCC5
+4FCCD
 100
 AcDbEntity
   8
@@ -482033,9 +482111,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FCC7
+4FCCF
 330
-4FCC5
+4FCCD
 100
 AcDbEntity
   8
@@ -482055,9 +482133,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FCC8
+4FCD0
 330
-4FCC5
+4FCCD
 100
 AcDbEntity
   8
@@ -482065,7 +482143,7 @@ Text
   0
 TEXT
   5
-4FCC9
+4FCD1
 330
 1F
 100
@@ -482091,7 +482169,7 @@ AcDbText
   0
 POLYLINE
   5
-4FCCA
+4FCD2
 330
 1F
 100
@@ -482113,9 +482191,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FCCB
+4FCD3
 330
-4FCCA
+4FCD2
 100
 AcDbEntity
   8
@@ -482135,9 +482213,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FCCC
+4FCD4
 330
-4FCCA
+4FCD2
 100
 AcDbEntity
   8
@@ -482157,9 +482235,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FCCD
+4FCD5
 330
-4FCCA
+4FCD2
 100
 AcDbEntity
   8
@@ -482167,7 +482245,7 @@ Text
   0
 POLYLINE
   5
-4FCCE
+4FCD6
 330
 1F
 100
@@ -482189,9 +482267,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FCCF
+4FCD7
 330
-4FCCE
+4FCD6
 100
 AcDbEntity
   8
@@ -482211,9 +482289,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FCD0
+4FCD8
 330
-4FCCE
+4FCD6
 100
 AcDbEntity
   8
@@ -482233,9 +482311,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FCD1
+4FCD9
 330
-4FCCE
+4FCD6
 100
 AcDbEntity
   8
@@ -482243,7 +482321,7 @@ Text
   0
 TEXT
   5
-4FCD2
+4FCDA
 330
 1F
 100
@@ -482269,7 +482347,7 @@ AcDbText
   0
 POLYLINE
   5
-4FCD3
+4FCDB
 330
 1F
 100
@@ -482291,9 +482369,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FCD4
+4FCDC
 330
-4FCD3
+4FCDB
 100
 AcDbEntity
   8
@@ -482313,9 +482391,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FCD5
+4FCDD
 330
-4FCD3
+4FCDB
 100
 AcDbEntity
   8
@@ -482335,9 +482413,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FCD6
+4FCDE
 330
-4FCD3
+4FCDB
 100
 AcDbEntity
   8
@@ -482345,7 +482423,7 @@ Text
   0
 POLYLINE
   5
-4FCD7
+4FCDF
 330
 1F
 100
@@ -482367,9 +482445,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FCD8
+4FCE0
 330
-4FCD7
+4FCDF
 100
 AcDbEntity
   8
@@ -482389,9 +482467,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FCD9
+4FCE1
 330
-4FCD7
+4FCDF
 100
 AcDbEntity
   8
@@ -482411,9 +482489,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FCDA
+4FCE2
 330
-4FCD7
+4FCDF
 100
 AcDbEntity
   8
@@ -482421,7 +482499,7 @@ Text
   0
 TEXT
   5
-4FCDB
+4FCE3
 330
 1F
 100
@@ -482447,7 +482525,7 @@ AcDbText
   0
 POLYLINE
   5
-4FCDC
+4FCE4
 330
 1F
 100
@@ -482469,9 +482547,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FCDD
+4FCE5
 330
-4FCDC
+4FCE4
 100
 AcDbEntity
   8
@@ -482491,9 +482569,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FCDE
+4FCE6
 330
-4FCDC
+4FCE4
 100
 AcDbEntity
   8
@@ -482513,9 +482591,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FCDF
+4FCE7
 330
-4FCDC
+4FCE4
 100
 AcDbEntity
   8
@@ -482523,7 +482601,7 @@ Text
   0
 POLYLINE
   5
-4FCE0
+4FCE8
 330
 1F
 100
@@ -482545,9 +482623,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FCE1
+4FCE9
 330
-4FCE0
+4FCE8
 100
 AcDbEntity
   8
@@ -482567,9 +482645,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FCE2
+4FCEA
 330
-4FCE0
+4FCE8
 100
 AcDbEntity
   8
@@ -482589,9 +482667,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FCE3
+4FCEB
 330
-4FCE0
+4FCE8
 100
 AcDbEntity
   8
@@ -482599,7 +482677,7 @@ Text
   0
 TEXT
   5
-4FCE4
+4FCEC
 330
 1F
 100
@@ -482625,7 +482703,7 @@ AcDbText
   0
 POLYLINE
   5
-4FCE5
+4FCED
 330
 1F
 100
@@ -482647,9 +482725,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FCE6
+4FCEE
 330
-4FCE5
+4FCED
 100
 AcDbEntity
   8
@@ -482669,9 +482747,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FCE7
+4FCEF
 330
-4FCE5
+4FCED
 100
 AcDbEntity
   8
@@ -482691,9 +482769,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FCE8
+4FCF0
 330
-4FCE5
+4FCED
 100
 AcDbEntity
   8
@@ -482701,7 +482779,7 @@ Text
   0
 POLYLINE
   5
-4FCE9
+4FCF1
 330
 1F
 100
@@ -482723,9 +482801,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FCEA
+4FCF2
 330
-4FCE9
+4FCF1
 100
 AcDbEntity
   8
@@ -482745,9 +482823,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FCEB
+4FCF3
 330
-4FCE9
+4FCF1
 100
 AcDbEntity
   8
@@ -482767,9 +482845,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FCEC
+4FCF4
 330
-4FCE9
+4FCF1
 100
 AcDbEntity
   8
@@ -482777,7 +482855,7 @@ Text
   0
 TEXT
   5
-4FCED
+4FCF5
 330
 1F
 100
@@ -482803,7 +482881,7 @@ AcDbText
   0
 POLYLINE
   5
-4FCEE
+4FCF6
 330
 1F
 100
@@ -482825,9 +482903,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FCEF
+4FCF7
 330
-4FCEE
+4FCF6
 100
 AcDbEntity
   8
@@ -482847,9 +482925,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FCF0
+4FCF8
 330
-4FCEE
+4FCF6
 100
 AcDbEntity
   8
@@ -482869,9 +482947,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FCF1
+4FCF9
 330
-4FCEE
+4FCF6
 100
 AcDbEntity
   8
@@ -482879,7 +482957,7 @@ Text
   0
 POLYLINE
   5
-4FCF2
+4FCFA
 330
 1F
 100
@@ -482901,9 +482979,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FCF3
+4FCFB
 330
-4FCF2
+4FCFA
 100
 AcDbEntity
   8
@@ -482923,9 +483001,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FCF4
+4FCFC
 330
-4FCF2
+4FCFA
 100
 AcDbEntity
   8
@@ -482945,9 +483023,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FCF5
+4FCFD
 330
-4FCF2
+4FCFA
 100
 AcDbEntity
   8
@@ -482955,7 +483033,7 @@ Text
   0
 TEXT
   5
-4FCF6
+4FCFE
 330
 1F
 100
@@ -482981,7 +483059,7 @@ AcDbText
   0
 POLYLINE
   5
-4FCF7
+4FCFF
 330
 1F
 100
@@ -483003,9 +483081,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FCF8
+4FD00
 330
-4FCF7
+4FCFF
 100
 AcDbEntity
   8
@@ -483025,9 +483103,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FCF9
+4FD01
 330
-4FCF7
+4FCFF
 100
 AcDbEntity
   8
@@ -483047,9 +483125,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FCFA
+4FD02
 330
-4FCF7
+4FCFF
 100
 AcDbEntity
   8
@@ -483057,7 +483135,7 @@ Text
   0
 POLYLINE
   5
-4FCFB
+4FD03
 330
 1F
 100
@@ -483079,9 +483157,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FCFC
+4FD04
 330
-4FCFB
+4FD03
 100
 AcDbEntity
   8
@@ -483101,9 +483179,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FCFD
+4FD05
 330
-4FCFB
+4FD03
 100
 AcDbEntity
   8
@@ -483123,9 +483201,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FCFE
+4FD06
 330
-4FCFB
+4FD03
 100
 AcDbEntity
   8
@@ -483133,7 +483211,7 @@ Text
   0
 TEXT
   5
-4FCFF
+4FD07
 330
 1F
 100
@@ -483159,7 +483237,7 @@ AcDbText
   0
 POLYLINE
   5
-4FD00
+4FD08
 330
 1F
 100
@@ -483181,9 +483259,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD01
+4FD09
 330
-4FD00
+4FD08
 100
 AcDbEntity
   8
@@ -483203,9 +483281,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD02
+4FD0A
 330
-4FD00
+4FD08
 100
 AcDbEntity
   8
@@ -483225,9 +483303,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD03
+4FD0B
 330
-4FD00
+4FD08
 100
 AcDbEntity
   8
@@ -483235,7 +483313,7 @@ Text
   0
 POLYLINE
   5
-4FD04
+4FD0C
 330
 1F
 100
@@ -483257,9 +483335,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD05
+4FD0D
 330
-4FD04
+4FD0C
 100
 AcDbEntity
   8
@@ -483279,9 +483357,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD06
+4FD0E
 330
-4FD04
+4FD0C
 100
 AcDbEntity
   8
@@ -483301,9 +483379,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD07
+4FD0F
 330
-4FD04
+4FD0C
 100
 AcDbEntity
   8
@@ -483311,7 +483389,7 @@ Text
   0
 TEXT
   5
-4FD08
+4FD10
 330
 1F
 100
@@ -483337,7 +483415,7 @@ AcDbText
   0
 POLYLINE
   5
-4FD09
+4FD11
 330
 1F
 100
@@ -483359,9 +483437,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD0A
+4FD12
 330
-4FD09
+4FD11
 100
 AcDbEntity
   8
@@ -483381,9 +483459,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD0B
+4FD13
 330
-4FD09
+4FD11
 100
 AcDbEntity
   8
@@ -483403,9 +483481,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD0C
+4FD14
 330
-4FD09
+4FD11
 100
 AcDbEntity
   8
@@ -483413,7 +483491,7 @@ Text
   0
 POLYLINE
   5
-4FD0D
+4FD15
 330
 1F
 100
@@ -483435,9 +483513,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD0E
+4FD16
 330
-4FD0D
+4FD15
 100
 AcDbEntity
   8
@@ -483457,9 +483535,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD0F
+4FD17
 330
-4FD0D
+4FD15
 100
 AcDbEntity
   8
@@ -483479,9 +483557,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD10
+4FD18
 330
-4FD0D
+4FD15
 100
 AcDbEntity
   8
@@ -483489,7 +483567,7 @@ Text
   0
 TEXT
   5
-4FD11
+4FD19
 330
 1F
 100
@@ -483515,7 +483593,7 @@ AcDbText
   0
 POLYLINE
   5
-4FD12
+4FD1A
 330
 1F
 100
@@ -483537,9 +483615,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD13
+4FD1B
 330
-4FD12
+4FD1A
 100
 AcDbEntity
   8
@@ -483559,9 +483637,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD14
+4FD1C
 330
-4FD12
+4FD1A
 100
 AcDbEntity
   8
@@ -483581,9 +483659,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD15
+4FD1D
 330
-4FD12
+4FD1A
 100
 AcDbEntity
   8
@@ -483591,7 +483669,7 @@ Text
   0
 POLYLINE
   5
-4FD16
+4FD1E
 330
 1F
 100
@@ -483613,9 +483691,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD17
+4FD1F
 330
-4FD16
+4FD1E
 100
 AcDbEntity
   8
@@ -483635,9 +483713,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD18
+4FD20
 330
-4FD16
+4FD1E
 100
 AcDbEntity
   8
@@ -483657,9 +483735,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD19
+4FD21
 330
-4FD16
+4FD1E
 100
 AcDbEntity
   8
@@ -483667,7 +483745,7 @@ Text
   0
 TEXT
   5
-4FD1A
+4FD22
 330
 1F
 100
@@ -483693,7 +483771,7 @@ AcDbText
   0
 POLYLINE
   5
-4FD1B
+4FD23
 330
 1F
 100
@@ -483715,9 +483793,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD1C
+4FD24
 330
-4FD1B
+4FD23
 100
 AcDbEntity
   8
@@ -483737,9 +483815,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD1D
+4FD25
 330
-4FD1B
+4FD23
 100
 AcDbEntity
   8
@@ -483759,9 +483837,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD1E
+4FD26
 330
-4FD1B
+4FD23
 100
 AcDbEntity
   8
@@ -483769,7 +483847,7 @@ Text
   0
 POLYLINE
   5
-4FD1F
+4FD27
 330
 1F
 100
@@ -483791,9 +483869,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD20
+4FD28
 330
-4FD1F
+4FD27
 100
 AcDbEntity
   8
@@ -483813,9 +483891,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD21
+4FD29
 330
-4FD1F
+4FD27
 100
 AcDbEntity
   8
@@ -483835,9 +483913,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD22
+4FD2A
 330
-4FD1F
+4FD27
 100
 AcDbEntity
   8
@@ -483845,7 +483923,7 @@ Text
   0
 TEXT
   5
-4FD23
+4FD2B
 330
 1F
 100
@@ -483871,7 +483949,7 @@ AcDbText
   0
 POLYLINE
   5
-4FD24
+4FD2C
 330
 1F
 100
@@ -483893,9 +483971,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD25
+4FD2D
 330
-4FD24
+4FD2C
 100
 AcDbEntity
   8
@@ -483915,9 +483993,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD26
+4FD2E
 330
-4FD24
+4FD2C
 100
 AcDbEntity
   8
@@ -483937,9 +484015,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD27
+4FD2F
 330
-4FD24
+4FD2C
 100
 AcDbEntity
   8
@@ -483947,7 +484025,7 @@ Text
   0
 POLYLINE
   5
-4FD28
+4FD30
 330
 1F
 100
@@ -483969,9 +484047,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD29
+4FD31
 330
-4FD28
+4FD30
 100
 AcDbEntity
   8
@@ -483991,9 +484069,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD2A
+4FD32
 330
-4FD28
+4FD30
 100
 AcDbEntity
   8
@@ -484013,9 +484091,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD2B
+4FD33
 330
-4FD28
+4FD30
 100
 AcDbEntity
   8
@@ -484023,7 +484101,7 @@ Text
   0
 TEXT
   5
-4FD2C
+4FD34
 330
 1F
 100
@@ -484049,7 +484127,7 @@ AcDbText
   0
 POLYLINE
   5
-4FD2D
+4FD35
 330
 1F
 100
@@ -484071,9 +484149,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD2E
+4FD36
 330
-4FD2D
+4FD35
 100
 AcDbEntity
   8
@@ -484093,9 +484171,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD2F
+4FD37
 330
-4FD2D
+4FD35
 100
 AcDbEntity
   8
@@ -484115,9 +484193,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD30
+4FD38
 330
-4FD2D
+4FD35
 100
 AcDbEntity
   8
@@ -484125,7 +484203,7 @@ Text
   0
 POLYLINE
   5
-4FD31
+4FD39
 330
 1F
 100
@@ -484147,9 +484225,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD32
+4FD3A
 330
-4FD31
+4FD39
 100
 AcDbEntity
   8
@@ -484169,9 +484247,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD33
+4FD3B
 330
-4FD31
+4FD39
 100
 AcDbEntity
   8
@@ -484191,9 +484269,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD34
+4FD3C
 330
-4FD31
+4FD39
 100
 AcDbEntity
   8
@@ -484201,7 +484279,7 @@ Text
   0
 TEXT
   5
-4FD35
+4FD3D
 330
 1F
 100
@@ -484227,7 +484305,7 @@ AcDbText
   0
 POLYLINE
   5
-4FD36
+4FD3E
 330
 1F
 100
@@ -484249,9 +484327,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD37
+4FD3F
 330
-4FD36
+4FD3E
 100
 AcDbEntity
   8
@@ -484271,9 +484349,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD38
+4FD40
 330
-4FD36
+4FD3E
 100
 AcDbEntity
   8
@@ -484293,9 +484371,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD39
+4FD41
 330
-4FD36
+4FD3E
 100
 AcDbEntity
   8
@@ -484303,7 +484381,7 @@ Text
   0
 POLYLINE
   5
-4FD3A
+4FD42
 330
 1F
 100
@@ -484325,9 +484403,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD3B
+4FD43
 330
-4FD3A
+4FD42
 100
 AcDbEntity
   8
@@ -484347,9 +484425,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD3C
+4FD44
 330
-4FD3A
+4FD42
 100
 AcDbEntity
   8
@@ -484369,9 +484447,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD3D
+4FD45
 330
-4FD3A
+4FD42
 100
 AcDbEntity
   8
@@ -484379,7 +484457,7 @@ Text
   0
 TEXT
   5
-4FD3E
+4FD46
 330
 1F
 100
@@ -484405,7 +484483,7 @@ AcDbText
   0
 POLYLINE
   5
-4FD3F
+4FD47
 330
 1F
 100
@@ -484427,9 +484505,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD40
+4FD48
 330
-4FD3F
+4FD47
 100
 AcDbEntity
   8
@@ -484449,9 +484527,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD41
+4FD49
 330
-4FD3F
+4FD47
 100
 AcDbEntity
   8
@@ -484471,9 +484549,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD42
+4FD4A
 330
-4FD3F
+4FD47
 100
 AcDbEntity
   8
@@ -484481,7 +484559,7 @@ Text
   0
 POLYLINE
   5
-4FD43
+4FD4B
 330
 1F
 100
@@ -484503,9 +484581,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD44
+4FD4C
 330
-4FD43
+4FD4B
 100
 AcDbEntity
   8
@@ -484525,9 +484603,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD45
+4FD4D
 330
-4FD43
+4FD4B
 100
 AcDbEntity
   8
@@ -484547,9 +484625,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD46
+4FD4E
 330
-4FD43
+4FD4B
 100
 AcDbEntity
   8
@@ -484557,7 +484635,7 @@ Text
   0
 TEXT
   5
-4FD47
+4FD4F
 330
 1F
 100
@@ -484583,7 +484661,7 @@ AcDbText
   0
 POLYLINE
   5
-4FD48
+4FD50
 330
 1F
 100
@@ -484605,9 +484683,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD49
+4FD51
 330
-4FD48
+4FD50
 100
 AcDbEntity
   8
@@ -484627,9 +484705,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD4A
+4FD52
 330
-4FD48
+4FD50
 100
 AcDbEntity
   8
@@ -484649,9 +484727,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD4B
+4FD53
 330
-4FD48
+4FD50
 100
 AcDbEntity
   8
@@ -484659,7 +484737,7 @@ Text
   0
 POLYLINE
   5
-4FD4C
+4FD54
 330
 1F
 100
@@ -484681,9 +484759,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD4D
+4FD55
 330
-4FD4C
+4FD54
 100
 AcDbEntity
   8
@@ -484703,9 +484781,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD4E
+4FD56
 330
-4FD4C
+4FD54
 100
 AcDbEntity
   8
@@ -484725,9 +484803,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD4F
+4FD57
 330
-4FD4C
+4FD54
 100
 AcDbEntity
   8
@@ -484735,7 +484813,7 @@ Text
   0
 TEXT
   5
-4FD50
+4FD58
 330
 1F
 100
@@ -484761,7 +484839,7 @@ AcDbText
   0
 POLYLINE
   5
-4FD51
+4FD59
 330
 1F
 100
@@ -484783,9 +484861,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD52
+4FD5A
 330
-4FD51
+4FD59
 100
 AcDbEntity
   8
@@ -484805,9 +484883,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD53
+4FD5B
 330
-4FD51
+4FD59
 100
 AcDbEntity
   8
@@ -484827,9 +484905,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD54
+4FD5C
 330
-4FD51
+4FD59
 100
 AcDbEntity
   8
@@ -484837,7 +484915,7 @@ Text
   0
 POLYLINE
   5
-4FD55
+4FD5D
 330
 1F
 100
@@ -484859,9 +484937,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD56
+4FD5E
 330
-4FD55
+4FD5D
 100
 AcDbEntity
   8
@@ -484881,9 +484959,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD57
+4FD5F
 330
-4FD55
+4FD5D
 100
 AcDbEntity
   8
@@ -484903,9 +484981,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD58
+4FD60
 330
-4FD55
+4FD5D
 100
 AcDbEntity
   8
@@ -484913,7 +484991,7 @@ Text
   0
 TEXT
   5
-4FD59
+4FD61
 330
 1F
 100
@@ -484939,7 +485017,7 @@ AcDbText
   0
 POLYLINE
   5
-4FD5A
+4FD62
 330
 1F
 100
@@ -484961,9 +485039,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD5B
+4FD63
 330
-4FD5A
+4FD62
 100
 AcDbEntity
   8
@@ -484983,9 +485061,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD5C
+4FD64
 330
-4FD5A
+4FD62
 100
 AcDbEntity
   8
@@ -485005,9 +485083,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD5D
+4FD65
 330
-4FD5A
+4FD62
 100
 AcDbEntity
   8
@@ -485015,7 +485093,7 @@ Text
   0
 POLYLINE
   5
-4FD5E
+4FD66
 330
 1F
 100
@@ -485037,9 +485115,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD5F
+4FD67
 330
-4FD5E
+4FD66
 100
 AcDbEntity
   8
@@ -485059,9 +485137,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD60
+4FD68
 330
-4FD5E
+4FD66
 100
 AcDbEntity
   8
@@ -485081,9 +485159,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD61
+4FD69
 330
-4FD5E
+4FD66
 100
 AcDbEntity
   8
@@ -485091,7 +485169,7 @@ Text
   0
 TEXT
   5
-4FD62
+4FD6A
 330
 1F
 100
@@ -485117,7 +485195,7 @@ AcDbText
   0
 POLYLINE
   5
-4FD63
+4FD6B
 330
 1F
 100
@@ -485139,9 +485217,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD64
+4FD6C
 330
-4FD63
+4FD6B
 100
 AcDbEntity
   8
@@ -485161,9 +485239,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD65
+4FD6D
 330
-4FD63
+4FD6B
 100
 AcDbEntity
   8
@@ -485183,9 +485261,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD66
+4FD6E
 330
-4FD63
+4FD6B
 100
 AcDbEntity
   8
@@ -485193,7 +485271,7 @@ Text
   0
 POLYLINE
   5
-4FD67
+4FD6F
 330
 1F
 100
@@ -485215,9 +485293,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD68
+4FD70
 330
-4FD67
+4FD6F
 100
 AcDbEntity
   8
@@ -485237,9 +485315,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD69
+4FD71
 330
-4FD67
+4FD6F
 100
 AcDbEntity
   8
@@ -485259,9 +485337,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD6A
+4FD72
 330
-4FD67
+4FD6F
 100
 AcDbEntity
   8
@@ -485269,7 +485347,7 @@ Text
   0
 TEXT
   5
-4FD6B
+4FD73
 330
 1F
 100
@@ -485295,7 +485373,7 @@ AcDbText
   0
 POLYLINE
   5
-4FD6C
+4FD74
 330
 1F
 100
@@ -485317,9 +485395,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD6D
+4FD75
 330
-4FD6C
+4FD74
 100
 AcDbEntity
   8
@@ -485339,9 +485417,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD6E
+4FD76
 330
-4FD6C
+4FD74
 100
 AcDbEntity
   8
@@ -485361,9 +485439,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD6F
+4FD77
 330
-4FD6C
+4FD74
 100
 AcDbEntity
   8
@@ -485371,7 +485449,7 @@ Text
   0
 POLYLINE
   5
-4FD70
+4FD78
 330
 1F
 100
@@ -485393,9 +485471,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD71
+4FD79
 330
-4FD70
+4FD78
 100
 AcDbEntity
   8
@@ -485415,9 +485493,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD72
+4FD7A
 330
-4FD70
+4FD78
 100
 AcDbEntity
   8
@@ -485437,9 +485515,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD73
+4FD7B
 330
-4FD70
+4FD78
 100
 AcDbEntity
   8
@@ -485447,7 +485525,7 @@ Text
   0
 TEXT
   5
-4FD74
+4FD7C
 330
 1F
 100
@@ -485473,7 +485551,7 @@ AcDbText
   0
 POLYLINE
   5
-4FD75
+4FD7D
 330
 1F
 100
@@ -485495,9 +485573,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD76
+4FD7E
 330
-4FD75
+4FD7D
 100
 AcDbEntity
   8
@@ -485517,9 +485595,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD77
+4FD7F
 330
-4FD75
+4FD7D
 100
 AcDbEntity
   8
@@ -485539,9 +485617,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD78
+4FD80
 330
-4FD75
+4FD7D
 100
 AcDbEntity
   8
@@ -485549,7 +485627,7 @@ Text
   0
 POLYLINE
   5
-4FD79
+4FD81
 330
 1F
 100
@@ -485571,9 +485649,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD7A
+4FD82
 330
-4FD79
+4FD81
 100
 AcDbEntity
   8
@@ -485593,9 +485671,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD7B
+4FD83
 330
-4FD79
+4FD81
 100
 AcDbEntity
   8
@@ -485615,9 +485693,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD7C
+4FD84
 330
-4FD79
+4FD81
 100
 AcDbEntity
   8
@@ -485625,7 +485703,7 @@ Text
   0
 TEXT
   5
-4FD7D
+4FD85
 330
 1F
 100
@@ -485651,7 +485729,7 @@ AcDbText
   0
 POLYLINE
   5
-4FD7E
+4FD86
 330
 1F
 100
@@ -485673,9 +485751,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD7F
+4FD87
 330
-4FD7E
+4FD86
 100
 AcDbEntity
   8
@@ -485695,9 +485773,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD80
+4FD88
 330
-4FD7E
+4FD86
 100
 AcDbEntity
   8
@@ -485717,9 +485795,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD81
+4FD89
 330
-4FD7E
+4FD86
 100
 AcDbEntity
   8
@@ -485727,7 +485805,7 @@ Text
   0
 POLYLINE
   5
-4FD82
+4FD8A
 330
 1F
 100
@@ -485749,9 +485827,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD83
+4FD8B
 330
-4FD82
+4FD8A
 100
 AcDbEntity
   8
@@ -485771,9 +485849,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD84
+4FD8C
 330
-4FD82
+4FD8A
 100
 AcDbEntity
   8
@@ -485793,9 +485871,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD85
+4FD8D
 330
-4FD82
+4FD8A
 100
 AcDbEntity
   8
@@ -485803,7 +485881,7 @@ Text
   0
 TEXT
   5
-4FD86
+4FD8E
 330
 1F
 100
@@ -485829,7 +485907,7 @@ AcDbText
   0
 POLYLINE
   5
-4FD87
+4FD8F
 330
 1F
 100
@@ -485851,9 +485929,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD88
+4FD90
 330
-4FD87
+4FD8F
 100
 AcDbEntity
   8
@@ -485873,9 +485951,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD89
+4FD91
 330
-4FD87
+4FD8F
 100
 AcDbEntity
   8
@@ -485895,9 +485973,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD8A
+4FD92
 330
-4FD87
+4FD8F
 100
 AcDbEntity
   8
@@ -485905,7 +485983,7 @@ Text
   0
 POLYLINE
   5
-4FD8B
+4FD93
 330
 1F
 100
@@ -485927,9 +486005,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD8C
+4FD94
 330
-4FD8B
+4FD93
 100
 AcDbEntity
   8
@@ -485949,9 +486027,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD8D
+4FD95
 330
-4FD8B
+4FD93
 100
 AcDbEntity
   8
@@ -485971,9 +486049,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD8E
+4FD96
 330
-4FD8B
+4FD93
 100
 AcDbEntity
   8
@@ -485981,7 +486059,7 @@ Text
   0
 TEXT
   5
-4FD8F
+4FD97
 330
 1F
 100
@@ -486007,7 +486085,7 @@ AcDbText
   0
 POLYLINE
   5
-4FD90
+4FD98
 330
 1F
 100
@@ -486029,9 +486107,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD91
+4FD99
 330
-4FD90
+4FD98
 100
 AcDbEntity
   8
@@ -486051,9 +486129,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD92
+4FD9A
 330
-4FD90
+4FD98
 100
 AcDbEntity
   8
@@ -486073,9 +486151,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD93
+4FD9B
 330
-4FD90
+4FD98
 100
 AcDbEntity
   8
@@ -486083,7 +486161,7 @@ Text
   0
 POLYLINE
   5
-4FD94
+4FD9C
 330
 1F
 100
@@ -486105,9 +486183,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD95
+4FD9D
 330
-4FD94
+4FD9C
 100
 AcDbEntity
   8
@@ -486127,9 +486205,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD96
+4FD9E
 330
-4FD94
+4FD9C
 100
 AcDbEntity
   8
@@ -486149,9 +486227,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD97
+4FD9F
 330
-4FD94
+4FD9C
 100
 AcDbEntity
   8
@@ -486159,7 +486237,7 @@ Text
   0
 TEXT
   5
-4FD98
+4FDA0
 330
 1F
 100
@@ -486185,7 +486263,7 @@ AcDbText
   0
 POLYLINE
   5
-4FD99
+4FDA1
 330
 1F
 100
@@ -486207,9 +486285,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD9A
+4FDA2
 330
-4FD99
+4FDA1
 100
 AcDbEntity
   8
@@ -486229,9 +486307,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD9B
+4FDA3
 330
-4FD99
+4FDA1
 100
 AcDbEntity
   8
@@ -486251,9 +486329,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FD9C
+4FDA4
 330
-4FD99
+4FDA1
 100
 AcDbEntity
   8
@@ -486261,7 +486339,7 @@ Text
   0
 POLYLINE
   5
-4FD9D
+4FDA5
 330
 1F
 100
@@ -486283,9 +486361,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FD9E
+4FDA6
 330
-4FD9D
+4FDA5
 100
 AcDbEntity
   8
@@ -486305,9 +486383,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FD9F
+4FDA7
 330
-4FD9D
+4FDA5
 100
 AcDbEntity
   8
@@ -486327,9 +486405,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FDA0
+4FDA8
 330
-4FD9D
+4FDA5
 100
 AcDbEntity
   8
@@ -486337,7 +486415,7 @@ Text
   0
 TEXT
   5
-4FDA1
+4FDA9
 330
 1F
 100
@@ -486363,7 +486441,7 @@ AcDbText
   0
 POLYLINE
   5
-4FDA2
+4FDAA
 330
 1F
 100
@@ -486385,9 +486463,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FDA3
+4FDAB
 330
-4FDA2
+4FDAA
 100
 AcDbEntity
   8
@@ -486407,9 +486485,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FDA4
+4FDAC
 330
-4FDA2
+4FDAA
 100
 AcDbEntity
   8
@@ -486429,9 +486507,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FDA5
+4FDAD
 330
-4FDA2
+4FDAA
 100
 AcDbEntity
   8
@@ -486439,7 +486517,7 @@ Text
   0
 POLYLINE
   5
-4FDA6
+4FDAE
 330
 1F
 100
@@ -486461,9 +486539,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FDA7
+4FDAF
 330
-4FDA6
+4FDAE
 100
 AcDbEntity
   8
@@ -486483,9 +486561,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FDA8
+4FDB0
 330
-4FDA6
+4FDAE
 100
 AcDbEntity
   8
@@ -486505,9 +486583,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FDA9
+4FDB1
 330
-4FDA6
+4FDAE
 100
 AcDbEntity
   8
@@ -486515,7 +486593,7 @@ Text
   0
 TEXT
   5
-4FDAA
+4FDB2
 330
 1F
 100
@@ -486541,7 +486619,7 @@ AcDbText
   0
 POLYLINE
   5
-4FDAB
+4FDB3
 330
 1F
 100
@@ -486563,9 +486641,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FDAC
+4FDB4
 330
-4FDAB
+4FDB3
 100
 AcDbEntity
   8
@@ -486585,9 +486663,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FDAD
+4FDB5
 330
-4FDAB
+4FDB3
 100
 AcDbEntity
   8
@@ -486607,9 +486685,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FDAE
+4FDB6
 330
-4FDAB
+4FDB3
 100
 AcDbEntity
   8
@@ -486617,7 +486695,7 @@ Text
   0
 POLYLINE
   5
-4FDAF
+4FDB7
 330
 1F
 100
@@ -486639,9 +486717,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FDB0
+4FDB8
 330
-4FDAF
+4FDB7
 100
 AcDbEntity
   8
@@ -486661,9 +486739,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FDB1
+4FDB9
 330
-4FDAF
+4FDB7
 100
 AcDbEntity
   8
@@ -486683,9 +486761,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FDB2
+4FDBA
 330
-4FDAF
+4FDB7
 100
 AcDbEntity
   8
@@ -486693,7 +486771,7 @@ Text
   0
 TEXT
   5
-4FDB3
+4FDBB
 330
 1F
 100
@@ -486719,7 +486797,7 @@ AcDbText
   0
 POLYLINE
   5
-4FDB4
+4FDBC
 330
 1F
 100
@@ -486741,9 +486819,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FDB5
+4FDBD
 330
-4FDB4
+4FDBC
 100
 AcDbEntity
   8
@@ -486763,9 +486841,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FDB6
+4FDBE
 330
-4FDB4
+4FDBC
 100
 AcDbEntity
   8
@@ -486785,9 +486863,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FDB7
+4FDBF
 330
-4FDB4
+4FDBC
 100
 AcDbEntity
   8
@@ -486795,7 +486873,7 @@ Text
   0
 POLYLINE
   5
-4FDB8
+4FDC0
 330
 1F
 100
@@ -486817,9 +486895,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FDB9
+4FDC1
 330
-4FDB8
+4FDC0
 100
 AcDbEntity
   8
@@ -486839,9 +486917,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FDBA
+4FDC2
 330
-4FDB8
+4FDC0
 100
 AcDbEntity
   8
@@ -486861,9 +486939,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FDBB
+4FDC3
 330
-4FDB8
+4FDC0
 100
 AcDbEntity
   8
@@ -486871,7 +486949,7 @@ Text
   0
 TEXT
   5
-4FDBC
+4FDC4
 330
 1F
 100
@@ -486897,7 +486975,7 @@ AcDbText
   0
 POLYLINE
   5
-4FDBD
+4FDC5
 330
 1F
 100
@@ -486919,9 +486997,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FDBE
+4FDC6
 330
-4FDBD
+4FDC5
 100
 AcDbEntity
   8
@@ -486941,9 +487019,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FDBF
+4FDC7
 330
-4FDBD
+4FDC5
 100
 AcDbEntity
   8
@@ -486963,9 +487041,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FDC0
+4FDC8
 330
-4FDBD
+4FDC5
 100
 AcDbEntity
   8
@@ -486973,7 +487051,7 @@ Text
   0
 POLYLINE
   5
-4FDC1
+4FDC9
 330
 1F
 100
@@ -486995,9 +487073,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FDC2
+4FDCA
 330
-4FDC1
+4FDC9
 100
 AcDbEntity
   8
@@ -487017,9 +487095,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FDC3
+4FDCB
 330
-4FDC1
+4FDC9
 100
 AcDbEntity
   8
@@ -487039,9 +487117,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FDC4
+4FDCC
 330
-4FDC1
+4FDC9
 100
 AcDbEntity
   8
@@ -487049,7 +487127,7 @@ Text
   0
 TEXT
   5
-4FDC5
+4FDCD
 330
 1F
 100
@@ -487075,7 +487153,7 @@ AcDbText
   0
 POLYLINE
   5
-4FDC6
+4FDCE
 330
 1F
 100
@@ -487097,9 +487175,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FDC7
+4FDCF
 330
-4FDC6
+4FDCE
 100
 AcDbEntity
   8
@@ -487119,9 +487197,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FDC8
+4FDD0
 330
-4FDC6
+4FDCE
 100
 AcDbEntity
   8
@@ -487141,9 +487219,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FDC9
+4FDD1
 330
-4FDC6
+4FDCE
 100
 AcDbEntity
   8
@@ -487151,7 +487229,7 @@ Text
   0
 POLYLINE
   5
-4FDCA
+4FDD2
 330
 1F
 100
@@ -487173,9 +487251,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FDCB
+4FDD3
 330
-4FDCA
+4FDD2
 100
 AcDbEntity
   8
@@ -487195,9 +487273,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FDCC
+4FDD4
 330
-4FDCA
+4FDD2
 100
 AcDbEntity
   8
@@ -487217,9 +487295,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FDCD
+4FDD5
 330
-4FDCA
+4FDD2
 100
 AcDbEntity
   8
@@ -487227,7 +487305,7 @@ Text
   0
 TEXT
   5
-4FDCE
+4FDD6
 330
 1F
 100
@@ -487253,7 +487331,7 @@ AcDbText
   0
 POLYLINE
   5
-4FDCF
+4FDD7
 330
 1F
 100
@@ -487275,9 +487353,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FDD0
+4FDD8
 330
-4FDCF
+4FDD7
 100
 AcDbEntity
   8
@@ -487297,9 +487375,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FDD1
+4FDD9
 330
-4FDCF
+4FDD7
 100
 AcDbEntity
   8
@@ -487319,9 +487397,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FDD2
+4FDDA
 330
-4FDCF
+4FDD7
 100
 AcDbEntity
   8
@@ -487329,7 +487407,7 @@ Text
   0
 POLYLINE
   5
-4FDD3
+4FDDB
 330
 1F
 100
@@ -487351,9 +487429,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FDD4
+4FDDC
 330
-4FDD3
+4FDDB
 100
 AcDbEntity
   8
@@ -487373,9 +487451,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FDD5
+4FDDD
 330
-4FDD3
+4FDDB
 100
 AcDbEntity
   8
@@ -487395,9 +487473,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FDD6
+4FDDE
 330
-4FDD3
+4FDDB
 100
 AcDbEntity
   8
@@ -487405,7 +487483,7 @@ Text
   0
 TEXT
   5
-4FDD7
+4FDDF
 330
 1F
 100
@@ -487431,7 +487509,7 @@ AcDbText
   0
 POLYLINE
   5
-4FDD8
+4FDE0
 330
 1F
 100
@@ -487453,9 +487531,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FDD9
+4FDE1
 330
-4FDD8
+4FDE0
 100
 AcDbEntity
   8
@@ -487475,9 +487553,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FDDA
+4FDE2
 330
-4FDD8
+4FDE0
 100
 AcDbEntity
   8
@@ -487497,9 +487575,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FDDB
+4FDE3
 330
-4FDD8
+4FDE0
 100
 AcDbEntity
   8
@@ -487507,7 +487585,7 @@ Text
   0
 POLYLINE
   5
-4FDDC
+4FDE4
 330
 1F
 100
@@ -487529,9 +487607,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FDDD
+4FDE5
 330
-4FDDC
+4FDE4
 100
 AcDbEntity
   8
@@ -487551,9 +487629,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FDDE
+4FDE6
 330
-4FDDC
+4FDE4
 100
 AcDbEntity
   8
@@ -487573,9 +487651,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FDDF
+4FDE7
 330
-4FDDC
+4FDE4
 100
 AcDbEntity
   8
@@ -487583,7 +487661,7 @@ Text
   0
 TEXT
   5
-4FDE0
+4FDE8
 330
 1F
 100
@@ -487609,7 +487687,7 @@ AcDbText
   0
 POLYLINE
   5
-4FDE1
+4FDE9
 330
 1F
 100
@@ -487631,9 +487709,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FDE2
+4FDEA
 330
-4FDE1
+4FDE9
 100
 AcDbEntity
   8
@@ -487653,9 +487731,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FDE3
+4FDEB
 330
-4FDE1
+4FDE9
 100
 AcDbEntity
   8
@@ -487675,9 +487753,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FDE4
+4FDEC
 330
-4FDE1
+4FDE9
 100
 AcDbEntity
   8
@@ -487685,7 +487763,7 @@ Text
   0
 POLYLINE
   5
-4FDE5
+4FDED
 330
 1F
 100
@@ -487707,9 +487785,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FDE6
+4FDEE
 330
-4FDE5
+4FDED
 100
 AcDbEntity
   8
@@ -487729,9 +487807,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FDE7
+4FDEF
 330
-4FDE5
+4FDED
 100
 AcDbEntity
   8
@@ -487751,9 +487829,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FDE8
+4FDF0
 330
-4FDE5
+4FDED
 100
 AcDbEntity
   8
@@ -487761,7 +487839,7 @@ Text
   0
 TEXT
   5
-4FDE9
+4FDF1
 330
 1F
 100
@@ -487787,7 +487865,7 @@ AcDbText
   0
 POLYLINE
   5
-4FDEA
+4FDF2
 330
 1F
 100
@@ -487809,9 +487887,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FDEB
+4FDF3
 330
-4FDEA
+4FDF2
 100
 AcDbEntity
   8
@@ -487831,9 +487909,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FDEC
+4FDF4
 330
-4FDEA
+4FDF2
 100
 AcDbEntity
   8
@@ -487853,9 +487931,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FDED
+4FDF5
 330
-4FDEA
+4FDF2
 100
 AcDbEntity
   8
@@ -487863,7 +487941,7 @@ Text
   0
 POLYLINE
   5
-4FDEE
+4FDF6
 330
 1F
 100
@@ -487885,9 +487963,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FDEF
+4FDF7
 330
-4FDEE
+4FDF6
 100
 AcDbEntity
   8
@@ -487907,9 +487985,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FDF0
+4FDF8
 330
-4FDEE
+4FDF6
 100
 AcDbEntity
   8
@@ -487929,9 +488007,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FDF1
+4FDF9
 330
-4FDEE
+4FDF6
 100
 AcDbEntity
   8
@@ -487939,7 +488017,7 @@ Text
   0
 TEXT
   5
-4FDF2
+4FDFA
 330
 1F
 100
@@ -487965,7 +488043,7 @@ AcDbText
   0
 POLYLINE
   5
-4FDF3
+4FDFB
 330
 1F
 100
@@ -487987,9 +488065,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FDF4
+4FDFC
 330
-4FDF3
+4FDFB
 100
 AcDbEntity
   8
@@ -488009,9 +488087,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FDF5
+4FDFD
 330
-4FDF3
+4FDFB
 100
 AcDbEntity
   8
@@ -488031,9 +488109,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FDF6
+4FDFE
 330
-4FDF3
+4FDFB
 100
 AcDbEntity
   8
@@ -488041,7 +488119,7 @@ Text
   0
 POLYLINE
   5
-4FDF7
+4FDFF
 330
 1F
 100
@@ -488063,9 +488141,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FDF8
+4FE00
 330
-4FDF7
+4FDFF
 100
 AcDbEntity
   8
@@ -488085,9 +488163,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FDF9
+4FE01
 330
-4FDF7
+4FDFF
 100
 AcDbEntity
   8
@@ -488107,9 +488185,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FDFA
+4FE02
 330
-4FDF7
+4FDFF
 100
 AcDbEntity
   8
@@ -488117,7 +488195,7 @@ Text
   0
 TEXT
   5
-4FDFB
+4FE03
 330
 1F
 100
@@ -488143,7 +488221,7 @@ AcDbText
   0
 POLYLINE
   5
-4FDFC
+4FE04
 330
 1F
 100
@@ -488165,9 +488243,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FDFD
+4FE05
 330
-4FDFC
+4FE04
 100
 AcDbEntity
   8
@@ -488187,9 +488265,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FDFE
+4FE06
 330
-4FDFC
+4FE04
 100
 AcDbEntity
   8
@@ -488209,9 +488287,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FDFF
+4FE07
 330
-4FDFC
+4FE04
 100
 AcDbEntity
   8
@@ -488219,7 +488297,7 @@ Text
   0
 POLYLINE
   5
-4FE00
+4FE08
 330
 1F
 100
@@ -488241,9 +488319,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE01
+4FE09
 330
-4FE00
+4FE08
 100
 AcDbEntity
   8
@@ -488263,9 +488341,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE02
+4FE0A
 330
-4FE00
+4FE08
 100
 AcDbEntity
   8
@@ -488285,9 +488363,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE03
+4FE0B
 330
-4FE00
+4FE08
 100
 AcDbEntity
   8
@@ -488295,7 +488373,7 @@ Text
   0
 TEXT
   5
-4FE04
+4FE0C
 330
 1F
 100
@@ -488321,7 +488399,7 @@ AcDbText
   0
 POLYLINE
   5
-4FE05
+4FE0D
 330
 1F
 100
@@ -488343,9 +488421,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE06
+4FE0E
 330
-4FE05
+4FE0D
 100
 AcDbEntity
   8
@@ -488365,9 +488443,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE07
+4FE0F
 330
-4FE05
+4FE0D
 100
 AcDbEntity
   8
@@ -488387,9 +488465,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE08
+4FE10
 330
-4FE05
+4FE0D
 100
 AcDbEntity
   8
@@ -488397,7 +488475,7 @@ Text
   0
 POLYLINE
   5
-4FE09
+4FE11
 330
 1F
 100
@@ -488419,9 +488497,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE0A
+4FE12
 330
-4FE09
+4FE11
 100
 AcDbEntity
   8
@@ -488441,9 +488519,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE0B
+4FE13
 330
-4FE09
+4FE11
 100
 AcDbEntity
   8
@@ -488463,9 +488541,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE0C
+4FE14
 330
-4FE09
+4FE11
 100
 AcDbEntity
   8
@@ -488473,7 +488551,7 @@ Text
   0
 TEXT
   5
-4FE0D
+4FE15
 330
 1F
 100
@@ -488499,7 +488577,7 @@ AcDbText
   0
 POLYLINE
   5
-4FE0E
+4FE16
 330
 1F
 100
@@ -488521,9 +488599,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE0F
+4FE17
 330
-4FE0E
+4FE16
 100
 AcDbEntity
   8
@@ -488543,9 +488621,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE10
+4FE18
 330
-4FE0E
+4FE16
 100
 AcDbEntity
   8
@@ -488565,9 +488643,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE11
+4FE19
 330
-4FE0E
+4FE16
 100
 AcDbEntity
   8
@@ -488575,7 +488653,7 @@ Text
   0
 POLYLINE
   5
-4FE12
+4FE1A
 330
 1F
 100
@@ -488597,9 +488675,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE13
+4FE1B
 330
-4FE12
+4FE1A
 100
 AcDbEntity
   8
@@ -488619,9 +488697,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE14
+4FE1C
 330
-4FE12
+4FE1A
 100
 AcDbEntity
   8
@@ -488641,9 +488719,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE15
+4FE1D
 330
-4FE12
+4FE1A
 100
 AcDbEntity
   8
@@ -488651,7 +488729,7 @@ Text
   0
 TEXT
   5
-4FE16
+4FE1E
 330
 1F
 100
@@ -488677,7 +488755,7 @@ AcDbText
   0
 POLYLINE
   5
-4FE17
+4FE1F
 330
 1F
 100
@@ -488699,9 +488777,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE18
+4FE20
 330
-4FE17
+4FE1F
 100
 AcDbEntity
   8
@@ -488721,9 +488799,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE19
+4FE21
 330
-4FE17
+4FE1F
 100
 AcDbEntity
   8
@@ -488743,9 +488821,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE1A
+4FE22
 330
-4FE17
+4FE1F
 100
 AcDbEntity
   8
@@ -488753,7 +488831,7 @@ Text
   0
 POLYLINE
   5
-4FE1B
+4FE23
 330
 1F
 100
@@ -488775,9 +488853,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE1C
+4FE24
 330
-4FE1B
+4FE23
 100
 AcDbEntity
   8
@@ -488797,9 +488875,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE1D
+4FE25
 330
-4FE1B
+4FE23
 100
 AcDbEntity
   8
@@ -488819,9 +488897,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE1E
+4FE26
 330
-4FE1B
+4FE23
 100
 AcDbEntity
   8
@@ -488829,7 +488907,7 @@ Text
   0
 TEXT
   5
-4FE1F
+4FE27
 330
 1F
 100
@@ -488855,7 +488933,7 @@ AcDbText
   0
 POLYLINE
   5
-4FE20
+4FE28
 330
 1F
 100
@@ -488877,9 +488955,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE21
+4FE29
 330
-4FE20
+4FE28
 100
 AcDbEntity
   8
@@ -488899,9 +488977,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE22
+4FE2A
 330
-4FE20
+4FE28
 100
 AcDbEntity
   8
@@ -488921,9 +488999,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE23
+4FE2B
 330
-4FE20
+4FE28
 100
 AcDbEntity
   8
@@ -488931,7 +489009,7 @@ Text
   0
 POLYLINE
   5
-4FE24
+4FE2C
 330
 1F
 100
@@ -488953,9 +489031,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE25
+4FE2D
 330
-4FE24
+4FE2C
 100
 AcDbEntity
   8
@@ -488975,9 +489053,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE26
+4FE2E
 330
-4FE24
+4FE2C
 100
 AcDbEntity
   8
@@ -488997,9 +489075,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE27
+4FE2F
 330
-4FE24
+4FE2C
 100
 AcDbEntity
   8
@@ -489007,7 +489085,7 @@ Text
   0
 TEXT
   5
-4FE28
+4FE30
 330
 1F
 100
@@ -489033,7 +489111,7 @@ AcDbText
   0
 POLYLINE
   5
-4FE29
+4FE31
 330
 1F
 100
@@ -489055,9 +489133,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE2A
+4FE32
 330
-4FE29
+4FE31
 100
 AcDbEntity
   8
@@ -489077,9 +489155,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE2B
+4FE33
 330
-4FE29
+4FE31
 100
 AcDbEntity
   8
@@ -489099,9 +489177,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE2C
+4FE34
 330
-4FE29
+4FE31
 100
 AcDbEntity
   8
@@ -489109,7 +489187,7 @@ Text
   0
 POLYLINE
   5
-4FE2D
+4FE35
 330
 1F
 100
@@ -489131,9 +489209,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE2E
+4FE36
 330
-4FE2D
+4FE35
 100
 AcDbEntity
   8
@@ -489153,9 +489231,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE2F
+4FE37
 330
-4FE2D
+4FE35
 100
 AcDbEntity
   8
@@ -489175,9 +489253,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE30
+4FE38
 330
-4FE2D
+4FE35
 100
 AcDbEntity
   8
@@ -489185,7 +489263,7 @@ Text
   0
 TEXT
   5
-4FE31
+4FE39
 330
 1F
 100
@@ -489211,7 +489289,7 @@ AcDbText
   0
 POLYLINE
   5
-4FE32
+4FE3A
 330
 1F
 100
@@ -489233,9 +489311,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE33
+4FE3B
 330
-4FE32
+4FE3A
 100
 AcDbEntity
   8
@@ -489255,9 +489333,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE34
+4FE3C
 330
-4FE32
+4FE3A
 100
 AcDbEntity
   8
@@ -489277,9 +489355,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE35
+4FE3D
 330
-4FE32
+4FE3A
 100
 AcDbEntity
   8
@@ -489287,7 +489365,7 @@ Text
   0
 POLYLINE
   5
-4FE36
+4FE3E
 330
 1F
 100
@@ -489309,9 +489387,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE37
+4FE3F
 330
-4FE36
+4FE3E
 100
 AcDbEntity
   8
@@ -489331,9 +489409,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE38
+4FE40
 330
-4FE36
+4FE3E
 100
 AcDbEntity
   8
@@ -489353,9 +489431,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE39
+4FE41
 330
-4FE36
+4FE3E
 100
 AcDbEntity
   8
@@ -489363,7 +489441,7 @@ Text
   0
 TEXT
   5
-4FE3A
+4FE42
 330
 1F
 100
@@ -489389,7 +489467,7 @@ AcDbText
   0
 POLYLINE
   5
-4FE3B
+4FE43
 330
 1F
 100
@@ -489411,9 +489489,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE3C
+4FE44
 330
-4FE3B
+4FE43
 100
 AcDbEntity
   8
@@ -489433,9 +489511,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE3D
+4FE45
 330
-4FE3B
+4FE43
 100
 AcDbEntity
   8
@@ -489455,9 +489533,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE3E
+4FE46
 330
-4FE3B
+4FE43
 100
 AcDbEntity
   8
@@ -489465,7 +489543,7 @@ Text
   0
 POLYLINE
   5
-4FE3F
+4FE47
 330
 1F
 100
@@ -489487,9 +489565,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE40
+4FE48
 330
-4FE3F
+4FE47
 100
 AcDbEntity
   8
@@ -489509,9 +489587,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE41
+4FE49
 330
-4FE3F
+4FE47
 100
 AcDbEntity
   8
@@ -489531,9 +489609,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE42
+4FE4A
 330
-4FE3F
+4FE47
 100
 AcDbEntity
   8
@@ -489541,7 +489619,7 @@ Text
   0
 TEXT
   5
-4FE43
+4FE4B
 330
 1F
 100
@@ -489567,7 +489645,7 @@ AcDbText
   0
 POLYLINE
   5
-4FE44
+4FE4C
 330
 1F
 100
@@ -489589,9 +489667,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE45
+4FE4D
 330
-4FE44
+4FE4C
 100
 AcDbEntity
   8
@@ -489611,9 +489689,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE46
+4FE4E
 330
-4FE44
+4FE4C
 100
 AcDbEntity
   8
@@ -489633,9 +489711,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE47
+4FE4F
 330
-4FE44
+4FE4C
 100
 AcDbEntity
   8
@@ -489643,7 +489721,7 @@ Text
   0
 POLYLINE
   5
-4FE48
+4FE50
 330
 1F
 100
@@ -489665,9 +489743,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE49
+4FE51
 330
-4FE48
+4FE50
 100
 AcDbEntity
   8
@@ -489687,9 +489765,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE4A
+4FE52
 330
-4FE48
+4FE50
 100
 AcDbEntity
   8
@@ -489709,9 +489787,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE4B
+4FE53
 330
-4FE48
+4FE50
 100
 AcDbEntity
   8
@@ -489719,7 +489797,7 @@ Text
   0
 TEXT
   5
-4FE4C
+4FE54
 330
 1F
 100
@@ -489745,7 +489823,7 @@ AcDbText
   0
 POLYLINE
   5
-4FE4D
+4FE55
 330
 1F
 100
@@ -489767,9 +489845,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE4E
+4FE56
 330
-4FE4D
+4FE55
 100
 AcDbEntity
   8
@@ -489789,9 +489867,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE4F
+4FE57
 330
-4FE4D
+4FE55
 100
 AcDbEntity
   8
@@ -489811,9 +489889,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE50
+4FE58
 330
-4FE4D
+4FE55
 100
 AcDbEntity
   8
@@ -489821,7 +489899,7 @@ Text
   0
 POLYLINE
   5
-4FE51
+4FE59
 330
 1F
 100
@@ -489843,9 +489921,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE52
+4FE5A
 330
-4FE51
+4FE59
 100
 AcDbEntity
   8
@@ -489865,9 +489943,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE53
+4FE5B
 330
-4FE51
+4FE59
 100
 AcDbEntity
   8
@@ -489887,9 +489965,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE54
+4FE5C
 330
-4FE51
+4FE59
 100
 AcDbEntity
   8
@@ -489897,7 +489975,7 @@ Text
   0
 TEXT
   5
-4FE55
+4FE5D
 330
 1F
 100
@@ -489923,7 +490001,7 @@ AcDbText
   0
 POLYLINE
   5
-4FE56
+4FE5E
 330
 1F
 100
@@ -489945,9 +490023,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE57
+4FE5F
 330
-4FE56
+4FE5E
 100
 AcDbEntity
   8
@@ -489967,9 +490045,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE58
+4FE60
 330
-4FE56
+4FE5E
 100
 AcDbEntity
   8
@@ -489989,9 +490067,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE59
+4FE61
 330
-4FE56
+4FE5E
 100
 AcDbEntity
   8
@@ -489999,7 +490077,7 @@ Text
   0
 POLYLINE
   5
-4FE5A
+4FE62
 330
 1F
 100
@@ -490021,9 +490099,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE5B
+4FE63
 330
-4FE5A
+4FE62
 100
 AcDbEntity
   8
@@ -490043,9 +490121,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE5C
+4FE64
 330
-4FE5A
+4FE62
 100
 AcDbEntity
   8
@@ -490065,9 +490143,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE5D
+4FE65
 330
-4FE5A
+4FE62
 100
 AcDbEntity
   8
@@ -490075,7 +490153,7 @@ Text
   0
 TEXT
   5
-4FE5E
+4FE66
 330
 1F
 100
@@ -490101,7 +490179,7 @@ AcDbText
   0
 POLYLINE
   5
-4FE5F
+4FE67
 330
 1F
 100
@@ -490123,9 +490201,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE60
+4FE68
 330
-4FE5F
+4FE67
 100
 AcDbEntity
   8
@@ -490145,9 +490223,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE61
+4FE69
 330
-4FE5F
+4FE67
 100
 AcDbEntity
   8
@@ -490167,9 +490245,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE62
+4FE6A
 330
-4FE5F
+4FE67
 100
 AcDbEntity
   8
@@ -490177,7 +490255,7 @@ Text
   0
 POLYLINE
   5
-4FE63
+4FE6B
 330
 1F
 100
@@ -490199,9 +490277,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE64
+4FE6C
 330
-4FE63
+4FE6B
 100
 AcDbEntity
   8
@@ -490221,9 +490299,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE65
+4FE6D
 330
-4FE63
+4FE6B
 100
 AcDbEntity
   8
@@ -490243,9 +490321,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE66
+4FE6E
 330
-4FE63
+4FE6B
 100
 AcDbEntity
   8
@@ -490253,7 +490331,7 @@ Text
   0
 TEXT
   5
-4FE67
+4FE6F
 330
 1F
 100
@@ -490279,7 +490357,7 @@ AcDbText
   0
 POLYLINE
   5
-4FE68
+4FE70
 330
 1F
 100
@@ -490301,9 +490379,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE69
+4FE71
 330
-4FE68
+4FE70
 100
 AcDbEntity
   8
@@ -490323,9 +490401,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE6A
+4FE72
 330
-4FE68
+4FE70
 100
 AcDbEntity
   8
@@ -490345,9 +490423,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE6B
+4FE73
 330
-4FE68
+4FE70
 100
 AcDbEntity
   8
@@ -490355,7 +490433,7 @@ Text
   0
 POLYLINE
   5
-4FE6C
+4FE74
 330
 1F
 100
@@ -490377,9 +490455,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE6D
+4FE75
 330
-4FE6C
+4FE74
 100
 AcDbEntity
   8
@@ -490399,9 +490477,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE6E
+4FE76
 330
-4FE6C
+4FE74
 100
 AcDbEntity
   8
@@ -490421,9 +490499,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE6F
+4FE77
 330
-4FE6C
+4FE74
 100
 AcDbEntity
   8
@@ -490431,7 +490509,7 @@ Text
   0
 TEXT
   5
-4FE70
+4FE78
 330
 1F
 100
@@ -490457,7 +490535,7 @@ AcDbText
   0
 POLYLINE
   5
-4FE71
+4FE79
 330
 1F
 100
@@ -490479,9 +490557,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE72
+4FE7A
 330
-4FE71
+4FE79
 100
 AcDbEntity
   8
@@ -490501,9 +490579,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE73
+4FE7B
 330
-4FE71
+4FE79
 100
 AcDbEntity
   8
@@ -490523,9 +490601,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE74
+4FE7C
 330
-4FE71
+4FE79
 100
 AcDbEntity
   8
@@ -490533,7 +490611,7 @@ Text
   0
 POLYLINE
   5
-4FE75
+4FE7D
 330
 1F
 100
@@ -490555,9 +490633,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE76
+4FE7E
 330
-4FE75
+4FE7D
 100
 AcDbEntity
   8
@@ -490577,9 +490655,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE77
+4FE7F
 330
-4FE75
+4FE7D
 100
 AcDbEntity
   8
@@ -490599,9 +490677,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE78
+4FE80
 330
-4FE75
+4FE7D
 100
 AcDbEntity
   8
@@ -490609,7 +490687,7 @@ Text
   0
 TEXT
   5
-4FE79
+4FE81
 330
 1F
 100
@@ -490635,7 +490713,7 @@ AcDbText
   0
 POLYLINE
   5
-4FE7A
+4FE82
 330
 1F
 100
@@ -490657,9 +490735,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE7B
+4FE83
 330
-4FE7A
+4FE82
 100
 AcDbEntity
   8
@@ -490679,9 +490757,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE7C
+4FE84
 330
-4FE7A
+4FE82
 100
 AcDbEntity
   8
@@ -490701,9 +490779,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE7D
+4FE85
 330
-4FE7A
+4FE82
 100
 AcDbEntity
   8
@@ -490711,7 +490789,7 @@ Text
   0
 POLYLINE
   5
-4FE7E
+4FE86
 330
 1F
 100
@@ -490733,9 +490811,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE7F
+4FE87
 330
-4FE7E
+4FE86
 100
 AcDbEntity
   8
@@ -490755,9 +490833,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE80
+4FE88
 330
-4FE7E
+4FE86
 100
 AcDbEntity
   8
@@ -490777,9 +490855,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE81
+4FE89
 330
-4FE7E
+4FE86
 100
 AcDbEntity
   8
@@ -490787,7 +490865,7 @@ Text
   0
 TEXT
   5
-4FE82
+4FE8A
 330
 1F
 100
@@ -490813,7 +490891,7 @@ AcDbText
   0
 POLYLINE
   5
-4FE83
+4FE8B
 330
 1F
 100
@@ -490835,9 +490913,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE84
+4FE8C
 330
-4FE83
+4FE8B
 100
 AcDbEntity
   8
@@ -490857,9 +490935,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE85
+4FE8D
 330
-4FE83
+4FE8B
 100
 AcDbEntity
   8
@@ -490879,9 +490957,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE86
+4FE8E
 330
-4FE83
+4FE8B
 100
 AcDbEntity
   8
@@ -490889,7 +490967,7 @@ Text
   0
 POLYLINE
   5
-4FE87
+4FE8F
 330
 1F
 100
@@ -490911,9 +490989,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE88
+4FE90
 330
-4FE87
+4FE8F
 100
 AcDbEntity
   8
@@ -490933,9 +491011,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE89
+4FE91
 330
-4FE87
+4FE8F
 100
 AcDbEntity
   8
@@ -490955,9 +491033,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE8A
+4FE92
 330
-4FE87
+4FE8F
 100
 AcDbEntity
   8
@@ -490965,7 +491043,7 @@ Text
   0
 TEXT
   5
-4FE8B
+4FE93
 330
 1F
 100
@@ -490991,7 +491069,7 @@ AcDbText
   0
 POLYLINE
   5
-4FE8C
+4FE94
 330
 1F
 100
@@ -491013,9 +491091,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE8D
+4FE95
 330
-4FE8C
+4FE94
 100
 AcDbEntity
   8
@@ -491035,9 +491113,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE8E
+4FE96
 330
-4FE8C
+4FE94
 100
 AcDbEntity
   8
@@ -491057,9 +491135,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE8F
+4FE97
 330
-4FE8C
+4FE94
 100
 AcDbEntity
   8
@@ -491067,7 +491145,7 @@ Text
   0
 POLYLINE
   5
-4FE90
+4FE98
 330
 1F
 100
@@ -491089,9 +491167,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE91
+4FE99
 330
-4FE90
+4FE98
 100
 AcDbEntity
   8
@@ -491111,9 +491189,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE92
+4FE9A
 330
-4FE90
+4FE98
 100
 AcDbEntity
   8
@@ -491133,9 +491211,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE93
+4FE9B
 330
-4FE90
+4FE98
 100
 AcDbEntity
   8
@@ -491143,7 +491221,7 @@ Text
   0
 TEXT
   5
-4FE94
+4FE9C
 330
 1F
 100
@@ -491169,7 +491247,7 @@ AcDbText
   0
 POLYLINE
   5
-4FE95
+4FE9D
 330
 1F
 100
@@ -491191,9 +491269,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE96
+4FE9E
 330
-4FE95
+4FE9D
 100
 AcDbEntity
   8
@@ -491213,9 +491291,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE97
+4FE9F
 330
-4FE95
+4FE9D
 100
 AcDbEntity
   8
@@ -491235,9 +491313,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE98
+4FEA0
 330
-4FE95
+4FE9D
 100
 AcDbEntity
   8
@@ -491245,7 +491323,7 @@ Text
   0
 POLYLINE
   5
-4FE99
+4FEA1
 330
 1F
 100
@@ -491267,9 +491345,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE9A
+4FEA2
 330
-4FE99
+4FEA1
 100
 AcDbEntity
   8
@@ -491289,9 +491367,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FE9B
+4FEA3
 330
-4FE99
+4FEA1
 100
 AcDbEntity
   8
@@ -491311,9 +491389,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FE9C
+4FEA4
 330
-4FE99
+4FEA1
 100
 AcDbEntity
   8
@@ -491321,7 +491399,7 @@ Text
   0
 TEXT
   5
-4FE9D
+4FEA5
 330
 1F
 100
@@ -491347,7 +491425,7 @@ AcDbText
   0
 POLYLINE
   5
-4FE9E
+4FEA6
 330
 1F
 100
@@ -491369,9 +491447,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FE9F
+4FEA7
 330
-4FE9E
+4FEA6
 100
 AcDbEntity
   8
@@ -491391,9 +491469,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FEA0
+4FEA8
 330
-4FE9E
+4FEA6
 100
 AcDbEntity
   8
@@ -491413,9 +491491,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FEA1
+4FEA9
 330
-4FE9E
+4FEA6
 100
 AcDbEntity
   8
@@ -491423,7 +491501,7 @@ Text
   0
 POLYLINE
   5
-4FEA2
+4FEAA
 330
 1F
 100
@@ -491445,9 +491523,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FEA3
+4FEAB
 330
-4FEA2
+4FEAA
 100
 AcDbEntity
   8
@@ -491467,9 +491545,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FEA4
+4FEAC
 330
-4FEA2
+4FEAA
 100
 AcDbEntity
   8
@@ -491489,9 +491567,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FEA5
+4FEAD
 330
-4FEA2
+4FEAA
 100
 AcDbEntity
   8
@@ -491499,7 +491577,7 @@ Text
   0
 TEXT
   5
-4FEA6
+4FEAE
 330
 1F
 100
@@ -491525,7 +491603,7 @@ AcDbText
   0
 POLYLINE
   5
-4FEA7
+4FEAF
 330
 1F
 100
@@ -491547,9 +491625,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FEA8
+4FEB0
 330
-4FEA7
+4FEAF
 100
 AcDbEntity
   8
@@ -491569,9 +491647,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FEA9
+4FEB1
 330
-4FEA7
+4FEAF
 100
 AcDbEntity
   8
@@ -491591,9 +491669,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FEAA
+4FEB2
 330
-4FEA7
+4FEAF
 100
 AcDbEntity
   8
@@ -491601,7 +491679,7 @@ Text
   0
 POLYLINE
   5
-4FEAB
+4FEB3
 330
 1F
 100
@@ -491623,9 +491701,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FEAC
+4FEB4
 330
-4FEAB
+4FEB3
 100
 AcDbEntity
   8
@@ -491645,9 +491723,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FEAD
+4FEB5
 330
-4FEAB
+4FEB3
 100
 AcDbEntity
   8
@@ -491667,9 +491745,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FEAE
+4FEB6
 330
-4FEAB
+4FEB3
 100
 AcDbEntity
   8
@@ -491677,7 +491755,7 @@ Text
   0
 TEXT
   5
-4FEAF
+4FEB7
 330
 1F
 100
@@ -491703,7 +491781,7 @@ AcDbText
   0
 POLYLINE
   5
-4FEB0
+4FEB8
 330
 1F
 100
@@ -491725,9 +491803,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FEB1
+4FEB9
 330
-4FEB0
+4FEB8
 100
 AcDbEntity
   8
@@ -491747,9 +491825,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FEB2
+4FEBA
 330
-4FEB0
+4FEB8
 100
 AcDbEntity
   8
@@ -491769,9 +491847,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FEB3
+4FEBB
 330
-4FEB0
+4FEB8
 100
 AcDbEntity
   8
@@ -491779,7 +491857,7 @@ Text
   0
 POLYLINE
   5
-4FEB4
+4FEBC
 330
 1F
 100
@@ -491801,9 +491879,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FEB5
+4FEBD
 330
-4FEB4
+4FEBC
 100
 AcDbEntity
   8
@@ -491823,9 +491901,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FEB6
+4FEBE
 330
-4FEB4
+4FEBC
 100
 AcDbEntity
   8
@@ -491845,9 +491923,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FEB7
+4FEBF
 330
-4FEB4
+4FEBC
 100
 AcDbEntity
   8
@@ -491855,7 +491933,7 @@ Text
   0
 TEXT
   5
-4FEB8
+4FEC0
 330
 1F
 100
@@ -491881,7 +491959,7 @@ AcDbText
   0
 POLYLINE
   5
-4FEB9
+4FEC1
 330
 1F
 100
@@ -491903,9 +491981,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FEBA
+4FEC2
 330
-4FEB9
+4FEC1
 100
 AcDbEntity
   8
@@ -491925,9 +492003,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FEBB
+4FEC3
 330
-4FEB9
+4FEC1
 100
 AcDbEntity
   8
@@ -491947,9 +492025,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FEBC
+4FEC4
 330
-4FEB9
+4FEC1
 100
 AcDbEntity
   8
@@ -491957,7 +492035,7 @@ Text
   0
 POLYLINE
   5
-4FEBD
+4FEC5
 330
 1F
 100
@@ -491979,9 +492057,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FEBE
+4FEC6
 330
-4FEBD
+4FEC5
 100
 AcDbEntity
   8
@@ -492001,9 +492079,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FEBF
+4FEC7
 330
-4FEBD
+4FEC5
 100
 AcDbEntity
   8
@@ -492023,9 +492101,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FEC0
+4FEC8
 330
-4FEBD
+4FEC5
 100
 AcDbEntity
   8
@@ -492033,7 +492111,7 @@ Text
   0
 TEXT
   5
-4FEC1
+4FEC9
 330
 1F
 100
@@ -492059,7 +492137,7 @@ AcDbText
   0
 POLYLINE
   5
-4FEC2
+4FECA
 330
 1F
 100
@@ -492081,9 +492159,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FEC3
+4FECB
 330
-4FEC2
+4FECA
 100
 AcDbEntity
   8
@@ -492103,9 +492181,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FEC4
+4FECC
 330
-4FEC2
+4FECA
 100
 AcDbEntity
   8
@@ -492125,9 +492203,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FEC5
+4FECD
 330
-4FEC2
+4FECA
 100
 AcDbEntity
   8
@@ -492135,7 +492213,7 @@ Text
   0
 POLYLINE
   5
-4FEC6
+4FECE
 330
 1F
 100
@@ -492157,9 +492235,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FEC7
+4FECF
 330
-4FEC6
+4FECE
 100
 AcDbEntity
   8
@@ -492179,9 +492257,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FEC8
+4FED0
 330
-4FEC6
+4FECE
 100
 AcDbEntity
   8
@@ -492201,9 +492279,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FEC9
+4FED1
 330
-4FEC6
+4FECE
 100
 AcDbEntity
   8
@@ -492211,7 +492289,7 @@ Text
   0
 TEXT
   5
-4FECA
+4FED2
 330
 1F
 100
@@ -492237,7 +492315,7 @@ AcDbText
   0
 POLYLINE
   5
-4FECB
+4FED3
 330
 1F
 100
@@ -492259,9 +492337,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FECC
+4FED4
 330
-4FECB
+4FED3
 100
 AcDbEntity
   8
@@ -492281,9 +492359,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FECD
+4FED5
 330
-4FECB
+4FED3
 100
 AcDbEntity
   8
@@ -492303,9 +492381,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FECE
+4FED6
 330
-4FECB
+4FED3
 100
 AcDbEntity
   8
@@ -492313,7 +492391,7 @@ Text
   0
 POLYLINE
   5
-4FECF
+4FED7
 330
 1F
 100
@@ -492335,9 +492413,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FED0
+4FED8
 330
-4FECF
+4FED7
 100
 AcDbEntity
   8
@@ -492357,9 +492435,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FED1
+4FED9
 330
-4FECF
+4FED7
 100
 AcDbEntity
   8
@@ -492379,9 +492457,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FED2
+4FEDA
 330
-4FECF
+4FED7
 100
 AcDbEntity
   8
@@ -492389,7 +492467,7 @@ Text
   0
 TEXT
   5
-4FED3
+4FEDB
 330
 1F
 100
@@ -492415,7 +492493,7 @@ AcDbText
   0
 POLYLINE
   5
-4FED4
+4FEDC
 330
 1F
 100
@@ -492437,9 +492515,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FED5
+4FEDD
 330
-4FED4
+4FEDC
 100
 AcDbEntity
   8
@@ -492459,9 +492537,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FED6
+4FEDE
 330
-4FED4
+4FEDC
 100
 AcDbEntity
   8
@@ -492481,9 +492559,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FED7
+4FEDF
 330
-4FED4
+4FEDC
 100
 AcDbEntity
   8
@@ -492491,7 +492569,7 @@ Text
   0
 POLYLINE
   5
-4FED8
+4FEE0
 330
 1F
 100
@@ -492513,9 +492591,9 @@ AcDb2dPolyline
   0
 VERTEX
   5
-4FED9
+4FEE1
 330
-4FED8
+4FEE0
 100
 AcDbEntity
   8
@@ -492535,9 +492613,9 @@ AcDb2dVertex
   0
 VERTEX
   5
-4FEDA
+4FEE2
 330
-4FED8
+4FEE0
 100
 AcDbEntity
   8
@@ -492557,9 +492635,9 @@ AcDb2dVertex
   0
 SEQEND
   5
-4FEDB
+4FEE3
 330
-4FED8
+4FEE0
 100
 AcDbEntity
   8
@@ -492567,7 +492645,7 @@ Text
   0
 TEXT
   5
-4FEDC
+4FEE4
 330
 1F
 100
@@ -492603,7 +492681,7 @@ AcDbText
   0
 LINE
   5
-4FEDD
+4FEE5
 330
 1F
 100
@@ -492627,7 +492705,7 @@ AcDbLine
   0
 LINE
   5
-4FEDE
+4FEE6
 330
 1F
 100
@@ -492651,7 +492729,7 @@ AcDbLine
   0
 LINE
   5
-4FEDF
+4FEE7
 330
 1F
 100
@@ -492675,7 +492753,7 @@ AcDbLine
   0
 LINE
   5
-4FEE0
+4FEE8
 330
 1F
 100
@@ -492699,7 +492777,7 @@ AcDbLine
   0
 LINE
   5
-4FEE1
+4FEE9
 330
 1F
 100
@@ -492723,7 +492801,7 @@ AcDbLine
   0
 LINE
   5
-4FEE2
+4FEEA
 330
 1F
 100
@@ -492747,7 +492825,7 @@ AcDbLine
   0
 TEXT
   5
-4FEE3
+4FEEB
 330
 1F
 100
@@ -492781,7 +492859,7 @@ AcDbText
   0
 LINE
   5
-4FEE4
+4FEEC
 330
 1F
 100
@@ -492805,7 +492883,7 @@ AcDbLine
   0
 LINE
   5
-4FEE5
+4FEED
 330
 1F
 100
@@ -492829,7 +492907,7 @@ AcDbLine
   0
 LINE
   5
-4FEE6
+4FEEE
 330
 1F
 100
@@ -492853,7 +492931,7 @@ AcDbLine
   0
 LINE
   5
-4FEE7
+4FEEF
 330
 1F
 100
@@ -492877,7 +492955,7 @@ AcDbLine
   0
 LINE
   5
-4FEE8
+4FEF0
 330
 1F
 100
@@ -492901,7 +492979,7 @@ AcDbLine
   0
 TEXT
   5
-4FEE9
+4FEF1
 330
 1F
 100
@@ -492935,7 +493013,7 @@ AcDbText
   0
 TEXT
   5
-4FEEA
+4FEF2
 330
 1F
 100
@@ -492969,241 +493047,37 @@ AcDbText
   0
 LWPOLYLINE
   5
-4FEEB
-330
-1F
-100
-AcDbEntity
-  8
-К1
-100
-AcDbPolyline
- 90
-4
- 70
-1
- 10
-122480.0
- 20
--27948.5
- 10
-122744.0
- 20
--27948.5
- 10
-122744.0
- 20
--27585.5
- 10
-122480.0
- 20
--27585.5
-  0
-CIRCLE
-  5
-4FEEC
-330
-1F
-100
-AcDbEntity
-  8
-Text
-100
-AcDbCircle
- 10
-122744.0
- 20
--27767.0
- 30
-0.0
- 40
-28.874999999999996
-  0
-LINE
-  5
-4FEED
-330
-1F
-100
-AcDbEntity
-  8
-Text
-100
-AcDbLine
- 10
-122744.0
- 20
--27767.0
- 30
-0.0
- 11
-123156.5
- 21
--26942.0
- 31
-0.0
-  0
-LINE
-  5
-4FEEE
-330
-1F
-100
-AcDbEntity
-  8
-Text
-100
-AcDbLine
- 10
-123156.5
- 20
--26942.0
- 30
-0.0
- 11
-123569.0
- 21
--26942.0
- 31
-0.0
-  0
-TEXT
-  5
-4FEEF
-330
-1F
-100
-AcDbEntity
-  8
-Текст
-100
-AcDbText
- 10
-123362.75
- 20
--26892.499999999996
- 30
-0.0
- 40
-165.0
-  1
-81
-  7
-GOST
- 72
-1
- 11
-123362.75
- 21
--26892.499999999996
- 31
-0.0
-100
-AcDbText
- 73
-1
-  0
-LWPOLYLINE
-  5
-4FEF0
-330
-1F
-100
-AcDbEntity
-  8
-К1
-100
-AcDbPolyline
- 90
-4
- 70
-1
- 10
-122480.0
- 20
--13098.5
- 10
-122744.0
- 20
--13098.5
- 10
-122744.0
- 20
--12735.5
- 10
-122480.0
- 20
--12735.5
-  0
-CIRCLE
-  5
-4FEF1
-330
-1F
-100
-AcDbEntity
-  8
-Text
-100
-AcDbCircle
- 10
-122744.0
- 20
--12917.0
- 30
-0.0
- 40
-28.874999999999996
-  0
-LINE
-  5
-4FEF2
-330
-1F
-100
-AcDbEntity
-  8
-Text
-100
-AcDbLine
- 10
-122744.0
- 20
--12917.0
- 30
-0.0
- 11
-123156.5
- 21
--11927.0
- 31
-0.0
-  0
-LINE
-  5
 4FEF3
 330
 1F
 100
 AcDbEntity
   8
-Text
+К1
 100
-AcDbLine
+AcDbPolyline
+ 90
+4
+ 70
+1
  10
-123156.5
+122480.0
  20
--11927.0
- 30
-0.0
- 11
-123569.0
- 21
--11927.0
- 31
-0.0
+-27948.5
+ 10
+122744.0
+ 20
+-27948.5
+ 10
+122744.0
+ 20
+-27585.5
+ 10
+122480.0
+ 20
+-27585.5
   0
-TEXT
+CIRCLE
   5
 4FEF4
 330
@@ -493211,6 +493085,210 @@ TEXT
 100
 AcDbEntity
   8
+Text
+100
+AcDbCircle
+ 10
+122744.0
+ 20
+-27767.0
+ 30
+0.0
+ 40
+28.874999999999996
+  0
+LINE
+  5
+4FEF5
+330
+1F
+100
+AcDbEntity
+  8
+Text
+100
+AcDbLine
+ 10
+122744.0
+ 20
+-27767.0
+ 30
+0.0
+ 11
+123156.5
+ 21
+-26942.0
+ 31
+0.0
+  0
+LINE
+  5
+4FEF6
+330
+1F
+100
+AcDbEntity
+  8
+Text
+100
+AcDbLine
+ 10
+123156.5
+ 20
+-26942.0
+ 30
+0.0
+ 11
+123569.0
+ 21
+-26942.0
+ 31
+0.0
+  0
+TEXT
+  5
+4FEF7
+330
+1F
+100
+AcDbEntity
+  8
+Текст
+100
+AcDbText
+ 10
+123362.75
+ 20
+-26892.499999999996
+ 30
+0.0
+ 40
+165.0
+  1
+81
+  7
+GOST
+ 72
+1
+ 11
+123362.75
+ 21
+-26892.499999999996
+ 31
+0.0
+100
+AcDbText
+ 73
+1
+  0
+LWPOLYLINE
+  5
+4FEF8
+330
+1F
+100
+AcDbEntity
+  8
+К1
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+122480.0
+ 20
+-13098.5
+ 10
+122744.0
+ 20
+-13098.5
+ 10
+122744.0
+ 20
+-12735.5
+ 10
+122480.0
+ 20
+-12735.5
+  0
+CIRCLE
+  5
+4FEF9
+330
+1F
+100
+AcDbEntity
+  8
+Text
+100
+AcDbCircle
+ 10
+122744.0
+ 20
+-12917.0
+ 30
+0.0
+ 40
+28.874999999999996
+  0
+LINE
+  5
+4FEFA
+330
+1F
+100
+AcDbEntity
+  8
+Text
+100
+AcDbLine
+ 10
+122744.0
+ 20
+-12917.0
+ 30
+0.0
+ 11
+123156.5
+ 21
+-11927.0
+ 31
+0.0
+  0
+LINE
+  5
+4FEFB
+330
+1F
+100
+AcDbEntity
+  8
+Text
+100
+AcDbLine
+ 10
+123156.5
+ 20
+-11927.0
+ 30
+0.0
+ 11
+123569.0
+ 21
+-11927.0
+ 31
+0.0
+  0
+TEXT
+  5
+4FEFC
+330
+1F
+100
+AcDbEntity
+  8
 Текст
 100
 AcDbText
@@ -493241,7 +493319,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-4FEF5
+4FEFD
 330
 1F
 100
@@ -493273,7 +493351,7 @@ AcDbPolyline
   0
 CIRCLE
   5
-4FEF6
+4FEFE
 330
 1F
 100
@@ -493293,7 +493371,7 @@ AcDbCircle
   0
 LINE
   5
-4FEF7
+4FEFF
 330
 1F
 100
@@ -493317,7 +493395,7 @@ AcDbLine
   0
 LINE
   5
-4FEF8
+4FF00
 330
 1F
 100
@@ -493341,7 +493419,7 @@ AcDbLine
   0
 TEXT
   5
-4FEF9
+4FF01
 330
 1F
 100
@@ -493377,7 +493455,7 @@ AcDbText
   0
 TEXT
   5
-4FEFA
+4FF02
 330
 1F
 100
@@ -493411,241 +493489,37 @@ AcDbText
   0
 LWPOLYLINE
   5
-4FEFB
-330
-1F
-100
-AcDbEntity
-  8
-К1
-100
-AcDbPolyline
- 90
-4
- 70
-1
- 10
-133774.25
- 20
--27948.5
- 10
-134038.25
- 20
--27948.5
- 10
-134038.25
- 20
--27585.5
- 10
-133774.25
- 20
--27585.5
-  0
-CIRCLE
-  5
-4FEFC
-330
-1F
-100
-AcDbEntity
-  8
-Text
-100
-AcDbCircle
- 10
-134038.25
- 20
--27767.0
- 30
-0.0
- 40
-28.874999999999996
-  0
-LINE
-  5
-4FEFD
-330
-1F
-100
-AcDbEntity
-  8
-Text
-100
-AcDbLine
- 10
-134038.25
- 20
--27767.0
- 30
-0.0
- 11
-134450.75
- 21
--26942.0
- 31
-0.0
-  0
-LINE
-  5
-4FEFE
-330
-1F
-100
-AcDbEntity
-  8
-Text
-100
-AcDbLine
- 10
-134450.75
- 20
--26942.0
- 30
-0.0
- 11
-134863.25
- 21
--26942.0
- 31
-0.0
-  0
-TEXT
-  5
-4FEFF
-330
-1F
-100
-AcDbEntity
-  8
-Текст
-100
-AcDbText
- 10
-134657.0
- 20
--26892.499999999996
- 30
-0.0
- 40
-165.0
-  1
-81
-  7
-GOST
- 72
-1
- 11
-134657.0
- 21
--26892.499999999996
- 31
-0.0
-100
-AcDbText
- 73
-1
-  0
-LWPOLYLINE
-  5
-4FF00
-330
-1F
-100
-AcDbEntity
-  8
-К1
-100
-AcDbPolyline
- 90
-4
- 70
-1
- 10
-133774.25
- 20
--13098.5
- 10
-134038.25
- 20
--13098.5
- 10
-134038.25
- 20
--12735.5
- 10
-133774.25
- 20
--12735.5
-  0
-CIRCLE
-  5
-4FF01
-330
-1F
-100
-AcDbEntity
-  8
-Text
-100
-AcDbCircle
- 10
-134038.25
- 20
--12917.0
- 30
-0.0
- 40
-28.874999999999996
-  0
-LINE
-  5
-4FF02
-330
-1F
-100
-AcDbEntity
-  8
-Text
-100
-AcDbLine
- 10
-134038.25
- 20
--12917.0
- 30
-0.0
- 11
-134450.75
- 21
--11927.0
- 31
-0.0
-  0
-LINE
-  5
 4FF03
 330
 1F
 100
 AcDbEntity
   8
-Text
+К1
 100
-AcDbLine
+AcDbPolyline
+ 90
+4
+ 70
+1
  10
-134450.75
+133774.25
  20
--11927.0
- 30
-0.0
- 11
-134863.25
- 21
--11927.0
- 31
-0.0
+-27948.5
+ 10
+134038.25
+ 20
+-27948.5
+ 10
+134038.25
+ 20
+-27585.5
+ 10
+133774.25
+ 20
+-27585.5
   0
-TEXT
+CIRCLE
   5
 4FF04
 330
@@ -493653,6 +493527,210 @@ TEXT
 100
 AcDbEntity
   8
+Text
+100
+AcDbCircle
+ 10
+134038.25
+ 20
+-27767.0
+ 30
+0.0
+ 40
+28.874999999999996
+  0
+LINE
+  5
+4FF05
+330
+1F
+100
+AcDbEntity
+  8
+Text
+100
+AcDbLine
+ 10
+134038.25
+ 20
+-27767.0
+ 30
+0.0
+ 11
+134450.75
+ 21
+-26942.0
+ 31
+0.0
+  0
+LINE
+  5
+4FF06
+330
+1F
+100
+AcDbEntity
+  8
+Text
+100
+AcDbLine
+ 10
+134450.75
+ 20
+-26942.0
+ 30
+0.0
+ 11
+134863.25
+ 21
+-26942.0
+ 31
+0.0
+  0
+TEXT
+  5
+4FF07
+330
+1F
+100
+AcDbEntity
+  8
+Текст
+100
+AcDbText
+ 10
+134657.0
+ 20
+-26892.499999999996
+ 30
+0.0
+ 40
+165.0
+  1
+81
+  7
+GOST
+ 72
+1
+ 11
+134657.0
+ 21
+-26892.499999999996
+ 31
+0.0
+100
+AcDbText
+ 73
+1
+  0
+LWPOLYLINE
+  5
+4FF08
+330
+1F
+100
+AcDbEntity
+  8
+К1
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+133774.25
+ 20
+-13098.5
+ 10
+134038.25
+ 20
+-13098.5
+ 10
+134038.25
+ 20
+-12735.5
+ 10
+133774.25
+ 20
+-12735.5
+  0
+CIRCLE
+  5
+4FF09
+330
+1F
+100
+AcDbEntity
+  8
+Text
+100
+AcDbCircle
+ 10
+134038.25
+ 20
+-12917.0
+ 30
+0.0
+ 40
+28.874999999999996
+  0
+LINE
+  5
+4FF0A
+330
+1F
+100
+AcDbEntity
+  8
+Text
+100
+AcDbLine
+ 10
+134038.25
+ 20
+-12917.0
+ 30
+0.0
+ 11
+134450.75
+ 21
+-11927.0
+ 31
+0.0
+  0
+LINE
+  5
+4FF0B
+330
+1F
+100
+AcDbEntity
+  8
+Text
+100
+AcDbLine
+ 10
+134450.75
+ 20
+-11927.0
+ 30
+0.0
+ 11
+134863.25
+ 21
+-11927.0
+ 31
+0.0
+  0
+TEXT
+  5
+4FF0C
+330
+1F
+100
+AcDbEntity
+  8
 Текст
 100
 AcDbText
@@ -493683,7 +493761,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-4FF05
+4FF0D
 330
 1F
 100
@@ -493715,7 +493793,7 @@ AcDbPolyline
   0
 CIRCLE
   5
-4FF06
+4FF0E
 330
 1F
 100
@@ -493735,7 +493813,7 @@ AcDbCircle
   0
 LINE
   5
-4FF07
+4FF0F
 330
 1F
 100
@@ -493759,7 +493837,7 @@ AcDbLine
   0
 LINE
   5
-4FF08
+4FF10
 330
 1F
 100
@@ -493783,7 +493861,7 @@ AcDbLine
   0
 TEXT
   5
-4FF09
+4FF11
 330
 1F
 100
@@ -493819,7 +493897,7 @@ AcDbText
   0
 TEXT
   5
-4FF0A
+4FF12
 330
 1F
 100
@@ -493853,7 +493931,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-4FF0B
+4FF13
 330
 1F
 100
@@ -493885,7 +493963,7 @@ AcDbPolyline
   0
 CIRCLE
   5
-4FF0C
+4FF14
 330
 1F
 100
@@ -493905,7 +493983,7 @@ AcDbCircle
   0
 LINE
   5
-4FF0D
+4FF15
 330
 1F
 100
@@ -493929,7 +494007,7 @@ AcDbLine
   0
 LINE
   5
-4FF0E
+4FF16
 330
 1F
 100
@@ -493953,7 +494031,7 @@ AcDbLine
   0
 TEXT
   5
-4FF0F
+4FF17
 330
 1F
 100
@@ -493989,7 +494067,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-4FF10
+4FF18
 330
 1F
 100
@@ -494021,7 +494099,7 @@ AcDbPolyline
   0
 CIRCLE
   5
-4FF11
+4FF19
 330
 1F
 100
@@ -494041,7 +494119,7 @@ AcDbCircle
   0
 LINE
   5
-4FF12
+4FF1A
 330
 1F
 100
@@ -494065,7 +494143,7 @@ AcDbLine
   0
 LINE
   5
-4FF13
+4FF1B
 330
 1F
 100
@@ -494089,7 +494167,7 @@ AcDbLine
   0
 TEXT
   5
-4FF14
+4FF1C
 330
 1F
 100
@@ -494125,7 +494203,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-4FF15
+4FF1D
 330
 1F
 100
@@ -494157,7 +494235,7 @@ AcDbPolyline
   0
 CIRCLE
   5
-4FF16
+4FF1E
 330
 1F
 100
@@ -494177,7 +494255,7 @@ AcDbCircle
   0
 LINE
   5
-4FF17
+4FF1F
 330
 1F
 100
@@ -494201,7 +494279,7 @@ AcDbLine
   0
 LINE
   5
-4FF18
+4FF20
 330
 1F
 100
@@ -494225,7 +494303,7 @@ AcDbLine
   0
 TEXT
   5
-4FF19
+4FF21
 330
 1F
 100
@@ -494261,7 +494339,7 @@ AcDbText
   0
 CIRCLE
   5
-4FF1A
+4FF22
 330
 1F
 100
@@ -494281,7 +494359,7 @@ AcDbCircle
   0
 LINE
   5
-4FF1B
+4FF23
 330
 1F
 100
@@ -494305,7 +494383,7 @@ AcDbLine
   0
 LINE
   5
-4FF1C
+4FF24
 330
 1F
 100
@@ -494329,7 +494407,7 @@ AcDbLine
   0
 TEXT
   5
-4FF1D
+4FF25
 330
 1F
 100
@@ -494365,7 +494443,7 @@ AcDbText
   0
 CIRCLE
   5
-4FF1E
+4FF26
 330
 1F
 100
@@ -494385,7 +494463,7 @@ AcDbCircle
   0
 LINE
   5
-4FF1F
+4FF27
 330
 1F
 100
@@ -494409,7 +494487,7 @@ AcDbLine
   0
 LINE
   5
-4FF20
+4FF28
 330
 1F
 100
@@ -494433,7 +494511,7 @@ AcDbLine
   0
 TEXT
   5
-4FF21
+4FF29
 330
 1F
 100
@@ -494469,7 +494547,7 @@ AcDbText
   0
 MTEXT
   5
-4FF22
+4FF2A
 330
 1F
 100
@@ -494503,7 +494581,7 @@ GOST
   0
 MTEXT
   5
-4FF23
+4FF2B
 330
 1F
 100
