@@ -1,0 +1,44 @@
+# ОВиК, дом и баня: скачать нормативные документы и справочные страницы,
+# закрытые из среды разработки. Список адресов — ovk-dom-banya/fetch.txt
+# (адрес и имя файла через пробел). PDF дополнительно переводится в текст.
+# Робот только читает и складывает файлы в ovk-dom-banya/norms.
+name: 'ОВиК дом и баня: нормативы'
+
+on:
+  push:
+    branches: ['claude/brave-darwin-wc97p5']
+    paths: ['ovk-dom-banya/fetch.txt', '.github/workflows/fetch-ovk-norms.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Скачиваем
+        run: |
+          set -u
+          sudo apt-get install -y -qq poppler-utils >/dev/null || true
+          mkdir -p ovk-dom-banya/norms
+          grep -v '^\s*#' ovk-dom-banya/fetch.txt | while read -r url name; do
+            [ -z "$url" ] && continue
+            [ -z "${name:-}" ] && name=$(basename "${url%%\?*}")
+            out="ovk-dom-banya/norms/$name"
+            code=$(curl -sSL -m 120 -A 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/141.0 Safari/537.36' \
+                   -H 'Accept-Language: ru' -o "$out" -w '%{http_code}' "$url" || echo ERR)
+            echo "$code $(stat -c %s "$out" 2>/dev/null) $url -> $out"
+            case "$name" in *.pdf) pdftotext -layout "$out" "${out%.pdf}.txt" && wc -l "${out%.pdf}.txt" ;; esac
+          done
+          grep -n -i -E 'Новый Иерусалим|^ *Москва' ovk-dom-banya/norms/*.txt 2>/dev/null | head -40 || true
+      - name: Коммит
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ovk-dom-banya/norms
+          git diff --cached --quiet && exit 0
+          git commit -q -m 'ОВиК дом и баня: нормативы и справочные данные'
+          git pull --rebase -q origin "${GITHUB_REF_NAME}"
+          git push -q origin "HEAD:${GITHUB_REF_NAME}"
