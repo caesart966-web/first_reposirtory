@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <title>Строительная климатология СП 131.13330.2020</title>
+<meta name="description" content="Строительная климатология, СП 131.13330.2020, строительная климатология, Климатические параметры теплого и холодного периода года, температура воздуха">
+<meta name="keywords" content="Строительная, климатология, СП 131.13330.2020, температура, воздух, район, застройки, населенный пункт, амплитуда, республика, край, область">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <link rel="stylesheet" href="/public/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/public/css/style.css" />
+    <script src="/public/js/jquery-3.6.0.js"></script>
+    <script src="/public/js/bootstrap.bundle.js"></script>
+    <link rel="icon" href="https://helpeng.ru/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <div class="container-fluid">
+        <header>
+    <nav class="navbar navbar-expand-md">
+        <a class="navbar-brand" href="/">
+            <img src="/public/images/logo/logo25.png" alt="Инженерная помощь" style="float: left;" />
+        </a>
+
+        <!--        Мобильное меню-->
+<!--        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar">-->
+<!--            <span class="navbar-toggler-icon">-->
+<!--                <img src="/public/images/menu/menu_icon.png" alt="Меню" />-->
+<!--            </span>-->
+<!---->
+<!--        </button>-->
+
+<!--        Основное меню-->
+        <div class="collapse navbar-collapse"  id="collapsibleNavbar">
+            <ul class="navbar-nav">
+<!--                <li class="nav-item">-->
+<!--                    <a class="nav-link" href="/">ИНЖЕНЕРНАЯ ПОМОЩЬ</a>-->
+<!--                </li>-->
+
+                <li class="nav-item">
+                    <a class="nav-link" href="/news">Новости</a>
+                </li>
+
+<!--                <li class="nav-item">-->
+<!--                    <a class="nav-link" href="/articles">Статьи</a>-->
+<!--                </li>-->
+
+                <li class="nav-item ml-3">
+                    <a class="nav-link" href="/engineer">Общестрой</a>
+                </li>
+
+                <li class="nav-item ml-3">
+                    <a class="nav-link" href="/ov">ОВиК</a>
+                </li>
+
+                <li class="nav-item ml-3">
+                    <a class="nav-link" href="/ov/heating">Отопление</a>
+                </li>
+
+                <li class="nav-item ml-3">
+                    <a class="nav-link" href="/ov/ventilation">Вентиляция</a>
+                </li>
+
+                <li class="nav-item ml-3">
+                    <a class="nav-link" href="/ov/conditioning">Кондиционирование</a>
+                </li>
+
+<!--                <li class="nav-item ml-3">-->
+<!--                    <a class="nav-link active backlight-job" href="/ov/prins">ПРИНС</a>-->
+<!--                </li>-->
+
+                <li class="nav-item ml-3">
+                    <a class="nav-link" href="/vk">ВК/НВК</a>
+                </li>
+
+                <li class="nav-item ml-3">
+                    <a class="nav-link" href="/eom">ЭОМ</a>
+                </li>
+
+                <li class="nav-item ml-3">
+                    <a class="nav-link" href="/library">Библиотека</a>
+                </li>
+
+<!--                <li class="nav-item ml-3">-->
+<!--                    <a class="nav-link" href="/catalog">Каталог</a>-->
+<!--                </li>-->
+
+                <li class="nav-item ml-3">
+                    <a class="nav-link" href="/handbook">Справочник</a>
+                </li>
+
+            </ul>
+        </div>
+
+<!--        <div style="text-align: right">-->
+<!--            --><!--                <a href="/main/private-office" class="nav-link" id="link_private_office">--><!--</a>-->
+<!--            --><!--                <a class="nav-link" data-bs-toggle="modal" data-bs-target="#authorization" style="color: #2F7BEF; cursor: pointer;" id="link_authorization">Войти</a>-->
+<!--            --><!--        </div>-->
+    </nav>
+
+
+
+
+
+
+
+
+    <div class="head" style="min-height: 10vh;">
+        <div class="row">
+            <div class="col">
+
+            </div>
+            <div class="col">
+                <h1 class="text-center" style="font-style: oblique;">ИНЖЕНЕРНАЯ ПОМОЩЬ</h1>
+            </div>
+            <div class="col"></div>
+        </div>
+    </div>
+    <div id="calc-button" class="py-1">
+        <button type="button" class="btn btn-default calc-unit" title="Кальулятор давления" data-bs-toggle="modal" data-bs-target="#calculator" style="color: #2F7BEF; cursor: pointer;" id="link_calc_pressure">P</button>
+        <button type="button" class="btn btn-default calc-unit" title="Кальулятор температуры" data-bs-toggle="modal" data-bs-target="#calculator" style="color: #2F7BEF; cursor: pointer;" id="link_calc_temperature">T</button>
+        <button type="button" class="btn btn-default calc-unit" title="Кальулятор мощности тепловой" data-bs-toggle="modal" data-bs-target="#calculator" style="color: #2F7BEF; cursor: pointer;" id="link_calc_power">Q</button>
+        <button type="button" class="btn btn-default calc-unit" title="Кальулятор расхода" data-bs-toggle="modal" data-bs-target="#calculator" style="color: #2F7BEF; cursor: pointer;" id="link_calc_flow">L</button>
+        <button type="button" class="btn btn-default calc-unit" title="Интерполяция" data-bs-toggle="modal" data-bs-target="#calculator" style="color: #2F7BEF; cursor: pointer;" id="link_calc_interpolation">I</button>
+        <button type="button" class="btn btn-default calc-unit" title="Вес оцинковки, плотность" data-bs-toggle="modal" data-bs-target="#calculator" style="color: #2F7BEF; cursor: pointer;" id="link_calc_galvanized">Zn</button>
+<!--        <button type="button" class="btn btn-default calc-unit" title="Кальулятор металла" data-bs-toggle="modal" data-bs-target="#calculator" style="color: #2F7BEF; cursor: pointer;" id="link_calc_metal">Me</button>-->
+
+<!--        <button type="button" class="btn btn-default calc-unit" title="Кальулятор площади фигур" data-bs-toggle="modal" data-bs-target="#calculator" style="color: #2F7BEF; cursor: pointer;" id="link_calc_square">S</button>-->
+<!--        <button type="button" class="btn btn-default calc-unit" title="Кальулятор объема тел" data-bs-toggle="modal" data-bs-target="#calculator" style="color: #2F7BEF; cursor: pointer;" id="link_calc_volume">V</button>-->
+
+
+        <button type="button" class="btn btn-default calc-unit p-0" title="Написать разработчику" data-bs-toggle="modal" data-bs-target="#developer" style="color: #2F7BEF; cursor: pointer; float: right; margin-right: 0.5em;" id="write_developer">
+            <img src="/public/images/icon/write-developer.png" width="100%" height="100%" style="margin-bottom: 1em;">
+        </button>
+
+        <button type="button" class="btn btn-default calc-unit p-0" title="Telegram-канал" style="color: #2F7BEF; cursor: pointer; float: right; margin-right: 0.5em;">
+            <a href="https://t.me/helpengru" target="_blank">
+                <img src="/public/images/icon/telegram.png" width="100%" height="100%" style="margin-bottom: 1em;">
+            </a>
+        </button>
+
+        <button type="button" class="btn btn-default calc-unit p-0" title="Youtube-канал" style="color: #2F7BEF; cursor: pointer; float: right; margin-right: 0.5em;">
+            <a href="https://www.youtube.com/channel/UC9lzeZJIgNyVLKpp1Ui06jw" target="_blank">
+                <img src="/public/images/icon/youtube.png" width="100%" height="100%" style="margin-bottom: 1em;">
+            </a>
+        </button>
+
+    </div>
+</header>
+
+<!-- .............................. Modal Authorization ............................................... -->
+<div class="modal fade bd-example-modal" id="authorization" tabindex="-1" role="dialog" aria-labelledby="authorizationTitle" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content" id="form_setting">
+            <div class="modal-header">
+                <h5 class="modal-title" id="authorizationTitle">Аутентификация</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="popup_authentication"></div>
+        </div>
+    </div>
+</div>
+<!-- .............................. Modal Calc ........................................................ -->
+<div class="modal fade bd-example-modal" id="calculator" tabindex="-1" role="dialog" aria-labelledby="calculatorTitle" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content" id="form_setting">
+            <div class="modal-header">
+                <h5 class="modal-title" id="calculatorTitle">Калькулятор</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="popup_calc"></div>
+        </div>
+    </div>
+</div>
+<!-- .............................. Modal Write Developer ............................................. -->
+<div class="modal fade bd-modal" id="developer" tabindex="-1" role="dialog" aria-labelledby="developerTitle" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content" id="form_setting">
+            <div class="modal-header">
+                <h5 class="modal-title" id="developerTitle">Напишите разработчику</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="popup_calc">
+                <div class="form-container form__wrapper">
+                                            <h5>Отправлять сообщения могут только зарегистрированные пользователи.</h5>
+                    
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function(){
+        $('#link_authorization').click(function(){
+            $("#popup_authentication").load('/user/popup-authorization');
+        })
+        $('#link_calc_pressure').click(function(){
+            $("#popup_calc").load('/user/calc-pressure');
+
+            $('#calculator').on('shown.bs.modal', function() {
+                $('#input_press').focus();
+            })
+        })
+        $('#link_calc_temperature').click(function(){
+            $("#popup_calc").load('/user/calc-temperature');
+
+            $('#calculator').on('shown.bs.modal', function() {
+                $('#input_temperature').focus();
+            })
+        })
+        $('#link_calc_power').click(function(){
+            $("#popup_calc").load('/user/calc-power');
+
+            $('#calculator').on('shown.bs.modal', function() {
+                $('#input_power').focus();
+            })
+        })
+        $('#link_calc_flow').click(function(){
+            $("#popup_calc").load('/user/calc-flow');
+
+            $('#calculator').on('shown.bs.modal', function() {
+                $('#input_flow').focus();
+            })
+        })
+        $('#link_calc_interpolation').click(function(){
+            $("#popup_calc").load('/user/calc-interpolation');
+
+            $('#calculator').on('shown.bs.modal', function() {
+                $('#x1').focus();
+            })
+        })
+        $('#link_calc_galvanized').click(function(){
+            $("#popup_calc").load('/user/calc-galvanized');
+
+            $('#calculator').on('shown.bs.modal', function() {
+            })
+        })
+        $('#link_calc_metal').click(function(){
+            $("#popup_calc").load('/user/calc-metal');
+
+            $('#calculator').on('shown.bs.modal', function() {
+            })
+        })
+    })
+</script>        <div class="main-content">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-12">
+                                                                    </div>
+                </div>
+            </div>
+            <style>
+    .climat-name{
+        text-align: left;
+        text-indent: 0.5em;
+    }
+    .climat-val{
+        font-weight: bold;
+    }
+</style>
+<div class="row mx-4">
+    <div class="col-12 m-4">
+        <h3>Строительная климатология <a href="/public/normdoc/sp-new/sp_131.13330.2020.pdf" target="_blank">СП 131.13330.2020</a></h3>
+    </div>
+
+    <div class="col-xl-6">
+        <div class="form-group">
+            <h4>Выберите район застройки</h4>
+            <label style="color: #B5B5B5;">Республика, край, область</label>
+            <select class="form-control" id="order_region" name="order_region">
+                                    <option value="1">Республика Адыгея (Адыгея)</option>
+                                    <option value="2">Республика Алтай</option>
+                                    <option value="3">Алтайский край</option>
+                                    <option value="4">Амурская область</option>
+                                    <option value="5">Архангельская область</option>
+                                    <option value="6">Астраханская область</option>
+                                    <option value="7">Республика Башкортостан</option>
+                                    <option value="8">Белгородская область</option>
+                                    <option value="9">Брянская область</option>
+                                    <option value="10">Республика Бурятия</option>
+                                    <option value="11">Владимирская область</option>
+                                    <option value="12">Волгоградская область</option>
+                                    <option value="13">Вологодская область</option>
+                                    <option value="14">Воронежская область</option>
+                                    <option value="15">Республика Дагестан</option>
+                                    <option value="16">Еврейская автономная область</option>
+                                    <option value="17">Забайкальский край</option>
+                                    <option value="18">Ивановская область</option>
+                                    <option value="19">Республика Ингушетия</option>
+                                    <option value="20">Иркутская область</option>
+                                    <option value="21">Кабардино-Балкарская Республика</option>
+                                    <option value="22">Калининградская область</option>
+                                    <option value="23">Республика Калмыкия</option>
+                                    <option value="24">Калужская область</option>
+                                    <option value="25">Камчатский край</option>
+                                    <option value="26">Карачаево-Черкесская Республика</option>
+                                    <option value="27">Республика Кареллия</option>
+                                    <option value="28">Кемеровская область</option>
+                                    <option value="29">Кировская область</option>
+                                    <option value="30">Республика Коми</option>
+                                    <option value="31">Костромская область</option>
+                                    <option value="32">Краснодарский край</option>
+                                    <option value="33">Красноярский край</option>
+                                    <option value="34">Республика Крым</option>
+                                    <option value="35">Севастополь</option>
+                                    <option value="36">Курганская область</option>
+                                    <option value="37">Курская область</option>
+                                    <option value="38">Ленинградская область</option>
+                                    <option value="39">Санкт-Петербург</option>
+                                    <option value="40">Липецкая область</option>
+                                    <option value="41">Магаданская область</option>
+                                    <option value="42">Республика Марий Эл</option>
+                                    <option value="43">Республика Мордовия</option>
+                                    <option value="44">Московская область</option>
+                                    <option value="45">Москва</option>
+                                    <option value="46">Мурманская область</option>
+                                    <option value="47">Ненецкий автономный округ</option>
+                                    <option value="48">Нижегородская область</option>
+                                    <option value="49">Новгородская область</option>
+                                    <option value="50">Новосибирская область</option>
+                                    <option value="51">Омская область</option>
+                                    <option value="52">Оренбургская область</option>
+                                    <option value="53">Орловская область</option>
+                                    <option value="54">Пензенская область</option>
+                                    <option value="55">Пермский край</option>
+                                    <option value="56">Приморский край</option>
+                                    <option value="57">Псковская область</option>
+                                    <option value="58">Ростовская область</option>
+                                    <option value="59">Рязанская область</option>
+                                    <option value="60">Самарская область</option>
+                                    <option value="61">Саратовская область</option>
+                                    <option value="62">Республика Саха (Якутия)</option>
+                                    <option value="63">Сахалинская область</option>
+                                    <option value="64">Свердловская область</option>
+                                    <option value="65">Республика Северная Осетия - Алания</option>
+                                    <option value="66">Смоленская область</option>
+                                    <option value="67">Ставропольский край</option>
+                                    <option value="68">Тамбовская область</option>
+                                    <option value="69">Республика Татарстан (Татарстан)</option>
+                                    <option value="70">Тверская область</option>
+                                    <option value="71">Томская область</option>
+                                    <option value="72">Тульская область</option>
+                                    <option value="73">Республика Тыва</option>
+                                    <option value="74">Тюменская область</option>
+                                    <option value="75">Удмуртская Республика</option>
+                                    <option value="76">Ульяновская область</option>
+                                    <option value="77">Хабаровский край</option>
+                                    <option value="78">Республика Хакасия</option>
+                                    <option value="79">Ханты-Мансийский автономный округ - Югра</option>
+                                    <option value="80">Челябинская область</option>
+                                    <option value="81">Чеченская Республика</option>
+                                    <option value="82">Чувашская Республика - Чувашия</option>
+                                    <option value="83">Чукотский автономный округ</option>
+                                    <option value="84">Ямало-Ненецкий автономный округ</option>
+                                    <option value="85">Ярославская область</option>
+                                    <option value="86">Донецкая народная республика</option>
+                                    <option value="87">Луганская народная республика</option>
+                                    <option value="88">Херсонская область</option>
+                                    <option value="89">Запорожская область</option>
+                            </select>
+            <h4>Выберите населенный пункт</h4>
+            <label style="color: #B5B5B5;">Населенный пункт, административный округ</label>
+            <select class="form-control" id="order_city" name="order_city"></select>
+        </div>
+        <h4 class="mt-4">Климатические параметры теплого периода года</h4>
+        <table class="table table-bordered table-hover table-sm text-center climatology">
+            <tr>
+                <td>1</td>
+                <th colspan="3"><span id="region_"></span>, <span id="city_"></span></th>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td class="climat-name">Барометрическое давление</td>
+                <td class="climat-val"><span id="bar_davl"></span></td>
+                <td>гПа</td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td class="climat-name">Температура воздуха обеспеченностью 0.95</td>
+                <td class="climat-val"><span id="ts_095"></span></td>
+                <td>°С</td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td class="climat-name">Температура воздуха обеспеченностью 0.98</td class="climat-name">
+                <td class="climat-val"><span id="ts_098"></span></td>
+                <td>°С</td>
+            </tr>
+            <tr>
+                <td>5</td>
+                <td class="climat-name">Средняя максимальная температура воздуха наиболее теплого месяца</td>
+                <td class="climat-val"><span id="t_sr_max"></span></td>
+                <td>°С</td>
+            </tr>
+
+            <tr>
+                <td>6</td>
+                <td class="climat-name">Абсолютная максимальная температура воздуха</td>
+                <td class="climat-val"><span id="t_abs_max"></span></td>
+                <td>°С</td>
+            </tr>
+            <tr>
+                <td>7</td>
+                <td class="climat-name">Средняя суточная амплитуда температуры воздуха наиболее теплого месяца</td>
+                <td class="climat-val"><span id="sr_sut_ampl_t"></span></td>
+                <td>°С</td>
+            </tr>
+            <tr>
+                <td>8</td>
+                <td class="climat-name">Средняя месячная относительная влажность воздуха наиболее теплого месяца</td>
+                <td class="climat-val"><span id="sr_mes_vlaga"></span></td>
+                <td>%</td>
+            </tr>
+
+            <tr>
+                <td>9</td>
+                <td class="climat-name">Средняя месячная относительная влажность воздуха в 15 ч наиболее теплого месяца</td>
+                <td class="climat-val"><span id="sr_mes_vlaga_15"></span></td>
+                <td>%</td>
+            </tr>
+            <tr>
+                <td>10</td>
+                <td class="climat-name">Количество осадков за апрель - октябрь</td>
+                <td class="climat-val"><span id="osadki_"></span></td>
+                <td>мм</td>
+            </tr>
+            <tr>
+                <td>11</td>
+                <td class="climat-name">Суточный максимум осадков</td>
+                <td class="climat-val"><span id="sut_max_osadki"></span></td>
+                <td>мм</td>
+            </tr>
+            <tr>
+                <td>12</td>
+                <td class="climat-name">Преобладающее направление ветра за июнь - август</td>
+                <td colspan="2" class="climat-val"><span id="napravl_vetra_"></span></td>
+            </tr>
+            <tr>
+                <td>13</td>
+                <td class="climat-name">Минимальная из средних скоростей ветра по румбам за июль</td>
+                <td class="climat-val"><span id="min_scor_vetra_rumb"></span></td>
+                <td>м/с</td>
+            </tr>
+        </table>
+    </div>
+    <div class="col-xl-6">
+        <h4>Климатические параметры холодного периода года</h4>
+        <table class="table table-bordered table-hover table-sm text-center">
+            <tr>
+                <td>1</td>
+                <th colspan="3"><span id="region"></span>, <span id="city"></span></th>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td class="climat-name">Температура воздуха наиболее холодных суток, обеспеченностью 0.98</td>
+                <td class="climat-val"><span id="t_098"></span></td>
+                <td>°С</td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td class="climat-name">Температура воздуха наиболее холодных суток, обеспеченностью 0.92</td>
+                <td class="climat-val"><span id="t_092"></span></td>
+                <td>°С</td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td class="climat-name">Температура воздуха наиболее холодной пятидневки, обеспеченностью 0.98</td>
+                <td class="climat-val"><span id="t_5_098"></span></td>
+                <td>°С</td>
+            </tr>
+            <tr>
+                <td>5</td>
+                <td class="climat-name">Температура воздуха наиболее холодной пятидневки, обеспеченностью 0.92</td>
+                <td class="climat-val"><span id="t_5_092"></span></td>
+                <td>°С</td>
+            </tr>
+
+            <tr>
+                <td>6</td>
+                <td class="climat-name">Температура воздуха, обеспеченностью 0.94</td>
+                <td class="climat-val"><span id="t_094"></span></td>
+                <td>°С</td>
+            </tr>
+            <tr>
+                <td>7</td>
+                <td class="climat-name">Абсолютная минимальная температура воздуха</td>
+                <td class="climat-val"><span id="t_abs"></span></td>
+                <td>°С</td>
+            </tr>
+            <tr>
+                <td>8</td>
+                <td class="climat-name">Средняя суточная амплитуда температуры воздуха наиболее холодного месяца</td>
+                <td class="climat-val"><span id="tsr_ampl"></span></td>
+                <td>°С</td>
+            </tr>
+
+            <tr>
+                <td>9</td>
+                <td class="climat-name">Продолжительность, сут, периода со среднесуточной температурой воздуха ≤0, °С</td>
+                <td class="climat-val"><span id="prod_0"></span></td>
+                <td>сут</td>
+            </tr>
+            <tr>
+                <td>10</td>
+                <td class="climat-name">Средняя температура воздуха периода со средней суточной температурой воздуха ≤0, °С</td>
+                <td class="climat-val"><span id="t_prod_0"></span></td>
+                <td>°С</td>
+            </tr>
+            <tr>
+                <td>11</td>
+                <td class="climat-name">Продолжительность, сут, периода со среднесуточной температурой воздуха ≤8, °С</td>
+                <td class="climat-val"><span id="prod_8"></span></td>
+                <td>сут</td>
+            </tr>
+            <tr>
+                <td>12</td>
+                <td class="climat-name">Средняя температура воздуха периода со средней суточной температурой воздуха ≤8, °С</td>
+                <td class="climat-val"><span id="t_prod_8"></span></td>
+                <td>°С</td>
+            </tr>
+            <tr>
+                <td>13</td>
+                <td class="climat-name">Продолжительность, сут, периода со среднесуточной температурой воздуха ≤10, °С</td>
+                <td class="climat-val"><span id="prod_10"></span></td>
+                <td>сут</td>
+            </tr>
+            <tr>
+                <td>14</td>
+                <td class="climat-name">Средняя температура воздуха периода со средней суточной температурой воздуха ≤10, °С</td>
+                <td class="climat-val"><span id="t_prod_10"></span></td>
+                <td>°С</td>
+            </tr>
+
+            <tr>
+                <td>15</td>
+                <td class="climat-name">Средняя месячная относительная влажность воздуха наиболее холодного месяца</td>
+                <td class="climat-val"><span id="vlaga"></span></td>
+                <td>%</td>
+            </tr>
+            <tr>
+                <td>16</td>
+                <td class="climat-name">Средняя месячная относительная влажность воздуха в 15 ч наиболее холодного месяца</td>
+                <td class="climat-val"><span id="vlaga_15"></span></td>
+                <td>%</td>
+            </tr>
+            <tr>
+                <td>17</td>
+                <td class="climat-name">Количество осадков за ноябрь-март</td>
+                <td class="climat-val"><span id="osadki"></span></td>
+                <td>мм</td>
+            </tr>
+            <tr>
+                <td>18</td>
+                <td class="climat-name">Преобладающее направлением ветра за декабрь - февраль </td>
+                <td colspan="2" class="climat-val"><span id="napravl_vetra"></span></td>
+            </tr>
+            <tr>
+                <td>19</td>
+                <td class="climat-name">Максимальная из средних скоростей ветра по румбам за январь </td>
+                <td class="climat-val"><span id="v_max"></span></td>
+                <td>м/с</td>
+            </tr>
+            <tr>
+                <td>20</td>
+                <td class="climat-name">Средняя скорость ветра за период со средней суточной температурой воздуха ≤8, °С</td>
+                <td class="climat-val"><span id="v_sr"></span></td>
+                <td>м/с</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="col-md-12">
+        <h5>Средняя месячная и годовая температура воздуха</h5>
+        <table class="table table-bordered table-hover table-sm text-center">
+            <tr>
+                <td>Республика, край, область, пункт</td>
+                <td>I</td>
+                <td>II</td>
+                <td>III</td>
+                <td>IV</td>
+                <td>V</td>
+                <td>VI</td>
+                <td>VII</td>
+                <td>VIII</td>
+                <td>IX</td>
+                <td>X</td>
+                <td>XI</td>
+                <td>XII</td>
+                <td>Год</td>
+            </tr>
+            <tr class="climat-val">
+                <th><span id="region_temperature"></span>, <span id="city_temperature"></span></th>
+                <td><span id="I_temperature"></span></td>
+                <td><span id="II_temperature"></span></td>
+                <td><span id="III_temperature"></span></td>
+                <td><span id="IV_temperature"></span></td>
+                <td><span id="V_temperature"></span></td>
+                <td><span id="VI_temperature"></span></td>
+                <td><span id="VII_temperature"></span></td>
+                <td><span id="VIII_temperature"></span></td>
+                <td><span id="IX_temperature"></span></td>
+                <td><span id="X_temperature"></span></td>
+                <td><span id="XI_temperature"></span></td>
+                <td><span id="XII_temperature"></span></td>
+                <td><span id="year_temperature"></span></td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="col-md-12">
+        <h5>Среднее месячное и годовое парциальное давление водяного пара, гПа</h5>
+        <table class="table table-bordered table-hover table-sm text-center">
+            <tr>
+                <td>Республика, край, область, АО, пункт</td>
+                <td>I</td>
+                <td>II</td>
+                <td>III</td>
+                <td>IV</td>
+                <td>V</td>
+                <td>VI</td>
+                <td>VII</td>
+                <td>VIII</td>
+                <td>IX</td>
+                <td>X</td>
+                <td>XI</td>
+                <td>XII</td>
+                <td>Год</td>
+            </tr>
+            <tr class="climat-val">
+                <th><span id="region_pressure"></span>, <span id="city_pressure"></span></th>
+                <td><span id="I_pressure"></span></td>
+                <td><span id="II_pressure"></span></td>
+                <td><span id="III_pressure"></span></td>
+                <td><span id="IV_pressure"></span></td>
+                <td><span id="V_pressure"></span></td>
+                <td><span id="VI_pressure"></span></td>
+                <td><span id="VII_pressure"></span></td>
+                <td><span id="VIII_pressure"></span></td>
+                <td><span id="IX_pressure"></span></td>
+                <td><span id="X_pressure"></span></td>
+                <td><span id="XI_pressure"></span></td>
+                <td><span id="XII_pressure"></span></td>
+                <td><span id="year_pressure"></span></td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="col-md-12">
+        <h5>Средняя и максимальная суточная амплитуда температуры наружного воздуха</h5>
+        <table class="table table-bordered table-hover table-sm text-center">
+            <tr>
+                <td>Республика, край, область, АО, пункт</td>
+                <td>I</td>
+                <td>II</td>
+                <td>III</td>
+                <td>IV</td>
+                <td>V</td>
+                <td>VI</td>
+                <td>VII</td>
+                <td>VIII</td>
+                <td>IX</td>
+                <td>X</td>
+                <td>XI</td>
+                <td>XII</td>
+            </tr>
+            <tr class="climat-val">
+                <th><span id="region_amplitude_middle"></span>, <span id="city_amplitude_middle"></span></th>
+                <td><span id="I_amplitude_middle"></span></td>
+                <td><span id="II_amplitude_middle"></span></td>
+                <td><span id="III_amplitude_middle"></span></td>
+                <td><span id="IV_amplitude_middle"></span></td>
+                <td><span id="V_amplitude_middle"></span></td>
+                <td><span id="VI_amplitude_middle"></span></td>
+                <td><span id="VII_amplitude_middle"></span></td>
+                <td><span id="VIII_amplitude_middle"></span></td>
+                <td><span id="IX_amplitude_middle"></span></td>
+                <td><span id="X_amplitude_middle"></span></td>
+                <td><span id="XI_amplitude_middle"></span></td>
+                <td><span id="XII_amplitude_middle"></span></td>
+            </tr>
+            <tr class="climat-val">
+                <th><span id="region_amplitude_max"></span>, <span id="city_amplitude_max"></span></th>
+                <td><span id="I_amplitude_max"></span></td>
+                <td><span id="II_amplitude_max"></span></td>
+                <td><span id="III_amplitude_max"></span></td>
+                <td><span id="IV_amplitude_max"></span></td>
+                <td><span id="V_amplitude_max"></span></td>
+                <td><span id="VI_amplitude_max"></span></td>
+                <td><span id="VII_amplitude_max"></span></td>
+                <td><span id="VIII_amplitude_max"></span></td>
+                <td><span id="IX_amplitude_max"></span></td>
+                <td><span id="X_amplitude_max"></span></td>
+                <td><span id="XI_amplitude_max"></span></td>
+                <td><span id="XII_amplitude_max"></span></td>
+            </tr>
+        </table>
+    </div>
+
+</div>
+
+
+<script>
+    $(document).ready (function() {
+        function City () {
+            clearcity ();
+            var region = $("#order_region option:selected").val();
+            $.post('/engineer/climatology/ajax-climatology-2020', {region : region}, onSuccess);
+            function onSuccess(data) {
+                var answer = $.parseJSON(data);
+                console.log(answer);
+                $.each(answer,function(key, value){
+                    console.log(key + ':' + value);
+                    $('#order_city').append($('<option>',{
+                        value: value['id'].toString(),
+                        text : value['city'].toString()
+                    }));
+                });
+                Climatologya();
+            }
+            function clearcity () {
+                $("#order_city").empty();
+            }
+        }
+        $("#order_region").change(City);
+        $(document).ready(City);
+
+        function Climatologya(){
+            var city = $("#order_city option:selected").val();
+            $.post('/engineer/climatology/ajax-climatology-2020', {city : city}, onSuccess);
+            function onSuccess(data) {
+                var answer = $.parseJSON(data);
+                // console.log(answer);
+                for (key in answer) {
+                    $('#region').text(answer['region_id']);
+                    $('#city').text(answer['city']);
+                    $('#t_098').text(answer['t_0.98']);
+                    $('#t_092').text(answer['t_0.92']);
+                    $('#t_5_098').text(answer['t_5_0.98']);
+                    $('#t_5_092').text(answer['t_5_0.92']);
+                    $('#t_094').text(answer['t_0.94']);
+                    $('#t_abs').text(answer['t_abs']);
+                    $('#tsr_ampl').text(answer['tsr_ampl']);
+                    $('#prod_0').text(answer['prod_0']);
+                    $('#t_prod_0').text(answer['t_prod_0']);
+                    $('#prod_8').text(answer['prod_8']);
+                    $('#t_prod_8').text(answer['t_prod_8']);
+                    $('#prod_10').text(answer['prod_10']);
+                    $('#t_prod_10').text(answer['t_prod_10']);
+                    $('#vlaga').text(answer['vlaga']);
+                    $('#vlaga_15').text(answer['vlaga_15']);
+                    $('#osadki').text(answer['osadki']);
+                    $('#napravl_vetra').text(answer['napravl_vetra']);
+                    $('#v_max').text(answer['v_max']);
+                    $('#v_sr').text(answer['v_sr']);
+
+                    $('#region_').text(answer['region_id']);
+                    $('#city_').text(answer['city']);
+                    $('#bar_davl').text(answer['bar_davl']);
+                    $('#ts_095').text(answer['t+0.95']);
+                    $('#ts_098').text(answer['t+0.98']);
+                    $('#t_sr_max').text(answer['t_sr_max+']);
+                    $('#t_abs_max').text(answer['t_abs_max']);
+                    $('#sr_sut_ampl_t').text(answer['sr_sut_ampl_t+']);
+                    $('#sr_mes_vlaga').text(answer['sr_mes_vlaga+']);
+                    $('#sr_mes_vlaga_15').text(answer['sr_mes_vlaga_15']);
+                    $('#osadki_').text(answer['osadki+']);
+                    $('#sut_max_osadki').text(answer['sut_max_osadki']);
+                    $('#napravl_vetra_').text(answer['napravl_vetra+']);
+                    $('#min_scor_vetra_rumb').text(answer['min_scor_vetra_rumb']);
+
+                    $('#region_temperature').text(answer['region_id']);
+                    $('#city_temperature').text(answer['city']);
+                    $('#I_temperature').text(answer['I_temperature']);
+                    $('#II_temperature').text(answer['II_temperature']);
+                    $('#III_temperature').text(answer['III_temperature']);
+                    $('#IV_temperature').text(answer['IV_temperature']);
+                    $('#V_temperature').text(answer['V_temperature']);
+                    $('#VI_temperature').text(answer['VI_temperature']);
+                    $('#VII_temperature').text(answer['VII_temperature']);
+                    $('#VIII_temperature').text(answer['VIII_temperature']);
+                    $('#IX_temperature').text(answer['IX_temperature']);
+                    $('#X_temperature').text(answer['X_temperature']);
+                    $('#XI_temperature').text(answer['XI_temperature']);
+                    $('#XII_temperature').text(answer['XII_temperature']);
+                    $('#year_temperature').text(answer['year_temperature']);
+
+                    $('#region_pressure').text(answer['region_id']);
+                    $('#city_pressure').text(answer['city']);
+                    $('#I_pressure').text(answer['I_pressure']);
+                    $('#II_pressure').text(answer['II_pressure']);
+                    $('#III_pressure').text(answer['III_pressure']);
+                    $('#IV_pressure').text(answer['IV_pressure']);
+                    $('#V_pressure').text(answer['V_pressure']);
+                    $('#VI_pressure').text(answer['VI_pressure']);
+                    $('#VII_pressure').text(answer['VII_pressure']);
+                    $('#VIII_pressure').text(answer['VIII_pressure']);
+                    $('#IX_pressure').text(answer['IX_pressure']);
+                    $('#X_pressure').text(answer['X_pressure']);
+                    $('#XI_pressure').text(answer['XI_pressure']);
+                    $('#XII_pressure').text(answer['XII_pressure']);
+                    $('#year_pressure').text(answer['year_pressure']);
+
+                    $('#region_amplitude_middle').text(answer['region_id']);
+                    $('#city_amplitude_middle').text(answer['city']);
+                    $('#I_amplitude_middle').text(answer['I_amplitude_middle']);
+                    $('#II_amplitude_middle').text(answer['II_amplitude_middle']);
+                    $('#III_amplitude_middle').text(answer['III_amplitude_middle']);
+                    $('#IV_amplitude_middle').text(answer['IV_amplitude_middle']);
+                    $('#V_amplitude_middle').text(answer['V_amplitude_middle']);
+                    $('#VI_amplitude_middle').text(answer['VI_amplitude_middle']);
+                    $('#VII_amplitude_middle').text(answer['VII_amplitude_middle']);
+                    $('#VIII_amplitude_middle').text(answer['VIII_amplitude_middle']);
+                    $('#IX_amplitude_middle').text(answer['IX_amplitude_middle']);
+                    $('#X_amplitude_middle').text(answer['X_amplitude_middle']);
+                    $('#XI_amplitude_middle').text(answer['XI_amplitude_middle']);
+                    $('#XII_amplitude_middle').text(answer['XII_amplitude_middle']);
+                    $('#year_amplitude_middle').text(answer['year_amplitude_middle']);
+
+                    $('#region_amplitude_max').text(answer['region_id']);
+                    $('#city_amplitude_max').text(answer['city']);
+                    $('#I_amplitude_max').text(answer['I_amplitude_max']);
+                    $('#II_amplitude_max').text(answer['II_amplitude_max']);
+                    $('#III_amplitude_max').text(answer['III_amplitude_max']);
+                    $('#IV_amplitude_max').text(answer['IV_amplitude_max']);
+                    $('#V_amplitude_max').text(answer['V_amplitude_max']);
+                    $('#VI_amplitude_max').text(answer['VI_amplitude_max']);
+                    $('#VII_amplitude_max').text(answer['VII_amplitude_max']);
+                    $('#VIII_amplitude_max').text(answer['VIII_amplitude_max']);
+                    $('#IX_amplitude_max').text(answer['IX_amplitude_max']);
+                    $('#X_amplitude_max').text(answer['X_amplitude_max']);
+                    $('#XI_amplitude_max').text(answer['XI_amplitude_max']);
+                    $('#XII_amplitude_max').text(answer['XII_amplitude_max']);
+                    $('#year_amplitude_max').text(answer['year_amplitude_max']);
+
+
+                    var m0 = 0;
+                    var arr = [answer['I'], answer['II'], answer['III'], answer['IV'], answer['V'], answer['VI'], answer['VII'], answer['VIII'], answer['IX'], answer['X'], answer['XI'], answer['XII']];
+                    $.each(arr,function(index,value){
+                        if (value<0){
+                            m0 = m0 + Math.abs(value);
+                        }
+                    });
+                    //console.log(m0);
+                    $('#glina_norm').text((0.23*Math.sqrt(m0)).toFixed(2));
+                    $('#glina_water').text(((0.23*Math.sqrt(m0))+0.5).toFixed(2));
+                    $('#glina_sew').text(((0.23*Math.sqrt(m0))-0.3).toFixed(2));
+                    $('#glina_sew500').text(((0.23*Math.sqrt(m0))-0.5).toFixed(2));
+
+                    $('#supes_norm').text((0.28*Math.sqrt(m0)).toFixed(2));
+                    $('#supes_water').text(((0.28*Math.sqrt(m0))+0.5).toFixed(2));
+                    $('#supes_sew').text(((0.28*Math.sqrt(m0))-0.3).toFixed(2));
+                    $('#supes_sew500').text(((0.28*Math.sqrt(m0))-0.5).toFixed(2));
+
+                    $('#pesok_norm').text((0.30*Math.sqrt(m0)).toFixed(2));
+                    $('#pesok_water').text(((0.30*Math.sqrt(m0))+0.5).toFixed(2));
+                    $('#pesok_sew').text(((0.30*Math.sqrt(m0))-0.3).toFixed(2));
+                    $('#pesok_sew500').text(((0.30*Math.sqrt(m0))-0.5).toFixed(2));
+
+                    $('#grunt_norm').text((0.34*Math.sqrt(m0)).toFixed(2));
+                    $('#grunt_water').text(((0.34*Math.sqrt(m0))+0.5).toFixed(2));
+                    $('#grunt_sew').text(((0.34*Math.sqrt(m0))-0.3).toFixed(2));
+                    $('#grunt_sew500').text(((0.34*Math.sqrt(m0))-0.5).toFixed(2));
+
+                }
+            }
+        }
+        $("#order_city").change(Climatologya);
+    });
+</script>        </div>
+        <footer>
+    <div class="row">
+        <div class="col-auto">
+            © 2012-2025
+        </div>
+        <div class="col">
+            <div class="row">
+                <div class="col text-center"><a href="/main/sitemap">Карта сайта</a></div>
+
+                <div class="col text-center">
+                    <!--LiveInternet counter--><script><!--
+                        document.write("<a href='http://www.liveinternet.ru/click' "+
+                            "target=_blank><img src='//counter.yadro.ru/hit?t16.11;r"+
+                            escape(document.referrer)+((typeof(screen)=="undefined")?"":
+                                ";s"+screen.width+"*"+screen.height+"*"+(screen.colorDepth?
+                                screen.colorDepth:screen.pixelDepth))+";u"+escape(document.URL)+
+                            ";"+Math.random()+
+                            "' alt='' title='LiveInternet: показано число просмотров за 24"+
+                            " часа, посетителей за 24 часа и за сегодня' "+
+                            "border='0' width='88' height='31'><\/a>")
+                        //--></script><!--/LiveInternet-->
+
+
+                    <!-- Yandex.Metrika informer -->
+                <a href="https://metrika.yandex.ru/stat/?id=27020379&amp;from=informer"
+                   target="_blank" rel="nofollow"><img src="https://informer.yandex.ru/informer/27020379/3_1_FFFFFFFF_EFEFEFFF_0_pageviews"
+                                                       style="width:88px; height:31px; border:0;" alt="Яндекс.Метрика" title="Яндекс.Метрика: данные за сегодня (просмотры, визиты и уникальные посетители)" class="ym-advanced-informer" data-cid="27020379" data-lang="ru" /></a>
+                <!-- /Yandex.Metrika informer -->
+
+                <!-- Yandex.Metrika counter -->
+                <script type="text/javascript" >
+                    (function (d, w, c) {
+                        (w[c] = w[c] || []).push(function() {
+                            try {
+                                w.yaCounter27020379 = new Ya.Metrika({
+                                    id:27020379,
+                                    clickmap:true,
+                                    trackLinks:true,
+                                    accurateTrackBounce:true
+                                });
+                            } catch(e) { }
+                        });
+
+                        var n = d.getElementsByTagName("script")[0],
+                            x = "https://mc.yandex.ru/metrika/watch.js",
+                            s = d.createElement("script"),
+                            f = function () { n.parentNode.insertBefore(s, n); };
+                        for (var i = 0; i < document.scripts.length; i++) {
+                            if (document.scripts[i].src === x) { return; }
+                        }
+                        s.type = "text/javascript";
+                        s.async = true;
+                        s.src = x;
+
+                        if (w.opera == "[object Opera]") {
+                            d.addEventListener("DOMContentLoaded", f, false);
+                        } else { f(); }
+                    })(document, window, "yandex_metrika_callbacks");
+                </script>
+                <noscript><div><img src="https://mc.yandex.ru/watch/27020379" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+                <!-- /Yandex.Metrika counter -->
+
+                </div>
+
+                <div class="col text-center"><a href="/main/advertising">Реклама на сайте</a></div>
+                <div class="col text-center"><a href="mailto:post@helpeng.ru">post@helpeng.ru</a></div>
+            </div>
+        </div>
+        <div class="col-auto">
+            +7 (916) 106-05-50
+        </div>
+    </div>
+</footer>    </div>
+</body>
+</html>
