@@ -1,0 +1,189 @@
+# ОВиК, дом и баня: скачать исходные данные Заказчика (Яндекс Диск и Облако Mail.ru)
+# и положить их в ovk-dom-banya/src. Из среды разработки оба сервиса закрыты сетевой
+# политикой, с сервера GitHub — открыты.
+#
+# Файлы больше 95 МБ режутся на части (GitHub не принимает файлы больше 100 МБ):
+# собрать обратно — cat имя.part-* > имя.
+# Из файлов Revit (.rvt) дополнительно вынимаются сведения о файле (версия Revit)
+# и картинка предпросмотра — по ним видно, что лежит в модели, без самого Revit.
+name: 'ОВиК дом и баня: исходные данные'
+
+on:
+  push:
+    branches: ['claude/brave-darwin-wc97p5']
+    paths: ['.github/workflows/fetch-ovk-dom-banya.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    env:
+      D: ovk-dom-banya/src
+      YA: https://disk.yandex.ru/d/mgOXutHqBvmtZA
+      MR: wkQW/WoaJfarQk
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Яндекс Диск
+        run: |
+          set -eu
+          mkdir -p "$D/yandex" /tmp/ya
+          curl -sS "https://cloud-api.yandex.net/v1/disk/public/resources?public_key=$YA&limit=500" -o /tmp/ya/meta.json
+          python3 - <<'EOF'
+          import json
+          d = json.load(open('/tmp/ya/meta.json'))
+          print('тип:', d.get('type'), '| имя:', d.get('name'), '| размер:', d.get('size'))
+          for i in d.get('_embedded', {}).get('items', []):
+              print('  ', i['type'], i['name'], i.get('size'))
+          EOF
+          curl -sS "https://cloud-api.yandex.net/v1/disk/public/resources/download?public_key=$YA" -o /tmp/ya/dl.json
+          href=$(python3 -c 'import json; print(json.load(open("/tmp/ya/dl.json"))["href"])')
+          curl -sSL "$href" -o /tmp/ya/download.bin
+          ls -la /tmp/ya/download.bin; file /tmp/ya/download.bin
+
+      - name: Облако Mail.ru
+        run: |
+          set -u
+          mkdir -p "$D/mailru"
+          python3 - <<'EOF'
+          import json, os, re, urllib.parse, urllib.request
+          WL, OUT = os.environ['MR'], os.path.join(os.environ['D'], 'mailru')
+          UA = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124 Safari/537.36'}
+
+          def get(u, raw=False):
+              r = urllib.request.urlopen(urllib.request.Request(u, headers=UA), timeout=120)
+              return r if raw else r.read()
+
+          base = None
+          try:
+              d = json.loads(get('https://cloud.mail.ru/api/v2/dispatcher'))
+              base = d['body']['weblink_get'][0]['url']
+          except Exception as e:
+              print('dispatcher:', e)
+          if not base:
+              html = get('https://cloud.mail.ru/public/' + WL).decode('utf-8', 'replace')
+              m = re.search(r'"weblink_get"\s*:\s*\[?\s*\{[^}]*?"url"\s*:\s*"([^"]+)"', html)
+              base = m and m.group(1)
+          print('сервер выдачи:', base)
+
+          def listing(w):
+              u = 'https://cloud.mail.ru/api/v2/folder?weblink=' + urllib.parse.quote(w) + '&offset=0&limit=500'
+              return json.loads(get(u))['body']
+
+          def fetch(w, rel, size):
+              path = os.path.join(OUT, rel)
+              os.makedirs(os.path.dirname(path), exist_ok=True)
+              url = base.rstrip('/') + '/' + urllib.parse.quote(w)
+              with get(url, raw=True) as r, open(path, 'wb') as f:
+                  while True:
+                      b = r.read(1 << 20)
+                      if not b:
+                          break
+                      f.write(b)
+              print('  скачан', rel, os.path.getsize(path), '(ожидалось', size, ')')
+
+          def walk(w, rel=''):
+              b = listing(w)
+              items = b.get('list')
+              if items is None:              # ссылка ведёт на файл, а не на папку
+                  fetch(w, rel or b.get('name', 'file'), b.get('size'))
+                  return
+              for i in items:
+                  name = i['name']
+                  if i.get('type') == 'folder' or i.get('kind') == 'folder':
+                      print('папка', rel + name)
+                      walk(i['weblink'], rel + name + '/')
+                  else:
+                      print('файл', rel + name, i.get('size'))
+                      fetch(i['weblink'], rel + name, i.get('size'))
+
+          try:
+              walk(WL)
+          except Exception as e:
+              import traceback; traceback.print_exc()
+          EOF
+
+      - name: Распаковка, предпросмотр Revit, большие файлы — на части
+        run: |
+          set -eu
+          pip install -q olefile
+          python3 - <<'EOF'
+          import io, os, re, zipfile, olefile
+          D = os.environ['D']
+
+          def unzip(data_or_path, out):
+              z = zipfile.ZipFile(data_or_path)
+              for zi in z.infolist():
+                  name = zi.filename
+                  if not zi.flag_bits & 0x800:          # имя не в UTF-8 — архив из Windows
+                      try:
+                          name = name.encode('cp437').decode('cp866')
+                      except Exception:
+                          pass
+                  if name.endswith('/'):
+                      continue
+                  p = os.path.join(out, name)
+                  os.makedirs(os.path.dirname(p), exist_ok=True)
+                  with z.open(zi) as s, open(p, 'wb') as f:
+                      f.write(s.read())
+                  print('  ', name, zi.file_size)
+
+          src = '/tmp/ya/download.bin'
+          if os.path.exists(src) and zipfile.is_zipfile(src):
+              print('Яндекс: архив, распаковываю')
+              unzip(src, os.path.join(D, 'yandex'))
+          elif os.path.exists(src):
+              os.rename(src, os.path.join(D, 'yandex', 'download.bin'))
+          # вложенные архивы — на один уровень
+          for root, _, files in os.walk(D):
+              for fn in files:
+                  p = os.path.join(root, fn)
+                  if fn.lower().endswith('.zip') and zipfile.is_zipfile(p):
+                      print('вложенный архив', p)
+                      unzip(p, os.path.splitext(p)[0])
+                      os.remove(p)
+
+          # Revit: версия и картинка предпросмотра
+          for root, _, files in os.walk(D):
+              for fn in files:
+                  if not fn.lower().endswith(('.rvt', '.rfa')):
+                      continue
+                  p = os.path.join(root, fn)
+                  try:
+                      ole = olefile.OleFileIO(p)
+                      print('Revit', p, [ '/'.join(s) for s in ole.listdir() ][:40])
+                      if ole.exists('BasicFileInfo'):
+                          t = ole.openstream('BasicFileInfo').read().decode('utf-16-le', 'ignore')
+                          t = re.sub(r'[^\w\s.,:;()/\\\-+]', ' ', t)
+                          open(p + '.info.txt', 'w').write(t)
+                          print('  ', ' '.join(t.split())[:600])
+                      for s in ('RevitPreview4.0',):
+                          if ole.exists(s):
+                              b = ole.openstream(s).read()
+                              i = b.find(b'\x89PNG')
+                              j = b.find(b'IEND', i)
+                              if i >= 0 and j > 0:
+                                  open(p + '.preview.png', 'wb').write(b[i:j + 8])
+                                  print('   предпросмотр сохранён')
+                  except Exception as e:
+                      print('  не прочитан:', e)
+          EOF
+          # GitHub не принимает файлы больше 100 МБ
+          find "$D" -type f -size +95M -print0 | while IFS= read -r -d '' f; do
+            echo "режу на части: $f"; split -b 90m -d "$f" "$f.part-"; rm "$f"
+          done
+          find "$D" -type f -printf '%10s  %p\n' | sort -k2 | tee "$D/../src-files.txt"
+          du -sh "$D"
+
+      - name: Коммит
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ovk-dom-banya
+          git diff --cached --quiet && { echo 'нечего коммитить'; exit 0; }
+          git commit -q -m 'ОВиК дом и баня: исходные данные Заказчика'
+          git pull --rebase -q origin "${GITHUB_REF_NAME}"
+          git push -q origin "HEAD:${GITHUB_REF_NAME}"
