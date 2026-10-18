@@ -1,0 +1,174 @@
+# ОВиК, дом и баня: модели Revit (.rvt) -> IFC через Autodesk Platform Services (Model Derivative).
+#
+# Revit в среде нет, формат .rvt закрыт; перевести модель в IFC может только Autodesk.
+# Нужны два секрета репозитория (Settings -> Secrets and variables -> Actions):
+#   APS_CLIENT_ID, APS_CLIENT_SECRET — ключи приложения на aps.autodesk.com
+#   (тип Server-to-Server / Traditional, API: Data Management и Model Derivative).
+# Модели берутся из ovk-dom-banya/src/mailru (склеиваются из частей), IFC и выписка из него
+# (уровни, перекрытия, окна, помещения) кладутся в ovk-dom-banya/ifc.
+# Запуск только вручную: Actions -> «ОВиК: Revit -> IFC» -> Run workflow.
+name: 'ОВиК: Revit -> IFC'
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    env:
+      APS_ID: ${{ secrets.APS_CLIENT_ID }}
+      APS_SECRET: ${{ secrets.APS_CLIENT_SECRET }}
+      SRC: ovk-dom-banya/src/mailru
+      OUT: ovk-dom-banya/ifc
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Проверка ключей
+        run: |
+          if [ -z "$APS_ID" ] || [ -z "$APS_SECRET" ]; then
+            echo '::error::Нет секретов APS_CLIENT_ID / APS_CLIENT_SECRET в настройках репозитория'; exit 1
+          fi
+
+      - name: Склеиваем модели из частей
+        run: |
+          set -eu
+          mkdir -p /tmp/rvt "$OUT"
+          cat "$SRC"/Баня.rvt.part-* > "/tmp/rvt/banya.rvt"
+          cat "$SRC"/'Исаково дом.rvt'.part-* > "/tmp/rvt/dom.rvt"
+          ls -la /tmp/rvt
+
+      - name: Autodesk -> IFC
+        run: |
+          pip install -q requests
+          python3 - <<'EOF'
+          import base64, hashlib, json, math, os, sys, time
+          import requests
+          B = 'https://developer.api.autodesk.com'
+          cid, sec = os.environ['APS_ID'], os.environ['APS_SECRET']
+          out = os.environ['OUT']
+
+          def token():
+              r = requests.post(B + '/authentication/v2/token',
+                                auth=(cid, sec),
+                                data={'grant_type': 'client_credentials',
+                                      'scope': 'data:read data:write data:create bucket:create bucket:read'})
+              print('токен:', r.status_code)
+              r.raise_for_status()
+              return r.json()['access_token']
+
+          T = token()
+          H = {'Authorization': 'Bearer ' + T}
+          bucket = 'ovk-' + hashlib.sha1(cid.encode()).hexdigest()[:16]
+          r = requests.post(B + '/oss/v2/buckets', headers=H, json={'bucketKey': bucket, 'policyKey': 'transient'})
+          print('бакет:', r.status_code, r.text[:200])
+
+          def upload(path, key):
+              size = os.path.getsize(path)
+              chunk = 50 * 1024 * 1024
+              n = math.ceil(size / chunk)
+              u = f'{B}/oss/v2/buckets/{bucket}/objects/{key}/signeds3upload'
+              r = requests.get(u, headers=H, params={'parts': n, 'minutesExpiration': 60})
+              r.raise_for_status()
+              j = r.json()
+              with open(path, 'rb') as f:
+                  for i, url in enumerate(j['urls']):
+                      rr = requests.put(url, data=f.read(chunk))
+                      rr.raise_for_status()
+                      print(f'  часть {i + 1}/{n} загружена')
+              r = requests.post(u, headers=H, json={'uploadKey': j['uploadKey']})
+              print('  завершение загрузки:', r.status_code, r.text[:300])
+              r.raise_for_status()
+              return r.json()['objectId']
+
+          results = {}
+          for path, key in (('/tmp/rvt/dom.rvt', 'dom.rvt'), ('/tmp/rvt/banya.rvt', 'banya.rvt')):
+              print('==', key)
+              oid = upload(path, key)
+              urn = base64.urlsafe_b64encode(oid.encode()).decode().rstrip('=')
+              job = {'input': {'urn': urn}, 'output': {'formats': [{'type': 'ifc'}]}}
+              r = requests.post(B + '/modelderivative/v2/designdata/job', headers={**H, 'x-ads-force': 'true'}, json=job)
+              print('  задание:', r.status_code, r.text[:400])
+              r.raise_for_status()
+              results[key] = urn
+
+          for key, urn in results.items():
+              for _ in range(180):
+                  m = requests.get(f'{B}/modelderivative/v2/designdata/{urn}/manifest', headers=H).json()
+                  st, pr = m.get('status'), m.get('progress')
+                  if st in ('success', 'failed', 'timeout'):
+                      break
+                  time.sleep(20)
+              print('==', key, 'статус:', st, pr)
+              json.dump(m, open(f'{out}/{key}.manifest.json', 'w'), ensure_ascii=False, indent=1)
+              ders = []
+              def walk(n):
+                  for c in n.get('children', []) + n.get('derivatives', []):
+                      if c.get('urn') and str(c.get('urn')).lower().endswith('.ifc') or c.get('role') == 'ifc':
+                          ders.append(c)
+                      walk(c)
+              walk(m)
+              for d in ders:
+                  du = d['urn']
+                  r = requests.get(f'{B}/modelderivative/v2/designdata/{urn}/manifest/{du}/signedcookies', headers=H)
+                  print('  ссылка на IFC:', r.status_code)
+                  if r.status_code != 200:
+                      print(r.text[:300]); continue
+                  url = r.json()['url']
+                  cookies = '; '.join(c.split(';')[0] for c in r.raw.headers.getlist('Set-Cookie')) if hasattr(r.raw.headers, 'getlist') else r.headers.get('Set-Cookie', '')
+                  rr = requests.get(url, headers={'Cookie': cookies})
+                  name = key.replace('.rvt', '.ifc')
+                  open(f'{out}/{name}', 'wb').write(rr.content)
+                  print('  сохранён', name, len(rr.content), 'байт')
+          EOF
+
+      - name: Выписка из IFC (уровни, перекрытия, окна, помещения)
+        if: always()
+        run: |
+          pip install -q ifcopenshell
+          python3 - <<'EOF'
+          import glob, os
+          import ifcopenshell, ifcopenshell.util.element as ue
+          out = os.environ['OUT']
+          for f in sorted(glob.glob(out + '/*.ifc')):
+              m = ifcopenshell.open(f)
+              L = [f'== {os.path.basename(f)}  схема {m.schema}']
+              for s in m.by_type('IfcBuildingStorey'):
+                  L.append(f'УРОВЕНЬ {s.Name}: отметка {s.Elevation}')
+              def props(e):
+                  p = ue.get_psets(e)
+                  flat = {}
+                  for ps in p.values():
+                      for k, v in ps.items():
+                          if k != 'id':
+                              flat[k] = v
+                  return flat
+              for cls in ('IfcSlab', 'IfcRoof', 'IfcCovering', 'IfcWindow', 'IfcDoor', 'IfcSpace', 'IfcWall'):
+                  els = m.by_type(cls)
+                  L.append(f'-- {cls}: {len(els)}')
+                  for e in els[:400]:
+                      st = ue.get_container(e)
+                      p = props(e)
+                      keep = {k: v for k, v in p.items() if any(t in k.lower() for t in (
+                          'толщ', 'thick', 'width', 'height', 'высот', 'ширин', 'area', 'площад', 'offset',
+                          'смещ', 'elevation', 'отметк', 'volume', 'объем', 'объём', 'тип', 'type', 'name', 'имя'))}
+                      L.append(f'  {e.Name} | {getattr(e, "LongName", "") or ""} | этаж: {st.Name if st else "-"} | '
+                               f'{getattr(e, "OverallWidth", "") or ""}x{getattr(e, "OverallHeight", "") or ""} | {keep}')
+              open(f[:-4] + '.summary.txt', 'w').write('\n'.join(L))
+              print('\n'.join(L[:60]))
+          EOF
+          ls -la "$OUT"
+          find "$OUT" -type f -size +95M -print0 | while IFS= read -r -d '' f; do split -b 90m -d "$f" "$f.part-"; rm "$f"; done
+
+      - name: Коммит
+        if: always()
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ovk-dom-banya/ifc
+          git diff --cached --quiet && { echo 'нечего коммитить'; exit 0; }
+          git commit -q -m 'ОВиК дом и баня: IFC из моделей Revit (Autodesk APS) и выписка'
+          git pull --rebase -q origin "${GITHUB_REF_NAME}"
+          git push -q origin "HEAD:${GITHUB_REF_NAME}"
