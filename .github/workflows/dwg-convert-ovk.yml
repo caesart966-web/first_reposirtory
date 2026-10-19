@@ -28,6 +28,7 @@ concurrency:
 jobs:
   convert:
     runs-on: ubuntu-22.04
+    timeout-minutes: 45
     env:
       D: cad/ovk-i05-09-26
     steps:
@@ -59,9 +60,11 @@ jobs:
       - name: DXF → DWG (AutoCAD 2018) с аудитом, затем DWG → DXF для сверки
         run: |
           set -eu
+          if ! ls "$D"/dxf/*.dxf >/dev/null 2>&1; then echo "Нет DXF в $D/dxf — конвертировать нечего"; exit 0; fi
           rm -rf "$D/dwg" /tmp/rt && mkdir -p "$D/dwg" /tmp/rt
-          xvfb-run -a ODAFileConverter "$PWD/$D/dxf" "$PWD/$D/dwg" ACAD2018 DWG 0 1 '*.dxf'
-          xvfb-run -a ODAFileConverter "$PWD/$D/dwg" /tmp/rt ACAD2018 DXF 0 1 '*.dwg'
+          # без таймаута ODA может ждать ответа в невидимом окне (так первый запуск провисел 2 часа)
+          timeout 1200 xvfb-run -a ODAFileConverter "$PWD/$D/dxf" "$PWD/$D/dwg" ACAD2018 DWG 0 1 '*.dxf'
+          timeout 1200 xvfb-run -a ODAFileConverter "$PWD/$D/dwg" /tmp/rt ACAD2018 DXF 0 1 '*.dwg'
           ls -la "$D/dwg" /tmp/rt
           for f in "$D"/dwg/*.err /tmp/rt/*.err; do
             [ -f "$f" ] && { echo "=== $f"; cat "$f"; }
