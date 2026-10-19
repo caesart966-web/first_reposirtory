@@ -95,3 +95,19 @@ def test_design_contract_fields_and_sro_kind():
     a2, _ = engine.assess_card(card2, find_cases=False)
     assert a2["verdict"]["in_member_sro"] is True and a2["verdict"]["counts_for_odo"] == "no"
     assert not any(x["title"] == "Вид СРО по договору" for x in a2["findings"])
+
+
+def test_survey_customer_circle_is_narrower():
+    """Ч. 2 ст. 47: у изыскателей заказчики — застройщик и техзаказчик; эксплуатант и регоператор членства не требуют."""
+    docs = [{"filename": "d.pdf", "kind": "contract", "text": read("design_fiction.txt")}]
+    card, _ = build_card({"name": "ООО «ПСК «ПРИМЕР»", "inn": "7700000003", "sro_kinds": ["survey"]}, docs)
+    card["contract"]["kind"] = "survey"
+    card["work_type"] = "survey"
+    card["customer"]["kind"] = "operator"
+    a, _ = engine.assess_card(card, find_cases=False)
+    assert a["verdict"]["membership_required"] == "no" and a["verdict"]["counts_for_odo"] == "no"
+    assert "ч. 2 ст. 47" in a["verdict"]["summary"]
+    card["customer"]["kind"] = "developer"
+    a, _ = engine.assess_card(card, find_cases=False)
+    assert a["verdict"]["membership_required"] == "yes"   # прямой договор: членство есть, в ОДО не входит
+    assert a["verdict"]["counts_for_odo"] == "no"
