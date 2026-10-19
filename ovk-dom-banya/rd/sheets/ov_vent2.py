@@ -12,7 +12,7 @@ from ov_vent1 import (new_doc, DPlan, RDSheet, add_underlay, insert_underlay, UN
                       SHEETS_TOTAL, axes, VS, VE, AC, sec_d, sec_L, SH1, SH2, SH2_CH, SH2_X, SH2_CX, SH2_SQ, RIS_P, RIS_V,
                       RIS_F, RIS_P27, KU2, draw_net, wall_grille, ceil_grille, ku, riser, freon, drain, zone,
                       mask, legend, L_duct, L_grille, L_wgrille, L_ku, L_freon, L_drain, L_riser, L_shaft,
-                      L_zone, save_sheet, DUCT_LAYER, LAYERS)
+                      L_zone, save_sheet, DUCT_LAYER, LAYERS, vz_riser, VZ_RISER)
 
 SHEET_NO = 10
 YM = 7.60          # ось магистрали П в подшивке галереи/холла
@@ -151,6 +151,10 @@ def build():
     p.label(16.0, 13.05, 'К-7 — Daikin FXDQ, 2,8 кВт (для 2.7)', 1.9, at=(14.21, 11.95))
     p.label(16.35, 9.30, 'Ш-1: стояки П, В Ø200, П Ø100, фреон', 1.8, at=(13.90, 9.30))
     p.label(16.0, 15.85, 'Ш-2: Дг, Дп, выброс П1, В2 (лист 9, задание АР)', 1.8, at=(15.36, 13.30))
+    # ВЗ — транзит через шахту над мангалом террасы 1.12 (эскиз Заказчика 19.10.2026)
+    vz_riser(p, label=False)
+    p.label(10.0, 16.05, 'Ст. ВЗ Ø200 в изоляции', 1.8, at=VZ_RISER, lines='транзит, выброс выше кровли',
+            mask=True)
     p.label(4.5, 8.65, 'Дренаж блоков К — в сифон за инсталляцией унитаза 2.9 (ВК)', 1.8, at=(12.95, 8.35))
     p.label(16.2, 9.45 - 0.9, 'Дренаж К-7 — в сифон у ванны 2.9 (ВК)', 1.8, at=(14.25, 8.75))
 
