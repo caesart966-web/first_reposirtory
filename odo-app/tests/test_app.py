@@ -100,7 +100,7 @@ def _form_from_card(ct):
          "procurement": k["procurement"], "procurement_law": k["procurement_law"] or "null", "procurement_basis": k["procurement_basis"] or "",
          "nmck_rub": "", "nmck_basis": "", "executed_rub": "", "executed_basis": "", "has_final_act": "null", "termination_document": "",
          "addenda_n": "0", "member_name": c["member"]["name"], "member_inn": c["member"]["inn"] or "", "member_role": "contractor",
-         "member_is_state_entity": "false", "member_sro_kinds": "build", "membership_date": "",
+         "member_is_state_entity": "false", "member_sro_kinds": c["member"].get("sro_kinds") or ["build"], "membership_date": "",
          "customer_name": c["customer"]["name"], "customer_inn": c["customer"]["inn"] or "", "customer_kind": c["customer"]["kind"], "customer_kind_basis": c["customer"]["kind_basis"] or "",
          "object_name": c["object"]["name"], "object_address": c["object"]["address"] or "", "cadastral": "", "work_type": c["work_type"],
          "is_capital": "true", "permit_required": "false", "category": "ordinary", "housing_type": "none", "object_basis": c["object"]["basis"] or "",
@@ -133,18 +133,22 @@ def test_design_contract_by_sro_kind():
     assert _wait(ct)["stage"] == "done"
     page = client.get(f"/contract/{ct}/card").text
     assert "2450000.0" in page and "0001-ПД" in page
+    # три СРО у проверяющего: вид «проектировщики» поставлен в карточке сам, с предупреждением
+    assert "Галочка «проектировщиков» в карточке поставлена" in page
+    assert 'name="member_sro_kinds" value="design" checked' in page
     r = client.post(f"/contract/{ct}/card", data=_form_from_card(ct))
     assert r.status_code == 303
     page = client.get(f"/contract/{ct}").text
-    assert "В ОДО не входит" in page and "СРО проектировщиков" in page
+    assert "В ОДО не входит" in page and "проектировщиков" in page
+    assert "Вид СРО по договору" not in page   # член отмечен в СРО проектировщиков — замечания о чужом виде нет
     comp = client.get(f"/company/{cid}").text
-    assert "не наша СРО" in comp and "проектировщиков" in comp   # прямой договор: в сумму не идёт и так, предупреждения о чужой СРО нет
+    assert "вид СРО не отмечен" not in comp and "СРО проектировщиков" in comp   # вид добавился компании при сохранении карточки
 
-    # компания состоит и в СРО проектировщиков: своя сумма и уровень по виду
+    # уровень по виду — из настроек компании
     r = client.post(f"/company/{cid}/settings", data={"name": "ООО «ПСК «ПРИМЕР»", "sro_kinds": ["build", "design"], "odo_level": "1", "odo_level_design": "2"})
     assert r.status_code == 303
     comp = client.get(f"/company/{cid}").text
-    assert "не наша СРО" not in comp and "СРО проектировщиков" in comp and "до 50 млн ₽" in comp
+    assert "вид СРО не отмечен" not in comp and "СРО проектировщиков" in comp and "до 50 млн ₽" in comp
     home = client.get("/").text
     assert "проект." in home
     rep = client.get(f"/company/{cid}/report").text

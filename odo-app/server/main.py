@@ -170,8 +170,9 @@ def company_view(cid: int):
     totals["level"], totals["level_share"] = b["level"], b["level_share"]
     warnings = splitting_warnings([r for r in rows if r["sro_kind"] in (None, "build", "mixed")])
     warnings += [f"Договор {r['number']}: уведомление в СРО просрочено (срок {r['notify_deadline']})." for r in rows if r["notify_overdue"]]
-    warnings += [f"Договор {r['number']} — для СРО {r['sro_kind_ru']}, а компания у нас состоит в СРО {', '.join(SRO_KIND_RU[k] for k in kinds)}: "
-                 "в совокупный размер по нашей СРО он не входит. Если компания состоит и в этой СРО — отметьте вид в настройках компании."
+    warnings += [f"Договор {r['number']} — для СРО {r['sro_kind_ru']}, а компания у нас отмечена членом СРО {', '.join(SRO_KIND_RU[k] for k in kinds)}: "
+                 "в совокупный размер по этому виду он не попадёт, пока вид не отмечен. Если компания состоит в нашей СРО "
+                 f"{r['sro_kind_ru']} — отметьте вид в настройках компании."
                  for r in rows if r["odo"] in ("yes", "conditional", "needs_facts") and not r["in_sro"]]
     return comp, rows, totals, warnings
 
@@ -317,6 +318,15 @@ def _process_upload(ct_id: int, cid: int, comp: dict, saved: list, use_llm: bool
         job.update(stage="parse", files_done=len(saved), file="")
         member = {"name": comp["name"], "inn": comp.get("inn"), "sro_kinds": comp.get("sro_kinds") or ["build"]}
         card, meta = build_card(member, docs)
+        # Три СРО у проверяющего: договор разбирается по ОДО той СРО, к виду которой он относится. Если компания
+        # у нас ещё не отмечена членом этой СРО, вид ставится в карточке сам — с предупреждением, галочку можно снять.
+        k = KIND_SRO.get(card["contract"].get("kind"))
+        if k in LEVEL_FIELD and k not in card["member"]["sro_kinds"]:
+            card["member"]["sro_kinds"] = [x for x in LEVEL_FIELD if x in set(card["member"]["sro_kinds"]) | {k}]
+            meta["warnings"].append(f"Договор относится к СРО {SRO_KIND_RU[k]}, а компания у нас была отмечена только как член СРО "
+                                    f"{', '.join(SRO_KIND_RU[x] for x in member['sro_kinds'])}. Галочка «{SRO_KIND_RU[k]}» в карточке поставлена: "
+                                    f"договор проверяется по ОДО СРО {SRO_KIND_RU[k]}, после сохранения карточки этот вид добавится компании. "
+                                    "Если компания в этой СРО не состоит — снимите галочку.")
         if use_llm:
             job.update(stage="llm")
             card, meta = llm.merge(card, llm.extract_card(docs, engine.card_schema(), member), meta)
@@ -471,6 +481,14 @@ async def card_save(request: Request, ct_id: int):
         return RedirectResponse(f"/contract/{ct_id}/card?errors=" + "||".join(errs)[:1500], status_code=303)
     a, md = engine.assess_card(card)
     db.update_contract(ct_id, number=card["contract"]["number"], card=card, assessment=a, status="assessed", decision=None, decision_note=None, decided_by=None, decided_at=None, case_id=None)
+    # виды СРО, отмеченные в карточке, добавляются компании (снятие — только в настройках компании: иначе одна
+    # карточка убирала бы вид у всех договоров компании)
+    comp = db.company(ct["company_id"])
+    if comp:
+        merged = [x for x in LEVEL_FIELD if x in set(comp.get("sro_kinds") or []) | set(card["member"]["sro_kinds"])]
+        if merged != (comp.get("sro_kinds") or []):
+            db.update_company(ct["company_id"], sro_kinds=merged)
+            db.log(user_of(request), "company.sro_kinds", ct_id, ", ".join(merged))
     db.log(user_of(request), "contract.assess", ct_id, f"{a['verdict']['membership_required']}/{a['verdict']['counts_for_odo']}")
     try:
         save_conclusion(db.contract(ct_id))

@@ -12,7 +12,7 @@
   {% endfor %}
   <div><span class="kpi-label">Договоров</span><span class="kpi-value">{{ totals.n_all }} <small>в ОДО {{ totals.n_odo }}, не входят {{ totals.n_no }}, открытых {{ totals.n_open }}</small></span></div>
 </div>
-<p class="muted">Состоит у нас в СРО: <b>{% for k in totals.kinds %}{{ SRO_KIND_RU[k] }}{{ ', ' if not loop.last }}{% endfor %}</b> — меняется в настройках компании внизу.</p>
+<p class="muted">Из трёх наших СРО состоит в: <b>{% for k in totals.kinds %}{{ SRO_KIND_RU[k] }}{{ ', ' if not loop.last }}{% endfor %}</b> — меняется в настройках компании внизу.</p>
 
 {% if warnings %}
 <div class="notice warn"><b>Обратите внимание</b><ul>{% for w in warnings %}<li>{{ w }}</li>{% endfor %}</ul></div>
@@ -33,12 +33,12 @@
 <tr class="{{ 'row-odo' if r.odo == 'yes' and r.in_sro else ('row-open' if r.odo in ('needs_facts','conditional') or r.status == 'draft' else '') }}">
   <td><a href="/contract/{{ r.id }}{{ '' if r.status != 'draft' else '/card' }}"><b>{{ r.number }}</b></a><br><small class="muted">{{ r.date|dmy }}</small></td>
   <td>{{ r.customer }}</td>
-  <td>{{ r.sro_kind_ru }}{% if not r.in_sro %}<br><span class="tag warn" title="компания у нас не состоит в СРО этого вида">не наша СРО</span>{% endif %}</td>
+  <td>{{ r.sro_kind_ru }}{% if not r.in_sro %}<br><span class="tag warn" title="компания у нас не отмечена членом СРО этого вида">вид СРО не отмечен</span>{% endif %}</td>
   <td class="num">{{ r.price|money }}</td>
   <td class="num">{{ r.remaining|money }}</td>
   <td>{{ r.procurement_ru }}</td>
   <td>{{ r.membership_ru }}</td>
-  <td><span class="tag {{ 'yes' if r.odo == 'yes' and r.in_sro else ('no' if r.odo == 'no' or not r.in_sro else 'open') }}">{{ r.odo_ru if r.in_sro else 'нет (другая СРО)' }}</span></td>
+  <td><span class="tag {{ 'yes' if r.odo == 'yes' and r.in_sro else ('no' if r.odo == 'no' or not r.in_sro else 'open') }}">{{ r.odo_ru if r.in_sro else 'вид не отмечен' }}</span></td>
   <td class="num">{% if r.odo == 'yes' and r.in_sro %}<b>{{ r.odo_amount|money }}</b>{% else %}—{% endif %}</td>
   <td>{{ r.decision_ru }}{% if r.decided_by %}<br><small class="muted">{{ r.decided_by }}</small>{% endif %}</td>
   <td>{% if r.notified %}да{% elif r.notify_overdue %}<span class="tag warn">просрочено</span>{% elif r.notify_deadline %}до {{ r.notify_deadline|dmy }}{% else %}—{% endif %}</td>
@@ -58,7 +58,7 @@
   <label>ИНН <input name="inn" value="{{ company.inn or '' }}"></label>
   <label>КПП <input name="kpp" value="{{ company.kpp or '' }}"></label>
   <label>СРО <input name="sro_name" value="{{ company.sro_name or '' }}"></label>
-  <label class="wide">В каких СРО состоит у нас <span class="checks">{% for k in ['build','design','survey'] %}<label class="check"><input type="checkbox" name="sro_kinds" value="{{ k }}" {{ 'checked' if k in company.sro_kinds }}> {{ SRO_KIND_RU[k] }}</label>{% endfor %}</span>
+  <label class="wide">В каких из наших трёх СРО состоит <span class="checks">{% for k in ['build','design','survey'] %}<label class="check"><input type="checkbox" name="sro_kinds" value="{{ k }}" {{ 'checked' if k in company.sro_kinds }}> {{ SRO_KIND_RU[k] }}</label>{% endfor %}</span>
     <small>Договоры другого вида (проектирование у члена-строителя) показываются в реестре, но в совокупный размер не входят.</small></label>
   {% for k in ['build','design','survey'] %}
   <label>Уровень по ОДО — СРО {{ SRO_KIND_RU[k] }} <select name="{{ LEVEL_FIELD[k] }}"><option value="">не указан</option>{% for L in levels[k].levels %}<option value="{{ L.level }}" {{ 'selected' if company[LEVEL_FIELD[k]] == L.level }}>{{ L.level }}-й — {{ L.limit }}</option>{% endfor %}</select></label>

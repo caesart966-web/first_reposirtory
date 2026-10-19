@@ -100,7 +100,7 @@ def register_xlsx(company: dict, rows: list[dict], totals: dict, path: Path):
         c.alignment = Alignment(wrap_text=True, vertical="top")
     for r in rows:
         ws.append([r["number"], r["date"], r["customer"], r.get("sro_kind_ru") or "—", r["price"], r["executed"], r["remaining"], r["procurement_ru"], r["membership_ru"],
-                   r["odo_ru"] + ("" if r.get("in_sro", True) else " (СРО другого вида)"), r["odo_amount"] if r.get("in_sro", True) else None, r["decision_ru"], r["decided_by"], r["notified_ru"]])
+                   r["odo_ru"] + ("" if r.get("in_sro", True) else " (вид СРО у компании не отмечен)"), r["odo_amount"] if r.get("in_sro", True) else None, r["decision_ru"], r["decided_by"], r["notified_ru"]])
     ws.append([])
     for k, t in (totals.get("by_kind") or {}).items():
         ws.append([f"Совокупный размер по КФ ОДО — СРО {SRO_KIND_RU.get(k, k)}", None, None, None, None, None, None, None, None, None, t["odo_sum"]])

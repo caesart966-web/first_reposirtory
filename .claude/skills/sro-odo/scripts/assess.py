@@ -346,7 +346,8 @@ class Assessor:
                 ["grk-55.8-4", "grk-55.13-7"], [] if doc else ["документ о расторжении договора"]))
             (hard_no if doc else needs).append("terminated")
         else:
-            sro_cite = ["sro-odo-1.2"] if self.policy.get("sro") else []
+            # пункты положения СРО цитируются только по договорам того вида, чьё положение прочитано (у проверяющего три СРО)
+            sro_cite = ["sro-odo-1.2"] if self.policy.get("sro") and sro_kind in (self.policy["sro"].get("regulated_kinds") or ["build"]) else []
             if proc == "competitive" and c.get("procurement_law") == "voluntary_tender" and self.policy.get("voluntary_tender", "direct") == "direct":
                 odo_note = "voluntary_tender"
                 findings.append(self.F(5, "Совокупный размер обязательств", "no",

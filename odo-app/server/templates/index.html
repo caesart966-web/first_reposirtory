@@ -29,8 +29,8 @@
   <label>Название <input name="name" required placeholder="ООО «Пример»"></label>
   <label>ИНН <input name="inn" pattern="\d{10}|\d{12}" placeholder="10 цифр"></label>
   <label>СРО (название) <input name="sro_name" placeholder="Ассоциация «…»"></label>
-  <label class="wide">В каких СРО состоит у нас <span class="checks">{% for k in ['build','design','survey'] %}<label class="check"><input type="checkbox" name="sro_kinds" value="{{ k }}" {{ 'checked' if k == 'build' }}> {{ SRO_KIND_RU[k] }}</label>{% endfor %}</span>
-    <small>У каждого вида СРО свой совокупный размер: строительный подряд и снос — у строителей, проектирование — у проектировщиков, изыскания — у изыскателей (ч. 11, 13 ст. 55.16 ГрК РФ).</small></label>
+  <label class="wide">В каких из наших трёх СРО состоит <span class="checks">{% for k in ['build','design','survey'] %}<label class="check"><input type="checkbox" name="sro_kinds" value="{{ k }}" {{ 'checked' if k == 'build' }}> {{ SRO_KIND_RU[k] }}</label>{% endfor %}</span>
+    <small>У каждого вида СРО свой совокупный размер: строительный подряд и снос — у строителей, проектирование — у проектировщиков, изыскания — у изыскателей (ч. 11, 13 ст. 55.16 ГрК РФ). Если забыть галочку, программа поставит её сама при первом договоре этого вида и предупредит.</small></label>
   {% for k in ['build','design','survey'] %}
   <label>Уровень по ОДО — СРО {{ SRO_KIND_RU[k] }} (из реестра, справочно)
     <select name="{{ LEVEL_FIELD[k] }}"><option value="">не указан</option>{% for L in levels[k].levels %}<option value="{{ L.level }}">{{ L.level }}-й — {{ L.limit }}</option>{% endfor %}</select></label>
