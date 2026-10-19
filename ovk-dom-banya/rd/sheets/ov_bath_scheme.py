@@ -172,7 +172,7 @@ def build():
     p.t(xm0 - 10, 223.5, 'КШ-Б1 — встроенный ШРВ-3 (≈750 мм), прямой коллектор 1"', 1.8, 'left', 'ОВ_марки')
     S.valve(xm0 - 8, 230, vert=True)
     S.valve(xm0 - 4, 230, vert=True)
-    dev = ['Р-б1', 'Р-б2', 'Кв-б1', 'Кв-б2', 'Кв-б3', 'Пс-б1', 'Пс-б2']
+    dev = ['Р-б1', 'Р-б2', 'Кв-б1', 'Кв-б2', 'Кв-б3', 'Пс-б2']
     dx = (xm1 - xm0 - 8) / (len(dev) - 1)
     for i, n in enumerate(dev):
         x = xm0 + 4 + i * dx
@@ -345,21 +345,27 @@ def build():
     XN, YN, WN = 252, 126.5, 161
     R_ = C['rooms']
     rows = [['Пом.', 'Наименование', 't, °С', 'Q, Вт', 'tпола max', 'ТП, Вт', 'ТП по ЭП', 'Приборы', 'Q приб., Вт']]
-    devs = {'б2': ['Р-б2'], 'б3': ['Пс-б1'], 'б4': ['Пс-б2'], 'б5': ['Р-б1'], 'б6': ['Кв-б1', 'Кв-б2'],
+    devs = {'б2': ['Р-б2'], 'б3': [], 'б4': ['Пс-б2'], 'б5': ['Р-б1'], 'б6': ['Кв-б1', 'Кв-б2'],
             'б7': ['Кв-б3']}
     for no in ['б2', 'б3', 'б4', 'б5', 'б6', 'б7']:
         r = ov_bath.ROOM[no]
         rr = R_.get(no)
-        qd = sum(D[n]['Q'] for n in devs[no])
+        if no == 'б3':                                     # полотенцесушители от циркуляции ГВС (ВК)
+            dname, qtxt = 'Пс-б1.1, Пс-б1.2 (ГВС)**', f'{C["towel_gvs"]["Q_total"]}**'
+        else:
+            dname, qtxt = ', '.join(devs[no]), str(sum(D[n]['Q'] for n in devs[no]))
         rows.append([no, r['name'], str(r['ti']), str(r['Q']), f'{rr["lim"]} °С' if rr else '—',
-                     str(rr['Q_ufh']) if rr else '—', str(rr['Q_ufh_rd']) if rr else '—', ', '.join(devs[no]),
-                     str(qd)])
+                     str(rr['Q_ufh']) if rr else '—', str(rr['Q_ufh_rd']) if rr else '—', dname, qtxt])
     rows.append(['', 'Итого баня', '', str(sum(ov_bath.ROOM[n]['Q'] for n in devs)), '',
                  str(C['Q_ufh']), '', '', str(C['Q_direct'])])
     widths = [10, 34, 10, 14, 16, 14, 16, 30, 18]
     sh.s.text('Тепловой баланс помещений бани (при -25 °С)', 22 + sum(widths) / 2, 68.5, h=2.5, align='center')
-    sh.table(22, 66, widths, rows, row_h=5.0, head_h=6.5, h=1.9,
-             aligns=['center', 'left', 'center', 'center', 'center', 'center', 'center', 'left', 'center'])
+    yt = sh.table(22, 66, widths, rows, row_h=5.0, head_h=6.5, h=1.9,
+                  aligns=['center', 'left', 'center', 'center', 'center', 'center', 'center', 'left', 'center'])
+    tg_ = C['towel_gvs']
+    sh.s.text(f'** от циркуляции ГВС бойлера Б2 (раздел ВК): каждый ≥{tg_["Qn_sel"]} Вт при 75/65/20 °С '
+              f'({tg_["Q_each"]} Вт при {int(tg_["t3"])}/{int(tg_["t4"])}/{tg_["ti"]} °С); в «Итого» приборов отопления '
+              'не входят', 22, yt - 3.0, h=1.7, align='left')
     sh.notes(XN, YN, WN, [
         f'Подача ТП {fmt_num(C["tv"], 1)} °С — наименьшая, при которой все петли не длиннее 90 м и с потерями '
         f'не более 20 кПа (минимум по нагрузке — {fmt_num(C["tv_min"], 1)} °С); предел температуры пола — СП 60.',

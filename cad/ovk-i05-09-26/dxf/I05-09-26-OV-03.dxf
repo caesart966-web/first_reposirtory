@@ -493,7 +493,7 @@ $SKPOLY
   9
 $TDCREATE
  40
-2461333.772314815
+2461333.8021064815
   9
 $TDUCREATE
  40
@@ -501,7 +501,7 @@ $TDUCREATE
   9
 $TDUPDATE
  40
-2461333.772349537
+2461333.8021180555
   9
 $TDUUPDATE
  40
@@ -933,11 +933,11 @@ $PSTYLEMODE
   9
 $FINGERPRINTGUID
   2
-{55E4AA14-BC04-40EA-B318-702810736350}
+{300D3458-BE2F-4889-A621-A4C7C26BD175}
   9
 $VERSIONGUID
   2
-{66B6A981-D5A4-4460-B328-9619C64148B4}
+{F8DE3183-5B5A-4CA1-8AB8-0EA730B4479D}
   9
 $EXTNAMES
 290
@@ -1327,11 +1327,11 @@ ISM
   0
 CLASS
   1
-WIPEOUTVARIABLES
+ACDBPLACEHOLDER
   2
-AcDbWipeoutVariables
+AcDbPlaceHolder
   3
-WipeOut
+ObjectDBX Classes
  90
 0
  91
@@ -1343,11 +1343,11 @@ WipeOut
   0
 CLASS
   1
-LAYOUT
+WIPEOUTVARIABLES
   2
-AcDbLayout
+AcDbWipeoutVariables
   3
-ObjectDBX Classes
+WipeOut
  90
 0
  91
@@ -1375,9 +1375,9 @@ WipeOut
   0
 CLASS
   1
-ACDBPLACEHOLDER
+LAYOUT
   2
-AcDbPlaceHolder
+AcDbLayout
   3
 ObjectDBX Classes
  90
@@ -1681,7 +1681,7 @@ AcDbSymbolTableRecord
 100
 AcDbLinetypeTableRecord
   2
-Пунктир 2-1_5
+Осевая 12-2-2
  70
 0
   3
@@ -1689,15 +1689,23 @@ AcDbLinetypeTableRecord
  72
 65
  73
-2
+4
  40
-3.5
+16.0
  49
-2.0
+12.0
  74
 0
  49
--1.5
+-2.0
+ 74
+0
+ 49
+0.0
+ 74
+0
+ 49
+-2.0
  74
 0
   0
@@ -1741,7 +1749,7 @@ AcDbSymbolTableRecord
 100
 AcDbLinetypeTableRecord
   2
-Осевая 12-2-2
+Пунктир 2-1_5
  70
 0
   3
@@ -1749,23 +1757,15 @@ AcDbLinetypeTableRecord
  72
 65
  73
-4
+2
  40
-16.0
+3.5
  49
-12.0
+2.0
  74
 0
  49
--2.0
- 74
-0
- 49
-0.0
- 74
-0
- 49
--2.0
+-1.5
  74
 0
   0
@@ -2709,11 +2709,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-COLS
+A-DETL-GENF
  70
 8
  62
-8
+9
   6
 Continuous
 370
@@ -2733,7 +2733,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-WALL-PATT
+A-GLAZ
  70
 8
  62
@@ -2757,11 +2757,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-I-FURN
+A-ANNO-DIMS
  70
-8
- 62
 9
+ 62
+-8
   6
 Continuous
 370
@@ -2774,30 +2774,6 @@ F
 LAYER
   5
 ECF
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-S-STRS
- 70
-8
- 62
-9
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-ED0
 330
 1
 100
@@ -2821,7 +2797,7 @@ F
   0
 LAYER
   5
-ED1
+ED0
 330
 1
 100
@@ -2829,31 +2805,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-DOOR-HDLN
- 70
-8
- 62
-8
-  6
-Пунктир 2-1_5
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-ED2
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-A-DETL-GENF
+I-FURN
  70
 8
  62
@@ -2869,7 +2821,7 @@ F
   0
 LAYER
   5
-ED3
+ED1
 330
 1
 100
@@ -2893,6 +2845,56 @@ F
   0
 LAYER
   5
+ED2
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+A-WALL-PATT
+ 70
+8
+ 62
+8
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+ED3
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+S-GRID-IDEN
+ 70
+9
+ 62
+-8
+420
+3261359204
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
 ED4
 330
 1
@@ -2901,7 +2903,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-GLAZ
+A-GLAZ-CWMG
  70
 8
  62
@@ -2949,11 +2951,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-WALL
+S-STRS
  70
 8
  62
-8
+9
   6
 Continuous
 370
@@ -2966,150 +2968,6 @@ F
 LAYER
   5
 ED7
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-S-GRID
- 70
-8
- 62
-8
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-ED8
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-A-DOOR
- 70
-8
- 62
-8
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-ED9
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-A-ANNO-NOTE
- 70
-8
- 62
-8
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-EDA
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-G-ANNO-SYMB
- 70
-8
- 62
-8
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-EDB
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-A-AREA-IDEN
- 70
-8
- 62
-8
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-EDC
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-A-ANNO-DIMS
- 70
-9
- 62
--8
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-EDD
 330
 1
 100
@@ -3133,6 +2991,150 @@ F
   0
 LAYER
   5
+ED8
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+A-WALL
+ 70
+8
+ 62
+8
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+ED9
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+A-AREA-IDEN
+ 70
+8
+ 62
+8
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+EDA
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+A-COLS
+ 70
+8
+ 62
+8
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+EDB
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+A-DOOR-HDLN
+ 70
+8
+ 62
+8
+  6
+Пунктир 2-1_5
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+EDC
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+A-ANNO-NOTE
+ 70
+8
+ 62
+8
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+EDD
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+S-GRID
+ 70
+8
+ 62
+8
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
 EDE
 330
 1
@@ -3141,7 +3143,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-GLAZ-CWMG
+A-DOOR
  70
 8
  62
@@ -3165,13 +3167,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-S-GRID-IDEN
+G-ANNO-SYMB
  70
-9
+8
  62
--8
-420
-3261359204
+8
   6
 Continuous
 370
@@ -3341,34 +3341,6 @@ AcDbSymbolTableRecord
 100
 AcDbTextStyleTableRecord
   2
-Arial
- 70
-0
- 40
-199.9999999999999
- 41
-1.0
- 50
-0.0
- 71
-0
- 42
-0.2
-  3
-arial.ttf
-  4
-
-  0
-STYLE
-  5
-EE5
-330
-5
-100
-AcDbSymbolTableRecord
-100
-AcDbTextStyleTableRecord
-  2
 GOST Common
  70
 0
@@ -3384,6 +3356,34 @@ GOST Common
 0.2
   3
 GOST_Common.ttf
+  4
+
+  0
+STYLE
+  5
+EE5
+330
+5
+100
+AcDbSymbolTableRecord
+100
+AcDbTextStyleTableRecord
+  2
+Arial
+ 70
+0
+ 40
+199.9999999999999
+ 41
+1.0
+ 50
+0.0
+ 71
+0
+ 42
+0.2
+  3
+arial.ttf
   4
 
   0
@@ -156809,7 +156809,7 @@ AcDbMText
  71
 4
   1
-L=1950, ≥1280 Вт/м
+«Бриз В» L=1950, ≥1280 Вт/м
   7
 GOST
   0
@@ -157077,7 +157077,7 @@ AcDbMText
  71
 4
   1
-L=1950, ≥1280 Вт/м
+«Бриз В» L=1950, ≥1280 Вт/м
   7
 GOST
   0
@@ -157345,7 +157345,7 @@ AcDbMText
  71
 4
   1
-L=1650, ≥1280 Вт/м
+«Бриз В» L=1650, ≥1280 Вт/м
   7
 GOST
   0
@@ -157613,7 +157613,7 @@ AcDbMText
  71
 4
   1
-L=900, ≥1280 Вт/м
+«Бриз В» L=900, ≥1280 Вт/м
   7
 GOST
   0
@@ -157881,7 +157881,7 @@ AcDbMText
  71
 4
   1
-L=900, ≥1280 Вт/м
+«Бриз В» L=900, ≥1280 Вт/м
   7
 GOST
   0
@@ -158149,7 +158149,7 @@ AcDbMText
  71
 4
   1
-L=1950, ≥580 Вт/м
+«Бриз В» L=1950, ≥580 Вт/м
   7
 GOST
   0
@@ -158417,7 +158417,7 @@ AcDbMText
  71
 4
   1
-L=1950, ≥580 Вт/м
+«Бриз В» L=1950, ≥580 Вт/м
   7
 GOST
   0
@@ -158685,7 +158685,7 @@ AcDbMText
  71
 4
   1
-L=2200, ≥1370 Вт/м
+«Бриз В» L=2200, ≥1370 Вт/м
   7
 GOST
   0
@@ -160811,19 +160811,19 @@ AcDbMText
  71
 1
   3
-1. Подложка — АР03 (выгрузка из Revit 19.10.2026), отметка чистого пола 1 этажа 0,000. Ярлык помещения: номер, расчетная температура, теплопотери при -25 °С.\P2. Конвекторы Кв-1–Кв-8 — КЗТО, внутрипольные с вентилятором 12 В (решение Заказчика), сери
+1. Подложка — АР03 (выгрузка из Revit 19.10.2026), отметка чистого пола 1 этажа 0,000. Ярлык помещения: номер, расчетная температура, теплопотери при -25 °С.\P2. Конвекторы Кв-1–Кв-8 — внутрипольные КЗТО «Бриз В», вентилятор 24 В (тихий, решение Зака
   3
-я и ширина — подбор по каталогу КЗТО на удельную мощность из таблицы (при 75/65/20 °С, рабочая скорость вентилятора); глубина — по толщине пирога пола, не более 150 мм. Питание вентиляторов 12 В — по разделу ЭОМ.\P3. Температура поверхности теплого п
+зчика); исполнение («Бриз В», «Бриз В Нерж», «Бриз В TURBO Нерж») и ширина — подбор по каталогу КЗТО на удельную мощность из таблицы (при 75/65/20 °С, рабочая скорость вентилятора); глубина — по толщине пирога пола, не более 150 мм. Питание вентилято
   3
-ола — по СП 60.13330: не выше 26 °С в 1.10, 1.11, не выше 31 °С в остальных; недостающее тепло дают Кв. Поэтому ТП 1.10, 1.11 (и 1.8, петля 1.9-3) — от смесительного узла КШ-2 с подачей 36 °С, КШ-1 и КШ-3 — от РК, 48,5 °С. Раскладка петель — лист 4.\
+ров — 24 В постоянного тока, блоки питания — по разделу ЭОМ.\P3. Температура поверхности теплого пола — по СП 60.13330: не выше 26 °С в 1.10, 1.11, не выше 31 °С в остальных; недостающее тепло дают Кв. Поэтому ТП 1.10, 1.11 (и 1.8, петля 1.9-3) — от 
   3
-P4. Подводки к конвекторам — PE-Xa 16×2,0 с антидиффузионным слоем в теплоизоляции 6 мм и гофре, в слое утеплителя под петлями ТП; магистрали — в теплоизоляции 9–13 мм. Соединений в конструкции пола нет. Магистрали в топочной и тамбуре 1.7 — открыто 
+смесительного узла КШ-2 с подачей 36 °С, КШ-1 и КШ-3 — от РК, 48,5 °С. Раскладка петель — лист 4.\P4. Подводки к конвекторам — PE-Xa 16×2,0 с антидиффузионным слоем в теплоизоляции 6 мм и гофре, в слое утеплителя под петлями ТП; магистрали — в теплои
   3
-под потолком на +3,200; из 1.6 в 1.7 — одним пучком над дверью (лист 7, ТЗ-1).\P5. Кв-8 (вместо Кн-2 по ЭП, решение Заказчика 19.10.2026) — у витража лестницы 1.9, под площадкой: на 2 этаже под витражом пола нет. Мощность — нагрузка 2.1 плюс недостач
+золяции 9–13 мм. Соединений в конструкции пола нет. Магистрали в топочной и тамбуре 1.7 — открыто под потолком на +3,200; из 1.6 в 1.7 — одним пучком над дверью (лист 7, ТЗ-1).\P5. Кв-8 (вместо Кн-2 по ЭП, решение Заказчика 19.10.2026) — у витража ле
   3
-а теплого пола 1.9.\P6. Стояки Т1, Т2 Ø25×3,5 на 2 этаж — в углу тамбура 1.7 у стены топочной, в коробе ГКЛ (АР); проход перекрытия — в гильзах.\P7. Р-т — радиатор 22/500 в топочной, догрев сверх ТП; присоединение — тройником к группе КШ-2 на РК.\P8.
+стницы 1.9, под площадкой: на 2 этаже под витражом пола нет. Мощность — нагрузка 2.1 плюс недостача теплого пола 1.9.\P6. Стояки Т1, Т2 Ø25×3,5 на 2 этаж — в углу тамбура 1.7 у стены топочной, в коробе ГКЛ (АР); проход перекрытия — в гильзах.\P7. Р-т
   1
- Покрытия пола и толщина стяжки приняты до получения экспликации полов: доска в 1.9, 1.10, 1.11, плитка в остальных, стяжка 100 мм.
+ — радиатор 22/500 в топочной, догрев сверх ТП; присоединение — тройником к группе КШ-2 на РК.\P8. Покрытия пола и толщина стяжки приняты до получения экспликации полов: доска в 1.9, 1.10, 1.11, плитка в остальных, стяжка 100 мм.
   7
 GOST
  44
