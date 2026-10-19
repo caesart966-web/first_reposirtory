@@ -1,0 +1,90 @@
+# Чертежи ОВиК И05.09.26-ОВ (дом и баня): DXF → DWG для AutoCAD.
+#
+# DWG пишет ODA File Converter (Open Design Alliance — тот же движок читают и пишут
+# nanoCAD, BricsCAD, ZWCAD), формат AutoCAD 2018 (AC1032) — как у исходных DWG
+# Заказчика, с аудитом каждого файла. Затем записанные DWG читаются обратно в DXF
+# и сверяются с исходниками (check_roundtrip.py): состав, надписи, слои, шрифты.
+# Результат (DWG, журналы аудита .err, отчёт сверки) коммитится в cad/ovk-i05-09-26/dwg.
+#
+# Запуск — сам при изменении DXF в cad/ovk-i05-09-26/dxf или вручную (Run workflow).
+name: 'ОВиК И05.09.26: DXF → DWG (ODA)'
+
+on:
+  push:
+    branches: ['claude/brave-darwin-wc97p5']
+    paths:
+      - 'cad/ovk-i05-09-26/dxf/*.dxf'
+      - 'cad/vk-140-1-2026/check_roundtrip.py'
+      - '.github/workflows/dwg-convert-ovk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: dwg-convert-ovk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  convert:
+    runs-on: ubuntu-22.04
+    env:
+      D: cad/ovk-i05-09-26
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Устанавливаем ODA File Converter
+        run: |
+          set -eu
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb file libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 \
+            libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0 \
+            libxcb-shape0 libxcb-cursor0 libxcb-xkb1 libgl1 libegl1 libopengl0 libglx0 libfontconfig1 \
+            libdbus-1-3 >/dev/null
+          curl -sSL -A 'Mozilla/5.0' https://www.opendesign.com/guestfiles/oda_file_converter -o page.html
+          echo '--- ссылки на конвертер на странице:'
+          grep -oiE '(href|data-href)="[^"]*ODAFileConverter[^"]*"' page.html | sort -u || true
+          rel=$(grep -oiE 'href="[^"]*ODAFileConverter[^"]*lnxX64[^"]*\.deb"' page.html | head -1 | sed -E 's/^href="//; s/"$//')
+          if [ -z "$rel" ]; then echo 'Ссылка на .deb для Linux не найдена'; exit 1; fi
+          case "$rel" in http*) url="$rel" ;; /*) url="https://www.opendesign.com$rel" ;; *) url="https://www.opendesign.com/guestfiles/$rel" ;; esac
+          url=$(echo "$url" | sed 's/&amp;/\&/g')
+          echo "Скачиваем: $url"
+          curl -sSL -A 'Mozilla/5.0' "$url" -o oda.deb
+          file oda.deb
+          sudo apt-get install -y -qq ./oda.deb >/dev/null
+          ls -la /usr/bin/ODAFileConverter*
+          echo '--- недостающие библиотеки (должно быть пусто):'
+          ldd /usr/bin/ODAFileConverter_*/ODAFileConverter | grep 'not found' || true
+
+      - name: DXF → DWG (AutoCAD 2018) с аудитом, затем DWG → DXF для сверки
+        run: |
+          set -eu
+          rm -rf "$D/dwg" /tmp/rt && mkdir -p "$D/dwg" /tmp/rt
+          xvfb-run -a ODAFileConverter "$PWD/$D/dxf" "$PWD/$D/dwg" ACAD2018 DWG 0 1 '*.dxf'
+          xvfb-run -a ODAFileConverter "$PWD/$D/dwg" /tmp/rt ACAD2018 DXF 0 1 '*.dwg'
+          ls -la "$D/dwg" /tmp/rt
+          for f in "$D"/dwg/*.err /tmp/rt/*.err; do
+            [ -f "$f" ] && { echo "=== $f"; cat "$f"; }
+          done
+          for f in "$D"/dwg/*.dwg; do printf '%s: ' "$(basename "$f")"; head -c 6 "$f"; echo; done
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Сверка состава
+        run: |
+          pip install -q ezdxf==1.4.4
+          python cad/vk-140-1-2026/check_roundtrip.py "$D/dxf" /tmp/rt 2>&1 | grep -v -i warning | tee "$D/dwg/check-report.txt"
+          exit ${PIPESTATUS[0]}
+
+      - name: Коммит DWG и отчёта
+        if: always()
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$D/dwg"
+          git diff --cached --quiet && exit 0
+          git commit -m 'ОВиК И05.09.26: DWG (ODA File Converter, AutoCAD 2018) и отчёт сверки'
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
