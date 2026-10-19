@@ -12,8 +12,8 @@
   <td>{{ c.inn or '—' }}</td>
   <td class="num">{{ c.totals.n_all }}{% if c.totals.n_open %} <span class="muted">({{ c.totals.n_open }} открыт.)</span>{% endif %}</td>
   <td class="num">{{ c.totals.n_odo }}</td>
-  <td class="num"><b>{{ c.totals.odo_sum|money }}</b></td>
-  <td>{% if c.totals.level %}{{ c.totals.level.level }}-й, {{ c.totals.level.limit }}{% if c.totals.level_share is not none %} · занято {{ '%.0f'|format(c.totals.level_share) }} %{% endif %}{% else %}<span class="muted">не указан</span>{% endif %}</td>
+  <td class="num">{% for k, t in c.totals.by_kind.items() %}<div>{% if c.totals.by_kind|length > 1 %}<small class="muted">{{ SRO_KIND_SHORT[k] }}</small> {% endif %}<b>{{ t.odo_sum|money }}</b></div>{% endfor %}</td>
+  <td>{% for k, t in c.totals.by_kind.items() %}<div>{% if c.totals.by_kind|length > 1 %}<small class="muted">{{ SRO_KIND_SHORT[k] }}</small> {% endif %}{% if t.level %}{{ t.level.level }}-й, {{ t.level.limit }}{% if t.level_share is not none %} · занято {{ '%.0f'|format(t.level_share) }} %{% endif %}{% else %}<span class="muted">не указан</span>{% endif %}</div>{% endfor %}</td>
   <td><a class="btn small" href="/company/{{ c.id }}/contracts/new">+ договор</a></td>
 </tr>
 {% endfor %}
@@ -29,8 +29,12 @@
   <label>Название <input name="name" required placeholder="ООО «Пример»"></label>
   <label>ИНН <input name="inn" pattern="\d{10}|\d{12}" placeholder="10 цифр"></label>
   <label>СРО (название) <input name="sro_name" placeholder="Ассоциация «…»"></label>
-  <label>Уровень ответственности по ОДО (из реестра СРО, справочно)
-    <select name="odo_level"><option value="">не указан</option><option value="1">1-й — до 90 млн</option><option value="2">2-й — до 500 млн</option><option value="3">3-й — до 3 млрд</option><option value="4">4-й — до 10 млрд</option><option value="5">5-й — свыше</option></select></label>
+  <label class="wide">В каких СРО состоит у нас <span class="checks">{% for k in ['build','design','survey'] %}<label class="check"><input type="checkbox" name="sro_kinds" value="{{ k }}" {{ 'checked' if k == 'build' }}> {{ SRO_KIND_RU[k] }}</label>{% endfor %}</span>
+    <small>У каждого вида СРО свой совокупный размер: строительный подряд и снос — у строителей, проектирование — у проектировщиков, изыскания — у изыскателей (ч. 11, 13 ст. 55.16 ГрК РФ).</small></label>
+  {% for k in ['build','design','survey'] %}
+  <label>Уровень по ОДО — СРО {{ SRO_KIND_RU[k] }} (из реестра, справочно)
+    <select name="{{ LEVEL_FIELD[k] }}"><option value="">не указан</option>{% for L in levels[k].levels %}<option value="{{ L.level }}">{{ L.level }}-й — {{ L.limit }}</option>{% endfor %}</select></label>
+  {% endfor %}
   <div class="actions"><button type="submit">Добавить</button></div>
 </form>
 </section>

@@ -50,22 +50,37 @@ def _pdf_text(path: Path, progress=None) -> tuple[str, bool]:
     cmd = tesseract_cmd()
     if cmd:
         import os
+        from concurrent.futures import ThreadPoolExecutor
         env = dict(os.environ)
-        out = []
+        # Один поток на страницу: tesseract с OpenMP при нескольких процессах или занятом процессоре
+        # уходил в ожидание — страница шла 2,5 минуты вместо 4 секунд. Параллелим страницами, не потоками.
+        env["OMP_THREAD_LIMIT"] = "1"
+        n = len(doc)
+        workers = max(1, min(4, (os.cpu_count() or 1)))
         with tempfile.TemporaryDirectory() as td:
+            pngs = []
             for i, p in enumerate(doc):
-                if progress:
-                    progress(i, len(doc), "ocr")
                 png = Path(td) / f"p{i}.png"
                 p.get_pixmap(dpi=200).save(str(png))
+                pngs.append(png)
+            done = {"n": 0}
+            if progress:
+                progress(0, n, "ocr")
+
+            def one(i_png):
+                i, png = i_png
                 r = subprocess.run([cmd, str(png), "-", "-l", "rus+eng", "--psm", "3"], capture_output=True, text=True, env=env,
                                    encoding="utf-8", errors="replace", creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
-                out.append(f"\n===== стр. {i + 1} =====\n" + (r.stdout or ""))
-        text = "".join(out)
-        if progress:
-            progress(len(doc), len(doc), "ocr")
-        _pdf_text.last_ocr = len(text.strip()) >= 40 * len(doc)
-        return text, len(text.strip()) < 40 * len(doc)
+                done["n"] += 1
+                if progress:
+                    progress(done["n"], n, "ocr")
+                return i, (r.stdout or "")
+
+            with ThreadPoolExecutor(max_workers=workers) as ex:
+                pages = dict(ex.map(one, enumerate(pngs)))
+        text = "".join(f"\n===== стр. {i + 1} =====\n" + pages[i] for i in range(n))
+        _pdf_text.last_ocr = len(text.strip()) >= 40 * n
+        return text, len(text.strip()) < 40 * n
     return text, True
 
 

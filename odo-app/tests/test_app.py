@@ -21,7 +21,7 @@ client = TestClient(app, follow_redirects=False)
 
 
 def test_flow():
-    r = client.post("/companies", data={"name": "ООО «ПРИМЕР-СТРОЙ»", "inn": "7700000001", "sro_name": "Ассоциация «Пример»", "odo_level": "1"})
+    r = client.post("/companies", data={"name": "ООО «ПРИМЕР-СТРОЙ»", "inn": "7700000001", "sro_name": "Ассоциация «Пример»", "odo_level": "1", "sro_kinds": "build"})
     assert r.status_code == 303
     cid = int(r.headers["location"].split("/")[-1])
     files = [("files", ("Контракт 7.txt", (FX / "contract_fiction.txt").read_bytes(), "text/plain")),
@@ -111,3 +111,42 @@ def _form_from_card(ct):
         f[f"work_source_{i}"] = w["source"] or ""
         f[f"work_human_{i}"] = ""
     return f
+
+
+def _wait(ct):
+    import time
+    for _ in range(200):
+        j = client.get(f"/contract/{ct}/progress.json").json()
+        if j["stage"] in ("done", "error"):
+            return j
+        time.sleep(0.1)
+    return j
+
+
+def test_design_contract_by_sro_kind():
+    """Проектный договор у члена-строителя — в реестре с пометкой «не наша СРО» и не в сумме; у члена двух СРО — в своей колонке."""
+    r = client.post("/companies", data={"name": "ООО «ПСК «ПРИМЕР»", "inn": "7700000003", "sro_kinds": ["build"], "odo_level": "1"})
+    cid = int(r.headers["location"].split("/")[-1])
+    files = [("files", ("Договор ПД.txt", (FX / "design_fiction.txt").read_bytes(), "text/plain"))]
+    r = client.post(f"/company/{cid}/contracts/new", files=files)
+    ct = int(re.search(r"/contract/(\d+)/progress", r.headers["location"]).group(1))
+    assert _wait(ct)["stage"] == "done"
+    page = client.get(f"/contract/{ct}/card").text
+    assert "2450000.0" in page and "0001-ПД" in page
+    r = client.post(f"/contract/{ct}/card", data=_form_from_card(ct))
+    assert r.status_code == 303
+    page = client.get(f"/contract/{ct}").text
+    assert "В ОДО не входит" in page and "СРО проектировщиков" in page
+    comp = client.get(f"/company/{cid}").text
+    assert "не наша СРО" in comp and "проектировщиков" in comp   # прямой договор: в сумму не идёт и так, предупреждения о чужой СРО нет
+
+    # компания состоит и в СРО проектировщиков: своя сумма и уровень по виду
+    r = client.post(f"/company/{cid}/settings", data={"name": "ООО «ПСК «ПРИМЕР»", "sro_kinds": ["build", "design"], "odo_level": "1", "odo_level_design": "2"})
+    assert r.status_code == 303
+    comp = client.get(f"/company/{cid}").text
+    assert "не наша СРО" not in comp and "СРО проектировщиков" in comp and "до 50 млн ₽" in comp
+    home = client.get("/").text
+    assert "проект." in home
+    rep = client.get(f"/company/{cid}/report").text
+    assert "СРО проектировщиков" in rep and "ч. 4 ст. 48" in rep
+    assert client.get(f"/company/{cid}/export.xlsx").status_code == 200

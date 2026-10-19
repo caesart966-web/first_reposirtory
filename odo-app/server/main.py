@@ -47,7 +47,12 @@ RU = {
     "housing": {"none": "нет", "izhs": "ИЖС", "blocked": "блокированная застройка", "mkd_low": "МКД до 3 этажей", "garden": "садовый дом", "auxiliary": "вспомогательная постройка", "unknown": "не установлено"},
     "claim_status": {"founded": "обоснован", "partially": "частично обоснован", "unfounded": "не обоснован", "needs_facts": "нужны факты", "needs_human": "решает человек"},
 }
-templates.env.globals.update(RU=RU, money=engine.money, llm_on=llm.available(), llm_model=LLM_MODEL, reports_dir=str(REPORTS_DIR))
+SRO_KIND_RU = {"build": "строителей", "design": "проектировщиков", "survey": "изыскателей", "mixed": "нескольких видов"}
+SRO_KIND_SHORT = {"build": "строит.", "design": "проект.", "survey": "изыск.", "mixed": "смеш."}
+KIND_SRO = {"construction": "build", "demolition": "build", "design": "design", "survey": "survey", "mixed": "mixed"}
+LEVEL_FIELD = {"build": "odo_level", "design": "odo_level_design", "survey": "odo_level_survey"}
+templates.env.globals.update(RU=RU, money=engine.money, llm_on=llm.available(), llm_model=LLM_MODEL, reports_dir=str(REPORTS_DIR),
+                             SRO_KIND_RU=SRO_KIND_RU, SRO_KIND_SHORT=SRO_KIND_SHORT, LEVEL_FIELD=LEVEL_FIELD)
 templates.env.filters["money"] = lambda x: engine.money(x) if x is not None else "—"
 templates.env.filters["dmy"] = lambda s: (f"{s[8:10]}.{s[5:7]}.{s[0:4]}" if s and len(s) >= 10 else (s or "—"))
 
@@ -107,6 +112,7 @@ def contract_row(ct: dict) -> dict:
     price = effective_price(card) if card else None
     remaining = v.get("remaining_rub") if v else (None if price is None else price - (c.get("executed_rub") or 0))
     odo = v.get("counts_for_odo")
+    sro_kind = v.get("sro_kind") if v else KIND_SRO.get(c.get("kind"))
     deadline, overdue = None, False
     if c.get("date"):
         deadline = working_days_after(c["date"], 3)
@@ -121,6 +127,7 @@ def contract_row(ct: dict) -> dict:
         "notified": bool(ct.get("sro_notified")), "notified_ru": ("да, " + (ct.get("sro_notified_date") or "")) if ct.get("sro_notified") else "нет",
         "notify_deadline": deadline, "notify_overdue": overdue, "confidence": v.get("confidence"), "summary": v.get("summary"),
         "needs": (a or {}).get("missing_facts") or [], "work_type": card.get("work_type"),
+        "sro_kind": sro_kind, "sro_kind_ru": SRO_KIND_RU.get(sro_kind, "—"), "sro_kind_short": SRO_KIND_SHORT.get(sro_kind, "—"),
     }
 
 
@@ -139,17 +146,33 @@ def company_view(cid: int):
     if not comp:
         return None, [], {}, []
     rows = [contract_row(ct) for ct in db.contracts_of(cid)]
-    odo_rows = [r for r in rows if r["odo"] == "yes"]
+    kinds = comp.get("sro_kinds") or ["build"]
+    for r in rows:
+        # договор другого вида СРО (проектирование у строителя) в совокупный размер по нашим СРО не входит
+        r["in_sro"] = r["sro_kind"] in (None, "mixed") or r["sro_kind"] in kinds
+    odo_rows = [r for r in rows if r["odo"] == "yes" and r["in_sro"]]
     totals = {"odo_sum": round(sum(r["odo_amount"] for r in odo_rows), 2), "n_all": len(rows), "n_odo": len(odo_rows),
               "n_open": sum(1 for r in rows if r["odo"] in ("needs_facts", "conditional") or r["status"] == "draft"),
-              "n_no": sum(1 for r in rows if r["odo"] == "no")}
-    lv = engine.levels()["odo"]["build"]["levels"]
-    if comp.get("odo_level"):
-        L = next((x for x in lv if x["level"] == comp["odo_level"]), None)
-        if L:
-            totals["level"] = L
-            totals["level_share"] = (totals["odo_sum"] / L["limit_rub"] * 100) if L.get("limit_rub") else None
-    warnings = splitting_warnings(rows) + [f"Договор {r['number']}: уведомление в СРО просрочено (срок {r['notify_deadline']})." for r in rows if r["notify_overdue"]]
+              "n_no": sum(1 for r in rows if r["odo"] == "no" or (r["odo"] == "yes" and not r["in_sro"])), "kinds": kinds, "by_kind": {}}
+    all_levels = engine.levels()["odo"]
+    for k in kinds:
+        krows = [r for r in odo_rows if r["sro_kind"] in (k, "mixed") or (r["sro_kind"] is None and k == "build")]
+        t = {"odo_sum": round(sum(r["odo_amount"] for r in krows), 2), "n_odo": len(krows), "level": None, "level_share": None, "ru": SRO_KIND_RU[k]}
+        lvl = comp.get(LEVEL_FIELD[k])
+        if lvl:
+            L = next((x for x in all_levels[k]["levels"] if x["level"] == lvl), None)
+            if L:
+                t["level"] = L
+                t["level_share"] = (t["odo_sum"] / L["limit_rub"] * 100) if L.get("limit_rub") else None
+        totals["by_kind"][k] = t
+    # прежние поля — для строителей (главная таблица и старые шаблоны)
+    b = totals["by_kind"].get("build") or next(iter(totals["by_kind"].values()))
+    totals["level"], totals["level_share"] = b["level"], b["level_share"]
+    warnings = splitting_warnings([r for r in rows if r["sro_kind"] in (None, "build", "mixed")])
+    warnings += [f"Договор {r['number']}: уведомление в СРО просрочено (срок {r['notify_deadline']})." for r in rows if r["notify_overdue"]]
+    warnings += [f"Договор {r['number']} — для СРО {r['sro_kind_ru']}, а компания у нас состоит в СРО {', '.join(SRO_KIND_RU[k] for k in kinds)}: "
+                 "в совокупный размер по нашей СРО он не входит. Если компания состоит и в этой СРО — отметьте вид в настройках компании."
+                 for r in rows if r["odo"] in ("yes", "conditional", "needs_facts") and not r["in_sro"]]
     return comp, rows, totals, warnings
 
 
@@ -175,12 +198,28 @@ async def index(request: Request):
     for c in db.companies():
         _, rows, totals, warnings = company_view(c["id"])
         comps.append({**c, "totals": totals, "n_warn": len(warnings)})
-    return render(request, "index.html", companies=comps)
+    return render(request, "index.html", companies=comps, levels=engine.levels()["odo"])
+
+
+def _company_form(form) -> dict:
+    """Поля компании из формы: виды СРО (флажки) и уровень по ОДО у каждого вида."""
+    kinds = [k for k in form.getlist("sro_kinds") if k in LEVEL_FIELD] or ["build"]
+    out = {"sro_kinds": kinds}
+    for k, field in LEVEL_FIELD.items():
+        v = (form.get(field) or "").strip()
+        out[field] = int(v) if v.isdigit() and k in kinds else None
+    return out
 
 
 @app.post("/companies")
-async def companies_add(request: Request, name: str = Form(...), inn: str = Form(""), sro_name: str = Form(""), odo_level: str = Form("")):
-    cid = db.add_company(name.strip(), inn.strip() or None, None, sro_name.strip() or None, int(odo_level) if odo_level.strip().isdigit() else None)
+async def companies_add(request: Request):
+    form = await request.form()
+    name = (form.get("name") or "").strip()
+    if not name:
+        return RedirectResponse("/", status_code=303)
+    cf = _company_form(form)
+    cid = db.add_company(name, (form.get("inn") or "").strip() or None, None, (form.get("sro_name") or "").strip() or None, cf["odo_level"],
+                         sro_kinds=cf["sro_kinds"], odo_level_design=cf["odo_level_design"], odo_level_survey=cf["odo_level_survey"])
     db.log(user_of(request), "company.add", None, name)
     return RedirectResponse(f"/company/{cid}", status_code=303)
 
@@ -190,14 +229,18 @@ async def company_page(request: Request, cid: int):
     comp, rows, totals, warnings = company_view(cid)
     if not comp:
         return RedirectResponse("/", status_code=303)
-    return render(request, "company.html", company=comp, rows=rows, totals=totals, warnings=warnings, levels=engine.levels()["odo"]["build"]["levels"])
+    return render(request, "company.html", company=comp, rows=rows, totals=totals, warnings=warnings, levels=engine.levels()["odo"])
 
 
 @app.post("/company/{cid}/settings")
-async def company_settings(request: Request, cid: int, name: str = Form(...), inn: str = Form(""), kpp: str = Form(""), sro_name: str = Form(""),
-                           odo_level: str = Form(""), vv_level: str = Form(""), notes: str = Form("")):
-    db.update_company(cid, name=name.strip(), inn=inn.strip() or None, kpp=kpp.strip() or None, sro_name=sro_name.strip() or None,
-                      odo_level=int(odo_level) if odo_level.strip().isdigit() else None, vv_level=int(vv_level) if vv_level.strip().isdigit() else None, notes=notes.strip() or None)
+async def company_settings(request: Request, cid: int):
+    form = await request.form()
+    g = lambda k: (form.get(k) or "").strip()  # noqa: E731
+    if not g("name"):
+        return RedirectResponse(f"/company/{cid}", status_code=303)
+    cf = _company_form(form)
+    db.update_company(cid, name=g("name"), inn=g("inn") or None, kpp=g("kpp") or None, sro_name=g("sro_name") or None,
+                      vv_level=int(g("vv_level")) if g("vv_level").isdigit() else None, notes=g("notes") or None, **cf)
     return RedirectResponse(f"/company/{cid}", status_code=303)
 
 
@@ -272,7 +315,7 @@ def _process_upload(ct_id: int, cid: int, comp: dict, saved: list, use_llm: bool
             db.add_file(ct_id, filename, str(dest.relative_to(DATA_DIR)), meta["kind_hint"], len(text), meta["scanned"])
             docs.append({"filename": filename, "kind": meta["kind_hint"], "text": text, "scanned": meta["scanned"], "ocr": meta.get("ocr", False)})
         job.update(stage="parse", files_done=len(saved), file="")
-        member = {"name": comp["name"], "inn": comp.get("inn"), "sro_kinds": ["build"]}
+        member = {"name": comp["name"], "inn": comp.get("inn"), "sro_kinds": comp.get("sro_kinds") or ["build"]}
         card, meta = build_card(member, docs)
         if use_llm:
             job.update(stage="llm")

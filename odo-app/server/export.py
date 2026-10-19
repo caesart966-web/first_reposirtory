@@ -81,6 +81,9 @@ def _para_with_bold(doc, ln: str):
             p.add_run(_plain(part))
 
 
+SRO_KIND_RU = {"build": "строителей", "design": "проектировщиков", "survey": "изыскателей"}
+
+
 def register_xlsx(company: dict, rows: list[dict], totals: dict, path: Path):
     from openpyxl import Workbook
     from openpyxl.styles import Alignment, Font
@@ -90,24 +93,32 @@ def register_xlsx(company: dict, rows: list[dict], totals: dict, path: Path):
     ws.append([f"Реестр договоров: {company['name']}" + (f" (ИНН {company['inn']})" if company.get("inn") else "")])
     ws["A1"].font = Font(bold=True, size=13)
     ws.append([])
-    head = ["№ договора", "Дата", "Заказчик", "Цена, ₽", "Принято по актам, ₽", "Остаток, ₽", "Способ", "Членство", "В ОДО", "В совокупный размер, ₽", "Решение", "Кто решил", "Уведомление в СРО"]
+    head = ["№ договора", "Дата", "Заказчик", "Вид СРО", "Цена, ₽", "Принято по актам, ₽", "Остаток, ₽", "Способ", "Членство", "В ОДО", "В совокупный размер, ₽", "Решение", "Кто решил", "Уведомление в СРО"]
     ws.append(head)
     for c in ws[3]:
         c.font = Font(bold=True)
         c.alignment = Alignment(wrap_text=True, vertical="top")
     for r in rows:
-        ws.append([r["number"], r["date"], r["customer"], r["price"], r["executed"], r["remaining"], r["procurement_ru"], r["membership_ru"], r["odo_ru"], r["odo_amount"], r["decision_ru"], r["decided_by"], r["notified_ru"]])
+        ws.append([r["number"], r["date"], r["customer"], r.get("sro_kind_ru") or "—", r["price"], r["executed"], r["remaining"], r["procurement_ru"], r["membership_ru"],
+                   r["odo_ru"] + ("" if r.get("in_sro", True) else " (СРО другого вида)"), r["odo_amount"] if r.get("in_sro", True) else None, r["decision_ru"], r["decided_by"], r["notified_ru"]])
     ws.append([])
-    ws.append(["Итого в совокупный размер по КФ ОДО", None, None, None, None, None, None, None, None, totals["odo_sum"]])
+    for k, t in (totals.get("by_kind") or {}).items():
+        ws.append([f"Совокупный размер по КФ ОДО — СРО {SRO_KIND_RU.get(k, k)}", None, None, None, None, None, None, None, None, None, t["odo_sum"]])
+        ws.cell(ws.max_row, 11).number_format = "#,##0.00"
+        if t.get("level"):
+            ws.append([f"  уровень ответственности {t['level']['level']}-й ({t['level']['limit']})" + (f", занято {t['level_share']:.1f} %" if t.get("level_share") is not None else "")])
+    ws.append(["Итого в совокупный размер по КФ ОДО", None, None, None, None, None, None, None, None, None, totals["odo_sum"]])
     ws.cell(ws.max_row, 1).font = Font(bold=True)
-    ws.cell(ws.max_row, 10).font = Font(bold=True)
+    ws.cell(ws.max_row, 11).font = Font(bold=True)
+    ws.cell(ws.max_row, 11).number_format = "#,##0.00"
     ws.append(["Договоров всего / в ОДО", totals["n_all"], totals["n_odo"]])
-    ws.append(["Расчёт: остаток = цена − принято по актам (ч. 7 ст. 55.13 ГрК РФ); в совокупный размер входят конкурентные договоры, по которым требуется членство (ч. 3 ст. 55.8, ст. 60.1 ГрК РФ)."])
-    for col, w in zip("ABCDEFGHIJKLM", (26, 12, 40, 16, 18, 16, 14, 12, 8, 20, 22, 14, 16)):
+    ws.append(["Расчёт: остаток = цена − принято по актам (ч. 7 ст. 55.13 ГрК РФ); в совокупный размер входят конкурентные договоры, по которым требуется членство (ч. 3 ст. 55.8, ст. 60.1 ГрК РФ); "
+               "у каждого вида СРО свой совокупный размер (ч. 11, 13 ст. 55.16): строительный подряд и снос — у строителей, проектирование — у проектировщиков, изыскания — у изыскателей."])
+    for col, w in zip("ABCDEFGHIJKLMN", (26, 12, 40, 14, 16, 18, 16, 14, 12, 10, 20, 22, 14, 16)):
         ws.column_dimensions[col].width = w
     for row in ws.iter_rows(min_row=4, max_row=3 + len(rows)):
         for c in row:
             c.alignment = Alignment(wrap_text=True, vertical="top")
-        for idx in (3, 4, 5, 9):
+        for idx in (4, 5, 6, 10):
             row[idx].number_format = "#,##0.00"
     wb.save(str(path))

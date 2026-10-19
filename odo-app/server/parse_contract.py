@@ -128,13 +128,13 @@ def parse_contract_text(t: str) -> tuple[dict, dict]:
 
     # цена: «Цена контракта составляет 8480267 рублей 44 копеек» / «… является твёрдой … и составляет 768 333 211 (прописью) рублей 08 копеек»
     price_seg = None
-    for pat in (r"Цена\s+(?:контракта|договора)[^.]{0,220}?составляет\s*([\d\s]{1,20}?\d)\s*(?:\([^)]{0,400}\))?\s*руб\w*\s*(\d{2})\s*коп",
-                r"Цена\s+(?:контракта|договора)[^.]{0,220}?составляет\s*([\d\s]{1,20}?\d)\s*(?:\([^)]{0,400}\))?\s*руб"):
+    for pat, hint in ((r"Цена\s+(?:контракта|договора)[^.]{0,220}?составляет\s*([\d\s]{1,20}?\d)(?:[,.](\d{2}))?\s*(?:\([^)]{0,400}\))?\s*руб\w*\s*(?:(\d{2})\s*коп)?", "п. «Цена контракта»"),
+                      (r"(?:Стоимость|Цена)\s+(?:работ|услуг)[^.]{0,220}?составляет\s*([\d\s]{1,20}?\d)(?:[,.](\d{2}))?\s*(?:\([^)]{0,400}\))?\s*руб\w*\s*(?:(\d{2})\s*коп)?", "п. «Стоимость работ»")):
         m = re.search(pat, flat, re.I)
         if m:
-            kop = m.group(2) if m.lastindex and m.lastindex >= 2 else "00"
+            kop = m.group(3) or m.group(2) or "00"
             f["price_rub"] = num(m.group(1) + "." + kop)
-            hints["price_rub"] = "п. «Цена контракта»"
+            hints["price_rub"] = hint
             price_seg = flat[max(0, m.start() - 50): m.end() + 500]
             break
     if f.get("price_rub") is None:
@@ -146,7 +146,7 @@ def parse_contract_text(t: str) -> tuple[dict, dict]:
     if price_seg:
         if re.search(r"НДС\s+не\s+облага|без\s+НДС", price_seg, re.I):
             f["price_includes_vat"] = False
-        elif re.search(r"с\s+уч[её]том\s+(?:налога\s+на\s+добавленную\s+стоимость|НДС)|включая\s+НДС|в\s+том\s+числе\s+НДС", price_seg, re.I):
+        elif re.search(r"с\s+уч[её]том\s+(?:налога\s+на\s+добавленную\s+стоимость|НДС)|включая\s+НДС|в\s+том\s+числе\s+НДС|с\s+НДС", price_seg, re.I):
             f["price_includes_vat"] = True
 
     # НМЦК: через обеспечение («10 % от НМЦК, что составляет N») или прямо («начальная (максимальная) цена … составляет N руб»)
@@ -188,6 +188,17 @@ def parse_contract_text(t: str) -> tuple[dict, dict]:
             f["period_to"] = d1.isoformat()
             hints["period_to"] = f"{n} {m.group(2)} с начала работ — расчётно"
 
+    if not f.get("period_to"):
+        m = re.search(r"выполнить\s+(?:работы\s+)?[^.]{0,80}?в\s+срок\s+(?:до|по)\s+(\d{2}\.\d{2}\.\d{4})", flat, re.I)
+        if m:
+            f["period_to"] = date_iso(m.group(1))
+            hints["period_to"] = "«выполнить в срок до …»"
+        else:
+            m = re.search(r"действует\s+до\s+«?\s*(\d{1,2})\s*»?\s*" + MONTH_RE + r"\s*(\d{4})", flat, re.I)
+            if m:
+                f["period_to"] = date_iso(f"{m.group(1)} {m.group(2)} {m.group(3)}")
+                hints["period_to"] = "срок действия договора (срок работ в тексте не найден)"
+
     # стороны
     pre = re.search(r"(?P<a>.{2,700}?),?\s*именуем\w*\s+в\s+дальнейшем\s*[–—-]?\s*[«\"]?(?P<ra>Заказчик|Генподрядчик|Генеральный подрядчик|Застройщик|Технический заказчик)[»\"]?"
                     r".*?с\s+одной\s+стороны,?\s+и\s+(?P<b>.{5,500}?)(?:,?\s*именуем\w*\s+в\s+дальнейшем\s*[–—-]?\s*[«\"]?(?P<rb>Подрядчик|Субподрядчик|Генподрядчик|Исполнитель)[»\"]?|\s+в\s+лице)", flat, re.S)
@@ -216,10 +227,18 @@ def parse_contract_text(t: str) -> tuple[dict, dict]:
     elif tender_words:
         f["procurement"] = "competitive"
         f["procurement_law"] = "unknown"
-    elif re.search(r"единственн\w+\s+поставщик|без\s+проведения\s+торгов", flat, re.I):
-        f["procurement"] = "direct"
     else:
-        f["procurement"] = "unknown"
+        app = re.search(r"Приложение\s*№?\s*\d\s+к\s+(?:договору|контракту)|ТЕХНИЧЕСКОЕ\s+ЗАДАНИЕ", flat)
+        body = flat[:app.start()] if app and app.start() > 1500 else flat
+        if re.search(r"единственн\w+\s+поставщик|без\s+проведения\s+торгов", body, re.I):
+            f["procurement"] = "direct"
+            hints["procurement"] = "в договоре сказано о закупке у единственного поставщика / без торгов"
+        elif not f.get("ikz") and not f.get("protocol") and not f.get("procurement_law"):
+            f["procurement"] = "direct"
+            f["procurement_inferred"] = True
+            hints["procurement"] = "признаков конкурентной закупки в тексте нет (ни ИКЗ, ни протокола торгов, ни ссылок на 44-ФЗ/223-ФЗ) — прямой договор; подтвердите по ЕИС"
+        else:
+            f["procurement"] = "unknown"
     if f.get("procurement") == "competitive" and "procurement" not in hints:
         bits = [f.get("protocol"), {"44-fz": "ссылки на 44-ФЗ", "223-fz": "ссылки на 223-ФЗ"}.get(f.get("procurement_law")),
                 ("ИКЗ " + f["ikz"]) if f.get("ikz") else None, ("«" + tender_words.group(0) + "»") if tender_words else None,
@@ -241,13 +260,19 @@ def parse_contract_text(t: str) -> tuple[dict, dict]:
     subj = (f.get("subject_text") or "") + " " + head[:1500]
     low = subj.lower()
     order = [("капитальн\\w+\\s+ремонт", "capital_repair"), ("текущ\\w+\\s+ремонт", "current_repair"), ("реконструкци", "reconstruction"),
-             ("\\bснос\\w*\\b|демонтаж\\w*\\s+здани", "demolition"), ("проектн\\w+\\s+документаци|разработк\\w+\\s+проект", "design"),
-             ("инженерн\\w+\\s+изыскан", "survey"), ("строительств\\w*", "construction"), ("\\bремонт", "repair_unspecified")]
+             ("\\bснос\\w*\\b|демонтаж\\w*\\s+здани", "demolition"),
+             ("проектн\\w+\\s+документаци|проектно-сметн\\w+\\s+документаци|рабоч\\w+\\s+документаци|разработк\\w+\\s+проект", "design"),
+             ("инженерн\\w+\\s+изыскан|изыскательск\\w+\\s+работ", "survey"), ("строительств\\w*", "construction"), ("\\bремонт", "repair_unspecified")]
     found = [(mm.start(), wt) for pat, wt in order for mm in [re.search(pat, low)] if mm]
     if found:
-        # капремонт/текущий ремонт побеждают, если названы; иначе — что встретилось раньше
-        prio = [wt for _, wt in found if wt in ("capital_repair", "current_repair")]
-        f["work_type"] = prio[0] if prio else min(found)[1]
+        first = min(found)[1]
+        if first in ("design", "survey"):
+            # предмет — разработка документации или изыскания: «капитальный ремонт» дальше по тексту называет объект, а не работу подрядчика
+            f["work_type"] = first
+        else:
+            # капремонт/текущий ремонт побеждают, если названы; иначе — что встретилось раньше
+            prio = [wt for _, wt in found if wt in ("capital_repair", "current_repair")]
+            f["work_type"] = prio[0] if prio else first
     else:
         f["work_type"] = "unknown"
 
@@ -368,6 +393,16 @@ def customer_kind_guess(name: str | None, work_type: str | None = None) -> tuple
     return "unknown", ""
 
 
+def _is_capital(f: dict, wt: str) -> bool | None:
+    if wt in ("capital_repair", "construction", "reconstruction", "demolition"):
+        return True
+    if wt in ("design", "survey"):
+        subj = (f.get("subject_text") or "") + " " + (f.get("result_text") or "")
+        if re.search(r"линейн\w+\s+объект|объект\w*\s+капитального\s+строительства|\bздани|\bсооружени|тепловы\w+\s+сет|водопровод|канализац|газопровод|автомобильн\w+\s+дорог", subj, re.I):
+            return True
+    return None
+
+
 def build_card(member: dict, docs: list[dict]) -> tuple[dict, dict]:
     """docs: [{filename, kind, text}] → (card, draft_meta)."""
     texts = {k: [d["text"] for d in docs if d["kind"] == k] for k in ("contract", "estimate", "act", "addendum", "letter", "other")}
@@ -433,6 +468,9 @@ def build_card(member: dict, docs: list[dict]) -> tuple[dict, dict]:
         warnings.append("Договор прямо требует от подрядчика членства в СРО — заказчик сам считал закупку конкурентной с обязательным членством.")
     elif texts["contract"] and f.get("mentions_sro"):
         warnings.append("В договоре упоминается СРО — посмотрите, что именно требовал заказчик.")
+    if f.get("procurement_inferred"):
+        needs.append("procurement")
+        warnings.append("Способ заключения определён по отсутствию признаков торгов в тексте: если заказчик закупал по 223-ФЗ или 44-ФЗ, укажите это в карточке (ИКЗ, протокол, извещение).")
     if price is not None and price <= 10_000_000 and f.get("procurement") == "competitive" and not f.get("nmck_rub"):
         warnings.append("Цена ниже 10 млн, торги: начальная цена закупки в договоре не найдена. Если в ЕИС она была выше 10 млн — случай спорный, укажите её в карточке.")
 
@@ -454,7 +492,7 @@ def build_card(member: dict, docs: list[dict]) -> tuple[dict, dict]:
             "has_final_act": None, "termination_document": None,
         },
         "customer": {"name": f.get("customer_name") or "", "inn": f.get("customer_inn"), "kind": ckind, "kind_basis": ckind_basis or None},
-        "object": {"name": _object_name(f), "address": f.get("object_address"), "cadastral": None, "is_capital": True if wt in ("capital_repair", "construction", "reconstruction", "demolition") else None,
+        "object": {"name": _object_name(f), "address": f.get("object_address"), "cadastral": None, "is_capital": _is_capital(f, wt),
                    "permit_required": False if wt == "capital_repair" else None, "housing_type": "none", "category": "ordinary",
                    "basis": _object_basis(f, wt, est)},
         "work_type": wt if wt in ("construction", "reconstruction", "capital_repair", "demolition", "current_repair", "improvement", "design", "survey", "mixed", "unknown") else "unknown",

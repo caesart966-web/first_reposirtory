@@ -12,7 +12,8 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS companies (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL, inn TEXT, kpp TEXT, sro_name TEXT, odo_level INTEGER, vv_level INTEGER,
-  notes TEXT, created_at TEXT NOT NULL
+  notes TEXT, created_at TEXT NOT NULL,
+  sro_kinds TEXT, odo_level_design INTEGER, odo_level_survey INTEGER
 );
 CREATE TABLE IF NOT EXISTS contracts (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -52,9 +53,17 @@ def connect() -> sqlite3.Connection:
     return con
 
 
+COMPANY_EXTRA = (("sro_kinds", "TEXT"), ("odo_level_design", "INTEGER"), ("odo_level_survey", "INTEGER"))
+
+
 def init():
     with connect() as con:
         con.executescript(SCHEMA)
+        # базы, созданные до появления видов СРО: колонки дописываются, данные остаются
+        cols = {r[1] for r in con.execute("PRAGMA table_info(companies)")}
+        for col, typ in COMPANY_EXTRA:
+            if col not in cols:
+                con.execute(f"ALTER TABLE companies ADD COLUMN {col} {typ}")
 
 
 @contextmanager
@@ -74,15 +83,22 @@ def j(row, key):
 
 
 # ---- компании ----------------------------------------------------------
+def _company_row(r) -> dict:
+    d = dict(r)
+    kinds = json.loads(d["sro_kinds"]) if d.get("sro_kinds") else None
+    d["sro_kinds"] = [k for k in (kinds or ["build"]) if k in ("build", "design", "survey")] or ["build"]
+    return d
+
+
 def companies():
     with tx() as con:
-        return [dict(r) for r in con.execute("SELECT * FROM companies ORDER BY name")]
+        return [_company_row(r) for r in con.execute("SELECT * FROM companies ORDER BY name")]
 
 
 def company(cid: int):
     with tx() as con:
         r = con.execute("SELECT * FROM companies WHERE id=?", (cid,)).fetchone()
-        return dict(r) if r else None
+        return _company_row(r) if r else None
 
 
 def company_by_inn(inn: str):
@@ -93,16 +109,21 @@ def company_by_inn(inn: str):
         return dict(r) if r else None
 
 
-def add_company(name, inn=None, kpp=None, sro_name=None, odo_level=None, vv_level=None, notes=None) -> int:
+def add_company(name, inn=None, kpp=None, sro_name=None, odo_level=None, vv_level=None, notes=None,
+                sro_kinds=None, odo_level_design=None, odo_level_survey=None) -> int:
     with tx() as con:
-        cur = con.execute("INSERT INTO companies(name,inn,kpp,sro_name,odo_level,vv_level,notes,created_at) VALUES(?,?,?,?,?,?,?,?)",
-                          (name, inn or None, kpp or None, sro_name or None, odo_level, vv_level, notes or None, now()))
+        cur = con.execute("INSERT INTO companies(name,inn,kpp,sro_name,odo_level,vv_level,notes,created_at,sro_kinds,odo_level_design,odo_level_survey) "
+                          "VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+                          (name, inn or None, kpp or None, sro_name or None, odo_level, vv_level, notes or None, now(),
+                           json.dumps(sro_kinds or ["build"], ensure_ascii=False), odo_level_design, odo_level_survey))
         return cur.lastrowid
 
 
 def update_company(cid, **fields):
     if not fields:
         return
+    if "sro_kinds" in fields:
+        fields["sro_kinds"] = json.dumps(fields["sro_kinds"] or ["build"], ensure_ascii=False)
     cols = ", ".join(f"{k}=?" for k in fields)
     with tx() as con:
         con.execute(f"UPDATE companies SET {cols} WHERE id=?", (*fields.values(), cid))

@@ -68,3 +68,30 @@ def test_letter_claims():
     assert "works_not_in_list" in types and "executed" in types
     m = letter_meta(t)
     assert m["date"] == "2026-09-01" and m["contract_number"] == "0100000000000000001-7"
+
+
+def test_design_contract_fields_and_sro_kind():
+    """Проектный договор: цена из «Стоимость работ … составляет», вид — проектирование (капремонт в предмете называет объект),
+    без признаков торгов — прямой с пометкой «проверить», «единственный поставщик» из приказа Минстроя в ТЗ не считается."""
+    f, h = parse_contract_text(read("design_fiction.txt"))
+    assert f["number"] == "0001-ПД" and f["date"] == "2026-09-01"
+    assert f["price_rub"] == 2_450_000.0 and f["price_includes_vat"] is True
+    assert f["work_type"] == "design"
+    assert f["procurement"] == "direct" and f.get("procurement_inferred") is True and "признаков" in h["procurement"]
+    assert f["period_to"] == "2027-02-20"
+    assert f["customer_name"] == "АО «ПРИМЕР-ТЕПЛО»"
+    docs = [{"filename": "d.pdf", "kind": "contract", "text": read("design_fiction.txt")}]
+    card, meta = build_card({"name": "ООО «ПСК «ПРИМЕР»", "inn": "7700000003", "sro_kinds": ["build"]}, docs)
+    assert engine.validate_card(card) == []
+    assert card["contract"]["kind"] == "design" and card["object"]["is_capital"] is True
+    assert "procurement" in meta["needs_review"]
+    a, md = engine.assess_card(card, find_cases=False)
+    v = a["verdict"]
+    assert v["sro_kind"] == "design" and v["in_member_sro"] is False and v["counts_for_odo"] == "no"
+    assert any(x["title"] == "Вид СРО по договору" for x in a["findings"])
+    assert "СРО проектировщиков" in v["summary"] and "СРО строителей" in v["summary"]
+    # член состоит и в СРО проектировщиков — замечания о чужом виде нет, прямой договор в ОДО всё равно не входит
+    card2, _ = build_card({"name": "ООО «ПСК «ПРИМЕР»", "inn": "7700000003", "sro_kinds": ["build", "design"]}, docs)
+    a2, _ = engine.assess_card(card2, find_cases=False)
+    assert a2["verdict"]["in_member_sro"] is True and a2["verdict"]["counts_for_odo"] == "no"
+    assert not any(x["title"] == "Вид СРО по договору" for x in a2["findings"])

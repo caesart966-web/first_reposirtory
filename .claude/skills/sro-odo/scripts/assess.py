@@ -243,6 +243,19 @@ class Assessor:
         if kind == "mixed":
             pk = {p["kind"] for p in (c.get("mixed_parts") or [])} & PODRYAD
             sro_kind = "mixed" if len({KIND_SRO[k] for k in pk}) > 1 else (KIND_SRO[next(iter(pk))] if pk else None)
+        # Вид СРО по договору против видов СРО, в которых состоит член: совокупный размер у каждого вида свой
+        member_kinds = [k for k in (m.get("sro_kinds") or []) if k in SRO_RU]
+        in_member_sro = True
+        if sro_kind in ("build", "design", "survey") and member_kinds and sro_kind not in member_kinds:
+            in_member_sro = False
+            mk = ", ".join(SRO_RU[k] for k in member_kinds)
+            findings.append(self.F(4, "Вид СРО по договору", "info",
+                f"Договор относится к СРО {SRO_RU[sro_kind]}, а член по карточке состоит в СРО {mk}. Совокупный размер обязательств считается "
+                "по каждому виду СРО отдельно: у СРО строителей — по договорам строительного подряда и сноса, у СРО проектировщиков — по договорам на подготовку "
+                "проектной документации, у СРО изыскателей — по договорам на инженерные изыскания (ч. 3 ст. 55.8, ч. 11 и 13 ст. 55.16 ГрК РФ). "
+                f"В совокупный размер по КФ ОДО СРО {mk} этот договор не входит ни при каких условиях. Если компания состоит в СРО {SRO_RU[sro_kind]}, "
+                "договор учитывается там — по правилам ниже.",
+                ["grk-55.8-3", "grk-55.16-11", "grk-55.16-13"]))
         thr = None
         if kind == "construction":
             thr = self.levels["thresholds"]["build_contract_rub"]["value"]
@@ -466,8 +479,11 @@ class Assessor:
         remaining = None if price is None else (0.0 if counts == "no" and ("executed" in hard_no or "terminated" in hard_no) else max(price - (executed or 0), 0.0))
         amount_sro = r2(price * share) if (price is not None and share is not None) else None
         summary = self._summary(card, membership, counts, sro_kind, price, share, remaining, hard_no, odo_conditional)
+        if not in_member_sro:
+            summary += (f" Это договор для СРО {SRO_RU[sro_kind]}; в совокупный размер по КФ ОДО СРО "
+                        f"{', '.join(SRO_RU[k] for k in member_kinds)}, где состоит член, он не входит.")
         verdict = {
-            "membership_required": membership, "sro_kind": sro_kind, "counts_for_odo": counts, "odo_note": odo_note,
+            "membership_required": membership, "sro_kind": sro_kind, "in_member_sro": in_member_sro, "counts_for_odo": counts, "odo_note": odo_note,
             "amount_total_rub": r2(price), "amount_sro_rub": amount_sro,
             "amount_non_sro_rub": r2(price - price * share) if (price is not None and share is not None) else None,
             "amount_unresolved_rub": r2(wsum["unres"]) if wsum["unres"] else None,
@@ -530,6 +546,12 @@ class Assessor:
                         "в совокупный размер по КФ ОДО не входят и ответственности СРО не создают.")
             return f"Договор № {c['number']} ({p}) обязательного членства в СРО не требует и в совокупный размер обязательств не входит: {reasons}.{tail}"
         if membership == "needs_facts":
+            if counts == "no" and proc == "direct":
+                return (f"Договор № {c['number']} ({p}) в совокупный размер обязательств по КФ ОДО не входит: заключён без конкурентных процедур "
+                        "(ч. 3 ст. 55.8 ГрК РФ); уведомлению в СРО подлежит (ч. 4 ст. 55.8). Нужно ли по нему членство в СРО — зависит от фактов, перечисленных ниже.")
+            if counts == "no" and c.get("procurement_law") == "voluntary_tender":
+                return (f"Договор № {c['number']} ({p}) в совокупный размер обязательств по КФ ОДО не входит: тендер заказчика не был обязательным по закону "
+                        "(ч. 1 ст. 60.1 ГрК РФ). Нужно ли по нему членство в СРО — зависит от фактов, перечисленных ниже.")
             return f"По договору № {c['number']} ({p}) вывод невозможен без установления фактов, перечисленных ниже."
         kind_ru = SRO_RU.get(sro_kind, "")
         s = f"Договор № {c['number']} ({p}) требует членства в СРО {kind_ru}"
