@@ -23,6 +23,18 @@ cfg = Configuration(background_policy=BackgroundPolicy.WHITE,
                     color_policy=ColorPolicy.BLACK if mono else ColorPolicy.COLOR,
                     lineweight_policy=LineweightPolicy.ABSOLUTE, min_lineweight=0.1)
 
+# знак диаметра: контур «Ø» в ISOCPEUR matplotlib заливает — в PDF подменяем на «⌀» (в DXF/DWG остаётся «Ø»)
+for e in doc.entitydb.values():
+    t = e.dxftype()
+    if t in ('TEXT', 'ATTRIB', 'ATTDEF'):
+        v = e.dxf.get('text', '')
+        if 'Ø' in v or '%%c' in v.lower():
+            e.dxf.text = v.replace('Ø', '⌀').replace('%%c', '⌀').replace('%%C', '⌀')
+    elif t == 'MTEXT':
+        v = e.text
+        if 'Ø' in v or '%%c' in v.lower() or '\\U+00D8' in v:
+            e.text = v.replace('Ø', '⌀').replace('%%c', '⌀').replace('%%C', '⌀').replace('\\U+00D8', '⌀')
+
 vps = [e for e in lay.query('VIEWPORT') if e.dxf.status >= 2]
 for v in vps:
     v.dxf.status = 0                         # пространство листа — без видовых экранов

@@ -7,6 +7,7 @@ python3 sheets/ov_vent_schemes.py  ->  out/ov_vent_schemes.dxf + out/ov_vent_sch
 Схемы лежат в модели отдельной областью (x от 40 м) и показаны своими видовыми экранами (лист А2).
 """
 import math
+import re
 import os
 import sys
 
@@ -15,7 +16,7 @@ sys.path.insert(0, HERE)
 import ov_vent1 as v1                                                    # noqa: E402
 import ov_vent2 as v2                                                    # noqa: E402
 from ov_vent1 import (new_doc, DPlan, RDSheet, SHEET_LIST, SHEETS_TOTAL, VS, VE, AC, RD, BRV, Z1, Z2, ZROOF,  # noqa
-                      RIS_P, RIS_V, RIS_P27, SH2_CH, SH2_X, DUCT_LAYER, dlabel, save_sheet, fmt_num)
+                      RIS_P, RIS_V, RIS_P27, SH2_CH, SH2_X, SH2_CX, DUCT_LAYER, dlabel, save_sheet, fmt_num)
 
 SHEET_NO = 11
 KS = 100                    # масштаб экрана схемы притока
@@ -142,7 +143,7 @@ def supply_scheme(p):
         P3 = [(x, y, Z1) for x, y in pts]
         a.line3(P3, kind)
         if sid not in ('гр.1.10-в', 'гр.1.10-с', 'гр.1.10-з', '1.11-з'):
-            a.sec_label(P3, f'{dlabel(d)}, {L}', kind, up=sid not in ('A-B', '1.2'))
+            a.sec_label(P3, f'{dlabel(d)}, {L}', kind, up=sid not in ('A-B', '1.2', 'Н', 'B-E', 'E-F', 'F-G', 'G-H', '1.11'))
         if sid in numb:
             a.num(P3, numb[sid], side=1)
     for sid, kind, pts, d, L in v2.NET2:
@@ -153,13 +154,14 @@ def supply_scheme(p):
         if sid not in ('2.5 (ЩП)', '2.4 (ЩП)', '2.7 (ЩП)'):
             a.sec_label(P3, f'{dlabel(d)}, {L}', kind, up=True)
         if sid in numb:
-            a.num(P3, numb[sid], seg=0 if sid != '2эт-зап' else 1, side=-1 if sid != '2эт-зап' else 1)
+            a.num(P3, numb[sid], seg=0 if sid != '2эт-зап' else 1, side=1)
         if sid == '2эт-3.9':
             a.num(P3, numb['2.3 (ЩП)'], seg=1, where=0.4, side=-1)
     # концевые устройства
     for gx, gy, kind, L, dr, nm, wall in v1.GRILLES1:
         if kind == 'П':
-            a.terminal(gx, gy if abs(gy - 7.75) > 0.01 else 7.62, Z1, 'П', f'L={L}')
+            fresh = abs(gy - 7.75) < 0.01
+            a.terminal(gx, 7.62 if fresh else gy, Z1, 'П', f'L={L}', dz=-0.10 if fresh else -0.35)
     for x, n, nm in ((0.45, '2.3', 'ЩП'), (8.15, '2.4', 'ЩП'), (11.85, '2.5', 'ЩП')):
         a.terminal(x, 6.58, Z2, 'П', f'{nm} {n}, 60')
     a.terminal(3.90, v2.YM, Z2, 'П', '2.2, 30')
@@ -190,13 +192,14 @@ def exhaust_scheme(p):
             yc = SH2_CH[0][0]
             P3 = [(x, y, Z1) for x, y in pts] + [(SH2_X, yc, Z1), (SH2_X, yc, ZROOF)]
             a.line3(P3, 'X')
-            a.sec_label(P3, f'{dlabel(d)}, {L}', 'X', seg=len(P3) - 2, where=0.45, up=True)
+            a.sec_label(P3, f'{dlabel(d)}, {L}', 'X', seg=len(P3) - 2, where=0.72, up=True)
             a.text(SH2_X, yc, ZROOF, 'оголовок ≈+9,000 (по АР)', 1.7, 'right', 'ОВ_Выброс', dx=-0.3)
             continue
         P3 = [(x, y, Z1) for x, y in pts]
         a.line3(P3, kind)
         if sid not in ('1.4', '1.3', '1.8'):
-            a.sec_label(P3, f'{dlabel(d)}, {L}', kind, up=sid not in ('С-B', 'D-С', 'E-D', 'кухня'))
+            a.sec_label(P3, f'{dlabel(d)}, {L}', kind, up=sid not in ('С-B', 'D-С', 'E-D', 'кухня'),
+                        seg=0 if sid == 'С-B' else None)
         if sid in numb:
             a.num(P3, numb[sid], side=-1)
     for sid, kind, pts, d, L in v2.NET2:
@@ -211,19 +214,20 @@ def exhaust_scheme(p):
     # концевые устройства
     for gx, gy, kind, L, dr, nm, wall in v1.GRILLES1:
         if kind == 'В':
-            a.terminal(gx, gy, Z1, 'В', f'L={L}')
+            a.terminal(gx, gy, Z1, 'В', f'L={L}', dz=-0.15 if gx == 14.80 else -0.35)
     for (x, y, L) in ((13.75, 8.25, 75), (18.00, 8.25, 75), (13.35, 10.80, 60), (11.00, 9.80, 90)):
         a.terminal(x, y, Z2, 'В', f'L={L}')
     a.terminal(9.75, 11.20, Z2, 'В', 'верх 2-го света, 120', dz=-0.45, al='right')
     # естественные и местные системы
     yc = SH2_CH[1][0]
-    a.line3([(15.66, yc, Z1 - 0.1), (SH2_X, yc, Z1 - 0.1), (SH2_X, yc, ZROOF - 0.35)], 'В', lw=35)
-    a.text(SH2_X, yc, Z1 + 1.6, f'В2 ест. Ø250, {BRV["L_exh"]}', 1.7, 'right', 'ОВ_В', dx=-0.25)
+    xc = SH2_CX['В2']
+    a.line3([(15.66, yc, Z1 - 0.1), (xc, yc, Z1 - 0.1), (xc, yc, ZROOF - 0.35)], 'В', lw=35)
+    a.text(xc, yc, Z1 + 1.6, f'В2 ест. Ø250, {BRV["L_exh"]}', 1.7, 'right', 'ОВ_В', dx=-0.25)
     hz = [(9.14, 12.12, 1.9), (9.14, 12.12, 2.55), (9.14, 13.70, 2.55), (9.14, 13.70, 4.80), (9.14, 14.00, 4.80)]
     a.line3(hz, 'В', lw=35)
-    a.text(9.14, 12.12, 1.9, 'ВЗ: зонт, Ø150, 500–600', 1.7, 'right', 'ОВ_В', dx=-0.30, dy=-0.15)
-    a.elev(12.05, 3.60, Z1, f'+{n1(Z1, 3)}', dx=0.3)
-    a.elev(16.20, 8.25, Z2, f'+{n1(Z2, 3)}', dx=0.3)
+    a.text(9.14, 13.70, 3.70, 'ВЗ: зонт, Ø150, 500–600', 1.7, 'right', 'ОВ_В', dx=-0.30)
+    a.elev(11.05, 2.00, Z1, f'+{n1(Z1, 3)}', dx=0.1)
+    a.elev(16.75, 8.25, Z2, f'+{n1(Z2, 3)}', dx=0.2)
 
 
 def freon_scheme(p):
@@ -243,6 +247,10 @@ def freon_scheme(p):
         horiz = abs(b[1] - a[1]) < 1e-6
         if horiz:
             p.t(ox + mx, oy + my + (0.35 if up else -0.35), txt, h, 'center', 'ОВ_Фреон')
+        elif abs(b[1] - a[1]) < 2.5:     # короткий отвод — подпись в две строки справа
+            p.t(ox + mx + 0.22, oy + my + 0.08, f'Ж{n1(f["d_liq"], 2)}/Г{n1(f["d_gas"], 2)}', h, 'left',
+                'ОВ_Фреон')
+            p.t(ox + mx + 0.22, oy + my - 0.30, f'{n1(f["L"], 1)} м', h, 'left', 'ОВ_Фреон')
         else:
             p.t(ox + mx + (0.30 if up else -0.30), oy + my, txt, h, 'center', 'ОВ_Фреон', rot=90)
 
@@ -366,8 +374,8 @@ def build():
         ['ВЗ', 'Кухонный зонт 500–600 м³/ч, воздуховод Ø150, обратный клапан, решетка на фасаде', '1',
          'зонт — поставка Заказчика'],
         ['КК', 'Клапан компенсации Ø200 с электроприводом, сблокирован с ВЗ', '1', ''],
-        ['ЩП, ЩВ', 'Решетка щелевая настенная 800×150 с регулированием, с напорной камерой', '5 + 5',
-         'спальни 2.3–2.5, 2.7 (ЩП 2.7 — 1)'],
+        ['ЩП, ЩВ', 'Решетка щелевая настенная 800×150 с регулированием; у ЩП — напорная камера', '4 + 4',
+         'спальни 2.3–2.5, 2.7 (К-4…К-7)'],
     ]
     yb = sh.table(x0, 409, [16, 99, 12, 45], rows, row_h=8.6, head_h=5.5, h=1.8,
                   aligns=['center', 'left', 'center', 'left'])
@@ -403,9 +411,9 @@ def build():
     yd = 205
     sh.s.text('Дренаж конденсата', 287 + 38, yd + 2.6, h=2.2, align='center')
     yd2 = sh.table(287, yd, [16, 24, 36], rr, row_h=4.6, head_h=4.8, h=1.6, aligns=['center', 'center', 'left'])
-    sh.notes(x0 + 84, ya + 2.6, 93, [
-        'Схемы П1 — во фронтальной диметрии без масштаба по трассам листов 9, 10; отметки — оси воздуховодов '
-        'от ±0,000. Номера в кружках — участки основного направления (таблицы).',
+    sh.notes(x0 + 84, ya + 2.6, 85, [
+        'Схемы П1 — в косоугольной проекции по трассам листов 9, 10, высоты условно увеличены; отметки — оси '
+        'воздуховодов от ±0,000. Номера в кружках — участки основного направления (таблицы).',
         f'Свободный напор П1 при {v["L_unit"]} м³/ч: приток {v["ESP_sup"]} Па, вытяжка {v["ESP_exh"]} Па — '
         'принять установку с напором не менее 200 Па; регуляторы расхода настроить по расходам на схемах.',
         'Фреонопроводы — медные трубы для холодильной техники в изоляции из вспененного каучука; хладагент и '
@@ -431,7 +439,7 @@ def build():
         Le = exh.get(no, ('', 0))[1]
         ts += Ls
         te += Le
-        bal.append([no, names.get(no, '')[:22], str(Ls) if Ls else '—', str(Le) if Le else '—', notes_b.get(no, '')])
+        bal.append([no, re.sub(r'\s*\(.*', '', names.get(no, ''))[:26], str(Ls) if Ls else '—', str(Le) if Le else '—', notes_b.get(no, '')])
     bal.append(['', 'Итого П1', str(ts), str(te), 'баланс'])
     bal.append(['1.6', 'Топочная (ест.)', str(BRV['L_in']), str(BRV['L_exh']), 'ПН в двери, В2 в Ш-2'])
     sh.s.text('Воздушный баланс', 22 + 73, 141, h=2.5, align='center')

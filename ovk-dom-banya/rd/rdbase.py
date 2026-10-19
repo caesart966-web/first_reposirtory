@@ -148,7 +148,7 @@ class DPlan:
 
     def tw(self, s, h=2.5):
         """Ширина строки во входных единицах (ISOCPEUR, ширина 0,9)."""
-        return len(s) * 0.58 * self.H(h) / self.unit
+        return len(s) * 0.62 * self.H(h) / self.unit
 
     def dot(self, x, y, layer='ОВ_выноски', r=0.35):
         self.circle(x, y, 0, layer, fill=7, r_paper=r)
