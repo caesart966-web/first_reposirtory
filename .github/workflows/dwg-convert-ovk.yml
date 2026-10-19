@@ -14,7 +14,6 @@ on:
     branches: ['claude/brave-darwin-wc97p5']
     paths:
       - 'cad/ovk-i05-09-26/dxf/*.dxf'
-      - 'cad/vk-140-1-2026/check_roundtrip.py'
       - '.github/workflows/dwg-convert-ovk.yml'
   workflow_dispatch:
 
@@ -78,7 +77,7 @@ jobs:
       - name: Сверка состава
         run: |
           pip install -q ezdxf==1.4.4
-          python cad/vk-140-1-2026/check_roundtrip.py "$D/dxf" /tmp/rt 2>&1 | grep -v -i warning | tee "$D/dwg/check-report.txt"
+          python "$D/check_roundtrip.py" "$D/dxf" /tmp/rt 2>&1 | grep -v -i warning | tee "$D/dwg/check-report.txt"
           exit ${PIPESTATUS[0]}
 
       - name: Коммит DWG и отчёта
