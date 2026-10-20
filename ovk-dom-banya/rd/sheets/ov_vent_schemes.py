@@ -18,7 +18,8 @@ import ov_vent2 as v2                                                    # noqa:
 from ov_vent1 import (new_doc, DPlan, RDSheet, SHEET_LIST, SHEETS_TOTAL, VS, VE, AC, RD, BRV, Z1, Z2, ZROOF,  # noqa
                       RIS_P, RIS_V, RIS_P27, SH2_CH, SH2_X, SH2_CX, DUCT_LAYER, dlabel, save_sheet, fmt_num,
                       VZ_X150, VZ_X200, VZ_Y_WALL, VZ_RISER, VZ_Z_HOOD, VZ_Z_BOX, VZ_Z_WALL, VZ_Z_SHAFT_TOP,
-                      VZ_Z_CAP, MANGAL_SHAFT, VZ_L, vz_calc)
+                      VZ_Z_CAP, MANGAL_SHAFT, VZ_L, vz_calc, P1_NAME, P1_BOX, P1_Z, P1_ZAX, P1_DROP_X,
+                      P1_DROP, P1_ESP_SUP, P1_ESP_EXH, P1_ESP_MIN, P1_KV, P1_KV_DP)
 
 SHEET_NO = 11
 KS = 100                    # масштаб экрана схемы притока
@@ -100,6 +101,17 @@ class Axo:
         self.p.poly([(X1 - s, Y1), (X1 + s, Y1), (X1, Y1 - s * 1.2)], lay, fill=v1.LAYERS[lay][0])
         self.p.t(X1 + (tdx if al == 'left' else -tdx), Y1 - s * 0.6 + tdy, txt, h, al, lay)
 
+    def damper(self, x, y, z, name, layer, h=1.6):
+        """Клапан на воздуховоде (вдоль x): прямоугольник поперёк линии с диагональю, привод — кружок."""
+        X, Y = self.P(x, y, z)
+        a = self.p.H(1.0) / self.p.unit
+        b = self.p.H(1.8) / self.p.unit
+        self.p.wipe(X - a, Y - b, X + a, Y + b)
+        self.p.pl([(X - a, Y - b), (X + a, Y - b), (X + a, Y + b), (X - a, Y + b)], layer, closed=True, lw=35)
+        self.p.pl([(X - a, Y - b), (X + a, Y + b)], layer, lw=35)
+        self.p.circle(X, Y + b + a * 0.7, a * 0.7, layer, lw=25)
+        self.p.t(X, Y + b + a * 1.4 + self.p.H(1.2) / self.p.unit, name, h, 'bc', layer)
+
     def box(self, x0, y0, x1, y1, z0, z1, name, layer='ОВ_оборуд'):
         """Установка — параллелепипед в проекции."""
         P = self.P
@@ -128,10 +140,32 @@ def z_of(sid, floor):
     return Z1 if floor == 1 else Z2
 
 
+def p1_ends(P3):
+    """Опуски к патрубкам П1: конец участка на +3,400 у торца П1 заменяется опуском на ось патрубка
+    (два отвода). Возвращает новую ломаную и число точек, вставленных в начало (сдвиг номера отрезка)."""
+    def at_face(q):
+        x, y, z = q
+        return (abs(z - Z1) < 1e-6 and P1_BOX[1] <= y <= P1_BOX[3]
+                and (abs(x - P1_BOX[0]) < 1e-6 or abs(x - P1_BOX[2]) < 1e-6))
+
+    def drop(q):
+        x, y, _ = q
+        xo = x - P1_DROP_X if abs(x - P1_BOX[0]) < 1e-6 else x + P1_DROP_X
+        return [(xo, y, Z1), (xo, y, P1_ZAX), (x, y, P1_ZAX)]
+    out, pre = list(P3), 0
+    if at_face(out[0]):
+        out = drop(out[0])[::-1] + out[1:]
+        pre = 2
+    if at_face(out[-1]):
+        out = out[:-1] + drop(out[-1])
+    return out, pre
+
+
 def supply_scheme(p):
     p = DPlan(p.doc, k=KS)
     a = Axo(p, ORG_S)
-    a.box(16.90, 9.35, 18.50, 10.15, Z1 - 0.30, Z1 + 0.25, 'П1')
+    a.box(*P1_BOX, *P1_Z, 'П1')
+    a.elev(P1_BOX[0], P1_BOX[1], P1_Z[0], f'низ П1 +{n1(P1_Z[0], 3)}', side='left', shelf=9.0, dx=0.25)
     crit = RD['vent']['supply_paths'][RD['vent']['crit_supply']]['path']
     numb = {sid: i + 1 for i, sid in enumerate(crit)}
     for sid, kind, pts, d, L in v1.NET1:
@@ -146,12 +180,12 @@ def supply_scheme(p):
             if sid in numb:
                 a.num(P3, numb[sid], seg=1, where=0.3, side=-1)
             continue
-        P3 = [(x, y, Z1) for x, y in pts]
+        P3, pre = p1_ends([(x, y, Z1) for x, y in pts])
         a.line3(P3, kind)
         if sid not in ('гр.1.10-в', 'гр.1.10-с', 'гр.1.10-з', '1.11-з'):
             a.sec_label(P3, f'{dlabel(d)}, {L}', kind, up=sid not in ('A-B', '1.2', 'Н', 'B-E', 'E-F', 'F-G', 'G-H', '1.11'))
         if sid in numb:
-            a.num(P3, numb[sid], side=1)
+            a.num(P3, numb[sid], side=1, seg=pre)
     for sid, kind, pts, d, L in v2.NET2:
         if kind != 'П':
             continue
@@ -174,6 +208,7 @@ def supply_scheme(p):
     a.terminal(13.80, 9.88, Z2, 'П', 'в К-7 (2.7), 60', dz=-0.25)
     # наружный воздух
     a.text(19.80, 11.10, Z1, 'Н1, низ +2,600', 1.7, 'left', 'ОВ_Н', dx=0.20, dy=0.25)
+    a.damper(P1_KV, 9.55, Z1, 'КВ-Н', DUCT_LAYER['Н'])
     a.elev(10.60, 6.75, Z1, f'+{n1(Z1, 3)}', dx=0.3)
     a.elev(7.00, v2.YM, Z2, f'+{n1(Z2, 3)}', dx=0.3)
 
@@ -181,7 +216,8 @@ def supply_scheme(p):
 def exhaust_scheme(p):
     p = DPlan(p.doc, k=KE)
     a = Axo(p, ORG_E)
-    a.box(16.90, 9.35, 18.50, 10.15, Z1 - 0.30, Z1 + 0.25, 'П1')
+    a.box(*P1_BOX, *P1_Z, 'П1')
+    a.elev(P1_BOX[0], P1_BOX[1], P1_Z[0], f'низ П1 +{n1(P1_Z[0], 3)}', side='left', shelf=9.0, dx=0.25)
     crit = RD['vent']['exhaust_paths'][RD['vent']['crit_exhaust']]['path']
     numb = {sid: i + 1 for i, sid in enumerate(crit)}
     for sid, kind, pts, d, L in v1.NET1:
@@ -196,12 +232,12 @@ def exhaust_scheme(p):
             continue
         if sid == 'Выброс':
             yc = SH2_CH[0][0]
-            P3 = [(x, y, Z1) for x, y in pts] + [(SH2_X, yc, Z1), (SH2_X, yc, ZROOF)]
+            P3, _ = p1_ends([(x, y, Z1) for x, y in pts] + [(SH2_X, yc, Z1), (SH2_X, yc, ZROOF)])
             a.line3(P3, 'X')
             a.sec_label(P3, f'{dlabel(d)}, {L}', 'X', seg=len(P3) - 2, where=0.72, up=True)
             a.text(SH2_X, yc, ZROOF, 'оголовок ≈+9,000 (по АР)', 1.7, 'right', 'ОВ_Выброс', dx=-0.3)
             continue
-        P3 = [(x, y, Z1) for x, y in pts]
+        P3, pre = p1_ends([(x, y, Z1) for x, y in pts])
         a.line3(P3, kind)
         if sid not in ('1.4', '1.3', '1.8'):
             a.sec_label(P3, f'{dlabel(d)}, {L}', kind, up=sid not in ('С-B', 'D-С', 'E-D', 'кухня'),
@@ -410,12 +446,16 @@ def build():
     x0, w = 416, 172
     rows = [['Поз.', 'Наименование и техническая характеристика', 'Кол.', 'Примечание']]
     v = RD['vent']
-    esp = max(v['ESP_sup'], v['ESP_exh'])
     rows += [
-        ['П1', f'Приточно-вытяжная установка с роторным рекуператором (КПД ≥ 80 %), {v["L_unit"]} м³/ч, '
-               f'свободный напор не менее 200 Па (по расчету {esp}), водяной калорифер '
-               f'≈{n1(v["Q_heater_sel"] / 1000)} кВт (70/50 °С), фильтры ePM1 50 % / ePM10 50 %', '1',
-         'марка — по выбору Заказчика'],
+        ['П1', f'Приточно-вытяжная установка {P1_NAME} (рекуперация тепла и влаги) или аналог: трехступенчатый '
+               f'пластинчатый рекуператор, 750 м³/ч ном., рабочая точка {v["L_unit"]} м³/ч; сеть {n1(P1_ESP_SUP, 0)}/'
+               f'{n1(P1_ESP_EXH, 0)} Па (приток/вытяжка), напор установки при {v["L_unit"]} м³/ч — по графику Turkov, '
+               f'не менее {P1_ESP_MIN} Па; водяной нагреватель (2 ряда) со смесительным узлом в комплекте, '
+               f'≈{n1(v["Q_heater_sel"] / 1000)} кВт (70/50 °С); патрубки Ø250; ≈1500×1080×610 мм, ≈145 кг; '
+               '220 В, ≈0,8 кВт; дренаж конденсата — через сифон', '1',
+         'выбор Заказчицы 20.10.2026; данные — по паспорту Turkov'],
+        ['КВ-Н', 'Клапан воздушный Ø250 с электроприводом 230 В с возвратной пружиной, нормально закрыт — '
+                 'на воздуховоде Н у П1', '1', 'если встроен в Turkov — не ставить'],
         ['НБ-1', 'Наружный блок мини-VRV Daikin серии VRV-S, тепловой насос, Qх = 22,4 кВт, ночной '
                  'малошумный режим', '1', 'модель — по каталогу Daikin или аналог'],
         ['К-1, К-2', f'Внутренний блок канальный тонкий Daikin серии FXDQ, Qх = 5,6 кВт, ≈{AC["К-1"]["air"]} м³/ч',
@@ -423,7 +463,7 @@ def build():
         ['К-3', f'То же, Qх = 3,6 кВт, ≈{AC["К-3"]["air"]} м³/ч', '1', 'то же'],
         ['К-4…К-7', f'То же, Qх = 2,8 кВт, ≈{AC["К-4"]["air"]} м³/ч', '4', 'то же'],
         ['Р1…Р6', 'Разветвитель фреоновый REFNET Daikin', '6', 'по каталогу Daikin'],
-        ['ШГ', 'Шумоглушитель круглый Ø250, L = 1000 мм', '2', 'на П и В у П1'],
+        ['ШГ', 'Шумоглушитель круглый Ø250, L = 600 мм', '2', 'на П и В у П1, между опуском и стеной'],
         ['РР', 'Регулятор расхода (ирисовый клапан) Ø100–Ø200', '20', 'на ответвлениях'],
         ['ВЗ', 'Кухонный зонт 500–600 м³/ч (поставка Заказчика), обратный клапан Ø150, Ø150 → Ø200 в шахте '
                'над мангалом, оголовок с зонтом выше кровли', '1', 'зонт — не менее 200 Па при 600 м³/ч'],
@@ -431,7 +471,7 @@ def build():
         ['ЩП, ЩВ', 'Решетка щелевая настенная 800×150 с регулированием; у ЩП — напорная камера', '4 + 4',
          'спальни 2.3–2.5, 2.7 (К-4…К-7)'],
     ]
-    yb = sh.table(x0, 409, [16, 99, 12, 45], rows, row_h=8.6, head_h=5.5, h=1.8,
+    yb = sh.table(x0, 409, [16, 99, 12, 45], rows, h=1.8, heights=[5.5, 16.0] + [8.6] * (len(rows) - 2),
                   aligns=['center', 'left', 'center', 'left'])
     sh.s.text('Основное оборудование', x0 + w / 2, 412.0, h=2.5, align='center')
 
@@ -452,10 +492,13 @@ def build():
     ya = yb - 7
     y1 = aero('Приток П1 — до ЩП 2.3 (основное направление)', v['supply_paths'], VS, v['crit_supply'], 45,
               [('наружный воздух + ШГ', n1(v['dp_intake'] + 10, 1)),
-               ('своб. напор, 700 м³/ч', str(v['ESP_sup']))], x0, ya, 81)
+               ('опуски к П1 (Н, П), 4 отвода', n1(2 * P1_DROP, 1)),
+               ('клапан КВ-Н', n1(P1_KV_DP, 1)),
+               ('своб. напор, 700 м³/ч', n1(P1_ESP_SUP, 0))], x0, ya, 81)
     y2 = aero('Вытяжка П1 — от 2.1 (основное направление)', v['exhaust_paths'], VE, v['crit_exhaust'], 40,
               [('выброс через Ш-2 + ШГ', n1(v['dp_discharge'] + 10, 1)),
-               ('своб. напор, 700 м³/ч', str(v['ESP_exh']))], x0, y1 - 8, 81)
+               ('опуски к П1 (В, выброс), 4 отвода', n1(2 * P1_DROP, 1)),
+               ('своб. напор, 700 м³/ч', n1(P1_ESP_EXH, 0))], x0, y1 - 8, 81)
     # сеть ВЗ (кухонный зонт) — отдельная система
     s1, s2, vz_tot, _ = vz_calc()
     rz = [['№', 'Участок', 'L, м³/ч', 'Ø, мм', 'l, м', 'v, м/с', 'Δp, Па'],
@@ -478,8 +521,11 @@ def build():
     sh.notes(x0 + 84, ya + 2.6, 85, [
         'Схемы П1 — в косоугольной проекции по трассам листов 9, 10, высоты условно увеличены; отметки — оси '
         'воздуховодов от ±0,000. Номера в кружках — участки основного направления (таблицы).',
-        f'Свободный напор П1 при {v["L_unit"]} м³/ч: приток {v["ESP_sup"]} Па, вытяжка {v["ESP_exh"]} Па — '
-        'принять установку с напором не менее 200 Па; регуляторы расхода настроить по расходам на схемах.',
+        f'П1 — {P1_NAME} или аналог, низ ≈ +{n1(P1_Z[0], 3)}; воздуховоды с +3,400 опускаются к патрубкам '
+        f'(≈ +{n1(P1_ZAX, 3)}) — по два отвода. Сеть при {v["L_unit"]} м³/ч с опусками: приток {n1(P1_ESP_SUP, 0)} Па, '
+        f'вытяжка {n1(P1_ESP_EXH, 0)} Па; напор установки при {v["L_unit"]} м³/ч — по графику Turkov, '
+        f'не менее {P1_ESP_MIN} Па. '
+        'Регуляторы расхода настроить по расходам на схемах.',
         'Фреонопроводы — медные трубы для холодильной техники в изоляции из вспененного каучука; хладагент и '
         'дозаправка — по паспорту НБ-1; перед пуском — опрессовка азотом и вакуумирование.',
         'Дренаж — трубы ПП Ø32 с уклоном не менее 0,01 к выпуску, сифон с сухим затвором (ВК); '

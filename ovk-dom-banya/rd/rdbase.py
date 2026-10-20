@@ -496,3 +496,135 @@ def save_and_pdf(doc, dxf_path, pdf=True, layouts=None):
                        check=True, capture_output=True)
         pdfs.append(out)
     return pdfs
+
+
+# ---------------------------------------------------------------- тёплый пол: раскладка петли «улиткой»
+def _rect_spiral(W, H, a, step, sh):
+    """Прямоугольная спираль внутрь в осях [0,W]×[0,H]: старт (a+sh, a+sh), шаг между витками step."""
+    l, b, r, t = a + sh, a + sh, W - a - sh, H - a - sh
+    if r - l < 1e-6 or t - b < 1e-6:
+        return []
+    pts = [(l, b)]
+    while True:
+        if r - pts[-1][0] < 1e-6:
+            break
+        pts.append((r, b))
+        if t - b < 1e-6:
+            break
+        pts.append((r, t))
+        if r - l < 1e-6:
+            break
+        pts.append((l, t))
+        nb = b + step
+        if t - nb < 1e-6:
+            break
+        pts.append((l, nb))
+        l, b, r, t = l + step, nb, r - step, t - step
+        if r - l < -1e-6 or t - b < -1e-6:
+            # ширина или высота кончилась — «язык» по оси оставшейся полосы, чтобы не было пустот
+            x, y = pts[-1]
+            if t - b > 1e-6:                                  # высокая полоса: вверх по середине
+                xc = (l - step + r + step) / 2.0
+                pts += [(xc, y), (xc, t + step)]
+            elif r - l > 1e-6:                                # широкая полоса: вправо по середине
+                pts += [(r + step, y)]
+            break
+        if r < l:
+            r = l
+    return pts
+
+
+def ufh_coil(p, poly_pts, T, entry=None, lays=('ОВ_Т11', 'ОВ_Т21'), lw=18, d0=None, lead_pts=None):
+    """Петля тёплого пола двойной спиралью («улитка»): подача и обратка чередуются с шагом T (м).
+
+    Прямоугольная зона — две ортогональные спирали с шагом 2T, вложенные со сдвигом T: без пересечений,
+    оба конца у угла, ближайшего к подводке. Непрямоугольная — витки по внутренним отступам контура.
+    poly_pts — контур зоны (м); entry — куда приходит подводка; lead_pts — (конец подачи, конец обратки).
+    Возвращает длину трубы в зоне, м."""
+    from shapely.geometry import Polygon, LineString, Point
+    from shapely.geometry.polygon import orient
+    from shapely.ops import substring
+
+    d0 = T / 2 if d0 is None else d0
+    xs = [q[0] for q in poly_pts]
+    ys = [q[1] for q in poly_pts]
+    X0, X1, Y0, Y1 = min(xs), max(xs), min(ys), max(ys)
+    P = Polygon(poly_pts)
+    is_rect = abs(P.area - (X1 - X0) * (Y1 - Y0)) < 1e-6
+    E = entry if entry is not None else (X0, Y0)
+    sup, ret = [], []
+    if is_rect:
+        W, H = X1 - X0, Y1 - Y0
+        fx = (E[0] - X0) > (X1 - E[0])          # угол входа: ближайший к подводке
+        fy = (E[1] - Y0) > (Y1 - E[1])
+
+        def g(q):
+            x, y = q
+            return (X1 - x if fx else X0 + x, Y1 - y if fy else Y0 + y)
+        # первая сторона спирали — вдоль той стороны, по которой не приходит подводка
+        dx = min(abs(E[0] - X0), abs(E[0] - X1))
+        dy = min(abs(E[1] - Y0), abs(E[1] - Y1))
+        swap = dy > dx        # подводка ближе к вертикальной стороне — первый ход вверх
+        if swap:
+            S = _rect_spiral(H, W, d0, 2 * T, 0.0)
+            Rr = _rect_spiral(H, W, d0, 2 * T, T)
+            S = [(y, x) for x, y in S]
+            Rr = [(y, x) for x, y in Rr]
+        else:
+            S = _rect_spiral(W, H, d0, 2 * T, 0.0)
+            Rr = _rect_spiral(W, H, d0, 2 * T, T)
+        sup = [g(q) for q in S]
+        ret = [g(q) for q in Rr]
+    else:
+        rings, d = [], d0
+        while True:
+            gg = P.buffer(-d, join_style=2, mitre_limit=10)
+            if gg.is_empty:
+                break
+            if gg.geom_type == 'MultiPolygon':
+                gg = max(gg.geoms, key=lambda q: q.area)
+            bx0, by0, bx1, by1 = gg.bounds
+            if min(bx1 - bx0, by1 - by0) < 0.6 * T or gg.exterior.length < 5 * T:
+                break
+            rings.append(LineString(orient(gg, sign=-1.0).exterior.coords))
+            d += T
+        if not rings:
+            return 0.0
+        c = P.centroid
+        Ep = Point(E)
+        vx, vy = c.x - Ep.x, c.y - Ep.y
+        n = math.hypot(vx, vy) or 1.0
+        ray = LineString([(Ep.x - vx / n * 0.5, Ep.y - vy / n * 0.5), (c.x + vx / n * 50, c.y + vy / n * 50)])
+
+        def start_param(ring):
+            it = ring.intersection(ray)
+            pts = [q for q in getattr(it, 'geoms', [it]) if q.geom_type == 'Point' and not q.is_empty]
+            return ring.project(min(pts, key=lambda q: q.distance(Ep))) if pts else ring.project(Ep)
+
+        def walk(ring, s0, length):
+            L = ring.length
+            s0 %= L
+            if s0 + length <= L:
+                return list(substring(ring, s0, s0 + length).coords)
+            return list(substring(ring, s0, L).coords) + list(substring(ring, 0, s0 + length - L).coords)[1:]
+
+        gap = 3 * T
+        for k, ring in enumerate(rings):
+            L = ring.length
+            st = start_param(ring) - (0 if k % 2 == 0 else T)
+            (sup if k % 2 == 0 else ret).extend(walk(ring, st, max(L - gap, L * 0.3)))
+    if not sup:
+        return 0.0
+    if ret:
+        sup = sup + [ret[-1]]                 # разворот в центре: конец подачи → конец обратки
+    if lead_pts is not None:
+        a, b = lead_pts
+        if ret and math.dist(a, sup[0]) + math.dist(b, ret[0]) > math.dist(b, sup[0]) + math.dist(a, ret[0]):
+            a, b = b, a
+        sup = [a] + sup
+        if ret:
+            ret = [b] + ret
+    p.pl(sup, lays[0], lw=lw)
+    if len(ret) > 1:
+        p.pl(ret, lays[1], lw=lw)
+    return LineString(sup).length + (LineString(ret).length if len(ret) > 1 else 0.0)

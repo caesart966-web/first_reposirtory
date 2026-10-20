@@ -11,7 +11,7 @@ ROOT = os.path.dirname(HERE)
 sys.path.insert(0, ROOT)
 sys.path.insert(0, HERE)
 from rdbase import (new_doc, DPlan, RDSheet, add_underlay, insert_underlay, UNDER, save_and_pdf,  # noqa: E402
-                    fmt_num, SHEET_LIST, SHEETS_TOTAL, axes)
+                    fmt_num, SHEET_LIST, SHEETS_TOTAL, axes, ufh_coil, offset_poly)
 from ov_heat1 import (calc1, LOOP_RECT, KSH, MAIN_ROUTES, pair, draw_base, draw_convectors, kw,  # noqa: E402
                       ROOM, OUT, mask, mlabel, mtag, noyo)
 
@@ -58,8 +58,8 @@ def routes():
 
 LABEL_AT = {  # где подписать петлю: (x, y) центра надписи; None — в центре зоны
     '1.4-1': ('in', 10.92, 5.32),
-    '1.7-1': ('in', 14.52, 9.85),
-    '1.9-1': (None,), '1.9-2': (None,), '1.9-3': ('in', 11.72, 13.4),
+    '1.7-1': ('in', 14.60, 10.10),          # в верхнем правом углу зоны: видны вход и нижние витки
+    '1.9-1': ('in', 10.65, 8.12),           # над транзитным пучком подводок (y 7,0–7,7) '1.9-2': (None,), '1.9-3': ('in', 11.72, 13.4),
     '1.6-3': ('in', 19.05, 10.25),
     '1.6-1': ('in', 16.88, 11.20),
     '1.6-2': ('in', 17.83, 11.85),
@@ -77,13 +77,18 @@ def build():
     draw_base(p, doc)
     draw_convectors(p, light=True)
 
-    # ---- зоны петель: 48,5 °С — штриховка 45°, 36 °С — 135° (смесительный узел КШ-2)
+    # ---- петли: контур зоны штрихом и раскладка трубы «улиткой» (подача — красная, обратка — синяя)
+    R = routes()
+    COIL_L = {}
     for lid, (x0, y0, x1, y1) in LOOP_RECT.items():
         lp = loops[lid]
-        ang = 135 if lp['cab'] == 'КШ-2' else 45
-        sc = lp['T'] / 10 * 6
-        p.poly([(x0, y0), (x1, y0), (x1, y1), (x0, y1)], 'ОВ_ТП', hatch=('ANSI31', sc, ang - 45, 1),
-               ltype='ОВ_ШТРИХ')
+        zone = [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
+        p.poly(zone, 'ОВ_ТП', ltype='ОВ_ШТРИХ')
+        r = R.get(lid)
+        lead = (offset_poly(r, 0.025)[-1], offset_poly(r, -0.025)[-1]) if r else None
+        COIL_L[lid] = ufh_coil(p, zone, lp['T'] / 1000.0, entry=r[-1] if r else None, lays=TP, lead_pts=lead)
+    print('улитки, м (чертёж / расчёт A/T):',
+          {k: (round(v, 1), round(loops[k]['A'] / (loops[k]['T'] / 1000.0), 1), loops[k]['L']) for k, v in COIL_L.items()})
     # ---- магистрали ТП от РК и подвод к КШ-2
     pair(p, MAIN_ROUTES['КШ-2'], gap=0.08, lw=35)
     pair(p, MAIN_ROUTES['КШ-1'], lays=TP, gap=0.08, lw=35)
@@ -151,10 +156,13 @@ def build():
                      fmt_num(d['dp_max'], 1), f'≈{d["W"]}'])
     widths2 = [22, 18, 14, 18, 30, 21]
     yb = sh.table(290, yb - 3.5, widths2, rows, row_h=4.6, head_h=6, h=1.8, aligns=['center'] * 6)
+    dp_hi = sorted((lp for lp in C['loops'] if lp['dp'] > 20.0), key=lambda lp: lp['id'])
+    dp_txt = ('; ' + ', '.join(f'петля {lp["id"]} — {fmt_num(lp["dp"], 1)} кПа' for lp in dp_hi) +
+              ' (допускается до 25 кПа)') if dp_hi else ''
     sh.notes(290, yb - 5, 123, [
-        'Трубы — PE-Xa 16×2,0 с антидиффузионным слоем, в стяжке; укладка спиралью («улиткой») с шагом по '
-        'таблице; длина петли с подводками — по таблице ±10 %, не более 90 м. Контуры зон — схематично, раскладка '
-        'по месту в пределах свободного пола.',
+        'Трубы — PE-Xa 16×2,0 с антидиффузионным слоем, в стяжке. Раскладка петель — спиралью («улиткой») '
+        'по чертежу, шаг — по таблице; длины петель с подводками — по таблице (±10 % по месту), не более '
+        f'90 м. Потери давления в петле — не более 20 кПа{dp_txt}.',
         'ТП не укладывается под кухонной мебелью и островом, сантехприборами, ванной и душевым поддоном, '
         'встроенными шкафами, а также под площадкой и маршем лестницы в 1.9 (кроме петли 1.9-3).',
         'Температура поверхности пола — по СП 60.13330: в 1.10, 1.11 не выше 26 °С, в остальных — не выше '
