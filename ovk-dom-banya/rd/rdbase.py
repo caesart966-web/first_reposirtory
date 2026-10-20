@@ -628,3 +628,110 @@ def ufh_coil(p, poly_pts, T, entry=None, lays=('ОВ_Т11', 'ОВ_Т21'), lw=18,
     if len(ret) > 1:
         p.pl(ret, lays[1], lw=lw)
     return LineString(sup).length + (LineString(ret).length if len(ret) > 1 else 0.0)
+
+
+def _ortho_rings(poly_pts, T, d0, step, start, ccw=True):
+    """Кольца отступа ортогонального контура: d0, d0+step, … (части уже ≈T отбрасываются «раскрытием»).
+    Каждое кольцо — список вершин, начиная с угла, ближайшего к start (для следующих — к углу предыдущего)."""
+    from shapely.geometry import Polygon, Point
+    from shapely.geometry.polygon import orient
+    P = Polygon(poly_pts)
+    r = 0.45 * T
+    rings, d, corner = [], d0, start
+    while True:
+        g = P.buffer(-(d + r), join_style=2, mitre_limit=10)
+        if g.is_empty:
+            break
+        g = g.buffer(r, join_style=2, mitre_limit=10)
+        if g.geom_type == 'MultiPolygon':
+            g = min(g.geoms, key=lambda q: q.distance(Point(corner)))
+        g = orient(g.simplify(1e-6), sign=1.0 if ccw else -1.0)
+        V = list(g.exterior.coords)[:-1]
+        i0 = min(range(len(V)), key=lambda i: math.dist(V[i], corner))
+        V = V[i0:] + V[:i0]
+        rings.append(V)
+        corner = V[0]
+        d += step
+    return rings
+
+
+def _ortho_spiral(rings, step):
+    """Спираль по кольцам: последняя сторона витка обрывается на линии первой стороны следующего витка
+    (как у прямоугольной «улитки»), переходы — без диагоналей."""
+    pts = []
+    for k, V in enumerate(rings):
+        if k == 0:
+            pts.append(V[0])
+        pts.extend(V[1:])
+        a, b = V[-1], V[0]                          # последняя сторона витка a → b
+        if k + 1 < len(rings):
+            W = rings[k + 1]
+            c, e = W[0], W[1]                       # первая сторона следующего витка c → e
+            if abs(a[0] - b[0]) < 1e-6 and abs(c[1] - e[1]) < 1e-6:
+                end = (b[0], c[1])
+            elif abs(a[1] - b[1]) < 1e-6 and abs(c[0] - e[0]) < 1e-6:
+                end = (c[0], b[1])
+            else:
+                end = c
+        else:                                        # последний виток: не доходить до своего начала
+            L = math.dist(a, b)
+            t = max(0.0, (L - step) / L) if L > 1e-9 else 0.0
+            end = (a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t)
+        pts.append(end)
+    return pts
+
+
+def ufh_coil_ortho(p, poly_pts, T, start, ccw=True, lays=('ОВ_Т11', 'ОВ_Т21'), lw=18, lead_pts=None,
+                   lead_dir=None):
+    """«Улитка» для ортогональной зоны любой формы (Г-образной, с вырезами): две вложенные спирали с шагом 2T —
+    по отступам T/2, 5T/2… и 3T/2, 7T/2…; начало — в углу start (ближний к подводке), ccw — направление
+    первого хода. В центре спирали соединяются. lead_pts — концы подводки (подача, обратка), lead_dir —
+    направление последнего участка подводки: подключение к виткам — с поворотом 90°, без диагоналей; какая
+    спираль внешняя, выбирается так, чтобы подключения не пересекались (цвет витков — по своей трубе подводки).
+    Возвращает длину трубы в зоне, м."""
+    from shapely.geometry import LineString
+    rs = _ortho_rings(poly_pts, T, T / 2, 2 * T, start, ccw)
+    if not rs:
+        return 0.0
+    rr = _ortho_rings(poly_pts, T, 1.5 * T, 2 * T, rs[0][0], ccw)
+    A = _ortho_spiral(rs, 2 * T)
+    B = _ortho_spiral(rr, 2 * T) if rr else []
+    joint = []
+    if B:
+        a, b = A[-1], B[-1]
+        if abs(a[0] - b[0]) > 1e-6 and abs(a[1] - b[1]) > 1e-6:
+            joint = [(a[0], b[1])]
+
+    def link(q, c):
+        if lead_dir is None:
+            return [q]
+        if abs(lead_dir[0]) < abs(lead_dir[1]):          # подводка вертикальная: сначала по ней, затем поперёк
+            return [q, (q[0], c[1])]
+        return [q, (c[0], q[1])]
+
+    cands = []
+    if lead_pts is None:
+        cands.append((A, B, 0))
+    else:
+        qs, qr = lead_pts
+        for swap in (False, True):
+            ls, lr = (qs, qr) if not swap else (qr, qs)   # ls — к внешней спирали A, lr — к B
+            Af = link(ls, A[0]) + A
+            Bf = (link(lr, B[0]) + B) if B else []
+            bad = 0
+            if Bf:
+                g1, g2 = LineString(Af), LineString(Bf)
+                bad = 1 if g1.intersects(g2) else 0
+            Lc = LineString(Af[:3]).length + (LineString(Bf[:3]).length if Bf else 0)
+            cands.append((Af, Bf, (bad, Lc), swap))
+    if lead_pts is None:
+        Af, Bf, swap = A, B, False
+    else:
+        Af, Bf, _, swap = min(cands, key=lambda c: c[2])
+    # подача — по слою своей трубы подводки: при swap внешняя спираль A идёт от обратки
+    full_A = Af + joint + ([Bf[-1]] if Bf else [])
+    la, lb = (lays[1], lays[0]) if swap else (lays[0], lays[1])
+    p.pl(full_A, la, lw=lw)
+    if len(Bf) > 1:
+        p.pl(Bf, lb, lw=lw)
+    return LineString(full_A).length + (LineString(Bf).length if len(Bf) > 1 else 0.0)
