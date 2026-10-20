@@ -130,7 +130,10 @@ export function Footer() {
                 </div>
               ))}
             </dl>
-            <p>
+            {/* Год в готовой разметке — год сборки, в браузере — текущий:
+                в январе они расходятся, и подхват страницы (hydrateRoot)
+                без suppressHydrationWarning ругался бы на это расхождение. */}
+            <p suppressHydrationWarning>
               © {new Date().getFullYear()} {REQUISITES.legalName}
             </p>
           </div>

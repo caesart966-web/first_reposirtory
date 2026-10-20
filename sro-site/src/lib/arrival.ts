@@ -14,8 +14,14 @@
 // Классы на <html>: arrived — насовсем (снимает анимации первого экрана),
 // arrived-settling — на время смены (снимает переходы .reveal у блоков,
 // которые уже в кадре; ниже кадра блоки выплывают при прокрутке, как всегда).
-// Вызывается до первой отрисовки: скрипт страницы блокирует отрисовку.
+// С 20.10.2026 скрипт страницы не блокирует отрисовку: готовая разметка
+// видна раньше, чем он выполнится. Поэтому то же самое делает строчка
+// в <head> (scripts/prerender.mjs) — до первой отрисовки — и ставит
+// data-arrival; здесь тогда делать нечего. markArrival остался для
+// страницы без готовой разметки (npm run dev). arrived-settling снимает
+// lib/mounted.ts — через 1,2 с после подхвата страницы.
 export function markArrival() {
+  if (document.documentElement.hasAttribute('data-arrival')) return
   const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined
   let inside = nav?.type === 'back_forward'
   try {
@@ -26,7 +32,6 @@ export function markArrival() {
   if (!inside) return
   const html = document.documentElement
   html.classList.add('arrived', 'arrived-settling')
-  window.setTimeout(() => html.classList.remove('arrived-settling'), 1200)
 }
 
 export const arrivedFromSite = () => document.documentElement.classList.contains('arrived-settling')

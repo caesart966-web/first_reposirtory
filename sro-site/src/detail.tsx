@@ -1,14 +1,11 @@
-import React from 'react'
-import { flushSync } from 'react-dom'
-import ReactDOM from 'react-dom/client'
 import '@fontsource-variable/onest'
 import '@fontsource-variable/brygada-1918'
 import './index.css'
 import { DetailPage } from './components/DetailPage'
 import { detailBySlug } from './content/sroDetails'
 import { markArrival } from './lib/arrival'
-import { markMounted } from './lib/mounted'
 import { setSiteRoot } from './lib/site'
+import { start } from './lib/start'
 
 // Точка входа страниц видов СРО. Какая именно страница — написано в её HTML
 // (data-sro), туда же вынесена глубина вложенности (data-root): страница
@@ -24,14 +21,6 @@ const detail = detailBySlug(mount.dataset.sro ?? '')
 if (!detail) {
   location.replace('../')
 } else {
-  // Синхронно — см. main.tsx.
-  const root = ReactDOM.createRoot(mount)
-  flushSync(() =>
-    root.render(
-      <React.StrictMode>
-        <DetailPage detail={detail} />
-      </React.StrictMode>,
-    ),
-  )
-  markMounted()
+  // Готовая разметка подхватывается — см. lib/start.tsx.
+  start(mount, <DetailPage detail={detail} />)
 }

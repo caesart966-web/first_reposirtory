@@ -83,25 +83,42 @@ export function Reveal({
  * «под ключ» так и едут парой, как и стоят в строке.
  *
  * Скринридер читает фразу целиком из aria-label, а не по кусочкам.
+ *
+ * intro — заголовок первого экрана (главная, шапки страниц): поднимается
+ * при загрузке CSS-анимацией (.hero-words в index.css), без скрипта.
+ * С 20.10.2026 готовая разметка видна раньше, чем выполнится скрипт,
+ * и заголовок, ждущий скрипта, возникал бы позже подзаголовка под ним.
+ * delay — когда начинать (мс), ступенька между словами та же.
  */
 export function RevealText({
   as = 'h2',
   text,
   className = '',
   id,
+  intro = false,
+  delay = 0,
 }: {
   as?: ElementType
   text: string
   className?: string
   id?: string
+  intro?: boolean
+  delay?: number
 }) {
-  const ref = useReveal<HTMLElement>()
+  const reveal = useReveal<HTMLElement>()
+  const ref = intro ? undefined : reveal
   // Короткие предлоги склеены со следующим словом (nbsp) и попадают с ним
   // в один блок: иначе «в» висело в конце строки («по вступлению в / СРО»).
   const words = nbsp(text).split(' ')
   return createElement(
     as,
-    { ref, id, className: `reveal-words ${className}`, 'aria-label': text },
+    {
+      ref,
+      id,
+      className: `${intro ? 'hero-words' : 'reveal-words'} ${className}`,
+      'aria-label': text,
+      style: intro && delay ? ({ '--d': `${delay}ms` } as CSSProperties) : undefined,
+    },
     // Пробел между словами стоит СНАРУЖИ обрезающего блока: внутри
     // inline-block конечный пробел схлопывается, и слова слипаются.
     words.map((word, i) => (

@@ -14,9 +14,12 @@
 // jsonld.mjs сверяет разметку с тем, что реально отрисовано на странице:
 // разойтись молча они не смогут.
 //
-// Тип Organization, а не LocalBusiness: LocalBusiness означает место, куда
-// приходят клиенты, а сайт прямо говорит «дистанционно, личный визит
-// не требуется». Заявлять приём посетителей мы не будем.
+// Тип — ProfessionalService (вид LocalBusiness, наследует всё от Organization)
+// с 20.10.2026. До того стоял Organization: сайт говорил «дистанционно, личный
+// визит не требуется», и заявлять приём посетителей было нельзя. 16.10.2026
+// заказчик подтвердил, что клиенты приходят в офис, часы — пн–пт 9:00–17:00;
+// сайт теперь говорит то же, и разметка называет часы (openingHoursSpecification)
+// и карту (hasMap) — так же, как карточки на картах.
 //
 // Запуск: node scripts/build-jsonld.mjs
 import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs'
@@ -45,6 +48,10 @@ const messengers = ['whatsapp', 'telegram', 'max']
 const legalName = one(facts, /legalName: '([^']+)'/, 'legalName')
 const inn = one(facts, /inn: '([^']+)'/, 'inn')
 const address = one(facts, /address:\s*'([^']+)'/, 'address')
+// Часы офиса — из contacts.ts (OPENING_HOURS), как и на странице.
+const opens = one(contacts, /opens: '(\d\d:\d\d)'/, 'opens')
+const closes = one(contacts, /closes: '(\d\d:\d\d)'/, 'closes')
+if (one(contacts, /days: '([^']+)'/, 'days') !== 'Mo-Fr') throw new Error('build-jsonld: дни работы не пн–пт — поправьте dayOfWeek')
 // Список регионов — тот же, что в блоке «География работы» на странице.
 // Строка списка — субъект; у части строк за ним идёт город (city), поэтому
 // ищется только начало записи.
@@ -53,9 +60,14 @@ if (regions.length === 0) throw new Error('не нашёл список реги
 
 // «Ростовская область, г. Ростов-на-Дону, ул. Социалистическая, зд. 74, офис 406/19»
 const [addrRegion, addrCity, ...addrStreet] = address.split(', ')
+// Та же ссылка на Яндекс Карты, что в «Связаться» (MAP_URL в facts.ts):
+// город, улица и здание без номера офиса.
+const mapUrl =
+  'https://yandex.ru/maps/?text=' +
+  encodeURIComponent([addrCity.replace(/^г\.\s*/, ''), addrStreet[0], addrStreet[1].replace(/^зд\.\s*/, '')].join(', '))
 
 const organization = {
-  '@type': 'Organization',
+  '@type': 'ProfessionalService',
   '@id': `${ORIGIN}/#organization`,
   name: brand,
   legalName,
@@ -77,6 +89,13 @@ const organization = {
     addressLocality: addrCity.replace(/^г\.\s*/, ''),
     streetAddress: addrStreet.join(', '),
   },
+  openingHoursSpecification: {
+    '@type': 'OpeningHoursSpecification',
+    dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+    opens,
+    closes,
+  },
+  hasMap: mapUrl,
   areaServed: regions.map((name) => ({ '@type': 'AdministrativeArea', name })),
   ...(messengers.length ? { sameAs: messengers } : {}),
 }

@@ -4,18 +4,12 @@ import { resolve } from 'node:path'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
-// Скрипт страницы — render-blocking: браузер не рисует страницу, пока скрипт
-// её не собрал. Нужно плавному переходу между страницами (@view-transition
-// в index.css): иначе новая страница снималась бы пустой. Первого показа
-// это не задерживает — до скрипта на странице и так пусто.
-const renderBlockingEntry = {
-  name: 'render-blocking-entry',
-  transformIndexHtml: {
-    order: 'post' as const,
-    handler: (html: string) =>
-      html.replace(/<script type="module" crossorigin/g, '<script type="module" blocking="render" crossorigin'),
-  },
-}
+// До 20.10.2026 скрипт страницы был render-blocking (плагин здесь ставил
+// blocking="render"): страницу собирал скрипт, и без этого плавный переход
+// между страницами снимал бы пустой лист. С 15.10.2026 текст страницы лежит
+// в HTML готовым (scripts/prerender.mjs), с 20.10.2026 скрипт его
+// подхватывает (src/lib/start.tsx) — и ждать скрипт для первой отрисовки
+// незачем: на телефоне первый экран появляется на 0,7–0,9 с раньше.
 
 // Отпечатки картинок из public/img (01.10.2026). Картинки лежат под
 // постоянными именами, и браузер, однажды скачав hero-day.webp, показывал
@@ -55,7 +49,7 @@ const articleInputs = existsSync(statiDir)
 // из public/, якоря на секции главной) знают о своей глубине через
 // src/lib/site.ts — см. комментарий там.
 export default defineConfig({
-  plugins: [react(), renderBlockingEntry],
+  plugins: [react()],
   base: './',
   define: { __ASSET_VERSIONS__: JSON.stringify(assetVersions) },
   build: {

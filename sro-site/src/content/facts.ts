@@ -30,4 +30,12 @@ export const REQUISITES = {
   address: 'Ростовская область, г. Ростов-на-Дону, ул. Социалистическая, зд. 74, офис 406/19',
 } as const
 
+// Офис на Яндекс Картах (20.10.2026): поиск по адресу без номера офиса —
+// «Ростов-на-Дону, ул. Социалистическая, 74». Только ссылка, без карты
+// на странице: виджет карты ставит cookie Яндекса до всякого согласия.
+const [, mapCity, mapStreet, mapBuilding] = REQUISITES.address.split(', ')
+export const MAP_URL =
+  'https://yandex.ru/maps/?text=' +
+  encodeURIComponent([mapCity.replace(/^г\.\s*/, ''), mapStreet, mapBuilding.replace(/^зд\.\s*/, '')].join(', '))
+
 export const isPlaceholder = (value: string) => value.startsWith('[') && value.endsWith(']')

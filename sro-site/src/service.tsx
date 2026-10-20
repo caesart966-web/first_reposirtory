@@ -1,14 +1,11 @@
-import React from 'react'
-import { flushSync } from 'react-dom'
-import ReactDOM from 'react-dom/client'
 import '@fontsource-variable/onest'
 import '@fontsource-variable/brygada-1918'
 import './index.css'
 import { ServicePage } from './components/ServicePage'
 import { serviceBySlug } from './content/services'
 import { markArrival } from './lib/arrival'
-import { markMounted } from './lib/mounted'
 import { setSiteRoot } from './lib/site'
+import { start } from './lib/start'
 
 // Точка входа страниц услуг (/uslugi/…). Какая именно страница — в её HTML
 // (data-service), глубина вложенности — там же (data-root): страница
@@ -25,14 +22,6 @@ const service = serviceBySlug(mount.dataset.service ?? '')
 if (!service) {
   location.replace('../../')
 } else {
-  // Синхронно — см. main.tsx.
-  const root = ReactDOM.createRoot(mount)
-  flushSync(() =>
-    root.render(
-      <React.StrictMode>
-        <ServicePage service={service} />
-      </React.StrictMode>,
-    ),
-  )
-  markMounted()
+  // Готовая разметка подхватывается — см. lib/start.tsx.
+  start(mount, <ServicePage service={service} />)
 }

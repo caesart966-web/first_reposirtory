@@ -95,7 +95,7 @@ function KeyFacts({ detail }: { detail: SroDetail }) {
         {/* Виды работ — строкой через точку (01.10.2026). Пилюлями в рамке
             они выглядели кнопками, как оглавление в шапке, но не нажимались. */}
         <p className="border-t border-neutral-300 py-5 text-sm leading-relaxed text-neutral-800">
-          <span className="mr-3 text-neutral-600">Виды работ</span>
+          <span className="mr-2 text-neutral-600">Виды работ</span>{' '}
           {detail.scope.join('\u00A0· ')}
         </p>
       </div>

@@ -1,5 +1,6 @@
 import { Plus } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
+import { CONTACTS } from '../content/contacts'
 import { nbsp } from '../lib/typo'
 import { ButtonLink } from './ui/Button'
 import { Reveal } from './ui/Reveal'
@@ -66,7 +67,9 @@ const ITEMS: { id: string; q: string; a: ReactNode }[] = [
   {
     id: 'remote',
     q: 'Можно ли всё оформить дистанционно?',
-    a: 'Да. Вопросы решаем по телефону, в мессенджерах и по почте, документы передаются в электронном виде или курьером. Приезжать не нужно.',
+    // До 20.10.2026 ответ кончался «Приезжать не нужно»: про офис, куда
+    // приходят клиенты, сайт молчал.
+    a: `Да. Вопросы решаем по телефону, в мессенджерах и по почте, документы передаются в электронном виде или курьером. Приезжать не обязательно, но можно: офис в Ростове-на-Дону работает ${CONTACTS.hours}.`,
   },
   {
     id: 'check',

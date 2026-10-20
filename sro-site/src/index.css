@@ -84,6 +84,40 @@
   transform: none;
 }
 
+/* Заголовок первого экрана (RevealText intro, 20.10.2026) — то же движение
+   по словам, но CSS-анимацией при загрузке, без скрипта: готовая разметка
+   видна раньше, чем скрипт её подхватит (lib/start.tsx), и заголовок,
+   ждущий скрипта, возникал бы позже подзаголовка под ним. Начало — --d,
+   ступенька — --i, как у .reveal-words. Пришли со своей страницы
+   (html.arrived) — без анимации; при «уменьшить движение» — тоже. */
+.hero-words .w {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding-bottom: 0.12em;
+  margin-bottom: -0.12em;
+}
+
+.hero-words .w > span {
+  display: inline-block;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero-words .w > span {
+    animation: word-rise 1.15s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: calc(var(--d, 0ms) + var(--i, 0) * 55ms);
+  }
+}
+
+@keyframes word-rise {
+  from {
+    transform: translateY(105%);
+  }
+  to {
+    transform: none;
+  }
+}
+
 
 /* Фотография Фемиды в разделе «О нас» (до 26.09.2026 — в «Как проходит
    работа»). На телефоне и планшете она стоит над заголовком и растворяется
@@ -457,10 +491,22 @@
    экран стоит на месте сразу, без вступления; блоки в кадре — без перехода. */
 html.arrived .hero-develop,
 html.arrived .hero-print,
-html.arrived .hero-rise {
+html.arrived .hero-rise,
+html.arrived .hero-words .w > span {
   animation: none;
 }
 html.arrived-settling .reveal,
 html.arrived-settling .reveal-words .w > span {
   transition: none;
+}
+/* Пока пришедшая со своей страницы страница ещё не подхвачена скриптом
+   (нет html.mounted, lib/mounted.ts), блоки, выплывающие по прокрутке,
+   видны сразу: плавная смена страниц снимает первый кадр новой страницы,
+   и без этого блоки в кадре на нём были бы пустыми, а потом возникали
+   рывком. После подхвата блоки в кадре уже отмечены видимыми (ui/Reveal),
+   остальные прячутся до прокрутки — без перехода, их не видно. */
+html.arrived-settling:not(.mounted) .reveal,
+html.arrived-settling:not(.mounted) .reveal-words .w > span {
+  opacity: 1;
+  transform: none;
 }

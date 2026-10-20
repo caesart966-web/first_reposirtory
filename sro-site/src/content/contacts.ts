@@ -24,7 +24,15 @@ export const CONTACTS = {
   // не показывается нигде. Если заказчик пересоздаст QR в приложении, хеш
   // может смениться — тогда ссылку нужно обновить тем же путём.
   max: 'https://max.ru/u/f9LHodD0cOJH-7DT2fACPZwYLPwbc7t7KpCPXfuGhpg987BNumzPfeB0RNk',
+  // Часы офиса (ответ заказчика 16.10.2026: клиенты приходят в офис, часы —
+  // пн–пт 9:00–17:00). Те же часы обязаны стоять в карточках на картах:
+  // сайт и карточки говорят одно (README, «Карточки на картах»). Меняете —
+  // меняйте и OPENING_HOURS ниже, по ним пишется микроразметка.
+  hours: 'пн–пт 9:00–17:00',
 } as const
+
+// Те же часы для микроразметки (build-jsonld.mjs читает эти строки).
+export const OPENING_HOURS = { days: 'Mo-Fr', opens: '09:00', closes: '17:00' } as const
 
 const isPlaceholder = (value: string) => value.startsWith('[') && value.endsWith(']')
 

@@ -177,9 +177,9 @@ for (const path of PAGES) {
 // который не выполняет JavaScript, видит страницу целиком, а не пустой
 // <div id="root">. Без скрипта: текст на месте, h1 тот же, что собирает
 // браузер, и блоки, которые выплывают по прокрутке, видны (noscript в <head>).
-// Со скриптом: после первой отрисовки класс pre-wait снят (иначе страница
-// осталась бы прозрачной), а запасной pre-late (скрипт не пришёл за 4 с)
-// не включился.
+// Со скриптом (с 20.10.2026): скрипт подхватил готовую разметку (класс
+// mounted, lib/mounted.ts), а запасной pre-late (скрипт не пришёл за 4 с)
+// не включился; класса pre-wait, прятавшего текст до скрипта, нет вовсе.
 {
   const off = await b.newContext({ javaScriptEnabled: false, viewport: { width: 1280, height: 900 } })
   const on = await b.newContext({ viewport: { width: 1280, height: 900 } })
@@ -213,6 +213,7 @@ for (const path of PAGES) {
     check(`${tag}: h1 тот же, что в браузере`, raw.h1 !== '' && raw.h1 === live.h1, `«${raw.h1}» / «${live.h1}»`)
     check(`${tag}: ничего не спрятано`, raw.hidden === 0 && raw.opacity === '1', `скрытых блоков ${raw.hidden}, прозрачность корня ${raw.opacity}`)
     check(`${path || '/'}: после отрисовки готовый текст не спрятан`, !/\bpre-(wait|late)\b/.test(live.cls), live.cls)
+    check(`${path || '/'}: скрипт подхватил готовую страницу`, /\bmounted\b/.test(live.cls), live.cls)
   }
   await off.close()
   await on.close()
@@ -341,21 +342,32 @@ for (const [W, H] of [[1440, 900], [1920, 1000], [2560, 1300], [5760, 3200]]) {
 }
 
 // Переход между страницами (@view-transition в index.css). Проверяется, что
-// он срабатывает и что новая страница в момент показа уже собрана: корень
-// у страниц заполняет скрипт, и без blocking="render" у него (плагин
-// в vite.config.ts) и синхронной первой отрисовки (flushSync в main.tsx,
-// detail.tsx, service.tsx) переход «проявлял» бы пустой лист. При «уменьшить
-// движение» перехода нет вовсе.
+// он срабатывает и что первый кадр новой страницы — тот, что снимает смена, —
+// уже полный. С 20.10.2026 скрипт отрисовку не блокирует: первый кадр — это
+// готовая разметка до скрипта. На нём заголовок обязан стоять на месте
+// (без вступления — html.arrived из строчки в <head>, prerender.mjs), а блоки
+// в кадре — быть видимыми (html.arrived-settling:not(.mounted) в index.css),
+// иначе смена «проявляла» бы страницу без них, и они возникали бы рывком.
+// При «уменьшить движение» перехода нет вовсе.
 for (const motion of ['no-preference', 'reduce']) {
   const ctx = await b.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: motion })
   await ctx.addInitScript(() => {
     addEventListener('pagereveal', (e) => {
       window.__vt = Boolean(e.viewTransition)
-      // С 15.10.2026 текст лежит в HTML готовым (scripts/prerender.mjs), но до
-      // первой отрисовки скриптом прозрачен (pre-wait): пустым считается и он.
-      window.__rootEmpty =
-        !document.getElementById('root')?.children.length ||
-        document.documentElement.classList.contains('pre-wait')
+      const h1 = document.querySelector('#root h1')
+      const word = h1?.querySelector('.w > span')
+      // Блоки в кадре, которые на первом кадре прозрачны или сдвинуты.
+      const hiddenInView = [...document.querySelectorAll('#root .reveal, #root .reveal-words .w > span')].filter((el) => {
+        const r = el.getBoundingClientRect()
+        if (r.bottom <= 0 || r.top >= innerHeight || r.width === 0) return false
+        const cs = getComputedStyle(el)
+        return cs.opacity === '0' || (cs.transform !== 'none' && cs.transform !== 'matrix(1, 0, 0, 1, 0, 0)')
+      }).length
+      window.__first = {
+        empty: !document.getElementById('root')?.children.length,
+        title: !!h1 && !!word && ['none', 'matrix(1, 0, 0, 1, 0, 0)'].includes(getComputedStyle(word).transform) && getComputedStyle(h1).opacity === '1',
+        hiddenInView,
+      }
     })
   })
   const p = await ctx.newPage()
@@ -370,13 +382,72 @@ for (const motion of ['no-preference', 'reduce']) {
   })
   await p.locator('#hero-types + ul a').first().click()
   await p.waitForLoadState('networkidle')
-  const [vt, empty] = await p.evaluate(() => [window.__vt, window.__rootEmpty])
+  const [vt, first] = await p.evaluate(() => [window.__vt, window.__first])
   if (motion === 'reduce') {
     check('переход между страницами: при «уменьшить движение» его нет', vt === false, String(vt))
   } else {
     check('переход между страницами: срабатывает', vt === true, String(vt))
-    check('переход между страницами: новая страница в момент показа не пустая', empty === false, String(empty))
+    check('переход между страницами: новая страница в момент показа не пустая', first?.empty === false, JSON.stringify(first))
+    check('переход между страницами: на первом кадре заголовок на месте, блоки в кадре видны',
+      first?.title === true && first?.hiddenInView === 0, JSON.stringify(first))
   }
+  await ctx.close()
+}
+
+// Первый экран не ждёт скрипта (20.10.2026). Готовая разметка видна сразу,
+// а скрипт её подхватывает (lib/start.tsx). Скрипты здесь приходят на 5 с
+// позже: к 2,8 с вступление первого экрана (CSS) уже отыграло, и заголовок,
+// подзаголовок и кнопка обязаны стоять на месте, хотя скрипта ещё нет.
+// До 20.10.2026 скрипт блокировал отрисовку, и на телефоне с медленным
+// интернетом первый экран появлялся только с ним — через ~1,9 с.
+for (const path of ['', 'sro-stroiteley/', 'stati/kak-proverit-sro/']) {
+  const ctx = await b.newContext({ viewport: { width: 390, height: 780 }, isMobile: true, hasTouch: true })
+  const p = await ctx.newPage()
+  await p.route(/\/assets\/.+\.js$/, async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 5000))
+    await route.continue().catch(() => {})
+  })
+  await p.goto(BASE + path, { waitUntil: 'commit' })
+  await p.waitForTimeout(2800)
+  const r = await p.evaluate(() => {
+    const h1 = document.querySelector('#root h1')
+    const words = [...(h1?.querySelectorAll('.w > span') ?? [])]
+    const box = h1?.getBoundingClientRect()
+    // Кнопка первого экрана — в <main>, не в меню шапки; видимость — по её
+    // обёртке с анимацией появления (.hero-rise), а не по самой ссылке.
+    const button = [...document.querySelectorAll('main a[href="#contacts"]')].find((a) => {
+      const rr = a.getBoundingClientRect()
+      return rr.width > 0 && rr.top < innerHeight
+    })
+    return {
+      mounted: document.documentElement.classList.contains('mounted'),
+      // После анимации браузер отдаёт либо none, либо единичную матрицу.
+      h1: !!h1 && box.top < innerHeight && words.length > 0 && words.every((w) => ['none', 'matrix(1, 0, 0, 1, 0, 0)'].includes(getComputedStyle(w).transform)),
+      button: !!button && getComputedStyle(button.closest('.hero-rise') ?? button).opacity === '1',
+    }
+  })
+  check(`/${path} до скрипта: скрипт ещё не пришёл`, r.mounted === false, JSON.stringify(r))
+  check(`/${path} до скрипта: заголовок первого экрана на месте`, r.h1, JSON.stringify(r))
+  check(`/${path} до скрипта: кнопка «Связаться»/«Обсудить задачу» видна`, r.button, JSON.stringify(r))
+  await ctx.close()
+}
+
+// Подхват готовой разметки (20.10.2026): то, что зависит от адреса и от
+// устройства, после подхвата верное. React при подхвате не исправляет
+// атрибуты, разошедшиеся с готовой разметкой, — поэтому подсветка открытой
+// страницы в меню считается одинаково при сборке и в браузере
+// (lib/site.ts, isCurrentPage), а «мышь или палец» решается после подхвата
+// (lib/useDesktopPointer.ts).
+{
+  const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } })
+  const p = await ctx.newPage()
+  await p.goto(BASE + 'sro-stroiteley/', { waitUntil: 'networkidle' })
+  const r = await p.evaluate(() => ({
+    current: [...document.querySelectorAll('header a[aria-current="page"]')].map((a) => a.getAttribute('href')),
+    blank: [...document.querySelectorAll('#contacts [data-channel]:not([href^="tel"])')].map((a) => a.target),
+  }))
+  check('подхват: в меню подсвечена открытая страница вида', r.current.length >= 1 && r.current.every((h) => h.includes('sro-stroiteley')), JSON.stringify(r.current))
+  check('подхват: мессенджеры на компьютере — в новой вкладке', r.blank.length === 3 && r.blank.every((t) => t === '_blank'), JSON.stringify(r.blank))
   await ctx.close()
 }
 
@@ -629,18 +700,49 @@ for (const motion of ['no-preference', 'reduce']) {
 // Фотография, которая ещё грузится, проступает, а не возникает рывком
 // (lib/fade.ts); пришедшая быстро — сразу. Кадр шапки
 // страницы вида отдаётся с задержкой, как на медленной связи.
+// Три пути (20.10.2026, fadeInFirstScreen):
+// - первый заход: кадр шапки «проявляется» из-под гаснущего листа
+//   (.hero-develop), и прятать его до загрузки нельзя — проявление и есть
+//   плавное появление, а прятанье откладывало главную картинку;
+// - кадр не успел к концу проявления (очень медленная сеть) — проступает сам;
+// - пришли со своей страницы (проявления нет) — обычный fadeIn.
 {
   const ctx = await b.newContext({ viewport: { width: 390, height: 780 }, isMobile: true, hasTouch: true })
   const p = await ctx.newPage()
-  await p.route(/\/img\/.*slide-survey/, async (route) => { await new Promise((r) => setTimeout(r, 900)); await route.continue() })
+  const slowImage = async (ms) => {
+    await p.unroute(/\/img\//)
+    await p.route(/\/img\/.*slide-survey/, async (route) => { await new Promise((r) => setTimeout(r, ms)); await route.continue().catch(() => {}) })
+  }
+  const state = () => p.locator('main img').first().evaluate((el) => ({ fade: el.dataset.fade, o: getComputedStyle(el).opacity, t: el.style.transition }))
+
+  await slowImage(900)
   await p.goto(BASE + 'sro-izyskateley/', { waitUntil: 'domcontentloaded' })
-  const img = p.locator('main img').first()
   await p.waitForTimeout(300)
-  const before = await img.evaluate((el) => ({ wait: el.dataset.fade, o: getComputedStyle(el).opacity }))
+  const develop = await state()
+  await p.waitForLoadState('networkidle')
+  await p.waitForTimeout(300)
+  const developed = await state()
+  check('первый заход: кадр, который ещё грузится, не прячется под проявлением',
+    develop.fade === 'develop' && develop.o === '1' && developed.o === '1', JSON.stringify({ develop, developed }))
+
+  await slowImage(4200)
+  await p.goto(BASE + 'sro-izyskateley/', { waitUntil: 'domcontentloaded' })
   await p.waitForLoadState('networkidle')
   await p.waitForTimeout(900)
-  const after = await img.evaluate((el) => ({ fade: el.dataset.fade, o: getComputedStyle(el).opacity }))
-  check('кадр, который ещё грузится, проступает плавно', before.wait === 'wait' && before.o === '0' && after.fade === 'done' && after.o === '1', JSON.stringify({ before, after }))
+  const late = await state()
+  check('первый заход: кадр, опоздавший к концу проявления, проступает', late.fade === 'develop' && late.o === '1' && /opacity/.test(late.t), JSON.stringify(late))
+
+  await slowImage(900)
+  await p.goto(BASE + 'stati/', { waitUntil: 'networkidle' })
+  await p.evaluate(() => { location.href = '../sro-izyskateley/' })
+  await p.waitForURL(/sro-izyskateley/, { waitUntil: 'domcontentloaded' })
+  await p.waitForTimeout(300)
+  const before = await state()
+  await p.waitForLoadState('networkidle')
+  await p.waitForTimeout(900)
+  const after = await state()
+  check('со своей страницы: кадр, который ещё грузится, проступает плавно', before.fade === 'wait' && before.o === '0' && after.fade === 'done' && after.o === '1', JSON.stringify({ before, after }))
+  const img = p.locator('main img').first()
   await p.unroute(/\/img\//)
   await p.reload({ waitUntil: 'networkidle' })
   await p.waitForTimeout(900)

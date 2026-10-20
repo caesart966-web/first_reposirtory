@@ -3,14 +3,13 @@ import { useEffect, useRef, useState, type FocusEvent } from 'react'
 import { CONFIGURED, CONTACTS, LINKS } from '../content/contacts'
 import { HEADER_NAV, MENU, isGroup, navHref, type NavGroup, type NavLink } from '../content/nav'
 import { fadeIn } from '../lib/fade'
-import { asset, home } from '../lib/site'
+import { asset, home, isCurrentPage } from '../lib/site'
 import { ScalesMark } from './illustrations'
 import { ButtonLink } from './ui/Button'
 
 // Ссылка на текущую страницу вида СРО подсвечивается: посетитель видит,
 // где он. На главной подсвечивать нечего — секции якорями не считаются.
-const isHere = (link: NavLink) =>
-  link.kind === 'page' && typeof window !== 'undefined' && window.location.pathname.includes(`/${link.href}/`)
+const isHere = (link: NavLink) => link.kind === 'page' && isCurrentPage(link.href)
 
 // Выпадающее меню шапки.
 //

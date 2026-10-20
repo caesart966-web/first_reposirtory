@@ -1,10 +1,11 @@
-import { Check, Copy, Mail, MapPin } from 'lucide-react'
+import { Check, Clock, Copy, Mail, MapPin } from 'lucide-react'
 import { useRef, useState, type CSSProperties } from 'react'
 import { CONFIGURED, CONTACTS, LINKS } from '../content/contacts'
-import { REQUISITES } from '../content/facts'
+import { MAP_URL, REQUISITES } from '../content/facts'
 import { nbsp } from '../lib/typo'
 import { MESSENGERS } from './messengers'
 import { MessengerLink } from './MessengerLink'
+import { GoTo } from './ui/GoTo'
 import { Reveal, RevealText } from './ui/Reveal'
 
 // Раздел «Связаться» — внизу КАЖДОЙ страницы, перед подвалом.
@@ -25,7 +26,11 @@ import { Reveal, RevealText } from './ui/Reveal'
 // Строка под заголовком одна на все страницы (01.10.2026). У страниц видов
 // и услуг была своя — «Отвечу на вопросы по теме «…», разберу вашу
 // ситуацию…», — и на десяти страницах она отличалась одним названием.
-const LEAD = 'Консультация бесплатная — и первая, и все следующие. Работаю дистанционно, личный визит не нужен.'
+//
+// До 20.10.2026 здесь было «Работаю дистанционно, личный визит не нужен»,
+// хотя клиенты приходят в офис (ответ заказчика 16.10.2026). Теперь —
+// оба пути, а под адресом часы и ссылка на Яндекс Карты.
+const LEAD = 'Консультация бесплатная — и первая, и все следующие. Всё можно решить дистанционно, а можно приехать в офис.'
 
 export function Contact() {
   return (
@@ -63,6 +68,23 @@ export function Contact() {
                     на телефоне «ул.» оставалось в конце строки. */}
                 <span>{REQUISITES.address.replace(/(г\.|ул\.|зд\.|офис) /g, '$1\u00a0')}</span>
               </p>
+              <p className="mt-3 flex items-start gap-3">
+                <Clock className="mt-0.5 h-4 w-4 shrink-0 text-accent-300" aria-hidden="true" />
+                <span>Офис работает {nbsp(CONTACTS.hours)}</span>
+              </p>
+              {/* Внешняя ссылка — в новой вкладке, как все внешние ссылки
+                  сайта (test-site.mjs); карта на месте не встраивается. */}
+              <a
+                href={MAP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-map="yandex"
+                className="group ml-7 mt-2 inline-flex min-h-11 items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-300"
+              >
+                <GoTo tone="light" className="text-sm">
+                  Открыть на Яндекс Картах
+                </GoTo>
+              </a>
             </div>
           </Reveal>
         </div>

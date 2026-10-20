@@ -35,5 +35,17 @@ export const anchor = (hash: string) => root + hash
 /** Главная страница: на ней самой — наверх, со вложенной — на её адрес. */
 export const home = () => root || '#top'
 
+/** Адрес текущей страницы. В браузере — location.pathname (точка входа),
+ *  при сборке — путь страницы в dist (entry-server.tsx). Нужен меню: ссылка
+ *  на открытую страницу подсвечена. С 20.10.2026 браузер не пересобирает
+ *  страницу, а подхватывает готовую разметку (hydrateRoot), и подсветка обязана
+ *  совпасть с готовой разметкой — поэтому не window.location прямо в отрисовке. */
+let pagePath = '/'
+export function setPagePath(value: string) {
+  pagePath = value
+}
+/** Ссылка ведёт на открытую страницу: isCurrentPage('sro-stroiteley'). */
+export const isCurrentPage = (dir: string) => pagePath.includes(`/${dir}/`)
+
 /** Адрес страницы вида СРО: page('sro-stroiteley'). */
 export const page = (dir: string) => `${root}${dir}/`

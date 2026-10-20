@@ -1,10 +1,11 @@
 import { ArrowLeft } from 'lucide-react'
+import type { CSSProperties } from 'react'
 import type { PageImage } from '../content/images'
-import { fadeIn } from '../lib/fade'
+import { fadeInFirstScreen } from '../lib/fade'
 import { asset } from '../lib/site'
 import { nbsp } from '../lib/typo'
 import { ButtonLink } from './ui/Button'
-import { Reveal, RevealText } from './ui/Reveal'
+import { RevealText } from './ui/Reveal'
 
 // Первый экран внутренних страниц — видов СРО и услуг.
 //
@@ -35,7 +36,16 @@ import { Reveal, RevealText } from './ui/Reveal'
 // bright — плёнка тоньше (статьи, 16.10.2026, заказчик: «картинки видно
 // плохо, чуть ярче»): на телефоне 0.7 вместо 0.78, на компьютере справа
 // кадр открыт целиком. Контраст перемерен test-hero-contrast.mjs.
+//
+// Появление (20.10.2026) — CSS-анимацией при загрузке (.hero-rise и
+// заголовок по словам, .hero-words), а не по прокрутке через скрипт:
+// готовая разметка страницы видна раньше, чем скрипт её подхватит
+// (lib/start.tsx), и шапка, ждущая скрипта, стояла бы пустой над уже
+// показанным кадром. Пришли со своей страницы — без анимации (html.arrived).
 export type TocItem = { id: string; title: string }
+
+// Ступенька появления: задержка анимации .hero-rise.
+const rise = (ms: number) => ({ '--d': `${ms}ms` }) as CSSProperties
 
 export function PageHero({
   backHref,
@@ -68,8 +78,10 @@ export function PageHero({
               width={image.width}
               height={image.height}
               loading="eager"
+              // Кадр шапки — раньше скрипта и шрифтов (см. Hero.tsx, HIGH).
+              {...({ fetchpriority: 'high' } as Record<string, string>)}
               decoding="async"
-              ref={fadeIn}
+              ref={fadeInFirstScreen}
               className="scroll-drift h-full w-full object-cover"
               style={{ objectPosition: image.position }}
             />
@@ -96,10 +108,16 @@ export function PageHero({
                 : 'absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(0deg,rgba(20,17,15,0.85)_0%,rgba(20,17,15,0)_100%)]'
             }
           />
+          {/* Проявление кадра (20.10.2026), как на главной: на первом заходе
+              кадр проступает из графита раздела, пока поднимается заголовок.
+              Пришли со своей страницы или «уменьшить движение» — листа нет
+              (index.css, .hero-develop). Кадр под ним показывается сам, как
+              только загрузится (lib/fade.ts, fadeInFirstScreen). */}
+          <span className="hero-develop absolute inset-0 bg-accent-950" aria-hidden="true" />
         </div>
       )}
       <div className="mx-auto w-full max-w-6xl min-[1800px]:max-w-7xl px-4 pb-20 pt-14 sm:px-6 sm:pb-28 sm:pt-20 lg:px-8">
-        <Reveal>
+        <div className="hero-rise" style={rise(0)}>
           <a
             href={backHref}
             className="inline-flex items-center gap-2 text-sm text-neutral-300 transition-colors duration-500 hover:text-neutral-50"
@@ -107,21 +125,23 @@ export function PageHero({
             <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
             {backLabel}
           </a>
-        </Reveal>
+        </div>
         <div className="max-w-3xl">
           {/* Кегль на телефоне — по самому длинному слову заголовков:
               «проектировщиков», «ответственности». На 2,9rem они были шире
               экрана и обрезались краем шапки (до 28.09.2026 — незаметно:
               горизонтальной прокрутки при этом нет). */}
           {meta && (
-            <Reveal>
+            <div className="hero-rise" style={rise(60)}>
               <p className="mt-10 text-sm text-neutral-200">
                 <span data-hero-text>{meta}</span>
               </p>
-            </Reveal>
+            </div>
           )}
           <RevealText
             as="h1"
+            intro
+            delay={80}
             text={title}
             className={`font-display text-[1.95rem] font-medium tracking-[-0.01em] ${
               // Заголовок статьи — вопрос в пять-восемь слов: кеглем страниц
@@ -131,17 +151,17 @@ export function PageHero({
                 : 'mt-10 leading-[1.02] min-[380px]:text-[2.35rem] sm:text-6xl lg:text-[4.6rem]'
             }`}
           />
-          <Reveal delay={200}>
+          <div className="hero-rise" style={rise(200)}>
             <p className="mt-7 max-w-2xl text-lg leading-relaxed text-neutral-200">
               <span data-hero-text>{nbsp(lead)}</span>
             </p>
             <ButtonLink href="#contacts" variant="inverse" size="lg" arrow className="mt-9">
               Обсудить задачу
             </ButtonLink>
-          </Reveal>
+          </div>
         </div>
         {toc.length > 0 && (
-          <Reveal delay={320}>
+          <div className="hero-rise" style={rise(320)}>
             <nav aria-label="На этой странице" className="mt-10 border-t border-white/15 pt-6 sm:mt-14">
               <p className="text-sm text-neutral-300">
                 <span data-hero-text>На этой странице</span>
@@ -159,7 +179,7 @@ export function PageHero({
                 ))}
               </ul>
             </nav>
-          </Reveal>
+          </div>
         )}
       </div>
     </section>

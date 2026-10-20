@@ -2,7 +2,7 @@ import { ArrowRight, DraftingCompass, HardHat, Mountain } from 'lucide-react'
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { IMAGES } from '../content/images'
 import { SRO_DETAILS } from '../content/sroDetails'
-import { fadeIn } from '../lib/fade'
+import { fadeIn, fadeInFirstScreen } from '../lib/fade'
 import { asset, page } from '../lib/site'
 import { nbsp } from '../lib/typo'
 import { ButtonLink } from './ui/Button'
@@ -150,6 +150,15 @@ const COVER_FRAME: Record<string, string> = {
   survey: 'object-[50%_30%]',
 }
 
+// Кадр первого экрана грузится раньше скрипта и шрифтов (20.10.2026):
+// с тех пор как скрипт не блокирует отрисовку, на медленном телефонном
+// интернете кадр шёл последним, после 118 КБ скрипта, и главная картинка
+// появлялась позже текста. Атрибут — строчными буквами: React 18 не знает
+// fetchPriority и в разработке ругался бы на него.
+const HIGH = { fetchpriority: 'high' } as Record<string, string>
+
+// Кадр первого экрана появляется под «проявлением» — lib/fade.ts, fadeInFirstScreen.
+
 // Затемнение обложки снизу вверх. Белый заголовок обязан держать 4,5:1
 // над самым светлым местом кадра (кадры сняты светлым ключом, у плана
 // этажа светлый почти весь лист), поэтому под строками заголовка тон
@@ -248,13 +257,15 @@ function CoverPhotos({ active }: { active: string }) {
             <img
               ref={(el) => {
                 imgs.current[type.slug] = el
-                fadeIn(el)
+                if (type.slug === 'construction') fadeInFirstScreen(el)
+                else fadeIn(el)
               }}
               src={asset(type.image.src)}
               alt=""
               width={type.image.width}
               height={type.image.height}
               loading="eager"
+              {...(type.slug === 'construction' ? HIGH : {})}
               decoding="async"
               className={`h-full w-full object-cover ${COVER_FRAME[type.slug] ?? ''}`}
             />
@@ -361,8 +372,9 @@ export function Hero() {
             width={image.width}
             height={image.height}
             loading="eager"
+            {...HIGH}
             decoding="async"
-            ref={fadeIn}
+            ref={fadeInFirstScreen}
             className={`scroll-drift h-full w-full object-cover ${FRAME.construction}`}
           />
         </picture>
@@ -407,6 +419,8 @@ export function Hero() {
             <RevealText
               as="h1"
               id="hero-title"
+              intro
+              delay={120}
               text={'Вступление в СРО под\u00a0ключ'}
               className="relative font-display text-[2.6rem] font-medium leading-[0.95] tracking-[-0.015em] min-[380px]:text-[2.85rem] sm:text-7xl lg:mt-6 lg:text-[4.75rem] xl:text-[5.25rem]"
             />
