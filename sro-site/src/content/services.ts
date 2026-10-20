@@ -34,7 +34,9 @@ export type ServiceBlock =
       title: string
       intro?: string
       ordered?: boolean
-      items: { title: string; text: string; law?: string }[]
+      // id — якорь пункта: на него ведёт ссылка с главной (три пути
+      // в «Специалистах НРС», Specialists.tsx).
+      items: { title: string; text: string; law?: string; id?: string }[]
       aside?: { text: string; law?: string }
     }
   | { kind: 'scale'; title: string; intro?: string; items: string[]; note?: string; law?: string }
@@ -300,14 +302,17 @@ export const SERVICE_PAGES: ServicePage[] = [
         intro: 'Три законных варианта.',
         items: [
           {
+            id: 'sotrudniki',
             title: 'Проверить действующих сотрудников',
             text: 'Бывает, что сотрудник с подходящим образованием и стажем уже работает в компании, но в реестр не внесён. Проверю его дипломы, стаж и должностные обязанности.',
           },
           {
+            id: 'vnesti-v-reestr',
             title: 'Включить своего специалиста в реестр',
             text: 'Для включения в НРС нужны профильное высшее образование, стаж по специальности и действующее свидетельство о независимой оценке квалификации — она обязательна с сентября 2022 года. Подготовлю документы и подам заявление.',
           },
           {
+            id: 'prinyat-v-shtat',
             title: 'Принять в штат специалиста из реестра',
             text: 'Специалист из реестра оформляется по основному месту работы — так требует закон. До оформления проверю его сведения в реестре.',
           },

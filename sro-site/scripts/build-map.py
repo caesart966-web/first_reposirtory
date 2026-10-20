@@ -1,27 +1,38 @@
 # -*- coding: utf-8 -*-
-"""Генератор карты регионов для src/content/regions.ts.
+"""Генератор карты регионов для src/content/mapData.ts.
 
 Раньше контур России был нарисован от руки по опорным точкам. Он был
 узнаваемым, но регионы на нём показать было нечем — только точки-булавки.
 Здесь карта строится из настоящих границ субъектов, поэтому регион, где
 заказчик помогает вступить, можно закрасить целиком.
 
-Источник границ: https://github.com/codeforamerica/click_that_hood
-(public/data/russia.geojson), лицензия MIT, 83 субъекта, имена по-русски.
-Крым в этот набор не входит (данные 2013 года), его контур остался прежним —
-по опорным точкам, они ниже в CRIMEA.
+Источник границ (с 20.10.2026) — Natural Earth, слой «Admin 1 – States,
+Provinces», масштаб 1:10 млн, общественное достояние
+(https://www.naturalearthdata.com, копия на GitHub:
+nvkelso/natural-earth-vector). Субъектов на карте 89, как в Конституции РФ:
+85 записей набора с кодом страны RUS (в их числе Республика Крым
+и Севастополь) и четыре субъекта, принятых в 2022 году, — их набор ведёт
+под кодами UA-14, UA-09, UA-23, UA-65 и берётся по коду. Москва — в нынешних
+границах, с Новой Москвой и Зеленоградом.
+
+До 20.10.2026 карта строилась из click_that_hood (Code for America) — это
+границы 2013 года: 83 субъекта, Москва без Новой Москвы, Крым дорисован
+от руки по опорным точкам, четырёх новых субъектов не было вовсе.
+
+Субъекты выбираются по коду ISO 3166-2 из набора, а не по имени: русские
+имена там с ошибками (у Алтайского края стоит «Республика Алтай»).
+У Москвы и Московской области коды в наборе перепутаны местами
+(RU-MOS — город), но обе идут одним пятном, и на карте это не видно.
 
 Проекция — равновеликая коническая Альберса со стандартными параллелями
 52° и 64° и осевым меридианом 100° в. д.: именно она даёт узнаваемую
-«арку» России, где Калининград и Чукотка опускаются к краям. Линейная
-проекция по широте и долготе, которая была здесь раньше, растягивала
-север и делала страну плоской лентой.
+«арку» России, где Калининград и Чукотка опускаются к краям.
 
-Запуск (нужен интернет, файл границ не хранится в репозитории):
+Запуск (нужен интернет, файл границ — 40 МБ — в репозитории не хранится):
 
-    curl -sSL -o /tmp/russia.geojson \\
-      https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/russia.geojson
-    python3 scripts/build-map.py /tmp/russia.geojson > src/content/mapData.ts
+    curl -sSL -o /tmp/ne1.geojson \\
+      https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_admin_1_states_provinces.geojson
+    python3 scripts/build-map.py /tmp/ne1.geojson > src/content/mapData.ts
 """
 import json
 import math
@@ -102,28 +113,26 @@ def area(pts):
     return abs(s) / 2
 
 
-# Крым: собственных границ в наборе нет, опорные точки те же, что были
-# в старой карте. Список регионов у заказчика Крым включает.
-CRIMEA = [(33.60, 46.16), (33.05, 46.04), (32.55, 45.60), (32.48, 45.36),
-          (33.20, 45.15), (33.55, 44.92), (33.42, 44.56), (33.80, 44.39),
-          (34.40, 44.50), (35.10, 44.80), (35.50, 45.02), (36.10, 45.02),
-          (36.65, 45.35), (36.10, 45.45), (35.50, 45.40), (35.30, 45.70),
-          (34.80, 45.95), (34.20, 46.10)]
+# Четыре субъекта 2022 года: в наборе они под кодами UA.
+ADDED_2022 = {'UA-14', 'UA-09', 'UA-23', 'UA-65'}
 
-# Какие субъекты закрашиваем и под каким ключом. Ключи — те же, что в LABELS.
+# Какие субъекты закрашиваем и под каким ключом. Ключи — те же, что в LABELS,
+# коды — ISO 3166-2 в записи Natural Earth. «Крым» у заказчика — Республика
+# Крым; Севастополь — отдельный субъект, его в списке нет, и он остаётся фоном.
 HIGHLIGHT = {
-    'spb': ['Санкт-Петербург', 'Ленинградская область'],
-    'msk': ['Москва', 'Московская область'],
-    'kazan': ['Татарстан'],
-    'nnov': ['Нижегородская область'],
-    'kostroma': ['Костромская область'],
-    'ufa': ['Башкортостан'],
-    'ekb': ['Свердловская область'],
-    'krasnodar': ['Краснодарский край'],
-    'rostov': ['Ростовская область'],
-    'krasnoyarsk': ['Красноярский край'],
-    'irkutsk': ['Иркутская область'],
-    'yakutsk': ['Республика Саха (Якутия)'],
+    'spb': ['RU-SPE', 'RU-LEN'],
+    'msk': ['RU-MOS', 'RU-MOW'],
+    'kazan': ['RU-TA'],
+    'nnov': ['RU-NIZ'],
+    'kostroma': ['RU-KOS'],
+    'ufa': ['RU-BA'],
+    'ekb': ['RU-SVE'],
+    'krasnodar': ['RU-KDA'],
+    'rostov': ['RU-ROS'],
+    'krasnoyarsk': ['RU-KYA'],
+    'irkutsk': ['RU-IRK'],
+    'yakutsk': ['RU-SA'],
+    'crimea': ['UA-43'],
 }
 
 # Куда ставить подпись и метку. Города настоящие, координаты — их.
@@ -138,15 +147,20 @@ CITIES = {
 src = json.load(open(sys.argv[1], encoding='utf-8'))
 raw = {}
 for feat in src['features']:
-    name = feat['properties']['name']
-    raw.setdefault(name, []).extend(
+    props = feat['properties']
+    code = props['iso_3166_2']
+    if props['adm0_a3'] != 'RUS' and code not in ADDED_2022:
+        continue
+    raw.setdefault(code, []).extend(
         [[project(lon, lat) for lon, lat in ring] for ring in rings_of(feat['geometry'])]
     )
-raw['Крым'] = [[project(lon, lat) for lon, lat in CRIMEA]]
+# 85 записей с кодом RUS — это 85 субъектов и безымянный островок
+# (RU-X01~, «Russia minor island»): он идёт фоном.
+subjects = [code for code in raw if not code.endswith('~')]
+assert len(subjects) == 89, f'субъектов {len(subjects)}, а не 89'
 for key in HIGHLIGHT:
-    for name in HIGHLIGHT[key]:
-        assert name in raw, f'нет в наборе границ: {name}'
-HIGHLIGHT['crimea'] = ['Крым']
+    for code in HIGHLIGHT[key]:
+        assert code in raw, f'нет в наборе границ: {code}'
 
 # Общий охват — по всем кольцам сразу, чтобы карта встала в viewBox целиком.
 flat = [p for rings in raw.values() for ring in rings for p in ring]
@@ -198,7 +212,8 @@ for key, (lon, lat) in CITIES.items():
 
 esc = lambda s: s.replace("'", "\\'")
 print('// Сгенерировано scripts/build-map.py — руками не править.')
-print('// Границы субъектов: github.com/codeforamerica/click_that_hood (MIT).')
+print('// Границы субъектов: Natural Earth, Admin 1, 1:10 млн (общественное достояние);')
+print('// 89 субъектов РФ. Подробности — в шапке scripts/build-map.py.')
 print('// Проекция Альберса, стандартные параллели 52° и 64°, меридиан 100° в. д.')
 print('')
 print(f'export const VIEW_BOX = \'0 0 {VIEW_W:.0f} {view_h}\'')

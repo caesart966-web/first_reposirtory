@@ -1,6 +1,7 @@
 import { Check } from 'lucide-react'
 import type { ServiceBlock, ServicePage as ServicePageData } from '../content/services'
 import { anchor } from '../lib/site'
+import { useHashScroll } from '../lib/useHashScroll'
 import { nbsp } from '../lib/typo'
 import { Footer } from './Footer'
 import { Header } from './Header'
@@ -175,7 +176,17 @@ function Blocks({ block }: { block: ServiceBlock }) {
         <Head title={block.title} lead={block.intro} />
         <ol className={`mt-10 grid border-t border-neutral-300 sm:grid-cols-2 sm:gap-x-10 ${wide}`}>
           {block.items.map((item, index) => (
-            <li key={item.title} className="border-b border-neutral-300 py-6">
+            <li
+              key={item.title}
+              id={item.id}
+              // Пункт с якорем: при переходе на него (ссылка с главной)
+              // латунная черта вытягивается, а заголовок темнеет — видно,
+              // к какому из трёх пунктов привела ссылка; с 1024 px пункты
+              // стоят в ряд, и без отметки они были бы неразличимы. Отступ
+              // сверху там больше — чтобы над рядом был виден заголовок
+              // раздела.
+              className={`group border-b border-neutral-300 py-6 ${item.id ? 'lg:scroll-mt-[15rem]' : ''}`}
+            >
               {/* Номер — только у этапов; у простого перечня вместо него
                   короткая латунная черта: пункт отмечен, но не пронумерован.
                   На телефоне номер слева от текста, как в шагах вступления
@@ -190,10 +201,15 @@ function Blocks({ block }: { block: ServiceBlock }) {
                     {String(index + 1).padStart(2, '0')}
                   </span>
                 ) : (
-                  <span className="mb-5 block h-0.5 w-8 bg-accent-400" aria-hidden="true" />
+                  <span
+                    className="mb-5 block h-0.5 w-8 bg-accent-400 transition-[width,background-color] duration-700 ease-silk group-target:w-16 group-target:bg-accent-600"
+                    aria-hidden="true"
+                  />
                 )}
                 <div>
-                  <h3 className="text-[1.0625rem] font-semibold leading-snug text-neutral-950">{nbsp(item.title)}</h3>
+                  <h3 className="text-[1.0625rem] font-semibold leading-snug text-neutral-950 group-target:text-accent-800">
+                    {nbsp(item.title)}
+                  </h3>
                   <p className="mt-1.5 text-[0.9375rem] leading-relaxed text-neutral-600">{nbsp(item.text)}</p>
                   {item.law && <Law>{item.law}</Law>}
                 </div>
@@ -265,6 +281,9 @@ function Blocks({ block }: { block: ServiceBlock }) {
 const blockId = (index: number) => `razdel-${index + 1}`
 
 export function ServicePage({ service }: { service: ServicePageData }) {
+  // Ссылка с якорем снаружи (с главной — на пункт «Специалистов НРС»):
+  // догоняем прыжок после сборки страницы, как на главной.
+  useHashScroll()
   const toc = service.blocks.flatMap((block, index) =>
     block.kind === 'note' || block.kind === 'actions' ? [] : [{ id: blockId(index), title: block.title }],
   )

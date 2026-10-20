@@ -1,6 +1,7 @@
 import { Plus } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { nbsp } from '../lib/typo'
+import { ButtonLink } from './ui/Button'
 import { Reveal } from './ui/Reveal'
 import { Section, SectionHeading } from './ui/Section'
 
@@ -106,13 +107,31 @@ export function FAQ() {
   return (
     <Section id="faq">
       <div className="grid gap-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-20">
-        <div>
-          <SectionHeading title="Частые вопросы" />
+        {/* Левая колонка (20.10.2026): под заголовком — «Не нашли ответа?»
+            и кнопка. Раньше под заголовком на компьютере стояла пустая
+            колонка во всю высоту вопросов; теперь она ведёт к связи и едет
+            вместе с прокруткой (sticky), пока вопросы не кончатся.
+            На телефоне строка — после вопросов, а не между заголовком
+            и ними: спрашивать «не нашли?» до того, как человек прочёл
+            вопросы, рано. Для этого до 1024 px обёртка «растворяется»
+            (contents), и порядок задают order у её частей. */}
+        <div className="contents lg:sticky lg:top-28 lg:block lg:self-start">
+          <div className="order-1 lg:order-none">
+            <SectionHeading title="Частые вопросы" />
+          </div>
+          <Reveal delay={150} className="order-3 lg:order-none lg:mt-10">
+            <p className="max-w-sm text-lg leading-relaxed text-neutral-700">
+              {nbsp('Не нашли ответа? Позвоните или напишите — разберу вашу ситуацию бесплатно.')}
+            </p>
+            <ButtonLink href="#contacts" size="lg" arrow className="mt-6">
+              Задать вопрос
+            </ButtonLink>
+          </Reveal>
         </div>
         {/* Вопросы строками с тонкими линейками, без карточки: знак «+»
             поворачивается в «×», ответ раскрывается мягко, на той же кривой
             silk, что и все переходы сайта. */}
-        <Reveal className="border-t border-neutral-300">
+        <Reveal className="order-2 border-t border-neutral-300 lg:order-none">
           {ITEMS.map((item, index) => {
             const open = openIndex === index
             return (
