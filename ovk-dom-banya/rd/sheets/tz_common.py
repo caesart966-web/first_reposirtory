@@ -16,7 +16,7 @@ sys.path.insert(0, HERE)
 from rdbase import (new_doc as _new_doc, DPlan, RDSheet, add_underlay, UNDER, save_and_pdf,  # noqa: E402,F401
                     fmt_num, axes, HOUSE_AX, BATH_AX, OX, OY, offset_poly)
 import ov_boiler_plan as BP                                   # noqa: E402
-from ov_heat1 import KSH, KV_RECT, RT_RECT, ECO_UP            # noqa: E402,F401
+from ov_heat1 import KSH, KV_RECT, ECO_UP                     # noqa: E402,F401
 from ov_vent1 import KU1, KU2                                 # noqa: E402
 import ov_bath as BA                                          # noqa: E402
 
@@ -106,12 +106,11 @@ def ctx_rect(p, r, txt=None, h=1.6, rot=0, ltype=None):
 
 
 def ctx_p1(p, boiler=True):
-    """1 этаж: шкафы, конвекторы, блоки К, Р-т; топочная — контуром или оборудованием."""
+    """1 этаж: шкафы, конвекторы, блоки К; топочная — контуром или оборудованием."""
     for n, r in KSH.items():
         ctx_rect(p, r)
     for n, r in KV_RECT.items():
         ctx_rect(p, r)
-    ctx_rect(p, RT_RECT)
     for n, r in KU1.items():
         ctx_rect(p, r, n, 1.4)
     if boiler:
