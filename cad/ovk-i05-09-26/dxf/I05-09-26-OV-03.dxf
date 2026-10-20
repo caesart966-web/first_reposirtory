@@ -493,7 +493,7 @@ $SKPOLY
   9
 $TDCREATE
  40
-2461334.4038194446
+2461334.500335648
   9
 $TDUCREATE
  40
@@ -501,7 +501,7 @@ $TDUCREATE
   9
 $TDUPDATE
  40
-2461334.4038310186
+2461334.500358796
   9
 $TDUUPDATE
  40
@@ -933,11 +933,11 @@ $PSTYLEMODE
   9
 $FINGERPRINTGUID
   2
-{8BF8174A-C16A-4285-A8AA-4E319D8EAD02}
+{FC926159-FFE0-48AF-B6F0-8F7C1C616265}
   9
 $VERSIONGUID
   2
-{4605703A-17EB-45B4-941A-EC2D71BA74A8}
+{6CEABC7A-EA51-4D93-930E-57739DA8DD10}
   9
 $EXTNAMES
 290
@@ -1343,22 +1343,6 @@ ObjectDBX Classes
   0
 CLASS
   1
-WIPEOUT
-  2
-AcDbWipeout
-  3
-WipeOut
- 90
-127
- 91
-0
-280
-0
-281
-1
-  0
-CLASS
-  1
 WIPEOUTVARIABLES
   2
 AcDbWipeoutVariables
@@ -1388,6 +1372,22 @@ ObjectDBX Classes
 0
 281
 0
+  0
+CLASS
+  1
+WIPEOUT
+  2
+AcDbWipeout
+  3
+WipeOut
+ 90
+127
+ 91
+0
+280
+0
+281
+1
   0
 ENDSEC
   0
@@ -1681,36 +1681,6 @@ AcDbSymbolTableRecord
 100
 AcDbLinetypeTableRecord
   2
-Пунктир 2-1_5
- 70
-0
-  3
-
- 72
-65
- 73
-2
- 40
-3.5
- 49
-2.0
- 74
-0
- 49
--1.5
- 74
-0
-  0
-LTYPE
-  5
-EE1
-330
-2
-100
-AcDbSymbolTableRecord
-100
-AcDbLinetypeTableRecord
-  2
 Сверху
  70
 0
@@ -1728,6 +1698,36 @@ AcDbLinetypeTableRecord
 0
  49
 -1.5875
+ 74
+0
+  0
+LTYPE
+  5
+EE1
+330
+2
+100
+AcDbSymbolTableRecord
+100
+AcDbLinetypeTableRecord
+  2
+Пунктир 2-1_5
+ 70
+0
+  3
+
+ 72
+65
+ 73
+2
+ 40
+3.5
+ 49
+2.0
+ 74
+0
+ 49
+-1.5
  74
 0
   0
@@ -2709,7 +2709,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-G-ANNO-SYMB
+A-DOOR
  70
 8
  62
@@ -2733,11 +2733,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-P-SANR-FIXT
+A-ANNO-DIMS-100
  70
 8
  62
-9
+8
   6
 Continuous
 370
@@ -2757,11 +2757,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-I-FURN
+A-AREA-IDEN
  70
 8
  62
-9
+8
   6
 Continuous
 370
@@ -2781,11 +2781,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-ANNO-DIMS
+A-GLAZ-CWMG
  70
-9
+8
  62
--8
+8
   6
 Continuous
 370
@@ -2798,6 +2798,30 @@ F
 LAYER
   5
 ED0
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+A-WALL-PATT
+ 70
+8
+ 62
+8
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+ED1
 330
 1
 100
@@ -2821,7 +2845,79 @@ F
   0
 LAYER
   5
-ED1
+ED2
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+A-GLAZ
+ 70
+8
+ 62
+8
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+ED3
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+A-DOOR-HDLN
+ 70
+8
+ 62
+8
+  6
+Пунктир 2-1_5
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+ED4
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+P-SANR-FIXT
+ 70
+8
+ 62
+9
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+ED5
 330
 1
 100
@@ -2847,102 +2943,6 @@ F
   0
 LAYER
   5
-ED2
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-A-DOOR-HDLN
- 70
-8
- 62
-8
-  6
-Пунктир 2-1_5
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-ED3
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-A-WALL-PATT
- 70
-8
- 62
-8
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-ED4
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-A-GLAZ-CWMG
- 70
-8
- 62
-8
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-ED5
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-A-DETL-GENF
- 70
-8
- 62
-9
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
 ED6
 330
 1
@@ -2951,7 +2951,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-M-EQPM
+S-STRS
  70
 8
  62
@@ -2999,7 +2999,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-DOOR
+A-WALL
  70
 8
  62
@@ -3023,11 +3023,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-COLS
+A-DETL-GENF
  70
 8
  62
-8
+9
   6
 Continuous
 370
@@ -3047,7 +3047,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-WALL
+A-COLS
  70
 8
  62
@@ -3071,11 +3071,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-ANNO-DIMS-100
+I-FURN
  70
 8
  62
-8
+9
   6
 Continuous
 370
@@ -3095,11 +3095,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-GLAZ
+M-EQPM
  70
 8
  62
-8
+9
   6
 Continuous
 370
@@ -3119,11 +3119,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-AREA-IDEN
+A-ANNO-DIMS
  70
-8
+9
  62
-8
+-8
   6
 Continuous
 370
@@ -3143,11 +3143,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-S-STRS
+A-ANNO-NOTE
  70
 8
  62
-9
+8
   6
 Continuous
 370
@@ -3167,7 +3167,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-ANNO-NOTE
+G-ANNO-SYMB
  70
 8
  62
@@ -3313,34 +3313,6 @@ AcDbSymbolTableRecord
 100
 AcDbTextStyleTableRecord
   2
-Arial
- 70
-0
- 40
-199.9999999999999
- 41
-1.0
- 50
-0.0
- 71
-0
- 42
-0.2
-  3
-arial.ttf
-  4
-
-  0
-STYLE
-  5
-EE4
-330
-5
-100
-AcDbSymbolTableRecord
-100
-AcDbTextStyleTableRecord
-  2
 ISOCPEUR_I
  70
 0
@@ -3356,6 +3328,34 @@ ISOCPEUR_I
 0.2
   3
 isocpeui.ttf
+  4
+
+  0
+STYLE
+  5
+EE4
+330
+5
+100
+AcDbSymbolTableRecord
+100
+AcDbTextStyleTableRecord
+  2
+Arial
+ 70
+0
+ 40
+199.9999999999999
+ 41
+1.0
+ 50
+0.0
+ 71
+0
+ 42
+0.2
+  3
+arial.ttf
   4
 
   0
@@ -3745,7 +3745,7 @@ AcDbDimStyleTableRecord
 290
 0
 340
-EE4
+EE3
 343
 EE6
 344
@@ -147721,7 +147721,7 @@ AcDbText
  40
 200.0
   1
-1950 Вт
+1910 Вт
   7
 GOST
  11
@@ -147981,7 +147981,7 @@ AcDbText
  40
 200.0
   1
-1950 Вт
+1910 Вт
   7
 GOST
  11
@@ -148241,7 +148241,7 @@ AcDbText
  40
 200.0
   1
-1650 Вт
+1610 Вт
   7
 GOST
  11
@@ -148501,7 +148501,7 @@ AcDbText
  40
 200.0
   1
-900 Вт
+880 Вт
   7
 GOST
  11
@@ -148761,7 +148761,7 @@ AcDbText
  40
 200.0
   1
-900 Вт
+880 Вт
   7
 GOST
  11
@@ -149021,7 +149021,7 @@ AcDbText
  40
 200.0
   1
-890 Вт
+900 Вт
   7
 GOST
  11
@@ -149281,7 +149281,7 @@ AcDbText
  40
 200.0
   1
-890 Вт
+900 Вт
   7
 GOST
  11
@@ -150705,7 +150705,7 @@ AcDbText
  40
 190.0
   1
-Кв 8 вых. + ТП 9 вых.
+Кв 8 вых. + ТП 10 вых.
   7
 GOST
  11
@@ -151903,7 +151903,7 @@ AcDbWipeout
  30
 0.0
  11
-2673.8
+2791.6000000000004
  21
 0.0
  31
@@ -151967,11 +151967,11 @@ AcDbPolyline
  20
 6663.5
  10
-3523.8
+3641.6000000000004
  20
 6663.5
  10
-3523.8
+3641.6000000000004
  20
 7550.0
  10
@@ -152033,7 +152033,7 @@ AcDbText
  40
 190.0
   1
-ТП 4 петли — 1,3 кВт
+ТП 5 петлель — 1,5 кВт
   7
 GOST
  11
@@ -152067,7 +152067,7 @@ AcDbText
  40
 190.0
   1
-Кв-1–5 — 7,4 кВт
+Кв-1–5 — 7,2 кВт
   7
 GOST
  11
@@ -152101,7 +152101,7 @@ AcDbPolyline
  20
 7244.499999999999
  10
-3523.8
+3641.6000000000004
  20
 7244.499999999999
   0
@@ -156763,7 +156763,7 @@ AcDbMText
  71
 5
   1
-1950
+1910
   7
 GOST
   0
@@ -156793,7 +156793,7 @@ AcDbMText
  71
 4
   1
-«Бриз В» L=1950, ≥1280 Вт/м
+«Бриз В» L=1950, ≥1250 Вт/м
   7
 GOST
   0
@@ -156823,7 +156823,7 @@ AcDbMText
  71
 5
   1
-112
+109
   7
 GOST
   0
@@ -156883,7 +156883,7 @@ AcDbMText
  71
 5
   1
-1,86
+1,82
   7
 GOST
   0
@@ -157031,7 +157031,7 @@ AcDbMText
  71
 5
   1
-1950
+1910
   7
 GOST
   0
@@ -157061,7 +157061,7 @@ AcDbMText
  71
 4
   1
-«Бриз В» L=1950, ≥1280 Вт/м
+«Бриз В» L=1950, ≥1250 Вт/м
   7
 GOST
   0
@@ -157091,7 +157091,7 @@ AcDbMText
  71
 5
   1
-112
+109
   7
 GOST
   0
@@ -157151,7 +157151,7 @@ AcDbMText
  71
 5
   1
-1,86
+1,82
   7
 GOST
   0
@@ -157299,7 +157299,7 @@ AcDbMText
  71
 5
   1
-1650
+1610
   7
 GOST
   0
@@ -157329,7 +157329,7 @@ AcDbMText
  71
 4
   1
-«Бриз В» L=1650, ≥1280 Вт/м
+«Бриз В» L=1650, ≥1250 Вт/м
   7
 GOST
   0
@@ -157359,7 +157359,7 @@ AcDbMText
  71
 5
   1
-95
+92
   7
 GOST
   0
@@ -157419,7 +157419,7 @@ AcDbMText
  71
 5
   1
-1,58
+1,54
   7
 GOST
   0
@@ -157567,7 +157567,7 @@ AcDbMText
  71
 5
   1
-900
+880
   7
 GOST
   0
@@ -157597,7 +157597,7 @@ AcDbMText
  71
 4
   1
-«Бриз В» L=900, ≥1280 Вт/м
+«Бриз В» L=900, ≥1250 Вт/м
   7
 GOST
   0
@@ -157627,7 +157627,7 @@ AcDbMText
  71
 5
   1
-52
+50
   7
 GOST
   0
@@ -157687,7 +157687,7 @@ AcDbMText
  71
 5
   1
-0,86
+0,84
   7
 GOST
   0
@@ -157835,7 +157835,7 @@ AcDbMText
  71
 5
   1
-900
+880
   7
 GOST
   0
@@ -157865,7 +157865,7 @@ AcDbMText
  71
 4
   1
-«Бриз В» L=900, ≥1280 Вт/м
+«Бриз В» L=900, ≥1250 Вт/м
   7
 GOST
   0
@@ -157895,7 +157895,7 @@ AcDbMText
  71
 5
   1
-52
+50
   7
 GOST
   0
@@ -157955,7 +157955,7 @@ AcDbMText
  71
 5
   1
-0,86
+0,84
   7
 GOST
   0
@@ -158103,7 +158103,7 @@ AcDbMText
  71
 5
   1
-890
+900
   7
 GOST
   0
@@ -158223,7 +158223,7 @@ AcDbMText
  71
 5
   1
-0,85
+0,86
   7
 GOST
   0
@@ -158371,7 +158371,7 @@ AcDbMText
  71
 5
   1
-890
+900
   7
 GOST
   0
@@ -158491,7 +158491,7 @@ AcDbMText
  71
 5
   1
-0,85
+0,86
   7
 GOST
   0
@@ -159601,7 +159601,7 @@ AcDbMText
  71
 5
   1
-719
+716
   7
 GOST
   0
