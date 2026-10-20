@@ -1,3 +1,4 @@
+import { useEffect, useRef, type CSSProperties } from 'react'
 import { IMAGES } from '../content/images'
 import { LAW } from '../content/sroDetails'
 import { fadeIn } from '../lib/fade'
@@ -40,6 +41,24 @@ const DOCS_PAGE = 'uslugi/dokumenty'
 // index.css (.docs-photo). Контраст подписей над растворённым краем
 // меряет scripts/test-hero-contrast.mjs.
 export function Documents() {
+  // «Подшивка» описи (20.10.2026): строка проявляется, под ней слева
+  // направо прочерчивается латунная линия, номер становится латунным —
+  // будто документ вносят в опись. Тот же язык, что у чертежа в «Как
+  // проходит работа» (линии латунью), но тише: раздел не останавливает
+  // прокрутку и не становится длиннее. Готовый HTML (поисковик, без
+  // скрипта) и «уменьшить движение» показывают опись уже подшитой: линии
+  // и номера латунные сразу. Скрипт «взводит» подшивку классом
+  // docs-filing у списка; строки, которые к этому моменту уже в кадре
+  // (вернулись «Назад»), помечаются is-filed и не перерисовываются.
+  // Правила — в index.css, «Опись документов».
+  const listRef = useRef<HTMLOListElement>(null)
+  useEffect(() => {
+    const list = listRef.current
+    if (!list || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    list.querySelectorAll(':scope > li > .reveal.is-visible').forEach((el) => el.classList.add('is-filed'))
+    list.classList.add('docs-filing')
+  }, [])
+
   return (
     <section
       id="documents"
@@ -85,11 +104,18 @@ export function Documents() {
           <Reveal>
             <p className="mt-14 text-sm text-neutral-600">Что войдёт в пакет</p>
           </Reveal>
-          <ol className="mt-5 grid border-t border-neutral-300 lg:grid-flow-col lg:grid-rows-[repeat(4,auto)] lg:gap-x-10">
+          <ol
+            ref={listRef}
+            className="mt-5 grid border-t border-neutral-300 lg:grid-flow-col lg:grid-rows-[repeat(4,auto)] lg:gap-x-10"
+          >
             {DOCUMENTS.map((doc, index) => (
-              <li key={doc.title} className="doc-row border-b border-neutral-300">
+              <li
+                key={doc.title}
+                className="doc-row border-b border-neutral-300"
+                style={{ '--i': index } as CSSProperties}
+              >
                 <Reveal delay={index * 50} className="grid grid-cols-[2.5rem_minmax(0,1fr)] gap-2 py-4">
-                  <span className="doc-num pt-0.5 text-sm tabular-nums text-neutral-500">
+                  <span className="doc-num pt-0.5 text-sm tabular-nums">
                     {String(index + 1).padStart(2, '0')}
                   </span>
                   <div className="doc-text">
