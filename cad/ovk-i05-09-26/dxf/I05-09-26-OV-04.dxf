@@ -493,7 +493,7 @@ $SKPOLY
   9
 $TDCREATE
  40
-2461335.384525463
+2461335.700266204
   9
 $TDUCREATE
  40
@@ -501,7 +501,7 @@ $TDUCREATE
   9
 $TDUPDATE
  40
-2461335.384537037
+2461335.700277778
   9
 $TDUUPDATE
  40
@@ -933,11 +933,11 @@ $PSTYLEMODE
   9
 $FINGERPRINTGUID
   2
-{B233086A-B4EC-4BA2-99E5-B8A1D04ABA9C}
+{670A3CA1-D673-427F-83AB-56A363D156D8}
   9
 $VERSIONGUID
   2
-{FAC78A7A-EFEB-472C-A03B-95533A972246}
+{C39D82C3-7344-413A-9BC7-012A99A0D21C}
   9
 $EXTNAMES
 290
@@ -1327,43 +1327,11 @@ ISM
   0
 CLASS
   1
-ACDBPLACEHOLDER
-  2
-AcDbPlaceHolder
-  3
-ObjectDBX Classes
- 90
-0
- 91
-0
-280
-0
-281
-0
-  0
-CLASS
-  1
 LAYOUT
   2
 AcDbLayout
   3
 ObjectDBX Classes
- 90
-0
- 91
-0
-280
-0
-281
-0
-  0
-CLASS
-  1
-WIPEOUTVARIABLES
-  2
-AcDbWipeoutVariables
-  3
-WipeOut
  90
 0
  91
@@ -1388,6 +1356,38 @@ WipeOut
 0
 281
 1
+  0
+CLASS
+  1
+WIPEOUTVARIABLES
+  2
+AcDbWipeoutVariables
+  3
+WipeOut
+ 90
+0
+ 91
+0
+280
+0
+281
+0
+  0
+CLASS
+  1
+ACDBPLACEHOLDER
+  2
+AcDbPlaceHolder
+  3
+ObjectDBX Classes
+ 90
+0
+ 91
+0
+280
+0
+281
+0
   0
 ENDSEC
   0
@@ -1681,36 +1681,6 @@ AcDbSymbolTableRecord
 100
 AcDbLinetypeTableRecord
   2
-Пунктир 2-1_5
- 70
-0
-  3
-
- 72
-65
- 73
-2
- 40
-3.5
- 49
-2.0
- 74
-0
- 49
--1.5
- 74
-0
-  0
-LTYPE
-  5
-EE1
-330
-2
-100
-AcDbSymbolTableRecord
-100
-AcDbLinetypeTableRecord
-  2
 Осевая 12-2-2
  70
 0
@@ -1741,7 +1711,7 @@ AcDbLinetypeTableRecord
   0
 LTYPE
   5
-EE2
+EE1
 330
 2
 100
@@ -1766,6 +1736,36 @@ AcDbLinetypeTableRecord
 0
  49
 -1.5875
+ 74
+0
+  0
+LTYPE
+  5
+EE2
+330
+2
+100
+AcDbSymbolTableRecord
+100
+AcDbLinetypeTableRecord
+  2
+Пунктир 2-1_5
+ 70
+0
+  3
+
+ 72
+65
+ 73
+2
+ 40
+3.5
+ 49
+2.0
+ 74
+0
+ 49
+-1.5
  74
 0
   0
@@ -2709,7 +2709,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-FLOR
+A-DETL-GENF
  70
 8
  62
@@ -2733,11 +2733,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-I-FURN
+A-GLAZ-CWMG
  70
 8
  62
-9
+8
   6
 Continuous
 370
@@ -2757,11 +2757,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-GLAZ
+A-ANNO-DIMS
  70
-8
+9
  62
-8
+-8
   6
 Continuous
 370
@@ -2781,11 +2781,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-G-ANNO-SYMB
+P-SANR-FIXT
  70
 8
  62
-8
+9
   6
 Continuous
 370
@@ -2798,126 +2798,6 @@ F
 LAYER
   5
 ED0
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-A-DOOR
- 70
-8
- 62
-8
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-ED1
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-S-STRS
- 70
-8
- 62
-9
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-ED2
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-A-ANNO-NOTE
- 70
-8
- 62
-8
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-ED3
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-A-DETL-GENF
- 70
-8
- 62
-9
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-ED4
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-A-DOOR-HDLN
- 70
-8
- 62
-8
-  6
-Пунктир 2-1_5
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-ED5
 330
 1
 100
@@ -2943,7 +2823,7 @@ F
   0
 LAYER
   5
-ED6
+ED1
 330
 1
 100
@@ -2951,7 +2831,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-AREA-IDEN
+A-DOOR
  70
 8
  62
@@ -2967,7 +2847,7 @@ F
   0
 LAYER
   5
-ED7
+ED2
 330
 1
 100
@@ -2975,7 +2855,31 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-WALL-PATT
+A-DOOR-HDLN
+ 70
+8
+ 62
+8
+  6
+Пунктир 2-1_5
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+ED3
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+G-ANNO-SYMB
  70
 8
  62
@@ -2991,7 +2895,7 @@ F
   0
 LAYER
   5
-ED8
+ED4
 330
 1
 100
@@ -2999,7 +2903,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-WALL
+A-ANNO-NOTE
  70
 8
  62
@@ -3015,55 +2919,7 @@ F
   0
 LAYER
   5
-ED9
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-P-SANR-FIXT
- 70
-8
- 62
-9
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-EDA
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-A-ANNO-DIMS
- 70
-9
- 62
--8
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-EDB
+ED5
 330
 1
 100
@@ -3087,31 +2943,7 @@ F
   0
 LAYER
   5
-EDC
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-A-ANNO-DIMS-100
- 70
-8
- 62
-8
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-EDD
+ED6
 330
 1
 100
@@ -3135,7 +2967,7 @@ F
   0
 LAYER
   5
-EDE
+ED7
 330
 1
 100
@@ -3159,6 +2991,174 @@ F
   0
 LAYER
   5
+ED8
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+A-WALL-PATT
+ 70
+8
+ 62
+8
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+ED9
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+A-WALL
+ 70
+8
+ 62
+8
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+EDA
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+A-ANNO-DIMS-100
+ 70
+8
+ 62
+8
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+EDB
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+A-FLOR
+ 70
+8
+ 62
+9
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+EDC
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+A-AREA-IDEN
+ 70
+8
+ 62
+8
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+EDD
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+S-STRS
+ 70
+8
+ 62
+9
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+EDE
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+I-FURN
+ 70
+8
+ 62
+9
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
 EDF
 330
 1
@@ -3167,7 +3167,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-GLAZ-CWMG
+A-GLAZ
  70
 8
  62
@@ -3317,34 +3317,6 @@ AcDbSymbolTableRecord
 100
 AcDbTextStyleTableRecord
   2
-ISOCPEUR_I
- 70
-0
- 40
-249.9999999999997
- 41
-1.0
- 50
-0.0
- 71
-0
- 42
-0.2
-  3
-isocpeui.ttf
-  4
-
-  0
-STYLE
-  5
-EE5
-330
-5
-100
-AcDbSymbolTableRecord
-100
-AcDbTextStyleTableRecord
-  2
 GOST Common
  70
 0
@@ -3360,6 +3332,34 @@ GOST Common
 0.2
   3
 GOST_Common.ttf
+  4
+
+  0
+STYLE
+  5
+EE5
+330
+5
+100
+AcDbSymbolTableRecord
+100
+AcDbTextStyleTableRecord
+  2
+ISOCPEUR_I
+ 70
+0
+ 40
+249.9999999999997
+ 41
+1.0
+ 50
+0.0
+ 71
+0
+ 42
+0.2
+  3
+isocpeui.ttf
   4
 
   0
@@ -3721,7 +3721,7 @@ AcDbDimStyleTableRecord
 290
 0
 340
-EE4
+EE5
 343
 EE6
 344
@@ -167475,15 +167475,17 @@ AcDbMText
   3
 0,2–0,35 м, опора косоуров); под остальной лестницей и площадкой до Кв-8 — петля 1.9-3 (шаг 150).\P3. Температура поверхности пола — по СП 60.13330: в 1.10, 1.11 не выше 26 °С, в остальных — не выше 31 °С. Петли 1.10, 1.11, 1.8, 1.9-3 — от смесительн
   3
-ого узла КШ-2 (подача 36 °С, насос класса 25-40); коллектор КШ-5 — от того же узла транзитом 25×3,5 в полу тамбура 1.7 (перед дверью в 1.8, ниже подводки 1.8-1); КШ-1, КШ-3 — от РК, подача 48,5 °С.\P4. Пол по грунту (сверху вниз): покрытие, стяжка 10
+ого узла КШ-2 (подача 36 °С, насос класса 25-40); коллектор КШ-5 — от того же узла транзитом 25×3,5 в полу тамбура 1.7 (перед дверью в 1.8, ниже подводки 1.8-1); КШ-1, КШ-3 — от РК, подача 48,5 °С.\P4. Пол по грунту (сверху вниз, АР06): покрытие, стя
   3
-0 мм с фиброй, трубы на пленке/мате с разметкой, ЭППС 100 (по АР/КР), демпферная лента по периметру. Деформационные швы — по границам петель и в дверных проемах; карта стяжки не более 40 м² и не длиннее 8 м.\P5. Транзитные подводки (на плане — от КШ-
+жка 90 мм армированная сеткой ВР-1 (гараж — 145), трубы на пленке/мате с разметкой, ЭППС 150 (гараж — 100), демпферная лента по периметру. Деформационные швы — по границам петель и в дверных проемах; карта стяжки не более 40 м² и не длиннее 8 м.\P5. 
   3
-1, КШ-2, КШ-5 через тамбур 1.7 под петлей 1.7-1 и холл 1.9) — в слое утеплителя под петлями, в гофре; пересечение с магистралями — с обходом по высоте.\P6. Перед заливкой стяжки — испытание давлением 0,6 МПа (не менее 1,5 рабочего) 24 ч; стяжка — под
+Транзитные подводки (на плане — от КШ-1, КШ-2, КШ-5 через тамбур 1.7 под петлей 1.7-1 и холл 1.9) — в слое утеплителя под петлями, в гофре; пересечение с магистралями — с обходом по высоте.\P6. Перед заливкой стяжки — испытание давлением 0,6 МПа (не 
   3
- давлением. Первый пуск — после набора прочности стяжки, с плавным подъемом температуры.\P7. Покрытия пола и толщина стяжки приняты до получения экспликации полов (доска — 1.9, 1.10, 1.11, плитка — остальные, гараж — бетон). При другом покрытии длины
+менее 1,5 рабочего) 24 ч; стяжка — под давлением. Первый пуск — после набора прочности стяжки, с плавным подъемом температуры.\P7. Покрытия и стяжка — по экспликации полов АР06, АР12 (21.10.2026): ламинат 8 на подложке 2 для теплого пола (1.9, 1.10; 
+  3
+R покрытия с подложкой не более 0,10 м²·°С/Вт), паркетная доска 13 на клею по наливному полу (1.11), керамогранит 8 на клею (остальные), гараж — наливной пол; стяжка 90 мм (1.11 — 85 + 5, гараж — 145), ЭППС 150 (гараж — 100). Расчет выполнен по стяжк
   1
- и настройки петель уточнить.
+е 100 мм — в запас: при 90 мм подача нужна на ≈1 °С ниже.
   7
 GOST
  44
