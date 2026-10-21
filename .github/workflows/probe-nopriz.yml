@@ -1,0 +1,41 @@
+# Разовая проверка: открыт ли реестр НОПРИЗ с серверов GitHub.
+# Из облачной среды Claude reestr.nopriz.ru закрыт сетевой политикой (403),
+# и от ответа здесь зависит, можно ли собирать базу роботом GitHub
+# или только с компьютера в России. Ничего не собирает и не сохраняет.
+name: probe-nopriz
+
+on:
+  push:
+    branches: [claude/awesome-hamilton-a559u5]
+    paths: [.github/workflows/probe-nopriz.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Адреса реестра
+        run: |
+          probe() {
+            echo "===== $1 $2"
+            if [ "$1" = POST ]; then
+              curl -sS -m 30 -X POST -H 'Content-Type: application/json' \
+                -H 'Accept: application/json' -H 'Referer: https://reestr.nopriz.ru/' \
+                -d '{"filters":{},"page":1,"pageCount":"1"}' \
+                -o /tmp/body -w 'HTTP %{http_code}, %{time_total} s, %{size_download} B\n' "$2" || echo "curl: ошибка"
+            else
+              curl -sS -m 30 -L -o /tmp/body \
+                -w 'HTTP %{http_code}, %{time_total} s, %{size_download} B, итог %{url_effective}\n' "$2" || echo "curl: ошибка"
+            fi
+            head -c 400 /tmp/body 2>/dev/null; echo; rm -f /tmp/body
+          }
+          curl -sS -m 10 https://ipinfo.io/country || true; echo
+          probe GET  https://reestr.nopriz.ru/
+          probe POST https://reestr.nopriz.ru/api/sro/all/member/list
+          probe POST https://reestr.nopriz.ru/api/member/list
+          probe GET  https://nrs.nopriz.ru/
+          probe GET  https://nopriz.ru/
