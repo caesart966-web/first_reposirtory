@@ -14,10 +14,11 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 C = json.load(open(os.path.join(HERE, '..', 'ovk', 'calc.json')))
 # площадь зон петель 1 этажа по раскладке «улиткой» (лист 4, ov_heat1.LOOP_RECT), м² — сверяется в calc1()
 A_DRAWN = {'1.2': 10.01, '1.3': 5.32, '1.4': 1.67, '1.5': 42.54, '1.6': 9.29, '1.7': 1.38, '1.8': 4.51,
-           '1.9': 14.03, '1.10': 48.55, '1.11': 24.44}
+           '1.9': 19.51, '1.10': 48.55, '1.11': 24.44}
 N_DRAWN = {'1.2': 1, '1.6': 3, '1.9': 3, '1.10': 5, '1.11': 3}  # петель на раскладке листа 4
-# шаг на раскладке листа 4 (20.10.2026: длины с подводками ≤ 90 м; 1.11 — от КШ-5, подводки длиннее на ≈2 м)
-T_DRAWN = {'1.10': 0.20, '1.11': 0.20}
+# шаг на раскладке листа 4 (20.10.2026: длины с подводками ≤ 90 м; 1.11 — от КШ-5, подводки длиннее на ≈2 м;
+# 1.9 — 100 у петель 1.9-1, 1.9-2; у 1.9-3 под всей лестницей — 150 (ov_heat1.T_LOOP, K_H — из K_H_T))
+T_DRAWN = {'1.10': 0.20, '1.11': 0.20, '1.9': 0.10}
 ROOM = {r['no']: r for r in C['rooms']}
 ASSUMPTIONS = []      # (раздел, текст) — допущения, которые надо подтвердить
 
@@ -350,6 +351,7 @@ def ufh_room(no, cab):
     return dict(no=no, name=r['name'], cab=cab, ti=ti, tv=tv, tv_need=TV_NEED[no], cover=COVER[no], R_cover=R,
                 area=area, A_loops=r1(A, 1), Q_room=r['Q'], Q_ufh_ep=r.get('ufh'), Q_ufh=round(Qn), short_to_device=short,
                 q=r1(q), q_down=r1(q_down), T_mm=int(T * 1000), K_H=r1(K, 2), dth=r1(best['dth']),
+                K_H_T={str(int(round(t * 1000))): r1(k_h(t, R), 2) for t in (0.10, 0.15, 0.20, 0.25, 0.30)},
                 t_ret=r1(tv - sig_d), sigma=r1(sig_d), sigma_calc=r1(sigma), t_floor=r1(tf), t_floor_max=tf_max,
                 ok_floor=tf <= tf_max + 0.05, sp60_limit=31 if wet_or_temp else 26,
                 n_loops=n, L_coil=r1(L_coil), lead=r1(lead_one), L_loop=r1(L_loop), L_total=r1(L_coil + 2 * lead_one * n),
