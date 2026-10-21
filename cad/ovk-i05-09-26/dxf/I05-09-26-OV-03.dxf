@@ -493,7 +493,7 @@ $SKPOLY
   9
 $TDCREATE
  40
-2461334.8005555556
+2461335.384363426
   9
 $TDUCREATE
  40
@@ -501,7 +501,7 @@ $TDUCREATE
   9
 $TDUPDATE
  40
-2461334.8005671296
+2461335.384375
   9
 $TDUUPDATE
  40
@@ -933,11 +933,11 @@ $PSTYLEMODE
   9
 $FINGERPRINTGUID
   2
-{500BE014-9B83-4CC2-911B-32ACE592F354}
+{F65A3B2B-45EE-4755-A11D-6B0AF3A5A41F}
   9
 $VERSIONGUID
   2
-{08C08C1B-DD6F-4A0A-9A25-8349807315D3}
+{4CD3B7ED-4A10-409D-B4B3-8704A28CE6F1}
   9
 $EXTNAMES
 290
@@ -1327,11 +1327,27 @@ ISM
   0
 CLASS
   1
-WIPEOUTVARIABLES
+WIPEOUT
   2
-AcDbWipeoutVariables
+AcDbWipeout
   3
 WipeOut
+ 90
+127
+ 91
+0
+280
+0
+281
+1
+  0
+CLASS
+  1
+ACDBPLACEHOLDER
+  2
+AcDbPlaceHolder
+  3
+ObjectDBX Classes
  90
 0
  91
@@ -1359,27 +1375,11 @@ ObjectDBX Classes
   0
 CLASS
   1
-WIPEOUT
+WIPEOUTVARIABLES
   2
-AcDbWipeout
+AcDbWipeoutVariables
   3
 WipeOut
- 90
-127
- 91
-0
-280
-0
-281
-1
-  0
-CLASS
-  1
-ACDBPLACEHOLDER
-  2
-AcDbPlaceHolder
-  3
-ObjectDBX Classes
  90
 0
  91
@@ -1681,7 +1681,7 @@ AcDbSymbolTableRecord
 100
 AcDbLinetypeTableRecord
   2
-Осевая 12-2-2
+Пунктир 2-1_5
  70
 0
   3
@@ -1689,23 +1689,15 @@ AcDbLinetypeTableRecord
  72
 65
  73
-4
+2
  40
-16.0
+3.5
  49
-12.0
+2.0
  74
 0
  49
--2.0
- 74
-0
- 49
-0.0
- 74
-0
- 49
--2.0
+-1.5
  74
 0
   0
@@ -1749,7 +1741,7 @@ AcDbSymbolTableRecord
 100
 AcDbLinetypeTableRecord
   2
-Пунктир 2-1_5
+Осевая 12-2-2
  70
 0
   3
@@ -1757,15 +1749,23 @@ AcDbLinetypeTableRecord
  72
 65
  73
-2
+4
  40
-3.5
+16.0
  49
-2.0
+12.0
  74
 0
  49
--1.5
+-2.0
+ 74
+0
+ 49
+0.0
+ 74
+0
+ 49
+-2.0
  74
 0
   0
@@ -2709,7 +2709,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-DOOR
+A-COLS
  70
 8
  62
@@ -2733,11 +2733,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-FLOR
+A-ANNO-NOTE
  70
 8
  62
-9
+8
   6
 Continuous
 370
@@ -2757,13 +2757,13 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-ANNO-DIMS
+A-DOOR-HDLN
  70
-9
+8
  62
--8
+8
   6
-Continuous
+Пунктир 2-1_5
 370
 13
 390
@@ -2781,7 +2781,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-M-EQPM
+P-SANR-FIXT
  70
 8
  62
@@ -2829,13 +2829,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-S-GRID-IDEN
+A-ANNO-DIMS-100
  70
-9
+8
  62
--8
-420
-3261359204
+8
   6
 Continuous
 370
@@ -2855,7 +2853,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-WALL
+A-DOOR
  70
 8
  62
@@ -2879,7 +2877,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-WALL-PATT
+G-ANNO-SYMB
  70
 8
  62
@@ -2903,7 +2901,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-GLAZ-CWMG
+S-GRID
  70
 8
  62
@@ -2927,7 +2925,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-P-SANR-FIXT
+I-FURN
  70
 8
  62
@@ -2951,11 +2949,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-S-GRID
+S-STRS
  70
 8
  62
-8
+9
   6
 Continuous
 370
@@ -2975,7 +2973,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-GLAZ
+A-GLAZ-CWMG
  70
 8
  62
@@ -2999,7 +2997,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-ANNO-NOTE
+A-GLAZ
  70
 8
  62
@@ -3023,13 +3021,13 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-DOOR-HDLN
+A-WALL-PATT
  70
 8
  62
 8
   6
-Пунктир 2-1_5
+Continuous
 370
 13
 390
@@ -3040,102 +3038,6 @@ F
 LAYER
   5
 EDA
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-A-COLS
- 70
-8
- 62
-8
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-EDB
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-I-FURN
- 70
-8
- 62
-9
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-EDC
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-S-STRS
- 70
-8
- 62
-9
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-EDD
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-A-ANNO-DIMS-100
- 70
-8
- 62
-8
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-EDE
 330
 1
 100
@@ -3159,6 +3061,104 @@ F
   0
 LAYER
   5
+EDB
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+M-EQPM
+ 70
+8
+ 62
+9
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+EDC
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+A-WALL
+ 70
+8
+ 62
+8
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+EDD
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+S-GRID-IDEN
+ 70
+9
+ 62
+-8
+420
+3261359204
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+EDE
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+A-ANNO-DIMS
+ 70
+9
+ 62
+-8
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
 EDF
 330
 1
@@ -3167,11 +3167,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-G-ANNO-SYMB
+A-FLOR
  70
 8
  62
-8
+9
   6
 Continuous
 370
@@ -3313,34 +3313,6 @@ AcDbSymbolTableRecord
 100
 AcDbTextStyleTableRecord
   2
-Arial
- 70
-0
- 40
-199.9999999999999
- 41
-1.0
- 50
-0.0
- 71
-0
- 42
-0.2
-  3
-arial.ttf
-  4
-
-  0
-STYLE
-  5
-EE4
-330
-5
-100
-AcDbSymbolTableRecord
-100
-AcDbTextStyleTableRecord
-  2
 GOST Common
  70
 0
@@ -3356,6 +3328,34 @@ GOST Common
 0.2
   3
 GOST_Common.ttf
+  4
+
+  0
+STYLE
+  5
+EE4
+330
+5
+100
+AcDbSymbolTableRecord
+100
+AcDbTextStyleTableRecord
+  2
+Arial
+ 70
+0
+ 40
+199.9999999999999
+ 41
+1.0
+ 50
+0.0
+ 71
+0
+ 42
+0.2
+  3
+arial.ttf
   4
 
   0
@@ -149531,7 +149531,7 @@ AcDbText
  40
 200.0
   1
-Кв-8  L=2200, 2340 Вт
+Кв-8  L=2200, 2170 Вт
   7
 GOST
  11
@@ -153099,7 +153099,7 @@ AcDbText
  40
 190.0
   1
-ТП 3 петли — 0,9 кВт
+ТП 3 петли — 1,1 кВт
   7
 GOST
  11
@@ -158697,7 +158697,7 @@ AcDbMText
  71
 5
   1
-2340
+2170
   7
 GOST
   0
@@ -158727,7 +158727,7 @@ AcDbMText
  71
 4
   1
-«Бриз В» L=2200, ≥1360 Вт/м
+«Бриз В» L=2200, ≥1260 Вт/м
   7
 GOST
   0
@@ -158757,7 +158757,7 @@ AcDbMText
  71
 5
   1
-134
+124
   7
 GOST
   0
@@ -158817,7 +158817,7 @@ AcDbMText
  71
 5
   1
-2,24
+2,07
   7
 GOST
   0
@@ -159659,7 +159659,7 @@ AcDbMText
  71
 5
   1
-716
+711
   7
 GOST
   0
@@ -159749,7 +159749,7 @@ AcDbMText
  71
 5
   1
-0,48
+0,47
   7
 GOST
   0
