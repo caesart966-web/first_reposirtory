@@ -314,7 +314,7 @@ def vz_scheme(p, a):
            'ОВ_В', dx=0.22, rot=90)
     a.text(x0, yr, (3.65 + VZ_Z_SHAFT_TOP) / 2, 'шахта над мангалом (АР)', 1.7, 'center', 'ОВ_шахты',
            dx=-0.22, rot=90)
-    a.elev(x1, yr, VZ_Z_SHAFT_TOP, f'+{n1(VZ_Z_SHAFT_TOP, 3)} верх шахты (по АР, уточнить)', shelf=17.0,
+    a.elev(x1, yr, VZ_Z_SHAFT_TOP, f'+{n1(VZ_Z_SHAFT_TOP, 3)} верх шахты', shelf=17.0,
            dx=0.15)
     a.elev(xr, yr, VZ_Z_CAP, f'+{n1(VZ_Z_CAP, 3)} низ зонта оголовка', shelf=13.0, dx=0.15)
     a.text(xr, yr, VZ_Z_CAP, 'Система ВЗ', 2.0, 'left', 'ОВ_В', dx=-0.30, dy=1.15)
