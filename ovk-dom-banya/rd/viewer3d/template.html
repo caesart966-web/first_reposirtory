@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>И05.09.26-ОВ 3D</title>
+<style>
+:root{--bg:#fff;--ink:#1f2937;--soft:#6b7280;--panel:rgba(255,255,255,.94);--line:#e5e7eb;--on:#1f2937;--onink:#fff}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:14px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+#view{position:fixed;inset:0}
+.labels{position:absolute;inset:0;pointer-events:none}
+.lbl{font:600 11px/1 system-ui,Arial,sans-serif;background:rgba(255,255,255,.85);padding:2px 4px;border-radius:3px;white-space:nowrap}
+#panel{position:fixed;left:12px;top:12px;width:300px;max-height:calc(100% - 24px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;box-shadow:0 4px 18px rgba(0,0,0,.08)}
+#panel h1{font-size:15px;margin:0 0 2px}
+#panel .sub{color:var(--soft);font-size:12px;margin:0 0 10px}
+.row{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.row button{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:6px;padding:5px 8px;font:inherit;font-size:12px;cursor:pointer}
+.row button.on{background:var(--on);color:var(--onink);border-color:var(--on)}
+.cap{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--soft);margin:2px 0 6px}
+#layers label{display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0;cursor:pointer}
+#layers i{display:inline-block;width:14px;height:14px;border-radius:3px;flex:none}
+#layers i.none{background:transparent;border:1px dashed #9ca3af}
+.note{color:var(--soft);font-size:11.5px;margin:10px 0 0}
+#toggle{position:fixed;left:12px;top:12px;display:none;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:7px 10px;font:inherit;cursor:pointer}
+body.collapsed #panel{display:none}
+body.collapsed #toggle{display:block}
+#card{position:fixed;right:12px;bottom:12px;max-width:340px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;font-size:13px;box-shadow:0 4px 18px rgba(0,0,0,.08)}
+#card[hidden]{display:none}
+#card .dim{color:var(--soft)}
+body.noui #panel,body.noui #toggle,body.noui #card{display:none!important}
+#hide{float:right;border:0;background:none;color:var(--soft);font:inherit;cursor:pointer;padding:0}
+@media (max-width:640px){#panel{width:calc(100% - 24px);max-height:46%}}
+</style>
+</head>
+<body>
+<div id="view"></div>
+<button id="toggle">Панель</button>
+<div id="panel">
+  <button id="hide" onclick="document.body.classList.add('collapsed')">скрыть</button>
+  <h1>Вентиляция и кондиционирование</h1>
+  <p class="sub">И05.09.26-ОВ · дом · 3D-модель по листам 9–11</p>
+  <div class="cap">Вид</div>
+  <div class="row">
+    <button data-view="iso">Общий вид</button><button data-view="iso2">С востока</button>
+    <button data-view="f1">1 этаж</button><button data-view="f2">2 этаж</button>
+    <button data-view="topo">Топочная</button><button data-view="top">Сверху</button>
+  </div>
+  <div class="cap">Этаж</div>
+  <div class="row"><button data-floor="0">Все</button><button data-floor="1">1 этаж</button><button data-floor="2">2 этаж</button></div>
+  <div class="cap">Слои</div>
+  <div id="layers"></div>
+  <p class="note">Вращение — левая кнопка или палец, сдвиг — правая кнопка или два пальца, масштаб — колесо. Нажатие на воздуховод, решётку или блок показывает сечение и расход.</p>
+  <p class="note">Стены — по АР03 и АР09, проёмы окон и дверей показаны на всю высоту. Пересечения в подшивке разведены по высоте, разводка — в пояснении к модели. Дренаж конденсата — по листам 9 и 10.</p>
+</div>
+<div id="card" hidden></div>
+<script>window.MODEL = __MODEL__;</script>
+<script>__JS__</script>
+</body>
+</html>

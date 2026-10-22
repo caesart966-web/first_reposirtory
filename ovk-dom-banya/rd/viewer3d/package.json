@@ -1,0 +1,10 @@
+{
+  "name": "ovk-i05-09-26-viewer3d",
+  "private": true,
+  "description": "Просмотрщик 3D-модели ОВ И05.09.26 в одном HTML",
+  "dependencies": {
+    "esbuild": "0.24.0",
+    "playwright-core": "1.56.1",
+    "three": "0.169.0"
+  }
+}
