@@ -493,6 +493,33 @@ def object_services(site: Site, o: dict) -> list:
     return out
 
 
+def block_service_objects(site: Site, service: dict) -> str:
+    """«Где мы это делали» на странице услуги: объекты, в паспорте которых
+    эта работа названа словами (те же OBJECT_SERVICE_HINTS, что и на странице
+    объекта, — связь двусторонняя и считается одним правилом). Нет таких
+    объектов — нет и блока: приписывать услуге чужие объекты нельзя."""
+    items = [o for o in site.raw.get("portfolio", {}).get("items", [])
+             if o.get("slug") and service["slug"] in object_services(site, o)]
+    if not items:
+        return ""
+    more = ""
+    if len(items) > 3:
+        more = (f'<p><a class="object__more" href="{site.url("/obekty/")}">Все объекты'
+                f'{ARROW_SVG}</a></p>')
+    return f'''  <section class="section section--alt">
+    <div class="container">
+      <div class="section__head"><span class="eyebrow">Объекты</span><h2>Где мы это делали</h2>
+        {more}</div>
+{block_objects(site, items[:3], limit=3)}
+    </div>
+  </section>'''
+
+
+ARROW_SVG = ('<svg class="arr" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">'
+             '<path d="M2 8h11M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" '
+             'stroke-linecap="round" stroke-linejoin="round"/></svg>')
+
+
 def object_url(o: dict) -> str:
     return f'/obekty/{o["slug"]}/'
 
@@ -548,7 +575,7 @@ def block_objects(site: Site, items, limit: int = 0, level: str = "h3") -> str:
         if o.get("slug"):
             href = site.url(object_url(o))
             name_html = f'<a href="{href}">{esc(o["name"])}</a>'
-            more = f'<a class="object__more" href="{href}">Подробнее об объекте<svg class="arr" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>'
+            more = f'<a class="object__more" href="{href}">Подробнее об объекте{ARROW_SVG}</a>'
         else:
             name_html, more = esc(o["name"]), ""
         css = "object object--wide" if (n - 1) in wide else "object"
@@ -1712,6 +1739,8 @@ def page_service(r: Renderer, service: dict, city: dict = None) -> None:
 
 {block_steps(service["steps"], "Как проходит работа", columns=3, dark=True)}
 
+{block_service_objects(site, service)}
+
 {block_faq(service["faq"])}
 
 {block_articles(site, articles_for(site, service["slug"]))}
@@ -1867,7 +1896,7 @@ def page_object(r: Renderer, o: dict, items: list) -> None:
   <section class="section section--alt">
     <div class="container">
       <div class="section__head"><h2>Другие объекты</h2>
-        <p><a class="object__more" href="{site.url("/obekty/")}">Все объекты<svg class="arr" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a></p></div>
+        <p><a class="object__more" href="{site.url("/obekty/")}">Все объекты{ARROW_SVG}</a></p></div>
 {block_objects(site, nxt, limit=3)}
     </div>
   </section>
