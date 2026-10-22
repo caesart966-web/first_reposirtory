@@ -105,6 +105,9 @@ class Site:
     def service_url(self, slug: str, city: str = "") -> str:
         return f"/uslugi/{slug}/{city + '/' if city else ''}"
 
+    def service(self, slug: str):
+        return next((x for x in self.services if x["slug"] == slug), None)
+
     def services_in_group(self, group_id: str) -> list:
         return [s for s in self.services if s["group"] == group_id]
 
@@ -187,7 +190,7 @@ def image_size(rel: str):
 THUMB_WIDTHS = (480, 960)
 
 
-def photo_img(site: Site, rel: str, alt: str, sizes: str, css: str = "") -> str:
+def photo_img(site: Site, rel: str, alt: str, sizes: str, css: str = "", eager: bool = False) -> str:
     """Фотография с уменьшенными копиями и отложенной загрузкой.
 
     Браузер сам берёт вариант под ширину экрана: телефону уходит копия
@@ -213,7 +216,7 @@ def photo_img(site: Site, rel: str, alt: str, sizes: str, css: str = "") -> str:
     pairs = lambda got: ", ".join(f"{site.url(p)} {w}w" for w, p in got)
     srcset = f' srcset="{pairs(webp)}" sizes="{sizes}"' if len(webp) > 1 else ""
     img = (f'<img{cls} src="{src}"{srcset}{dims} alt="{esc(alt)}"'
-           f' loading="lazy" decoding="async">')
+           + (' fetchpriority="high">' if eager else ' loading="lazy" decoding="async">'))
     if len(avif) > 1:
         return ('<picture>'
                 f'<source type="image/avif" srcset="{pairs(avif)}" sizes="{sizes}">'
@@ -417,6 +420,83 @@ def block_recommendations(site: Site, cfg: dict) -> str:
   </section>'''
 
 
+def object_photos(o: dict) -> list:
+    """Фотографии объекта по имени: <slug>.webp — главная, <slug>-2.webp,
+    <slug>-3.webp и далее — дополнительные. Достаточно положить файлы
+    с нужными именами, данные править не нужно."""
+    photos = []
+    if o.get("photo") and asset_exists(o["photo"]):
+        photos.append(o["photo"])
+    if o.get("slug"):
+        for n_photo in range(1, 13):
+            suffix = "" if n_photo == 1 else f"-{n_photo}"
+            for ext in (".webp", ".jpg", ".jpeg", ".png"):
+                candidate = f'/assets/img/objects/{o["slug"]}{suffix}{ext}'
+                if asset_exists(candidate) and candidate not in photos:
+                    photos.append(candidate)
+                    break
+    return photos
+
+
+def object_spec(o: dict) -> str:
+    """Паспорт объекта: разделы документации, застройщик и наш заказчик.
+    Одинаковый на главной, на странице «Объекты» и на странице объекта.
+    Раньше на главной стоял сокращённый вид (описание в четыре строки,
+    из паспорта только заказчик), и заказчик принял его за старые описания:
+    одна и та же карточка в разных местах сайта обязана выглядеть одинаково."""
+    rows = []
+    clients = o.get("clients") or ([o["client"]] if o.get("client") else [])
+    if o.get("sections"):
+        rows.append(("Разделы", o["sections"]))
+    if o.get("developer"):
+        rows.append(("Застройщик", o["developer"]))
+    # «Наш заказчик» — только там, где заказчик это подтвердил в новом
+    # формате (поле clients). У объекта со старым полем client роль
+    # компании неизвестна: там стоит просто «Заказчик», чтобы сайт
+    # не приписал ей роль, которой у неё, возможно, не было.
+    first_label = "Наш заказчик" if o.get("clients") else "Заказчик"
+    for i, c in enumerate(clients):
+        # Подпись не повторяется у второго заказчика: два одинаковых
+        # слова подряд читаются как ошибка вёрстки, а не как список.
+        rows.append((first_label if i == 0 else "", c))
+    spec = "".join(
+        f'<div class="spec__row spec__row--cont">'
+        f'<span class="spec__val">{esc(val)}</span></div>'
+        if not key else
+        f'<div class="spec__row"><span class="spec__key">{esc(key)}</span>'
+        f'<span class="spec__dots"></span>'
+        f'<span class="spec__val">{esc(val)}</span></div>'
+        for key, val in rows)
+    return f'<div class="spec">{spec}</div>' if spec else ""
+
+
+# Какие услуги были на объекте — по словам из его же описания, а не на глаз:
+# страница объекта не должна приписывать работу, о которой в паспорте ни слова.
+OBJECT_SERVICE_HINTS = [
+    ("исполнительн", "ispolnitelnaya-dokumentatsiya"),
+    ("изменени", "aktualizatsiya-proektov"),
+    ("проектной документации", "proektirovanie"),
+    ("геодез", "geodeziya"),
+    ("кс-2", "zashchita-obemov-ks2-ks3"),
+    ("объём", "zashchita-obemov-ks2-ks3"),
+    ("ростехнадзор", "rostehnadzor"),
+    ("зос", "zos"),
+]
+
+
+def object_services(site: Site, o: dict) -> list:
+    text = (o.get("scope") or "").lower()
+    out = []
+    for word, slug in OBJECT_SERVICE_HINTS:
+        if word in text and slug not in out and slug in site.by_slug:
+            out.append(slug)
+    return out
+
+
+def object_url(o: dict) -> str:
+    return f'/obekty/{o["slug"]}/'
+
+
 def block_objects(site: Site, items, limit: int = 0, level: str = "h3") -> str:
     """Карточки объектов. Фотография необязательна: без неё выводится
     фирменная заставка с чертёжной сеткой, вёрстка не ломается.
@@ -438,20 +518,7 @@ def block_objects(site: Site, items, limit: int = 0, level: str = "h3") -> str:
             wide.add(len(shown) - 1)
     cards = []
     for n, o in enumerate(shown, start=1):
-        # Фотографии ищутся по имени: <slug>.webp — главная, <slug>-2.webp,
-        # <slug>-3.webp и далее — дополнительные. Достаточно положить файлы
-        # с нужными именами, данные править не нужно.
-        photos = []
-        if o.get("photo") and asset_exists(o["photo"]):
-            photos.append(o["photo"])
-        if o.get("slug"):
-            for n_photo in range(1, 13):
-                suffix = "" if n_photo == 1 else f"-{n_photo}"
-                for ext in (".webp", ".jpg", ".jpeg", ".png"):
-                    candidate = f'/assets/img/objects/{o["slug"]}{suffix}{ext}'
-                    if asset_exists(candidate) and candidate not in photos:
-                        photos.append(candidate)
-                        break
+        photos = object_photos(o)
 
         # Ширина карточки: во всю ширину экрана на телефоне, половина на
         # планшете, треть на компьютере. По ней браузер выбирает копию.
@@ -476,46 +543,24 @@ def block_objects(site: Site, items, limit: int = 0, level: str = "h3") -> str:
                      + f'<span class="object__count">{len(photos)} фото</span></button>')
         scope = f'<p class="object__scope">{esc(o["scope"])}</p>' if o.get("scope") else ""
 
-        # Нижняя часть карточки — паспорт объекта: разделы документации,
-        # застройщик и наш заказчик. Одинаковый на главной и на странице
-        # «Объекты». Раньше на главной стоял сокращённый вид (описание
-        # в четыре строки, из паспорта только заказчик), и заказчик
-        # принял его за старые описания: одна и та же карточка в двух
-        # местах сайта обязана выглядеть одинаково.
-        rows = []
-        clients = o.get("clients") or ([o["client"]] if o.get("client") else [])
-        if o.get("sections"):
-            rows.append(("Разделы", o["sections"]))
-        if o.get("developer"):
-            rows.append(("Застройщик", o["developer"]))
-        # «Наш заказчик» — только там, где заказчик это подтвердил в новом
-        # формате (поле clients). У объекта со старым полем client роль
-        # компании неизвестна: там стоит просто «Заказчик», чтобы сайт
-        # не приписал ей роль, которой у неё, возможно, не было.
-        first_label = "Наш заказчик" if o.get("clients") else "Заказчик"
-        for i, c in enumerate(clients):
-            # Подпись не повторяется у второго заказчика: два одинаковых
-            # слова подряд читаются как ошибка вёрстки, а не как список.
-            rows.append((first_label if i == 0 else "", c))
-        spec = "".join(
-            f'<div class="spec__row spec__row--cont">'
-            f'<span class="spec__val">{esc(val)}</span></div>'
-            if not key else
-            f'<div class="spec__row"><span class="spec__key">{esc(key)}</span>'
-            f'<span class="spec__dots"></span>'
-            f'<span class="spec__val">{esc(val)}</span></div>'
-            for key, val in rows)
-        spec = f'<div class="spec">{spec}</div>' if spec else ""
+        spec = object_spec(o)
 
+        if o.get("slug"):
+            href = site.url(object_url(o))
+            name_html = f'<a href="{href}">{esc(o["name"])}</a>'
+            more = f'<a class="object__more" href="{href}">Подробнее об объекте<svg class="arr" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>'
+        else:
+            name_html, more = esc(o["name"]), ""
         css = "object object--wide" if (n - 1) in wide else "object"
         cards.append(f'''        <article class="{css}">
           {media}
           <div class="object__body">
             <span class="object__num">{n:02d}</span>
-            <{level} class="object__name">{esc(o["name"])}</{level}>
+            <{level} class="object__name">{name_html}</{level}>
             <span class="object__city">{esc(o["city"])}</span>
             {scope}
             {spec}
+            {more}
           </div>
         </article>''')
     return f'''      <div class="object-grid">
@@ -837,12 +882,12 @@ def hero_sro(site: Site) -> str:
         mark = (f'<span class="hero-sro__seal" aria-hidden="true">'
                 f'<svg viewBox="0 0 64 64"><circle class="hero-sro__ring" cx="32" cy="32" r="29"/></svg>'
                 f'<span>{short}</span></span>')
-    return f'''        <a class="hero-sro" href="{site.url('/o-kompanii/')}#sro"
-           aria-label="{esc(title)}. Подробнее о членстве в СРО">
+    return f'''        <a class="hero-sro" href="{site.url('/o-kompanii/')}#sro">
           {mark}
           <span class="hero-sro__text">
             <span class="hero-sro__title">{esc(title)}</span>
             {reg}
+            <span class="visually-hidden">. Подробнее о членстве в СРО</span>
           </span>
           <svg class="hero-sro__arrow" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11M11 5.5 15.5 10 11 14.5"/></svg>
         </a>'''
@@ -1302,7 +1347,7 @@ def objects_strip(site: Site) -> str:
                 break
         if not thumb:
             continue
-        items.append(f'''<a class="ostrip__item" href="{site.url("/obekty/")}">
+        items.append(f'''<a class="ostrip__item" href="{site.url(object_url(o))}">
           <img src="{site.url(thumb)}" width="64" height="44" alt="" loading="lazy" decoding="async">
           <span><b>{esc(o["name"])}</b><small>{esc(o["city"])}</small></span>
         </a>''')
@@ -1733,11 +1778,124 @@ def page_objects(r: Renderer) -> None:
                 "@type": "ListItem",
                 "position": i,
                 "name": f'{o["name"]}, {o["city"]}',
+                **({"url": site.abs_url(object_url(o))} if o.get("slug") else {}),
             } for i, o in enumerate(cfg["items"], start=1)],
         }),
     ])
     r.render(path="/obekty/", title=cfg["title"], description=cfg["description"],
              body=body, head_extra=head, priority="0.8")
+
+
+def page_object(r: Renderer, o: dict, items: list) -> None:
+    """Страница одного объекта. На общей странице «Объекты» десять объектов
+    делят один заголовок, и запрос «исполнительная документация, школа,
+    Тверь» ей не ответить. Здесь у объекта свой адрес, заголовок и описание.
+    Текст — только из паспорта объекта в site.json, ничего сверху."""
+    site = r.site
+    path = object_url(o)
+    photos = object_photos(o)
+    alt = f'{o["name"]}, {o["city"]}'
+    caption = f'{o["name"]} · {o["city"]}'
+    gallery = json.dumps([site.url(x) for x in photos], ensure_ascii=False)
+
+    shots = []
+    for i, ph in enumerate(photos):
+        sizes = ("(max-width: 720px) calc(100vw - 2.5rem), 58vw" if i == 0 else
+                 "(max-width: 720px) 46vw, 19vw")
+        shots.append(f'<button class="ogal__item{" ogal__item--main" if i == 0 else ""}" type="button"'
+                     f' data-gallery="{esc(gallery)}" data-start="{i}" data-caption="{esc(caption)}"'
+                     f' aria-label="Открыть фото {i + 1} из {len(photos)}">'
+                     + photo_img(site, ph, alt if i == 0 else "", sizes, "ogal__img", eager=i == 0) + '</button>')
+    media = (f'<div class="ogal ogal--{min(len(photos), 5)}">{"".join(shots)}</div>' if photos
+             else '<div class="object__media object__media--empty ogal-empty"></div>')
+
+    svc = [site.by_slug[x] for x in object_services(site, o)]
+    svc_html = ""
+    if svc:
+        lis = "\n".join(f'          <li><a href="{site.url(site.service_url(x["slug"]))}">{esc(x["nav_title"])}</a></li>'
+                         for x in svc)
+        svc_html = f'''      <div class="panel" style="margin-top:1.25rem">
+        <h2 class="h3">Услуги на этом объекте</h2>
+        <ul class="link-list">
+{lis}
+        </ul>
+      </div>'''
+
+    others = [x for x in items if x is not o and x.get("slug")]
+    k = items.index(o)
+    nxt = [others[(k + j) % len(others)] for j in range(min(3, len(others)))]
+
+    lead = o["city"]
+    body = f'''  <section class="page-head">
+    <div class="container">
+      <ul class="breadcrumbs">
+        <li><a href="{site.url("/")}">Главная</a></li>
+        <li><a href="{site.url("/obekty/")}">Объекты</a></li>
+        <li>{esc(o["name"])}</li>
+      </ul>
+      <span class="eyebrow">Объект · {esc(lead)}</span>
+      <h1>{esc(o["name"])}</h1>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+{media}
+      <div class="split" style="margin-top:2.5rem">
+        <div class="prose">
+          <h2>Что мы сделали</h2>
+{paragraphs(o.get("scope", ""))}
+          {object_spec(o)}
+        </div>
+        <aside>
+          <div class="sticky-box">
+            <div class="panel panel--accent">
+              <h2 class="h3">Похожая задача?</h2>
+              <p style="color:var(--ink-muted)">Опишите объект — скажем, что реально успеть к вашей дате сдачи. Ответ в течение рабочего дня.</p>
+              <div class="btn-row" style="margin-top:1.25rem">
+                <a class="btn btn--primary btn--block" href="#zayavka">Оставить заявку</a>
+                <a class="btn btn--ghost btn--block" href="tel:{esc(site.contacts["phone_href"])}">{esc(site.contacts["phone_display"])}</a>
+              </div>
+            </div>
+{svc_html}
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--alt">
+    <div class="container">
+      <div class="section__head"><h2>Другие объекты</h2>
+        <p><a class="object__more" href="{site.url("/obekty/")}">Все объекты<svg class="arr" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a></p></div>
+{block_objects(site, nxt, limit=3)}
+    </div>
+  </section>
+
+{block_form(site, preselect=svc[0]["nav_title"] if svc else "")}'''
+
+    crumbs = [("Главная", "/"), ("Объекты", "/obekty/"), (o["name"], path)]
+    head = "\n".join([
+        jsonld(schema_organization(site)),
+        jsonld(schema_breadcrumbs(site, crumbs)),
+    ])
+    # В заголовке вкладки — короткое имя, если есть: длинное поиск режет посередине
+    nm = o.get("short_name") or o["name"]
+    title = f'{nm}, {o["city"]} — документация объекта | X-PTO'
+    if len(title) > 70:
+        title = f'{nm}, {o["city"]} | X-PTO'
+    desc = trim_words(f'{o["name"]} ({o["city"]}): {o.get("scope", "")}', 190)
+    r.render(path=path, title=title, description=desc, body=body, head_extra=head,
+             priority="0.6", og_image_alt=alt)
+
+
+def trim_words(text: str, limit: int) -> str:
+    """Обрезает по слову и ставит многоточие — для описаний в выдаче."""
+    text = " ".join(text.split())
+    if len(text) <= limit:
+        return text
+    cut = text[:limit].rsplit(" ", 1)[0].rstrip(",.;:—-")
+    return cut + "…"
 
 
 # ---------- о компании ----------------------------------------------------
@@ -2594,6 +2752,13 @@ def write_llms(site: Site) -> None:
         for a in site.articles:
             lines.append(f"- [{a['h1']}]({site.abs_url('/stati/' + a['slug'] + '/')}): {a['lead']}")
         lines.append("")
+    objs = [o for o in site.raw.get("portfolio", {}).get("items", []) if o.get("slug")]
+    if objs:
+        lines += ["## Объекты", ""]
+        for o in objs:
+            lines.append(f"- [{o['name']}, {o['city']}]({site.abs_url(object_url(o))}): "
+                         f"{trim_words(o.get('scope', ''), 220)}")
+        lines.append("")
     lines += [
         "## Разделы сайта",
         "",
@@ -2758,6 +2923,9 @@ def build(regen_media: bool = False, base_path: str = None,
         for city in service.get("cities", []):
             page_service(r, service, city)
     page_objects(r)
+    for o in site.raw.get("portfolio", {}).get("items", []):
+        if o.get("slug"):
+            page_object(r, o, site.raw["portfolio"]["items"])
     page_about(r)
     page_pto(r)
     page_contacts(r)

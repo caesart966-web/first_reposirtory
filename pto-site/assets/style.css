@@ -3097,6 +3097,74 @@ html {
 .fab__link:hover { background: var(--surface-alt); }
 .fab__link img { width: 28px; height: 28px; flex: none; }
 
+/* ---------- 14е. Страница объекта ---------------------------------------
+   Галерея «главный снимок + плитка»: каждый снимок открывает просмотр
+   с себя (data-start), а не с первого. */
+.h3 { font-size: 1.25rem; line-height: 1.3; }
+.ogal { display: grid; gap: var(--s-3); grid-template-columns: 2fr 1fr 1fr; grid-auto-rows: 15rem; }
+.ogal--1 { grid-template-columns: 1fr; grid-auto-rows: 28rem; }
+.ogal--2 { grid-template-columns: 2fr 1fr; grid-auto-rows: 15rem; }
+.ogal__item { position: relative; display: block; padding: 0; border: 0; border-radius: var(--radius-lg);
+  overflow: hidden; background: var(--surface-alt); cursor: zoom-in; }
+.ogal__item--main { grid-row: span 2; }
+.ogal--1 .ogal__item--main { grid-row: auto; }
+.ogal__item picture, .ogal__img { display: block; width: 100%; height: 100%; object-fit: cover;
+  transition: transform 700ms var(--ease); }
+.ogal__item:hover .ogal__img { transform: scale(1.05); }
+.ogal__item::after { content: ""; position: absolute; inset: 0; border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgba(13, 28, 48, .08); pointer-events: none; }
+.ogal-empty { height: 18rem; border-radius: var(--radius-lg); }
+@media (max-width: 45em) {
+  .ogal, .ogal--2 { grid-template-columns: 1fr 1fr; grid-auto-rows: 9rem; }
+  .ogal__item--main { grid-column: 1 / -1; grid-row: span 2; }
+  .ogal--1 { grid-auto-rows: 16rem; }
+}
+.object__name a { color: inherit; text-decoration: none; }
+.object__name a:hover { color: var(--accent); }
+.object__more { display: inline-flex; align-items: center; gap: .25rem; margin-top: var(--s-4);
+  font-weight: 600; color: var(--accent); text-decoration: none; }
+.object__more .arr { transition: transform var(--t-mid); }
+.object__more:hover .arr { transform: translateX(4px); }
+
+/* ---------- 14ж. Движение при прокрутке ----------------------------------
+   Полоса прочитанного под шапкой — анимация, привязанная к прокрутке
+   (animation-timeline), без единой строки скрипта. Браузер, который этого
+   не умеет, просто не показывает полосу. */
+@supports (animation-timeline: scroll()) {
+  .header::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-300));
+    transform-origin: 0 50%; transform: scaleX(0);
+    animation: read-progress linear both; animation-timeline: scroll(root);
+  }
+  @keyframes read-progress { to { transform: scaleX(1); } }
+}
+
+/* Фото проявляются шторкой снизу вверх и чуть «отъезжают» — как отпечаток
+   на листе. Прячет только скрипт (класс can-reveal), страховки те же, что у
+   появления блоков (раздел 13). */
+.can-reveal .object.reveal .object__media,
+.can-reveal .ogal__item.reveal { clip-path: inset(0 0 100% 0); }
+.can-reveal .object.reveal .object__img,
+.can-reveal .ogal__item.reveal .ogal__img { transform: scale(1.12); }
+.can-reveal .object.reveal.is-in .object__media,
+.can-reveal .ogal__item.reveal.is-in {
+  clip-path: inset(0 0 0 0);
+  transition: clip-path 900ms var(--ease) var(--rd, 0ms);
+}
+.can-reveal .object.reveal.is-in .object__img,
+.can-reveal .ogal__item.reveal.is-in .ogal__img {
+  transform: none;
+  transition: transform 1400ms var(--ease) var(--rd, 0ms);
+}
+/* после проявления наведение снова управляет увеличением */
+.can-reveal .object.reveal.is-in:hover .object__img,
+.can-reveal .ogal__item.reveal.is-in:hover .ogal__img { transform: scale(1.05); transition-duration: 700ms; transition-delay: 0ms; }
+
+/* Чёрточка у надзаголовка секции прочерчивается при появлении */
+.can-reveal .section__head.reveal .eyebrow::before { width: 0; }
+.can-reveal .section__head.reveal.is-in .eyebrow::before { width: 24px; transition: width 600ms var(--ease) 250ms; }
+
 /* ---------- 15. Тёмная тема ---------------------------------------------
    Включается сама, если в системе телефона или компьютера выбрана тёмная
    тема. Переопределяются ТОЛЬКО цвета — вся вёрстка общая, поэтому правки
