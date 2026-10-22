@@ -209,6 +209,7 @@ export function Regions() {
           Вашего региона нет в списке?{' '}
           <a
             href="#contacts"
+            data-topic="region"
             className="font-semibold text-accent-700 underline underline-offset-2 transition hover:text-accent-800"
           >
             {nbsp('Напишите — скажу, смогу ли помочь')}

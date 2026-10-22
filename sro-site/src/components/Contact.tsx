@@ -2,7 +2,9 @@ import { Check, Clock, Copy, Mail, MapPin } from 'lucide-react'
 import { useRef, useState, type CSSProperties } from 'react'
 import { CONFIGURED, CONTACTS, LINKS } from '../content/contacts'
 import { MAP_URL, REQUISITES } from '../content/facts'
+import { TOPICS, type Topic } from '../content/topics'
 import { nbsp } from '../lib/typo'
+import { ContactSheet } from './ContactSheet'
 import { MESSENGERS } from './messengers'
 import { MessengerLink } from './MessengerLink'
 import { GoTo } from './ui/GoTo'
@@ -32,64 +34,71 @@ import { Reveal, RevealText } from './ui/Reveal'
 // оба пути, а под адресом часы и ссылка на Яндекс Карты.
 const LEAD = 'Консультация бесплатная — и первая, и все следующие. Всё можно решить дистанционно, а можно приехать в офис.'
 
-export function Contact() {
+// topic — тема страницы (content/topics.ts): начало сообщения в WhatsApp
+// здесь и в панели «Связаться» на телефоне (ContactSheet), если у нажатой
+// кнопки нет своей темы. Панель стоит рядом с разделом, а не в нём:
+// ссылки панели не смешиваются со ссылками раздела.
+export function Contact({ topic = TOPICS.general }: { topic?: Topic }) {
   return (
-    <section id="contacts" className="bg-accent-950 py-20 text-neutral-50 sm:py-32">
-      <div className="mx-auto w-full max-w-6xl min-[1800px]:max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-end lg:gap-16">
-          <div>
-            <RevealText
-              text={"Расскажите о\u00A0задаче\u00A0— отвечу лично"}
-              className="font-display text-[2.6rem] font-medium leading-[1.02] sm:text-5xl lg:text-[3.6rem]"
-            />
-            <Reveal delay={150}>
-              <p className="mt-6 max-w-md text-lg leading-relaxed text-neutral-300">{nbsp(LEAD)}</p>
+    <>
+      <section id="contacts" className="bg-accent-950 py-20 text-neutral-50 sm:py-32">
+        <div className="mx-auto w-full max-w-6xl min-[1800px]:max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-end lg:gap-16">
+            <div>
+              <RevealText
+                text={"Расскажите о\u00A0задаче\u00A0— отвечу лично"}
+                className="font-display text-[2.6rem] font-medium leading-[1.02] sm:text-5xl lg:text-[3.6rem]"
+              />
+              <Reveal delay={150}>
+                <p className="mt-6 max-w-md text-lg leading-relaxed text-neutral-300">{nbsp(LEAD)}</p>
+              </Reveal>
+            </div>
+
+            <Reveal delay={200}>
+              {CONFIGURED.phone && (
+                <a
+                  href={LINKS.tel}
+                  data-channel="Позвонить"
+                  className="group block min-h-11 whitespace-nowrap font-display text-[2.35rem] font-medium leading-none tracking-tight text-neutral-50 min-[380px]:text-[2.7rem] sm:text-6xl"
+                >
+                  <span className="bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-left-bottom bg-no-repeat pb-1 transition-[background-size] duration-700 ease-silk group-hover:bg-[length:100%_1px]">
+                    {CONTACTS.phone}
+                  </span>
+                </a>
+              )}
+              <Channels topic={topic} />
+              {CONFIGURED.email && <EmailLine />}
+              <div className="mt-10 border-t border-white/10 pt-8 text-sm text-neutral-300">
+                <p className="flex items-start gap-3">
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-accent-300" aria-hidden="true" />
+                  {/* «г.», «ул.», «зд.» и «офис» не отрываются от своего слова:
+                      на телефоне «ул.» оставалось в конце строки. */}
+                  <span>{REQUISITES.address.replace(/(г\.|ул\.|зд\.|офис) /g, '$1\u00a0')}</span>
+                </p>
+                <p className="mt-3 flex items-start gap-3">
+                  <Clock className="mt-0.5 h-4 w-4 shrink-0 text-accent-300" aria-hidden="true" />
+                  <span>Офис работает {nbsp(CONTACTS.hours)}</span>
+                </p>
+                {/* Внешняя ссылка — в новой вкладке, как все внешние ссылки
+                    сайта (test-site.mjs); карта на месте не встраивается. */}
+                <a
+                  href={MAP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-map="yandex"
+                  className="group ml-7 mt-2 inline-flex min-h-11 items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-300"
+                >
+                  <GoTo tone="light" className="text-sm">
+                    Открыть на Яндекс Картах
+                  </GoTo>
+                </a>
+              </div>
             </Reveal>
           </div>
-
-          <Reveal delay={200}>
-            {CONFIGURED.phone && (
-              <a
-                href={LINKS.tel}
-                data-channel="Позвонить"
-                className="group block whitespace-nowrap font-display text-[2.35rem] font-medium leading-none tracking-tight text-neutral-50 min-[380px]:text-[2.7rem] sm:text-6xl"
-              >
-                <span className="bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-left-bottom bg-no-repeat pb-1 transition-[background-size] duration-700 ease-silk group-hover:bg-[length:100%_1px]">
-                  {CONTACTS.phone}
-                </span>
-              </a>
-            )}
-            <Channels />
-            {CONFIGURED.email && <EmailLine />}
-            <div className="mt-10 border-t border-white/10 pt-8 text-sm text-neutral-300">
-              <p className="flex items-start gap-3">
-                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-accent-300" aria-hidden="true" />
-                {/* «г.», «ул.», «зд.» и «офис» не отрываются от своего слова:
-                    на телефоне «ул.» оставалось в конце строки. */}
-                <span>{REQUISITES.address.replace(/(г\.|ул\.|зд\.|офис) /g, '$1\u00a0')}</span>
-              </p>
-              <p className="mt-3 flex items-start gap-3">
-                <Clock className="mt-0.5 h-4 w-4 shrink-0 text-accent-300" aria-hidden="true" />
-                <span>Офис работает {nbsp(CONTACTS.hours)}</span>
-              </p>
-              {/* Внешняя ссылка — в новой вкладке, как все внешние ссылки
-                  сайта (test-site.mjs); карта на месте не встраивается. */}
-              <a
-                href={MAP_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                data-map="yandex"
-                className="group ml-7 mt-2 inline-flex min-h-11 items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-300"
-              >
-                <GoTo tone="light" className="text-sm">
-                  Открыть на Яндекс Картах
-                </GoTo>
-              </a>
-            </div>
-          </Reveal>
         </div>
-      </div>
-    </section>
+      </section>
+      <ContactSheet topic={topic} />
+    </>
   )
 }
 
@@ -111,7 +120,7 @@ export function Contact() {
 const PILL =
   'group flex flex-col items-center gap-2 focus-visible:outline-none sm:relative sm:isolate sm:flex-row sm:gap-0 sm:overflow-hidden sm:rounded-full sm:pr-5 sm:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)] sm:focus-visible:ring-2 sm:focus-visible:ring-accent-300'
 
-function Channels() {
+function Channels({ topic }: { topic: Topic }) {
   if (MESSENGERS.length === 0) return null
   return (
     // На телефоне — сеткой, кружки поровну в ряд; с 640 px — пилюли
@@ -124,7 +133,7 @@ function Channels() {
     >
       {MESSENGERS.map(({ id, label, icon: Icon }) => (
         <li key={id}>
-          <MessengerLink channel={id} label={label} className={PILL}>
+          <MessengerLink channel={id} label={label} text={id === 'whatsapp' ? topic.text : undefined} className={PILL}>
             {/* Выдвигающаяся подложка: из кружка на всю пилюлю. */}
             <span
               className="absolute inset-y-0 left-0 -z-10 hidden w-14 rounded-full bg-neutral-50 transition-[width] duration-500 ease-silk group-hover:w-full group-focus-visible:w-full sm:block"

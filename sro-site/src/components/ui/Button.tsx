@@ -8,6 +8,12 @@ import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from 'reac
 // inverse       — крем на тёмном фоне;
 // outlineInverse — контур на тёмном.
 //
+// Наведение — только там, где оно есть ([@media(hover:hover)]), нажатие —
+// active: (22.10.2026). На телефоне касание включает :hover и оставляет его
+// до следующего касания: с тех пор как «Связаться» открывает панель поверх
+// страницы, а не уводит к разделу, кнопка после закрытия панели стояла бы
+// «наведённой» — светлее и с повёрнутой стрелкой.
+//
 // arrow — кружок со стрелкой справа внутри кнопки (приём из LeonHome и
 // woodland). Ставится только на главное действие: стрелка в каждой кнопке
 // перестаёт что-либо значить. С 01.10.2026 кружок на сайте только здесь
@@ -18,12 +24,12 @@ export type ButtonVariant = 'primary' | 'secondary' | 'inverse' | 'outlineInvers
 export type ButtonSize = 'md' | 'lg'
 
 const VARIANTS: Record<ButtonVariant, string> = {
-  primary: 'bg-neutral-950 text-neutral-50 hover:bg-neutral-800',
+  primary: 'bg-neutral-950 text-neutral-50 active:bg-neutral-800 [@media(hover:hover)]:hover:bg-neutral-800',
   secondary:
-    'border border-neutral-300 bg-transparent text-neutral-950 hover:border-neutral-950',
-  inverse: 'bg-neutral-50 text-neutral-950 hover:bg-white focus-visible:ring-offset-0',
+    'border border-neutral-300 bg-transparent text-neutral-950 active:border-neutral-950 [@media(hover:hover)]:hover:border-neutral-950',
+  inverse: 'bg-neutral-50 text-neutral-950 active:bg-white [@media(hover:hover)]:hover:bg-white focus-visible:ring-offset-0',
   outlineInverse:
-    'border border-white/30 text-neutral-50 hover:border-white/70 focus-visible:ring-offset-0',
+    'border border-white/30 text-neutral-50 active:border-white/70 [@media(hover:hover)]:hover:border-white/70 focus-visible:ring-offset-0',
 }
 
 // Кружок стрелки красится от варианта: на тёмной кнопке — светлый, на
@@ -63,7 +69,7 @@ export function buttonClasses(
 function Arrow({ variant, size }: { variant: ButtonVariant; size: ButtonSize }) {
   return (
     <span
-      className={`flex shrink-0 items-center justify-center rounded-full transition-transform duration-700 ease-silk group-hover/btn:rotate-45 ${
+      className={`flex shrink-0 items-center justify-center rounded-full transition-transform duration-700 ease-silk [@media(hover:hover)]:group-hover/btn:rotate-45 ${
         size === 'lg' ? 'h-10 w-10' : 'h-8 w-8'
       } ${ARROW[variant]}`}
       aria-hidden="true"

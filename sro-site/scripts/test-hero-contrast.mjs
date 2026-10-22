@@ -29,8 +29,11 @@ const SHOTS = [
   { path: '' },
   { path: '', hover: 1 }, { path: '', hover: 2 },
   // Телефон и планшет: заголовок белым на обложке — и после смены кадра
-  // нажатием на карточку вида (план этажа почти весь светлый).
-  { path: '', tap: 1 }, { path: '', tap: 2 },
+  // на кадр вида (план этажа почти весь светлый). С 22.10.2026 касание
+  // карточки открывает страницу вида, а кадр меняет наведение мыши —
+  // планшет с мышью или узкое окно компьютера; замер — в том же окне, но
+  // без касаний (cover).
+  { path: '', cover: 1 }, { path: '', cover: 2 },
   { path: 'sro-stroiteley/' }, { path: 'sro-proektirovshchikov/' }, { path: 'sro-izyskateley/' }, { path: 'uslugi/nok/' },
   { path: 'uslugi/dokumenty/' },
   // Шапки остальных услуг — с кадрами с 29.09.2026.
@@ -68,8 +71,9 @@ const rows = []
 for (const [dev, vp, mob] of DEVICES) {
   for (const s of SHOTS) {
     if (s.hover !== undefined && mob) continue
-    if (s.tap !== undefined && !mob) continue
-    const ctx = await b.newContext({ viewport: vp, hasTouch: mob, isMobile: mob, reducedMotion: 'reduce', deviceScaleFactor: 1 })
+    if (s.cover !== undefined && !mob) continue
+    const touch = mob && s.cover === undefined
+    const ctx = await b.newContext({ viewport: vp, hasTouch: touch, isMobile: touch, reducedMotion: 'reduce', deviceScaleFactor: 1 })
     const p = await ctx.newPage()
     await p.goto(BASE + s.path, { waitUntil: 'networkidle' })
     const selector = s.selector || 'h1, [data-hero-text]'
@@ -88,10 +92,15 @@ for (const [dev, vp, mob] of DEVICES) {
         .filter((el) => getComputedStyle(el).opacity === '1').length)
       if (shown < 2) throw new Error(`наведение на вид ${s.hover}: кадр не сменился`)
     }
-    if (s.tap !== undefined) {
+    if (s.cover !== undefined) {
       await p.waitForFunction(() => document.querySelectorAll('[data-hero-cards]').length && document.querySelectorAll('section[aria-labelledby="hero-title"] .lg\\:hidden picture img').length === 3)
-      await p.locator('[data-hero-cards] > li').nth(s.tap).locator('a').tap()
+      // Мышь — по координатам: hover() Playwright прокручивал бы к карточке,
+      // и она уезжала бы из-под неподвижной мыши (кадр — обратно к крану).
+      const box = await p.locator('[data-hero-cards] > li').nth(s.cover).locator('a').boundingBox()
+      await p.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
       await p.waitForTimeout(1800)
+      const shown = await p.evaluate(() => document.querySelector('section[aria-labelledby="hero-title"] .lg\\:hidden picture[data-shown] img')?.getAttribute('src') ?? '')
+      if (!/slide-/.test(shown)) throw new Error(`наведение на карточку ${s.cover}: кадр обложки не сменился (${shown})`)
     }
     await p.waitForTimeout(900)
     // Меряется не прямоугольник элемента, а строки самого текста (прямоугольники
@@ -141,7 +150,7 @@ for (const [dev, vp, mob] of DEVICES) {
         return { text: bx.text, worst: min }
       })
     }, { png, boxes })
-    const name = `${s.path || '/'}${s.section ? ` #${s.section}` : ''}${s.hover !== undefined ? ` наведение ${s.hover}` : ''}${s.tap !== undefined ? ` нажатие ${s.tap}` : ''} @${dev}`
+    const name = `${s.path || '/'}${s.section ? ` #${s.section}` : ''}${s.hover !== undefined ? ` наведение ${s.hover}` : ''}${s.cover !== undefined ? ` кадр вида ${s.cover}` : ''} @${dev}`
     // Надпись в несколько строк даёт несколько прямоугольников — в отчёт идёт худший.
     const byText = new Map()
     for (const r of worst) if (!byText.has(r.text) || r.worst < byText.get(r.text).worst) byText.set(r.text, r)

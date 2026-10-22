@@ -118,9 +118,11 @@ export function PageHero({
       )}
       <div className="mx-auto w-full max-w-6xl min-[1800px]:max-w-7xl px-4 pb-20 pt-14 sm:px-6 sm:pb-28 sm:pt-20 lg:px-8">
         <div className="hero-rise" style={rise(0)}>
+          {/* Высота ссылки 44 px — под палец (22.10.2026: было 20 px), а место
+              в шапке прежнее: отрицательные поля сверху и снизу съедают прибавку. */}
           <a
             href={backHref}
-            className="inline-flex items-center gap-2 text-sm text-neutral-300 transition-colors duration-500 hover:text-neutral-50"
+            className="-my-3 inline-flex min-h-11 items-center gap-2 text-sm text-neutral-300 transition-colors duration-500 hover:text-neutral-50"
           >
             <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
             {backLabel}

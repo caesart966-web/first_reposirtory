@@ -1,5 +1,6 @@
 import type { SroDetail } from '../content/sroDetails'
 import { DOCS_LAW, DOCS_SPECIALISTS, FUNDS_CONFIRMED, LAW } from '../content/sroDetails'
+import { typeTopic } from '../content/topics'
 import { home, page } from '../lib/site'
 import { nbsp } from '../lib/typo'
 import { Footer } from './Footer'
@@ -282,7 +283,7 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
   return (
     <div id="top">
       <Header />
-      <main>
+      <main id="main" className="focus:outline-none">
         {/* Первый экран: крошка на главную (там список трёх видов), заголовок,
             строка о том, что я делаю, и кадр своего вида. */}
         <PageHero
@@ -392,10 +393,10 @@ export function DetailPage({ detail }: { detail: SroDetail }) {
             строка «Отвечу на вопросы по …, подберу организацию и назову
             порядок действий» на десяти страницах отличалась одним названием,
             и по такой подстановке узнаётся текст по шаблону. */}
-        <Contact />
+        <Contact topic={typeTopic(detail.card.title)} />
       </main>
       <Footer />
-      <MobileBar />
+      <MobileBar topic={typeTopic(detail.card.title)} />
     </div>
   )
 }

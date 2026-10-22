@@ -1,5 +1,6 @@
 import { ARTICLES_PATH, ARTICLES_SORTED, articleLaws, readingMinutes, type Article, type ArticleBlock } from '../content/articles'
 import { IMAGES } from '../content/images'
+import { articleTopic } from '../content/topics'
 import { formatDate } from '../lib/date'
 import { plural } from '../lib/plural'
 import { page } from '../lib/site'
@@ -102,7 +103,7 @@ export function ArticlePage({ article }: { article: Article }) {
   return (
     <div id="top">
       <Header />
-      <main>
+      <main id="main" className="focus:outline-none">
         <PageHero
           backHref={page(ARTICLES_PATH)}
           backLabel="Все статьи"
@@ -190,10 +191,10 @@ export function ArticlePage({ article }: { article: Article }) {
           </Section>
         )}
 
-        <Contact />
+        <Contact topic={articleTopic(article.title)} />
       </main>
       <Footer />
-      <MobileBar />
+      <MobileBar topic={articleTopic(article.title)} />
     </div>
   )
 }

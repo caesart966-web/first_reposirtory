@@ -87,7 +87,7 @@ export function Documents() {
                 'Соберу комплект под требования выбранной СРО и проверю каждый документ до подачи.',
               )}
             </p>
-            <ButtonLink href="#contacts" size="lg" arrow className="mt-9">
+            <ButtonLink href="#contacts" data-topic="documents" size="lg" arrow className="mt-9">
               Проверить мои документы
             </ButtonLink>
           </Reveal>

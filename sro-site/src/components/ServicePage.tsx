@@ -1,5 +1,6 @@
 import { Check } from 'lucide-react'
 import type { ServiceBlock, ServicePage as ServicePageData } from '../content/services'
+import { serviceTopic } from '../content/topics'
 import { anchor } from '../lib/site'
 import { useHashScroll } from '../lib/useHashScroll'
 import { nbsp } from '../lib/typo'
@@ -290,7 +291,7 @@ export function ServicePage({ service }: { service: ServicePageData }) {
   return (
     <div id="top">
       <Header />
-      <main>
+      <main id="main" className="focus:outline-none">
         {/* Первый экран: крошка к услугам на главной, заголовок, строка. */}
         <PageHero
           backHref={anchor('#services')}
@@ -314,10 +315,10 @@ export function ServicePage({ service }: { service: ServicePageData }) {
         <PageExtras related={service.related} muted={service.blocks.length % 2 === 1} place={service.slug} />
 
         {/* Строка «Связаться» общая, как на главной: см. DetailPage. */}
-        <Contact />
+        <Contact topic={serviceTopic(service.short)} />
       </main>
       <Footer />
-      <MobileBar />
+      <MobileBar topic={serviceTopic(service.short)} />
     </div>
   )
 }

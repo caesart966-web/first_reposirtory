@@ -23,7 +23,7 @@ export default function App() {
   return (
     <div id="top">
       <Header />
-      <main>
+      <main id="main" className="focus:outline-none">
         {/* Порядок с 24.09.2026. Первый экран (с 26.09.2026 — «лист и окно»)
             сам показывает три вида СРО списком, поэтому сетки карточек видов
             под ним нет. Дальше —

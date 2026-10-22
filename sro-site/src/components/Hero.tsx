@@ -1,4 +1,4 @@
-import { ArrowRight, DraftingCompass, HardHat, Mountain } from 'lucide-react'
+import { DraftingCompass, HardHat, Mountain } from 'lucide-react'
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { IMAGES } from '../content/images'
 import { SRO_DETAILS } from '../content/sroDetails'
@@ -54,11 +54,14 @@ import { RevealText } from './ui/Reveal'
 // и профессиональнее», из трёх вариантов выбран этот). Заголовок стоит белым
 // на кадре, под ним — затемнение снизу вверх (COVER_SHADE), ниже на бумаге
 // строка, кнопки и три вида СРО карточками (TypeCards): значок, занятие,
-// вид СРО мелко. Нажатие на карточку меняет кадр обложки на кадр этого вида
-// (заказчик: «чтобы и там картинка менялась, когда кликаешь на тип СРО»),
-// выбранная карточка выделена и показывает «Открыть →» — второе нажатие
-// ведёт на страницу вида. Сразу выбрано строительство: на первом кадре кран.
-// Списком строками остаётся компьютер — там кадр меняется наведением.
+// вид СРО мелко со стрелкой. Касание карточки сразу открывает страницу вида
+// (с 22.10.2026, разбор удобства, пункт 1). С 01.10.2026 первое касание
+// только меняло кадр обложки (заказчик: «чтобы и там картинка менялась,
+// когда кликаешь на тип СРО»), а страница открывалась со второго — человек
+// решал, что нажатие «не сработало». Кадр обложки теперь меняется при
+// наведении мышью (планшет с мышью, узкое окно компьютера); на первом
+// кадре кран. Списком строками остаётся компьютер — там кадр меняется
+// наведением в окне справа.
 // Первый экран обязан показать, что это, для кого и как связаться:
 // заголовок, обе кнопки и все три вида — без прокрутки при видимой высоте
 // окна 780 px (стережёт test-site.mjs). Поэтому подзаголовок «Для
@@ -166,10 +169,11 @@ const HIGH = { fetchpriority: 'high' } as Record<string, string>
 const COVER_SHADE =
   'bg-[linear-gradient(to_top,rgba(20,17,15,0.94)_0%,rgba(20,17,15,0.82)_38%,rgba(20,17,15,0.5)_66%,rgba(20,17,15,0.08)_100%)]'
 
-// Кадры обложки. Кран — сразу; два других кадра телефон грузит после
-// загрузки страницы, когда браузер свободен, чтобы смена по нажатию шла
-// без ожидания; нажали раньше — грузится сразу. На компьютере обложки нет,
-// и лишние кадры туда не грузятся.
+// Кадры обложки. Кран — сразу; два других кадра — только там, где есть
+// мышь (обложку меняет наведение), после загрузки страницы, когда браузер
+// свободен; навели раньше — грузится сразу. Телефон их не грузит вовсе
+// (с 22.10.2026): касание карточки открывает страницу, а не меняет кадр.
+// На компьютере обложки нет, и лишние кадры туда не грузятся.
 //
 // Смена кадра без рывка (01.10.2026, заказчик: «немного подёргивает»):
 // 1) новый кадр проступает ПОВЕРХ прежнего, а прежний держится под ним
@@ -187,7 +191,7 @@ function CoverPhotos({ active }: { active: string }) {
   const shownRef = useRef(active)
   const imgs = useRef<Record<string, HTMLImageElement | null>>({})
   useEffect(() => {
-    if (!matchMedia('(max-width: 1023px)').matches) return
+    if (!matchMedia('(max-width: 1023px) and (hover: hover)').matches) return
     let handle = 0
     const start = () => {
       handle = idle
@@ -279,67 +283,59 @@ function CoverPhotos({ active }: { active: string }) {
 // Три вида СРО карточками — телефон и планшет. Кружка со стрелкой
 // здесь нет нарочно: он только у кнопок «Связаться» (ui/GoTo.tsx).
 //
-// Каждая карточка — ссылка на страницу своего вида, и элемент не меняется
-// при выборе. До 01.10.2026 выбранная была ссылкой, остальные — кнопками,
-// и при нажатии React пересоздавал обе карточки: рамка, тень и «Открыть»
-// возникали скачком, без перехода (заказчик: «подёргивает»). Теперь
-// касание невыбранной карточки меняет кадр (переход отменяется), касание
-// выбранной ведёт на страницу. Enter с клавиатуры (detail 0) и щелчок
-// с Ctrl/Shift ведут сразу: кадр — украшение (aria-hidden), экранному
-// диктору и клавиатуре показывать нечего.
-function TypeCards({ active, onSelect }: { active: string; onSelect: (slug: string) => void }) {
+// Каждая карточка — ссылка на страницу своего вида и открывает её с первого
+// касания (22.10.2026). До этого первое касание только меняло кадр обложки,
+// выбранная карточка выделялась и показывала «Открыть →», и страница
+// открывалась со второго касания: лишний шаг на главном пути с телефона.
+// Теперь три карточки равны, у подписи вида СРО — стрелка, как в строках
+// компьютера (GoTo). Стрелка стоит во второй строке, а не справа от занятия:
+// там она отнимала бы ширину, и «Строительство, капремонт, снос» уходило бы
+// на две строки.
+// Кадр обложки меняет наведение МЫШЬЮ (pointerType): касание пальцем
+// присылает те же pointerenter, и без этой проверки кадр сменился бы
+// в момент перехода на другую страницу. Нажатие видно сразу: рамка
+// латунная, карточка чуть проседает. Наведение красит рамку только там,
+// где наведение есть ([@media(hover:hover)]): на телефоне подсветка
+// «залипала» бы после возврата кнопкой «Назад».
+// Уже 360 px значок и поля карточки чуть меньше, занятие 13,5 px, вторая
+// строка 12 px — иначе на 320 px строки не помещались.
+function TypeCards({ onHover }: { onHover: (slug: string | null) => void }) {
   return (
-    <ul aria-labelledby="hero-types" data-hero-cards className="mt-2.5 grid gap-2 sm:max-w-xl lg:hidden">
+    <ul
+      aria-labelledby="hero-types"
+      data-hero-cards
+      className="mt-2.5 grid gap-2 sm:max-w-xl lg:hidden"
+      onPointerLeave={(e) => {
+        if (e.pointerType === 'mouse') onHover(null)
+      }}
+    >
       {TYPES.map((type) => {
         const Icon = TYPE_ICON[type.slug] ?? HardHat
-        const on = active === type.slug
         return (
           <li key={type.href}>
             <a
               href={type.href}
-              data-selected={on ? '' : undefined}
-              onClick={(e) => {
-                if (on || e.detail === 0 || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
-                e.preventDefault()
-                onSelect(type.slug)
+              onPointerEnter={(e) => {
+                if (e.pointerType === 'mouse') onHover(type.slug)
               }}
-              className={`flex w-full touch-manipulation select-none items-center gap-3 rounded-2xl border py-2.5 pl-2.5 pr-3 text-left [-webkit-tap-highlight-color:transparent] max-[359px]:gap-2.5 max-[359px]:pl-2 max-[359px]:pr-2.5 transition-[border-color,box-shadow,background-color,transform] duration-500 ease-silk motion-safe:active:scale-[0.985] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-50 ${
-                on
-                  ? 'border-accent-500 bg-white shadow-[0_6px_18px_-8px_rgba(107,76,38,0.35),0_0_0_1px_theme(colors.accent.500)]'
-                  : 'border-neutral-200 bg-white/80 shadow-[0_1px_2px_rgba(20,17,15,0.05),0_0_0_1px_transparent]'
-              }`}
+              className="group flex w-full touch-manipulation select-none items-center gap-3 rounded-2xl border border-neutral-200 bg-white/80 py-2.5 pl-2.5 pr-3 text-left shadow-[0_1px_2px_rgba(20,17,15,0.05)] [-webkit-tap-highlight-color:transparent] transition-[border-color,box-shadow,background-color,transform] duration-500 ease-silk active:border-accent-500 active:bg-white motion-safe:active:scale-[0.985] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-50 max-[359px]:gap-2.5 max-[359px]:pl-2 max-[359px]:pr-2.5 [@media(hover:hover)]:hover:border-accent-500 [@media(hover:hover)]:hover:bg-white [@media(hover:hover)]:hover:shadow-[0_6px_18px_-8px_rgba(107,76,38,0.35)]"
             >
-              <span
-                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset transition-[background-color,color,box-shadow] duration-500 ease-silk max-[359px]:h-9 max-[359px]:w-9 ${
-                  on ? 'bg-accent-600 text-neutral-50 ring-accent-600' : 'bg-accent-50 text-accent-700 ring-accent-200/70'
-                }`}
-              >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-700 ring-1 ring-inset ring-accent-200/70 transition-[background-color,color,box-shadow] duration-500 ease-silk group-active:bg-accent-600 group-active:text-neutral-50 group-active:ring-accent-600 max-[359px]:h-9 max-[359px]:w-9 [@media(hover:hover)]:group-hover:bg-accent-600 [@media(hover:hover)]:group-hover:text-neutral-50 [@media(hover:hover)]:group-hover:ring-accent-600">
                 <Icon className="h-5 w-5" strokeWidth={1.6} aria-hidden="true" />
               </span>
-              {/* «Открыть →» — во второй строке, рядом с видом СРО: справа
-                  от занятия оно отнимало ширину, и «Строительство, капремонт,
-                  снос» у выбранной карточки уходило на две строки. Оно стоит
-                  у каждой карточки и проступает у выбранной: место под него
-                  занято всегда, строки при выборе не сдвигаются. Стрелки «>»
-                  у невыбранных карточек нет: первое касание не ведёт на
-                  страницу, а меняет кадр. Уже 360 px значок и поля карточки
-                  чуть меньше, занятие 13,5 px, вторая строка 12 px — иначе
-                  на 320 px строки не помещались. */}
               <span className="min-w-0 flex-1">
                 <span className="block text-[0.9375rem] font-semibold leading-snug text-neutral-950 max-[359px]:text-[0.84375rem] min-[380px]:text-base">
                   {type.activity}
                 </span>
-                <span className="flex items-center justify-between gap-3 text-[0.8125rem] leading-snug max-[359px]:gap-2 max-[359px]:text-xs">
-                  <span className="text-neutral-600">{type.title}</span>
-                  <span
-                    className={`flex shrink-0 items-center gap-1 font-semibold text-accent-700 transition-[opacity,transform] duration-500 ease-silk ${
-                      on ? 'opacity-100' : 'opacity-0 motion-safe:-translate-x-1.5'
-                    }`}
-                    aria-hidden="true"
-                  >
-                    Открыть
-                    <ArrowRight className="h-4 w-4" />
-                  </span>
+                {/* Обёртка flex: GoTo — строчный блок, и в строке под ним
+                    оставалось место под выносные элементы букв — карточка
+                    вырастала на 4 px, и третья уходила за первый экран
+                    телефона. -mb-0.5 гасит поле под подчёркивание: высота
+                    карточки та же, что была до стрелки. */}
+                <span className="-mb-0.5 flex">
+                  <GoTo tone="muted" className="text-[0.8125rem] leading-snug max-[359px]:text-xs">
+                    {type.title}
+                  </GoTo>
                 </span>
               </span>
             </a>
@@ -473,7 +469,7 @@ export function Hero() {
               </li>
             ))}
           </ul>
-          <TypeCards active={active} onSelect={setActive} />
+          <TypeCards onHover={(slug) => setActive(slug ?? 'construction')} />
         </div>
       </div>
     </section>

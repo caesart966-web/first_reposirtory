@@ -77,7 +77,7 @@ export function Licenses() {
 
       <Reveal className="mt-12 flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="max-w-xl text-lg text-neutral-700">{nbsp('Расскажите, что нужно, — назову срок и стоимость.')}</p>
-        <ButtonLink href="#contacts" size="lg" arrow className="shrink-0">
+        <ButtonLink href="#contacts" data-topic="licenses" size="lg" arrow className="shrink-0">
           Обсудить задачу
         </ButtonLink>
       </Reveal>

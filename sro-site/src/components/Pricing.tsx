@@ -112,7 +112,7 @@ export function Pricing() {
       {/* На телефоне — «Узнать стоимость»: полная надпись не помещалась
           в строку, и кнопка ломалась на две. */}
       <Reveal className="mt-12">
-        <ButtonLink href="#contacts" size="lg" arrow>
+        <ButtonLink href="#contacts" data-topic="price" size="lg" arrow>
           {/* Одним span: иначе хвост надписи становился отдельным элементом
               кнопки и отодвигался от начала на её зазор. */}
           <span>

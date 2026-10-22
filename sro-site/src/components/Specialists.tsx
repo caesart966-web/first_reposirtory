@@ -87,7 +87,7 @@ export function Specialists() {
         <p className="max-w-xl text-lg text-neutral-700">
           {nbsp('Пришлите документы сотрудника — скажу, подходит ли он для реестра.')}
         </p>
-        <ButtonLink href="#contacts" size="lg" arrow className="shrink-0">
+        <ButtonLink href="#contacts" data-topic="employee" size="lg" arrow className="shrink-0">
           Проверить сотрудника
         </ButtonLink>
       </Reveal>

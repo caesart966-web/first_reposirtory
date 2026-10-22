@@ -1,12 +1,14 @@
 import { Phone } from 'lucide-react'
 import { useEffect, useState, type ComponentType } from 'react'
-import { LINKS } from '../content/contacts'
+import { LINKS, messengerHref } from '../content/contacts'
+import { TOPICS, type Topic } from '../content/topics'
 import { MESSENGERS } from './messengers'
 
 const itemClasses =
   'flex min-h-[3.5rem] flex-col items-center justify-center gap-0.5 text-[0.6875rem] font-medium text-neutral-700 transition-colors active:bg-neutral-100'
 
 type Channel = {
+  id: string
   label: string
   href: string
   icon: ComponentType<{ className?: string }>
@@ -17,8 +19,8 @@ type Channel = {
 // раньше каналы перечислялись здесь заново, и панель могла разойтись с
 // подвалом.
 const CHANNELS: Channel[] = [
-  { label: 'Позвонить', href: LINKS.tel, icon: Phone, external: false },
-  ...MESSENGERS.map((m) => ({ label: m.label, href: m.href, icon: m.icon, external: true })),
+  { id: 'tel', label: 'Позвонить', href: LINKS.tel, icon: Phone, external: false },
+  ...MESSENGERS.map((m) => ({ id: m.id, label: m.label, href: m.href, icon: m.icon, external: true })),
 ]
 
 // Классы перечислены целиком: Tailwind собирает только то, что видит в коде.
@@ -33,7 +35,9 @@ const GRID_BY_COUNT: Record<number, string> = {
 // Появляется после прокрутки ниже первого экрана (T18): пока посетитель
 // видит первый экран с кнопками «Связаться» и «Позвонить», панель дублировала
 // бы их и съедала нижнюю кромку экрана.
-export function MobileBar() {
+// topic — тема страницы (content/topics.ts): у WhatsApp уже набрано начало
+// сообщения, как в разделе «Связаться».
+export function MobileBar({ topic = TOPICS.general }: { topic?: Topic }) {
   const [visible, setVisible] = useState(false)
 
   // Прячется и в конце страницы (29.09.2026): как только на экран
@@ -63,6 +67,11 @@ export function MobileBar() {
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       aria-label="Быстрая связь"
       aria-hidden={!visible}
+      // Спрятанная панель не только не видна, но и недоступна с клавиатуры
+      // (inert, 22.10.2026): до этого Tab заходил в невидимые ссылки, а диктор
+      // их не читал (aria-hidden) — проверка доступности axe отмечала это
+      // ошибкой. React 18 не знает inert, поэтому атрибут — строкой.
+      {...(visible ? {} : { inert: '' })}
     >
       <div
         className={`grid divide-x divide-neutral-200 ${GRID_BY_COUNT[CHANNELS.length] ?? 'grid-cols-3'}`}
@@ -70,7 +79,7 @@ export function MobileBar() {
         {CHANNELS.map((channel) => (
           <a
             key={channel.label}
-            href={channel.href}
+            href={channel.id === 'whatsapp' ? messengerHref('whatsapp', topic.text) : channel.href}
             data-channel={channel.label}
             className={itemClasses}
           >

@@ -232,7 +232,7 @@ function FormTabs({ form, onChange }: { form: FormKey; onChange: (key: FormKey) 
             tabIndex={on ? 0 : -1}
             onClick={() => onChange(f.key)}
             onKeyDown={(event) => onKey(event, index)}
-            className={`min-h-9 rounded-full px-4 text-sm font-medium transition-colors duration-300 ease-silk ${
+            className={`relative min-h-9 rounded-full px-4 text-sm font-medium transition-colors duration-300 ease-silk after:absolute after:inset-x-0 after:-inset-y-1 after:content-[''] ${
               on ? 'bg-white text-neutral-950 shadow-sm' : 'text-neutral-600 hover:text-neutral-950'
             }`}
           >
@@ -254,11 +254,16 @@ export function SroDocs() {
         <FormTabs form={current.key} onChange={setForm} />
       </div>
       <p className="mt-1 min-h-10 text-sm leading-snug text-neutral-600">{nbsp(SRO_HINT)}</p>
-      <ul id="docs-panel" role="tabpanel" aria-labelledby={`docs-tab-${current.key}`} className="mt-4 border-t border-neutral-300">
-        {current.items.map((item) => (
-          <DocRow key={item.title} item={item} icon="file" details={false} />
-        ))}
-      </ul>
+      {/* Панель вкладки — обёртка, а не сам список (22.10.2026): с role="tabpanel"
+          на <ul> пункты переставали быть списком для экранного диктора
+          (проверка axe: listitem, aria-allowed-role). */}
+      <div id="docs-panel" role="tabpanel" aria-labelledby={`docs-tab-${current.key}`} className="mt-4">
+        <ul className="border-t border-neutral-300">
+          {current.items.map((item) => (
+            <DocRow key={item.title} item={item} icon="file" details={false} />
+          ))}
+        </ul>
+      </div>
     </div>
   )
 }
@@ -303,30 +308,28 @@ function DocGroup({
         {law && <Law>{law}</Law>}
         {control && <div className="mt-5">{control}</div>}
       </div>
-      <ol
-        id={panel?.id}
-        role={panel ? 'tabpanel' : undefined}
-        aria-labelledby={panel?.labelledBy}
-        className="border-t border-neutral-200 lg:border-t-0"
-      >
-        {items.map((item, index) => (
-          <li
-            key={item.title}
-            className="grid grid-cols-[2.25rem_minmax(0,1fr)] border-b border-neutral-200 py-4 last:border-b-0 lg:first:pt-1"
-          >
-            <span className="font-display text-lg font-medium leading-snug tabular-nums text-accent-600">
-              {String(index + 1).padStart(2, '0')}
-            </span>
-            <span className="min-w-0">
-              <span className="block text-[1.0625rem] font-medium leading-snug text-neutral-950">{keepHyphens(item.title)}</span>
-              {item.detail && (
-                <span className="mt-1 block text-[0.9375rem] leading-relaxed text-neutral-600">{nbsp(item.detail)}</span>
-              )}
-              {item.law && item.law !== law && <Law>{item.law}</Law>}
-            </span>
-          </li>
-        ))}
-      </ol>
+      {/* Панель вкладки ООО / ИП — обёртка вокруг списка, как в SroDocs. */}
+      <div id={panel?.id} role={panel ? 'tabpanel' : undefined} aria-labelledby={panel?.labelledBy}>
+        <ol className="border-t border-neutral-200 lg:border-t-0">
+          {items.map((item, index) => (
+            <li
+              key={item.title}
+              className="grid grid-cols-[2.25rem_minmax(0,1fr)] border-b border-neutral-200 py-4 last:border-b-0 lg:first:pt-1"
+            >
+              <span className="font-display text-lg font-medium leading-snug tabular-nums text-accent-600">
+                {String(index + 1).padStart(2, '0')}
+              </span>
+              <span className="min-w-0">
+                <span className="block text-[1.0625rem] font-medium leading-snug text-neutral-950">{keepHyphens(item.title)}</span>
+                {item.detail && (
+                  <span className="mt-1 block text-[0.9375rem] leading-relaxed text-neutral-600">{nbsp(item.detail)}</span>
+                )}
+                {item.law && item.law !== law && <Law>{item.law}</Law>}
+              </span>
+            </li>
+          ))}
+        </ol>
+      </div>
     </Reveal>
   )
 }

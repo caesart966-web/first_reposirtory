@@ -474,9 +474,13 @@ for (const [width, height, need] of [[390, 780, 'all'], [360, 740, 'all'], [390,
   await p.goto(BASE, { waitUntil: 'networkidle' })
   const bar = p.locator('nav[aria-label="Быстрая связь"]')
   check('телефон: нижняя панель скрыта на первом экране', (await bar.getAttribute('aria-hidden')) === 'true')
+  // Скрытая панель недоступна и с клавиатуры (22.10.2026, пункт 7):
+  // aria-hidden прятал её от диктора, а Tab доходил до невидимых ссылок.
+  check('телефон: скрытая нижняя панель недоступна с клавиатуры (inert)', await bar.evaluate((n) => n.inert))
   await p.evaluate(() => scrollTo({ top: 2000, behavior: 'instant' }))
   await p.waitForTimeout(700)
   check('телефон: нижняя панель появилась после прокрутки', (await bar.getAttribute('aria-hidden')) === 'false')
+  check('телефон: появившаяся нижняя панель доступна', !(await bar.evaluate((n) => n.inert)))
   // У «Связаться» панель уходит: там те же номер и мессенджеры крупно.
   await p.evaluate(() => document.getElementById('contacts').scrollIntoView({ block: 'start', behavior: 'instant' }))
   await p.waitForTimeout(700)
@@ -486,10 +490,228 @@ for (const [width, height, need] of [[390, 780, 'all'], [360, 740, 'all'], [390,
   await p.waitForTimeout(600)
   const menuLinks = await p.locator('nav[aria-label="Мобильная навигация"] a:visible').count()
   check('телефон: меню открывается', menuLinks > 5, String(menuLinks))
-  await p.locator('header a:visible', { hasText: 'Связаться' }).last().click()
+  // «Контакты» в меню ведут к разделу (data-direct), «Связаться» в меню —
+  // открывает панель связи поверх страницы, как кнопки «Связаться» везде
+  // на телефоне (22.10.2026, пункт 2).
+  await p.locator('nav[aria-label="Мобильная навигация"] a:visible', { hasText: 'Контакты' }).first().click()
   await p.waitForTimeout(1500)
   const top = await p.evaluate(() => document.getElementById('contacts').getBoundingClientRect().top)
-  check('телефон: «Связаться» из меню приводит к контактам', Math.abs(top) < 200, String(Math.round(top)))
+  check('телефон: «Контакты» из меню приводят к разделу «Связаться»', Math.abs(top) < 200, String(Math.round(top)))
+  await p.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }))
+  await p.locator('header button[aria-label="Открыть меню"]').click()
+  await p.waitForTimeout(600)
+  await p.locator('header a:visible', { hasText: 'Связаться' }).last().click()
+  await p.waitForTimeout(900)
+  const m = await p.evaluate(() => ({
+    sheet: document.querySelector('dialog[data-contact-sheet]').open,
+    menu: getComputedStyle(document.getElementById('mobile-menu')).visibility,
+    y: Math.round(scrollY),
+  }))
+  check('телефон: «Связаться» из меню открывает панель связи, меню закрыто', m.sheet && m.menu === 'hidden' && m.y === 0, JSON.stringify(m))
+  await ctx.close()
+}
+
+// Меню телефона: открытая страница отмечена (22.10.2026, пункт 6) — как
+// в меню компьютера: фоном и цветом пункта, для диктора — aria-current.
+{
+  const ctx = await b.newContext({ viewport: { width: 390, height: 780 }, isMobile: true, hasTouch: true })
+  const p = await ctx.newPage()
+  for (const [path, href] of [['sro-stroiteley/', 'sro-stroiteley/'], ['uslugi/dokumenty/', 'uslugi/dokumenty/']]) {
+    await p.goto(BASE + path, { waitUntil: 'networkidle' })
+    await p.locator('header button[aria-label="Открыть меню"]').click()
+    await p.waitForTimeout(600)
+    const cur = await p.evaluate(() => [...document.querySelectorAll('#mobile-menu a[aria-current="page"]')].map((a) => ({
+      href: a.getAttribute('href'),
+      bg: getComputedStyle(a).backgroundColor,
+      visible: a.checkVisibility(),
+    })))
+    check(`меню телефона на ${path}: открытая страница отмечена`,
+      cur.length === 1 && cur[0].href.endsWith(href) && cur[0].visible && cur[0].bg !== 'rgba(0, 0, 0, 0)', JSON.stringify(cur))
+  }
+  await ctx.close()
+}
+
+// Панель «Связаться» на телефоне (22.10.2026, пункт 2): кнопки «Связаться»,
+// «Обсудить задачу», «Проверить мои документы» открывают способы связи
+// поверх страницы, а не уводят к разделу в конце (на главной — прыжок
+// на 18 экранов). Страница стоит на месте. В WhatsApp — начало сообщения
+// по теме кнопки, у письма — тема.
+{
+  const ctx = await b.newContext({ viewport: { width: 390, height: 780 }, isMobile: true, hasTouch: true })
+  const p = await ctx.newPage()
+  const errs = []
+  p.on('pageerror', (e) => errs.push(String(e)))
+  await p.goto(BASE, { waitUntil: 'networkidle' })
+  const sheet = () => p.evaluate(() => {
+    const d = document.querySelector('dialog[data-contact-sheet]')
+    const wa = d.querySelector('[data-channel="WhatsApp"]')
+    const mail = d.querySelector('[data-channel="Почта"]')
+    const box = d.querySelector('.sheet-panel').getBoundingClientRect()
+    return {
+      open: d.open,
+      y: Math.round(scrollY),
+      wa: wa ? new URL(wa.href).searchParams.get('text') : null,
+      subject: mail ? decodeURIComponent(mail.getAttribute('href').split('subject=')[1] ?? '') : null,
+      bottom: Math.round(box.bottom),
+      focus: d.contains(document.activeElement),
+    }
+  })
+  // Касание по координатам: tap() Playwright прокручивает к элементу сам
+  // (плавно — у страницы scroll-behavior: smooth), и проверка «страница
+  // на месте» мерила бы его прокрутку, а не панель.
+  const tapAt = async (loc) => {
+    const box = await loc.boundingBox()
+    await p.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2)
+  }
+  const toCenter = (loc) => loc.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }))
+  await tapAt(p.locator('section[aria-labelledby="hero-title"] a[href="#contacts"]:visible').first())
+  await p.waitForTimeout(800)
+  let s = await sheet()
+  check('панель связи: «Связаться» на первом экране открывает её, страница на месте', s.open && s.y === 0, JSON.stringify(s))
+  check('панель связи: стоит у нижнего края, фокус в ней', Math.abs(s.bottom - 780) <= 1 && s.focus, JSON.stringify(s))
+  check('панель связи: в WhatsApp набрано начало сообщения', /консультация по вступлению в СРО/.test(s.wa ?? ''), s.wa ?? '')
+  await p.locator('dialog[data-contact-sheet] button[aria-label="Закрыть"]').tap()
+  await p.waitForTimeout(800)
+  check('панель связи: крестик закрывает', !(await sheet()).open)
+
+  const docs = p.locator('a[data-topic="documents"]')
+  await toCenter(docs)
+  await p.waitForTimeout(400)
+  const y0 = await p.evaluate(() => Math.round(scrollY))
+  await tapAt(docs)
+  await p.waitForTimeout(800)
+  s = await sheet()
+  check('панель связи: «Проверить мои документы» — на месте прокрутки, тема о документах',
+    s.open && Math.abs(s.y - y0) <= 2 && /проверить документы/.test(s.wa ?? '') && /Проверка документов/.test(s.subject ?? ''), JSON.stringify({ y0, ...s }))
+  await p.keyboard.press('Escape')
+  await p.waitForTimeout(800)
+  s = await sheet()
+  check('панель связи: Esc закрывает, страница на месте', !s.open && Math.abs(s.y - y0) <= 2, JSON.stringify(s))
+  await tapAt(docs)
+  await p.waitForTimeout(800)
+  await p.touchscreen.tap(195, 30)
+  await p.waitForTimeout(800)
+  check('панель связи: касание затемнения закрывает', !(await sheet()).open)
+  await tapAt(docs)
+  await p.waitForTimeout(800)
+  await p.locator('dialog[data-contact-sheet] a', { hasText: 'Адрес и карта' }).tap()
+  await p.waitForTimeout(1500)
+  const end = await p.evaluate(() => ({
+    open: document.querySelector('dialog[data-contact-sheet]').open,
+    top: Math.round(document.getElementById('contacts').getBoundingClientRect().top),
+  }))
+  check('панель связи: «Адрес и карта» ведёт к разделу «Связаться»', !end.open && Math.abs(end.top) < 200, JSON.stringify(end))
+  check('панель связи: без ошибок', errs.length === 0, errs[0] ?? '')
+
+  // Тема страницы: у вида СРО — его название, и в нижней панели тоже.
+  await p.goto(BASE + 'sro-stroiteley/', { waitUntil: 'networkidle' })
+  const discuss = p.locator('main a[href="#contacts"]:visible', { hasText: 'Обсудить задачу' }).first()
+  await toCenter(discuss)
+  await p.waitForTimeout(400)
+  await tapAt(discuss)
+  await p.waitForTimeout(800)
+  s = await sheet()
+  const barWa = await p.evaluate(() => new URL(document.querySelector('nav[aria-label="Быстрая связь"] [data-channel="WhatsApp"]').href).searchParams.get('text'))
+  check('панель связи: на странице вида тема — вид СРО', s.open && /СРО строителей/.test(s.wa ?? '') && /СРО строителей/.test(s.subject ?? ''), JSON.stringify(s))
+  check('нижняя панель: WhatsApp с темой страницы', /СРО строителей/.test(barWa ?? ''), barWa ?? '')
+  await ctx.close()
+}
+
+// Компьютер: панели нет — «Связаться» ведёт к разделу, как раньше; номер
+// и «Связаться» всегда в шапке.
+{
+  const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } })
+  const p = await ctx.newPage()
+  await p.goto(BASE, { waitUntil: 'networkidle' })
+  await p.locator('section[aria-labelledby="hero-title"] a[href="#contacts"]:visible').first().click()
+  await p.waitForTimeout(1500)
+  const r = await p.evaluate(() => ({
+    open: document.querySelector('dialog[data-contact-sheet]').open,
+    top: Math.round(document.getElementById('contacts').getBoundingClientRect().top),
+  }))
+  check('компьютер: «Связаться» ведёт к разделу, панели нет', !r.open && Math.abs(r.top) < 200, JSON.stringify(r))
+  await ctx.close()
+}
+
+// Клавиатура (22.10.2026, пункт 7): первая ссылка страницы — «Перейти
+// к содержанию», видна в фокусе и уводит фокус в main; следующий Tab —
+// к первой ссылке содержания, а не обратно в шапку.
+{
+  const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } })
+  const p = await ctx.newPage()
+  await p.goto(BASE + 'sro-stroiteley/', { waitUntil: 'networkidle' })
+  await p.keyboard.press('Tab')
+  const first = await p.evaluate(() => {
+    const a = document.activeElement
+    const r = a.getBoundingClientRect()
+    return { text: a.textContent.trim(), w: Math.round(r.width), h: Math.round(r.height), top: Math.round(r.top) }
+  })
+  check('клавиатура: первая ссылка — «Перейти к содержанию», видна в фокусе',
+    first.text === 'Перейти к содержанию' && first.w > 100 && first.h >= 36 && first.top >= 0, JSON.stringify(first))
+  await p.keyboard.press('Enter')
+  await p.waitForTimeout(300)
+  const main = await p.evaluate(() => document.activeElement?.id)
+  await p.keyboard.press('Tab')
+  const next = await p.evaluate(() => ({
+    inMain: !!document.activeElement?.closest('main'),
+    text: document.activeElement?.textContent.trim().slice(0, 30),
+    tabindex: document.getElementById('main').getAttribute('tabindex'),
+  }))
+  check('клавиатура: «Перейти к содержанию» ведёт в main, дальше — содержание страницы',
+    main === 'main' && next.inMain && next.tabindex === null, JSON.stringify({ main, ...next }))
+  await ctx.close()
+}
+
+// Области нажатия не меньше 44 px (22.10.2026, пункт 5): «Назад» в шапке
+// страниц, знак в шапке, номер телефона в «Связаться»; у вкладок ООО / ИП
+// кнопка 36 px, но нажатие ловится и на 4 px выше и ниже (::after).
+{
+  const ctx = await b.newContext({ viewport: { width: 390, height: 780 }, isMobile: true, hasTouch: true })
+  const p = await ctx.newPage()
+  await p.goto(BASE + 'sro-stroiteley/', { waitUntil: 'networkidle' })
+  await scrollThrough(p)
+  const r = await p.evaluate(() => {
+    const h = (el) => (el ? Math.round(el.getBoundingClientRect().height) : 0)
+    const tabs = [...document.querySelectorAll('[role="tab"]')].filter((t) => t.checkVisibility()).map((t) => {
+      t.scrollIntoView({ block: 'center', behavior: 'instant' })
+      const box = t.getBoundingClientRect()
+      const x = box.left + box.width / 2
+      const hit = (y) => {
+        const el = document.elementFromPoint(x, y)
+        return el === t || t.contains(el)
+      }
+      return { h: Math.round(box.height), above: hit(box.top - 3), below: hit(box.bottom + 3) }
+    })
+    return {
+      back: h(document.querySelector('main section .hero-rise a')),
+      logo: h(document.querySelector('header a[href]:not([href="#main"])')),
+      tel: h(document.querySelector('#contacts a[href^="tel"]')),
+      tabs,
+    }
+  })
+  check('нажатие: «Назад» в шапке страницы — не меньше 44 px', r.back >= 44, String(r.back))
+  check('нажатие: знак в шапке — не меньше 44 px', r.logo >= 44, String(r.logo))
+  check('нажатие: номер телефона в «Связаться» — не меньше 44 px', r.tel >= 44, String(r.tel))
+  check('нажатие: вкладки ООО / ИП ловят нажатие и чуть выше, и чуть ниже',
+    r.tabs.length >= 2 && r.tabs.every((t) => t.above && t.below), JSON.stringify(r.tabs))
+  await ctx.close()
+}
+
+// Вкладки документов (22.10.2026, пункт 7): роль tabpanel — у обёртки,
+// а не у самого списка: у ul с ролью tabpanel пункты списка теряли
+// родителя-список для диктора (axe: listitem, aria-allowed-role).
+{
+  const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } })
+  const p = await ctx.newPage()
+  for (const path of ['sro-stroiteley/', 'uslugi/dokumenty/']) {
+    await p.goto(BASE + path, { waitUntil: 'networkidle' })
+    const r = await p.evaluate(() => [...document.querySelectorAll('[role="tabpanel"]')].map((el) => ({
+      tag: el.tagName,
+      list: !!el.querySelector('ul, ol'),
+      label: !!document.getElementById(el.getAttribute('aria-labelledby') ?? ''),
+    })))
+    check(`${path}: панели вкладок — обёртки вокруг списков`, r.length > 0 && r.every((x) => x.tag === 'DIV' && x.list && x.label), JSON.stringify(r))
+  }
   await ctx.close()
 }
 
@@ -515,7 +737,10 @@ for (const [width, height, need] of [[390, 780, 'all'], [360, 740, 'all'], [390,
           const t = title.getBoundingClientRect()
           const lines = Math.round(t.height / parseFloat(getComputedStyle(title).lineHeight))
           const h = cards ? null : a.children[1].getBoundingClientRect()
-          return { lines, height: Math.round(a.getBoundingClientRect().height), right: h ? h.top < t.bottom - 2 : null }
+          // Подпись вида под занятием (карточки) — тоже в одну строку.
+          const sub = cards ? title.nextElementSibling : null
+          const subTwo = sub ? sub.getBoundingClientRect().height > parseFloat(getComputedStyle(sub).lineHeight) * 1.5 : null
+          return { lines, subTwo, height: Math.round(a.getBoundingClientRect().height), right: h ? h.top < t.bottom - 2 : null }
         }),
       }
     })
@@ -523,19 +748,7 @@ for (const [width, height, need] of [[390, 780, 'all'], [360, 740, 'all'], [390,
     if (w < 1024) {
       check(`первый экран ${w}: виды СРО — карточками`, r.cards && ok3)
       check(`первый экран ${w}: карточки одной высоты`, ok3 && r.rows.every((x) => Math.abs(x.height - r.rows[0].height) <= 1), r.rows.map((x) => x.height).join(' / '))
-      // И после выбора другого вида: у выбранной карточки «Открыть →»,
-      // и обе строки любой карточки обязаны остаться в одну строку.
-      for (const i of [1, 2]) {
-        await p.locator('[data-hero-cards] > li').nth(i).locator('a').click()
-        const hs = await p.evaluate(() => [...document.querySelectorAll('[data-hero-cards] > li > *')].map((a) => {
-          const t = a.querySelector('.font-semibold')
-          const two = t.getBoundingClientRect().height > parseFloat(getComputedStyle(t).lineHeight) * 1.5
-          const sub = t.nextElementSibling.getBoundingClientRect().height > parseFloat(getComputedStyle(t.nextElementSibling).lineHeight) * 1.5
-          return { h: Math.round(a.getBoundingClientRect().height), two: two || sub }
-        }))
-        check(`первый экран ${w}: выбран вид ${i + 1} — карточки одной высоты, строки не переносятся`,
-          hs.every((x) => !x.two && Math.abs(x.h - hs[0].h) <= 1), hs.map((x) => x.h + (x.two ? '*' : '')).join(' / '))
-      }
+      check(`первый экран ${w}: подпись вида СРО в карточке в одну строку`, ok3 && r.rows.every((x) => x.subTwo === false), r.rows.map((x) => (x.subTwo ? '2' : '1')).join(' / '))
     } else {
       check(`первый экран ${w}: подпись вида СРО у всех строк справа`, !r.cards && ok3 && r.rows.every((x) => x.right), r.rows.map((x) => (x.right ? 'справа' : 'под')).join(' / '))
     }
@@ -544,15 +757,46 @@ for (const [width, height, need] of [[390, 780, 'all'], [360, 740, 'all'], [390,
   await ctx.close()
 }
 
-// Телефон: нажатие на карточку вида меняет кадр обложки на кадр этого вида,
-// выбранная карточка показывает «Открыть», второе нажатие ведёт на страницу.
-// Сразу выбрано строительство — на первом кадре кран.
-// Смена без рывка (01.10.2026): карточки при выборе не пересоздаются
-// (иначе рамка и «Открыть» возникали скачком, без перехода), а прежний
-// кадр держится под новым, пока тот проступает (иначе на середине смены
-// сквозь оба полупрозрачных кадра мигал тёмный фон).
+// Телефон: карточка вида открывает свою страницу с одного нажатия
+// (22.10.2026, разбор удобства, пункт 1). До того первое нажатие только
+// выбирало вид и меняло кадр обложки, страница открывалась вторым — а его
+// не угадывали: нажал, ничего не открылось. Выбранной карточки больше нет.
+// На обложке кран, и кадры двух других видов на телефоне не грузятся:
+// показывать их некому — смена кадра осталась только для мыши.
 {
   const ctx = await b.newContext({ viewport: { width: 390, height: 780 }, isMobile: true, hasTouch: true })
+  const p = await ctx.newPage()
+  const frames = []
+  p.on('request', (r) => /slide-(design|survey)/.test(r.url()) && frames.push(r.url().split('/').pop()))
+  await p.goto(BASE, { waitUntil: 'networkidle' })
+  // Раньше кадры видов грузились, когда браузер освободится, — подождать
+  // с запасом, чтобы проверка видела и отложенную загрузку.
+  await p.waitForTimeout(3500)
+  const s0 = await p.evaluate(() => {
+    const items = [...document.querySelectorAll('[data-hero-cards] > li > *')]
+    const pics = [...document.querySelectorAll('section[aria-labelledby="hero-title"] .lg\\:hidden picture img')]
+    return {
+      tags: items.map((el) => el.tagName).join(','),
+      selected: items.filter((el) => el.hasAttribute('data-selected') || el.hasAttribute('aria-pressed')).length,
+      pics: pics.map((img) => img.getAttribute('src').replace(/\?.*$/, '').split('/').pop()),
+    }
+  })
+  check('телефон: каждая карточка вида — ссылка', s0.tags === 'A,A,A', s0.tags)
+  check('телефон: «выбранной» карточки нет', s0.selected === 0, String(s0.selected))
+  check('телефон: на обложке кран, кадры других видов не грузятся', s0.pics.length === 1 && /hero-day/.test(s0.pics[0]) && frames.length === 0, `${s0.pics.join(' ')} | ${frames.join(' ')}`)
+  await p.locator('[data-hero-cards] > li').nth(1).locator('a').tap()
+  await p.waitForURL(/sro-proektirovshchikov\/$/, { timeout: 5000 }).catch(() => {})
+  check('телефон: одно нажатие на карточку открывает страницу вида', /sro-proektirovshchikov\/$/.test(p.url()), p.url())
+  await ctx.close()
+}
+
+// Планшет с мышью: наведение на карточку меняет кадр обложки на кадр вида,
+// мышь ушла с карточек — снова кран. Смена без рывка (01.10.2026): карточки
+// при смене не пересоздаются, а прежний кадр держится под новым, пока тот
+// проступает (иначе на середине смены сквозь оба полупрозрачных кадра мигал
+// тёмный фон).
+{
+  const ctx = await b.newContext({ viewport: { width: 800, height: 1000 } })
   const p = await ctx.newPage()
   await p.goto(BASE, { waitUntil: 'networkidle' })
   // Кадры других видов грузятся, когда браузер свободен, — дождаться их.
@@ -560,39 +804,40 @@ for (const [width, height, need] of [[390, 780, 'all'], [360, 740, 'all'], [390,
   await p.evaluate(() => document.querySelectorAll('[data-hero-cards] > li > a').forEach((a, i) => { a.dataset.mark = String(i) }))
   const pictures = 'section[aria-labelledby="hero-title"] .lg\\:hidden picture'
   const state = () => p.evaluate((sel) => {
-    const items = [...document.querySelectorAll('[data-hero-cards] > li > *')]
     const file = (el) => el.querySelector('img').getAttribute('src').replace(/\?.*$/, '').split('/').pop()
     return {
-      tags: items.map((el) => el.tagName).join(','),
-      marks: items.map((el) => el.dataset.mark).join(','),
-      selected: items.map((el) => (el.hasAttribute('data-selected') ? el.getAttribute('href') : null)),
-      open: items.map((el) => getComputedStyle(el.querySelector('[aria-hidden="true"].text-accent-700')).opacity === '1'),
+      marks: [...document.querySelectorAll('[data-hero-cards] > li > *')].map((el) => el.dataset.mark).join(','),
       shown: [...document.querySelectorAll(sel)].filter((el) => getComputedStyle(el).opacity === '1').map(file),
       top: [...document.querySelectorAll(sel)].filter((el) => el.hasAttribute('data-shown')).map(file),
     }
   }, pictures)
-  const s0 = await state()
-  check('телефон: каждая карточка вида — ссылка', s0.tags === 'A,A,A', s0.tags)
-  check('телефон: сразу выбрано строительство', s0.selected[0]?.endsWith('sro-stroiteley/') && !s0.selected[1] && !s0.selected[2] && s0.open[0] && !s0.open[1], JSON.stringify(s0.selected))
-  check('телефон: на обложке кран', s0.shown.length === 1 && /hero-day/.test(s0.shown[0]), s0.shown.join(' '))
-  for (const [i, slug, file] of [[1, 'sro-proektirovshchikov/', 'slide-design'], [2, 'sro-izyskateley/', 'slide-survey']]) {
-    await p.locator('[data-hero-cards] > li').nth(i).locator('a').tap()
+  // Мышь ставится по координатам: hover() Playwright сначала прокручивает
+  // к карточке, и при плавной прокрутке страницы (scroll-behavior: smooth)
+  // карточка уезжала из-под неподвижной мыши — кадр возвращался к крану.
+  // На 800 × 1000 все три карточки в окне и без прокрутки.
+  const point = async (i) => {
+    const box = await p.locator('[data-hero-cards] > li').nth(i).locator('a').boundingBox()
+    await p.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  }
+  const inView = await p.evaluate(() => [...document.querySelectorAll('[data-hero-cards] a')].every((a) => a.getBoundingClientRect().bottom <= innerHeight))
+  check('планшет 800 × 1000: карточки видов в окне без прокрутки', inView)
+  for (const [i, file] of [[1, 'slide-design'], [2, 'slide-survey']]) {
+    await point(i)
     // Середина смены: новый кадр сверху проступает, прежний под ним целиком.
     await p.waitForTimeout(250)
     const mid = await p.evaluate((sel) => [...document.querySelectorAll(sel)].map((el) => ({ top: el.hasAttribute('data-shown'), o: Number(getComputedStyle(el).opacity) })), pictures)
     const rising = mid.find((x) => x.top)
-    check(`телефон: смена на «${slug}» без мигания — прежний кадр держится под новым`,
+    check(`планшет: смена на «${file}» без мигания — прежний кадр держится под новым`,
       rising && rising.o > 0 && rising.o < 1 && mid.some((x) => !x.top && x.o === 1), JSON.stringify(mid))
     await p.waitForTimeout(1300)
     const st = await state()
-    check(`телефон: нажатие на «${slug}» меняет кадр обложки, страница та же`, p.url() === BASE && st.top[0]?.startsWith(file) && st.shown.length === 1 && st.shown[0].startsWith(file), `${p.url()} ${st.shown.join(' ')}`)
-    check(`телефон: выбрана «${slug}», у неё «Открыть»`, st.selected[i]?.endsWith(slug) && st.open[i] && st.open.filter(Boolean).length === 1 && st.selected.filter(Boolean).length === 1, JSON.stringify(st.selected))
-    check(`телефон: карточки при выборе не пересоздаются`, st.marks === '0,1,2', st.marks)
+    check(`планшет: наведение на вид ${i + 1} меняет кадр обложки, страница та же`, p.url() === BASE && st.top[0]?.startsWith(file) && st.shown.length === 1 && st.shown[0].startsWith(file), `${p.url()} ${st.shown.join(' ')}`)
+    check('планшет: карточки при смене кадра не пересоздаются', st.marks === '0,1,2', st.marks)
   }
-  // Второе нажатие на выбранную — переход на страницу вида.
-  await p.locator('[data-hero-cards] > li').nth(2).locator('a').tap()
-  await p.waitForURL(/sro-izyskateley\/$/, { timeout: 5000 }).catch(() => {})
-  check('телефон: нажатие на выбранную карточку открывает страницу вида', /sro-izyskateley\/$/.test(p.url()), p.url())
+  await p.mouse.move(780, 990)
+  await p.waitForTimeout(1600)
+  const back = await state()
+  check('планшет: мышь ушла с карточек — на обложке снова кран', /hero-day/.test(back.top[0] || '') && back.shown.length === 1, back.shown.join(' '))
   await ctx.close()
 }
 
@@ -600,20 +845,25 @@ for (const [width, height, need] of [[390, 780, 'all'], [360, 740, 'all'], [390,
 // смены кадра: при «уменьшить движение» у обложки нет анимации, а с ней
 // и своего контекста наложения, и кадр со z-index ложился на заголовок.
 for (const motion of ['no-preference', 'reduce']) {
-  const ctx = await b.newContext({ viewport: { width: 390, height: 780 }, isMobile: true, hasTouch: true, reducedMotion: motion })
+  // Кадр меняет наведение мыши (с 22.10.2026 касание открывает страницу),
+  // поэтому окно телефонной ширины — без касаний.
+  const ctx = await b.newContext({ viewport: { width: 390, height: 780 }, reducedMotion: motion })
   const p = await ctx.newPage()
   await p.goto(BASE, { waitUntil: 'networkidle' })
-  await p.locator('[data-hero-cards] > li').nth(1).locator('a').tap()
+  await p.waitForFunction(() => document.querySelectorAll('section[aria-labelledby="hero-title"] .lg\\:hidden picture img').length === 3)
+  // Мышь — по координатам (см. проверку планшета выше): вторая карточка
+  // на 390 × 780 в окне, страница не прокручивается.
+  const box = await p.locator('[data-hero-cards] > li').nth(1).locator('a').boundingBox()
+  await p.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
   await p.waitForTimeout(1600)
-  // Касание прокрутило бы к карточке — заголовок меряется с верха страницы.
   const top = await p.evaluate(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' })
+    const shown = document.querySelector('section[aria-labelledby="hero-title"] .lg\\:hidden picture[data-shown] img')?.getAttribute('src') ?? ''
     const h = document.getElementById('hero-title')
     const r = h.getBoundingClientRect()
     const el = document.elementFromPoint(r.left + 20, r.top + r.height / 2)
-    return h.contains(el) ? 'заголовок' : `${el?.tagName}.${el?.className}`.slice(0, 80)
+    return { who: h.contains(el) ? 'заголовок' : `${el?.tagName}.${el?.className}`.slice(0, 80), shown: shown.replace(/\?.*$/, '').split('/').pop() }
   })
-  check(`телефон (${motion}): заголовок обложки поверх кадра`, top === 'заголовок', top)
+  check(`телефон (${motion}): после смены кадра заголовок обложки поверх кадра`, top.who === 'заголовок' && /slide-design/.test(top.shown), JSON.stringify(top))
   await ctx.close()
 }
 
@@ -637,7 +887,6 @@ for (const motion of ['no-preference', 'reduce']) {
   const first = await intro()
   check('первый заход: вступление первого экрана играет', !first.arrived && first.running > 0, JSON.stringify(first))
   await p.waitForTimeout(1500)
-  await p.locator('[data-hero-cards] > li').nth(2).locator('a').tap()
   await p.locator('[data-hero-cards] > li').nth(2).locator('a').tap()
   await p.waitForURL(/sro-izyskateley\/$/)
   await p.waitForLoadState('domcontentloaded')

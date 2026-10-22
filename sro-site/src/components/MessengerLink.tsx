@@ -27,16 +27,19 @@ type Props = {
   /** Готовый текст сообщения; умеет принимать только WhatsApp. */
   text?: string
   className?: string
+  /** Например, закрыть панель «Связаться» (ContactSheet) после выбора канала. */
+  onClick?: () => void
   children: ReactNode
 }
 
-export function MessengerLink({ channel, label, text, className = '', children }: Props) {
+export function MessengerLink({ channel, label, text, className = '', onClick, children }: Props) {
   const desktop = useDesktopPointer()
   return (
     <a
       href={messengerHref(channel, text)}
       className={className}
       data-channel={label}
+      onClick={onClick}
       {...(desktop ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
     >
       {children}

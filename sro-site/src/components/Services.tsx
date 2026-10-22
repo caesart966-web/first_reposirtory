@@ -105,7 +105,7 @@ export function Services() {
               ))}
               {groupIndex === GROUPS.length - 1 && (
                 <Reveal delay={group.slugs.length * 90} className="h-full">
-                  <a href="#contacts" className={CARD_DARK}>
+                  <a href="#contacts" data-topic="consult" className={CARD_DARK}>
                     <h4 className="font-display text-[1.4rem] font-medium leading-[1.1] text-neutral-50 sm:text-[1.6rem] lg:text-[1.45rem] xl:text-[1.6rem]">
                       Бесплатная консультация
                     </h4>

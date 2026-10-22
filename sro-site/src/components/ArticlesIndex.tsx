@@ -19,7 +19,7 @@ export function ArticlesIndex() {
   return (
     <div id="top">
       <Header />
-      <main>
+      <main id="main" className="focus:outline-none">
         <PageHero
           backHref={home()}
           backLabel="На главную"

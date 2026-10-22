@@ -52,7 +52,7 @@ const ITEMS: { id: string; q: string; a: ReactNode }[] = [
         {nbsp(
           'Консультации бесплатны на любом этапе. Оплачивается подготовка документов и сопровождение: стоимость зависит от вида СРО и объёма работы и согласовывается письменно до начала. Взносы в СРО компания платит отдельно, их размер зависит от выбранной организации и уровня ответственности. Обе суммы назову после короткого разговора —',
         )}{' '}
-        <a href="#contacts" className="font-medium text-accent-700 underline underline-offset-2">
+        <a href="#contacts" data-topic="price" className="font-medium text-accent-700 underline underline-offset-2">
           позвоните или напишите
         </a>
         .
@@ -126,7 +126,7 @@ export function FAQ() {
             <p className="max-w-sm text-lg leading-relaxed text-neutral-700">
               {nbsp('Не нашли ответа? Позвоните или напишите — разберу вашу ситуацию бесплатно.')}
             </p>
-            <ButtonLink href="#contacts" size="lg" arrow className="mt-6">
+            <ButtonLink href="#contacts" data-topic="question" size="lg" arrow className="mt-6">
               Задать вопрос
             </ButtonLink>
           </Reveal>

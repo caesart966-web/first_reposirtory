@@ -223,13 +223,35 @@ export function Header() {
           : 'border-transparent bg-neutral-50/80'
       }`}
     >
+      {/* «Перейти к содержанию» (22.10.2026, разбор удобства, пункт 7) — первая
+          ссылка страницы для тех, кто ходит клавиатурой: без неё к тексту
+          каждой страницы приходилось проходить всю шапку. На экране видна
+          только в фокусе. Цель — <main id="main"> на каждой странице.
+          tabindex у main ставится только на время перехода и снимается,
+          когда фокус уходит: постоянный tabindex забирал бы фокус при любом
+          щелчке по тексту, и следующий Tab уводил бы к началу страницы,
+          а не к ссылке после места щелчка. Без скрипта ссылка работает
+          обычным якорем. */}
+      <a
+        href="#main"
+        onClick={() => {
+          const main = document.getElementById('main')
+          if (!main) return
+          main.setAttribute('tabindex', '-1')
+          main.focus({ preventScroll: true })
+          main.addEventListener('blur', () => main.removeAttribute('tabindex'), { once: true })
+        }}
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-[60] focus:rounded-full focus:bg-neutral-950 focus:px-5 focus:py-2.5 focus:text-sm focus:font-medium focus:text-neutral-50 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 focus:ring-offset-neutral-50"
+      >
+        Перейти к содержанию
+      </a>
       <div className="mx-auto flex h-16 w-full max-w-6xl min-[1800px]:max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Знак aria-hidden: имя рядом уже озвучено, второй раз объяснять
             картинку скринридеру нечем. */}
         {/* На 320px имя в 15px не помещалось рядом с двумя круглыми кнопками
             и рвалось по дефису: «БИЗНЕС- / ГРУПП». Ниже 360px кегль и зазоры
             на ступень меньше, а перенос внутри имени запрещён. */}
-        <a href={home()} className="flex min-w-0 items-center gap-2 min-[360px]:gap-2.5">
+        <a href={home()} className="flex min-h-11 min-w-0 items-center gap-2 min-[360px]:gap-2.5">
           <ScalesMark className="h-6 w-auto shrink-0 text-accent-600 min-[360px]:h-7" />
           <span className="flex flex-col leading-tight">
             <span className="whitespace-nowrap text-[0.8125rem] font-bold tracking-tight text-neutral-950 min-[360px]:text-[0.9375rem]">{CONTACTS.brand}</span>
@@ -337,27 +359,37 @@ export function Header() {
                   <p className="px-2 pb-1 pt-2 text-sm text-neutral-600">
                     {item.label}
                   </p>
-                  {item.items.map((link) => (
-                    <a
-                      key={link.href}
-                      href={navHref(link)}
-                      onClick={() => setOpen(false)}
-                      className="flex items-center gap-3 rounded-xl px-2 py-2.5 transition hover:bg-neutral-100"
-                    >
-                      {link.thumb && <NavThumb thumb={link.thumb} load={thumbs} />}
-                      <span className="min-w-0">
-                        <span className="block text-base font-medium text-neutral-800">{link.label}</span>
-                        {link.hint && <span className="block text-sm text-neutral-600">{link.hint}</span>}
-                      </span>
-                    </a>
-                  ))}
+                  {item.items.map((link) => {
+                    const here = isHere(link)
+                    return (
+                      <a
+                        key={link.href}
+                        href={navHref(link)}
+                        aria-current={here ? 'page' : undefined}
+                        onClick={() => setOpen(false)}
+                        className={`flex items-center gap-3 rounded-xl px-2 py-2.5 transition ${here ? 'bg-accent-50' : 'hover:bg-neutral-100'}`}
+                      >
+                        {link.thumb && <NavThumb thumb={link.thumb} load={thumbs} />}
+                        <span className="min-w-0">
+                          <span className={`block text-base font-medium ${here ? 'text-accent-800' : 'text-neutral-800'}`}>{link.label}</span>
+                          {link.hint && <span className="block text-sm text-neutral-600">{link.hint}</span>}
+                        </span>
+                      </a>
+                    )
+                  })}
                 </div>
               ) : (
                 <a
                   key={item.href}
                   href={navHref(item)}
+                  aria-current={isHere(item) ? 'page' : undefined}
+                  // «Контакты» ведут к разделу, а не открывают панель
+                  // «Связаться» (ContactSheet): человек выбрал именно раздел.
+                  {...(item.href === '#contacts' ? { 'data-direct': '' } : {})}
                   onClick={() => setOpen(false)}
-                  className="rounded-xl px-2 py-3 text-base font-medium text-neutral-700 transition hover:bg-neutral-50 hover:text-neutral-950"
+                  className={`rounded-xl px-2 py-3 text-base font-medium transition ${
+                    isHere(item) ? 'bg-accent-50 text-accent-800' : 'text-neutral-700 hover:bg-neutral-50 hover:text-neutral-950'
+                  }`}
                 >
                   {item.label}
                 </a>

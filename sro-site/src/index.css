@@ -510,3 +510,32 @@ html.arrived-settling:not(.mounted) .reveal-words .w > span {
   opacity: 1;
   transform: none;
 }
+
+/* Панель «Связаться» на телефоне и планшете (components/ContactSheet.tsx,
+   22.10.2026): выезжает снизу, под ней проступает затемнение. Начальное
+   положение — за краем экрана; data-shown ставит скрипт со следующего
+   кадра после showModal(), иначе выезда не было бы видно. Закрытие — тот же
+   переход назад, затем close(). При «уменьшить движение» переходы гасит
+   общее правило выше, и панель стоит сразу. Страница под панелью
+   не прокручивается (html.sheet-open). */
+.contact-sheet::backdrop {
+  background-color: rgb(20 17 15 / 0);
+  transition: background-color 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.contact-sheet[data-shown]::backdrop {
+  background-color: rgb(20 17 15 / 0.55);
+}
+.contact-sheet .sheet-panel {
+  transform: translateY(100%);
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.contact-sheet[data-shown] .sheet-panel {
+  transform: none;
+}
+/* scrollbar-gutter — место полосы прокрутки остаётся за ней: в узком окне
+   компьютера с обычной полосой страница иначе сдвигалась бы вбок,
+   пока панель открыта. */
+html.sheet-open {
+  overflow: hidden;
+  scrollbar-gutter: stable;
+}
