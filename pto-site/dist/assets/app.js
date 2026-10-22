@@ -49,7 +49,7 @@ if (!phone.matches) header.classList.remove('is-hidden');
 var revealTargets = [];
 if (!calmMedia.matches && 'IntersectionObserver' in window) {
 revealTargets = [].slice.call(document.querySelectorAll(
-'.section__head, .card, .object, .step, .rec, .service-list,' +
+'.section__head, .card, .object, .ogal__item:not(.ogal__item--main), .step, .rec, .service-list,' +
 ' .panel, .media-band, .faq, .form-card, .contact-card, .doc-list'
 )).filter(function (el) { return !el.closest('.hero'); });
 if (revealTargets.length) {
@@ -287,7 +287,7 @@ var pdf = lightbox.querySelector('[data-pdf-link]');
 var pdfHref = trigger.getAttribute('data-pdf');
 if (pdfHref) { pdf.href = pdfHref; pdf.hidden = false; }
 else { pdf.removeAttribute('href'); pdf.hidden = true; }
-show(0);
+show(Math.min(items.length - 1, parseInt(trigger.getAttribute('data-start'), 10) || 0));
 lightbox.hidden = false;
 document.body.classList.add('is-locked');
 lightbox.querySelector('[data-close]').focus();
