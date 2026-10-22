@@ -26,6 +26,8 @@ sys.path.insert(0, os.path.join(HERE, 'sheets'))
 import ov_vent1 as v1                                                    # noqa: E402
 import ov_vent2 as v2                                                    # noqa: E402
 import ov_vent_schemes as vs                                             # noqa: E402
+import ov_bath as vb                                                     # noqa: E402  лист 12: ВВ-б1, ВВ-б2
+from ov_site import BX, BY                                               # noqa: E402  оси 1/А бани в осях дома (ГП01)
 
 OUT = os.path.join(HERE, 'out', '3d')
 Z1, Z2, ZROOF = v1.Z1, v1.Z2, v1.ZROOF
@@ -37,6 +39,8 @@ GAP = 0.01                         # между воздуховодами на 
 F_D = 0.05                         # фреонопроводы (жидкость + газ в изоляции) — одним «пучком» Ø50
 ZF1, ZF2 = SLAB1 - TOP - F_D / 2, SLAB2 - TOP - F_D / 2
 AC = v1.AC
+BATH = 3                           # «этаж» бани: отдельное здание, сдвиг (BX; BY) от осей дома без поворота
+BATH_TOP = 2.80                    # стены бани в модели — до +2,800 (потолки +2,370…+2,750 по разрезам АР)
 
 SYS = {   # система: (название, цвет RGB для просмотрщика, ACI для DXF)
     'П': ('П1 — приток', (37, 99, 235), 5),
@@ -47,6 +51,7 @@ SYS = {   # система: (название, цвет RGB для просмо�
     'В2': ('В2 — вытяжка топочной (естественная)', (180, 120, 60), 32),
     'Р': ('Кондиционирование: блоки К, КСД, воздуховоды', (192, 38, 211), 6),
     'F': ('Фреонопроводы мини-VRV', (219, 39, 119), 221),
+    'ВВ': ('ВВ-б1, ВВ-б2 — вытяжка бани', (234, 88, 12), 30),
     'E': ('Оборудование', (148, 163, 184), 9),
 }
 
@@ -59,7 +64,8 @@ def _low(low, depth, slab):
 
 
 ZONES = {1: [(Polygon(p), lab, _low(low, dep, SLAB1)) for p, lab, dep, low, what in v1.ZONES1],
-         2: [(Polygon(p), lab, _low(low, dep, SLAB2)) for p, lab, dep, low, what in v2.ZONES2]}
+         2: [(Polygon(p), lab, _low(low, dep, SLAB2)) for p, lab, dep, low, what in v2.ZONES2],
+         BATH: []}
 
 
 def zone_at(x, y, floor):
@@ -72,8 +78,8 @@ def zone_at(x, y, floor):
 
 def zlim(x, y, floor):
     lab, low = zone_at(x, y, floor)
-    zmax = SLAB1 - TOP if floor == 1 else SLAB2 - TOP
-    zmin = (low + BOARD) if low is not None else (0.0 if floor == 1 else FL2)
+    zmax = {1: SLAB1 - TOP, 2: SLAB2 - TOP, BATH: BATH_TOP}[floor]
+    zmin = (low + BOARD) if low is not None else {1: 0.0, 2: FL2, BATH: 0.0}[floor]
     return zmin, zmax
 
 
@@ -210,6 +216,33 @@ def build_runs():
         fr(f'Ф-{n}', [(cx, 7.78), (cx, y1)], ZF2, 2, end_z=sum(zu2[n]) / 2, nm=f'Фреон — отвод к {n}, 6,35/12,7')
 
 
+def build_bath():
+    """Баня (лист 12): ВВ-б1, ВВ-б2 — решётка под потолком → канальный вентилятор Ø100 → проход Ø110 в наружной
+    стене → наружная решётка с жалюзи; ось +2,200. Координаты листа 12 (оси бани) + сдвиг по ГП01."""
+    z = vb.FAN_Z
+    for nm, fd in vb.FANS.items():
+        (gx, gy), (fx, fy), (ox_, oy_) = fd['grille'], fd['fan'], fd['out']
+        gx, gy, fx, fy, ox_, oy_ = gx + BX, gy + BY, fx + BX, fy + BY, ox_ + BX, oy_ + BY
+        L = math.hypot(ox_ - gx, oy_ - gy)
+        ux, uy = (ox_ - gx) / L, (oy_ - gy) / L
+        room = {'б3': 'с/у б3', 'б7': 'помывочная б7'}[fd['room']]
+        run(nm, 'ВВ', [(gx, gy, z), (ox_, oy_, z)], d=0.10, name=f'{nm} — вытяжка {room}, Ø100',
+            L=fd['L'], floor=BATH, clamp=False)
+        run(f'{nm}-вент', 'ВВ', [(fx - ux * 0.16, fy - uy * 0.16, z), (fx + ux * 0.16, fy + uy * 0.16, z)], d=0.25,
+            kind='fan', name=f'{nm} — канальный вентилятор Ø100, {fd["L"]}/{fd["Lmax"]} м³/ч, с датчиком влажности',
+            L=fd['L'], floor=BATH, clamp=False)
+        RUNS[-1].label = f'{nm} {fd["L"]}/{fd["Lmax"]}'
+
+        def plate(cx, cy, t, a=0.10):
+            hx = t / 2 if abs(ux) > 0.5 else a
+            hy = t / 2 if abs(uy) > 0.5 else a
+            return (cx - hx, cy - hy, z - a, cx + hx, cy + hy, z + a)
+        box(f'{nm}-реш', 'ВВ', plate(gx - ux * 0.015, gy - uy * 0.015, 0.03), 'grille',
+            name=f'{nm}: решётка под потолком, {room}', L=fd['L'], label=f'L={fd["L"]}…{fd["Lmax"]}', floor=BATH)
+        box(f'{nm}-нар', 'ВВ', plate(ox_ + ux * 0.025, oy_ + uy * 0.025, 0.05, a=0.125), 'grille',
+            name=f'{nm}: наружная решётка с гравитационными жалюзи', floor=BATH)
+
+
 def unit_z(n, floor):
     b = v1.KU1[n] if floor == 1 else v2.KU2[n]
     cx, cy = (b[0] + b[2]) / 2, (b[1] + b[3]) / 2
@@ -313,7 +346,7 @@ def crossings():
     res = []
     for i, a in enumerate(RUNS):
         for b in RUNS[i + 1:]:
-            if a.floor != b.floor or a.kind == 'silencer' or b.kind == 'silencer':
+            if a.floor != b.floor or a.kind in ('silencer', 'fan') or b.kind in ('silencer', 'fan'):
                 continue
             for (ia0, ia1, sa0, sa1, za) in horiz_runs(a):
                 la = LineString([p[:2] for p in a.pts[ia0:ia1 + 1]])
@@ -448,6 +481,7 @@ def routing():
     """Только трассы и разводка (без стен и выгрузок) — для листа 11 и спецификации."""
     RUNS.clear(), BOXES.clear(), LABELS.clear(), CROSS.clear(), CLAMP.clear()
     build_runs()
+    build_bath()
     clamp_runs()
     log, fail = solve()
     if fail:
@@ -675,7 +709,8 @@ def walls():
     from ezdxf import recover
     from underlay import OX, OY
     out = {}
-    for fl, key in ((1, 'plan1'), (2, 'plan2')):
+    for fl, key in ((1, 'plan1'), (2, 'plan2'), (BATH, 'bath')):
+        sx, sy = (BX, BY) if fl == BATH else (0.0, 0.0)
         doc, _ = recover.readfile(v1.UNDER[key])
         polys = []
         for e in doc.modelspace().query('HATCH'):
@@ -685,9 +720,9 @@ def walls():
                 pts = []
                 for ed in getattr(p, 'edges', []):
                     s = ed.start
-                    pts.append(((s[0] - OX) / 1000, (s[1] - OY) / 1000))
+                    pts.append(((s[0] - OX) / 1000 + sx, (s[1] - OY) / 1000 + sy))
                 if not pts and hasattr(p, 'vertices'):
-                    pts = [((v[0] - OX) / 1000, (v[1] - OY) / 1000) for v in p.vertices]
+                    pts = [((v[0] - OX) / 1000 + sx, (v[1] - OY) / 1000 + sy) for v in p.vertices]
                 if len(pts) >= 3:
                     pg = Polygon(pts).buffer(0)
                     if pg.area > 1e-4:
@@ -801,7 +836,7 @@ def export_json(W, slab):
     data = {'title': 'И05.09.26-ОВ. Вентиляция и кондиционирование дома — 3D-модель',
             'systems': {k: {'name': v[0], 'rgb': v[1]} for k, v in SYS.items()},
             'walls': [], 'slabs': [], 'runs': [], 'boxes': [], 'labels': []}
-    for fl, (z0, z1) in ((1, (0.0, SLAB1)), (2, (SLAB1, SLAB2))):
+    for fl, (z0, z1) in ((1, (0.0, SLAB1)), (2, (SLAB1, SLAB2)), (BATH, (0.0, BATH_TOP))):
         for g in geoms(W[fl]):
             data['walls'].append({'floor': fl, 'z0': z0, 'z1': z1, 'outer': [list(map(lambda v: round(v, 4), p))
                                                                               for p in g.exterior.coords[:-1]],
@@ -818,6 +853,11 @@ def export_json(W, slab):
                          1 if sh else 0])
         data['runs'].append({'id': r.id, 'sys': r.sys, 'name': r.name, 'L': r.L, 'kind': r.kind,
                              'sec': r.section(), 'floor': r.floor, 'segs': segs})
+    for r in RUNS:
+        if r.label:
+            (x0, y0, z0), (x1, y1, z1) = r.pts[0], r.pts[-1]
+            data['labels'].append({'x': round((x0 + x1) / 2, 3), 'y': round((y0 + y1) / 2, 3), 'z': round(z0 + 0.30, 3),
+                                   'text': r.label, 'sys': r.sys, 'floor': r.floor})
     for b in BOXES:
         data['boxes'].append({'id': b.id, 'sys': b.sys, 'kind': b.kind, 'name': b.name, 'L': b.L, 'floor': b.floor,
                               'b': [round(v, 4) for v in b.b]})
@@ -905,7 +945,7 @@ def export_dxf(data):
     msp = doc.modelspace()
     LAY = {'П': 'ОВ_3D_П1_приток', 'В': 'ОВ_3D_П1_вытяжка', 'Н': 'ОВ_3D_П1_наружный', 'X': 'ОВ_3D_П1_выброс',
            'ВЗ': 'ОВ_3D_ВЗ', 'В2': 'ОВ_3D_В2', 'Р': 'ОВ_3D_Кондиционирование', 'F': 'ОВ_3D_Фреон',
-           'E': 'ОВ_3D_Оборудование'}
+           'E': 'ОВ_3D_Оборудование', 'ВВ': 'ОВ_3D_Баня_вытяжка'}
     for k, nm in LAY.items():
         lay = doc.layers.add(nm, color=SYS[k][2])
         lay.rgb = SYS[k][1]
@@ -959,6 +999,12 @@ def export_ifc(data):
     api('aggregate.assign_object', f, relating_object=proj, products=[site])
     api('aggregate.assign_object', f, relating_object=site, products=[bld])
     api('aggregate.assign_object', f, relating_object=bld, products=[st[1], st[2]])
+    bath = api('root.create_entity', f, ifc_class='IfcBuilding', name='Баня')
+    st[BATH] = api('root.create_entity', f, ifc_class='IfcBuildingStorey', name='Баня, этаж 1')
+    api('aggregate.assign_object', f, relating_object=site, products=[bath])
+    api('aggregate.assign_object', f, relating_object=bath, products=[st[BATH]])
+    api('geometry.edit_object_placement', f, product=bath)
+    api('geometry.edit_object_placement', f, product=st[BATH])
     for obj in (site, bld):
         api('geometry.edit_object_placement', f, product=obj)
     from underlay import OX, OY                         # оси 1/А в координатах выгрузки Revit, мм
@@ -968,8 +1014,13 @@ def export_ifc(data):
         s.Elevation = 0.0 if k == 1 else FL2
         s.ObjectPlacement.RelativePlacement.Location.Coordinates = (0.0, 0.0, 0.0 if k == 1 else FL2)
     bld.ObjectPlacement.PlacementRelTo = site.ObjectPlacement      # цепочка участок → здание → этаж
-    for s in st.values():
-        s.ObjectPlacement.PlacementRelTo = bld.ObjectPlacement
+    for k in (1, 2):
+        st[k].ObjectPlacement.PlacementRelTo = bld.ObjectPlacement
+    # баня — здание с началом в осях 1/А бани: сдвиг по ГП01 от осей дома (элементы — в общей системе дома)
+    bath.ObjectPlacement.RelativePlacement.Location.Coordinates = (OX / 1000 + BX, OY / 1000 + BY, 0.0)
+    bath.ObjectPlacement.PlacementRelTo = site.ObjectPlacement
+    st[BATH].ObjectPlacement.RelativePlacement.Location.Coordinates = (0.0, 0.0, 0.0)
+    st[BATH].ObjectPlacement.PlacementRelTo = bath.ObjectPlacement
 
     O = f.createIfcCartesianPoint((0.0, 0.0, 0.0))
 
@@ -999,9 +1050,10 @@ def export_ifc(data):
         return f.createIfcProductDefinitionShape(None, None, [rep])
 
     def place(prod, storey):
-        z = 0.0 if storey == 1 else FL2
+        z = FL2 if storey == 2 else 0.0
+        dx, dy = (-BX, -BY) if storey == BATH else (0.0, 0.0)  # координаты элементов бани — в осях дома
         rel = st[storey].ObjectPlacement
-        prod.ObjectPlacement = f.createIfcLocalPlacement(rel, ax((0.0, 0.0, -z)))
+        prod.ObjectPlacement = f.createIfcLocalPlacement(rel, ax((dx, dy, -z)))
 
     def extr_seg(p0, p1, w, h, rect):
         t, u, v, L = frame(p0, p1)
@@ -1034,14 +1086,14 @@ def export_ifc(data):
     def system(k):
         if k not in systems and k in SYS and k != 'E':
             ptype = {'П': 'VENTILATION', 'В': 'VENTILATION', 'Н': 'VENTILATION', 'X': 'EXHAUST', 'ВЗ': 'EXHAUST',
-                     'В2': 'EXHAUST', 'Р': 'AIRCONDITIONING', 'F': 'REFRIGERATION'}[k]
+                     'В2': 'EXHAUST', 'Р': 'AIRCONDITIONING', 'F': 'REFRIGERATION', 'ВВ': 'EXHAUST'}[k]
             s = api('system.add_system', f, ifc_class='IfcDistributionSystem')
             s.Name = SYS[k][0]
             s.PredefinedType = ptype
             systems[k] = s
         return systems.get(k)
 
-    by_store = {1: [], 2: []}
+    by_store = {1: [], 2: [], BATH: []}
     by_sys = {}
 
     def pset(prod, props):
@@ -1049,7 +1101,8 @@ def export_ifc(data):
         api('pset.edit_pset', f, pset=ps, properties={k: v for k, v in props.items() if v is not None})
 
     for wl in data['walls']:
-        w = api('root.create_entity', f, ifc_class='IfcWall', name=f'Стена по АР (этаж {wl["floor"]})')
+        w = api('root.create_entity', f, ifc_class='IfcWall',
+                name='Стена бани по АР4' if wl['floor'] == BATH else f'Стена по АР (этаж {wl["floor"]})')
         w.Representation = shape([extr_poly(wl['outer'], wl['holes'], wl['z0'], wl['z1'])], 'wall')
         place(w, wl['floor'])
         by_store[wl['floor']].append(w)
@@ -1062,6 +1115,8 @@ def export_ifc(data):
         cls = 'IfcPipeSegment' if r['sys'] == 'F' else 'IfcDuctSegment'
         if r['kind'] == 'silencer':
             cls = 'IfcDuctSilencer'
+        if r['kind'] == 'fan':
+            cls = 'IfcFan'
         e = api('root.create_entity', f, ifc_class=cls, name=r['name'])
         e.Tag = r['id']
         items = [extr_seg(s[:3], s[3:6], s[6], s[7], s[8]) for s in r['segs'] if math.dist(s[:3], s[3:6]) > 1e-6]
@@ -1098,6 +1153,7 @@ def export_ifc(data):
 # ---------------------------------------------------------------- сборка
 def main():
     build_runs()
+    build_bath()
     notes = clamp_runs()
     log, fail = solve()
     stubs()

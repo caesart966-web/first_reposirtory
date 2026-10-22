@@ -39,19 +39,20 @@ body.noui #panel,body.noui #toggle,body.noui #card{display:none!important}
 <div id="panel">
   <button id="hide" onclick="document.body.classList.add('collapsed')">скрыть</button>
   <h1>Вентиляция и кондиционирование</h1>
-  <p class="sub">И05.09.26-ОВ · дом · 3D-модель по листам 9–11</p>
+  <p class="sub">И05.09.26-ОВ · дом и баня · 3D-модель по листам 9–12</p>
   <div class="cap">Вид</div>
   <div class="row">
     <button data-view="iso">Общий вид</button><button data-view="iso2">С востока</button>
     <button data-view="f1">1 этаж</button><button data-view="f2">2 этаж</button>
     <button data-view="topo">Топочная</button><button data-view="top">Сверху</button>
+    <button data-view="bath">Баня</button><button data-view="site">Участок</button>
   </div>
   <div class="cap">Этаж</div>
-  <div class="row"><button data-floor="0">Все</button><button data-floor="1">1 этаж</button><button data-floor="2">2 этаж</button></div>
+  <div class="row"><button data-floor="0">Все</button><button data-floor="1">1 этаж</button><button data-floor="2">2 этаж</button><button data-floor="3">Баня</button></div>
   <div class="cap">Слои</div>
   <div id="layers"></div>
   <p class="note">Вращение — левая кнопка или палец, сдвиг — правая кнопка или два пальца, масштаб — колесо. Нажатие на воздуховод, решётку или блок показывает сечение и расход.</p>
-  <p class="note">Стены — по АР03 и АР09, проёмы окон и дверей показаны на всю высоту. Пересечения в подшивке разведены по высоте, разводка — в пояснении к модели. Дренаж конденсата — по листам 9 и 10.</p>
+  <p class="note">Стены — по АР03, АР09 и АР4 (баня; положение — по ГП01), проёмы окон и дверей показаны на всю высоту. Пересечения в подшивке разведены по высоте, разводка — в пояснении к модели. Дренаж конденсата — по листам 9 и 10.</p>
 </div>
 <div id="card" hidden></div>
 <script>window.MODEL = __MODEL__;</script>

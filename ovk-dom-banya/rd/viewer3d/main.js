@@ -158,6 +158,8 @@ const VIEWS = {
   f2: { pos: [-5, -13, 18], tgt: [9.5, 8.2, 6.4], floor: 2 },
   top: { pos: [10, 8.4, 40], tgt: [10, 8.4, 0], floor: 0 },
   topo: { pos: [11.0, 3.2, 7.2], tgt: [16.6, 10.9, 2.9], floor: 1 },
+  bath: { pos: [3.0, 12.5, 15.5], tgt: [15.1, 28.4, 0.6], floor: 3 },
+  site: { pos: [-16, -22, 34], tgt: [12, 16, 1.5], floor: 0 },
 };
 let floorSel = 0;
 function applyFloor(f) {
@@ -168,7 +170,7 @@ function applyFloor(f) {
         const fl = o.userData.floor;
         let vis = f === 0 || fl === f;
         if (k === 'walls' && f === 2 && fl === 1) vis = false;
-        if (k === 'slabs') vis = f !== 1;
+        if (k === 'slabs') vis = f === 0 || f === 2;
         o.visible = vis;
       }
     });
@@ -186,7 +188,7 @@ function setView(name) {
 
 // ---------------------------------------------------------------- панель
 const layerList = [['walls', 'Стены (по АР)'], ['slabs', 'Перекрытие'], ['П', null], ['В', null], ['Н', null], ['X', null],
-  ['ВЗ', null], ['В2', null], ['Р', null], ['F', null], ['E', null], ['labels', 'Подписи расходов']];
+  ['ВЗ', null], ['В2', null], ['Р', null], ['F', null], ['E', null], ['ВВ', null], ['labels', 'Подписи расходов']];
 const box = document.getElementById('layers');
 for (const [k, nm] of layerList) {
   if (!groups[k]) continue;
