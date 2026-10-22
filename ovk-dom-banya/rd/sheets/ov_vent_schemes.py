@@ -560,7 +560,64 @@ def build():
     sh.s.text('Воздушный баланс', 22 + 73, 141, h=2.5, align='center')
     sh.table(22, 138, [10, 38, 14, 14, 70], bal, row_h=4.6, head_h=4.8, h=1.6,
              aligns=['center', 'left', 'center', 'center', 'left'])
+    crossing_table(sh, 182, 156)
     return doc
+
+
+AX_X = [('1', 0.0), ('2', 6.1), ('3', 9.5), ('4', 12.6), ('5', 20.0)]
+AX_Y = [('А', 0.0), ('Б', 1.1), ('В', 6.3), ('Г', 8.9), ('Д', 13.8), ('Е', 15.5), ('Ж', 16.7)]
+
+
+def axes_of(x, y):
+    def between(v, ax):
+        for (a, va), (b, vb) in zip(ax, ax[1:]):
+            if va <= v <= vb:
+                return f'{a}–{b}'
+        return ''
+    return f'{between(x, AX_X)} / {between(y, AX_Y)}'
+
+
+def crossing_table(sh, x, y):
+    """Разводка пересечений в подшивках — по 3D-модели (rdsh/model3d.py): те же трассы, что на листах 9, 10."""
+    import model3d as m3
+    R = m3.routing()
+    KN = {'П': 'П', 'В': 'В', 'Р': 'К', 'F': 'фреон'}
+
+    def nm(r):
+        return f"{KN.get(r.sys, r.sys)} {r.section()} ({r.id})"
+    rows = [['Зона', 'Оси', 'Пересекаются', 'Решение (отметки — оси воздуховодов)']]
+    for c in R['cross']:
+        Y, K, P = c['Y'], c['K'], c['P']
+        if c['flat']:
+            w, h = (round(v * 1000) for v in c['flat'])
+            sol = (f"{KN[K.sys]} {K.section()} поднять до +{n1(c['zK'], 3)}; {KN[Y.sys]} {Y.section()} под ним — плоский "
+                   f"участок {w}×{h} длиной ≈0,5 м на оси +{n1(c['zY'], 3)}, переходы {Y.section()}/{w}×{h}")
+        else:
+            over = c['zY'] > c['zK']
+            sol = (f"{KN[Y.sys]} {Y.section()} {'над' if over else 'под'} {KN[K.sys]} {K.section()}: "
+                   f"ось {KN[Y.sys]} +{n1(c['zY'], 3)}")
+            if abs(c['zK'] - (Z1 if c['floor'] == 1 else Z2)) > 0.035:
+                sol += f", ось {KN[K.sys]} +{n1(c['zK'], 3)}"
+        rows.append([m3.zone_label(P, c['floor']), axes_of(*P), f'{nm(Y)} × {nm(K)}', sol + '; утки — отводы 45°'])
+    for fl in (1, 2):
+        cl = [c for c in R['clamp'] if c['floor'] == fl]
+        if not cl:
+            continue
+        zs = sorted(c['z'] for c in cl)
+        secs = sorted({c['sec'] for c in cl}, key=lambda t: int(t[1:]))
+        zones = sorted({m3.zone_label(p[:2], fl) for c in cl for r in m3.RUNS if r.id == c['id']
+                        for p in r.pts if m3.zone_label(p[:2], fl) != '—'})
+        lev = Z1 if fl == 1 else Z2
+        rows.append([', '.join(zones), '—', f'{secs[0]}…{secs[-1]}, {len(cl)} участков',
+                     f'оси +{n1(zs[0], 3)}…+{n1(zs[-1], 3)} вместо +{n1(lev, 3)}: низ воздуховода — не ближе 30 мм '
+                     f'к низу подшивки'])
+    sh.s.text('Разводка пересечений в подшивках (3D-модель И05.09.26-ОВ 3D)', x + 105, y + 2.6, h=2.5, align='center')
+    yb = sh.table(x, y, [22, 20, 62, 106], rows, row_h=7.6, head_h=5.0, h=1.6,
+                  aligns=['center', 'center', 'left', 'left'])
+    sh.s.mtext('Пересечения в плане (листы 9, 10) разведены по высоте в 3D-модели по тем же трассам и сечениям; '
+               'на участках обхода сечение не уменьшается. Модель — файлы И05.09.26-ОВ 3D (DWG, IFC, просмотр).',
+               x, yb - 1.4, 210, h=1.6, attach=1)
+    return yb
 
 
 if __name__ == '__main__':
