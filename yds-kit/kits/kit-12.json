@@ -1,0 +1,1075 @@
+{
+  "kit": 12,
+  "spec": 3,
+  "topic": "Geniş Konu Yelpazesi I",
+  "date": "2026",
+  "passages": [
+    {
+      "first": 43,
+      "last": 46,
+      "subject": "metrology / the metric system",
+      "text": "A unit of measurement looks like a technical matter and is almost never introduced as one. When the metre was defined at the end of the eighteenth century, the point of the exercise was not accuracy; the units already in use were accurate enough for the trades that used them. The point was that there were too many of them. A bushel meant one quantity in one market town and a different quantity thirty miles away, the difference was known to the local merchant and not to the stranger, and a great deal of ordinary commerce consisted of finding out what the local words meant before any bargaining could begin. A single system abolished that advantage, which is exactly why it was resisted. The opposition was not superstition about old ways. It came from the people whose position depended on knowing the local measure, and it lasted for two generations in some regions. What eventually settled the question was not argument but the railway and the tax office, both of which needed to describe the same quantity in the same words at either end of a journey. The lesson has been learned several times since under different names. A standard is never only a convenience; it redistributes an advantage from those who know the particular to those who know the general, and the people who lose by it understand this long before the people who gain."
+    },
+    {
+      "first": 47,
+      "last": 50,
+      "subject": "finance / passive investing",
+      "text": "The fund that simply buys everything in a market and holds it was proposed as a joke against the profession that manages money. If the price of a share already reflects what buyers and sellers collectively know, then the effort of choosing between shares is wasted, and a fund that chose nothing at all should do about as well as the average of those that chose carefully, while costing almost nothing to run. The argument was unpopular for an obvious reason and correct for a measurable one: over long periods most managed funds do not beat the index they are measured against, and the ones that do are not reliably the same ones from decade to decade. What is interesting is what the success of the idea has done to the premise it rests on. Prices reflect what is known because somebody is paid to find out and to trade on it. A market in which everybody held the index and nobody investigated anything would have prices that reflected nothing, and the index would be worthless. The passive fund is therefore a passenger on an activity it does not perform and would not survive without, which is not a criticism of anybody who owns one. It is a reminder that an argument can be true of each person who acts on it and false of everybody acting on it at once."
+    },
+    {
+      "first": 51,
+      "last": 54,
+      "subject": "media preservation / sound archives",
+      "text": "A sound archive does not fight decay so much as obsolescence. The wax cylinder, the lacquer disc, the quarter-inch tape and the digital cartridge all survive longer than the machines that play them, and a recording nobody can play is, for every practical purpose, a recording that has been lost. This makes the work of such an archive unlike that of a library. A book printed in 1650 can be read by anybody who can read; a tape recorded in 1975 needs a particular machine, in working order, with parts that are no longer manufactured and an engineer who remembers how it was aligned. Archives therefore spend much of their money on equipment and on people rather than on storage, and they transfer continuously rather than waiting for a format to fail. Each transfer is a small loss and a large insurance. The choice they face is not whether to accept the loss but how often, and the answer most of them have reached is that a copy made now, with whatever is available now, is worth more than a better copy that may never be made, because the window in which a given machine can still be made to work is measured in a few decades and is closing in every case. The problem has not been solved by recording digitally; it has been made faster. A file is readable only while something will open it, and the formats of the last thirty years have been retired at a rate no wax cylinder ever managed."
+    },
+    {
+      "first": 55,
+      "last": 58,
+      "subject": "urban history / cemeteries",
+      "text": "For most of their history, European cities buried their dead among the living. The churchyard sat in the middle of the parish, the ground was used again and again, and nobody regarded this as a problem until the cities grew faster than the ground could absorb. The reform that moved burial to large sites outside the walls was argued for on grounds of health, and the medical reasoning of the time was largely wrong: the danger was believed to come from the air rather than from the water supply the graves were sitting above. The policy was nevertheless right, which is a more common sequence than tidy accounts of progress admit. What the reformers did not anticipate was the social consequence. A grave inside the parish could be visited on the way to anything else, and its upkeep was a shared obligation of people who saw each other daily. A grave two hours away by road becomes an occasion, then a duty, and then, within two generations, a place nobody can find. The new cemeteries were designed as parks and were used as parks for a while, but the connection between a community and its dead had been built out of proximity, and distance dissolved it quietly, without anybody deciding that it should. The reformers would have been puzzled by the complaint. They had been asked to stop a city poisoning itself, they did so, and the thing they damaged was not one that anybody at the time thought to measure."
+    },
+    {
+      "first": 59,
+      "last": 62,
+      "subject": "music history / the conductor",
+      "text": "An orchestra of sixty players performing without a conductor sounds like a modern experiment and is in fact the older arrangement. For most of the eighteenth century the ensemble was led from within, by the first violin or from the keyboard, and the leader played while leading. The separate figure who plays nothing and faces away from the audience appears in the nineteenth century, and the reason is arithmetic rather than artistry. Ensembles grew, the works written for them grew more intricate, and the number of players who could see and hear the leader from where they sat stopped covering the whole group. A player at the back of a large orchestra is far enough from the front for sound to arrive noticeably late, so an ensemble beyond a certain size cannot stay together by listening alone; it needs something to watch. Everything else that the role has acquired since came afterwards and is genuinely artistic: an interpretation, a balance between sections, a view of the work as a whole. But the job exists because of a problem in geometry, and this is worth remembering whenever the conductor is described as the source of the music. The source is still the players. What was added was a way of agreeing when to begin. Even the posture is recent. Conductors faced the audience until well into the nineteenth century, and turning round, which now looks like the obvious arrangement, was at the time thought discourteous enough to need defending."
+    }
+  ],
+  "questions": [
+    {
+      "no": 27, "group": "sentence_completion", "level": "B2",
+      "subject": "civil aviation / overbooking",
+      "stem": "Because an airline knows almost exactly how many passengers holding tickets will fail to appear at the gate, ----.",
+      "options": {
+        "o1": "selling more seats than the aircraft holds is a calculation rather than a blunder",
+        "o2": "selling more seats than the aircraft holds is a blunder it repeats every day",
+        "o3": "passengers who arrive late are moved to the following morning's service",
+        "o4": "the price of a ticket changes several times between booking and departure",
+        "o5": "the crew are required to count the passengers before the doors are closed"
+      },
+      "order": ["o1", "o3", "o4", "o2", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Gelmeyeceklerin sayısı biliniyorsa fazla satış bir yanlışlık değil, yapılmış bir hesaptır.",
+      "trap_note": "Aynı öncülden hata sonucunu çıkarır; oysa öncül tam da işin öngörülebilir olduğunu söyler."
+    },
+    {
+      "no": 28, "group": "sentence_completion", "level": "C1",
+      "subject": "punctuation / the apostrophe",
+      "stem": "Although the apostrophe has been put in the wrong place in English for as long as the mark has existed, ----.",
+      "options": {
+        "o1": "hardly any sentence is made genuinely unclear by getting it wrong",
+        "o2": "almost every sentence becomes unclear as soon as it is left out",
+        "o3": "printers of the sixteenth century used it to mark a missing letter",
+        "o4": "schools devote a considerable part of the year to teaching it",
+        "o5": "the rule governing possessive plurals was settled long ago"
+      },
+      "order": ["o4", "o5", "o3", "o2", "o1"],
+      "answer": "o1", "trap": "o2",
+      "why": "Ödün bağlacı beklenen sonucu kırar: yanlış kullanım yüzyıllardır sürüyorsa anlaşılmayı ciddi biçimde bozmuyor demektir.",
+      "trap_note": "Ödünü sonuçsuz bırakır; sürekli yanlış yazılan bir işaretin her cümleyi bulanıklaştırması mümkün olmazdı."
+    },
+    {
+      "no": 29, "group": "sentence_completion", "level": "C1",
+      "subject": "emergency medicine / triage",
+      "stem": "Since the purpose of triage is to decide who is treated first rather than who is treated best, ----.",
+      "options": {
+        "o1": "the patient in the greatest pain is not necessarily the one seen soonest",
+        "o2": "the patient in the greatest pain is by definition the one seen soonest",
+        "o3": "the nurses carrying it out are given a fixed number of minutes for each case",
+        "o4": "the method was first used on battlefields rather than in hospitals",
+        "o5": "every patient who arrives is examined by a doctor within the hour"
+      },
+      "order": ["o3", "o1", "o4", "o2", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Sıralama ölçütü aciliyettir, ıstırabın şiddeti değil; bu ikisi çoğu zaman örtüşmez.",
+      "trap_note": "Ağrıyı aciliyetle eşitler; triyajın bütün varlık nedeni bu eşitlemeyi reddetmektir."
+    },
+    {
+      "no": 30, "group": "sentence_completion", "level": "C1",
+      "subject": "auctions / the reserve price",
+      "stem": "----, a seller at auction would have no protection at all against a room that happened to be empty on the day.",
+      "options": {
+        "o1": "If the reserve price below which a lot will not be sold did not exist",
+        "o2": "If the reserve price below which a lot will not be sold were made public",
+        "o3": "Because bidders are told in advance what the auctioneer expects",
+        "o4": "Although the commission is charged on the price finally reached",
+        "o5": "Whenever two bidders are prepared to go beyond the estimate"
+      },
+      "order": ["o5", "o2", "o1", "o4", "o3"],
+      "answer": "o1", "trap": "o2",
+      "why": "İkinci tip koşul gerçeğe aykırı bir varsayım kurar: taban fiyat olmasaydı satıcı o günkü katılıma teslim olurdu.",
+      "trap_note": "Taban fiyatın açıklanmasıyla hiç bulunmamasını karıştırır; açıklansa bile koruma ortadan kalkmaz."
+    },
+    {
+      "no": 31, "group": "sentence_completion", "level": "C1",
+      "subject": "education / the school uniform",
+      "stem": "Head teachers who defend the school uniform rarely argue that it improves what their pupils actually learn, ----.",
+      "options": {
+        "o1": "but that it removes a daily competition they would otherwise have to referee",
+        "o2": "but that it has been shown to raise examination results in every study",
+        "o3": "although the cost of it falls on families rather than on the school",
+        "o4": "since the design of most uniforms has changed very little in fifty years",
+        "o5": "and parents are consulted whenever a new supplier has to be appointed"
+      },
+      "order": ["o1", "o2", "o5", "o3", "o4"],
+      "answer": "o1", "trap": "o2",
+      "why": "'rarely argue that' ile kurulan cümle, savunmanın başka bir gerekçeye dayandığını bildirir; boşluk o gerekçeyi vermelidir.",
+      "trap_note": "Cümlenin az önce dışladığı öğrenme savına döner; 'rarely argue that it improves learning' bunu peşinen eler."
+    },
+    {
+      "no": 32, "group": "sentence_completion", "level": "C1",
+      "subject": "sport / the offside rule",
+      "stem": "However carefully the offside rule is written, it asks one official to judge two things that happen at the very same instant, ----.",
+      "options": {
+        "o1": "which is why disputes about it survive every attempt at rewording",
+        "o2": "which is why rewording it has settled the disputes about it for good",
+        "o3": "and the rule has been part of the game since it was first codified",
+        "o4": "so attacking players are instructed to stay behind the defence",
+        "o5": "because spectators at the side of the pitch see a different angle"
+      },
+      "order": ["o2", "o1", "o4", "o5", "o3"],
+      "answer": "o1", "trap": "o2",
+      "why": "Güçlük sözcüklerde değil, aynı anda iki şeyi görme zorunluluğundadır; yeniden yazmak bunu ortadan kaldırmaz.",
+      "trap_note": "Ödün bağlacının kurduğu yapıyı çözer: 'ne kadar dikkatle yazılırsa yazılsın' ifadesi tam da bu çözümü dışlar."
+    },
+    {
+      "no": 33, "group": "sentence_completion", "level": "C1",
+      "subject": "law / the coroner's inquest",
+      "stem": "An inquest is held in order to establish how a person died and is forbidden to say who is to blame for the death, ----.",
+      "options": {
+        "o1": "a distinction that the families attending one often find hard to accept",
+        "o2": "a distinction that the families attending one find perfectly straightforward",
+        "o3": "because the proceedings are conducted without a jury in most cases",
+        "o4": "so the medical evidence is heard before any witness is called",
+        "o5": "although the findings may later be used in a civil action"
+      },
+      "order": ["o5", "o4", "o1", "o2", "o3"],
+      "answer": "o1", "trap": "o2",
+      "why": "Nasıl öldüğü ile kimin sorumlu olduğu arasındaki ayrım hukuki olarak nettir, duygusal olarak değildir; boşluk bu gerilimi vermelidir.",
+      "trap_note": "Ayrımı sorunsuz sayar; o zaman cümlenin kurduğu karşıtlığın anlatılmaya değer bir yanı kalmaz."
+    },
+    {
+      "no": 34, "group": "sentence_completion", "level": "C1",
+      "subject": "technology / the QWERTY layout",
+      "stem": "The claim that the QWERTY layout was designed in order to slow typists down is repeated so often that it is rarely checked, ----.",
+      "options": {
+        "o1": "and the evidence for it turns out to be a good deal thinner than its confidence",
+        "o2": "and the evidence for it turns out to be stronger than its critics will allow",
+        "o3": "so manufacturers of the period arranged the keys alphabetically instead",
+        "o4": "because the typewriters of the 1870s jammed whenever two bars met",
+        "o5": "while faster layouts have been proposed in almost every decade since"
+      },
+      "order": ["o4", "o2", "o5", "o3", "o1"],
+      "answer": "o1", "trap": "o2",
+      "why": "'Çok tekrarlandığı için denetlenmiyor' ifadesi bir uyarıdır; devamı kanıtın güveni kadar sağlam olmadığını söylemelidir.",
+      "trap_note": "Uyarıyı doğrulamaya çevirir; denetlenmediği söylenen bir iddianın güçlü çıkması cümlenin tonuyla çelişir."
+    },
+    {
+      "no": 35, "group": "sentence_completion", "level": "B2",
+      "subject": "waste policy / the bottle deposit",
+      "stem": "A deposit added to the price of a bottle is not a charge on the buyer but a sum that is held on his behalf, ----.",
+      "options": {
+        "o1": "and the people who never reclaim it are paying for the people who do",
+        "o2": "and the people who reclaim it are paying for the people who never do",
+        "o3": "so the scheme costs the manufacturer nothing at all to administer",
+        "o4": "although the rate of it has not been changed for twenty years",
+        "o5": "because the containers are counted by machine at the point of return"
+      },
+      "order": ["o3", "o4", "o2", "o1", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Depozito geri alınmazsa sistemde kalır; dolayısıyla geri almayanların parası geri alanların maliyetini karşılar.",
+      "trap_note": "Aktarımın yönünü ters çevirir; geri alan kişi zaten kendi parasını almaktadır, kimseyi finanse etmez."
+    },
+    {
+      "no": 36, "group": "sentence_completion", "level": "C1",
+      "subject": "recruitment / the reference letter",
+      "stem": "Given that almost nobody asks for a reference from somebody who is likely to say anything damaging, ----.",
+      "options": {
+        "o1": "a favourable letter tells its reader a good deal less than it appears to",
+        "o2": "a favourable letter is the most reliable evidence a reader can obtain",
+        "o3": "employers now telephone the writer instead of reading the letter",
+        "o4": "the practice has been abandoned in several professions already",
+        "o5": "candidates are permitted to see what has been written about them"
+      },
+      "order": ["o4", "o1", "o3", "o5", "o2"],
+      "answer": "o1", "trap": "o2",
+      "why": "Örneklem adayın kendisi tarafından seçildiğine göre olumlu mektup bir ayıklamanın değil, bir seçimin sonucudur.",
+      "trap_note": "Taraflı bir örneklemi en güvenilir kanıt sayar; öncül tam da bu güvenilirliği ortadan kaldırır."
+    },
+    {
+      "no": 37, "group": "translation", "level": "B2", "direction": "en_tr",
+      "subject": "navigation / the lighthouse keeper",
+      "stem": "The last keeper left the lighthouse in 1998, and the lamp has been switched on from a control room two hundred miles away ever since.",
+      "options": {
+        "o1": "Son bekçi fenerden 1998'de ayrıldı ve lamba o tarihten beri iki yüz mil uzaktaki bir kontrol odasından yakılıyor.",
+        "o2": "Son bekçi 1998'den beri fenerdedir ve lambayı iki yüz mil uzaktaki bir kontrol odası adına yakmaktadır.",
+        "o3": "Fenerin lambası 1998'e kadar iki yüz mil uzaktan yakılıyordu; o yıl yeniden bir bekçi görevlendirildi.",
+        "o4": "1998'de fenere iki yüz mil uzaklıkta bir kontrol odası kuruldu ve bekçiler oraya taşındı.",
+        "o5": "Son bekçi ayrıldıktan sonra fener söndürüldü ve iki yüz mil ötedeki bir kontrol odasıyla değiştirildi."
+      },
+      "order": ["o5", "o3", "o2", "o4", "o1"],
+      "answer": "o1", "trap": "o2",
+      "why": "Cümlede bir ayrılış tarihi ve ondan sonra süren bir durum vardır; çeviri ikisini de aynı sırayla taşımalıdır.",
+      "trap_note": "Bekçiyi hâlâ fenerde bırakır; ayrılma ile uzaktan kumanda arasındaki neden-sonuç bağı yok olur."
+    },
+    {
+      "no": 38, "group": "translation", "level": "C1", "direction": "en_tr",
+      "subject": "statistics / the margin of error",
+      "stem": "A poll that reports a two-point lead with a three-point margin of error has not reported a lead at all.",
+      "options": {
+        "o1": "Üç puanlık hata payıyla iki puanlık bir öndelik bildiren anket, aslında hiçbir öndelik bildirmemiştir.",
+        "o2": "İki puanlık hata payıyla üç puanlık bir öndelik bildiren anket, aslında hiçbir öndelik bildirmemiştir.",
+        "o3": "Hata payı iki puanı aşmadıkça bir anketin bildirdiği öndelik güvenilir sayılır.",
+        "o4": "Anketlerin bildirdiği öndelikler, hata payı açıklanmadığı sürece anlamlı kabul edilmez.",
+        "o5": "İki puanlık bir öndelik, üç puanlık hata payına rağmen istatistiksel olarak anlamlıdır."
+      },
+      "order": ["o1", "o4", "o2", "o3", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Cümlenin bütün yükü iki sayının hangisinin daha büyük olduğundadır: hata payı öndelikten büyükse ortada öndelik yoktur.",
+      "trap_note": "İki sayıyı yer değiştirir; o durumda öndelik hata payını aşar ve cümlenin yargısı geçersiz kalır."
+    },
+    {
+      "no": 39, "group": "translation", "level": "B2", "direction": "en_tr",
+      "subject": "building safety / the fire escape",
+      "stem": "An external staircase that nobody uses in the ordinary course of a day is the hardest part of a building to keep in working order.",
+      "options": {
+        "o1": "Günün olağan akışında kimsenin kullanmadığı bir dış merdiven, bir binanın çalışır durumda tutulması en zor parçasıdır.",
+        "o2": "Günün olağan akışında kimsenin kullanmadığı bir dış merdiven, bir binanın çalışır durumda tutulması en kolay parçasıdır.",
+        "o3": "Bir binanın en zor bakımı, gün boyunca sürekli kullanılan dış merdivenlerinde yapılır.",
+        "o4": "Dış merdivenler kullanılmadıkça yıpranmaz, bu yüzden bakımları seyrek yapılır.",
+        "o5": "Kimsenin kullanmadığı dış merdivenler çoğu binada sökülüp kaldırılmıştır."
+      },
+      "order": ["o5", "o2", "o3", "o1", "o4"],
+      "answer": "o1", "trap": "o2",
+      "why": "Kullanılmayan bir düzenek bozulduğunda kimse fark etmez; bu yüzden bakımı en güç olan parçadır.",
+      "trap_note": "Üstünlük derecesini tersine çevirir; cümlenin uyarısı tam da kullanılmamanın yarattığı güçlüktür."
+    },
+    {
+      "no": 40, "group": "translation", "level": "C1", "direction": "tr_en",
+      "subject": "vocational training / apprenticeship",
+      "stem": "Çıraklık, öğretenin öğrettiği kişiyi aynı zamanda işe aldığı tek eğitim biçimidir; bu da onu hem en sağlam hem de en kapalı yol yapar.",
+      "options": {
+        "o1": "Apprenticeship is the only form of training in which the teacher is also the person who takes the learner on, which makes it both the most dependable route and the most closed one.",
+        "o2": "Apprenticeship is the only form of training in which the teacher never employs the person being taught, which makes it both the least dependable route and the most open one.",
+        "o3": "Apprenticeship is the form of training in which learners are employed by somebody other than the person who has taught them.",
+        "o4": "Teachers who employ their own apprentices make the route into a trade easier for everybody who wants to enter it.",
+        "o5": "The most dependable route into a trade is also the one that the largest number of people are able to take."
+      },
+      "order": ["o5", "o3", "o1", "o4", "o2"],
+      "answer": "o1", "trap": "o2",
+      "why": "Cümle tek bir olgudan iki sonuç türetir: aynı kişinin hem öğretmesi hem işe alması güveni de kapalılığı da doğurur.",
+      "trap_note": "Öncülü ve iki sonucu birden tersine çevirir; yapı korunduğu için değişim gözden kaçar."
+    },
+    {
+      "no": 41, "group": "translation", "level": "C1", "direction": "tr_en",
+      "subject": "linguistics / loanwords",
+      "stem": "Bir dilin ödünç aldığı sözcükler, o dili konuşanların neyi yeni bulduğunu herhangi bir sözlükten daha açık gösterir.",
+      "options": {
+        "o1": "The words a language borrows show what its speakers found new more plainly than any dictionary does.",
+        "o2": "The words a language refuses to borrow show what its speakers found new more plainly than any dictionary does.",
+        "o3": "No dictionary is able to record the words that a language has borrowed from its neighbours.",
+        "o4": "Speakers of a language borrow words only for the things they have known about for a long time.",
+        "o5": "Dictionaries show more plainly than borrowed words do what a language's speakers once considered new."
+      },
+      "order": ["o1", "o3", "o2", "o5", "o4"],
+      "answer": "o1", "trap": "o2",
+      "why": "Kanıt olarak gösterilen şey ödünç alınan sözcüklerdir; karşılaştırma da sözlükle yapılır.",
+      "trap_note": "Kanıtı tersine çevirir: alınan sözcükler yerine alınmayanları gösterir, oysa cümlede böyle bir küme yoktur."
+    },
+    {
+      "no": 42, "group": "translation", "level": "C1", "direction": "tr_en",
+      "subject": "health policy / waiting lists",
+      "stem": "Bekleme listesini kısaltmanın en hızlı yolu listeye girme ölçütünü sıkılaştırmaktır; bu, sorunu çözmez, yalnızca sayımın dışına taşır.",
+      "options": {
+        "o1": "The quickest way to shorten a waiting list is to tighten the rule for getting onto it, which does not solve the problem but moves it outside the count.",
+        "o2": "The quickest way to shorten a waiting list is to tighten the rule for getting onto it, which does not move the problem outside the count but solves it.",
+        "o3": "Tightening the rule for getting onto a waiting list lengthens the list and solves nothing at all.",
+        "o4": "A waiting list can only be shortened by treating the people who are already on it.",
+        "o5": "The rule for getting onto a waiting list is tightened whenever the problem has been solved."
+      },
+      "order": ["o4", "o2", "o5", "o1", "o3"],
+      "answer": "o1", "trap": "o2",
+      "why": "Cümlenin ikinci yarısı bir olumsuzlama ile bir düzeltme taşır: çözmez, yalnızca görünmez kılar.",
+      "trap_note": "Olumsuzlanan ile olumlanan yarıyı değiştirir; aynı sözcüklerle cümle bir övgüye dönüşür."
+    },
+    {
+      "no": 43, "group": "paragraph", "level": "B2", "qtype": "according_to",
+      "stem": "According to the passage, the metre was introduced in order to ----.",
+      "options": {
+        "o1": "replace a crowd of local units with a single one",
+        "o2": "correct the inaccuracy of the units then in use",
+        "o3": "make the work of the tax office less expensive",
+        "o4": "give merchants an advantage over their customers",
+        "o5": "settle a dispute between two schools of science"
+      },
+      "order": ["o4", "o2", "o1", "o3", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça amacı açıkça ayırır: sorun doğruluk değil, aynı sözcüğün her kasabada başka bir miktarı göstermesiydi.",
+      "trap_note": "Parçanın ilk cümlelerinde reddedilen gerekçedir: eski birimler kullanıldıkları işler için yeterince doğruydu."
+    },
+    {
+      "no": 44, "group": "paragraph", "level": "C1", "qtype": "it_is_clear",
+      "stem": "It is clear from the passage that the opposition to a single system came mainly from ----.",
+      "options": {
+        "o1": "those whose position rested on knowing the local measure",
+        "o2": "those who distrusted anything introduced from the capital",
+        "o3": "the trades whose instruments would have to be replaced",
+        "o4": "the regions that lay furthest from the railway network",
+        "o5": "officials who had drafted the earlier regulations"
+      },
+      "order": ["o5", "o1", "o3", "o4", "o2"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça direnişin kaynağını adlandırır ve bunun eskiye bağlılık olmadığını özellikle belirtir.",
+      "trap_note": "Parçanın dışladığı açıklamayı seçer: 'eski usullere dair bir batıl inanç değildi' denmektedir."
+    },
+    {
+      "no": 45, "group": "paragraph", "level": "C1", "qtype": "inference",
+      "stem": "It can be inferred from the passage that the railway and the tax office settled the question because they ----.",
+      "options": {
+        "o1": "had to name the same quantity identically at both ends of a journey",
+        "o2": "were able to impose penalties on merchants who refused to comply",
+        "o3": "employed the people who had argued for the new system",
+        "o4": "reached the regions where resistance had been strongest",
+        "o5": "were the only institutions that could afford new instruments"
+      },
+      "order": ["o5", "o3", "o2", "o4", "o1"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça tartışmayı bitiren şeyi bir ihtiyaca bağlar: aynı miktarın iki uçta aynı sözcükle anılması zorunluluğu.",
+      "trap_note": "Çözümü zorlamaya bağlar; parça 'sav değil, ihtiyaç' diyerek bunu dışlar."
+    },
+    {
+      "no": 46, "group": "paragraph", "level": "C1", "qtype": "main_idea",
+      "stem": "Which of the following best expresses the main idea of the passage?",
+      "options": {
+        "o1": "A standard is a transfer of advantage from those who know the particular to those who know the general, and is resisted accordingly.",
+        "o2": "The metric system was adopted because it was more accurate than the units it replaced.",
+        "o3": "Local measures varied so widely that trade between neighbouring towns was impossible.",
+        "o4": "Technical reforms are always delayed by the superstition of ordinary people.",
+        "o5": "The railway did more to unify Europe than any legislation of the period."
+      },
+      "order": ["o4", "o5", "o1", "o3", "o2"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça son cümlesinde dersi adlandırır ve standardı bir kolaylık değil, bir üstünlük aktarımı sayar.",
+      "trap_note": "Parçanın başta reddettiği gerekçeyi ana fikir yapar; doğruluk zaten sorun değildi."
+    },
+    {
+      "no": 47, "group": "paragraph", "level": "C1", "qtype": "it_is_clear",
+      "stem": "It is clear from the passage that the index fund was originally put forward as ----.",
+      "options": {
+        "o1": "a provocation aimed at the people who manage money",
+        "o2": "a product designed for investors of very modest means",
+        "o3": "a temporary measure until better managers could be found",
+        "o4": "a way of raising the price of the shares it bought",
+        "o5": "an experiment that its designers expected to fail"
+      },
+      "order": ["o1", "o2", "o4", "o5", "o3"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça ilk cümlede söyler: fikir, parayı yöneten mesleğe karşı bir şaka olarak önerilmiştir.",
+      "trap_note": "Bugünkü yaygın kullanımını doğuş gerekçesi sanır; parçada maliyet ucuzluğu savın sonucudur, amacı değil."
+    },
+    {
+      "no": 48, "group": "paragraph", "level": "B2", "qtype": "according_to",
+      "stem": "According to the passage, the record of managed funds over long periods shows that ----.",
+      "options": {
+        "o1": "most do not beat the index and the winners keep changing",
+        "o2": "most beat the index but only by a very small margin",
+        "o3": "the same funds succeed decade after decade",
+        "o4": "their costs have fallen faster than their returns",
+        "o5": "they perform best in markets that are poorly informed"
+      },
+      "order": ["o4", "o5", "o2", "o3", "o1"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça iki bulguyu birlikte verir: çoğu endeksi geçemez ve geçenler on yıldan on yıla aynı kalmaz.",
+      "trap_note": "Bulgunun yönünü tersine çevirir; parça 'çoğu geçemez' demektedir."
+    },
+    {
+      "no": 49, "group": "paragraph", "level": "C1", "qtype": "inference",
+      "stem": "It can be inferred from the passage that a market in which every investor held the index would ----.",
+      "options": {
+        "o1": "have prices that no longer carried any information",
+        "o2": "produce higher returns for everybody taking part in it",
+        "o3": "be cheaper to run than any market has ever been",
+        "o4": "remove the need for companies to publish accounts",
+        "o5": "reward the few investors who went on investigating"
+      },
+      "order": ["o3", "o1", "o4", "o5", "o2"],
+      "answer": "o1", "trap": "o2",
+      "why": "Fiyatlar birileri araştırdığı için bilgi taşır; kimse araştırmazsa fiyat da endeks de boşalır.",
+      "trap_note": "Tek tek doğru olanı herkese birden uygular; parçanın son cümlesi tam bu hatayı adlandırır."
+    },
+    {
+      "no": 50, "group": "paragraph", "level": "C1", "qtype": "main_idea",
+      "stem": "Which of the following best expresses the main idea of the passage?",
+      "options": {
+        "o1": "The passive fund rests on work it does not do, so an argument sound for each investor fails if all of them follow it.",
+        "o2": "Investors should avoid index funds, since they cannot beat the managers who research the market.",
+        "o3": "Fund managers have been shown to add no value of any kind to the money they look after.",
+        "o4": "Share prices reflect everything that buyers and sellers collectively know about a company.",
+        "o5": "The cost of running a fund matters more to its investors than its choice of shares."
+      },
+      "order": ["o2", "o4", "o3", "o1", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça son cümlede yargıyı verir: her birey için doğru olan sav, herkes birden uygularsa yanlışa döner.",
+      "trap_note": "Parçanın vermediği yatırım tavsiyesine atlar; metin endeks fonu sahibini eleştirmediğini açıkça söyler."
+    },
+    {
+      "no": 51, "group": "paragraph", "level": "B2", "qtype": "according_to",
+      "stem": "According to the passage, what a sound archive is mainly fighting is ----.",
+      "options": {
+        "o1": "the disappearance of the machines that can play its holdings",
+        "o2": "the gradual chemical decay of the tapes and discs it keeps",
+        "o3": "the shortage of space in which recordings can be stored",
+        "o4": "the reluctance of performers to let their work be copied",
+        "o5": "the cost of employing engineers rather than librarians"
+      },
+      "order": ["o5", "o2", "o4", "o3", "o1"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça ilk cümlede ayrımı kurar: asıl düşman çürüme değil, okuyucu aygıtın ortadan kalkmasıdır.",
+      "trap_note": "Çürümeyi ana sorun sayar; parça kayıt ortamlarının makinelerden uzun yaşadığını söyler."
+    },
+    {
+      "no": 52, "group": "paragraph", "level": "C1", "qtype": "inference",
+      "stem": "It can be inferred from the passage that a book of 1650 is easier to preserve than a tape of 1975 because ----.",
+      "options": {
+        "o1": "reading it requires nothing that has to be kept in repair",
+        "o2": "paper of that period was made to a far higher standard",
+        "o3": "libraries have more experience of handling older material",
+        "o4": "its contents have already been copied many times over",
+        "o5": "the language it is written in has changed very little"
+      },
+      "order": ["o1", "o5", "o2", "o4", "o3"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça karşılaştırmayı aygıta bağlar: kitabı okumak için okuma bilmek yeter, banda ise çalışır bir makine gerekir.",
+      "trap_note": "Farkı malzemenin dayanıklılığına bağlar; parçanın ayrımı malzemede değil, erişim koşulundadır."
+    },
+    {
+      "no": 53, "group": "paragraph", "level": "C1", "qtype": "it_is_clear",
+      "stem": "It is clear from the passage that archives transfer recordings repeatedly because ----.",
+      "options": {
+        "o1": "a copy made now is worth more than a better one that may never be made",
+        "o2": "each transfer improves the quality of the recording a little further",
+        "o3": "the law requires a new copy to be deposited at fixed intervals",
+        "o4": "the original carriers are destroyed once a copy has been taken",
+        "o5": "digital files are known to be safe from this kind of loss"
+      },
+      "order": ["o4", "o1", "o5", "o2", "o3"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça seçimi açıkça kurar: her aktarım küçük bir kayıp, büyük bir sigortadır ve bekleyen kopya hiç yapılmayabilir.",
+      "trap_note": "Aktarımı bir iyileştirme sanır; parça onu 'küçük bir kayıp' diye tanımlar."
+    },
+    {
+      "no": 54, "group": "paragraph", "level": "C1", "qtype": "main_idea",
+      "stem": "Which of the following best expresses the main idea of the passage?",
+      "options": {
+        "o1": "Recorded sound survives only as long as something can play it, so preservation is a matter of continuous copying rather than of storage.",
+        "o2": "Digital recording has at last solved the problem of preserving sound for the long term.",
+        "o3": "Sound archives should concentrate their spending on buildings rather than on staff.",
+        "o4": "The wax cylinder has proved more durable than any later recording medium.",
+        "o5": "Libraries and sound archives face essentially the same difficulties."
+      },
+      "order": ["o2", "o4", "o5", "o1", "o3"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça sorunu eskimeye bağlar ve çözümü sürekli aktarmada bulur; son cümleler dijitalin bunu hızlandırdığını ekler.",
+      "trap_note": "Parçanın son cümlelerinin tersini söyler: dijital, sorunu çözmemiş, hızlandırmıştır."
+    },
+    {
+      "no": 55, "group": "paragraph", "level": "B2", "qtype": "it_is_clear",
+      "stem": "It is clear from the passage that the medical case for moving burial outside the walls was ----.",
+      "options": {
+        "o1": "mistaken in its reasoning and right in its conclusion",
+        "o2": "correct in its reasoning and mistaken in its conclusion",
+        "o3": "accepted only after the water supply had been tested",
+        "o4": "rejected by the physicians of the period as unproven",
+        "o5": "the last argument to be put forward by the reformers"
+      },
+      "order": ["o3", "o4", "o1", "o5", "o2"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça iki şeyi ayırır: dönemin gerekçesi yanlıştı, ama politika doğruydu ve bu sıra sanıldığından sık görülür.",
+      "trap_note": "İki yargıyı değiştirir; parça gerekçeyi yanlış, sonucu doğru sayar."
+    },
+    {
+      "no": 56, "group": "paragraph", "level": "C1", "qtype": "according_to",
+      "stem": "According to the passage, the upkeep of a churchyard grave was sustained by ----.",
+      "options": {
+        "o1": "the daily contact of people who already saw one another",
+        "o2": "a fund administered by the parish on behalf of families",
+        "o3": "the obligation written into the law of the period",
+        "o4": "the wealth of the families who could afford a stone",
+        "o5": "gardeners employed to maintain the ground as a park"
+      },
+      "order": ["o4", "o5", "o3", "o1", "o2"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça bakımı bir paylaşılan yükümlülüğe bağlar ve o yükümlülüğü her gün birbirini gören insanlara dayandırır.",
+      "trap_note": "Parçada hiç geçmeyen bir kurum uydurur; metin mesafenin dağıttığı şeyin para değil, yakınlık olduğunu söyler."
+    },
+    {
+      "no": 57, "group": "paragraph", "level": "C1", "qtype": "inference",
+      "stem": "It can be inferred from the passage that the writer regards the loss the reform caused as ----.",
+      "options": {
+        "o1": "real, but of a kind nobody at the time was measuring",
+        "o2": "serious enough to outweigh the benefit of the reform",
+        "o3": "the direct result of designing the cemeteries as parks",
+        "o4": "a problem that the reformers had foreseen and accepted",
+        "o5": "something later generations were able to repair"
+      },
+      "order": ["o3", "o1", "o4", "o2", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Son cümleler kaybı gerçek sayar ama reformcuların şaşıracağını söyler: ölçülen bir büyüklük değildi.",
+      "trap_note": "Yazarın vermediği tartıyı yapar; metin reformu haklı bulmayı sürdürür."
+    },
+    {
+      "no": 58, "group": "paragraph", "level": "C1", "qtype": "main_idea",
+      "stem": "Which of the following best expresses the main idea of the passage?",
+      "options": {
+        "o1": "A necessary reform, argued for on the wrong grounds, quietly dissolved a tie that had rested on nothing but nearness.",
+        "o2": "Cemeteries outside the walls were a mistake that the cities concerned should never have made.",
+        "o3": "Medical understanding of disease improved rapidly during the period of the burial reforms.",
+        "o4": "Parks designed in the nineteenth century were used for purposes their designers had not intended.",
+        "o5": "Communities maintain their graves only when the law obliges them to do so."
+      },
+      "order": ["o4", "o5", "o1", "o3", "o2"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça üçünü birden taşır: gerekçenin yanlışlığı, politikanın doğruluğu ve yakınlıkla kurulmuş bağın çözülüşü.",
+      "trap_note": "Parçanın savunduğunun tersini söyler; metin reformun doğru olduğunu açıkça yazar."
+    },
+    {
+      "no": 59, "group": "paragraph", "level": "B2", "qtype": "according_to",
+      "stem": "According to the passage, an eighteenth-century ensemble was led by ----.",
+      "options": {
+        "o1": "a musician who went on playing while he directed",
+        "o2": "a conductor standing in front with his back to the players",
+        "o3": "whichever of the players happened to know the work best",
+        "o4": "the composer, whenever he was present in the hall",
+        "o5": "nobody at all, since the parts were simple enough"
+      },
+      "order": ["o1", "o5", "o2", "o3", "o4"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça eski düzeni tarif eder: birinci kemandan ya da klavyeden, çalarak yönetmek.",
+      "trap_note": "Sonradan ortaya çıkan figürü geçmişe taşır; parça onun on dokuzuncu yüzyılda belirdiğini söyler."
+    },
+    {
+      "no": 60, "group": "paragraph", "level": "C1", "qtype": "it_is_clear",
+      "stem": "It is clear from the passage that a large ensemble cannot stay together by listening alone because ----.",
+      "options": {
+        "o1": "sound reaches the back of it noticeably later than the front",
+        "o2": "the players at the back are given more difficult parts",
+        "o3": "the hall absorbs a great deal of what is being played",
+        "o4": "the leader cannot play and listen at the same time",
+        "o5": "nineteenth-century works were written to be heard, not watched"
+      },
+      "order": ["o5", "o4", "o3", "o2", "o1"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça gerekçeyi fiziğe bağlar: arkadaki çalgıcı sesi gözle görülür bir gecikmeyle duyar.",
+      "trap_note": "Güçlüğü partilerin zorluğuna bağlar; parçanın açıklaması mesafe ve sesin gecikmesidir."
+    },
+    {
+      "no": 61, "group": "paragraph", "level": "C1", "qtype": "inference",
+      "stem": "It can be inferred from the passage that the writer regards the interpretative side of conducting as ----.",
+      "options": {
+        "o1": "genuine, but added to a role that began as a practical fix",
+        "o2": "an invention of critics rather than of musicians themselves",
+        "o3": "the reason the separate conductor appeared in the first place",
+        "o4": "less important than the ability to keep an ensemble together",
+        "o5": "impossible in an orchestra that leads itself from within"
+      },
+      "order": ["o4", "o3", "o5", "o1", "o2"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça yorumu 'gerçekten sanatsal' sayar ama sonradan eklendiğini, işin kökeninin geometri olduğunu söyler.",
+      "trap_note": "Parçanın gerçek saydığı şeyi uydurma sayar; metin yorumun sahiciliğini açıkça kabul eder."
+    },
+    {
+      "no": 62, "group": "paragraph", "level": "B2", "qtype": "main_idea",
+      "stem": "Which of the following best expresses the main idea of the passage?",
+      "options": {
+        "o1": "The conductor exists because large ensembles need something to watch, and everything else about the role was added later.",
+        "o2": "Orchestras would play better today if they returned to leading themselves from the first violin.",
+        "o3": "Nineteenth-century composers wrote works that were too intricate for the players of their time.",
+        "o4": "The conductor is the true source of the music that an orchestra produces.",
+        "o5": "Concert halls built in the nineteenth century were too large for the ensembles that used them."
+      },
+      "order": ["o4", "o2", "o1", "o5", "o3"],
+      "answer": "o1", "trap": "o2",
+      "why": "Parça rolün kökenini bir geometri sorununa bağlar ve geri kalan her şeyin sonradan eklendiğini söyler.",
+      "trap_note": "Parçanın vermediği öneriye atlar; metin eski düzene dönülmesini savunmaz, rolün nereden geldiğini anlatır."
+    },
+    {
+      "no": 63, "group": "dialogue", "level": "C1",
+      "subject": "urban transport / the taxi meter",
+      "dialogue": [
+        ["Interviewer", "Drivers complain that the meter is unfair to them in heavy traffic. Passengers complain that it is unfair to them. Can both be right?"],
+        ["Regulator", "----"],
+        ["Interviewer", "Then what is it doing?"],
+        ["Regulator", "It is removing the negotiation. Before the meter, every journey began with an argument between a stranger who knew the city and a stranger who did not, and the stranger who knew it won."]
+      ],
+      "options": {
+        "o1": "They can, because the meter was never designed to be fair to either of them.",
+        "o2": "They cannot, because the meter divides the cost of a journey exactly between them.",
+        "o3": "They can, but only in cities where the rate has not been raised for years.",
+        "o4": "They cannot, since the figures are set by an independent committee.",
+        "o5": "They can, and that is why most cities have abandoned the meter altogether."
+      },
+      "order": ["o5", "o1", "o4", "o2", "o3"],
+      "answer": "o1", "trap": "o2",
+      "why": "Sunucu 'öyleyse ne yapıyor' diye sorar; bu soru ancak sayacın adalet amacı taşımadığı söylendikten sonra anlamlıdır.",
+      "trap_note": "İki şikâyeti de geçersiz sayar; o zaman bir sonraki replikteki 'peki ne yapıyor' sorusunun yeri kalmaz."
+    },
+    {
+      "no": 64, "group": "dialogue", "level": "B2",
+      "subject": "labour / the night shift",
+      "dialogue": [
+        ["Presenter", "You pay a premium for the night shift. Why not simply pay everybody the same and let people choose?"],
+        ["Manager", "We tried it for a year. The people who chose nights were the ones who needed the money most, and they were the ones least able to lose the sleep."],
+        ["Presenter", "So the premium is not a reward for inconvenience?"],
+        ["Manager", "----"]
+      ],
+      "options": {
+        "o1": "It is partly that, but mostly it is a price we pay to keep the choice from being forced.",
+        "o2": "It is exactly that, and we have never thought of it as anything else.",
+        "o3": "It is a reward for seniority, as it has been in this industry for decades.",
+        "o4": "It is a figure the union negotiated and we have not revisited since.",
+        "o5": "It is the cheapest way of filling a shift nobody wants to work."
+      },
+      "order": ["o1", "o2", "o3", "o4", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Yönetici bir önceki replikte denemenin sonucunu anlatmıştır; yanıt primi o sonucu önlemeye bağlamalıdır.",
+      "trap_note": "Sunucunun sorusunu olumlar; oysa anlatılan deney tam da 'zahmet karşılığı' açıklamasının yetmediğini gösterir."
+    },
+    {
+      "no": 65, "group": "dialogue", "level": "C1",
+      "subject": "public services / the lost-property office",
+      "dialogue": [
+        ["Interviewer", "----"],
+        ["Supervisor", "Umbrellas, by a distance, and almost nobody comes back for one. Keys are the opposite: we get very few and they are collected within the day."],
+        ["Interviewer", "What does that tell you?"],
+        ["Supervisor", "That people do not come for the valuable thing. They come for the thing they cannot replace by lunchtime, and those are not the same category at all."]
+      ],
+      "options": {
+        "o1": "What is it that you receive most of, and what is actually reclaimed?",
+        "o2": "How long are you required to keep an item before disposing of it?",
+        "o3": "Do people ever try to claim something that was never theirs?",
+        "o4": "Has the number of items handed in been rising or falling?",
+        "o5": "Which of the items you hold is the most valuable at present?"
+      },
+      "order": ["o3", "o2", "o5", "o4", "o1"],
+      "answer": "o1", "trap": "o2",
+      "why": "Yanıt iki şeyi birden verir: en çok gelen nesne ve geri alınma oranı; boşluk da ikisini birden sormalıdır.",
+      "trap_note": "Saklama süresini sorar; yanıtta geçen 'gün içinde alınır' ifadesi bir süre değil, bir davranış bildirir."
+    },
+    {
+      "no": 66, "group": "dialogue", "level": "B2",
+      "subject": "sport officiating / the whistle",
+      "dialogue": [
+        ["Presenter", "A referee told me the hardest thing is not seeing the foul. It is deciding not to blow."],
+        ["Referee", "That is the whole job. Stopping play is itself a decision with a cost, and the cost falls on the team that was attacking."],
+        ["Presenter", "----"],
+        ["Referee", "Then you let it run and you speak to the player afterwards. A whistle that punishes the wrong side is worse than no whistle at all."]
+      ],
+      "options": {
+        "o1": "What do you do when the foul is real but the team that suffered it is still ahead?",
+        "o2": "What do you do when you are certain that no foul has been committed?",
+        "o3": "How many decisions of that kind does a single match contain?",
+        "o4": "Are referees graded on the number of fouls they fail to see?",
+        "o5": "Does the crowd ever influence the way you use the whistle?"
+      },
+      "order": ["o1", "o3", "o5", "o2", "o4"],
+      "answer": "o1", "trap": "o2",
+      "why": "Yanıt faulün gerçek olduğu ama düdüğün zarar vereceği durumu anlatır; boşluk tam bu ikilemi sormalıdır.",
+      "trap_note": "Faulün bulunmadığı durumu sorar; o zaman 'oyunu akıtıp sonra konuşmak' açıklamasının gerekçesi kalmaz."
+    },
+    {
+      "no": 67, "group": "dialogue", "level": "C1",
+      "subject": "catering / the kitchen brigade",
+      "dialogue": [
+        ["Interviewer", "Your kitchen is organised on a system worked out in the nineteenth century. Is that not a little absurd in 2026?"],
+        ["Chef", "----"],
+        ["Interviewer", "So nothing has changed?"],
+        ["Chef", "A great deal has changed. The shouting has gone, the hours are shorter and half the stations have different names. What has not changed is that twenty plates have to leave together, and nobody has found another way of arranging that."]
+      ],
+      "options": {
+        "o1": "It would be, if the problem it was built to solve had gone away.",
+        "o2": "It is, and most serious kitchens abandoned it some years ago.",
+        "o3": "It is not a nineteenth-century system at all, whatever people say.",
+        "o4": "It is absurd, but the staff are too used to it to change now.",
+        "o5": "It was absurd then as well, and it has simply never been questioned."
+      },
+      "order": ["o3", "o2", "o1", "o5", "o4"],
+      "answer": "o1", "trap": "o2",
+      "why": "Son replik hem değişenleri hem değişmeyeni sayar; boşluk sistemin hâlâ bir sorunu çözdüğünü ima etmelidir.",
+      "trap_note": "Sistemin bırakıldığını söyler; oysa şef sonraki replikte onu hâlâ kullandığını ve gerekçesini anlatır."
+    },
+    {
+      "no": 68, "group": "restatement", "level": "C1",
+      "subject": "law / the statute of limitations",
+      "stem": "Not until the period fixed by statute has run out does a claim become impossible to bring.",
+      "options": {
+        "o1": "A claim can still be brought right up to the moment the statutory period expires.",
+        "o2": "A claim becomes impossible to bring well before the statutory period expires.",
+        "o3": "The statutory period begins to run only once a claim has been brought.",
+        "o4": "Claims brought after the statutory period are decided on their merits.",
+        "o5": "No claim of this kind has ever been brought within the statutory period."
+      },
+      "order": ["o5", "o4", "o2", "o3", "o1"],
+      "answer": "o1", "trap": "o2",
+      "why": "Not until yapısı eşiği belirler: olanaksızlık ancak süre dolduğunda başlar, dolayısıyla o ana kadar dava açılabilir.",
+      "trap_note": "Eşiği öne çeker; 'ancak ... -dıktan sonra' kalıbı tam da bundan önce engel bulunmadığını söyler."
+    },
+    {
+      "no": 69, "group": "restatement", "level": "B2",
+      "subject": "street furniture / the park bench",
+      "stem": "Rather than invite people to sit for a long time, the new benches were shaped to make a short rest comfortable and a longer one impossible.",
+      "options": {
+        "o1": "The new benches were designed not for sitting at length but for pausing briefly, and they prevent anything more.",
+        "o2": "The new benches were designed not for pausing briefly but for sitting at length, and they prevent anything less.",
+        "o3": "The new benches are comfortable whether a person rests on them briefly or for several hours.",
+        "o4": "People were invited to sit on the new benches for as long as they found them comfortable.",
+        "o5": "The shape of the new benches makes even a short rest uncomfortable for most people."
+      },
+      "order": ["o4", "o1", "o2", "o3", "o5"],
+      "answer": "o1", "trap": "o2",
+      "why": "Rather than X, Y kalıbı amaçlananı Y'ye verir: kısa mola rahat, uzun oturuş olanaksız kılınmıştır.",
+      "trap_note": "Kalıbın iki ucunu değiştirir; tasarımın amacı tam tersine döner."
+    },
+    {
+      "no": 70, "group": "restatement", "level": "C1",
+      "subject": "research method / the control group",
+      "stem": "Without a group that receives nothing, there is no way of telling whether the improvement owes anything to the treatment.",
+      "options": {
+        "o1": "Unless some of the participants are given nothing, an improvement cannot be attributed to the treatment at all.",
+        "o2": "Unless some of the participants are given nothing, an improvement can safely be attributed to the treatment.",
+        "o3": "A group that receives nothing will improve to exactly the same degree as one that is treated.",
+        "o4": "Treatments are tested by comparing one group's improvement with that group's earlier condition.",
+        "o5": "Improvements observed in a trial are usually larger than the treatment itself can explain."
+      },
+      "order": ["o2", "o4", "o5", "o1", "o3"],
+      "answer": "o1", "trap": "o2",
+      "why": "Cümle bir koşul kurar: karşılaştırma grubu yoksa iyileşmenin kaynağı saptanamaz.",
+      "trap_note": "Koşulun sonucunu tersine çevirir; aynı koşuldan güvenli bir atıf çıkarmak cümlenin tam karşıtıdır."
+    },
+    {
+      "no": 71, "group": "restatement", "level": "C1",
+      "subject": "commerce / the subscription model",
+      "stem": "What a subscription sells is not the thing itself but the reader's decision not to decide again next month.",
+      "options": {
+        "o1": "A subscription is sold less as a product than as a way of sparing the reader a monthly choice.",
+        "o2": "A subscription is sold less as a way of sparing the reader a monthly choice than as a product.",
+        "o3": "Readers who subscribe make a fresh decision about the product every month.",
+        "o4": "Subscriptions are bought chiefly by readers who value the product very highly.",
+        "o5": "The thing itself matters more to a subscriber than the convenience of the arrangement."
+      },
+      "order": ["o2", "o1", "o5", "o3", "o4"],
+      "answer": "o1", "trap": "o2",
+      "why": "What ile kurulan yapı vurguyu ikinci ögeye taşır: satılan şey ürün değil, yeniden karar vermekten kurtulmaktır.",
+      "trap_note": "Vurgunun iki ucunu değiştirir; cümle bu kez tam da reddettiği açıklamayı öne sürer."
+    },
+    {
+      "no": 72, "group": "paragraph_completion", "level": "C1",
+      "subject": "software design / the error message",
+      "stem": "An error message is written by somebody who knows exactly what has gone wrong, for somebody who does not. ---- The writer, looking at the failure from inside, names the component that failed; the reader, looking at it from outside, wants to be told what to do next, and the two are almost never the same sentence. A message that says a connection was refused has described the writer's world. A message that says to check the cable has entered the reader's.",
+      "options": {
+        "o1": "That gap is where almost all of them go wrong.",
+        "o2": "Most of them are written late in the development of a product.",
+        "o3": "Programmers are rarely trained in writing of any kind.",
+        "o4": "Users are advised to record the exact wording before calling.",
+        "o5": "The same message may appear in several different languages."
+      },
+      "order": ["o3", "o5", "o1", "o2", "o4"],
+      "answer": "o1", "trap": "o2",
+      "why": "Boşluktan sonrası yazan ile okuyan arasındaki farkı açar; boşluk bu farkı sorunun kaynağı olarak adlandırmalıdır.",
+      "trap_note": "Nedeni sürece bağlar; paragrafın savı zamanlamada değil, iki bakış açısının uyuşmamasındadır."
+    },
+    {
+      "no": 73, "group": "paragraph_completion", "level": "B2",
+      "subject": "urban design / the dropped kerb",
+      "stem": "The sloped kerb at a street corner was fought for by people in wheelchairs and is used by almost everybody else. ---- A parent with a pushchair, a traveller with a suitcase, a delivery rider, a child on a scooter and an elderly person who no longer lifts her feet very high all take the slope without noticing that somebody had to campaign for it. The lesson has a name in design, and the name is older than most of the people who use it.",
+      "options": {
+        "o1": "A change made for a few turned out to serve a great many.",
+        "o2": "The campaign for it lasted the better part of two decades.",
+        "o3": "Kerbs of the older kind are still common in smaller towns.",
+        "o4": "The slope must meet a standard gradient to be of any use.",
+        "o5": "Most cities now install them whenever a road is resurfaced."
+      },
+      "order": ["o1", "o4", "o5", "o2", "o3"],
+      "answer": "o1", "trap": "o2",
+      "why": "Boşluktan sonra sayılan kullanıcılar tek bir yargıyı örnekler: azınlık için yapılan düzenleme çoğunluğa yaramıştır.",
+      "trap_note": "Kampanyanın süresine odaklanır; paragrafın anlattığı şey süre değil, faydanın beklenmedik genişliğidir."
+    },
+    {
+      "no": 74, "group": "paragraph_completion", "level": "C1",
+      "subject": "food law / the appellation label",
+      "stem": "A label stating that a wine comes from a named district is a promise about geography and is read as a promise about quality. ---- The two are connected, but loosely: the rules say where the grapes grew and, usually, which varieties were permitted, and they say almost nothing about whether the result is any good. A careless producer inside the district may use the name. A meticulous one just outside it may not.",
+      "options": {
+        "o1": "The label guarantees the first and is trusted for the second.",
+        "o2": "Most buyers are unable to find the district on a map at all.",
+        "o3": "The boundaries were drawn in the early part of the last century.",
+        "o4": "Producers inside the district pay a fee for the right to the name.",
+        "o5": "Wines of this kind are usually more expensive than their neighbours."
+      },
+      "order": ["o2", "o4", "o5", "o3", "o1"],
+      "answer": "o1", "trap": "o2",
+      "why": "Boşluk ilk cümledeki iki vaadi ayırıp birbirine bağlamalıdır: biri güvence altındadır, öteki yalnızca varsayılır.",
+      "trap_note": "Sorunu alıcının bilgisizliğine bağlar; paragrafın ayrımı coğrafya ile kalite arasındaki gevşek bağdır."
+    },
+    {
+      "no": 75, "group": "paragraph_completion", "level": "B2",
+      "subject": "social custom / the handshake",
+      "stem": "The handshake is usually explained as a way of showing that the right hand holds no weapon, which is a tidy story with very little behind it. ---- What the gesture actually does is far simpler and harder to replace: it obliges two people to come within arm's length, to adjust their timing to each other and to touch, all within about a second. Every substitute proposed for it has kept the timing and dropped the touching, and none of them has held.",
+      "options": {
+        "o1": "The explanation survives because it is memorable rather than because it is true.",
+        "o2": "Weapons were in any case carried on the left side by most soldiers.",
+        "o3": "The gesture is recorded on reliefs from several ancient civilisations.",
+        "o4": "Different countries vary considerably in how firm the grip should be.",
+        "o5": "Public health advice has discouraged the practice on several occasions."
+      },
+      "order": ["o1", "o3", "o5", "o4", "o2"],
+      "answer": "o1", "trap": "o2",
+      "why": "Boşluk, 'arkasında pek bir şey yok' yargısını tamamlamalı ve açıklamanın neden yaşadığını söylemelidir.",
+      "trap_note": "Hikâyeyi çürütmeye girişir; paragraf onu çürütmekle değil, neden tutunduğuyla ilgilenir."
+    },
+    {
+      "no": 76, "group": "odd_one_out", "level": "B2",
+      "subject": "standards / paper sizes",
+      "sentences": [
+        "The sheet of paper used in most of the world has a shape chosen so that folding it in half produces the same shape again.",
+        "That single property is what makes enlarging and reducing a document a matter of one number rather than of guesswork.",
+        "It also means that a sheet, a poster and a leaflet can all be cut from one another without waste.",
+        "Paper mills in Europe produced about forty million tonnes of paper last year.",
+        "An arrangement that looks like a convention turns out to be a piece of arithmetic."
+      ],
+      "answer": "IV", "trap": "I",
+      "why": "IV. cümle üretim miktarına geçer; paragraf ise kâğıt boyutundaki oranın ne işe yaradığını anlatır.",
+      "trap_note": "I. cümle teknik bir ayrıntı gibi durur ama paragrafın açıkladığı bütün özelliklerin kaynağıdır."
+    },
+    {
+      "no": 77, "group": "odd_one_out", "level": "B2",
+      "subject": "literature / the serial novel",
+      "sentences": [
+        "Novels published a chapter at a time were written to a deadline that arrived before the ending had been decided.",
+        "Printing presses of the period were driven by steam rather than by hand.",
+        "An author could therefore hear what readers thought of a character while there was still time to change what happened to him.",
+        "Several famous figures were spared or destroyed on the strength of letters that arrived mid-serial.",
+        "The form produced books that are shaped by their audience in a way no finished manuscript can be."
+      ],
+      "answer": "II", "trap": "I",
+      "why": "II. cümle baskı tekniğine geçer; paragraf ise tefrikanın yazarla okur arasında kurduğu ilişkiyi anlatır.",
+      "trap_note": "I. cümle yalnızca bir çalışma koşulu gibi görünür; oysa sonraki cümlelerin tamamı ondan türer."
+    },
+    {
+      "no": 78, "group": "odd_one_out", "level": "C1",
+      "subject": "security design / the bollard",
+      "sentences": [
+        "The short post at the edge of a pavement is doing a job that the pavement itself cannot do.",
+        "A kerb tells a driver where the road ends; a bollard makes the answer physical, and the difference matters only in the few seconds when the driver is not reading anything.",
+        "The modern version is engineered to a stated impact, and the figure is chosen from the mass and the speed of the vehicles expected in that street.",
+        "Many of the earliest ones were cannon barrels set upright in the ground at the end of the Napoleonic wars.",
+        "What reads as a decorative object is a calculation about a collision that nobody intends to have."
+      ],
+      "answer": "IV", "trap": "III",
+      "why": "IV. cümle babaların kökenine ilişkin bir tarih ayrıntısıdır; paragrafın savı bugünkü işlevin bir çarpma hesabı olduğudur.",
+      "trap_note": "III. cümle teknik göründüğü için sapma sanılır; oysa son cümledeki 'hesap' yargısının dayanağıdır."
+    },
+    {
+      "no": 79, "group": "odd_one_out", "level": "B2",
+      "subject": "sport technology / the photo finish",
+      "sentences": [
+        "Before the photo finish, a close race was decided by three judges who wrote down what they had seen and compared notes.",
+        "They disagreed often enough for the practice to be defended as a safeguard rather than as a measurement.",
+        "The camera did not make the judges more accurate; it made them unnecessary.",
+        "Athletics meetings in the period were usually held in the late afternoon.",
+        "What had been an opinion, arrived at by people who could be argued with, became a reading that could not."
+      ],
+      "answer": "V", "trap": "II",
+      "why": "IV. cümle yarışların saatine geçer; paragraf ise kararın görüşten ölçüme dönüşmesini anlatır.",
+      "trap_note": "II. cümle eski yöntemi savunur gibi göründüğü için sapma sanılır; oysa dönüşümün nedenini verir."
+    },
+    {
+      "no": 80, "group": "odd_one_out", "level": "B2",
+      "subject": "legal procedure / the oath",
+      "sentences": [
+        "A witness who intends to lie is not prevented from doing so by being asked to promise that he will not.",
+        "The oath survives anyway, and the reason is not the promise but the moment.",
+        "Standing up, being addressed by name and saying a fixed form of words marks the point after which everything said is of a different kind.",
+        "Courts that have replaced the religious wording with a plain declaration report no change of any sort in what witnesses do.",
+        "Most countries revised their rules of evidence at some point during the twentieth century."
+      ],
+      "answer": "III", "trap": "I",
+      "why": "V. cümle delil kurallarının genel reformuna geçer; paragraf ise yeminin neden sürdüğünü anlatır.",
+      "trap_note": "I. cümle yemini işe yaramaz gösterdiği için konu dışı sanılır; oysa paragrafın sorusunu kuran cümledir."
+    }
+  ],
+  "vocabulary": [
+    ["abolish (abolished)", "kaldırmak, ilga etmek"],
+    ["acquire", "edinmek, elde etmek"],
+    ["actually", "aslında, gerçekte"],
+    ["administer (to administer a scheme)", "yürütmek"],
+    ["admit (are admitted)", "kabul etmek"],
+    ["align (how it was aligned)", "ayarlamak, hizalamak"],
+    ["anticipate", "öngörmek"],
+    ["apostrophe", "kesme işareti"],
+    ["apprenticeship", "çıraklık"],
+    ["archive", "arşiv"],
+    ["arithmetic", "hesap, aritmetik"],
+    ["attempt", "teşebbüs, deneme"],
+    ["attribute (attributed to the treatment)", "bağlamak, atfetmek"],
+    ["auctioneer", "müzayedeci"],
+    ["bargain (to bargain over a price)", "pazarlık etmek"],
+    ["bargaining", "pazarlık"],
+    ["battlefield", "savaş alanı"],
+    ["be of", "sahip olmak"],
+    ["bench", "bank, sıra"],
+    ["beyond", "ötesinde"],
+    ["bidder", "artırmaya katılan"],
+    ["blame", "suçlamak, sorumlu tutmak"],
+    ["blunder", "büyük yanlış"],
+    ["bollard", "baba, engel direği"],
+    ["borrow (borrowing costs)", "borç almak"],
+    ["brief", "kısa"],
+    ["burial (the burial ever was)", "gömme"],
+    ["bushel", "kile (hacim ölçüsü)"],
+    ["candidate", "aday"],
+    ["cap (supply is capped)", "sınırlamak, tavan koymak"],
+    ["churchyard", "kilise avlusu mezarlığı"],
+    ["codify (codified)", "kurala bağlayarak derlemek"],
+    ["collision", "çarpışma"],
+    ["commission", "komisyon"],
+    ["component", "bileşen, parça"],
+    ["concerned (the community concerned)", "ilgili, söz konusu"],
+    ["confidence", "öz güven"],
+    ["consequence", "sonuç"],
+    ["considerable", "önemli, büyük"],
+    ["consult (consulted)", "danışmak"],
+    ["convenience", "kolaylık"],
+    ["convention (became a convention)", "yerleşik âdet"],
+    ["court (tried in the same court)", "mahkeme"],
+    ["cylinder (the wax cylinder)", "silindir"],
+    ["damaging", "zarar verici"],
+    ["deadline", "son teslim tarihi"],
+    ["decade", "on yıl"],
+    ["decay", "çürümek, ayrışmak"],
+    ["declaration", "beyan"],
+    ["decorative", "süsleyici"],
+    ["define", "tanımlamak"],
+    ["dependable", "güvenilir"],
+    ["deposit (a deposit on a bottle)", "depozito"],
+    ["discourteous", "nezaketsiz"],
+    ["dispute", "anlaşmazlık, uyuşmazlık"],
+    ["dissolve", "çözünmek, erimek"],
+    ["ensemble", "topluluk"],
+    ["estimate", "tahmin etmek"],
+    ["evidence", "kanıt"],
+    ["expire (a copyright expiring)", "süresi dolmak"],
+    ["forbid (the thing it once forbade)", "yasaklamak"],
+    ["foresee (foreseen)", "öngörmek"],
+    ["format", "biçim"],
+    ["foul", "faul"],
+    ["further", "daha ileri, daha öte"],
+    ["gate (the departure gate)", "kapı, çıkış kapısı"],
+    ["geometry", "geometri"],
+    ["gesture", "jest, gösteriş hareketi"],
+    ["grade (to grade a sentence)", "derecelendirmek"],
+    ["gradient", "eğim"],
+    ["hardly", "nadiren"],
+    ["holdings (an archive's holdings)", "koleksiyon, mevcut"],
+    ["impact", "çarpma"],
+    ["impose (imposed)", "dayatmak"],
+    ["inconvenience", "rahatsızlık, güçlük"],
+    ["index (an alphabetical index)", "dizin"],
+    ["infer", "çıkarım yapmak"],
+    ["inquest", "ölüm soruşturması"],
+    ["install (to install a direction)", "yerleştirmek"],
+    ["instrument (financial instruments)", "araç, enstrüman"],
+    ["insurance", "sigorta"],
+    ["interpretation", "yorum"],
+    ["intricate", "karmaşık, girift"],
+    ["investor", "yatırımcı"],
+    ["jam (if it jammed)", "sıkışmak"],
+    ["jury", "jüri"],
+    ["keeper (a lighthouse keeper)", "bekçi"],
+    ["kerb", "kaldırım taşı"],
+    ["lacquer", "lak"],
+    ["lead (a two-point lead)", "öndelik, fark"],
+    ["leaflet", "broşür"],
+    ["lift (the mirrors in lifts)", "asansör"],
+    ["lighthouse", "deniz feneri"],
+    ["likely", "muhtemel, olası"],
+    ["manufactured (manufactured goods)", "imal edilmiş"],
+    ["manufacturer", "üretici"],
+    ["manuscript", "elyazması"],
+    ["margin (printed in the margin)", "kenar boşluğu"],
+    ["margin of error", "hata payı"],
+    ["merchant", "tüccar"],
+    ["meticulous", "titiz"],
+    ["minutes (a set of minutes)", "toplantı tutanağı"],
+    ["negotiation", "pazarlık, görüşme"],
+    ["no longer", "artık"],
+    ["oath", "yemin"],
+    ["obligation", "yükümlülük"],
+    ["observe", "gözlemlemek"],
+    ["obsolescence", "eskiyip kullanılmaz hâle gelme"],
+    ["obvious", "açık, bariz"],
+    ["offside", "ofsayt"],
+    ["parish", "cemaat bölgesi"],
+    ["passenger", "yolcu"],
+    ["pavement", "kaldırım"],
+    ["pitch (the size of the pitch)", "saha"],
+    ["poll (the open poll)", "oylama; sandık"],
+    ["possessive", "iyelik"],
+    ["posture", "duruş"],
+    ["premise", "öncül, dayanak"],
+    ["premium (a shift premium)", "ek ödeme, prim"],
+    ["proceedings", "yargılama, oturum"],
+    ["property (a property of the place)", "nitelik, özellik"],
+    ["proximity", "yakınlık"],
+    ["purpose", "amaç, hedef"],
+    ["pushchair", "puset, bebek arabası"],
+    ["puzzle", "bulmaca, bilmece"],
+    ["quarter (a crowded quarter)", "mahalle, semt"],
+    ["rapidly", "hızlı bir şekilde"],
+    ["rarely", "nadiren"],
+    ["rather than", "-den ziyade"],
+    ["reclaim", "geri almak"],
+    ["redistribute", "yeniden dağıtmak"],
+    ["referee (to referee a competition)", "hakemlik etmek"],
+    ["reference (a reference letter)", "bonservis, referans"],
+    ["reflect (prices reflect what is known)", "yansıtmak"],
+    ["reformer", "reformcu"],
+    ["relief (famine relief)", "yardım"],
+    ["require", "gerektirmek"],
+    ["reserve price", "taban fiyat"],
+    ["resistance", "direniş"],
+    ["retire (formats have been retired)", "hizmetten kaldırmak"],
+    ["safeguard", "güvence, koruyucu önlem"],
+    ["seniority", "kıdem"],
+    ["sentence (to sentence somebody)", "hüküm, ceza vermek"],
+    ["serial (a serial novel)", "tefrika"],
+    ["settle (settled the question)", "çözüme bağlamak"],
+    ["share (a rising share)", "pay"],
+    ["shortage", "kıtlık, darlık"],
+    ["sound (perfectly sound)", "sağlam"],
+    ["source", "kaynak"],
+    ["spare (sparing the reader a choice)", "esirgemek, zahmetten kurtarmak"],
+    ["staircase", "merdiven"],
+    ["station (kitchen stations)", "istasyon, çalışma noktası"],
+    ["statute", "yasa, kanun"],
+    ["storage", "depo, ambar"],
+    ["subscription", "abonelik"],
+    ["substitute", "yerine geçen şey"],
+    ["superstition", "batıl inanç"],
+    ["supply", "arz"],
+    ["that is", "yani, bir başka deyişle"],
+    ["the number of", "-nın sayısı"],
+    ["tighten", "sıkılaştırmak"],
+    ["tonne", "ton"],
+    ["trade (the rest of the trade)", "meslek çevresi"],
+    ["transfer", "devir, aktarım"],
+    ["triage", "triyaj, aciliyet sıralaması"],
+    ["typewriter", "daktilo"],
+    ["umbrella", "şemsiye"],
+    ["upkeep", "bakım masrafı"],
+    ["valuable", "değerli"],
+    ["variety (which varieties were permitted)", "menşe adı"],
+    ["waste", "israf, atık"],
+    ["whistle", "düdük"],
+    ["witness", "tanık"],
+    ["wording", "ifade, sözcük seçimi"]
+  ]
+}

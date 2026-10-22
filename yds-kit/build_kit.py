@@ -16,6 +16,7 @@ import argparse
 import json
 import re
 import sys
+from collections import Counter
 from pathlib import Path
 
 from docx import Document
@@ -30,13 +31,15 @@ from docx.shared import Cm, Pt, RGBColor
 # Kit kuralları (spec.md ile birebir aynı olmak zorunda)
 # --------------------------------------------------------------------------
 
-TOTAL_KITS = 12
+TOTAL_KITS = 14
 
 #: Kit numarası -> seviye. Aralıklar kapalıdır (her iki uç dahil).
+#: Kaynak promt kendi içinde çelişiyordu (kapakta "/ 15", seviye kuralında
+#: "/ 12"); seri 12'de kapatılmıştı, 13-14 istenince C1 Entry bandı uzatıldı.
 LEVEL_BANDS = [
     (1, 3, "B2 Beginner"),
     (4, 7, "B2 Advanced"),
-    (8, 12, "C1 Entry"),
+    (8, 14, "C1 Entry"),
 ]
 
 LETTERS = ["A", "B", "C", "D", "E"]
@@ -107,7 +110,7 @@ PARAGRAPH_QTYPES = ("according_to", "it_is_clear", "inference", "main_idea")
 #: Kural sürümü. Kit JSON'unda "spec": 2 yazılıysa aşağıdaki uzunluk ve
 #: diyalog kuralları da zorunlu olur. Alan yoksa kit 1. sürüm sayılır —
 #: kitler 1-7 bu kurallardan önce yazıldı ve yeniden basılabilmeleri gerekiyor.
-SPEC = 2
+SPEC = 3
 
 #: Cümle tamamlamada verilen yarı da, seçenekler de gerçek bir cümle olmalı.
 #: Tek sözcüklük dilbilgisi şıkları (of whom / of them) YDS'nin sorma biçimi
@@ -121,6 +124,13 @@ PASSAGE_WORDS = (230, 275)
 #: Boşluğun diyalogdaki yeri değişmeli: YDS kimi zaman ilk repliği,
 #: kimi zaman ortadakini, kimi zaman sonuncuyu sorar.
 DIALOGUE_BLANK = "----"
+
+#: spec 3: gerçek YDS'de paragraf dışındaki her soru başka bir konudandır.
+#: Kitlerde 8-11 bu bölümler beş parçanın konularını tekrar ediyordu; öğrenci
+#: "özellikle birçok konuya değin" dedi, o yüzden konu artık alan olarak
+#: yazılıyor ve sayılıyor.
+MIN_SUBJECTS = 30
+MAX_PER_SUBJECT = 2
 
 # Görsel dil: ÖSYM kitapçığı — lacivert metin, ince çerçeveler, beyaz kâğıt.
 NAVY = RGBColor(0x1B, 0x33, 0x5F)
@@ -211,6 +221,8 @@ def validate(kit: dict) -> list[str]:
 
     if kit.get("spec", 1) >= 2:
         errors += _validate_spec2(kit, by_no)
+    if kit.get("spec", 1) >= 3:
+        errors += _validate_spec3(kit)
 
     covered = set()
     for p in kit.get("passages", []):
@@ -318,6 +330,51 @@ def _validate_spec2(kit: dict, by_no: dict) -> list[str]:
                 errors.append(
                     f"Diyalog boşlukları aynı sırada ({i + 1}. replik) ikiden çok kez olamaz."
                 )
+    return errors
+
+
+
+def _validate_spec3(kit: dict) -> list[str]:
+    """spec 3: konu genişliği.
+
+    Paragraf soruları (43-62) parçalarının konusunu paylaşır; geri kalan
+    34 sorunun her biri kendi konusunu `subject` alanında taşır. Gerçek YDS
+    de böyledir: cümle tamamlama, çeviri, diyalog ve anlam bozan cümle
+    birbirinden bağımsız alanlardan gelir.
+    """
+    errors: list[str] = []
+    subjects: list[str] = []
+
+    for q in kit.get("questions", []):
+        if q.get("group") == "paragraph":
+            continue
+        s = (q.get("subject") or "").strip()
+        if not s:
+            errors.append(f"Soru {q.get('no')}: spec 3 subject alanını zorunlu kılar.")
+        else:
+            subjects.append(s.lower())
+
+    for p in kit.get("passages", []):
+        s = (p.get("subject") or "").strip()
+        if not s:
+            errors.append(
+                f"Parça {p.get('first')}-{p.get('last')}: spec 3 subject alanını zorunlu kılar."
+            )
+        else:
+            subjects.append(s.lower())
+
+    counts = Counter(subjects)
+    if len(counts) < MIN_SUBJECTS:
+        errors.append(
+            f"Kitte en az {MIN_SUBJECTS} ayrı konu olmalı, {len(counts)} bulundu: "
+            f"bölümler birbirinin konusunu tekrar ediyor."
+        )
+    crowded = [s for s, c in counts.items() if c > MAX_PER_SUBJECT]
+    if crowded:
+        errors.append(
+            f"Aynı konu en çok {MAX_PER_SUBJECT} soruda olabilir; fazla olanlar: "
+            f"{', '.join(sorted(crowded))}."
+        )
     return errors
 
 
