@@ -50,8 +50,10 @@ const STEPS = [
   },
   {
     number: '04',
-    title: 'Выписка',
-    text: 'Веду переписку с СРО до решения о приёме и выписки из реестра.',
+    // До 22.10.2026 — «Выписка»: членство подтверждает запись в едином
+    // реестре членов СРО, а не выписка (ст. 55.17 ГрК РФ, с 01.09.2022).
+    title: 'Реестр',
+    text: 'Веду переписку с СРО до решения о приёме и внесения в реестр членов.',
   },
 ]
 
@@ -137,10 +139,13 @@ export function Process() {
             {STEPS.map((step, index) => {
               const dim = active !== null && active >= 0 && index !== active
               const reached = active === null || index <= active
+              // Высота шага до 1024 px — 26vh (до 22.10.2026 — 34vh): между
+              // короткими шагами стояли пустые тёмные полосы. Чертёж всё так
+              // же достраивается по шагам — каждый проходит отметку экрана.
               return (
                 <li
                   key={step.number}
-                  className="relative min-h-[34vh] border-b border-white/15 py-7 pl-6 last:min-h-0 sm:py-9 sm:pl-9 lg:min-h-[40vh] lg:py-10 lg:pl-10 lg:last:min-h-0"
+                  className="relative min-h-[26vh] border-b border-white/15 py-7 pl-6 last:min-h-0 sm:py-9 sm:pl-9 lg:min-h-[40vh] lg:py-10 lg:pl-10 lg:last:min-h-0"
                 >
                   {/* Точка шага на шкале: горит, когда до шага дошли. */}
                   <span

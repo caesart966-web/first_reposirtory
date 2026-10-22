@@ -142,6 +142,17 @@ export const IMAGES = {
     height: 1066,
     position: '60% 55%',
   },
+  // 22.10.2026 — «Сколько стоит вступление в СРО»: два башенных крана,
+  // Kouji Tsuru, Unsplash License (CREDITS.md). Исходник невысокий (462 px),
+  // кадр под плотной плёнкой шапки.
+  articleStoimost: {
+    src: './img/article-stoimost.webp',
+    srcAvif: './img/article-stoimost.avif',
+    alt: 'Два башенных крана на фоне неба',
+    width: 1320,
+    height: 462,
+    position: '50% 50%',
+  },
   articleRegion: {
     src: './img/article-region.webp',
     srcAvif: './img/article-region.avif',

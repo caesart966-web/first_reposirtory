@@ -20,12 +20,17 @@ export function ArticleRows({ articles }: { articles: Article[] }) {
           <Reveal delay={(index % 3) * 70}>
             <a
               href={page(`${ARTICLES_PATH}/${article.slug}`)}
-              className="group grid gap-2 py-6 sm:grid-cols-[9.5rem_minmax(0,1fr)_auto] sm:items-baseline sm:gap-8 sm:py-7"
+              className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 py-6 sm:grid-cols-[9.5rem_minmax(0,1fr)_auto] sm:items-baseline sm:gap-8 sm:py-7"
             >
-              <span className="text-sm text-neutral-600">
+              {/* На телефоне дата и название — одной колонкой, стрелка справа,
+                  как в статьях на главной (22.10.2026: здесь стрелки не было);
+                  с 640 px обёртка исчезает (sm:contents) и строка делится
+                  на дату, название и стрелку. */}
+              <span className="min-w-0 sm:contents">
+              <span className="block text-sm text-neutral-600">
                 {formatDate(article.checked)}
               </span>
-              <span className="min-w-0">
+              <span className="mt-2 block min-w-0 sm:mt-0">
                 <span className="block font-display text-[1.45rem] font-medium leading-tight text-neutral-950 transition-colors duration-700 ease-silk group-hover:text-accent-700 sm:text-[1.7rem]">
                   {nbsp(article.title)}
                 </span>
@@ -33,8 +38,9 @@ export function ArticleRows({ articles }: { articles: Article[] }) {
                   {nbsp(article.hint)}
                 </span>
               </span>
+              </span>
               {/* Стрелка без кружка: кружок — только у «Связаться». */}
-              <GoTo className="hidden sm:inline-flex" />
+              <GoTo />
             </a>
           </Reveal>
         </li>

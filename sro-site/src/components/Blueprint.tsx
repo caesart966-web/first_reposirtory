@@ -89,7 +89,8 @@ const LINE_ORDER = orderOf(LINES)
 const CRANE_ORDER = orderOf(CRANE)
 const FINISH_ORDER = orderOf(FINISH)
 
-export const STAGE_NAMES = ['Заявка', 'Разбор', 'Документы', 'Выписка']
+// «Реестр», а не «Выписка» (22.10.2026) — как четвёртый шаг в Process.tsx.
+export const STAGE_NAMES = ['Заявка', 'Разбор', 'Документы', 'Реестр']
 
 export function Blueprint({ stage, animate }: { stage: number; animate: boolean }) {
   const drawn = (s: number, order: number, slow = 1) => ({

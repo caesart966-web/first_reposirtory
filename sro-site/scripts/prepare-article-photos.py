@@ -14,6 +14,8 @@
                      отражение не видно.
   article-proverka — человек читает договор с ручкой в руке, лица нет,
                      «Как проверить СРО перед вступлением».
+  article-stoimost — два башенных крана на фоне неба (Unsplash),
+                     «Сколько стоит вступление в СРО».
   article-region   — старинный глобус, Россия от Москвы и Ростова до
                      Сибири, «В СРО какого региона вступать». Обрезан
                      до России и Казахстана: нижняя половина — Ближний
@@ -45,6 +47,10 @@ PHOTOS = [
     ("article-dogovor-src.jpg", "article-dogovor", (860, 400, 1880, 1333), True, (0.02, 0.82, 0.75)),
     ("article-proverka-src.jpg", "article-proverka", None, False, (0.04, 0.96, 0.85)),
     ("article-region-src.jpg", "article-region", (70, 0, 1080, 1320), False, (0.03, 0.88, 0.8)),
+    # 22.10.2026 — «Сколько стоит вступление в СРО»: два башенных крана
+    # (Kouji Tsuru, Unsplash License — CREDITS.md), запасной исходник
+    # 1320×462, лежал в assets-src с 27.08.2026. Целиком.
+    ("cranes-crop-spare.jpg", "article-stoimost", None, False, (0.02, 0.9, 0.85)),
 ]
 
 

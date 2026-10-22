@@ -781,6 +781,24 @@ for (const [w, h, mobile] of [[390, 844, true], [820, 1180, true], [1440, 900, f
   await ctx.close()
 }
 
+// «Сколько стоит вступление в СРО» (22.10.2026): суммы фондов в статье
+// записаны руками (articles.ts читает Node, импортировать таблицы нельзя) —
+// поэтому они обязаны совпасть с суммами на страницах видов СРО.
+{
+  const ctx = await b.newContext()
+  const sums = async (path) => {
+    const html = await (await ctx.request.get(BASE + path)).text()
+    const main = html.slice(html.indexOf('<main'), html.indexOf('</main>'))
+    return new Set([...main.matchAll(/(?<![\d\s\u00a0])(\d{1,3}(?:[\s\u00a0\u202f]\d{3})*)[\s\u00a0\u202f]₽/g)]
+      .map((m) => m[1].replace(/\D/g, '')))
+  }
+  const art = await sums('stati/skolko-stoit-vstuplenie-v-sro/')
+  const types = new Set([...(await sums('sro-stroiteley/')), ...(await sums('sro-proektirovshchikov/'))])
+  const diff = [...art].filter((x) => !types.has(x)).concat([...types].filter((x) => !art.has(x)))
+  check('«Сколько стоит»: суммы фондов совпадают со страницами видов СРО', art.size >= 14 && diff.length === 0, `${art.size} сумм; расхождения: ${diff.join(', ') || 'нет'}`)
+  await ctx.close()
+}
+
 // Картинки для мессенджеров (22.10.2026): у каждой страницы, кроме главной,
 // своя картинка с её заголовком; файл на месте, 1200 × 630.
 {

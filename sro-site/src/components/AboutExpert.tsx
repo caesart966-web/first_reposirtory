@@ -41,11 +41,13 @@ const CITY = 'Ростов-на-Дону'
 // про одного специалиста (см. README, «„О нас“»).
 // Карточки компании больше нет — её строки стали списком под текстом,
 // подпись со знаком — внизу, как подпись под письмом.
+// На телефоне кадр 21rem вместо 26rem (22.10.2026, разбор главной): Фемида
+// узнаётся и в меньшем кадре, а раздел становится на 80 px короче.
 export function AboutExpert() {
   return (
     <section
       id="about"
-      className="relative isolate overflow-hidden bg-accent-950 pb-24 pt-[21rem] text-neutral-50 sm:pb-32 sm:pt-[28rem] lg:py-32"
+      className="relative isolate overflow-hidden bg-accent-950 pb-24 pt-[16.5rem] text-neutral-50 sm:pb-32 sm:pt-[28rem] lg:py-32"
     >
       <picture>
         <source type="image/avif" srcSet={asset('./img/themis-photo.avif')} />
@@ -58,7 +60,7 @@ export function AboutExpert() {
           loading="lazy"
           decoding="async"
           ref={fadeIn}
-          className="about-photo scroll-settle pointer-events-none absolute inset-x-0 top-0 -z-10 h-[26rem] w-full select-none object-cover object-[50%_12%] sm:h-[34rem] lg:inset-x-auto lg:right-0 lg:h-full lg:w-[46%] lg:object-[55%_20%] min-[1800px]:right-[max(0px,calc(50%-56.25rem))] min-[1800px]:w-[51.875rem]"
+          className="about-photo scroll-settle pointer-events-none absolute inset-x-0 top-0 -z-10 h-[21rem] w-full select-none object-cover object-[50%_12%] sm:h-[34rem] lg:inset-x-auto lg:right-0 lg:h-full lg:w-[46%] lg:object-[55%_20%] min-[1800px]:right-[max(0px,calc(50%-56.25rem))] min-[1800px]:w-[51.875rem]"
         />
       </picture>
       <div className="mx-auto w-full max-w-6xl min-[1800px]:max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -83,7 +85,7 @@ export function AboutExpert() {
             </p>
             <p className="mt-6 text-lg leading-relaxed text-neutral-300">
               {nbsp(
-                'Каждую задачу ведёт один специалист — от первого звонка до выписки из реестра. Вы знаете, кому звонить и на каком этапе дело.',
+                'Каждую задачу ведёт один специалист — от первого звонка до внесения в реестр членов. Вы знаете, кому звонить и на каком этапе дело.',
               )}
             </p>
           </Reveal>

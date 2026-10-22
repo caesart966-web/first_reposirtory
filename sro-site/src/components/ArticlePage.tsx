@@ -113,6 +113,47 @@ function Block({ block }: { block: ArticleBlock }) {
     )
   }
 
+  // Таблицы «уровень — взнос» (22.10.2026): та же разметка, что у фондов
+  // на страницах видов СРО (DetailPage, Fund), — номер уровня, порог, взнос.
+  // Рядом с 640 px, на телефоне одна под другой.
+  if (block.kind === 'tables') {
+    return (
+      <div className="mt-7 grid gap-9 sm:grid-cols-2 sm:gap-8">
+        {block.items.map((table) => (
+          <table key={table.title} className="w-full border-collapse self-start text-sm">
+            <caption className="pb-3 text-left text-[1.0625rem] font-semibold leading-snug text-neutral-950">
+              {table.title}
+            </caption>
+            <thead>
+              <tr className="border-b border-neutral-300 text-left align-bottom text-xs text-neutral-600">
+                <th scope="col" className="w-9 pb-2 font-medium">
+                  Ур.
+                </th>
+                <th scope="col" className="pb-2 pr-3 font-medium">
+                  {block.basis}
+                </th>
+                <th scope="col" className="pb-2 text-right font-medium">
+                  Взнос
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {table.rows.map((row, index) => (
+                <tr key={row.limit} className="border-b border-neutral-200">
+                  <td className="py-2.5 tabular-nums text-neutral-600">{index + 1}</td>
+                  <td className="py-2.5 pr-3 text-neutral-700">{nbsp(row.limit)}</td>
+                  <td className="whitespace-nowrap py-2.5 text-right font-semibold tabular-nums text-neutral-950">
+                    {row.amount}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ))}
+      </div>
+    )
+  }
+
   // note
   return (
     <div className="mt-7 border-l-2 border-accent-400 pl-5 sm:pl-6">
