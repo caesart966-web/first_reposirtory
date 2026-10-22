@@ -1,3 +1,4 @@
+import { ExternalLink } from 'lucide-react'
 import { ARTICLES_PATH, ARTICLES_SORTED, articleLaws, readingMinutes, type Article, type ArticleBlock } from '../content/articles'
 import { IMAGES } from '../content/images'
 import { articleTopic } from '../content/topics'
@@ -81,6 +82,34 @@ function Block({ block }: { block: ArticleBlock }) {
           </div>
         ))}
       </dl>
+    )
+  }
+
+  // Ссылки на реестры (22.10.2026): кнопками, чтобы проверить СРО можно было
+  // сразу из статьи, а не искать адрес. Внешние — в новой вкладке, как все
+  // внешние ссылки сайта; значок — «внешняя ссылка», не кружок со стрелкой
+  // (кружок — только у «Связаться», ui/GoTo.tsx).
+  if (block.kind === 'links') {
+    return (
+      <ul className="mt-6 grid gap-2.5 sm:grid-cols-2">
+        {block.items.map((item) => (
+          <li key={item.href}>
+            <a
+              href={item.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex h-full min-h-14 items-center justify-between gap-4 rounded-2xl border border-neutral-300 bg-white/70 px-5 py-3.5 transition-colors duration-500 ease-silk active:border-accent-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 [@media(hover:hover)]:hover:border-accent-500"
+            >
+              <span className="min-w-0">
+                <span className="block text-base font-semibold leading-snug text-neutral-950">{nbsp(item.label)}</span>
+                <span className="mt-0.5 block text-sm text-neutral-600">{item.hint}</span>
+                <span className="sr-only">, откроется в новой вкладке</span>
+              </span>
+              <ExternalLink className="h-4 w-4 shrink-0 text-accent-700" aria-hidden="true" />
+            </a>
+          </li>
+        ))}
+      </ul>
     )
   }
 

@@ -715,6 +715,90 @@ for (const [width, height, need] of [[390, 780, 'all'], [360, 740, 'all'], [390,
   await ctx.close()
 }
 
+// Порядок разделов главной (22.10.2026, разбор главной): цена и «О компании»
+// выше, «Лицензии» — перед «О компании». Светлые и тёмные разделы
+// чередуются: соседи с одним фоном слились бы в один раздел.
+{
+  const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } })
+  const p = await ctx.newPage()
+  await p.goto(BASE, { waitUntil: 'networkidle' })
+  const r = await p.evaluate(() => {
+    const kids = [...document.querySelector('main').children].filter((el) => el.tagName === 'SECTION')
+    return {
+      ids: kids.map((el) => el.id || el.getAttribute('aria-labelledby')),
+      bgs: kids.map((el) => getComputedStyle(el).backgroundColor),
+      lead: [...document.querySelectorAll('section[aria-labelledby="hero-title"] p')].map((el) => el.textContent).find((t) => /Подберу/.test(t)) ?? '',
+    }
+  })
+  const want = ['hero-title', 'services', 'process', 'pricing', 'nrs', 'documents', 'licenzii', 'about', 'articles', 'faq', 'regions', 'contacts']
+  check('главная: порядок разделов', JSON.stringify(r.ids) === JSON.stringify(want), r.ids.join(' → '))
+  const same = r.bgs.map((bg, i) => (i && bg === r.bgs[i - 1] && bg !== 'rgba(0, 0, 0, 0)' ? `${r.ids[i - 1]}/${r.ids[i]}` : null)).filter(Boolean)
+  check('главная: у соседних разделов разный фон', same.length === 0, same.join(' '))
+  check('главная: на первом экране «Консультация бесплатная»', /Консультация\s+бесплатная/.test(r.lead), r.lead)
+  await ctx.close()
+}
+
+// «Лицензии» до 1024 px свёрнуты (22.10.2026): название и перечень строкой,
+// нажатие раскрывает описание и пункты с нормами. С 1024 px открыты всегда,
+// кнопок там нет.
+for (const [w, h, mobile] of [[390, 844, true], [820, 1180, true], [1440, 900, false]]) {
+  const ctx = await b.newContext({ viewport: { width: w, height: h }, isMobile: mobile, hasTouch: mobile })
+  const p = await ctx.newPage()
+  await p.goto(BASE, { waitUntil: 'networkidle' })
+  await p.evaluate(() => document.getElementById('licenzii').scrollIntoView({ block: 'start', behavior: 'instant' }))
+  await p.waitForTimeout(1200)
+  const state = () => p.evaluate(() => [...document.querySelectorAll('#licenzii article')].map((a) => ({
+    button: a.querySelector('button[aria-expanded]')?.checkVisibility() ?? false,
+    expanded: a.querySelector('button[aria-expanded]')?.getAttribute('aria-expanded'),
+    items: [...a.querySelectorAll('li h4')].filter((h4) => h4.checkVisibility({ visibilityProperty: true }) && h4.getBoundingClientRect().height > 0).length,
+  })))
+  const s0 = await state()
+  if (w < 1024) {
+    check(`«Лицензии» ${w}: листы свёрнуты, видны названия и перечни`, s0.length === 3 && s0.every((x) => x.button && x.expanded === 'false' && x.items === 0), JSON.stringify(s0))
+    const btn = p.locator('#licenzii article').nth(1).locator('button[aria-expanded]')
+    const box = await btn.boundingBox()
+    if (mobile) await p.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2)
+    else await btn.click()
+    await p.waitForTimeout(900)
+    const s1 = await state()
+    check(`«Лицензии» ${w}: нажатие раскрывает лист с пунктами`, s1[1].expanded === 'true' && s1[1].items === 4 && s1[0].items === 0, JSON.stringify(s1))
+  } else {
+    check(`«Лицензии» ${w}: листы открыты, кнопок нет`, s0.length === 3 && s0.every((x) => !x.button && x.items > 0), JSON.stringify(s0))
+  }
+  await ctx.close()
+}
+
+// «Как проверить СРО»: кнопки официальных реестров (22.10.2026) — в новой
+// вкладке, с noopener, только сайты Ростехнадзора, НОСТРОЙ и НОПРИЗ.
+{
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })
+  const p = await ctx.newPage()
+  await p.goto(BASE + 'stati/kak-proverit-sro/', { waitUntil: 'networkidle' })
+  const links = await p.evaluate(() => [...document.querySelectorAll('main a[target="_blank"]')]
+    .filter((a) => /gosnadzor|nostroy|nopriz/.test(a.href))
+    .map((a) => ({ href: a.getAttribute('href'), rel: a.rel, h: Math.round(a.getBoundingClientRect().height) })))
+  check('«Как проверить СРО»: три кнопки реестров', links.length === 3 && links.every((l) => /noopener/.test(l.rel) && l.h >= 44), JSON.stringify(links))
+  await ctx.close()
+}
+
+// Картинки для мессенджеров (22.10.2026): у каждой страницы, кроме главной,
+// своя картинка с её заголовком; файл на месте, 1200 × 630.
+{
+  const ctx = await b.newContext()
+  const seen = new Set()
+  for (const path of PAGES) {
+    const html = await (await ctx.request.get(BASE + path)).text()
+    const og = html.match(/<meta property="og:image" content="([^"]+)"/)?.[1] ?? ''
+    const file = og.replace(/^https?:\/\/[^/]+\//, '')
+    const res = await ctx.request.get(BASE + file)
+    const ok = res.status() === 200 && /^image\//.test(res.headers()['content-type'] ?? '')
+    check(`${path || '/'}: картинка для мессенджеров ${file}`, ok && (path === '' ? file === 'og.png' : file === `og/${path.replace(/\/$/, '').replace(/\//g, '-')}.jpg`), `${res.status()} ${og}`)
+    seen.add(file)
+  }
+  check('картинки для мессенджеров у страниц разные', seen.size === PAGES.length, `${seen.size} из ${PAGES.length}`)
+  await ctx.close()
+}
+
 // Список видов на первом экране. С 1024 px — строками, подпись вида СРО
 // у всех трёх строк справа, занятие в одну строку (01.10.2026: строки
 // переносились сами, и подпись стояла то справа, то снизу). До 1024 px —

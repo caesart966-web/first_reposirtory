@@ -13,6 +13,7 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { ogName } from './og-name.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 // Node 22.18+ снимает типы с .ts сам: данные читаются из того же файла,
@@ -26,6 +27,12 @@ const origin = readFileSync(resolve(root, 'index.html'), 'utf8').match(/<link re
 if (!origin) throw new Error('Не нашёл canonical главной — откуда взять домен?')
 
 const esc = (text) => text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
+
+// Картинка для мессенджеров: своя, если build-og.mjs --pages её уже нарисовал,
+// иначе общая og.png. У новой статьи своей картинки ещё нет: она рисуется
+// по готовой странице, после сборки (порядок — в build-og.mjs).
+const ogImage = (url) =>
+  existsSync(resolve(root, 'public/og', ogName(url))) ? `${origin}/og/${ogName(url)}` : `${origin}/og.png`
 
 function html({ url, depth, title, description, type, extraMeta = '', mount }) {
   const up = '../'.repeat(depth)
@@ -49,14 +56,14 @@ function html({ url, depth, title, description, type, extraMeta = '', mount }) {
     <meta property="og:title" content="${esc(title)}" />
     <meta property="og:description" content="${esc(description)}" />
     <meta property="og:url" content="${origin}/${url}" />
-${extraMeta}    <!-- Картинка карточки в мессенджерах и соцсетях. Одна на все страницы:
-         собрана из знака и имени компании, а не из фотографии — карточка
-         показывается размером с ноготь, и кадр в ней превращается в кашу.
-         Пересобирается: node scripts/build-og.mjs -->
-    <meta property="og:image" content="${origin}/og.png" />
+${extraMeta}    <!-- Картинка карточки в мессенджерах и соцсетях — своя у страницы
+         (с 22.10.2026): знак, имя компании и заголовок этой страницы,
+         без фотографии — карточка показывается размером с ноготь.
+         Пересобирается: node scripts/build-og.mjs --pages -->
+    <meta property="og:image" content="${ogImage(url)}" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="${esc(`${BRAND} — вступление в СРО`)}" />
+    <meta property="og:image:alt" content="${esc(title)}" />
     <meta name="twitter:card" content="summary_large_image" />
     <!-- Без JS reveal-блоки остались бы прозрачными: страница выглядела бы пустой -->
     <noscript>

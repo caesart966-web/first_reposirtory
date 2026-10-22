@@ -37,6 +37,10 @@ export type ArticleBlock =
   | { kind: 'rows'; items: { label: string; text: string; law?: string }[] }
   /** Оговорка с латунной чертой. */
   | { kind: 'note'; title: string; text: string; law?: string }
+  /** Ссылки на официальные сайты — кнопками (22.10.2026): реестры, которые
+   *  статья советует проверить. Только адреса государственных органов
+   *  и национальных объединений; hint — кто ведёт и адрес сайта. */
+  | { kind: 'links'; items: { label: string; hint: string; href: string }[] }
 
 export type ArticleSection = { title: string; blocks: ArticleBlock[] }
 
@@ -237,6 +241,10 @@ export const ARTICLES: Article[] = [
             law: `ст.${N}55.18 ГрК РФ`,
           },
           {
+            kind: 'links',
+            items: [{ label: 'Государственный реестр СРО', hint: 'Ростехнадзор · sro.gosnadzor.ru', href: 'http://sro.gosnadzor.ru/' }],
+          },
+          {
             kind: 'p',
             text: 'Национальное объединение строителей (НОСТРОЙ) публикует ещё и отдельный список исключённых СРО — по нему сразу видно, если организацию уже исключили.',
           },
@@ -264,6 +272,13 @@ export const ARTICLES: Article[] = [
             kind: 'p',
             text: 'Сколько членов в СРО и кто они, видно в едином реестре членов СРО. Его ведут национальные объединения: НОСТРОЙ — по строителям, НОПРИЗ — по проектировщикам и изыскателям.',
             law: `ст.${N}55.17 ГрК РФ`,
+          },
+          {
+            kind: 'links',
+            items: [
+              { label: 'Реестр членов СРО строителей', hint: 'НОСТРОЙ · reestr.nostroy.ru', href: 'https://reestr.nostroy.ru/' },
+              { label: 'Реестр членов СРО проектировщиков и изыскателей', hint: 'НОПРИЗ · reestr.nopriz.ru', href: 'https://reestr.nopriz.ru/' },
+            ],
           },
         ],
       },
@@ -449,7 +464,7 @@ export function articleLaws(article: Article): string[] {
   for (const section of article.sections) {
     for (const block of section.blocks) {
       if (block.kind === 'p' || block.kind === 'note') add(block.law)
-      else for (const item of block.items) add(item.law)
+      else if (block.kind !== 'links') for (const item of block.items) add(item.law)
     }
   }
   return out
@@ -464,7 +479,8 @@ export function readingMinutes(article: Article): number {
       if (block.kind === 'p') texts.push(block.text)
       else if (block.kind === 'note') texts.push(block.title, block.text)
       else if (block.kind === 'list') texts.push(...block.items.map((i) => i.text))
-      else texts.push(...block.items.flatMap((i) => [i.label, i.text]))
+      else if (block.kind === 'rows') texts.push(...block.items.flatMap((i) => [i.label, i.text]))
+      // Кнопки ссылок не читают — во время чтения они не входят.
     }
   }
   const words = texts.join(' ').split(/\s+/).filter(Boolean).length
