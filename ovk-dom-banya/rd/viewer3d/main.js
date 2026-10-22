@@ -202,6 +202,10 @@ for (const [k, nm] of layerList) {
     if (k === 'labels') labelR.domElement.style.display = e.target.checked ? '' : 'none';
   });
 }
+// без бани в модели — без её видов
+if (!M.walls.some(w => w.floor === 3) && !M.runs.some(r => r.floor === 3)) {
+  document.querySelectorAll('[data-view="bath"],[data-view="site"],[data-floor="3"]').forEach(b => b.remove());
+}
 document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
 document.querySelectorAll('[data-floor]').forEach(b => b.addEventListener('click', () => applyFloor(+b.dataset.floor)));
 document.getElementById('toggle').addEventListener('click', () => document.body.classList.toggle('collapsed'));

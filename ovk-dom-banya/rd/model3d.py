@@ -40,6 +40,8 @@ F_D = 0.05                         # фреонопроводы (жидкост�
 ZF1, ZF2 = SLAB1 - TOP - F_D / 2, SLAB2 - TOP - F_D / 2
 AC = v1.AC
 BATH = 3                           # «этаж» бани: отдельное здание, сдвиг (BX; BY) от осей дома без поворота
+WITH_BATH = '--bath' in sys.argv   # баню в модель не включаем (Заказчица 22.10.2026: «один небольшой воздуховод,
+                                   # моделить не надо»); python3 model3d.py --bath — с баней
 BATH_TOP = 2.80                    # стены бани в модели — до +2,800 (потолки +2,370…+2,750 по разрезам АР)
 
 SYS = {   # система: (название, цвет RGB для просмотрщика, ACI для DXF)
@@ -481,7 +483,8 @@ def routing():
     """Только трассы и разводка (без стен и выгрузок) — для листа 11 и спецификации."""
     RUNS.clear(), BOXES.clear(), LABELS.clear(), CROSS.clear(), CLAMP.clear()
     build_runs()
-    build_bath()
+    if WITH_BATH:
+        build_bath()
     clamp_runs()
     log, fail = solve()
     if fail:
@@ -709,7 +712,7 @@ def walls():
     from ezdxf import recover
     from underlay import OX, OY
     out = {}
-    for fl, key in ((1, 'plan1'), (2, 'plan2'), (BATH, 'bath')):
+    for fl, key in ((1, 'plan1'), (2, 'plan2')) + (((BATH, 'bath'),) if WITH_BATH else ()):
         sx, sy = (BX, BY) if fl == BATH else (0.0, 0.0)
         doc, _ = recover.readfile(v1.UNDER[key])
         polys = []
@@ -837,6 +840,8 @@ def export_json(W, slab):
             'systems': {k: {'name': v[0], 'rgb': v[1]} for k, v in SYS.items()},
             'walls': [], 'slabs': [], 'runs': [], 'boxes': [], 'labels': []}
     for fl, (z0, z1) in ((1, (0.0, SLAB1)), (2, (SLAB1, SLAB2)), (BATH, (0.0, BATH_TOP))):
+        if fl not in W:
+            continue
         for g in geoms(W[fl]):
             data['walls'].append({'floor': fl, 'z0': z0, 'z1': z1, 'outer': [list(map(lambda v: round(v, 4), p))
                                                                               for p in g.exterior.coords[:-1]],
@@ -999,12 +1004,14 @@ def export_ifc(data):
     api('aggregate.assign_object', f, relating_object=proj, products=[site])
     api('aggregate.assign_object', f, relating_object=site, products=[bld])
     api('aggregate.assign_object', f, relating_object=bld, products=[st[1], st[2]])
-    bath = api('root.create_entity', f, ifc_class='IfcBuilding', name='Баня')
-    st[BATH] = api('root.create_entity', f, ifc_class='IfcBuildingStorey', name='Баня, этаж 1')
-    api('aggregate.assign_object', f, relating_object=site, products=[bath])
-    api('aggregate.assign_object', f, relating_object=bath, products=[st[BATH]])
-    api('geometry.edit_object_placement', f, product=bath)
-    api('geometry.edit_object_placement', f, product=st[BATH])
+    bath = None
+    if WITH_BATH:
+        bath = api('root.create_entity', f, ifc_class='IfcBuilding', name='Баня')
+        st[BATH] = api('root.create_entity', f, ifc_class='IfcBuildingStorey', name='Баня, этаж 1')
+        api('aggregate.assign_object', f, relating_object=site, products=[bath])
+        api('aggregate.assign_object', f, relating_object=bath, products=[st[BATH]])
+        api('geometry.edit_object_placement', f, product=bath)
+        api('geometry.edit_object_placement', f, product=st[BATH])
     for obj in (site, bld):
         api('geometry.edit_object_placement', f, product=obj)
     from underlay import OX, OY                         # оси 1/А в координатах выгрузки Revit, мм
@@ -1017,10 +1024,11 @@ def export_ifc(data):
     for k in (1, 2):
         st[k].ObjectPlacement.PlacementRelTo = bld.ObjectPlacement
     # баня — здание с началом в осях 1/А бани: сдвиг по ГП01 от осей дома (элементы — в общей системе дома)
-    bath.ObjectPlacement.RelativePlacement.Location.Coordinates = (OX / 1000 + BX, OY / 1000 + BY, 0.0)
-    bath.ObjectPlacement.PlacementRelTo = site.ObjectPlacement
-    st[BATH].ObjectPlacement.RelativePlacement.Location.Coordinates = (0.0, 0.0, 0.0)
-    st[BATH].ObjectPlacement.PlacementRelTo = bath.ObjectPlacement
+    if bath is not None:
+        bath.ObjectPlacement.RelativePlacement.Location.Coordinates = (OX / 1000 + BX, OY / 1000 + BY, 0.0)
+        bath.ObjectPlacement.PlacementRelTo = site.ObjectPlacement
+        st[BATH].ObjectPlacement.RelativePlacement.Location.Coordinates = (0.0, 0.0, 0.0)
+        st[BATH].ObjectPlacement.PlacementRelTo = bath.ObjectPlacement
 
     O = f.createIfcCartesianPoint((0.0, 0.0, 0.0))
 
@@ -1140,7 +1148,8 @@ def export_ifc(data):
         by_sys.setdefault(b['sys'], []).append(e)
         pset(e, {'Расход, м³/ч': float(b['L']) if b['L'] else None, 'Система': SYS[b['sys']][0]})
     for k, objs in by_store.items():
-        api('spatial.assign_container', f, relating_structure=st[k], products=objs)
+        if objs:
+            api('spatial.assign_container', f, relating_structure=st[k], products=objs)
     for k, objs in by_sys.items():
         s = system(k)
         if s is not None:
@@ -1153,7 +1162,8 @@ def export_ifc(data):
 # ---------------------------------------------------------------- сборка
 def main():
     build_runs()
-    build_bath()
+    if WITH_BATH:
+        build_bath()
     notes = clamp_runs()
     log, fail = solve()
     stubs()

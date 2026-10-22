@@ -6,6 +6,7 @@ import fitz
 from PIL import Image, ImageChops
 
 SRC, OUT = sys.argv[1:3]
+WITH_BATH = '--bath' in sys.argv          # страницы «Баня» и «Дом и баня» — только для модели с баней
 FONT = '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'
 PAGES = [
     ('iso', 'Общий вид с юго-запада', 'Стены — по АР03 и АР09 (полупрозрачно), подписи — расходы у решёток, м³/ч.'),
@@ -39,13 +40,15 @@ doc = fitz.open()
 MM = 72 / 25.4
 W, H = 420 * MM, 297 * MM
 for key, title, note in PAGES:
+    if key in ('bath', 'site') and not WITH_BATH:
+        continue
     png, (iw, ih) = trim(f'{SRC}/{key}.png')
     pg = doc.new_page(width=W, height=H)
     pg.insert_font(fontname='dj', fontfile=FONT)
     pg.insert_text((15 * MM, 16 * MM), f'И05.09.26-ОВ. Вентиляция и кондиционирование дома. 3D-модель — {title}',
                    fontname='dj', fontsize=13)
     pg.insert_text((15 * MM, 285 * MM), note, fontname='dj', fontsize=9, color=(0.3, 0.3, 0.3))
-    pg.insert_text((15 * MM, 290.5 * MM), 'Модель по трассам листов 9–12; файлы И05.09.26-ОВ 3D (DWG, IFC, просмотр в '
+    pg.insert_text((15 * MM, 290.5 * MM), 'Модель по трассам листов 9–11; файлы И05.09.26-ОВ 3D (DWG, IFC, просмотр в '
                    'браузере). Дренаж конденсата — по листам 9, 10.', fontname='dj', fontsize=8, color=(0.45, 0.45, 0.45))
     area = fitz.Rect(15 * MM, 22 * MM, W - 15 * MM, 278 * MM)
     k = min(area.width / iw, area.height / ih)
