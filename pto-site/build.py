@@ -358,7 +358,49 @@ def block_geo(site: Site) -> str:
   </section>'''
 
 
-def block_recommendations(site: Site, cfg: dict) -> str:
+def block_quotes(site: Site) -> str:
+    """Короткий вид рекомендаций для главной: только цитата, кто написал и про
+    какой объект, плюс сам документ. Полные карточки — на «О компании»,
+    «Объектах» и «ПТО на аутсорсе»; здесь главная не должна вырасти на экран.
+    Берутся только письма компаний с документом (благодарность министерства —
+    не отзыв заказчика о работе)."""
+    items = [r for r in site.raw.get("recommendations", {}).get("items", [])
+             if r.get("file") and r.get("image") and asset_exists(r["image"])][:3]
+    if not items:
+        return ""
+    cards = []
+    for r in items:
+        pdf = f' data-pdf="{site.url(r["file"])}"' if asset_exists(r["file"]) else ""
+        opens = (f' data-lightbox="{site.url(r["image"])}"'
+                 f' data-caption="{esc(r["company"])} · {esc(r["city"])}, {esc(r["date"])}"{pdf}')
+        obj = esc(r["object"])
+        if r.get("object_slug"):
+            obj = f'<a href="{site.url("/obekty/" + r["object_slug"] + "/")}">{obj}</a>'
+        cards.append(f'''        <figure class="card quote">
+          <blockquote class="quote__text">{esc(r["quote"])}</blockquote>
+          <figcaption class="quote__who">
+            <b>{esc(r["company"])}</b>
+            <span>{esc(r["role"])} · {esc(r["date"])}</span>
+            <span class="quote__obj">{obj}</span>
+          </figcaption>
+          <button class="rec__link" type="button"{opens}>Посмотреть письмо</button>
+        </figure>''')
+    return f'''  <section class="section">
+    <div class="container">
+      <div class="section__head">
+        <span class="eyebrow">Рекомендации</span>
+        <h2>Что пишут заказчики</h2>
+        <p>Письма с подписями и печатями — каждое можно открыть целиком.</p>
+      </div>
+      <div class="grid grid--3">
+{chr(10).join(cards)}
+      </div>
+    </div>
+  </section>'''
+
+
+def block_recommendations(site: Site, cfg: dict, css: str = "section", heading: str = "",
+                          here: str = "") -> str:
     """Рекомендательные письма и награды. У карточки без поля file ссылки нет —
     так документ можно показать текстом, не выкладывая сам файл.
 
@@ -388,6 +430,11 @@ def block_recommendations(site: Site, cfg: dict) -> str:
                      + photo_img(site, r["image"], f'Документ: {r["company"]}',
                                  "(max-width: 720px) 96px, 132px", "rec__thumb-img")
                      + '</button>')
+        # Письмо про объект, у которого есть своя страница, ведёт на неё:
+        # отзыв и объект подтверждают друг друга.
+        obj_html = esc(r["object"])
+        if r.get("object_slug") and r["object_slug"] != here:
+            obj_html = f'<a href="{site.url("/obekty/" + r["object_slug"] + "/")}">{obj_html}</a>'
         cards.append(f'''        <article class="card rec{" rec--doc" if thumb else ""}">
           {thumb}
           <div class="rec__body">
@@ -400,17 +447,17 @@ def block_recommendations(site: Site, cfg: dict) -> str:
             <div class="spec__row"><span class="spec__key">{esc(r.get("role_label", "Роль"))}</span>
               <span class="spec__dots"></span><span class="spec__val">{esc(r["role"])}</span></div>
             <div class="spec__row"><span class="spec__key">{esc(r.get("object_label", "Объект"))}</span>
-              <span class="spec__dots"></span><span class="spec__val">{esc(r["object"])}</span></div>
+              <span class="spec__dots"></span><span class="spec__val">{obj_html}</span></div>
           </div>
           <p class="rec__scope">{esc(r["scope"])}</p>
           {link}
           </div>
         </article>''')
 
-    head = f'<h2>{esc(cfg["title"])}</h2>'
-    if cfg.get("lead"):
+    head = f'<h2>{esc(heading or cfg["title"])}</h2>'
+    if cfg.get("lead") and not heading:
         head += f'<p>{esc(cfg["lead"])}</p>'
-    return f'''  <section class="section">
+    return f'''  <section class="{css}">
     <div class="container">
       <div class="section__head">{head}</div>
       <div class="grid grid--2">
@@ -578,6 +625,10 @@ def block_objects(site: Site, items, limit: int = 0, level: str = "h3") -> str:
             more = f'<a class="object__more" href="{href}">Подробнее об объекте{ARROW_SVG}</a>'
         else:
             name_html, more = esc(o["name"]), ""
+        n_recs = sum(1 for x in site.raw.get("recommendations", {}).get("items", [])
+                     if o.get("slug") and x.get("object_slug") == o["slug"])
+        badge = (f'<span class="object__badge">{"Рекомендательное письмо" if n_recs == 1 else f"Рекомендательные письма: {n_recs}"}</span>'
+                 if n_recs else "")
         css = "object object--wide" if (n - 1) in wide else "object"
         cards.append(f'''        <article class="{css}">
           {media}
@@ -585,6 +636,7 @@ def block_objects(site: Site, items, limit: int = 0, level: str = "h3") -> str:
             <span class="object__num">{n:02d}</span>
             <{level} class="object__name">{name_html}</{level}>
             <span class="object__city">{esc(o["city"])}</span>
+            {badge}
             {scope}
             {spec}
             {more}
@@ -1489,7 +1541,9 @@ def page_home(r: Renderer) -> None:
         <a class="btn btn--ghost" href="{site.url("/obekty/")}">Все объекты</a>
       </div>
     </div>
-  </section>'''
+  </section>
+
+{block_quotes(site)}'''
 
     hero = f'''  <section class="hero">
     <div class="hero__media" aria-hidden="true">{poster_img(site, poster_rel, "hero__media-img")}</div>
@@ -1785,6 +1839,8 @@ def page_objects(r: Renderer) -> None:
     </div>
   </section>
 
+{block_recommendations(site, site.raw.get("recommendations"), "section section--alt")}
+
 {block_geo(site)}
 
   <section class="section section--alt">
@@ -1850,6 +1906,12 @@ def page_object(r: Renderer, o: dict, items: list) -> None:
         </ul>
       </div>'''
 
+    recs = [x for x in site.raw.get("recommendations", {}).get("items", [])
+            if x.get("object_slug") == o["slug"]]
+    recs_html = block_recommendations(
+        site, {"items": recs, "title": ""}, "section",
+        "Рекомендация заказчика" if len(recs) == 1 else "Рекомендации заказчиков",
+        here=o["slug"]) if recs else ""
     others = [x for x in items if x is not o and x.get("slug")]
     k = items.index(o)
     nxt = [others[(k + j) % len(others)] for j in range(min(3, len(others)))]
@@ -1892,6 +1954,8 @@ def page_object(r: Renderer, o: dict, items: list) -> None:
       </div>
     </div>
   </section>
+
+{recs_html}
 
   <section class="section section--alt">
     <div class="container">
@@ -2061,6 +2125,16 @@ def page_pto(r: Renderer) -> None:
   </section>
 
 {block_steps(process["steps"], process["title"])}
+
+  <section class="section section--alt">
+    <div class="container">
+      <div class="section__head"><span class="eyebrow">Объекты</span><h2>Объекты, где мы вели документацию</h2>
+        <p><a class="object__more" href="{site.url("/obekty/")}">Все объекты{ARROW_SVG}</a></p></div>
+{block_objects(site, [o for o in site.raw.get("portfolio", {}).get("items", []) if o.get("slug")][:3], limit=3)}
+    </div>
+  </section>
+
+{block_recommendations(site, site.raw.get("recommendations"))}
 
 {block_faq(cfg["faq"])}
 
