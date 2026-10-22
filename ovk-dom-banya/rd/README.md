@@ -18,3 +18,14 @@
 - `viewer3d/` — просмотрщик в одном HTML (three.js r169, без интернета): `npm install`, затем
   `node build.mjs ../out/3d/model.json ../out/3d/view.html`; снимки видов — `node shot.mjs view.html папка вид?view=iso&ui=0`,
   PDF видов — `python3 views_pdf.py папка выход.pdf`.
+
+## Раздел И05.09.26-ТМ — котельная (22.10.2026)
+
+- `tm_model.py` — 3D-модель топочной 1.6 (оборудование, трубы, арматура, насосные группы): единый источник листов ТМ,
+  спецификации ТМ.СО и выгрузок `out/tm/` (`model.json`, `I05-09-26-TM-3D.dxf`, `I05-09-26-TM-3D.ifc`, `tm.json`,
+  `kollizii.txt`). `tm_draw.py` — проекции модели на лист (план, разрез, фронтальная изометрия), `tm_link.py` —
+  увязка с листами ОВ (трассы магистралей, газ, длины внутри топочной).
+- `sheets/tm_od.py`, `tm_plans.py`, `tm_sections.py`, `tm_axo.py`, `tm_3d.py` — листы 1–6; `spec/make_spec_tm.py` —
+  ТМ.СО (через `spec/spec_render.py`).
+- `assemble_tm.py` — модель → просмотрщик (viewer3d) → снимки видов → листы → ТМ.СО → том PDF; с `--repo` кладёт DXF
+  в `cad/ovk-i05-09-26/dxf` (I05-09-26-TM-01…06, TM-3D) и выдачу в `release-tm/`.

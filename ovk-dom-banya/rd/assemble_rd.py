@@ -21,7 +21,7 @@ SHEETS = {1: 'ov_od1', 2: 'ov_od2', 3: 'ov_heat1', 4: 'ov_ufh1', 5: 'ov_heat2', 
 # порядок пересборки (зависимости: heat1 -> boiler_scheme -> scheme, nodes; vent1 -> vent2, schemes; bath -> bath_scheme)
 BUILD = ['ov_heat2', 'ov_heat1', 'ov_ufh1', 'ov_boiler_scheme', 'ov_scheme', 'ov_boiler_plan', 'ov_vent1',
          'ov_vent2', 'ov_vent_schemes', 'ov_bath', 'ov_bath_scheme', 'ov_site', 'ov_nodes', 'ov_od',
-         'tz_ar', 'tz_eom', 'tz_vk', 'tz_gsv']
+         'tz_ar', 'tz_eom', 'tz_vk', 'tz_gsv', 'ov_vr']
 # задания смежникам: код -> (скрипт, базовые имена выходов)
 TZ = {1: ('tz_ar', 'Задание АР и КР (отверстия, шахты, ниши, приямки)'), 2: ('tz_eom', 'Задание ЭОМ'),
       3: ('tz_vk', 'Задание ВК'), 4: ('tz_gsv', 'Задание ГСВ')}
@@ -87,6 +87,15 @@ def main():
             tz_pdf.append(dst)
         else:
             print('нет задания', base)
+    # ведомость воздухораспределителей ОВ.ВР (листы А3) + XLSX
+    vr = sorted(f for f in os.listdir(OUT) if f.startswith('ov_vr_Лист_') and f.endswith('.pdf'))
+    if vr:
+        d = fitz.open()
+        for f in vr:
+            d.insert_pdf(fitz.open(os.path.join(OUT, f)))
+        d.save(os.path.join(rel, 'И05.09.26-ОВ.ВР Ведомость воздухораспределителей.pdf'), garbage=3, deflate=True)
+        shutil.copy(os.path.join(OUT, 'ov_vr.dxf'), os.path.join(dxf_dir, 'I05-09-26-OV-VR.dxf'))
+        shutil.copy(os.path.join(OUT, 'И05.09.26-ОВ.ВР Ведомость воздухораспределителей.xlsx'), rel)
     for ext in ('pdf', 'xlsx'):
         p = os.path.join(OUT, f'И05.09.26-ОВ.СО Спецификация.{ext}')
         if os.path.exists(p):

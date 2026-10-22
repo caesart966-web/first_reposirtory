@@ -12,6 +12,7 @@ sys.path.insert(0, ROOT)
 sys.path.insert(0, HERE)
 from rdbase import (new_doc, DPlan, RDSheet, add_underlay, insert_underlay, UNDER, save_and_pdf,  # noqa: E402
                     fmt_num, SHEET_LIST, SHEETS_TOTAL, axes, ufh_coil, ufh_coil_ortho, offset_poly)
+import ov_heat1 as H1  # noqa: E402
 from ov_heat1 import (calc1, LOOP_RECT, LOOP_POLY, KSH, KSH_SIZE, TRANSIT_K5, MAIN_ROUTES, pair, draw_base, draw_convectors, kw,  # noqa: E402
                       ROOM, OUT, mask, mlabel, mtag, noyo, ufh_routes)
 
@@ -70,9 +71,7 @@ def build():
           {k: (round(v, 1), round(loops[k]['A'] / (loops[k]['T'] / 1000.0), 1), round(loops[k]['L'], 1))
            for k, v in COIL_L.items()})
     # ---- магистрали ТП от РК и подвод к КШ-2
-    pair(p, MAIN_ROUTES['КШ-2'], gap=0.08, lw=35)
-    pair(p, MAIN_ROUTES['КШ-1'], lays=TP, gap=0.08, lw=35)
-    pair(p, MAIN_ROUTES['КШ-3'], lays=TP, gap=0.08, lw=35)
+    H1.boiler_mains(p, TP, 35)                                    # в топочной — по 3D-модели ТМ
     pair(p, TRANSIT_K5, lays=TP, gap=0.06, lw=35)                  # транзит 36 °С КШ-2 → КШ-5, в полу
     # ---- подводки петель
     for lid, r in routes().items():

@@ -4,7 +4,8 @@ import path from 'node:path';
 const [html, outdir, ...views] = process.argv.slice(2);
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
   args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
-const p = await b.newPage({ viewport: { width: 1600, height: 1000 }, deviceScaleFactor: 1.5 });
+const W = +(process.env.SHOT_W || 1600), H = +(process.env.SHOT_H || 1000), DPR = +(process.env.SHOT_DPR || 1.5);
+const p = await b.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: DPR });
 p.on('console', m => { if (m.type() === 'error') console.log('console:', m.text()); });
 p.on('pageerror', e => console.log('pageerror:', e.message));
 for (const v of (views.length ? views : ['iso'])) {

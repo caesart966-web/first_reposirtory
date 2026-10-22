@@ -423,7 +423,7 @@ FORMATS = {'А3': (420, 297), 'А2': (594, 420), 'А1': (841, 594), 'А4': (210,
 class RDSheet:
     """Лист РД: пространство листа с рамкой и штампом; модель — общая для файла."""
 
-    def __init__(self, doc, name, title, no, total, fmt='А3', code=CODE):
+    def __init__(self, doc, name, title, no, total, fmt='А3', code=CODE, bld=None):
         self.doc = doc
         W, H = FORMATS[fmt]
         self.W, self.H = W, H
@@ -434,7 +434,7 @@ class RDSheet:
         self.s = Sheet(doc, W, H)
         self.s.m = self.lay
         self.s.frame(f'Формат {fmt}')
-        self.s.stamp3(code, OBJ, BLD, title, no, total)
+        self.s.stamp3(code, OBJ, bld or BLD, title, no, total)
         self.p = DPlan(doc, k=1, space=self.lay, unit=1.0)        # рисование на листе в мм
 
     def viewport(self, cx, cy, w, h, model_cx, model_cy, k=100):

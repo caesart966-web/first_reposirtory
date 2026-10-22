@@ -35,6 +35,13 @@ scene.add(sun2);
 
 // ---------------------------------------------------------------- материалы
 const mats = {};
+const rgbMats = {};
+function matRGB(rgb) {
+  const k = rgb.join(',');
+  if (!rgbMats[k]) rgbMats[k] = new THREE.MeshStandardMaterial({ color: new THREE.Color(rgb[0] / 255, rgb[1] / 255,
+    rgb[2] / 255), roughness: 0.5, metalness: 0.15 });
+  return rgbMats[k];
+}
 function mat(sys) {
   if (!mats[sys]) {
     const [r, g, b] = M.systems[sys].rgb;
@@ -109,7 +116,7 @@ for (const r of M.runs) {
   g.userData = { info: r, floor: r.floor };
   for (const s of r.segs) {
     const ext = (r.kind === 'duct' || r.kind === 'pipe') ? Math.min(s[6] / 2, 0.13) : 0;
-    const m = segMesh(s, mat(r.sys), ext);
+    const m = segMesh(s, r.rgb ? matRGB(r.rgb) : mat(r.sys), ext);
     if (m) { m.userData.owner = g; g.add(m); pickables.push(m); }
   }
   grp(r.sys).add(g);
@@ -119,7 +126,7 @@ for (const bx of M.boxes) {
   const geo = new THREE.BoxGeometry(x1 - x0, y1 - y0, Math.max(z1 - z0, 0.004));
   let material = mat(bx.sys);
   if (bx.kind === 'grille' || bx.kind === 'cap') material = gmat(bx.sys);
-  if (bx.kind === 'unit') material = bx.sys === 'E' ? unitMat : unitMat;
+  if (bx.kind === 'unit') material = bx.rgb ? matRGB(bx.rgb) : unitMat;
   const m = new THREE.Mesh(geo, material);
   m.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
   const g = new THREE.Group();
@@ -141,17 +148,31 @@ for (const bx of M.boxes) {
 for (const lb of M.labels) {
   const d = document.createElement('div');
   d.className = 'lbl';
-  const [r, g, b] = M.systems[lb.sys].rgb;
+  const [r, g, b] = lb.rgb || M.systems[lb.sys].rgb;
   d.style.color = `rgb(${r},${g},${b})`;
   d.textContent = lb.text;
   const o = new CSS2DObject(d);
   o.position.set(lb.x, lb.y, lb.z);
   o.userData.floor = lb.floor;
+  o.userData.sys = lb.sys;
   grp('labels').add(o);
+}
+// марки сетей ОВ (П1) гаснут вместе с сетями ОВ
+function ovLabels(on) {
+  for (const o of grp('labels').children) if (o.userData.sys === 'OV') o.visible = on;
 }
 
 // ---------------------------------------------------------------- виды
-const VIEWS = {
+const VIEW_SETS = {};
+VIEW_SETS.tm = {
+  iso: { pos: [22.6, 7.2, 5.4], tgt: [17.3, 12.0, 1.5], floor: 0, label: 'Общий вид' },
+  sw: { pos: [13.9, 6.4, 6.6], tgt: [18.1, 12.3, 1.1], floor: 0, label: 'С юго-запада' },
+  nw: { pos: [19.4, 9.4, 2.9], tgt: [16.3, 12.0, 1.6], floor: 0, label: 'Котлы и ПК' },
+  rk: { pos: [18.6, 11.2, 2.85], tgt: [18.9, 13.4, 1.35], floor: 0, label: 'Коллектор и группы' },
+  b1: { pos: [17.0, 12.9, 2.6], tgt: [19.3, 11.0, 1.2], floor: 0, label: 'Бойлер Б1' },
+  top: { pos: [17.8, 11.3, 14.0], tgt: [17.8, 11.32, 0], floor: 0, label: 'Сверху' },
+};
+const VIEWS = M.views === 'tm' ? VIEW_SETS.tm : {
   iso: { pos: [-9, -17, 19], tgt: [10, 8, 3.6], floor: 0 },
   iso2: { pos: [31, -12, 18], tgt: [9.5, 8.5, 3.8], floor: 0 },
   f1: { pos: [-5, -13, 14], tgt: [9.5, 7.6, 2.6], floor: 1 },
@@ -187,8 +208,10 @@ function setView(name) {
 }
 
 // ---------------------------------------------------------------- панель
-const layerList = [['walls', 'Стены (по АР)'], ['slabs', 'Перекрытие'], ['П', null], ['В', null], ['Н', null], ['X', null],
-  ['ВЗ', null], ['В2', null], ['Р', null], ['F', null], ['E', null], ['ВВ', null], ['labels', 'Подписи расходов']];
+const layerList = M.views === 'tm'
+  ? [['walls', 'Стены (по АР)'], ...Object.keys(M.systems).map(k => [k, null]), ['labels', 'Марки оборудования']]
+  : [['walls', 'Стены (по АР)'], ['slabs', 'Перекрытие'], ['П', null], ['В', null], ['Н', null], ['X', null],
+    ['ВЗ', null], ['В2', null], ['Р', null], ['F', null], ['E', null], ['ВВ', null], ['labels', 'Подписи расходов']];
 const box = document.getElementById('layers');
 for (const [k, nm] of layerList) {
   if (!groups[k]) continue;
@@ -200,7 +223,21 @@ for (const [k, nm] of layerList) {
   lab.querySelector('input').addEventListener('change', e => {
     groups[k].visible = e.target.checked;
     if (k === 'labels') labelR.domElement.style.display = e.target.checked ? '' : 'none';
+    if (k === 'OV') ovLabels(e.target.checked);
   });
+}
+// котельная: свои кнопки видов, без фильтра этажей
+if (M.views === 'tm') {
+  const row = document.querySelector('[data-view]').parentElement;
+  row.innerHTML = Object.entries(VIEWS).map(([k, v]) => `<button data-view="${k}">${v.label}</button>`).join('');
+  const fr = document.querySelector('[data-floor]').parentElement;
+  fr.previousElementSibling.remove();
+  fr.remove();
+  document.querySelector('#panel h1').textContent = 'Котельная (топочная 1.6)';
+  document.querySelector('#panel .sub').textContent = 'И05.09.26-ТМ · 3D-модель: оборудование, трубы, арматура';
+  document.querySelectorAll('#panel .note')[1].textContent = 'Стены — по АР03; сети ОВ (П1, воздуховоды, фреон) — для увязки, '
+    + 'серым. Газопровод — условно, по проекту ГСВ. Т3, Т4, В1 — до границы раздела ВК.';
+  document.title = 'И05.09.26-ТМ 3D';
 }
 // без бани в модели — без её видов
 if (!M.walls.some(w => w.floor === 3) && !M.runs.some(r => r.floor === 3)) {
@@ -247,7 +284,8 @@ setView(qs.get('view') || 'iso');
 if (qs.get('labels') === '0') { groups.labels.visible = false; labelR.domElement.style.display = 'none';
   const c = document.getElementById('cb_labels'); if (c) c.checked = false; }
 if (qs.get('ui') === '0') document.body.classList.add('noui');
-for (const k of ['walls', 'slabs', 'F']) if (qs.get(k) === '0' && groups[k]) { groups[k].visible = false;
+if (qs.get('OV') === '0') ovLabels(false);
+for (const k of ['walls', 'slabs', 'F', 'OV']) if (qs.get(k) === '0' && groups[k]) { groups[k].visible = false;
   const c = document.getElementById('cb_' + k); if (c) c.checked = false; }
 
 let frames = 0;
