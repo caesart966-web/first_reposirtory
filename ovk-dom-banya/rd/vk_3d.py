@@ -22,6 +22,7 @@ SYS = {
     'Т4': ('Т4 — циркуляция ГВС', (132, 204, 22)),
     'К1': ('К1 — канализация бытовая', (194, 65, 12)),
     'К1в': ('К1в — вытяжные части стояков', (161, 98, 7)),
+    'К2': ('К2 — от лотка гаража в ливневую сеть', (37, 99, 235)),
     'EQ': ('Оборудование и шкафы', (226, 232, 240)),
     'AR': ('Арматура', (180, 140, 60)),
     'TM': ('Трубы котельной ТМ — для увязки', (190, 196, 206)),
@@ -64,6 +65,9 @@ def fit_parts(f):
                 stub(0.010, 0.07, hcol, d * 0.7 + 0.03)]
     if k == 'check':
         return [along(max(0.05, d * 1.8), d * 1.5, brass)]
+    if k == 'mvalve':                                   # кран с электроприводом: корпус крана + блок привода
+        return [along(max(0.05, d * 2.0), d * 1.45, brass), stub(0.03, 0.012, brass, d * 0.7),
+                stub(0.06, 0.07, (71, 85, 105), d * 0.7 + 0.03)]
     if k == 'balance':
         return [along(0.07, d * 1.5, brass), stub(0.05, 0.03, (59, 130, 246), d * 0.7)]
     if k in ('filter', 'filter_fine'):
@@ -173,7 +177,7 @@ def walls():
 
 
 LAY = {'В1': ('ВК_3D_В1', 4), 'Т3': ('ВК_3D_Т3', 3), 'Т4': ('ВК_3D_Т4', 82), 'К1': ('ВК_3D_К1', 30),
-       'К1в': ('ВК_3D_К1в', 32), 'EQ': ('ВК_3D_Оборудование', 9), 'AR': ('ВК_3D_Арматура', 42),
+       'К1в': ('ВК_3D_К1в', 32), 'К2': ('ВК_3D_К2', 5), 'EQ': ('ВК_3D_Оборудование', 9), 'AR': ('ВК_3D_Арматура', 42),
        'TM': ('ТМ_3D_для_увязки', 253)}
 
 
@@ -227,7 +231,7 @@ FIT_IFC = {'ball': ('IfcValve', 'ISOLATING'), 'check': ('IfcValve', 'CHECK'), 'b
            'filter_fine': ('IfcFilter', 'WATERFILTER'), 'pump': ('IfcPump', 'CIRCULATOR'),
            'mano': ('IfcFlowInstrument', 'PRESSUREGAUGE'), 'meter': ('IfcFlowMeter', 'WATERMETER'),
            'revision': ('IfcPipeFitting', 'NOTDEFINED'), 'cleanout': ('IfcPipeFitting', 'NOTDEFINED')}
-SYS_IFC = {'Т3': 'DOMESTICHOTWATER', 'Т4': 'DOMESTICHOTWATER', 'В1': 'DOMESTICCOLDWATER', 'К1': 'DRAINAGE',
+SYS_IFC = {'К2': 'STORMWATER', 'Т3': 'DOMESTICHOTWATER', 'Т4': 'DOMESTICHOTWATER', 'В1': 'DOMESTICCOLDWATER', 'К1': 'DRAINAGE',
            'К1в': 'VENT'}
 MAT_NAME = {'pex': 'PE-Xa (ГОСТ 32415)', 'pe': 'ПЭ 100 SDR11 (ГОСТ 18599)', 'pp': 'ПП канализационная (ГОСТ 32414)',
             'ppn': 'ПП наружная SN8 (ГОСТ 32413)'}

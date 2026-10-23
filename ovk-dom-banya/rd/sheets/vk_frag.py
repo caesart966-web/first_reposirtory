@@ -17,7 +17,7 @@ sys.path.insert(0, HERE)
 from rdbase import new_doc, RDSheet, save_and_pdf, UNDER, HOUSE_AX, BATH_AX  # noqa: E402
 import vk_model as VK  # noqa: E402
 from vk_draw import (CODE_VK, BLD_VK, VK_LIST, VK_TOTAL, setup, finish_layers, PP, VLabels, plan_doc, under_texts,  # noqa
-                     draw_net, vk_fit, longest_seg, fixture_marks, in_box, lev, f1, DN_SHORT, draw_eq)
+                     draw_net, vk_fit, longest_seg, fixture_marks, in_box, lev, f1, DN_SHORT, draw_eq, leak_marks)
 
 OUT = os.path.join(ROOT, 'out')
 K = 25
@@ -74,7 +74,7 @@ def axes_marks(p, V, box, bld='h'):
 
 
 def fragment(doc, sh, p, under, cx, cy, x0, y0, x1, y1, zr, systems, bld='h', title='', marks_floor=None,
-             eqs=(), fits=True, label=True, skip=(), text=None, extra=None):
+             eqs=(), fits=True, label=True, skip=(), text=None, extra=None, leak=None):
     w, h = (x1 - x0) * 1000 / K, (y1 - y0) * 1000 / K
     V, box = plan_doc(doc, sh, under, cx, cy, w, h, (x0 + x1) / 2, (y0 + y1) / 2, K, frame=zr)
     p.rect(*box, 'ТМ_оборуд_тонк')
@@ -97,6 +97,8 @@ def fragment(doc, sh, p, under, cx, cy, x0, y0, x1, y1, zr, systems, bld='h', ti
                 vk_fit(p, V, f, scale=0.8)
     if marks_floor is not None:
         fixture_marks(p, L, V, box, bld, floor=marks_floor, h=1.8)
+    if leak is not None:
+        leak_marks(p, L, V, box, bld, leak)
     if extra:
         extra(p, L, V, box)
     if label:
@@ -120,7 +122,7 @@ def sheet4(doc, sh):
         for pt, t, sub in (((12.87, 7.05, 0), 'ШВК-1: В1 — выходы к 1.4 вперёд и вниз,', 'Т3 — вниз у стены (лист 13)'),):
             L.shelf(V.P(pt), t, 1.8, sub=sub)
     fragment(doc, sh, p, 'plan1', 100, 205, 9.70, 4.40, 13.45, 7.70, zr, sysw, title='С/у 1.4 и ШВК-1. М 1:25',
-             marks_floor=1, eqs=('ШВК-1',), extra=ex_a, skip=('ШВК-1В', 'ШВК-1Т'))
+             marks_floor=1, eqs=('ШВК-1',), extra=ex_a, skip=('ШВК-1В', 'ШВК-1Т'), leak=1)
 
     def ex_b(p, L, V, box):
         for pt, t, sub in (((19.40, 9.45, 0), 'Приямок ввода 600×600, дно -1,100', 'ввод ПЭ 32 — лист 7'),
@@ -128,10 +130,28 @@ def sheet4(doc, sh):
                            ((18.80, 11.10, 0), 'Б1 (ТМ): Т3 от Б1, Т4 к Б1', 'граница с ТМ'),):
             L.shelf(V.P(pt), t, 1.8, sub=sub)
     fragment(doc, sh, p, 'plan1', 300, 172, 17.60, 9.05, 20.45, 13.90, zr, sysw, title='Топочная 1.6. М 1:25',
-             marks_floor=1, eqs=('КХ', 'ПРВ'), extra=ex_b, skip=('КХ', 'В1-узел'),
+             marks_floor=1, eqs=('КХ', 'ПРВ', 'КЗП-1'), extra=ex_b, skip=('КХ', 'В1-узел'), leak=1,
              text=lambda pp: (f'{pp.id}: В1 {SHORT.get(pp.dn, pp.dn)} → {target(pp)}' if pp.id.startswith('КХ-')
                               else f'{pp.sys} {SHORT.get(pp.dn, pp.dn)} → {target(pp)}'))
-    sh.notes(24, 124, 200, NOTES4, h=1.8, spacing=1.0)
+    # гараж: лоток с пескоуловителем → К2 (ливневая сеть), М 1:50
+    global K
+    K = 50
+
+    def ex_g(p, L, V, box):
+        E = {e.id: e for e in VK.EQUIP}
+        for eid in ('ЛГ-1', 'ПУ-1'):
+            x_0, y_0, z_0, x_1, y_1, z_1 = E[eid].bbox()
+            a, b = V.P((x_0, y_0, 0)), V.P((x_1, y_1, 0))
+            p.rect(min(a[0], b[0]), min(a[1], b[1]), max(a[0], b[0]), max(a[1], b[1]), 'ВК_К2')
+        L.shelf(V.P((16.30, 1.85, 0)), 'ЛГ-1 — лоток DN100 с решёткой C250, L ≈ 6,1 м', 1.8,
+                sub='уклон дна — к ПУ-1; верх решётки = пол гаража')
+        L.shelf(V.P((19.60, 1.85, 0)), 'ПУ-1 — пескоуловитель DN100 с корзиной', 1.8, sub='выпуск вниз Ø110')
+        L.shelf(V.P((19.60, 0.60, 0)), 'К2-1: Ø110 SN8, i=0,02, лоток −0,800 → −0,835', 1.8,
+                sub='в футляре Ø160 под краем плиты → ливневая сеть (НВК)')
+    fragment(doc, sh, p, 'plan1', 100, 44, 12.90, 0.0, 20.30, 2.40, (-1.3, 0.5), ('К2',),
+             title='Гараж: лоток ЛГ-1, пескоуловитель ПУ-1, выпуск К2-1. М 1:50', extra=ex_g, label=False)
+    K = 25
+    sh.notes(24, 132, 200, NOTES4, h=1.8, spacing=1.0)
     return doc
 
 
@@ -146,6 +166,10 @@ NOTES4 = [
     'соединений.',
     'КХ-8 — подводка автополива PE-Xa 25×3,5 с обратным клапаном: опуск в приямок у южной кромки крышки, '
     'спускной кран, через проём ввода наружу, заглушка (лист 7).',
+    'Защита от протечек: датчики ДП (на полу у приборов и под шкафами) — к контроллеру КЗП-1 в 1.6, кран КЭ-1 '
+    'с электроприводом — на подъёме узла к гребёнке КХ (лист 7); в умный дом — только сигнал «протечка».',
+    'Гараж: лоток ЛГ-1 с пескоуловителем ПУ-1 вдоль ворот — в ливневую сеть (К2), не в К1 (опросный лист); '
+    'под ПУ-1 — местное понижение плиты, лоток — в стяжке (ТЗ-1).',
 ]
 
 
@@ -167,14 +191,14 @@ def sheet5(doc, sh):
             L.shelf(V.P(pt), t, 1.8, sub=sub)
     fragment(doc, sh, p, 'plan1', 180, 318, 12.45, 6.35, 20.05, 9.00, zr, sysw,
              title='Сети под потолком гаража (В1, Т3, Т4, К1). М 1:25', eqs=('ШВК-2',), extra=ex1,
-             skip=('ШВК-2В', 'ШВК-2Т'), text=txt)
+             skip=('ШВК-2В', 'ШВК-2Т'), text=txt, leak='ceil')
     zr2 = (3.80, 6.5)
 
     def ex2(p, L, V, box):
         for (x, y), t in (((15.53, 6.88), 'Пс-2 (Т4)'), ((19.73, 7.65), 'Пс-1 (Т4)')):
             L.shelf(V.P((x, y, 0)), t, 1.8)
     fragment(doc, sh, p, 'plan2', 180, 160, 12.45, 6.35, 20.05, 9.00, zr2, sysw, title='План 2 этажа: с/у 2.9, 2.8. М 1:25',
-             marks_floor=2, extra=ex2, text=txt)
+             marks_floor=2, extra=ex2, text=txt, leak=2)
     sh.notes(344, 400, 236, NOTES5, h=1.9, spacing=1.0)
     return doc
 
@@ -193,8 +217,8 @@ NOTES5 = [
     '0,6 м (25, 32); К1 — хомуты под каждым раструбом, не реже 10 диаметров; уклон К1 — не менее 0,02.',
     'Конденсат кондиционеров К-4…К-6 и К-7 (ОВ) — в сифоны с сухим затвором за инсталляцией 2.9 и у ванны 2.9, '
     'далее в отводы К1.',
-    'К1 2 этажа, сборный под потолком гаража и стояк Ст.К1-1 — малошумные трёхслойные трубы и фасонные части '
-    '(ВК.СО), хомуты с резиновыми вкладышами.',
+    'К1 внутри дома (2 этаж, сборный под потолком гаража, стояк Ст.К1-1) — бесшумные трубы и фасонные части '
+    '(ВК.СО), хомуты с резиновыми вкладышами. ДП-9 — датчик протечки в поддоне короба под ШВК-2.',
 ]
 
 if __name__ == '__main__':
