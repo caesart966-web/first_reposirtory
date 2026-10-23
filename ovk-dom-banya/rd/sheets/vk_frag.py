@@ -14,7 +14,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 sys.path.insert(0, ROOT)
 sys.path.insert(0, HERE)
-from rdbase import new_doc, RDSheet, save_and_pdf, UNDER  # noqa: E402
+from rdbase import new_doc, RDSheet, save_and_pdf, UNDER, HOUSE_AX, BATH_AX  # noqa: E402
 import vk_model as VK  # noqa: E402
 from vk_draw import (CODE_VK, BLD_VK, VK_LIST, VK_TOTAL, setup, finish_layers, PP, VLabels, plan_doc, under_texts,  # noqa
                      draw_net, vk_fit, longest_seg, fixture_marks, in_box, lev, f1, DN_SHORT, draw_eq)
@@ -49,11 +49,36 @@ def label_pipes(L, V, pipes, box, zr, h=1.6, skip=(), text=None):
                 break
 
 
+def axes_marks(p, V, box, bld='h'):
+    """Марки координационных осей, попавших в окно: вертикальных — над окном, горизонтальных — слева
+    (справа, если слева до рамки листа нет места). Возвращает True, если марки стоят над окном."""
+    xs, ys = BATH_AX if bld == 'b' else HOUSE_AX
+    top = False
+    for n, x in xs:
+        a = V.P((x, 0, 0))
+        if box[0] + 2 <= a[0] <= box[2] - 2:
+            yt = box[3] + 6.0
+            p.line(a[0], box[3], a[0], yt - 4.0, 'ТМ_оси', ltype='ОВ_ШП')
+            p.circle(a[0], yt, 0, 'ТМ_оси', r_paper=4.0)
+            p.t(a[0], yt, n, 3.0, 'center', 'ТМ_оси')
+            top = True
+    left = box[0] - 10.0 >= 22.0
+    for n, y in ys:
+        a = V.P((0, y, 0))
+        if box[1] + 2 <= a[1] <= box[3] - 2:
+            xc = box[0] - 6.0 if left else box[2] + 6.0
+            p.line(box[0] if left else box[2], a[1], xc + (4.0 if left else -4.0), a[1], 'ТМ_оси', ltype='ОВ_ШП')
+            p.circle(xc, a[1], 0, 'ТМ_оси', r_paper=4.0)
+            p.t(xc, a[1], n, 3.0, 'center', 'ТМ_оси')
+    return top
+
+
 def fragment(doc, sh, p, under, cx, cy, x0, y0, x1, y1, zr, systems, bld='h', title='', marks_floor=None,
              eqs=(), fits=True, label=True, skip=(), text=None, extra=None):
     w, h = (x1 - x0) * 1000 / K, (y1 - y0) * 1000 / K
     V, box = plan_doc(doc, sh, under, cx, cy, w, h, (x0 + x1) / 2, (y0 + y1) / 2, K, frame=zr)
     p.rect(*box, 'ТМ_оборуд_тонк')
+    ax_top = axes_marks(p, V, box, bld)
     L = VLabels(p, box)
     for r in under_texts(UNDER[under], V, box):
         L.block(r)
@@ -82,7 +107,7 @@ def fragment(doc, sh, p, under, cx, cy, x0, y0, x1, y1, zr, systems, bld='h', ti
         c = V.P(((bb[0] + bb[3]) / 2, (bb[1] + bb[4]) / 2, 0))
         L.shelf(c, e.mark if not e.ctx else e.name.split(' (')[0], 1.8)
     if title:
-        sh.s.text(title, cx, box[3] + 4.0, h=3.0, align='center')
+        sh.s.text(title, cx, box[3] + (13.0 if ax_top else 4.0), h=3.0, align='center')
     return V, box, L
 
 
@@ -138,7 +163,7 @@ def sheet5(doc, sh):
                            ((19.68, 8.58, 0), 'Ст.К1-1в Ø110 вверх', 'прочистка в начале сборного'),
                            ((19.10, 8.70, 0), 'В1, Т3, Т4 — в топочную 1.6', 'сквозь стену в гильзах')):
             L.shelf(V.P(pt), t, 1.8, sub=sub)
-    fragment(doc, sh, p, 'plan1', 180, 318, 12.55, 6.35, 20.05, 9.00, zr, sysw,
+    fragment(doc, sh, p, 'plan1', 180, 318, 12.45, 6.35, 20.05, 9.00, zr, sysw,
              title='Сети под потолком гаража (В1, Т3, Т4, К1). М 1:25', eqs=('ШВК-2',), extra=ex1,
              skip=('ШВК-2В', 'ШВК-2Т'), text=txt)
     zr2 = (3.80, 6.5)
@@ -146,7 +171,7 @@ def sheet5(doc, sh):
     def ex2(p, L, V, box):
         for (x, y), t in (((15.53, 6.88), 'Пс-2 (Т4)'), ((19.73, 7.65), 'Пс-1 (Т4)')):
             L.shelf(V.P((x, y, 0)), t, 1.8)
-    fragment(doc, sh, p, 'plan2', 180, 160, 12.55, 6.35, 20.05, 9.00, zr2, sysw, title='План 2 этажа: с/у 2.9, 2.8. М 1:25',
+    fragment(doc, sh, p, 'plan2', 180, 160, 12.45, 6.35, 20.05, 9.00, zr2, sysw, title='План 2 этажа: с/у 2.9, 2.8. М 1:25',
              marks_floor=2, extra=ex2, text=txt)
     sh.notes(344, 400, 236, NOTES5, h=1.9, spacing=1.0)
     return doc

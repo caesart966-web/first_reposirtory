@@ -10,31 +10,13 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 sys.path.insert(0, ROOT)
 sys.path.insert(0, HERE)
-from rdbase import new_doc, RDSheet, save_and_pdf, BATH_AX  # noqa: E402
+from rdbase import new_doc, RDSheet, save_and_pdf  # noqa: E402
 import vk_model as VK  # noqa: E402
 from vk_draw import (CODE_VK, BLD_VK, VK_LIST, VK_TOTAL, setup, finish_layers, PP, lev, f1)  # noqa: E402
 from vk_frag import fragment, target, SHORT  # noqa: E402
 from vk_plan1 import legend  # noqa: E402
 
 OUT = os.path.join(ROOT, 'out')
-
-
-def axes_marks(p, V, box):
-    xs, ys = BATH_AX
-    for n, x in xs:
-        a = V.P((x, 0, 0))
-        if box[0] + 2 <= a[0] <= box[2] - 2:
-            yt = box[3] + 6.0
-            p.line(a[0], box[3], a[0], yt - 4.0, 'ТМ_оси', ltype='ОВ_ШП')
-            p.circle(a[0], yt, 0, 'ТМ_оси', r_paper=4.0)
-            p.t(a[0], yt, n, 3.0, 'center', 'ТМ_оси')
-    for n, y in ys:
-        a = V.P((0, y, 0))
-        if box[1] + 2 <= a[1] <= box[3] - 2:
-            xl = box[0] - 6.0
-            p.line(box[0], a[1], xl + 4.0, a[1], 'ТМ_оси', ltype='ОВ_ШП')
-            p.circle(xl, a[1], 0, 'ТМ_оси', r_paper=4.0)
-            p.t(xl, a[1], n, 3.0, 'center', 'ТМ_оси')
 
 
 def sheet8(doc, sh):
@@ -52,7 +34,6 @@ def sheet8(doc, sh):
             L.shelf(V.P(pt), t, 1.9, sub=sub)
     V, box, L = fragment(doc, sh, p, 'bath', 205, 316, -0.45, -0.85, 16.25, 6.90, zr, sysw, bld='b',
                          title='', marks_floor=1, eqs=(), extra=ex, label=False)
-    axes_marks(p, V, box)
     sh.s.text('Баня. План водопровода В1, Т3, Т4. М 1:50', 205, box[3] + 15, h=3.5, align='center')
     vk_frag.K = 25
 
@@ -60,7 +41,7 @@ def sheet8(doc, sh):
         for pt, t, sub in (((12.85, 1.62, 0), 'Пс-б1.1', None), ((13.70, 1.62, 0), 'Пс-б1.2', None),
                            ((15.60, 2.80, 0), 'Пс-б2', None), ((15.45, 2.80, 0), 'Н9, клапан обратный', 'на Т4, +0,450')):
             L.shelf(V.P(pt), t, 1.8, sub=sub)
-    fragment(doc, sh, p, 'bath', 105, 100, 12.35, -0.65, 15.85, 3.40, zr, sysw, bld='b',
+    fragment(doc, sh, p, 'bath', 105, 100, 12.35, -0.65, 16.05, 3.40, zr, sysw, bld='b',
              title='Фрагмент: с/у б3, раздевалка б4, ШВК-Б, Б2. М 1:25', marks_floor=1,
              eqs=('ШВК-Б', 'Б2', 'РБ-Б2'), extra=ex2, skip=('ШВК-БВ', 'ШВК-БТ'))
     sh.notes(200, 196, 190, NOTES8, h=1.9, spacing=1.0)
@@ -109,7 +90,6 @@ def sheet9(doc, sh):
         if pp.bld == 'b' and pp.sys == 'К1' and pp.where == 'ground' and pp.id != 'К1-б':
             a = V.P(pp.pts[0])
             p.circle(a[0], a[1], 0, 'ВК_К1', r_paper=max(0.8, pp.od * V.s / 2))
-    axes_marks(p, V, box)
     sh.s.text('Баня. План канализации К1. М 1:50', 200, box[3] + 15, h=3.5, align='center')
     sh.notes(24, 112, 200, NOTES9, h=1.9, spacing=1.0)
     legend(p, 240, 98, k1=True)
