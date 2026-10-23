@@ -385,7 +385,15 @@ const articleSchema = {
   .prose :global(ul), .prose :global(ol) { margin: 0 0 20px; padding-left: 24px; display: grid; gap: 8px; }
   .prose :global(li) { line-height: 1.65; }
   .prose :global(strong) { font-weight: 600; }
-  .prose :global(a) { color: var(--acc-deep); }
+  /* Подчёркивание ссылок в тексте — бледное и чуть ниже строки, при
+     наведении темнеет: ссылка видна, но не рябит в абзаце (23.10.2026). */
+  .prose :global(a) {
+    color: var(--acc-deep);
+    text-decoration-color: color-mix(in srgb, var(--acc-deep) 35%, transparent);
+    text-underline-offset: 3px;
+    transition: text-decoration-color var(--t-fast) var(--ease);
+  }
+  .prose :global(a:hover) { text-decoration-color: currentColor; }
   .prose :global(blockquote) {
     margin: 0 0 20px;
     padding: 14px 20px;
@@ -393,6 +401,7 @@ const articleSchema = {
     background: var(--acc-soft);
     border-radius: 0 var(--r-s) var(--r-s) 0;
   }
+  .prose :global(blockquote > :last-child) { margin-bottom: 0; }
   /* ── Таблицы в статьях ──
      Разметка статей — обычный markdown, и таблица приходит из него голым
      <table>: без рамки, без шапки, без полосок между строками. На телефоне

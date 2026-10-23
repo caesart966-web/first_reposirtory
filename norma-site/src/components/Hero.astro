@@ -658,9 +658,23 @@ const TRUST: { icon: string; t: string; n?: string; d: string }[] = [
     margin-block: -5px;
   }
   .v-id a:hover { text-decoration: underline; }
+  /* На телефоне печать встаёт рядом со строкой ИНН, а длинная фраза
+     о сверке — под ними во всю ширину карточки (23.10.2026). Раньше
+     текст жался в колонку в 200 px справа от печати и шёл по два-три
+     слова в строке. Размер печати — с !important: компонент ставит
+     --seal-size в атрибут style, и обычное правило его не перебивало
+     (прежние «80 px» здесь не работали никогда). */
   @media (max-width: 560px) {
-    .verify { gap: 14px; padding: 16px; }
-    .v-seal :global(.seal) { --seal-size: 80px; }
+    .verify {
+      grid-template-areas: 'seal id' 'txt txt';
+      gap: 12px 14px;
+      padding: 16px;
+    }
+    .v-txt { display: contents; }
+    .v-seal { grid-area: seal; }
+    .v-id { grid-area: id; }
+    .v-txt > p:first-child { grid-area: txt; }
+    .v-seal :global(.seal) { --seal-size: 76px !important; }
   }
 
   /* ── Карточка условий ── */

@@ -35,6 +35,7 @@ const TESTS = [
   ['test-search.mjs', 'поиск по сайту'],
   ['test-regions.mjs', 'городские страницы'],
   ['test-pages.mjs', 'страницы в браузере'],
+  ['test-motion.mjs', 'переходы между страницами и прокрутка без рывков'],
 ]
 
 if (!existsSync('dist/index.html')) {

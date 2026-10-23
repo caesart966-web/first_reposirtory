@@ -50,6 +50,7 @@ const HEADS = [
   '/proverit-sro/',
   '/baza-znaniy/',
   '/slovar/',
+  '/voprosy/',
   '/politika/',
   '/kontakty/',
   '/obo-mne/',

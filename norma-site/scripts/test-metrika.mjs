@@ -126,6 +126,23 @@ const queue = (page) => page.evaluate(() => (window.ym && window.ym.a ? window.y
   await context.close()
 }
 
+// Переход из нейросети: визит получает параметр ai_source (CookieBanner).
+// Метка ChatGPT — utm_source=chatgpt.com; обычный заход параметра не получает.
+{
+  const { context, page } = await visitor()
+  await page.goto(BASE + '/?utm_source=chatgpt.com', { waitUntil: 'networkidle' })
+  await page.click('[data-cookie="all"]')
+  await page.waitForFunction(() => typeof window.ym === 'function')
+  const params = (await queue(page)).find((c) => c[1] === 'params')
+  if (params && params[0] === ID && params[2]?.ai_source === 'ChatGPT') ok('переход из ChatGPT помечен параметром визита ai_source')
+  else fail(`переход с utm_source=chatgpt.com не помечен: ${JSON.stringify(params)}`)
+  await page.goto(BASE + '/stoimost/', { waitUntil: 'networkidle' })
+  const plain = (await queue(page)).find((c) => c[1] === 'params')
+  if (!plain) ok('обычный заход параметра ai_source не получает')
+  else fail(`обычный заход получил параметр: ${JSON.stringify(plain)}`)
+  await context.close()
+}
+
 await browser.close()
 console.log(problems ? `\n✗ Проверка не прошла: ${problems}\n` : '\n✓ Метрика подключается только после согласия и считает в свой счётчик.\n')
 process.exit(problems ? 1 : 0)

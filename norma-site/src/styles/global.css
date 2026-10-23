@@ -251,13 +251,27 @@ img { max-width: 100%; height: auto; }
 }
 .page-head .crumbs a:hover { color: var(--acc-bright); }
 .page-head > .wrap { position: relative; z-index: 1; }
+/* Слой в два этажа (23.10.2026). Снаружи — то, что движется и тает:
+   масштаб «дыхания» и непрозрачность, их браузер считает на видеокарте
+   по готовой картинке. Внутри (::before) — сам снимок с фильтром и маской:
+   они рисуются один раз. Пока фильтр и маска стояли на том же слое, что
+   и анимация, браузер пересчитывал их на каждом кадре: на компьютере при
+   прокрутке «Стоимости» и «НОК и НРС» терялось 6–22 кадра из ~110,
+   в два этажа — 0–1 (замер шагами по трети экрана, 1280 px). Снимок
+   и точку кадра HeadPhoto.astro передаёт переменными --head-img и --head-pos. */
 .head-photo {
   position: absolute;
   inset: 0;
   z-index: 0;
-  background-size: cover;
-  filter: saturate(0.45) brightness(0.6) contrast(1.05);
   opacity: 0.5;
+  pointer-events: none;
+}
+.head-photo::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--head-img) var(--head-pos, 72% center) / cover no-repeat;
+  filter: saturate(0.45) brightness(0.6) contrast(1.05);
   mask-image:
     linear-gradient(90deg, transparent 0%, transparent 34%, rgba(0, 0, 0, 0.45) 62%, #000 88%),
     linear-gradient(180deg, transparent 0%, #000 16%, #000 72%, transparent 100%);
@@ -266,7 +280,6 @@ img { max-width: 100%; height: auto; }
     linear-gradient(180deg, transparent 0%, #000 16%, #000 72%, transparent 100%);
   mask-composite: intersect;
   -webkit-mask-composite: source-in;
-  pointer-events: none;
 }
 /* Строка «на связи» рядом с фотографией владельца — первый экран главной
    и форма заявки (06.10.2026). Текст ставит скрипт в Base.astro по
@@ -311,8 +324,8 @@ img { max-width: 100%; height: auto; }
     height: 300px;
     opacity: 0.4;
   }
-  .head-photo--soft {
-    opacity: 0.22;
+  .head-photo--soft { opacity: 0.22; }
+  .head-photo--soft::before {
     mask-image:
       linear-gradient(90deg, transparent 0%, transparent 20%, rgba(0, 0, 0, 0.4) 52%, #000 84%),
       linear-gradient(180deg, transparent 0%, #000 12%, #000 44%, transparent 78%);
@@ -809,6 +822,49 @@ table.data td.strong { font-weight: 600; }
     transition-duration: 0.001ms !important;
   }
 }
+
+/* ── Переходы между страницами (23.10.2026, «плавность») ──
+   Страница не мигает белым при переходе: прежняя стоит на месте, новая
+   проступает поверх неё за 0,32 с. Сдвига нет нарочно: выезжающая страница
+   читается рывком (урок sro-site, «подёргивает»). Шапка — отдельным слоем
+   и без анимации: она одна и та же на всех страницах и стоять должна
+   неподвижно. Прежний снимок шапки не показывается вовсе: открытое меню
+   телефона живёт внутри шапки, и его снимок висел бы поверх новой страницы
+   всё время перехода. Браузеры без поддержки (старые Firefox, Safari до 18)
+   переходят как раньше — правило они пропускают. При «уменьшить движение»
+   переходов нет. */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+}
+::view-transition-old(root) { animation: none; }
+::view-transition-new(root) { animation: vt-in 320ms var(--ease) both; }
+::view-transition-group(site-header),
+::view-transition-new(site-header) { animation: none; }
+::view-transition-old(site-header) { display: none; }
+@keyframes vt-in { from { opacity: 0; } }
+
+/* ── Микродвижения (23.10.2026, «анимации») ──
+   Только то, что что-то сообщает. (1) Стрелка у ссылки «подробнее»
+   сдвигается на 3 px при наведении — ссылка ведёт дальше. (2) Якорь, на
+   который пришли по ссылке (/voprosy/#porog, /slovar/#nrs — так ссылаются
+   нейросети и поисковики), полторы секунды подсвечен голубой подложкой:
+   человек видит свой ответ, а не начало страницы. Подложка — box-shadow
+   во все стороны, поля и раскладка не двигаются. При «уменьшить движение»
+   общее правило выше сводит оба к мгновенным. */
+.fa-more svg, .gl-more svg, .qa-more svg, .faq-all svg, .card--link .more svg {
+  transition: transform var(--t-fast) var(--ease);
+}
+.fa-more:hover svg, .gl-more:hover svg, .qa-more:hover svg, .faq-all:hover svg,
+.card--link:hover .more svg { transform: translateX(3px); }
+
+[data-anchor]:target { animation: anchor-hl 1.6s var(--ease) 0.15s both; }
+@keyframes anchor-hl {
+  0%, 35% { background: var(--acc-soft); box-shadow: 0 0 0 14px var(--acc-soft); }
+  100% { background: transparent; box-shadow: 0 0 0 14px transparent; }
+}
+/* Разделы целиком (section[data-anchor]) не подсвечиваются: экран
+   голубого — это не «вот ваш ответ», а вспышка. */
+section[data-anchor]:target { animation: none; }
 
 /* ── Формы ── */
 
