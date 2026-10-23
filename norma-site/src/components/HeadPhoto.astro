@@ -34,6 +34,6 @@ const { src = SITE.headPhoto, position = '72% center', soft = false } = Astro.pr
   <div
     class:list={['head-photo', soft && 'head-photo--soft']}
     aria-hidden="true"
-    style={`background-image: url(${href(`/img/${src}`)}); background-position: ${position}`}
+    style={`--head-img: url(${href(`/img/${src}`)}); --head-pos: ${position}`}
   ></div>
 )}

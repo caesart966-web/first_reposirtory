@@ -82,7 +82,10 @@ const rBot = 49
   }
   .seal--dark { color: var(--acc-bright); opacity: 0.9; }
 
-  .seal svg { display: block; overflow: visible; }
+  /* Рисунок следует за --seal-size, а не за атрибутами width/height:
+     иначе уменьшить печать по месту (на телефоне) было нельзя — рамка
+     сжималась, а рисунок оставался прежнего размера и вылезал из неё. */
+  .seal svg { display: block; overflow: visible; width: 100%; height: 100%; }
 
   .s-ring { fill: none; stroke: currentColor; stroke-width: 2.4; }
   .s-ring--in { stroke-width: 1; opacity: 0.75; }

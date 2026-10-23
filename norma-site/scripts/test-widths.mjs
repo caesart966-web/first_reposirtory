@@ -34,7 +34,7 @@ const PAGES = [
 // Ширины, на которых чаще всего ломается: край брейкпоинтов и режим «для ПК».
 // 1440, 1600 и 1920 — ступени колонки сайта (--wrap в global.css,
 // с 07.10.2026) и первый экран «пополам»: на этих ширинах своя раскладка.
-const WIDTHS = [360, 390, 480, 640, 767, 768, 899, 900, 980, 1024, 1099, 1100, 1279, 1360, 1440, 1600, 1920]
+const WIDTHS = [360, 390, 480, 640, 767, 768, 899, 900, 980, 1024, 1099, 1100, 1279, 1280, 1360, 1440, 1599, 1600, 1920]
 
 const browser = await chromium.launch()
 let failed = 0
@@ -58,6 +58,21 @@ for (const width of WIDTHS) {
     )
     report(over <= 1, `${path} при ${width}px — горизонтальная прокрутка`, `${over}px`)
   }
+  // Шапка стоит по колонке сайта: правый край кнопки — у правого края
+  // содержимого. Прокрутки это не давало, и на 1280–1439 правая группа
+  // вылезала за колонку на 96 px, пока не взглянули на снимок (23.10.2026).
+  // И кнопка «Оставить заявку» с 1280 px — в одну строку.
+  const hdr = await page.evaluate(() => {
+    const h = document.querySelector('.site-header .hdr')
+    const cs = getComputedStyle(h)
+    const right = h.getBoundingClientRect().right - parseFloat(cs.paddingRight)
+    const kids = [...h.querySelectorAll(':scope > *, .hdr-right > *')].filter((e) => e.offsetParent)
+    const max = Math.max(...kids.map((e) => e.getBoundingClientRect().right))
+    const cta = h.querySelector('.hdr-cta')
+    return { over: Math.round(max - right), ctaH: cta && cta.offsetParent ? cta.getBoundingClientRect().height : 0 }
+  })
+  report(hdr.over <= 1, `шапка при ${width}px выходит за колонку сайта`, `${hdr.over}px`)
+  if (width >= 1280) report(hdr.ctaH > 0 && hdr.ctaH <= 44, `кнопка в шапке при ${width}px — в две строки`, `${hdr.ctaH}px`)
   await ctx.close()
 }
 console.log(`✓ Нет горизонтальной прокрутки: ${PAGES.length} страниц × ${WIDTHS.length} ширин`)

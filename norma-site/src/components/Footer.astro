@@ -39,6 +39,7 @@ const pages = [
   { label: 'Стоимость вступления в СРО', url: href('/stoimost/') },
   { label: 'База знаний о СРО', url: href('/baza-znaniy/') },
   { label: 'Словарь терминов СРО', url: href('/slovar/') },
+  { label: 'Вопросы и ответы о СРО', url: href('/voprosy/') },
   { label: 'Вступление в СРО по городам', url: href('/sro/') },
   { label: 'Обо мне: как я работаю', url: href('/obo-mne/') },
   { label: 'Контакты и реквизиты', url: href('/kontakty/') },
@@ -225,9 +226,9 @@ const year = new Date().getFullYear()
     flex-wrap: wrap;
     align-items: baseline;
     gap: 6px 14px;
-    margin-top: 40px;
+    /* Линейка одна — та, что под колонками. Здесь стояла вторая, через
+       40 px пустоты, и между ними читался пустой блок (снимок 23.10.2026). */
     padding-top: 26px;
-    border-top: 1px solid var(--dark-line);
     font-size: 13.5px;
   }
   .cities-label { color: var(--on-dark-muted); }

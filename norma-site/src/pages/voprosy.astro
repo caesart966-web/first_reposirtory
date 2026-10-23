@@ -1,0 +1,204 @@
+---
+// Вопросы и ответы о СРО (23.10.2026, «чтобы наш сайт выдавали нейросети»).
+//
+// Зачем. Помощники — Алиса, ChatGPT, обзоры Google — отвечают на вопрос
+// и ставят ссылку на страницу, где ответ сказан прямо и проверяемо. Здесь
+// у каждого вопроса свой якорь, ответ — первой фразой, рядом норма закона
+// и дата, когда сверен разбор, из которого ответ взят. Где робот прочитал
+// текст нормы, он стоит дословно: цитата нормы — то, что помощник может
+// передать, не исказив.
+//
+// Данные — src/config/answers.ts (новых фактов там нет: только пересказ
+// разборов). Печати «Сверено» нет, как и на словаре: у ответов разные
+// даты сверки, и у каждого стоит своя.
+import { getCollection } from 'astro:content'
+import Base from '../layouts/Base.astro'
+import HeadPhoto from '../components/HeadPhoto.astro'
+import PageNav from '../components/PageNav.astro'
+import Icon from '../components/Icon.astro'
+import { ANSWER_GROUPS, ANSWERS } from '../config/answers'
+import { href } from '../config/site'
+
+const pageUrl = new URL('/voprosy/', Astro.site).toString()
+
+// Дата сверки разбора, на который ведёт ответ. Для страниц, которые
+// не статьи (стоимость, документы), даты нет — и строка о ней не выводится.
+const articles = await getCollection('articles')
+const checked = new Map(
+  articles.map((a) => [`/baza-znaniy/${a.id}/`, a.data.updated ?? a.data.published]),
+)
+// Ответ не может ссылаться на разбор, которого нет: такая ссылка вела бы
+// в 404, а помощник цитировал бы ответ без опоры. Падаем при сборке.
+for (const a of ANSWERS) {
+  if (a.more.url.startsWith('/baza-znaniy/') && !checked.has(a.more.url)) {
+    throw new Error(`answers.ts: «${a.q}» ведёт в несуществующий разбор ${a.more.url}`)
+  }
+}
+const ruDate = (d: Date) =>
+  d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+
+// Неразрывные пробелы там, где перенос рвёт смысл (как в словаре).
+const MONTHS = 'января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря'
+const nb = (text: string) =>
+  text
+    .replace(new RegExp(`(\\d) (${MONTHS})`, 'g'), '$1 $2')
+    .replace(/(\d) (млн|млрд|₽|тыс\.)/g, '$1 $2')
+    .replace(/(млн|млрд|тыс\.) ₽/g, '$1 ₽')
+    .replace(/№ /g, '№ ')
+    .replace(/ст\. /g, 'ст. ')
+    .replace(/ч\. /g, 'ч. ')
+
+const plural = (n: number, one: string, few: string, many: string) => {
+  const m10 = n % 10
+  const m100 = n % 100
+  if (m10 === 1 && m100 !== 11) return one
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few
+  return many
+}
+const count = `${ANSWERS.length} ${plural(ANSWERS.length, 'вопрос', 'вопроса', 'вопросов')}`
+
+// Микроразметка: FAQPage, у каждого вопроса — адрес с якорем. Текст ответа
+// тот же, что на странице (короткий ответ плюс пояснение), без цитаты нормы:
+// она стоит на странице отдельным блоком.
+const faqSchema = {
+  '@type': 'FAQPage',
+  '@id': `${pageUrl}#faq`,
+  name: 'Вопросы и ответы о СРО',
+  mainEntity: ANSWERS.map((a) => ({
+    '@type': 'Question',
+    '@id': `${pageUrl}#${a.id}`,
+    name: a.q,
+    url: `${pageUrl}#${a.id}`,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: [a.short, a.detail, a.law ? `Норма: ${a.law}.` : ''].filter(Boolean).join(' '),
+      url: `${pageUrl}#${a.id}`,
+    },
+  })),
+}
+---
+
+<Base
+  title="Вопросы о СРО: ответы со ссылкой на закон — порог, взносы, НРС"
+  description={`${count} о членстве в СРО с короткими ответами: кому нужна СРО, порог 10 млн ₽, субподряд, взносы и компенсационный фонд, специалисты НРС, выход и исключение. У каждого ответа — статья закона.`}
+  breadcrumbs={[
+    { label: 'Главная', url: href('/') },
+    { label: 'База знаний', url: href('/baza-znaniy/') },
+    { label: 'Вопросы и ответы' },
+  ]}
+  schema={[faqSchema]}
+>
+  <section class="section page-head">
+    <HeadPhoto src="themis-books.webp" position="30% 46%" />
+    <div class="wrap">
+      <span class="eyebrow">База знаний</span>
+      <h1>Вопросы о СРО: <em>короткие ответы</em> со ссылкой на закон</h1>
+      <p class="lead">
+        {count} о членстве в СРО. Ответ — первой строкой, рядом норма, которую можно открыть
+        и прочитать самому, и ссылка на подробный разбор с датой сверки.
+      </p>
+      <PageNav label="Разделы" items={ANSWER_GROUPS.map((g) => ({ href: `#${g.id}`, label: `${g.title} · ${g.items.length}` }))} />
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap qa-wrap">
+      {ANSWER_GROUPS.map((g) => (
+        <section class="qa-group" id={g.id} aria-labelledby={`${g.id}-t`}>
+          <h2 id={`${g.id}-t`}>{g.title}</h2>
+          {g.items.map((a) => {
+            const date = checked.get(a.more.url)
+            return (
+              <article class="qa" id={a.id} data-anchor>
+                <h3>{a.q}</h3>
+                <p class="qa-short">{nb(a.short)}</p>
+                {a.detail && <p class="qa-detail">{nb(a.detail)}</p>}
+                {a.quote && (
+                  <figure class="qa-quote">
+                    <blockquote>
+                      <p>«{a.quote.text}»</p>
+                    </blockquote>
+                    <figcaption>Текст нормы · <span class="law">{a.quote.law}</span></figcaption>
+                  </figure>
+                )}
+                <div class="qa-foot">
+                  {a.law && <span class="law">{a.law}</span>}
+                  <a class="qa-more" href={href(a.more.url)}>
+                    {a.more.label} <Icon name="arrow" size={14} />
+                  </a>
+                  {date && <span class="qa-date">разбор сверен {ruDate(date)}</span>}
+                </div>
+              </article>
+            )
+          })}
+        </section>
+      ))}
+
+      <p class="qa-end">
+        Термины — НРС, НОК, КФ ВВ, КФ ОДО — расшифрованы в{' '}
+        <a href={href('/slovar/')}>словаре терминов СРО</a>, все разборы —{' '}
+        <a href={href('/baza-znaniy/')}>в базе знаний</a>. Не нашли свой случай — пройдите{' '}
+        <a href={href('/#calc')}>калькулятор «Нужна ли вам СРО»</a>: он отвечает и «не нужна».
+      </p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .qa-wrap { display: grid; gap: 56px; max-width: 880px; }
+  .qa-group { display: grid; }
+  .qa-group > h2 {
+    margin: 0 0 8px;
+    font-size: clamp(26px, 3vw, 34px);
+  }
+
+  /* Вопрос — строкой бланка: линейка сверху, без карточек (как словарь). */
+  .qa {
+    display: grid;
+    gap: 10px;
+    padding: 26px 0;
+    border-top: 1px solid var(--line);
+  }
+  .qa:last-child { border-bottom: 1px solid var(--line); }
+  .qa h3 { margin: 0; font-size: clamp(19px, 2.1vw, 22px); line-height: 1.3; }
+
+  /* Короткий ответ — то, что цитируют. Он крупнее и темнее пояснения,
+     чтобы и человек видел его первым. */
+  .qa-short {
+    margin: 0;
+    max-width: 68ch;
+    font-family: var(--font-head);
+    font-size: 18px;
+    line-height: 1.55;
+    color: var(--ink);
+  }
+  .qa-detail { margin: 0; max-width: 68ch; font-size: 16px; line-height: 1.65; color: var(--muted); }
+
+  .qa-quote {
+    margin: 4px 0 0;
+    padding: 14px 18px;
+    border-left: 3px solid var(--acc-btn);
+    background: var(--paper-2);
+    border-radius: 0 var(--r-s) var(--r-s) 0;
+    max-width: 68ch;
+  }
+  .qa-quote blockquote { margin: 0; }
+  .qa-quote p { margin: 0; font-family: var(--font-head); font-style: italic; font-size: 15.5px; line-height: 1.6; color: var(--ink); }
+  .qa-quote figcaption { margin-top: 8px; font-size: 13.5px; color: var(--muted); }
+
+  .qa-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin-top: 2px; }
+  .qa-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 30px;
+    color: var(--acc-deep);
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+  }
+  .qa-more:hover { text-decoration: underline; }
+  .qa-date { font-size: 13.5px; color: var(--muted); }
+
+  .qa-end { margin: 0; max-width: 68ch; color: var(--muted); }
+</style>

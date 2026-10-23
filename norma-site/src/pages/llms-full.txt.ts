@@ -25,8 +25,17 @@ export const GET: APIRoute = async ({ site }) => {
     return a.data.order - b.data.order
   })
 
+  // Текст статьи — markdown с двумя вещами, которые вне сайта не работают:
+  // ссылки от корня (/baza-znaniy/…) и чипы норм разметкой
+  // (<span class="law">…</span>). Помощнику нужны полный адрес и норма
+  // словами, иначе он процитирует ссылку в никуда или тег.
+  const plain = (md: string) =>
+    md
+      .replace(/<span class="law">([^<]+)<\/span>/g, 'Норма: $1.')
+      .replace(/\]\((\/[^)\s]*)\)/g, (_, p: string) => `](${abs(p)})`)
+
   const parts = articles.map((a) => {
-    const raw = (a as { body?: string }).body ?? ''
+    const raw = plain((a as { body?: string }).body ?? '')
     return [
       `# ${a.data.title}`,
       '',
