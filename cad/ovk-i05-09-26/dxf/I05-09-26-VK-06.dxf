@@ -493,7 +493,7 @@ $SKPOLY
   9
 $TDCREATE
  40
-2461337.4364699074
+2461337.518101852
   9
 $TDUCREATE
  40
@@ -501,7 +501,7 @@ $TDUCREATE
   9
 $TDUPDATE
  40
-2461337.4365046294
+2461337.518125
   9
 $TDUUPDATE
  40
@@ -933,11 +933,11 @@ $PSTYLEMODE
   9
 $FINGERPRINTGUID
   2
-{AB00A75B-6A7B-43CA-A8AA-3575CEE39C0F}
+{8CBEEEBD-6AA6-4AB8-9AC9-A1FBC54846A2}
   9
 $VERSIONGUID
   2
-{C3447D25-2DF4-451D-AE3F-06B6E9671EAD}
+{C3D758D1-EB66-4B95-A810-A15EA09DFAAC}
   9
 $EXTNAMES
 290
@@ -1327,19 +1327,19 @@ ISM
   0
 CLASS
   1
-WIPEOUT
+ACDBPLACEHOLDER
   2
-AcDbWipeout
+AcDbPlaceHolder
   3
-WipeOut
+ObjectDBX Classes
  90
-127
+0
  91
 0
 280
 0
 281
-1
+0
   0
 CLASS
   1
@@ -1375,19 +1375,19 @@ ObjectDBX Classes
   0
 CLASS
   1
-ACDBPLACEHOLDER
+WIPEOUT
   2
-AcDbPlaceHolder
+AcDbWipeout
   3
-ObjectDBX Classes
+WipeOut
  90
-0
+127
  91
 0
 280
 0
 281
-0
+1
   0
 ENDSEC
   0
@@ -1681,6 +1681,36 @@ AcDbSymbolTableRecord
 100
 AcDbLinetypeTableRecord
   2
+Пунктир 2-1_5
+ 70
+0
+  3
+
+ 72
+65
+ 73
+2
+ 40
+3.5
+ 49
+2.0
+ 74
+0
+ 49
+-1.5
+ 74
+0
+  0
+LTYPE
+  5
+F4A
+330
+2
+100
+AcDbSymbolTableRecord
+100
+AcDbLinetypeTableRecord
+  2
 Сверху
  70
 0
@@ -1703,7 +1733,7 @@ AcDbLinetypeTableRecord
   0
 LTYPE
   5
-F4A
+F4B
 330
 2
 100
@@ -1736,36 +1766,6 @@ AcDbLinetypeTableRecord
 0
  49
 -2.0
- 74
-0
-  0
-LTYPE
-  5
-F4B
-330
-2
-100
-AcDbSymbolTableRecord
-100
-AcDbLinetypeTableRecord
-  2
-Пунктир 2-1_5
- 70
-0
-  3
-
- 72
-65
- 73
-2
- 40
-3.5
- 49
-2.0
- 74
-0
- 49
--1.5
  74
 0
   0
@@ -2949,11 +2949,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-M-EQPM
+A-GLAZ
  70
 8
  62
-9
+8
   6
 Continuous
 370
@@ -2973,7 +2973,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-WALL-PATT
+A-ANNO-NOTE
  70
 8
  62
@@ -2997,13 +2997,13 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-DOOR-HDLN
+S-GRID
  70
 8
  62
 8
   6
-Пунктир 2-1_5
+Continuous
 370
 13
 390
@@ -3014,102 +3014,6 @@ F
 LAYER
   5
 F38
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-A-DOOR
- 70
-8
- 62
-8
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-F39
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-G-ANNO-SYMB
- 70
-8
- 62
-8
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-F3A
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-P-SANR-FIXT
- 70
-8
- 62
-9
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-F3B
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-A-GLAZ-CWMG
- 70
-8
- 62
-8
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-F3C
 330
 1
 100
@@ -3133,6 +3037,102 @@ F
   0
 LAYER
   5
+F39
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+A-DETL-GENF
+ 70
+8
+ 62
+9
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+F3A
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+A-COLS
+ 70
+8
+ 62
+8
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+F3B
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+A-ANNO-DIMS
+ 70
+9
+ 62
+-8
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+F3C
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+M-EQPM
+ 70
+8
+ 62
+9
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
 F3D
 330
 1
@@ -3141,7 +3141,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-AREA-IDEN
+A-ANNO-DIMS-100
  70
 8
  62
@@ -3165,7 +3165,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-S-GRID
+G-ANNO-SYMB
  70
 8
  62
@@ -3182,6 +3182,150 @@ F
 LAYER
   5
 F3F
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+S-STRS
+ 70
+8
+ 62
+9
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+F40
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+A-DOOR-HDLN
+ 70
+8
+ 62
+8
+  6
+Пунктир 2-1_5
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+F41
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+A-AREA-IDEN
+ 70
+8
+ 62
+8
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+F42
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+A-FLOR
+ 70
+8
+ 62
+9
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+F43
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+A-WALL-PATT
+ 70
+8
+ 62
+8
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+F44
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+A-WALL
+ 70
+8
+ 62
+8
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+F45
 330
 1
 100
@@ -3207,150 +3351,6 @@ F
   0
 LAYER
   5
-F40
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-A-ANNO-NOTE
- 70
-8
- 62
-8
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-F41
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-A-WALL
- 70
-8
- 62
-8
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-F42
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-S-STRS
- 70
-8
- 62
-9
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-F43
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-A-DETL-GENF
- 70
-8
- 62
-9
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-F44
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-A-ANNO-DIMS
- 70
-9
- 62
--8
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-F45
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-A-ANNO-DIMS-100
- 70
-8
- 62
-8
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
 F46
 330
 1
@@ -3359,7 +3359,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-FLOR
+P-SANR-FIXT
  70
 8
  62
@@ -3383,7 +3383,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-COLS
+A-GLAZ-CWMG
  70
 8
  62
@@ -3407,7 +3407,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-GLAZ
+A-DOOR
  70
 8
  62
@@ -3989,34 +3989,6 @@ AcDbSymbolTableRecord
 100
 AcDbTextStyleTableRecord
   2
-GOST Common
- 70
-0
- 40
-299.9999999999997
- 41
-1.0
- 50
-0.0
- 71
-0
- 42
-0.2
-  3
-GOST_Common.ttf
-  4
-
-  0
-STYLE
-  5
-F4E
-330
-5
-100
-AcDbSymbolTableRecord
-100
-AcDbTextStyleTableRecord
-  2
 Arial
  70
 0
@@ -4032,6 +4004,34 @@ Arial
 0.2
   3
 arial.ttf
+  4
+
+  0
+STYLE
+  5
+F4E
+330
+5
+100
+AcDbSymbolTableRecord
+100
+AcDbTextStyleTableRecord
+  2
+GOST Common
+ 70
+0
+ 40
+299.9999999999997
+ 41
+1.0
+ 50
+0.0
+ 71
+0
+ 42
+0.2
+  3
+GOST_Common.ttf
   4
 
   0
@@ -151905,15 +151905,15 @@ AcDbMText
  71
 1
   3
-1. Подложка — АР (выгрузка из Revit 19.10.2026). Отметки — лотки труб от чистого пола 1 этажа ±0,000.\P2. Вариант А: сети 1 этажа — в грунте под плитой пола (ПП Ø110 наружные SN8, Ø50 — ПП внутренние, на песчаном основании 100 мм, обсыпка песком 300 
+1. Подложка — АР (выгрузка из Revit 19.10.2026). Отметки — лотки труб от чистого пола 1 этажа ±0,000.\P2. Сети 1 этажа — в грунте под плитой пола по решению Заказчика (ПП Ø110 наружные SN8, Ø50 — ПП внутренние, на песчаном основании 100 мм, обсыпка п
   3
-мм над верхом трубы), выпуски — за край фундаментной плиты в футлярах ПП Ø160 (лист 14, узел 2). Вариант Б по п. 18.38 СП 30.13330.2020 (без труб под плитой) — через приямки у наружных стен — по решению Заказчика.\P3. Уклоны: Ø110 — 0,02, Ø50 — 0,03 
+еском 300 мм над верхом трубы), укладка и испытание — до бетонирования плиты; выпуски — за край фундаментной плиты в футлярах ПП Ø160 (лист 14, узел 2) в домовой колодец (НВК).\P3. Уклоны: Ø110 — 0,02, Ø50 — 0,03 (нерасчетные участки, не менее 1/d по
   3
-(нерасчетные участки, не менее 1/d по п. 19.1, И05.09.26-ВК.П3). Присоединения — косыми тройниками 45°, повороты — двумя отводами по 45°.\P4. Сеть 2 этажа — в коробе под потолком гаража к стояку Ст.К1-1 в северо-западном углу гаража (лист 5); Ст.К1-1
+ п. 19.1, И05.09.26-ВК.П3). Присоединения — косыми тройниками 45°, повороты — двумя отводами по 45°.\P4. Сеть 2 этажа — в коробе под потолком гаража к стояку Ст.К1-1 в северо-западном углу гаража (лист 5); Ст.К1-1в — вытяжная часть над кровлей на 0,3
   3
-в — вытяжная часть над кровлей на 0,35 м (п. 18.18), не ближе 4 м от открываемых окон.\P5. Ревизии и прочистки — по п. 18.26: на стояке Ст.К1-1 (+1,000), у выпуска К1-1 (вывод к люку в полу 1.8), в начале сборного (прочистка у УН-1, через инсталляцию
+5 м (п. 18.18), не ближе 4 м от открываемых окон.\P5. Ревизии и прочистки — по п. 18.26: на стояке Ст.К1-1 (+1,000), у выпуска К1-1 (вывод к люку в полу 1.8), в начале сборного (прочистка у УН-1, через инсталляцию). Отводы от приборов — с уклоном к с
   1
-). Отводы от приборов — с уклоном к стоякам и сборному.\P6. Конденсат кондиционеров К-1...К-3 (ОВ) — в сифон с сухим затвором в 1.4; трап Т-1 и стиральная машина топочной — отвод Ø50; конденсат котлов — через нейтрализатор в трап Т-1 (ТЗ-3 ОВ).
+тоякам и сборному.\P6. Конденсат кондиционеров К-1...К-3 (ОВ) — в сифон с сухим затвором в 1.4; трап Т-1 и стиральная машина топочной — отвод Ø50; конденсат котлов — через нейтрализатор в трап Т-1 (ТЗ-3 ОВ).
   7
 GOST
   0
