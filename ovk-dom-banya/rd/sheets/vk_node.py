@@ -1,0 +1,179 @@
+"""И05.09.26-ВК, лист 7. Топочная 1.6: ввод, водомерный узел, гребёнка КХ — развёртка южной стены и план М 1:20,
+таблицы выходов КХ и состава узла. Проекции 3D-модели vk_model.
+
+python3 sheets/vk_node.py -> out/vk_node.dxf + PDF
+"""
+import json
+import math
+import os
+import sys
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(HERE)
+sys.path.insert(0, ROOT)
+sys.path.insert(0, HERE)
+from rdbase import new_doc, RDSheet, save_and_pdf, fmt_num  # noqa: E402
+import vk_model as VK  # noqa: E402
+from vk_draw import (CODE_VK, BLD_VK, VK_LIST, VK_TOTAL, setup, finish_layers, PP, View, VLabels, draw_net,  # noqa
+                     vk_fit, draw_eq, level_mark, lev, in_box, clip2)
+
+OUT = os.path.join(ROOT, 'out')
+SHEET_NO = 7
+K = 20
+CALC = json.load(open(os.path.join(ROOT, 'out', 'vk', 'vk_calc.json')))
+NODE_IDS = ('ВВ', 'В1-узел', 'КХ') + tuple(f'КХ-{i}' for i in range(1, 8))
+
+
+class _FP:
+    def __init__(self, pts, sysk='В1'):
+        self.pts, self.sys, self.id, self.od = pts, sysk, 'схема', 0.03
+
+
+class _FF:
+    def __init__(self, kind, c, d=(1, 0)):
+        self.kind, self.pos, self.side = kind, (c[0], c[1], 0.0), None
+        self.axis = 'x' if abs(d[0]) > abs(d[1]) else 'y'
+        self.pipe = _FP([(c[0] - 5 * d[0], c[1] - 5 * d[1], 0.0), (c[0] + 5 * d[0], c[1] + 5 * d[1], 0.0)])
+
+
+VS = View('plan', 1000, (0.0, 0.0), (0.0, 0.0))     # мм листа = «метры» вида
+
+
+def sym(p, kind, c, d=(1, 0), scale=1.2):
+    vk_fit(p, VS, _FF(kind, c, d), scale=scale)
+
+
+def scheme(p, box, P):
+    """Узел ввода слева направо по ходу воды (внизу), гребёнка КХ над ним."""
+    lay = 'ВК_В1'
+    y0 = box[1] + 30.0                 # линия узла
+    x_in = box[0] + 10.0
+    p.pl([(x_in, box[1] + 10.0), (x_in + 10, box[1] + 10.0), (x_in + 10, y0)], lay, lw=50)
+    p.t(x_in, box[1] + 5.5, 'Ввод ПЭ 32×3,0 от НВК, -0,850 (приямок)', 1.8, 'bl', 'ТМ_текст')
+    items = ['ball', 'filter', 'mano', 'meter', 'ball', 'check', 'filter_fine', 'reducer']
+    x = x_in + 10
+    st = 15.0
+    xe = x + 10 + st * (len(items) - 1) + 12
+    p.pl([(x, y0), (xe, y0)], lay, lw=50)
+    for i, k in enumerate(items):
+        c = (x + 10 + st * i, y0)
+        sym(p, k, c)
+        p.circle(c[0], y0 - 8.0, 0, 'ТМ_марки', r_paper=2.4)
+        p.t(c[0], y0 - 8.0, str(i + 1), 2.0, 'center', 'ТМ_марки')
+        p.line(c[0], y0 - 5.6, c[0], y0 - 2.0, 'ТМ_марки')
+    p.t(x + 10 + st * 3, y0 + 4.0, 'Q3 = 4 м³/ч', 1.7, 'bc', 'ТМ_текст')
+    p.t(x + 10 + st * 7, y0 + 4.0, '4,0 бар', 1.7, 'bc', 'ТМ_текст')
+    p.t(x + 10 + st * 0.5, y0 + 4.0, '+0,600', 1.7, 'bc', 'ТМ_текст')
+    yk = box[1] + 92.0
+    p.pl([(xe, y0), (xe, yk)], lay, lw=50)
+    n_out = [('4', 'вверх: к ШВК-2, ШВК-1', '32×4,4', True), ('5', 'СМ-1, кран +0,900', '20×2,8', True),
+             ('7', 'ПК-2 (терраса 1.13)', '25×3,5', False), ('2', 'УП — подпитка (ТМ)', '16×2,2', False),
+             ('1', 'Б1 (ТМ)', '25×3,5', False), ('3', 'баня — Ecoflex', '25×3,5', False),
+             ('6', 'ПК-1 (фасад)', '25×3,5', False), ('8', 'резерв', '', False)]
+    stp = 17.0
+    xk0 = xe - stp * (len(n_out) - 1) - 10
+    p.pl([(xk0, yk), (xe, yk)], lay, lw=70)
+    p.rect(xk0 - 1, yk - 2.2, xe + 1, yk + 2.2, 'ТМ_оборуд')
+    p.t(xk0, yk + 3.2, 'КХ — гребёнка Ду32, ось +1,300', 1.9, 'bl', 'ТМ_текст')
+    for i, (n, t, dn, up) in enumerate(n_out):
+        c = xk0 + 5 + stp * i
+        txt = f'КХ-{n}: {t}' + (f', {dn}' if dn else '')
+        if up:
+            p.pl([(c, yk + 2.2), (c, yk + 40)], lay)
+            sym(p, 'ball', (c, yk + 8), (0, 1))
+            p.t(c + 3.4, yk + 12, txt, 1.6, 'bl', 'ТМ_текст', rot=90)
+        else:
+            p.pl([(c, yk - 2.2), (c, yk - 42)], lay)
+            sym(p, 'ball', (c, yk - 8), (0, 1))
+            p.t(c + 3.4, yk - 41, txt, 1.6, 'bl', 'ТМ_текст', rot=90)
+
+
+def build():
+    doc = new_doc()
+    setup(doc)
+    sh = RDSheet(doc, 'Лист', VK_LIST[SHEET_NO], SHEET_NO, VK_TOTAL, code=CODE_VK, bld=BLD_VK)
+    p = PP(doc, sh.lay)
+    P = {pp.id: pp for pp in VK.PIPES}
+    pipes = [P[i] for i in NODE_IDS]
+    # ---------------- схема узла и гребёнки (без масштаба)
+    box = (25.0, 120.0, 205.0, 268.0)
+    p.rect(*box, 'ТМ_оборуд_тонк')
+    E = {e.id: e for e in VK.EQUIP}
+    scheme(p, box, P)
+    sh.s.text('Схема водомерного узла и гребёнки КХ (без масштаба)', (box[0] + box[2]) / 2, box[3] + 4,
+              h=3.0, align='center')
+    pit = VK.PIT
+    # ---------------- план узла
+    box2 = (25.0, 22.0, 205.0, 104.0)
+    V2 = View('plan', K, ((box2[0] + box2[2]) / 2, (box2[1] + box2[3]) / 2), (19.05, 9.62), zr=(-1.3, 1.6))
+    p.rect(*box2, 'ТМ_оборуд_тонк')
+    L2 = VLabels(p, box2)
+    for (x0, y0, x1, y1) in ((17.40, 8.75, 20.70, 9.05), (19.85, 9.05, 20.15, 10.30)):
+        a, b = V2.P((x0, y0, 0)), V2.P((x1, y1, 0))
+        cc = clip2(a, b, box2)
+        if cc:
+            r = (min(a[0], b[0]), min(a[1], b[1]), max(a[0], b[0]), max(a[1], b[1]))
+            r = (max(r[0], box2[0]), max(r[1], box2[1]), min(r[2], box2[2]), min(r[3], box2[3]))
+            p.poly([(r[0], r[1]), (r[2], r[1]), (r[2], r[3]), (r[0], r[3])], 'ТМ_штрих',
+                   hatch=('ANSI31', 60.0, 0, 8), outline=False)
+            p.rect(*r, 'ТМ_стены')
+    a, b = V2.P((pit[0], pit[1], 0)), V2.P((pit[2], pit[3], 0))
+    p.rect(a[0], a[1], b[0], b[1], 'ТМ_оборуд', ltype='ОВ_ШТРИХ')
+    draw_net(p, V2, pipes, box2, L=L2)
+    draw_eq(p, V2, E['КХ'], layer='ТМ_оборуд', mask=False)
+    for f in VK.FITS:
+        if f.pipe.id in NODE_IDS and in_box(V2.P(f.pos), box2):
+            vk_fit(p, V2, f, scale=1.0)
+    L2.shelf(V2.P((19.40, 9.60, 0)), 'приямок ввода, крышка в уровне пола', 1.7)
+    L2.shelf(V2.P((19.85, 9.75, 0)), 'восточная стена 1.6', 1.7)
+    sh.s.text('План узла ввода (трубы ниже +1,600). М 1:20', (box2[0] + box2[2]) / 2, box2[3] + 4, h=3.0,
+              align='center')
+    # ---------------- таблицы
+    N = CALC['network']
+    rows = [['Выход', 'Назначение', 'Труба PE-Xa', 'q, л/с', 'Кран']]
+    for n in range(1, 8):
+        pp = P[f'КХ-{n}']
+        x = N.get(pp.id, {})
+        rows.append([f'КХ-{n}', pp.name.replace('В1 ', '').replace(' (далее — ТМ)', ' (ТМ)')[:46], pp.dn,
+                     fmt_num(x.get('q', 0), 2), 'Ду15' if pp.dn in ('16×2,2', '20×2,8') else 'Ду20'])
+    rows.append(['КХ-8', 'резерв (заглушка)', '—', '—', 'Ду20'])
+    sh.s.text('Гребёнка КХ Ду32 (ось +1,300)', 312, 286, h=2.5, align='center')
+    sh.table(215, 282, [14, 86, 22, 12, 13], rows, row_h=5.0, head_h=6.0, h=1.8,
+             aligns=['center', 'left', 'center', 'center', 'center'])
+    m = CALC['meter']
+    rows2 = [['№', 'Элемент водомерного узла (по ходу воды)', 'Ду', 'Примечание']]
+    items = [('Кран шаровой', '32', 'вход ввода, в приямке'), ('Фильтр сетчатый косой с краном промывки', '32',
+                                                                 'п. 12.4; ячейка 300–500 мкм'),
+             ('Манометр 0–10 бар с краном', '15', 'давление сети'),
+             (f'Счётчик холодной воды крыльчатый, класс В, импульсный выход', '20',
+              f'Q3 = 4 м³/ч; h = {fmt_num(m["chosen"]["h"], 2)} м (П2); с переходами 32/20'),
+             ('Кран шаровой', '32', 'с контрольным краном Ду15 (п. 12.9)'),
+             ('Клапан обратный пружинный', '32', 'п. 12.13'),
+             ('Фильтр тонкой очистки самопромывной, 100 мкм', '32', 'промывка — в трап Т-1 шлангом'),
+             ('Регулятор давления «после себя» с манометром', '32', 'настройка 4,0 бар (П2, п. 8.22)')]
+    for i, (n_, d, t) in enumerate(items, 1):
+        rows2.append([str(i), n_, d, t])
+    sh.s.text('Водомерный узел (ось +0,600 — счётчик на 0,6 м от пола, п. 12.5)', 312, 222, h=2.5, align='center')
+    sh.table(215, 218, [8, 84, 10, 45], rows2, row_h=5.0, head_h=6.0, h=1.7, aligns=['center', 'left', 'center', 'left'])
+    sh.notes(215, 166, 195, NOTES, h=1.8, spacing=1.0)
+    finish_layers(doc)
+    return doc
+
+
+NOTES = [
+    'Узел — по разд. 12 СП 30.13330.2020 и П2: обводной линии нет (индивидуальный жилой дом, п. 12.10). Арматура '
+    'Ду32 — латунь, PN16; трубы узла — PE-Xa 32×4,4 с пресс-фитингами, допускается нержавеющая сталь.',
+    'Ввод ПЭ 100 SDR11 32×3,0 — через фундамент в гильзе ПЭ Ø110 с эластичной заделкой (п. 8.8, лист 14), '
+    'отметка -0,850 на границе с НВК; глубина и утепление ввода снаружи — по разделу НВК (ниже глубины '
+    'промерзания или с греющим кабелем).',
+    'Водоподготовка не предусмотрена: источник (центральный водопровод или скважина) Заказчиком не указан. При '
+    'скважине — установка водоподготовки по анализу воды отдельным заказом, место — у южной стены 1.6 между '
+    'регулятором давления и гребёнкой КХ (участок 18,12…18,25 переставляется).',
+    'Гребёнка КХ и узел — на кронштейнах к стене, трубы над полом — по стене на хомутах; выходы КХ — с маркировкой '
+    'назначения; опуски в пол — перед узлом (ось 9,34), выход КХ-4 — вверх к потолку гаража, КХ-5 — к '
+    'стиральной машине (кран +0,900).',
+    'Поливочные краны ПК-1, ПК-2 и баня (КХ-3) отключаются своими кранами на гребёнке КХ.',
+]
+
+if __name__ == '__main__':
+    print(save_and_pdf(build(), os.path.join(OUT, 'vk_node.dxf')))

@@ -172,7 +172,16 @@ VIEW_SETS.tm = {
   b1: { pos: [17.0, 12.9, 2.6], tgt: [19.3, 11.0, 1.2], floor: 0, label: 'Бойлер Б1' },
   top: { pos: [17.8, 11.3, 14.0], tgt: [17.8, 11.32, 0], floor: 0, label: 'Сверху' },
 };
-const VIEWS = M.views === 'tm' ? VIEW_SETS.tm : {
+VIEW_SETS.vk = {
+  iso: { pos: [-7, -15, 17], tgt: [14.5, 9.0, 2.0], floor: 0, label: 'Общий вид дома' },
+  gar: { pos: [12.6, 3.2, 1.4], tgt: [16.2, 8.0, 3.1], floor: 1, label: 'Под потолком гаража' },
+  f1: { pos: [-4, -12, 13], tgt: [12.5, 8.5, 0.0], floor: 1, label: '1 этаж' },
+  f2: { pos: [8.5, 0.5, 11.5], tgt: [16.0, 7.6, 4.2], floor: 2, label: '2 этаж' },
+  topo: { pos: [16.6, 12.6, 2.4], tgt: [18.9, 9.4, 0.5], floor: 1, label: 'Ввод и узел 1.6' },
+  bath: { pos: [11.0, 15.5, 10.5], tgt: [16.5, 27.0, 0.3], floor: 3, label: 'Баня' },
+  site: { pos: [-16, -20, 34], tgt: [13, 15, 1.0], floor: 0, label: 'Дом и баня' },
+};
+const VIEWS = M.views === 'tm' ? VIEW_SETS.tm : M.views === 'vk' ? VIEW_SETS.vk : {
   iso: { pos: [-9, -17, 19], tgt: [10, 8, 3.6], floor: 0 },
   iso2: { pos: [31, -12, 18], tgt: [9.5, 8.5, 3.8], floor: 0 },
   f1: { pos: [-5, -13, 14], tgt: [9.5, 7.6, 2.6], floor: 1 },
@@ -208,7 +217,7 @@ function setView(name) {
 }
 
 // ---------------------------------------------------------------- панель
-const layerList = M.views === 'tm'
+const layerList = M.views === 'tm' || M.views === 'vk'
   ? [['walls', 'Стены (по АР)'], ...Object.keys(M.systems).map(k => [k, null]), ['labels', 'Марки оборудования']]
   : [['walls', 'Стены (по АР)'], ['slabs', 'Перекрытие'], ['П', null], ['В', null], ['Н', null], ['X', null],
     ['ВЗ', null], ['В2', null], ['Р', null], ['F', null], ['E', null], ['ВВ', null], ['labels', 'Подписи расходов']];
@@ -238,6 +247,18 @@ if (M.views === 'tm') {
   document.querySelectorAll('#panel .note')[1].textContent = 'Стены — по АР03; сети ОВ (П1, воздуховоды, фреон) — для увязки, '
     + 'серым. Газопровод — условно, по проекту ГСВ. Т3, Т4, В1 — до границы раздела ВК.';
   document.title = 'И05.09.26-ТМ 3D';
+}
+// водопровод и канализация: свои кнопки видов, фильтр этажей остаётся
+if (M.views === 'vk') {
+  const row = document.querySelector('[data-view]').parentElement;
+  row.innerHTML = Object.entries(VIEWS).map(([k, v]) => `<button data-view="${k}">${v.label}</button>`).join('');
+  document.querySelector('#panel h1').textContent = 'Водопровод и канализация';
+  document.querySelector('#panel .sub').textContent = 'И05.09.26-ВК · дом и баня · 3D-модель по листам 3–14';
+  document.querySelectorAll('#panel .note')[0].textContent = 'Вращение — левая кнопка или палец, сдвиг — правая '
+    + 'кнопка или два пальца, масштаб — колесо. Нажатие на трубу или арматуру показывает название, типоразмер и отметку.';
+  document.querySelectorAll('#panel .note')[1].textContent = 'Стены — по АР (дом — АР03, АР09; баня — АР4), баня — '
+    + 'на своём месте по ГП01. Трубы котельной ТМ — серым, для увязки. Пересечений труб ВК между собой, с ТМ и с ОВ нет.';
+  document.title = 'И05.09.26-ВК 3D';
 }
 // без бани в модели — без её видов
 if (!M.walls.some(w => w.floor === 3) && !M.runs.some(r => r.floor === 3)) {
