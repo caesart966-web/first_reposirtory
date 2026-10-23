@@ -2506,6 +2506,16 @@
 
   Инструкция для заказчика — `pto-site/README.md`.
 - **`.claude/skills/construction-control/`** — скилл строительного контроля (ниже).
+- **`.claude/skills/replica-*/`** — набор Replica, 11 скиллов «повторить приложение»
+  (`/replica-recon`, `/replica-architect`, `/replica-design`, `/replica-build`,
+  `/replica-backend`, `/replica-test`, `/replica-diff`, `/replica-entrepreneur`,
+  `/replica-brand`, `/replica-launch`, `/replica-deploy`). Поставлен 23.10.2026
+  по просьбе пользователя из https://github.com/Jakeschincariol/replica-skill
+  (коммит 77c9436, MIT — `LICENSE` в каждой папке), без правок. Чужой набор:
+  при обновлении копировать папки целиком из репозитория автора, своё в них
+  не дописывать. Пути к программам в его текстах даны от `~/.claude/skills/`,
+  здесь они лежат в `.claude/skills/` репозитория. Рабочие файлы набор пишет
+  в папку `replica/` того проекта, где его запускают.
 
 ---
 
