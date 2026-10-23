@@ -10,7 +10,7 @@
 //
 // Playwright в зависимостях сайта не нужен (см. build-og.mjs): модуль берётся
 // из переменной PLAYWRIGHT, если он лежит не рядом.
-import { existsSync, readdirSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 const pw = await import(process.env.PLAYWRIGHT || 'playwright-core')
 const { chromium } = pw.default ?? pw
 
@@ -873,6 +873,21 @@ for (const [w, h, mobile] of [[390, 844, true], [820, 1180, true], [1440, 900, f
   const r = await p.evaluate((y) => ({ open: !!document.querySelector('dialog[open]'), locked: document.documentElement.classList.contains('sheet-open'), scrolled: Math.round(scrollY - y) }), y0)
   check('поворот планшета с открытой панелью: панель закрыта, страница прокручивается', opened && !r.open && !r.locked && r.scrolled > 0, JSON.stringify({ opened, ...r }))
   await ctx.close()
+}
+
+// Своя страница 404 на хостинге (23.10.2026): без .htaccess Timeweb
+// показывал английскую заглушку Apache. В сборке — одно правило
+// ErrorDocument и самостоятельная 404.html со ссылками от корня (её отдают
+// по любому адресу, и относительная ссылка ушла бы не туда). Проверено
+// на настоящем Apache — README, «Страница 404 на хостинге».
+{
+  const dist = new URL('../dist/', import.meta.url)
+  const ht = existsSync(new URL('.htaccess', dist)) ? readFileSync(new URL('.htaccess', dist), 'utf8') : ''
+  const rules = ht.split('\n').map((l) => l.trim()).filter((l) => l && !l.startsWith('#'))
+  check('.htaccess в сборке: только ErrorDocument 404 /404.html', rules.length === 1 && rules[0] === 'ErrorDocument 404 /404.html', JSON.stringify(rules))
+  const page = readFileSync(new URL('404.html', dist), 'utf8')
+  const rel = [...page.matchAll(/(?:href|src)="([^"]+)"/g)].map((m) => m[1]).filter((u) => !/^(\/|#|https?:|mailto:|tel:|data:)/.test(u))
+  check('404.html: ссылки от корня сайта', rel.length === 0, rel.join(', '))
 }
 
 // Картинки для мессенджеров (22.10.2026): у каждой страницы, кроме главной,
