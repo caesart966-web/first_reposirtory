@@ -21,7 +21,7 @@ jobs:
       - name: Скачиваем
         run: |
           set -u
-          sudo apt-get install -y -qq poppler-utils >/dev/null || true
+          (sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils) >/dev/null 2>&1 || true
           mkdir -p ovk-dom-banya/norms
           grep -v '^\s*#' ovk-dom-banya/fetch.txt | while read -r url name; do
             [ -z "$url" ] && continue
@@ -30,7 +30,7 @@ jobs:
             code=$(curl -sSL -m 120 -A 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/141.0 Safari/537.36' \
                    -H 'Accept-Language: ru' -o "$out" -w '%{http_code}' "$url" || echo ERR)
             echo "$code $(stat -c %s "$out" 2>/dev/null) $url -> $out"
-            case "$name" in *.pdf) pdftotext -layout "$out" "${out%.pdf}.txt" && wc -l "${out%.pdf}.txt" ;; esac
+            case "$name" in *.pdf) if command -v pdftotext >/dev/null; then pdftotext -layout "$out" "${out%.pdf}.txt" && wc -l "${out%.pdf}.txt" || true; fi ;; esac
           done
           grep -n -i -E 'Новый Иерусалим|^ *Москва' ovk-dom-banya/norms/*.txt 2>/dev/null | head -40 || true
       - name: Коммит
