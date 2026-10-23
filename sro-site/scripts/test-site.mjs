@@ -799,6 +799,48 @@ for (const [w, h, mobile] of [[390, 844, true], [820, 1180, true], [1440, 900, f
   await ctx.close()
 }
 
+// Разбор Replica (23.10.2026), bugs.md. B01: рамка фокуса у строк услуг
+// на светлом фоне — не ниже 3:1 (WCAG 1.4.11); светлая латунь accent-400
+// давала 2,3–2,5:1. B02: о цене работы на странице статьи — один раздел
+// «Сколько стоит…», а не свой раздел статьи плюс общий блок под ним.
+{
+  const lum = (rgb) => { const c = rgb.map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4 }); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2] }
+  const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05) }
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })
+  const p = await ctx.newPage()
+  await p.goto(BASE, { waitUntil: 'networkidle' })
+  await p.locator('#services').scrollIntoViewIfNeeded()
+  const rows = await p.locator('#services a').count()
+  const found = []
+  for (let i = 0; i < rows; i++) {
+    const a = p.locator('#services a').nth(i)
+    await a.evaluate((e) => e.focus({ focusVisible: true }))
+    await p.waitForTimeout(80)
+    found.push(await a.evaluate((e) => {
+      const nums = (s) => (s.match(/rgba?\(([^)]+)\)/)?.[1] || '').split(',').slice(0, 3).map(Number)
+      // Кольцо Tailwind — тень с растяжкой больше нуля и непрозрачным цветом;
+      // тень отступа (растяжка 0) и прозрачные заглушки рядом не в счёт.
+      const shadow = getComputedStyle(e).boxShadow
+      const part = shadow === 'none' ? null : shadow.split(/,(?![^(]*\))/)
+        .find((x) => !/rgba\([^)]*,\s*0\)/.test(x) && parseFloat((x.match(/(-?[\d.]+)px\s*$/) || [])[1] || '0') > 0)
+      const ring = part ? nums(part) : null
+      let bg = null
+      for (let el = e.parentElement; el; el = el.parentElement) { const c = getComputedStyle(el).backgroundColor; if (c !== 'rgba(0, 0, 0, 0)') { bg = nums(c); break } }
+      return { text: e.textContent.trim().slice(0, 24), ring, bg }
+    }))
+  }
+  const bad = found.filter((f) => f.ring && f.ring.length === 3 && ratio(f.ring, f.bg) < 3).map((f) => `${f.text}: ${ratio(f.ring, f.bg).toFixed(2)}:1`)
+  check('рамка фокуса у строк услуг на светлом — от 3:1', found.some((f) => f.ring) && bad.length === 0, bad.join('; ') || `${found.filter((f) => f.ring).length} рамок`)
+  await ctx.close()
+  const c2 = await b.newContext()
+  for (const path of ARTICLE_PAGES.filter((x) => x !== 'stati/')) {
+    const html = await (await c2.request.get(BASE + path)).text()
+    const n = [...html.matchAll(/<h2[^>]*>([^<]*)<\/h2>/g)].filter((m) => m[1].trim().startsWith('Сколько стоит')).length
+    check(`${path}: «Сколько стоит» — один раздел`, n === 1, `${n}`)
+  }
+  await c2.close()
+}
+
 // Картинки для мессенджеров (22.10.2026): у каждой страницы, кроме главной,
 // своя картинка с её заголовком; файл на месте, 1200 × 630.
 {

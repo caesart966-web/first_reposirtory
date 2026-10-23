@@ -45,10 +45,13 @@ const serviceOf = (slug: string) => {
 // приглашение, а не ещё одна услуга. Затемнение при наведении — только
 // с 640 px: на телефоне наведение «залипает» после касания, и строка
 // без фона получила бы белый текст на светлом листе.
+// Рамка фокуса — accent-600: светлая латунь accent-400 на кремовом фоне
+// раздела давала 2,3:1 при норме 3:1 для рамки (разбор Replica 23.10.2026,
+// replica/bugs.md, B01; стережёт test-site.mjs).
 const CARD =
-  'group relative flex flex-col border-b border-neutral-300 py-5 pr-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 sm:h-full sm:min-h-[13rem] sm:rounded-3xl sm:border-0 sm:bg-neutral-50 sm:p-7 sm:transition-colors sm:duration-700 sm:ease-silk sm:hover:bg-neutral-950 sm:focus-visible:bg-neutral-950 sm:focus-visible:ring-0 lg:min-h-[14.5rem]'
+  'group relative flex flex-col border-b border-neutral-300 py-5 pr-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 sm:h-full sm:min-h-[13rem] sm:rounded-3xl sm:border-0 sm:bg-neutral-50 sm:p-7 sm:transition-colors sm:duration-700 sm:ease-silk sm:hover:bg-neutral-950 sm:focus-visible:bg-neutral-950 sm:focus-visible:ring-0 lg:min-h-[14.5rem]'
 const CARD_DARK =
-  'group relative mt-4 flex h-full flex-col rounded-3xl bg-accent-950 p-6 pr-14 transition-colors duration-700 ease-silk hover:bg-neutral-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 sm:mt-0 sm:min-h-[13rem] sm:p-7 lg:min-h-[14.5rem]'
+  'group relative mt-4 flex h-full flex-col rounded-3xl bg-accent-950 p-6 pr-14 transition-colors duration-700 ease-silk hover:bg-neutral-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-600 sm:mt-0 sm:min-h-[13rem] sm:p-7 lg:min-h-[14.5rem]'
 
 // Стрелка: на компьютере — внизу справа под текстом; на телефоне — справа
 // от строки, по центру. С 01.10.2026 без кружка (правило кружков —
