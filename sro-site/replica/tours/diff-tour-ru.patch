@@ -1,0 +1,146 @@
+diff --git a/internal/generate/generate.go b/internal/generate/generate.go
+index 1211509..3bb7fd2 100644
+--- a/internal/generate/generate.go
++++ b/internal/generate/generate.go
+@@ -61,6 +61,7 @@ var languageRules = map[i18n.Lang]string{
+ 	i18n.JA:     "文章は日本語。です・ます調ではなく、短い常体（「〜している」「〜になる」）で書く。",
+ 	i18n.ZH:     "全部文字使用简体中文，用短句，表达直白。代码标识符、文件名、命令和通用技术术语保留原文。中文与英文、数字之间加空格。用中文全角标点，引号用“”，不用日文用词和「」。",
+ 	i18n.ES:     "Escribe todo el texto en español neutro, con frases cortas y claras. Deja sin traducir los identificadores, los nombres de archivo, los comandos y los términos técnicos de uso habitual.",
++	i18n.RU:     "Пиши весь текст по-русски, короткими простыми предложениями. Идентификаторы в коде, имена файлов, команды и общепринятые технические термины оставляй как есть.",
+ 	i18n.ZHHant: "全部文字使用繁體中文，用詞依台灣習慣（程式碼、檔案、資料表、設定）。用短句，表達直白。程式碼識別字、檔名、指令和通用技術術語保留原文。中文與英文、數字之間加空格。用全形標點，引號用「」，不用日文用詞。",
+ }
+ 
+diff --git a/internal/i18n/i18n.go b/internal/i18n/i18n.go
+index 8a16fe7..be4b9b0 100644
+--- a/internal/i18n/i18n.go
++++ b/internal/i18n/i18n.go
+@@ -16,10 +16,11 @@ const (
+ 	// ZHHant is Traditional Chinese, worded for readers in Taiwan (Hong Kong and Macau get it too).
+ 	ZHHant Lang = "zh-Hant"
+ 	ES     Lang = "es"
++	RU     Lang = "ru" // локальная добавка: русский
+ )
+ 
+ // Langs lists the supported languages. It is also the order of the choices.
+-var Langs = []Lang{EN, JA, ZH, ZHHant, ES}
++var Langs = []Lang{EN, JA, ZH, ZHHant, ES, RU}
+ 
+ func (l Lang) Name() string {
+ 	switch l {
+@@ -31,6 +32,8 @@ func (l Lang) Name() string {
+ 		return "繁體中文"
+ 	case ES:
+ 		return "Español"
++	case RU:
++		return "Русский"
+ 	default:
+ 		return "English"
+ 	}
+@@ -635,4 +638,107 @@ var messages = map[Lang]map[string]string{
+ 		"setup.keys":             "↑↓ Elegir   Enter Confirmar   ← Atrás   q Salir",
+ 		"setup.saved":            "Configuración guardada en %s",
+ 	},
++	RU: {
++		"key.back":               "← Назад",
++		"key.next":               "→ Дальше",
++		"key.last":               "Последний шаг",
++		"key.open":               "o Открыть в редакторе",
++		"key.quit":               "q Выйти",
++		"scroll.more":            "▼ Ниже ещё  ↑↓",
++		"scroll.top":             "▲ ↑↓",
++		"chapter":                "Гл. %d  %s",
++		"question":               "Вопрос",
++		"think":                  "Подумайте и нажмите →, чтобы увидеть ответ",
++		"basis.fact":             "Проверено",
++		"basis.inferred":         "Видно из кода",
++		"basis.opinion":          "Взгляд опытного разработчика",
++		"tag.example":            "Пример",
++		"diff.summary":           "diff  +%d −%d",
++		"schema.title":           "Схема",
++		"schema.desc":            "%s применены на %s и на %s",
++		"schema.newTable":        "новая таблица",
++		"change.added":           "добавлено",
++		"change.removed":         "удалено",
++		"change.changed":         "изменено",
++		"change.same":            "без изменений",
++		"schema.column":          "Столбец",
++		"schema.type":            "Тип",
++		"schema.constraints":     "Ограничения",
++		"schema.index":           "индекс",
++		"schema.unique":          "уникальный индекс",
++		"rows.added":             "Зелёные столбцы добавлены этим изменением",
++		"target.branched":        "  (ответвлено от %s)",
++		"target.summary":         "коммитов: %d · файлов изменено: %d (+%d −%d)",
++		"err.fileNotFound":       "Файл не найден: %s (%s)",
++		"err.lineRange":          "Строки вне файла: %s L%d–%d (в файле %d строк)",
++		"err.noDiff":             "Изменение не найдено: %s",
++		"err.noHunk":             "Фрагмент не найден: %s %v",
++		"err.noTable":            "Таблица не найдена: %s",
++		"err.unsafeSQL":          "Не выполнено ради безопасности: %s",
++		"err.migration":          "Не удалось применить миграцию: %s (%v)",
++		"err.schema":             "Не удалось прочитать схему: %v",
++		"editor.copy":            "Открыта копия только для чтения: рабочая папка отличается от %s",
++		"editor.fail":            "Не удалось открыть редактор: %v",
++		"needTTY":                "tour нужно запускать в терминале",
++		"picker.title":           "По какому изменению провести экскурсию?",
++		"picker.uncommitted":     "незакоммиченные изменения",
++		"picker.uncommittedNote": "вместе с незакоммиченными изменениями",
++		"picker.current":         "текущая ветка",
++		"picker.commits":         "коммитов: %d",
++		"picker.cached":          "готово",
++		"picker.advanced":        "Коммит или диапазон: tour <ref>  /  tour <base>..<head>",
++		"picker.info":            "Сравнение с %s · Экскурсии пишет %s (сменить: tour setup)",
++		"picker.keys":            "↑↓ Выбрать   Enter Начать   q Выйти",
++		"picker.empty":           "Нет локальных веток с коммитами, которых нет в %s.",
++		"time.now":               "только что",
++		"time.minutes":           "%d мин назад",
++		"time.hours":             "%d ч назад",
++		"time.days":              "%d дн. назад",
++		"gen.title":              "Пишу экскурсию по %s (от %s)",
++		"gen.reading":            "%s читает код (%s)",
++		"flow.changed":           "изменено",
++		"flow.new":               "новое",
++		"role.core":              "основное",
++		"role.mechanical":        "механическое",
++		"role.test":              "проверки",
++		"role.config":            "настройки",
++		"role.docs":              "документация",
++		"err.noChanges":          "нет изменённых файлов",
++		"key.ask":                "? Спросить",
++		"asked":                  "Ваш вопрос",
++		"ask.title":              "Вопрос об этом шаге",
++		"ask.help":               "↑↓ выбрать · или напишите свой · Enter спросить · Esc закрыть",
++		"ask.placeholder":        "Напишите вопрос…",
++		"ask.question":           "В:",
++		"ask.answering":          "%s читает код, чтобы ответить (%s)",
++		"ask.added":              "Ответ — следующий шаг ($%.2f)",
++		"ask.notSaved":           "Не удалось сохранить ответ: %v",
++		"ask.failed":             "Не удалось ответить: %s",
++		"ask.canceled":           "отменено",
++		"ask.unavailable":        "Чтобы задавать вопросы, выберите модель в tour setup",
++		"gen.repairing":          "Исправляю ошибки экскурсии (попытка %d из %d, %s)",
++		"gen.files":              "Прочитано файлов: %d",
++		"gen.search":             "поиск: %s",
++		"gen.note":               "Обычно это 2–5 минут. Экскурсия сохраняется, в следующий раз откроется сразу.",
++		"gen.keys":               "q Отменить",
++		"gen.saved":              "Экскурсия сохранена (около $%.2f по ценам API)",
++		"gen.failed":             "Не удалось написать экскурсию",
++		"gen.failKeys":           "q Выйти",
++		"err.noLLM":              "Модель не выбрана. Выберите её в tour setup.",
++		"err.unsupported":        "%s не поддерживается. Выберите другую модель в tour setup.",
++		"err.notRepo":            "Не git-репозиторий: %s",
++		"err.badRef":             "Нет такого коммита или ветки: %s",
++		"err.noBase":             "Не нашлась ветка для сравнения (main, master, ...). Используйте tour <base>..<head>.",
++		"setup.welcome":          "Добро пожаловать в tour. Два коротких выбора перед началом.",
++		"setup.lang":             "Язык",
++		"setup.detected":         "определён по %s",
++		"setup.llm":              "Модель, которая пишет экскурсии",
++		"setup.found":            "найдено",
++		"setup.notFound":         "не установлено",
++		"setup.needsV2":          "нужен OpenCode 2 (это OpenCode 1)",
++		"setup.sendsCode":        "Код репозитория, по которому идёт экскурсия, будет отправлен выбранной модели.",
++		"setup.none":             "Пока нет ни одной доступной модели. Выбрать можно позже: `tour setup`.",
++		"setup.keys":             "↑↓ Выбрать   Enter Подтвердить   ← Назад   q Выйти",
++		"setup.saved":            "Настройки сохранены в %s",
++	},
+ }

@@ -846,6 +846,35 @@ for (const [w, h, mobile] of [[390, 844, true], [820, 1180, true], [1440, 900, f
   await c2.close()
 }
 
+// Поворот планшета при открытой панели «Связаться» (23.10.2026, нашла
+// экскурсия diff-tour по коммиту a11a9de): панель скрыта с 1024 px
+// (lg:hidden), но оставалась открытой — модальный <dialog> делает страницу
+// под собой недоступной, html.sheet-open запирает прокрутку, и страница
+// замирала. Теперь при выходе за 1023 px панель закрывается сразу.
+{
+  const ctx = await b.newContext({ viewport: { width: 820, height: 1180 }, isMobile: true, hasTouch: true })
+  const p = await ctx.newPage()
+  await p.goto(BASE + 'uslugi/nok/', { waitUntil: 'networkidle' })
+  const a = p.locator('main a[href="#contacts"]:not([data-direct])').first()
+  await a.scrollIntoViewIfNeeded()
+  await p.waitForTimeout(400)
+  const box = await a.boundingBox()
+  await p.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2)
+  await p.waitForTimeout(900)
+  const opened = await p.evaluate(() => !!document.querySelector('dialog[open]'))
+  await p.setViewportSize({ width: 1180, height: 820 })
+  await p.waitForTimeout(900)
+  // Прокрутка колёсиком, как у человека: программную прокрутку запертая
+  // страница пропускает, колёсико — нет.
+  const y0 = await p.evaluate(() => scrollY)
+  await p.mouse.move(590, 400)
+  await p.mouse.wheel(0, 600)
+  await p.waitForTimeout(900)
+  const r = await p.evaluate((y) => ({ open: !!document.querySelector('dialog[open]'), locked: document.documentElement.classList.contains('sheet-open'), scrolled: Math.round(scrollY - y) }), y0)
+  check('поворот планшета с открытой панелью: панель закрыта, страница прокручивается', opened && !r.open && !r.locked && r.scrolled > 0, JSON.stringify({ opened, ...r }))
+  await ctx.close()
+}
+
 // Картинки для мессенджеров (22.10.2026): у каждой страницы, кроме главной,
 // своя картинка с её заголовком; файл на месте, 1200 × 630.
 {

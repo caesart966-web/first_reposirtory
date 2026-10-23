@@ -93,8 +93,22 @@ export function ContactSheet({ topic: pageTopic }: { topic: Topic }) {
       // положения панели (за краем экрана), и она возникнет без выезда.
       requestAnimationFrame(() => requestAnimationFrame(() => dialog.setAttribute('data-shown', '')))
     }
+    // Окно стало шире 1023 px при открытой панели (повернули планшет):
+    // панель там скрыта (lg:hidden), но модальный <dialog> оставался открытым
+    // и запирал страницу — ни прокрутки, ни нажатий. Закрываем сразу, без
+    // выезда (23.10.2026, нашла экскурсия diff-tour; стережёт test-site.mjs).
+    const onWide = () => {
+      const dialog = ref.current
+      if (narrow.matches || !dialog?.open) return
+      dialog.removeAttribute('data-shown')
+      dialog.close()
+    }
     document.addEventListener('click', onClick)
-    return () => document.removeEventListener('click', onClick)
+    narrow.addEventListener('change', onWide)
+    return () => {
+      document.removeEventListener('click', onClick)
+      narrow.removeEventListener('change', onWide)
+    }
   }, [pageTopic])
 
   return (
@@ -106,6 +120,13 @@ export function ContactSheet({ topic: pageTopic }: { topic: Topic }) {
       onCancel={(event) => {
         event.preventDefault()
         close()
+      }}
+      // Любое закрытие — наше, браузерное (жест «назад» без недавнего
+      // касания браузер может не дать отменить) или по смене ширины —
+      // снимает блокировку прокрутки; повторное снятие безвредно.
+      onClose={() => {
+        ref.current?.removeAttribute('data-shown')
+        document.documentElement.classList.remove('sheet-open')
       }}
       onClick={(event) => {
         // Касание затемнения приходит самому <dialog>, касания по панели —
