@@ -129,7 +129,7 @@ def sheet4(doc, sh):
                            ((19.25, 13.46, 0), 'Ecoflex Quattro: санитарная 32×4,4 — В1 в баню', 'вторая (20×2,8) — резерв'),
                            ((18.80, 11.10, 0), 'Б1 (ТМ): Т3 от Б1, Т4 к Б1', 'граница с ТМ'),):
             L.shelf(V.P(pt), t, 1.8, sub=sub)
-    fragment(doc, sh, p, 'plan1', 300, 172, 17.60, 9.05, 20.45, 13.90, zr, sysw, title='Топочная 1.6. М 1:25',
+    fragment(doc, sh, p, 'plan1', 302, 172, 16.45, 9.05, 20.45, 13.90, zr, sysw, title='Топочная 1.6. М 1:25',
              marks_floor=1, eqs=('КХ', 'ПРВ', 'КЗП-1'), extra=ex_b, skip=('КХ', 'В1-узел'), leak=1,
              text=lambda pp: (f'{pp.id}: В1 {SHORT.get(pp.dn, pp.dn)} → {target(pp)}' if pp.id.startswith('КХ-')
                               else f'{pp.sys} {SHORT.get(pp.dn, pp.dn)} → {target(pp)}'))
@@ -151,7 +151,7 @@ def sheet4(doc, sh):
     fragment(doc, sh, p, 'plan1', 100, 44, 12.90, 0.0, 20.30, 2.40, (-1.3, 0.5), ('К2',),
              title='Гараж: лоток ЛГ-1, пескоуловитель ПУ-1, выпуск К2-1. М 1:50', extra=ex_g, label=False)
     K = 25
-    sh.notes(24, 132, 200, NOTES4, h=1.8, spacing=1.0)
+    sh.notes(24, 132, 188, NOTES4, h=1.8, spacing=1.0)
     return doc
 
 
