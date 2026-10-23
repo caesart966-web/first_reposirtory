@@ -45,7 +45,7 @@ Not shippable yet: 1 must-have features are not done.
 ## Yours, not in the original (not scored)
 - Смена уровня ответственности как услуга
 - Честно: «допусков СРО нет с 2017 года»
-
+- Кто заполняет документы и разбирает замечания СРО — в вопросах на главной
 
 ## Вывод
 

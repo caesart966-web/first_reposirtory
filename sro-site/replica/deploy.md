@@ -8,9 +8,9 @@ Date: 2026-10-23  Go from user: заливает заказчик сам
 
 ## Preflight
 
-- [x] сквозная проверка `scripts/test-site.mjs` — все проверки зелёные (итог — README, раздел 23.10.2026)
-- [x] контраст надписей на фотографиях `scripts/test-hero-contrast.mjs` — все от 4,5:1
-- [x] axe, WCAG 2.2 AA — 0 нарушений
+- [x] сквозная проверка `scripts/test-site.mjs` — 2102 из 2102
+- [x] контраст надписей на фотографиях `scripts/test-hero-contrast.mjs` — 715 замеров, все от 4,5:1
+- [x] axe, WCAG 2.2 AA и best practice, 9 страниц × 2 ширины — 0 нарушений
 - [x] открытых ошибок S1 и S2 нет (`bugs.md`); B01 и B02 исправлены
 - [x] контраст токенов (`design/tokens.json`) — 0 провалов после правки B01
 - [x] следов других проектов нет (`sweep.py` по `brand.json`: исходники и `dist`)
