@@ -1,0 +1,281 @@
+"""Ведомость объёмов работ И05.09.26-НВК.ВОР в форме Заказчика (Excel, лист «Вариант для импорта»).
+
+Объёмы материалов — из позиций НВК.СО (make_spec_nvk.rows_nvk) по наименованию, земляные работы — из earth()
+того же модуля (траншеи и котлованы по модели). Номера страниц — по тому И05.09.26-НВК: листы 1–8, затем НВК.СО.
+
+python3 spec/make_vor_nvk.py ШАБЛОН.xlsx -> out/nvk/И05.09.26-НВК.ВОР Ведомость объёмов работ.xlsx
+"""
+import copy
+import math
+import os
+import re
+import subprocess
+import sys
+
+import openpyxl
+from openpyxl.styles import Alignment, Border, Side, Font
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+from make_spec_nvk import rows_nvk, earth, OUT, ROOF_OUTLETS  # noqa: E402
+from spec_data import f  # noqa: E402
+
+CODE = 'И05.09.26-НВК'
+VOLUME = 'И05.09.26-НВК Наружные сети водопровода и канализации'
+SHEETS_IN_VOLUME = 8
+SPEC_PDF = os.path.join(OUT, 'И05.09.26-НВК.СО Спецификация.pdf')
+
+ROWS = rows_nvk()
+ITEMS = {r[1]: r for r in ROWS if r[0] == 'item'}
+E = earth()
+
+
+def P(*subs, n=None):
+    out = [k for k, r in ITEMS.items() if all(s in r[2] for s in subs)]
+    assert out, subs
+    if n is not None:
+        assert len(out) == n, (subs, out)
+    return out
+
+
+def q(pos):
+    units = {ITEMS[p][6] for p in pos}
+    assert len(units) == 1, (pos, units)
+    v = sum(ITEMS[p][7] for p in pos)
+    return int(v) if float(v).is_integer() else v
+
+
+def formula(pos):
+    if len(pos) < 2:
+        return ''
+    return ' + '.join(f(ITEMS[p][7], 1) if not float(ITEMS[p][7]).is_integer() else str(ITEMS[p][7])
+                      for p in pos) + f' = {q(pos)}'
+
+
+def rng(pos):
+    return 'поз. ' + ', '.join(map(str, sorted(pos)))
+
+
+def r1(v):
+    return round(v, 1)
+
+
+R = []
+
+
+def S(name):
+    R.append(('section', name))
+
+
+def I(name, pos, sheets=(), note='', unit=None, qty=None, form=None):
+    pos = list(pos)
+    R.append(dict(name=name, unit=unit or ITEMS[pos[0]][6], qty=qty if qty is not None else q(pos),
+                  formula=form if form is not None else formula(pos), pos=pos, sheets=tuple(sheets), note=note))
+
+
+# ====================================================================================== работы
+tr = E['trenches']
+L_all = sum(t[1] for t in tr)
+deep = [(n, Lt, h) for n, Lt, w, h, v in tr if h > 1.5]
+wall = sum(2 * Lt * h for _, Lt, h in deep)
+
+S('Подготовительные работы')
+I('Шурфование вручную у существующих сетей: ДК5-018, выпуски ВК и ЛК (отметки и назначение выпусков)', [], (3, 4, 6, 7),
+  'до начала работ; результаты — проектировщику', unit='м³', qty=r1(E['exc_hand']),
+  form=' + '.join(f(v, 1) for _, v in E['hand']) + f' = {f(E["exc_hand"], 1)}')
+I('Разбивка трасс сетей и колодцев, вынос отметок', [], (3,), 'от осей 1/А дома', unit='м', qty=r1(L_all), form='')
+
+S('Земляные работы (грунт — суглинок по ИГИ)')
+I('Разработка грунта в траншеях и котлованах колодцев экскаватором в отвал', [], (3, 4, 5, 6, 7, 8),
+  'траншея: 0,7 м по дну, общая Др/К2 — 0,9 м', unit='м³', qty=r1(E['exc_tr'] + E['exc_pits']),
+  form=f'траншеи {f(E["exc_tr"], 1)} + котлованы {f(E["exc_pits"], 1)} = {f(E["exc_tr"] + E["exc_pits"], 1)}')
+I('Доработка дна траншей и котлованов вручную до проектных отметок (слой 0,1 м)', [], (4, 5, 6, 7),
+  'в т. ч. у фундаментов и существующих колодцев', unit='м³',
+  qty=r1(sum(t[1] * t[2] * 0.1 for t in tr)), form='')
+I('Крепление стенок траншей глубиной более 1,5 м инвентарными щитами (или откосы по СП 45.13330.2017)', [],
+  (4, 5, 6, 7), ', '.join(n for n, _, _ in deep), unit='м²', qty=r1(wall), form='')
+I('Водоотлив из траншей и котлованов (при появлении воды)', [], (2,), 'по факту, уровень подземных вод 2,3–3,0 м',
+  unit='компл.', qty=1, form='')
+I('Устройство песчаного основания 100 мм и обсыпки 300 мм над трубой с ручным уплотнением, оснований колодцев',
+  P('Песок средней крупности'), (4, 5, 6, 7, 8), 'узлы 4, 6, 8 листа 8')
+I('Устройство щебёночной призмы вокруг дренажа в обёртке из геотекстиля', P('Щебень гранитный'), (5, 6, 8),
+  'геотекстиль — поз. ' + str(P('Геотекстиль')[0]))
+I('Укладка геотекстиля с нахлёстом 0,3 м', P('Геотекстиль'), (8,))
+I('Обратная засыпка траншей и пазух местным грунтом без камней слоями 0,2–0,3 м с уплотнением', [], (2, 8),
+  'под проездами — песком на всю глубину, Купл ≥ 0,95', unit='м³', qty=r1(E['back']),
+  form=f'{f(E["exc"], 1)} − {f(E["away"], 1)} = {f(E["back"], 1)}')
+I('Погрузка и вывоз лишнего грунта (объём песка, щебня, труб и колодцев)', [], (), '', unit='м³',
+  qty=r1(E['away']), form='')
+
+S('Водопровод В1 (ввод) и подводка полива')
+I('Прокладка трубопровода ПЭ 100 SDR11 32×3,0 на глубине не менее 1,6 м с соединением электросварными муфтами и '
+  'отводами', P('32×3,0') + P('Муфта электросварная ПЭ 100 SDR11 Ø32') + P('Отвод электросварной'), (3, 7, 8),
+  'повороты 45° — изгибом трубы', unit='м', qty=q(P('32×3,0')), form='')
+I('Прокладка подводки полива ПЭ 100 SDR11 25×2,3 с компрессионными фитингами', P('25×2,3') +
+  P('Муфта компрессионная'), (3, 7), 'уклон 0,01 к КП-1', unit='м', qty=q(P('25×2,3')), form='')
+I('Установка крана шарового подземного с телескопическим штоком и ковером на бетонной подушке',
+  P('Кран шаровой подземный') + P('Ковер малый'), (3, 7), unit='шт.', qty=1, form='')
+I('Протаскивание трубы В1 в футляре ПНД Ø110 под крыльцом 1.6', P('Футляр из трубы ПНД'), (7,))
+I('Изоляция подъёма ввода скорлупой ППУ с монтажом греющего кабеля', P('Скорлупа ППУ') + P('Кабель нагревательный'),
+  (7, 8), 'подключение кабеля — ЭОМ', unit='м', qty=q(P('Скорлупа ППУ')), form='')
+I('Установка колодца полива КП-1 Ø400 с кранами полива и слива', P('Колодец полимерный Ø400') +
+  P('Кран шаровой Ду 20') + P('Кран шаровой спускной'), (3, 7, 8), unit='шт.', qty=1, form='')
+I('Подключение к выпуску поселкового водопровода от ВК217', [], (3, 7), 'по ТУ, с допуском ООО «Лика»',
+  unit='шт.', qty=1, form='')
+
+S('Канализация бытовая К1')
+k1pipe = [k for k in P('Труба ПП гофрированная двухслойная SN8 Ø110 с раструбом') if 'выпуски' in ITEMS[k][8]]
+I('Прокладка трубопроводов ПП SN8 Ø110 (выпуски) на песчаном основании', k1pipe + P('Отвод ПП Ø110, 15°'), (3, 4),
+  unit='м', qty=ITEMS[k1pipe[0]][7], form='')
+I('Прокладка трубопроводов ПП SN8 Ø160 (сеть бани) на песчаном основании', P('SN8 Ø160'), (3, 4))
+I('Установка колодцев канализационных полимерных Ø630 с лотком, шахтой и люком', P('Ø630'), (3, 4, 8))
+I('Врезка в существующий колодец ДК5-018: алмазное бурение отверстий в ж/б стенке, установка манжет, заделка, '
+  'устройство лотков-водосливов', P('ж/б колодца Ø110')[:1] + P('ж/б колодца Ø160'), (3, 4, 8), 'узел 3 листа 8',
+  unit='шт.', qty=2, form='')
+
+S('Ливневая канализация К2. Колодец КЛ-1')
+k2pipe = [k for k in P('Труба ПП гофрированная двухслойная SN8 Ø110 с раструбом') if 'кольца' in ITEMS[k][8]]
+I('Прокладка трубопроводов ПП SN8 Ø110 (кольца К2 дома и бани, транзит) с фасонными частями в общей траншее с '
+  'дренажом', k2pipe + P('Отвод ПП Ø110, 45°') + P('Тройник ПП Ø110, 90°') + P('Тройник ПП Ø110 косой'), (3, 5, 6, 8),
+  'выше дренажа на 0,235 м (узел 8)', unit='м', qty=ITEMS[k2pipe[0]][7], form='')
+I('Подключение выпусков стояков водостоков к кольцам К2 (отводы 45°, косые тройники)', P('Тройник ПП Ø110 косой'),
+  (5, 6, 8), f'ориентировочно {ROOF_OUTLETS} шт. — по привязке воронок', unit='шт.', qty=ROOF_OUTLETS, form='')
+I('Установка футляров Ø160 в край плиты для выпусков водостоков', P('Футляр (гильза)'), (8,),
+  'при бетонировании (КР)')
+I('Монтаж колодца КЛ-1 из сборных ж/б элементов (днище, кольца, плита, горловина, люк, скобы)',
+  P('Плита днища') + P('Кольцо стеновое') + P('Плита перекрытия') + P('Люк чугунный') + P('Скобы ходовые'),
+  (3, 6, 8), 'узел 2 листа 8', unit='шт.', qty=1, form='')
+I('Наружная гидроизоляция колец КЛ-1 битумной мастикой в 2 слоя', P('Мастика битумная'), (8,))
+I('Устройство вводов и выпуска КЛ-1: манжеты, обратный клапан на дренаже, решётка-корзина',
+  P('ж/б колодца Ø110')[1:] + P('ж/б колодца Ø63') + P('Клапан обратный канализационный') + P('Решётка-корзина'),
+  (6, 8), unit='компл.', qty=1, form='')
+I('Прокладка выпуска ПЭ 100 SDR17 63×3,8 и подключение к выпуску ЛК электросварной муфтой',
+  P('63×3,8') + P('Муфта электросварная ПЭ 100 Ø63'), (3, 6), 'с допуском ООО «Лика»', unit='м',
+  qty=q(P('63×3,8')), form='')
+
+S('Дренаж Др')
+I('Прокладка дренажных труб перфорированных Ø110 в геотекстиле с уклоном 0,005', P('перфорированная Ø110'),
+  (3, 5, 6, 8))
+I('Прокладка транзитных труб ПП SN8 Ø110 без перфорации', P('(без перфорации)'), (3, 5, 6))
+I('Установка дренажных колодцев Ø315 (шахта, днище, крышка, уплотнители)', P('Колодец дренажный') +
+  P('Ø315 для шахт') + P('Уплотнитель резиновый'), (3, 5, 6, 8), unit='шт.', qty=q(P('Колодец дренажный')), form='')
+
+S('Утепление')
+I('Утепление трубопроводов плитами ЭППС 50 мм на участках малого заглубления', P('Плиты ЭППС'), (4, 6, 8),
+  'узел 6 листа 8')
+
+S('Испытания и сдача')
+water = P('32×3,0') + P('25×2,3')
+I('Гидравлическое испытание трубопроводов В1 давлением 1,0 МПа', water, (2, 7))
+I('Промывка и дезинфекция трубопроводов В1', water, (2, 7))
+grav = P('SN8 Ø160') + P('Труба ПП гофрированная двухслойная SN8 Ø110 с раструбом') + P('63×3,8')
+I('Испытание трубопроводов К1 и К2 наполнением водой до засыпки', grav, (2, 4, 5, 6))
+I('Проверка дренажа проливом водой', P('перфорированная Ø110') + P('(без перфорации)'), (2, 5, 6))
+I('Исполнительная геодезическая съёмка сетей и колодцев до засыпки', [], (2,), '', unit='м', qty=r1(L_all), form='')
+
+NOTES = [
+    f'Объёмы подсчитаны по модели наружных сетей и листам {CODE} (1–8); ссылки даны на позиции спецификации '
+    f'{CODE}.СО. Длины труб — с запасом 10 %, песок и щебень — с запасом 10 %.',
+    'Земляные работы — по траншеям шириной по дну 0,7 м (одна труба) и 0,9 м (общая траншея дренажа и К2) от '
+    'проектной поверхности (планировка у зданий −0,300 — допущение, лист 2); стенки вертикальные, глубже 1,5 м — '
+    'в креплении. При работе с откосами объём разработки и засыпки уточняется.',
+    'Количество фасонных частей подсчитано по модели и уточняется по месту в пределах общего объёма работ; выпуски '
+    f'водостоков ({ROOF_OUTLETS} шт.) — ориентировочно, до привязки воронок Заказчиком.',
+    'Ввод В1, выпуски К1, подводка КХ-8 и выпуск лотка гаража до наружной грани фундамента, стояки водостоков — '
+    'раздел ВК; утеплённая отмостка — КР/АР; питание греющего кабеля — ЭОМ.',
+    'Подключение к поселковым сетям (ДК5-018, выпуски ВК и ЛК) — по техническим условиям и с допуском '
+    'эксплуатирующей организации (ООО «Лика»).',
+]
+
+
+# ====================================================================================== запись в шаблон
+def pos_pages():
+    pos_page = {}
+    xml = subprocess.check_output(['pdftotext', '-bbox', SPEC_PDF, '-']).decode()
+    for k, page in enumerate(re.findall(r'<page .*?</page>', xml, re.S), 1):
+        for x1, y1, w in re.findall(r'<word xMin="([\d.]+)" yMin="([\d.]+)"[^>]*>(\d{1,3})</word>', page):
+            if 56 < float(x1) < 114 and float(y1) > 60:
+                pos_page.setdefault(int(w), k)
+    return pos_page
+
+
+def lines(text, width_chars):
+    return max(1, sum(math.ceil(max(1, len(part)) / width_chars) for part in str(text).split('\n')))
+
+
+def write(tpl, out):
+    pp = pos_pages()
+    missing = [p for it in R if isinstance(it, dict) for p in it['pos'] if p not in pp]
+    assert not missing, missing
+    wb = openpyxl.load_workbook(tpl)
+    ws = wb['Вариант для импорта']
+    sec_style = {c.column: copy.copy(c._style) for c in ws[4]}
+    row_style = {c.column: copy.copy(c._style) for c in ws[5]}
+    for mr in list(ws.merged_cells.ranges):
+        if mr.min_row >= 4:
+            ws.unmerge_cells(str(mr))
+    ws.delete_rows(4, ws.max_row - 3)
+    thin = Side(style='thin')
+    box = Border(left=thin, right=thin, top=thin, bottom=thin)
+    r, n = 4, 0
+    for item in R:
+        if isinstance(item, tuple):
+            ws.cell(r, 1, item[1])
+            for c in range(1, 10):
+                ws.cell(r, c)._style = copy.copy(sec_style[c])
+                ws.cell(r, c).border = box
+            ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=9)
+            ws.row_dimensions[r].height = 15.75
+            r += 1
+            continue
+        n += 1
+        sheets = sorted(set(item['sheets']))
+        spec_pages = sorted({pp[p] for p in item['pos']})
+        refs = []
+        if sheets:
+            refs.append(f'{CODE}, см. лист{"ы" if len(sheets) > 1 else ""} ' + ', '.join(map(str, sheets)))
+        if item['pos']:
+            refs.append(f'{CODE}.СО, {rng(item["pos"])}')
+        pages = sheets + [SHEETS_IN_VOLUME + p for p in spec_pages]
+        qty = item['qty']
+        vals = [str(n), item['name'], item['unit'], qty, item['formula'] or None, '; '.join(refs), VOLUME,
+                ' '.join(map(str, pages)), item['note'] or None]
+        for c, v in enumerate(vals, 1):
+            cell = ws.cell(r, c, v)
+            cell._style = copy.copy(row_style[c])
+            cell.border = box
+            h = 'left' if c in (2, 6, 9) else 'center'
+            cell.alignment = Alignment(horizontal=h, vertical='center', wrap_text=c in (2, 5, 6, 9))
+        ws.row_dimensions[r].height = 15.0 * max(lines(vals[1], 36), lines(vals[5], 32), lines(vals[8] or '', 40),
+                                                 lines(vals[4] or '', 22))
+        r += 1
+    ws.print_title_rows = '2:3'
+    ws.page_setup.orientation = 'landscape'
+    ws.page_setup.fitToWidth = 1
+    ws.page_setup.fitToHeight = 0
+    ws.sheet_properties.pageSetUpPr.fitToPage = True
+    wn = wb.create_sheet('Примечания')
+    wn.column_dimensions['A'].width = 120
+    wn.cell(1, 1, f'Примечания к ведомости объёмов работ {CODE}.ВОР').font = Font(name='Times New Roman', size=11,
+                                                                                 bold=True)
+    for i, t in enumerate(NOTES, 1):
+        c = wn.cell(1 + i, 1, f'{i}. {t}')
+        c.font = Font(name='Times New Roman', size=11)
+        c.alignment = Alignment(wrap_text=True, vertical='top')
+        wn.row_dimensions[1 + i].height = 15.0 * lines(c.value, 115)
+    wb.properties.creator = ''
+    wb.properties.lastModifiedBy = ''
+    wb.properties.title = f'{CODE}.ВОР Ведомость объёмов работ'
+    wb.save(out)
+    return n
+
+
+if __name__ == '__main__':
+    tpl = sys.argv[1]
+    out = os.path.join(OUT, 'И05.09.26-НВК.ВОР Ведомость объёмов работ.xlsx')
+    for it in R:
+        if isinstance(it, dict):
+            print(f'{it["qty"]!s:>7} {it["unit"]:6} {it["name"][:80]} | {it["formula"][:60]}')
+        else:
+            print('==', it[1])
+    print('ok', write(tpl, out), 'строк ->', out)
