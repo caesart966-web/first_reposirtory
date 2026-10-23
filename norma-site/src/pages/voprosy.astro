@@ -79,7 +79,7 @@ const faqSchema = {
 ---
 
 <Base
-  title="Вопросы о СРО: ответы со ссылкой на закон — порог, взносы, НРС"
+  title="Вопросы о СРО: ответы со ссылкой на закон — порог, взносы, выход"
   description={`${count} о членстве в СРО с короткими ответами: кому нужна СРО, порог 10 млн ₽, субподряд, взносы и компенсационный фонд, специалисты НРС, выход и исключение. У каждого ответа — статья закона.`}
   breadcrumbs={[
     { label: 'Главная', url: href('/') },
@@ -118,7 +118,7 @@ const faqSchema = {
                     <blockquote>
                       <p>«{a.quote.text}»</p>
                     </blockquote>
-                    <figcaption>Текст нормы · <span class="law">{a.quote.law}</span></figcaption>
+                    <figcaption><span>Текст нормы</span><span class="law">{a.quote.law}</span></figcaption>
                   </figure>
                 )}
                 <div class="qa-foot">
@@ -184,7 +184,15 @@ const faqSchema = {
   }
   .qa-quote blockquote { margin: 0; }
   .qa-quote p { margin: 0; font-family: var(--font-head); font-style: italic; font-size: 15.5px; line-height: 1.6; color: var(--ink); }
-  .qa-quote figcaption { margin-top: 8px; font-size: 13.5px; color: var(--muted); }
+  .qa-quote figcaption {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    margin-top: 10px;
+    font-size: 13.5px;
+    color: var(--muted);
+  }
 
   .qa-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin-top: 2px; }
   .qa-more {

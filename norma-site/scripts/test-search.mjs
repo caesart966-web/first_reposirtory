@@ -117,6 +117,11 @@ const QUERIES = [
   ['словарь терминов сро', '/slovar/'],
   ['вопросы и ответы о сро', '/voprosy/'],
   ['как выбрать компанию для вступления в сро', '/baza-znaniy/kak-vybrat-kompaniyu-dlya-vstupleniya-v-sro/'],
+  ['сро исключили из реестра что делать', '/baza-znaniy/sro-isklyuchili-iz-reestra/'],
+  ['сро для строительного контроля', '/baza-znaniy/stroitelnyy-kontrol-i-sro/'],
+  ['сро на снос здания', '/baza-znaniy/sro-na-snos/'],
+  ['специалиста исключили из реестра', '/baza-znaniy/specialista-isklyuchili-iz-nrs/'],
+  ['обучение по охране труда 805', '/baza-znaniy/obuchenie-ohrana-truda-pp-805/'],
   // Членские взносы (статья 15.10.2026). Запрос «взносы» выше по-прежнему
   // ведёт на «Стоимость»: там все суммы, а статья — о том, как устроен один
   // из платежей.

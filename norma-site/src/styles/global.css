@@ -843,6 +843,29 @@ table.data td.strong { font-weight: 600; }
 ::view-transition-old(site-header) { display: none; }
 @keyframes vt-in { from { opacity: 0; } }
 
+/* ── Микродвижения (23.10.2026, «анимации») ──
+   Только то, что что-то сообщает. (1) Стрелка у ссылки «подробнее»
+   сдвигается на 3 px при наведении — ссылка ведёт дальше. (2) Якорь, на
+   который пришли по ссылке (/voprosy/#porog, /slovar/#nrs — так ссылаются
+   нейросети и поисковики), полторы секунды подсвечен голубой подложкой:
+   человек видит свой ответ, а не начало страницы. Подложка — box-shadow
+   во все стороны, поля и раскладка не двигаются. При «уменьшить движение»
+   общее правило выше сводит оба к мгновенным. */
+.fa-more svg, .gl-more svg, .qa-more svg, .faq-all svg, .card--link .more svg {
+  transition: transform var(--t-fast) var(--ease);
+}
+.fa-more:hover svg, .gl-more:hover svg, .qa-more:hover svg, .faq-all:hover svg,
+.card--link:hover .more svg { transform: translateX(3px); }
+
+[data-anchor]:target { animation: anchor-hl 1.6s var(--ease) 0.15s both; }
+@keyframes anchor-hl {
+  0%, 35% { background: var(--acc-soft); box-shadow: 0 0 0 14px var(--acc-soft); }
+  100% { background: transparent; box-shadow: 0 0 0 14px transparent; }
+}
+/* Разделы целиком (section[data-anchor]) не подсвечиваются: экран
+   голубого — это не «вот ваш ответ», а вспышка. */
+section[data-anchor]:target { animation: none; }
+
 /* ── Формы ── */
 
 /* align-content: start — иначе поле «уезжает» вниз. Два поля стоят в одной
