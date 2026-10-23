@@ -258,5 +258,24 @@ class TestПрогон(unittest.TestCase):
         self.assertEqual(checko.осталось_пробить(self.прочитать()), set())
 
 
+
+class TestОКВЭДиРегион(unittest.TestCase):
+    """Основной ОКВЭД и регион — из того же ответа Checko, без лишних запросов."""
+
+    def test_оквэд_и_регион(self):
+        info = checko.extract({"Регион": {"Код": "77", "Наим": "Москва"},
+                               "ОКВЭД": {"Код": "41.20", "Наим": "Строительство жилых и нежилых зданий",
+                                         "Версия": "2014"}})
+        self.assertEqual(info["Регион (Checko)"], "Москва")
+        self.assertEqual(info["ОКВЭД основной (Checko)"], "41.20 Строительство жилых и нежилых зданий")
+
+    def test_нет_данных_пусто(self):
+        info = checko.extract({})
+        self.assertEqual((info["Регион (Checko)"], info["ОКВЭД основной (Checko)"]), ("", ""))
+
+    def test_колонки_в_файле(self):
+        for имя in ("Регион (Checko)", "ОКВЭД основной (Checko)"):
+            self.assertIn(имя, checko.CONTACT_COLUMNS)
+
 if __name__ == "__main__":
     unittest.main()
