@@ -188,7 +188,7 @@ def build_runs():
     # воздуховоды блоков К 250×150 (2 этаж)
     for nm, kind, pts in v2.KDUCTS2:
         P3 = [(x, y, 7.33) for x, y in pts]
-        if nm != 'К-7 подача' and nm != 'К-7 возврат':  # возврат К-4…К-6 — к задней стенке блока
+        if nm.endswith('возврат') and nm != 'К-7 возврат':  # возврат К-4…К-6 — к задней стенке блока
             n = nm.split()[0]
             P3.append((P3[-1][0], v2.KU2[n][3], 7.33))
         run(nm, 'Р', P3, rect=(0.25, 0.15), name=f'Воздуховод блока {nm} 250×150', floor=2, clamp=False)
@@ -687,14 +687,20 @@ def terminals_ceiling():
 
 
 def build_floor2_slots():
+    # К-4…К-6: решётки в нижней плоскости подшивки над шкафами П-10, КСД над решёткой, переход у фланца блока
+    low = v2.SOF_LOW
     for kind, xc, n in v2.SLOTS:
         L = v2.slot_L(kind, n)
         x0, y0, x1, y1 = v2.KSD2[(kind, n)]
-        z0 = 7.20 if kind == 'ЩП' else 7.28
-        box(f'{n}-{kind}-КСД', 'Р', (x0, y0, z0, x1, y1, 7.50), 'ksd', name=f'{n}: КСД решётки {kind}', floor=2)
+        box(f'{n}-{kind}-КСД', 'Р', (x0, y0, low + 0.005, x1, y1, low + 0.005 + v2.KSD_H), 'ksd',
+            name=f'{n}: КСД решётки {kind} в подшивке', floor=2)
         what = 'подача' if kind == 'ЩП' else 'возврат'
-        box(f'{n}-{kind}', 'Р', (xc - 0.40, v2.Y_WALL - 0.07, 7.325, xc + 0.40, v2.Y_WALL + 0.07, 7.475), 'grille',
-            name=f'{n}: {kind} 800×150 в стене ({what})', L=L, label=f'{kind} L={L}', floor=2)
+        box(f'{n}-{kind}', 'Р', (xc - 0.40, v2.Y_SLOT - 0.075, low - 0.015, xc + 0.40, v2.Y_SLOT + 0.075, low + 0.005),
+            'grille', name=f'{n}: {kind} 800×150 в подшивке над шкафами ({what})', L=L, label=f'{kind} L={L}', floor=2)
+    for n, (x0, y0, x1, y1) in v2.TRANS2.items():
+        z0, z1 = unit_z(n, 2)
+        box(f'{n}-переход', 'Р', (x0, y0, z0, x1, y1, max(z1, 7.33 + 0.075)), 'ksd',
+            name=f'{n}: переход с фланца блока на 250×150, патрубок Ø100 П1', floor=2)
     for kind, yc in (('ЩП', 11.75), ('ЩВ', 10.00)):
         x0, y0, x1, y1 = v2.KSD2[(kind, 'К-7')]
         L = v2.slot_L(kind, 'К-7')
