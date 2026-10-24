@@ -17,7 +17,7 @@ sys.path.insert(0, HERE)
 from rdbase import new_doc, RDSheet, save_and_pdf, UNDER, HOUSE_AX, BATH_AX  # noqa: E402
 import vk_model as VK  # noqa: E402
 from vk_draw import (CODE_VK, BLD_VK, VK_LIST, VK_TOTAL, setup, finish_layers, PP, VLabels, plan_doc, under_texts,  # noqa
-                     draw_net, vk_fit, longest_seg, fixture_marks, in_box, lev, f1, DN_SHORT, draw_eq, leak_marks)
+                     draw_net, vk_fit, longest_seg, fixture_marks, in_box, lev, f1, DN_SHORT, draw_eq, leak_marks, leak_block)
 
 OUT = os.path.join(ROOT, 'out')
 K = 25
@@ -95,6 +95,8 @@ def fragment(doc, sh, p, under, cx, cy, x0, y0, x1, y1, zr, systems, bld='h', ti
         for f in VK.FITS:
             if f.pipe in pipes and zr[0] <= f.pos[2] <= zr[1] and in_box(V.P(f.pos), box):
                 vk_fit(p, V, f, scale=0.8)
+    if leak is not None:
+        leak_block(L, V, box, bld, leak)
     if marks_floor is not None:
         fixture_marks(p, L, V, box, bld, floor=marks_floor, h=1.8)
     if leak is not None:
@@ -181,12 +183,14 @@ def sheet5(doc, sh):
     def txt(pp):
         dn = f'Ø{pp.dn}' if pp.mat in ('pp', 'ppn') else SHORT.get(pp.dn, pp.dn)
         if pp.sys == 'К1':
-            return f'К1 {dn} от {target(pp)}' if pp.id != 'К1-гараж' else 'К1 Ø110 сборный, i=0,02 → Ст.К1-1'
-        return f'{pp.sys} {dn} → {target(pp)}'
+            src = target(pp).replace('Сифон', 'сифона', 1)
+            return f'К1 {dn} от {src}' if pp.id != 'К1-гараж' else 'К1 Ø110 сборный, i=0,02 → Ст.К1-1'
+        tg = target(pp)
+        return f'{pp.sys} {dn} → {"ШВК-2" if tg == "дом" else tg}'
 
     def ex1(p, L, V, box):
         for pt, t, sub in (((12.97, 8.55, 0), 'Ст.К1-1 Ø110 вниз', 'ревизия +1,000'),
-                           ((19.68, 8.58, 0), 'Ст.К1-1в Ø110 вверх', 'прочистка в начале сборного'),
+                           ((19.68, 8.58, 0), 'Ст.К1-1в Ø110 вверх', 'ревизия в начале сборного'),
                            ((19.10, 8.70, 0), 'В1, Т3, Т4 — в топочную 1.6', 'сквозь стену в гильзах')):
             L.shelf(V.P(pt), t, 1.8, sub=sub)
     fragment(doc, sh, p, 'plan1', 180, 318, 12.45, 6.35, 20.05, 9.00, zr, sysw,
@@ -197,7 +201,7 @@ def sheet5(doc, sh):
     def ex2(p, L, V, box):
         for (x, y), t in (((15.53, 6.88), 'Пс-2 (Т4)'), ((19.73, 7.65), 'Пс-1 (Т4)')):
             L.shelf(V.P((x, y, 0)), t, 1.8)
-    fragment(doc, sh, p, 'plan2', 180, 160, 12.45, 6.35, 20.05, 9.00, zr2, sysw, title='План 2 этажа: с/у 2.9, 2.8. М 1:25',
+    fragment(doc, sh, p, 'plan2', 180, 160, 12.45, 6.35, 20.05, 9.00, zr2, sysw, title='План 2 этажа: с/у 2.8, 2.9. М 1:25',
              marks_floor=2, extra=ex2, text=txt, leak=2)
     sh.notes(344, 400, 236, NOTES5, h=1.9, spacing=1.0)
     return doc
@@ -205,7 +209,7 @@ def sheet5(doc, sh):
 
 NOTES5 = [
     'Сети 2 этажа (кроме коротких подводок в пироге пола у стен 2.8, 2.9) проложены под потолком гаража в подшивном '
-    'потолке (коробе) — ТЗ-1: низ короба не выше +2,900, люки 600×600 у ШВК-2 и у прочистки в начале сборного К1.',
+    'потолке (коробе) — ТЗ-1: низ короба не выше +2,900, люки 600×600 у ШВК-2 и у ревизии в начале сборного К1.',
     'Отметки осей: Т4 — +2,970; магистрали и коллекторы ШВК-2 — +3,050; ряд отводов В1 — +3,170, Т3 — +3,250 (выше '
     'коллекторов, ниже К1); сборный К1 Ø110 — ось от +3,400 у Ст.К1-1в до +3,265 у Ст.К1-1 (i = 0,02), отводы К1 '
     'от приборов — выше рядов водопровода.',
@@ -214,7 +218,7 @@ NOTES5 = [
     'Порядок выходов на коллекторах ШВК-2 согласован с рядами: трубы одной системы не пересекаются, выходы Т3 '
     'отстоят от труб В1 не менее чем на 60 мм; проверка пересечений по 3D-модели — 0 (с ОВ, ТМ и между собой).',
     'Крепление труб PE-Xa под потолком — в лотках или на подвесах с хомутами, шаг — не более 0,5 м (16, 20), '
-    '0,6 м (25, 32); К1 — хомуты под каждым раструбом, не реже 10 диаметров; уклон К1 — не менее 0,02.',
+    '0,6 м (25, 32); К1 — хомуты под каждым раструбом, не реже 10 диаметров; уклон К1: Ø110 — 0,02, Ø50 — 0,03 (П3).',
     'Конденсат кондиционеров К-4…К-6 и К-7 (ОВ) — в сифоны с сухим затвором за инсталляцией 2.9 и у ванны 2.9, '
     'далее в отводы К1.',
     'К1 внутри дома (2 этаж, сборный под потолком гаража, стояк Ст.К1-1) — бесшумные трубы и фасонные части '

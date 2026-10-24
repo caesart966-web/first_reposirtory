@@ -108,7 +108,18 @@ def run(clear=0.010):
     return out
 
 
+def clean_check():
+    """Шаг прочисток на сборных К1 в грунте — не более VK.CLEAN_MAX (табл. 18.1); хвост до выпуска — раздел НВК."""
+    out = []
+    for pid, steps in VK.cleanout_steps().items():
+        for i, st in enumerate(steps[:-1]):
+            if st > VK.CLEAN_MAX:
+                out.append(f'{pid}: шаг прочисток {i + 1} = {st:.2f} м > {VK.CLEAN_MAX:.0f} м (табл. 18.1)')
+    return out
+
+
 if __name__ == '__main__':
-    r = run()
+    r = run() + clean_check()
     print('\n'.join(r) if r else '—')
     print(len(r), 'коллизий')
+    sys.exit(1 if r else 0)

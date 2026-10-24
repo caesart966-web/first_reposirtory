@@ -43,11 +43,31 @@ def end_labels(p, L, V, pipes, h=1.7):
     """Концы подводок у приборов: марка прибора, Ø, отметка присоединения."""
     for pp in pipes:
         fx = [s for s in pp.serves if s in VK.FIXT]
-        if len(fx) != 1 or pp.sys not in ('В1', 'Т3'):
+        if not fx or pp.sys not in ('В1', 'Т3'):
             continue
         end = pp.pts[-1]
-        t = f'{pp.sys} {SHORT.get(pp.dn, pp.dn)} → {fx[0]}'
-        L.shelf(V.P(end), t, h, sub=lev(end[2]) if pp.where != 'floor' or True else None)
+        near = min(fx, key=lambda k: math.hypot(VK.FIXT[k].pos[0] - end[0], VK.FIXT[k].pos[1] - end[1]))
+        others = [k for k in fx if k != near]
+        t = f'{pp.sys} {SHORT.get(pp.dn, pp.dn)} → {near}' + (f' ({", ".join(others)})' if others else '')
+        L.shelf(V.P(end), t, h, sub=lev(end[2]))
+    # циркуляция: насос, балансировочный клапан, полотенцесушители
+    pump_done = set()
+    for f in VK.FITS:
+        if f.pipe not in pipes:
+            continue
+        if f.kind == 'pump':
+            mk = [w for w in f.name.split() if w.startswith('Н') and w[1:].isdigit()]
+            L.shelf(V.P(f.pos), f'{mk[0] if mk else "Н"} — насос циркуляционный', h, sub='клапан обратный (П4)')
+        elif f.kind == 'balance':
+            L.shelf(V.P(f.pos), 'Клапан балансировочный Ду15', h, sub='настройка — П4')
+        elif f.kind == 'mvalve':
+            mk = [w for w in f.name.split() if w.startswith('КЭ-')]
+            L.shelf(V.P(f.pos), f'{mk[0] if mk else "КЭ"} — кран с электроприводом', h, sub='защита от протечек')
+        elif f.kind == 'ball' and ' у Пс' in f.name:
+            mk = f.name.split(' у ')[-1]
+            if mk not in pump_done:
+                pump_done.add(mk)
+                L.shelf(V.P(f.pos), f'{mk} — полотенцесушитель (Т4)', h)
 
 
 def water(doc, sh, bld, title):
@@ -73,7 +93,12 @@ def water(doc, sh, bld, title):
     # подписи магистралей
     P = {pp.id: pp for pp in VK.PIPES}
     mains = ['ВВ', 'КХ-4', 'В1-гараж', 'Т3-гараж', 'Т3-1.6', 'Т4-1.6', 'В1-ШВК1', 'Т3-ШВК1', 'Т4-дом', 'КХ-1', 'КХ-3',
-             'КХ-2', 'КХ-6', 'КХ-7', 'КХ-5'] if bld == 'h' else ['В1-баня', 'Т3-Б2', 'Т4-баня', 'В1-Б2', 'В1-ПК-3']
+             'КХ-2', 'КХ-6', 'КХ-7', 'КХ-5', 'КХ-8'] if bld == 'h' else ['В1-баня', 'Т3-Б2', 'Т4-баня', 'В1-Б2', 'В1-ПК-3']
+    SHOWN = {'ВВ': 'Ввод', 'В1-ШВК1': 'В1-ШВК-1', 'Т3-ШВК1': 'Т3-ШВК-1', 'КХ-8': 'КХ-8 (автополив)'}
+    DESC = {'Т3-1.6': 'от Б1', 'Т4-1.6': 'к насосу Н8 и Б1', 'В1-гараж': 'к ШВК-2', 'Т3-гараж': 'к ШВК-2',
+            'В1-ШВК1': 'от ШВК-2 к ШВК-1', 'Т3-ШВК1': 'от ШВК-2 к ШВК-1', 'Т4-дом': 'циркуляция ШВК-1 → Пс-2 → Пс-1',
+            'В1-баня': 'от Ecoflex к ШВК-Б', 'Т3-Б2': 'от Б2 к ШВК-Б', 'Т4-баня': 'к насосу Н9 и Б2',
+            'В1-ПК-3': 'к ПК-3', 'В1-Б2': 'к Б2'}
     for i in mains:
         pp = P[i]
         best = None
@@ -84,10 +109,15 @@ def water(doc, sh, bld, title):
                 best = (Lm, A, B, a)
         Lm, A, B, a = best
         dn = SHORT.get(pp.dn, pp.dn) if pp.mat == 'pex' else pp.label()
-        t = f'{pp.id}: {pp.sys} {dn}'
+        t = f'{pp.sys} {dn} — {DESC[pp.id]}' if pp.id in DESC else f'{SHOWN.get(pp.id, pp.id)}: {pp.sys} {dn}'
         for tt in (0.5, 0.3, 0.7):
             if L.shelf((A[0] + (B[0] - A[0]) * tt, A[1] + (B[1] - A[1]) * tt), t, 1.8, sub=f'ось {lev(a[2])}'):
                 break
+        else:
+            far = [(dx * r, dy * r * 0.8) for r in (45, 55, 70, 85)
+                   for dx, dy in ((1, -1), (-1, -1), (1, 1), (-1, 1), (0.4, -1), (-0.4, -1))]
+            if not L.shelf(((A[0] + B[0]) / 2, (A[1] + B[1]) / 2), t, 1.8, cands=far, sub=f'ось {lev(a[2])}'):
+                print('  !! нет места для подписи', t)
     sh.title((box[0] + box[2]) / 2, box[3] + 6, f'{title}. М 1:{V.K}', h=3.5)
     return p, L, V
 
@@ -104,7 +134,8 @@ NOTES10 = [
 ]
 NOTES11 = [
     'Схема — проекция 3D-модели (фронтальная изометрия). Отметки — оси труб от ±0,000 бани.',
-    'Холодная вода — от КХ-3 дома по санитарной трубе Ecoflex Quattro 32×4,4 (L ≈ 17 м, ОВ лист 14) к ШВК-Б.',
+    'Холодная вода — от КХ-3 дома (25×3,5) по санитарной трубе Ecoflex Quattro 32×4,4 (L ≈ 17 м, ОВ лист 14), '
+    'в бане — 25×3,5 к ШВК-Б; переходы 25/32 — на концах санитарной трубы.',
     'Т4: из конца коллектора Т3 ШВК-Б → Пс-б1.1 → Пс-б1.2 → Пс-б2 → Н9 → клапан обратный → Б2 (П4).',
     'Группа безопасности 6 бар и мембранный бак РБ-Б2 12 л — на подводе В1 к Б2; сброс ГБ — в воронку К1-Б2.',
 ]
@@ -130,28 +161,47 @@ def sewer(doc, sh):
                 if best is None or Lm > best[0]:
                     best = (Lm, A, B, a, b)
             Lm, A, B, a, b = best
+            nm = DISP.get(pp.id, pp.id)
             if pp.sys == 'К1в':
-                t, sub = f'{pp.id} Ø{pp.dn}', f'верх {lev(pp.pts[-1][2])}'
+                t, sub = f'{nm} Ø{pp.dn}', f'верх {lev(pp.pts[-1][2])}'
             elif pp.where in ('ground', 'ceil'):
                 i_ = 0.02 if pp.dn == 110 else 0.03
-                t = f'{pp.id}: Ø{pp.dn}, i={f1(i_, 2)}'
+                t = f'{nm}: Ø{pp.dn}, i={f1(i_, 2)}'
                 sub = f'лоток {lev(pp.pts[0][2] - pp.od / 2)} → {lev(pp.pts[-1][2] - pp.od / 2)}'
             else:
-                t, sub = f'{pp.id}: Ø{pp.dn}', None
+                t, sub = f'{nm}: Ø{pp.dn}', None
             for tt in (0.5, 0.3, 0.7, 0.15):
                 if L.shelf((A[0] + (B[0] - A[0]) * tt, A[1] + (B[1] - A[1]) * tt), t, 1.7, sub=sub):
                     break
         fx = [k for k, f in VK.FIXT.items() if f.bld == bld and f.k1]
+        done = set()
         for k in fx:
-            # начало отвода прибора
-            src = [pp for pp in pipes if k in pp.serves]
-            if not src:
+            # подъём к прибору (верх) или начало отвода прибора — по трубе, обслуживающей меньше всего приборов
+            st = [pp for pp in pipes if pp.id.endswith('-ст') and (k in pp.serves or pp.name.startswith(f'Выпуск от {k} '))]
+            src = [pp for pp in pipes if k in pp.serves and not pp.id.endswith('-ст')]
+            if st:
+                st = min(st, key=lambda pp: len(pp.serves))
+                at, key = st.pts[-1], st.id
+            elif src:
+                br = min(src, key=lambda pp: len(pp.serves))
+                at, key = br.pts[0], br.id
+            else:
                 continue
-            L.shelf(V.P(src[0].pts[0]), k, 1.8, cands=[(4, 4), (-4, 4), (4, -4), (-4, -4), (7, 7), (-7, 7)])
+            if key in done:
+                continue
+            done.add(key)
+            mk = ', '.join(x for x in fx if x == k or (x in getattr(st if st else br, 'serves', []) and x != k))
+            L.shelf(V.P(at), mk, 1.8, cands=[(4, 4), (-4, 4), (4, -4), (-4, -4), (7, 7), (-7, 7), (10, 4), (-10, 4),
+                                            (10, -4), (-10, -4)])
         sh.s.text(f'{title}. М 1:{V.K}', (box[0] + box[2]) / 2, box[3] + 3, h=3.0, align='center')
         res.append((V, L))
     return p
 
+
+DISP = {'К1в-1': 'Ст.К1-1в', 'К1в-б': 'Ст.К1-б', 'К1-сиф14': 'К1 от сифона конденсата (1.4)',
+        'К1-сиф14-ст': 'подъём к сифону конденсата (1.4)', 'К1-сиф29': 'К1 от сифона конденсата К-4…К-6 (2.9)',
+        'К1-сиф29в': 'К1 от сифона конденсата К-7 (2.9)', 'К1-1.6': 'К1-1.6 (Т-1, СМ-1, УМ-4)',
+        'К1-б-ст': 'подъём к трапу Д-б1'}
 
 NOTES12 = [
     'Схемы — проекции 3D-модели (фронтальная изометрия). Отметки — лотки труб; верх вытяжных частей — от '
@@ -160,8 +210,10 @@ NOTES12 = [
     'к Ст.К1-1. Внутри зданий (стояки, вытяжные части, короб гаража, отводы 2 этажа и подъёмы к приборам) — '
     'бесшумные трубы и фасонные части (опросный лист, ВК.СО). Лоток гаража — в К2 (лист 4).',
     'Уклоны: Ø110 — 0,02, Ø50 — 0,03, конденсат Ø32 — не менее 0,02 (П3). Отводы от приборов — с уклоном к сборным.',
-    'Ст.К1-1в, Ст.К1-б — над кровлей на 0,35 м (п. 18.18), с зонтом-флюгаркой не устанавливать (п. 18.21).',
-    'Ревизии (Р) и прочистки (П) — по п. 18.26 и табл. 18.1; у ревизий в коробах — люки 300×400 (ТЗ-1).',
+    'Ст.К1-1в, Ст.К1-б — над кровлей на 0,35 м (п. 18.18), зонт и флюгарку не устанавливать (п. 18.21).',
+    'Ревизии (Р) и прочистки (П) — по п. 18.26 и табл. 18.1: ревизия на стояке Ст.К1-1 — люк 300×400 в коробе, '
+    'ревизия в начале сборного под потолком гаража — люк 600×600 в коробе, прочистки в грунте — люки в полу 300×300 (ТЗ-1).',
+    'СПА бани — слив шлангом в трап Т-б1 Ду100 (не более 1,1 л/с, лист 9); К1-Б2 — сброс группы безопасности Б2 через воронку.',
 ]
 
 if __name__ == '__main__':

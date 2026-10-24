@@ -116,10 +116,17 @@ def vk_fit(p, V, f, scale=0.9):
         p.poly(q, 'ТМ_арматура')
         p.t(m[0], m[1], 'М', 1.3, 'center', 'ТМ_арматура')
         return r
-    if k == 'filter_fine':
+    if k == 'filter_fine':                             # фильтр тонкой очистки: знак фильтра с двумя диагоналями
         f.kind = 'filter'
         r = sym_fit(p, V, f, scale)
         f.kind = 'filter_fine'
+        if r is not False:
+            a, b = TD._seg_of(f)
+            c, pa, pb = V.P(f.pos), V.P(a), V.P(b)
+            d = unit(pa, pb)
+            n = (-d[1], d[0])
+            p.line(c[0] + d[0] * 1.6 - n[0] * 1.1, c[1] + d[1] * 1.6 - n[1] * 1.1,
+                   c[0] - d[0] * 1.6 + n[0] * 1.1, c[1] - d[1] * 1.6 + n[1] * 1.1, 'ТМ_арматура')
         return r
     if k == 'air':
         f.kind = 'vent'
@@ -149,6 +156,8 @@ def vk_fit(p, V, f, scale=0.9):
         p.line(c[0] + n[0] * 1.8, c[1] + n[1] * 1.8, c[0] + n[0] * 1.8 + d[0] * 1.0,
                c[1] + n[1] * 1.8 + d[1] * 1.0, 'ТМ_арматура')
         return True
+    if k == 'revision' and f.name.startswith('Прочистка'):  # прочистка в грунте с выводом к люку в полу — знак П
+        k = 'cleanout'
     if k == 'revision':                                # ревизия: прямоугольник на трубе с буквой Р
         q = [(c[0] - 1.4, c[1] - 1.4), (c[0] + 1.4, c[1] - 1.4), (c[0] + 1.4, c[1] + 1.4), (c[0] - 1.4, c[1] + 1.4)]
         poly_wipe(p, q)
@@ -173,10 +182,23 @@ def vk_fit(p, V, f, scale=0.9):
 UNDER_DY = {'plan1': 0.0, 'plan2': 60.0, 'bath': 120.0, 'roof': 180.0}   # сдвиг подложек в модели, м
 
 
+def strip_revit_dots(doc):
+    """Точки подключений приборов из Revit (красная, синяя, зелёная заливка в блоках сантехники АР) — не ВК,
+    на листах ВК только закрывают стояки и подписи."""
+    for b in doc.blocks:
+        if b.name.startswith('*'):
+            continue
+        for e in list(b):
+            if (e.dxftype() == 'HATCH' and e.dxf.layer == 'A-DETL-GENF' and e.dxf.solid_fill
+                    and e.dxf.get('color', 256) in (1, 5, 96)):
+                b.delete_entity(e)
+
+
 def ensure_underlay(doc, under):
     name = 'АР_' + under
     if name not in doc.blocks:
         blk = add_underlay(doc, UNDER[under], name)
+        strip_revit_dots(doc)
         ref = insert_underlay(doc.modelspace(), blk)
         dy = UNDER_DY.get(under, 0.0) * 1000
         ref.dxf.insert = (ref.dxf.insert[0], ref.dxf.insert[1] + dy, 0)
@@ -341,6 +363,47 @@ class VLabels(Labels):
         return True
 
 
+def leak_block(L, V, box, bld='h', level=1, r=1.6):
+    """Места знаков датчиков протечки — заняты заранее, чтобы марки приборов не ложились на знаки."""
+    for lid, b, lev_, (x, y), place in VK.LEAK:
+        if b != bld or lev_ != level:
+            continue
+        c = V.P((x, y, 0))
+        if in_box(c, box):
+            L.block((c[0] - r, c[1] - r, c[0] + r, c[1] + r))
+
+
+def under_solids(src, V, box):
+    """Сплошные заливки остекления подложки АР (тёмные на листе) — занятые места для полок."""
+    from ezdxf import recover, bbox
+    from underlay import OX, OY
+    sdoc, _ = recover.readfile(src)
+    out = []
+
+    def add(h):
+        if 'GLAZ' not in h.dxf.layer or not h.dxf.solid_fill:
+            return
+        e = bbox.extents([h], fast=True)
+        if not e.has_data:
+            return
+        a = V.P(((e.extmin.x - OX) / 1000, (e.extmin.y - OY) / 1000, 0))
+        b = V.P(((e.extmax.x - OX) / 1000, (e.extmax.y - OY) / 1000, 0))
+        r = (min(a[0], b[0]), min(a[1], b[1]), max(a[0], b[0]), max(a[1], b[1]))
+        if r[2] >= box[0] and r[0] <= box[2] and r[3] >= box[1] and r[1] <= box[3]:
+            out.append(r)
+    for e in sdoc.modelspace():
+        if e.dxftype() == 'HATCH':
+            add(e)
+        elif e.dxftype() == 'INSERT':
+            try:
+                for ve in e.virtual_entities():
+                    if ve.dxftype() == 'HATCH':
+                        add(ve)
+            except Exception:
+                continue
+    return out
+
+
 def under_texts(src, V, box, scale_h=1.0):
     """Прямоугольники надписей подложки АР на листе (номера помещений, марки) — занятые места для полок."""
     from ezdxf import recover
@@ -363,4 +426,4 @@ def under_texts(src, V, box, scale_h=1.0):
         r = (c[0] - w * 0.6, c[1] - hh * 0.8, c[0] + w * 0.6, c[1] + hh * 0.8)
         if box[0] <= c[0] <= box[2] and box[1] <= c[1] <= box[3]:
             out.append(r)
-    return out
+    return out + under_solids(src, V, box)
