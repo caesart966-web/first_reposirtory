@@ -493,7 +493,7 @@ $SKPOLY
   9
 $TDCREATE
  40
-2461336.5623842594
+2461338.3580439813
   9
 $TDUCREATE
  40
@@ -501,7 +501,7 @@ $TDUCREATE
   9
 $TDUPDATE
  40
-2461336.5623842594
+2461338.3580439813
   9
 $TDUUPDATE
  40
@@ -933,11 +933,11 @@ $PSTYLEMODE
   9
 $FINGERPRINTGUID
   2
-{212FA360-4294-4D78-BC4A-52E3D6CA3170}
+{A0C25F3D-A369-4B97-BB04-AC5F4693D8F9}
   9
 $VERSIONGUID
   2
-{FFB20606-5DCF-4BEA-B312-745B8140AFC8}
+{EAE21844-AFF6-4536-8F9B-2BFD7ABADBFA}
   9
 $EXTNAMES
 290
@@ -1327,22 +1327,6 @@ ISM
   0
 CLASS
   1
-WIPEOUTVARIABLES
-  2
-AcDbWipeoutVariables
-  3
-WipeOut
- 90
-0
- 91
-0
-280
-0
-281
-0
-  0
-CLASS
-  1
 WIPEOUT
   2
 AcDbWipeout
@@ -1356,6 +1340,22 @@ WipeOut
 0
 281
 1
+  0
+CLASS
+  1
+ACDBPLACEHOLDER
+  2
+AcDbPlaceHolder
+  3
+ObjectDBX Classes
+ 90
+0
+ 91
+0
+280
+0
+281
+0
   0
 CLASS
   1
@@ -1375,11 +1375,11 @@ ObjectDBX Classes
   0
 CLASS
   1
-ACDBPLACEHOLDER
+WIPEOUTVARIABLES
   2
-AcDbPlaceHolder
+AcDbWipeoutVariables
   3
-ObjectDBX Classes
+WipeOut
  90
 0
  91
@@ -18557,7 +18557,7 @@ AcDbMText
  71
 4
   1
-Решетка щелевая настенная 800×150 с регулированием, каждая — через свою КСД (камера статического давления)
+Решетка щелевая 800×150 с регулированием, каждая — через свою КСД (камера статического давления); 2.3–2.5 — в подшивке над шкафами, 2.7 — в стене
   7
 GOST
   0
