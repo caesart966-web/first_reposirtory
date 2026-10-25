@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>X-PTO — Усадьба «Архангельское»</title>
+<!--
+  Рилс «Усадьба Архангельское»: 1080×1920, 60 кадров в секунду, 40,5 с. Сборка — tools/make-arhangelskoe.py.
+
+  Всё движение считается из времени в window.seek(t): ни одной CSS-анимации, поэтому каждый кадр
+  выходит одинаковым при любой скорости машины, а 60 кадров дают ровное движение без рывков.
+  Отрезки видео — заранее нарезанные кадры (tools/video/reels/arhangelskoe.json, _frames/),
+  seek подставляет нужный и ждёт его декодирования.
+
+  Два голоса в типографике: история усадьбы — антиквой Literata с золотом, X-PTO — гротеском
+  Geologica с фирменным синим. Смены кадров стоят на долях такта музыки (120 ударов, такт — 2 с),
+  акцент оркестра — 34 с, на генподрядчике.
+  Текст — только из сценария заказчика; X-PTO не выдаёт себя за строителя или реставратора:
+  наша часть — исполнительная документация.
+  Нижние ~350 px и правый край в Reels закрывают кнопки — надписи стоят выше и левее.
+-->
+<style>
+  @font-face { font-family: "Display"; src: url("../../assets/fonts/geologica-cyrillic.woff2") format("woff2"); font-weight: 300 800; unicode-range: U+0400-04FF; }
+  @font-face { font-family: "Display"; src: url("../../assets/fonts/geologica-latin.woff2") format("woff2"); font-weight: 300 800; unicode-range: U+0000-03FF, U+2000-206F; }
+  @font-face { font-family: "Text"; src: url("../../assets/fonts/inter-cyrillic.woff2") format("woff2"); font-weight: 300 800; unicode-range: U+0400-04FF; }
+  @font-face { font-family: "Text"; src: url("../../assets/fonts/inter-latin.woff2") format("woff2"); font-weight: 300 800; unicode-range: U+0000-03FF, U+2000-206F; }
+  @font-face { font-family: "Mono"; src: url("../../assets/fonts/mono-cyrillic.woff2") format("woff2"); font-weight: 300 800; unicode-range: U+0400-04FF; }
+  @font-face { font-family: "Mono"; src: url("../../assets/fonts/mono-latin.woff2") format("woff2"); font-weight: 300 800; unicode-range: U+0000-03FF, U+2000-206F; }
+  @font-face { font-family: "Serif"; src: url("reels/arhangelskoe/fonts/literata-cyrillic.woff2") format("woff2"); font-weight: 200 900; unicode-range: U+0400-04FF; }
+  @font-face { font-family: "Serif"; src: url("reels/arhangelskoe/fonts/literata-latin.woff2") format("woff2"); font-weight: 200 900; unicode-range: U+0000-03FF, U+2000-206F; }
+  @font-face { font-family: "Serif"; font-style: italic; src: url("reels/arhangelskoe/fonts/literata-cyrillic-italic.woff2") format("woff2"); font-weight: 200 900; unicode-range: U+0400-04FF; }
+  @font-face { font-family: "Serif"; font-style: italic; src: url("reels/arhangelskoe/fonts/literata-latin-italic.woff2") format("woff2"); font-weight: 200 900; unicode-range: U+0000-03FF, U+2000-206F; }
+
+  :root { --navy: #0b1828; --navy-2: #102640; --accent: #1f6feb; --accent-300: #8ab8ff;
+    --gold: #e2c48d; --gold-2: #c9a46a; --ivory: #fbf6ec; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--navy); }
+  body { font-family: "Text", sans-serif; color: #fff; -webkit-font-smoothing: antialiased; }
+  .stage { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: var(--navy); }
+  .abs { position: absolute; inset: 0; }
+
+  /* ---------- кадры ---------- */
+  .shot { position: absolute; inset: 0; overflow: hidden; opacity: 0; will-change: opacity; }
+  .cam { position: absolute; transform-origin: 50% 50%; will-change: transform; }
+  .cam img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .cam svg.over { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .grade { position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(180deg, rgba(8, 18, 32, .28) 0%, rgba(8, 18, 32, 0) 22%, rgba(8, 18, 32, 0) 34%, rgba(6, 14, 26, .62) 56%, rgba(6, 14, 26, .93) 100%); }
+
+  /* карточка видео поверх размытого кадра (сцена с цифрой) */
+  .blurbg { position: absolute; inset: -120px; background-size: cover; background-position: center;
+    filter: blur(38px) brightness(.42) saturate(1.15); }
+  .card { position: absolute; left: 60px; top: 250px; width: 960px; height: 525px; border-radius: 30px; overflow: hidden;
+    box-shadow: 0 40px 90px rgba(0, 0, 0, .55), 0 0 0 2px rgba(255, 255, 255, .14); }
+  .card img { width: 100%; height: 100%; display: block; object-fit: cover; }
+  .card .chip { position: absolute; left: 26px; top: 24px; font: 700 24px/1 "Mono", monospace; letter-spacing: .14em;
+    padding: 12px 16px; border-radius: 10px; background: rgba(8, 18, 32, .62); color: var(--gold); }
+
+  /* световой блик на сменах */
+  .leak { position: absolute; inset: -20%; pointer-events: none; mix-blend-mode: screen; opacity: 0;
+    background: radial-gradient(ellipse 55% 45% at var(--lx, 30%) var(--ly, 40%), rgba(255, 214, 160, .95), rgba(255, 170, 90, .35) 45%, rgba(255, 170, 90, 0) 75%); }
+  .bloom { position: absolute; inset: 0; pointer-events: none; background: #fff6e6; opacity: 0; }
+  .vignette { position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse 85% 70% at 50% 45%, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, .38) 100%); }
+
+  /* ---------- надписи ---------- */
+  .txt { position: absolute; left: 72px; right: 140px; will-change: transform, opacity, filter; }
+  .txt.center { left: 60px; right: 60px; text-align: center; }
+  .ln { display: block; overflow: hidden; padding: .06em 0 .12em; margin: -.06em 0 -.12em; }
+  .ln > span { display: inline-block; will-change: transform; }
+  .tag { font: 700 30px/1.2 "Mono", monospace; letter-spacing: .2em; text-transform: uppercase; color: var(--gold); text-shadow: 0 2px 12px rgba(0, 0, 0, .7); }
+  .tag.blue { color: var(--accent-300); }
+  .serif { font-family: "Serif", serif; font-weight: 600; letter-spacing: -.005em; }
+  .serif i, .it { font-family: "Serif", serif; font-style: italic; font-weight: 400; }
+  .sans { font-family: "Display", sans-serif; font-weight: 800; letter-spacing: -.02em; }
+  .sans em { font-style: normal; color: var(--accent-300); }
+  .gold { color: var(--gold); }
+  .shadowed { text-shadow: 0 4px 34px rgba(0, 0, 0, .45), 0 1px 3px rgba(0, 0, 0, .35); }
+  .rule { height: 3px; width: 240px; background: linear-gradient(90deg, var(--gold), rgba(226, 196, 141, 0)); transform-origin: 0 50%; }
+  .center .rule { margin: 0 auto; background: linear-gradient(90deg, rgba(226, 196, 141, 0), var(--gold), rgba(226, 196, 141, 0)); width: 360px; transform-origin: 50% 50%; }
+  .chips { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 34px; }
+  .chips span { display: inline-flex; align-items: center; gap: 14px; padding: 16px 24px 16px 20px; border-radius: 999px;
+    font: 600 34px/1 "Text", sans-serif; background: rgba(10, 24, 42, .62); box-shadow: inset 0 0 0 2px rgba(138, 184, 255, .38);
+    backdrop-filter: blur(6px); }
+  .chips span::before { content: ""; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 14px var(--accent); }
+
+  .num { font: 800 400px/0.86 "Display", sans-serif; letter-spacing: -.05em; font-variant-numeric: tabular-nums;
+    background: linear-gradient(180deg, #ffffff 30%, #9cc3ff 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 20px 60px rgba(31, 111, 235, .45)); }
+
+  /* значок в углу на протяжении ролика */
+  .brand { position: absolute; left: 60px; top: 190px; display: flex; align-items: center; gap: 16px; opacity: 0; }
+  .brand svg { width: 58px; height: 58px; color: #fff; filter: drop-shadow(0 2px 10px rgba(0, 0, 0, .5)); }
+  .brand b { font: 800 34px/1 "Display", sans-serif; letter-spacing: .02em; text-shadow: 0 2px 14px rgba(0, 0, 0, .55); }
+
+  /* ---------- заставка и финал ---------- */
+  .scene { position: absolute; inset: 0; background: radial-gradient(ellipse 90% 60% at 50% 40%, var(--navy-2), var(--navy) 70%); opacity: 0; overflow: hidden; }
+  .scene .grid { position: absolute; inset: 0; }
+  .scene .grid i { position: absolute; background: rgba(138, 184, 255, .09); transform-origin: 0 0; }
+  .scene .glow { position: absolute; width: 1200px; height: 1200px; left: -60px; top: 160px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(31, 111, 235, .34), rgba(31, 111, 235, 0) 62%); }
+  .mark { position: absolute; left: 50%; overflow: visible; color: #fff; }
+  .mark path { will-change: transform, opacity; }
+  .word { position: absolute; left: 0; right: 0; text-align: center; font: 800 150px/1 "Display", sans-serif; letter-spacing: .02em; }
+  .word span { display: inline-block; }
+  .slogan { position: absolute; left: 60px; right: 60px; text-align: center; }
+  .slogan .l1 { font: 600 52px/1.2 "Text", sans-serif; }
+  .slogan .l2 { font: 500 44px/1.3 "Text", sans-serif; color: var(--accent-300); margin-top: 10px; }
+  .divider { position: absolute; left: 50%; width: 420px; margin-left: -210px; height: 3px; border-radius: 2px;
+    background: linear-gradient(90deg, rgba(31, 111, 235, 0), var(--accent), rgba(31, 111, 235, 0)); }
+  .contacts { position: absolute; left: 150px; right: 150px; display: flex; flex-direction: column; gap: 26px; }
+  .contacts div { display: flex; align-items: center; gap: 26px; font: 600 50px/1 "Text", sans-serif; }
+  .contacts .ic { width: 80px; height: 80px; border-radius: 22px; flex: none; display: grid; place-items: center;
+    background: rgba(31, 111, 235, .16); box-shadow: inset 0 0 0 2px rgba(138, 184, 255, .32); }
+  .contacts .ic svg { width: 42px; height: 42px; color: var(--accent-300); }
+  .contacts .ic img { width: 56px; height: 56px; }
+  .shine { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; mix-blend-mode: overlay; }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div id="shots"></div>
+  <div class="leak" id="leak"></div>
+  <div class="bloom" id="bloom"></div>
+  <div class="vignette"></div>
+  <div id="texts"></div>
+  <div class="brand" id="brand"><svg viewBox="0 0 64 64"><use href="#xmark"/></svg><b>X-PTO</b></div>
+  <section class="scene" id="intro"></section>
+  <section class="scene" id="final"></section>
+</div>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <g id="xmark">
+      <path fill="#1f6feb" fill-rule="evenodd" d="M27 32 H37 L16 56 H6 Z M30 32 H34 L17.375 51 H13.375 Z"/>
+      <path fill="currentColor" fill-rule="evenodd" d="M48 8 H58 L37 32 H27 Z M46.625 13 H50.625 L34 32 H30 Z"/>
+      <path fill="currentColor" fill-rule="evenodd" d="M6 8 H16 L58 56 H48 Z M13.375 13 H17.375 L50.625 51 H46.625 Z"/>
+    </g>
+  </defs>
+</svg>
+
+<script>
+(function () {
+  'use strict';
+  var W = 1080, H = 1920, DIR = 'reels/arhangelskoe/';
+
+  /* ---------- плавности ---------- */
+  function clamp(x, a, b) { return Math.max(a === undefined ? 0 : a, Math.min(b === undefined ? 1 : b, x)); }
+  function prog(t, a, d) { return clamp((t - a) / d); }
+  var E = {
+    lin: function (x) { return x; },
+    out3: function (x) { return 1 - Math.pow(1 - x, 3); },
+    out5: function (x) { return 1 - Math.pow(1 - x, 5); },
+    in3: function (x) { return x * x * x; },
+    io: function (x) { return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; },
+    sine: function (x) { return -(Math.cos(Math.PI * x) - 1) / 2; },
+    back: function (x) { var c = 1.4; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); }
+  };
+  function lerp(a, b, u) { return a + (b - a) * u; }
+  function pair(v, u) { return Array.isArray(v) ? lerp(v[0], v[1], u) : (v || 0); }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  /* ---------- кадры ----------
+     t0 — начало наплыва, f — его длина, until — когда кадр уже закрыт следующим.
+     Камера едет линейно от t0 до until: постоянная скорость не «спотыкается» на наплывах. */
+  var SHOTS = [
+    { img: 'park-balustrade.jpg', t0: 3.70, f: .6, until: 6.80, mv: { s: [1.20, 1.04], x: [.35, -.15], y: [.2, -.2] } },
+    { img: 'park-axis.jpg',       t0: 6.25, f: .5, until: 9.30, mv: { s: [1.02, 1.08], x: [-.75, .45], y: [0, 0] } },
+    { img: 'rotunda.jpg',         t0: 8.75, f: .5, until: 10.80, mv: { s: [1.28, 1.08], x: [0, 0], y: [1, .1] } },
+    { clip: 'hall',               t0: 10.25, f: .5, until: 12.80, mv: { s: [1.04, 1.10], x: [0, 0], y: [0, 0] } },
+    { img: 'ceiling.jpg',         t0: 12.25, f: .5, until: 14.30, mv: { s: [1.18, 1.10], x: [.35, -.35], y: [0, 0], r: [-2.5, 2.5] } },
+    { clip: 'works',              t0: 13.75, f: .5, until: 15.80, mv: { s: [1.10, 1.03], x: [0, 0], y: [0, 0] } },
+    { img: 'stairs.jpg',          t0: 15.25, f: .5, until: 17.30, mv: { s: [1.04, 1.12], x: [.55, -.25], y: [0, 0] } },
+    { clip: 'finish',             t0: 16.75, f: .5, until: 18.80, mv: { s: [1.03, 1.10], x: [0, 0], y: [0, 0] } },
+    { img: 'belvedere.jpg',       t0: 18.25, f: .5, until: 20.30, mv: { s: [1.06, 1.14], x: [-.5, .3], y: [0, 0] } },
+    { img: 'measure.jpg',         t0: 19.75, f: .5, until: 25.30, mv: { s: [1.06, 1.18], x: [-.6, -.35], y: [.1, .3] }, over: 'measure' },
+    { img: 'office.jpg',          t0: 24.75, f: .5, until: 30.30, mv: { s: [1.16, 1.04], x: [.2, -.2], y: [-.2, .25] } },
+    { card: 'park', bg: 'park-sun.jpg', t0: 29.75, f: .5, until: 34.30, mv: { s: [1.0, 1.06], x: [0, 0], y: [0, 0] } },
+    { img: 'dome.jpg',            t0: 33.88, f: .25, until: 37.40, mv: { s: [1.22, 1.06], x: [-.3, .3], y: [0, 0] }, dim: .5 }
+  ];
+
+  /* ---------- надписи ----------
+     in/out — секунды. Строки выезжают из-под маски, на уходе тают с лёгким размытием. */
+  var TEXTS = [
+    { cls: 'txt center', bottom: 430, in: 4.45, out: 8.35, lines: [
+      { html: 'Усадьба', cls: 'tag', ls: true },
+      { html: '«Архангельское»', cls: 'serif shadowed', size: 98, d: .18 },
+      { rule: true, d: .55 },
+      { html: 'Историческое наследие России', cls: 'it gold shadowed', size: 54, d: .75 } ] },
+    { cls: 'txt', bottom: 430, in: 9.25, out: 13.55, lines: [
+      { html: 'Вековая история.', cls: 'serif shadowed', size: 104 },
+      { html: 'Современные <em>инженерные решения.</em>', cls: 'sans shadowed', size: 70, d: 1.35 } ] },
+    { cls: 'txt', bottom: 400, in: 14.25, out: 19.55, lines: [
+      { html: 'Исполнительная документация', cls: 'tag blue' },
+      { html: 'Комплексное сопровождение исполнительной документации', cls: 'sans shadowed', size: 80, d: .12, words: true },
+      { chips: ['Дворец', 'Два флигеля', 'Отделка', 'Инженерные системы', 'Наружные сети'], d: 1.25 } ] },
+    { cls: 'txt', bottom: 430, in: 20.30, out: 24.55, lines: [
+      { html: 'Выезд на объект', cls: 'tag blue' },
+      { html: 'Сами выезжаем.', cls: 'sans shadowed', size: 96, d: .1 },
+      { html: 'Сами собираем <em>исходные данные.</em>', cls: 'sans shadowed', size: 70, d: 1.0 } ] },
+    { cls: 'txt', bottom: 430, in: 25.30, out: 29.55, lines: [
+      { html: 'Команда X-PTO', cls: 'tag blue' },
+      { html: 'Собственная команда.', cls: 'sans shadowed', size: 92, d: .1 },
+      { html: 'Полный цикл без нагрузки на <em>ПТО заказчика.</em>', cls: 'sans shadowed', size: 64, d: 1.0 } ] },
+    { cls: 'txt center', top: 860, in: 30.25, out: 33.70, id: 'numtxt', lines: [
+      { html: 'Опережаем график сдачи ИД на', cls: 'sans shadowed', size: 58 },
+      { num: true, d: .3 },
+      { html: 'месяца', cls: 'sans shadowed', size: 96, d: 1.25 } ] },
+    { cls: 'txt center', top: 1020, in: 34.30, out: 36.75, lines: [
+      { html: 'Генеральный подрядчик', cls: 'tag' },
+      { rule: true, d: .25 },
+      { html: 'ООО «Строительная<br>Компания Альянс +»', cls: 'serif shadowed', size: 82, d: .35 } ] }
+  ];
+
+  var stage = document.getElementById('stage'), shotsBox = document.getElementById('shots');
+  var CLIPS = {}, shots = [], texts = [], intro = {}, fin = {};
+
+  function cover(w, h, bw, bh) { var k = Math.max(bw / w, bh / h); return { w: w * k, h: h * k }; }
+
+  function buildShot(S) {
+    var sh = el('div', 'shot'), cam = el('div', 'cam'), img = new Image();
+    sh.appendChild(cam);
+    S.el = sh; S.cam = cam; S.imgEl = img;
+    if (S.card) {
+      var c = CLIPS[S.card], bg = el('div', 'blurbg'); bg.style.backgroundImage = 'url(' + DIR + S.bg + ')';
+      cam.style.cssText = 'left:0;top:0;width:' + W + 'px;height:' + H + 'px';
+      cam.appendChild(bg);
+      var card = el('div', 'card'); img.src = frameSrc(c, 0); card.appendChild(img);
+      card.appendChild(el('span', 'chip', 'Архангельское'));
+      sh.appendChild(card); S.cardEl = card; S.clipObj = c;
+      sh.appendChild(el('div', 'abs', '')).style.background = 'linear-gradient(180deg, rgba(8,18,32,0) 40%, rgba(8,18,32,.5) 100%)';
+    } else {
+      var w, h;
+      if (S.clip) { var cl = CLIPS[S.clip]; S.clipObj = cl; w = cl.w; h = cl.h; img.src = frameSrc(cl, 0); }
+      else { img.src = DIR + S.img; w = S.w; h = S.h; }
+      var box = cover(w, h, W, H);
+      S.bw = box.w; S.bh = box.h;
+      cam.style.cssText = 'width:' + box.w + 'px;height:' + box.h + 'px;left:' + (W - box.w) / 2 + 'px;top:' + (H - box.h) / 2 + 'px';
+      cam.appendChild(img);
+      if (S.over === 'measure') cam.appendChild(measureOverlay(S));
+      var g = el('div', 'grade'); sh.appendChild(g);
+      if (S.dim) { var d = el('div', 'abs'); d.style.background = 'rgba(6,14,26,' + S.dim + ')'; sh.appendChild(d); }
+    }
+    shotsBox.appendChild(sh);
+  }
+
+  /* обмер балясины: размерная линия прочерчивается вдоль рулетки */
+  function measureOverlay(S) {
+    var ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('class', 'over'); svg.setAttribute('viewBox', '0 0 960 1280'); svg.setAttribute('preserveAspectRatio', 'none');
+    svg.innerHTML =
+      '<g stroke="#8ab8ff" stroke-width="5" stroke-linecap="round" fill="none" style="filter:drop-shadow(0 0 8px rgba(31,111,235,.9))">' +
+      '<path id="mline" d="M150 372 V 1028" pathLength="1"/>' +
+      '<path id="mt1" d="M120 372 H 205" pathLength="1"/><path id="mt2" d="M120 1028 H 205" pathLength="1"/>' +
+      '<path id="ma1" d="M132 400 L150 372 L168 400" pathLength="1"/><path id="ma2" d="M132 1000 L150 1028 L168 1000" pathLength="1"/></g>' +
+      '<g id="mlab" transform="translate(64 700) rotate(-90)"><rect x="-112" y="-26" width="224" height="52" rx="10" fill="rgba(8,18,32,.72)"/>' +
+      '<text x="0" y="11" text-anchor="middle" font-family="Mono" font-weight="700" font-size="30" letter-spacing="5" fill="#e2c48d">ОБМЕР</text></g>';
+    S.mparts = svg;
+    return svg;
+  }
+
+  function frameSrc(c, i) { return DIR + '_frames/' + c.name + '/' + String(i + 1).padStart(4, '0') + '.jpg'; }
+
+  /* ---------- надписи: сборка ---------- */
+  function buildText(T) {
+    var box = el('div', T.cls); if (T.bottom != null) box.style.bottom = T.bottom + 'px'; if (T.top != null) box.style.top = T.top + 'px';
+    T.el = box; T.parts = [];
+    T.lines.forEach(function (L, k) {
+      var d = L.d || 0;
+      if (L.rule) { var r = el('div', 'rule'); r.style.margin = (box.classList.contains('center') ? '30px auto 26px' : '28px 0 26px'); box.appendChild(r); T.parts.push({ kind: 'rule', n: r, d: d }); return; }
+      if (L.chips) {
+        var cw = el('div', 'chips'); L.chips.forEach(function (c, i) { var s = el('span', '', c); cw.appendChild(s); T.parts.push({ kind: 'chip', n: s, d: d + i * .32 }); });
+        box.appendChild(cw); return;
+      }
+      if (L.num) {
+        var nw = el('div', 'ln'), ns = el('span', 'num', '0,0'); nw.appendChild(ns); nw.style.margin = '18px 0 6px'; box.appendChild(nw);
+        T.parts.push({ kind: 'num', n: ns, d: d }); return;
+      }
+      var ln = el('div', 'ln ' + L.cls); if (L.size) ln.style.fontSize = L.size + 'px'; ln.style.lineHeight = L.size ? '1.06' : '';
+      if (k > 0 && !L.cls.match(/tag/)) ln.style.marginTop = '14px';
+      if (L.cls.match(/tag/)) ln.style.marginBottom = '18px';
+      if (L.words) {
+        // по словам: каждое слово выезжает своим ходом
+        ln.style.overflow = 'visible';
+        L.html.split(' ').forEach(function (w, i) {
+          var m = el('span', ''); m.style.cssText = 'display:inline-block;overflow:hidden;vertical-align:top;padding:.06em 0 .14em;margin:-.06em 0 -.14em';
+          var s = el('span', '', w); s.style.display = 'inline-block'; m.appendChild(s); ln.appendChild(m); ln.appendChild(document.createTextNode(' '));
+          T.parts.push({ kind: 'line', n: s, d: d + i * .09 });
+        });
+      } else {
+        var s = el('span', '', L.html); ln.appendChild(s); T.parts.push({ kind: 'line', n: s, d: d, ls: L.ls });
+      }
+      box.appendChild(ln);
+    });
+    document.getElementById('texts').appendChild(box);
+  }
+
+  /* ---------- заставка и финал ---------- */
+  function buildGrid(host) {
+    var g = el('div', 'grid'), list = [];
+    for (var i = 0; i < 9; i++) { var h = el('i'); h.style.cssText = 'left:0;width:100%;height:2px;top:' + (180 + i * 200) + 'px'; g.appendChild(h); list.push({ n: h, d: i * .05, ax: 'x' }); }
+    for (var j = 0; j < 6; j++) { var v = el('i'); v.style.cssText = 'top:0;height:100%;width:2px;left:' + (90 + j * 180) + 'px'; g.appendChild(v); list.push({ n: v, d: .1 + j * .06, ax: 'y' }); }
+    host.appendChild(g); return list;
+  }
+  function buildMark(host, size, top) {
+    var ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 64 64'); svg.setAttribute('class', 'mark');
+    svg.style.cssText = 'width:' + size + 'px;height:' + size + 'px;margin-left:' + (-size / 2) + 'px;top:' + top + 'px';
+    svg.innerHTML =
+      '<defs><linearGradient id="sh' + top + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/>' +
+      '<stop offset=".5" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>' +
+      '<clipPath id="cp' + top + '"><path d="M27 32 H37 L16 56 H6 Z M48 8 H58 L37 32 H27 Z M6 8 H16 L58 56 H48 Z"/></clipPath></defs>' +
+      '<path class="pc" fill="currentColor" fill-opacity="0" stroke="#fff" stroke-width=".7" pathLength="1" fill-rule="evenodd" d="M6 8 H16 L58 56 H48 Z M13.375 13 H17.375 L50.625 51 H46.625 Z"/>' +
+      '<path class="pa" fill="#1f6feb" fill-rule="evenodd" d="M27 32 H37 L16 56 H6 Z M30 32 H34 L17.375 51 H13.375 Z"/>' +
+      '<path class="pb" fill="currentColor" fill-rule="evenodd" d="M48 8 H58 L37 32 H27 Z M46.625 13 H50.625 L34 32 H30 Z"/>' +
+      '<path class="pc2" fill="currentColor" fill-rule="evenodd" d="M6 8 H16 L58 56 H48 Z M13.375 13 H17.375 L50.625 51 H46.625 Z"/>' +
+      '<g clip-path="url(#cp' + top + ')"><rect class="sweep" x="-40" y="-10" width="22" height="90" fill="url(#sh' + top + ')" transform="rotate(25)"/></g>';
+    host.appendChild(svg);
+    return { svg: svg, a: svg.querySelector('.pa'), b: svg.querySelector('.pb'), c: svg.querySelector('.pc'), c2: svg.querySelector('.pc2'), sweep: svg.querySelector('.sweep') };
+  }
+  function buildWord(host, text, top, size) {
+    var w = el('div', 'word'); w.style.top = top + 'px'; if (size) w.style.fontSize = size + 'px';
+    var spans = text.split('').map(function (ch) { var s = el('span', '', ch); w.appendChild(s); return s; });
+    host.appendChild(w); return spans;
+  }
+
+  function buildIntro() {
+    var host = document.getElementById('intro');
+    host.appendChild(el('div', 'glow'));
+    intro.grid = buildGrid(host);
+    intro.mark = buildMark(host, 360, 470);
+    intro.word = buildWord(host, 'X-PTO', 900);
+    var sl = el('div', 'slogan', '<div class="ln l1"><span>Исполнительная документация</span></div><div class="ln l2"><span>по всей России</span></div>');
+    sl.style.top = '1120px'; host.appendChild(sl);
+    intro.sl = [sl.querySelector('.l1 span'), sl.querySelector('.l2 span')];
+    var dv = el('div', 'divider'); dv.style.top = '1085px'; host.appendChild(dv); intro.div = dv;
+    intro.host = host;
+  }
+  function buildFinal(C) {
+    var host = document.getElementById('final');
+    host.appendChild(el('div', 'glow'));
+    fin.grid = buildGrid(host);
+    fin.mark = buildMark(host, 250, 330);
+    fin.word = buildWord(host, 'X-PTO', 640, 128);
+    var sl = el('div', 'slogan', '<div class="ln l1"><span>Документальное сопровождение</span></div><div class="ln l1"><span>строительства</span></div>');
+    sl.style.top = '815px'; host.appendChild(sl); fin.sl = [].slice.call(sl.querySelectorAll('span'));
+    var dv = el('div', 'divider'); dv.style.top = '995px'; host.appendChild(dv); fin.div = dv;
+    var globe = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c2.6 2.8 3.9 6 3.9 9.5S14.6 18.7 12 21.5M12 2.5C9.4 5.3 8.1 8.5 8.1 12s1.3 6.7 3.9 9.5"/></svg>';
+    var phone = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M5 3.5h3.2l1.6 4.2-2.1 1.4a11 11 0 0 0 7.2 7.2l1.4-2.1 4.2 1.6V19a2 2 0 0 1-2 2C10.6 21 3 13.4 3 5.5a2 2 0 0 1 2-2z"/></svg>';
+    var ct = el('div', 'contacts');
+    ct.style.top = '1070px';
+    var rows = [
+      [globe, C.site],
+      [phone, C.phone],
+      ['<img src="../../assets/img/icons/telegram.png" alt="">', C.tg]
+    ];
+    fin.rows = rows.map(function (r) { var d = el('div', '', '<span class="ic">' + r[0] + '</span><span>' + r[1] + '</span>'); ct.appendChild(d); return d; });
+    host.appendChild(ct);
+    fin.host = host;
+  }
+
+  /* ---------- кадр в момент t ---------- */
+  function animGrid(list, t, t0) {
+    list.forEach(function (g) {
+      var u = E.out3(prog(t, t0 + g.d, 1.1));
+      g.n.style.transform = g.ax === 'x' ? 'scaleX(' + u + ')' : 'scaleY(' + u + ')';
+    });
+  }
+  function animMark(m, t, t0, k) {
+    k = k || 1;
+    var uc = E.io(prog(t, t0, .8 * k));                       // контур «\» прочерчивается
+    m.c.style.strokeDasharray = '1'; m.c.style.strokeDashoffset = String(1 - uc);
+    m.c.style.opacity = String(1 - prog(t, t0 + .9 * k, .3));
+    var uf = E.out3(prog(t, t0 + .55 * k, .45 * k));          // «\» заливается
+    m.c2.style.opacity = String(uf);
+    var ua = E.back(prog(t, t0 + .5 * k, .7 * k)), ub = E.back(prog(t, t0 + .65 * k, .7 * k));
+    m.a.style.transform = 'translate(' + (-26 * (1 - ua)) + 'px,' + (26 * (1 - ua)) + 'px)';
+    m.a.style.opacity = String(clamp(prog(t, t0 + .5 * k, .25)));
+    m.b.style.transform = 'translate(' + (26 * (1 - ub)) + 'px,' + (-26 * (1 - ub)) + 'px)';
+    m.b.style.opacity = String(clamp(prog(t, t0 + .65 * k, .25)));
+    var us = E.io(prog(t, t0 + 1.25 * k, .7));                // блик по знаку
+    m.sweep.setAttribute('x', String(-40 + us * 110));
+    var pop = prog(t, t0 + 1.15 * k, .5), sc = 1 + .06 * Math.sin(pop * Math.PI);
+    m.svg.style.transform = 'scale(' + sc + ')';
+    m.svg.style.filter = 'drop-shadow(0 0 ' + (10 + 40 * Math.sin(pop * Math.PI)) + 'px rgba(31,111,235,.55))';
+  }
+  function animWord(spans, t, t0) {
+    spans.forEach(function (s, i) {
+      var u = E.out5(prog(t, t0 + i * .07, .7));
+      s.style.opacity = String(u);
+      s.style.transform = 'translateY(' + (70 * (1 - u)) + 'px)';
+      s.style.filter = 'blur(' + (12 * (1 - u)) + 'px)';
+    });
+  }
+  function animLine(n, t, t0, dur) {
+    var u = E.out5(prog(t, t0, dur || .9));
+    n.style.transform = 'translateY(' + (108 * (1 - u)) + '%)';
+  }
+
+  function seekIntro(t) {
+    var host = intro.host;
+    var out = E.io(prog(t, 3.55, .7));
+    host.style.opacity = String(t < 4.3 ? 1 - out : 0);
+    host.style.transform = 'scale(' + (1 + .08 * out) + ')';
+    host.style.filter = out > 0 ? 'blur(' + (6 * out) + 'px)' : '';
+    if (t >= 4.3) return;
+    animGrid(intro.grid, t, 0);
+    animMark(intro.mark, t, .2, 1);
+    animWord(intro.word, t, 1.15);
+    var ud = E.out3(prog(t, 1.85, .8)); intro.div.style.transform = 'scaleX(' + ud + ')'; intro.div.style.opacity = String(ud);
+    animLine(intro.sl[0], t, 2.0); animLine(intro.sl[1], t, 2.25);
+  }
+  function seekFinal(t) {
+    var host = fin.host, t0 = 36.9;
+    var u = E.io(prog(t, t0 - .15, .6));
+    host.style.opacity = String(u);
+    host.style.transform = 'scale(' + (1.06 - .06 * u) + ')';
+    if (u <= 0) return;
+    animGrid(fin.grid, t, t0 - .2);
+    animMark(fin.mark, t, t0, .8);
+    animWord(fin.word, t, t0 + .75);
+    var ud = E.out3(prog(t, t0 + 1.3, .7)); fin.div.style.transform = 'scaleX(' + ud + ')'; fin.div.style.opacity = String(ud);
+    fin.sl.forEach(function (s, i) { animLine(s, t, t0 + 1.1 + i * .15); });
+    fin.rows.forEach(function (r, i) {
+      var v = E.out5(prog(t, t0 + 1.55 + i * .18, .8));
+      r.style.opacity = String(v); r.style.transform = 'translateX(' + (-60 * (1 - v)) + 'px)';
+    });
+  }
+
+  function seekShots(t) {
+    var waits = [];
+    SHOTS.forEach(function (S, idx) {
+      var vis = t >= S.t0 && t < S.until;
+      S.el.style.display = vis ? '' : 'none';
+      if (!vis) return;
+      var fi = E.sine(prog(t, S.t0, S.f));
+      S.el.style.opacity = String(idx === 0 ? fi : fi);
+      var u = prog(t, S.t0, S.until - S.t0), c = S.mv;
+      var s = pair(c.s, u), r = pair(c.r, u);
+      if (S.card) {
+        S.cam.style.transform = 'scale(' + s + ')';
+        var ci = E.out5(prog(t, S.t0 + .1, 1.0));
+        S.cardEl.style.transform = 'translateY(' + (80 * (1 - ci)) + 'px) scale(' + (.94 + .06 * ci) + ')';
+      } else {
+        var ex = (S.bw * s - W) / 2, ey = (S.bh * s - H) / 2;
+        S.cam.style.transform = 'translate(' + (-pair(c.x, u) * ex) + 'px,' + (-pair(c.y, u) * ey) + 'px) scale(' + s + ') rotate(' + r + 'deg)';
+      }
+      if (S.clipObj) {
+        var cl = S.clipObj, n = cl.frames, i = Math.round((t - cl.at) * 60);
+        i = Math.max(0, Math.min(n - 1, i));
+        var src = frameSrc(cl, i);
+        if (S.imgEl.getAttribute('src') !== src) { S.imgEl.src = src; waits.push(S.imgEl.decode().catch(function () {})); }
+      }
+      if (S.mparts) {
+        var m = S.mparts, ul = E.io(prog(t, 20.55, 1.1));
+        m.querySelector('#mline').style.strokeDasharray = '1'; m.querySelector('#mline').style.strokeDashoffset = String(1 - ul);
+        ['#mt1', '#ma1'].forEach(function (q) { var p = m.querySelector(q); p.style.strokeDasharray = '1'; p.style.strokeDashoffset = String(1 - E.out3(prog(t, 20.45, .4))); });
+        ['#mt2', '#ma2'].forEach(function (q) { var p = m.querySelector(q); p.style.strokeDasharray = '1'; p.style.strokeDashoffset = String(1 - E.out3(prog(t, 21.5, .4))); });
+        var ll = E.out3(prog(t, 21.3, .5)); m.querySelector('#mlab').style.opacity = String(ll);
+        m.style.opacity = String(1 - prog(t, 24.4, .5));
+      }
+    });
+    return waits;
+  }
+
+  function seekTexts(t) {
+    TEXTS.forEach(function (T) {
+      var vis = t >= T.in - .05 && t < T.out + .6;
+      T.el.style.display = vis ? '' : 'none';
+      if (!vis) return;
+      var q = E.in3(prog(t, T.out, .5));
+      T.el.style.opacity = String(1 - q);
+      T.el.style.transform = 'translateY(' + (-36 * q) + 'px)';
+      T.el.style.filter = q > 0 ? 'blur(' + (10 * q) + 'px)' : '';
+      T.parts.forEach(function (P) {
+        var a = T.in + P.d;
+        if (P.kind === 'line') {
+          animLine(P.n, t, a, 1.0);
+          if (P.ls) P.n.style.letterSpacing = (0.2 + .3 * (1 - E.out3(prog(t, a, 1.6)))) + 'em';
+        } else if (P.kind === 'rule') {
+          var ur = E.io(prog(t, a, .9)); P.n.style.transform = 'scaleX(' + ur + ')';
+        } else if (P.kind === 'chip') {
+          var uc = E.back(prog(t, a, .6)); P.n.style.opacity = String(clamp(prog(t, a, .25)));
+          P.n.style.transform = 'translateY(' + (40 * (1 - uc)) + 'px) scale(' + (.85 + .15 * uc) + ')';
+        } else if (P.kind === 'num') {
+          var un = E.out5(prog(t, a, 1.5)), v = 1.5 * un;
+          P.n.textContent = v.toFixed(1).replace('.', ',');
+          var up = E.out3(prog(t, a, .5));
+          P.n.style.transform = 'translateY(' + (80 * (1 - up)) + 'px) scale(' + (.8 + .2 * up) + ')';
+          P.n.style.opacity = String(up);
+        }
+      });
+    });
+  }
+
+  /* световые пятна на главных сменах; 34 с — акцент оркестра */
+  var LEAKS = [{ t: 4.0, a: .55, x: 20, y: 30 }, { t: 9.0, a: .3, x: 75, y: 25 }, { t: 14.0, a: .45, x: 80, y: 60 },
+    { t: 20.0, a: .35, x: 15, y: 70 }, { t: 25.0, a: .3, x: 85, y: 30 }, { t: 30.0, a: .4, x: 30, y: 25 }, { t: 37.0, a: .35, x: 50, y: 40 }];
+  function seekLight(t) {
+    var a = 0, x = 50, y = 40;
+    LEAKS.forEach(function (L) { var g = Math.exp(-Math.pow((t - L.t) / .35, 2)) * L.a; if (g > a * .5) { x = L.x + (t - L.t) * 30; y = L.y; } a += g; });
+    var lk = document.getElementById('leak'); lk.style.opacity = String(Math.min(.8, a)); lk.style.setProperty('--lx', x + '%'); lk.style.setProperty('--ly', y + '%');
+    var b = t >= 33.85 ? Math.exp(-(t - 33.92) / .32) * .7 * clamp((t - 33.85) / .07) : 0;
+    document.getElementById('bloom').style.opacity = String(b);
+    var br = document.getElementById('brand'), bu = E.out3(prog(t, 4.6, .8)) * (1 - E.in3(prog(t, 36.3, .5)));
+    br.style.opacity = String(bu * .92); br.style.transform = 'translateX(' + (-30 * (1 - bu)) + 'px)';
+  }
+
+  window.seek = function (t) {
+    seekIntro(t);
+    var w = seekShots(t);
+    seekTexts(t);
+    seekLight(t);
+    seekFinal(t);
+    return Promise.all(w);
+  };
+
+  window.READY = Promise.all([
+    fetch('reels/arhangelskoe.json').then(function (r) { return r.json(); }),
+    fetch('../../data/site.json').then(function (r) { return r.json(); })
+  ]).then(function (res) {
+    var cfg = res[0], site = res[1];
+    cfg.clips.forEach(function (c) { c.frames = Math.round((c.until - c.at) * cfg.fps); CLIPS[c.name] = c; });
+    var dims = SHOTS.filter(function (S) { return S.img; }).map(function (S) {
+      return new Promise(function (ok) { var i = new Image(); i.onload = function () { S.w = i.naturalWidth; S.h = i.naturalHeight; ok(); }; i.src = DIR + S.img; });
+    });
+    return Promise.all(dims).then(function () {
+      SHOTS.forEach(buildShot);
+      TEXTS.forEach(buildText);
+      buildIntro();
+      buildFinal({ site: site.base_url.replace(/^https?:\/\//, ''), phone: site.contacts.phone_display, tg: site.contacts.telegram_display });
+      return document.fonts.ready;
+    }).then(function () { return window.seek(0); });
+  });
+})();
+</script>
+</body>
+</html>
