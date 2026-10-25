@@ -260,7 +260,8 @@ STORM = 'ПП SN8 Ø110 (ГОСТ 32413)'
 
 I_DH = 0.003                                  # дренаж дома: выход в КЛ-1 выше лотка выпуска (0,002 — наименьший)
 Z_S1 = round(H0 - 1.276, 3)                   # лоток К2-Б в Н1: юг — под выпуском К1-1 с зазором
-Z_SA1 = round(Z_S1 + 0.08, 3)                 # лоток К2-А в Н1: север и восток — выше, над транзитом дренажа бани
+Z_SA1 = round(Z_S1 + 0.05, 3)                 # лоток К2-А в Н1: север и восток — выше, над транзитом дренажа бани;
+                                              # +0,05, а не +0,08: ввод В1 проходит над К2-А на 0,4 м (СП 31, 11.48)
 d = DR
 L_DH = math.dist(d['Др-1'].xy, d['Др-2'].xy) + math.dist(d['Др-2'].xy, d['Др-3'].xy) + math.dist(d['Др-3'].xy, KL1.xy)
 Z_DR1 = round(KL_OUT + 0.025 + I_DH * L_DH, 3)   # лоток дренажа в Др-1: выход в КЛ-1 на 0,025 выше выпуска
@@ -341,13 +342,46 @@ KP1.bottom = round(kx8.z[-1] - 0.25, 2)
 GAZEBO = (-2.00, 28.20, 0.80, 31.00)
 KB = (1.10, 28.60)                             # садовая колонка с краном у беседки
 I_KB = 0.003
-kb_pts = [KP1.xy, (KP1.x, 19.50), (KB[0], 19.50), KB]
-z, kb_z = kx8.z[-1], [kx8.z[-1]]
+# трасса: от КП-1 на север, перемычкой y 18,60 между кольцом К2 дома и теплотрассой ОВ (пересекает её под прямым
+# углом, теплотрасса там ниже дренажа), далее по y 19,50 — в 1,5 м от К1-б1 и в 1,56 м от кольца К2 дома
+KB_J, KB_X, KB_Y = 18.60, 18.75, 19.50
+kb_pts = [KP1.xy, (KP1.x, KB_J), (KB_X, KB_J), (KB_X, KB_Y), (KB[0], KB_Y), KB]
+Z_KB0 = 185.90                                 # ось на выходе из КП-1 (подъём внутри колодца от КХ-8н)
+z, kb_z = Z_KB0, [Z_KB0]
 for a_, b_ in zip(kb_pts, kb_pts[1:]):
     z += I_KB * math.dist(a_, b_)
     kb_z.append(round(z, 3))
 kb_line = Pipe('В1-Бс', 'В1', kb_pts, 25, 0.025, 'ПЭ 100 SDR11 25×2,3 (ГОСТ 18599)', kb_z, kind='press',
                note='сезонная подводка к садовой колонке у беседки (от КП-1, уклон 0,003 к КП-1)')
+
+# ====================================================================================== теплотрасса ОВ (внешняя сеть)
+# Uponor Ecoflex Quattro дом — баня (И05.09.26-ОВ, лист 14: трасса ROUTE в sheets/ov_site.py, выход из стены хозблока
+# 1.13 на y 15,80, ввод в баню через южную стену y 24,76). В НВК — только для проверки пересечений и показа на плане.
+# Над К2 пройти нельзя: зазор 0,2 м (СП 124.13330, прил. А; СП 31.13330.2021, 11.48 — в оболочке и санитарная труба)
+# дал бы глубину до верха 0,6 м при наименьшей 0,7 м; между К2 и Др места нет — поэтому на пересечениях с кольцами Др
+# и К2 и транзитом бани теплотрасса проходит ниже дренажа: верх оболочки не выше ECO_TOP.
+ECO_OD = 0.20                                  # оболочка Quattro (типоразмер по каталогу; принят наибольший)
+ECO_TOP = 185.00                               # верх оболочки на пересечениях (≈1,65 м от планировки)
+ECO_IN_TOP = round(PLAN_Z - 0.80, 2)           # у вводов — глубина до верха 0,8 м (ОВ, лист 13, узлы 1, 2)
+ECO_PTS = [(19.25, 15.80), (19.25, 17.30), (19.25, 19.40), (22.232, 19.40), (22.232, 23.45), (22.232, 24.76)]
+eco = Pipe('ТС-ОВ', 'ТС', ECO_PTS, 160, ECO_OD, 'Uponor Ecoflex Quattro (И05.09.26-ОВ, лист 14)',
+           [ECO_IN_TOP - ECO_OD / 2] + [ECO_TOP - ECO_OD / 2] * 4 + [ECO_IN_TOP - ECO_OD / 2], kind='press',
+           note='теплотрасса дом — баня (раздел ОВ): на пересечениях с сетями НВК — ниже дренажа')
+PIPES.remove(eco)
+EXT = [eco]                                    # внешние сети: в проверке пересечений и на плане, не в НВК.СО
+
+
+def cross_s(p, q):
+    """Расстояния s по трубе p до её пересечений в плане с трубой q."""
+    out = []
+    for s0, s1, a, b, *_ in p.segs():
+        for _, _, c, d, *_ in q.segs():
+            x = seg_x(a, b, c, d)
+            if x:
+                out.append(s0 + (s1 - s0) * x[0])
+    return out
+
+
 
 
 # ====================================================================================== проверки
@@ -397,10 +431,11 @@ def seg_x(a, b, c, d):
 
 
 def crossings():
-    """Пересечения труб разных систем в плане: зазор по вертикали (м)."""
+    """Пересечения труб разных систем в плане (и с внешними сетями EXT): зазор по вертикали (м)."""
     res = []
-    for i, p in enumerate(PIPES):
-        for q in PIPES[i + 1:]:
+    allp = PIPES + EXT
+    for i, p in enumerate(allp):
+        for q in allp[i + 1:]:
             if p.trench and p.trench == q.trench:
                 continue
             for s0, s1, a, b, *_ in p.segs():
@@ -415,8 +450,50 @@ def crossings():
                     gap = hi.bottom(s_hi) - lo.top(s_lo)
                     xy = (a[0] + (b[0] - a[0]) * x[0], a[1] + (b[1] - a[1]) * x[0])
                     res.append(dict(up=hi.id, down=lo.id, xy=(round(xy[0], 2), round(xy[1], 2)),
-                                    gap=round(gap, 3), z_up=round(hi.bottom(s_hi), 3), z_dn=round(lo.top(s_lo), 3)))
+                                    gap=round(gap, 3), z_up=round(hi.bottom(s_hi), 3), z_dn=round(lo.top(s_lo), 3),
+                                    s_up=round(s_hi, 2), s_dn=round(s_lo, 2)))
     return res
+
+
+def sleeved(p, s, half):
+    """Труба p в футляре на участке s ± half (за концом трубы — стена здания или колодца — футляр не нужен)."""
+    lo, hi = max(0.0, s - half), min(p.length(), s + half)
+    return any(a <= lo + 1e-6 and hi - 1e-6 <= b for a, b in (p.sleeve or []))
+
+
+def crossing_check():
+    """Нормы на пересечениях: водопровод — канализация (К1, К2) — 0,4 м, водопровод выше; при футляре на 2 м в каждую
+    сторону — 0,2 м (СП 31.13330.2021, 11.48); теплотрасса — до любых сетей 0,2 м (СП 124.13330, прил. А); прочие
+    самотёчные между собой — 0,1 м. Возвращает список нарушений."""
+    by = {p.id: p for p in PIPES + EXT}
+    bad = []
+    for c in crossings():
+        up, dn = by[c['up']], by[c['down']]
+        g = c['gap']
+        sys2 = {up.sys, dn.sys}
+        if 'ТС' in sys2:
+            if g < 0.2:
+                bad.append(f"{up.id} над {dn.id} в {c['xy']}: {g:.3f} < 0,2 (теплотрасса)")
+        elif 'В1' in sys2 and sys2 & {'К1', 'К2'}:
+            w, o = (up, dn) if up.sys == 'В1' else (dn, up)
+            sw = c['s_up'] if w is up else c['s_dn']
+            sl = sleeved(w, sw, 2.0 + o.od / 2)
+            if w is dn and not sl:
+                bad.append(f"{w.id} под {o.id} в {c['xy']}: водопровод ниже канализации без футляра")
+            elif g < 0.2 or (g < 0.4 and not sl):
+                bad.append(f"{up.id} над {dn.id} в {c['xy']}: {g:.3f} м" + (' (футляр есть)' if sl else ' без футляра'))
+        elif g < 0.1:
+            bad.append(f"{up.id} над {dn.id} в {c['xy']}: {g:.3f} < 0,1")
+    return bad
+
+
+# футляры ПНД Ø63 на водопроводе: на всю длину КХ-8н (над К2-А с зазором меньше 0,4 м; к западу от пересечения —
+# фундамент), на В1-Бс от КП-1 до конца перемычки (зона заезда, пересечение транзитов К2-Т и Др-Т, перемычка между
+# кольцом К2 и теплотрассой) и на пересечении с К1-б1 — по 2 м в каждую сторону (СП 31.13330.2021, 11.48)
+kx8.sleeve = [(0.0, round(kx8.length(), 2))]
+_s_jog = sum(math.dist(a_, b_) for a_, b_ in zip(kb_pts[:4], kb_pts[1:4]))
+kb_line.sleeve = [(0.0, round(_s_jog, 2))] + [(round(sx - 2.1, 2), round(sx + 2.1, 2))
+                                              for sx in cross_s(kb_line, k12)]
 
 
 def report():
@@ -437,6 +514,10 @@ def report():
     for c in crossings():
         flag = '' if c['gap'] >= 0.1 else '  <-- МАЛО'
         print(f"  {c['up']} над {c['down']} в {c['xy']}: зазор {c['gap']}{flag}")
+    bad = crossing_check()
+    print('Нормы на пересечениях:', 'OK' if not bad else 'НАРУШЕНИЯ')
+    for b in bad:
+        print('  !!', b)
     dk_in = [(pp.id, z) for pp, z in DK.ins]
     print('ДК5-018: входы', dk_in, 'лоток', DK.bottom, 'перепады', [round(z - DK.bottom, 2) for _, z in dk_in])
     print('Др-2: дом', dA1.z[-1], 'транзит бани', dT.z[-1], '| Н2: дом', round(sA.at(math.dist(S['Н1'], S['Н2']))[2], 3),
@@ -453,7 +534,9 @@ def export():
                     exist=w.exist, drive=w.drive, note=w.note, ins=[(p.id, z) for p, z in w.ins], outs=[(p.id, z) for p, z in w.outs])
                for w in WELLS],
         pipes=[dict(id=p.id, sys=p.sys, pts=p.pts, dn=p.dn, od=p.od, mat=p.mat, z=p.z, i=p.i, kind=p.kind,
-                    L=round(p.length(), 2), ins=p.ins, note=p.note, trench=p.trench) for p in PIPES],
+                    L=round(p.length(), 2), ins=p.ins, note=p.note, trench=p.trench, sleeve=p.sleeve)
+               for p in PIPES],
+        ext=[dict(id=p.id, sys=p.sys, pts=p.pts, od=p.od, mat=p.mat, z=p.z, note=p.note) for p in EXT],
         crossings=crossings(),
     )
     with open(os.path.join(OUT, 'nvk.json'), 'w') as fh:
@@ -464,3 +547,5 @@ def export():
 if __name__ == '__main__':
     report()
     export()
+    if crossing_check():
+        raise SystemExit('НВК: нарушены нормы на пересечениях сетей (см. выше)')

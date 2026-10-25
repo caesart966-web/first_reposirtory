@@ -13,7 +13,7 @@ sys.path.insert(0, ROOT)
 sys.path.insert(0, HERE)
 from rdbase import new_doc, RDSheet, save_and_pdf  # noqa: E402
 import nvk_model as M  # noqa: E402
-from nvk_draw import (CODE_NVK, BLD_NVK, NVK_LIST, NVK_TOTAL, NVK_OUT, setup, finish, plan_view, draw_pipe,  # noqa
+from nvk_draw import (legend_line, CODE_NVK, BLD_NVK, NVK_LIST, NVK_TOTAL, NVK_OUT, setup, finish, plan_view, draw_pipe,  # noqa
                       draw_well, flow_arrow, north_arrow, alev, data, msk, well_r, VLabels, PP, unit, in_box)
 
 OUT = os.path.join(ROOT, 'out')
@@ -76,6 +76,32 @@ def net(p, V, box, L, D, every=40.0):
                 from rdbase import offset_poly
                 for sg in (1, -1):
                     p.pl(offset_poly(pts, sg * 1.3), 'НВК_утепл')
+    # теплотрасса ОВ (внешняя сеть) — двойной линией, как на листе 14 ОВ
+    from nvk_draw import clip_poly
+    from rdbase import offset_poly
+    for e in D.get('ext', []):
+        pts = [V.P((x, y, 0)) for x, y in e['pts']]
+        for part in clip_poly(pts, box):
+            if len(part) < 2:
+                continue
+            for sg in (1, -1):
+                p.pl(offset_poly(part, sg * max(0.35, e['od'] * V.s / 2)), 'НВК_ТС')
+            for a, b in zip(part, part[1:]):
+                L.segs.append((a, b))
+    # футляры на водопроводе — штриховыми линиями вдоль трубы
+    for pp in pipes:
+        mp = M.PIPES[[q.id for q in M.PIPES].index(pp['id'])]
+        for s0, s1 in (mp.sleeve or []):
+            pts, s = [], s0
+            while s <= s1 + 1e-6:
+                q = mp.at(min(s, s1))
+                c_ = V.P((q[0], q[1], 0))
+                if in_box(c_, box):
+                    pts.append(c_)
+                s += 0.2
+            if len(pts) > 1:
+                for sg in (1, -1):
+                    p.pl(offset_poly(pts, sg * 0.9), 'НВК_футляр', ltype='ОВ_ШТРИХ')
     # направление стока
     for pp in pipes:
         if pp['kind'] != 'grav':
@@ -96,13 +122,16 @@ def net(p, V, box, L, D, every=40.0):
                            ((M.vk_end('К1-б')[0], M.vk_end('К1-б')[1]), (0, 1), 'выпуск К1-б (ВК)'),
                            ((20.60, 9.45), (1, 0), 'ввод В1 (ВК)'), ((19.60, 0.10), (0, 1), 'К2-1 лотка гаража (ВК)')):
         c = V.P((x, y, 0))
+        if not in_box(c, box):                         # во фрагменте 1:100 — только свои точки
+            continue
         n = (d[1], -d[0])
         p.line(c[0] - n[0] * 1.8, c[1] - n[1] * 1.8, c[0] + n[0] * 1.8, c[1] + n[1] * 1.8, 'НВК_марки', lw=50)
     # кран на вводе
     vx, vy = M.v1.valve
     c = V.P((vx, vy, 0))
-    p.poly([(c[0] - 1.2, c[1] - 0.8), (c[0] + 1.2, c[1] + 0.8), (c[0] + 1.2, c[1] - 0.8), (c[0] - 1.2, c[1] + 0.8)],
-           'НВК_В1', fill=7)
+    if in_box(c, box):
+        p.poly([(c[0] - 1.2, c[1] - 0.8), (c[0] + 1.2, c[1] + 0.8), (c[0] + 1.2, c[1] - 0.8), (c[0] - 1.2, c[1] + 0.8)],
+               'НВК_В1', fill=7)
     return pipes
 
 
@@ -149,6 +178,8 @@ def main():
             L.shelf(c, f'{nm} (сущ.)', 1.8, sub=sub)
     # подписи участков
     drop = {pid: z - M.DK.bottom for pid, z in [(pp_.id, z_) for pp_, z_ in M.DK.ins]}
+    kbt = [M.PLAN_Z - M.kb_line.top(s_) for s_ in (0.0, M.kb_line.length())]
+    KB_D = (alev(min(kbt), 2), alev(max(kbt), 2))
     LBL = {
         'К1-1н': ('К1 Ø110 ПП SN8, i=0,10, L=3,3 м', f'перепад в ДК5-018 {alev(drop["К1-1н"])} м'),
         'К1-бн': ('К1 Ø110 ПП SN8, i=0,02, L=3,2 м', None),
@@ -163,7 +194,8 @@ def main():
         'ДрБ-1/2': ('Др Ø110 перф. + К2 Ø110, i=0,005', 'вокруг бани'),
         'Др-Т': ('Др и К2 Ø110 — транзит от бани', 'i=0,005, L=6,3 м'),
         'К2-1н': ('К2 Ø110 от лотка гаража', 'утеплить, присоед. к кольцу К2'),
-        'В1-Бс': ('В1 ПЭ 25 от КП-1 к колонке КБ, L=41 м', 'сезонная, i=0,003 к КП-1, гл. 0,7–0,8 м'),
+        'В1-Бс': (f'В1 ПЭ 25 от КП-1 к колонке КБ, L={alev(M.kb_line.length(), 0)} м',
+                  f'сезонная, i=0,003 к КП-1, гл. {KB_D[0]}–{KB_D[1]} м до верха'),
     }
     for pp in pipes:
         if pp['id'] not in LBL:
@@ -189,6 +221,16 @@ def main():
             L.shelf(at, txt, 1.9, sub=sub, cands=cands)
         else:
             L.shelf(at, txt, 1.9, sub=sub)
+    # теплотрасса ОВ и футляры — подписи
+    for e in D.get('ext', []):
+        c = V.P((e['pts'][3][0], (e['pts'][3][1] + e['pts'][4][1]) / 2, 0))
+        L.shelf(c, 'Т1, Т2 — теплотрасса Ecoflex (ОВ, лист 14)', 1.9,
+                sub=f'на пересечениях — ниже Др: верх ≤ {alev(M.ECO_TOP)}', cands=[(8, 6), (8, -6), (10, 10), (-8, 6)])
+    for sx in M.cross_s(M.kb_line, M.k12):
+        q = M.kb_line.at(sx)
+        if L.shelf(V.P((q[0], q[1], 0)), 'В1-Бс над К1-б1 — в футляре', 1.9, sub='ПНД Ø63, по 2 м в стороны',
+                   cands=[(dx, dy) for dy in (-8, -14, -20, 8, 14) for dx in (6, 12, 20, -6, -12)]) is None:
+            print('  !! нет места для подписи футляра над К1-б1')
     # граница участка
     c = V.P((-4.2, 26.0, 0))
     L.shelf(c, 'Граница з/у 50:08:0050209:1600', 1.9, sub='(з/у 19, ул. Лесная)', cands=[(6, 6), (6, -6), (8, 14)])
@@ -239,8 +281,10 @@ def main():
         'существующий выпуск ЛК Ø63.',
         'Утепление — плиты ЭППС 50 мм шириной 1,2 м над трубой, где глубина меньше нормы (п. 6.2.4 '
         'СП 32.13330.2018): выпуск лотка гаража К2-1н; В1 у ввода — в скорлупе ППУ с греющим кабелем (лист 8, узел 1).',
-        'Пересечения: К1 — над Др и К2, В1 и КХ-8 у дома — над Др и К2; зазоры — не менее 0,1 м (листы 4–7). '
-        'Расстояния по горизонтали: В1 — К2 1,56 м, К1 — Др 1,0 м (табл. 12.6 СП 42.13330.2016).',
+        'Пересечения в свету: В1 над К1, К2 — не менее 0,4 м, при меньшем — не менее 0,2 м в футляре ПНД Ø63 по 2 м '
+        'в стороны (СП 31.13330.2021, п. 11.48): КХ-8н — целиком, В1-Бс — от КП-1 до перемычки и над К1-б1; К1 над '
+        f'Др и К2, К2 над Др — не менее 0,1 м. Теплотрасса Ecoflex (ОВ, л. 14) — ниже Др и К2, верх не выше '
+        f'{alev(M.ECO_TOP)}, не менее 0,2 м (СП 124.13330, прил. А). По горизонтали — табл. 12.6 СП 42.13330.2016.',
     ]
     sh.notes(262, yb2 - 8, 214, notes, h=2.0, spacing=1.0)
     # условные обозначения
@@ -249,10 +293,12 @@ def main():
     items = [('НВК_К1', None, 'К1', 'бытовая канализация (проект)'), ('НВК_К2', None, 'К2', 'ливневая канализация'),
              ('НВК_Др', 'ОВ_ШТРИХ', 'Др', 'дренаж'), ('НВК_В1', None, 'В1', 'водопровод'),
              ('НВК_сущ', 'ОВ_ШТРИХ', 'К1', 'существующие поселковые сети'),
-             ('НВК_утепл', None, None, 'утепление ЭППС (контур)')]
+             ('НВК_утепл', None, None, 'утепление ЭППС (контур)'),
+             ('НВК_ТС', None, None, 'теплотрасса Т1, Т2 (раздел ОВ)'),
+             ('НВК_футляр', 'ОВ_ШТРИХ', None, 'футляр ПНД на водопроводе')]
     for i, (lay, lt, mk, t) in enumerate(items):
         yy = ly - 7 - i * 6.0
-        p.pipe([(lx, yy), (lx + 18, yy)], lay, mark=mk, every=18, h=1.6, ltype=lt)
+        legend_line(p, lx, yy, lay, lt, mk)
         p.t(lx + 21, yy, t, 1.8, 'left', 'НВК_текст')
     yy = ly - 7 - len(items) * 6.0
     p.circle(lx + 9, yy, 0, 'НВК_К1', r_paper=1.6, lw=50)
@@ -273,8 +319,8 @@ def main():
     return save_and_pdf(doc, os.path.join(OUT, 'nvk_plan.dxf'))
 
 
-FB = (266.0, 62.0, 466.0, 206.0)               # фрагмент 1: 20 × 14,4 м при М 1:100
-FM = (17.0, 1.4)
+FB = (266.0, 62.0, 466.0, 198.0)               # фрагмент 1: 20 × 13,6 м при М 1:100 (над ним — примечания)
+FM = (17.0, 1.0)
 
 
 def fragment(doc, sh, p, D, V0, box0):
@@ -289,7 +335,8 @@ def fragment(doc, sh, p, D, V0, box0):
     p.t(c[0] - 1.0, c[1] + 1.2, 'Фрагмент 1', 2.2, 'br', 'НВК_марки')
     L = VLabels(p, b)
     # оси 5 и А
-    for nm, (p0, p1), at in (('5', ((20.0, -6.0), (20.0, 8.6)), 'top'), ('А', ((7.0, 0.0), (27.0, 0.0)), 'left')):
+    top_m = FM[1] + (FB[3] - FB[1]) / 2 / 10.0        # верх фрагмента в метрах (М 1:100)
+    for nm, (p0, p1), at in (('5', ((20.0, -6.0), (20.0, top_m)), 'top'), ('А', ((7.0, 0.0), (27.0, 0.0)), 'left')):
         A, B = V.P((p0[0], p0[1], 0)), V.P((p1[0], p1[1], 0))
         p.pl([A, B], 'ТМ_оси', ltype='ОВ_ШП')
         q = B if at == 'top' else A
@@ -333,7 +380,7 @@ def fragment(doc, sh, p, D, V0, box0):
     dk = V.P((9.42, -3.85, 0))
     dim_v(p, ax5[1], kl[1], b[2] - 6, txt='2800')
     dim_v(p, ax5[1], dk[1], b[0] + 10, txt='3850')
-    p.t(cx, FB[3] + 4.0, 'Фрагмент 1. Южная часть участка. М 1:100', 2.8, 'center', 'НВК_текст')
+    p.t(FB[0], FB[3] + 4.0, 'Фрагмент 1. Южная часть участка. М 1:100', 2.8, 'left', 'НВК_текст')   # правее — кружок оси 5
 
 
 if __name__ == '__main__':
