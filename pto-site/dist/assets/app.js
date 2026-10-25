@@ -10,7 +10,7 @@ try { window.ym(Number(id), 'reachGoal', name); } catch (e) { /* счётчик 
 var CFG = window.SITE_CONFIG || {};
 document.addEventListener('click', function (e) {
 var a = e.target.closest && e.target.closest('a[href]');
-if (!a) return;
+if (!a || a.closest('.share')) return;
 var href = a.getAttribute('href') || '';
 if (href.indexOf('tel:') === 0) window.xptoGoal('telefon');
 else if (href.indexOf('mailto:') === 0) window.xptoGoal('pochta');
