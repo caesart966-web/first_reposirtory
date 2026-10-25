@@ -18,6 +18,7 @@
 Возвращает код 1, если что-то не так, — поэтому годится для проверки
 при выкладке: сломанная сборка не уедет на сайт.
 """
+import html as html_lib
 import re
 import sys
 from pathlib import Path
@@ -78,8 +79,11 @@ def check_meta(html: str, page: Path, seen: dict) -> None:
         fail(rel(page), "нет описания страницы (description)")
     else:
         d = desc.group(1).strip()
-        if len(d) > 200:
-            fail(rel(page), f"описание длиннее 200 знаков ({len(d)})")
+        # Норма аудиторов — 1000 px строки выдачи; главная в 162 знака дала 1090 px
+        # (Seobility, 25.10.2026). 140 знаков — с запасом под широкие буквы.
+        n = len(html_lib.unescape(d))
+        if n > 140:
+            fail(rel(page), f"описание длиннее 140 знаков ({n}) — в выдаче обрежется")
         if d in seen.setdefault("desc", {}):
             fail(rel(page), f"описание повторяет {seen['desc'][d]}")
         seen["desc"][d] = rel(page)

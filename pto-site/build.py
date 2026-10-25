@@ -236,7 +236,7 @@ def poster_img(site: Site, rel: str, css: str) -> str:
     size = image_size(rel)
     dims = f' width="{size[0]}" height="{size[1]}"' if size else ""
     return (f'<picture>{source}<img class="{css}" src="{site.url(rel)}"{dims}'
-            f' alt="" fetchpriority="high" decoding="async"></picture>')
+            f' alt="Исполнительная документация на объекте" fetchpriority="high" decoding="async"></picture>')
 
 
 def block_media(site: Site, cfg: dict) -> str:
@@ -670,10 +670,12 @@ def block_services_by_group(site: Site, level: str = "h3") -> str:
         items = []
         for s in site.services_in_group(group["id"]):
             items.append(
-                f'''        <a class="service-item" href="{site.url(site.service_url(s["slug"]))}">
-          <span class="service-item__title">{esc(s["nav_title"])}</span>
+                # Ссылка — только название, нажимается вся карточка (.stretch):
+                # карточка-ссылка целиком давала текст ссылки в 150 знаков.
+                f'''        <div class="service-item">
+          <a class="service-item__title stretch" href="{site.url(site.service_url(s["slug"]))}">{esc(s["nav_title"])}</a>
           <span class="service-item__text">{esc(s["short"])}</span>
-        </a>'''
+        </div>'''
             )
         total = len(site.groups)
         parts.append(f'''    <div class="group">
@@ -712,7 +714,7 @@ def block_steps(steps, title, text="", columns=3, dark=False) -> str:
     cards = []
     for st in steps:
         cards.append(f'''        <div class="step">
-          <h3>{esc(st["title"])}</h3>
+          <p class="step__title">{esc(st["title"])}</p>
           <p>{esc(st["text"])}</p>
         </div>''')
     head = f"<h2>{esc(title)}</h2>"
@@ -847,8 +849,15 @@ def icon(name: str) -> str:
 def brand_icon(site: Site, name: str, size: int = 20, css: str = "brand-ico") -> str:
     """Значок сервиса (Telegram, WhatsApp, MAX, почта, Яндекс Карты) — PNG
     из assets/img/icons/, нарисован в два раза крупнее, чтобы был чётким."""
+    # alt с названием + aria-hidden: диктору значок не нужен (рядом подпись),
+    # а аудиторы поисковой оптимизации пустой alt считают ошибкой.
+    label = BRAND_NAMES.get(name, name)
     return (f'<img class="{css}" src="{site.url("/assets/img/icons/" + name + ".png")}" '
-            f'width="{size}" height="{size}" alt="" loading="lazy">')
+            f'width="{size}" height="{size}" alt="{label}" aria-hidden="true" loading="lazy">')
+
+
+BRAND_NAMES = {"telegram": "Telegram", "whatsapp": "WhatsApp", "max": "MAX",
+               "mail": "Почта", "yandex-maps": "Яндекс Карты"}
 
 
 def card_icon(site: Site, ic: str) -> str:
@@ -955,7 +964,7 @@ def hero_sro(site: Site) -> str:
         # Настоящий логотип СРО — на белой плашке: он нарисован под светлый
         # фон, и на тёмном первом экране без подложки его золото тонет.
         mark = (f'<span class="hero-sro__logo" aria-hidden="true">'
-                f'<img src="{site.url(logo)}" alt="" width="96" height="56" decoding="async"></span>')
+                f'<img src="{site.url(logo)}" alt="Логотип СРО «{esc(short)}»" width="96" height="56" decoding="async"></span>')
     else:
         # Пока файла логотипа нет — круглая печать с сокращением.
         mark = (f'<span class="hero-sro__seal" aria-hidden="true">'
@@ -1019,7 +1028,7 @@ def sro_block(site: Site, dark: bool = True) -> str:
     anchor = "" if dark else ' id="sro"'
     logo = sro_logo(site)
     mark = (f'<div class="sro__logo" aria-hidden="true">'
-            f'<img src="{site.url(logo)}" alt="" width="120" height="70" loading="lazy" decoding="async"></div>'
+            f'<img src="{site.url(logo)}" alt="Логотип СРО" width="120" height="70" loading="lazy" decoding="async"></div>'
             if logo else
             f'<div class="sro__seal" aria-hidden="true"><span>{short}</span></div>')
     return f'''<div class="sro{' sro--dark' if dark else ''}"{anchor}>
@@ -1426,13 +1435,19 @@ def objects_strip(site: Site) -> str:
                 break
         if not thumb:
             continue
-        items.append(f'''<a class="ostrip__item" href="{site.url(object_url(o))}">
-          <img src="{site.url(thumb)}" width="64" height="44" alt="" loading="lazy" decoding="async">
-          <span><b>{esc(o["name"])}</b><small>{esc(o["city"])}</small></span>
-        </a>''')
+        # Названия — не <b>: лента выводится дважды, и аудиторы считали
+        # «повтор жирного текста»; alt — название, а не пусто (картинка несёт смысл).
+        inner = (f'<img src="{site.url(thumb)}" width="64" height="44" alt="{esc(o["name"])}, {esc(o["city"])}"'
+                 f' loading="lazy" decoding="async">'
+                 f'<span><span class="ostrip__name">{esc(o["name"])}</span><small>{esc(o["city"])}</small></span>')
+        items.append((f'<a class="ostrip__item" href="{site.url(object_url(o))}">{inner}</a>',
+                      f'<span class="ostrip__item">{inner}</span>'))
     if len(items) < 3:
         return ""
-    row = "\n        ".join(items)
+    row = "\n        ".join(x[0] for x in items)
+    # Второй экземпляр — только ради бесшовной прокрутки: он inert, нажать его нельзя,
+    # поэтому и ссылок в нём нет — иначе аудиторы видят каждую ссылку дважды.
+    row2 = "\n        ".join(x[1] for x in items)
     return f'''  <section class="ostrip" aria-label="Объекты, где мы вели документацию">
     <div class="container ostrip__head"><span class="eyebrow">Объекты, где мы вели документацию</span></div>
     <div class="ostrip__viewport">
@@ -1441,7 +1456,7 @@ def objects_strip(site: Site) -> str:
         {row}
         </div>
         <div class="ostrip__row" aria-hidden="true" inert>
-        {row}
+        {row2}
         </div>
       </div>
     </div>
@@ -1652,8 +1667,8 @@ def page_home(r: Renderer) -> None:
         # Запрос впереди, бренд в конце: поисковик и человек читают заголовок
         # слева направо, а «X-PTO» пока не ищет никто.
         title=f'ПТО на аутсорсе и исполнительная документация — {site.company["name"]}',
-        description=("Производственно-технический отдел на аутсорсе: проектирование, исполнительная "
-                     "документация, сметы, ППР, геодезия, КС-2 и КС-3, Ростехнадзор и ЗОС. По всей России."),
+        description=("ПТО на аутсорсе: проектирование, исполнительная документация, сметы, "
+                     "геодезия, КС-2 и КС-3, Ростехнадзор и ЗОС. По всей России."),
         body=body,
         head_extra=head,
         priority="1.0",
@@ -1890,7 +1905,7 @@ def page_object(r: Renderer, o: dict, items: list) -> None:
         shots.append(f'<button class="ogal__item{" ogal__item--main" if i == 0 else ""}" type="button"'
                      f' data-gallery="{esc(gallery)}" data-start="{i}" data-caption="{esc(caption)}"'
                      f' aria-label="Открыть фото {i + 1} из {len(photos)}">'
-                     + photo_img(site, ph, alt if i == 0 else "", sizes, "ogal__img", eager=i == 0) + '</button>')
+                     + photo_img(site, ph, alt if i == 0 else f"{alt}, фото {i + 1}", sizes, "ogal__img", eager=i == 0) + '</button>')
     media = (f'<div class="ogal ogal--{min(len(photos), 5)}">{"".join(shots)}</div>' if photos
              else '<div class="object__media object__media--empty ogal-empty"></div>')
 
@@ -1977,7 +1992,7 @@ def page_object(r: Renderer, o: dict, items: list) -> None:
     title = f'{nm}, {o["city"]} — документация объекта | X-PTO'
     if len(title) > 70:
         title = f'{nm}, {o["city"]} | X-PTO'
-    desc = trim_words(f'{o["name"]} ({o["city"]}): {o.get("scope", "")}', 190)
+    desc = trim_words(f'{o.get("short_name") or o["name"]}, {o["city"]}: {o.get("scope", "")}', 140)
     r.render(path=path, title=title, description=desc, body=body, head_extra=head,
              priority="0.6", og_image_alt=alt)
 
@@ -2471,11 +2486,11 @@ def md_to_html(text: str, site: Site, toc: list) -> str:
 
 
 def article_card(site: Site, a: dict, level: str = "h3") -> str:
-    return f'''        <a class="card card--link article-card" href="{site.url(f"/stati/{a['slug']}/")}">
+    return f'''        <article class="card card--link article-card">
           <span class="article-card__date">{date_ru(a["updated"])}</span>
-          <{level}>{esc(a["h1"])}</{level}>
+          <{level}><a class="stretch" href="{site.url(f"/stati/{a['slug']}/")}">{esc(a["h1"])}</a></{level}>
           <p>{esc(a["lead"])}</p>
-        </a>'''
+        </article>'''
 
 
 def block_articles(site: Site, items: list, title: str = "Статьи по теме",
@@ -2531,6 +2546,18 @@ def schema_article(site: Site, a: dict, path: str) -> dict:
     }
 
 
+def share_links(site: Site, path: str, title: str) -> str:
+    """«Поделиться» обычными ссылками, без виджетов: виджет сети грузит её скрипт
+    и ставит cookie до всякого согласия, а ссылка — ничего, пока её не нажали."""
+    from urllib.parse import quote
+    u, t = quote(site.abs_url(path), safe=""), quote(title, safe="")
+    nets = [("Telegram", f"https://t.me/share/url?url={u}&text={t}"),
+            ("WhatsApp", f"https://wa.me/?text={t}%20{u}"),
+            ("ВКонтакте", f"https://vk.com/share.php?url={u}&title={t}")]
+    links = " ".join(f'<a href="{esc(h)}" rel="nofollow noopener" target="_blank">в {n}</a>' for n, h in nets)
+    return f'<p class="share">Поделиться статьёй: {links}</p>'
+
+
 def page_article(r: Renderer, a: dict) -> None:
     site = r.site
     path = f"/stati/{a['slug']}/"
@@ -2579,6 +2606,7 @@ def page_article(r: Renderer, a: dict) -> None:
       <article class="prose">
 {toc_html}
 {content}
+{share_links(site, path, a["h1"])}
       </article>
 
       <aside>
@@ -2618,8 +2646,7 @@ def page_articles_index(r: Renderer) -> None:
     path = "/stati/"
     title = f"Статьи о документации в строительстве — {site.company['name']}"
     description = ("Разборы для подрядчиков и заказчиков: исполнительная документация, "
-                   "КС-2 и КС-3, ППР, сдача объекта и ЗОС. Как собрать документы "
-                   "и сдать объект без возвратов.")
+                   "КС-2 и КС-3, ППР, сметы, сдача объекта и ЗОС.")
     cards = "\n".join(article_card(site, a, "h2") for a in site.articles)
     body = f'''  <section class="page-head">
     <div class="container">

@@ -26,7 +26,8 @@ window.xptoGoal = function (name) {
   // Названия целей те же, что заводятся в Метрике (см. README).
   document.addEventListener('click', function (e) {
     var a = e.target.closest && e.target.closest('a[href]');
-    if (!a) return;
+    // «Поделиться статьёй» тоже ведёт на t.me и wa.me, но это не обращение к нам
+    if (!a || a.closest('.share')) return;
     var href = a.getAttribute('href') || '';
     if (href.indexOf('tel:') === 0) window.xptoGoal('telefon');
     else if (href.indexOf('mailto:') === 0) window.xptoGoal('pochta');
