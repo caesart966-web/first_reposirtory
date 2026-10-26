@@ -80,6 +80,9 @@ CONTACT_COLUMNS = [
 # «Есть телефон» ставится и при ответе без телефона и почты: без неё такая
 # компания считалась непробитой и запрашивалась каждый день заново
 _DONE_MARKERS = ("Телефоны (Checko)", "E-mail (Checko)", "Статус (Checko)", "Есть телефон")
+# Строку с отметкой в этой колонке скрипт не спрашивает — лимит на неё не тратится.
+# Отметку ставит отсев_до_checko.py (по базе реестра МСП) или человек руками
+НЕ_ПРОБИВАТЬ = "Не пробивать"
 
 
 def _есть(value: Any) -> bool:
@@ -408,7 +411,7 @@ def осталось_пробить(rows: list[dict], inn_column: str = "ИНН"
     нужны, готовы = set(), set()
     for row in rows:
         инн = re.sub(r"\D", "", row.get(inn_column) or "")
-        if not инн:
+        if not инн or _есть(row.get(НЕ_ПРОБИВАТЬ)):
             continue
         if not пробита(row) or нужно_повторить(row, inn_column):
             нужны.add(инн)
@@ -468,16 +471,23 @@ def main(argv: list[str] | None = None) -> int:
         return re.sub(r"\D", "", row.get(args.inn_column) or "")
 
     todo = []
+    отсеяно = 0
     for row in rows:
+        if _есть(row.get(НЕ_ПРОБИВАТЬ)) and not пробита(row):
+            отсеяно += 1
+            continue
         if args.redo or not пробита(row) or нужно_повторить(row, args.inn_column):
             if инн_строки(row):
                 todo.append(row)
+    if отсеяно:
+        print(f"[checko] отсеяно без запроса (колонка «{НЕ_ПРОБИВАТЬ}»): {отсеяно}")
     # Одна компания бывает в файле дважды — например, состояла в двух СРО.
     # Второй раз за неё не платим: ответ копируется с уже пробитой строки
     в_очереди = {id(row) for row in todo}
     пробиты: dict[str, dict] = {}
     for row in rows:
-        if id(row) not in в_очереди and инн_строки(row):
+        # Источник копии — только строка с ответом: отсеянная без запроса пуста
+        if id(row) not in в_очереди and инн_строки(row) and пробита(row):
             пробиты.setdefault(инн_строки(row), row)
     к_запросу = len({инн_строки(r) for r in todo} - set(пробиты))
     повторно = sum(1 for row in todo if нужно_повторить(row, args.inn_column))
