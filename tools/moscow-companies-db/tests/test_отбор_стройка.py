@@ -62,6 +62,21 @@ class TestОтбор(unittest.TestCase):
         self.assertEqual(отбор.разобрать({"ИНН": "7701234567"})[0], "Не проверены")
         self.assertEqual(self.лист(**{"Статус (Checko)": "HTTP 403: лимит или ключ"}), "Не проверены")
 
+    def test_под_вопросом(self):
+        self.assertEqual(self.лист(**{"Статус (Checko)": "В отношении юридического лица в деле о "
+                                      "несостоятельности (банкротстве) введено наблюдение"}), "Под вопросом")
+        self.assertEqual(self.лист(**{"Статус (Checko)": "Юридическим лицом принято решение об "
+                                      "изменении места нахождения"}), "Под вопросом")
+        self.assertEqual(self.лист(**{"Банкротство": "банкротство"}), "Под вопросом")
+
+    def test_коротко_телефоны_и_почта_вместе(self):
+        с = отбор.коротко(строка(**{"Телефоны (Checko)": "+74951490123",
+                                   "Телефон (из файла)": "(495) 149-01-23, 8-916-123-45-67",
+                                   "E-mail (Checko)": "Info@Firma.ru", "Почта (из файла)": "info@firma.ru; buh@firma.ru"}))
+        self.assertEqual(с["Телефон"], "+7 (495) 149-01-23; +7 (916) 123-45-67")
+        self.assertEqual(с["Почта"], "info@firma.ru; buh@firma.ru")
+        self.assertEqual(с["ОКВЭД основной"], "41.20 Строительство жилых и нежилых зданий")
+
     def test_отсеяна_до_checko(self):
         лист, почему, _ = отбор.разобрать({"ИНН": "7701234567",
                                             "Не пробивать": "не Москва (база: регион 50)"})
@@ -94,6 +109,7 @@ class TestОтбор(unittest.TestCase):
             out = load_workbook(Path(tmp) / "москва_для_checko_отбор.xlsx")
             self.assertEqual(out.sheetnames, ["Сводка", *отбор.ЛИСТЫ])
             self.assertEqual(out["Подходят"].max_row - 1, 1)
+            self.assertEqual([c.value for c in out["Подходят"][1]], отбор.КОРОТКО)
             self.assertEqual(out["Не Москва"].max_row - 1, 1)
             self.assertEqual(out["Не проверены"].max_row - 1, 1)
 
