@@ -493,7 +493,7 @@ $SKPOLY
   9
 $TDCREATE
  40
-2461340.477662037
+2461340.5319328704
   9
 $TDUCREATE
  40
@@ -501,7 +501,7 @@ $TDUCREATE
   9
 $TDUPDATE
  40
-2461340.4777430557
+2461340.532013889
   9
 $TDUUPDATE
  40
@@ -933,11 +933,11 @@ $PSTYLEMODE
   9
 $FINGERPRINTGUID
   2
-{14DF9FF1-72DA-4A60-935E-F7189D3AD3DF}
+{7A7DD893-A343-4289-AACB-30CF13FAD07E}
   9
 $VERSIONGUID
   2
-{35538F2D-1E77-428F-92BD-010DA6BC46B4}
+{5EB32427-B454-4736-8A81-3269037230A6}
   9
 $EXTNAMES
 290
@@ -1343,6 +1343,22 @@ ObjectDBX Classes
   0
 CLASS
   1
+WIPEOUTVARIABLES
+  2
+AcDbWipeoutVariables
+  3
+WipeOut
+ 90
+0
+ 91
+0
+280
+0
+281
+0
+  0
+CLASS
+  1
 LAYOUT
   2
 AcDbLayout
@@ -1372,22 +1388,6 @@ WipeOut
 0
 281
 1
-  0
-CLASS
-  1
-WIPEOUTVARIABLES
-  2
-AcDbWipeoutVariables
-  3
-WipeOut
- 90
-0
- 91
-0
-280
-0
-281
-0
   0
 ENDSEC
   0
@@ -1681,66 +1681,6 @@ AcDbSymbolTableRecord
 100
 AcDbLinetypeTableRecord
   2
-Штрих
- 70
-0
-  3
-
- 72
-65
- 73
-2
- 40
-6.35
- 49
-3.175
- 74
-0
- 49
--3.175
- 74
-0
-  0
-LTYPE
-  5
-1027
-330
-2
-100
-AcDbSymbolTableRecord
-100
-AcDbLinetypeTableRecord
-  2
-Сверху
- 70
-0
-  3
-
- 72
-65
- 73
-2
- 40
-3.96875
- 49
-2.38125
- 74
-0
- 49
--1.5875
- 74
-0
-  0
-LTYPE
-  5
-1028
-330
-2
-100
-AcDbSymbolTableRecord
-100
-AcDbLinetypeTableRecord
-  2
 Осевая 12-2-2
  70
 0
@@ -1766,6 +1706,66 @@ AcDbLinetypeTableRecord
 0
  49
 -2.0
+ 74
+0
+  0
+LTYPE
+  5
+1027
+330
+2
+100
+AcDbSymbolTableRecord
+100
+AcDbLinetypeTableRecord
+  2
+Штрих
+ 70
+0
+  3
+
+ 72
+65
+ 73
+2
+ 40
+6.35
+ 49
+3.175
+ 74
+0
+ 49
+-3.175
+ 74
+0
+  0
+LTYPE
+  5
+1028
+330
+2
+100
+AcDbSymbolTableRecord
+100
+AcDbLinetypeTableRecord
+  2
+Сверху
+ 70
+0
+  3
+
+ 72
+65
+ 73
+2
+ 40
+3.96875
+ 49
+2.38125
+ 74
+0
+ 49
+-1.5875
  74
 0
   0
@@ -2997,7 +2997,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-ANNO-DIMS-75
+A-WALL
  70
 8
  62
@@ -3021,13 +3021,13 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-G-ANNO-SYMB
+A-FLOR-PATT
  70
 8
  62
-8
+9
   6
-Штрих
+Continuous
 370
 13
 390
@@ -3045,13 +3045,13 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-G-ANNO-DIMS
+G-ANNO-SYMB
  70
-9
+8
  62
--8
+8
   6
-Continuous
+Штрих
 370
 13
 390
@@ -3069,11 +3069,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-WALL-PATT
+S-GRID-IDEN
  70
-8
+9
  62
-8
+-8
   6
 Continuous
 370
@@ -3093,11 +3093,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-DETL-GENF
+A-AREA-IDEN
  70
 8
  62
-9
+8
   6
 Continuous
 370
@@ -3165,11 +3165,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-ANNO-DIMS
+A-ANNO-DIMS-75
  70
-9
+8
  62
--8
+8
   6
 Continuous
 370
@@ -3213,11 +3213,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-WALL
+A-FLOR
  70
 8
  62
-8
+9
   6
 Continuous
 370
@@ -3237,11 +3237,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-GLAZ-CWMG
+I-FURN
  70
 8
  62
-8
+9
   6
 Continuous
 370
@@ -3285,11 +3285,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-AREA-IDEN
+A-DETL-GENF
  70
 8
  62
-8
+9
   6
 Continuous
 370
@@ -3309,11 +3309,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-I-FURN
+A-ANNO-DIMS
  70
-8
- 62
 9
+ 62
+-8
   6
 Continuous
 370
@@ -3357,11 +3357,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-GLAZ-CURT
+G-ANNO-DIMS
  70
-8
+9
  62
-8
+-8
   6
 Continuous
 370
@@ -3381,11 +3381,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-FLOR
+A-GLAZ-CWMG
  70
 8
  62
-9
+8
   6
 Continuous
 370
@@ -3405,11 +3405,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-FLOR-PATT
+A-WALL-PATT
  70
 8
  62
-9
+8
   6
 Continuous
 370
@@ -3429,7 +3429,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-DOOR
+A-GLAZ-CURT
  70
 8
  62
@@ -3453,11 +3453,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-S-GRID-IDEN
+A-DOOR
  70
-9
+8
  62
--8
+8
   6
 Continuous
 370
@@ -4063,34 +4063,6 @@ AcDbSymbolTableRecord
 100
 AcDbTextStyleTableRecord
   2
-GOST Common_I
- 70
-0
- 40
-135.0
- 41
-1.0
- 50
-0.0
- 71
-0
- 42
-0.2
-  3
-GOST_Common Italic.ttf
-  4
-
-  0
-STYLE
-  5
-102C
-330
-5
-100
-AcDbSymbolTableRecord
-100
-AcDbTextStyleTableRecord
-  2
 GOST Common_1
  70
 0
@@ -4106,6 +4078,34 @@ GOST Common_1
 0.2
   3
 GOST_Common.ttf
+  4
+
+  0
+STYLE
+  5
+102C
+330
+5
+100
+AcDbSymbolTableRecord
+100
+AcDbTextStyleTableRecord
+  2
+GOST Common_I
+ 70
+0
+ 40
+135.0
+ 41
+1.0
+ 50
+0.0
+ 71
+0
+ 42
+0.2
+  3
+GOST_Common Italic.ttf
   4
 
   0
@@ -4467,7 +4467,7 @@ AcDbDimStyleTableRecord
 290
 1
 340
-102B
+102C
 343
 102D
 344
@@ -4613,7 +4613,7 @@ AcDbDimStyleTableRecord
 290
 1
 340
-102B
+102C
 343
 102D
 344
