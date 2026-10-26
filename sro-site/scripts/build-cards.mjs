@@ -109,9 +109,10 @@ const PAGES = [
 
 // Картинки услуг для блока «Услуги» в фотографиях Яндекс Бизнеса (26.10.2026,
 // просьба заказчика: «красиво и профессионально оформить услуги»).
-// Светлый лист сайта: крем, графит, латунь. Название — как `short` в
-// services.ts (сборка падает, если услугу переименовали, а здесь нет), строка
-// под ним — из подсказки или описания карточки, новых фактов нет.
+// Светлый лист сайта: крем, графит, латунь. Название — как `short` или `title`
+// в services.ts (сборка падает, если услугу переименовали, а здесь нет). Строка
+// под ним — простыми словами, что получит клиент (заказчик: «Уровень
+// ответственности — совсем непонятен»), только из текстов страниц услуг.
 // Без знака, телефона и адреса сайта: знак поверх картинки модерация считает
 // водяным, контакты — рекламой (опыт norma-site). У каждой картинки короткий
 // вариант `-korotko` — значок и название — для повторной загрузки, если
@@ -123,23 +124,24 @@ const icon = (name) =>
   renderToStaticMarkup(createElement(icons[name], { size: 60, strokeWidth: 1.5, color: '#86602F' }))
 
 const SERVICES = [
-  ['vstuplenie', 'Building2', 'Вступление в СРО', 'Подбор СРО, документы и сопровождение до внесения в реестр членов'],
-  ['podbor', 'Search', 'Подбор и проверка СРО', 'Сравнение условий и проверка по государственному реестру до оплаты взносов'],
-  ['dokumenty', 'FileText', 'Подготовка документов', 'Пакет под требования выбранной СРО, для ООО и ИП'],
-  ['nrs', 'UserCheck', 'Специалисты НРС', 'Требование закона и три законных варианта, если специалистов нет'],
-  ['nok', 'GraduationCap', 'НОК', 'Независимая оценка квалификации: кому обязательна, экзамен, срок свидетельства'],
-  ['uroven', 'ListChecks', 'Уровень ответственности', 'То, что раньше называли расширением видов работ'],
-  ['proverki', 'Handshake', 'Сопровождение проверок', 'Что проверяет СРО, типичные замечания, меры воздействия'],
-  ['licenzii', 'BadgeCheck', 'Лицензии, обучение и сертификация', 'Лицензии МЧС и Минкультуры, обучение сотрудников, ISO 9001'],
+  ['vstuplenie', 'Building2', 'Вступление в СРО', 'Проверим, нужно ли вам членство, и сопроводим до внесения в реестр членов СРО'],
+  ['podbor', 'Search', 'Подбор и проверка СРО', 'Сравним условия и взносы нескольких СРО и проверим выбранную по госреестру до оплаты'],
+  ['dokumenty', 'FileText', 'Подготовка документов', 'Соберём документы под требования выбранной СРО и проверим каждый до подачи'],
+  ['nrs', 'UserCheck', 'Специалисты НРС', 'Для вступления в штате нужны два специалиста из национального реестра. Проверим ваших сотрудников или поможем найти'],
+  ['nok', 'GraduationCap', 'Независимая оценка квалификации (НОК)', 'Экзамен для специалиста: без свидетельства его не внесут в национальный реестр. Поможем подготовиться и записаться'],
+  ['uroven', 'ListChecks', 'Изменение уровня ответственности', 'От уровня в СРО зависит, на какую сумму можно заключать договоры. Подберём нужный уровень и рассчитаем доплату взноса'],
+  ['proverki', 'Handshake', 'Сопровождение проверок', 'СРО регулярно проверяет своих членов. Подготовим к проверке и составим ответы на её запросы'],
+  ['licenzii', 'BadgeCheck', 'Лицензии, обучение и сертификация', 'Поможем получить лицензии МЧС и Минкультуры и сертификат ISO 9001, организуем обучение сотрудников'],
 ]
 const servicesSrc = readFileSync(resolve(root, 'src/content/services.ts'), 'utf8')
 const licensesSrc = readFileSync(resolve(root, 'src/components/Licenses.tsx'), 'utf8')
 for (const [, , title] of SERVICES) {
-  if (!servicesSrc.includes(`short: '${title}'`) && !licensesSrc.includes(`title="${title}"`))
+  const named = [`short: '${title}'`, `title: '${title}'`].some((k) => servicesSrc.includes(k))
+  if (!named && !licensesSrc.includes(`title="${title}"`))
     throw new Error(`«${title}»: такой услуги на сайте нет — сверить с services.ts`)
 }
 // Неразрывные пробелы после коротких слов: «в СРО», «и ИП» не разрываются.
-const nb = (s) => s.replace(/(^|\s)(в|и|до|по|для|под|не|на|с|к|о|а|то) /g, '$1$2&nbsp;')
+const nb = (s) => s.replace(/(^|\s)(в|и|до|по|для|под|не|на|с|к|о|а|то|от|из|ISO) /g, '$1$2&nbsp;')
 const sheet = (inner) => `<div style="position:absolute;inset:0;background:#FBF9F5">
     <div class="light" style="left:-300px;top:-380px;width:1100px;height:1100px;background:radial-gradient(circle,#E3CDA955 0%,#E3CDA900 70%)"></div>
     <div style="position:absolute;inset:44px;border:1px solid #E3CDA9"></div>
@@ -147,13 +149,15 @@ const sheet = (inner) => `<div style="position:absolute;inset:0;background:#FBF9
   </div>`
 const ring = (name) => `<div style="width:128px;height:128px;border-radius:50%;border:1.5px solid #C09A68;
     display:flex;align-items:center;justify-content:center;background:#F7F1E8">${icon(name)}</div>`
-const title = (t) => `<div class="name" style="color:#1C1815;font-size:100px;line-height:1.06;margin-top:64px">${nb(t)}</div>`
+// Длинное название (НОК, уровень) в 100 px шло в четыре строки — тесно.
+const title = (t) =>
+  `<div class="name" style="color:#1C1815;font-size:${t.length > 24 ? 84 : 100}px;line-height:1.06;margin-top:64px">${nb(t)}</div>`
 for (const [slug, iconName, t, sub] of SERVICES) {
   PAGES.push({
     file: `uslugi/usluga-${slug}.png`, w: 1200, h: 1200,
     body: sheet(`${ring(iconName)}${title(t)}
       <span class="rule" style="width:72px;margin-top:56px"></span>
-      <div style="margin-top:44px;font-size:42px;line-height:1.4;color:#5C534A;max-width:880px">${nb(sub)}</div>`),
+      <div style="margin-top:44px;font-size:42px;line-height:1.4;color:#5C534A;max-width:880px">${nb(sub)}.</div>`),
   })
   PAGES.push({ file: `uslugi/usluga-${slug}-korotko.png`, w: 1200, h: 1200, body: sheet(`${ring(iconName)}${title(t)}`) })
 }
