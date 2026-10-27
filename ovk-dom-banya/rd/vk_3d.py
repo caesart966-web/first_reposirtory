@@ -370,7 +370,7 @@ def export_ifc(data):
         e.Representation = shape(sol, (203, 213, 225) if q.ctx else (226, 232, 240), 0.4 if q.ctx else 0.0)
         place(e, fl)
         cont[fl].append(e)
-        pset(e, {'Марка': q.mark, 'Раздел': 'КР (приямок)' if q.ctx else 'ВК'})
+        pset(e, {'Марка': q.mark, 'Раздел': 'смежный раздел (контекст)' if q.ctx else 'ВК'})
     for k, objs in cont.items():
         if objs:
             api('spatial.assign_container', f, relating_structure=st[k], products=objs)

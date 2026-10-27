@@ -129,6 +129,8 @@ def members(p):
             s |= {k for k in HOUSE if water(FX[k]) and k not in ON_KX}
         elif t == '*1эт':
             s |= SHVK1
+        elif t == '*2эт':
+            s |= {k for k in HOUSE if water(FX[k]) and k not in ON_KX and k not in SHVK1}
         elif t in ('*баня', 'баня'):
             s |= {k for k in BATH if water(FX[k])} | {'Б2'}
         elif t == 'М-1':
@@ -265,11 +267,11 @@ PATHS = [
     dict(key='h_h', name='Дом, ГВС: ввод → КХ → Б1 → Т3 → ШВК-2 → душ Д-3 (2 этаж)', bld='h',
          ids=['ВВ', 'В1-узел', 'КХ', 'КХ-1', 'Т3-1.6', 'Т3-гараж', 'ШВК-2Т', 'Т3-Д-3'], z=VK.FL2 + SHOWER_HEAD,
          heater=True),
-    dict(key='b_c', name='Баня, ХВС: ввод → КХ → Ecoflex → ШВК-Б2 → ШВК-Б1 → душ Д-б1', bld='b',
-         ids=['ВВ', 'В1-узел', 'КХ', 'КХ-3', 'ЭФ', 'В1-баня', 'ШВК-Б2В', 'В1-ШВК-Б1', 'ШВК-Б1В', 'В1-Д-б1'],
+    dict(key='b_c', name='Баня, ХВС: ввод → КХ → Ecoflex → ШВК-Б1 → душ Д-б1', bld='b',
+         ids=['ВВ', 'В1-узел', 'КХ', 'КХ-3', 'ЭФ', 'В1-ШВК-Б1', 'ШВК-Б1В', 'В1-Д-б1'],
          z=VK.B_FL + SHOWER_HEAD, heater=False),
-    dict(key='b_h', name='Баня, ГВС: ввод → КХ → Ecoflex → ШВК-Б2 → Б2 → Т3 → ШВК-Б2 → ШВК-Б1 → душ Д-б1', bld='b',
-         ids=['ВВ', 'В1-узел', 'КХ', 'КХ-3', 'ЭФ', 'В1-баня', 'ШВК-Б2В', 'В1-Б2', 'Т3-Б2', 'ШВК-Б2Т', 'Т3-ШВК-Б1',
+    dict(key='b_h', name='Баня, ГВС: ввод → КХ → Ecoflex → ШВК-Б2 → Б2 → Т3 → ШВК-Б1 → кольцо → душ Д-б1', bld='b',
+         ids=['ВВ', 'В1-узел', 'КХ', 'КХ-3', 'ЭФ', 'В1-баня', 'ШВК-Б2В', 'В1-Б2', 'Т3-ШВК-Б1',
               'ШВК-Б1Т', 'Т3-Д-б1'],
          z=VK.B_FL + SHOWER_HEAD, heater=True),
 ]
@@ -330,8 +332,10 @@ K1_SETS = {
     'К1-1': ([k for k, f_ in VK.FIXT.items() if f_.k1 and k != 'СПА'], 'гориз', 110, VK.I_HOUSE,
              'Сборный К1-1 под плитой и выпуск в ДК5-018 (дом и баня)'),
     'К1-1.6': (['Т-1', 'СМ-1', 'УМ-4'], 'гориз', 50, 0.03, 'Отвод Ø50 от трапа, СМ и раковины топочной 1.6'),
-    'К1-б': ([k for k, f_ in VK.FIXT.items() if f_.k1 and f_.bld == 'b' and k != 'СПА'], 'гориз', 110, 0.02,
-             'Сборный и выпуск К1-б (баня), далее — через КК-1 в К1-1'),
+    'К1-б': (['Д-б1', 'Т-б1', 'Т-б2', 'В-б1'], 'гориз', 110, 0.02,
+             'Сборный и выпуск К1-б бани (Д-б1, трапы, ванна; СПА — свой выпуск с краном), далее — КК-1 и К1-1'),
+    'К1-бв': (['УН-б1', 'УМ-б1', 'М-б1'], 'гориз', 110, 0.02,
+              'Выпуск К1-бв от стояка Ст.К1-б бани (УН-б1, УМ-б1, М-б1), далее — КК-1 и К1-1'),
 }
 
 
@@ -348,7 +352,7 @@ def sewer():
             cap = STACK_CAP[(110, 110, 87.5)]
             row.update(qs=qtot + q0s, cap=cap, ok=qtot + q0s <= cap)
         else:
-            L = 1.0 if sid in ('К1-1', 'К1-б') else max(1.0, [p for p in VK.PIPES if p.id == sid][0].length())
+            L = 1.0 if sid in ('К1-1', 'К1-б', 'К1-бв') else max(1.0, [p for p in VK.PIPES if p.id == sid][0].length())
             k, n_row, l_row = ks(n, L)
             ahr = alpha(n * phr)
             qhr = 0.005 * Q0HR['tot'] * ahr
@@ -362,14 +366,15 @@ def sewer():
     # отводы от приборов: Ø50 (i 0,03), Ø110 от унитазов и трапа Ду100 (i 0,02)
     seen = set()
     for p in VK.PIPES:
-        if p.sys != 'К1' or p.id in K1_SETS or not p.serves or p.where == 'riser':
+        if p.sys != 'К1' or p.id in K1_SETS or not p.serves or p.where == 'riser' or p.id == 'Ст.К1-б':
             continue
         fx = [s for s in p.serves if s in FX]
         if not fx:
             continue
         key = (p.dn, tuple(sorted({FX[k].typ for k in fx})))
         q0s = max(FX[k].a1[7] for k in fx)
-        i = 0.03 if p.dn == 50 else 0.02
+        sl = VK.slope(p)
+        i = sl if sl and sl <= 0.1 else (0.03 if p.dn == 50 else 0.02)   # 45° опуски — не уклон
         hd, v = part_flow(PP_DI[p.dn], i, q0s)
         res['branches'].append(dict(id=p.id, name=p.name, fx=fx, d=p.dn, q=q0s, i=i, hd=hd, v=v,
                                     kk=v * math.sqrt(hd), L=p.length(), bld=p.bld, i_min=1 / p.dn, rep=key not in seen))
@@ -450,24 +455,37 @@ def main():
     meter = meter_pick(rows['ВВ']['q'], qT_m3h)
     hd = head(rows, meter)
     sw = sewer()
-    house = loop('Дом, санузлы: Б1 → ШВК-2 → ШВК-1 → Пс-2, Пс-1 → Н8 → Б1',
+    # кольца ГВС — от каждого коллектора отдельно (Заказчица 27.10.2026); общие участки у Б1/Б2 и насосов — в каждом
+    house = loop('Дом, ШВК-2 (2 этаж): Б1 → ШВК-2 → Пс-2, Пс-1 → Н8 → Б1',
                  [(('Т3 в топочной от Б1 (ТМ)', '25×3,5', 1.0, 'wall', T_AIR['boiler']), 'Т3'), ('Т3-1.6', 'Т3'),
-                  ('Т3-гараж', 'Т3'), ('ШВК-2Т', 'Т3'), ('Т3-ШВК1', 'Т3'), ('ШВК-1Т', 'Т3'),
-                  ('Т4-дом', 'Т4'), ('Т4-1.6', 'Т4'),
+                  ('Т3-гараж', 'Т3'), ('ШВК-2Т', 'Т3'), ('Т4-ШВК2', 'Т4'), ('Т4-1.6', 'Т4'),
                   (('Т4 в топочной к Б1 (ТМ)', '20×2,8', 0.3, 'wall', T_AIR['boiler']), 'Т4')],
                  ['Пс-2', 'Пс-1'])
-    # кухня — своё кольцо от 1.6 (Заказчица 27.10.2026); общие с кольцом санузлов участки у Б1 и Н8 учтены в обоих
+    house1 = loop('Дом, ШВК-1 (1 этаж): Б1 → ШВК-1 → Н8 → Б1',
+                  [(('Т3 в топочной от Б1 до тройника ШВК-1 (ТМ, ВК)', '25×3,5', 2.5, 'wall', T_AIR['boiler']), 'Т3'),
+                   ('Т3-ШВК1', 'Т3'), ('ШВК-1Т', 'Т3'), ('Т4-ШВК1', 'Т4'),
+                   (('Т4 в топочной к Н8 и Б1', '20×2,8', 3.5, 'wall', T_AIR['boiler']), 'Т4')],
+                  [], dt=5.0)
+    # кухня — своё кольцо от 1.6 (Заказчица 27.10.2026)
     kitchen = loop('Дом, кухня: Б1 → мойка М-1 → Н8 → Б1',
                    [(('Т3 в топочной от Б1 до тройника кухни (ТМ, ВК)', '25×3,5', 3.0, 'wall', T_AIR['boiler']), 'Т3'),
                     ('Т3-М-1', 'Т3'), ('Т4-М-1', 'Т4'),
                     (('Т4 в топочной от тройника кухни к Н8 и Б1', '20×2,8', 4.5, 'wall', T_AIR['boiler']), 'Т4')],
                    [], dt=5.0)                          # без полотенцесушителей: Δt 5 °С — у мойки не ниже 60 °С
-    n8 = dict(G=house['G'] + kitchen['G'], G_m3h=(house['G'] + kitchen['G']) * 3.6, H=max(house['H'], kitchen['H']))
-    n8.update(pump_Q=math.ceil(n8['G_m3h'] * 1.1 * 100) / 100, pump_H=math.ceil(n8['H'] * 1.2 * 10) / 10)
-    bath = loop('Баня: Б2 → ШВК-Б2 → ШВК-Б1 → Пс-б1.1, Пс-б1.2, Пс-б2 → Н9 → Б2',
-                [('Т3-Б2', 'Т3'), ('ШВК-Б2Т', 'Т3'), ('Т3-ШВК-Б1', 'Т3'), ('ШВК-Б1Т', 'Т3'), ('Т4-баня', 'Т4')],
+    n8 = dict(G=house['G'] + house1['G'] + kitchen['G'], H=max(house['H'], house1['H'], kitchen['H']))
+    n8.update(G_m3h=n8['G'] * 3.6, pump_Q=math.ceil(n8['G'] * 3.6 * 1.1 * 100) / 100,
+              pump_H=math.ceil(n8['H'] * 1.2 * 10) / 10)
+    bath = loop('Баня, ШВК-Б2: Б2 → ШВК-Б2 → Пс-б1.1, Пс-б1.2, Пс-б2 → Н9 → Б2',
+                [('Т3-Б2', 'Т3'), ('ШВК-Б2Т', 'Т3'), ('Т4-ШВК-Б2', 'Т4')],
                 ['Пс-б1.1', 'Пс-б1.2', 'Пс-б2'])
-    res = dict(balance=bal, network=rows, meter=meter, head=hd, sewer=sw, circ=dict(house=house, kitchen=kitchen, n8=n8, bath=bath),
+    bath1 = loop('Баня, ШВК-Б1: Б2 → ШВК-Б1 → смеситель душа Д-б1 → мойка М-б1 → Н9 → Б2',
+                 [('Т3-ШВК-Б1', 'Т3'), ('ШВК-Б1Т', 'Т3'), ('Т3-Д-б1', 'Т3'), ('Т3-М-б1', 'Т3'), ('Т4-ШВК-Б1', 'Т4'),
+                  (('Т4 от тройника у Н9 к Б2', '20×2,8', 1.2, 'wall', T_AIR['wet']), 'Т4')],
+                 [], dt=5.0)
+    n9 = dict(G=bath['G'] + bath1['G'], H=max(bath['H'], bath1['H']))
+    n9.update(G_m3h=n9['G'] * 3.6, pump_Q=math.ceil(n9['G'] * 3.6 * 1.1 * 100) / 100,
+              pump_H=math.ceil(n9['H'] * 1.2 * 10) / 10)
+    res = dict(balance=bal, network=rows, meter=meter, head=hd, sewer=sw, circ=dict(house=house, house1=house1, kitchen=kitchen, n8=n8, bath=bath, bath1=bath1, n9=n9),
                dead_ends=dead_ends(), assume=dict(
                    U=f'{U} человек: 3 постоянно проживающих + до 4 гостей (опросный лист Заказчика)',
                    poliv=f'полив газона {int(POLIV["area"])} м² × {POLIV["norm"]:.0f} л/м², один раз в сутки (в т. ч. '
@@ -503,8 +521,8 @@ if __name__ == '__main__':
     for bb in r['sewer']['branches']:
         print(' ', bb['id'], bb['d'], bb['q'], round(bb['hd'], 2), round(bb['v'], 2))
     for k, c in r['circ'].items():
-        if k == 'n8':
-            print('Н8', c)
+        if k in ('n8', 'n9'):
+            print(k, c)
             continue
         print(k, 'Q', round(c['Q_t3']), round(c['Q_t4']), c['Q_towel'], round(c['Q']), 'G', round(c['G_m3h'], 3), 'м³/ч',
               't_end', round(c['t_end_t3'], 1), 'H', round(c['H'], 2), 'насос', c['pump_Q'], c['pump_H'])

@@ -130,6 +130,24 @@ def site_underlay(doc, box=(-30, -30, 50, 50)):
             lay.dxf.lineweight = 18 if n == 'A-WALL' else 9
     from underlay import OX, OY
     doc.modelspace().add_blockref('ГП01', (-OX, -OY), dxfattribs={'layer': 'НВК_ГП'})
+    # баня — на ГП01 её нет (Заказчица 27.10.2026: «тут можем баню обозначить?»): стены, окна и двери из плана АР бани
+    # (b4_plan, оси бани) со сдвигом осей 1/А бани в оси дома BATH_AX (ГП01)
+    from rdbase import UNDER
+    import nvk_model as M
+    bdoc, _ = recover.readfile(UNDER['bath'])
+    keep_b = ('A-WALL', 'A-WALL-PATT', 'A-GLAZ', 'A-GLAZ-CWMG', 'A-GLAZ-CURT', 'A-DOOR')
+    ents = [e for e in bdoc.modelspace() if e.dxf.layer in keep_b]
+    imp = importer.Importer(bdoc, doc)
+    bblk = doc.blocks.new('БАНЯ_АР')
+    imp.import_entities(ents, bblk)
+    imp.finalize()
+    for lay in list(doc.layers):
+        n = lay.dxf.name
+        if n.startswith(('A-', 'S-')):
+            lay.color = 8
+            lay.dxf.lineweight = 18 if n == 'A-WALL' else 9
+    doc.modelspace().add_blockref('БАНЯ_АР', (M.BATH_AX[0] * 1000 - OX, M.BATH_AX[1] * 1000 - OY),
+                                  dxfattribs={'layer': 'НВК_ГП'})
 
 
 def plan_view(doc, sh, cx, cy, w, h, mx, my, K):
