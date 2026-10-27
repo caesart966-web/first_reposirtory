@@ -109,8 +109,8 @@ COLD = sorted(k for k, f in FX.items() if f.cold)
 HOT = sorted(k for k, f in FX.items() if f.hot)
 HOUSE = {k for k, f in FX.items() if f.bld == 'h'}
 BATH = {k for k, f in FX.items() if f.bld == 'b'}
-ON_KX = {'СМ-1', 'УМ-4', 'ПК-1', 'ПК-2'}
-SHVK1 = {'УМ-1', 'УН-1', 'Д-1', 'М-1', 'ПМ-1'}
+ON_KX = {'СМ-1', 'УМ-4', 'ПК-1', 'ПК-2', 'М-1', 'ПМ-1'}       # кухня — от КХ-9 и своим кольцом ГВС (27.10.2026)
+SHVK1 = {'УМ-1', 'УН-1', 'Д-1'}
 
 P = dict(tot=NORM['qhr_tot'] * U / (NORM['q0_tot'] * 3600 * len(ALL)),
          c=NORM['qhr_c'] * U / (NORM['q0_c'] * 3600 * len(COLD)),
@@ -450,16 +450,24 @@ def main():
     meter = meter_pick(rows['ВВ']['q'], qT_m3h)
     hd = head(rows, meter)
     sw = sewer()
-    house = loop('Дом: Б1 → ШВК-2 → ШВК-1 → мойка М-1 → Пс-2, Пс-1 → Н8 → Б1',
+    house = loop('Дом, санузлы: Б1 → ШВК-2 → ШВК-1 → Пс-2, Пс-1 → Н8 → Б1',
                  [(('Т3 в топочной от Б1 (ТМ)', '25×3,5', 1.0, 'wall', T_AIR['boiler']), 'Т3'), ('Т3-1.6', 'Т3'),
-                  ('Т3-гараж', 'Т3'), ('ШВК-2Т', 'Т3'), ('Т3-ШВК1', 'Т3'), ('ШВК-1Т', 'Т3'), ('Т3-М-1', 'Т3'),
+                  ('Т3-гараж', 'Т3'), ('ШВК-2Т', 'Т3'), ('Т3-ШВК1', 'Т3'), ('ШВК-1Т', 'Т3'),
                   ('Т4-дом', 'Т4'), ('Т4-1.6', 'Т4'),
                   (('Т4 в топочной к Б1 (ТМ)', '20×2,8', 0.3, 'wall', T_AIR['boiler']), 'Т4')],
                  ['Пс-2', 'Пс-1'])
+    # кухня — своё кольцо от 1.6 (Заказчица 27.10.2026); общие с кольцом санузлов участки у Б1 и Н8 учтены в обоих
+    kitchen = loop('Дом, кухня: Б1 → мойка М-1 → Н8 → Б1',
+                   [(('Т3 в топочной от Б1 до тройника кухни (ТМ, ВК)', '25×3,5', 3.0, 'wall', T_AIR['boiler']), 'Т3'),
+                    ('Т3-М-1', 'Т3'), ('Т4-М-1', 'Т4'),
+                    (('Т4 в топочной от тройника кухни к Н8 и Б1', '20×2,8', 4.5, 'wall', T_AIR['boiler']), 'Т4')],
+                   [], dt=5.0)                          # без полотенцесушителей: Δt 5 °С — у мойки не ниже 60 °С
+    n8 = dict(G=house['G'] + kitchen['G'], G_m3h=(house['G'] + kitchen['G']) * 3.6, H=max(house['H'], kitchen['H']))
+    n8.update(pump_Q=math.ceil(n8['G_m3h'] * 1.1 * 100) / 100, pump_H=math.ceil(n8['H'] * 1.2 * 10) / 10)
     bath = loop('Баня: Б2 → ШВК-Б2 → ШВК-Б1 → Пс-б1.1, Пс-б1.2, Пс-б2 → Н9 → Б2',
                 [('Т3-Б2', 'Т3'), ('ШВК-Б2Т', 'Т3'), ('Т3-ШВК-Б1', 'Т3'), ('ШВК-Б1Т', 'Т3'), ('Т4-баня', 'Т4')],
                 ['Пс-б1.1', 'Пс-б1.2', 'Пс-б2'])
-    res = dict(balance=bal, network=rows, meter=meter, head=hd, sewer=sw, circ=dict(house=house, bath=bath),
+    res = dict(balance=bal, network=rows, meter=meter, head=hd, sewer=sw, circ=dict(house=house, kitchen=kitchen, n8=n8, bath=bath),
                dead_ends=dead_ends(), assume=dict(
                    U=f'{U} человек: 3 постоянно проживающих + до 4 гостей (опросный лист Заказчика)',
                    poliv=f'полив газона {int(POLIV["area"])} м² × {POLIV["norm"]:.0f} л/м², один раз в сутки (в т. ч. '
@@ -495,6 +503,9 @@ if __name__ == '__main__':
     for bb in r['sewer']['branches']:
         print(' ', bb['id'], bb['d'], bb['q'], round(bb['hd'], 2), round(bb['v'], 2))
     for k, c in r['circ'].items():
+        if k == 'n8':
+            print('Н8', c)
+            continue
         print(k, 'Q', round(c['Q_t3']), round(c['Q_t4']), c['Q_towel'], round(c['Q']), 'G', round(c['G_m3h'], 3), 'м³/ч',
               't_end', round(c['t_end_t3'], 1), 'H', round(c['H'], 2), 'насос', c['pump_Q'], c['pump_H'])
     for d in r['dead_ends']:
