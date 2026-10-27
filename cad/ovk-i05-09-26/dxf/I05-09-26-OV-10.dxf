@@ -493,7 +493,7 @@ $SKPOLY
   9
 $TDCREATE
  40
-2461341.453101852
+2461341.499201389
   9
 $TDUCREATE
  40
@@ -501,7 +501,7 @@ $TDUCREATE
   9
 $TDUPDATE
  40
-2461341.453125
+2461341.499212963
   9
 $TDUUPDATE
  40
@@ -933,11 +933,11 @@ $PSTYLEMODE
   9
 $FINGERPRINTGUID
   2
-{1AD152FF-4D94-4AD2-B3AE-C7240D499862}
+{14974883-71D8-409E-AF47-CB584900AC63}
   9
 $VERSIONGUID
   2
-{0D66C59C-0908-4A7C-9E77-941ED8A6EE2A}
+{762189F1-4CDA-4935-BCC3-7BD843AAC3DC}
   9
 $EXTNAMES
 290
@@ -1327,11 +1327,27 @@ ISM
   0
 CLASS
   1
-WIPEOUTVARIABLES
+WIPEOUT
   2
-AcDbWipeoutVariables
+AcDbWipeout
   3
 WipeOut
+ 90
+127
+ 91
+0
+280
+0
+281
+1
+  0
+CLASS
+  1
+LAYOUT
+  2
+AcDbLayout
+  3
+ObjectDBX Classes
  90
 0
  91
@@ -1359,35 +1375,19 @@ ObjectDBX Classes
   0
 CLASS
   1
-LAYOUT
+WIPEOUTVARIABLES
   2
-AcDbLayout
-  3
-ObjectDBX Classes
- 90
-0
- 91
-0
-280
-0
-281
-0
-  0
-CLASS
-  1
-WIPEOUT
-  2
-AcDbWipeout
+AcDbWipeoutVariables
   3
 WipeOut
  90
-127
+0
  91
 0
 280
 0
 281
-1
+0
   0
 ENDSEC
   0
@@ -1681,36 +1681,6 @@ AcDbSymbolTableRecord
 100
 AcDbLinetypeTableRecord
   2
-Пунктир 2-1_5
- 70
-0
-  3
-
- 72
-65
- 73
-2
- 40
-3.5
- 49
-2.0
- 74
-0
- 49
--1.5
- 74
-0
-  0
-LTYPE
-  5
-F18
-330
-2
-100
-AcDbSymbolTableRecord
-100
-AcDbLinetypeTableRecord
-  2
 Сверху
  70
 0
@@ -1733,7 +1703,7 @@ AcDbLinetypeTableRecord
   0
 LTYPE
   5
-F19
+F18
 330
 2
 100
@@ -1766,6 +1736,36 @@ AcDbLinetypeTableRecord
 0
  49
 -2.0
+ 74
+0
+  0
+LTYPE
+  5
+F19
+330
+2
+100
+AcDbSymbolTableRecord
+100
+AcDbLinetypeTableRecord
+  2
+Пунктир 2-1_5
+ 70
+0
+  3
+
+ 72
+65
+ 73
+2
+ 40
+3.5
+ 49
+2.0
+ 74
+0
+ 49
+-1.5
  74
 0
   0
@@ -2709,11 +2709,13 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-WALL-PATT
+S-GRID-IDEN
  70
-8
+9
  62
-8
+-8
+420
+3261359204
   6
 Continuous
 370
@@ -2733,7 +2735,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-P-SANR-FIXT
+I-FURN
  70
 8
  62
@@ -2757,13 +2759,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-DETL
+A-ANNO-DIMS-100
  70
 8
  62
-9
-420
-3254822400
+8
   6
 Continuous
 370
@@ -2807,7 +2807,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-FLOR
+P-SANR-FIXT
  70
 8
  62
@@ -2831,7 +2831,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-GLAZ-CURT
+G-ANNO-SYMB
  70
 8
  62
@@ -2855,13 +2855,13 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-S-GRID-IDEN
+A-DETL
  70
-9
+8
  62
--8
+9
 420
-3261359204
+3254822400
   6
 Continuous
 370
@@ -2881,11 +2881,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-COLS
+A-FLOR-PATT
  70
 8
  62
-8
+9
   6
 Continuous
 370
@@ -2905,7 +2905,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-GLAZ-CWMG
+A-WALL
  70
 8
  62
@@ -2953,7 +2953,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-G-ANNO-TEXT
+A-GLAZ-CWMG
  70
 8
  62
@@ -3001,11 +3001,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-WALL
+S-STRS
  70
 8
  62
-8
+9
   6
 Continuous
 370
@@ -3025,11 +3025,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-G-ANNO-SYMB
+A-FLOR
  70
 8
  62
-8
+9
   6
 Continuous
 370
@@ -3049,7 +3049,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-AREA-IDEN
+A-WALL-PATT
  70
 8
  62
@@ -3073,11 +3073,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-I-FURN
+A-GLAZ-CURT
  70
 8
  62
-9
+8
   6
 Continuous
 370
@@ -3090,30 +3090,6 @@ F
 LAYER
   5
 F11
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-A-FLOR-PATT
- 70
-8
- 62
-9
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-F12
 330
 1
 100
@@ -3137,31 +3113,7 @@ F
   0
 LAYER
   5
-F13
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-A-GLAZ
- 70
-8
- 62
-8
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-F14
+F12
 330
 1
 100
@@ -3185,6 +3137,54 @@ F
   0
 LAYER
   5
+F13
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+A-COLS
+ 70
+8
+ 62
+8
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+F14
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+A-GLAZ
+ 70
+8
+ 62
+8
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
 F15
 330
 1
@@ -3193,7 +3193,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-ANNO-DIMS-100
+G-ANNO-TEXT
  70
 8
  62
@@ -3217,11 +3217,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-S-STRS
+A-AREA-IDEN
  70
 8
  62
-9
+8
   6
 Continuous
 370
@@ -3339,34 +3339,6 @@ AcDbSymbolTableRecord
 100
 AcDbTextStyleTableRecord
   2
-GOST Common
- 70
-0
- 40
-299.9999999999997
- 41
-1.0
- 50
-0.0
- 71
-0
- 42
-0.2
-  3
-GOST_Common.ttf
-  4
-
-  0
-STYLE
-  5
-F1B
-330
-5
-100
-AcDbSymbolTableRecord
-100
-AcDbTextStyleTableRecord
-  2
 ISOCPEUR_I
  70
 0
@@ -3382,6 +3354,34 @@ ISOCPEUR_I
 0.2
   3
 isocpeui.ttf
+  4
+
+  0
+STYLE
+  5
+F1B
+330
+5
+100
+AcDbSymbolTableRecord
+100
+AcDbTextStyleTableRecord
+  2
+GOST Common
+ 70
+0
+ 40
+299.9999999999997
+ 41
+1.0
+ 50
+0.0
+ 71
+0
+ 42
+0.2
+  3
+GOST_Common.ttf
   4
 
   0
@@ -3743,7 +3743,7 @@ AcDbDimStyleTableRecord
 290
 0
 340
-F1B
+F1A
 343
 F1C
 344
