@@ -299,9 +299,21 @@ def calc1():
     main('КШ-2 (Кв + смес. узел ТП)', G2, cabs['КШ-2']['Q_dir'] + cabs['КШ-2']['mix']['Q'], '70/≈52', round(L2, 1))
     main('КШ-3 (ТП)', cabs['КШ-3']['G_tp'], cabs['КШ-3']['Q_tp'], f'{fmt_num(T_TP_HI, 1)}/{fmt_num(cabs["КШ-3"]["t_ret"], 0)}', round(L3, 1))
     c4 = [c for c in RD['circuits'] if 'КШ-4' in c['name']][0]
-    mains.append(dict(name='Ст. КШ-4 (2 этаж)', G=c4['G'], Q=c4['Q'], temp='70/55', pipe=c4['pipe'], v=c4['v'], L=8))
+    # КШ-4 — по расчёту листа 5 (как группа Н2 на листах 6, 8): приборы + ТП 2.8, 2.9 с теплопотоком вниз
+    import ov_heat2 as H2
+    q4 = (sum(H2.DEV[n]['Q'] for n in H2.K4_DIRECT) + sum(H2.UFH[no]['Q_ufh'] for no in ('2.8', '2.9'))
+          + sum(H2.UFH0[no]['q_down'] * H2.UFH[no]['q'] / H2.UFH0[no]['q'] * H2.UFH[no]['A_loops']
+                for no in ('2.8', '2.9')))
+    g4 = q4 / (4187.0 * 15) * 3600
+    v4 = g4 / 3600 / 983.0 / (math.pi * 0.0181 ** 2 / 4)          # 25×3,5: Dвн 18,1 мм
+    mains.append(dict(name='Ст. КШ-4 (2 этаж)', G=g4, Q=q4, temp='70/55', pipe=c4['pipe'], v=v4, L=8))
     cb = [c for c in RD['circuits'] if 'Баня' in c['name']][0]
-    mains.append(dict(name='Баня (КШ-Б)', G=cb['G'], Q=cb['Q'], temp='70/55', pipe='Ecoflex 32×2,9', v=cb['v'], L=cb['L']))
+    # баня — по расчёту листа 12 (как группа Н6 на листах 6, 8): отопление бани + ТО-Д; Б2 — с приоритетом
+    bc = json.load(open(os.path.join(ROOT, 'out', 'ov_bath_calc.json')))
+    qb = bc['Q_heat'] + bc['tod']['Q']
+    gb = qb / (4187.0 * 15) * 3600
+    vb = gb / 3600 / 983.0 / (math.pi * 0.0262 ** 2 / 4)
+    mains.append(dict(name='Баня (КШ-Б)', G=gb, Q=qb, temp='70/55', pipe='Ecoflex 32×2,9', v=vb, L=cb['L']))
     return dict(loops=loops, rooms=rooms, dev=dev, cabs=cabs, mains=mains)
 
 
@@ -518,9 +530,9 @@ def build():
 
     # ---- шкафы, стояки, Р-т — подписи в гараже (на листе 3 он свободен)
     c1, c2, c3, c5 = cabs['КШ-1'], cabs['КШ-2'], cabs['КШ-3'], cabs['КШ-5']
-    mlabel(p, 12.90, 8.25, f'КШ-1: ТП {c1["n_tp"]} вых., 48,5 °С', 1.9, at=(13.05, 8.97))
-    mlabel(p, 15.95, 8.25, f'КШ-3: ТП {c3["n_tp"]} вых., 48,5 °С', 1.9, at=(16.22, 9.14))
-    mlabel(p, 16.10, 7.60, 'Ст. Т1, Т2 Ø25×3,5 на 2 этаж', 1.9, 'right', at=(15.38, 9.16))
+    mlabel(p, 12.75, 8.25, f'КШ-1: ТП {c1["n_tp"]} вых., 48,5 °С', 1.9, at=(13.05, 8.97))
+    mlabel(p, 16.45, 8.25, f'КШ-3: ТП {c3["n_tp"]} вых., 48,5 °С', 1.9, at=(16.22, 9.14))
+    mlabel(p, 16.35, 7.60, 'Ст. Т1, Т2 Ø25×3,5 на 2 этаж', 1.9, 'right', at=(15.38, 9.16))
     mlabel(p, 12.20, 12.45, f'КШ-2: 2 яруса, Кв {c2["n_dir"]} вых.', 1.9, 'right', at=(13.10, 11.07),
             lines=f'ТП {c2["n_tp"]} вых. + смес. узел 36 °С')
     mlabel(p, 15.50, 12.45, f'КШ-5: ТП {c5["n_tp"]} вых., 36 °С', 1.8, 'right', at=(15.10, 11.07),
@@ -533,10 +545,12 @@ def build():
     for x, y, at, txt in rows:
         mlabel(p, x, y, txt, 1.9, at=at)
     kx = (TL.plan('КШ-3-П')[0][0] + TL.plan('КШ-3-О')[0][0]) / 2
-    mlabel(p, 16.55, 7.05, f'Т11, Т21 {M["КШ-3"]["pipe"]} → КШ-3 (48,5 °С)', 1.9, at=(kx, 9.60),
-           lines='в топочной — по разделу ТМ')
-    mlabel(p, 19.05, 14.62, 'Т1, Т2 → баня, Ecoflex 32×2,9', 1.9, 'right', at=SITE.on_line(14.95),
-            lines='в грунте под 1.13, прямо к бане (лист 14)')
+    # в топочной над ШУ (свободно): снизу, в гараже, выноска пересекала бы полку и выноску КШ-3
+    mlabel(p, 16.62, 9.75, f'Т11, Т21 {M["КШ-3"]["pipe"]} → КШ-3', 1.9, at=(kx, 9.60),
+           lines='48,5 °С, трасса по ТМ')
+    # подпись Ecoflex — во дворе у конца трассы: в хозблоке её закрывал ярлык 1.6 и пересекали выноски магистралей
+    mlabel(p, 19.90, 16.30, 'Т1, Т2 → баня', 1.9, 'left', at=SITE.on_line(15.95),
+            lines='Ecoflex, лист 14')
 
     # ---- ярлыки помещений
     R = C['rooms']

@@ -211,11 +211,13 @@ def draw_p2(doc):
     ctx_p2(p)
     c4 = center(KSH4)
     m_eom(p, *c4)
-    lab(p, 15.75, 6.70, f'28, 29. КШ-4: сервоприводы {N_K4} шт., насос', at=c4, lines='230 В, до 0,05 кВт')
+    lab(p, 15.75, 6.70, f'28, 29. КШ-4: сервоприводы {N_K4} шт.', at=c4, lines='насос; 230 В, до 0,05 кВт')
     tw = [center(r) for r in TOWEL_H.values()]
     for q in tw:
         m_eom(p, *q)
-    lab(p, 16.40, 5.30, '32. ТЭН Пс-1, Пс-2: 2 вывода IP44', at=tw[0], more=tw[1:])
+    # по подписи на каждый ТЭН: общая полка тянула выноску от Пс-1 через подпись КШ-4
+    lab(p, 15.75, 5.30, '32. ТЭН Пс-2: вывод 230 В, IP44', at=tw[1])
+    lab(p, 20.80, 4.55, '32. ТЭН Пс-1: вывод 230 В, IP44', at=tw[0], anchor='right')
     kn3 = center(KN['Кн-3'])
     m_eom(p, *kn3)
     lab(p, 1.05, 5.45, '30. Кн-3: блок питания 24 В', at=kn3)
@@ -274,7 +276,8 @@ def draw_bath(doc):
     cd, cu = center(BA.CAB_DIR), center(BA.CAB_UFH)
     m_eom(p, *cd)
     m_eom(p, *cu)
-    lab(p, 16.30, -1.15, f'33, 36, 37. КШ-Б1: сервопр. {N_B1} шт., УК1, УК2', at=cd, anchor='right',
+    # КШ-Б1 (нижний шкаф) — полка левее шкафов, КШ-Б2 (верхний) — правее: выноски не пересекаются
+    lab(p, 15.30, -1.15, f'33, 36, 37. КШ-Б1: сервопр. {N_B1} шт., УК1, УК2', at=cd, anchor='right',
         lines='230 В, ≈0,03 кВт')
     lab(p, 16.30, -2.25, f'34, 35. КШ-Б2: сервопр. {N_B2} шт., насос', at=cu, anchor='right',
         lines='230 В, ≈0,045 кВт')
@@ -290,7 +293,7 @@ def draw_bath(doc):
     tw = [center(r) for r in BA.TOWEL_GVS.values()]
     for q in tw + [center(r) for r in BA.TOWEL_GVS_B4.values()]:
         m_eom(p, *q)
-    lab(p, 6.20, 1.00, '41. ТЭН Пс-б1.1, Пс-б1.2: 2 вывода IP44', at=tw[0], more=tw[1:])
+    lab(p, 12.60, 1.00, '41. ТЭН Пс-б1.1, Пс-б1.2', at=tw[0], more=tw[1:], anchor='right', lines='2 вывода IP44')
     lab(p, 17.90, 3.95, '41. ТЭН Пс-б2 (б4)', at=center(BA.TOWEL_GVS_B4['Пс-б2']), anchor='right',
         lines='вывод 230 В, IP44')
     kup = (14.85, 1.55)

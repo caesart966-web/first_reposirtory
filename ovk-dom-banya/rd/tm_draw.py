@@ -169,6 +169,38 @@ def _clip_axis(a, b, i, lo, hi):
 
 
 # ====================================================================================== подписи без наложений
+def pair_sub(P, ids, a, b):
+    """Подпись отметки для полки пары труб: «ось …» или «оси … / …», если вторая труба пары идёт рядом
+    параллельно на другой высоте (Н6: подача и обратка разведены по высоте)."""
+    z = a[2]
+    best = None
+    if len(ids) > 1 and ids[1] in P:
+        ux, uy = b[0] - a[0], b[1] - a[1]
+        L = math.hypot(ux, uy)
+        if L > 1e-6:
+            ux, uy = ux / L, uy / L
+            for c, d in zip(P[ids[1]].pts, P[ids[1]].pts[1:]):
+                if abs(c[2] - d[2]) > 1e-6:
+                    continue
+                vx, vy = d[0] - c[0], d[1] - c[1]
+                M = math.hypot(vx, vy)
+                if M < 0.05 or abs(ux * vy - uy * vx) / M > 0.05:      # не параллельна
+                    continue
+                if abs((c[0] - a[0]) * uy - (c[1] - a[1]) * ux) > 0.20:  # дальше 0,2 м в плане
+                    continue
+                s0 = (c[0] - a[0]) * ux + (c[1] - a[1]) * uy
+                s1 = (d[0] - a[0]) * ux + (d[1] - a[1]) * uy
+                ov = min(max(s0, s1), L) - max(min(s0, s1), 0.0)
+                if ov <= 0.05:                                         # не перекрываются
+                    continue
+                if abs(c[2] - z) <= 0.005:
+                    return 'ось ' + lev(z)                             # есть соседний участок на той же высоте
+                best = max(best, (ov, c[2])) if best else (ov, c[2])
+        if best:
+            return f'оси {lev(z)} / {lev(best[1])}'
+    return 'ось ' + lev(z)
+
+
 class Labels:
     """Раскладка полок-выносок без наложений: занятые прямоугольники (мм листа) и рамка вида."""
 
@@ -235,6 +267,100 @@ class Labels:
             p.t(x0 + 0.8, y + 0.8, t, h, 'bl', layer)
         r = (x0, y0 - 0.4, x0 + w, top)
         self.block(r)
+        return r
+
+
+def _seg_cross(a, b, c, d):
+    def cr(o, p_, q):
+        return (p_[0] - o[0]) * (q[1] - o[1]) - (p_[1] - o[1]) * (q[0] - o[0])
+    return cr(c, d, a) * cr(c, d, b) < -1e-9 and cr(a, b, c) * cr(a, b, d) < -1e-9
+
+
+def _seg_box(a, b, r, pad=0.2):
+    """Отрезок a–b проходит через прямоугольник r (уменьшенный на pad)."""
+    x0, y0, x1, y1 = r[0] + pad, r[1] + pad, r[2] - pad, r[3] - pad
+    if x1 <= x0 or y1 <= y0:
+        return False
+    t0, t1 = 0.0, 1.0
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    for p_, q in ((-dx, a[0] - x0), (dx, x1 - a[0]), (-dy, a[1] - y0), (dy, y1 - a[1])):
+        if abs(p_) < 1e-12:
+            if q < 0:
+                return False
+        else:
+            t = q / p_
+            if p_ < 0:
+                t0 = max(t0, t)
+            else:
+                t1 = min(t1, t)
+    return t0 < t1
+
+
+class TMLabels(Labels):
+    """Раскладка выносок листов ТМ: кроме свободной полки — выноска не пересекает другие выноски и чужие
+    полки с текстом, точка выноски не попадает в чужой текст. Если так не выходит — как Labels (fallback)."""
+
+    def __init__(self, p, frame):
+        super().__init__(p, frame)
+        self.texts, self.leads = [], []
+
+    def _ok(self, at, end, r):
+        for t in self.texts:
+            if t[0] - 0.3 < at[0] < t[2] + 0.3 and t[1] - 0.3 < at[1] < t[3] + 0.3:
+                return False
+            if _seg_box(at, end, t):
+                return False
+        for c, d in self.leads:
+            if _seg_cross(at, end, c, d):
+                return False
+        for c, d in self.leads:                     # чужая выноска через новую полку
+            if _seg_box(c, d, r, pad=0.0):
+                return False
+        return True
+
+    def shelf(self, at, text, h=2.0, cands=None, sub=None, force=None, layer='ТМ_марки', fallback=True):
+        p = self.p
+        w = max(p.tw(text, h), p.tw(sub, h) if sub else 0) + 1.6
+        top = h * 1.25 + 0.9
+        bot = (h * 1.25 + 0.9) if sub else 0.4
+        pick = None
+        if force is not None:
+            pick = force
+        else:
+            for dx, dy in (cands or default_cands()):
+                x0 = at[0] + dx if dx >= 0 else at[0] + dx - w
+                r = (x0, at[1] + dy - bot, x0 + w, at[1] + dy + top)
+                end = (x0 if dx >= 0 else x0 + w, at[1] + dy)
+                if self.free(r) and self._ok(at, end, r):
+                    pick = (dx, dy)
+                    break
+            if pick is None:
+                if not fallback:
+                    return None
+                if fallback == 'soft' and any(t[0] - 0.3 < at[0] < t[2] + 0.3 and t[1] - 0.3 < at[1] < t[3] + 0.3
+                                              for t in self.texts):
+                    return None                     # точка выноски попала бы в чужой текст — пусть ищут другую
+                r = super().shelf(at, text, h, cands=cands, sub=sub, layer=layer)
+                if r:
+                    self._note(at, r, bot)
+                return r
+        r = super().shelf(at, text, h, sub=sub, force=pick, layer=layer)
+        dx, dy = pick
+        self.texts.append(r)
+        self.leads.append((tuple(at), (r[0] if dx >= 0 else r[2], at[1] + dy)))
+        return r
+
+    def _note(self, at, r, bot):
+        """Учесть полку, поставленную базовым способом (fallback): выноска — к ближнему концу полки."""
+        self.texts.append(r)
+        xe = r[0] if abs(r[0] - at[0]) < abs(r[2] - at[0]) else r[2]
+        self.leads.append((tuple(at), (xe, r[1] + bot)))
+
+    def stack(self, at, lines, dx, dy, h=1.8, layer='ТМ_марки'):
+        r = super().stack(at, lines, dx, dy, h=h, layer=layer)
+        if r:
+            self.texts.append(r)
+            self.leads.append((tuple(at), (r[0] if dx >= 0 else r[2], r[1] + 0.4)))
         return r
 
 
@@ -472,7 +598,10 @@ def draw_eq(p, V, e, layer='ТМ_оборуд', mask=True, ltype=None):
         if mask:
             p.m.add_wipeout([(cx - r * 0.7, cy - r * 0.7), (cx + r * 0.7, cy + r * 0.7)],
                             dxfattribs={'layer': layer})
-        p.circle(cx, cy, 0, layer, r_paper=r, color=None)
+        c_ = p.circle(cx, cy, 0, layer, r_paper=r, color=None)
+        if ltype:
+            c_.dxf.linetype = ltype
+            c_.dxf.ltscale = 0.004                   # штрих ≈1,3 мм: на малом кружке иначе выходит сплошная
     elif o[0] == 'cylv':
         _, a, b, r = o
         rr = r

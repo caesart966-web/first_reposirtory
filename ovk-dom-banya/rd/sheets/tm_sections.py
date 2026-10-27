@@ -15,8 +15,8 @@ sys.path.insert(0, ROOT)
 sys.path.insert(0, HERE)
 from rdbase import new_doc, RDSheet, save_and_pdf  # noqa: E402
 import tm_model as TM  # noqa: E402
-from tm_draw import (CODE_TM, BLD_TM, TM_LIST, TM_TOTAL, setup_layers, PP, View, Labels, draw_eq,  # noqa: E402
-                     eq_outline, sym_fit, PIPE_STYLE, unit, level_mark, lev, f1, mm, dim_v)
+from tm_draw import (CODE_TM, BLD_TM, TM_LIST, TM_TOTAL, setup_layers, PP, View, TMLabels as Labels, draw_eq,  # noqa: E402
+                     eq_outline, sym_fit, PIPE_STYLE, unit, level_mark, lev, f1, mm, dim_v, pair_sub)
 from tm_plans import PAIRS, CUTS  # noqa: E402
 
 OUT = os.path.join(ROOT, 'out')
@@ -210,6 +210,9 @@ def draw_section(p, V, walls, ctx_runs, ctx_boxes, u_lo, u_hi, L, eq_labels=(), 
         if force == 'in':
             ty = cy + h * 0.28 if h > 12.0 else cy
             p.t(cx, ty, txt, 2.2, 'center', 'ТМ_марки')
+            tw_ = p.tw(txt, 2.2)
+            if hasattr(L, 'texts'):
+                L.texts.append((cx - tw_ / 2, ty - 1.4, cx + tw_ / 2, ty + 1.4))
         else:
             L.shelf((cx, cy), txt, 2.0, force=force)
     label_pipes(p, V, L, skip_labels)
@@ -234,11 +237,13 @@ def label_pipes(p, V, L, skip):
         if not best:
             continue
         Lp, c, A, B = best
-        sub = 'ось ' + lev(c[0][2]) if abs(c[0][2] - c[1][2]) < 1e-6 and ids[0] != 'Д-каскад' else None
-        for t in (0.4, 0.65, 0.2, 0.85):
-            at = (A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t)
-            if L.shelf(at, txt, 1.8, sub=sub):
-                break
+        sub = pair_sub(P, ids, c[0], c[1]) if abs(c[0][2] - c[1][2]) < 1e-6 and ids[0] != 'Д-каскад' else None
+        ats = [(A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t) for t in (0.4, 0.65, 0.2, 0.85)]
+        if not any(L.shelf(at, txt, 1.8, sub=sub, fallback=False) for at in ats):
+            if not any(L.shelf(at, txt, 1.8, sub=sub, fallback='soft') for at in ats):
+                for at in ats:                                      # как раньше: первое свободное место
+                    if L.shelf(at, txt, 1.8, sub=sub):
+                        break
 
 
 def levels(p, V, u_right):
@@ -273,7 +278,7 @@ EQ_N = [('ПК', 'ПК', 'in'), ('БП', 'БП', 'in'), ('ГС', 'ГС', (-6, 22
         ('РК', 'РК', 'in')] + [(n, n, 'in') for n, _ in TM.GROUPS]
 EQ_W = [('К1', 'К1', 'in'), ('К2', 'К2', 'in'), ('ПК', 'ПК', 'in'), ('КШ-3', 'КШ-3', (-6, 16)), ('ШУ', 'ШУ', 'in'),
         ('Нейтр', 'нейтрализатор (ВК)', (-8, 14))]
-EQ_E = [('Б1', 'Б1', 'in'), ('РБ-ГВС', 'РБ-ГВС', (-8, 12)), ('РБ', 'РБ', (8, 14)),
+EQ_E = [('Б1', 'Б1', 'in'), ('РБ-ГВС', 'РБ-ГВС', (-8, 12)), ('РБ', 'РБ', 'in'),
         ('РК', 'РК с группами Н3…Н7 (вид с торца)', (6, 22))]
 EQ_S = [('ШУ', 'ШУ', 'in'), ('КШ-3', 'КШ-3 (ОВ)', (8, 18)), ('П1', 'П1 (ОВ)', 'in'), ('П1-узел', 'смесит. узел П1', (6, 30))]
 

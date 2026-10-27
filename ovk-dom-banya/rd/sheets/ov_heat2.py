@@ -274,10 +274,11 @@ def build():
         rows.append([f'ТП{j}', f'петля {no}', no, f'{u["Q_ufh"]}', f'ТП шаг {u["T_mm"]}, {fmt_num(u["A_loops"], 1)} м²',
                      fmt_num(u['G_loop'], 0), '16×2,0', fmt_num(u['L_loop'], 1), fmt_num(u['l_min'], 2)])
     widths = [9, 13, 9, 11, 37, 10, 13, 12, 12]
-    yb = sh.table(290, 289, widths, rows, row_h=5.2, head_h=7, h=1.9,
+    TX, TY = 287.5, 285.0                       # таблица — внутри рамки (правая граница 415, верхняя 292)
+    yb = sh.table(TX, TY, widths, rows, row_h=5.2, head_h=7, h=1.9,
                   aligns=['center', 'center', 'center', 'center', 'left', 'center', 'center', 'center', 'center'])
-    sh.s.text('Подключения к коллекторному шкафу КШ-4', 290 + sum(widths) / 2, 292.2, h=2.5, align='center')
-    sh.notes(290, yb - 5, 124, [
+    sh.s.text('Подключения к коллекторному шкафу КШ-4', TX + sum(widths) / 2, TY + 2.4, h=2.5, align='center')
+    sh.notes(TX, yb - 5, 126, [
         'Подложка — АР03, АР09 (выгрузка из Revit 19.10.2026), отметка чистого пола 2 этажа +4,050. '
         'Ярлык помещения: номер, расчетная температура, теплопотери при -25 °С.',
         'Система двухтрубная лучевая от КШ-4, параметры 70/55 °С. Подводки — PE-Xa 16×2,0 с антидиффузионным '

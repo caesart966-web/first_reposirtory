@@ -14,8 +14,8 @@ sys.path.insert(0, ROOT)
 sys.path.insert(0, HERE)
 from rdbase import new_doc, RDSheet, save_and_pdf  # noqa: E402
 import tm_model as TM  # noqa: E402
-from tm_draw import (CODE_TM, BLD_TM, TM_LIST, TM_TOTAL, setup_layers, PP, View, Labels, draw_pipes, draw_eq,  # noqa
-                     eq_outline, sym_fit, walls_plan, dim_h, dim_v, mm, axis_bubble, cut_mark, lev, f1)
+from tm_draw import (CODE_TM, BLD_TM, TM_LIST, TM_TOTAL, setup_layers, PP, View, TMLabels as Labels, draw_pipes, draw_eq,  # noqa
+                     eq_outline, sym_fit, walls_plan, dim_h, dim_v, mm, axis_bubble, cut_mark, lev, f1, pair_sub)
 
 OUT = os.path.join(ROOT, 'out')
 RD = json.load(open(os.path.join(ROOT, '..', 'rd', 'rd_calc.json')))
@@ -76,8 +76,10 @@ def visible_segments(V, pp):
     return out
 
 
-def label_pipes(L, V, skip=()):
+def label_pipes(L, V, skip=(), force=None):
+    """force: id -> (t, (dx, dy)) — точка на длиннейшем участке и полка, заданные вручную (без пересечений выносок)."""
     P = pipe_by_id()
+    force = force or {}
     for ids, txt in PAIRS:
         if ids[0] in skip or ids[0] not in P:
             continue
@@ -88,14 +90,26 @@ def label_pipes(L, V, skip=()):
         Lm, c, A, B = segs[0]
         sub = None
         if abs(c[0][2] - c[1][2]) < 1e-6:
-            sub = 'ось ' + lev(c[0][2])
+            sub = pair_sub(P, ids, c[0], c[1])
             if ids[0] == 'Д-каскад':
                 sub = None
-        # точка подписи — 35 % длины отрезка (середины часто заняты чужими подписями)
-        for t in (0.35, 0.6, 0.2, 0.8):
-            at = (A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t)
-            if L.shelf(at, txt, 1.8, sub=sub):
-                break
+        cands = None
+        if ids[0] in force:
+            t, fv = force[ids[0]]
+            if t is None:                      # только сторона полки: перебор свободных мест в заданном направлении
+                sx, sy = fv
+                cands = [(sx * r, sy * r * 0.8) for r in (9, 14, 20, 27, 35)]
+            else:
+                L.shelf((A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t), txt, 1.8, sub=sub, force=fv)
+                continue
+        # точка подписи — 35 % длины отрезка (середины часто заняты чужими подписями); сначала — без пересечений
+        # выносок, иначе — как раньше
+        ats = [(A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t) for t in (0.35, 0.6, 0.2, 0.8)]
+        if not any(L.shelf(at, txt, 1.8, sub=sub, cands=cands, fallback=False) for at in ats):
+            if not any(L.shelf(at, txt, 1.8, sub=sub, cands=cands, fallback='soft') for at in ats):
+                for at in ats:                                      # как раньше: первое свободное место
+                    if L.shelf(at, txt, 1.8, sub=sub, cands=cands):
+                        break
 
 
 def eq_marks(p, L, V, items, inside_min=(9.0, 5.0)):
@@ -205,7 +219,9 @@ def build():
         e = E[n]
         o = eq_outline(V1, e)
         p.t((o[1] + o[3]) / 2, (o[2] + o[4]) / 2 - 0.2, n, 1.8, 'center', 'ТМ_марки')
-    block_room(L1, V1, [E[k] for k in ('К1', 'К2', 'ПК', 'БП', 'Б1', 'КШ-3', 'ШУ', 'Нейтр')])
+    # ввод Ecoflex — под РК и группами: показан штрихом поверх
+    draw_eq(p, V1, E['Ecoflex'], mask=False, ltype='ОВ_ШТРИХ')
+    block_room(L1, V1, [E[k] for k in ('К1', 'К2', 'ПК', 'БП', 'Б1', 'КШ-3', 'ШУ', 'Нейтр', 'РБ', 'Ecoflex')])
     L1.block(V1.P((TM.gx(0) - 0.13, TM.GY - 0.12, 0)) + V1.P((TM.gx(5) + 0.13, TM.GY + 0.12, 0)))
     L1.shelf(V1.P((TM.HS[0], TM.HS[1], 0)), 'ГС', 2.2, force=(-10, -16))
     L1.shelf(V1.P((18.10, 13.18, 0)), 'УП', 2.2, force=(-8, -27))
@@ -213,9 +229,14 @@ def build():
     L1.shelf(V1.P((TM.gx(3), TM.GY - 0.06, 0)), 'РК', 2.2, force=(6, -13))
     L1.shelf(V1.P((16.55, 11.42, 0)), 'нейтрализатор (ВК)', 1.8, force=(10, 10))
     L1.shelf(V1.P((17.00, 11.05, 0)), 'трап Ду50 (ВК)', 1.8, force=(10, -8))
-    L1.shelf(V1.P((TM.ECO[0], TM.ECO[1] - 0.06, 0)), 'ввод Ecoflex (баня)', 1.8, force=(-4, -40))
+    # Н6 и ввод Ecoflex — одной полкой у ввода: две полки рядом с РК, РБ и УП давали пересечения выносок
+    P_ = pipe_by_id()
+    h6 = P_['Н6-П'].pts
+    L1.shelf(V1.P((TM.ECO[0], TM.ECO[1] - 0.06, 0)), 'Т1, Т2 Ecoflex → баня (Н6), ввод в полу', 1.8,
+             sub=pair_sub(P_, ('Н6-П', 'Н6-О'), h6[1], h6[2]), force=(-4, -48))
     L1.shelf(V1.P((17.65, 9.75, 0)), 'П1 (ОВ, над головой, низ +2,450)', 1.8, force=(4, 9))
-    label_pipes(L1, V1, skip=('Н3-П', 'Н4-П', 'Н2-П', 'Н5-П', 'КШ-3-П', 'Д-каскад', 'РБ', 'ГС-РК-П'))
+    label_pipes(L1, V1, skip=('Н3-П', 'Н4-П', 'Н2-П', 'Н5-П', 'КШ-3-П', 'Д-каскад', 'РБ', 'ГС-РК-П', 'Н6-П'),
+                force={'К-сб': (0.95, (20, -1))})         # выноска конденсата — под нейтрализатором, не через его выноску
     p.t(*V1.P((15.22, 12.75, 0)), 'Ш-2', 2.5, 'center', 'ТМ_марки')
     p.t(*V1.P((17.80, 10.75, 0)), '1.6 Топочная', 3.0, 'center', 'ТМ_марки')
     p.t(*V1.P((15.25, 10.00, 0)), '1.7', 2.5, 'center', 'ТМ_марки')
@@ -281,9 +302,10 @@ def build():
              4.0, 30.0)
     L2.shelf(V2.P((17.65, 9.75, 0)), 'П1 (ОВ, лист 9)', 2.0, force=(4, 10))
     L2.shelf(V2.P((18.57, 10.18, 0)), 'смесительный узел П1', 1.8, force=(14, -10))
-    L2.shelf(V2.P((TM.RBG[0], TM.RBG[1], 0)), 'РБ-ГВС', 2.2)
+    L2.shelf(V2.P((TM.RBG[0], TM.RBG[1], 0)), 'РБ-ГВС', 2.2, force=(-4, 16))   # полка — выше трубы Т3, не на ней
     label_pipes(L2, V2, skip=('К2-П', 'К1-П', 'ГС-РК-П', 'Н6-П', 'В1-Б1', 'Т4', 'УП', 'РБ', 'ГС-О', 'Н3-П', 'Н4-П',
-                              'Н2-П'))
+                              'Н2-П'),
+                force={'ПК-КТ': (None, (-1, -1.6)), 'XR': (None, (1, -1))})   # выноски котлового контура не пересекаются
     xa2, xb2 = V2.P((TM.X0, 0, 0))[0], V2.P((TM.X1, 0, 0))[0]
     ya2, yb2 = V2.P((0, TM.Y0, 0))[1], V2.P((0, TM.Y1, 0))[1]
     # привязка поворотов магистралей групп к южной стене (по западной стене)

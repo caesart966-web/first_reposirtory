@@ -119,7 +119,8 @@ def build():
     p.rect(X0 - 2, YR - 4, X0 + 16, YS + 4, 'ОВ_оборуд')
     p.t(X0 + 7, YS + 6.0, 'Ecoflex', 1.8, 'center', 'ОВ_текст')
     p.label(24, 214, 'От РК топочной дома (листы 7, 8): Т1, Т2 PE-Xa 32×2,9', 1.9, at=(X0 + 7, YR - 4),
-            lines=f'в оболочке Ecoflex Quattro, L≈{fmt_num(L_TOT, 1)} м (в расчёте 17 м); G max {n0(C["b2"]["G"])} кг/ч')
+            lines=f'в оболочке Ecoflex Quattro, L≈{fmt_num(L_TOT, 1)} м (в расчёте 17 м); '
+                  f'G {n0((C["Q_heat"] + C["tod"]["Q"]) / (4187.0 * 15) * 3600)} кг/ч (группа Н6, лист 8)')
     S.valve(X0 + 22, YS)
     S.valve(X0 + 22, YR)
     S.filt(X0 + 30, YS)

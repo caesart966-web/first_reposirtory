@@ -13,8 +13,8 @@ sys.path.insert(0, ROOT)
 sys.path.insert(0, HERE)
 from rdbase import new_doc, RDSheet, save_and_pdf  # noqa: E402
 import tm_model as TM  # noqa: E402
-from tm_draw import (CODE_TM, BLD_TM, TM_LIST, TM_TOTAL, setup_layers, PP, View, Labels, draw_eq, eq_outline,  # noqa
-                     sym_fit, PIPE_STYLE, unit, lev, f1, C45)
+from tm_draw import (CODE_TM, BLD_TM, TM_LIST, TM_TOTAL, setup_layers, PP, View, TMLabels as Labels, draw_eq, eq_outline,  # noqa
+                     sym_fit, PIPE_STYLE, unit, lev, f1, C45, pair_sub)
 from tm_plans import PAIRS  # noqa: E402
 
 OUT = os.path.join(ROOT, 'out')
@@ -80,34 +80,51 @@ def build():
             fr = V.P((bb[0], bb[1], bb[2]))
             p.t(fr[0] + (bb[3] - bb[0]) * V.s / 2, fr[1] + 3.0, e.mark, 1.8, 'center', 'ТМ_марки')
             continue
-        L.shelf(top, e.mark if e.id != 'Ecoflex' else 'ввод Ecoflex (баня)', 2.2)
+        if e.id == 'Ecoflex':                         # вправо-вниз: над ним — полка труб Н6 и сама труба
+            L.shelf(top, 'ввод Ecoflex (баня)', 2.2, force=(8, -12))
+            continue
+        L.shelf(top, e.mark, 2.2)
     for e, t in ((E['П1-узел'], 'смесит. узел П1 (ОВ)'), (E['КШ-3'], 'КШ-3 (ОВ)'), (E['Нейтр'], 'нейтрализатор (ВК)')):
         bb = e.bbox()
         L.shelf(V.P(((bb[0] + bb[3]) / 2, (bb[1] + bb[4]) / 2, bb[5])), t, 1.8)
     # подписи труб с диаметрами и отметками
     P = {pp.id: pp for pp in TM.PIPES}
     done = set()
-    for ids, txt in PAIRS:
+
+    # сначала трубы, у которых на схеме мало места для выноски (иначе их закрывают полки магистралей)
+    FIRST = ('ПК-КТ', 'Т3', 'УП')
+    for ids, txt in sorted(PAIRS, key=lambda it: FIRST.index(it[0][0]) if it[0][0] in FIRST else len(FIRST)):
         if ids[0] in done or ids[0] not in P:
             continue
         done.add(ids[0])
-        best = None
+        segs = []
         for a, b in zip(P[ids[0]].pts, P[ids[0]].pts[1:]):
             A, B = V.P(a), V.P(b)
             Lp = math.hypot(B[0] - A[0], B[1] - A[1])
-            if Lp > 6.0 and (best is None or Lp > best[0]):
-                best = (Lp, (a, b), A, B)
-        if not best:
+            if Lp > 6.0:
+                segs.append((Lp, (a, b), A, B))
+        if not segs:
             continue
-        Lp, (a, b), A, B = best
-        sub = 'ось ' + lev(a[2]) if abs(a[2] - b[2]) < 1e-6 and ids[0] != 'Д-каскад' else None
-        for t in (0.4, 0.6, 0.25, 0.75):
-            q = (A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t)
-            if L.shelf(q, txt, 1.8, sub=sub):
+        segs.sort(key=lambda s_: -s_[0])
+        # точки выноски: три длиннейших участка (на схеме длиннейший часто закрыт чужой полкой); отметка — своего
+        cand = []
+        horiz0 = abs(segs[0][1][0][2] - segs[0][1][1][2]) < 1e-6
+        for Lp, (a, b), A, B in segs:
+            horiz = abs(a[2] - b[2]) < 1e-6
+            if cand and horiz0 and not horiz:        # у горизонтальной трубы отметку не терять
+                continue
+            sub = pair_sub(P, ids, a, b) if horiz and ids[0] != 'Д-каскад' else None
+            cand += [((A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t), sub) for t in (0.4, 0.6, 0.25, 0.75)]
+            if len(cand) >= 12:
                 break
+        if not any(L.shelf(q, txt, 1.8, sub=sb, fallback=False) for q, sb in cand):
+            if not any(L.shelf(q, txt, 1.8, sub=sb, fallback='soft') for q, sb in cand):
+                for q, sb in cand[:4]:                            # как раньше: первое свободное место
+                    if L.shelf(q, txt, 1.8, sub=sb):
+                        break
     # концы — куда уходят трубы
     for pid, t in (('Н3-П', 'к КШ-2 (листы 3, 6 ОВ)'), ('Н4-П', 'к КШ-1 (листы 3, 6 ОВ)'), ('Н2-П', 'к КШ-4 (лист 6 ОВ)'),
-                   ('Т3', 'Т3 — к сети ГВС (ВК)'), ('В1-Б1', 'В1 — от сети ВК'), ('Г', 'ввод газа (ГСВ)')):
+                   ('В1-Б1', 'В1 — от сети ВК'), ('Г', 'ввод газа (ГСВ)')):   # Т3 → ВК — полкой трубы
         pp = P[pid]
         end = pp.pts[-1] if pid not in ('В1-Б1',) else pp.pts[0]
         L.shelf(V.P(end), t, 1.8)
