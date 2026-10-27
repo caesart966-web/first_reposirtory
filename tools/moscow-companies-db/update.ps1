@@ -51,6 +51,21 @@ Write-Host "PowerShell $($PSVersionTable.PSVersion), папка $((Get-Location)
 Write-Host "ветка $branch"
 Write-Host ""
 
+# «Базовое соединение закрыто: непредвиденная ошибка при передаче» у заказчика
+# случается на первом запросе к GitHub (26 и 27.10.2026, на двух компьютерах):
+# соединение рвётся до ответа, следующий запрос проходит. Поэтому каждый запрос —
+# до трёх попыток с паузой, и разовый обрыв больше не оставляет папку без обновления.
+function Invoke-WithRetry([scriptblock]$Action, [int]$Tries = 3) {
+    for ($i = 1; $i -le $Tries; $i++) {
+        try {
+            return (& $Action)
+        } catch {
+            if ($i -eq $Tries) { throw }
+            Start-Sleep -Seconds (2 * $i)
+        }
+    }
+}
+
 $updated = @()
 $skipped = 0
 $failed  = @()
@@ -62,7 +77,7 @@ foreach ($folder in $folders) {
         # @(Invoke-RestMethod ...) давал массив из ОДНОГО элемента — всего списка
         # файлов сразу: «файлов в репозитории — 1» и ошибка Join-Path. Конвейер
         # через ForEach-Object разворачивает список в отдельные файлы (в PS 7 тоже).
-        $response = Invoke-RestMethod -Uri $api -Headers $agent -ErrorAction Stop
+        $response = Invoke-WithRetry { Invoke-RestMethod -Uri $api -Headers $agent -ErrorAction Stop }
         $items = @($response | ForEach-Object { $_ })
     } catch {
         $failed += "$($folder.Remote) — $($_.Exception.Message)"
@@ -88,8 +103,10 @@ foreach ($folder in $folders) {
 
         $tmp = [System.IO.Path]::GetTempFileName()
         try {
-            Invoke-WebRequest -Uri $item.download_url -OutFile $tmp -Headers $agent `
-                              -UseBasicParsing -ErrorAction Stop
+            Invoke-WithRetry {
+                Invoke-WebRequest -Uri $item.download_url -OutFile $tmp -Headers $agent `
+                                  -UseBasicParsing -ErrorAction Stop
+            } | Out-Null
             Move-Item -LiteralPath $tmp -Destination $target -Force -ErrorAction Stop
             Write-Host "  обновлён: $target" -ForegroundColor Green
             $updated += $target
