@@ -21,6 +21,8 @@ from nvk_draw import (CODE_NVK, BLD_NVK, NVK_LIST, NVK_TOTAL, setup, finish, ale
 
 OUT = os.path.join(ROOT, 'out')
 P = {p.id: p for p in M.PIPES}
+_kx = P['КХ-8н']
+KX_I = f'{(_kx.z[0] - _kx.z[-1]) / _kx.length():.3f}'.replace('.', ',').rstrip('0')   # уклон подводки КХ-8
 W = {w.id: w for w in M.WELLS}
 for _p in M.PIPES:
     M.frost_check(_p)
@@ -150,6 +152,7 @@ def draw_profile(p, x0, y0, title, route, nodes, Kh, Kv, sysk, second=None, zc=N
         for a, b in p_.ins:
             for s_ in (a, b):
                 pass
+    ins_boxes = []
     for pid in {q['pid'] for q in route.parts}:
         p_ = P[pid]
         if not p_.ins:
@@ -160,20 +163,74 @@ def draw_profile(p, x0, y0, title, route, nodes, Kh, Kv, sysk, second=None, zc=N
             sa, sb = base + a, base + min(b, p_.length())
             za, zb = route.z(sa) + (p_.od if not axis else p_.od / 2) + 0.15, route.z(sb) + (p_.od if not axis else p_.od / 2) + 0.15
             p.pl([(pr.X(sa), pr.Y(za)), (pr.X(sb), pr.Y(zb))], 'НВК_утепл', lw=70)
-            p.t((pr.X(sa) + pr.X(sb)) / 2, pr.Y(max(za, zb)) + 1.2, 'ЭППС 50', 1.6, 'bc', 'НВК_утепл')
+            xm, yi = (pr.X(sa) + pr.X(sb)) / 2, pr.Y(max(za, zb)) + 1.2
+            p.t(xm, yi, 'ЭППС 50', 1.6, 'bc', 'НВК_утепл')
+            ins_boxes.append((xm - p.tw('ЭППС 50', 1.6) / 2, yi, xm + p.tw('ЭППС 50', 1.6) / 2, yi + 1.6))
     # пересечения
-    placed = []                                          # подписи пересечений — без наложений
+    placed = list(ins_boxes)                             # подписи пересечений — без наложений
+    axes = []                                            # штрихпунктирные линии узлов: по возможности не пересекать
+    for n in nodes:                                      # и не поперёк колодцев
+        w_ = n.get('well')
+        if w_ is not None:
+            zb_ = w_.bottom if w_.bottom else min(n.get('zin') or 9e9, n.get('zout') or 9e9) - 0.10
+            wd = max(1.6, min(w_.dn, 1500) / Kh)
+            placed.append((pr.X(n['s']) - wd / 2, pr.Y(zb_), pr.X(n['s']) + wd / 2, pr.Y(w_.cover)))
+            tl = p.tw(n['name'], 2.2) / 2 + 0.5
+            placed.append((pr.X(n['s']) - tl, pr.Y(w_.cover) + 3.0, pr.X(n['s']) + tl, pr.Y(w_.cover) + 5.4))
+            axes.append((pr.X(n['s']) - 0.3, pr.yt, pr.X(n['s']) + 0.3, pr.Y(zb_)))        # ось колодца до таблицы
+        else:
+            axes.append((pr.X(n['s']) - 0.3, pr.yt, pr.X(n['s']) + 0.3, pr.Y(gd(n['s']))))     # линия узла
+            if n.get('top', True):
+                tl = p.tw(n['name'], 2.0) / 2 + 0.5
+                placed.append((pr.X(n['s']) - tl, pr.Y(gd(n['s'])) + 3.0, pr.X(n['s']) + tl, pr.Y(gd(n['s'])) + 5.2))
+    from vk_draw import _seg_rect
+    circ = {s_: (pr.X(s_) - 1.0, pr.Y(t_[1]) - 1.0, pr.X(s_) + 1.0, pr.Y(t_[1]) + 1.0) for s_, t_ in crossings}
+    leads = []                                           # выноски подписей пересечений
     for s_, txt in sorted(crossings, key=lambda c: -c[1][1]):
         cx, cy = pr.X(s_), pr.Y(txt[1])
         p.circle(cx, cy, 0, 'НВК_марки', r_paper=1.0)
-        w, ty = p.tw(txt[0], 1.7), cy + 1.5
-        while any(cx + 1.5 < b[2] and cx + 1.5 + w > b[0] and ty < b[3] + 0.6 and ty + 1.7 > b[1] - 0.6
-                  for b in placed):
-            ty += 2.6
-        if ty > cy + 1.5:
-            p.line(cx + 0.7, cy + 0.7, cx + 1.5, ty, 'НВК_марки')
-        p.t(cx + 1.5, ty, txt[0], 1.7, 'bl', 'НВК_марки')
-        placed.append((cx + 1.5, ty, cx + 1.5 + w, ty + 1.7))
+        w = p.tw(txt[0], 1.7) * 1.12                     # tw — по оценке, шрифт чуть шире
+        right_first = cx + 1.5 + w <= pr.X(route.L) - 1.0
+        x_lo, x_hi = pr.X(0) - 4.0, pr.X(route.L) + 6.0
+        best = None
+        ytop = pr.Y(min(gd(s_), ge(s_))) - 0.8 - 1.7              # подписи — под землёй, над таблицей
+        for k, use_axes in [(k_, True) for k_ in (0, -1, 1, -2, 2, -3, 3, -4, 4, -5, 5, 6, 7, 8)] + \
+                           [(k_, False) for k_ in (0, -1, 1, -2, 2, -3, 3, -4, 4, -5, 5, 6, 7, 8)]:
+            ty = cy + 1.5 + 2.6 * k if k >= 0 else cy - 3.2 - 2.6 * (-k - 1)
+            if ty > ytop or ty < pr.yt + 1.0:
+                continue
+            for left in ((False, True) if right_first else (True, False)):
+                tx0 = cx - 1.5 - w if left else cx + 1.5
+                if tx0 < x_lo or tx0 + w > x_hi:
+                    continue
+                rt = (tx0, ty, tx0 + w, ty + 1.7)
+                others = placed + [c_ for k_, c_ in circ.items() if k_ != s_] + (axes if use_axes else [])
+                if any(rt[0] < b_[2] + 0.8 and rt[2] > b_[0] - 0.8 and rt[1] < b_[3] + 0.8 and rt[3] > b_[1] - 0.8
+                       for b_ in others):
+                    continue
+                if any(_seg_rect(a_, b_, (rt[0] - 0.4, rt[1] - 0.4, rt[2] + 0.4, rt[3] + 0.4)) for a_, b_ in leads):
+                    continue
+                if abs(ty - (cy + 1.5)) > 1e-6:          # выноска не идёт через чужие подписи и кружки
+                    la = (cx - 0.7 if left else cx + 0.7, cy + (0.7 if ty > cy else -0.7))
+                    lb = (cx - 1.5 if left else cx + 1.5, ty if ty > cy else ty + 1.7)
+                    if any(_seg_rect(la, lb, (b_[0] + 0.2, b_[1] + 0.2, b_[2] - 0.2, b_[3] - 0.2)) for b_ in others
+                           if b_[2] - b_[0] > 0.6):
+                        continue
+                best = (ty, left, tx0)
+                break
+            if best:
+                break
+        if best is None:
+            raise SystemExit(f'НВК профиль: нет места для подписи пересечения «{txt[0]}»')
+        ty, left, tx0 = best
+        if abs(ty - (cy + 1.5)) > 1e-6:
+            yl = ty if ty > cy else ty + 1.7
+            p.line(cx - 0.7 if left else cx + 0.7, cy + (0.7 if ty > cy else -0.7), cx - 1.5 if left else cx + 1.5, yl,
+                   'НВК_марки')
+            leads.append(((cx - 0.7 if left else cx + 0.7, cy + (0.7 if ty > cy else -0.7)),
+                          (cx - 1.5 if left else cx + 1.5, yl)))
+        p.t(cx - 1.5 if left else cx + 1.5, ty, txt[0], 1.7, 'br' if left else 'bl', 'НВК_марки')
+        placed.append((tx0, ty, tx0 + w, ty + 1.7))
     # колодцы и узлы
     for n in nodes:
         w = n.get('well')
@@ -294,7 +351,7 @@ def sheet4(sh, p):
              'Трасса — по схеме Заказчицы 26.10.2026: сборный дома одной прямой в ДК5-018, баня — двумя прямыми '
              'линиями (К1-б — сборный от душа, К1-бв — от стояка Ст.К1-б; 27.10.2026) через колодец КК-1 в сборный '
              'дома (между ревизией бани и прочисткой дома без КК-1 было бы 18 м при наибольших 15 м, табл. 18.1 '
-             'СП 30.13330.2020). Линии бани — i = 0,015, в КК-1 — перепады ' +
+             f'СП 30.13330.2020). Линии бани — i = {alev(P["К1-бн"].i, 3).rstrip("0")}, в КК-1 — перепады ' +
              ', '.join(f'{pp.id} {alev(z - W["КК-1"].tray())} м' for pp, z in W['КК-1'].ins) +
              f'; лоток на вводе в дом {alev(P["К1-б1"].z[-1], 3)} совпадает с началом сборного К1-1 (ВК).',
              f'Вход в ДК5-018: выпуск К1-1 — с перепадом {alev(DROP["К1-1н"])} м (по лотку-водосливу). Врезка в '
@@ -303,7 +360,7 @@ def sheet4(sh, p):
              '200 мм. ' + (f'Участки, где глубина меньше нормы (п. 6.2.4 СП 32.13330.2018), — с утеплением ЭППС '
                            f'50 мм: {", ".join(k1_ins)}.' if k1_ins else
                            'Глубина сети — не меньше нормы (п. 6.2.4 СП 32.13330.2018), утепление не требуется.'),
-             'До начала работ — шурф у ДК5-018: проверить отметку лотка (184,98 по съёмке, 185,019 по ИС).']
+             f'До начала работ — шурф у ДК5-018: проверить отметку лотка ({alev(M.DK.bottom)} по съёмке, 185,019 по ИС).']
     sh.notes(162, 140, 238, notes, h=2.0, spacing=1.0)
 
 
@@ -414,7 +471,7 @@ def sheet6(sh, p):
     nE = [well_node(rE, 0.0, W['КЛ-1'], None, P['К2-ЛК'].z[0]),
           dict(s=rE.L, name='врезка ЛК', zin=P['К2-ЛК'].z[-1])]
     draw_profile(p, 290, 66, 'КЛ-1 → врезка в сущ. выпуск ЛК Ø63. Гор. 1:50, верт. 1:50', rE, nE, 50, 50, 'К2', rows=ROWS_K1,
-                 label_pipe='ПЭ 100 SDR17 63×3,8, муфта')
+                 label_pipe='ПЭ Ø63 SDR17')
 
 
 def sheet7(sh, p):
@@ -447,14 +504,14 @@ def sheet7(sh, p):
     draw_profile(p, 28, 10, 'Подводка полива КХ-8 → КП-1. Гор. 1:50, верт. 1:50', rk, nk, 50, 50, 'В1', rows=ROWS_V,
                  axis=True, label_pipe='ПЭ 100 SDR11 25×2,3')
     notes = [f'Глубина ввода — не менее {f2(M.FROST + 0.5)} м до низа трубы (промерзание {f2(M.FROST)} + 0,5 м, '
-             'п. 11.40 СП 31.13330.2021); у фундамента — подъём к вводу на −0,850 в скорлупе ППУ 40 мм с '
+             f'п. 11.40 СП 31.13330.2021); у фундамента — подъём к вводу на −{alev(M.H0 - M.Z_VV, 3)} в скорлупе ППУ 40 мм с '
              'греющим кабелем 10 Вт/м (лист 8, узел 1).',
              'Под крыльцом 1.6 — в футляре ПНД Ø110 (L = 2,0 м).',
              'Перед засыпкой — гидравлическое испытание 1,5 Pраб, но не менее 1,0 МПа (СП 129.13330.2019), '
              'промывка и дезинфекция.',
-             'Подводка полива КХ-8 — сезонная, с уклоном 0,01 к КП-1, в футляре ПНД Ø63 на всю длину (над К2-А с '
+             f'Подводка полива КХ-8 — сезонная, с уклоном {KX_I} к КП-1, в футляре ПНД Ø63 на всю длину (над К2-А с '
              f'зазором {alev(CROSS[("КХ-8н", "К2-А")])} м); от КП-1 — сезонная линия В1-Бс ПЭ 25 к садовой колонке КБ '
-             f'у беседки (L = {alev(M.kb_line.length(), 0)} м, выход из КП-1 на оси {alev(M.Z_KB0)}, уклон 0,003 к КП-1, '
+             f'у беседки (L = {alev(M.kb_line.length(), 0)} м, выход из КП-1 на оси {alev(M.Z_KB0)}, уклон {alev(M.I_KB, 3).rstrip("0")} к КП-1, '
              f'глубина до верха {alev(min(M.PLAN_Z - M.kb_line.top(s_) for s_ in (0, M.kb_line.length())))}–'
              f'{alev(max(M.PLAN_Z - M.kb_line.top(s_) for s_ in (0, M.kb_line.length())))} м; в футляре ПНД Ø63 — от '
              'КП-1 за теплотрассу и над К1-б1, лист 3). На зиму — перекрыть кран КХ-8 в 1.6, открыть '

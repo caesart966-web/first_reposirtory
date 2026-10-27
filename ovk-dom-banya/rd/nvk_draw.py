@@ -15,7 +15,23 @@ from ezdxf.addons import importer  # noqa: E402
 from rdbase import fmt_num  # noqa: E402
 import tm_draw as TD  # noqa: E402
 from tm_draw import PP, View, Labels, lev, f1, unit, dim_h  # noqa: E402,F401
-from vk_draw import VLabels, clip2, in_box, fix_glyphs  # noqa: E402,F401
+from vk_draw import VLabels as _VLabels, clip2, in_box, fix_glyphs  # noqa: E402,F401
+
+
+class VLabels(_VLabels):
+    """Полки ВК; выноска может начинаться внутри своего объекта (кружок колодца, занятый квадрат с центром
+    в точке выноски), но не пересекает чужие полки, выноски и знаки."""
+
+    def _clean(self, a, b, r):
+        def own(s):
+            return abs((s[0] + s[2]) / 2 - a[0]) < 0.05 and abs((s[1] + s[3]) / 2 - a[1]) < 0.05 and \
+                abs((s[2] - s[0]) - (s[3] - s[1])) < 0.05
+        saved = self.busy
+        self.busy = [s for s in saved if not own(s)]
+        try:
+            return super()._clean(a, b, r)
+        finally:
+            self.busy = saved
 import nvk_model as M  # noqa: E402
 
 CODE_NVK = 'И05.09.26-НВК'
@@ -184,14 +200,85 @@ def clip_poly(pts, box):
     return out
 
 
+def _ov(a, b, pad=0.3):
+    return a[0] < b[2] + pad and a[2] > b[0] - pad and a[1] < b[3] + pad and a[3] > b[1] - pad
+
+
+def pipe_marked(p, pts, layer, mark, every, h=1.8, ltype=None, lw=None, L=None, min_len=15.0):
+    """Труба с обозначениями в разрывах (как PP.pipe), но марки не ложатся на занятые места (L.busy: другие
+    марки, полки) и не ставятся на коротких кусках (< min_len мм); принятые марки занимают место в L."""
+    cum = [0.0]
+    for (x0, y0), (x1, y1) in zip(pts[:-1], pts[1:]):
+        cum.append(cum[-1] + math.hypot(x1 - x0, y1 - y0))
+    total = cum[-1]
+    if not mark or total < min_len:
+        return p.pl(pts, layer, ltype=ltype, lw=lw)
+    tw = p.tw(mark, h)
+    gap = tw + p.H(1.6) / p.unit
+
+    def at(sv):
+        for i in range(len(pts) - 1):
+            if cum[i] - 1e-9 <= sv <= cum[i + 1] + 1e-9:
+                Ls = cum[i + 1] - cum[i] or 1
+                t = (sv - cum[i]) / Ls
+                (x0, y0), (x1, y1) = pts[i], pts[i + 1]
+                return x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, i
+        return pts[-1][0], pts[-1][1], len(pts) - 2
+
+    def rect(x, y, i):
+        (x0, y0), (x1, y1) = pts[i], pts[i + 1]
+        a = math.atan2(y1 - y0, x1 - x0)
+        hw, hh = tw / 2 + 0.3, h / 2 + 0.3
+        dx = abs(math.cos(a)) * hw + abs(math.sin(a)) * hh
+        dy = abs(math.sin(a)) * hw + abs(math.cos(a)) * hh
+        return (x - dx, y - dy, x + dx, y + dy)
+    busy = L.busy if L is not None else []
+    marks = []
+    sv = min(every / 2, total / 2)
+    while sv < total - gap * 0.6:
+        x, y, i = at(sv)
+        if cum[i] + gap * 0.6 <= sv <= cum[i + 1] - gap * 0.6 and \
+                not any(_ov(rect(x, y, i), b) for b in busy + [m[4] for m in marks]):
+            marks.append((sv, x, y, i, rect(x, y, i)))
+            sv += every
+        else:
+            sv += gap * 0.5
+    cuts = [(m[0] - gap / 2, m[0] + gap / 2) for m in marks]
+    bounds = [0.0] + [c for ab in cuts for c in ab] + [total]
+    for k in range(0, len(bounds), 2):
+        s0, s1 = bounds[k], bounds[k + 1]
+        if s1 - s0 < 1e-6:
+            continue
+        seg = [at(s0)[:2]] + [pts[j] for j in range(len(pts)) if s0 < cum[j] < s1] + [at(s1)[:2]]
+        p.pl(seg, layer, ltype=ltype, lw=lw)
+    for sv, x, y, i, r in marks:
+        (x0, y0), (x1, y1) = pts[i], pts[i + 1]
+        ang = math.degrees(math.atan2(y1 - y0, x1 - x0))
+        if ang > 90.01 or ang < -89.99:
+            ang += 180
+        p.t(x, y, mark, h, 'center', layer, rot=ang)
+        if L is not None:
+            L.block(r)
+
+
 def draw_pipe(p, V, pp, box, every=38.0, lw=None, L=None):
     lay, lt, mark = STYLE[pp['sys']]
     pts = [V.P((x, y, 0)) for x, y in pp['pts']]
     for part in clip_poly(pts, box):
-        p.pipe(part, lay, mark=mark, every=every, h=1.8, ltype=lt, lw=lw)
+        pipe_marked(p, part, lay, mark, every, 1.8, lt, lw, L)
         if L is not None:
             for a, b in zip(part, part[1:]):
                 L.segs.append((a, b))
+
+
+def fence_segs(V, box):
+    """Граница участка (забор) на листе — отрезки для раскладки подписей: полки её не пересекают."""
+    ring = list(M.FENCE_W) + list(reversed(M.FENCE_E)) + [M.FENCE_W[0]]
+    pts = [V.P((x, y, 0)) for x, y in ring]
+    out = []
+    for part in clip_poly(pts, box):
+        out += list(zip(part, part[1:]))
+    return out
 
 
 def well_r(w, V):
@@ -294,9 +381,16 @@ class Profile:
         p.t(self.x0 + 1.2, self.yt + 2.0, f'Усл. горизонт {alev(self.zc)}', 2.0, 'bl', 'НВК_текст')
 
     def vtext(self, row, s, txt, h=1.9):
-        """Вертикальная надпись в строке row в точке s."""
+        """Вертикальная надпись в строке row в точке s (справа от линии); пара «вх. / вых.» — по обе стороны
+        линии: в одну строку она длиннее высоты строки таблицы."""
         y0, y1 = self.row_y(row)
-        self.p.t(self.X(s) + 0.8, (y0 + y1) / 2, txt, h, 'center', 'НВК_текст', rot=90)
+        ym = (y0 + y1) / 2
+        parts = [t.strip() for t in txt.split(' / ')] if ' / ' in txt else []
+        if len(parts) == 2:
+            self.p.t(self.X(s) - 0.35 - h / 2, ym, parts[0], h, 'center', 'НВК_текст', rot=90)
+            self.p.t(self.X(s) + 0.35 + h / 2, ym, parts[1], h, 'center', 'НВК_текст', rot=90)
+        else:
+            self.p.t(self.X(s) + 0.35 + h / 2, ym, txt, h, 'center', 'НВК_текст', rot=90)
 
     def ctext(self, row, s0, s1, txt, h=1.9):
         y0, y1 = self.row_y(row)

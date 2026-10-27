@@ -493,7 +493,7 @@ $SKPOLY
   9
 $TDCREATE
  40
-2461341.4992824076
+2461341.981099537
   9
 $TDUCREATE
  40
@@ -501,7 +501,7 @@ $TDUCREATE
   9
 $TDUPDATE
  40
-2461341.499421296
+2461341.981261574
   9
 $TDUUPDATE
  40
@@ -553,7 +553,7 @@ $SPLINESEGS
   9
 $HANDSEED
   5
-112E
+1128
   9
 $SURFTAB1
  70
@@ -933,11 +933,11 @@ $PSTYLEMODE
   9
 $FINGERPRINTGUID
   2
-{60417D8A-548E-4800-92A6-F2F3DE266BBC}
+{AC331B20-E8FF-499D-A629-42E9BD6267C4}
   9
 $VERSIONGUID
   2
-{14DF2310-BBB8-4B7D-82DD-EFEFD121236D}
+{D9CC8017-A1A5-4ED4-9ACD-D08A1409629C}
   9
 $EXTNAMES
 290
@@ -1343,22 +1343,6 @@ WipeOut
   0
 CLASS
   1
-LAYOUT
-  2
-AcDbLayout
-  3
-ObjectDBX Classes
- 90
-0
- 91
-0
-280
-0
-281
-0
-  0
-CLASS
-  1
 ACDBPLACEHOLDER
   2
 AcDbPlaceHolder
@@ -1380,6 +1364,22 @@ WIPEOUTVARIABLES
 AcDbWipeoutVariables
   3
 WipeOut
+ 90
+0
+ 91
+0
+280
+0
+281
+0
+  0
+CLASS
+  1
+LAYOUT
+  2
+AcDbLayout
+  3
+ObjectDBX Classes
  90
 0
  91
@@ -1711,36 +1711,6 @@ AcDbSymbolTableRecord
 100
 AcDbLinetypeTableRecord
   2
-Штрих
- 70
-0
-  3
-
- 72
-65
- 73
-2
- 40
-6.35
- 49
-3.175
- 74
-0
- 49
--3.175
- 74
-0
-  0
-LTYPE
-  5
-1028
-330
-2
-100
-AcDbSymbolTableRecord
-100
-AcDbLinetypeTableRecord
-  2
 Осевая 12-2-2
  70
 0
@@ -1766,6 +1736,36 @@ AcDbLinetypeTableRecord
 0
  49
 -2.0
+ 74
+0
+  0
+LTYPE
+  5
+1028
+330
+2
+100
+AcDbSymbolTableRecord
+100
+AcDbLinetypeTableRecord
+  2
+Штрих
+ 70
+0
+  3
+
+ 72
+65
+ 73
+2
+ 40
+6.35
+ 49
+3.175
+ 74
+0
+ 49
+-3.175
  74
 0
   0
@@ -2997,11 +2997,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-WALL
+I-FURN
  70
 8
  62
-8
+9
   6
 Continuous
 370
@@ -3021,31 +3021,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-DOOR
- 70
-8
- 62
-8
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-1014
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-A-FLOR-PATT
+A-GENM
  70
 8
  62
@@ -3061,7 +3037,7 @@ F
   0
 LAYER
   5
-1015
+1014
 330
 1
 100
@@ -3085,6 +3061,30 @@ F
   0
 LAYER
   5
+1015
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+A-GLAZ-CWMG
+ 70
+8
+ 62
+8
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
 1016
 330
 1
@@ -3093,7 +3093,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-WALL-PATT
+A-WALL
  70
 8
  62
@@ -3117,7 +3117,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-GLAZ
+A-AREA-IDEN
  70
 8
  62
@@ -3165,11 +3165,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-FLOR
+A-WALL-PATT
  70
 8
  62
-9
+8
   6
 Continuous
 370
@@ -3189,7 +3189,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-I-FURN
+A-FLOR-PATT
  70
 8
  62
@@ -3213,11 +3213,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-M-EQPM
+A-DOOR
  70
 8
  62
-9
+8
   6
 Continuous
 370
@@ -3230,54 +3230,6 @@ F
 LAYER
   5
 101C
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-A-AREA-IDEN
- 70
-8
- 62
-8
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-101D
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-G-ANNO-SYMB
- 70
-8
- 62
-8
-  6
-Штрих
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-101E
 330
 1
 100
@@ -3301,6 +3253,54 @@ F
   0
 LAYER
   5
+101D
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+M-EQPM
+ 70
+8
+ 62
+9
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+101E
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+A-FLOR
+ 70
+8
+ 62
+9
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
 101F
 330
 1
@@ -3309,11 +3309,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-P-SANR-FIXT
+A-GLAZ-CURT
  70
 8
  62
-9
+8
   6
 Continuous
 370
@@ -3333,7 +3333,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-GENM
+A-DETL-GENF
  70
 8
  62
@@ -3381,7 +3381,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-GLAZ-CWMG
+A-GLAZ
  70
 8
  62
@@ -3405,13 +3405,13 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-DETL-GENF
+G-ANNO-SYMB
  70
 8
  62
-9
+8
   6
-Continuous
+Штрих
 370
 13
 390
@@ -3429,11 +3429,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-GLAZ-CURT
+A-ANNO-DIMS
  70
-8
+9
  62
-8
+-8
   6
 Continuous
 370
@@ -3453,11 +3453,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-ANNO-DIMS
+P-SANR-FIXT
  70
-9
+8
  62
--8
+9
   6
 Continuous
 370
@@ -4007,62 +4007,6 @@ AcDbSymbolTableRecord
 100
 AcDbTextStyleTableRecord
   2
-GOST Common_1
- 70
-0
- 40
-187.5
- 41
-1.0
- 50
-0.0
- 71
-0
- 42
-0.2
-  3
-GOST_Common.ttf
-  4
-
-  0
-STYLE
-  5
-102A
-330
-5
-100
-AcDbSymbolTableRecord
-100
-AcDbTextStyleTableRecord
-  2
-GOST Common_I
- 70
-0
- 40
-135.0
- 41
-1.0
- 50
-0.0
- 71
-0
- 42
-0.2
-  3
-GOST_Common Italic.ttf
-  4
-
-  0
-STYLE
-  5
-102B
-330
-5
-100
-AcDbSymbolTableRecord
-100
-AcDbTextStyleTableRecord
-  2
 ISOCPEUR_I
  70
 0
@@ -4083,7 +4027,35 @@ isocpeui.ttf
   0
 STYLE
   5
-102C
+102A
+330
+5
+100
+AcDbSymbolTableRecord
+100
+AcDbTextStyleTableRecord
+  2
+GOST Common_1
+ 70
+0
+ 40
+187.5
+ 41
+1.0
+ 50
+0.0
+ 71
+0
+ 42
+0.2
+  3
+GOST_Common.ttf
+  4
+
+  0
+STYLE
+  5
+102B
 330
 5
 100
@@ -4106,6 +4078,34 @@ GOST Common
 0.2
   3
 GOST_Common.ttf
+  4
+
+  0
+STYLE
+  5
+102C
+330
+5
+100
+AcDbSymbolTableRecord
+100
+AcDbTextStyleTableRecord
+  2
+GOST Common_I
+ 70
+0
+ 40
+135.0
+ 41
+1.0
+ 50
+0.0
+ 71
+0
+ 42
+0.2
+  3
+GOST_Common Italic.ttf
   4
 
   0
@@ -4167,7 +4167,7 @@ ACAD
   0
 APPID
   5
-112D
+1127
 330
 3
 100
@@ -4467,7 +4467,7 @@ AcDbDimStyleTableRecord
 290
 1
 340
-102A
+102C
 343
 102D
 344
@@ -4613,7 +4613,7 @@ AcDbDimStyleTableRecord
 290
 1
 340
-102A
+102C
 343
 102D
 344
@@ -681713,7 +681713,7 @@ AcDbPolyline
  20
 120.0
  10
-210.39999999999998
+192.39999999999998
  20
 127.2
   0
@@ -681817,7 +681817,7 @@ AcDbWipeout
  90
 0
  10
-210.39999999999998
+154.83999999999997
  20
 127.5
  30
@@ -681883,7 +681883,7 @@ AcDbWipeout
  90
 0
  10
-210.39999999999998
+154.83999999999997
  20
 124.0
  30
@@ -681951,11 +681951,11 @@ AcDbPolyline
  70
 0
  10
-210.39999999999998
+154.83999999999997
  20
 127.2
  10
-247.95999999999998
+192.39999999999998
  20
 127.2
   0
@@ -681973,7 +681973,7 @@ AcDbEntity
 100
 AcDbText
  10
-211.2
+155.64
  20
 128.0
  30
@@ -681985,7 +681985,7 @@ AcDbText
   7
 GOST
  11
-211.2
+155.64
  21
 128.0
  31
@@ -682009,7 +682009,7 @@ AcDbEntity
 100
 AcDbText
  10
-211.2
+155.64
  20
 126.4
  30
@@ -682021,7 +682021,7 @@ AcDbText
   7
 GOST
  11
-211.2
+155.64
  21
 126.4
  31
@@ -682357,7 +682357,7 @@ AcDbText
  40
 2.0
   1
-лоток -0,935
+i=0,02, лоток -0,904 → -0,935
   7
 GOST
  11
@@ -682389,6 +682389,244 @@ AcDbPolyline
  70
 0
  10
+308.0
+ 20
+143.6
+ 10
+273.0
+ 20
+115.6
+  0
+HATCH
+  5
+10B5
+330
+74
+100
+AcDbEntity
+ 67
+1
+  8
+ВК_марки
+ 62
+7
+100
+AcDbHatch
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+210
+0.0
+220
+0.0
+230
+1.0
+  2
+SOLID
+ 70
+1
+ 71
+0
+ 91
+1
+ 92
+1
+ 93
+1
+ 72
+2
+ 10
+308.0
+ 20
+143.6
+ 40
+0.35
+ 50
+0
+ 51
+360
+ 73
+1
+ 97
+0
+ 75
+0
+ 76
+1
+ 98
+0
+  0
+CIRCLE
+  5
+10B6
+330
+74
+100
+AcDbEntity
+ 67
+1
+  8
+ВК_марки
+100
+AcDbCircle
+ 10
+308.0
+ 20
+143.6
+ 30
+0.0
+ 40
+0.35
+  0
+WIPEOUT
+  5
+10B7
+330
+74
+100
+AcDbEntity
+ 67
+1
+  8
+0
+100
+AcDbWipeout
+ 90
+0
+ 10
+226.76
+ 20
+115.89999999999999
+ 30
+0.0
+ 11
+46.24000000000001
+ 21
+0.0
+ 31
+0.0
+ 12
+0.0
+ 22
+2.4000000000000057
+ 32
+0.0
+ 13
+1.0
+ 23
+1.0
+340
+0
+ 70
+7
+280
+1
+281
+50
+282
+50
+283
+0
+360
+0
+ 71
+1
+ 91
+2
+ 14
+-0.5
+ 24
+0.5
+ 14
+0.5
+ 24
+-0.5
+290
+0
+  0
+LWPOLYLINE
+  5
+10B8
+330
+74
+100
+AcDbEntity
+ 67
+1
+  8
+ВК_марки
+100
+AcDbPolyline
+ 90
+2
+ 70
+0
+ 10
+226.76
+ 20
+115.6
+ 10
+273.0
+ 20
+115.6
+  0
+TEXT
+  5
+10B9
+330
+74
+100
+AcDbEntity
+ 67
+1
+  8
+ВК_марки
+100
+AcDbText
+ 10
+227.56
+ 20
+116.39999999999999
+ 30
+0.0
+ 40
+1.6
+  1
+К1-УМ-б1: Ø50, i=0,039, лоток +0,375 → +0,145
+  7
+GOST
+ 11
+227.56
+ 21
+116.39999999999999
+ 31
+0.0
+100
+AcDbText
+ 73
+1
+  0
+LWPOLYLINE
+  5
+10BA
+330
+74
+100
+AcDbEntity
+ 67
+1
+  8
+ВК_марки
+100
+AcDbPolyline
+ 90
+2
+ 70
+0
+ 10
 292.5
  20
 143.2
@@ -682399,7 +682637,7 @@ AcDbPolyline
   0
 HATCH
   5
-10B5
+10BB
 330
 74
 100
@@ -682461,7 +682699,7 @@ SOLID
   0
 CIRCLE
   5
-10B6
+10BC
 330
 74
 100
@@ -682483,7 +682721,7 @@ AcDbCircle
   0
 WIPEOUT
   5
-10B7
+10BD
 330
 74
 100
@@ -682549,7 +682787,7 @@ AcDbWipeout
   0
 WIPEOUT
   5
-10B8
+10BE
 330
 74
 100
@@ -682615,7 +682853,7 @@ AcDbWipeout
   0
 LWPOLYLINE
   5
-10B9
+10BF
 330
 74
 100
@@ -682641,7 +682879,7 @@ AcDbPolyline
   0
 TEXT
   5
-10BA
+10C0
 330
 74
 100
@@ -682677,7 +682915,7 @@ AcDbText
   0
 TEXT
   5
-10BB
+10C1
 330
 74
 100
@@ -682713,7 +682951,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-10BC
+10C2
 330
 74
 100
@@ -682733,13 +682971,13 @@ AcDbPolyline
  20
 201.756
  10
-196.25199999999998
+178.25199999999998
  20
-208.956
+194.556
   0
 HATCH
   5
-10BD
+10C3
 330
 74
 100
@@ -682801,7 +683039,7 @@ SOLID
   0
 CIRCLE
   5
-10BE
+10C4
 330
 74
 100
@@ -682823,7 +683061,7 @@ AcDbCircle
   0
 WIPEOUT
   5
-10BF
+10C5
 330
 74
 100
@@ -682837,9 +683075,9 @@ AcDbWipeout
  90
 0
  10
-196.25199999999998
+144.28799999999998
  20
-209.256
+194.85600000000002
  30
 0.0
  11
@@ -682889,7 +683127,7 @@ AcDbWipeout
   0
 LWPOLYLINE
   5
-10C0
+10C6
 330
 74
 100
@@ -682905,17 +683143,17 @@ AcDbPolyline
  70
 0
  10
-196.25199999999998
+144.28799999999998
  20
-208.956
+194.556
  10
-230.21599999999998
+178.25199999999998
  20
-208.956
+194.556
   0
 TEXT
   5
-10C1
+10C7
 330
 74
 100
@@ -682927,9 +683165,9 @@ AcDbEntity
 100
 AcDbText
  10
-197.052
+145.088
  20
-209.756
+195.35600000000002
  30
 0.0
  40
@@ -682939,9 +683177,9 @@ AcDbText
   7
 GOST
  11
-197.052
+145.088
  21
-209.756
+195.35600000000002
  31
 0.0
 100
@@ -682951,7 +683189,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-10C2
+10C8
 330
 74
 100
@@ -682977,7 +683215,7 @@ AcDbPolyline
   0
 HATCH
   5
-10C3
+10C9
 330
 74
 100
@@ -683039,7 +683277,7 @@ SOLID
   0
 CIRCLE
   5
-10C4
+10CA
 330
 74
 100
@@ -683061,7 +683299,7 @@ AcDbCircle
   0
 WIPEOUT
   5
-10C5
+10CB
 330
 74
 100
@@ -683127,7 +683365,7 @@ AcDbWipeout
   0
 WIPEOUT
   5
-10C6
+10CC
 330
 74
 100
@@ -683193,7 +683431,7 @@ AcDbWipeout
   0
 LWPOLYLINE
   5
-10C7
+10CD
 330
 74
 100
@@ -683219,7 +683457,7 @@ AcDbPolyline
   0
 TEXT
   5
-10C8
+10CE
 330
 74
 100
@@ -683255,7 +683493,7 @@ AcDbText
   0
 TEXT
   5
-10C9
+10CF
 330
 74
 100
@@ -683291,7 +683529,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-10CA
+10D0
 330
 74
 100
@@ -683317,7 +683555,7 @@ AcDbPolyline
   0
 HATCH
   5
-10CB
+10D1
 330
 74
 100
@@ -683379,7 +683617,7 @@ SOLID
   0
 CIRCLE
   5
-10CC
+10D2
 330
 74
 100
@@ -683401,7 +683639,7 @@ AcDbCircle
   0
 WIPEOUT
   5
-10CD
+10D3
 330
 74
 100
@@ -683467,7 +683705,7 @@ AcDbWipeout
   0
 WIPEOUT
   5
-10CE
+10D4
 330
 74
 100
@@ -683533,7 +683771,7 @@ AcDbWipeout
   0
 LWPOLYLINE
   5
-10CF
+10D5
 330
 74
 100
@@ -683559,7 +683797,7 @@ AcDbPolyline
   0
 TEXT
   5
-10D0
+10D6
 330
 74
 100
@@ -683595,7 +683833,7 @@ AcDbText
   0
 TEXT
   5
-10D1
+10D7
 330
 74
 100
@@ -683631,7 +683869,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-10D2
+10D8
 330
 74
 100
@@ -683657,7 +683895,7 @@ AcDbPolyline
   0
 HATCH
   5
-10D3
+10D9
 330
 74
 100
@@ -683719,7 +683957,7 @@ SOLID
   0
 CIRCLE
   5
-10D4
+10DA
 330
 74
 100
@@ -683741,7 +683979,7 @@ AcDbCircle
   0
 WIPEOUT
   5
-10D5
+10DB
 330
 74
 100
@@ -683807,7 +684045,7 @@ AcDbWipeout
   0
 WIPEOUT
   5
-10D6
+10DC
 330
 74
 100
@@ -683873,7 +684111,7 @@ AcDbWipeout
   0
 LWPOLYLINE
   5
-10D7
+10DD
 330
 74
 100
@@ -683899,7 +684137,7 @@ AcDbPolyline
   0
 TEXT
   5
-10D8
+10DE
 330
 74
 100
@@ -683935,7 +684173,7 @@ AcDbText
   0
 TEXT
   5
-10D9
+10DF
 330
 74
 100
@@ -683971,7 +684209,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-10DA
+10E0
 330
 74
 100
@@ -683997,7 +684235,7 @@ AcDbPolyline
   0
 HATCH
   5
-10DB
+10E1
 330
 74
 100
@@ -684059,7 +684297,7 @@ SOLID
   0
 CIRCLE
   5
-10DC
+10E2
 330
 74
 100
@@ -684081,7 +684319,7 @@ AcDbCircle
   0
 WIPEOUT
   5
-10DD
+10E3
 330
 74
 100
@@ -684147,7 +684385,7 @@ AcDbWipeout
   0
 LWPOLYLINE
   5
-10DE
+10E4
 330
 74
 100
@@ -684173,7 +684411,7 @@ AcDbPolyline
   0
 TEXT
   5
-10DF
+10E5
 330
 74
 100
@@ -684209,7 +684447,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-10E0
+10E6
 330
 74
 100
@@ -684235,7 +684473,7 @@ AcDbPolyline
   0
 HATCH
   5
-10E1
+10E7
 330
 74
 100
@@ -684297,7 +684535,7 @@ SOLID
   0
 CIRCLE
   5
-10E2
+10E8
 330
 74
 100
@@ -684319,7 +684557,7 @@ AcDbCircle
   0
 WIPEOUT
   5
-10E3
+10E9
 330
 74
 100
@@ -684385,7 +684623,7 @@ AcDbWipeout
   0
 LWPOLYLINE
   5
-10E4
+10EA
 330
 74
 100
@@ -684411,7 +684649,7 @@ AcDbPolyline
   0
 TEXT
   5
-10E5
+10EB
 330
 74
 100
@@ -684447,7 +684685,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-10E6
+10EC
 330
 74
 100
@@ -684473,7 +684711,7 @@ AcDbPolyline
   0
 HATCH
   5
-10E7
+10ED
 330
 74
 100
@@ -684535,7 +684773,7 @@ SOLID
   0
 CIRCLE
   5
-10E8
+10EE
 330
 74
 100
@@ -684557,7 +684795,7 @@ AcDbCircle
   0
 WIPEOUT
   5
-10E9
+10EF
 330
 74
 100
@@ -684623,7 +684861,7 @@ AcDbWipeout
   0
 LWPOLYLINE
   5
-10EA
+10F0
 330
 74
 100
@@ -684649,7 +684887,7 @@ AcDbPolyline
   0
 TEXT
   5
-10EB
+10F1
 330
 74
 100
@@ -684685,7 +684923,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-10EC
+10F2
 330
 74
 100
@@ -684711,7 +684949,7 @@ AcDbPolyline
   0
 HATCH
   5
-10ED
+10F3
 330
 74
 100
@@ -684773,7 +685011,7 @@ SOLID
   0
 CIRCLE
   5
-10EE
+10F4
 330
 74
 100
@@ -684795,7 +685033,7 @@ AcDbCircle
   0
 WIPEOUT
   5
-10EF
+10F5
 330
 74
 100
@@ -684861,7 +685099,7 @@ AcDbWipeout
   0
 LWPOLYLINE
   5
-10F0
+10F6
 330
 74
 100
@@ -684887,7 +685125,7 @@ AcDbPolyline
   0
 TEXT
   5
-10F1
+10F7
 330
 74
 100
@@ -684923,7 +685161,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-10F2
+10F8
 330
 74
 100
@@ -684949,7 +685187,7 @@ AcDbPolyline
   0
 HATCH
   5
-10F3
+10F9
 330
 74
 100
@@ -685011,7 +685249,7 @@ SOLID
   0
 CIRCLE
   5
-10F4
+10FA
 330
 74
 100
@@ -685033,7 +685271,7 @@ AcDbCircle
   0
 WIPEOUT
   5
-10F5
+10FB
 330
 74
 100
@@ -685099,7 +685337,7 @@ AcDbWipeout
   0
 LWPOLYLINE
   5
-10F6
+10FC
 330
 74
 100
@@ -685125,7 +685363,7 @@ AcDbPolyline
   0
 TEXT
   5
-10F7
+10FD
 330
 74
 100
@@ -685161,244 +685399,6 @@ AcDbText
   0
 LWPOLYLINE
   5
-10F8
-330
-74
-100
-AcDbEntity
- 67
-1
-  8
-ВК_марки
-100
-AcDbPolyline
- 90
-2
- 70
-0
- 10
-281.855
- 20
-131.6
- 10
-290.855
- 20
-124.39999999999999
-  0
-HATCH
-  5
-10F9
-330
-74
-100
-AcDbEntity
- 67
-1
-  8
-ВК_марки
- 62
-7
-100
-AcDbHatch
- 10
-0.0
- 20
-0.0
- 30
-0.0
-210
-0.0
-220
-0.0
-230
-1.0
-  2
-SOLID
- 70
-1
- 71
-0
- 91
-1
- 92
-1
- 93
-1
- 72
-2
- 10
-281.855
- 20
-131.6
- 40
-0.35
- 50
-0
- 51
-360
- 73
-1
- 97
-0
- 75
-0
- 76
-1
- 98
-0
-  0
-CIRCLE
-  5
-10FA
-330
-74
-100
-AcDbEntity
- 67
-1
-  8
-ВК_марки
-100
-AcDbCircle
- 10
-281.855
- 20
-131.6
- 30
-0.0
- 40
-0.35
-  0
-WIPEOUT
-  5
-10FB
-330
-74
-100
-AcDbEntity
- 67
-1
-  8
-0
-100
-AcDbWipeout
- 90
-0
- 10
-290.855
- 20
-124.69999999999999
- 30
-0.0
- 11
-43.26400000000001
- 21
-0.0
- 31
-0.0
- 12
-0.0
- 22
-2.4000000000000057
- 32
-0.0
- 13
-1.0
- 23
-1.0
-340
-0
- 70
-7
-280
-1
-281
-50
-282
-50
-283
-0
-360
-0
- 71
-1
- 91
-2
- 14
--0.5
- 24
-0.5
- 14
-0.5
- 24
--0.5
-290
-0
-  0
-LWPOLYLINE
-  5
-10FC
-330
-74
-100
-AcDbEntity
- 67
-1
-  8
-ВК_марки
-100
-AcDbPolyline
- 90
-2
- 70
-0
- 10
-290.855
- 20
-124.39999999999999
- 10
-334.119
- 20
-124.39999999999999
-  0
-TEXT
-  5
-10FD
-330
-74
-100
-AcDbEntity
- 67
-1
-  8
-ВК_марки
-100
-AcDbText
- 10
-291.65500000000003
- 20
-125.19999999999999
- 30
-0.0
- 40
-1.6
-  1
-К1-бв: Ø110, i=0,02, лоток -0,904 → -0,935
-  7
-GOST
- 11
-291.65500000000003
- 21
-125.19999999999999
- 31
-0.0
-100
-AcDbText
- 73
-1
-  0
-LWPOLYLINE
-  5
 10FE
 330
 74
@@ -685419,9 +685419,9 @@ AcDbPolyline
  20
 142.89999999999998
  10
-262.75
+252.75
  20
-114.89999999999998
+178.89999999999998
   0
 HATCH
   5
@@ -685523,9 +685523,9 @@ AcDbWipeout
  90
 0
  10
-216.51
+206.51
  20
-115.19999999999997
+179.2
  30
 0.0
  11
@@ -685591,13 +685591,13 @@ AcDbPolyline
  70
 0
  10
-216.51
+206.51
  20
-114.89999999999998
+178.89999999999998
  10
-262.75
+252.75
  20
-114.89999999999998
+178.89999999999998
   0
 TEXT
   5
@@ -685613,9 +685613,9 @@ AcDbEntity
 100
 AcDbText
  10
-217.31
+207.31
  20
-115.69999999999997
+179.7
  30
 0.0
  40
@@ -685625,9 +685625,9 @@ AcDbText
   7
 GOST
  11
-217.31
+207.31
  21
-115.69999999999997
+179.7
  31
 0.0
 100
@@ -685653,13 +685653,13 @@ AcDbPolyline
  70
 0
  10
-324.90000000000003
+270.75
  20
-144.39999999999998
+194.328
  10
-310.90000000000003
+279.75
  20
-116.39999999999998
+201.528
   0
 HATCH
   5
@@ -685703,9 +685703,9 @@ SOLID
  72
 2
  10
-324.90000000000003
+270.75
  20
-144.39999999999998
+194.328
  40
 0.35
  50
@@ -685737,9 +685737,9 @@ AcDbEntity
 100
 AcDbCircle
  10
-324.90000000000003
+270.75
  20
-144.39999999999998
+194.328
  30
 0.0
  40
@@ -685748,244 +685748,6 @@ AcDbCircle
 WIPEOUT
   5
 1107
-330
-74
-100
-AcDbEntity
- 67
-1
-  8
-0
-100
-AcDbWipeout
- 90
-0
- 10
-264.66
- 20
-116.69999999999997
- 30
-0.0
- 11
-46.24000000000001
- 21
-0.0
- 31
-0.0
- 12
-0.0
- 22
-2.4000000000000057
- 32
-0.0
- 13
-1.0
- 23
-1.0
-340
-0
- 70
-7
-280
-1
-281
-50
-282
-50
-283
-0
-360
-0
- 71
-1
- 91
-2
- 14
--0.5
- 24
-0.5
- 14
-0.5
- 24
--0.5
-290
-0
-  0
-LWPOLYLINE
-  5
-1108
-330
-74
-100
-AcDbEntity
- 67
-1
-  8
-ВК_марки
-100
-AcDbPolyline
- 90
-2
- 70
-0
- 10
-264.66
- 20
-116.39999999999998
- 10
-310.90000000000003
- 20
-116.39999999999998
-  0
-TEXT
-  5
-1109
-330
-74
-100
-AcDbEntity
- 67
-1
-  8
-ВК_марки
-100
-AcDbText
- 10
-265.46000000000004
- 20
-117.19999999999997
- 30
-0.0
- 40
-1.6
-  1
-К1-УМ-б1: Ø50, i=0,059, лоток +0,375 → +0,145
-  7
-GOST
- 11
-265.46000000000004
- 21
-117.19999999999997
- 31
-0.0
-100
-AcDbText
- 73
-1
-  0
-LWPOLYLINE
-  5
-110A
-330
-74
-100
-AcDbEntity
- 67
-1
-  8
-ВК_марки
-100
-AcDbPolyline
- 90
-2
- 70
-0
- 10
-270.75
- 20
-194.328
- 10
-279.75
- 20
-201.528
-  0
-HATCH
-  5
-110B
-330
-74
-100
-AcDbEntity
- 67
-1
-  8
-ВК_марки
- 62
-7
-100
-AcDbHatch
- 10
-0.0
- 20
-0.0
- 30
-0.0
-210
-0.0
-220
-0.0
-230
-1.0
-  2
-SOLID
- 70
-1
- 71
-0
- 91
-1
- 92
-1
- 93
-1
- 72
-2
- 10
-270.75
- 20
-194.328
- 40
-0.35
- 50
-0
- 51
-360
- 73
-1
- 97
-0
- 75
-0
- 76
-1
- 98
-0
-  0
-CIRCLE
-  5
-110C
-330
-74
-100
-AcDbEntity
- 67
-1
-  8
-ВК_марки
-100
-AcDbCircle
- 10
-270.75
- 20
-194.328
- 30
-0.0
- 40
-0.35
-  0
-WIPEOUT
-  5
-110D
 330
 74
 100
@@ -686051,7 +685813,7 @@ AcDbWipeout
   0
 LWPOLYLINE
   5
-110E
+1108
 330
 74
 100
@@ -686077,7 +685839,7 @@ AcDbPolyline
   0
 TEXT
   5
-110F
+1109
 330
 74
 100
@@ -686113,7 +685875,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-1110
+110A
 330
 74
 100
@@ -686129,17 +685891,17 @@ AcDbPolyline
  70
 0
  10
-307.5
+297.0
  20
-165.0
+154.5
  10
-280.5
+252.0
  20
-143.4
+190.5
   0
 HATCH
   5
-1111
+110B
 330
 74
 100
@@ -686179,9 +685941,9 @@ SOLID
  72
 2
  10
-307.5
+297.0
  20
-165.0
+154.5
  40
 0.35
  50
@@ -686201,7 +685963,7 @@ SOLID
   0
 CIRCLE
   5
-1112
+110C
 330
 74
 100
@@ -686213,9 +685975,9 @@ AcDbEntity
 100
 AcDbCircle
  10
-307.5
+297.0
  20
-165.0
+154.5
  30
 0.0
  40
@@ -686223,7 +685985,7 @@ AcDbCircle
   0
 WIPEOUT
   5
-1113
+110D
 330
 74
 100
@@ -686237,9 +685999,9 @@ AcDbWipeout
  90
 0
  10
-235.252
+206.752
  20
-143.70000000000002
+190.8
  30
 0.0
  11
@@ -686289,7 +686051,7 @@ AcDbWipeout
   0
 LWPOLYLINE
   5
-1114
+110E
 330
 74
 100
@@ -686305,17 +686067,17 @@ AcDbPolyline
  70
 0
  10
-235.252
+206.752
  20
-143.4
+190.5
  10
-280.5
+252.0
  20
-143.4
+190.5
   0
 TEXT
   5
-1115
+110F
 330
 74
 100
@@ -686327,9 +686089,9 @@ AcDbEntity
 100
 AcDbText
  10
-236.05200000000002
+207.55200000000002
  20
-144.20000000000002
+191.3
  30
 0.0
  40
@@ -686339,9 +686101,9 @@ AcDbText
   7
 GOST
  11
-236.05200000000002
+207.55200000000002
  21
-144.20000000000002
+191.3
  31
 0.0
 100
@@ -686351,7 +686113,7 @@ AcDbText
   0
 CIRCLE
   5
-1116
+1110
 330
 74
 100
@@ -686373,7 +686135,7 @@ AcDbCircle
   0
 CIRCLE
   5
-1117
+1111
 330
 74
 100
@@ -686395,7 +686157,7 @@ AcDbCircle
   0
 CIRCLE
   5
-1118
+1112
 330
 74
 100
@@ -686417,7 +686179,7 @@ AcDbCircle
   0
 CIRCLE
   5
-1119
+1113
 330
 74
 100
@@ -686439,7 +686201,7 @@ AcDbCircle
   0
 CIRCLE
   5
-111A
+1114
 330
 74
 100
@@ -686461,7 +686223,7 @@ AcDbCircle
   0
 CIRCLE
   5
-111B
+1115
 330
 74
 100
@@ -686483,7 +686245,7 @@ AcDbCircle
   0
 CIRCLE
   5
-111C
+1116
 330
 74
 100
@@ -686505,7 +686267,7 @@ AcDbCircle
   0
 TEXT
   5
-111D
+1117
 330
 74
 100
@@ -686543,7 +686305,7 @@ AcDbText
   0
 TEXT
   5
-111E
+1118
 330
 74
 100
@@ -686581,7 +686343,7 @@ AcDbText
   0
 MTEXT
   5
-111F
+1119
 330
 74
 100
@@ -686629,7 +686391,7 @@ GOST
   0
 TEXT
   5
-1120
+111A
 330
 74
 100
@@ -686665,7 +686427,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-1121
+111B
 330
 74
 100
@@ -686693,7 +686455,7 @@ AcDbPolyline
   0
 TEXT
   5
-1122
+111C
 330
 74
 100
@@ -686729,7 +686491,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-1123
+111D
 330
 74
 100
@@ -686761,7 +686523,7 @@ AcDbPolyline
   0
 TEXT
   5
-1124
+111E
 330
 74
 100
@@ -686797,7 +686559,7 @@ AcDbText
   0
 CIRCLE
   5
-1125
+111F
 330
 74
 100
@@ -686819,7 +686581,7 @@ AcDbCircle
   0
 TEXT
   5
-1126
+1120
 330
 74
 100
@@ -686855,7 +686617,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-1127
+1121
 330
 74
 100
@@ -686889,7 +686651,7 @@ AcDbPolyline
   0
 TEXT
   5
-1128
+1122
 330
 74
 100
@@ -686927,7 +686689,7 @@ AcDbText
   0
 TEXT
   5
-1129
+1123
 330
 74
 100
@@ -686963,7 +686725,7 @@ AcDbText
   0
 CIRCLE
   5
-112A
+1124
 330
 74
 100
@@ -686985,7 +686747,7 @@ AcDbCircle
   0
 TEXT
   5
-112B
+1125
 330
 74
 100
@@ -687023,7 +686785,7 @@ AcDbText
   0
 TEXT
   5
-112C
+1126
 330
 74
 100

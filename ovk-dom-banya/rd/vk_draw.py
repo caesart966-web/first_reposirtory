@@ -340,6 +340,15 @@ def leak_marks(p, L, V, box, bld='h', level=1, h=1.7, label=True):
 
 
 # ====================================================================================== подписи в обход труб
+def _seg_x(a, b, c, d):
+    """Отрезки a-b и c-d пересекаются (касание в общей точке не считается)?"""
+    def cr(o, p, q):
+        return (p[0] - o[0]) * (q[1] - o[1]) - (p[1] - o[1]) * (q[0] - o[0])
+    d1, d2, d3, d4 = cr(c, d, a), cr(c, d, b), cr(a, b, c), cr(a, b, d)
+    return ((d1 > 1e-9 and d2 < -1e-9) or (d1 < -1e-9 and d2 > 1e-9)) and \
+        ((d3 > 1e-9 and d4 < -1e-9) or (d3 < -1e-9 and d4 > 1e-9))
+
+
 def _seg_rect(a, b, r):
     """Отрезок a-b пересекает прямоугольник r = (x0, y0, x1, y1)?"""
     x0, y0, x1, y1 = r
@@ -370,9 +379,86 @@ class VLabels(Labels):
     def __init__(self, p, frame):
         super().__init__(p, frame)
         self.segs = []
+        self.leads = []          # выноски уже поставленных полок: (точка, конец полки)
+        self.shelves = []        # прямоугольники полок с текстом
 
     def add_segs(self, segs):
         self.segs.extend(segs)
+
+    def _clean(self, a, b, r):
+        """Выноска a-b не пересекает другие выноски и чужие полки (свою полку r не считаем)."""
+        rr = (r[0] + 0.3, r[1] + 0.3, r[2] - 0.3, r[3] - 0.3)
+        for c, d in self.leads:
+            if _seg_x(a, b, c, d) or _seg_rect(c, d, rr):
+                return False
+        for s in self.busy:                    # чужие полки, номера помещений подложки, знаки датчиков
+            ss = (s[0] + 0.3, s[1] + 0.3, s[2] - 0.3, s[3] - 0.3)
+            if s is not r and ss[0] < ss[2] and ss[1] < ss[3] and _seg_rect(a, b, ss):
+                return False
+        return True
+
+    def shelf(self, at, text, h=2.0, cands=None, sub=None, force=None, layer='ТМ_марки', strict=False):
+        """Как Labels.shelf, но сначала ищется место, где выноска не пересекает другие выноски и полки;
+        если такого нет — прежнее правило (полка не теряется); strict=True — без отката (None)."""
+        from tm_draw import default_cands
+        if force is None:
+            p = self.p
+            w = max(p.tw(text, h), p.tw(sub, h) if sub else 0) + 1.6
+            top = h * 1.25 + 0.9
+            bot = (h * 1.25 + 0.9) if sub else 0.4
+            far = [(dx * r, dy * r * 0.8) for r in (45, 55, 70)
+                   for dx, dy in ((1, 1), (-1, 1), (1, -1), (-1, -1), (0.4, 1), (-0.4, 1), (0.4, -1), (-0.4, -1))]
+            # заданные места, затем (если все с пересечением) — общие ближние и дальние; только без пересечений
+            cc = (list(cands) + default_cands() + far) if cands else (default_cands() + far)
+            for dx, dy in cc:
+                x0 = at[0] + dx if dx >= 0 else at[0] + dx - w
+                r = (x0, at[1] + dy - bot, x0 + w, at[1] + dy + top)
+                y = at[1] + dy
+                xe = x0 if dx >= 0 else x0 + w
+                if self.free(r) and self._clean(at, (xe, y), r):
+                    rr = super().shelf(at, text, h, sub=sub, force=(dx, dy), layer=layer)
+                    self.leads.append((at, (xe, y)))
+                    self.shelves.append(rr)
+                    return rr
+            if strict:
+                return None
+        rr = super().shelf(at, text, h, cands=cands, sub=sub, force=force, layer=layer)
+        if rr is not None:
+            xe = rr[0] if (rr[0] + rr[2]) / 2 >= at[0] else rr[2]
+            ye = rr[1] + ((h * 1.25 + 0.9) if sub else 0.4)
+            self.leads.append((at, (xe, ye)))
+            self.shelves.append(rr)
+        return rr
+
+    def soft(self, anchors, text, h=2.0, layer='ТМ_марки'):
+        """Запасное место, когда чистого нет: полка — только на свободном месте (текст и трубы не задеваем),
+        выноска — с наименьшим числом пересечений (через чужую полку — втрое хуже, чем через выноску).
+        anchors — [(точка, подпись под полкой)]."""
+        from tm_draw import default_cands
+        far = [(dx * r, dy * r * 0.8) for r in (45, 55, 70, 85)
+               for dx, dy in ((1, 1), (-1, 1), (1, -1), (-1, -1), (0.4, 1), (-0.4, 1), (0.4, -1), (-0.4, -1))]
+        best = None
+        for at, sub in anchors:
+            w = max(self.p.tw(text, h), self.p.tw(sub, h) if sub else 0) + 1.6
+            top = h * 1.25 + 0.9
+            bot = (h * 1.25 + 0.9) if sub else 0.4
+            for dx, dy in default_cands() + far:
+                x0 = at[0] + dx if dx >= 0 else at[0] + dx - w
+                r = (x0, at[1] + dy - bot, x0 + w, at[1] + dy + top)
+                if not self.free(r):
+                    continue
+                e = (x0 if dx >= 0 else x0 + w, at[1] + dy)
+                rr = (r[0] + 0.3, r[1] + 0.3, r[2] - 0.3, r[3] - 0.3)
+                cost = sum(_seg_x(at, e, c, d) for c, d in self.leads)
+                cost += 3 * sum(_seg_rect(c, d, rr) for c, d in self.leads)
+                cost += 3 * sum(_seg_rect(at, e, (s[0] + 0.3, s[1] + 0.3, s[2] - 0.3, s[3] - 0.3)) for s in self.busy
+                                if s[2] - s[0] > 0.6 and s[3] - s[1] > 0.6)
+                cost += math.dist(at, e) / 1000
+                if best is None or cost < best[0]:
+                    best = (cost, at, sub, (dx, dy))
+        if best is None:
+            return None
+        return self.shelf(best[1], text, h, sub=best[2], force=best[3], layer=layer)
 
     def free(self, r, pad=0.6):
         if not super().free(r, pad):

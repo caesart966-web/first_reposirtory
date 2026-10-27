@@ -42,10 +42,13 @@ def label_pipes(L, V, pipes, box, zr, h=1.6, skip=(), text=None):
         Lm, c, A, B = seg
         dn = f'Ø{pp.dn}' if pp.mat in ('pp', 'ppn') else SHORT.get(pp.dn, pp.dn)
         t = text(pp) if text else f'{pp.sys} {dn} → {target(pp)}'
-        for tt in (0.5, 0.3, 0.7, 0.15, 0.85):
-            at = (A[0] + (B[0] - A[0]) * tt, A[1] + (B[1] - A[1]) * tt)
-            if L.shelf(at, t, h):
-                break
+        TT = (0.5, 0.3, 0.7, 0.15, 0.85)
+        pts = [(A[0] + (B[0] - A[0]) * tt, A[1] + (B[1] - A[1]) * tt) for tt in TT]
+        strict = getattr(L, 'leads', None) is not None       # VLabels: сначала — без пересечения выносок
+        if not (strict and any(L.shelf(at, t, h, strict=True) for at in pts)):
+            for at in pts:
+                if L.shelf(at, t, h):
+                    break
 
 
 def axes_marks(p, V, box, bld='h'):
@@ -72,16 +75,49 @@ def axes_marks(p, V, box, bld='h'):
     return top
 
 
+_UM = {}
+
+
+def under_marks(key, V, box):
+    """Настоящие габариты надписей подложки АР (TEXT, MTEXT) и марок помещений (блоки A-AREA-IDEN: номер
+    в кружке), мм листа. under_texts ставит прямоугольник с центром в точке вставки, а у MTEXT она в левом
+    верхнем углу — номер помещения с кружком оставался открытым для полок (ДП-1 на «1.4», лист 3)."""
+    from ezdxf import recover, bbox
+    from underlay import OX, OY
+    src = UNDER[key]
+    if src not in _UM:
+        d, _ = recover.readfile(src)
+        out = []
+        for e in d.modelspace():
+            t = e.dxftype()
+            if t in ('TEXT', 'MTEXT') or (t == 'INSERT' and e.dxf.layer == 'A-AREA-IDEN'):
+                try:
+                    b = bbox.extents([e], fast=True)
+                except Exception:
+                    continue
+                if b.has_data:
+                    out.append(((b.extmin.x - OX) / 1000, (b.extmin.y - OY) / 1000,
+                                (b.extmax.x - OX) / 1000, (b.extmax.y - OY) / 1000))
+        _UM[src] = out
+    res = []
+    for x0, y0, x1, y1 in _UM[src]:
+        a, c = V.P((x0, y0, 0)), V.P((x1, y1, 0))
+        r = (min(a[0], c[0]), min(a[1], c[1]), max(a[0], c[0]), max(a[1], c[1]))
+        if r[2] >= box[0] and r[0] <= box[2] and r[3] >= box[1] and r[1] <= box[3]:
+            res.append(r)
+    return res
+
+
 def fragment(doc, sh, p, under, cx, cy, x0, y0, x1, y1, zr, systems, bld='h', title='', marks_floor=None,
              eqs=(), fits=True, label=True, skip=(), text=None, extra=None, leak=None, k=None, pipes=None,
-             title_h=3.0):
+             title_h=3.0, eq_nolabel=()):
     k = k or K
     w, h = (x1 - x0) * 1000 / k, (y1 - y0) * 1000 / k
     V, box = plan_doc(doc, sh, under, cx, cy, w, h, (x0 + x1) / 2, (y0 + y1) / 2, k, frame=zr)
     p.rect(*box, 'ТМ_оборуд_тонк')
     ax_top = axes_marks(p, V, box, bld)
     L = VLabels(p, box)
-    for r in under_texts(UNDER[under], V, box):
+    for r in under_texts(UNDER[under], V, box) + under_marks(under, V, box):
         L.block(r)
     if pipes is None:
         pipes = [pp for pp in VK.PIPES if pp.bld == bld and pp.sys in systems]
@@ -108,6 +144,8 @@ def fragment(doc, sh, p, under, cx, cy, x0, y0, x1, y1, zr, systems, bld='h', ti
     if label:
         label_pipes(L, V, pipes, box, zr, skip=skip, text=text)
     for eid in eqs:
+        if eid in eq_nolabel:                      # подписано отдельной выноской листа
+            continue
         e = E[eid]
         bb = e.bbox()
         c = V.P(((bb[0] + bb[3]) / 2, (bb[1] + bb[4]) / 2, 0))
@@ -149,10 +187,17 @@ def sheet4(doc, sh):
                                   ((19.30, 8.90, 4.5), 'Ст.К1-1в Ø110 — вытяжная часть', 'в стене по оси Г, на кровлю'),
                                   ((15.66, 7.99, 4.0), 'В1 32, Т3 25 — снизу, из-под потолка гаража', 'лист 5'),
                                   ((15.60, 7.15, 3.95), 'Т4 20 — из ШВК-2 в полу к Пс-2,', 'далее под потолок гаража (лист 5)')):
-            L.shelf(V.P((x, y, z)), t, 1.8, sub=sub)
+            cc = [(-8, 10), (-8, 16), (-14, 22), (8, 30), (14, 30)] if t.startswith('В1 32') else None
+            if not (cc and L.shelf(V.P((x, y, z)), t, 1.8, sub=sub, cands=cc, strict=True)):
+                L.shelf(V.P((x, y, z)), t, 1.8, sub=sub)
+        # Т3 к УМ-3 — полкой вправо вниз, мимо «2.8»: общим порядком выноска пересекала выноску «В1 32, Т3 25»
+        at = V.P((15.95, 7.97, 3.925))
+        if not L.shelf(at, 'Т3 16 → УМ-3', 1.6, cands=[(27, -21), (27, -18), (30, -21), (24, -21)], strict=True):
+            L.shelf(at, 'Т3 16 → УМ-3', 1.6)
     fragment(doc, sh, p, 'plan2', 212, 211, X0, Y0, X1, Y1, zr, sysw,
              title='План 2 этажа: с/у 2.8, 2.9. Водопровод В1, Т3, Т4 и канализация К1. М 1:25', marks_floor=2,
-             eqs=('ШВК-2',), extra=ex, text=txt2, leak=2, skip=('ШВК-2В', 'ШВК-2Т'))
+             eqs=('ШВК-2',), extra=ex, text=txt2, leak=2, skip=('ШВК-2В', 'ШВК-2Т', 'Т3-УМ-3'),
+             eq_nolabel=('ШВК-2',))
     sh.notes(24, 143, 205, NOTES4, h=1.8, spacing=1.0)
     legend2(p, 248, 132)
     return doc
@@ -201,13 +246,19 @@ def sheet5(doc, sh):
     sysw = ('В1', 'Т3', 'Т4', 'К1', 'К1в')
 
     def ex(p, L, V, box):
-        for pt, t, sub in (((VK.ST1[0], VK.ST1[1], 3.3), 'Ст.К1-1 Ø110 вниз (в стене гаража/1.9)', 'ревизия +1,000'),
-                           ((19.30, 8.90, 3.4), 'Ст.К1-1в Ø110 вверх', 'ревизия в начале сборного'),
-                           ((19.18, 8.80, 3.0), 'В1, Т3, Т4 — в топочную 1.6', 'сквозь стену в гильзах'),
-                           ((15.66, 7.97, 3.3), 'В1, Т3 — вверх в ШВК-2 (2 этаж)', 'сквозь плиту в гильзах'),
-                           ((15.53, 6.67, 3.3), 'Т4 от ШВК-2 и Пс-2 — сверху', None),
-                           ((X_SH, 6.68, 3.0), 'В1 (КХ-10), Т3 (Б1) — вниз к ШВК-1,', 'Т4 ШВК-1 — снизу; штроба в стене гаража (лист 3)')):
-            L.shelf(V.P(pt), t, 1.8, sub=sub)
+        for pt, t, sub, cc in (((VK.ST1[0], VK.ST1[1], 3.3), 'Ст.К1-1 Ø110 вниз (в стене гаража/1.9)', 'ревизия +1,000',
+                                [(10, -12), (10, -16), (14, -12), (8, 8)]),
+                               ((19.30, 8.90, 3.4), 'Ст.К1-1в Ø110 вверх', 'ревизия в начале сборного',
+                                [(-14, 3), (-14, 6), (-20, 3)]),        # верхняя точка — верхняя полка
+                               ((19.18, 8.80, 3.0), 'В1, Т3, Т4 — в топочную 1.6', 'сквозь стену в гильзах',
+                                [(-14, -4), (-14, -2), (-20, -4)]),
+                               ((15.66, 7.97, 3.3), 'В1, Т3 — вверх в ШВК-2 (2 этаж)', 'сквозь плиту в гильзах', None),
+                               ((15.53, 6.67, 3.3), 'Т4 от ШВК-2 и Пс-2 — сверху', None, None),
+                               ((X_SH, 6.68, 3.0), 'В1 (КХ-10), Т3 (Б1) — вниз к ШВК-1,',
+                                'Т4 ШВК-1 — снизу; штроба в стене гаража (лист 3)', None)):
+            if (cc and L.shelf(V.P(pt), t, 1.8, sub=sub, cands=cc, strict=True)) or L.shelf(V.P(pt), t, 1.8, sub=sub):
+                continue
+            print('  !! нет места для полки:', t)
     fragment(doc, sh, p, 'plan1', 212, 211, X0, Y0, X1, Y1, zr, sysw,
              title='Сети под потолком гаража: В1, Т3, Т4, К1. М 1:25', extra=ex, text=txt2)
     sh.notes(24, 143, 205, NOTES5, h=1.8, spacing=1.0)
@@ -216,14 +267,34 @@ def sheet5(doc, sh):
 
 
 X_SH = VK.X_SH
+
+
+def _ins(p):
+    return (13 if p.sys in ('Т3', 'Т4') else 9 if p.sys == 'В1' else 0) / 1000
+
+
+# отметки под потолком гаража — из модели (те же правила, что в ТЗ-1: гараж южнее стены гараж/1.6, y < 8,75)
+_CEIL = [p for p in VK.PIPES if p.bld == 'h' and (p.where == 'ceil' or p.id in ('В1-ШВК1', 'Т3-ШВК1'))]
+_LOW = min(min(a[2], b[2]) - p.od / 2 - _ins(p) for p in _CEIL for a, b in zip(p.pts, p.pts[1:])
+           if min(a[2], b[2]) > 2.5 and min(a[1], b[1]) < 8.75)
+BOX_Z5 = math.floor((_LOW - 0.02) * 20) / 20
+
+
+def _lv(z):
+    return ('+' if z >= 0 else '') + f'{z:.3f}'.replace('.', ',')
+
+
+_P5 = {p.id: p for p in VK.PIPES}
+_KG = _P5['К1-гараж']
 NOTES5 = [
     'План — проекция 3D-модели ВК (сети между потолком гаража +3,650 и низом подшивки). Отметки — от ±0,000.',
-    'Сети под потолком гаража — в подшивном потолке (коробе), ТЗ-1: низ подшивки не выше +2,900, люк 600×600 у '
-    'ревизии в начале сборного К1 (у стены по оси Г). Соединений труб PE-Xa под подшивкой нет — от гребёнки КХ и '
-    'Б1 до ШВК-2 и до ШВК-1 — цельные трубы.',
-    'Отметки осей: Т4 — +2,970; магистрали В1, Т3 к ШВК-2 — +3,050, к ШВК-1 — +3,150 и +3,100; сборный К1 Ø110 — '
-    'ось от +3,420 у Ст.К1-1в до '
-    '≈+3,280 у Ст.К1-1 (i = 0,02), отводы К1 от приборов 2 этажа — выше магистралей водопровода.',
+    f'Сети под потолком гаража — в подшивном потолке (коробе), ТЗ-1: низ подшивки не выше {_lv(BOX_Z5)} (низ труб в '
+    f'изоляции — {_lv(_LOW)}: В1 к ШВК-1 у стены 1.6), люк 600×600 у ревизии в начале сборного К1 (у стены по оси Г). '
+    'Соединений труб PE-Xa под подшивкой нет — от гребёнки КХ и Б1 до ШВК-2 и до ШВК-1 — цельные трубы.',
+    f'Отметки осей: Т4 — {_lv(VK.Z_T4G)}; магистрали В1, Т3 к ШВК-2 — {_lv(VK.Z_GW)}, к ШВК-1 — {_lv(VK.Z_N1V)} и '
+    f'{_lv(VK.Z_N1T)} (у стены 1.6 В1 к ШВК-1 обходит Т3 снизу на +2,850); сборный К1 Ø110 — ось от '
+    f'{_lv(_KG.pts[0][2])} у Ст.К1-1в до {_lv(_KG.pts[-1][2])} у Ст.К1-1 (i = 0,02), отводы К1 от приборов 2 этажа — '
+    'выше магистралей водопровода.',
     'Коллекторы подключены независимо (Заказчица 27.10.2026): ШВК-2 — В1 от КХ-4 и Т3 от Б1, Т4 → Пс-2 → Пс-1 → Н8; '
     'ШВК-1 — В1 от КХ-10 и Т3 тройником у Б1, Т4 — отдельно к Н8 (П4); кухня — своим кольцом от топочной 1.6 '
     '(лист 3). В1 и Т3 спускаются к ШВК-1 и Т4 поднимается от ШВК-1 — в штробе стены гаража у оси В. Выпуски '

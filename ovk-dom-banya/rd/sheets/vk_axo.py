@@ -54,7 +54,14 @@ def end_labels(p, L, V, pipes, h=1.7):
             others = []
             near += ' (тройник кольца Т3–Т4)'
         t = f'{pp.sys} {SHORT.get(pp.dn, pp.dn)} → {near}' + (f' ({", ".join(others)})' if others else '')
-        L.shelf(V.P(end), t, h, sub=lev(end[2]))
+        E_, Q_ = V.P(end), V.P(pp.pts[-2])
+        alt = [(E_[0] + (Q_[0] - E_[0]) * tt, E_[1] + (Q_[1] - E_[1]) * tt) for tt in (0.25, 0.5)]   # у конца трубы
+        for a2, b2 in list(zip(pp.pts, pp.pts[1:]))[::-1][1:]:                # затем — другие участки трубы
+            A2, B2 = V.P(a2), V.P(b2)
+            if math.dist(A2, B2) >= 6.0:
+                alt += [(A2[0] + (B2[0] - A2[0]) * tt, A2[1] + (B2[1] - A2[1]) * tt) for tt in (0.5, 0.25, 0.75)]
+        if not any(L.shelf(q, t, h, sub=lev(end[2]), strict=True) for q in [E_] + alt):
+            L.shelf(E_, t, h, sub=lev(end[2]))
     # циркуляция: насос, балансировочный клапан, полотенцесушители
     pump_done = set()
     for f in VK.FITS:
@@ -75,7 +82,7 @@ def end_labels(p, L, V, pipes, h=1.7):
                 L.shelf(V.P(f.pos), f'{mk} — полотенцесушитель (Т4)', h)
 
 
-def water(doc, sh, bld, title):
+def water(doc, sh, bld, title, first=()):
     p = PP(doc, sh.lay)
     box = (28.0, 70.0, 585.0, 400.0)
     pipes = [pp for pp in VK.PIPES if pp.bld == bld and pp.sys in ('В1', 'Т3', 'Т4')]
@@ -94,7 +101,6 @@ def water(doc, sh, bld, title):
         if e.bld == bld and e.id in EQS:
             bb = e.bbox()
             L.shelf(V.P(((bb[0] + bb[3]) / 2, (bb[1] + bb[4]) / 2, bb[5])), e.mark, 2.2)
-    end_labels(p, L, V, pipes)
     # подписи магистралей
     P = {pp.id: pp for pp in VK.PIPES}
     mains = ['ВВ', 'КХ-4', 'В1-гараж', 'Т3-гараж', 'Т3-1.6', 'Т4-1.6', 'В1-ШВК1', 'Т3-ШВК1', 'Т3-М-1', 'Т4-М-1',
@@ -111,7 +117,12 @@ def water(doc, sh, bld, title):
             'В1-Б2': 'к Б2', 'В1-ШВК-Б1': 'от ввода Ecoflex к ШВК-Б1', 'Т3-ШВК-Б1': 'от Б2 к ШВК-Б1',
             'Т3-Д-б1': 'кольцо ШВК-Б1 → смеситель душа Д-б1', 'Т3-М-б1': 'кольцо: Д-б1 → мойка М-б1',
             'Т4-ШВК-Б1': 'от мойки М-б1 → Н9', 'Т4-ШВК-Б2': 'от ШВК-Б2 → Пс-б1.1, Пс-б1.2, Пс-б2 → Н9 → Б2'}
-    for i in mains:
+    L.crossed = []                                  # магистрали, подписанные с пересечением выносок
+    order = [i for i in first if i in mains] + ['end'] + [i for i in mains if i not in first]
+    for i in order:
+        if i == 'end':                              # концы подводок у приборов и арматура колец
+            end_labels(p, L, V, pipes)
+            continue
         pp = P[i]
         best = None
         for a, b in zip(pp.pts, pp.pts[1:]):
@@ -122,13 +133,31 @@ def water(doc, sh, bld, title):
         Lm, A, B, a = best
         dn = SHORT.get(pp.dn, pp.dn) if pp.mat == 'pex' else pp.label()
         t = f'{pp.sys} {dn} — {DESC[pp.id]}' if pp.id in DESC else f'{SHOWN.get(pp.id, pp.id)}: {pp.sys} {dn}'
-        for tt in (0.5, 0.3, 0.7):
-            if L.shelf((A[0] + (B[0] - A[0]) * tt, A[1] + (B[1] - A[1]) * tt), t, 1.8, sub=f'ось {lev(a[2])}'):
+        pts = [(A[0] + (B[0] - A[0]) * tt, A[1] + (B[1] - A[1]) * tt) for tt in (0.5, 0.3, 0.7)]
+        far = [(dx * r, dy * r * 0.8) for r in (45, 55, 70, 85)
+               for dx, dy in ((1, -1), (-1, -1), (1, 1), (-1, 1), (0.4, -1), (-0.4, -1))]
+        sb = f'ось {lev(a[2])}'
+        if any(L.shelf(q, t, 1.8, sub=sb, strict=True) for q in pts):       # сначала — без пересечений выносок
+            continue
+        alt = []                                    # другие горизонтальные участки трубы (по убыванию длины)
+        for a2, b2 in sorted(zip(pp.pts, pp.pts[1:]), key=lambda s_: -math.dist(V.P(s_[0]), V.P(s_[1]))):
+            A2, B2 = V.P(a2), V.P(b2)
+            if math.dist(A2, B2) >= 8.0 and abs(a2[2] - b2[2]) < 1e-6:
+                alt += [((A2[0] + (B2[0] - A2[0]) * tt, A2[1] + (B2[1] - A2[1]) * tt), f'ось {lev(a2[2])}')
+                        for tt in (0.5, 0.3, 0.7)]
+        if any(L.shelf(q, t, 1.8, sub=sb2, strict=True) for q, sb2 in alt):
+            continue
+        if any(L.shelf(q, t, 1.8, cands=far, sub=sb2, strict=True)       # далее — дальние полки от любой точки
+               for q, sb2 in [(q_, sb) for q_ in pts] + alt):
+            continue
+        L.crossed.append(i)
+        if L.soft([(q, sb) for q in pts] + alt, t, 1.8):       # меньше всего пересечений
+            continue
+        for q in pts:
+            if L.shelf(q, t, 1.8, sub=sb):
                 break
         else:
-            far = [(dx * r, dy * r * 0.8) for r in (45, 55, 70, 85)
-                   for dx, dy in ((1, -1), (-1, -1), (1, 1), (-1, 1), (0.4, -1), (-0.4, -1))]
-            if not L.shelf(((A[0] + B[0]) / 2, (A[1] + B[1]) / 2), t, 1.8, cands=far, sub=f'ось {lev(a[2])}'):
+            if not L.shelf(((A[0] + B[0]) / 2, (A[1] + B[1]) / 2), t, 1.8, cands=far, sub=sb):
                 print('  !! нет места для подписи', t)
     sh.title((box[0] + box[2]) / 2, box[3] + 6, f'{title}. М 1:{V.K}', h=3.5)
     return p, L, V
@@ -147,7 +176,7 @@ NOTES10 = [
     'Под потолком гаража — уклон водопровода не требуется; спуск — через краны коллекторов и гребёнки.',
     'Коллекторы ШВК-1, ШВК-2 — в санузлах, схемы на листе 13; водомерный узел и гребёнка КХ на 10 выходов — '
     'лист 7. Ввод — без приямка: под краем плиты и сквозь плиту в футляре ПЭ Ø75 (лист 14, узел 1). '
-    'Поливочные краны ПК-1, ПК-2 — незамерзающие, шток 350 мм через стену (лист 14, узел 9).',
+    'Поливочные краны ПК-1, ПК-2 — незамерзающие, шток 350 мм через стену (лист 14, узел 8).',
 ]
 NOTES11 = [
     'Схема — проекция 3D-модели (фронтальная изометрия). Отметки — оси труб от ±0,000 бани.',
@@ -159,11 +188,11 @@ NOTES11 = [
     'клапан обратный → Б2; Б2 → ШВК-Б1 (ниша в стене помывочной б7) → смеситель душа Д-б1 → мойка М-б1 (тройники '
     'петли) → Т4 → Н9 → Б2. Балансировочные клапаны — на Т4 в шкафу ШВК-Б2 и в шкафу мойки М-б1.',
     'Группа безопасности 6 бар и мембранный бак РБ-Б2 12 л — на подводе В1 к Б2; сброс ГБ — в воронку К1-ГБ-Б2. '
-    'ПК-3 — кран незамерзающий, шток 350 мм через стену (лист 14, узел 9).',
+    'ПК-3 — кран незамерзающий, шток 350 мм через стену (лист 14, узел 8).',
 ]
 
 
-def sewer(doc, sh):
+def sewer(doc, sh, first=()):
     p = PP(doc, sh.lay)
     res = []
     for bld, box, title in (('h', (28.0, 185.0, 585.0, 400.0), 'Схема К1 дома'),
@@ -175,7 +204,8 @@ def sewer(doc, sh):
         for f in VK.FITS:
             if f.pipe in pipes:
                 vk_fit(p, V, f, scale=0.9)
-        for pp in pipes:
+        L.crossed = []
+        for pp in sorted(pipes, key=lambda q: q.id not in first):     # трудные (с прошлого прохода) — первыми
             best = None
             for a, b in zip(pp.pts, pp.pts[1:]):
                 A, B = V.P(a), V.P(b)
@@ -197,9 +227,18 @@ def sewer(doc, sh):
                 sub = f'лоток {lev(pp.pts[0][2] - pp.od / 2)} → {lev(pp.pts[-1][2] - pp.od / 2)}'
             else:
                 t, sub = f'{nm}: Ø{pp.dn}', None
-            for tt in (0.5, 0.3, 0.7, 0.15):
-                if L.shelf((A[0] + (B[0] - A[0]) * tt, A[1] + (B[1] - A[1]) * tt), t, 1.7, sub=sub):
-                    break
+            pts = [(A[0] + (B[0] - A[0]) * tt, A[1] + (B[1] - A[1]) * tt) for tt in (0.5, 0.3, 0.7, 0.15)]
+            alt = []                                                    # другие участки той же трубы
+            for a2, b2 in sorted(zip(pp.pts, pp.pts[1:]), key=lambda s_: -math.dist(V.P(s_[0]), V.P(s_[1])))[1:]:
+                A2, B2 = V.P(a2), V.P(b2)
+                if math.dist(A2, B2) >= 6.0:
+                    alt += [(A2[0] + (B2[0] - A2[0]) * tt, A2[1] + (B2[1] - A2[1]) * tt) for tt in (0.5, 0.3, 0.7)]
+            if not any(L.shelf(q, t, 1.7, sub=sub, strict=True) for q in pts + alt):   # сначала — без пересечений
+                L.crossed.append(pp.id)
+                if not L.soft([(q, sub) for q in pts], t, 1.7):
+                    for q in pts:
+                        if L.shelf(q, t, 1.7, sub=sub):
+                            break
         fx = [k for k, f in VK.FIXT.items() if f.bld == bld and f.k1]
         done = set()
         for k in fx:
@@ -222,6 +261,7 @@ def sewer(doc, sh):
                                             (10, -4), (-10, -4)])
         sh.s.text(f'{title}. М 1:{V.K}', (box[0] + box[2]) / 2, box[3] + 3, h=3.0, align='center')
         res.append((V, L))
+    p.crossed = [c for _, L in res for c in L.crossed]
     return p
 
 
@@ -260,14 +300,20 @@ if __name__ == '__main__':
     doc = new_doc()
     setup(doc)
     sh = RDSheet(doc, 'Лист', VK_LIST[no], no, VK_TOTAL, fmt='А2', code=CODE_VK, bld=BLD_VK)
-    if no == 10:
-        water(doc, sh, 'h', 'Схема систем В1, Т3, Т4 дома (фронтальная изометрия)')
-        sh.notes(28, 62, 370, NOTES10, h=1.9, spacing=1.0)
-    elif no == 11:
-        water(doc, sh, 'b', 'Схема систем В1, Т3, Т4 бани (фронтальная изометрия)')
-        sh.notes(28, 62, 370, NOTES11, h=1.9, spacing=1.0)
+    if no in (10, 11):
+        bld = 'h' if no == 10 else 'b'
+        ttl = f'Схема систем В1, Т3, Т4 {"дома" if no == 10 else "бани"} (фронтальная изометрия)'
+        d0 = new_doc()                                  # пробный проход: какие магистрали не нашли чистого места
+        setup(d0)
+        s0 = RDSheet(d0, 'Лист', VK_LIST[no], no, VK_TOTAL, fmt='А2', code=CODE_VK, bld=BLD_VK)
+        first = water(d0, s0, bld, ttl)[1].crossed      # их подписываем первыми
+        water(doc, sh, bld, ttl, first=first)
+        sh.notes(28, 62, 370, NOTES10 if no == 10 else NOTES11, h=1.9, spacing=1.0)
     else:
-        sewer(doc, sh)
+        d0 = new_doc()
+        setup(d0)
+        s0 = RDSheet(d0, 'Лист', VK_LIST[no], no, VK_TOTAL, fmt='А2', code=CODE_VK, bld=BLD_VK)
+        sewer(doc, sh, first=sewer(d0, s0).crossed)
         sh.notes(402, 170, 182, NOTES12, h=1.9, spacing=1.0)
     finish_layers(doc)
     print(save_and_pdf(doc, os.path.join(OUT, f'vk_axo_{no}.dxf')))
