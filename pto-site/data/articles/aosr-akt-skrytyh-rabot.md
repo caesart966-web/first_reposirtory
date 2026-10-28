@@ -82,6 +82,6 @@ services: ispolnitelnaya-dokumentatsiya, geodeziya, zashchita-obemov-ks2-ks3
 
 Если акты всё же не составлялись вовремя, что можно сделать — в статье [о восстановлении исполнительной документации](/stati/vosstanovlenie-ispolnitelnoy-dokumentatsii/).
 
-Во внутренних инженерных системах скрытых участков особенно много — что входит в комплект на них, разобрано в статье [об исполнительной документации на отопление и вентиляцию](/stati/ispolnitelnaya-dokumentatsiya-otoplenie-ventilyatsiya/).
+Во внутренних инженерных системах скрытых участков особенно много — что входит в комплект на них, разобрано в статье [об исполнительной документации на отопление и вентиляцию](/stati/ispolnitelnaya-dokumentatsiya-otoplenie-ventilyatsiya/). Ещё один пример, где акт нужен на каждый слой, — [кровля](/stati/ispolnitelnaya-dokumentatsiya-krovlya/).
 
 Мы [оформляем исполнительную документацию](/uslugi/ispolnitelnaya-dokumentatsiya/) с первого акта до сдачи комплекта: готовим АОСР по формам заказчика, делаем [исполнительные съёмки](/uslugi/geodeziya/) для приложений и сводим акты с объёмами в [КС-2 и КС-3](/uslugi/zashchita-obemov-ks2-ks3/).

@@ -37,4 +37,6 @@ services: ispolnitelnaya-dokumentatsiya, geodeziya, zashchita-obemov-ks2-ks3
 
 Монолит — одна из самых дорогих позиций КС-2, и объёмы по нему спорят часто. Фактический объём бетона и арматуры подтверждается исполнительной съёмкой, накладными и актами. Как его защищать — в статье [о защите объёмов в КС-2](/stati/ks-2-ks-3-zashchita-obemov/).
 
+Монолит начинается с котлована, а каркас часто продолжается металлом — о документах на эти этапы статьи [о земляных работах](/stati/ispolnitelnaya-dokumentatsiya-zemlyanye-raboty/) и [о монтаже металлоконструкций](/stati/ispolnitelnaya-dokumentatsiya-metallokonstruktsii/).
+
 Мы [ведём исполнительную документацию](/uslugi/ispolnitelnaya-dokumentatsiya/) на монолит по захваткам, делаем [исполнительную съёмку](/uslugi/geodeziya/) конструкций и [защищаем объёмы](/uslugi/zashchita-obemov-ks2-ks3/) перед техническим заказчиком.
