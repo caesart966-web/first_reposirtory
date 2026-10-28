@@ -2967,6 +2967,11 @@ def write_robots(site: Site, noindex: bool = False) -> None:
                 "Disallow: /api/\n\n"
                 f"Sitemap: {site.abs_url('/sitemap.xml')}\n")
     (DIST_DIR / "robots.txt").write_text(text, encoding="utf-8")
+    # Файл ключа IndexNow: по нему Яндекс и Bing проверяют, что отправка
+    # новых страниц идёт от владельца сайта (tools/indexnow.py).
+    key = site.raw.get("seo", {}).get("indexnow_key", "")
+    if key and not noindex:
+        (DIST_DIR / f"{key}.txt").write_text(key, encoding="utf-8")
 
 
 def write_photo_hint(site: Site) -> None:
