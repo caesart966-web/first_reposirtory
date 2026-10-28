@@ -38,6 +38,8 @@ services: ispolnitelnaya-dokumentatsiya, zos, geodeziya
 
 ## Разборы по видам работ и документам
 
+Короткие определения всех терминов — в [словаре исполнительной документации](/slovar/).
+
 - [Исполнительная документация на электромонтажные работы](/stati/ispolnitelnaya-dokumentatsiya-elektromontazh/)
 - [Исполнительная документация на наружные сети водопровода и канализации](/stati/ispolnitelnaya-dokumentatsiya-naruzhnye-seti/)
 - [Исполнительная документация на монолитные работы](/stati/ispolnitelnaya-dokumentatsiya-monolitnye-raboty/)
