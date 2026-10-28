@@ -2556,11 +2556,14 @@ ARTICLE_TOPICS = [
         "akt-osvidetelstvovaniya-otvetstvennyh-konstruktsiy", "ispolnitelnaya-skhema",
         "obshchiy-zhurnal-rabot", "specialnye-zhurnaly-rabot", "vhodnoy-kontrol-materialov",
         "izmeneniya-v-rabochey-dokumentatsii", "elektronnaya-ispolnitelnaya-dokumentatsiya",
+        "reestr-ispolnitelnoy-dokumentatsii",
         "vosstanovlenie-ispolnitelnoy-dokumentatsii", "kak-vybrat-podryadchika-ispolnitelnoy-dokumentatsii"]),
     ("vidy-rabot", "Исполнительная документация по видам работ", [
         "ispolnitelnaya-dokumentatsiya-monolitnye-raboty", "ispolnitelnaya-dokumentatsiya-elektromontazh",
         "ispolnitelnaya-dokumentatsiya-otoplenie-ventilyatsiya", "ispolnitelnaya-dokumentatsiya-naruzhnye-seti",
-        "ispolnitelnaya-dokumentatsiya-seti-svyazi"]),
+        "ispolnitelnaya-dokumentatsiya-seti-svyazi", "ispolnitelnaya-dokumentatsiya-zemlyanye-raboty",
+        "ispolnitelnaya-dokumentatsiya-metallokonstruktsii", "ispolnitelnaya-dokumentatsiya-teplovye-seti",
+        "ispolnitelnaya-dokumentatsiya-krovlya"]),
     ("geodeziya", "Геодезия и обмеры", [
         "geodezicheskaya-razbivochnaya-osnova", "ispolnitelnaya-geodezicheskaya-semka"]),
     ("smety", "Сметы и объёмы", [
