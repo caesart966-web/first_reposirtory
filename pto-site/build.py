@@ -562,6 +562,32 @@ def block_service_objects(site: Site, service: dict) -> str:
   </section>'''
 
 
+def block_city_objects(site: Site, city: dict) -> str:
+    """На странице услуги под город — объекты именно этого города из портфолио.
+    Это то, что отличает городскую страницу от основной: без своих объектов
+    страница «в Твери» повторяла бы общую одним словом и считалась бы дорвеем."""
+    items = [o for o in site.raw.get("portfolio", {}).get("items", [])
+             if o.get("slug") and o.get("city") == city["name"]]
+    if not items:
+        raise SystemExit(f"Страница под город «{city['name']}»: в портфолио нет объектов этого города")
+    return f'''  <section class="section section--alt">
+    <div class="container">
+      <div class="section__head"><span class="eyebrow">Объекты</span><h2>Наши объекты {esc(city["case_in"])}</h2></div>
+{block_objects(site, items, limit=len(items))}
+    </div>
+  </section>'''
+
+
+def city_links(site: Site, service: dict) -> str:
+    """На основной странице услуги — ссылки на её городские страницы."""
+    cities = service.get("cities", [])
+    if not cities:
+        return ""
+    links = ", ".join(f'<a href="{site.url(site.service_url(service["slug"], c["slug"]))}">{esc(c["case_in"])}</a>'
+                      for c in cities)
+    return f'<p class="city-links">Работаем по всей России. Отдельно о работе {links}.</p>'
+
+
 ARROW_SVG = ('<svg class="arr" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">'
              '<path d="M2 8h11M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" '
              'stroke-linecap="round" stroke-linejoin="round"/></svg>')
@@ -1768,6 +1794,7 @@ def page_service(r: Renderer, service: dict, city: dict = None) -> None:
       <span class="eyebrow">{esc(group["title"])}</span>
       <h1>{esc(h1)}</h1>
       <p class="lead">{esc(lead)}</p>
+      {"" if city else city_links(site, service)}
     </div>
   </section>
 
@@ -1808,7 +1835,7 @@ def page_service(r: Renderer, service: dict, city: dict = None) -> None:
 
 {block_steps(service["steps"], "Как проходит работа", columns=3, dark=True)}
 
-{block_service_objects(site, service)}
+{block_city_objects(site, city) if city else block_service_objects(site, service)}
 
 {block_faq(service["faq"])}
 
@@ -2504,15 +2531,59 @@ def block_articles(site: Site, items: list, title: str = "Статьи по те
     return f'''  <section class="section" data-articles>
     <div class="container">
       <div class="section__head"><h2>{esc(title)}</h2>{link}</div>
-      <div class="grid grid--{min(len(items), 3)}">
+      <div class="grid grid--{2 if len(items) == 4 else min(len(items), 3)}">
 {chr(10).join(article_card(site, a) for a in items)}
       </div>
     </div>
   </section>'''
 
 
-def articles_for(site: Site, service_slug: str, limit: int = 3) -> list:
-    return [a for a in site.articles if service_slug in a["services"]][:limit]
+def articles_for(site: Site, service_slug: str) -> list:
+    """Статьи на странице услуги: сначала те, где услуга названа первой (статья о ней),
+    потом остальные. До шести; четыре и пять обрезаются до ровной сетки 2×2 или 3×2,
+    чтобы последняя карточка не висела одна в ряду."""
+    mine = [a for a in site.articles if service_slug in a["services"]]
+    mine.sort(key=lambda a: a["services"].index(service_slug) != 0)
+    n = len(mine)
+    return mine[:6] if n >= 6 else mine[:4] if n >= 4 else mine
+
+
+# Темы раздела «Статьи». Каждая статья обязана стоять ровно в одной теме:
+# новая статья без темы роняет сборку, иначе она молча выпала бы из оглавления.
+ARTICLE_TOPICS = [
+    ("osnovy", "Состав и оформление исполнительной документации", [
+        "sostav-ispolnitelnoy-dokumentatsii", "aosr-akt-skrytyh-rabot",
+        "akt-osvidetelstvovaniya-otvetstvennyh-konstruktsiy", "ispolnitelnaya-skhema",
+        "obshchiy-zhurnal-rabot", "specialnye-zhurnaly-rabot", "vhodnoy-kontrol-materialov",
+        "izmeneniya-v-rabochey-dokumentatsii", "elektronnaya-ispolnitelnaya-dokumentatsiya",
+        "vosstanovlenie-ispolnitelnoy-dokumentatsii", "kak-vybrat-podryadchika-ispolnitelnoy-dokumentatsii"]),
+    ("vidy-rabot", "Исполнительная документация по видам работ", [
+        "ispolnitelnaya-dokumentatsiya-monolitnye-raboty", "ispolnitelnaya-dokumentatsiya-elektromontazh",
+        "ispolnitelnaya-dokumentatsiya-otoplenie-ventilyatsiya", "ispolnitelnaya-dokumentatsiya-naruzhnye-seti",
+        "ispolnitelnaya-dokumentatsiya-seti-svyazi"]),
+    ("geodeziya", "Геодезия и обмеры", [
+        "geodezicheskaya-razbivochnaya-osnova", "ispolnitelnaya-geodezicheskaya-semka"]),
+    ("smety", "Сметы и объёмы", [
+        "proverka-smety", "vedomost-obemov-rabot", "ks-2-ks-3-zashchita-obemov"]),
+    ("proekt", "Проект, ППР и экспертиза", [
+        "ppr-proekt-proizvodstva-rabot", "tekhnologicheskaya-karta", "zamechaniya-ekspertizy",
+        "proektirovanie-na-subpodryade"]),
+    ("sdacha", "Сдача объекта и подключение", [
+        "sdacha-obekta-tehnicheskomu-zakazchiku", "zos-zaklyuchenie-o-sootvetstvii",
+        "dopusk-energoustanovki-v-ekspluatatsiyu", "tehotchet-elektroizmereniya"]),
+]
+
+
+def articles_by_topic(site: Site) -> list:
+    by_slug = {a["slug"]: a for a in site.articles}
+    listed = [s for _, _, slugs in ARTICLE_TOPICS for s in slugs]
+    missing = sorted(set(by_slug) - set(listed))
+    unknown = sorted(set(listed) - set(by_slug))
+    twice = sorted({s for s in listed if listed.count(s) > 1})
+    if missing or unknown or twice:
+        raise SystemExit("Темы статей (ARTICLE_TOPICS) разошлись со статьями: "
+                         f"без темы {missing}, нет файла {unknown}, в двух темах {twice}")
+    return [(tid, title, [by_slug[s] for s in slugs]) for tid, title, slugs in ARTICLE_TOPICS]
 
 
 def related_articles(site: Site, a: dict, limit: int = 3) -> list:
@@ -2647,7 +2718,16 @@ def page_articles_index(r: Renderer) -> None:
     title = f"Статьи о документации в строительстве — {site.company['name']}"
     description = ("Разборы для подрядчиков и заказчиков: исполнительная документация, "
                    "КС-2 и КС-3, ППР, сметы, сдача объекта и ЗОС.")
-    cards = "\n".join(article_card(site, a, "h2") for a in site.articles)
+    topics = articles_by_topic(site)
+    nav = "\n".join(f'        <a href="#{tid}">{esc(t)} <span>{len(items)}</span></a>' for tid, t, items in topics)
+    sections = "\n".join(f'''  <section class="section section--tight" id="{tid}">
+    <div class="container">
+      <h2 class="topic-title">{esc(t)}</h2>
+      <div class="grid grid--{2 if len(items) in (2, 4) else min(len(items), 3)}">
+{chr(10).join(article_card(site, a, "h3") for a in items)}
+      </div>
+    </div>
+  </section>''' for tid, t, items in topics)
     body = f'''  <section class="page-head">
     <div class="container">
       <ul class="breadcrumbs">
@@ -2660,17 +2740,93 @@ def page_articles_index(r: Renderer) -> None:
     </div>
   </section>
 
+  <nav class="topics container" aria-label="Темы статей">
+{nav}
+  </nav>
+  <p class="container topics__glossary">Нужно быстро понять термин? <a href="{site.url("/slovar/")}">Словарь исполнительной документации</a> — коротко об АОСР, КС-2, ППР, ЗОС и других.</p>
+
+{sections}
+
+{block_form(site)}'''
+    crumbs = [("Главная", "/"), ("Статьи", path)]
+    collection = {
+        "@context": "https://schema.org", "@type": "CollectionPage", "name": "Статьи о документации в строительстве",
+        "url": site.abs_url(path), "inLanguage": "ru",
+        "mainEntity": {"@type": "ItemList", "numberOfItems": len(site.articles), "itemListElement": [
+            {"@type": "ListItem", "position": i + 1, "url": site.abs_url(f"/stati/{a['slug']}/"), "name": a["h1"]}
+            for i, a in enumerate(a for _, _, items in topics for a in items)]},
+    }
+    head = "\n".join([jsonld(schema_organization(site)), jsonld(collection),
+                      jsonld(schema_breadcrumbs(site, crumbs))])
+    r.render(path=path, title=title, description=description, body=body,
+             head_extra=head, priority="0.6")
+
+
+def load_glossary(site: Site) -> list:
+    """Словарь /slovar/: data/glossary.json. Термин без статьи или со ссылкой
+    на несуществующую статью роняет сборку — определение здесь короткое,
+    а подробности и норма живут в статье."""
+    path = DATA_DIR / "glossary.json"
+    if not path.exists():
+        return []
+    terms = json.loads(path.read_text(encoding="utf-8"))["terms"]
+    slugs = {a["slug"] for a in site.articles}
+    bad = [t["id"] for t in terms if t.get("article") not in slugs]
+    ids = [t["id"] for t in terms]
+    if bad or len(ids) != len(set(ids)):
+        raise SystemExit(f"Словарь: нет статьи у {bad} или повтор id")
+    return sorted(terms, key=lambda t: t["term"].lower().replace("ё", "е"))
+
+
+def page_glossary(r: Renderer) -> None:
+    site = r.site
+    terms = load_glossary(site)
+    if not terms:
+        return
+    path = "/slovar/"
+    by_slug = {a["slug"]: a for a in site.articles}
+    title = f"Словарь исполнительной документации: АОСР, КС-2, ППР — {site.company['name']}"
+    description = ("Короткие определения терминов стройки: АОСР, АООК, исполнительная схема, "
+                   "КС-2, ППР, ЗОС — со ссылками на подробные разборы.")
+    nav = " ".join(f'<a href="#{esc(t["id"])}">{esc(t["term"].split(" — ")[0])}</a>' for t in terms)
+    items = "\n".join(f'''        <article class="term" id="{esc(t["id"])}">
+          <h2>{esc(t["term"])}</h2>
+          <p>{esc(t["def"])}</p>
+          <p class="term__more"><a href="{site.url(f"/stati/{t['article']}/")}">Подробно: {esc(by_slug[t["article"]]["h1"])}</a></p>
+        </article>''' for t in terms)
+    body = f'''  <section class="page-head">
+    <div class="container">
+      <ul class="breadcrumbs">
+        <li><a href="{site.url("/")}">Главная</a></li>
+        <li><a href="{site.url("/stati/")}">Статьи</a></li>
+        <li>Словарь</li>
+      </ul>
+      <span class="eyebrow">Словарь</span>
+      <h1>Словарь исполнительной документации</h1>
+      <p class="lead">Коротко о терминах, которые встречаются в актах, журналах и договорах стройки. У каждого — ссылка на подробный разбор.</p>
+    </div>
+  </section>
+
   <section class="section">
     <div class="container">
-      <div class="grid grid--2">
-{cards}
+      <nav class="term-index" aria-label="Термины">{nav}</nav>
+      <div class="terms">
+{items}
       </div>
     </div>
   </section>
 
 {block_form(site)}'''
-    crumbs = [("Главная", "/"), ("Статьи", path)]
-    head = "\n".join([jsonld(schema_organization(site)),
+    url = site.abs_url(path)
+    schema = {
+        "@context": "https://schema.org", "@type": "DefinedTermSet", "@id": url + "#set",
+        "name": "Словарь исполнительной документации", "url": url, "inLanguage": "ru",
+        "hasDefinedTerm": [{"@type": "DefinedTerm", "@id": f"{url}#{t['id']}", "name": t["term"],
+                            "description": t["def"], "url": f"{url}#{t['id']}",
+                            "inDefinedTermSet": url + "#set"} for t in terms],
+    }
+    crumbs = [("Главная", "/"), ("Статьи", "/stati/"), ("Словарь", path)]
+    head = "\n".join([jsonld(schema_organization(site)), jsonld(schema),
                       jsonld(schema_breadcrumbs(site, crumbs))])
     r.render(path=path, title=title, description=description, body=body,
              head_extra=head, priority="0.6")
@@ -2895,6 +3051,8 @@ def write_llms(site: Site) -> None:
         f"- [Все услуги]({site.abs_url('/uslugi/')}): список из "
         f"{len(site.services)} направлений документации.",
         f"- [Объекты]({site.abs_url('/obekty/')}): объекты, на которых велась документация.",
+        f"- [Словарь]({site.abs_url('/slovar/')}): короткие определения терминов исполнительной "
+        "документации со ссылками на разборы.",
         f"- [ПТО на аутсорсе]({site.abs_url('/pto-na-autsorse/')}): "
         f"{site.raw['pto_page']['lead']}",
         f"- [О компании]({site.abs_url('/o-kompanii/')}): как устроена работа.",
@@ -3061,6 +3219,7 @@ def build(regen_media: bool = False, base_path: str = None,
     page_contacts(r)
     page_policy(r)
     page_articles_index(r)
+    page_glossary(r)
     for article in site.articles:
         page_article(r, article)
     page_404(r)
