@@ -198,23 +198,26 @@ def build():
     room_frame(p, V1, walls)
     # нижнее оборудование
     low = [e for e in TM.EQUIP if e.bbox()[2] < Z_SPLIT and not e.ctx and e.kind != 'cylx'
-           and e.id not in ('ПК-горелка', 'БП-шнек', 'РБ-ГВС')]
+           and e.id not in ('ПК-горелка', 'БП-шнек', 'РБ-ГВС', 'ШУ')]           # ШУ — на стене над КШ-3: штрихом
     for e in sorted(low, key=lambda e: e.bbox()[5]):           # сначала низкие — высокие закрывают
         draw_eq(p, V1, e)
     for e in (E['П1'], E['П1-узел']):                          # П1 над головой — штрихом
         draw_eq(p, V1, e, layer='ТМ_ОВ', mask=False, ltype='ОВ_ШТРИХ')
+    draw_eq(p, V1, E['ШУ'], mask=False, ltype='ОВ_ШТРИХ')        # ШУ (низ +1,700) над КШ-3 — штрихом
     draw_pipes(p, V1, TM.PIPES)
     for f in TM.FITS:
         if Z_SPLIT >= f.pos[2] >= -0.3:
             sym_fit(p, V1, f)
-    eq_marks(p, L1, V1, [(E['ПК'], 'ПК'), (E['БП'], 'БП'), (E['ШУ'], 'ШУ')])
+    eq_marks(p, L1, V1, [(E['ПК'], 'ПК'), (E['БП'], 'БП')])
+    o = eq_outline(V1, E['ШУ'])
+    p.t((o[1] + o[3]) / 2 + 4.5, o[4] + 2.2, 'ШУ (низ +1,700)', 1.8, 'center', 'ТМ_марки')
     for m in ('К1', 'К2'):                                     # марка котла — у передней грани, вне подводок
         o = eq_outline(V1, E[m])
         p.t(o[3] - 2.6, (o[2] + o[4]) / 2 + 3.2, m, 2.2, 'center', 'ТМ_марки')
     o = eq_outline(V1, E['Б1'])
     p.t(o[1] - 3.0, o[2] + 3.0, 'Б1', 2.5, 'center', 'ТМ_марки')
     o = eq_outline(V1, E['КШ-3'])
-    p.t(o[1] + 7.0, (o[2] + o[4]) / 2, 'КШ-3 (ОВ)', 1.8, 'center', 'ТМ_марки')
+    p.t((o[1] + o[3]) / 2 + 1.5, (o[2] + o[4]) / 2, 'КШ-3 (ОВ)', 1.8, 'center', 'ТМ_марки')   # правее опусков Т11, Т21
     for n, _ in TM.GROUPS:
         e = E[n]
         o = eq_outline(V1, e)

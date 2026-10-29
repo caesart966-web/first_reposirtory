@@ -276,7 +276,8 @@ def draw_net(p, V, pipes, box, lw=None, zr=None, L=None):
             A, B = cc
             L = math.hypot(B[0] - A[0], B[1] - A[1])
             if L < 0.05:
-                if math.dist(c[0], c[1]) > 0.02:
+                dz = math.dist(c[0], c[1])
+                if dz > 0.02 and not (max(c[0][2], c[1][2]) < 0 and dz < 0.08):   # переход ряда в полу — не стояк
                     p.circle(A[0], A[1], 0, lay, r_paper=max(0.7, pp.od * V.s / 2))
                 continue
             p.pl([A, B], lay, ltype=lt, lw=lw or (50 if pp.sys in ('К1', 'К1в') else 35))
@@ -381,6 +382,8 @@ class VLabels(Labels):
         self.segs = []
         self.leads = []          # выноски уже поставленных полок: (точка, конец полки)
         self.shelves = []        # прямоугольники полок с текстом
+        self.far_r = (45, 55, 70)                                   # дальние места полок: радиусы, мм листа
+        self.far_d = ((1, 1), (-1, 1), (1, -1), (-1, -1), (0.4, 1), (-0.4, 1), (0.4, -1), (-0.4, -1))
 
     def add_segs(self, segs):
         self.segs.extend(segs)
@@ -406,8 +409,7 @@ class VLabels(Labels):
             w = max(p.tw(text, h), p.tw(sub, h) if sub else 0) + 1.6
             top = h * 1.25 + 0.9
             bot = (h * 1.25 + 0.9) if sub else 0.4
-            far = [(dx * r, dy * r * 0.8) for r in (45, 55, 70)
-                   for dx, dy in ((1, 1), (-1, 1), (1, -1), (-1, -1), (0.4, 1), (-0.4, 1), (0.4, -1), (-0.4, -1))]
+            far = [(dx * r, dy * r * 0.8) for r in self.far_r for dx, dy in self.far_d]
             # заданные места, затем (если все с пересечением) — общие ближние и дальние; только без пересечений
             cc = (list(cands) + default_cands() + far) if cands else (default_cands() + far)
             for dx, dy in cc:
@@ -534,3 +536,58 @@ def under_texts(src, V, box, scale_h=1.0):
         if box[0] <= c[0] <= box[2] and box[1] <= c[1] <= box[3]:
             out.append(r)
     return out + under_solids(src, V, box)
+
+
+_UL = {}
+
+
+def under_lines(src, V, box, layers=('A-WALL', 'I-FURN', 'P-SANR-FIXT', 'A-DOOR', 'S-STRS', 'A-COLS', 'A-GLAZ',
+                                     'A-GLAZ-CWMG', 'M-EQPM', 'A-DETL-GENF')):
+    """Линии подложки АР (стены, мебель, сантехника, двери, лестница) на листе — отрезки, мм листа. Добавленные в
+    VLabels.segs, они не дают полкам ложиться на стены и приборы: подписи уходят на свободное поле листа."""
+    from ezdxf import recover
+    from underlay import OX, OY
+    if src not in _UL:
+        d, _ = recover.readfile(src)
+        out = []
+
+        def take(e):
+            t = e.dxftype()
+            if t == 'LINE':
+                out.append(((e.dxf.start.x, e.dxf.start.y), (e.dxf.end.x, e.dxf.end.y)))
+            elif t in ('LWPOLYLINE', 'POLYLINE'):
+                pts = [(q[0], q[1]) for q in (e.get_points('xy') if t == 'LWPOLYLINE' else
+                                              [(v.dxf.location.x, v.dxf.location.y) for v in e.vertices])]
+                if t == 'LWPOLYLINE' and e.closed and pts:
+                    pts.append(pts[0])
+                out.extend(zip(pts, pts[1:]))
+            elif t in ('ARC', 'CIRCLE'):
+                c, r = e.dxf.center, e.dxf.radius
+                a0, a1 = (e.dxf.start_angle, e.dxf.end_angle) if t == 'ARC' else (0.0, 360.0)
+                if a1 < a0:
+                    a1 += 360.0
+                n = max(2, int((a1 - a0) / 15) + 1)
+                pts = [(c.x + r * math.cos(math.radians(a0 + (a1 - a0) * k / n)),
+                        c.y + r * math.sin(math.radians(a0 + (a1 - a0) * k / n))) for k in range(n + 1)]
+                out.extend(zip(pts, pts[1:]))
+
+        for e in d.modelspace():
+            if e.dxf.layer not in layers:
+                continue
+            if e.dxftype() == 'INSERT':
+                try:
+                    for ve in e.virtual_entities():
+                        take(ve)
+                except Exception:
+                    continue
+            else:
+                take(e)
+        _UL[src] = [(((a[0] - OX) / 1000, (a[1] - OY) / 1000), ((b[0] - OX) / 1000, (b[1] - OY) / 1000))
+                    for a, b in out if math.dist(a, b) > 1.0]
+    res = []
+    for a, b in _UL[src]:
+        A, B = V.P((a[0], a[1], 0)), V.P((b[0], b[1], 0))
+        if max(A[0], B[0]) >= box[0] and min(A[0], B[0]) <= box[2] and max(A[1], B[1]) >= box[1] and \
+                min(A[1], B[1]) <= box[3]:
+            res.append((A, B))
+    return res

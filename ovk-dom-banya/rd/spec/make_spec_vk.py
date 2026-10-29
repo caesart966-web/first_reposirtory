@@ -137,22 +137,40 @@ def sewer_fittings():
     """К1: отводы 45°/30°/15° — повороты внутри трубы и в стыках двух труб (низ подъёмов от приборов, низ стояков);
     тройники косые — конец трубы на другой трубе К1 (по оси или на стенке трубы, как УМ-б1 на выпуске УН-б1)."""
     grp = pipes(SEWER)
-    bends, tees = Counter(), Counter()     # ключи: (Ø, малошумная, угол) и (Ø магистрали, Ø отвода, малошумная)
+    # ключи: (Ø, малошумная, угол) и (Ø магистрали, Ø отвода, малошумная, вид): вид '' — косой 45°, 'v' — на
+    # вертикальной трубе (прямой 87,5°: отвод из пола в вывод прочистки Ст.К1-2), 'x' — косая крестовина 45°
+    bends, tees = Counter(), Counter()
     for p in grp:
         for a, b, c in zip(p.pts, p.pts[1:], p.pts[2:]):
             for deg in split_bend(angle(vec(a, b), vec(b, c))):
                 bends[(p.dn, p.quiet, deg)] += 1
         for e in (p.pts[0], p.pts[-1]):
             q = on_other(e, p, grp)
+            if q is not None and q.id == 'Ст.К1-б':
+                continue                                      # низ Ст.К1-б — двухплоскостная крестовина (своя строка)
             if q is not None and not any(math.dist(e, t) < 2e-3 for t in (q.pts[0], q.pts[-1])):
-                tees[(q.dn, p.dn, q.quiet)] += 1
+                seg = next((a, b) for a, b in zip(q.pts, q.pts[1:]) if VK.point_on_seg(e, a, b, tol=2e-3))
+                tees[(q.dn, p.dn, q.quiet, 'v' if is_vert(*seg) and not q.quiet else '')] += 1
             elif q is None:
                 for q in grp:                                 # на стенке трубы большего Ø, вдали от её концов
                     if q is not p and q.dn > p.dn and min(math.dist(e, t) for t in (q.pts[0], q.pts[-1])) > 0.10 \
                             and any(VK.point_on_seg(e, a, b, tol=q.od / 2 + 0.01) for a, b in zip(q.pts, q.pts[1:])):
-                        tees[(q.dn, p.dn, q.quiet)] += 1
+                        tees[(q.dn, p.dn, q.quiet, '')] += 1
                         break
     ends = [(p, k) for p in grp for k in (0, -1)]
+    nodes = []                                                # узлы, где сходятся 3 и более концов труб
+    for p, k in ends:
+        e = p.pts[k]
+        for nd in nodes:
+            if math.dist(nd[0], e) < 2e-3:
+                nd[1].append(p)
+                break
+        else:
+            nodes.append([e, [p]])
+    for e, ps in nodes:                                       # четыре конца в одной точке — косая крестовина
+        if len(ps) >= 4:
+            dn = sorted(q.dn for q in ps)
+            tees[(dn[-1], dn[0], any(q.quiet for q in ps), 'x')] += 1
     for i, (p, kp) in enumerate(ends):                        # стыки ровно двух концов труб — отводы
         e = p.pts[kp]
         near = [(q, kq) for q, kq in ends if q is not p and math.dist(q.pts[kq], e) < 2e-3]
@@ -222,7 +240,7 @@ def slab_passes():
     out = Counter()
     where = defaultdict(set)
     for p in VK.PIPES:
-        if p.id in COLL_IDS:
+        if p.id in COLL_IDS or p.id == 'Ст.К1-2':
             continue
         for a, b in zip(p.pts, p.pts[1:]):
             if not is_vert(a, b):
@@ -274,7 +292,7 @@ def supports():
 def lengths():
     L = defaultdict(float)
     for p in VK.PIPES:
-        if p.id in COLL_IDS:
+        if p.id in COLL_IDS or p.id == 'Ст.К1-2':                 # вывод прочистки — в L_CLEAN
             continue
         if p.sys == 'К2':
             L[('k2', p.dn, True)] += p.length()
@@ -447,8 +465,11 @@ def rows_vk():
             if bends[(dn, True, deg)]:
                 fits.append((f'Отвод канализационный малошумный Ø{dn}, {deg}°', QA, '', '', 'шт.',
                              bends[(dn, True, deg)], 'повороты и низ подъёмов по модели'))
-    for (d1, d2, qt), n in sorted(tees.items(), reverse=True):
-        if qt:
+    for (d1, d2, qt, kind), n in sorted(tees.items(), reverse=True):
+        if qt and kind == 'x':
+            fits.append((f'Крестовина канализационная малошумная косая 45° Ø{d1}×{d2}×{d2}', QA, '', '', 'шт.', n,
+                         'пол 1.4: УМ-1, Д-1, сифон конденсата → Ст.К1-2'))
+        elif qt:
             fits.append((f'Тройник канализационный малошумный косой 45° Ø{d1}×{d2}', QA, '', '', 'шт.', n,
                          'присоединения по модели'))
     BEND_NOTE = {(110, 15): 'К1-б: поворот 60° в б6 — 45° + 15°', (50, 30): 'К1-М-б1 у стояка'}
@@ -460,8 +481,11 @@ def rows_vk():
                              bends[(dn, False, deg)] + extra,
                              BEND_NOTE.get((dn, deg), 'повороты, низ подъёмов и стояков по модели'
                                            + (', прочистки' if extra else ''))))
-    for (d1, d2, qt), n in sorted(tees.items(), reverse=True):
-        if not qt:
+    for (d1, d2, qt, kind), n in sorted(tees.items(), reverse=True):
+        if not qt and kind == 'v':
+            fits.append((f'Тройник ПП канализационный 87,5° Ø{d1}×{d2}', 'ГОСТ 32414-2013', '', '', 'шт.', n,
+                         'на выводе прочистки Ст.К1-2 — отвод Ø50 из пола 1.4'))
+        elif not qt:
             fits.append((f'Тройник ПП канализационный косой 45° Ø{d1}×{d2}', 'ГОСТ 32414-2013', '', '', 'шт.', n,
                          'присоединения по модели'))
     fits.append(('Тройник ПП канализационный косой 45° Ø110×110 — прочистки в грунте', 'ГОСТ 32414-2013', '', '', 'шт.',
@@ -501,7 +525,8 @@ def rows_vk():
         note = ', '.join(w + (f' — {k}' if k > 1 else '') for w, k in where_ball[du].items())
         arm.append((f'Кран шаровой Ду {du}, PN16, под трубу PE-Xa', A, '', '', 'шт.', n, note))
     chk = [fi for fi in VK.FITS if fi.kind == 'check' and fi.pipe.sys == 'Т4']
-    arm.append(('Клапан обратный Ду 15 (Т4)', A, '', '', 'шт.', len(chk), 'на Т4 у Н8, Н9'))
+    arm.append(('Клапан обратный Ду 15 (Т4)', A, '', '', 'шт.', len(chk),
+                'на Т4 у Н8, Н9 и на Т4 каждого кольца — рядом с балансировочным клапаном (против противотока)'))
     chk_ap = [fi for fi in VK.FITS if fi.kind == 'check' and 'автополив' in fi.name]
     arm.append(('Клапан обратный пружинный Ду 20 — защита сети от обратного потока', A, '', '', 'шт.', len(chk_ap),
                 'КХ-8, подводка автополива'))

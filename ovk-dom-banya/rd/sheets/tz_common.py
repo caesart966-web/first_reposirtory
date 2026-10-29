@@ -146,7 +146,11 @@ def ctx_boiler(p, h=1.8, labels=True):
     for n, r in BP.EQ.items():
         if n in ('К1', 'К2'):
             ctx_rect(p, r, n if labels else None, h, rot=90)
-        elif n in ('ПК', 'БП', 'ШУ', 'КШ-3'):
+        elif n == 'ШУ':                          # на стене над КШ-3: штрихом, марка — восточнее КШ-3
+            ctx_rect(p, r, ltype='ОВ_ШТРИХ')
+            if labels:
+                p.t((BP.EQ['КШ-3'][2] + r[2]) / 2, (r[1] + r[3]) / 2, n, min(h, 1.4), 'center', 'ТЗ_контекст')
+        elif n in ('ПК', 'БП', 'КШ-3'):
             ctx_rect(p, r, n if labels and n != 'КШ-3' else None, h)
         else:
             ctx_rect(p, r)
