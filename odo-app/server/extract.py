@@ -87,6 +87,61 @@ def _pdf_text(path: Path, progress=None) -> tuple[str, bool]:
 _pdf_text.last_ocr = False
 
 
+def _rtf_text(path: Path) -> str:
+    """RTF без библиотек: \\'hh — байт кодовой страницы, \\uN — юникод (после него \\ucN знаков пропускается), служебные группы выбрасываются."""
+    import re as _re
+    raw = path.read_bytes().decode("latin-1")
+    m = _re.search(r"\\ansicpg(\d+)", raw)
+    cp = "cp" + m.group(1) if m and m.group(1) not in ("0",) else "cp1251"
+    out, buf = [], bytearray()
+    skip_groups = {"fonttbl", "colortbl", "stylesheet", "info", "pict", "header", "footer", "xmlnstbl", "themedata", "colorschememapping", "latentstyles", "datastore", "listtable", "listoverridetable", "rsidtbl", "generator"}
+    stack, depth_skip, uc, i, n = [], None, 1, 0, len(raw)
+
+    def flush():
+        if buf:
+            out.append(buf.decode(cp, errors="replace")); buf.clear()
+    while i < n:
+        ch = raw[i]
+        if ch == "{":
+            stack.append(uc); i += 1
+            mm = _re.match(r"\\(?:\*\\)?([A-Za-z]+)", raw[i:i + 24])
+            if depth_skip is None and mm and (mm.group(1) in skip_groups or raw[i:i + 2] == "\\*"):
+                depth_skip = len(stack)
+            continue
+        if ch == "}":
+            if stack:
+                uc = stack.pop()
+                if depth_skip is not None and len(stack) < depth_skip:
+                    depth_skip = None
+            i += 1; continue
+        if ch == "\\":
+            mm = _re.match(r"\\([A-Za-z]+)(-?\d+)? ?|\\'([0-9a-fA-F]{2})|\\(.)", raw[i:])
+            if not mm:
+                i += 1; continue
+            i += mm.end()
+            if depth_skip is not None:
+                continue
+            if mm.group(3):
+                buf.append(int(mm.group(3), 16)); continue
+            if mm.group(4) is not None:
+                flush(); out.append({"\\": "\\", "{": "{", "}": "}", "~": " ", "-": "", "_": "-", "\n": "\n"}.get(mm.group(4), "")); continue
+            word, arg = mm.group(1), mm.group(2)
+            if word == "u" and arg is not None:
+                flush(); code = int(arg); out.append(chr(code + 65536 if code < 0 else code)); i += uc; continue
+            if word == "uc" and arg is not None:
+                uc = int(arg); continue
+            if word in ("par", "line", "row", "sect", "page"):
+                flush(); out.append("\n"); continue
+            if word in ("tab", "cell"):
+                flush(); out.append(" | " if word == "cell" else "\t"); continue
+            continue
+        if depth_skip is None and ch not in "\r\n":
+            buf.append(ord(ch) if ord(ch) < 256 else 63)
+        i += 1
+    flush()
+    return _re.sub(r"[ \t]+\n", "\n", "".join(out))
+
+
 def _xlsx_text(path: Path) -> str:
     import openpyxl
     wb = openpyxl.load_workbook(path, data_only=True, read_only=True)
@@ -115,6 +170,8 @@ def extract_text(path: str | Path, progress=None) -> tuple[str, dict]:
         text = _xlsx_text(p)
     elif ext in (".txt", ".md", ".csv"):
         text = p.read_text(encoding="utf-8", errors="replace")
+    elif ext == ".rtf":
+        text = _rtf_text(p)
     elif ext == ".doc":
         text, scanned = "", True  # старый формат: без конвертера не читается
     else:

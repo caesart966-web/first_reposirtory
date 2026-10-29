@@ -132,3 +132,33 @@ def test_state_road_contract():
     a, _ = engine.assess_card(card, find_cases=False)
     assert (a["verdict"]["membership_required"], a["verdict"]["counts_for_odo"]) == ("yes", "yes")
     assert a["verdict"]["amount_total_rub"] == 120_000_000.0
+
+
+def test_contract_estimate_rows_and_rtf(tmp_path):
+    """«Смета контракта» из Excel (форма ЕИС): строки «№ | работа | ед. | кол-во | цена | сумма», разделы, итоги, перенос строки
+    в ячейке; шапка «1 | 2 | 3 …» не строка. RTF читается без библиотек."""
+    from server.parse_contract import parse_contract_estimate
+    from server.extract import extract_text
+    text = (
+        "===== лист ПСК =====\nПриложение №1 к Контракту №7/26/ПРИМ от _________\nСмета контракта\n"
+        "№ п/п | Наименование | Единица измерения | Количество | Цена | Стоимость всего, руб. | Страна\n1 | 2 | 3 | 4 | 5 | 6 | 7\n"
+        "Разборка пролетных строений\n"
+        "1 | Демонтаж балок пролетных строений длиной 21 м | шт | 8 | 34769.63 | 278157\n"
+        "2 | Погрузка мусора строительного и перевозка\nна расстояние до 163 км | т | 0.48 | 1150 | 552\n"
+        "Устройство покрытия\n"
+        "3 | Устройство верхнего слоя покрытия — ЩМА-16 | м2 | 1290 | 2785.56 | 3593376\n"
+        "4 | Затраты на обеспечение безопасности производства работ | руб | 42533908\n"
+        "Итого с коэф. 0,99 | руб | 3838000\nНДС 22% | руб | 844360\nВсего с НДС: | руб | 4682360\n")
+    ce = parse_contract_estimate(text)
+    assert [l["amount_rub"] for l in ce["lines"]] == [278157.0, 552.0, 3593376.0, 42533908.0]
+    assert ce["lines"][0]["source"].endswith("«Разборка пролетных строений»") and ce["lines"][2]["source"].endswith("«Устройство покрытия»")
+    assert "на расстояние до 163 км" in ce["lines"][1]["name"]
+    assert (ce["total_no_vat"], ce["vat"], ce["total_with_vat"]) == (3838000.0, 844360.0, 4682360.0)
+    docs = [{"filename": "k.docx", "kind": "contract", "text": read("state_road_fiction.txt")}, {"filename": "smeta.xlsx", "kind": "estimate", "text": text}]
+    card, meta = build_card({"name": "ООО «ПРИМЕР-МОСТ»", "inn": "7700000009", "sro_kinds": ["build"]}, docs)
+    assert len(card["works"]) == 4 and meta["estimates"]["contract_estimate"] is True
+    rtf = tmp_path / "p.rtf"
+    rtf.write_bytes(("{\\rtf1\\ansi\\ansicpg1251{\\fonttbl{\\f0 Times New Roman;}}{\\stylesheet{Heading 1;}}\\pard "
+                     "\\'cf\\'f0\\'e8\\'eb\\'ee\\'e6\\'e5\\'ed\\'e8\\'e5 17\\par \\uc1\\u1046*\\u1091*\\u1088*\\u1085*\\u1072*\\u1083* \\tab 2026}").encode("latin-1"))
+    t, m = extract_text(rtf)
+    assert "Приложение 17" in t and "Журнал" in t and "Times New Roman" not in t and "Heading" not in t

@@ -308,6 +308,52 @@ def parse_contract_text(t: str) -> tuple[dict, dict]:
 
 
 # ------------------------------------------------------------------ сметы
+ROW_RE = re.compile(r"^\s*(\d{1,4})\s*\|\s*(.{4,300}?)\s*\|\s*([^|]{0,20}?)\s*\|\s*([\d\s.,]+)\s*\|\s*([\d\s.,]+)\s*\|\s*([\d\s.,]+)\s*(?:\|.*)?$")
+# короткая строка затрат без объёма и цены: «678 | Перевозка рабочих | руб | 2531832»
+ROW_SHORT_RE = re.compile(r"^\s*(\d{1,4})\s*\|\s*(.{4,300}?)\s*\|\s*(руб\.?|тыс\. ?руб\.?)\s*\|\s*([\d\s.,]+)\s*$", re.I)
+
+
+def parse_contract_estimate(text: str) -> dict:
+    """«Смета контракта» в форме ЕИС (Excel): строки «№ | наименование | ед. | кол-во | цена | сумма», между ними заголовки разделов.
+    Итоги: «Итого … | руб | N» (без НДС, после коэффициентов снижения), «НДС … | руб | N», «Всего с НДС | руб | N»."""
+    lines, section, totals = [], None, {}
+    # ячейка с переносом строки рвёт строку таблицы: строку «N | …» с неполным числом ячеек склеиваем со следующими
+    rows, acc = [], None
+    for raw in text.split("\n"):
+        line = raw.strip()
+        if acc is not None:
+            acc += " " + line
+            if acc.count("|") >= 5:
+                rows.append(acc); acc = None
+            continue
+        if re.match(r"^\d{1,4}\s*\|", line) and line.count("|") < 5 and not ROW_SHORT_RE.match(line):
+            acc = line; continue
+        rows.append(line)
+    if acc:
+        rows.append(acc)
+    for line in rows:
+        if not line or line.startswith("====="):
+            continue
+        m = ROW_RE.match(line)
+        ms = None if m else ROW_SHORT_RE.match(line)
+        if m or ms:
+            amt = num(m.group(6)) if m else num(ms.group(4)) * (1000 if ms.group(3).lower().startswith("тыс") else 1)
+            name = m.group(2) if m else ms.group(2)
+            if amt is None or not re.search(r"[А-Яа-яA-Za-z]", name):
+                continue
+            lines.append({"name": re.sub(r"\s+", " ", name), "amount_rub": round(amt, 2), "source": "Смета контракта" + (f", раздел «{section}»" if section else "")})
+            continue
+        low = line.lower()
+        mt = re.match(r"^(итого[^|]*|ндс[^|]*|всего[^|]*)\|\s*руб\.?\s*\|\s*([\d\s.,]+)\s*$", line, re.I)
+        if mt:
+            key = "vat" if low.startswith("ндс") else ("total_with_vat" if low.startswith("всего") else "total_no_vat")
+            totals[key] = num(mt.group(2))
+            continue
+        if "|" not in line and 3 < len(line) < 120 and not re.match(r"^[\d\s.,]+$", line):
+            section = line.strip(" :")
+    return {"lines": lines, "lines_sum": round(sum(x["amount_rub"] for x in lines), 2) if lines else None, **totals}
+
+
 def parse_estimates(texts: list[str]) -> dict:
     """Строки объектного сметного расчёта и итоги сводного."""
     out = {"lines": [], "object_total": None, "summary_total": None, "vat_pct": None, "unforeseen_pct": None, "methodology_421": False, "summary_header_total": None}
@@ -359,6 +405,17 @@ def parse_estimates(texts: list[str]) -> dict:
             nums = [x for x in nums if x]
             if nums:
                 out["summary_total"] = max(nums)
+    if not out["lines"]:
+        # «Смета контракта» в форме ЕИС (Excel/ docx): строки «№ | работа | ед. | кол-во | цена | сумма»
+        for t in texts:
+            ce = parse_contract_estimate(t)
+            if len(ce["lines"]) >= 3:
+                out["lines"] = ce["lines"]
+                out["contract_estimate"] = True
+                for k in ("total_no_vat", "vat", "total_with_vat"):
+                    if ce.get(k) is not None:
+                        out["estimate_" + k] = ce[k]
+                break
     if out["lines"]:
         s = round(sum(x["amount_rub"] for x in out["lines"]), 2)
         out["lines_sum"] = s
