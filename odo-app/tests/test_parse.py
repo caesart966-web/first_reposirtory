@@ -111,3 +111,24 @@ def test_survey_customer_circle_is_narrower():
     a, _ = engine.assess_card(card, find_cases=False)
     assert a["verdict"]["membership_required"] == "yes"   # прямой договор: членство есть, в ОДО не входит
     assert a["verdict"]["counts_for_odo"] == "no"
+
+
+def test_state_road_contract():
+    """Госконтракт Росавтодора на «ремонт» путепровода: ИКЗ в скобках, объект из шапки, имя заказчика с кавычками внутри,
+    дата из реквизитов приложения, срок «завершение СМР», дата приказа не принимается за начало работ, по смете — капремонт."""
+    t = read("state_road_fiction.txt")
+    f, h = parse_contract_text(t)
+    assert f["number"] == "7/26/ПРИМ" and f.get("date") is None
+    assert f["ikz"].startswith("2611234567890") and f["customer_inn"] == "1234567890"
+    assert "Управление федеральных автомобильных дорог" in f["customer_name"] and not f["customer_name"].startswith("Федерального")
+    assert f["contractor_name"] == "ООО «ПРИМЕР-МОСТ»"
+    assert f["price_rub"] == 120_000_000.0 and f["procurement"] == "competitive" and f["procurement_law"] == "44-fz"
+    assert f["object_name"].startswith("Ремонт путепровода") and f.get("period_from") is None and f["period_to"] == "2027-10-15"
+    card, meta = build_card({"name": "ООО «ПРИМЕР-МОСТ»", "inn": "7700000009", "sro_kinds": ["build"]}, [{"filename": "k.docx", "kind": "contract", "text": t}])
+    assert card["contract"]["date"] == "2026-08-25" and "приложений" in meta["hints"].get("date", "")
+    assert card["work_type"] == "capital_repair" and "балок" in meta["hints"]["work_type"]
+    assert card["customer"]["kind"] == "technical_customer" and card["object"]["name"].startswith("Ремонт путепровода")
+    assert engine.validate_card(card) == []
+    a, _ = engine.assess_card(card, find_cases=False)
+    assert (a["verdict"]["membership_required"], a["verdict"]["counts_for_odo"]) == ("yes", "yes")
+    assert a["verdict"]["amount_total_rub"] == 120_000_000.0
