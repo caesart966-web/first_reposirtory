@@ -126,6 +126,9 @@ def place_labels(L, reqs):
                 r, e = _geom(L, at, rq['text'], rq['h'], rq['sub'], dx, dy)
                 if not (L.free(r) and L._clean(at, e, r)):
                     continue
+                rr = (r[0] - 0.6, r[1] - 0.6, r[2] + 0.6, r[3] + 0.6)
+                if any(_seg_rect(a_, b_, rr) for a_, b_ in getattr(L, 'no_text', [])):   # текст — не на границах з/у
+                    continue
                 if first:
                     out.append(None)
                     continue
@@ -141,7 +144,7 @@ def place_labels(L, reqs):
                 out.append((c, at, (dx, dy)))
         return out
 
-    order = sorted(reqs, key=lambda rq: (len(opts(rq, first=True)), rq.get('rank', 0)))
+    order = sorted(reqs, key=lambda rq: (not rq.get('first'), len(opts(rq, first=True)), rq.get('rank', 0)))
     for rq in order:
         o = opts(rq)
         if not o:
@@ -281,6 +284,60 @@ def net(p, V, box, L, D, every=40.0):
     return pipes
 
 
+def boundary_segs(V, box):
+    """Границы земельных участков по топосъёмке (слой ТОПО_границы) на листе: текст подписей на них не ложится."""
+    import ezdxf
+    from nvk_draw import clip_poly
+    src = ezdxf.readfile(os.path.join(NVK_OUT, 'topo_house_axes.dxf'))
+    out = []
+    for e in src.modelspace():
+        if e.dxf.layer != 'ТОПО_границы':
+            continue
+        if e.dxftype() == 'LINE':
+            pts = [(e.dxf.start.x, e.dxf.start.y), (e.dxf.end.x, e.dxf.end.y)]
+        elif e.dxftype() == 'LWPOLYLINE':
+            pts = [(q[0], q[1]) for q in e.get_points()]
+            if e.closed:
+                pts.append(pts[0])
+        else:
+            continue
+        for part in clip_poly([V.P((x, y, 0)) for x, y in pts], box):
+            out += list(zip(part, part[1:]))
+    return out
+
+
+def k2_corner(xy, tol=0.45):
+    """Лоток К2 в вершине кольца у колодца Др (кольцо К2 идёт рядом с дренажом, поворот — у колодца). Если отсюда
+    начинаются две ветви с разными лотками — обе с марками, иначе — проходящая (наименьший лоток)."""
+    hits = []
+    for q in M.PIPES:
+        if q.sys != 'К2' or q.kind != 'grav':
+            continue
+        for k, v in enumerate(q.pts):
+            if math.dist(v, xy) < tol:
+                hits.append((q.id, q.z[k], k == 0))
+    if not hits:
+        return None
+    heads = sorted({(pid, round(z, 2)) for pid, z, h in hits if h}, key=lambda t: -t[1])
+    if len({z for _, z in heads}) > 1:
+        return ', '.join(f'{pid} {alev(z)}' for pid, z in heads)
+    return f'К2 {alev(min(z for _, z, _ in hits))}'
+
+
+def well_inv(w):
+    """Подпись лотков колодца на плане (Заказчица 29.10.2026: отметки низа труб на поворотах)."""
+    zs = [z for _, z in w['ins']] + [z for _, z in w['outs']]
+    if w['kind'] == 'ДрК':
+        t = f'лоток Др {alev(min(zs))}'
+        k2 = k2_corner((w['x'], w['y']))
+        return t + (f', {k2}' if k2 else '')
+    if w['kind'] == 'КК':
+        ins = ', '.join(alev(z) for _, z in w['ins'])
+        outs = ', '.join(sorted(set(alev(z) for _, z in w['outs'])))
+        return f'лоток вх. {ins}; вых. {outs}'
+    return None
+
+
 def main():
     D = data()
     doc = new_doc()
@@ -319,6 +376,7 @@ def main():
     L.busy.remove(hold)
     L.fence = fence_segs(V, box)                  # полки не пересекают границу участка, выноски — по возможности
     L.segs += L.fence
+    L.no_text = L.fence + boundary_segs(V, box)
     # здания — полки по возможности вне их планов
     L.bld_rects = []
     for r_ in (M.HOUSE, M.BATHB):
@@ -339,8 +397,8 @@ def main():
         L.block(r_)
     REQ = []
 
-    def req(anchors_, text, h, sub=None, prefs=None):
-        REQ.append(dict(anchors=list(anchors_), text=text, h=h, sub=sub, prefs=prefs))
+    def req(anchors_, text, h, sub=None, prefs=None, first=False):
+        REQ.append(dict(anchors=list(anchors_), text=text, h=h, sub=sub, prefs=prefs, first=first))
 
     def on_line(pts, q):                          # ближайшая точка ломаной к q
         best = None
@@ -358,7 +416,12 @@ def main():
     for w in D['wells']:
         c = V.P((w['x'], w['y'], 0))
         r = well_r(w, V)
-        req([c], w['id'] + (' (сущ.)' if w['exist'] else ''), 2.0, sub=f'к {alev(w["cover"])}' if w['cover'] else None,
+        inv = well_inv(w)
+        if inv:                                   # колодцы Др (поворот колец Др и К2) и КК-1 — с лотками
+            t_, s_ = f'{w["id"]}, к {alev(w["cover"])}', inv
+        else:
+            t_, s_ = w['id'] + (' (сущ.)' if w['exist'] else ''), (f'к {alev(w["cover"])}' if w['cover'] else None)
+        req([c], t_, 2.0 if not inv else 1.9, sub=s_,
             prefs=[(r + 2, r + 2), (-r - 2, r + 2), (r + 2, -r - 2), (-r - 2, -r - 2), (r + 5, 0.5), (-r - 5, 0.5)])
     for nm, (x, y), sub in EXIST_WELLS:
         c = V.P((x, y, 0))
@@ -367,9 +430,9 @@ def main():
     for e in D.get('ext', []):                    # теплотрасса ОВ
         a_, b_ = e['pts'][1], e['pts'][2]
         pts_ = [V.P((a_[0] + (b_[0] - a_[0]) * t, a_[1] + (b_[1] - a_[1]) * t, 0))
-                for t in (0.62, 0.5, 0.75, 0.4, 0.85, 0.3, 0.2, 0.92)]
+                for t in (0.62, 0.5, 0.75, 0.4, 0.85, 0.3, 0.2, 0.92, 0.68, 0.56, 0.45, 0.35, 0.25, 0.8, 0.15, 0.1)]
         req([q for q in pts_ if in_box(q, box)], 'Т1, Т2 — теплотрасса Ecoflex (ОВ, лист 14)', 1.9,
-            sub=f'прямая, ниже Др: верх ≤ {alev(M.ECO_TOP)}')
+            sub=f'прямая, ниже Др: верх ≤ {alev(M.ECO_TOP)}', first=True)   # в тесном проходе дом — баня
     for sx in M.cross_s(M.kb_line, M.k12):        # футляр В1-Бс над К1-б1 — точка выноски задана пересечением
         q = M.kb_line.at(sx)
         req([V.P((q[0], q[1], 0))], 'В1-Бс над К1-б1 — в футляре', 1.9, sub='ПНД Ø63, по 2 м в стороны')
@@ -381,8 +444,10 @@ def main():
     def ii(pid):
         return alev(PM[pid].i, 3).rstrip('0')
 
-    assert PM['К1-бн'].i == PM['К1-бвн'].i and PM['Др-1/2'].i == PM['Др-1/4'].i and PM['К2-А'].i == PM['К2-Б'].i
-    assert PM['ДрБ-1/2'].i == PM['К2-БА'].i and PM['Др-Т'].i == PM['К2-Т'].i
+    assert PM['К1-бн'].i == PM['К1-бвн'].i and PM['Др-Т'].i == PM['К2-Т'].i
+
+    def seg_l(pid, k):
+        return math.dist(PM[pid].pts[k], PM[pid].pts[k + 1])
     LBL = {
         'К1-1н': (f'К1-1 Ø110 ПП SN8, i={ii("К1-1н")}, L={alev(M.k1h.length(), 1)} м',
                   f'перепад в ДК5-018 {alev(drop["К1-1н"])} м'),
@@ -392,14 +457,27 @@ def main():
         'В1-н': (f'В1 ПЭ 100 SDR11 32×3,0, L={alev(M.v1.length(), 1)} м', 'глубина 1,6 м, у ввода — утепл. и кабель'),
         'КХ-8н': (f'В1 (КХ-8) ПЭ 25, L={alev(PM["КХ-8н"].length(), 1)} м', 'сезонная, слив в КП-1'),
         'К2-ЛК': (f'К2 ПЭ Ø63, i={ii("К2-ЛК")}, L={alev(M.s_out.length(), 2)} м', 'врезка в сущ. выпуск ЛК Ø63'),
-        'Др-1/2': (f'Др Ø110 перф. i={ii("Др-1/2")} + К2 Ø110 i={ii("К2-А")}', 'в общей траншее, К2 выше'),
-        'Др-1/4': (f'Др Ø110 перф. i={ii("Др-1/4")} + К2 Ø110 i={ii("К2-Б")}', None),
-        'ДрБ-1/2': (f'Др Ø110 перф. + К2 Ø110, i={ii("ДрБ-1/2")}', 'вокруг бани'),
-        'Др-Т': ('Др и К2 Ø110 — транзит от бани', f'i={ii("Др-Т")}, L={alev(PM["Др-Т"].length(), 1)} м'),
-        'К2-1н': ('К2 Ø110 от лотка гаража', 'утеплить, присоед. к кольцу К2'),
+        'Др-Т': ('Др и К2 Ø110 — транзит от бани',
+                 f'i={ii("Др-Т")}, L={alev(PM["Др-Т"].length(), 1)} и {alev(PM["К2-Т"].length(), 1)} м'),
+        'К2-1н': (f'К2 Ø110 от лотка гаража, i={ii("К2-1н")}', 'утеплить, присоед. к кольцу К2'),
         'В1-Бс': (f'В1 ПЭ 25 от КП-1 к колонке КБ, L={alev(M.kb_line.length(), 0)} м',
                   f'сезонная, i={alev(M.I_KB, 3).rstrip("0")} к КП-1, гл. {KB_D[0]}–{KB_D[1]} м до верха'),
     }
+    # уклон и длина каждой стороны колец Др и К2 (Заказчица 29.10.2026: «подписать уклоны» — как у транзита от бани);
+    # К2 — в той же траншее выше дренажа, его звено вдоль этой стороны — второй строкой
+    for did, (kid, k) in (('Др-1/2', ('К2-А', 0)), ('Др-2/3', ('К2-А', 1)), ('Др-1/4', ('К2-Б', 0)),
+                          ('Др-4/3', ('К2-Б', 1))):
+        assert abs(seg_l(kid, k) - PM[did].length()) < 1.2, (did, kid, k)   # звено К2 — вдоль той же стороны (юг: К2-Б поворачивает к КЛ-1 раньше)
+        LBL[did] = (f'Др Ø110 i={ii(did)}, L={alev(PM[did].length(), 1)} м',
+                    f'К2 Ø110 i={ii(kid)}, L={alev(seg_l(kid, k), 1)} м')
+    assert PM['К2-К'].i == PM['К2-А'].i              # К2-К — продолжение восточной стороны К2 до КЛ-1
+    LBL['Др-2/3'] = (LBL['Др-2/3'][0], LBL['Др-2/3'][1] + f' и {alev(PM["К2-К"].length(), 1)} м до КЛ-1')
+    # баня: у всех сторон обоих колец один уклон — одна подпись, длины сторон — по парам (север/юг, запад/восток)
+    assert len({PM[q].i for q in ('ДрБ-1/2', 'ДрБ-2/3', 'ДрБ-1/4', 'ДрБ-4/3', 'К2-БА', 'К2-ББ')}) == 1
+    assert abs(PM['ДрБ-1/2'].length() - PM['ДрБ-4/3'].length()) < 0.05 and abs(seg_l('К2-БА', 0) - seg_l('К2-ББ', 1)) < 0.05
+    LBL['ДрБ-1/2'] = (f'Др и К2 Ø110 вокруг бани, i={ii("ДрБ-1/2")}',
+                      f'L: Др {alev(PM["ДрБ-1/2"].length(), 1)} и {alev(PM["ДрБ-2/3"].length(), 1)} м, '
+                      f'К2 {alev(seg_l("К2-БА", 0), 1)} и {alev(seg_l("К2-БА", 1), 1)} м')
     for pp in pipes:
         if pp['id'] in LBL:
             txt, sub = LBL[pp['id']]
@@ -558,9 +636,29 @@ def fragment(doc, sh, p, D, V0, box0):
            (next(c['xy'] for c in M.crossings() if c['up'] == 'К1-1н'), 'К1 над Др и К2:', 'зазоры ' + ' и '.join(
                alev(c['gap']) for c in M.crossings() if c['up'] == 'К1-1н') + ' м'),
            ((M.vk_end('К1-1')[0], M.vk_end('К1-1')[1]), 'Выпуск К1-1 (ВК)', f'лоток {alev(M.vk_end("К1-1")[2])}')]
+    # повороты К2-Б и Др-К к КЛ-1 — отметки лотка (Заказчица 29.10.2026)
+    PM = {q.id: q for q in M.PIPES}
+    q = PM['Др-К']                                # единственный поворот Др-К — с уклоном и длиной линии
+    det.append((q.pts[1], 'Поворот Др-К,', f'лоток {alev(q.z[1])}'))
     for (x, y), t, sub, *cn in det:
         cc = V.P((x, y, 0))
         put(L, cc, t, 1.8, sub=sub, cands=cn[0] if cn else None, what=f'фрагмент: {t}')
+    # уклоны и длины линий к КЛ-1 и от лотка гаража — на фрагменте (на плане 1:200 здесь тесно)
+
+    def ii_(pid):
+        return alev(PM[pid].i, 3).rstrip('0')
+    tail = PM['К2-Б']
+    for pts_, t, sub in (
+            (tail.pts[2:], f'К2-Б Ø110 i={ii_("К2-Б")}, L={alev(sum(math.dist(a_, b_) for a_, b_ in zip(tail.pts[2:], tail.pts[3:])), 1)} м',
+             f'повороты: лоток {alev(tail.z[2])} и {alev(tail.z[3])}'),
+            (PM['Др-К'].pts, f'Др-К i={ii_("Др-К")}, L={alev(PM["Др-К"].length(), 1)} м', None),
+            ):
+        an = [V.P((a_[0] + (b_[0] - a_[0]) * t_, a_[1] + (b_[1] - a_[1]) * t_, 0))
+              for a_, b_ in zip(pts_, pts_[1:]) for t_ in (0.5, 0.35, 0.65, 0.25, 0.75)]
+        an = [q_ for q_ in an if in_box(q_, b)]
+        for k_, q_ in enumerate(an):
+            if put(L, q_, t, 1.8, sub=sub, what=f'фрагмент: {t}', need=k_ == len(an) - 1) is not None:
+                break
     # привязки к осям 5 и А
     kl = V.P((M.KL1.x, M.KL1.y, 0))
     ax5 = V.P((20.0, 0.0, 0))

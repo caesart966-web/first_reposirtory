@@ -478,14 +478,19 @@ def main():
     bath = loop('Баня, ШВК-Б2: Б2 → ШВК-Б2 → Пс-б1.1, Пс-б1.2, Пс-б2 → Н9 → Б2',
                 [('Т3-Б2', 'Т3'), ('ШВК-Б2Т', 'Т3'), ('Т4-ШВК-Б2', 'Т4')],
                 ['Пс-б1.1', 'Пс-б1.2', 'Пс-б2'])
-    bath1 = loop('Баня, ШВК-Б1: Б2 → ШВК-Б1 → смеситель душа Д-б1 → мойка М-б1 → Н9 → Б2',
-                 [('Т3-ШВК-Б1', 'Т3'), ('ШВК-Б1Т', 'Т3'), ('Т3-Д-б1', 'Т3'), ('Т3-М-б1', 'Т3'), ('Т4-ШВК-Б1', 'Т4'),
+    bath1 = loop('Баня, ШВК-Б1: Б2 → ШВК-Б1 → смеситель душа Д-б1 → Т4 → Н9 → Б2',
+                 [('Т3-ШВК-Б1', 'Т3'), ('ШВК-Б1Т', 'Т3'), ('Т3-Д-б1', 'Т3'), ('Т4-Д-б1', 'Т4'), ('Т4-б6', 'Т4'),
                   (('Т4 от тройника у Н9 к Б2', '20×2,8', 1.2, 'wall', T_AIR['wet']), 'Т4')],
                  [], dt=5.0)
-    n9 = dict(G=bath['G'] + bath1['G'], H=max(bath['H'], bath1['H']))
+    # кухня бани — своё кольцо от Б2 (Заказчица 29.10.2026)
+    bath2 = loop('Баня, кухня: Б2 → мойка М-б1 → Н9 → Б2',
+                 [('Т3-М-б1', 'Т3'), ('Т4-М-б1', 'Т4'), ('Т4-б6', 'Т4'),
+                  (('Т4 от тройника у Н9 к Б2', '20×2,8', 1.2, 'wall', T_AIR['wet']), 'Т4')],
+                 [], dt=5.0)
+    n9 = dict(G=bath['G'] + bath1['G'] + bath2['G'], H=max(bath['H'], bath1['H'], bath2['H']))
     n9.update(G_m3h=n9['G'] * 3.6, pump_Q=math.ceil(n9['G'] * 3.6 * 1.1 * 100) / 100,
               pump_H=math.ceil(n9['H'] * 1.2 * 10) / 10)
-    res = dict(balance=bal, network=rows, meter=meter, head=hd, sewer=sw, circ=dict(house=house, house1=house1, kitchen=kitchen, n8=n8, bath=bath, bath1=bath1, n9=n9),
+    res = dict(balance=bal, network=rows, meter=meter, head=hd, sewer=sw, circ=dict(house=house, house1=house1, kitchen=kitchen, n8=n8, bath=bath, bath1=bath1, bath2=bath2, n9=n9),
                dead_ends=dead_ends(), assume=dict(
                    U=f'{U} человек: 3 постоянно проживающих + до 4 гостей (опросный лист Заказчика)',
                    poliv=f'полив газона {int(POLIV["area"])} м² × {POLIV["norm"]:.0f} л/м², один раз в сутки (в т. ч. '
