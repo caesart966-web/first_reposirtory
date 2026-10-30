@@ -1,4 +1,4 @@
-"""Сборка раздела И05.09.26-ВК (дом и баня): проверка модели, расчёты П1–П4, листы 1–14, ВК.СО, ВОР, ТЗ-1, ТЗ-2,
+"""Сборка раздела И05.09.26-ВК (дом и баня): проверка модели, расчёты П1–П5, листы 1–15, ВК.СО, ВОР, ТЗ-1, ТЗ-2,
 3D-модель (просмотр, DWG через DXF, IFC, виды), том PDF, DXF для перевода в DWG.
 
 python3 assemble_vk.py [--no-build] [--repo /home/user/first_reposirtory]
@@ -18,12 +18,12 @@ OUT = os.path.join(HERE, 'out')
 VKO = os.path.join(OUT, 'vk')
 SHEETS = {1: 'vk_od_1', 2: 'vk_od_2', 3: 'vk_plan1_3', 4: 'vk_frag_4', 5: 'vk_frag_5', 6: 'vk_plan1_6',
           7: 'vk_node', 8: 'vk_bath_8', 9: 'vk_bath_9', 10: 'vk_axo_10', 11: 'vk_axo_11', 12: 'vk_axo_12',
-          13: 'vk_coll', 14: 'vk_nodes'}
+          13: 'vk_coll', 14: 'vk_nodes', 15: 'vk_k2_15'}
 BUILD = [('vk_check.py', []), ('vk_calc.py', []), ('spec/make_calc_vk.py', []),
          ('sheets/vk_plan1.py', ['3']), ('sheets/vk_plan1.py', ['6']), ('sheets/vk_frag.py', ['4']),
          ('sheets/vk_frag.py', ['5']), ('sheets/vk_node.py', []), ('sheets/vk_bath.py', ['8']),
          ('sheets/vk_bath.py', ['9']), ('sheets/vk_axo.py', ['10']), ('sheets/vk_axo.py', ['11']),
-         ('sheets/vk_axo.py', ['12']), ('sheets/vk_coll.py', []), ('sheets/vk_nodes.py', []), ('sheets/vk_od.py', []),
+         ('sheets/vk_axo.py', ['12']), ('sheets/vk_coll.py', []), ('sheets/vk_nodes.py', []), ('sheets/vk_k2.py', []), ('sheets/vk_od.py', []),
          ('spec/make_spec_vk.py', ['--pdf']), ('spec/make_vor_vk.py', [os.path.join(HERE, '..', 'in6', 'vor_form.xlsx')]),
          ('sheets/tz_vk_ar.py', []), ('sheets/tz_vk_eom.py', []), ('vk_3d.py', [])]
 WEB = os.path.join(HERE, '..', 'm3d', 'web')
@@ -32,7 +32,7 @@ VIEWS3D = [('iso', 'Общий вид (дом и баня): ввод, колле
            ('topo', 'Топочная 1.6: ввод сквозь плиту, водомерный узел, гребёнка КХ'), ('bath', 'Баня: ШВК-Б1, ШВК-Б2, Б2, К1 под плитой')]
 CALC = ['И05.09.26-ВК.П1 Баланс водопотребления и водоотведения', 'И05.09.26-ВК.П2 Расчёт сетей водопровода. '
         'Требуемый напор на вводе', 'И05.09.26-ВК.П3 Расчёт системы канализации К1',
-        'И05.09.26-ВК.П4 Расчёт циркуляции горячей воды']
+        'И05.09.26-ВК.П4 Расчёт циркуляции горячей воды', 'И05.09.26-ВК.П5 Расчёт внутренних водостоков К2']
 
 
 def run(script, args=()):
@@ -90,7 +90,7 @@ def main():
     if os.path.exists(rel):
         shutil.rmtree(rel)
     os.makedirs(rel)
-    # ---- том: листы 1–14 и ВК.СО
+    # ---- том: листы 1–15 и ВК.СО
     doc, toc = fitz.open(), []
     for no, base in SHEETS.items():
         src = fitz.open(os.path.join(OUT, base + '_Лист.pdf'))

@@ -448,6 +448,40 @@ def dead_ends():
     return out
 
 
+# ====================================================================================== К2: внутренние водостоки
+# Площади водосбора воронок — кровли из АР14 (над 2 этажом, 295,6 м²) и АР13.1 (над 1 этажом за вычетом верхней кровли,
+# 99,5 м²), разделённые по ближайшей воронке (Вороной в контуре кровли, shapely; 30.10.2026). Сумма 395 м² — та же
+# площадь кровли дома, что в П2 НВК (F_ROOF). Параметры дождя — как в НВК (СП 32.13330.2018, Московская обл.).
+K2_AREA = {'1': 47.5, '2': 64.7, '3': 80.9, '4': 48.5, '5': 54.1, '6': 52.6, '7': 25.7, '8': 21.2}
+K2_ROOF_F = {'main': 295.6, 'low': 99.5}
+K2_Q20, K2_N = 80.0, 0.71
+K2_SLOPE = (1.5, 4.7)                          # уклоны кровель по АР13.1, АР14, % (больше 1,5 % — расчёт по q5)
+K2_STACK_MAX = {100: 20.0}                     # предельный расход на водосточный стояк, л/с (СП 30.13330.2020, разд. 24)
+
+
+def k2_calc():
+    """Расход с площади каждой воронки и проверка стояка SML DN100 и выпуска в ДК (наполнение при i = 0,02)."""
+    q5 = K2_Q20 * 4 ** K2_N                    # кровли с уклоном более 1,5 %: Q = F·q5/10000, q5 = 4^n·q20
+    di = 0.100                                 # SML DN100: внутренний Ø ≈ 100 мм
+    n_m = 0.013                                # шероховатость чугуна с внутренним покрытием
+    P = {p.id: p for p in VK.PIPES}
+    rows = []
+    for nst, xy, roof, path, d, room in VK.K2_STACKS:
+        st, out = P[f'Ст.К2-{nst}'], P[f'К2-ДК{nst}']
+        F = K2_AREA[nst]
+        q = F * q5 / 10000
+        i = VK.I_K2
+        A = math.pi * di * di / 4
+        q_full = A * (di / 4) ** (2 / 3) * i ** 0.5 / n_m * 1000
+        rows.append(dict(id=nst, roof=roof, xy=xy, F=F, q=q, L_st=st.length(), L_out=out.length(), z_top=st.pts[0][2],
+                         q_stack=K2_STACK_MAX[100], q_out_full=q_full, i=i, room=room, dk=VK.K2_DK[nst],
+                         inv_end=out.pts[-1][2] - VK.SML[100] / 2,
+                         ok=q <= K2_STACK_MAX[100] and q <= q_full))
+    F_all = sum(K2_AREA.values())
+    return dict(q20=K2_Q20, n=K2_N, q5=q5, slope=K2_SLOPE, roof_F=K2_ROOF_F, F=F_all, Q=F_all * q5 / 10000,
+                rows=rows, ok=all(r['ok'] for r in rows))
+
+
 def main():
     bal = balance()
     rows = network()
@@ -490,7 +524,7 @@ def main():
     n9 = dict(G=bath['G'] + bath1['G'] + bath2['G'], H=max(bath['H'], bath1['H'], bath2['H']))
     n9.update(G_m3h=n9['G'] * 3.6, pump_Q=math.ceil(n9['G'] * 3.6 * 1.1 * 100) / 100,
               pump_H=math.ceil(n9['H'] * 1.2 * 10) / 10)
-    res = dict(balance=bal, network=rows, meter=meter, head=hd, sewer=sw, circ=dict(house=house, house1=house1, kitchen=kitchen, n8=n8, bath=bath, bath1=bath1, bath2=bath2, n9=n9),
+    res = dict(balance=bal, network=rows, meter=meter, head=hd, sewer=sw, k2=k2_calc(), circ=dict(house=house, house1=house1, kitchen=kitchen, n8=n8, bath=bath, bath1=bath1, bath2=bath2, n9=n9),
                dead_ends=dead_ends(), assume=dict(
                    U=f'{U} человек: 3 постоянно проживающих + до 4 гостей (опросный лист Заказчика)',
                    poliv=f'полив газона {int(POLIV["area"])} м² × {POLIV["norm"]:.0f} л/м², один раз в сутки (в т. ч. '

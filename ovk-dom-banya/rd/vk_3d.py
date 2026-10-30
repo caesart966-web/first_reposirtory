@@ -234,7 +234,7 @@ FIT_IFC = {'ball': ('IfcValve', 'ISOLATING'), 'check': ('IfcValve', 'CHECK'), 'b
 SYS_IFC = {'К2': 'STORMWATER', 'Т3': 'DOMESTICHOTWATER', 'Т4': 'DOMESTICHOTWATER', 'В1': 'DOMESTICCOLDWATER', 'К1': 'DRAINAGE',
            'К1в': 'VENT'}
 MAT_NAME = {'pex': 'PE-Xa (ГОСТ 32415)', 'pe': 'ПЭ 100 SDR11 (ГОСТ 18599)', 'pp': 'ПП канализационная (ГОСТ 32414)',
-            'ppn': 'ПП наружная SN8 (ГОСТ 32413)'}
+            'ppn': 'ПП наружная SN8 (ГОСТ 32413)', 'sml': 'Чугун безраструбный SML (Smart SML)'}
 
 
 def export_ifc(data):
