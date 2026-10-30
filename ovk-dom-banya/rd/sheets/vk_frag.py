@@ -110,7 +110,7 @@ def under_marks(key, V, box):
 
 def fragment(doc, sh, p, under, cx, cy, x0, y0, x1, y1, zr, systems, bld='h', title='', marks_floor=None,
              eqs=(), fits=True, label=True, skip=(), text=None, extra=None, leak=None, k=None, pipes=None,
-             title_h=3.0, eq_nolabel=()):
+             title_h=3.0, eq_nolabel=(), marks_skip=()):
     k = k or K
     w, h = (x1 - x0) * 1000 / k, (y1 - y0) * 1000 / k
     V, box = plan_doc(doc, sh, under, cx, cy, w, h, (x0 + x1) / 2, (y0 + y1) / 2, k, frame=zr)
@@ -136,7 +136,7 @@ def fragment(doc, sh, p, under, cx, cy, x0, y0, x1, y1, zr, systems, bld='h', ti
     if leak is not None:
         leak_block(L, V, box, bld, leak)
     if marks_floor is not None:
-        fixture_marks(p, L, V, box, bld, floor=marks_floor, h=1.8)
+        fixture_marks(p, L, V, box, bld, floor=marks_floor, h=1.8, skip=marks_skip)
     if leak is not None:
         leak_marks(p, L, V, box, bld, leak)
     if extra:
