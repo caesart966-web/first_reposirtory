@@ -279,7 +279,7 @@ def sheet2():
     x0, w = 25, 250
     s.text('Общие указания', x0 + w / 2, 288, h=3.0, align='center')
     body = '\\P'.join(f'{i}. {t}' for i, t in enumerate(notes(), 1))
-    s.mtext(body, x0, 283, w, h=2.7, attach=1, spacing=1.35)
+    s.mtext(body, x0, 283, w, h=2.7, attach=1, spacing=1.25)   # 31.10.2026: +баня — без наезда на штамп
     xl = 284
     s.text('Условные обозначения', xl + 60, 288, h=3.0, align='center')
     yy = legend(p, xl, 280)

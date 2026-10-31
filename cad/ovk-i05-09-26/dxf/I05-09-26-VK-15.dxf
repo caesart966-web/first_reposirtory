@@ -493,7 +493,7 @@ $SKPOLY
   9
 $TDCREATE
  40
-2461344.9380555553
+2461345.545752315
   9
 $TDUCREATE
  40
@@ -501,7 +501,7 @@ $TDUCREATE
   9
 $TDUPDATE
  40
-2461344.9381944444
+2461345.545949074
   9
 $TDUUPDATE
  40
@@ -933,11 +933,11 @@ $PSTYLEMODE
   9
 $FINGERPRINTGUID
   2
-{2B86E172-DB2D-4531-A6EB-8D0210E10F2C}
+{89CD5342-1764-43D7-932F-8AEEB14963E1}
   9
 $VERSIONGUID
   2
-{C0032A95-134D-40E9-836C-BCC11B3A318E}
+{00AB9BD2-2496-445C-BED9-C996DEC7D9D4}
   9
 $EXTNAMES
 290
@@ -1343,22 +1343,6 @@ WipeOut
   0
 CLASS
   1
-WIPEOUT
-  2
-AcDbWipeout
-  3
-WipeOut
- 90
-127
- 91
-0
-280
-0
-281
-1
-  0
-CLASS
-  1
 LAYOUT
   2
 AcDbLayout
@@ -1372,6 +1356,22 @@ ObjectDBX Classes
 0
 281
 0
+  0
+CLASS
+  1
+WIPEOUT
+  2
+AcDbWipeout
+  3
+WipeOut
+ 90
+127
+ 91
+0
+280
+0
+281
+1
   0
 CLASS
   1
@@ -2997,13 +2997,13 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-S-GRID-IDEN
+A-DETL
  70
-9
+8
  62
--8
+9
 420
-3261359204
+3254822400
   6
 Continuous
 370
@@ -3016,30 +3016,6 @@ F
 LAYER
   5
 3EF
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-S-GRID
- 70
-8
- 62
-8
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-3F0
 330
 1
 100
@@ -3063,7 +3039,7 @@ F
   0
 LAYER
   5
-3F1
+3F0
 330
 1
 100
@@ -3071,11 +3047,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-G-ANNO-DIMS
+S-GRID
  70
-9
+8
  62
--8
+8
   6
 Continuous
 370
@@ -3087,7 +3063,7 @@ F
   0
 LAYER
   5
-3F2
+3F1
 330
 1
 100
@@ -3111,7 +3087,7 @@ F
   0
 LAYER
   5
-3F3
+3F2
 330
 1
 100
@@ -3135,7 +3111,7 @@ F
   0
 LAYER
   5
-3F4
+3F3
 330
 1
 100
@@ -3159,57 +3135,7 @@ F
   0
 LAYER
   5
-3F5
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-A-DETL
- 70
-8
- 62
-9
-420
-3254822400
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-3F6
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-P-PIPE
- 70
-8
- 62
-8
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-3F7
+3F4
 330
 1
 100
@@ -3233,7 +3159,7 @@ F
   0
 LAYER
   5
-3F8
+3F5
 330
 1
 100
@@ -3246,6 +3172,80 @@ A-WALL
 8
  62
 8
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+3F6
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+S-GRID-IDEN
+ 70
+9
+ 62
+-8
+420
+3261359204
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+3F7
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+P-PIPE
+ 70
+8
+ 62
+8
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
+3F8
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+G-ANNO-DIMS
+ 70
+9
+ 62
+-8
   6
 Continuous
 370
@@ -3289,7 +3289,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-P-SANR-FIXT
+M-EQPM
  70
 8
  62
@@ -3313,11 +3313,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-M-EQPM
+A-GLAZ-CURT
  70
 8
  62
-9
+8
   6
 Continuous
 370
@@ -3330,30 +3330,6 @@ F
 LAYER
   5
 159F
-330
-1
-100
-AcDbSymbolTableRecord
-100
-AcDbLayerTableRecord
-  2
-A-AREA-IDEN
- 70
-8
- 62
-8
-  6
-Continuous
-370
-13
-390
-F
-347
-21
-  0
-LAYER
-  5
-15A0
 330
 1
 100
@@ -3377,6 +3353,30 @@ F
   0
 LAYER
   5
+15A0
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbLayerTableRecord
+  2
+P-SANR-FIXT
+ 70
+8
+ 62
+9
+  6
+Continuous
+370
+13
+390
+F
+347
+21
+  0
+LAYER
+  5
 15A1
 330
 1
@@ -3385,7 +3385,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-S-COLS
+A-DOOR
  70
 8
  62
@@ -3409,7 +3409,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-GLAZ
+A-WALL-PATT
  70
 8
  62
@@ -3457,11 +3457,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-DOOR
+I-FURN
  70
 8
  62
-8
+9
   6
 Continuous
 370
@@ -3481,7 +3481,7 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-WALL-PATT
+A-GLAZ
  70
 8
  62
@@ -3505,11 +3505,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-S-STRS
+S-COLS
  70
 8
  62
-9
+8
   6
 Continuous
 370
@@ -3529,11 +3529,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-I-FURN
+A-AREA-IDEN
  70
 8
  62
-9
+8
   6
 Continuous
 370
@@ -3553,11 +3553,11 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-GLAZ-CURT
+S-STRS
  70
 8
  62
-8
+9
   6
 Continuous
 370
@@ -3577,13 +3577,13 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-DOOR-HDLN
+A-FLOR-PATT
  70
 8
  62
-8
+9
   6
-Пунктир 2-1_5
+Continuous
 370
 13
 390
@@ -3625,13 +3625,13 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-A-FLOR-PATT
+A-DOOR-HDLN
  70
 8
  62
-9
+8
   6
-Continuous
+Пунктир 2-1_5
 370
 13
 390
@@ -4179,34 +4179,6 @@ AcDbSymbolTableRecord
 100
 AcDbTextStyleTableRecord
   2
-ISOCPEUR_I
- 70
-0
- 40
-249.9999999999997
- 41
-1.0
- 50
-0.0
- 71
-0
- 42
-0.2
-  3
-isocpeui.ttf
-  4
-
-  0
-STYLE
-  5
-3FD
-330
-5
-100
-AcDbSymbolTableRecord
-100
-AcDbTextStyleTableRecord
-  2
 ISOCPEUR_B_I
  70
 0
@@ -4222,6 +4194,34 @@ ISOCPEUR_B_I
 0.2
   3
 
+  4
+
+  0
+STYLE
+  5
+3FD
+330
+5
+100
+AcDbSymbolTableRecord
+100
+AcDbTextStyleTableRecord
+  2
+ISOCPEUR_I
+ 70
+0
+ 40
+249.9999999999997
+ 41
+1.0
+ 50
+0.0
+ 71
+0
+ 42
+0.2
+  3
+isocpeui.ttf
   4
 
   0
@@ -4639,152 +4639,6 @@ AcDbDimStyleTableRecord
 290
 0
 340
-3FD
-343
-3FE
-344
-3FE
-371
--2
-372
--2
-  0
-DIMSTYLE
-105
-3EC
-330
-4
-100
-AcDbSymbolTableRecord
-100
-AcDbDimStyleTableRecord
-  2
-2_5_мм
- 70
-0
- 40
-304.8
- 41
-0.6561679790026247
- 42
-0.1640419947506562
- 43
-0.38
- 44
-0.4593175853018373
- 45
-0.01
- 46
-0.4593175853018373
- 47
-0.0
- 48
-0.0
- 49
-1.0
- 50
-45.0
-140
-248.9952939525788
-141
-0.09
-142
-0.0
-143
-25.4
-144
-1.0
-145
-1.0
-146
-1.0
-147
-0.625
-148
-0.0
- 69
-0
- 70
-0
- 71
-0
- 72
-0
- 73
-0
- 74
-0
- 75
-0
- 76
-0
- 77
-1
- 78
-8
- 79
-3
- 90
-2
-170
-0
-171
-2
-172
-1
-173
-1
-174
-1
-175
-0
-176
--1056964608
-177
--1056964608
-178
--1056964608
-179
-1
-271
-2
-272
-4
-273
-2
-274
-2
-275
-0
-276
-0
-277
-2
-278
-46
-279
-0
-280
-0
-281
-0
-282
-0
-283
-1
-284
-8
-285
-0
-286
-0
-288
-0
-289
-3
-290
-0
-340
 3FC
 343
 3FE
@@ -4797,7 +4651,7 @@ AcDbDimStyleTableRecord
   0
 DIMSTYLE
 105
-3ED
+3EC
 330
 4
 100
@@ -4926,6 +4780,152 @@ AcDbDimStyleTableRecord
 0
 288
 1
+289
+3
+290
+0
+340
+3FC
+343
+3FE
+344
+3FE
+371
+-2
+372
+-2
+  0
+DIMSTYLE
+105
+3ED
+330
+4
+100
+AcDbSymbolTableRecord
+100
+AcDbDimStyleTableRecord
+  2
+2_5_мм
+ 70
+0
+ 40
+304.8
+ 41
+0.6561679790026247
+ 42
+0.1640419947506562
+ 43
+0.38
+ 44
+0.4593175853018373
+ 45
+0.01
+ 46
+0.4593175853018373
+ 47
+0.0
+ 48
+0.0
+ 49
+1.0
+ 50
+45.0
+140
+248.9952939525788
+141
+0.09
+142
+0.0
+143
+25.4
+144
+1.0
+145
+1.0
+146
+1.0
+147
+0.625
+148
+0.0
+ 69
+0
+ 70
+0
+ 71
+0
+ 72
+0
+ 73
+0
+ 74
+0
+ 75
+0
+ 76
+0
+ 77
+1
+ 78
+8
+ 79
+3
+ 90
+2
+170
+0
+171
+2
+172
+1
+173
+1
+174
+1
+175
+0
+176
+-1056964608
+177
+-1056964608
+178
+-1056964608
+179
+1
+271
+2
+272
+4
+273
+2
+274
+2
+275
+0
+276
+0
+277
+2
+278
+46
+279
+0
+280
+0
+281
+0
+282
+0
+283
+1
+284
+8
+285
+0
+286
+0
+288
+0
 289
 3
 290
@@ -362582,8 +362582,10 @@ AcDbMText
  север к ДК-3 и на юг, затем на восток к ДК-5. Выпуск Ст.К2-7 обходит ступень крыльца: в стене на запад, затем на юг к ДК-7.\P6. Ревизии — на каждом стояке на +1,000 за нажимными люками 300×300 в стенах (помещения — в подписях на плане 1 этажа; ТЗ-1)
   3
 . Испытание — наполнением водой до уровня наивысшей воронки не менее 10 мин, до закрытия штраб (СП 73.13330.2016); выпуски на время испытания заглушаются.\P7. Расчет — приложение П5: наибольший расход — Ст.К2-3, 1,73 л/с при предельном для стояка DN1
+  3
+00 20 л/с (СП 30.13330.2020, разд. 24). Суммарная площадь кровли 395,2 м² — как в П2 НВК.\P8. Баня — наружные водостоки по АР14 бани (желоб северного карниза, две воронки, трубы Ø100 по северному фасаду) в дождеприемники ДК-б1, ДК-б2 и одной веткой К
   1
-00 20 л/с (СП 30.13330.2020, разд. 24). Суммарная площадь кровли 395,2 м² — как в П2 НВК.\P8. Баня — водостоки по АР бани (в комплекте ВК не показаны: расположение воронок бани не передано).
+2 бани (НВК); в ВК не входят (Заказчица 31.10.2026).
   7
 GOST
   0

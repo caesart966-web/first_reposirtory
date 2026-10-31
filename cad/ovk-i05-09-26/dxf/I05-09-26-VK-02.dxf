@@ -493,7 +493,7 @@ $SKPOLY
   9
 $TDCREATE
  40
-2461344.9386921297
+2461345.551689815
   9
 $TDUCREATE
  40
@@ -501,7 +501,7 @@ $TDUCREATE
   9
 $TDUPDATE
  40
-2461344.9386921297
+2461345.551689815
   9
 $TDUUPDATE
  40
@@ -933,11 +933,11 @@ $PSTYLEMODE
   9
 $FINGERPRINTGUID
   2
-{E0FA8577-51A6-4403-B6CB-0D1D59066540}
+{1FC73BA9-8A9B-40E8-AD3A-03F12099E660}
   9
 $VERSIONGUID
   2
-{DD07C5B8-885D-4938-A0F3-34D7AAF0DA74}
+{0E8F18E6-CF67-4E58-93C2-9E2F88591BDB}
   9
 $EXTNAMES
 290
@@ -1327,22 +1327,6 @@ ISM
   0
 CLASS
   1
-WIPEOUTVARIABLES
-  2
-AcDbWipeoutVariables
-  3
-WipeOut
- 90
-0
- 91
-0
-280
-0
-281
-0
-  0
-CLASS
-  1
 WIPEOUT
   2
 AcDbWipeout
@@ -1359,11 +1343,11 @@ WipeOut
   0
 CLASS
   1
-ACDBPLACEHOLDER
+WIPEOUTVARIABLES
   2
-AcDbPlaceHolder
+AcDbWipeoutVariables
   3
-ObjectDBX Classes
+WipeOut
  90
 0
  91
@@ -1378,6 +1362,22 @@ CLASS
 LAYOUT
   2
 AcDbLayout
+  3
+ObjectDBX Classes
+ 90
+0
+ 91
+0
+280
+0
+281
+0
+  0
+CLASS
+  1
+ACDBPLACEHOLDER
+  2
+AcDbPlaceHolder
   3
 ObjectDBX Classes
  90
@@ -5981,7 +5981,7 @@ AcDbMText
  30
 0.0
  40
-2.3
+2.2
  41
 238.0
  71
@@ -6057,11 +6057,9 @@ AcDbMText
   3
 ажом — 3), стояки Ст.К2-1...8 — в штрабах наружных стен, чугунные безраструбные трубы SML DN100 (Smart SML); внизу стояка — переход двумя отводами 45° в выпуск сквозь стену в гильзе в боковой вход дождеприемника ДК 300×300 у наружной грани стены (НВК
   1
-); ревизии — на +1,000 за люками. После ДК — пластиковая труба в грунте в кольцо К2 (НВК). Водостоки бани — по АР бани (расположение воронок не передано).
+); ревизии — на +1,000 за люками. После ДК — пластиковая труба в грунте в кольцо К2 (НВК). Баня — наружные водостоки северного фасада по АР14 бани в ДК-б1, ДК-б2 и ветку К2 бани (НВК, Заказчица 31.10.2026).
   7
 GOST
- 44
-1.05
   0
 TEXT
   5

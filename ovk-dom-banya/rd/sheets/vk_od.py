@@ -317,7 +317,7 @@ def sheet2():
     x0, w = 25, 238
     s.text('Общие указания', x0 + w / 2, 288, h=3.0, align='center')
     body = '\\P'.join(f'{i}. {t}' for i, t in enumerate(notes(), 1))
-    s.mtext(body, x0, 283, w, h=2.3, attach=1, spacing=1.05)
+    s.mtext(body, x0, 283, w, h=2.2, attach=1, spacing=1.0)    # 31.10.2026: последние строки не заходят на штамп
     xl = 272
     s.text('Условные обозначения', xl + 68, 288, h=3.0, align='center')
     yy = legend(p, xl, 280)
