@@ -153,6 +153,24 @@ export const IMAGES = {
     height: 462,
     position: '50% 50%',
   },
+  // 02.11.2026 — куски кадров заказчика, которые целиком стоят в шапках
+  // услуг (CREDITS.md, «Шапки статей 02.11.2026»): свободных снимков нет.
+  articleVyhod: {
+    src: './img/article-vyhod.webp',
+    srcAvif: './img/article-vyhod.avif',
+    alt: 'Ключи на листе с планом помещения',
+    width: 1600,
+    height: 904,
+    position: '30% 40%',
+  },
+  articleUvedomleniya: {
+    src: './img/article-uvedomleniya.webp',
+    srcAvif: './img/article-uvedomleniya.avif',
+    alt: 'Руки, бумаги и ноутбук на столе переговоров',
+    width: 1600,
+    height: 400,
+    position: '55% 50%',
+  },
   articleRegion: {
     src: './img/article-region.webp',
     srcAvif: './img/article-region.avif',

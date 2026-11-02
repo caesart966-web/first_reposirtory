@@ -25,7 +25,9 @@
                      снимка, вопроса о границах на карте не возникает.
 
     python3 scripts/prepare-article-photos.py      # из sro-site/
+    python3 scripts/prepare-article-photos.py article-vyhod   # один кадр
 """
+import sys
 from pathlib import Path
 
 from PIL import Image
@@ -51,11 +53,26 @@ PHOTOS = [
     # (Kouji Tsuru, Unsplash License — CREDITS.md), запасной исходник
     # 1320×462, лежал в assets-src с 27.08.2026. Целиком.
     ("cranes-crop-spare.jpg", "article-stoimost", None, False, (0.02, 0.9, 0.85)),
+    # 02.11.2026 — свободных снимков нет (стоки из среды закрыты, кадры
+    # заказчика стоят в шапках услуг), поэтому две статьи получили другие
+    # куски тех же снимков, без повтора кадра услуги целиком.
+    # «Выход из СРО»: ключи на простом плане помещения — из desk-src
+    # (целиком он в шапке «Вступления в СРО»), без каски и уровня.
+    ("desk-src.jpg", "article-vyhod", (842, 1205, 3970, 2972), False, (0.03, 0.95, 0.85)),
+    # «Уведомления о договорах»: руки, бумаги и ноутбук на столе
+    # переговоров — из quiz-2-src (целиком в шапке «Сопровождения
+    # проверок»), обрезан ниже подбородков: лиц в кадре нет.
+    ("quiz-2-src.jpg", "article-uvedomleniya", (1044, 2375, 5958, 3604), False, (0.03, 0.95, 0.85)),
 ]
 
 
 def main() -> None:
+    # Имена кадров аргументами — собрать только их: прочие файлы не
+    # пересобираются, и их отпечатки ?v= на сайте не меняются.
+    only = set(sys.argv[1:])
     for source, name, box, mirror, levels in PHOTOS:
+        if only and name not in only:
+            continue
         img = Image.open(SRC / source).convert("RGB")
         if box:
             img = img.crop(box)
