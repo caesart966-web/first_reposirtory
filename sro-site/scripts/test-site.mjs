@@ -595,11 +595,20 @@ for (const [width, height, need] of [[390, 780, 'all'], [360, 740, 'all'], [390,
   await tapAt(docs)
   await p.waitForTimeout(800)
   await p.locator('dialog[data-contact-sheet] a', { hasText: 'Адрес и карта' }).tap()
-  await p.waitForTimeout(1500)
-  const end = await p.evaluate(() => ({
+  // Плавная прокрутка на 18 экранов идёт около 2,5 с (02.11.2026: и на сборке
+  // до статей тоже) — ждать, пока страница остановится, а не 1,5 с подряд:
+  // с фиксированной паузой проверка падала посреди исправной прокрутки.
+  const where = () => p.evaluate(() => ({
     open: document.querySelector('dialog[data-contact-sheet]').open,
     top: Math.round(document.getElementById('contacts').getBoundingClientRect().top),
   }))
+  let end = await where()
+  for (let t = 0; t < 40; t++) {
+    await p.waitForTimeout(100)
+    const now = await where()
+    if (t >= 5 && now.top === end.top) break
+    end = now
+  }
   check('панель связи: «Адрес и карта» ведёт к разделу «Связаться»', !end.open && Math.abs(end.top) < 200, JSON.stringify(end))
   check('панель связи: без ошибок', errs.length === 0, errs[0] ?? '')
 
