@@ -30,12 +30,14 @@ export const REQUISITES = {
   address: 'Ростовская область, г. Ростов-на-Дону, ул. Социалистическая, зд. 74, офис 406/19',
 } as const
 
-// Офис на Яндекс Картах (20.10.2026): поиск по адресу без номера офиса —
-// «Ростов-на-Дону, ул. Социалистическая, 74». Только ссылка, без карты
-// на странице: виджет карты ставит cookie Яндекса до всякого согласия.
-const [, mapCity, mapStreet, mapBuilding] = REQUISITES.address.split(', ')
-export const MAP_URL =
-  'https://yandex.ru/maps/?text=' +
-  encodeURIComponent([mapCity.replace(/^г\.\s*/, ''), mapStreet, mapBuilding.replace(/^зд\.\s*/, '')].join(', '))
+// Офис на Яндекс Картах. До 03.11.2026 — поиск по адресу; теперь у компании
+// своя карточка в Яндекс Бизнесе (номер организации — из «Карты на сайт»),
+// и ссылка ведёт прямо на неё: отзывы, часы, маршрут. Только ссылка, без карты
+// на странице: виджет («Карта на сайт», iframe map-widget) ставит cookie
+// Яндекса до всякого согласия, а политики обработки данных на сайте нет
+// (решение заказчика 22.10.2026). Тот же номер читает build-jsonld.mjs
+// (hasMap и sameAs) — менять в одном месте.
+export const YANDEX_ORG_ID = '157474414443'
+export const MAP_URL = `https://yandex.ru/maps/?ol=biz&oid=${YANDEX_ORG_ID}`
 
 export const isPlaceholder = (value: string) => value.startsWith('[') && value.endsWith(']')

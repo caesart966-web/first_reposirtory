@@ -60,11 +60,11 @@ if (regions.length === 0) throw new Error('не нашёл список реги
 
 // «Ростовская область, г. Ростов-на-Дону, ул. Социалистическая, зд. 74, офис 406/19»
 const [addrRegion, addrCity, ...addrStreet] = address.split(', ')
-// Та же ссылка на Яндекс Карты, что в «Связаться» (MAP_URL в facts.ts):
-// город, улица и здание без номера офиса.
-const mapUrl =
-  'https://yandex.ru/maps/?text=' +
-  encodeURIComponent([addrCity.replace(/^г\.\s*/, ''), addrStreet[0], addrStreet[1].replace(/^зд\.\s*/, '')].join(', '))
+// Та же ссылка на Яндекс Карты, что в «Связаться» (MAP_URL в facts.ts): карточка
+// организации в Яндекс Бизнесе (с 03.11.2026; до того — поиск по адресу). Она же
+// в sameAs: так поисковик связывает сайт с карточкой (README, «Карточки на картах»).
+const orgId = one(facts, /YANDEX_ORG_ID = '(\d+)'/, 'YANDEX_ORG_ID')
+const mapUrl = `https://yandex.ru/maps/?ol=biz&oid=${orgId}`
 
 const organization = {
   '@type': 'ProfessionalService',
@@ -97,7 +97,7 @@ const organization = {
   },
   hasMap: mapUrl,
   areaServed: regions.map((name) => ({ '@type': 'AdministrativeArea', name })),
-  ...(messengers.length ? { sameAs: messengers } : {}),
+  sameAs: [mapUrl, ...messengers],
 }
 
 /** Все страницы сайта: каждая — отдельный index.html со своей точкой входа. */
