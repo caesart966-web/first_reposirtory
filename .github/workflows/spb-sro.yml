@@ -1,0 +1,45 @@
+name: 'СРО Петербурга: реестры НОПРИЗ и НОСТРОЙ'
+
+# Запуск — правкой файла tools/moscow-companies-db/spb/run.txt в этой ветке:
+# первая строка — команда для spb/ (без «python»). Итоги коммитятся обратно в spb/out/.
+on:
+  push:
+    branches: [claude/moscow-construction-companies-db-khnge4]
+    paths: ['tools/moscow-companies-db/spb/run.txt']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: spb-sro
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    defaults:
+      run:
+        working-directory: tools/moscow-companies-db
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install requests openpyxl
+      - name: Команда из spb/run.txt
+        run: |
+          cmd="$(head -n1 spb/run.txt)"
+          echo "Команда: $cmd"
+          python $cmd
+      - name: Итоги — обратно в ветку
+        if: always()
+        run: |
+          if [ -d spb/out ] && [ -n "$(git status --porcelain spb/out)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add spb/out
+            git commit -m "spb: итоги запуска $(date -u +%Y-%m-%dT%H:%MZ)"
+            for i in 1 2 3; do git pull --rebase -q origin "$GITHUB_REF_NAME" && git push -q origin "HEAD:$GITHUB_REF_NAME" && break; sleep 5; done
+          fi
