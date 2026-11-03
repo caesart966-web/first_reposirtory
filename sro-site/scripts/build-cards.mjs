@@ -67,8 +67,10 @@ const PAGES = [
   {
     file: 'logo-znak.png', w: 1024, h: 1024,
     // Карты показывают логотип кружком: знак занимает середину, края пустые.
+    // 03.11.2026 знак 560 → 740 px: в кружке 40 px в списке организаций весы
+    // в половину круга читались мелко; углы знака и при 740 внутри круга.
     body: `<div class="light" style="right:-260px;top:-300px;width:900px;height:900px"></div>
-      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">${scales(560)}</div>`,
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">${scales(740)}</div>`,
   },
   {
     file: 'logo-s-nazvaniem.png', w: 1024, h: 1024,
