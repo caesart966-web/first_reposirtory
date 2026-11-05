@@ -279,3 +279,27 @@ class TestОКВЭДиРегион(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestНедостоверность(unittest.TestCase):
+    """Отметки ФНС о недостоверных сведениях (заказчик, 05.11.2026: таких не брать)."""
+
+    def test_нет_отметок(self):
+        info = checko.extract({"ЮрАдрес": {"АдресРФ": "г. Москва", "Недост": False},
+                               "Руковод": [{"ФИО": "Петров П. П.", "Недост": False}]})
+        self.assertEqual(info[checko.НЕДОСТОВЕРНОСТЬ], "нет")
+
+    def test_адрес_руководитель_учредитель(self):
+        info = checko.extract({"ЮрАдрес": {"АдресРФ": "г. Москва", "Недост": True},
+                               "Руковод": [{"ФИО": "Петров П. П.", "Недост": False},
+                                           {"ФИО": "Сидоров С. С.", "Недост": True}],
+                               "Учред": {"ФЛ": [{"ФИО": "Иванов И. И.", "Недост": True}]}})
+        self.assertEqual(info[checko.НЕДОСТОВЕРНОСТЬ], "адрес, руководитель, учредитель")
+
+    def test_руководитель_словарём_и_строка_false(self):
+        info = checko.extract({"Руковод": {"ФИО": "Петров П. П.", "Недост": True},
+                               "ЮрАдрес": {"Недост": "false"}})
+        self.assertEqual(info[checko.НЕДОСТОВЕРНОСТЬ], "руководитель")
+
+    def test_колонка_в_списке(self):
+        self.assertIn(checko.НЕДОСТОВЕРНОСТЬ, checko.CONTACT_COLUMNS)
