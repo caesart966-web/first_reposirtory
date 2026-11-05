@@ -736,7 +736,37 @@ def block_faq(items, title="Частые вопросы", dark=False) -> str:
   </section>'''
 
 
-def block_steps(steps, title, text="", columns=3, dark=False) -> str:
+def blueprint_svg() -> str:
+    """Чертёж здания над шагами «Как мы работаем»: шесть групп линий — по одной
+    на шаг. CSS вычерчивает их по очереди при прокрутке (раздел 14к); где
+    браузер так не умеет или движение выключено, чертёж просто стоит готовым."""
+    P = 'pathLength="1"'
+    win = []
+    for fl, y in enumerate((178, 145, 112, 79)):
+        for k in range(6):
+            x = 436 + k * 56
+            win.append(f'<rect {P} x="{x}" y="{y}" width="26" height="17" rx="1"/>')
+    groups = [
+        # 1. Заявка — земля и оси
+        f'<path {P} d="M40 220 H1160"/><path class="aux" d="M420 26 V228 M600 26 V228 M780 26 V228"/>',
+        # 2. Аудит — фундамент и сваи
+        f'<path {P} d="M404 220 V206 H796 V220"/><path {P} d="M440 220 V234 M520 220 V234 M600 220 V234 M680 220 V234 M760 220 V234"/>',
+        # 3. Смета — каркас
+        f'<path {P} d="M420 206 V68 M600 206 V68 M780 206 V68"/><path {P} d="M420 173 H780 M420 140 H780 M420 107 H780 M420 68 H780"/>',
+        # 4. Работа — окна
+        "".join(win),
+        # 5. Согласование — кровля и кран
+        f'<path {P} d="M408 68 V58 H792 V68"/><path {P} d="M930 220 V34 M880 44 H1130 M930 34 L1010 44 M930 34 L880 44"/>'
+        f'<path {P} d="M1090 44 V126 M1082 126 H1098 M1090 126 V134"/><path {P} d="M942 220 V34 M930 60 L942 74 M930 100 L942 114 M930 140 L942 154 M930 180 L942 194"/>',
+        # 6. Передача — размерные линии и отметка «сдано»
+        f'<path {P} d="M366 220 V58 M358 220 H374 M358 58 H374"/><path {P} d="M420 238 H780 M420 232 V244 M780 232 V244"/>'
+        f'<circle {P} cx="1060" cy="178" r="26"/><path {P} d="M1047 178 L1056 188 L1074 168"/>',
+    ]
+    gs = "".join(f'<g class="bp__g" style="--i:{i}">{g}</g>' for i, g in enumerate(groups))
+    return (f'<svg class="bp" viewBox="0 0 1200 250" aria-hidden="true" focusable="false">{gs}</svg>')
+
+
+def block_steps(steps, title, text="", columns=3, dark=False, drawing=False) -> str:
     cards = []
     for st in steps:
         cards.append(f'''        <div class="step">
@@ -750,6 +780,7 @@ def block_steps(steps, title, text="", columns=3, dark=False) -> str:
     return f'''  <section class="{css}">
     <div class="container">
       <div class="section__head">{head}</div>
+{"      " + blueprint_svg() if drawing else ""}
       <div class="steps steps--{columns}">
 {chr(10).join(cards)}
       </div>
@@ -1666,7 +1697,7 @@ def page_home(r: Renderer) -> None:
     </div>
   </section>
 
-{block_steps(process["steps"], process["title"], columns=3)}
+{block_steps(process["steps"], process["title"], columns=3, drawing=True)}
 
 {block_faq(faq["items"])}
 

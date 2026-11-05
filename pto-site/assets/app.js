@@ -138,7 +138,7 @@ window.xptoGoal = function (name) {
       var started = 0;
       var step = function (now) {
         if (!started) started = now;
-        var k = Math.min(1, (now - started) / 900);
+        var k = Math.min(1, (now - started) / 1600);
         // Замедление к концу: цифра «доезжает», а не обрывается.
         var value = Math.round(target * (1 - Math.pow(1 - k, 3)));
         el.firstChild.nodeValue = String(value);

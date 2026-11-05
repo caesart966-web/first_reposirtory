@@ -3237,6 +3237,76 @@ html {
 .city-links { margin-top: var(--s-4); color: rgba(255, 255, 255, .78); }
 .city-links a { color: #fff; }
 
+/* ---------- 14к. Живые места главной (05.11.2026) --------------------------
+   1) Чертёж здания над «Как мы работаем» (blueprint_svg в build.py):
+      шесть групп линий вычерчиваются по очереди, пока раздел проезжает экран.
+      Только CSS (view-timeline); без поддержки или при «уменьшить движение»
+      чертёж стоит готовым. */
+.bp { display: block; width: 100%; height: auto; max-height: 15rem; margin: 0 0 var(--s-6); overflow: visible; }
+.bp path, .bp rect, .bp circle {
+  fill: none; stroke: var(--accent); stroke-width: 1.5; vector-effect: non-scaling-stroke;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+.bp .aux { stroke: var(--line-strong); stroke-dasharray: 4 6; }
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .bp { view-timeline: --bp block; }
+    .bp__g :is(path, rect, circle):not(.aux) {
+      stroke-dasharray: 1; stroke-dashoffset: 1;
+      animation: bp-draw linear both; animation-timeline: --bp;
+      animation-range: cover calc(4% + var(--i) * 7%) cover calc(18% + var(--i) * 7%);
+    }
+    .bp__g .aux {
+      animation: bp-fade linear both; animation-timeline: --bp;
+      animation-range: cover 0% cover 14%;
+    }
+  }
+}
+@keyframes bp-draw { to { stroke-dashoffset: 0; } }
+@keyframes bp-fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* 2) Цифры первого экрана: под цифрой прочерчивается акцентная черта,
+      пока идёт отсчёт (сам отсчёт — app.js, 0в). */
+@media (prefers-reduced-motion: no-preference) {
+  .hero__spec-item::before { animation: spec-bar 1400ms var(--ease) 320ms both; }
+  .hero__spec-item:nth-child(2)::before { animation-delay: 410ms; }
+  .hero__spec-item:nth-child(3)::before { animation-delay: 500ms; }
+}
+@keyframes spec-bar { from { height: 0; } }
+
+/* Фото объектов: при наведении по снимку проходит блик, как по стеклу. */
+.object__media::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.28) 50%, transparent 65%);
+  transform: translateX(-120%);
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .object:hover .object__media::after { transform: translateX(120%); transition: transform 900ms var(--ease); }
+}
+
+/* 3) Тёмные блоки: чертёжная сетка медленно плывёт по диагонали —
+      на одну клетку за 40 с, поэтому стык не виден. Двигается слой целиком
+      (transform), без перерисовки. Карточкам — светящаяся кромка за курсором
+      (координаты даёт app.js, 0г). */
+@media (prefers-reduced-motion: no-preference) {
+  .section--dark::before {
+    inset: calc(var(--grid-size) * -1) 0 0 calc(var(--grid-size) * -1);
+    animation: grid-drift 40s linear infinite;
+  }
+}
+@keyframes grid-drift { to { transform: translate(var(--grid-size), var(--grid-size)); } }
+@media (hover: hover) and (pointer: fine) {
+  .section--dark .card { position: relative; }
+  .section--dark .card::after {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
+    background: radial-gradient(180px circle at var(--mx) var(--my), rgba(127, 176, 255, 0.9), transparent 70%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    opacity: 0; transition: opacity 300ms var(--ease);
+  }
+  .section--dark .card:hover::after { opacity: 1; }
+}
+
 /* ---------- 15. Тёмная тема ---------------------------------------------
    Включается сама, если в системе телефона или компьютера выбрана тёмная
    тема. Переопределяются ТОЛЬКО цвета — вся вёрстка общая, поэтому правки
