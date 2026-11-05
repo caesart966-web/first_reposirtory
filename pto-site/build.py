@@ -2557,7 +2557,8 @@ ARTICLE_TOPICS = [
         "obshchiy-zhurnal-rabot", "specialnye-zhurnaly-rabot", "vhodnoy-kontrol-materialov",
         "izmeneniya-v-rabochey-dokumentatsii", "elektronnaya-ispolnitelnaya-dokumentatsiya",
         "reestr-ispolnitelnoy-dokumentatsii",
-        "vosstanovlenie-ispolnitelnoy-dokumentatsii", "kak-vybrat-podryadchika-ispolnitelnoy-dokumentatsii"]),
+        "vosstanovlenie-ispolnitelnoy-dokumentatsii", "kak-vybrat-podryadchika-ispolnitelnoy-dokumentatsii",
+        "inzhener-pto-v-shtat-ili-autsorsing"]),
     ("vidy-rabot", "Исполнительная документация по видам работ", [
         "ispolnitelnaya-dokumentatsiya-monolitnye-raboty", "ispolnitelnaya-dokumentatsiya-elektromontazh",
         "ispolnitelnaya-dokumentatsiya-otoplenie-ventilyatsiya", "ispolnitelnaya-dokumentatsiya-naruzhnye-seti",
