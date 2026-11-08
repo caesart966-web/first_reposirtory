@@ -49,6 +49,8 @@ services: ispolnitelnaya-dokumentatsiya, zos, geodeziya
 - [Исполнительная документация на монтаж металлоконструкций](/stati/ispolnitelnaya-dokumentatsiya-metallokonstruktsii/)
 - [Исполнительная документация на тепловые сети](/stati/ispolnitelnaya-dokumentatsiya-teplovye-seti/)
 - [Исполнительная документация на кровлю](/stati/ispolnitelnaya-dokumentatsiya-krovlya/)
+- [Исполнительная документация на внутренний водопровод и канализацию](/stati/ispolnitelnaya-dokumentatsiya-vodoprovod-kanalizatsiya/)
+- [Исполнительная документация на фасадные работы](/stati/ispolnitelnaya-dokumentatsiya-fasad/)
 - [Реестр исполнительной документации](/stati/reestr-ispolnitelnoy-dokumentatsii/)
 - [Электронная исполнительная документация](/stati/elektronnaya-ispolnitelnaya-dokumentatsiya/)
 - [Акт освидетельствования ответственных конструкций](/stati/akt-osvidetelstvovaniya-otvetstvennyh-konstruktsiy/)
