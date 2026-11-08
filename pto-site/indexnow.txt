@@ -1,10 +1,8 @@
 # Страницы, которые робот IndexNow отправит по умолчанию (tools/indexnow.py).
 # Обновляется при каждом новом архиве: новые и заметно изменённые страницы.
-# Архив v24 (05.11.2026): города Казань и Симферополь, статья о штатном ПТО и аутсорсе.
-/uslugi/ispolnitelnaya-dokumentatsiya/
-/uslugi/ispolnitelnaya-dokumentatsiya/kazan/
-/uslugi/ispolnitelnaya-dokumentatsiya/simferopol/
-/stati/
-/stati/inzhener-pto-v-shtat-ili-autsorsing/
-/pto-na-autsorse/
+# Пути — от корня сайта (/stati/…), не полные адреса.
+# Архив v26 (08.11.2026): страница «Стоимость» с расчётом, ссылки на неё с услуг и главной.
+/stoimost/
 /
+/uslugi/
+/pto-na-autsorse/
