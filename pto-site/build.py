@@ -2758,13 +2758,14 @@ ARTICLE_TOPICS = [
         "ispolnitelnaya-dokumentatsiya-otoplenie-ventilyatsiya", "ispolnitelnaya-dokumentatsiya-naruzhnye-seti",
         "ispolnitelnaya-dokumentatsiya-seti-svyazi", "ispolnitelnaya-dokumentatsiya-zemlyanye-raboty",
         "ispolnitelnaya-dokumentatsiya-metallokonstruktsii", "ispolnitelnaya-dokumentatsiya-teplovye-seti",
-        "ispolnitelnaya-dokumentatsiya-krovlya"]),
+        "ispolnitelnaya-dokumentatsiya-krovlya", "ispolnitelnaya-dokumentatsiya-vodoprovod-kanalizatsiya",
+        "ispolnitelnaya-dokumentatsiya-fasad"]),
     ("geodeziya", "Геодезия и обмеры", [
         "geodezicheskaya-razbivochnaya-osnova", "ispolnitelnaya-geodezicheskaya-semka"]),
     ("smety", "Сметы и объёмы", [
         "proverka-smety", "vedomost-obemov-rabot", "ks-2-ks-3-zashchita-obemov"]),
     ("proekt", "Проект, ППР и экспертиза", [
-        "ppr-proekt-proizvodstva-rabot", "tekhnologicheskaya-karta", "zamechaniya-ekspertizy",
+        "razdely-proektnoy-dokumentatsii", "ppr-proekt-proizvodstva-rabot", "tekhnologicheskaya-karta", "zamechaniya-ekspertizy",
         "proektirovanie-na-subpodryade"]),
     ("sdacha", "Сдача объекта и подключение", [
         "sdacha-obekta-tehnicheskomu-zakazchiku", "zos-zaklyuchenie-o-sootvetstvii",
