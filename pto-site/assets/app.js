@@ -17,6 +17,33 @@ window.xptoGoal = function (name) {
   }
 };
 
+/* Откуда пришёл посетитель — для письма с заявкой (раздел 4).
+   Запоминается первый заход за сессию браузера: метки рекламы (utm_*, yclid)
+   или поисковик, с которого перешли. Хранится только в sessionStorage этой
+   вкладки и уходит лишь вместе с заявкой, которую человек отправляет сам. */
+window.xptoSource = (function () {
+  var KEY = 'xpto-src';
+  try {
+    var saved = sessionStorage.getItem(KEY);
+    if (saved) return JSON.parse(saved);
+  } catch (e) { /* хранилище закрыто — посчитаем заново */ }
+  var q = {};
+  try {
+    var sp = new URLSearchParams(window.location.search);
+    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'yclid', 'gclid']
+      .forEach(function (k) { var v = sp.get(k); if (v) q[k] = v.slice(0, 200); });
+  } catch (e) { /* старый браузер */ }
+  if (!Object.keys(q).length && document.referrer) {
+    try {
+      var host = new URL(document.referrer).hostname;
+      if (host && host !== window.location.hostname) q.referrer = host;
+    } catch (e) { /* пустой или кривой адрес */ }
+  }
+  q.landing = window.location.pathname;
+  try { sessionStorage.setItem(KEY, JSON.stringify(q)); } catch (e) { /* не страшно */ }
+  return q;
+})();
+
 (function () {
   'use strict';
 
@@ -492,6 +519,19 @@ window.xptoGoal = function (name) {
     return ok;
   }
 
+  /* Ответы расчёта стоимости (/stoimost/): блоки с data-q — вопрос и выбранный
+     или вписанный ответ. В обычной форме таких блоков нет, список пустой. */
+  function quizAnswers(form) {
+    var out = [];
+    Array.prototype.forEach.call(form.querySelectorAll('[data-q]'), function (box) {
+      var picked = box.querySelector('input[type="radio"]:checked');
+      var typed = box.querySelector('input[type="text"]');
+      var v = picked ? picked.value : (typed ? typed.value.trim() : '');
+      if (v) out.push(box.getAttribute('data-q') + ': ' + v);
+    });
+    return out;
+  }
+
   function buildMessage(form) {
     var f = form.elements;
     var lines = [
@@ -501,6 +541,8 @@ window.xptoGoal = function (name) {
       'Телефон: ' + f.phone.value.trim()
     ];
     if (f.service && f.service.value) lines.push('Услуга / объект: ' + f.service.value);
+    var qa = quizAnswers(form);
+    if (qa.length) lines = lines.concat(['', 'Расчёт стоимости:'], qa);
     if (f.comment && f.comment.value.trim()) lines.push('Комментарий: ' + f.comment.value.trim());
     lines.push('');
     lines.push('Страница: ' + window.location.href);
@@ -569,6 +611,8 @@ window.xptoGoal = function (name) {
           service: f.service ? f.service.value : '',
           comment: f.comment ? f.comment.value.trim() : '',
           page: window.location.href,
+          source: window.xptoSource || {},
+          answers: quizAnswers(form),
           text: text
         })
       }).then(function (r) {
@@ -615,6 +659,7 @@ window.xptoGoal = function (name) {
           form.reset();
           showStatus(form, 'ok', form.getAttribute('data-success') || 'Заявка отправлена.');
           window.xptoGoal('zayavka');
+          if (form.getAttribute('data-goal')) window.xptoGoal(form.getAttribute('data-goal'));
         })
         .catch(function (err) {
           showStatus(form, 'err', form.getAttribute('data-error') || 'Не удалось отправить.');

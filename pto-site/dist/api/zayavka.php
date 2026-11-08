@@ -132,11 +132,48 @@ $comment = clean($data['comment'] ?? '', 2000);
 if ($service !== '') {
     $lines[] = 'Услуга / объект: ' . $service;
 }
+// Ответы расчёта стоимости (/stoimost/): список строк «вопрос: ответ».
+$answers = array();
+foreach (array_slice(is_array($data['answers'] ?? null) ? $data['answers'] : array(), 0, 10) as $a) {
+    $a = preg_replace('/\s+/u', ' ', clean($a, 200));
+    if ($a !== '') {
+        $answers[] = '  ' . $a;
+    }
+}
+if ($answers) {
+    $lines[] = '';
+    $lines[] = 'Расчёт стоимости:';
+    $lines = array_merge($lines, $answers);
+}
 if ($comment !== '') {
     $lines[] = 'Комментарий: ' . $comment;
 }
 $lines[] = '';
 $lines[] = 'Страница: ' . clean($data['page'] ?? '', 300);
+
+// Источник: метки рекламы или поисковик (собирает app.js, xptoSource).
+// По нему видно, какая кампания и какой запрос привели заявку.
+$src = is_array($data['source'] ?? null) ? $data['source'] : array();
+$srcNames = array(
+    'utm_source' => 'Источник', 'utm_medium' => 'Канал', 'utm_campaign' => 'Кампания',
+    'utm_content' => 'Объявление', 'utm_term' => 'Запрос', 'referrer' => 'Пришёл с сайта',
+    'landing' => 'Первая страница', 'yclid' => 'yclid', 'gclid' => 'gclid',
+);
+$srcLines = array();
+foreach ($srcNames as $k => $label) {
+    $v = clean(is_string($src[$k] ?? null) ? $src[$k] : '', 200);
+    if ($v !== '') {
+        $srcLines[] = $label . ': ' . preg_replace('/\s+/u', ' ', $v);
+    }
+}
+$fromAds = isset($src['yclid']) || (isset($src['utm_medium']) && in_array(strtolower((string) $src['utm_medium']), array('cpc', 'ppc', 'paid'), true));
+if ($srcLines) {
+    $lines[] = '';
+    $lines[] = $fromAds ? 'Откуда: реклама' : 'Откуда:';
+    foreach ($srcLines as $l) {
+        $lines[] = '  ' . $l;
+    }
+}
 
 // ---------- Отправка письма ----------------------------------------------
 // Отправитель — ящик на домене сайта: хостинг не пропускает письма
@@ -146,7 +183,7 @@ if (!preg_match('/^[a-z0-9.-]+$/', $domain)) {
     $domain = 'localhost';
 }
 $from = trim((string) ($config['from'] ?? ('noreply@' . $domain)));
-$subject = 'Заявка с сайта: ' . $name;
+$subject = ($fromAds ? '[Директ] ' : '') . 'Заявка с сайта: ' . $name;
 $body = implode("\n", $lines);
 
 // Проверка без отправки: в zayavki-config.php 'dry_run' => true, и письмо
