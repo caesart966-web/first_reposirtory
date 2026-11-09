@@ -111,5 +111,65 @@ class TestСтатистика(unittest.TestCase):
         self.assertEqual(ws.max_row, 5)        # 4 члена без повтора
 
 
+
+def _без_stop(r, поле="member_right_end_date", ещё=None):
+    """Как в настоящей выгрузке НОСТРОЯ: прямого «stop» нет, дата — среди всех дат."""
+    r = dict(r, stop=None)
+    r["dates"] = {"registry_registration_date": r["start"], "last_updated": "2026-01-01", **(ещё or {})}
+    if r["former"] and ЗАПИСИ_СТОП.get(r["id"]):
+        r["dates"][поле] = ЗАПИСИ_СТОП[r["id"]]
+    return r
+
+
+ЗАПИСИ_СТОП = {r["id"]: r["stop"] for r in ЗАПИСИ if r["former"]}
+
+
+class TestДатаИсключения(unittest.TestCase):
+    _прогнать = TestСтатистика._прогнать
+
+    def test_поле_подбирается_по_данным(self):
+        записи = [_без_stop(r) for r in ЗАПИСИ]
+        поле, прибл, покрытие = стат.поле_выхода(записи)
+        self.assertEqual((поле, прибл), ("member_right_end_date", False))
+        код, out, _ = self._прогнать(записи)
+        ws = load_workbook(out)["Сводная"]
+        шапка = [c.value for c in ws[1]]
+        спб = [dict(zip(шапка, r)) for r in ws.iter_rows(min_row=2, values_only=True)
+               if r[0] == "СРО-С-003-22042009"][0]
+        self.assertEqual((спб["Исключено 2025"], спб["Без даты искл."]), (1, 1))
+        как = [r for r in load_workbook(out)["Как считали"].iter_rows(values_only=True)]
+        self.assertTrue(any("member_right_end_date" in str(r[1]) for r in как if r[0] and "Исключено" in r[0]))
+
+    def test_запасной_путь_last_updated_приблизительно(self):
+        записи = [dict(r, stop=None, dates={"registry_registration_date": r["start"],
+                                            **({"last_updated": "2025-06-01"} if r["former"] else {})})
+                  for r in ЗАПИСИ]
+        # дата изменения записи — только приблизительно, и так и помечается
+        self.assertEqual(стат.поле_выхода(записи)[:2], ("last_updated", True))
+
+    def test_дат_нет_вовсе(self):
+        записи = [dict(r, stop=None, dates={"registry_registration_date": r["start"]}) for r in ЗАПИСИ]
+        код, out, err = self._прогнать(записи)
+        self.assertEqual(код, 0)
+        self.assertIn("дат исключения в выгрузке нет", err)
+        ws = load_workbook(out)["Динамика по России"]
+        self.assertTrue(any("Дат исключения" in str(c.value) for row in ws.iter_rows() for c in row))
+
+
+class TestДинамика(unittest.TestCase):
+    _прогнать = TestСтатистика._прогнать
+
+    def test_лист_с_графиками(self):
+        _код, out, _ = self._прогнать()
+        wb = load_workbook(out)
+        self.assertEqual(wb.sheetnames[:2], ["Сводная", "Динамика по России"])
+        ws = wb["Динамика по России"]
+        self.assertEqual([c.value for c in ws[1]][:2], ["Вступления по месяцам", "2023"])
+        февраль = [c.value for c in ws[3]]
+        self.assertEqual(февраль[0], "Февраль")
+        self.assertEqual(февраль[3], 2)          # 2025: 20.02 в СПб и 03.02 в Москве
+        self.assertEqual(len(ws._charts), 2)
+
+
 if __name__ == "__main__":
     unittest.main()

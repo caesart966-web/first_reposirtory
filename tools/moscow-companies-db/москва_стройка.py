@@ -300,6 +300,34 @@ def бывший(record: dict) -> bool:
     return bool(stop and stop <= date.today())
 
 
+def даты_записи(record: dict) -> dict[str, str]:
+    """Все поля записи (и вложенные), которые читаются как дата: {путь: ГГГГ-ММ-ДД}.
+
+    Нужна для статистики по СРО: в ответе НОСТРОЯ дата исключения лежит не там,
+    где её искали (_ПОЛЯ_ВЫХОДА) — у всех 276 тысяч исключённых в выгрузке
+    10.11.2026 она вышла пустой. Сохраняем все даты, а нужное поле подбирает
+    статистика_сро.py по данным: какое есть у исключённых и нет у действующих.
+    Ветку «sro» пропускаем — там даты самой СРО, а не члена.
+    """
+    даты: dict[str, str] = {}
+
+    def обход(obj: Any, путь: str) -> None:
+        for ключ, значение in obj.items():
+            if not путь and ключ == "sro":
+                continue
+            полный = f"{путь}.{ключ}" if путь else ключ
+            if isinstance(значение, str):
+                d = разобрать_дату(значение)
+                if d:
+                    даты[полный] = d.isoformat()
+            elif isinstance(значение, dict):
+                обход(значение, полный)
+
+    if isinstance(record, dict):
+        обход(record, "")
+    return даты
+
+
 def сжать(record: dict) -> dict:
     """Из записи реестра — только то, что нужно таблице."""
     sro = record.get("sro") if isinstance(record.get("sro"), dict) else {}
@@ -322,6 +350,7 @@ def сжать(record: dict) -> dict:
         "sro_id": str(sro.get("id") or ""),
         "region": _строка(регион, "title", "name") if isinstance(регион, dict) else
                   (регион.strip() if isinstance(регион, str) else ""),
+        "dates": даты_записи(record),
     }
 
 
