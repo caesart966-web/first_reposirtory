@@ -236,10 +236,12 @@ def записать(out: Path, строки: list[dict], годы: list[int], �
             w.append([s["номер"], s["имя"], s["регион"]] + [s[ключ].get(м, 0) for м in список_месяцев])
         итог(w, 2, 4, 3 + len(список_месяцев), len(строки))
         w.freeze_panes = "D2"
-        if строки and список_месяцев:
+        # заливка от нуля: без чисел (все нули) лист не заливается целиком синим
+        if строки and список_месяцев and any(s[ключ].get(м) for s in строки for м in список_месяцев):
             w.conditional_formatting.add(
                 f"D2:{L(3 + len(список_месяцев))}{len(строки) + 1}",
-                ColorScaleRule(start_type="min", start_color="FFFFFF", end_type="max", end_color="5598E7"))
+                ColorScaleRule(start_type="num", start_value=0, start_color="FFFFFF",
+                               end_type="max", end_color="5598E7"))
 
     # по регионам
     w = wb.create_sheet("По регионам")
@@ -303,7 +305,7 @@ def динамика(wb, строки, годы, список_месяцев, д
     for c in w[14]:
         c.font = Font(bold=True)
     w.conditional_formatting.add(f"B2:{L(len(годы) + 1)}13",
-                                 ColorScaleRule(start_type="min", start_color="FFFFFF",
+                                 ColorScaleRule(start_type="num", start_value=0, start_color="FFFFFF",
                                                 end_type="max", end_color="5598E7"))
     w.cell(row=15, column=1, value=f"текущий месяц ({последний}) ещё не закончился").font = Font(
         italic=True, color="595959")
