@@ -305,6 +305,7 @@ def сжать(record: dict) -> dict:
     sro = record.get("sro") if isinstance(record.get("sro"), dict) else {}
     start = _первая_дата(record, _ПОЛЯ_ВСТУПЛЕНИЯ)
     stop = _первая_дата(record, _ПОЛЯ_ВЫХОДА)
+    регион = record.get("region_number")
     return {
         "id": record.get("id"),
         "inn": норм_инн(record.get("inn")),
@@ -314,6 +315,13 @@ def сжать(record: dict) -> dict:
         "sro_num": _строка(sro, "registration_number"),
         "start": start.isoformat() if start else None,
         "stop": stop.isoformat() if stop else None,
+        # для статистики по всем СРО (статистика_сро.py): название члена,
+        # короткое имя и номер СРО в реестре, регион члена
+        "name": _строка(record, "short_description", "full_description", "title", "name"),
+        "sro_short": _строка(sro, "short_description", "title", "full_description", "name"),
+        "sro_id": str(sro.get("id") or ""),
+        "region": _строка(регион, "title", "name") if isinstance(регион, dict) else
+                  (регион.strip() if isinstance(регион, str) else ""),
     }
 
 
