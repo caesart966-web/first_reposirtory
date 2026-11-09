@@ -744,23 +744,8 @@ window.xptoSource = (function () {
     });
   }
 
-  // Виджет рейтинга Яндекс Бизнеса — тоже запрос к Яндексу, поэтому
-  // появляется вместе с Метрикой, только после «Принять».
-  function startWidgets() {
-    [].forEach.call(document.querySelectorAll('[data-yrating]'), function (el) {
-      if (el.querySelector('iframe')) return;
-      var f = document.createElement('iframe');
-      f.src = el.getAttribute('data-yrating');
-      f.width = 150; f.height = 50;
-      f.title = 'Рейтинг на Яндексе';
-      f.loading = 'lazy';
-      f.setAttribute('frameborder', '0');
-      el.appendChild(f);
-    });
-  }
-
   var choice = saved();
-  if (choice === 'all') { startMetrika(); startWidgets(); return; }
+  if (choice === 'all') { startMetrika(); return; }
   if (choice === 'none') return;
 
   bar.hidden = false;
@@ -770,6 +755,6 @@ window.xptoSource = (function () {
     var value = btn.getAttribute('data-cookie');
     remember(value);
     bar.hidden = true;
-    if (value === 'all') { startMetrika(); startWidgets(); }
+    if (value === 'all') { startMetrika(); }
   });
 })();

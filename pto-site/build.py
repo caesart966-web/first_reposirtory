@@ -1075,16 +1075,12 @@ def sro_block(site: Site, dark: bool = True) -> str:
 
 
 def yandex_rating(site: Site) -> str:
-    """Рейтинг из Яндекс Бизнеса в подвале. Сам виджет — чужой iframe, то есть
-    запрос к Яндексу, поэтому вставляет его скрипт полосы cookie и только после
-    «Принять» — как Метрику. До согласия и без JavaScript на его месте ссылка
-    на карточку: она полезна и сама по себе."""
+    """Ссылка на отзывы в Яндекс Картах в подвале. Виджет рейтинга (чужой iframe)
+    снят 09.11.2026: Яндекс отдавал в рамку пустую страницу с полосами прокрутки."""
     c = site.contacts
     if not c.get("yandex_url"):
         return ""
-    widget = c.get("yandex_rating_widget", "")
-    attr = f' data-yrating="{esc(widget)}"' if widget else ""
-    return (f'<div class="yrating"{attr}><a href="{esc(c["yandex_url"])}" rel="nofollow noopener" '
+    return (f'<div class="yrating"><a href="{esc(c["yandex_url"])}" rel="nofollow noopener" '
             f'target="_blank">{brand_icon(site, "yandex-maps", 18)}Отзывы о нас на Яндекс Картах</a></div>')
 
 
