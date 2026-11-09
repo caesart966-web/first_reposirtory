@@ -31,9 +31,9 @@ PROBE = 45
 
 #: Sayfa altı ve üstü, bir cümlenin ortasına girip eşleşmeyi bozar; çıkarılır.
 NOISE = (
-    r"Go on to the next page\.\s*\d+\s*Kit \d+ / \d+",
-    r"TEST BİTTİ\.\s*\d+\s*Kit \d+ / \d+",
-    r"YDS DENEME — KIT \d+\s*ENGLISH",
+    r"Go on to the next page\.\s*\d+\s*(?:Ara )?Kit \d+ / \d+",
+    r"TEST BİTTİ\.\s*\d+\s*(?:Ara )?Kit \d+ / \d+",
+    r"YDS DENEME — (?:ARA KİT|KIT) \d+\s*ENGLISH",
 )
 
 #: PDF'te satır sonu tirenin ardından gelebilir ("eight-hundred- thousand-year").
@@ -59,7 +59,10 @@ def expected_fragments(kit: dict) -> list[tuple[str, str]]:
     """(nerede, basılması beklenen metin) çiftleri."""
     items: list[tuple[str, str]] = []
     for p in kit["passages"]:
-        items.append((f"parça {p['first']}-{p['last']}", p["text"]))
+        # Parçanın yalnızca başı aranırsa sonu kırpılmış bir parça gözden kaçar;
+        # bu yüzden her cümlesi ayrı aranır.
+        for sentence in bk._sentences(p["text"]):
+            items.append((f"parça {p['first']}-{p['last']}", sentence))
     for q in kit["questions"]:
         where = f"soru {q['no']}"
         if q.get("stem"):
@@ -95,8 +98,7 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
 
     kit = json.loads(args.kit.read_text(encoding="utf-8"))
-    docx = args.docx or (Path(__file__).parent / "dist" /
-                         f"YDS-DENEME-Kit-{kit['kit']:02d}.docx")
+    docx = args.docx or (Path(__file__).parent / "dist" / bk.kit_label(kit)["file"])
     if not docx.exists():
         print(f"{docx} yok; önce build_kit.py çalıştırın.", file=sys.stderr)
         return 1

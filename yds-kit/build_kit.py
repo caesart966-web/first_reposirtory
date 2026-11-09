@@ -42,6 +42,15 @@ LEVEL_BANDS = [
     (8, 14, "C1 Entry"),
 ]
 
+#: Ara kitler: 1-14 dizisinin dışında, 8'den sonraki kitlere geçişi kolaylaştıran
+#: köprü kitleri. Biçim ve uzunluk 8-14 ile aynıdır; cümle yapısı B2'de tutulur,
+#: sözcük yükü C1'dir. Öğrenci kit 8'den sonra 19-26 yanlışa çıkınca istendi:
+#: uzun ve iç içe cümle ile C1 sözcük birlikte geldiğinde okuma geçiştirmeye
+#: dönüyordu. Ara kitler bu iki yükü ayırır.
+ARA_SERIES = "ara"
+ARA_TOTAL = 2
+ARA_LEVEL = "B2 Grammar · C1 Vocabulary"
+
 LETTERS = ["A", "B", "C", "D", "E"]
 ROMAN = ["I", "II", "III", "IV", "V"]
 
@@ -132,6 +141,25 @@ DIALOGUE_BLANK = "----"
 MIN_SUBJECTS = 30
 MAX_PER_SUBJECT = 2
 
+#: Ara kitlerde "B2 dilbilgisi" sözünün ölçülebilir hâli. Devrik yapı, 8-14'teki
+#: C1 yükünün en belirgin parçasıydı (Not until..., Had the council..., So
+#: entrenched had...); ara kitlerde hiçbir İngilizce cümle böyle başlayamaz.
+ARA_INVERSION = re.compile(
+    r"^(Not until|Not only|Not once|Seldom|Rarely|Never (?:have|has|had|did|before|again)"
+    r"|Only (?:when|after|by|if|in|once|then|later|with|through)|Hardly|Scarcely"
+    r"|No sooner|Little (?:did|do|does|had)|Nowhere|At no (?:time|point)|Under no"
+    r"|On no account|In no way|So \w+ (?:is|was|were|did|had|has|does|do|are)\b"
+    r"|Such (?:is|was|were) |Had (?:the|he|she|it|they|we|I|you|there)\b"
+    r"|Were (?:it|he|she|they|we|I|you|there)\b|Should (?:you|he|she|it|they|we|I)\b)",
+)
+#: Parça cümleleri: tek cümle en çok 30, ortalama en çok 20 sözcük; noktalı
+#: virgül yok. Kitler 8-14'te tek cümlede 40 sözcüğü aşan zincirler vardı.
+ARA_MAX_SENTENCE = 30
+ARA_MEAN_SENTENCE = 20
+#: Her parçada bu listeden en az bu kadar ayrı C1 sözcük geçmeli.
+ARA_MIN_C1_PER_PASSAGE = 8
+C1_WORDS_FILE = Path(__file__).parent / "c1_words.txt"
+
 # Görsel dil: ÖSYM kitapçığı — lacivert metin, ince çerçeveler, beyaz kâğıt.
 NAVY = RGBColor(0x1B, 0x33, 0x5F)
 INK = RGBColor(0x14, 0x1C, 0x2B)
@@ -139,6 +167,28 @@ RULE = "8FA3BF"
 RULE_SOFT = "C3CEDD"
 BAR_FILL = "1B335F"
 FONT = "Arial"
+
+
+def kit_label(kit: dict) -> dict:
+    """Kitin kapakta, üst/alt bilgide, başlıklarda ve dosya adında görünen kimliği."""
+    no = kit["kit"]
+    if kit.get("series") == ARA_SERIES:
+        return {
+            "short": f"Ara Kit {no}",
+            "no": f"Ara {no} / {ARA_TOTAL}",
+            "of": f"Ara Kit {no} / {ARA_TOTAL}",
+            "header": f"YDS DENEME — ARA KİT {no:02d}",
+            "level": ARA_LEVEL,
+            "file": f"YDS-DENEME-Ara-Kit-{no:02d}.docx",
+        }
+    return {
+        "short": f"Kit {no}",
+        "no": f"{no} / {TOTAL_KITS}",
+        "of": f"Kit {no} / {TOTAL_KITS}",
+        "header": f"YDS DENEME — KIT {no:02d}",
+        "level": level_for_kit(no),
+        "file": f"YDS-DENEME-Kit-{no:02d}.docx",
+    }
 
 
 def level_for_kit(kit: int) -> str:
@@ -161,8 +211,19 @@ def validate(kit: dict) -> list[str]:
     warnings: list[str] = []
 
     no = kit.get("kit")
-    if not isinstance(no, int) or not 1 <= no <= TOTAL_KITS:
-        errors.append(f"kit alanı 1-{TOTAL_KITS} arasında bir tam sayı olmalı: {no!r}")
+    series = kit.get("series")
+    top = ARA_TOTAL if series == ARA_SERIES else TOTAL_KITS
+    if series not in (None, ARA_SERIES):
+        errors.append(f"series alanı yalnızca '{ARA_SERIES}' olabilir: {series!r}")
+    if not isinstance(no, int) or not 1 <= no <= top:
+        errors.append(f"kit alanı 1-{top} arasında bir tam sayı olmalı: {no!r}")
+
+    # Dizgi notu: bu soru numarasıyla başlayan bölüm yeni sayfada açılır.
+    starts = sorted(sec["first"] for sec in SECTIONS if sec["first"] != FIRST_Q)
+    breaks = kit.get("break_before", [])
+    if not isinstance(breaks, list) or any(n not in starts for n in breaks):
+        errors.append(f"break_before yalnızca bölüm başı soru numaralarını içerebilir "
+                      f"{starts}: {breaks!r}")
 
     questions = kit.get("questions", [])
     numbers = [q.get("no") for q in questions]
@@ -223,6 +284,10 @@ def validate(kit: dict) -> list[str]:
         errors += _validate_spec2(kit, by_no)
     if kit.get("spec", 1) >= 3:
         errors += _validate_spec3(kit)
+    if series == ARA_SERIES:
+        if kit.get("spec", 1) < 3:
+            errors.append("Ara kitler 8-14 biçiminde olmalı: spec en az 3.")
+        errors += _validate_ara(kit, by_no)
 
     covered = set()
     for p in kit.get("passages", []):
@@ -375,6 +440,106 @@ def _validate_spec3(kit: dict) -> list[str]:
             f"Aynı konu en çok {MAX_PER_SUBJECT} soruda olabilir; fazla olanlar: "
             f"{', '.join(sorted(crowded))}."
         )
+    return errors
+
+
+def load_c1_words() -> list[str]:
+    lines = C1_WORDS_FILE.read_text(encoding="utf-8").splitlines()
+    return [w.strip().lower() for w in lines if w.strip() and not w.startswith("#")]
+
+
+def _c1_forms(word: str) -> set[str]:
+    """Listedeki sözcüğün metinde karşılaşılabilecek çekimli biçimleri."""
+    f = {word}
+    for suf in ("s", "es", "d", "ed", "ing", "ly", "ally", "er", "ers", "ment", "ments",
+                "ion", "ions", "ity", "ities", "ness"):
+        f.add(word + suf)
+    if word.endswith("e"):
+        f |= {word[:-1] + x for x in ("ing", "ion", "ions", "y", "ive")}
+    if word.endswith("y"):
+        f |= {word[:-1] + x for x in ("ies", "ied", "ily", "iness")}
+    if word[-1] not in "aeiouwy":
+        f |= {word + word[-1] + x for x in ("ed", "ing")}
+    return f
+
+
+def c1_hits(text: str, words: list[str]) -> set[str]:
+    """Metinde geçen C1 listesi sözcükleri (taban biçimleriyle)."""
+    found = set(re.findall(r"[a-z]+", text.lower()))
+    return {w for w in words if _c1_forms(w) & found}
+
+
+def _sentences(text: str) -> list[str]:
+    return [s for s in re.split(r"(?<=[.!?])\s+", (text or "").strip()) if s]
+
+
+def _validate_ara(kit: dict, by_no: dict) -> list[str]:
+    """Ara kit sözü: dilbilgisi B2, sözcük C1, okuma becerisine yönelik akış.
+
+    Öğrencinin kit 8'deki yanlışları paragraf soruları ile paragraf tamamlama /
+    anlam bozan cümleden geldi; ara kitler bu bölümlerde akışı izletmeye
+    zorlar. Kurallar ölçülebilir olduğu için sert kontroldür.
+    """
+    errors: list[str] = []
+    c1 = load_c1_words()
+
+    english: list[tuple[str, str]] = []
+    for p in kit.get("passages", []):
+        english.append((f"Parça {p['first']}-{p['last']}", p.get("text", "")))
+    for q in kit.get("questions", []):
+        n = q.get("no")
+        if q.get("direction") != "tr_en":
+            english.append((f"Soru {n} kökü", q.get("stem", "")))
+        if q.get("direction") != "en_tr":
+            for k, v in (q.get("options") or {}).items():
+                english.append((f"Soru {n} {k}", v))
+        for s in q.get("sentences") or []:
+            english.append((f"Soru {n} cümle", s))
+        for who, line in q.get("dialogue") or []:
+            english.append((f"Soru {n} diyalog", line))
+    for where, text in english:
+        for sent in _sentences(text.replace("----", "").strip()):
+            # Soru cümlesinde yardımcı fiilin öne gelmesi sıradan B2 dilbilgisidir.
+            if ARA_INVERSION.match(sent) and not sent.rstrip().endswith("?"):
+                errors.append(f"{where}: devrik yapı B2 değil: «{sent[:60]}...»")
+
+    for p in kit.get("passages", []):
+        where = f"Parça {p['first']}-{p['last']}"
+        text = p.get("text", "")
+        if ";" in text:
+            errors.append(f"{where}: noktalı virgül var; ara kitte cümleler ayrı yazılır.")
+        lens = [_words(s) for s in _sentences(text)]
+        if lens and max(lens) > ARA_MAX_SENTENCE:
+            errors.append(f"{where}: {max(lens)} sözcüklük cümle var "
+                          f"(sınır {ARA_MAX_SENTENCE}).")
+        if lens and sum(lens) / len(lens) > ARA_MEAN_SENTENCE:
+            errors.append(f"{where}: cümle ortalaması {sum(lens) / len(lens):.1f} sözcük "
+                          f"(sınır {ARA_MEAN_SENTENCE}).")
+        hits = c1_hits(text, c1)
+        if len(hits) < ARA_MIN_C1_PER_PASSAGE:
+            errors.append(f"{where}: {len(hits)} C1 sözcük (en az "
+                          f"{ARA_MIN_C1_PER_PASSAGE}); sözcük yükü C1 olmalı.")
+
+    glossed = " ".join(en.lower() for en, _tr in kit.get("vocabulary", []))
+    used = c1_hits(_kit_text(kit), c1)
+    missing = sorted(w for w in used if not (_c1_forms(w) & set(re.findall(r"[a-z]+", glossed))))
+    if missing:
+        errors.append("Kelime Röntgeni kitte geçen her C1 sözcüğü açıklamalı; eksik: "
+                      + ", ".join(missing))
+
+    spots = []
+    for n in range(72, 76):
+        q = by_no.get(n) or {}
+        sents = _sentences(q.get("stem", ""))
+        idx = [i for i, s in enumerate(sents) if s.strip().startswith("----")]
+        if len(idx) != 1:
+            errors.append(f"Soru {n}: boşluk ayrı bir cümle olarak tam bir kez geçmeli.")
+            continue
+        spots.append("first" if idx[0] == 0 else "last" if idx[0] == len(sents) - 1 else "mid")
+    if len(spots) == 4:
+        if "first" not in spots or "last" not in spots:
+            errors.append(f"Paragraf tamamlamada boşluk en az bir kez ilk, en az bir kez "
+                          f"son cümle olmalı; şu an: {spots}.")
     return errors
 
 
@@ -639,7 +804,7 @@ def _bare_cell(cell, text_align=WD_ALIGN_PARAGRAPH.LEFT):
 
 def attach_header_footer(section, kit):
     """Sekme durakları yerine çerçevesiz tablo: hizalama şablondan bağımsız olur."""
-    kit_no = kit["kit"]
+    label = kit_label(kit)
     section.header.is_linked_to_previous = False
     section.footer.is_linked_to_previous = False
 
@@ -649,7 +814,7 @@ def attach_header_footer(section, kit):
                  margins=(0, 0, 40, 0))
     for cell, width in zip(table.rows[0].cells, (Cm(12), Cm(6))):
         cell.width = width
-    run_in(_bare_cell(table.cell(0, 0)), f"YDS DENEME — KIT {kit_no:02d}",
+    run_in(_bare_cell(table.cell(0, 0)), label["header"],
            size=9, bold=True, color=NAVY)
     run_in(_bare_cell(table.cell(0, 1), RIGHT), "ENGLISH", size=11, bold=True, color=NAVY)
     _drop_first_paragraph(header)
@@ -664,7 +829,7 @@ def attach_header_footer(section, kit):
     run_in(_bare_cell(table.cell(0, 0)), "Go on to the next page.",
            size=8, italic=True, color=NAVY)
     add_field(_bare_cell(table.cell(0, 1), CENTER), " PAGE ", size=8, bold=True, color=NAVY)
-    run_in(_bare_cell(table.cell(0, 2), RIGHT), f"Kit {kit_no} / {TOTAL_KITS}",
+    run_in(_bare_cell(table.cell(0, 2), RIGHT), label["of"],
            size=8, color=NAVY)
     _drop_first_paragraph(footer)
     para(footer, "", size=1, after=0)
@@ -675,18 +840,18 @@ def _drop_first_paragraph(container):
     first._p.getparent().remove(first._p)
 
 
-def section_bar(doc, title: str):
+def section_bar(doc, title: str, keep_next: bool = False):
     cell = box(doc, pct=100, border=BAR_FILL, sz=6, fill=BAR_FILL, margins=(60, 150, 60, 150))
-    para(cell, title, size=10.5, bold=True, color=WHITE, after=0, line=1.0)
-    spacer(doc, 4)
+    para(cell, title, size=10.5, bold=True, color=WHITE, after=0, line=1.0, keep_next=keep_next)
+    spacer(doc, 4, keep_next=keep_next)
 
 
-def instruction_box(doc, first: int, last: int, text: str, pct=62):
+def instruction_box(doc, first: int, last: int, text: str, pct=62, keep_next: bool = False):
     cell = box(doc, pct=pct, border=NAVY_HEX, sz=6, margins=(60, 110, 60, 110))
-    p = para(cell, "", size=9, after=0, line=1.05)
+    p = para(cell, "", size=9, after=0, line=1.05, keep_next=keep_next)
     run_in(p, f"{first}-{last}: ", size=9, bold=True, color=NAVY)
     run_in(p, text, size=9, bold=True, color=NAVY)
-    spacer(doc, 5)
+    spacer(doc, 5, keep_next=keep_next)
 
 
 NAVY_HEX = "1B335F"
@@ -781,8 +946,7 @@ COVER_RULES = [
 
 
 def render_cover(doc, kit):
-    kit_no = kit["kit"]
-    level = level_for_kit(kit_no)
+    label = kit_label(kit)
     b2, c1 = level_split(kit)
     count = len(kit["questions"])
     minutes = round(count * 180 / 80 / 5) * 5
@@ -791,14 +955,18 @@ def render_cover(doc, kit):
     cell = box(doc, pct=100, border=NAVY_HEX, sz=12, margins=(180, 200, 180, 200))
     para(cell, f"YDS DENEME — {kit['topic']} · {kit['date']}", size=20, bold=True,
          color=NAVY, align=CENTER, after=8, line=1.0)
-    para(cell, f"Kit {kit_no} / {TOTAL_KITS} — Level: {level}", size=13, bold=True,
+    para(cell, f"{label['of']} — Level: {label['level']}", size=13, bold=True,
          color=INK, align=CENTER, after=0, line=1.0)
 
     spacer(doc, 14)
-    para(doc, f"Kit No: {kit_no} / {TOTAL_KITS}", size=11.5, bold=True, color=INK,
+    para(doc, f"Kit No: {label['no']}", size=11.5, bold=True, color=INK,
          align=CENTER, after=4)
-    para(doc, f"Seviye: B2 ({b2} soru) / C1 ({c1} soru)", size=11.5, bold=True,
-         color=INK, align=CENTER, after=4)
+    if kit.get("series") == ARA_SERIES:
+        seviye = (f"Seviye: Dilbilgisi B2 · Kelime C1 — {c1} sorunun cevabı "
+                  f"C1 bir sözcüğe dayanır")
+    else:
+        seviye = f"Seviye: B2 ({b2} soru) / C1 ({c1} soru)"
+    para(doc, seviye, size=11.5, bold=True, color=INK, align=CENTER, after=4)
     para(doc, f"TEST OF ENGLISH — {count} soru · {minutes} dakika", size=10.5,
          color=NAVY, align=CENTER, after=0)
 
@@ -830,7 +998,7 @@ def render_cover(doc, kit):
 def render_explanations(doc, layout, kit):
     layout.need(1)  # gövdenin son iki sütununu dengeler
     layout.need(1, new_page=True)
-    para(doc, f"SORU AÇIKLAMALARI — Kit {kit['kit']}", size=15, bold=True, color=NAVY, after=3)
+    para(doc, f"SORU AÇIKLAMALARI — {kit_label(kit)['short']}", size=15, bold=True, color=NAVY, after=3)
     para(doc, "Her soru için: doğru cevabın gerekçesi ve en çok işaretlenen yanlış "
               "seçenekteki tuzak.", size=9, italic=True, color=NAVY, after=8)
     layout.need(2)
@@ -857,7 +1025,7 @@ def _cell_text(cell, text, *, size=9, bold=False, color=INK, align=CENTER, fill=
 
 def render_answer_key(doc, layout, kit):
     layout.need(1, new_page=True)
-    para(doc, f"CEVAP ANAHTARI — Kit {kit['kit']}", size=15, bold=True, color=NAVY, after=3)
+    para(doc, f"CEVAP ANAHTARI — {kit_label(kit)['short']}", size=15, bold=True, color=NAVY, after=3)
     para(doc, "“Benim cevabım” sütunu boş bırakılmıştır; testi çözerken kendi "
               "cevaplarınızı buraya yazınız.", size=9, italic=True, color=NAVY, after=8)
 
@@ -896,7 +1064,7 @@ def render_answer_key(doc, layout, kit):
 
 def render_vocabulary(doc, layout, kit):
     layout.need(1, new_page=True)
-    para(doc, f"KELİME RÖNTGENİ — Kit {kit['kit']}", size=15, bold=True, color=NAVY, after=3)
+    para(doc, f"KELİME RÖNTGENİ — {kit_label(kit)['short']}", size=15, bold=True, color=NAVY, after=3)
     para(doc, f"Testte geçen C1+ sözcük, kalıp ve eş dizimler; alfabetik sıra ile "
               f"({len(kit['vocabulary'])} madde).", size=9, italic=True, color=NAVY, after=8)
 
@@ -941,7 +1109,7 @@ def close_footer(section, kit):
         cell.width = width
     run_in(_bare_cell(table.cell(0, 0)), "TEST BİTTİ.", size=8, bold=True, color=NAVY)
     add_field(_bare_cell(table.cell(0, 1), CENTER), " PAGE ", size=8, bold=True, color=NAVY)
-    run_in(_bare_cell(table.cell(0, 2), RIGHT), f"Kit {kit['kit']} / {TOTAL_KITS}",
+    run_in(_bare_cell(table.cell(0, 2), RIGHT), kit_label(kit)["of"],
            size=8, color=NAVY)
     _drop_first_paragraph(section.footer)
     para(section.footer, "", size=1, after=0)
@@ -951,13 +1119,27 @@ def render_body(doc, layout, kit):
     by_no = {q["no"]: q for q in kit["questions"]}
     passages = {(p["first"], p["last"]): p["text"] for p in kit["passages"]}
 
+    # Ara kitlerin amacı okuma alışkanlığı: her parça yeni bir sayfada başlar ve
+    # dört sorusuyla o sayfaya sığar, öğrenci okurken ya da cevaplarken sayfa
+    # çevirmez. Ana kitler (1-14) öğrenciye verildiği için onların sayfa düzeni
+    # değiştirilmez.
+    by_page = kit.get("series") == ARA_SERIES
+    # Dizgi notu (kit JSON'unda "break_before"): sayfa dibine yakın açılan iki
+    # sütunlu bir bölümde yönerge sol sütunda kalıyor, ilk soru sağ sütunda
+    # sayfadan taşıyordu. Böyle bir bölüm elle yeni sayfaya alınır.
+    breaks = set(kit.get("break_before", []))
+
     for sec in SECTIONS:
-        layout.need(1)
-        section_bar(doc, sec["tr"])
+        # Tam genişlikteki diyalog bölümünde başlık ve yönerge ilk diyaloğa
+        # bağlanır; yoksa sayfa dibinde tek başlarına kalabiliyorlar.
+        stick = by_page and sec["group"] == "dialogue"
+        layout.need(1, new_page=(by_page and sec["group"] == "paragraph")
+                    or sec["first"] in breaks)
+        section_bar(doc, sec["tr"], keep_next=stick)
 
         if sec["group"] == "paragraph":
-            for (first, last), text in sorted(passages.items()):
-                layout.need(1)
+            for i, ((first, last), text) in enumerate(sorted(passages.items())):
+                layout.need(1, new_page=by_page and i > 0)
                 instruction_box(doc, first, last, sec["instr"])
                 passage_block(doc, text)
                 layout.need(2)
@@ -970,7 +1152,7 @@ def render_body(doc, layout, kit):
         columns = 1 if sec["group"] == "dialogue" else 2
         layout.need(columns)
         instruction_box(doc, sec["first"], sec["last"], sec["instr"],
-                        pct=100 if columns == 1 else 96)
+                        pct=100 if columns == 1 else 96, keep_next=stick)
         for n in range(sec["first"], sec["last"] + 1):
             render_question(doc, by_no[n])
 
@@ -1019,11 +1201,11 @@ def main(argv=None) -> int:
             print(f"  - {error}", file=sys.stderr)
         return 1
 
-    level = level_for_kit(kit["kit"])
+    label = kit_label(kit)
     b2, c1 = level_split(kit)
-    out = build(kit, args.out / f"YDS-DENEME-Kit-{kit['kit']:02d}.docx")
+    out = build(kit, args.out / label["file"])
 
-    print(f"Kit {kit['kit']} / {TOTAL_KITS} — Level: {level}")
+    print(f"{label['of']} — Level: {label['level']}")
     print(f"  sorular : {len(kit['questions'])} ({FIRST_Q}-{LAST_Q})")
     print(f"  seviye  : B2 ({b2} soru) / C1 ({c1} soru)")
     print(f"  kelime  : {len(kit['vocabulary'])} madde")
