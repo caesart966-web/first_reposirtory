@@ -239,32 +239,6 @@ def poster_img(site: Site, rel: str, css: str) -> str:
             f' alt="Исполнительная документация на объекте" fetchpriority="high" decoding="async"></picture>')
 
 
-def block_media(site: Site, cfg: dict) -> str:
-    """Широкая видео-полоса. Ведёт себя как первый экран: постер виден сразу,
-    видео подключается скриптом после загрузки страницы. Если файлов видео нет,
-    остаётся постер — блок не ломается."""
-    if not cfg:
-        return ""
-    poster_rel = resolve_media(cfg.get("poster"), [])
-    poster = site.url(poster_rel)
-    sources = "|".join(site.url(cfg[k]) for k in ("webm", "mp4") if asset_exists(cfg.get(k)))
-    mobile = "/assets/media/about-mobile.mp4"
-    mob_attr = f' data-src-mobile="{site.url(mobile)}"' if asset_exists(mobile) else ""
-    video = (f'''<video class="media-band__video js-video" autoplay muted loop playsinline
-             preload="none" data-src="{sources}"{mob_attr}
-             aria-hidden="true" tabindex="-1"></video>''' if sources else "")
-    caption = (f'<figcaption class="media-band__caption">{esc(cfg["caption"])}</figcaption>'
-               if cfg.get("caption") else "")
-    return f'''  <section class="section section--tight">
-    <div class="container">
-      <figure class="media-band">{poster_img(site, poster_rel, "media-band__img")}
-        {video}
-        {caption}
-      </figure>
-    </div>
-  </section>'''
-
-
 def map_point(site: Site, lon: float, lat: float):
     """Широта и долгота — в координаты карты. Проекция та же, по которой
     построен контур (Альберс, параллели 52° и 64°, меридиан 100° в. д.),
@@ -2094,7 +2068,6 @@ def page_about(r: Renderer) -> None:
     </div>
   </section>
 
-{block_media(site, cfg.get("video"))}
 
   <section class="section">
     <div class="container">
