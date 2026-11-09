@@ -1,13 +1,6 @@
 # Страницы, которые робот IndexNow отправит по умолчанию (tools/indexnow.py).
 # Обновляется при каждом новом архиве: новые и заметно изменённые страницы.
 # Пути — от корня сайта (/stati/…), не полные адреса.
-# Архив v27 (08.11.2026): статьи о внутреннем ВК, фасадах и разделах проектной документации.
-/stati/ispolnitelnaya-dokumentatsiya-vodoprovod-kanalizatsiya/
-/stati/ispolnitelnaya-dokumentatsiya-fasad/
-/stati/razdely-proektnoy-dokumentatsii/
-/stati/
-/slovar/
-/stati/sostav-ispolnitelnoy-dokumentatsii/
-/uslugi/proektirovanie/
-/uslugi/ispolnitelnaya-dokumentatsiya/
-/stoimost/
+# Архивы v28–v29 (09.11.2026): без видео на «О компании», без виджета рейтинга, политика без абзаца о виджете.
+/o-kompanii/
+/politika/
