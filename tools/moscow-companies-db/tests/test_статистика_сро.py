@@ -140,12 +140,12 @@ class TestДатаИсключения(unittest.TestCase):
         как = [r for r in load_workbook(out)["Как считали"].iter_rows(values_only=True)]
         self.assertTrue(any("member_right_end_date" in str(r[1]) for r in как if r[0] and "Исключено" in r[0]))
 
-    def test_запасной_путь_last_updated_приблизительно(self):
+    def test_last_updated_не_замена(self):
+        # по Петербургу дата изменения записи совпала с исключением лишь у 12–19 %
         записи = [dict(r, stop=None, dates={"registry_registration_date": r["start"],
                                             **({"last_updated": "2025-06-01"} if r["former"] else {})})
                   for r in ЗАПИСИ]
-        # дата изменения записи — только приблизительно, и так и помечается
-        self.assertEqual(стат.поле_выхода(записи)[:2], ("last_updated", True))
+        self.assertIsNone(стат.поле_выхода(записи)[0])
 
     def test_дат_нет_вовсе(self):
         записи = [dict(r, stop=None, dates={"registry_registration_date": r["start"]}) for r in ЗАПИСИ]
