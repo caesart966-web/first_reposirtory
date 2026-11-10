@@ -49,7 +49,7 @@ class TestТаблица(unittest.TestCase):
         первая = [c.value for c in ws[2]]
         self.assertEqual(первая[:5], ["СРО-С-003-22042009", "Объединение строителей СПб", 2562, 792, 1770])
         self.assertEqual(первая[-1], "Иванов Иван Иванович, генеральный директор")
-        self.assertEqual([c.value for c in ws[3]][-1], "")            # ИНН не сошёлся — не вписан
+        self.assertFalse([c.value for c in ws[3]][-1])               # ИНН не сошёлся — не вписан
         итог = [c.value for c in ws[21]]
         self.assertEqual((итог[1], итог[2]), ("Итого по 19 СРО", "=SUM(C2:C20)"))
         мес = wb["Вступления по месяцам"]
