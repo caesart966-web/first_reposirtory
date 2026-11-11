@@ -288,7 +288,12 @@ def cmd_итог(a) -> int:
             ws.column_dimensions[get_column_letter(i)].width = ШИРИНА.get(к, 16)
         ws.freeze_panes = "B2"
         ws.auto_filter.ref = ws.dimensions
-    wb.save(a.out)
+    try:
+        wb.save(a.out)
+    except PermissionError:
+        print(f"Не могу записать {a.out}: файл открыт в Excel. Закройте его и запустите команду снова.",
+              file=sys.stderr)
+        return 1
     print(" · ".join(f"{л}: {len(по_листам[л])}" for л in ЛИСТЫ), f"→ {a.out}")
     return 0
 

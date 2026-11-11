@@ -148,6 +148,17 @@ class TestИтог(unittest.TestCase):
         self.assertEqual(первая["Телефон"], "+7 (812) 123-45-67; +7 (921) 765-43-21")
         self.assertEqual(первая["Почта"], "info@example.ru")
 
+    def test_итог_открыт_в_excel(self):
+        from unittest import mock
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            checko.write_rows(tmp / "к.xlsx", list(ответ()), [ответ()])
+            with mock.patch("openpyxl.Workbook.save", side_effect=PermissionError(13, "denied")), \
+                    redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()) as err:
+                код = спб.main(["итог", "--file", str(tmp / "к.xlsx"), "--out", str(tmp / "и.xlsx")])
+        self.assertEqual(код, 1)
+        self.assertIn("открыт в Excel", err.getvalue())
+
 
 if __name__ == "__main__":
     unittest.main()
