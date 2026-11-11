@@ -171,6 +171,24 @@ export const IMAGES = {
     height: 400,
     position: '55% 50%',
   },
+  // 11.11.2026 — исходники, которые на сайте больше нигде не стоят
+  // (CREDITS.md, «Шапки статей 11.11.2026»).
+  articleSubpodryad: {
+    src: './img/article-subpodryad.webp',
+    srcAvif: './img/article-subpodryad.avif',
+    alt: 'Геодезический приёмник на штативе, за ним башенный кран над стройкой',
+    width: 1200,
+    height: 675,
+    position: '30% 40%',
+  },
+  articleTehzakazchik: {
+    src: './img/article-tehzakazchik.webp',
+    srcAvif: './img/article-tehzakazchik.avif',
+    alt: 'План этажа на листе, ручка и свёрнутые чертежи на столе',
+    width: 960,
+    height: 1080,
+    position: '60% 45%',
+  },
   articleRegion: {
     src: './img/article-region.webp',
     srcAvif: './img/article-region.avif',
