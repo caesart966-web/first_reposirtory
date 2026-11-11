@@ -239,32 +239,6 @@ def poster_img(site: Site, rel: str, css: str) -> str:
             f' alt="Исполнительная документация на объекте" fetchpriority="high" decoding="async"></picture>')
 
 
-def block_media(site: Site, cfg: dict) -> str:
-    """Широкая видео-полоса. Ведёт себя как первый экран: постер виден сразу,
-    видео подключается скриптом после загрузки страницы. Если файлов видео нет,
-    остаётся постер — блок не ломается."""
-    if not cfg:
-        return ""
-    poster_rel = resolve_media(cfg.get("poster"), [])
-    poster = site.url(poster_rel)
-    sources = "|".join(site.url(cfg[k]) for k in ("webm", "mp4") if asset_exists(cfg.get(k)))
-    mobile = "/assets/media/about-mobile.mp4"
-    mob_attr = f' data-src-mobile="{site.url(mobile)}"' if asset_exists(mobile) else ""
-    video = (f'''<video class="media-band__video js-video" autoplay muted loop playsinline
-             preload="none" data-src="{sources}"{mob_attr}
-             aria-hidden="true" tabindex="-1"></video>''' if sources else "")
-    caption = (f'<figcaption class="media-band__caption">{esc(cfg["caption"])}</figcaption>'
-               if cfg.get("caption") else "")
-    return f'''  <section class="section section--tight">
-    <div class="container">
-      <figure class="media-band">{poster_img(site, poster_rel, "media-band__img")}
-        {video}
-        {caption}
-      </figure>
-    </div>
-  </section>'''
-
-
 def map_point(site: Site, lon: float, lat: float):
     """Широта и долгота — в координаты карты. Проекция та же, по которой
     построен контур (Альберс, параллели 52° и 64°, меридиан 100° в. д.),
@@ -736,7 +710,37 @@ def block_faq(items, title="Частые вопросы", dark=False) -> str:
   </section>'''
 
 
-def block_steps(steps, title, text="", columns=3, dark=False) -> str:
+def blueprint_svg() -> str:
+    """Чертёж здания над шагами «Как мы работаем»: шесть групп линий — по одной
+    на шаг. CSS вычерчивает их по очереди при прокрутке (раздел 14к); где
+    браузер так не умеет или движение выключено, чертёж просто стоит готовым."""
+    P = 'pathLength="1"'
+    win = []
+    for fl, y in enumerate((178, 145, 112, 79)):
+        for k in range(6):
+            x = 436 + k * 56
+            win.append(f'<rect {P} x="{x}" y="{y}" width="26" height="17" rx="1"/>')
+    groups = [
+        # 1. Заявка — земля и оси
+        f'<path {P} d="M40 220 H1160"/><path class="aux" d="M420 26 V228 M600 26 V228 M780 26 V228"/>',
+        # 2. Аудит — фундамент и сваи
+        f'<path {P} d="M404 220 V206 H796 V220"/><path {P} d="M440 220 V234 M520 220 V234 M600 220 V234 M680 220 V234 M760 220 V234"/>',
+        # 3. Смета — каркас
+        f'<path {P} d="M420 206 V68 M600 206 V68 M780 206 V68"/><path {P} d="M420 173 H780 M420 140 H780 M420 107 H780 M420 68 H780"/>',
+        # 4. Работа — окна
+        "".join(win),
+        # 5. Согласование — кровля и кран
+        f'<path {P} d="M408 68 V58 H792 V68"/><path {P} d="M930 220 V34 M880 44 H1130 M930 34 L1010 44 M930 34 L880 44"/>'
+        f'<path {P} d="M1090 44 V126 M1082 126 H1098 M1090 126 V134"/><path {P} d="M942 220 V34 M930 60 L942 74 M930 100 L942 114 M930 140 L942 154 M930 180 L942 194"/>',
+        # 6. Передача — размерные линии и отметка «сдано»
+        f'<path {P} d="M366 220 V58 M358 220 H374 M358 58 H374"/><path {P} d="M420 238 H780 M420 232 V244 M780 232 V244"/>'
+        f'<circle {P} cx="1060" cy="178" r="26"/><path {P} d="M1047 178 L1056 188 L1074 168"/>',
+    ]
+    gs = "".join(f'<g class="bp__g" style="--i:{i}">{g}</g>' for i, g in enumerate(groups))
+    return (f'<svg class="bp" viewBox="0 0 1200 250" aria-hidden="true" focusable="false">{gs}</svg>')
+
+
+def block_steps(steps, title, text="", columns=3, dark=False, drawing=False) -> str:
     cards = []
     for st in steps:
         cards.append(f'''        <div class="step">
@@ -750,6 +754,7 @@ def block_steps(steps, title, text="", columns=3, dark=False) -> str:
     return f'''  <section class="{css}">
     <div class="container">
       <div class="section__head">{head}</div>
+{"      " + blueprint_svg() if drawing else ""}
       <div class="steps steps--{columns}">
 {chr(10).join(cards)}
       </div>
@@ -1070,16 +1075,12 @@ def sro_block(site: Site, dark: bool = True) -> str:
 
 
 def yandex_rating(site: Site) -> str:
-    """Рейтинг из Яндекс Бизнеса в подвале. Сам виджет — чужой iframe, то есть
-    запрос к Яндексу, поэтому вставляет его скрипт полосы cookie и только после
-    «Принять» — как Метрику. До согласия и без JavaScript на его месте ссылка
-    на карточку: она полезна и сама по себе."""
+    """Ссылка на отзывы в Яндекс Картах в подвале. Виджет рейтинга (чужой iframe)
+    снят 09.11.2026: Яндекс отдавал в рамку пустую страницу с полосами прокрутки."""
     c = site.contacts
     if not c.get("yandex_url"):
         return ""
-    widget = c.get("yandex_rating_widget", "")
-    attr = f' data-yrating="{esc(widget)}"' if widget else ""
-    return (f'<div class="yrating"{attr}><a href="{esc(c["yandex_url"])}" rel="nofollow noopener" '
+    return (f'<div class="yrating"><a href="{esc(c["yandex_url"])}" rel="nofollow noopener" '
             f'target="_blank">{brand_icon(site, "yandex-maps", 18)}Отзывы о нас на Яндекс Картах</a></div>')
 
 
@@ -1637,6 +1638,7 @@ def page_home(r: Renderer) -> None:
           <div class="btn-row" style="margin-top:1.5rem">
             <a class="btn btn--primary btn--block" href="#zayavka">Оценить объём и сроки</a>
           </div>
+          <p class="price-link"><a href="{site.url("/stoimost/")}">Сколько стоит и как считаем{ARROW_SVG}</a></p>
         </aside>
       </div>
     </div>
@@ -1666,7 +1668,7 @@ def page_home(r: Renderer) -> None:
     </div>
   </section>
 
-{block_steps(process["steps"], process["title"], columns=3)}
+{block_steps(process["steps"], process["title"], columns=3, drawing=True)}
 
 {block_faq(faq["items"])}
 
@@ -1820,6 +1822,7 @@ def page_service(r: Renderer, service: dict, city: dict = None) -> None:
               <a class="btn btn--primary btn--block" href="#zayavka">Оставить заявку</a>
               <a class="btn btn--ghost btn--block" href="tel:{esc(site.contacts["phone_href"])}">{esc(site.contacts["phone_display"])}</a>
             </div>
+            <p class="price-link"><a href="{site.url("/stoimost/")}">Сколько стоит и как считаем{ARROW_SVG}</a></p>
             <div class="spec">
 {chr(10).join(f"""              <div class="spec__row">
                 <span class="spec__key">{esc(s["key"])}</span>
@@ -2061,7 +2064,6 @@ def page_about(r: Renderer) -> None:
     </div>
   </section>
 
-{block_media(site, cfg.get("video"))}
 
   <section class="section">
     <div class="container">
@@ -2190,6 +2192,167 @@ def page_pto(r: Renderer) -> None:
         jsonld(schema_breadcrumbs(site, [("Главная", "/"), ("ПТО на аутсорсе", path)])),
     ])
     r.render(path=path, title=cfg["title"], description=cfg["description"],
+             body=body, head_extra=head, priority="0.9")
+
+
+# ---------- стоимость -------------------------------------------------------
+# /stoimost/ — под запросы «стоимость / цена / сколько стоит исполнительная
+# документация». Цен на сайте нет нарочно: их называют после аудита исходных
+# данных. Страница объясняет, от чего зависит цена, и собирает ответы для
+# оценки (block_quiz). Факты — только из site.json (faq, offer, service_spec).
+
+PRICE_QUIZ = [
+    ("stage", "Где сейчас объект", ["Идёт стройка", "Сдача в ближайший месяц",
+        "Работы закончены, документации нет или её вернули", "Стадия проектирования"]),
+    ("kind", "Тип объекта", ["Жилой", "Общественный", "Промышленный",
+        "Сети, дороги, линейный объект", "Другое"]),
+    ("term", "Когда нужен результат", ["Срочно, до двух недель", "В течение 1–2 месяцев", "Без спешки"]),
+]
+
+
+def block_quiz(site: Site) -> str:
+    """Форма расчёта: те же поля, что у обычной заявки (data-form="lead"),
+    плюс вопросы об объекте. Ответы из блоков data-q уходят в письмо (app.js)."""
+    form_cfg = site.raw["form"]
+    consent_url = site.legal.get("policy", {}).get("slug", "/politika/")
+    options = ['<option value="">— несколько услуг / пока не знаю —</option>'] + [
+        f'<option value="{esc(sv["nav_title"])}">{esc(sv["nav_title"])}</option>' for sv in site.services]
+    groups = []
+    for key, label, choices in PRICE_QUIZ:
+        items = "".join(
+            f'<label class="choice"><input type="radio" name="q_{key}" value="{esc(c)}">'
+            f'<span>{esc(c)}</span></label>' for c in choices)
+        groups.append(
+            f'          <fieldset class="field quiz__q" data-q="{esc(label)}">\n'
+            f'            <legend>{esc(label)}</legend>\n'
+            f'            <div class="choices">{items}</div>\n'
+            f'          </fieldset>')
+    group_html = "\n".join(groups)
+    opts = "".join(options)
+    return f'''  <section class="section form-block" id="zayavka">
+    <div class="container">
+      <div class="form-grid">
+        <div class="section__head" style="max-width:none;margin-bottom:0">
+          <span class="eyebrow">Расчёт</span>
+          <h2>Рассчитать стоимость</h2>
+          <p class="lead">Ответьте на вопросы об объекте и оставьте телефон. Оценку объёма и стоимости пришлём в течение рабочего дня, а если нужно посмотреть документы — скажем, какие.</p>
+          <ul class="quiz__perks">
+            <li>Оценка бесплатная и ни к чему не обязывает</li>
+            <li>Цена фиксируется в договоре по этапам</li>
+            <li>Правки по замечаниям — без доплат</li>
+          </ul>
+        </div>
+        <form class="form" data-form="lead" data-goal="raschet" novalidate
+              data-success="Спасибо! Пришлём оценку в течение рабочего дня."
+              data-error="{esc(form_cfg["error"])}"
+              data-mail="{esc(site.contacts["email"])}"
+              data-tel="{esc(site.contacts["phone_href"])}"
+              data-tel-display="{esc(site.contacts["phone_display"])}"
+              data-tg="{esc(site.contacts["telegram_url"])}">
+          <div class="field">
+            <label for="q-service">Что нужно сделать</label>
+            <select id="q-service" name="service">{opts}</select>
+          </div>
+{group_html}
+          <div class="field quiz__q" data-q="Площадь или протяжённость">
+            <label for="q-size">Площадь или протяжённость, если знаете</label>
+            <input id="q-size" name="q_size" type="text" placeholder="Например, 12 000 м² или 3 км сетей">
+          </div>
+          <div class="field">
+            <label for="q-name">Как к вам обращаться <span class="req">*</span></label>
+            <input id="q-name" name="name" type="text" autocomplete="name" required>
+            <span class="field__error"></span>
+          </div>
+          <div class="field">
+            <label for="q-phone">Телефон <span class="req">*</span></label>
+            <input id="q-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required placeholder="+7 ___ ___-__-__">
+            <span class="field__error"></span>
+          </div>
+          <div class="field">
+            <label for="q-comment">Что ещё важно знать</label>
+            <textarea id="q-comment" name="comment" rows="3" placeholder="Разделы, заказчик, дата сдачи"></textarea>
+          </div>
+          <div class="hp" aria-hidden="true">
+            <label for="q-company">Не заполняйте это поле</label>
+            <input id="q-company" name="company" type="text" tabindex="-1" autocomplete="off">
+          </div>
+          <div class="field field--consent">
+            <label class="consent">
+              <input id="q-consent" name="consent" type="checkbox" required>
+              <span class="consent__box" aria-hidden="true"></span>
+              <span class="consent__text">{esc(form_cfg["consent"])}
+                <a href="{site.url(consent_url)}#soglasie" target="_blank" rel="noopener">{esc(form_cfg["consent_link"])}</a>.</span>
+            </label>
+            <span class="field__error"></span>
+          </div>
+          <div class="form__status" role="status"></div>
+          <button class="btn btn--primary btn--block" type="submit">Получить расчёт</button>
+          <p class="form__note">{esc(form_cfg["note"])}</p>
+        </form>
+      </div>
+    </div>
+  </section>'''
+
+
+def page_price(r: Renderer) -> None:
+    site = r.site
+    path = "/stoimost/"
+    faq = [f for f in site.raw["faq"]["items"]
+           if f["q"].startswith(("Как считается", "Сдача через", "Мы в другом", "Документацию уже"))]
+    factors = [
+        ("Состав работ", "Сколько разделов и какие документы нужны: акты, журналы, схемы, объёмы, сдача объекта."),
+        ("Объект", "Площадь, протяжённость и назначение: жилой дом, школа, производство, сети."),
+        ("Срочность", "Под срочную сдачу подключаем нескольких инженеров параллельно — это влияет на цену."),
+        ("Требования заказчика", "Свои формы и регламенты, формат сдачи: бумага, PDF с ЭЦП, загрузка в ИСУП."),
+        ("Что уже собрано", "Ведём с начала стройки, доделываем комплект или восстанавливаем документацию по уже выполненным работам."),
+        ("Геодезия и обмеры", "Нужен ли выезд на объект для исполнительной съёмки и обмеров — его согласуем отдельно."),
+    ]
+    cards = "\n".join(
+        f'        <div class="card">\n          <h3>{esc(t)}</h3>\n          <p>{esc(x)}</p>\n        </div>'
+        for t, x in factors)
+    steps = [
+        {"title": "Вы присылаете, что есть", "text": "Договор, проект, смету, журналы, сертификаты — или просто описываете объект и задачу."},
+        {"title": "Оценка за день", "text": "Смотрим исходные данные и говорим, что есть, чего не хватает и что придётся восстанавливать."},
+        {"title": "Фиксированная цена", "text": "Стоимость и график сдачи фиксируем в договоре по этапам, а не «вилкой»."},
+        {"title": "Без доплат за правки", "text": "Замечания технического заказчика и надзора отрабатываем до снятия в рамках задачи."},
+    ]
+    body = f'''  <section class="page-head">
+    <div class="container">
+      <ul class="breadcrumbs">
+        <li><a href="{site.url('/')}">Главная</a></li>
+        <li>Стоимость</li>
+      </ul>
+      <h1>Стоимость исполнительной документации и ПТО на аутсорсе</h1>
+      <p class="lead">Цену называем после того, как увидим объект и исходные данные, — так она не растёт по ходу работы. Оценку объёма и стоимости даём за один рабочий день, бесплатно.</p>
+      <div class="btn-row" style="margin-top:1.5rem">
+        <a class="btn btn--primary" href="#zayavka">Рассчитать стоимость</a>
+        <a class="btn btn--ghost btn--on-dark" href="tel:{esc(site.contacts["phone_href"])}">{esc(site.contacts["phone_display"])}</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section__head"><h2>От чего зависит цена</h2>
+        <p>Одной цены «за комплект» нет: она складывается из объёма работ по конкретному объекту.</p></div>
+      <div class="grid grid--3">
+{cards}
+      </div>
+    </div>
+  </section>
+
+{block_steps(steps, "Как мы считаем", columns=2)}
+
+{block_quiz(site)}
+
+{block_faq(faq)}'''
+    head = "\n".join([
+        jsonld(schema_organization(site)),
+        jsonld(schema_faq(faq)),
+        jsonld(schema_breadcrumbs(site, [("Главная", "/"), ("Стоимость", path)])),
+    ])
+    r.render(path=path, title="Стоимость исполнительной документации — расчёт за 1 день",
+             description="Сколько стоит исполнительная документация и ПТО на аутсорсе: от чего зависит цена и как считаем. Оценка за 1 день, бесплатно.",
              body=body, head_extra=head, priority="0.9")
 
 
@@ -2557,19 +2720,21 @@ ARTICLE_TOPICS = [
         "obshchiy-zhurnal-rabot", "specialnye-zhurnaly-rabot", "vhodnoy-kontrol-materialov",
         "izmeneniya-v-rabochey-dokumentatsii", "elektronnaya-ispolnitelnaya-dokumentatsiya",
         "reestr-ispolnitelnoy-dokumentatsii",
-        "vosstanovlenie-ispolnitelnoy-dokumentatsii", "kak-vybrat-podryadchika-ispolnitelnoy-dokumentatsii"]),
+        "vosstanovlenie-ispolnitelnoy-dokumentatsii", "kak-vybrat-podryadchika-ispolnitelnoy-dokumentatsii",
+        "inzhener-pto-v-shtat-ili-autsorsing"]),
     ("vidy-rabot", "Исполнительная документация по видам работ", [
         "ispolnitelnaya-dokumentatsiya-monolitnye-raboty", "ispolnitelnaya-dokumentatsiya-elektromontazh",
         "ispolnitelnaya-dokumentatsiya-otoplenie-ventilyatsiya", "ispolnitelnaya-dokumentatsiya-naruzhnye-seti",
         "ispolnitelnaya-dokumentatsiya-seti-svyazi", "ispolnitelnaya-dokumentatsiya-zemlyanye-raboty",
         "ispolnitelnaya-dokumentatsiya-metallokonstruktsii", "ispolnitelnaya-dokumentatsiya-teplovye-seti",
-        "ispolnitelnaya-dokumentatsiya-krovlya"]),
+        "ispolnitelnaya-dokumentatsiya-krovlya", "ispolnitelnaya-dokumentatsiya-vodoprovod-kanalizatsiya",
+        "ispolnitelnaya-dokumentatsiya-fasad"]),
     ("geodeziya", "Геодезия и обмеры", [
         "geodezicheskaya-razbivochnaya-osnova", "ispolnitelnaya-geodezicheskaya-semka"]),
     ("smety", "Сметы и объёмы", [
         "proverka-smety", "vedomost-obemov-rabot", "ks-2-ks-3-zashchita-obemov"]),
     ("proekt", "Проект, ППР и экспертиза", [
-        "ppr-proekt-proizvodstva-rabot", "tekhnologicheskaya-karta", "zamechaniya-ekspertizy",
+        "razdely-proektnoy-dokumentatsii", "ppr-proekt-proizvodstva-rabot", "tekhnologicheskaya-karta", "zamechaniya-ekspertizy",
         "proektirovanie-na-subpodryade"]),
     ("sdacha", "Сдача объекта и подключение", [
         "sdacha-obekta-tehnicheskomu-zakazchiku", "zos-zaklyuchenie-o-sootvetstvii",
@@ -2964,7 +3129,11 @@ def write_robots(site: Site, noindex: bool = False) -> None:
                 # Служебная страница с кадрами для сторис: она для нас,
                 # а не для посетителей, и в поиске ей делать нечего.
                 "Disallow: /assets/promo/\n"
-                "Disallow: /api/\n\n"
+                "Disallow: /api/\n"
+                # Метки рекламы и выдачи: без Clean-param Яндекс заводит
+                # каждый адрес с ?utm_…/yclid дублем страницы (читает только Яндекс).
+                "Clean-param: utm_source&utm_medium&utm_campaign&utm_content&utm_term\n"
+                "Clean-param: yclid&ysclid&gclid&_openstat&from\n\n"
                 f"Sitemap: {site.abs_url('/sitemap.xml')}\n")
     (DIST_DIR / "robots.txt").write_text(text, encoding="utf-8")
     # Файл ключа IndexNow: по нему Яндекс и Bing проверяют, что отправка
@@ -3228,6 +3397,7 @@ def build(regen_media: bool = False, base_path: str = None,
     page_policy(r)
     page_articles_index(r)
     page_glossary(r)
+    page_price(r)
     for article in site.articles:
         page_article(r, article)
     page_404(r)
