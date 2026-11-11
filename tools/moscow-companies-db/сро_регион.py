@@ -227,6 +227,22 @@ def месяцы(до: dt.date) -> list[str]:
     return out
 
 
+def город_сро(x: dict | None) -> str | None:
+    """Город СРО из sro/list: у НОСТРОЙ — region_name (субъект РФ), у НОПРИЗ его нет — city."""
+    x = x or {}
+    return x.get("region_name") or x.get("city")
+
+
+def место_сро(x: dict | None) -> dict:
+    """Город, субъект и федеральный округ СРО из sro/list — для сопоставления по регионам."""
+    x = x or {}
+    фо = x.get("federal_district")
+    return {"город": город_сро(x),
+            "город_реестра": x.get("city"),
+            "регион_реестра": x.get("region_name"),
+            "федеральный_округ": фо.get("title") if isinstance(фо, dict) else фо}
+
+
 def выбрать_сро(реестр: dict[str, dict], регион: str | None, номера: list[str],
                 все: bool = False) -> list[str]:
     """Рег. номера СРО: все, списком или все СРО реестра с городом region_name == регион."""
@@ -235,7 +251,7 @@ def выбрать_сро(реестр: dict[str, dict], регион: str | Non
     if номера:
         return номера
     город = норм_город(регион)
-    return sorted(н for н, x in реестр.items() if норм_город(x.get("region_name")) == город)
+    return sorted(н for н, x in реестр.items() if норм_город(город_сро(x)) == город)
 
 
 def одна_сро(номер: str, x: dict | None, кэш: Path, заново: bool) -> dict:
@@ -307,7 +323,7 @@ def main(argv: list[str] | None = None) -> None:
     else:
         реестр = список_сро()
         выбор = выбрать_сро(реестр, a.регион, номера, a.все)
-        города = Counter(норм_город(x.get("region_name")) for x in реестр.values())
+        города = Counter(норм_город(город_сро(x)) for x in реестр.values())
         print(f"СРО в реестре: {len(реестр)}; выбрано: {len(выбор)}; "
               f"самые частые города: {города.most_common(6)}", flush=True)
         if not выбор:
@@ -412,7 +428,7 @@ def main(argv: list[str] | None = None) -> None:
             continue
         if not собрана(s):
             итог.append({"рег_номер": номер, "id": s["id"], "ошибка": s.get("ошибка") or "список не собран",
-                         "карточка": {"город": (s.get("список") or {}).get("region_name"),
+                         "карточка": {**место_сро(s.get("список")),
                                       "состояние": (s.get("список") or {}).get("state")}})
             continue
         сп = json.loads((кэш / "списки" / f"{s['id']}.json").read_text(encoding="utf-8"))
@@ -470,7 +486,7 @@ def main(argv: list[str] | None = None) -> None:
             "инн": кс.get("inn"),
             "огрн": кс.get("ogrn"),
             "краткое_название": кс.get("short_description"),
-            "страница": f"https://reestr.nostroy.ru/sro/{s['id']}",
+            "страница": f"{BASE.removesuffix('/api')}/sro/{s['id']}",
             "карточка": {
                 "полное_название": кс.get("full_description"),
                 "краткое_название": кс.get("short_description"),
@@ -482,7 +498,7 @@ def main(argv: list[str] | None = None) -> None:
                 "телефон": кс.get("phone"),
                 "сайт": кс.get("site"),
                 "email": кс.get("email"),
-                "город": (s.get("список") or {}).get("region_name"),
+                **место_сро(s.get("список")),
                 "состояние": (s.get("список") or {}).get("state"),
                 "карточка_обновлена_в_реестре": s.get("карточка_обновлена"),
             },
@@ -510,7 +526,7 @@ def main(argv: list[str] | None = None) -> None:
     for r in итог:
         lu_всего.update(r.get("last_updated_vs_дата_искл") or {})
     out = {
-        "источник": "reestr.nostroy.ru (API сайта)",
+        "источник": f"{BASE.removeprefix('https://').removesuffix('/api')} (API сайта)",
         "регион": "все" if a.все else a.регион,
         "реестр": a.реестр,
         "дата_сбора": сегодня.isoformat(),

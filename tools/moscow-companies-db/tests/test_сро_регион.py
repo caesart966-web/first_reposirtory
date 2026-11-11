@@ -131,3 +131,21 @@ class TestРегион(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ГородНоприз(unittest.TestCase):
+    """У НОПРИЗ в sro/list нет region_name — город берётся из city."""
+
+    def test_город_из_city(self):
+        x = {"registration_number": "СРО-П-005-21052009", "city": "Белгород",
+             "federal_district": {"id": 3, "title": "Центральный ФО"}}
+        self.assertEqual(регион.город_сро(x), "Белгород")
+        self.assertEqual(регион.место_сро(x)["федеральный_округ"], "Центральный ФО")
+        self.assertIsNone(регион.место_сро(x)["регион_реестра"])
+        self.assertEqual(регион.выбрать_сро({"СРО-П-005-21052009": x}, "г. Белгород", []),
+                         ["СРО-П-005-21052009"])
+
+    def test_нострой_region_name_главнее(self):
+        x = {"region_name": "Алтайский край", "city": "Барнаул"}
+        self.assertEqual(регион.город_сро(x), "Алтайский край")
+        self.assertEqual(регион.место_сро(x)["город_реестра"], "Барнаул")
