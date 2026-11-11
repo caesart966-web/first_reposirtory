@@ -71,11 +71,11 @@ class TestРоссия(unittest.TestCase):
         self.assertEqual(рег["г. Москва"][7], "да")
         self.assertEqual(рег["г. Санкт-Петербург"][7], "нет")
         self.assertEqual((рег["Республика Татарстан"][1], рег["Республика Татарстан"][3]), (0, 1))
-        # недействующая изыскательская в Москве в счёт не идёт, а на своём листе есть
-        wm = wb["Недействующие СРО"]
-        номера = [r[0] for r in wm.iter_rows(min_row=2, values_only=True) if r[0] and isinstance(r[4], int)]
-        self.assertIn("СРО-И-002-01012009", номера)
-        self.assertEqual(len(номера), 46)                               # 45 Москвы + 1
+        # недействующих в таблице нет вовсе — ни листа, ни строк
+        self.assertNotIn("Недействующие СРО", wb.sheetnames)
+        всё = " ".join(str(c.value) for w in wb for r in w.iter_rows() for c in r if c.value)
+        self.assertNotIn("СРО-И-002-01012009", всё)
+        self.assertIn("46 СРО, которые реестр помечает недействующими", всё)
         wp = wb["Проектные и изыскательские"]
         self.assertEqual([r[2] for r in wp.iter_rows(min_row=2, max_row=5, values_only=True)],
                          ["Изыскательская", "Проектная", "Проектная", "Проектная"])

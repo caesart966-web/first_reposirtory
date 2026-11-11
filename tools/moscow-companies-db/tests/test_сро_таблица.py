@@ -55,7 +55,7 @@ class TestТаблица(unittest.TestCase):
         мес = wb["Вступления по месяцам"]
         self.assertEqual([c.value for c in мес[1]][2], "2023-01")
 
-    def test_недействующие_отдельно(self):
+    def test_недействующих_нет(self):
         import json
         d = json.loads(СВОДКА.read_text(encoding="utf-8"))
         d["сро"][0]["карточка"]["состояние"] = "disabled"
@@ -67,10 +67,11 @@ class TestТаблица(unittest.TestCase):
                 таблица.main(["для-checko", "--сводка", str(tmp / "с.json"), "--out", str(tmp / "ч.xlsx")])
             wb = openpyxl.load_workbook(tmp / "т.xlsx")
             ч = openpyxl.load_workbook(tmp / "ч.xlsx").active
-        self.assertEqual(wb.sheetnames[-1], "Недействующие СРО")
+        self.assertNotIn("Недействующие СРО", wb.sheetnames)
         self.assertEqual(wb["Сводная"].cell(2, 1).value, "СРО-С-008-19052009")
         self.assertEqual(wb["Сводная"].cell(20, 2).value, "Итого по 18 СРО")
-        self.assertEqual(wb["Недействующие СРО"].cell(2, 1).value, "СРО-С-003-22042009")
+        всё = " ".join(str(c.value) for w in wb for r in w.iter_rows() for c in r if c.value)
+        self.assertNotIn("СРО-С-003-22042009", всё)
         self.assertEqual(wb["Вступления по месяцам"].max_row, 20)      # 18 СРО + шапка + итог
         self.assertEqual(ч.max_row, 19)                                  # недействующую в Checko не шлём
 
