@@ -1,7 +1,9 @@
 """Сводка по строительным СРО одного региона из реестра НОСТРОЙ (Москва, Петербург…).
 
-Обобщение spb_2026_11/собрать.py: СРО берутся по городу из реестра (--регион)
-или списком номеров (--номера); СРО обрабатываются в несколько потоков.
+Обобщение spb_2026_11/собрать.py: СРО берутся по городу из реестра (--регион),
+списком номеров (--номера) или все (--все); СРО обрабатываются в несколько потоков.
+Реестр — НОСТРОЙ (строители) или НОПРИЗ (проектировщики и изыскатели, --реестр
+ноприз): у них одна платформа и одно API.
 
 Что делает:
   1. POST /api/sro/list — список всех СРО; из него берутся СРО нужного города
@@ -27,6 +29,8 @@
   python сро_регион.py --регион Москва --out msk_2026_11/сводка.json
   python сро_регион.py --регион Москва --только-сводка ...   # пересчитать по кэшу
   python сро_регион.py --номера СРО-С-003-22042009,СРО-С-008-19052009 --out x.json
+  python сро_регион.py --все --out russia_2026_11/нострой.json
+  python сро_регион.py --реестр ноприз --все --out russia_2026_11/ноприз.json
 """
 from __future__ import annotations
 
@@ -47,7 +51,8 @@ from pathlib import Path
 import openpyxl
 import requests
 
-BASE = "https://reestr.nostroy.ru/api"
+РЕЕСТРЫ = {"нострой": "https://reestr.nostroy.ru/api", "ноприз": "https://reestr.nopriz.ru/api"}
+BASE = РЕЕСТРЫ["нострой"]
 PAGE = 500
 ПАУЗА = (0.3, 0.5)
 
@@ -222,8 +227,11 @@ def месяцы(до: dt.date) -> list[str]:
     return out
 
 
-def выбрать_сро(реестр: dict[str, dict], регион: str | None, номера: list[str]) -> list[str]:
-    """Рег. номера СРО: списком или все СРО реестра с городом region_name == регион."""
+def выбрать_сро(реестр: dict[str, dict], регион: str | None, номера: list[str],
+                все: bool = False) -> list[str]:
+    """Рег. номера СРО: все, списком или все СРО реестра с городом region_name == регион."""
+    if все:
+        return sorted(реестр)
     if номера:
         return номера
     город = норм_город(регион)
@@ -257,11 +265,22 @@ def одна_сро(номер: str, x: dict | None, кэш: Path, заново:
     return рез
 
 
+def одна_сро_без_падения(номер: str, x: dict | None, кэш: Path, заново: bool) -> dict:
+    """Как одна_сро, но сбой одной СРО не роняет весь сбор: она помечается ошибкой."""
+    try:
+        return одна_сро(номер, x, кэш, заново)
+    except Exception as exc:  # noqa: BLE001 — любая осечка сети или ответа
+        print(f"{номер}: НЕ СОБРАНА — {exc}", file=sys.stderr, flush=True)
+        return {"id": (x or {}).get("id"), "список": x, "ошибка": str(exc)[:300]}
+
+
 def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--регион", help="город СРО в реестре (region_name), например «Москва»")
     ap.add_argument("--номера", default="", help="или рег. номера СРО через запятую")
+    ap.add_argument("--все", action="store_true", help="или все СРО реестра")
+    ap.add_argument("--реестр", choices=sorted(РЕЕСТРЫ), default="нострой")
     ap.add_argument("--кэш", help="папка для сырых ответов (по умолчанию ~/.cache/nostroy_<регион>)")
     ap.add_argument("--out", required=True, help="куда записать сводка.json")
     ap.add_argument("--потоков", type=int, default=4)
@@ -270,11 +289,13 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--заново-списки", action="store_true")
     ap.add_argument("--только-сводка", action="store_true")
     a = ap.parse_args(argv)
+    global BASE
+    BASE = РЕЕСТРЫ[a.реестр]
     номера = [н.strip() for н in a.номера.split(",") if н.strip()]
-    if not номера and not a.регион:
-        ap.error("нужен --регион или --номера")
-
-    кэш = Path(a.кэш or os.path.expanduser(f"~/.cache/nostroy_{норм_город(a.регион or 'список')}"))
+    if not номера and not a.регион and not a.все:
+        ap.error("нужен --регион, --номера или --все")
+    имя = "все" if a.все else норм_город(a.регион or "список")
+    кэш = Path(a.кэш or os.path.expanduser(f"~/.cache/{a.реестр}_{имя}"))
     (кэш / "списки").mkdir(parents=True, exist_ok=True)
     (кэш / "архивы").mkdir(exist_ok=True)
     карточки_файл = кэш / "карточки.jsonl"
@@ -285,21 +306,25 @@ def main(argv: list[str] | None = None) -> None:
         сро = json.loads(сро_файл.read_text(encoding="utf-8"))
     else:
         реестр = список_сро()
-        выбор = выбрать_сро(реестр, a.регион, номера)
+        выбор = выбрать_сро(реестр, a.регион, номера, a.все)
         города = Counter(норм_город(x.get("region_name")) for x in реестр.values())
         print(f"СРО в реестре: {len(реестр)}; выбрано: {len(выбор)}; "
               f"самые частые города: {города.most_common(6)}", flush=True)
         if not выбор:
             sys.exit(f"СРО с городом «{a.регион}» не найдено")
         with ThreadPoolExecutor(max_workers=a.потоков) as pool:
-            готово = pool.map(lambda н: (н, одна_сро(н, реестр.get(н), кэш, a.заново_списки)), выбор)
+            готово = pool.map(lambda н: (н, одна_сро_без_падения(н, реестр.get(н), кэш, a.заново_списки)),
+                              выбор)
             сро = dict(готово)
         сро_файл.write_text(json.dumps(сро, ensure_ascii=False), encoding="utf-8")
 
     архив: dict[str, dict] = {}   # рег. номер СРО → {id записи: дата прекращения | None}
     архив_инфо: dict[str, dict] = {}
+    def собрана(s: dict) -> bool:
+        return bool(s.get("id")) and not s.get("ошибка") and (кэш / "списки" / f"{s['id']}.json").exists()
+
     for номер, s in сро.items():
-        if not s.get("id"):
+        if not собрана(s):
             continue
         сп = json.loads((кэш / "списки" / f"{s['id']}.json").read_text(encoding="utf-8"))
         путь = кэш / "архивы" / f"{s['id']}.zip"
@@ -308,7 +333,14 @@ def main(argv: list[str] | None = None) -> None:
             архив_инфо[номер] = {"строк": 0, "без_пары": len(сп["записи"]), "неоднозначно": 0,
                                  "даты_файлов": None, "ошибка": "архив не скачан"}
             continue
-        строки, даты_файлов = строки_архива(путь)
+        try:
+            строки, даты_файлов = строки_архива(путь)
+        except Exception as exc:  # noqa: BLE001 — другой вид выгрузки или битый архив
+            print(f"{номер}: архив не разобран — {exc}", file=sys.stderr)
+            архив[номер] = {}
+            архив_инфо[номер] = {"строк": 0, "без_пары": len(сп["записи"]), "неоднозначно": 0,
+                                 "даты_файлов": None, "ошибка": f"архив не разобран: {exc}"[:200]}
+            continue
         индекс = defaultdict(list)
         for r in строки:
             индекс[(r["инн"], r["вступ"], r["номер"])].append(r)
@@ -337,7 +369,7 @@ def main(argv: list[str] | None = None) -> None:
                 карточки[z["id"]] = z
     нужно = []
     for номер, s in сро.items():
-        if not s.get("id"):
+        if not собрана(s):
             continue
         сп = json.loads((кэш / "списки" / f"{s['id']}.json").read_text(encoding="utf-8"))
         for z in сп["записи"]:
@@ -377,6 +409,11 @@ def main(argv: list[str] | None = None) -> None:
     for номер, s in сро.items():
         if not s.get("id"):
             итог.append({"рег_номер": номер, "id": None, "ошибка": "нет в реестре"})
+            continue
+        if not собрана(s):
+            итог.append({"рег_номер": номер, "id": s["id"], "ошибка": s.get("ошибка") or "список не собран",
+                         "карточка": {"город": (s.get("список") or {}).get("region_name"),
+                                      "состояние": (s.get("список") or {}).get("state")}})
             continue
         сп = json.loads((кэш / "списки" / f"{s['id']}.json").read_text(encoding="utf-8"))
         записи = сп["записи"]
@@ -474,7 +511,8 @@ def main(argv: list[str] | None = None) -> None:
         lu_всего.update(r.get("last_updated_vs_дата_искл") or {})
     out = {
         "источник": "reestr.nostroy.ru (API сайта)",
-        "регион": a.регион,
+        "регион": "все" if a.все else a.регион,
+        "реестр": a.реестр,
         "дата_сбора": сегодня.isoformat(),
         "пояснения": {
             "дата_вступления": "registry_registration_date из списка членов СРО",

@@ -68,7 +68,7 @@ def post(path, body=None, попыток=7):
     if части[0] == "sro" and len(части) == 2:
         return {"data": {"inn": f"77{части[1]}", "short_description": f"СРО {части[1]}"}}
     if части[0] == "sro" and части[2] == "member":
-        записи = ЧЛЕНЫ[int(части[1])]
+        записи = ЧЛЕНЫ.get(int(части[1]), [])
         return {"data": {"data": записи, "count": len(записи), "countPages": 1}}
     if части[0] == "member":
         return {"data": {"suspension_date": "2025-09-05T00:00:00+03:00"}}
@@ -95,6 +95,34 @@ class TestРегион(unittest.TestCase):
         self.assertEqual(x["исключения_по_месяцам"]["2025-09"], 1)     # из карточки
         self.assertEqual(x["вступления_по_месяцам"]["2023-03"], 1)
         self.assertEqual(x["инн"], "7710")
+
+    def test_все_через_ноприз_и_сбой_одной(self):
+        адреса = []
+
+        def post_с_ошибкой(path, body=None, попыток=7):
+            адреса.append(регион.BASE)
+            if path == "sro/12":                       # одна СРО не отвечает
+                raise RuntimeError("HTTP 503")
+            if path.startswith("sro/") and path.split("/")[1] in ("12", "13") and "member" in path:
+                return {"data": {"data": [], "count": 0, "countPages": 1}}
+            return post(path, body, попыток)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "сводка.json"
+            with mock.patch.object(регион, "post", post_с_ошибкой), \
+                    mock.patch.object(регион, "скачать_архив",
+                                      lambda sid, путь: путь.write_bytes(архив_zip(АРХИВ.get(sid, [])))), \
+                    redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+                регион.main(["--реестр", "ноприз", "--все", "--кэш", tmp, "--out", str(out)])
+            d = json.loads(out.read_text(encoding="utf-8"))
+        self.assertTrue(all(a == "https://reestr.nopriz.ru/api" for a in адреса))
+        self.assertEqual(d["реестр"], "ноприз")
+        по = {x["рег_номер"]: x for x in d["сро"]}
+        self.assertEqual(len(по), 4)                                     # все СРО, без фильтра по городу
+        self.assertIn("503", по["СРО-С-003-01012009"]["ошибка"])          # сбой одной — не падение всех
+        self.assertEqual(по["СРО-С-003-01012009"]["карточка"]["город"], "Санкт-Петербург")
+        self.assertEqual(по["СРО-С-001-01012009"]["действующих"], 1)
+        self.assertEqual(по["СРО-С-004-01012009"]["всего_записей"], 0)
 
     def test_нужен_регион_или_номера(self):
         with self.assertRaises(SystemExit), redirect_stderr(io.StringIO()):
