@@ -93,8 +93,11 @@ checko = _модуль("checko_контакты", "checko_контакты.py")
 СПБ = "78"
 КОЛОНКИ = ["Наименование", "ИНН", "Направление", "ОКВЭД основной", "Сотрудников (реестр МСП)",
            "Категория МСП", "В реестре МСП с"]
-ИТОГ_КОЛОНКИ = ["Наименование", "ИНН", "Направление", "ОКВЭД основной (Checko)", "Сотрудников (СЧР)",
-                "Налоги уплачено, ₽", "Адрес (Checko)", "Руководитель", "Статус (Checko)"]
+ИТОГ_КОЛОНКИ = ["Наименование", "ИНН", "Телефон", "Почта", "Направление", "ОКВЭД основной (Checko)",
+                "Сотрудников (СЧР)", "Налоги уплачено, ₽", "Адрес (Checko)", "Руководитель", "Статус (Checko)"]
+ШИРИНА = {"Наименование": 40, "ИНН": 13, "Телефон": 22, "Почта": 30, "Направление": 34,
+          "ОКВЭД основной (Checko)": 34, "Сотрудников (СЧР)": 12, "Налоги уплачено, ₽": 16,
+          "Адрес (Checko)": 50, "Руководитель": 34, "Статус (Checko)": 16, "Почему не подходит": 50}
 ЛИСТЫ = ("Подходят", "Не подходят", "Не проверены")
 
 
@@ -240,15 +243,35 @@ def разобрать(r: dict, от: int, до: int) -> tuple[str, str]:
     return ("Не подходят", "; ".join(причины)) if причины else ("Подходят", "")
 
 
+def _формат(телефон: str) -> str:
+    ц = телефон[2:] if телефон.startswith("+7") else телефон
+    return f"+7 ({ц[:3]}) {ц[3:6]}-{ц[6:8]}-{ц[8:10]}" if len(ц) == 10 else телефон
+
+
+def контакты(r: dict) -> dict:
+    """Телефоны и почта из ответа Checko — без повторов, телефон в виде +7 (812) 123-45-67."""
+    телефоны: list[str] = []
+    for источник in ("Телефоны (Checko)", "Телефон из почты"):
+        for т in checko._phones_in(r.get(источник) or ""):
+            if т not in телефоны:
+                телефоны.append(т)
+    почты: list[str] = []
+    for м in checko._EMAIL_RE.finditer(r.get("E-mail (Checko)") or ""):
+        if м.group(0).lower() not in почты:
+            почты.append(м.group(0).lower())
+    return {"Телефон": "; ".join(_формат(т) for т in телефоны), "Почта": "; ".join(почты)}
+
+
 def cmd_итог(a) -> int:
     _шапка, строки = checko.read_rows(Path(a.file))
     по_листам: dict[str, list[dict]] = {л: [] for л in ЛИСТЫ}
     for r in строки:
         лист, почему = разобрать(r, a.от, a.до)
-        по_листам[лист].append({**r, "Почему не подходит": почему})
+        по_листам[лист].append({**r, **контакты(r), "Почему не подходит": почему})
     по_листам["Подходят"].sort(key=lambda r: (r.get("Направление") or "", r.get("Наименование") or ""))
     from openpyxl import Workbook
     from openpyxl.styles import Alignment, Font, PatternFill
+    from openpyxl.utils import get_column_letter
     wb = Workbook()
     wb.remove(wb.active)
     for лист in ЛИСТЫ:
@@ -261,8 +284,8 @@ def cmd_итог(a) -> int:
             c.font = Font(bold=True, color="FFFFFF")
             c.fill = PatternFill("solid", fgColor="1F4E79")
             c.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
-        for к, ш in zip("ABCDEFGHIJ", (40, 13, 34, 34, 12, 16, 50, 34, 16, 50)):
-            ws.column_dimensions[к].width = ш
+        for i, к in enumerate(колонки, 1):
+            ws.column_dimensions[get_column_letter(i)].width = ШИРИНА.get(к, 16)
         ws.freeze_panes = "B2"
         ws.auto_filter.ref = ws.dimensions
     wb.save(a.out)
