@@ -83,6 +83,42 @@ class TestРоссия(unittest.TestCase):
         как = " ".join(str(c.value) for r in wb["Как считали"].iter_rows() for c in r)
         self.assertIn("СРО-С-999-01012020", как)
 
+    def test_руководители(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            a, b = сводки(tmp)
+            общие = ["--нострой", str(a), "--ноприз", str(b)]
+            # как будто Checko уже ответил по одной СРО Москвы и по одной проектной
+            рук = openpyxl.Workbook()
+            рук.active.append(["Наименование", "ИНН", "Рег. номер", "Руководитель", "Должность"])
+            мск = json.loads(a.read_text(encoding="utf-8"))["сро"]
+            альянс = next(x for x in мск if x["рег_номер"] == "СРО-С-018-16072009")
+            рук.active.append(["", альянс["инн"], альянс["рег_номер"], "Иванов Иван Иванович", "Президент"])
+            рук.active.append(["", "7700000001", "СРО-П-001-01012009", "Петрова Анна Сергеевна", "Директор"])
+            рук.save(tmp / "р.xlsx")
+            with redirect_stdout(io.StringIO()):
+                россия.main(общие + ["--для-checko", str(tmp / "ч.xlsx"), "--руководители", str(tmp / "р.xlsx")])
+                россия.main(общие + ["--out", str(tmp / "т.xlsx"), "--руководители", str(tmp / "р.xlsx")])
+            ч = [r for r in openpyxl.load_workbook(tmp / "ч.xlsx").active.iter_rows(values_only=True)]
+            wb = openpyxl.load_workbook(tmp / "т.xlsx")
+        self.assertEqual(ч[0], ("Наименование", "ИНН", "Рег. номер", "Вид"))
+        номера = [r[2] for r in ч[1:]]
+        self.assertNotIn("СРО-С-018-16072009", номера)                   # уже известен — не тратим запрос
+        self.assertNotIn("СРО-П-001-01012009", номера)
+        self.assertEqual(len(номера), (75 - 1) + (4 - 1))                 # действующие без известных
+        self.assertEqual(ч[1][3], "Строительная")                         # строительные первыми
+        self.assertEqual(ч[-1][3], "Изыскательская")
+        ws = wb["Сводная"]
+        шапка = [c.value for c in ws[1]]
+        self.assertEqual(шапка[-1], "Руководитель")
+        строка = next(r for r in ws.iter_rows(min_row=2, values_only=True) if r[0] == "СРО-С-018-16072009")
+        self.assertEqual(строка[-1], "Иванов Иван Иванович, президент")
+        итог = next(r for r in ws.iter_rows(min_row=2, values_only=True) if str(r[1]).startswith("Итого"))
+        self.assertIsNone(итог[-1])                                      # руководителей не суммируем
+        wp = wb["Проектные и изыскательские"]
+        п = next(r for r in wp.iter_rows(min_row=2, values_only=True) if r[0] == "СРО-П-001-01012009")
+        self.assertEqual(п[-1], "Петрова Анна Сергеевна, директор")
+
     def test_динамика(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp = Path(tmp)
