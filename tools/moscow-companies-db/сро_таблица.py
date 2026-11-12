@@ -75,8 +75,8 @@ def руководители(путь: Path | None, сро: list[dict]) -> dict[
         z = dict(zip(шапка, r))
         номер = str(z.get("Рег. номер") or "").strip()
         фио = str(z.get("Руководитель") or "").strip()
-        if not номер or not фио:
-            continue
+        if not номер or not фио or номер not in инн_по_номеру:
+            continue                       # пусто или СРО не из этой сводки (файл может быть общим)
         if str(z.get("ИНН") or "").strip() != инн_по_номеру.get(номер):
             print(f"{номер}: ИНН в файле руководителей не совпал со сводкой — пропускаю", file=sys.stderr)
             continue
