@@ -50,7 +50,7 @@ class TestРоссия(unittest.TestCase):
             with redirect_stdout(io.StringIO()):
                 россия.main(["--нострой", str(a), "--ноприз", str(b), "--out", str(tmp / "р.xlsx")])
             wb = openpyxl.load_workbook(tmp / "р.xlsx")
-        self.assertEqual(wb.sheetnames[:3], ["Сводная", "Регионы", "Проектные и изыскательские"])
+        self.assertEqual(wb.sheetnames[:4], ["Сводная", "Регионы", "Руководители", "Проектные и изыскательские"])
         # Сводная: 19 СРО Петербурга + 56 действующих Москвы, у каждой — П и И в её регионе
         ws = wb["Сводная"]
         шапка = [c.value for c in ws[1]]
@@ -118,6 +118,14 @@ class TestРоссия(unittest.TestCase):
         wp = wb["Проектные и изыскательские"]
         п = next(r for r in wp.iter_rows(min_row=2, values_only=True) if r[0] == "СРО-П-001-01012009")
         self.assertEqual(п[-1], "Петрова Анна Сергеевна, директор")
+        # общий список руководителей: все действующие, строительные первыми
+        wу = wb["Руководители"]
+        строки = [r for r in wу.iter_rows(min_row=2, values_only=True) if r[1] and str(r[1]).startswith(("СРО", "02-"))]
+        self.assertEqual(len(строки), 75 + 4)
+        self.assertEqual(строки[0][0], "Строительная")
+        self.assertEqual(строки[-1][0], "Изыскательская")
+        self.assertIn(("СРО-П-001-01012009", "Петрова Анна Сергеевна, директор"),
+                      [(r[1], r[6]) for r in строки])
 
     def test_динамика(self):
         with tempfile.TemporaryDirectory() as tmp:
