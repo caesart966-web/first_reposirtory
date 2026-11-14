@@ -26,14 +26,25 @@ def enc(s):
 
 NAME = enc('Магазин')
 OLD = {enc('Жилой дом'), enc('Наименование проекта'), enc('Наименование здания')}
+ADDRESS = 'г. Москва, внутригородское муниципальное образование Гольяново, Щёлковское шоссе, земельный участок, 17А/1'
+# точные замены строк: опечатка в названии помещения и заглушки сведений о проекте
+EXACT = {
+    "'" + enc('Памещение главной кассы') + "'": "'" + enc('Помещение главной кассы') + "'",
+    "IFCORGANIZATION($,'" + enc('Название организации') + "','" + enc('Сведения об организации') + "',$,$)":
+        "IFCORGANIZATION($,'" + enc('ООО «СК СТРАТЕГИЯ»') + "','" + enc('Проектная организация') + "',$,$)",
+    "('" + enc('Адрес проекта') + "')": "('" + enc(ADDRESS) + "')",
+}
 
 
 def patch(path, storeys=None):
     b = open(path, 'rb').read()
     lines = b.split(b'\r\n')
-    n = {'project': 0, 'building': 0, 'pname': 0, 'storeys': 0}
+    n = {'project': 0, 'building': 0, 'pname': 0, 'storeys': 0, 'exact': 0}
     for i, raw in enumerate(lines):
         s = raw.decode('ascii')
+        for old, new in EXACT.items():
+            if old in s:
+                s = s.replace(old, new); n['exact'] += 1
         m = re.match(r"^(#\d+=IFCPROJECT\('[^']+',#\d+,'[^']*',\$,\$,)'([^']*)'(,.*)$", s)
         if m and m.group(2) in OLD:
             s = m.group(1) + "'" + NAME + "'" + m.group(3); n['project'] += 1
