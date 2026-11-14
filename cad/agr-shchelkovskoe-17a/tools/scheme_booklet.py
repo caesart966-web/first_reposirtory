@@ -135,8 +135,8 @@ def main(base_path, out_path):
     # маршруты
     left = -34.0
     # пожарная техника: с проезда вдоль главного фасада — вдоль западного фасада — сквозной выезд на север
-    route(ax, [(left, V_FIRE), (-9.0, V_FIRE), (-6.2, -3.4), (lane_c, 1.6), (lane_c, B_N + 6.5),
-               (lane_c - 3.0, B_N + 10.5), (-21.0, B_N + 12.0)], FIRE, heads=(0.36, 0.56, 0.93))
+    route(ax, [(left, V_FIRE), (-9.0, V_FIRE), (-6.2, -3.4), (lane_c, 1.6), (lane_c, B_N + 1.2),
+               (lane_c - 2.6, B_N + 3.7), (-40.0, B_N + 3.9)], FIRE, heads=(0.33, 0.52, 0.9))
     route(ax, [(-9.0, V_FIRE), (25.0, V_FIRE)], FIRE, heads=(0.3, 0.95))
     # грузовой транспорт: проезд вдоль главного фасада — проезд восточнее дома 17 — ворота — двор
     truck = [(left, V_TRUCK), (EAST_U - 2.5, V_TRUCK), (EAST_U, V_TRUCK + 2.5), (EAST_U, GATE[1] - 2.5),
@@ -156,7 +156,7 @@ def main(base_path, out_path):
     # подписи
     label(ax, (12.5, 13.5), 'Магазин\nреконструкция\n1 этаж, выс. 5,80 м', size=6.6, weight='semibold', box=False,
           color='#3a1500')
-    label(ax, (-13.5, B_N + 8.2), 'сквозной выезд', size=5.6, color=FIRE)
+    label(ax, (-17.0, B_N + 6.3), 'сквозной выезд', size=5.6, color=FIRE)
     label(ax, (36.5, 23.3), 'двор\nзона загрузки', size=5.8, color='white', box=False, weight='semibold')
     label(ax, (GATE[0] + 0.4, GATE[1] - 4.4), 'ворота', size=5.4)
     label(ax, (51.0, 9.2), 'контейнерная\nплощадка', size=5.4)
