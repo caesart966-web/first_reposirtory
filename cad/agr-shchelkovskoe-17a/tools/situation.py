@@ -296,3 +296,103 @@ if __name__ == '__main__':
     if len(sys.argv) > 4:
         dxf(G, sys.argv[4])
     print('готово')
+
+
+def plain_map(g, out_png, size_pt, scale, centre, views=(), dpi=300, labels=True, streets=True, north=True,
+              scalebar=True):
+    """Карта без маршрутов: ситуационный план или мини-карта с точками съёмки.
+
+    views — [(номер, (u, v) точки, (du, dv) направления взгляда), ...] в местных координатах."""
+    c = frame.l2w([centre])[0]
+    half_w = size_pt[0] / 72 * 0.0254 * scale / 2
+    half_h = size_pt[1] / 72 * 0.0254 * scale / 2
+    x0, x1, y0, y1 = c[0] - half_w, c[0] + half_w, c[1] - half_h, c[1] + half_h
+    win = box(x0, y0, x1, y1)
+    fig = plt.figure(figsize=(size_pt[0] / 72, size_pt[1] / 72), dpi=dpi)
+    ax = fig.add_axes([0, 0, 1, 1])
+    ax.set_xlim(x0, x1); ax.set_ylim(y0, y1); ax.set_aspect('equal'); ax.axis('off')
+    ax.add_patch(plt.Rectangle((x0, y0), x1 - x0, y1 - y0, fc='#FBFBF9', ec='none', zorder=0))
+    pt = 72 * (size_pt[0] / 72) / (x1 - x0)
+
+    def fill(poly, **kw):
+        if poly.is_empty:
+            return
+        for q in (poly.geoms if hasattr(poly, 'geoms') else [poly]):
+            if q.geom_type == 'Polygon':
+                ax.add_patch(MPoly(np.array(q.exterior.coords), closed=True, **kw))
+
+    for p in g['green']:
+        fill(p.intersection(win), fc='#DCEDCD', ec='none', zorder=1)
+    for cas in (True, False):
+        for ls, kind, name, oneway, wid in sorted(g['roads'], key=lambda r: WIDTH[r[1]]):
+            q = ls.intersection(win.buffer(30))
+            for part in (q.geoms if hasattr(q, 'geoms') else [q]):
+                if part.is_empty or part.geom_type != 'LineString':
+                    continue
+                xy = np.array(part.coords)
+                w = WIDTH[kind] * pt
+                ax.plot(xy[:, 0], xy[:, 1], color='#9A9A9A' if cas else 'white', lw=w + (0.8 if cas else 0),
+                        solid_capstyle='round', solid_joinstyle='round', zorder=2 if cas else 3)
+    for ls in g['foot']:
+        q = ls.intersection(win)
+        for part in (q.geoms if hasattr(q, 'geoms') else [q]):
+            if not part.is_empty and part.geom_type == 'LineString':
+                xy = np.array(part.coords)
+                ax.plot(xy[:, 0], xy[:, 1], color='#B4B4B4', lw=0.4, dashes=(2.0, 1.4), zorder=4)
+    for poly, num in g['buildings']:
+        q = poly.intersection(win)
+        fill(q, fc='#D9D9D9', ec='#8C8C8C', lw=0.35, zorder=5)
+        if labels and num and q.area > 150 and q.area > 0.6 * poly.area:
+            r = poly.representative_point()
+            ax.text(r.x, r.y, num, fontsize=5.0, ha='center', va='center', color='#333', zorder=6)
+    fill(g['object'], fc='#F58220', ec='#B45309', lw=0.5, zorder=7)
+    fill(g['site'], fc='none', ec='#2F5597', lw=1.2, zorder=8)
+    for v in (RED_N, RED_S):
+        xy = frame.l2w(np.c_[[-400, 400], [v, v]])
+        ax.plot(xy[:, 0], xy[:, 1], color='#D8262C', lw=0.7, zorder=6)
+    if streets:
+        named = {}
+        for ls, kind, name, oneway, wid in g['roads']:
+            if kind in ('primary', 'tertiary') and name:
+                q = ls.intersection(win.buffer(-15))
+                if q.is_empty:
+                    continue
+                part = max(q.geoms, key=lambda z: z.length) if hasattr(q, 'geoms') else q
+                if part.length > named.get(name, (0,))[0]:
+                    named[name] = (part.length, part)
+        for name, (L, part) in named.items():
+            m = np.array(part.interpolate(0.5, normalized=True).coords[0])
+            ax.text(m[0], m[1], name, fontsize=5.6 if 'дублёр' not in name else 4.8, rotation=25.2,
+                    rotation_mode='anchor', ha='center', va='center', zorder=14, fontweight='medium', color='#222')
+    for num, p, d in views:
+        p = frame.l2w([p])[0]
+        d = np.array(d, float); d /= np.linalg.norm(d)
+        dw = frame.U * d[0] + frame.V * d[1]
+        r = (x1 - x0) * 0.042
+        for s in (-1, 1):
+            a = np.arctan2(dw[1], dw[0]) + s * np.radians(22)
+            ax.plot([p[0], p[0] + np.cos(a) * r * 1.9], [p[1], p[1] + np.sin(a) * r * 1.9], color='#C00000',
+                    lw=0.8, zorder=15)
+        ax.add_patch(plt.Rectangle((p[0] - r * 0.5, p[1] - r * 0.5), r, r, fc='#262626', ec='white', lw=0.4,
+                                   zorder=16))
+        ax.text(p[0], p[1], str(num), fontsize=6.0, color='white', ha='center', va='center', zorder=17,
+                fontweight='bold')
+    if north:
+        ax.annotate('', xy=(x1 - (x1 - x0) * 0.06, y1 - (y1 - y0) * 0.05),
+                    xytext=(x1 - (x1 - x0) * 0.06, y1 - (y1 - y0) * 0.16),
+                    arrowprops=dict(arrowstyle='-|>', lw=0.8, color='#111', mutation_scale=8), zorder=18)
+        ax.text(x1 - (x1 - x0) * 0.06, y1 - (y1 - y0) * 0.035, 'С', fontsize=6, ha='center', va='bottom',
+                fontweight='bold', zorder=18)
+    if scalebar:
+        step = 50 if scale >= 2000 else 20
+        bx, by = x0 + (x1 - x0) * 0.04, y0 + (y1 - y0) * 0.035
+        hh = (y1 - y0) * 0.011
+        for i in range(2):
+            ax.add_patch(plt.Rectangle((bx + i * step, by), step, hh, fc='#111' if i == 0 else 'white', ec='#111',
+                                       lw=0.4, zorder=18))
+        for i in range(3):
+            ax.text(bx + i * step, by + hh * 2.2, str(i * step), fontsize=4.2, ha='center', va='bottom', zorder=18)
+        ax.text(bx + 2 * step + (x1 - x0) * 0.012, by + hh * 0.5, 'м', fontsize=4.2, va='center', zorder=18)
+        ax.text(bx, by - hh * 1.2, 'М 1:%d' % scale, fontsize=4.6, va='top', fontweight='semibold', zorder=18)
+    fig.savefig(out_png, dpi=dpi)
+    plt.close(fig)
