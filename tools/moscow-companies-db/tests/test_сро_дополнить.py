@@ -58,8 +58,8 @@ class TestДополнить(unittest.TestCase):
         self.assertEqual(с[2], ["СРО-С-002", "Б", 5, None, None, "Петров", None])   # нет данных — пусто
         self.assertEqual([c.value for c in о["Изыскания"][2]], ["СРО-И-001", "В", 2, None])
         self.assertTrue(о["Стройка"]["A1"].font.bold)                               # оформление на месте
-        self.assertEqual(о.sheetnames[-1], "Председатели: где найдено")
-        self.assertEqual(о["Председатели: где найдено"]["E2"].value, "http://a.ru/sovet")
+        self.assertEqual(о.sheetnames[-1], "Председатели — где найдено")
+        self.assertEqual(о["Председатели — где найдено"]["E2"].value, "http://a.ru/sovet")
 
 
 if __name__ == "__main__":
