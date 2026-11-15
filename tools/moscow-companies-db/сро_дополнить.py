@@ -31,11 +31,29 @@ def поле(заголовок) -> str | None:
     н = _норм(заголовок)
     if "председател" in н:
         return "председатель"
+    if "руководител" in н:
+        return "руководитель"
     if "несост" in н and "проект" in н:
         return "не_в_проекте"
     if "несост" in н and ("изик" in н or "изыск" in н or "изыс" in н):
         return "не_в_изысканиях"
     return None
+
+
+def руководители(пути: list[Path]) -> dict[str, str]:
+    """Рег. номер → «ФИО, должность» из файлов после checko_контакты.py (поздний файл главнее)."""
+    out = {}
+    for путь in пути:
+        ws = openpyxl.load_workbook(путь, read_only=True).active
+        строки = ws.iter_rows(values_only=True)
+        шапка = [str(c or "").strip() for c in next(строки)]
+        for r in строки:
+            z = dict(zip(шапка, r))
+            номер, фио = str(z.get("Рег. номер") or "").strip(), str(z.get("Руководитель") or "").strip()
+            if номер and фио:
+                должность = str(z.get("Должность") or "").strip()
+                out[номер] = f"{фио}, {должность[:1].lower() + должность[1:]}" if должность else фио
+    return out
 
 
 def председатели(путь: Path | None) -> dict[str, dict]:
@@ -52,9 +70,11 @@ def председатели(путь: Path | None) -> dict[str, dict]:
     return out
 
 
-def дополнить(таблица: Path, пересечения: dict, пред: dict[str, dict], out: Path) -> dict:
+def дополнить(таблица: Path, пересечения: dict, пред: dict[str, dict], out: Path,
+              рук: dict[str, str] | None = None) -> dict:
+    рук = рук or {}
     wb = openpyxl.load_workbook(таблица)
-    счёт = {"не_в_проекте": 0, "не_в_изысканиях": 0, "председатель": 0, "без_данных": set()}
+    счёт = {"не_в_проекте": 0, "не_в_изысканиях": 0, "председатель": 0, "руководитель": 0, "без_данных": set()}
     for ws in wb.worksheets:
         шапка = [c.value for c in ws[1]]
         if "Рег. номер" not in [str(h or "").strip() for h in шапка]:
@@ -66,6 +86,12 @@ def дополнить(таблица: Path, пересечения: dict, пр�
             if not номер:
                 continue
             for j, что in столбцы.items():
+                if что == "руководитель":
+                    # только пустые клетки: заполненное заказчиком не трогаем
+                    if not ws.cell(i, j).value and рук.get(номер):
+                        ws.cell(i, j, рук[номер])
+                        счёт["руководитель"] += 1
+                    continue
                 if что == "председатель":
                     z = пред.get(номер) or {}
                     if z.get("Председатель совета"):
@@ -105,11 +131,12 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--таблица", required=True)
     ap.add_argument("--пересечения", help="russia_2026_11/пересечения.json")
     ap.add_argument("--председатели", help="файл после председатели_сро.py")
+    ap.add_argument("--руководители", nargs="*", default=[], help="файлы после checko_контакты.py")
     ap.add_argument("--out", required=True)
     a = ap.parse_args(argv)
     пересечения = json.loads(Path(a.пересечения).read_text(encoding="utf-8")) if a.пересечения else {}
     счёт = дополнить(Path(a.таблица), пересечения, председатели(Path(a.председатели) if a.председатели else None),
-                     Path(a.out))
+                     Path(a.out), руководители([Path(x) for x in a.руководители]))
     print(счёт, "→", a.out)
     return 0
 

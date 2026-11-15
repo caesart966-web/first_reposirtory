@@ -24,7 +24,28 @@ class TestДополнить(unittest.TestCase):
         self.assertEqual(доп.поле("Не состоят в изысканиях"), "не_в_изысканиях")
         self.assertEqual(доп.поле("Председатель совета"), "председатель")
         self.assertIsNone(доп.поле("Проектных СРО\n в регионе"))
-        self.assertIsNone(доп.поле("Руководитель"))
+        self.assertEqual(доп.поле("Руководитель СРО"), "руководитель")
+
+    def test_руководители_только_в_пустые(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            wb = openpyxl.Workbook()
+            wb.active.title = "Руководители"
+            wb.active.append(["Рег. номер", "СРО", "Руководитель СРО"])
+            wb.active.append(["СРО-И-001", "А", None])
+            wb.active.append(["СРО-И-002", "Б", "Заполнено заказчиком"])
+            wb.save(tmp / "т.xlsx")
+            ч = openpyxl.Workbook()
+            ч.active.append(["Наименование", "ИНН", "Рег. номер", "Руководитель", "Должность"])
+            ч.active.append(["А", "1", "СРО-И-001", "Иванов Иван Иванович", "Генеральный директор"])
+            ч.active.append(["Б", "2", "СРО-И-002", "Петров Пётр Петрович", "Директор"])
+            ч.save(tmp / "ч.xlsx")
+            with redirect_stdout(io.StringIO()):
+                доп.main(["--таблица", str(tmp / "т.xlsx"), "--руководители", str(tmp / "ч.xlsx"),
+                          "--out", str(tmp / "о.xlsx")])
+            ws = openpyxl.load_workbook(tmp / "о.xlsx")["Руководители"]
+        self.assertEqual(ws["C2"].value, "Иванов Иван Иванович, генеральный директор")
+        self.assertEqual(ws["C3"].value, "Заполнено заказчиком")
 
     def test_таблица(self):
         with tempfile.TemporaryDirectory() as tmp:
