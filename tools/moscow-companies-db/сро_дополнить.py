@@ -115,6 +115,8 @@ def дополнить(таблица: Path, пересечения: dict, пр�
             шапка.insert(6, "Уверенность")
         if any(z.get("Сайт") for z in пред.values()):
             шапка.insert(2, "Сайт")              # где искать вручную тех, кого не нашли
+        if any(z.get("Дата документа") for z in пред.values()):
+            шапка.insert(шапка.index("Сайт: итог"), "Дата документа")   # найденные в протоколах
         w.append(шапка)
         for н, z in пред.items():
             w.append([н] + [z.get(к) or "" for к in шапка[1:]])
@@ -123,7 +125,7 @@ def дополнить(таблица: Path, пересечения: dict, пр�
             c.fill = PatternFill("solid", fgColor="1F4E79")
             c.alignment = Alignment(wrap_text=True, vertical="center")
         ширина = {"Рег. номер": 20, "СРО": 36, "Сайт": 28, "Председатель совета": 34, "Как назван на сайте": 22,
-                  "Где найдено": 40, "Фрагмент": 70, "Уверенность": 14, "Сайт: итог": 30}
+                  "Где найдено": 40, "Фрагмент": 70, "Уверенность": 14, "Дата документа": 14, "Сайт: итог": 30}
         for j, h in enumerate(шапка):
             w.column_dimensions[get_column_letter(j + 1)].width = ширина.get(h, 20)
         w.freeze_panes = "B2"
