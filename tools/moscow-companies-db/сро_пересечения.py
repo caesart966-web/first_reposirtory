@@ -80,8 +80,45 @@ def все_члены(реестр: str, кэш: Path, потоков: int) -> l
             по_id[z["id"]] = z
     print(f"{реестр}: заявлено {заявлено}, получено {len(по_id)}", flush=True)
     if len(по_id) != заявлено:
-        print(f"  ВНИМАНИЕ: {реестр} отдал {len(по_id)} из {заявлено} — повторите с --заново "
-              f"или проверьте страницы", file=sys.stderr)
+        print(f"  ВНИМАНИЕ: {реестр} отдал {len(по_id)} уникальных из {заявлено} — страницы "
+              f"пересекаются (нестабильная сортировка); берите по СРО (члены_по_сро)", file=sys.stderr)
+    return list(по_id.values())
+
+
+ЗА_РАЗ = 10000   # pageCount: самая большая СРО НОПРИЗ — ~6 тыс. членов, берётся одним ответом
+
+
+def члены_по_сро(реестр: str, сро: list[dict], кэш: Path, потоков: int) -> list[dict]:
+    """Все члены реестра — по каждой СРО одним запросом (sro/{id}/member/list, pageCount=ЗА_РАЗ).
+
+    Зачем: у НОПРИЗ sro/all/member/list сортирует нестабильно (sortBy игнорируется), страницы
+    пересекаются — 15.11.2026 из 214 531 строки уникальных было 137 584, остальное повторы,
+    а 77 тыс. членов не попали ни на одну страницу. Одна страница на СРО этого лишена.
+    """
+    регион.BASE = регион.РЕЕСТРЫ[реестр]
+    кэш.mkdir(parents=True, exist_ok=True)
+    неполные = []
+
+    def одна(x: dict) -> list[dict]:
+        путь = кэш / f"sro_{x['id']}.json"
+        if путь.exists():
+            return json.loads(путь.read_text(encoding="utf-8"))
+        тело = регион.тело(1)
+        тело["pageCount"] = str(ЗА_РАЗ)
+        д = регион.post(f"sro/{x['id']}/member/list", тело)["data"]
+        записи = list({z["id"]: z for z in д["data"]}.values())
+        if len(записи) != int(д["count"]):
+            неполные.append((x.get("рег_номер"), len(записи), int(д["count"])))
+            return записи                      # не кэшируем — перезапуск спросит заново
+        путь.write_text(json.dumps(записи, ensure_ascii=False), encoding="utf-8")
+        return записи
+
+    with ThreadPoolExecutor(max_workers=потоков) as pool:
+        части = list(pool.map(одна, [x for x in сро if x.get("id")]))
+    по_id = {z["id"]: z for ч in части for z in ч}
+    print(f"{реестр} (по СРО): СРО {len(части)}, записей {len(по_id)}", flush=True)
+    for н, есть, надо in неполные:
+        print(f"  ВНИМАНИЕ: {реестр} {н}: уникальных {есть} из {надо} — перезапустите", file=sys.stderr)
     return list(по_id.values())
 
 
@@ -129,7 +166,8 @@ def main(argv: list[str] | None = None) -> int:
     сро_с = json.loads(Path(a.нострой).read_text(encoding="utf-8"))["сро"]
     сро_пи = json.loads(Path(a.ноприз).read_text(encoding="utf-8"))["сро"]
     члены_с = все_члены("нострой", Path(a.кэш) / "нострой", a.потоков)
-    члены_пи = все_члены("ноприз", Path(a.кэш) / "ноприз", a.потоков)
+    # НОПРИЗ — только по СРО: общий список у него теряет треть членов (см. члены_по_сро)
+    члены_пи = члены_по_сро("ноприз", сро_пи, Path(a.кэш) / "ноприз_по_сро", a.потоков)
     статусы = Counter(str((z.get("member_status") or {}).get("title")) for z in члены_с + члены_пи)
     итог = посчитать(члены_с, члены_пи, сро_с, сро_пи)
     итог.update({"дата_сбора": dt.date.today().isoformat(), "статусы": dict(статусы),

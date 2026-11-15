@@ -66,5 +66,27 @@ class TestВыгрузка(unittest.TestCase):
         self.assertEqual(вызовы, [1, 2, 1])
 
 
+class TestПоСРО(unittest.TestCase):
+    def test_одна_страница_на_сро_и_кэш(self):
+        ответы = {"sro/1/member/list": ([член(1, "1", 1), член(2, "2", 1)], 2),
+                  "sro/2/member/list": ([член(3, "3", 2), член(3, "3", 2)], 2)}   # повтор → неполная
+        вызовы = []
+
+        def post(path, body=None, попыток=7):
+            вызовы.append((path, body["pageCount"]))
+            данные, count = ответы[path]
+            return {"data": {"data": данные, "count": count, "countPages": 1}}
+
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.object(пер.регион, "post", post), \
+                redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()) as err:
+            члены = пер.члены_по_сро("ноприз", СРО_ПИ, Path(tmp), 2)
+            self.assertEqual(sorted(z["id"] for z in члены), [1, 2, 3])
+            self.assertIn("уникальных 1 из 2", err.getvalue())
+            пер.члены_по_сро("ноприз", СРО_ПИ, Path(tmp), 2)       # полная СРО 1 — из кэша
+        self.assertEqual(sorted(вызовы), sorted([("sro/1/member/list", str(пер.ЗА_РАЗ)),
+                                                 ("sro/2/member/list", str(пер.ЗА_РАЗ)),
+                                                 ("sro/2/member/list", str(пер.ЗА_РАЗ))]))
+
+
 if __name__ == "__main__":
     unittest.main()
