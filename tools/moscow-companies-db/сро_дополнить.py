@@ -110,6 +110,8 @@ def дополнить(таблица: Path, пересечения: dict, пр�
         w = wb.create_sheet("Председатели — где найдено")
         шапка = ["Рег. номер", "СРО", "Председатель совета", "Как назван на сайте", "Где найдено",
                  "Фрагмент", "Сайт: итог"]
+        if any(z.get("Уверенность") for z in пред.values()):
+            шапка.insert(6, "Уверенность")
         w.append(шапка)
         for н, z in пред.items():
             w.append([н] + [z.get(к) or "" for к in шапка[1:]])
@@ -117,7 +119,7 @@ def дополнить(таблица: Path, пересечения: dict, пр�
             c.font = Font(bold=True, color="FFFFFF")
             c.fill = PatternFill("solid", fgColor="1F4E79")
             c.alignment = Alignment(wrap_text=True, vertical="center")
-        for к, ш in zip("ABCDEFG", (20, 36, 34, 22, 40, 70, 22)):
+        for к, ш in zip("ABCDEFGH", (20, 36, 34, 22, 40, 70, 14, 30)):
             w.column_dimensions[к].width = ш
         w.freeze_panes = "B2"
         w.auto_filter.ref = w.dimensions
