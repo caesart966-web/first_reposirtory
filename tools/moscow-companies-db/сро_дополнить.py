@@ -20,6 +20,7 @@ from pathlib import Path
 
 import openpyxl
 from openpyxl.styles import Alignment, Font, PatternFill
+from openpyxl.utils import get_column_letter
 
 
 def _норм(h) -> str:
@@ -112,6 +113,8 @@ def дополнить(таблица: Path, пересечения: dict, пр�
                  "Фрагмент", "Сайт: итог"]
         if any(z.get("Уверенность") for z in пред.values()):
             шапка.insert(6, "Уверенность")
+        if any(z.get("Сайт") for z in пред.values()):
+            шапка.insert(2, "Сайт")              # где искать вручную тех, кого не нашли
         w.append(шапка)
         for н, z in пред.items():
             w.append([н] + [z.get(к) or "" for к in шапка[1:]])
@@ -119,8 +122,10 @@ def дополнить(таблица: Path, пересечения: dict, пр�
             c.font = Font(bold=True, color="FFFFFF")
             c.fill = PatternFill("solid", fgColor="1F4E79")
             c.alignment = Alignment(wrap_text=True, vertical="center")
-        for к, ш in zip("ABCDEFGH", (20, 36, 34, 22, 40, 70, 14, 30)):
-            w.column_dimensions[к].width = ш
+        ширина = {"Рег. номер": 20, "СРО": 36, "Сайт": 28, "Председатель совета": 34, "Как назван на сайте": 22,
+                  "Где найдено": 40, "Фрагмент": 70, "Уверенность": 14, "Сайт: итог": 30}
+        for j, h in enumerate(шапка):
+            w.column_dimensions[get_column_letter(j + 1)].width = ширина.get(h, 20)
         w.freeze_panes = "B2"
         w.auto_filter.ref = w.dimensions
     wb.save(out)
