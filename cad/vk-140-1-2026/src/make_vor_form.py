@@ -24,7 +24,7 @@ SHEETS_IN_VOLUME = 6
 pos_page = {}
 xml = subprocess.check_output(['pdftotext', '-bbox', SPEC_PDF, '-']).decode()
 for k, page in enumerate(re.findall(r'<page .*?</page>', xml, re.S), 1):
-    for x1, y1, w in re.findall(r'<word xMin="([\d.]+)" yMin="([\d.]+)"[^>]*>(\d{1,2})</word>', page):
+    for x1, y1, w in re.findall(r'<word xMin="([\d.]+)" yMin="([\d.]+)"[^>]*>(\d{1,3})</word>', page):
         if 56 < float(x1) < 114 and float(y1) > 60:          # графа «Поз.» (20–40 мм от края), ниже шапки
             pos_page.setdefault(int(w), k)
 n_pages = k

@@ -132,5 +132,8 @@ for row in ws.iter_rows(min_row=2, max_row=ws.max_row - 2):
     for c in row:
         c.alignment = Alignment(wrap_text=True, vertical='center', horizontal='left' if c.column == 2 else 'center')
         c.border = Border(left=thin, right=thin, top=thin, bottom=thin)
+wb.properties.creator = ''
+wb.properties.lastModifiedBy = ''
+wb.properties.title = code + ' ' + title
 wb.save(os.path.join(OUT, '140-1-2026-ВК.СО Спецификация.xlsx'))
 print('ok', len([r for r in rows if r[0] == 'item']), 'positions')
