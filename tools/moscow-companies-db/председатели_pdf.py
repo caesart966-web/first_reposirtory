@@ -742,10 +742,13 @@ def распознаватель():
             if not OcrEngine.is_language_supported(Language("ru")):
                 return None, _ЯЗЫК_WINDOWS
 
+            import asyncio  # noqa: PLC0415
+
             def windows(картинка) -> str:
-                р = winocr.recognize_pil_sync(картинка, "ru")
-                строки = [л.get("text", "") for л in (р.get("lines") or []) if isinstance(л, dict)]
-                return "\n".join(строки) or str(р.get("text") or "")
+                # строки берём сами: разбор результата в winocr (picklify) перебирает все поля объекта
+                р = asyncio.run(winocr.to_coroutine(winocr.recognize_pil(картинка, "ru")))
+                строки = [str(л.text) for л in (р.lines or [])]
+                return "\n".join(строки) or str(р.text or "")
             return windows, "распознавание Windows"
     try:
         import pytesseract  # noqa: PLC0415
