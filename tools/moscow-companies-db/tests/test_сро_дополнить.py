@@ -82,6 +82,28 @@ class TestДополнить(unittest.TestCase):
         self.assertEqual(о.sheetnames[-1], "Председатели — где найдено")
         self.assertEqual(о["Председатели — где найдено"]["E2"].value, "http://a.ru/sovet")
 
+    def test_низкая_уверенность_примечанием(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            wb = openpyxl.Workbook()
+            wb.active.title = "Стройка"
+            wb.active.append(["Рег. номер", "СРО", "Председатель совета"])
+            wb.active.append(["СРО-С-001", "А", None])
+            wb.active.append(["СРО-С-002", "Б", None])
+            wb.save(tmp / "т.xlsx")
+            пред = openpyxl.Workbook()
+            пред.active.append(["Рег. номер", "СРО", "Председатель совета", "Уверенность", "Сайт: итог"])
+            пред.active.append(["СРО-С-001", "А", "Старов С. С.", "низкая", "найдено в документе"])
+            пред.active.append(["СРО-С-002", "Б", "Новиков Н. Н.", "высокая", "найдено в документе"])
+            пред.save(tmp / "п.xlsx")
+            with redirect_stdout(io.StringIO()):
+                доп.main(["--таблица", str(tmp / "т.xlsx"), "--председатели", str(tmp / "п.xlsx"),
+                          "--out", str(tmp / "о.xlsx")])
+            о = openpyxl.load_workbook(tmp / "о.xlsx")["Стройка"]
+        self.assertIn("Низкая уверенность", о["C2"].comment.text)
+        self.assertIsNone(о["C3"].comment)
+
+
 
 if __name__ == "__main__":
     unittest.main()

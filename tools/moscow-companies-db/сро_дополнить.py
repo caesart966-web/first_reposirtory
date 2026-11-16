@@ -19,6 +19,7 @@ import sys
 from pathlib import Path
 
 import openpyxl
+from openpyxl.comments import Comment
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
@@ -96,8 +97,13 @@ def дополнить(таблица: Path, пересечения: dict, пр�
                 if что == "председатель":
                     z = пред.get(номер) or {}
                     if z.get("Председатель совета"):
-                        ws.cell(i, j, z["Председатель совета"])
+                        клетка = ws.cell(i, j, z["Председатель совета"])
                         счёт["председатель"] += 1
+                        if str(z.get("Уверенность") or "") == "низкая":
+                            # видно сразу в таблице, не открывая лист источников
+                            клетка.comment = Comment(
+                                "Низкая уверенность: старый документ или косвенное указание. "
+                                "Источник — лист «Председатели — где найдено».", "проверка")
                 else:
                     x = (пересечения.get("сро") or {}).get(номер)
                     if x is None:
