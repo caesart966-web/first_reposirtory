@@ -199,7 +199,7 @@ def main(out):
         p = doc.add_paragraph(style='List Bullet')
         para(p, e, space_after=2)
     para(doc, '', space_after=14)
-    para(doc, 'Главный архитектор проекта  ____________________  /____________________/', space_after=0)
+    para(doc, 'Главный архитектор проекта  ____________________  /В. Н. Губань/', space_after=0)
     doc.save(out)
 
 
