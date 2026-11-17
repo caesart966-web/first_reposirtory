@@ -90,18 +90,31 @@ for (const u of urls) {
     } else {
       const title = (text.match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [])[1]
       if (title) console.log('заголовок: ' + title.trim().replace(/\s+/g, ' '))
-      const scripts = uniq([...text.matchAll(/<script[^>]+src=["']([^"']+)["']/gi)].map((m) => new URL(m[1], res.url).href))
+      // Скрипты страницы и подгружаемые куски (link rel=prefetch/preload):
+      // у приложений-реестров адрес данных живёт в кусках, а не в разметке.
+      const scripts = uniq([
+        ...[...text.matchAll(/<script[^>]+src=["']([^"']+)["']/gi)].map((m) => m[1]),
+        ...[...text.matchAll(/<link[^>]+href=["']([^"']+\.js)["']/gi)].map((m) => m[1]),
+      ].map((x) => new URL(x, res.url).href))
       console.log(`скриптов: ${scripts.length}`)
       const inHtml = apiPaths(text)
       if (inHtml.length) console.log('адреса api в разметке: ' + inHtml.slice(0, 40).join('  '))
       const links = fullUrls(text)
       if (links.length) console.log('ссылки на реестры в разметке (до 40): ' + links.slice(0, 40).join('  '))
-      for (const s of scripts.filter((s) => allowed(s)).slice(0, 6)) {
+      const seen = new Set()
+      for (const s of scripts.filter((s) => allowed(s) && !/vendors/.test(s)).slice(0, 25)) {
         try {
           const js = await get(s, { accept: '*/*' })
-          const found = apiPaths(js.text)
-          console.log(`  скрипт ${s} — ${js.size} байт, адресов api: ${found.length}`)
-          if (found.length) console.log('    ' + found.slice(0, 60).join('  '))
+          // Строки, похожие на адрес данных: абсолютные адреса и пути
+          // с api / sro / member / reestr / registry.
+          const found = uniq([
+            ...apiPaths(js.text),
+            ...(js.text.match(/["'`](https?:\/\/[^"'`\s]{6,160})["'`]/g) || []).map((x) => x.slice(1, -1)),
+            ...(js.text.match(/["'`](\/?[A-Za-z0-9_\-]*(?:api|sro|member|reestr|registry|export|xls|csv)[A-Za-z0-9_\-/{}.:?=&]*)["'`]/gi) || []).map((x) => x.slice(1, -1)),
+          ]).filter((x) => x.length > 3 && !seen.has(x))
+          found.forEach((x) => seen.add(x))
+          console.log(`  скрипт ${s} — ${js.size} байт, новых адресов: ${found.length}`)
+          if (found.length) console.log('    ' + found.slice(0, 80).join('  '))
         } catch (e) {
           console.log(`  скрипт ${s} — ошибка: ${e.message}`)
         }
