@@ -1,0 +1,102 @@
+---
+// «Разберу ваш случай» — блок связи сразу после текста разбора (17.11.2026,
+// просьба заказчика: «чтобы заходили чаще и оставляли заявки»).
+//
+// Зачем. Большая часть заходов из поиска — на разборы, а не на главную.
+// Статья кончается фразой «пришлите предмет договора…», и на телефоне
+// после неё не было ни одной кнопки: дальше шли «Поделиться», карточка
+// услуги, калькулятор и только третьей карточкой — связь мелкими ссылками.
+// Человек в момент, когда вопрос у него созрел, должен видеть кнопку.
+//
+// WhatsApp открывается с готовым началом сообщения — с названием разбора:
+// человеку не нужно объяснять, откуда он, а владельцу видно, какая статья
+// привела. У Telegram и звонка такого нет (ссылка на имя в Telegram текст
+// не принимает). Цели Метрики — те же, что у остальных кнопок связи
+// (data-goal), чтобы отчёты не дробились.
+//
+// Блок помечен data-nosearch: он повторяется на каждой странице и не должен
+// находиться поиском по сайту.
+import BrandIcon from './BrandIcon.astro'
+import { SITE, href } from '../config/site'
+
+interface Props {
+  /** Название разбора — уходит в начало сообщения WhatsApp. Без него —
+   *  общее «вопрос о СРО». */
+  topic?: string
+  /** Уникальная приставка id для значков (BrandIcon). */
+  idp?: string
+}
+const { topic, idp = 'ask' } = Astro.props
+const start = topic ? `Здравствуйте! Вопрос по разбору «${topic}»: ` : 'Здравствуйте! У меня вопрос о СРО: '
+const wa = `${SITE.whatsapp}?text=${encodeURIComponent(start)}`
+---
+
+<aside class="ask-case" aria-labelledby={`${idp}-title`} data-nosearch>
+  <h2 id={`${idp}-title`}>Разберу ваш случай</h2>
+  <p>
+    Пришлите предмет договора, с кем он заключён и сумму — отвечу лично, со ссылкой на норму,
+    в том числе если членство вам не нужно. Консультация бесплатная.
+  </p>
+  <div class="ask-btns">
+    <a class="ask-btn ask-btn--main" href={wa} target="_blank" rel="noopener noreferrer" data-goal="click_whatsapp">
+      <BrandIcon name="whatsapp" size={24} idp={idp} />
+      Написать в WhatsApp
+    </a>
+    <a class="ask-btn" href={SITE.telegram} target="_blank" rel="noopener noreferrer" data-goal="click_telegram">
+      <BrandIcon name="telegram" size={24} idp={idp} />
+      Telegram
+    </a>
+    <a class="ask-btn" href={SITE.phoneHref} data-goal="click_phone">
+      <BrandIcon name="phone" size={24} idp={idp} />
+      {SITE.phone}
+    </a>
+  </div>
+  <p class="ask-alt">
+    Удобнее письменно с ответом на почту —{' '}
+    <a href={href('/kontakty/#konsultaciya')}>оставьте заявку</a>.
+  </p>
+</aside>
+
+<style>
+  .ask-case {
+    display: grid;
+    gap: 14px;
+    padding: 24px;
+    border: 1px solid color-mix(in srgb, var(--acc) 22%, transparent);
+    border-radius: var(--r-l);
+    background: var(--acc-soft);
+  }
+  .ask-case h2 { margin: 0; font-size: clamp(22px, 2.4vw, 26px); }
+  .ask-case p { margin: 0; max-width: 62ch; color: var(--ink); line-height: 1.6; }
+  .ask-btns { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+  .ask-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 48px;
+    padding: 0 18px 0 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-m);
+    background: #fff;
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 15.5px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: border-color var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
+  }
+  .ask-btn:hover { border-color: var(--acc-btn); }
+  .ask-btn--main { background: var(--acc-btn); border-color: var(--acc-btn); color: #fff; }
+  .ask-btn--main:hover { background: var(--acc-deep); border-color: var(--acc-deep); }
+  .ask-alt { font-size: 14.5px; color: var(--muted) !important; }
+  .ask-alt a { color: var(--acc-deep); font-weight: 600; }
+
+  /* На телефоне кнопки — во всю ширину, одна под другой: так в них
+     попадают большим пальцем и не нужно целиться в соседнюю. */
+  @media (max-width: 599px) {
+    .ask-case { padding: 20px 18px; }
+    .ask-btns { flex-direction: column; }
+    .ask-btn { justify-content: flex-start; }
+  }
+</style>

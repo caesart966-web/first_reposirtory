@@ -1,4 +1,5 @@
 ---
+import AskCase from '../../components/AskCase.astro'
 import Base from '../../layouts/Base.astro'
 import Icon from '../../components/Icon.astro'
 import ShareLinks from '../../components/ShareLinks.astro'
@@ -205,6 +206,10 @@ const articleSchema = {
         <div class="prose">
           {rendered ? <Fragment set:html={withLabels(withBase(rendered))} /> : <Content />}
         </div>
+        {/* Кнопки связи — сразу после текста, до «Поделиться»: разбор
+            кончается «пришлите договор», и кнопка нужна ровно здесь
+            (AskCase.astro, 17.11.2026). */}
+        <AskCase topic={article.data.title} />
         {/* Разбор пересылают бухгалтеру или партнёру — адрес уходит вместе
             с названием. В подвале у статей этой строки нет: вторая такая же
             внизу страницы была бы повтором (Footer.astro, проп share). */}
@@ -568,5 +573,9 @@ const articleSchema = {
   @media (max-width: 900px) {
     .art-body { grid-template-columns: minmax(0, 1fr); gap: 28px; }
     .art-side { position: static; }
+    /* Когда колонка уходит под статью, карточка «Связаться» повторяет
+       блок «Разберу ваш случай» тремя экранами выше — те же телефон
+       и мессенджеры, только мелкими ссылками (17.11.2026). */
+    .side-card--quiet { display: none; }
   }
 </style>
