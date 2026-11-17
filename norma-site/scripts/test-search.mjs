@@ -137,6 +137,15 @@ const QUERIES = [
   ['сколько стоит вступить в сро', '/stoimost/'],
   ['вступить в сро строителей', '/uslugi/sro-stroiteley/'],
   ['вступить в сро москва', '/sro/moskva/'],
+  // «Популярные запросы» Вебмастера (17.11.2026): по ним сайт уже показывался,
+  // и у каждого теперь своя страница-ответ.
+  ['сро для отделочных работ', '/baza-znaniy/sro-dlya-otdelochnyh-rabot/'],
+  ['сро для отделочных материалов', '/baza-znaniy/sro-dlya-otdelochnyh-rabot/'],
+  ['повышение уровня ответственности в сро', '/baza-znaniy/smena-urovnya-otvetstvennosti/'],
+  ['поднять уровень сро с 3 млрд до 10 млрд', '/baza-znaniy/smena-urovnya-otvetstvennosti/'],
+  ['уровень ответственности вв это простыми словами', '/baza-znaniy/urovni-otvetstvennosti/'],
+  ['перечень работ требующих допуск сро', '/baza-znaniy/dopuskov-sro-ne-sushchestvuet/'],
+  ['когда нужно сро в строительстве', '/komu-nuzhna-sro/'],
 ]
 
 for (const [q, want] of QUERIES) {
