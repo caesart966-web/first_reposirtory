@@ -1,0 +1,48 @@
+# Робот сайта «НОРМА»: разведка государственного реестра СРО.
+#
+# Заказчик спросил про каталог всех СРО на сайте (17.11.2026). Каталог —
+# только из реестра и только с обновлением роботом. Реестры Ростехнадзора,
+# НОСТРОЙ и НОПРИЗ из среды, где пишется сайт, закрыты; у GitHub открыты.
+# Робот открывает адреса и печатает в журнал, что они отдают (код, тип,
+# номера СРО на странице, адреса api в разметке и скриптах, начало ответа).
+# Только читает, ничего не публикует. Сайты — список в
+# norma-site/scripts/probe-registry.mjs.
+name: 'НОРМА: разведка реестра СРО'
+
+on:
+  workflow_dispatch:
+    inputs:
+      adresa:
+        description: 'Адреса через пробел (reestr.nostroy.ru, reestr.nopriz.ru, gosnadzor.ru)'
+        required: true
+      metod:
+        description: 'GET или POST'
+        required: false
+        default: 'GET'
+      telo:
+        description: 'Для POST: тело запроса JSON'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Ввод из формы — через переменные окружения, а не подстановкой
+      # в команду: текст из поля не может стать частью команды.
+      - name: Смотрим
+        working-directory: norma-site
+        env:
+          ADRESA: ${{ inputs.adresa }}
+          METOD: ${{ inputs.metod }}
+          TELO: ${{ inputs.telo }}
+        run: node scripts/probe-registry.mjs
