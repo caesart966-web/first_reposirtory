@@ -146,6 +146,11 @@ const QUERIES = [
   ['уровень ответственности вв это простыми словами', '/baza-znaniy/urovni-otvetstvennosti/'],
   ['перечень работ требующих допуск сро', '/baza-znaniy/dopuskov-sro-ne-sushchestvuet/'],
   ['когда нужно сро в строительстве', '/komu-nuzhna-sro/'],
+  // Разборы 17.11.2026 (пункт 4 плана «что сделать без меня»).
+  ['сро на ремонт дорог', '/baza-znaniy/sro-na-remont-dorog/'],
+  ['сро на благоустройство', '/baza-znaniy/sro-na-blagoustroystvo/'],
+  ['лицензия мчс на пожарную сигнализацию', '/baza-znaniy/sro-ili-licenziya-mchs-pozharnaya-signalizaciya/'],
+  ['сро на пожарную сигнализацию', '/baza-znaniy/sro-ili-licenziya-mchs-pozharnaya-signalizaciya/'],
 ]
 
 for (const [q, want] of QUERIES) {
