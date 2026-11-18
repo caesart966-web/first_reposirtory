@@ -16,6 +16,7 @@ import Base from '../layouts/Base.astro'
 import HeadPhoto from '../components/HeadPhoto.astro'
 import PageNav from '../components/PageNav.astro'
 import Icon from '../components/Icon.astro'
+import AskCase from '../components/AskCase.astro'
 import { ANSWER_GROUPS, ANSWERS } from '../config/answers'
 import { href } from '../config/site'
 
@@ -140,6 +141,8 @@ const faqSchema = {
         <a href={href('/baza-znaniy/')}>в базе знаний</a>. Не нашли свой случай — пройдите{' '}
         <a href={href('/#calc')}>калькулятор «Нужна ли вам СРО»</a>: он отвечает и «не нужна».
       </p>
+
+      <AskCase />
     </div>
   </section>
 </Base>

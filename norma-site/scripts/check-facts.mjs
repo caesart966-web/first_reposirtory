@@ -238,6 +238,56 @@ for (const c of CHECKS) {
 }
 if (problems === before) console.log('  ✓ значения из facts.ts на страницах совпадают')
 
+// ── 2в. Таблицы уровней и доплат в статьях ──────────────────────────────
+// 17.11.2026 в разборы об уровнях ответственности легли таблицы: уровни
+// строителей с взносами и доплаты при переходе на следующий уровень
+// (пример «с 3 до 10 млрд» — запрос из Вебмастера). Markdown не умеет
+// брать числа из facts.ts, поэтому суммы там написаны руками — и при правке
+// FUNDS разошлись бы молча. Здесь строка каждой таблицы собирается из FUNDS
+// и обязана стоять на странице.
+const before2v = problems
+console.log('\nТаблицы уровней и доплат')
+const fundRows = (key) => {
+  const block = cfg.match(new RegExp(`${key}:\\s*\\[([\\s\\S]*?)\\]`))
+  if (!block) return null
+  return [...block[1].matchAll(/level:\s*(\d+),\s*limit:\s*'([^']+)',\s*amount:\s*'([^']+)',\s*amountNum:\s*(\d+)/g)]
+    .map((m) => ({ level: +m[1], limit: m[2], amount: m[3], n: +m[4] }))
+}
+const rubles = (n) => `${n.toLocaleString('ru-RU').replace(/\s/g, ' ')} ₽`
+const unNbsp = (t) => t.replace(/ | /g, ' ')
+const step = (i) => ['с 1-го на 2-й', 'со 2-го на 3-й', 'с 3-го на 4-й', 'с 4-го на 5-й'][i]
+const levelPages = [
+  {
+    url: '/baza-znaniy/urovni-otvetstvennosti/',
+    rows: () => {
+      const vv = fundRows('buildHarm'), odo = fundRows('buildContract')
+      return vv.map((r, i) => `${r.level} ${r.limit} ${r.amount} ${odo[i].amount}`)
+    },
+  },
+  {
+    url: '/baza-znaniy/smena-urovnya-otvetstvennosti/',
+    rows: () => {
+      const out = []
+      for (const [h, c] of [['buildHarm', 'buildContract'], ['designHarm', 'designContract']]) {
+        const vv = fundRows(h), odo = fundRows(c)
+        for (let i = 0; i + 1 < vv.length; i++) {
+          out.push(`${step(i)} ${vv[i + 1].limit} ${rubles(vv[i + 1].n - vv[i].n)} ${rubles(odo[i + 1].n - odo[i].n)}`)
+        }
+      }
+      return out
+    },
+  },
+]
+for (const lp of levelPages) {
+  const p = pages.find((x) => x.url === lp.url)
+  if (!p) { fail(`страница ${lp.url} не найдена`); continue }
+  const body = unNbsp(p.body)
+  for (const row of lp.rows()) {
+    if (!body.includes(unNbsp(row))) fail(`${lp.url} — нет строки таблицы, собранной из FUNDS: «${row}»`)
+  }
+}
+if (problems === before2v) console.log('  ✓ таблицы уровней и доплат совпадают с FUNDS в facts.ts')
+
 // ── 2а. Партнёрские СРО не расходятся с предложением ────────────────────
 // Самый вероятный способ соврать на этом сайте — показать в карточке СРО
 // условия, отличные от тех, что обещаны на первом экране, и не сказать

@@ -137,6 +137,20 @@ const QUERIES = [
   ['сколько стоит вступить в сро', '/stoimost/'],
   ['вступить в сро строителей', '/uslugi/sro-stroiteley/'],
   ['вступить в сро москва', '/sro/moskva/'],
+  // «Популярные запросы» Вебмастера (17.11.2026): по ним сайт уже показывался,
+  // и у каждого теперь своя страница-ответ.
+  ['сро для отделочных работ', '/baza-znaniy/sro-dlya-otdelochnyh-rabot/'],
+  ['сро для отделочных материалов', '/baza-znaniy/sro-dlya-otdelochnyh-rabot/'],
+  ['повышение уровня ответственности в сро', '/baza-znaniy/smena-urovnya-otvetstvennosti/'],
+  ['поднять уровень сро с 3 млрд до 10 млрд', '/baza-znaniy/smena-urovnya-otvetstvennosti/'],
+  ['уровень ответственности вв это простыми словами', '/baza-znaniy/urovni-otvetstvennosti/'],
+  ['перечень работ требующих допуск сро', '/baza-znaniy/dopuskov-sro-ne-sushchestvuet/'],
+  ['когда нужно сро в строительстве', '/komu-nuzhna-sro/'],
+  // Разборы 17.11.2026 (пункт 4 плана «что сделать без меня»).
+  ['сро на ремонт дорог', '/baza-znaniy/sro-na-remont-dorog/'],
+  ['сро на благоустройство', '/baza-znaniy/sro-na-blagoustroystvo/'],
+  ['лицензия мчс на пожарную сигнализацию', '/baza-znaniy/sro-ili-licenziya-mchs-pozharnaya-signalizaciya/'],
+  ['сро на пожарную сигнализацию', '/baza-znaniy/sro-ili-licenziya-mchs-pozharnaya-signalizaciya/'],
 ]
 
 for (const [q, want] of QUERIES) {

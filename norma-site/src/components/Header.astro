@@ -284,7 +284,10 @@ const formHref = path === href('/') ? '#zayavka' : href('/kontakty/#form')
 
   .hdr-right { margin-left: auto; display: flex; align-items: center; gap: 14px; }
 
-  .phone { display: none; align-items: center; gap: 8px; color: var(--on-dark); text-decoration: none; }
+  /* min-height — область нажатия, а не вид: с 23.10.2026 подпись под номером
+     прячется до 1599 px, и без неё ссылка на 1280 была 17 px в высоту
+     (test-pages: цель от 24 px). Строка шапки выше 44 px, вид не меняется. */
+  .phone { display: none; align-items: center; gap: 8px; min-height: 44px; color: var(--on-dark); text-decoration: none; }
   .phone svg { color: var(--acc-bright); flex: none; }
   .phone span { display: grid; line-height: 1.2; }
   .phone b { font-family: var(--font-mono); font-size: 14px; font-weight: 500; white-space: nowrap; }
