@@ -6,9 +6,14 @@ fix_models.py ВПМ_ЗДАНИЯ ВПМ_БЛАГОУСТРОЙСТВА НПМ �
   параметры стекол числами — значения правятся в тексте, структура и порядок полей не меняются;
 * НПМ: здание и благоустройство переносятся в координаты МСК-77 из geojson ВПМ (в НПМ они стояли
   на 7,5 км западнее и 17,7 км южнее — район Строгино), пути к текстурам на диске автора убираются;
+* цвета фасада по ведомости отделки буклета (лист 11): в текстурах обеих моделей остались цвета
+  САГР 2022 года — RAL 7016 вместо RAL 7012 (нижний пояс, цоколь, двери, ворота, фасонные элементы)
+  и RAL 7038 вместо RAL 7035 (верхний пояс); RAL 7042 совпадает. Значения RGB — те же, что
+  в колористике буклета (листы 8–9), чтобы модель и буклет совпадали до пикселя;
 * архивы называются по маскам требований: SM_<адрес>.zip, SM_<адрес>_Ground.zip, 1010_<адрес>.zip.
-FBX ВПМ не меняются (файлы копируются как есть).
+Геометрия ВПМ не меняется: FBX копируются как есть, перекрашиваются только карты диффузного цвета.
 """
+import io
 import json
 import os
 import re
@@ -18,11 +23,31 @@ import zipfile
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'agr-shchelkovskoe-17a', 'tools'))
 import fbxio  # noqa: E402
+import numpy as np  # noqa: E402
+from PIL import Image  # noqa: E402
 
 ADDR = '77_10_0005004_1443'
 ADDRESS = 'Восточная коммунальная зона, пр. 4921'      # как в заявлении arh-20261013-405
 RAJON = 'Савёлки'
 SAGR = '466-5-22/С'                                     # действующее свидетельство от 21.07.2022
+# цвет в модели -> цвет по ведомости отделки (RGB как в колористике буклета)
+RECOLOR = [((56, 62, 66), (89, 97, 99), 'RAL 7016 -> RAL 7012'),
+           ((176, 176, 169), (203, 208, 204), 'RAL 7038 -> RAL 7035')]
+TOL = 3                                                 # разброс оттенка в запеченном атласе НПМ
+
+
+def recolor(im):
+    """Перекрасить пиксели палитры RECOLOR, сохранив их отклонение от основного цвета. -> (картинка, счет)."""
+    mode = im.mode
+    a = np.asarray(im.convert('RGBA')).astype(int)
+    rgb = a[..., :3]
+    n = {}
+    for src, dst, name in RECOLOR:
+        m = np.abs(rgb - np.array(src)).max(-1) <= TOL
+        rgb[m] = np.clip(rgb[m] - np.array(src) + np.array(dst), 0, 255)
+        n[name] = int(m.sum())
+    out = Image.fromarray(a.astype(np.uint8), 'RGBA')
+    return (out if mode == 'RGBA' else out.convert(mode)), n
 
 
 def fix_geojson(src, dst, building):
@@ -72,8 +97,8 @@ def neutral_paths(f, fname):
     return n
 
 
-def move_npm(path, out, place):
-    """place: {имя модели: (x, y)} — новые Lcl Translation по X, Y (Z без изменений)."""
+def move_npm(path, out, place, paint=False):
+    """place: {имя модели: (x, y)} — новые Lcl Translation по X, Y (Z без изменений); paint — перекрасить фасад."""
     f = fbxio.Fbx(path)
     done = set()
     for k in f.one('Objects').kids:
@@ -87,6 +112,14 @@ def move_npm(path, out, place):
                 c.props[5].set(float(y))
                 done.add(nm)
     assert done == set(place), (done, place)
+    for k in f.one('Objects').kids:            # встроенная карта диффузного цвета
+        if paint and k.name == 'Video' and '_d_' in k.props[1].value and k.find('Content'):
+            c = k.one('Content').props[0]
+            im, cnt = recolor(Image.open(io.BytesIO(bytes(c.value))))
+            b = io.BytesIO()
+            im.save(b, 'PNG', optimize=True)
+            c.set(b.getvalue())
+            print('НПМ', os.path.basename(out), k.props[1].value.split('\x00')[0], cnt)
     n = neutral_paths(f, os.path.basename(out))
     open(out, 'wb').write(f.dumps())
     return n
@@ -110,6 +143,10 @@ def main(vb, vg, npm, out):
         for name in os.listdir(src):
             if name.endswith('.geojson'):
                 pts[base] = fix_geojson(os.path.join(src, name), os.path.join(d, name), building)
+            elif building and '_Diffuse_' in name and name.endswith('.png'):
+                im, cnt = recolor(Image.open(os.path.join(src, name)))
+                im.save(os.path.join(d, name), 'PNG', optimize=True)
+                print('ВПМ', name, cnt)
             else:
                 shutil.copy2(os.path.join(src, name), os.path.join(d, name))
         zipdir(d, os.path.join(out, base + '.zip'))
@@ -119,7 +156,7 @@ def main(vb, vg, npm, out):
     bx, by = pts['SM_%s' % ADDR]
     gx, gy = pts['SM_%s_Ground' % ADDR]
     n1 = move_npm(os.path.join(npm, '1010_%s_01.fbx' % ADDR), os.path.join(d, '1010_%s_01.fbx' % ADDR),
-                  {'SM_%s_001_Main' % ADDR: (bx, by)})
+                  {'SM_%s_001_Main' % ADDR: (bx, by)}, paint=True)
     n2 = move_npm(os.path.join(npm, '1010_%s_Ground.fbx' % ADDR), os.path.join(d, '1010_%s_Ground.fbx' % ADDR),
                   {'SM_%s_%s' % (ADDR, s): (gx, gy) for s in ('Ground', 'GroundEl', 'Flora')})
     zipdir(d, os.path.join(out, '1010_%s.zip' % ADDR))
