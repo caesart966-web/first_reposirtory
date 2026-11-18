@@ -189,6 +189,24 @@ export const IMAGES = {
     height: 1080,
     position: '60% 45%',
   },
+  // 18.11.2026 — тоже исходники, которых на сайте больше нет
+  // (CREDITS.md, «Шапки статей 18.11.2026»).
+  articleDveSro: {
+    src: './img/article-dve-sro.webp',
+    srcAvif: './img/article-dve-sro.avif',
+    alt: 'Силуэты двух изыскателей на закате: прибор на штативе, чертёж и ноутбук',
+    width: 1320,
+    height: 538,
+    position: '62% 50%',
+  },
+  articleIsklyuchili: {
+    src: './img/article-isklyuchili.webp',
+    srcAvif: './img/article-isklyuchili.avif',
+    alt: 'Стопка папок с подшитыми документами',
+    width: 1240,
+    height: 1086,
+    position: '70% 50%',
+  },
   articleRegion: {
     src: './img/article-region.webp',
     srcAvif: './img/article-region.avif',

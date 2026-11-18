@@ -30,7 +30,7 @@
 import sys
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageFilter
 
 from monotone import monotone
 
@@ -42,6 +42,10 @@ WEBP_LIMIT_KB, AVIF_LIMIT_KB = 190, 120
 # Глобус весь в мелких подписях и не влезал в бюджет при общем качестве;
 # под плёнкой шапки разницы не видно.
 QUALITY = {"article-region": (66, 46)}
+# Мелкие исходники увеличиваются до этой ширины (Lanczos и лёгкая резкость):
+# браузер растягивал бы их сам и мягче. Нейросеть здесь не нужна — кадр
+# лежит под плёнкой шапки.
+UPSCALE = {"article-dve-sro": 1320}
 
 # (исходник, имя, обрезка в пикселях исходника (left, top, right, bottom) или None,
 #  отразить по горизонтали, уровни)
@@ -73,6 +77,15 @@ PHOTOS = [
     # чертежи — прежний кадр слайда проектировщиков (с 28.09.2026 там другой
     # план). Обрезан сверху до листа с планом.
     ("slide-design-src.jpg", "article-tehzakazchik", (0, 120, 960, 1200), False, (0.03, 0.95, 0.85)),
+    # 18.11.2026 — тоже исходники, которых на сайте нет.
+    # «Две СРО, если в договоре изыскания и проект»: силуэты двух изыскателей
+    # на закате — прибор на штативе, рулон чертежей, ноутбук; прежний слайд
+    # изыскателей (с 28.09.2026 там геодезист), 820×334 — увеличен (UPSCALE).
+    ("slide-survey-src.jpg", "article-dve-sro", None, False, (0.03, 0.92, 0.9)),
+    # «СРО исключили из реестра»: стопка папок с подшитыми документами
+    # (Beatriz Pérez Moya, Unsplash License — CREDITS.md, «documents»),
+    # правая часть с папками; белое на белом — уровни круче, как в 2026-08.
+    ("folders-src.jpg", "article-isklyuchili", (760, 0, 2000, 1086), False, (0.35, 0.98, 1.6)),
 ]
 
 
@@ -90,6 +103,10 @@ def main() -> None:
             img = img.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         if img.width > WIDTH:
             img = img.resize((WIDTH, round(img.height * WIDTH / img.width)), Image.LANCZOS)
+        if name in UPSCALE and img.width < UPSCALE[name]:
+            w = UPSCALE[name]
+            img = img.resize((w, round(img.height * w / img.width)), Image.LANCZOS)
+            img = img.filter(ImageFilter.UnsharpMask(radius=1.2, percent=60, threshold=2))
         img = monotone(img, *levels)
         webp, avif = OUT / f"{name}.webp", OUT / f"{name}.avif"
         webp_q, avif_q = QUALITY.get(name, (WEBP_QUALITY, AVIF_QUALITY))
