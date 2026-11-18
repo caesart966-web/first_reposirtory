@@ -507,7 +507,12 @@ for (const [width, height, need] of [[390, 780, 'all'], [360, 740, 'all'], [390,
     menu: getComputedStyle(document.getElementById('mobile-menu')).visibility,
     y: Math.round(scrollY),
   }))
-  check('телефон: «Связаться» из меню открывает панель связи, меню закрыто', m.sheet && m.menu === 'hidden' && m.y === 0, JSON.stringify(m))
+  // Прокрутка — до 4 px, а не ровно 0 (18.11.2026): после резких переходов
+  // вниз и обратно открытие меню в эмуляции телефона сдвигает страницу
+  // на 1–2 px — и без кликов Playwright, и с overflow-anchor: none, и на
+  // сборке v31. Проверка стережёт другое: панель не уводит к разделу
+  // «Связаться» (это больше 13 000 px вниз).
+  check('телефон: «Связаться» из меню открывает панель связи, меню закрыто', m.sheet && m.menu === 'hidden' && m.y <= 4, JSON.stringify(m))
   await ctx.close()
 }
 
