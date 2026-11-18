@@ -89,14 +89,26 @@ class Fbx:
                 break
             self.top.append(n)
         tail = b[pos:]
-        # подвал: 16 байт кода, выравнивание на 16, 4 нуля, версия, 120 нулей, 16 байт метки
+        # подвал: 16 байт кода, нули выравнивания, версия, 120 нулей, 16 байт метки.
+        # Число нулей у экспортёров разное: «std» — (16 - pos % 16) + 4 (файл кратен 16),
+        # «sdk» — дополнение pos до кратного 16, не меньше 4 байт (длина файла дает остаток 12).
         self.footer_id = tail[:16]
-        pad = 16 - pos % 16
-        want = self.footer_id + b'\0' * (pad + 4) + struct.pack('<I', self.version) + b'\0' * 120
-        assert tail[:len(want)] == want, 'подвал файла устроен иначе'
-        self.footer_magic = tail[len(want):]
+        z = len(tail) - 16 - 4 - 120 - 16
+        assert z >= 0 and tail[16:16 + z] == b'\0' * z, 'подвал файла устроен иначе'
+        assert tail[16 + z:20 + z] == struct.pack('<I', self.version) and tail[20 + z:140 + z] == b'\0' * 120, \
+            'подвал файла устроен иначе'
+        self.footer_magic = tail[140 + z:]
         assert len(self.footer_magic) == 16
+        self.footer_rule = next((r for r in ('std', 'sdk') if self._footer_zeros(r, pos) == z), None)
+        assert self.footer_rule, ('неизвестное выравнивание подвала', pos % 16, z)
         del self.b
+
+    @staticmethod
+    def _footer_zeros(rule, pos):
+        if rule == 'std':
+            return 16 - pos % 16 + 4
+        z = -pos % 16
+        return z + 16 if z < 4 else z
 
     def _node(self, pos):
         b = self.b
@@ -162,10 +174,8 @@ class Fbx:
             pos = self._write(n, out, pos)
         out.append(b'\0' * (self.hsz + 1))
         pos += self.hsz + 1
-        # случай pos % 16 == 0 в исходных файлах не встречался, собирать такой файл не будем
-        assert pos % 16, 'конец дерева попал на границу 16 байт'
-        pad = 16 - pos % 16
-        out.append(self.footer_id + b'\0' * (pad + 4) + struct.pack('<I', self.version)
+        z = self._footer_zeros(self.footer_rule, pos)
+        out.append(self.footer_id + b'\0' * z + struct.pack('<I', self.version)
                    + b'\0' * 120 + self.footer_magic)
         return b''.join(out)
 

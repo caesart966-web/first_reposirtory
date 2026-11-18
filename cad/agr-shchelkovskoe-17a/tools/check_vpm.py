@@ -48,8 +48,13 @@ def check(folder, base, kind):
                                        V[[q[2] for q in P]] - V[[q[0] for q in P]]), axis=1) / 2
         if (area < 1e-10).any():
             say(False, '%s: вырожденных треугольников %d' % (k, int((area < 1e-10).sum())))
-        nrm = np.array(g.one('LayerElementNormal').one('Normals').props[0].value).reshape(-1, 3)
-        if len(nrm) != 3 * len(P) or abs(np.linalg.norm(nrm, axis=1) - 1).max() > 1e-4:
+        ln = g.one('LayerElementNormal')
+        nrm = np.array(ln.one('Normals').props[0].value).reshape(-1, 3)
+        nn = len(nrm)
+        if ln.one('ReferenceInformationType').props[0].value == 'IndexToDirect':     # так пишет Blender
+            idx = np.array(ln.one('NormalsIndex').props[0].value)
+            nn = len(idx) if idx.size and idx.max() < len(nrm) and idx.min() >= 0 else -1
+        if nn != 3 * len(P) or abs(np.linalg.norm(nrm, axis=1) - 1).max() > 1e-4:
             say(False, '%s: нормали' % k)
         if g.find('LayerElementColor'):
             say(False, '%s: есть слой цвета вершин' % k)
@@ -131,7 +136,7 @@ def check(folder, base, kind):
     # geojson
     j = json.load(open(os.path.join(folder, base + '.geojson'), encoding='utf-8'))
     pr = j['features'][0]['properties']
-    say(pr['Наименование GeoJSON-файла'] == base, 'geojson: имя файла внутри совпадает')
+    say(pr.get('Наименование GeoJSON-файла') == base, 'geojson: имя файла внутри совпадает')
     print('  geojson:', {k: v for k, v in pr.items() if k != 'imageBase64' and v != ''}, j['features'][0]['geometry']['coordinates'])
     return ok
 
