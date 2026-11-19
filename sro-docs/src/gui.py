@@ -28,6 +28,7 @@ if __package__ in (None, ""):  # запуск как «python src/gui.py»
 from . import app_logging  # noqa: E402
 from .company_parser import parse_card, parse_text  # noqa: E402
 from .context_builder import OBJECT_KINDS, build_context  # noqa: E402
+from .keyboard import clipboard_action  # noqa: E402
 from .document_generator import (GeneratorError, Project, check_readiness,  # noqa: E402
                                  generate_many)
 from .models import (APPLICANT_KINDS, COMPANY, DOC_PARAM_FIELDS,  # noqa: E402
@@ -424,6 +425,23 @@ class SroParamsWizard(tk.Toplevel):
         self.destroy()
 
 
+def enable_clipboard_in_any_layout(root: tk.Misc) -> None:
+    """Ctrl+C, Ctrl+V, Ctrl+X и Ctrl+A при ЛЮБОЙ раскладке клавиатуры.
+
+    Почему без этого не работает — в src/keyboard.py. Здесь только привязка:
+    решение принимает clipboard_action, чтобы его можно было проверить
+    тестом без графики.
+    """
+    def on_control_key(event):
+        action = clipboard_action(event.keycode, event.keysym)
+        if action is None:
+            return None
+        event.widget.event_generate(action)
+        return "break"
+
+    root.bind_all("<Control-KeyPress>", on_control_key, add="+")
+
+
 class Application(tk.Frame):
     def __init__(self, master: tk.Tk, project: Project) -> None:
         super().__init__(master)
@@ -438,6 +456,7 @@ class Application(tk.Frame):
         self.entries: dict[str, ttk.Entry] = {}
 
         self.pack(fill=BOTH, expand=True)
+        enable_clipboard_in_any_layout(master)
         self._build()
         self._show_sro()
         self._show_applicant_kind()

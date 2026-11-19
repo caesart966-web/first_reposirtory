@@ -2126,5 +2126,55 @@ class TestOrs(unittest.TestCase):
         self.assertTrue(checked, "не нашлось бланка с позициями табуляции")
 
 
+# --------------------------------------------------- сочетания клавиш
+class TestKeyboard(unittest.TestCase):
+    """Ctrl+C и Ctrl+V должны работать при русской раскладке.
+
+    Tkinter узнаёт сочетание по символу: при английской раскладке клавиша
+    даёт «c», при русской — «с» кириллическую, и сочетание не срабатывает.
+    Людям приходилось переключаться на английский, чтобы вставить реквизиты.
+    Опознаём по коду клавиши — он одинаков в любой раскладке.
+    """
+
+    def test_russian_layout_copies_and_pastes(self):
+        from src.keyboard import clipboard_action
+
+        # Коды клавиш те же, символы — кириллические.
+        self.assertEqual(clipboard_action(67, "Cyrillic_es"), "<<Copy>>")
+        self.assertEqual(clipboard_action(86, "Cyrillic_em"), "<<Paste>>")
+        self.assertEqual(clipboard_action(88, "Cyrillic_che"), "<<Cut>>")
+        self.assertEqual(clipboard_action(65, "Cyrillic_ef"), "<<SelectAll>>")
+
+    def test_english_layout_is_left_to_tkinter(self):
+        """При английской раскладке вмешиваться НЕЛЬЗЯ.
+
+        Tkinter там срабатывает сам, и если продублировать действие,
+        текст вставится дважды.
+        """
+        from src.keyboard import clipboard_action
+
+        for keycode, keysym in ((67, "c"), (86, "v"), (88, "x"), (65, "a")):
+            with self.subTest(keysym=keysym):
+                self.assertIsNone(clipboard_action(keycode, keysym))
+        # Заглавные (с Shift) — тоже забота Tkinter.
+        self.assertIsNone(clipboard_action(67, "C"))
+
+    def test_other_keys_are_not_touched(self):
+        from src.keyboard import clipboard_action
+
+        self.assertIsNone(clipboard_action(83, "Cyrillic_yeru"))   # Ctrl+S
+        self.assertIsNone(clipboard_action(90, "Cyrillic_ya"))     # Ctrl+Z
+
+    def test_missing_keysym_still_copies(self):
+        """Символа нет — верим коду клавиши.
+
+        Раз символа нет, то и у Tkinter его не было: его собственное
+        сочетание не могло сработать, и действие не продублируется.
+        """
+        from src.keyboard import clipboard_action
+
+        self.assertEqual(clipboard_action(67, ""), "<<Copy>>")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
