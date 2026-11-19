@@ -284,25 +284,6 @@ def build_context(company: CompanyData, attorney: dict[str, str],
         morphology.basis_genitive(company.director_basis),
         "Основание полномочий в родительном падеже («на основании …»)", result)
 
-    # ------------------------------------------- доверитель в доверенности
-    # Бланк «Перспективы» написан под юридическое лицо: «Общество с
-    # ограниченной ответственностью … (далее – Общество) … в лице
-    # Генерального директора …, действующего на основании Устава».
-    # У предпринимателя нет ни директора, ни Устава, и называть его
-    # «Обществом» нельзя, поэтому обороты собираются здесь, а не в бланке.
-    if company.is_entrepreneur:
-        values["principal_word"] = "Доверитель"
-        values["principal_word_genitive"] = "Доверителя"
-        values["acting_clause"] = (
-            f"действующий на основании {values['director_basis_genitive']}, ")
-    else:
-        values["principal_word"] = "Общество"
-        values["principal_word_genitive"] = "Общества"
-        values["acting_clause"] = (
-            f"в лице {values['director_position_genitive']} – "
-            f"{values['director_full_name_genitive']}, действующего(ей) "
-            f"на основании {values['director_basis_genitive']}, ")
-
     # ---------------------------------------------------------- дата документа
     doc_date = _parse_date(company.doc_date) or (today or date.today())
     values["doc_day"] = f"{doc_date.day:02d}"

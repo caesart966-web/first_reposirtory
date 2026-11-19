@@ -2126,6 +2126,48 @@ class TestOrs(unittest.TestCase):
         self.assertTrue(checked, "не нашлось бланка с позициями табуляции")
 
 
+# ------------------------------------------- бланк под тип заявителя
+class TestDocumentForApplicantKind(unittest.TestCase):
+    """У СРО заявление бывает напечатано порознь для юрлица и для ИП.
+
+    Подставить одно вместо другого нельзя: у юрлица ОГРН и юридический
+    адрес, у предпринимателя ОГРНИП и место жительства. За выбор отвечает
+    поле only_for в описании документа. Сейчас ни одна настроенная СРО его
+    не использует, поэтому возможность проверяется здесь — иначе она тихо
+    сломается к тому дню, когда понадобится.
+    """
+
+    def _spec(self, only_for):
+        from src.sro_registry import DocumentSpec
+
+        return DocumentSpec(id="application", title="Заявление",
+                            template="01.docx", output_name="01.docx",
+                            only_for=only_for)
+
+    def test_blank_without_only_for_suits_everyone(self):
+        spec = self._spec(None)
+        self.assertTrue(spec.suits(entrepreneur=True))
+        self.assertTrue(spec.suits(entrepreneur=False))
+
+    def test_blank_is_taken_by_applicant_kind(self):
+        company = self._spec("company")
+        self.assertTrue(company.suits(entrepreneur=False))
+        self.assertFalse(company.suits(entrepreneur=True))
+
+        entrepreneur = self._spec("entrepreneur")
+        self.assertTrue(entrepreneur.suits(entrepreneur=True))
+        self.assertFalse(entrepreneur.suits(entrepreneur=False))
+
+    def test_all_blanks_are_returned_without_applicant(self):
+        """Без заявителя возвращаются ВСЕ бланки — так проверяют настройки."""
+        project = Project(ROOT)
+        for profile in project.all_sro:
+            with self.subTest(sro=profile.key):
+                self.assertEqual(
+                    profile.enabled_documents(),
+                    [d for d in profile.documents if d.enabled])
+
+
 # --------------------------------------------------- сочетания клавиш
 class TestKeyboard(unittest.TestCase):
     """Ctrl+C и Ctrl+V должны работать при русской раскладке.
