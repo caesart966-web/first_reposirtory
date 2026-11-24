@@ -207,6 +207,25 @@ export const IMAGES = {
     height: 1086,
     position: '70% 50%',
   },
+  // 24.11.2026 — куски кадров, которые целиком стоят на других страницах
+  // (CREDITS.md, «Шапки статей 24.11.2026»): каска с уровнем — из кадра
+  // «Вступления в СРО», план с размерами — из кадра проектировщиков.
+  articlePozharka: {
+    src: './img/article-pozharka.webp',
+    srcAvif: './img/article-pozharka.avif',
+    alt: 'Строительная каска и уровень на бетонном полу',
+    width: 1600,
+    height: 750,
+    position: '60% 50%',
+  },
+  articleRabochaya: {
+    src: './img/article-rabochaya.webp',
+    srcAvif: './img/article-rabochaya.avif',
+    alt: 'План этажа с размерными линиями крупным планом',
+    width: 1200,
+    height: 860,
+    position: '55% 45%',
+  },
   articleRegion: {
     src: './img/article-region.webp',
     srcAvif: './img/article-region.avif',
