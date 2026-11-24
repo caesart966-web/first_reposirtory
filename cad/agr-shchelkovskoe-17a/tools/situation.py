@@ -1,6 +1,6 @@
 """Схема организации движения транспорта и пешеходов, М 1:2000 (PNG для буклета и DXF).
 
-    python3 situation.py <near.osm> <areas.json> <куда.png> <куда.dxf>
+    python3 situation.py <near.osm> <areas.json> <куда.png> <куда.dxf> [<грузовой.png>]
 
 Участок и здание — из модели, окружение — из открытой векторной основы, совмещённой
 с генпланом авторов проекта. Чертёж ориентирован на север, координаты — как в модели.
@@ -33,6 +33,10 @@ plt.rcParams['font.family'] = 'Montserrat'
 FIRE, TRUCK, CAR, WALK, NAVY, ORANGE = '#E3000F', '#7B2D8E', '#0070C0', '#00963F', '#0000C8', '#F58220'
 WIDTH = {'primary': 11.0, 'tertiary': 9.0, 'tertiary_link': 5.0, 'service': 5.5}
 RED_N, RED_S = -3.08, -111.8            # красные линии Щёлковского шоссе в местных координатах (v)
+# приобъектная парковка (как в scheme_booklet.py): 3 м/м, в т. ч. для МГН 6,0 × 3,6 м и с зарядной станцией
+PARK_V0 = -8.3
+PARKING = [('mgn', 8.4, 14.4, -4.7), ('std', 14.8, 20.8, -5.8), ('ev', 21.2, 27.2, -5.8)]
+GATE = (47.2, 21.6)                     # ворота во двор
 
 
 def build(osm_path, areas_path):
@@ -89,10 +93,17 @@ def routes():
                  (lane - 2.6, 32.3), (-62.0, 32.5)],
         'walk1': [(138.7, -47.0), (70.0, -31.9), (61.0, -9.6), (58.5, -1.5), (9.0, -1.5), (6.4, 0.6)],
         'walk2': [(-17.9, -39.0), (-17.9, -30.0), (-12.0, -8.0), (2.0, -1.5), (4.6, 0.9)],
+        # грузовой транспорт целиком: с дублёра через существующий въезд, по проезду вдоль главного фасада
+        # и восточнее дома 17 к воротам двора; выезд тем же путём на дублёр
+        'truck_in': [(60.0, -40.9), (-28.0, -41.6), (-30.8, -38.5), (-30.9, -9.5), (-28.0, -4.0), (53.1, -4.0),
+                     (55.6, -1.5), (55.6, 19.1), (53.1, 21.6), (31.0, 22.2)],
+        'truck_out': [(31.0, 23.6), (53.6, 23.0), (57.0, 19.6), (57.0, -2.1), (53.7, -5.4), (-27.4, -5.4),
+                      (-29.5, -9.5), (-29.6, -36.5), (-31.4, -38.0), (-34.5, -42.0), (-75.0, -42.4)],
     }
 
 
-def draw(g, out_png, half_w=250.0, half_h=165.0, centre=(22.0, -18.0), scale=2000, dpi=300):
+def draw(g, out_png, half_w=250.0, half_h=165.0, centre=(22.0, -18.0), scale=2000, dpi=300, mode='odd'):
+    """mode: 'odd' — организация движения транспорта и пешеходов, 'truck' — обслуживание грузовым транспортом."""
     c = frame.l2w([centre])[0]
     x0, x1, y0, y1 = c[0] - half_w, c[0] + half_w, c[1] - half_h, c[1] + half_h
     win = box(x0, y0, x1, y1)
@@ -164,12 +175,27 @@ def draw(g, out_png, half_w=250.0, half_h=165.0, centre=(22.0, -18.0), scale=200
             ax.add_patch(MPoly([cc + d * L * 0.55, cc - d * L * 0.45 + n * Wd, cc - d * L * 0.45 - n * Wd],
                                closed=True, fc=color, ec='white', lw=0.3, zorder=z + 1))
 
-    route('car', CAR, 1.3, heads=(0.2, 0.5, (0.58, -1), 0.85))
-    route('car_out', CAR, 1.3, heads=(0.8,))
-    route('truck', TRUCK, 1.5, heads=(0.3, (0.36, -1), 0.72, 0.95))
-    route('fire', FIRE, 1.5, heads=(0.25, 0.52, 0.9))
-    route('walk1', WALK, 1.1, dash=(0.5, 1.8), heads=(0.5, 0.97))
-    route('walk2', WALK, 1.1, dash=(0.5, 1.8), heads=(0.96,))
+    if mode == 'odd':
+        route('car', CAR, 1.3, heads=(0.2, 0.5, (0.58, -1), 0.85))
+        route('car_out', CAR, 1.3, heads=(0.8,))
+        route('truck', TRUCK, 1.5, heads=(0.3, (0.36, -1), 0.72, 0.95))
+        route('fire', FIRE, 1.5, heads=(0.25, 0.52, 0.9))
+        route('walk1', WALK, 1.1, dash=(0.5, 1.8), heads=(0.5, 0.97))
+        route('walk2', WALK, 1.1, dash=(0.5, 1.8), heads=(0.96,))
+        # приобъектная парковка
+        for kind, u0, u1, vtop in PARKING:
+            q = frame.l2w([(u0, PARK_V0), (u1, PARK_V0), (u1, vtop), (u0, vtop)])
+            ax.add_patch(MPoly(q, closed=True, fc='white', ec=CAR, lw=0.7, zorder=10))
+            cc = q.mean(axis=0)
+            sym = {'mgn': '\u267F', 'ev': '\u26A1', 'std': 'P'}[kind]
+            ax.text(cc[0], cc[1], sym, fontsize=4.2 if kind == 'std' else 4.6, color=CAR, ha='center', va='center',
+                    rotation=25.2, fontweight='bold', zorder=11, family='DejaVu Sans' if kind != 'std' else None)
+    else:
+        route('truck_in', TRUCK, 1.6, heads=(0.12, 0.3, 0.55, 0.78, 0.97))
+        route('truck_out', TRUCK, 1.6, dash=(3.0, 1.2), heads=(0.08, 0.35, 0.62, 0.86, 0.98))
+        gx, gy = frame.l2w([GATE])[0]
+        ax.add_patch(plt.Circle((gx, gy), 2.4, fc='white', ec=TRUCK, lw=0.8, zorder=12))
+        ax.text(gx, gy, 'В', fontsize=3.6, color=TRUCK, ha='center', va='center', fontweight='bold', zorder=13)
 
     # направления движения на шоссе и дублёре — по направлению осей в основе
     flow = []
@@ -208,6 +234,11 @@ def draw(g, out_png, half_w=250.0, half_h=165.0, centre=(22.0, -18.0), scale=200
                 bbox=dict(boxstyle='round,pad=0.2', fc='white', ec='#555', lw=0.4, alpha=0.95),
                 arrowprops=dict(arrowstyle='-|>', lw=0.6, color='#333', shrinkA=1, shrinkB=0, mutation_scale=6))
     lab((14.0, 14.0), 'магазин', 4.6, color='#3a1500', bx=False, weight='semibold', rot=25.2)
+    if mode == 'truck':
+        lab((35.5, 26.0), 'двор, зона загрузки', 3.6, color=TRUCK, weight='semibold', rot=25.2, bx=False)
+        lab((61.5, 22.0), 'проезд между домами 17 и 19', 3.8, color=TRUCK, ha='left', rot=25.2)
+    else:
+        lab((17.8, -13.2), 'приобъектная парковка, 3 м/м', 3.8, color=CAR, rot=25.2)
     lab((86.0, 2.2), 'красная линия', 4.0, color='#D8262C', rot=25.2, bx=False)
     lab((86.0, -116.5), 'красная линия', 4.0, color='#D8262C', rot=25.2, bx=False)
     for xy, name in g['stops']:
@@ -253,7 +284,7 @@ def dxf(g, out_dxf):
     layers = {'Граница участка': 5, 'Объект реконструкции': 30, 'Опорная застройка': 8, 'Проезжая часть, оси': 9,
               'Пешеходные дорожки': 8, 'Красные линии': 1, 'Движение легкового транспорта': 5,
               'Движение грузового транспорта': 6, 'Движение пожарной техники': 1, 'Движение пешеходов': 3,
-              'Остановки и переходы': 2, 'Подписи': 7}
+              'Остановки и переходы': 2, 'Приобъектная парковка': 5, 'Подписи': 7}
     for name, col in layers.items():
         doc.layers.add(name, color=col)
 
@@ -281,6 +312,11 @@ def dxf(g, out_dxf):
                        ('fire', 'Движение пожарной техники'), ('walk1', 'Движение пешеходов'),
                        ('walk2', 'Движение пешеходов')):
         pl(frame.l2w(R[key]), layer)
+    for kind, u0, u1, vtop in PARKING:
+        pl(frame.l2w([(u0, PARK_V0), (u1, PARK_V0), (u1, vtop), (u0, vtop)]), 'Приобъектная парковка', True)
+        cc = frame.l2w([((u0 + u1) / 2, (PARK_V0 + vtop) / 2)])[0]
+        msp.add_text({'mgn': 'МГН', 'ev': 'ЭЗС', 'std': 'P'}[kind], height=1.2,
+                     dxfattribs={'layer': 'Подписи', 'style': 'TXT'}).set_placement((float(cc[0]), float(cc[1])))
     for xy, name in g['stops']:
         msp.add_circle((float(xy[0]), float(xy[1])), 3.0, dxfattribs={'layer': 'Остановки и переходы'})
         msp.add_text('ост. «%s»' % name, height=2.5, dxfattribs={'layer': 'Подписи', 'style': 'TXT'}).set_placement(
@@ -295,6 +331,8 @@ if __name__ == '__main__':
     draw(G, sys.argv[3])
     if len(sys.argv) > 4:
         dxf(G, sys.argv[4])
+    if len(sys.argv) > 5:
+        draw(G, sys.argv[5], mode='truck')
     print('готово')
 
 
