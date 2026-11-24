@@ -1,6 +1,7 @@
 """Примитивы листа А3 по шаблону буклета АГР (координаты в пунктах, начало — левый верхний угол)."""
 import hashlib
 import os
+import sys
 import re
 
 from PIL import Image
@@ -10,6 +11,8 @@ from pptx.enum.shapes import MSO_CONNECTOR, MSO_SHAPE
 from pptx.enum.text import MSO_ANCHOR, PP_ALIGN
 from pptx.oxml.ns import qn
 from pptx.util import Emu
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+import clean_meta  # noqa: E402
 
 Image.MAX_IMAGE_PIXELS = None
 W_PT, H_PT = 1190.52, 841.92
@@ -62,6 +65,7 @@ class Deck:
 
     def save(self, path):
         self.prs.save(path)
+        clean_meta.clean(path)
 
 
 class Slide:

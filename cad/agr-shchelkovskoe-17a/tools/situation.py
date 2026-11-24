@@ -22,6 +22,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import frame      # noqa: E402
 import osm_base   # noqa: E402
+import clean_meta   # noqa: E402
 
 SHIFT = np.array([-9.3, -2.5])          # совмещение основы с генпланом авторов проекта
 for f in ('Montserrat-Regular.ttf', 'Montserrat-Medium.ttf', 'Montserrat-SemiBold.ttf', 'Montserrat-Bold.ttf'):
@@ -323,7 +324,7 @@ def dxf(g, out_dxf):
             (float(xy[0]) + 5, float(xy[1]) + 4))
     for xy in g['cross'] + g['signals']:
         msp.add_point((float(xy[0]), float(xy[1])), dxfattribs={'layer': 'Остановки и переходы'})
-    doc.saveas(out_dxf)
+    clean_meta.save_dxf(doc, out_dxf)
 
 
 if __name__ == '__main__':

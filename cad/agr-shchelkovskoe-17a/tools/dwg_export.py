@@ -25,6 +25,7 @@ from shapely.ops import unary_union
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+import clean_meta  # noqa: E402
 import frame          # noqa: E402
 import ifc_geom       # noqa: E402
 import sections_ifc as SI  # noqa: E402
@@ -262,7 +263,7 @@ def plan(ar_path, areas_path, out_dxf):
          TextEntityAlignment.BOTTOM_LEFT)
     text(msp, 'spp2 — СПП в ГНС %.2f м²; s3 — ННП отдельно стоящего нежилого здания %.2f м²'
          % (spp.area, nnp.area), (U0, V1 + 2.4), 0.3, 'АР_Надписи', TextEntityAlignment.BOTTOM_LEFT)
-    doc.saveas(out_dxf)
+    clean_meta.save_dxf(doc, out_dxf)
     return dict(spp=spp.area, nnp=nnp.area, inner=inner.area, parts=[p.area for p in parts], rooms=rooms,
                 names=list(A['parts'].keys()))
 
@@ -435,7 +436,7 @@ def sections_facades(ar_path, bio_path, out_dxf):
         level_mark(msp, xr, roof + oy, round(roof, 3), 'right', 'Отметки')
         text(msp, title, (ox + (x0 + x1) / 2, oy + zmax + 1.6), 0.5, 'Надписи')
         info[title] = (round(x1 - x0, 2), round(zmax, 3))
-    doc.saveas(out_dxf)
+    clean_meta.save_dxf(doc, out_dxf)
     return info
 
 
@@ -554,7 +555,7 @@ def spozu(osm_path, areas_path, ar_path, out_dxf):
     text(msp, 'проезд пожарной техники', W([(lane_c - 3.5, 12.0)])[0], 0.9, 'Подписи', rot=ROT + 90)
     text(msp, 'ворота', W([(SB.GATE[0], SB.GATE[1] - 3.0)])[0], 0.9, 'Подписи', rot=ROT)
     text(msp, 'Щёлковское шоссе (дублёр)', W([(30.0, -20.0)])[0], 2.0, 'Подписи', rot=ROT)
-    doc.saveas(out_dxf)
+    clean_meta.save_dxf(doc, out_dxf)
     return dict(site=site.area, building=fp_world.area, pave=pave.area)
 
 
@@ -618,6 +619,7 @@ def xlsx(info, out_xlsx):
     ws2.column_dimensions['B'].width = 60
     ws2.column_dimensions['C'].width = 14
     wb.save(out_xlsx)
+    clean_meta.clean(out_xlsx)
 
 
 def main(ar, bio, osm, outdir):

@@ -4,6 +4,8 @@
 """
 import sys
 
+import clean_meta  # noqa: E402
+
 from docx import Document
 from docx.enum.section import WD_ORIENT
 from docx.enum.table import WD_TABLE_ALIGNMENT
@@ -201,6 +203,7 @@ def main(out):
     para(doc, '', space_after=14)
     para(doc, 'Главный архитектор проекта  ____________________  /В. Н. Губань/', space_after=0)
     doc.save(out)
+    clean_meta.clean(out)
 
 
 if __name__ == '__main__':
