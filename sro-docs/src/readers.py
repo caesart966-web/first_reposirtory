@@ -29,6 +29,9 @@ class CardContent:
     text: str = ""
     pairs: list[tuple[str, str]] = field(default_factory=list)
     source: str = ""
+    #: Содержимое снято распознаванием со скана, а не прочитано из файла.
+    #: Распознанные ЦИФРЫ достоверными считать нельзя — их сверяет человек.
+    from_scan: bool = False
 
     def merged_text(self) -> str:
         """Текст + пары в виде «подпись: значение» — так парсеру удобнее."""
@@ -141,45 +144,56 @@ def read_pdf(path: Path) -> CardContent:
         ) from exc
 
     text = "\n".join(chunks).strip()
-    if not text:
+    if text:
+        return CardContent(text, [], path.name)
+
+    # Текста нет вовсе — значит, внутри картинка: карточку отсканировали.
+    # Пробуем распознать. Если распознавание не настроено, объясняем, что
+    # поставить, и предлагаем прежний путь — вставить реквизиты текстом.
+    return _recognize_scan(
+        path,
+        f"В PDF «{path.name}» не найдено ни одной строки текста: "
+        f"это скан (картинка)."
+    )
+
+
+def _recognize_scan(path: Path, what: str) -> CardContent:
+    """Распознать скан карточки. Общее для PDF-сканов и картинок."""
+    from .ocr import OcrUnavailable, recognize
+
+    try:
+        found = recognize(path)
+    except OcrUnavailable as exc:
         raise ReadError(
-            f"В PDF «{path.name}» не найдено ни одной строки текста. "
-            f"Скорее всего, это скан (картинка). Скопируйте реквизиты вручную "
+            f"{what}\n\n"
+            f"Чтобы программа читала сканы, на компьютере должна быть "
+            f"установлена бесплатная программа Tesseract OCR с русским языком "
+            f"— как её поставить, написано в ИНСТРУКЦИЯ.md.\n\n"
+            f"Без неё: откройте скан, скопируйте реквизиты и вставьте их "
+            f"во вкладку «Вставить текст».\n\n"
+            f"Техническая причина: {exc}"
+        ) from exc
+
+    if not found.pairs and not found.text.strip():
+        raise ReadError(
+            f"{what}\n\n"
+            f"Распознать текст не удалось — скан слишком бледный или кривой. "
+            f"Попробуйте отсканировать заново или вставьте реквизиты "
             f"во вкладку «Вставить текст»."
         )
-    return CardContent(text, [], path.name)
+    return CardContent(found.text, found.pairs, path.name, from_scan=True)
 
 
 # ---------------------------------------------------------------- изображение
 def read_image(path: Path) -> CardContent:
-    """Распознавание текста с картинки. Требует локально установленный Tesseract."""
-    try:
-        import pytesseract
-        from PIL import Image
-    except ImportError as exc:
-        raise ReadError(
-            "Распознавание текста с изображений не настроено.\n\n"
-            "Что делать: откройте картинку, скопируйте реквизиты и вставьте их "
-            "во вкладку «Вставить текст» — это быстрее и надёжнее.\n\n"
-            "Если распознавание нужно постоянно, установите программу Tesseract OCR "
-            "и библиотеки: pip install pytesseract pillow"
-        ) from exc
+    """Распознавание карточки со снимка или скана-картинки.
 
-    try:
-        text = pytesseract.image_to_string(Image.open(str(path)), lang="rus+eng")
-    except Exception as exc:
-        raise ReadError(
-            f"Не удалось распознать текст на изображении «{path.name}». "
-            f"Проверьте, что установлена программа Tesseract OCR с русским языком. "
-            f"Техническая причина: {exc}"
-        ) from exc
-
-    if not text.strip():
-        raise ReadError(
-            f"На изображении «{path.name}» текст не распознан. "
-            f"Попробуйте более чёткий снимок или вставьте реквизиты текстом."
-        )
-    return CardContent(text, [], path.name)
+    Идёт тем же путём, что и PDF-скан: карточка — таблица из двух колонок,
+    и её разметку надо восстановить, иначе подпись поля слипается
+    со значением и разобрать содержимое нельзя.
+    """
+    return _recognize_scan(
+        path, f"Файл «{path.name}» — картинка, текста в нём нет.")
 
 
 # ---------------------------------------------------------------- текст

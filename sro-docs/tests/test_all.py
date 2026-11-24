@@ -2194,6 +2194,101 @@ class TestDocumentForApplicantKind(unittest.TestCase):
                     [d for d in profile.documents if d.enabled])
 
 
+# ------------------------------------------------- карточка со скана
+def _word(text, left, top, width=60, height=20):
+    return {"text": text, "left": left, "top": top,
+            "width": width, "height": height}
+
+
+class TestScanLayout(unittest.TestCase):
+    """Карточка со скана: две колонки надо восстановить по координатам.
+
+    Распознавание отдаёт текст строками во всю ширину, и подпись поля
+    слипается со значением: «Юридический адрес (с почтовым 191023, г. Санкт-
+    Петербург…». Разобрать такое нельзя, поэтому колонки собираются заново
+    по тому, где стоит каждое слово. Проверки идут на готовых координатах,
+    поэтому не требуют ни Tesseract, ни графики.
+    """
+
+    def test_words_group_into_rows(self):
+        from src.ocr import _rows
+
+        rows = _rows([
+            _word("ИНН", 100, 10), _word("7838037322", 900, 12),
+            _word("КПП", 100, 60), _word("784001001", 900, 61),
+        ])
+        self.assertEqual(len(rows), 2)
+        self.assertEqual([w["text"] for w in rows[0]], ["ИНН", "7838037322"])
+        self.assertEqual([w["text"] for w in rows[1]], ["КПП", "784001001"])
+
+    def test_column_edge_is_one_for_whole_page(self):
+        """Граница колонок ищется на всю страницу, а не в каждой строке.
+
+        Иначе строка переноса, где подпись пустая, делится по случайному
+        просвету и значение уезжает в колонку подписей.
+        """
+        from src.ocr import _column_edge, _rows
+
+        rows = _rows([
+            _word("ИНН", 100, 10), _word("7838037322", 900, 10),
+            _word("КПП", 100, 60), _word("784001001", 900, 60),
+            _word("БИК", 100, 110), _word("044030790", 900, 110),
+        ])
+        edge = _column_edge(rows, width=2000)
+        self.assertIsNotNone(edge)
+        self.assertGreater(edge, 160)     # правее подписей
+        self.assertLessEqual(edge, 900)   # не правее значений
+
+    def test_wrapped_value_joins_previous_row(self):
+        """Строка без подписи — продолжение значения, а не новое поле."""
+        from src.ocr import _pairs_from_rows, _rows
+
+        rows = _rows([
+            _word("Адрес", 100, 10), _word("191023, г. Санкт-Петербург,", 900, 10),
+            _word("реки Фонтанки дом 59", 900, 60),
+        ])
+        pairs, loose = _pairs_from_rows(rows, edge=500)
+        self.assertEqual(len(pairs), 1)
+        self.assertEqual(pairs[0][0], "Адрес")
+        self.assertIn("Санкт-Петербург", pairs[0][1])
+        self.assertIn("Фонтанки", pairs[0][1])
+        self.assertEqual(loose, [])
+
+    def test_wrapped_label_joins_previous_row(self):
+        """«Юридический адрес (с почтовым» / «индексом)» — одна подпись.
+
+        Продолжение подписи узнаётся по строчной букве в начале: новое поле
+        карточки с маленькой буквы не начинается.
+        """
+        from src.ocr import _pairs_from_rows, _rows
+
+        rows = _rows([
+            _word("Юридический адрес (с почтовым", 100, 10),
+            _word("191023, г. Санкт-Петербург,", 900, 10),
+            _word("индексом)", 100, 60),
+            _word("Набережная реки Фонтанки", 900, 60),
+        ])
+        pairs, _loose = _pairs_from_rows(rows, edge=500)
+        self.assertEqual(len(pairs), 1)
+        self.assertEqual(pairs[0][0], "Юридический адрес (с почтовым индексом)")
+        self.assertIn("Набережная", pairs[0][1])
+
+    def test_scan_result_is_marked_for_checking(self):
+        """Снятое со скана помечается: цифры распознаются ненадёжно."""
+        from src.readers import CardContent
+
+        parsed = parse_card(CardContent(
+            "", [("ИНН", "7838037322"), ("Полное название", "ООО «Ромашка»")],
+            "скан.pdf", from_scan=True))
+        self.assertTrue(
+            any("РАСПОЗНАНЫ со скана" in note for note in parsed.notes),
+            "о распознавании надо предупредить: цифры сверяет человек")
+
+        # Прочитанный, а не распознанный файл такого примечания не несёт.
+        plain = parse_card(CardContent("ИНН: 7838037322", [], "карточка.docx"))
+        self.assertFalse(any("РАСПОЗНАНЫ" in note for note in plain.notes))
+
+
 # --------------------------------------------------- сочетания клавиш
 class TestKeyboard(unittest.TestCase):
     """Ctrl+C и Ctrl+V должны работать при русской раскладке.

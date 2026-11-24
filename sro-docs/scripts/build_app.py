@@ -42,7 +42,8 @@ COLLECT_ALL = ["tkinterdnd2"]
 # Модули Word (COM) — через них программа пересохраняет старые .doc в .docx
 # и делает PDF. Импортируются лениво, внутри функций, поэтому сборщику
 # их нужно назвать явно. На не-Windows их просто нет — тогда пропускаем.
-HIDDEN_IMPORTS = ["win32com", "win32com.client", "pythoncom"]
+HIDDEN_IMPORTS = ["win32com", "win32com.client", "pythoncom",
+                  "pymupdf", "pytesseract", "PIL.Image"]
 
 
 def say(text: str = "") -> None:
