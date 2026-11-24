@@ -88,7 +88,7 @@ def draw_row(els, vmax, vmin, out_png, title=None):
         fc, ec = COL[k]
         if k == 'building':
             ax.add_patch(Rectangle((x0, ground), x1 - x0, 5.8, fc=fc, ec=ec, lw=0.6, zorder=3))
-            ax.text((x0 + x1) / 2, 2.9, t, rotation=90, fontsize=5, ha='center', va='center', color='#3a1500')
+            ax.text((x0 + x1) / 2, 2.9, t, rotation=90, fontsize=6.5, ha='center', va='center', color='#3a1500')
             continue
         h = THICK[k]
         top = ground + h
@@ -115,7 +115,7 @@ def draw_row(els, vmax, vmin, out_png, title=None):
                     zorder=5)
         # подпись над элементом и размер под ним
         if x1 - x0 > 1.2:
-            ax.text((x0 + x1) / 2, 7.4 if k != 'green' else 7.9, t, fontsize=4.6, ha='center', va='bottom',
+            ax.text((x0 + x1) / 2, 7.4 if k != 'green' else 7.9, t, fontsize=6.0, ha='center', va='bottom',
                     rotation=90 if (x1 - x0) < 6 else 0, color='#222', zorder=6,
                     wrap=True)
         ax.plot([x0, x0], [-0.5, -3.2], color='#333', lw=0.3)
@@ -123,13 +123,13 @@ def draw_row(els, vmax, vmin, out_png, title=None):
         ax.annotate('', xy=(x0, -2.8), xytext=(x1, -2.8),
                     arrowprops=dict(arrowstyle='<|-|>', lw=0.35, color='#333', mutation_scale=3, shrinkA=0,
                                     shrinkB=0))
-        ax.text((x0 + x1) / 2, -2.45, ('%.1f' % (a - b)).replace('.', ','), fontsize=4.6, ha='center',
+        ax.text((x0 + x1) / 2, -2.45, ('%.1f' % (a - b)).replace('.', ','), fontsize=6.0, ha='center',
                 va='bottom', zorder=6)
     for v, nm in ((RED_N, 'красная линия'), (RED_S, 'красная линия')):
         if vmin <= v <= vmax:
             x = X(v)
             ax.plot([x, x], [-4.2, 10.8], color='#D8262C', lw=0.8, dashes=(5, 2), zorder=7)
-            ax.text(x + 0.3, 10.6, nm, fontsize=4.6, color='#D8262C', rotation=90, ha='left', va='top', zorder=7)
+            ax.text(x + 0.3, 10.6, nm, fontsize=6.0, color='#D8262C', rotation=90, ha='left', va='top', zorder=7)
     ax.plot([0, L], [0, 0], color='#333', lw=0.4, zorder=2)
     ax.text(0.3, -6.2, 'М 1:%d' % SCALE + ('   ' + title if title else ''), fontsize=5, ha='left', va='center')
     fig.savefig(out_png, dpi=300, facecolor='white')
