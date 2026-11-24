@@ -398,6 +398,32 @@ class TestParser(unittest.TestCase):
         self.assertEqual(company.ogrn, "1267800069888")
         self.assertIn("ВЫМПЕЛ", company.full_name)
 
+    def test_corr_account_spellings(self):
+        """«Кор/счет» — такая же подпись корсчёта, как «К/с» и «Корр. счет».
+
+        В карточке ООО «ПБ «Сириус»» написано именно «Кор/счет», и
+        корреспондентский счёт не находился: сокращение «кор» в списке
+        подписей отсутствовало, а расчётный счёт рядом читался нормально.
+        """
+        from src.company_parser import _field_for_label
+
+        for label in ("Кор/счет", "Кор/сч", "Корсчет", "К/с",
+                      "Корр. счет", "Корреспондентский счет"):
+            with self.subTest(label=label):
+                self.assertEqual(_field_for_label(label), "bank_corr_account")
+        # Расчётный счёт не должен перепутаться с корреспондентским.
+        self.assertEqual(_field_for_label("Р/счет"), "bank_account")
+
+        parsed = parse_text(
+            "ИНН: 7838037322\n"
+            "Р/счет: 40702810390320001431\n"
+            "Кор/счет: 30101810900000000790\n"
+            "БИК: 044030790\n")
+        self.assertEqual(parsed.company.bank_corr_account,
+                         "30101810900000000790")
+        self.assertEqual(parsed.company.bank_account,
+                         "40702810390320001431")
+
     def test_bank_statement_layout(self):
         """Выписка банка: подпись поля напечатана ПОД значением.
 
