@@ -14,9 +14,10 @@
     на 50 мм (навесные фасады под кровлей, витражи ограждения кровли, два окна, проёмы). Значения
     свойств экспортёр делит между элементами, поэтому для высоты заводятся новые свойства (по одному
     на значение), а ссылка меняется только в наборе RusSet_Quantities своего элемента.
+АР и ПС:
+  * контуры профилей (IfcIndexedPolyCurve по списку точек) замыкаются явно — первая точка повторяется
+    в конце списка: в ПС контур участка, в АР 4 контура зоны «Общая площадь»;
 ПС:
-  * контур участка (IfcIndexedPolyCurve по списку точек) замыкается явно — первая точка повторяется
-    в конце списка;
   * RUS_AreaSquare = площадь этого контура (1057,10 м² — как в ГПЗУ) вместо 1057,277.
 
 Правка построчная: остальные строки экспорта не меняются, новые сущности дописываются в конец DATA.
@@ -151,23 +152,43 @@ def fix_ar(src, dst):
     for x in olds:
         if t.refs(x) == 0:
             t.drop(x)
+    close_profiles(m, t, 'АР')
     t.save(dst)
+
+
+def close_profiles(m, t, tag):
+    """Контуры замкнутых профилей (IfcArbitraryClosedProfileDef) по списку точек без сегментов —
+    первая точка повторяется в конце. Возвращает {id кривой: площадь, м²}."""
+    out = {}
+    for p in m.by_type('IfcArbitraryClosedProfileDef'):
+        for c in [p.OuterCurve] + list(getattr(p, 'InnerCurves', None) or []):
+            if not c.is_a('IfcIndexedPolyCurve'):
+                assert not c.is_a('IfcPolyline') or c.Points[0].Coordinates == c.Points[-1].Coordinates, c
+                continue
+            pts = c.Points.CoordList
+            if c.Segments:
+                idx = [i for sg in c.Segments for i in sg.wrappedValue]
+                assert idx[0] == idx[-1], c          # замкнут сегментами (дуги)
+                continue
+            if pts[0] == pts[-1]:
+                continue
+            assert t.refs(c.Points.id()) == 1, c
+            ln = t.get(c.Points.id())
+            first = re.search(r'\(\((\([^()]*\))', ln).group(1)
+            assert ln.endswith('));'), ln
+            t.set(c.Points.id(), ln[:-3] + ',' + first + '));')
+            out[c.id()] = Polygon(pts).area / 1e6
+            print('%s: контур #%d замкнут, %d -> %d точек, площадь %.4f м²' % (tag, c.id(), len(pts), len(pts) + 1,
+                                                                            out[c.id()]))
+    return out
 
 
 def fix_ps(src, dst):
     t = Text(src)
     m = ifcopenshell.open(src)
-    for c in m.by_type('IfcIndexedPolyCurve'):
-        pts = c.Points.CoordList
-        if pts[0] == pts[-1]:
-            continue
-        assert c.Segments is None
-        ln = t.get(c.Points.id())
-        first = re.search(r'\(\((\([^()]*\))', ln).group(1)
-        assert ln.endswith('));'), ln
-        t.set(c.Points.id(), ln[:-3] + ',' + first + '));')
-        area = Polygon(pts).area / 1e6
-        print('ПС: контур #%d замкнут, %d -> %d точек, площадь %.4f м²' % (c.id(), len(pts), len(pts) + 1, area))
+    closed = close_profiles(m, t, 'ПС')
+    assert len(closed) == 1
+    area = next(iter(closed.values()))
     for p in m.by_type('IfcPropertySingleValue'):
         if p.Name == 'RUS_AreaSquare':
             ln = t.get(p.id())
@@ -190,6 +211,8 @@ def main(src, out):
     os.makedirs(out, exist_ok=True)
     fix_ar(os.path.join(src, 'AR.ifc'), os.path.join(out, 'AR.ifc'))
     fix_ps(os.path.join(src, 'PS.ifc'), os.path.join(out, 'PS.ifc'))
+    m = ifcopenshell.open(os.path.join(src, 'BiO.ifc'))
+    assert not close_profiles(m, Text(os.path.join(src, 'BiO.ifc')), 'БиО')
     shutil.copyfile(os.path.join(src, 'BiO.ifc'), os.path.join(out, 'BiO.ifc'))
     bad = sum(check(os.path.join(out, f)) for f in ('AR.ifc', 'PS.ifc', 'BiO.ifc'))
     assert bad == 0
