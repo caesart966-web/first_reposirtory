@@ -154,6 +154,15 @@ class TestИтог(unittest.TestCase):
         self.assertEqual(первая["Телефон"], "+7 (812) 123-45-67; +7 (921) 765-43-21")
         self.assertEqual(первая["Почта"], "info@example.ru")
 
+    def test_итог_без_файла(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ошибки = io.StringIO()
+            with redirect_stderr(ошибки):
+                код = спб.main(["итог", "--регион", "61", "--file", str(Path(tmp) / "нет.xlsx"),
+                                "--out", str(Path(tmp) / "итог.xlsx")])
+        self.assertEqual(код, 1)
+        self.assertIn("кандидаты --регион 61", ошибки.getvalue())
+
     def test_итог_открыт_в_excel(self):
         from unittest import mock
         with tempfile.TemporaryDirectory() as tmp:

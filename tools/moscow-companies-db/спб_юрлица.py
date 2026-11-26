@@ -274,6 +274,11 @@ def контакты(r: dict) -> dict:
 
 
 def cmd_итог(a) -> int:
+    if not Path(a.file).exists():
+        print(f"Нет файла {a.file}. Сначала шаг 1 — «кандидаты» (он создаёт этот файл), потом Checko:\n"
+              f"  python спб_юрлица.py кандидаты --регион {a.регион} --rsmp data\\rsmp.zip --out {a.file}\n"
+              f"  python checko_контакты.py --file {a.file} --key ВАШ_КЛЮЧ", file=sys.stderr)
+        return 1
     _шапка, строки = checko.read_rows(Path(a.file))
     по_листам: dict[str, list[dict]] = {л: [] for л in ЛИСТЫ}
     for r in строки:
