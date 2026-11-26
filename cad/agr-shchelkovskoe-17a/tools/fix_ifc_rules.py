@@ -250,6 +250,16 @@ def close_profiles(m, t, tag):
 def fix_ps(src, dst):
     t = Text(src)
     m = ifcopenshell.open(src)
+    # имя уровня по требованиям ДГП (ч. 1, п. 6.7, табл. 6): <секция>_<номер>_<наименование>_<назначение>;
+    # у ПС было «Этаж 01» — замечание проверки ЦИМ 26.11.2026 «нет типа в названии этажа»
+    for st in m.by_type('IfcBuildingStorey'):
+        if not re.match(r'^[СП]\d\d_[^_]+_[^_]+_(основной|дополнительный|вспомогательный)', st.Name or ''):
+            new = 'С01_1_этаж_основной'
+            ln = t.get(st.id())
+            old = re.match(r"#\d+=IFCBUILDINGSTOREY\('[^']*',#\d+,'([^']*)'", ln).group(1)
+            assert ln.count("'%s'" % old) == 2, ln
+            t.set(st.id(), ln.replace("'%s'" % old, "'%s'" % enc(new)))
+            print('ПС: уровень «%s» -> «%s»' % (st.Name, new))
     closed = close_profiles(m, t, 'ПС')
     assert len(closed) == 1
     area = next(iter(closed.values()))
