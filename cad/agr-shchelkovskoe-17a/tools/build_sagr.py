@@ -1,6 +1,6 @@
 """Сборка комплекта САГР из исходного комплекта с заменой моделей и ТЭП.
 
-    python3 build_sagr.py <распакованный исходный комплект> <папка с AR/PS/BiO.ifc> <куда> <площадь> <ГПЗУ>
+    python3 build_sagr.py <распакованный исходный комплект> <папка с AR/PS/BiO.ifc> <куда> <площадь> <ГПЗУ> [<trm.zip>]
 
 Структура комплекта, идентификаторы документов и имена файлов сохраняются.
 """
@@ -16,6 +16,7 @@ IFC = {'c0228dc0-12d9-4a61-9be6-21c5ae78933d': 'AR.ifc',
        'a7213da6-fc22-42c0-8f55-4e1111962c11': 'PS.ifc',
        'b34c5aed-3fc7-45b2-8451-d936b220e013': 'BiO.ifc'}
 TEP = '3354b151-021c-449d-9ce5-693855f1dfdf'
+TRM = '48b2721b-15fe-495f-96ed-04e353845312'   # НН_К01_С01_АР_АГР_TRM/trm.zip
 ORDER = ['c684722c-d2d3-4291-a5d0-9e32aab4b61b', 'a7213da6-fc22-42c0-8f55-4e1111962c11',
          'b34c5aed-3fc7-45b2-8451-d936b220e013', 'c0228dc0-12d9-4a61-9be6-21c5ae78933d',
          '48b2721b-15fe-495f-96ed-04e353845312', TEP, 'info.xml']
@@ -36,7 +37,8 @@ def tep(text, area, gpzu):
     return text
 
 
-def main(src, ifc_dir, out, area, gpzu):
+def main(src, ifc_dir, out, area, gpzu, trm=None):
+    """trm — новый trm.zip из той же выгрузки плагина, что и AR.ifc (иначе остаётся прежний)."""
     now = datetime.datetime.now(MSK).replace(microsecond=0)
     stamp = now.isoformat()
     kit = os.path.join(out, 'kit')
@@ -47,6 +49,8 @@ def main(src, ifc_dir, out, area, gpzu):
         a, b = os.path.join(src, name), os.path.join(kit, name)
         if name in IFC:
             shutil.copyfile(os.path.join(ifc_dir, IFC[name]), b)
+        elif name == TRM and trm:
+            shutil.copyfile(trm, b)
         elif name == TEP:
             raw = open(a, 'rb').read()
             crlf = b'\r\n' in raw
@@ -90,4 +94,4 @@ def main(src, ifc_dir, out, area, gpzu):
 
 
 if __name__ == '__main__':
-    main(*sys.argv[1:6])
+    main(*sys.argv[1:7])
