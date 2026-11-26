@@ -8,7 +8,8 @@
     помещения и зоны (контуры, высота, наборы RusSet_*), сведения о проекте;
   * RusSets_mapping.txt — наборы свойств для экспорта IFC из Revit (пользовательские наборы свойств),
     запасной путь, если у плагина нет своего файла соответствия;
-  * RUS_shared_params.txt — файл общих параметров (RUS_*, IfcExportAs, IfcExportType).
+  * RUS_shared_params.txt — файл общих параметров (RUS_*, IfcExportAs, IfcExportType); GUID пишется во встроенный
+    параметр IfcGUID.
 
 Локальные координаты = координаты относительно IfcSite (у этой модели здание и уровни без смещения): в Revit
 это внутреннее начало, общие координаты задаются точкой и углом из блока site.
@@ -181,7 +182,7 @@ def main(src, out):
                 done.add(k)
                 g = uuid.uuid5(uuid.NAMESPACE_URL, 'agr17a/' + k)
                 f.write('PARAM\t%s\t%s\t%s\t\t1\t1\t%s\t1\t0\n' % (g, k, t, pn))
-        for k in ('IfcExportAs', 'IfcExportType', 'IfcGUID'):
+        for k in ('IfcExportAs', 'IfcExportType'):
             g = uuid.uuid5(uuid.NAMESPACE_URL, 'agr17a/' + k)
             f.write('PARAM\t%s\t%s\tTEXT\t\t2\t1\t\t1\t0\n' % (g, k))
     print('наборы свойств:', {k: len(v) for k, v in sets.items()})

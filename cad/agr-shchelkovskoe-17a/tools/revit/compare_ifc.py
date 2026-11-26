@@ -77,9 +77,24 @@ def main(ref_path, new_path, trm=None):
             bad.append('%s: %d, в эталоне %d' % (k, cnt(new)[k], cnt(ref)[k]))
     R, N = centers(ref), centers(new)
     byname = {(e.is_a(), e.Name): g for g, (e, _, _) in N.items()}
+    used = set(g for g in R if g in N)
+
+    def nearest(e, cr):
+        best = None
+        for g2, (e2, cn, _) in N.items():
+            if g2 in used or e2.is_a() != e.is_a():
+                continue
+            d = np.linalg.norm(cn - cr)
+            if d < 100 and (best is None or d < best[0]):
+                best = (d, g2)
+        return best and best[1]
     moved, pdiff, found = [], [], 0
     for g, (e, cr, hr) in R.items():
         g2 = g if g in N else byname.get((e.is_a(), e.Name))
+        if g2 is None or g2 in used and g2 != g:
+            g2 = nearest(e, cr)
+        if g2 is not None:
+            used.add(g2)
         if g2 is None:
             if not e.is_a('IfcSpace'):
                 bad.append('нет элемента %s %s' % (e.is_a(), e.Name))
