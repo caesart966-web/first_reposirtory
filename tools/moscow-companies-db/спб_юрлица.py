@@ -47,6 +47,7 @@ import re
 import sys
 import xml.etree.ElementTree as ET
 import zipfile
+import zlib
 from collections import Counter
 from pathlib import Path
 
@@ -144,13 +145,24 @@ def документы(путь: Path):
         with open(путь, "rb") as fh:
             yield from из_потока(fh)
         return
+    пропущено = []
     with zipfile.ZipFile(путь) as zf:
         имена = [n for n in zf.namelist() if n.lower().endswith(".xml")]
         for i, имя in enumerate(имена, 1):
             if i % 200 == 0 or i == len(имена):
                 print(f"  файлов реестра: {i}/{len(имена)}", flush=True)
-            with zf.open(имя) as fh:
-                yield from из_потока(fh)
+            # повреждённый файл внутри архива (недокачка, сбой связи) — пропустить, а не падать:
+            # 26.11.2026 архив с одним испорченным файлом из 7594 ронял весь отбор (zlib.error)
+            try:
+                with zf.open(имя) as fh:
+                    yield from из_потока(fh)
+            except (zlib.error, zipfile.BadZipFile, EOFError, ET.ParseError) as e:
+                пропущено.append(имя)
+                print(f"  ПРОПУЩЕН повреждённый файл реестра {имя}: {type(e).__name__}", file=sys.stderr, flush=True)
+    if пропущено:
+        print(f"Внимание: повреждённых файлов в архиве — {len(пропущено)} из {len(имена)}, они пропущены. "
+              f"Чтобы взять всё, перекачайте выгрузку: python -m mosstroybase fetch-rsmp --force",
+              file=sys.stderr, flush=True)
 
 
 def cmd_кандидаты(a) -> int:

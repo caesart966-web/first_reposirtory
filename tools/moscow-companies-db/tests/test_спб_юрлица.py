@@ -174,6 +174,25 @@ class TestИтог(unittest.TestCase):
         self.assertEqual(код, 1)
         self.assertIn("открыт в Excel", err.getvalue())
 
+class TestПовреждённыйАрхив(unittest.TestCase):
+    def test_пропускает_испорченный_файл(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            путь = Path(tmp) / "rsmp.zip"
+            реестр(путь, [док("7801000001", "96.02", ссчр=8)])
+            # второй файл — испорченный: сжатые данные заменены мусором
+            with zipfile.ZipFile(путь, "a", zipfile.ZIP_DEFLATED) as zf:
+                zf.writestr("плохой.xml", "<Файл>" + "<Документ/>" * 5000 + "</Файл>")
+            данные = bytearray(путь.read_bytes())
+            начало = данные.find("плохой.xml".encode()) + 200
+            данные[начало:начало + 64] = b"\xff" * 64
+            путь.write_bytes(bytes(данные))
+            ошибки = io.StringIO()
+            with redirect_stderr(ошибки), redirect_stdout(io.StringIO()):
+                доки = list(спб.документы(путь))
+        self.assertEqual([d["inn"] for d in доки], ["7801000001"])
+        self.assertIn("ПРОПУЩЕН", ошибки.getvalue())
+
+
 
 if __name__ == "__main__":
     unittest.main()
