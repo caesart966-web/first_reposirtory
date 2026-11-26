@@ -153,7 +153,71 @@ def fix_ar(src, dst):
         if t.refs(x) == 0:
             t.drop(x)
     close_profiles(m, t, 'АР')
+    fix_mssk(m, t)
     t.save(dst)
+
+
+# Коды помещений по МССК «Помещения и зоны» (www.mos.ru/upload/documents/files/1115/05_MSSKPomesheniyaizoni.pdf):
+# RUS_Name помещения -> (код, наименование ровно как в классификаторе). «Торгового зала» в классификаторе нет —
+# ближайшее по смыслу «Зона обслуживания» (ПЗ 14); у автора стоял ПЗ 31 01 «Административно-деловые помещения».
+# Пом. 11 «ВУ» — водомерный узел (ПД, ИОС2: «В пом. 11 установлен водомерный узел»), у автора «Вентиляционная
+# шахта» (ПЗ 31 13 03 в классификаторе — «Вертикальная шахта»).
+MSSK = {
+    'Торговый зал': ('ПЗ 14', 'Зона обслуживания'),
+    'Помещение ВУ': ('ПЗ 31 13 12', 'Помещение инженерных коммуникаций'),
+    'Помещение приемки и предпродажной подготовки товара': ('ПЗ 31 13 07', 'Подсобное помещение'),
+    'Комната приема пищи': ('ПЗ 31 12 07', 'Помещение приема пищи'),
+    'ИТП': ('ПЗ 31 13 01', 'ИТП'),
+}
+
+
+def enc(s):
+    out, buf = [], []
+    for ch in s:
+        if ord(ch) < 128:
+            if buf:
+                out.append('\\X2\\' + ''.join(buf) + '\\X0\\')
+                buf = []
+            out.append(ch)
+        else:
+            buf.append('%04X' % ord(ch))
+    if buf:
+        out.append('\\X2\\' + ''.join(buf) + '\\X0\\')
+    return ''.join(out)
+
+
+def fix_mssk(m, t):
+    made, olds = {}, set()
+    for sp in m.by_type('IfcSpace'):
+        for r in sp.IsDefinedBy:
+            if not r.is_a('IfcRelDefinesByProperties'):
+                continue
+            p = r.RelatingPropertyDefinition
+            vals = {x.Name: x for x in p.HasProperties}
+            if 'RUS_MSSK_SpaceAndZone_Code' not in vals or 'RUS_Name' not in vals:
+                continue
+            name = vals['RUS_Name'].NominalValue.wrappedValue
+            if name not in MSSK:
+                continue
+            code, cname = MSSK[name]
+            ln = t.get(p.id())
+            for key, new in (('RUS_MSSK_SpaceAndZone_Code', code), ('RUS_MSSK_SpaceAndZone_Name', cname)):
+                old = vals[key]
+                if old.NominalValue.wrappedValue == new:
+                    continue
+                k = (key, new, old.NominalValue.is_a())
+                if k not in made:
+                    made[k] = t.add("IFCPROPERTYSINGLEVALUE('%s',$,%s('%s'),$);" % (key, old.NominalValue.is_a().upper(),
+                                                                                  enc(new)))
+                olds.add(old.id())
+                ln, n = re.subn(r'#%d(?=[,)])' % old.id(), '#%d' % made[k], ln)
+                assert n == 1, ln
+                print('АР: помещение «%s» %s: %s -> %s' % (name, key[-4:], old.NominalValue.wrappedValue, new))
+            t.set(p.id(), ln)
+    for x in olds:
+        if t.refs(x) == 0:
+            t.drop(x)
+    return made
 
 
 def close_profiles(m, t, tag):
