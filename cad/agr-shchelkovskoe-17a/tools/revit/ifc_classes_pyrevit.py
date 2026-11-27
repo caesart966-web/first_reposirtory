@@ -7,6 +7,9 @@
 двери — NOTDEFINED вместо DOOR). Класс и тип берутся из исходного IFC (ar_model.json): облицовка навесного
 фасада — IfcCurtainWall (как в исходной модели и в IDS «Фасад, витраж» с кодом ЭЛ 30 10 60), плиты кровли —
 IfcSlab ROOF, двери — DOOR, колонны — COLUMN. Общие параметры IfcExportAs/IfcExportType ставятся теми же.
+Уровень кровли (С01_крыша_дополнительный) — не «Этаж здания»: иначе Revit пишет в Pset_BuildingCommon
+NumberOfStoreys = 2 при этажности 1 в ТЭП (FloorsCount), а проверка ЦИМ требует СПП на каждом надземном уровне,
+в том числе на кровле. Элементы кровли выгружаются в составе этажа С01_1_этаж_основной.
 """
 import io
 import json
@@ -15,7 +18,7 @@ import os
 import clr
 clr.AddReference('RevitAPI')
 from Autodesk.Revit.DB import (  # noqa: E402
-    BuiltInParameter, DirectShape, FilteredElementCollector, Transaction)
+    BuiltInParameter, DirectShape, FilteredElementCollector, Level, Transaction)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 LOG = []
@@ -89,6 +92,14 @@ def main():
                                          u'' if ok_pt else u'«Предопределённый тип»'))
             k = u'%s %s' % (cls, pt or u'')
             cnt[k] = cnt.get(k, 0) + 1
+        for lv in FilteredElementCollector(doc).OfClass(Level).ToElements():
+            p = lv.get_Parameter(BuiltInParameter.LEVEL_IS_BUILDING_STORY)
+            if p is None or p.IsReadOnly:
+                continue
+            want = 0 if u'крыша' in lv.Name else 1
+            if p.AsInteger() != want:
+                p.Set(want)
+            log(u'Уровень «%s»: «Этаж здания» — %s' % (lv.Name, u'да' if want else u'нет'))
         tr.Commit()
         log(u'Встроенный параметр «Экспорт в IFC как»:', u'есть' if B_AS is not None else u'нет — по имени')
         log(u'Проставлено:', u'; '.join(u'%s — %d' % (k.strip(), v) for k, v in sorted(cnt.items())))
