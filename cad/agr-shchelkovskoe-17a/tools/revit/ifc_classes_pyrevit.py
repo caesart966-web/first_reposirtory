@@ -7,9 +7,10 @@
 двери — NOTDEFINED вместо DOOR). Класс и тип берутся из исходного IFC (ar_model.json): облицовка навесного
 фасада — IfcCurtainWall (как в исходной модели и в IDS «Фасад, витраж» с кодом ЭЛ 30 10 60), плиты кровли —
 IfcSlab ROOF, двери — DOOR, колонны — COLUMN. Общие параметры IfcExportAs/IfcExportType ставятся теми же.
-Уровень кровли (С01_крыша_дополнительный) — не «Этаж здания»: иначе Revit пишет в Pset_BuildingCommon
-NumberOfStoreys = 2 при этажности 1 в ТЭП (FloorsCount), а проверка ЦИМ требует СПП на каждом надземном уровне,
-в том числе на кровле. Элементы кровли выгружаются в составе этажа С01_1_этаж_основной.
+Оба уровня — «Этаж здания»: если уровень кровли им не сделать, Revit выгружает зоны площадей толщиной 1 мм
+(высота зоны — до следующего этажа), а RUS_Height у них 4,5 м (выгрузка 27.11.2026 15:19). Число этажей в
+Pset_BuildingCommon (NumberOfStoreys) задаётся параметром здания NumberOfStoreys = 1 (сведения о проекте), как
+этажность в ТЭП (FloorsCount = 1); без него Revit считает уровни и пишет 2.
 """
 import io
 import json
@@ -18,7 +19,7 @@ import os
 import clr
 clr.AddReference('RevitAPI')
 from Autodesk.Revit.DB import (  # noqa: E402
-    BuiltInParameter, DirectShape, FilteredElementCollector, Level, Transaction)
+    BuiltInCategory, BuiltInParameter, CategorySet, DirectShape, FilteredElementCollector, Level, Transaction)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 LOG = []
@@ -67,6 +68,35 @@ def shared(el, name, v):
         p.Set(v)
 
 
+def storeys_param():
+    app = __revit__.Application  # noqa: F821
+    path = os.path.join(HERE, 'IFC_building_params.txt')
+    old = app.SharedParametersFilename
+    app.SharedParametersFilename = path
+    try:
+        sp = app.OpenSharedParameterFile()
+        cats = CategorySet()
+        cats.Insert(doc.Settings.Categories.get_Item(BuiltInCategory.OST_ProjectInformation))
+        binding = app.Create.NewInstanceBinding(cats)
+        try:
+            from Autodesk.Revit.DB import GroupTypeId
+            grp = GroupTypeId.Ifc
+        except Exception:
+            from Autodesk.Revit.DB import BuiltInParameterGroup
+            grp = BuiltInParameterGroup.PG_IFC
+        for g in sp.Groups:
+            for d in g.Definitions:
+                if doc.ParameterBindings.Contains(d):
+                    doc.ParameterBindings.ReInsert(d, binding, grp)
+                else:
+                    doc.ParameterBindings.Insert(d, binding, grp)
+    finally:
+        app.SharedParametersFilename = old or u''
+    p = doc.ProjectInformation.LookupParameter(u'NumberOfStoreys')
+    ok = p is not None and not p.IsReadOnly and p.Set(1)
+    log(u'Сведения о проекте: NumberOfStoreys = 1 —', u'записано' if ok else u'НЕ ЗАПИСАНО')
+
+
 def main():
     shapes = [d for d in FilteredElementCollector(doc).OfClass(DirectShape).ToElements() if d.ApplicationId == u'agr17a']
     tr = Transaction(doc, u'Классы IFC')
@@ -96,10 +126,14 @@ def main():
             p = lv.get_Parameter(BuiltInParameter.LEVEL_IS_BUILDING_STORY)
             if p is None or p.IsReadOnly:
                 continue
-            want = 0 if u'крыша' in lv.Name else 1
+            want = 1
             if p.AsInteger() != want:
                 p.Set(want)
             log(u'Уровень «%s»: «Этаж здания» — %s' % (lv.Name, u'да' if want else u'нет'))
+        try:
+            storeys_param()
+        except Exception as ex:
+            log(u'   ОШИБКА параметра NumberOfStoreys (остальное записано):', ex)
         tr.Commit()
         log(u'Встроенный параметр «Экспорт в IFC как»:', u'есть' if B_AS is not None else u'нет — по имени')
         log(u'Проставлено:', u'; '.join(u'%s — %d' % (k.strip(), v) for k, v in sorted(cnt.items())))
