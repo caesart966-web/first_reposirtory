@@ -5,7 +5,11 @@
   1. имена планов этажей = имена их уровней (у нового уровня крыши план назывался по шаблону);
   2. план С01_1_этаж_основной: подрезка по зданию с осями, марки фасадов скрыты;
   3. размерные цепочки по осям снизу (1–7) и слева (А–З): шаги и общий размер;
-  4. марки помещений — тип с площадью, если он есть в шаблоне; иначе площадь подписывается текстом под маркой.
+  4. марки помещений — тип с площадью, если он есть в шаблоне; иначе площадь подписывается текстом под маркой;
+     в узких помещениях (меньше 1,5 м по одной из сторон — пом. 6 и 7) марка выносится на выноске за наружную стену:
+     иначе марки 6, 7 и 8 налезали друг на друга (вид TRM выгрузки 27.11.2026);
+  5. 3D-вид {3D} -> «НН_К01_С01_АР_АГР»: плагин выгрузки называет IFC внутри IFCZIP по основному виду,
+     а в комплекте и ведомости файл называется НН_К01_С01_АР_АГР.ifc.
 Повторный запуск не дублирует размеры и подписи: поставленные прошлым запуском (format_state.json) удаляются.
 """
 import io
@@ -16,7 +20,7 @@ import clr
 clr.AddReference('RevitAPI')
 from Autodesk.Revit.DB import (  # noqa: E402
     BuiltInCategory, BuiltInParameter, ElementId, ElementTypeGroup, FilteredElementCollector, Grid, Line,
-    Reference, ReferenceArray, TextNote, Transaction, ViewPlan, ViewType, XYZ)
+    Reference, ReferenceArray, TextNote, Transaction, View3D, ViewPlan, ViewType, XYZ)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 MM = 1.0 / 304.8
@@ -158,6 +162,45 @@ def room_tags(v):
     log(u'4. типа марки с площадью в шаблоне нет — площадь подписана текстом под маркой у %d помещений' % n)
 
 
+def leaders(v):
+    rooms = {}
+    for s in data['spaces']:
+        if s['kind'] != 'room':
+            continue
+        xs = [p[0] for lp in s['loops'] for p in lp]
+        ys = [p[1] for lp in s['loops'] for p in lp]
+        rooms[s['name']] = (min(xs), max(xs), min(ys), max(ys))
+    x_head = max(r[1] for r in rooms.values()) + 2200.0
+    n = 0
+    for tg in FilteredElementCollector(doc, v.Id).OfCategory(BuiltInCategory.OST_RoomTags) \
+            .WhereElementIsNotElementType().ToElements():
+        rm = tg.Room
+        if rm is None or rm.Number not in rooms:
+            continue
+        x0, x1, y0, y1 = rooms[rm.Number]
+        if min(x1 - x0, y1 - y0) >= 1500.0:
+            continue
+        tg.HasLeader = True
+        z = tg.TagHeadPosition.Z
+        tg.TagHeadPosition = XYZ(x_head * MM, (y0 + y1) / 2.0 * MM, z)
+        n += 1
+    log(u'4. марок на выноске (узкие помещения):', n)
+
+
+def rename_3d():
+    names = set(v.Name for v in FilteredElementCollector(doc).OfClass(View3D).ToElements())
+    want = u'НН_К01_С01_АР_АГР'
+    if want in names:
+        log(u'5. 3D-вид «%s» уже есть' % want)
+        return
+    for v in FilteredElementCollector(doc).OfClass(View3D).ToElements():
+        if not v.IsTemplate and v.Name == u'{3D}':
+            v.Name = want
+            log(u'5. 3D-вид {3D} -> «%s»' % want)
+            return
+    log(u'5. 3D-вида {3D} нет — переименовать основной 3D-вид в «%s» вручную' % want)
+
+
 def main():
     tr = Transaction(doc, u'Оформление плана для TRM')
     tr.Start()
@@ -165,8 +208,8 @@ def main():
         rename_plans()
         v = plan_view()
         clear_old()
-        crop(v, -6600.0, -3900.0, 19200.0, 29000.0)
-        for step in (lambda: dims(v), lambda: room_tags(v)):
+        crop(v, -6600.0, -3900.0, 21600.0, 29000.0)
+        for step in (lambda: dims(v), lambda: room_tags(v), lambda: leaders(v), rename_3d):
             try:
                 step()
             except Exception as ex:
