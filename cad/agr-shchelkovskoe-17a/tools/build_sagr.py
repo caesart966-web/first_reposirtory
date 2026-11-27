@@ -16,7 +16,8 @@ IFC = {'c0228dc0-12d9-4a61-9be6-21c5ae78933d': 'AR.ifc',
        'a7213da6-fc22-42c0-8f55-4e1111962c11': 'PS.ifc',
        'b34c5aed-3fc7-45b2-8451-d936b220e013': 'BiO.ifc'}
 TEP = '3354b151-021c-449d-9ce5-693855f1dfdf'
-TRM = '48b2721b-15fe-495f-96ed-04e353845312'   # НН_К01_С01_АР_АГР_TRM/trm.zip
+TRM = '48b2721b-15fe-495f-96ed-04e353845312'
+HEIGHT = '6.3'   # НН_К01_С01_АР_АГР_TRM/trm.zip
 ORDER = ['c684722c-d2d3-4291-a5d0-9e32aab4b61b', 'a7213da6-fc22-42c0-8f55-4e1111962c11',
          'b34c5aed-3fc7-45b2-8451-d936b220e013', 'c0228dc0-12d9-4a61-9be6-21c5ae78933d',
          '48b2721b-15fe-495f-96ed-04e353845312', TEP, 'info.xml']
@@ -34,6 +35,9 @@ def tep(text, area, gpzu):
     for tag in ('TotalObjectArea', 'AboveGroundArea', 'NonResidentialAboveGroundAreaNonResidentialObjects'):
         text = sub1(text, r'<%s>[^<]*</%s>' % (tag, tag), '<%s>%s</%s>' % (tag, area, tag))
     text = sub1(text, r'<ApartmentsCount>[^<]*</ApartmentsCount>', '<ApartmentsCount>0</ApartmentsCount>')
+    # высота от отметки земли у здания 154,350 до верха ограждения кровли 160,650 (проверка 27.11.2026)
+    for tag in ('BuildingHeight', 'ObjectHeight'):
+        text = sub1(text, r'<%s>[^<]*</%s>' % (tag, tag), '<%s>%s</%s>' % (tag, HEIGHT, tag))
     return text
 
 

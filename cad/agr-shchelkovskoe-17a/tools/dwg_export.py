@@ -619,7 +619,7 @@ def xlsx(info, out_xlsx):
     ws2.column_dimensions['B'].width = 60
     ws2.column_dimensions['C'].width = 14
     wb.save(out_xlsx)
-    clean_meta.clean(out_xlsx)
+    clean_meta.recalc_xlsx(out_xlsx)
 
 
 def main(ar, bio, osm, outdir):

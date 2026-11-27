@@ -172,7 +172,7 @@ def main(base_path, out_path, mode='routes', win=None):
         dim(ax, (LANE_U0, 26.5), (LANE_U1, 26.5), '3,5', off=(0, -1.25))
 
         # подписи
-        label(ax, (12.5, 13.5), 'Магазин\nреконструкция\n1 этаж, выс. 5,80 м', size=6.6, weight='semibold', box=False,
+        label(ax, (12.5, 13.5), 'Магазин\nреконструкция\n1 этаж, выс. 6,30 м', size=6.6, weight='semibold', box=False,
               color='#3a1500')
         label(ax, (-17.0, B_N + 6.3), 'сквозной выезд', size=5.6, color=FIRE)
         label(ax, (36.5, 23.3), 'двор\nзона загрузки', size=5.8, color='white', box=False, weight='semibold')

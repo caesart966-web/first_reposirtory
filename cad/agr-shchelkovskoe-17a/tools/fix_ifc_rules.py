@@ -33,6 +33,7 @@ import numpy as np
 import ifcopenshell
 import ifcopenshell.geom
 import ifcopenshell.validate
+import ifcopenshell.util.element as ue
 from shapely.geometry import Polygon
 
 LINE = re.compile(r'^#(\d+)=', re.M)
@@ -154,6 +155,7 @@ def fix_ar(src, dst):
             t.drop(x)
     close_profiles(m, t, 'АР')
     fix_mssk(m, t)
+    fix_zone_depth(m, t)
     t.save(dst)
 
 
@@ -184,6 +186,38 @@ def enc(s):
     if buf:
         out.append('\\X2\\' + ''.join(buf) + '\\X0\\')
     return ''.join(out)
+
+
+def fix_zone_depth(m, t):
+    """Расчётные зоны («Площадь:…», СПП в ГНС и Общая площадь) выдавлены на 4,5 м, а RUS_Height и RUS_Volume —
+    на 3,8 м, как у помещений (замечание проверки 27.11.2026). Площади не меняются: глубина выдавливания
+    приводится к RUS_Height, объём геометрии сходится с RUS_Volume."""
+    for sp in m.by_type('IfcSpace'):
+        if not (sp.Name or '').startswith('Площадь'):
+            continue
+        q = ue.get_psets(sp).get('RusSet_Quantities', {})
+        h = q.get('RUS_Height')
+        assert h, sp
+        for rep in sp.Representation.Representations:
+            for it in rep.Items:
+                if it.is_a('IfcExtrudedAreaSolid') and abs(it.Depth - h) > 0.5:
+                    ln = t.get(it.id())
+                    ln2, k = re.subn(r',[-\d.E]+\);$', ',%s);' % num(h), ln)
+                    assert k == 1, ln
+                    t.set(it.id(), ln2)
+                    print('АР: зона %s, выдавливание %s -> %s мм' % (sp.Name, num(it.Depth), num(h)))
+
+
+def new_storey_guids(m, t, tag):
+    """У уровня ПС и БиО (абс. 154,350) был тот же GlobalId, что у уровня АР (154,850): разные уровни — разные GUID."""
+    import uuid
+    import ifcopenshell.guid
+    for st in m.by_type('IfcBuildingStorey'):
+        g = ifcopenshell.guid.compress(uuid.uuid5(uuid.NAMESPACE_URL, 'agr17a/%s/storey/%s' % (tag, st.Name)).hex)
+        ln = t.get(st.id())
+        assert ln.count("'%s'" % st.GlobalId) == 1, ln
+        t.set(st.id(), ln.replace("'%s'" % st.GlobalId, "'%s'" % g))
+        print('%s: GUID уровня %s -> %s' % (tag, st.GlobalId, g))
 
 
 def fix_mssk(m, t):
@@ -260,6 +294,7 @@ def fix_ps(src, dst):
             assert ln.count("'%s'" % old) == 2, ln
             t.set(st.id(), ln.replace("'%s'" % old, "'%s'" % enc(new)))
             print('ПС: уровень «%s» -> «%s»' % (st.Name, new))
+    new_storey_guids(m, t, 'ПС')
     closed = close_profiles(m, t, 'ПС')
     assert len(closed) == 1
     area = next(iter(closed.values()))
@@ -286,8 +321,10 @@ def main(src, out):
     fix_ar(os.path.join(src, 'AR.ifc'), os.path.join(out, 'AR.ifc'))
     fix_ps(os.path.join(src, 'PS.ifc'), os.path.join(out, 'PS.ifc'))
     m = ifcopenshell.open(os.path.join(src, 'BiO.ifc'))
-    assert not close_profiles(m, Text(os.path.join(src, 'BiO.ifc')), 'БиО')
-    shutil.copyfile(os.path.join(src, 'BiO.ifc'), os.path.join(out, 'BiO.ifc'))
+    t = Text(os.path.join(src, 'BiO.ifc'))
+    assert not close_profiles(m, t, 'БиО')
+    new_storey_guids(m, t, 'БиО')
+    t.save(os.path.join(out, 'BiO.ifc'))
     bad = sum(check(os.path.join(out, f)) for f in ('AR.ifc', 'PS.ifc', 'BiO.ifc'))
     assert bad == 0
 

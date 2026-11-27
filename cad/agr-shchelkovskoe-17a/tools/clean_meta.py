@@ -143,6 +143,33 @@ def clean_zip(path):
     open(path, 'wb').write(buf.getvalue())
 
 
+def recalc_xlsx(path):
+    """Сохранить в xlsx вычисленные значения формул (openpyxl пишет формулы без значений, и программы
+    предпросмотра показывают пустые итоги): пересчёт в LibreOffice без интерфейса, затем очистка свойств."""
+    import shutil
+    import subprocess
+    tmp = tempfile.mkdtemp()
+    src = os.path.join(tmp, 'in.xlsx')
+    shutil.copyfile(path, src)
+    subprocess.run(['soffice', '--headless', '--calc', '--convert-to', 'xlsx:Calc MS Excel 2007 XML',
+                    '--outdir', os.path.join(tmp, 'out'), src], check=True, capture_output=True, timeout=180)
+    out = os.path.join(tmp, 'out', 'in.xlsx')
+    zin = zipfile.ZipFile(out)
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zout:
+        for it in zin.infolist():
+            data = zin.read(it.filename)
+            if it.filename == 'docProps/app.xml':
+                data = re.sub(rb'<Application>[^<]*</Application>', b'<Application></Application>', data)
+            if it.filename == 'docProps/core.xml':
+                data = data.replace(b'<dc:language>en-US</dc:language>', b'<dc:language>ru-RU</dc:language>')
+            zout.writestr(it, data)
+    zin.close()
+    open(path, 'wb').write(buf.getvalue())
+    shutil.rmtree(tmp, ignore_errors=True)
+    clean_office(path, os.path.splitext(os.path.basename(path))[0])
+
+
 def clean(path, title=None):
     ext = path.lower().rsplit('.', 1)[-1]
     if ext in ('pptx', 'docx', 'xlsx'):
