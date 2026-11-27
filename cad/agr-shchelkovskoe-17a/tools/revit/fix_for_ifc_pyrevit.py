@@ -24,7 +24,7 @@ import clr
 clr.AddReference('RevitAPI')
 from System.Collections.Generic import List  # noqa: E402
 from Autodesk.Revit.DB import (  # noqa: E402
-    BuiltInCategory, BuiltInParameter, CategorySet, DirectShape, ElementId, FilteredElementCollector, Mesh, Options,
+    BuiltInCategory, BuiltInParameter, CategorySet, DirectShape, ElementId, FilteredElementCollector, Level, Mesh, Options,
     Solid, Transaction, TessellatedFace, TessellatedShapeBuilder, TessellatedShapeBuilderFallback,
     TessellatedShapeBuilderOutcome, TessellatedShapeBuilderTarget, ViewDetailLevel, XYZ)
 
@@ -209,10 +209,11 @@ def areas():
             got.setdefault(nm, []).append(a)
     for nm, lst in got.items():
         z = zs[nm]
-        h = None
-        for k, v in z['psets'].get('RusSet_Quantities', {}).items():
-            if k == 'RUS_Height' and v:
-                h = float(v[1])
+        # высота выгрузки зоны — от её уровня до следующего (Revit выгружает площади на эту высоту)
+        levels = sorted([lv.Elevation for lv in FilteredElementCollector(doc).OfClass(Level).ToElements()])
+        z0 = doc.GetElement(lst[0].LevelId).Elevation if lst else 0.0
+        up = [x for x in levels if x > z0 + 1e-6]
+        h = (up[0] - z0) / MM if up else None
         lst.sort(key=lambda a: -a.Area)
         tot = 0.0
         for i, a in enumerate(lst):
@@ -220,6 +221,8 @@ def areas():
             tot += am2
             setp(a, u'RUS_Area', am2)
             if h:
+                setp(a, u'RUS_Area', am2)
+                setp(a, u'RUS_Height', h)
                 setp(a, u'RUS_Volume', am2 * h / 1000.0)
             setp(a, u'IfcName', z['name'] if i == 0 else u'%s.%d' % (z['name'], i + 1))
             if i == 0:

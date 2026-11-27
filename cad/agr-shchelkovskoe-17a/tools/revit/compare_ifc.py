@@ -22,6 +22,13 @@ import ifcopenshell.util.element as ue
 import ifcopenshell.validate
 
 TOL_MM = 20.0
+# облицовка навесного фасада из Revit выгружается IfcCovering (CLADDING): IfcCurtainWall из DirectShape не выгружается,
+# а IfcWall с кодом «Фасад» не проходит IDS «Стена, перегородка»
+SAME = {'IfcCovering': 'IfcCurtainWall'}
+
+
+def cls(e):
+    return SAME.get(e.is_a(), e.is_a())
 
 
 def psets(e):
@@ -65,7 +72,7 @@ def main(ref_path, new_path, trm=None):
         print('IfcSite', s.RefLatitude, s.RefLongitude)
         if tuple(s.RefLatitude or ())[:3] != tuple(ref.by_type('IfcSite')[0].RefLatitude)[:3]:
             bad.append('широта IfcSite %s' % (s.RefLatitude,))
-    cnt = lambda m: collections.Counter(e.is_a() for e in m.by_type('IfcElement') if not e.is_a('IfcOpeningElement'))  # noqa
+    cnt = lambda m: collections.Counter(cls(e) for e in m.by_type('IfcElement') if not e.is_a('IfcOpeningElement'))  # noqa
     print('элементы:', dict(cnt(new)))
     for k in set(cnt(ref)) | set(cnt(new)):
         if k == 'IfcRoof':          # в Revit кровля — плиты IfcSlab.ROOF без контейнера IfcRoof
@@ -76,13 +83,13 @@ def main(ref_path, new_path, trm=None):
         if cnt(ref)[k] != cnt(new)[k]:
             bad.append('%s: %d, в эталоне %d' % (k, cnt(new)[k], cnt(ref)[k]))
     R, N = centers(ref), centers(new)
-    byname = {(e.is_a(), e.Name): g for g, (e, _, _) in N.items()}
+    byname = {(cls(e), e.Name): g for g, (e, _, _) in N.items()}
     used = set(g for g in R if g in N)
 
     def nearest(e, cr):
         best = None
         for g2, (e2, cn, _) in N.items():
-            if g2 in used or e2.is_a() != e.is_a():
+            if g2 in used or cls(e2) != cls(e):
                 continue
             d = np.linalg.norm(cn - cr)
             if d < 100 and (best is None or d < best[0]):
@@ -90,7 +97,7 @@ def main(ref_path, new_path, trm=None):
         return best and best[1]
     moved, pdiff, found = [], [], 0
     for g, (e, cr, hr) in R.items():
-        g2 = g if g in N else byname.get((e.is_a(), e.Name))
+        g2 = g if g in N else byname.get((cls(e), e.Name))
         if g2 is None or g2 in used and g2 != g:
             g2 = nearest(e, cr)
         if g2 is not None:
@@ -119,7 +126,7 @@ def main(ref_path, new_path, trm=None):
             print('   смещён', *x)
     if pdiff:
         bad.append('расходятся параметры: %d' % len(pdiff))
-        for x in pdiff[:30]:
+        for x in sorted(pdiff, key=lambda t: ('навесной' in str(t[1]), str(t)))[:40]:
             print('   параметр', *x)
     # высоты, повторы наборов, контуры
     for g, (e, _, h) in N.items():

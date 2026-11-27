@@ -162,7 +162,10 @@ def main(src, out):
     with open(os.path.join(out, 'RusSets_mapping.txt'), 'w', encoding='utf-8', newline='\r\n') as f:
         f.write('# Пользовательские наборы свойств для экспорта IFC из Revit (формат Revit IFC exporter)\n')
         for pn, props in sets.items():
-            ents = ','.join(sorted(scope[pn]))
+            ents = set(scope[pn])
+            if 'IfcCurtainWall' in ents:        # облицовка навесного фасада выгружается IfcCovering (CLADDING)
+                ents.add('IfcCovering')
+            ents = ','.join(sorted(ents))
             f.write('PropertySet:\t%s\tI\t%s\n' % (pn, ents))
             for k, t in props.items():
                 f.write('\t%s\t%s\n' % (k, {'TEXT': 'Text', 'NUMBER': 'Real', 'YESNO': 'Boolean',
