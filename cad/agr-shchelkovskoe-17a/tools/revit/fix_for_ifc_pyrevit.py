@@ -57,7 +57,7 @@ def write_params():
     txt = (u'# This is a Revit shared parameter file.\r\n# Do not edit manually.\r\n*META\tVERSION\tMINVERSION\r\n'
            u'META\t2\t1\r\n*GROUP\tID\tNAME\r\nGROUP\t2\tIFC\r\n*PARAM\tGUID\tNAME\tDATATYPE\tDATACATEGORY\tGROUP\t'
            u'VISIBLE\tDESCRIPTION\tUSERMODIFIABLE\tHIDEWHENNOEXIST\r\nPARAM\t%s\tIfcName\tTEXT\t\t2\t1\t\t1\t0\r\n' % g)
-    io.open(PARAMS, 'w', encoding='utf-16').write(txt)
+    io.open(PARAMS, 'w', encoding='utf-16', newline=u'').write(txt)        # без перевода \n -> \r\n: строки уже с \r\n
 
 
 def bind():
