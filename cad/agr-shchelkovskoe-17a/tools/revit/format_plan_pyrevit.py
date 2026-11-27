@@ -171,7 +171,7 @@ def leaders(v):
         ys = [p[1] for lp in s['loops'] for p in lp]
         rooms[s['name']] = (min(xs), max(xs), min(ys), max(ys))
     x_head = max(r[1] for r in rooms.values()) + 2200.0
-    n = 0
+    picked = []
     for tg in FilteredElementCollector(doc, v.Id).OfCategory(BuiltInCategory.OST_RoomTags) \
             .WhereElementIsNotElementType().ToElements():
         rm = tg.Room
@@ -180,10 +180,17 @@ def leaders(v):
         x0, x1, y0, y1 = rooms[rm.Number]
         if min(x1 - x0, y1 - y0) >= 1500.0:
             continue
-        tg.HasLeader = True
-        z = tg.TagHeadPosition.Z
-        tg.TagHeadPosition = XYZ(x_head * MM, (y0 + y1) / 2.0 * MM, z)
-        n += 1
+        picked.append(((y0 + y1) / 2.0, tg))
+    picked.sort(key=lambda t: t[0])
+    gap = 2400.0                  # марка в три строки (имя, номер, площадь) — около 1,6 м по высоте при 1:100
+    if picked:
+        mid = sum(y for y, _ in picked) / len(picked)
+        y = mid - gap * (len(picked) - 1) / 2.0
+        for _, tg in picked:
+            tg.HasLeader = True
+            tg.TagHeadPosition = XYZ(x_head * MM, y * MM, tg.TagHeadPosition.Z)
+            y += gap
+    n = len(picked)
     log(u'4. марок на выноске (узкие помещения):', n)
 
 
