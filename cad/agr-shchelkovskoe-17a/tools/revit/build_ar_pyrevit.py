@@ -449,7 +449,8 @@ def main():
         if tr.HasStarted() and not tr.HasEnded():
             tr.RollBack()
         log(u'ОСТАНОВЛЕНО, изменения отменены:', ex)
-    io.open(os.path.join(HERE, 'build_report.txt'), 'w', encoding='utf-8').write(u'\n'.join(LOG))
+    with io.open(os.path.join(HERE, 'build_report.txt'), 'w', encoding='utf-8') as f:
+        f.write(u'\n'.join(LOG))
 
 
 main()

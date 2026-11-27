@@ -53,11 +53,15 @@ def P(x, y, z):
 
 
 def write_params():
+    if os.path.exists(PARAMS):           # файл идёт в пакете готовым
+        return
     g = uuid.uuid5(uuid.NAMESPACE_URL, 'agr17a/IfcName')
     txt = (u'# This is a Revit shared parameter file.\r\n# Do not edit manually.\r\n*META\tVERSION\tMINVERSION\r\n'
            u'META\t2\t1\r\n*GROUP\tID\tNAME\r\nGROUP\t2\tIFC\r\n*PARAM\tGUID\tNAME\tDATATYPE\tDATACATEGORY\tGROUP\t'
            u'VISIBLE\tDESCRIPTION\tUSERMODIFIABLE\tHIDEWHENNOEXIST\r\nPARAM\t%s\tIfcName\tTEXT\t\t2\t1\t\t1\t0\r\n' % g)
-    io.open(PARAMS, 'w', encoding='utf-16', newline=u'').write(txt)        # без перевода \n -> \r\n: строки уже с \r\n
+    # IronPython не закрывает файл сам: без with Revit читал недописанный файл (SEHException в readParamDatabase)
+    with io.open(PARAMS, 'w', encoding='utf-16', newline=u'') as f:      # строки уже с \r\n
+        f.write(txt)
 
 
 def bind():
@@ -266,7 +270,8 @@ def main():
         if tr.HasStarted() and not tr.HasEnded():
             tr.RollBack()
         log(u'ОСТАНОВЛЕНО, изменения отменены:', ex)
-    io.open(os.path.join(HERE, 'fix_report.txt'), 'w', encoding='utf-8').write(u'\n'.join(LOG))
+    with io.open(os.path.join(HERE, 'fix_report.txt'), 'w', encoding='utf-8') as f:
+        f.write(u'\n'.join(LOG))
 
 
 main()

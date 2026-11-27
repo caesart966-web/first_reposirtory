@@ -89,7 +89,9 @@ def clear_old():
     if not os.path.exists(STATE):
         return
     n = 0
-    for uid in json.load(io.open(STATE, encoding='utf-8')):
+    with io.open(STATE, encoding='utf-8') as f:
+        uids = json.load(f)
+    for uid in uids:
         e = doc.GetElement(uid)
         if e is not None:
             doc.Delete(e.Id)
@@ -170,13 +172,15 @@ def main():
             except Exception as ex:
                 log(u'   ОШИБКА шага, остальные шаги продолжены:', ex)
         tr.Commit()
-        io.open(STATE, 'w', encoding='utf-8').write(u'%s' % json.dumps(MADE))
+        with io.open(STATE, 'w', encoding='utf-8') as f:
+            f.write(u'%s' % json.dumps(MADE))
         log(u'ГОТОВО. Открыть план «%s», проверить и сохранить проект (Ctrl+S)' % v.Name)
     except Exception as ex:
         if tr.HasStarted() and not tr.HasEnded():
             tr.RollBack()
         log(u'ОСТАНОВЛЕНО, изменения отменены:', ex)
-    io.open(os.path.join(HERE, 'format_report.txt'), 'w', encoding='utf-8').write(u'\n'.join(LOG))
+    with io.open(os.path.join(HERE, 'format_report.txt'), 'w', encoding='utf-8') as f:
+        f.write(u'\n'.join(LOG))
 
 
 main()
