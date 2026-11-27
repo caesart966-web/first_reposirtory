@@ -1,6 +1,6 @@
 """Чертежи для Комиссии по п. 2.3 Положения (DXF, затем DWG) и таблица расчёта площадей (XLSX).
 
-    python3 dwg_export.py <AR.ifc> <BiO.ifc> <near.osm> <папка вывода>
+    python3 dwg_export.py <AR.ifc> <BiO.ifc> <near.osm> <папка вывода> [areas.json]
 
 * «План 1 этажа»: стены, колонны, витражи, окна и двери в разрезе на +1,0 м; крыльца, лестницы и пандусы;
   помещения с номерами и площадями; оси с марками и размерами; замкнутые контуры по наружному и внутреннему
@@ -622,9 +622,9 @@ def xlsx(info, out_xlsx):
     clean_meta.recalc_xlsx(out_xlsx)
 
 
-def main(ar, bio, osm, outdir):
+def main(ar, bio, osm, outdir, areas=None):
     os.makedirs(outdir, exist_ok=True)
-    areas = os.path.join(HERE, 'out_ifc2', 'areas.json')
+    areas = areas or os.path.join(HERE, 'out_ifc2', 'areas.json')        # areas_from_ifc.py — по исправленной модели
     info = plan(ar, areas, os.path.join(outdir, 'План_1_этажа.dxf'))
     print('план: spp2 %.3f, s3 %.3f, внутр. контур %.3f' % (info['spp'], info['nnp'], info['inner']))
     xlsx(info, os.path.join(outdir, 'Расчет_площадей.xlsx'))
@@ -633,4 +633,4 @@ def main(ar, bio, osm, outdir):
 
 
 if __name__ == '__main__':
-    main(*sys.argv[1:5])
+    main(*sys.argv[1:6])

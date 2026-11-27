@@ -14,6 +14,9 @@
     на 50 мм (навесные фасады под кровлей, витражи ограждения кровли, два окна, проёмы). Значения
     свойств экспортёр делит между элементами, поэтому для высоты заводятся новые свойства (по одному
     на значение), а ссылка меняется только в наборе RusSet_Quantities своего элемента.
+  * зона «Общая площадь»: части за наружными стенами (крыльца, терраса) обрезаны по следу стен и облицовки
+    навесного фасада — проверка ЦИМ 27.11.2026, 4 пересечения с навесным фасадом больше 80 мм; RUS_Area,
+    RUS_Volume — по новым контурам (520,63 -> 519,28 м²).
 АР и ПС:
   * контуры профилей (IfcIndexedPolyCurve по списку точек) замыкаются явно — первая точка повторяется
     в конце списка: в ПС контур участка, в АР 4 контура зоны «Общая площадь»;
@@ -35,6 +38,7 @@ import ifcopenshell.geom
 import ifcopenshell.validate
 import ifcopenshell.util.element as ue
 from shapely.geometry import Polygon
+from shapely.ops import unary_union
 
 LINE = re.compile(r'^#(\d+)=', re.M)
 HTOL = 50.0          # мм: расхождение высоты с геометрией, до которого атрибут не трогается (кроме стен)
@@ -156,6 +160,7 @@ def fix_ar(src, dst):
     close_profiles(m, t, 'АР')
     fix_mssk(m, t)
     fix_zone_depth(m, t)
+    clip_open_parts(m, t)
     t.save(dst)
 
 
@@ -206,6 +211,97 @@ def fix_zone_depth(m, t):
                     assert k == 1, ln
                     t.set(it.id(), ln2)
                     print('АР: зона %s, выдавливание %s -> %s мм' % (sp.Name, num(it.Depth), num(h)))
+
+
+def footprint(e, st):
+    """След элемента в плане (мм, мировые координаты) — объединение проекций треугольников."""
+    sh = ifcopenshell.geom.create_shape(st, e)
+    v = np.array(sh.geometry.verts).reshape(-1, 3) * 1000.0
+    fc = np.array(sh.geometry.faces).reshape(-1, 3)
+    tri = [Polygon(v[f][:, :2]) for f in fc]
+    return unary_union([p.buffer(0) for p in tri if p.area > 1e-3])
+
+
+def tidy(pts, tol=0.5):
+    """Убрать повторы точек и точки на прямой (отклонение до 0,5 мм)."""
+    out = []
+    for p in pts:
+        if not out or np.hypot(p[0] - out[-1][0], p[1] - out[-1][1]) > tol:
+            out.append(p)
+    if np.hypot(out[0][0] - out[-1][0], out[0][1] - out[-1][1]) <= tol:
+        out.pop()
+    res = []
+    for i in range(len(out)):
+        a, b, c = out[i - 1], out[i], out[(i + 1) % len(out)]
+        cross = (b[0] - a[0]) * (c[1] - b[1]) - (b[1] - a[1]) * (c[0] - b[0])
+        if abs(cross) / max(np.hypot(c[0] - a[0], c[1] - a[1]), 1.0) > tol:
+            res.append(b)
+    return res
+
+
+def clip_open_parts(m, t):
+    """Зона «Общая площадь»: части за наружными стенами (крыльцо главного входа с пандусом и лестницей, служебное
+    крыльцо, терраса загрузки) заходили в стены и облицовку навесного фасада на всю толщину — проверка ЦИМ
+    27.11.2026: «Матрица коллизий», 4 пересечения зоны с навесным фасадом больше 80 мм. Эти части обрезаются
+    по следу стен (IfcWall) и навесных фасадов (IfcCurtainWall); часть внутри здания (самая большая, по внутренним
+    поверхностям наружных стен, с перегородками) не меняется. RUS_Area и RUS_Volume — по новым контурам."""
+    import ifcopenshell.util.placement as up
+    st = ifcopenshell.geom.settings()
+    st.set('use-world-coords', True)
+    walls = unary_union([footprint(e, st) for e in m.by_type('IfcWall') + m.by_type('IfcCurtainWall')])
+    zone = [s for s in m.by_type('IfcSpace')
+            if ue.get_psets(s).get('RusSet_Common', {}).get('RUS_Name') == 'Общая площадь']
+    assert len(zone) == 1, zone
+    zone = zone[0]
+    Ml = np.array(up.get_local_placement(zone.ObjectPlacement))
+    items = [it for rep in zone.Representation.Representations for it in rep.Items]
+    assert all(it.is_a('IfcExtrudedAreaSolid') and not it.SweptArea.OuterCurve.Segments for it in items)
+    world, Mis = [], []
+    for it in items:
+        Mi = Ml @ np.array(up.get_axis2placement(it.Position))
+        Mis.append(Mi)
+        world.append(Polygon([tuple((Mi @ np.array([p[0], p[1], 0.0, 1.0]))[:2])
+                              for p in it.SweptArea.OuterCurve.Points.CoordList]))
+    big = max(range(len(items)), key=lambda i: world[i].area)
+    total = world[big].area
+    for i, it in enumerate(items):
+        if i == big:
+            continue
+        d = world[i].difference(walls)
+        pieces = [g for g in getattr(d, 'geoms', [d]) if g.area > 1e4]          # куски меньше 0,01 м² — щели
+        assert len(pieces) == 1, [g.area for g in pieces]
+        Pi = np.linalg.inv(Mis[i])
+        loc = [tuple((Pi @ np.array([x, y, 0.0, 1.0]))[:2]) for x, y in tidy(list(pieces[0].exterior.coords)[:-1])]
+        old = it.SweptArea.OuterCurve.Points.CoordList
+        if Polygon(loc).exterior.is_ccw != Polygon(old).exterior.is_ccw:
+            loc = loc[::-1]
+        loc = [(round(x, 4), round(y, 4)) for x, y in loc]
+        loc.append(loc[0])
+        pid = it.SweptArea.OuterCurve.Points.id()
+        assert t.refs(pid) == 1, pid
+        t.set(pid, '#%d=IFCCARTESIANPOINTLIST2D((%s));' % (pid, ','.join('(%s,%s)' % (num(x), num(y)) for x, y in loc)))
+        w = Polygon([tuple((Mis[i] @ np.array([x, y, 0.0, 1.0]))[:2]) for x, y in loc])
+        assert w.intersection(walls).area < 100.0, w.intersection(walls).area      # только касание по грани
+        total += w.area
+        print('АР: зона «Общая площадь», часть #%d: %.4f -> %.4f м² (обрезано по стенам и облицовке %.4f м²)'
+              % (it.id(), world[i].area / 1e6, w.area / 1e6, (world[i].area - w.area) / 1e6))
+    total = round(total / 1e6, 6)
+    q = [r.RelatingPropertyDefinition for r in zone.IsDefinedBy if r.is_a('IfcRelDefinesByProperties')
+         and r.RelatingPropertyDefinition.Name == 'RusSet_Quantities']
+    assert len(q) == 1
+    vals = {x.Name: x for x in q[0].HasProperties}
+    h = vals['RUS_Height'].NominalValue.wrappedValue
+    ln = t.get(q[0].id())
+    for key, v in (('RUS_Area', total), ('RUS_Volume', round(total * h / 1000.0, 6))):
+        old = vals[key]
+        new = t.add("IFCPROPERTYSINGLEVALUE('%s',$,IFCREAL(%s),$);" % (key, num(v)))
+        ln, k = re.subn(r'#%d(?=[,)])' % old.id(), '#%d' % new, ln)
+        assert k == 1, ln
+        if t.refs(old.id()) == 1:            # ссылка была только из этого набора
+            t.drop(old.id())
+        print('АР: зона «Общая площадь» %s %s -> %s' % (key, num(old.NominalValue.wrappedValue), num(v)))
+    t.set(q[0].id(), ln)
+    return total
 
 
 def new_storey_guids(m, t, tag):
