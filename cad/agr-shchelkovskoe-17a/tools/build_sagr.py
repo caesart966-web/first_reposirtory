@@ -1,6 +1,9 @@
 """Сборка комплекта САГР из исходного комплекта с заменой моделей и ТЭП.
 
-    python3 build_sagr.py <распакованный исходный комплект> <папка с AR/PS/BiO.ifc> <куда> <площадь> <ГПЗУ> [<trm.zip>]
+    python3 build_sagr.py <распакованный исходный комплект> <папка с AR/PS/BiO.ifc> <куда> <площадь> <ГПЗУ> [<trm.zip>] [<ТЭП.xml>]
+
+ТЭП.xml — файл из «Сервиса формирования ТЭП XML» портала «СтроимПросто»: кладётся в комплект как есть, под своим
+именем (проверка 28.11.2026 приняла только его, см. tep()). Без него ТЭП правится из исходного комплекта.
 
 Структура комплекта, идентификаторы документов и имена файлов сохраняются.
 """
@@ -34,17 +37,21 @@ def tep(text, area, gpzu):
     text = sub1(text, r'<GPZUNumber>[^<]*</GPZUNumber>', '<GPZUNumber>ГПЗУ № %s</GPZUNumber>' % gpzu)
     for tag in ('TotalObjectArea', 'AboveGroundArea', 'NonResidentialAboveGroundAreaNonResidentialObjects'):
         text = sub1(text, r'<%s>[^<]*</%s>' % (tag, tag), '<%s>%s</%s>' % (tag, area, tag))
-    # число квартир в схеме ТЭП — positiveInteger (от 1): «0» проверка XML отклоняет (критичная ошибка 28.11.2026),
-    # у нежилого здания строки нет вовсе — как в ТЭП из «Сервиса формирования ТЭП XML»
-    text = sub1(text, r'\r?\n[ \t]*<ApartmentsCount>[^<]*</ApartmentsCount>', '')
+    # Проверка XML 28.11.2026: ApartmentsCount — positiveInteger и обязателен («0» и пропуск — критичные ошибки).
+    # «Сервис формирования ТЭП XML» с отметкой «Нежилой объект» пишет ApartmentsCount = 1 и не пишет трёх строк о
+    # жилой части — так же и здесь
+    for tag in ('ResidentialPartArea', 'ResidentialPartOfResidentialArea', 'NonResidentialPartOfResidentialArea'):
+        text = sub1(text, r'\r?\n[ \t]*<%s>[^<]*</%s>' % (tag, tag), '')
+    text = sub1(text, r'<ApartmentsCount>[^<]*</ApartmentsCount>', '<ApartmentsCount>1</ApartmentsCount>')
     # высота от отметки земли у здания 154,350 до верха ограждения кровли 160,650 (проверка 27.11.2026)
     for tag in ('BuildingHeight', 'ObjectHeight'):
         text = sub1(text, r'<%s>[^<]*</%s>' % (tag, tag), '<%s>%s</%s>' % (tag, HEIGHT, tag))
     return text
 
 
-def main(src, ifc_dir, out, area, gpzu, trm=None):
-    """trm — новый trm.zip из той же выгрузки плагина, что и AR.ifc (иначе остаётся прежний)."""
+def main(src, ifc_dir, out, area, gpzu, trm=None, tep_xml=None):
+    """trm — новый trm.zip из той же выгрузки плагина, что и AR.ifc (иначе остаётся прежний);
+    tep_xml — ТЭП из сервиса портала, кладётся как есть."""
     now = datetime.datetime.now(MSK).replace(microsecond=0)
     stamp = now.isoformat()
     kit = os.path.join(out, 'kit')
@@ -57,6 +64,8 @@ def main(src, ifc_dir, out, area, gpzu, trm=None):
             shutil.copyfile(os.path.join(ifc_dir, IFC[name]), b)
         elif name == TRM and trm:
             shutil.copyfile(trm, b)
+        elif name == TEP and tep_xml:
+            shutil.copyfile(tep_xml, b)
         elif name == TEP:
             raw = open(a, 'rb').read()
             crlf = b'\r\n' in raw
@@ -70,6 +79,10 @@ def main(src, ifc_dir, out, area, gpzu, trm=None):
             changed.append(name)
     info = open(os.path.join(kit, 'info.xml'), 'rb').read().decode('utf-8')
     info = sub1(info, r'(<Package Created=")[^"]*(")', r'\g<1>%s\g<2>' % stamp)
+    if tep_xml:
+        tname = os.path.basename(tep_xml)
+        info = sub1(info, r'(FileName="Комплект САГР/ТЭП/)[^"]*(")', r'\g<1>%s\g<2>' % tname)
+        info = sub1(info, r'(<Attribute Name="DocumentName" Value=")agrtep_[^"]*(")', r'\g<1>%s\g<2>' % tname)
     for name in changed:
         info = sub1(info, r'(<Document TypeName="Document" Id="%s" ParentId="[^"]*" Created=")[^"]*(" Modified=")[^"]*(")'
                     % name, r'\g<1>%s\g<2>%s\g<3>' % (stamp, stamp))
@@ -100,4 +113,4 @@ def main(src, ifc_dir, out, area, gpzu, trm=None):
 
 
 if __name__ == '__main__':
-    main(*sys.argv[1:7])
+    main(*sys.argv[1:8])
