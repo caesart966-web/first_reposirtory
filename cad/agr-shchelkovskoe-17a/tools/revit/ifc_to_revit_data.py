@@ -28,6 +28,7 @@ import ifcopenshell.util.placement as up
 from shapely.geometry import Polygon
 from shapely.ops import unary_union
 
+AXIS_FIX = {u'З': u'И'}
 SKIP = ('IfcOpeningElement', 'IfcSpace', 'IfcGrid', 'IfcSite', 'IfcBuildingStorey', 'IfcBuilding', 'IfcAnnotation')
 VTYPE = {'IfcText': 'TEXT', 'IfcLabel': 'TEXT', 'IfcIdentifier': 'TEXT', 'IfcReal': 'NUMBER',
          'IfcBoolean': 'YESNO', 'IfcLogical': 'YESNO', 'IfcInteger': 'INTEGER'}
@@ -86,7 +87,9 @@ def main(src, out):
                 continue
             seen.add(ax.AxisTag)
             pts = [list((Mg @ np.array([p[0], p[1], 0, 1]))[:2]) for p in ax.AxisCurve.Points.CoordList]
-            data['grids'].append({'tag': ax.AxisTag, 'p0': pts[0], 'p1': pts[-1]})
+            # буквы З, Й, О, Х, Ц, Ч, Щ, Ъ, Ы, Ь для осей не применяют (ГОСТ 21.101): в исходной модели за «Ж» шла «З»,
+            # в буклете и DWG — «И» (справка заказчика 28.11.2026)
+            data['grids'].append({'tag': AXIS_FIX.get(ax.AxisTag, ax.AxisTag), 'p0': pts[0], 'p1': pts[-1]})
     st = ifcopenshell.geom.settings()
     st.set('use-world-coords', True)
     ok = collections.Counter()
