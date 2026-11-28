@@ -34,7 +34,9 @@ def tep(text, area, gpzu):
     text = sub1(text, r'<GPZUNumber>[^<]*</GPZUNumber>', '<GPZUNumber>ГПЗУ № %s</GPZUNumber>' % gpzu)
     for tag in ('TotalObjectArea', 'AboveGroundArea', 'NonResidentialAboveGroundAreaNonResidentialObjects'):
         text = sub1(text, r'<%s>[^<]*</%s>' % (tag, tag), '<%s>%s</%s>' % (tag, area, tag))
-    text = sub1(text, r'<ApartmentsCount>[^<]*</ApartmentsCount>', '<ApartmentsCount>0</ApartmentsCount>')
+    # число квартир в схеме ТЭП — positiveInteger (от 1): «0» проверка XML отклоняет (критичная ошибка 28.11.2026),
+    # у нежилого здания строки нет вовсе — как в ТЭП из «Сервиса формирования ТЭП XML»
+    text = sub1(text, r'\r?\n[ \t]*<ApartmentsCount>[^<]*</ApartmentsCount>', '')
     # высота от отметки земли у здания 154,350 до верха ограждения кровли 160,650 (проверка 27.11.2026)
     for tag in ('BuildingHeight', 'ObjectHeight'):
         text = sub1(text, r'<%s>[^<]*</%s>' % (tag, tag), '<%s>%s</%s>' % (tag, HEIGHT, tag))
